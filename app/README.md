@@ -16,16 +16,16 @@ The grid tab on the left edge lists every screen and switches theme, motion and 
 
 ## What loads from the CDN
 
-Only KaTeX is in the repository (`vendor/katex/`). Everything else loads from `cdn.jsdelivr.net` the first time a lesson needs it, and the browser caches it after that. The page also asks Google Fonts for its typefaces.
+Only KaTeX is in the repository (`vendor/katex/`). Everything else loads from `cdn.jsdelivr.net` the first time a lesson needs it, and the browser caches it after that. The page also asks Google Fonts for its typefaces. Each library has an optional self-hosted fallback in `vendor/`, tried only when the CDN fails (see Self-hosting).
 
 | Library | Version | Loaded by | When | Size |
 |---|---|---|---|---|
-| Pyodide (Python, with NumPy, pandas, SciPy, scikit-learn, statsmodels, matplotlib) | 0.27.7 | `js/engine/widgets/code.js` (`PYODIDE`) and `js/screens/drill-worker.js` (`CDN`) | First Python code widget or drill | The core is several MB; each package wheel downloads on the first import that needs it (up to 2 minutes of its own, up to 1 minute for the core) |
+| Pyodide (Python, with NumPy, pandas, SciPy, scikit-learn, statsmodels, matplotlib) | 0.27.7 | `js/screens/drill-worker.js` (`CDN`; `code.js` and `drill.js` pass `vendor/pyodide/` as the fallback) | First Python code widget or drill | The core is several MB; each package wheel downloads on the first import that needs it (up to 2 minutes of its own, up to 1 minute for the core) |
 | MathLive | 0.105.0 | `js/engine/grade.js` (`LIBS`) | First expression answer | About 5 MB unpacked |
 | Compute Engine | 0.30.2 | `js/engine/grade.js` (`LIBS`) | First expression answer | About 4 MB unpacked |
 | YoWASP clang | 21.1.4-3 | `js/engine/widgets/cpp-grade.js` (`CLANG`) | First C++ code widget | About 26 MB gzip (see the table below); up to 5 minutes allowed |
 
-MathLive and Compute Engine share a 6 second budget. If either has not loaded by then, the expression widget still works, with less help:
+MathLive and Compute Engine share a budget: 6 seconds for each CDN script, then up to 4 more for its local copy in `vendor/` (10 seconds in all). If either has not loaded by then, the expression widget still works, with less help:
 
 - No MathLive: a plain text box replaces the maths field, with the note "Type the expression as text: use / for fractions, ^ for powers and * for products."
 - No Compute Engine: answers are matched as normalised text against the lesson's `answer` and `accept` list, not checked algebraically.
@@ -34,23 +34,25 @@ MathLive and Compute Engine share a 6 second budget. If either has not loaded by
 
 ## Self-hosting (offline use)
 
-`vendor/` is read only when the CDN is unreachable. Today it holds `katex/` only. The state of each fallback in the code:
-
-- `vendor/yowasp-clang/`: works. `cpp-worker.js` tries the CDN, then `vendor/yowasp-clang/` (the contents of the package's `gen/` folder, directly in it). From the repository root:
+`vendor/` is read only when the CDN is unreachable; with the CDN working nothing changes. Today the repository holds `katex/` only. One script fills the rest, in exactly the layout the code reads:
 
 ```sh
-mkdir -p app/vendor/yowasp-clang
-curl -fsSL https://registry.npmjs.org/@yowasp/clang/-/clang-21.1.4-3.tgz \
-  | tar -xz --strip-components=2 --wildcards 'package/gen/*' -C app/vendor/yowasp-clang
-sha256sum app/vendor/yowasp-clang/bundle.js   # compare with the table below
+app/tools/fetch-vendor.sh            # into app/vendor (or give another folder as the last argument)
+app/tools/fetch-vendor.sh --core     # Pyodide core only
 ```
 
-- `vendor/pyodide/`: not reachable today. `drill-worker.js` would use a local copy only if the page passed one as `indexURL`, but `code.js` passes the CDN address itself and `drill.js` passes `null`, so the local path is never tried. `app/vendor/pyodide/` is git-ignored for this reason. Until a page passes `vendor/pyodide/`, offline Python needs a code change, or a proxy that serves `cdn.jsdelivr.net`.
-- MathLive and Compute Engine: no local fallback. If the CDN is down the expression widget degrades as described above.
+| Folder | Read by | Holds |
+|---|---|---|
+| `vendor/pyodide/` | `drill-worker.js`; `code.js` and `drill.js` pass its absolute address as `indexURL` | The Pyodide 0.27.7 release: `pyodide.mjs`, the wasm, `pyodide-lock.json` and every package wheel. The worker tries the CDN first and this folder only when the CDN is unreachable and the folder has `pyodide.mjs`. |
+| `vendor/mathlive/` | `grade.js` (`LOCAL`) | `mathlive.min.js` with `fonts/`, `sounds/` and `mathlive-fonts.css` beside it. MathLive finds `./fonts` and `./sounds` relative to its own script. It asks for fonts only when the KaTeX families are not already in the page, and the app has them from `vendor/katex/`, so in practice only `sounds/` is read (on a key press). |
+| `vendor/compute-engine/` | `grade.js` (`LOCAL`) | `compute-engine.min.umd.js` |
+| `vendor/yowasp-clang/` | `cpp-worker.js` | The package's `gen/` folder, directly in it (see the C++ section) |
 
-`tools/fetch-local-cdn.sh <dir>` is for `node tools/playthrough.mjs --local-cdn <dir>`, which intercepts jsDelivr in the test browser. It builds a different layout (`<dir>/pyodide-0.27.7/package/`, `<dir>/mathlive-0.105.0/package/`, `<dir>/@cortex-js...`, `<dir>/yowasp-clang-21.1.4-3/package/gen/`, about 870 MB with every Pyodide wheel), not the `vendor/` layout. It does not populate `app/vendor/`. To reuse its clang copy: `cp <dir>/yowasp-clang-21.1.4-3/package/gen/* app/vendor/yowasp-clang/`.
+The script uses the same sources as `tools/fetch-local-cdn.sh` (the Pyodide release tarball from `github.com`, the npm tarballs from `registry.npmjs.org`) and checks what it downloads: npm tarballs against the registry's sha512 integrity, and every Pyodide file against the sha256 in `pyodide-lock.json`. It skips folders that are already complete. The four folders are git-ignored; KaTeX stays tracked. The full Pyodide release is 389 MB to download and 762 MB on disk (351 packages). `--core` takes only the npm `pyodide` package (about 14 MB, no wheels): offline Python then runs the standard library, and a lesson that imports NumPy, pandas, SciPy, scikit-learn, statsmodels or matplotlib fails with an import error.
 
-The grid tab on the left edge lists every screen and switches theme, motion and sound.
+`node tools/test-vendor-fallback.mjs --vendor <dir>` checks all of it with `cdn.jsdelivr.net` blocked: a Python lesson, a C++ lesson and an expression lesson play to the end, MathLive registers its field and the Compute Engine grades an identity. `--absent` checks the opposite, that without the folders Python and C++ report that there is no local copy and the maths editor falls back to a text box. CI runs both in the `python` leg of `tests-browser`.
+
+`tools/fetch-local-cdn.sh <dir>` is a different tool, for `node tools/playthrough.mjs --local-cdn <dir>`, which intercepts jsDelivr in the test browser. It builds another layout (`<dir>/pyodide-0.27.7/package/`, `<dir>/mathlive-0.105.0/package/` and so on, about 870 MB) and does not populate `app/vendor/`.
 
 ## Check the content
 
@@ -88,11 +90,11 @@ The validator implements `docs/AUTHORING.md` section 7. Missing lesson, review a
 | `tools/test-fluency-reach.mjs`, `tools/audit-plain-functions.mjs` | Unit tests of the authoring reach of Fluency families (functions and `pi` and `if` in `let`, `wrong[].when`, the `cfrac`, `(frac)`, `sfN`, `mono` and `falling` formats; ENGINE-BACKLOG 838 to 840); the audit of plain-text function names in graded answers (836) |
 | `tools/test-validate-problems.mjs`, `tools/test-problems.mjs`, `tools/fixtures/problems/` | Scratch cases for the problem-set validator rules; the runtime test (save, XP, hours, weekly review pool, the real player); the fixture set (never content). `node tools/playthrough.mjs --problems <course>/problems-<n>` plays one |
 | `tools/drill-constraints.mjs`, `tools/test-drill-constraints.mjs`, `tools/test-drill-page.mjs`, `tools/fixtures/drill-page/` | Machine-readable drill `constraints` (reader shared with the validator; `[no-constraints]`; ENGINE-BACKLOG 866) and the drill page limits (shared comparison, `setup`, `raises`, lists, long spans, `allocCheck`; 861 to 865): unit cases plus a played fixture drill, desktop and `--mobile` |
-| `vendor/katex/` | KaTeX, vendored (`vendor/yowasp-clang/` is an optional self-hosted compiler; see Self-hosting) |
+| `vendor/katex/` | KaTeX, vendored (`vendor/pyodide/`, `mathlive/`, `compute-engine/` and `yowasp-clang/` are optional self-hosted copies, git-ignored; see Self-hosting) |
 
 ## The C++ compiler (not vendored)
 
-C++ code widgets (`language: "cpp"`) compile in the browser with YoWASP Clang, the npm package `@yowasp/clang@21.1.4-3` (LLVM 21.1.4; Apache 2.0 with the LLVM exception, which allows redistribution; the JavaScript wrapper is ISC). `js/engine/widgets/cpp-grade.js` loads it from `https://cdn.jsdelivr.net/npm/@yowasp/clang@21.1.4-3/gen/`; if that is unreachable, `js/screens/cpp-worker.js` tries `vendor/yowasp-clang/` (absent from the repository; commands under Self-hosting). Alternatively put the package's `gen/` files on any static host with CORS and change `CLANG` in `cpp-grade.js`. Expected files:
+C++ code widgets (`language: "cpp"`) compile in the browser with YoWASP Clang, the npm package `@yowasp/clang@21.1.4-3` (LLVM 21.1.4; Apache 2.0 with the LLVM exception, which allows redistribution; the JavaScript wrapper is ISC). `js/engine/widgets/cpp-grade.js` loads it from `https://cdn.jsdelivr.net/npm/@yowasp/clang@21.1.4-3/gen/`; if that is unreachable, `js/screens/cpp-worker.js` tries `vendor/yowasp-clang/` (absent from the repository; `tools/fetch-vendor.sh` fills it). Alternatively put the package's `gen/` files on any static host with CORS and change `CLANG` in `cpp-grade.js`. Expected files:
 
 | File | Bytes | gzip | SHA-256 |
 | --- | ---: | ---: | --- |

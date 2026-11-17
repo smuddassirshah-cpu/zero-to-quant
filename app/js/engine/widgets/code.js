@@ -22,7 +22,8 @@
 (function () {
   'use strict';
   const Z = window.ZQ;
-  const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
+  const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';   // read by tools/code-runner.mjs; the worker itself tries this CDN first
+  const PYODIDE_LOCAL = 'vendor/pyodide/';   // self-hosted fallback, used by the worker only when the CDN is unreachable
   const TEST_MS = 5000, LOAD_MS = 60000, PKG_MS = 120000;
   const MARK = '\u001eZQ';
 
@@ -167,7 +168,7 @@
         const msg = (e && e.message) || 'The Python worker could not start.';
         if (run) { end({ crash: msg }); start(true); } else unavailable(msg);
       };
-      w.postMessage({ type: 'init', indexURL: PYODIDE });
+      w.postMessage({ type: 'init', indexURL: new URL(PYODIDE_LOCAL, location.href).href }); // the local fallback; the worker tries the CDN first
       loadTimer = setTimeout(() => { if (my === gen) unavailable('Python took more than a minute to load.'); }, LOAD_MS);
     };
     /* items 394, 419: perCase(k) is the limit for case k (k = -1 while the code loads); each event re-arms the timer, so
