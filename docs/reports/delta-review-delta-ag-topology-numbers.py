@@ -92,6 +92,9 @@ LO, HI = 98, 102
 if '$x < 60$' in sg['prose']:
     LO, HI = 60, 64
 S = ('sell', 'hold', 'buy')
+# Session AH: p-signal-bands was re-authored on the symmetric topology of R (finding 1); the checks of the
+# three-point version below run only while that version is in the file. The author's script checks the new one.
+OLDSIG = r'\text{sell}' in sg['prose']
 
 
 def f(x):
@@ -113,10 +116,10 @@ def pre_open(W):
 
 
 tau = [W for W in subsets(S) if pre_open(W)]
-check('signal: tau', set(tau) == {frozenset(), frozenset({'sell'}), frozenset({'buy'}), frozenset({'sell', 'buy'}), frozenset(S)})
-numeric('signal part 1', sg['parts'][0], 5, {'all-subsets': 8, 'no-ends': 3}, printed=[': 5 sets', 'leaves 5 sets'])
-check('signal part 1 key by count', len(tau) == 5)
-check('signal part 1: with hold, open only for S', [W for W in tau if 'hold' in W] == [frozenset(S)])
+OLDSIG and check('signal: tau', set(tau) == {frozenset(), frozenset({'sell'}), frozenset({'buy'}), frozenset({'sell', 'buy'}), frozenset(S)})
+OLDSIG and numeric('signal part 1', sg['parts'][0], 5, {'all-subsets': 8, 'no-ends': 3}, printed=[': 5 sets', 'leaves 5 sets'])
+OLDSIG and check('signal part 1 key by count', len(tau) == 5)
+OLDSIG and check('signal part 1: with hold, open only for S', [W for W in tau if 'hold' in W] == [frozenset(S)])
 
 
 def is_top(fam, X):
@@ -131,15 +134,15 @@ all_tops = [set(c) | {frozenset(), frozenset(S)} for r in range(7) for c in comb
 all_tops = [t for t in all_tops if is_top(t, S)]
 check('29 topologies on three points', len(all_tops) == 29)
 inside = [t for t in all_tops if t <= set(tau)]
-numeric('signal part 2', sg['parts'][1], len(inside), {'all-choices': 8, 'tau-only': 1, 'all-topologies': 29}, printed=['So 7', '2^3 = 8', '7 topologies'])
-check('signal part 2 key 7', len(inside) == 7)
+OLDSIG and numeric('signal part 2', sg['parts'][1], len(inside), {'all-choices': 8, 'tau-only': 1, 'all-topologies': 29}, printed=['So 7', '2^3 = 8', '7 topologies'])
+OLDSIG and check('signal part 2 key 7', len(inside) == 7)
 tmid = [W for W in tau if 0 < len(W) < 3]
 bad = [set(c) | {frozenset(), frozenset(S)} for r in range(4) for c in combinations(tmid, r)]
 bad = [t for t in bad if not is_top(t, S)]
-check('signal part 2: one family of the 8 fails, the two singletons without their union',
+OLDSIG and check('signal part 2: one family of the 8 fails, the two singletons without their union',
       len(bad) == 1 and bad[0] == {frozenset(), frozenset(S), frozenset({'sell'}), frozenset({'buy'})})
 # continuity of f into (S, sigma) is exactly sigma inside tau
-check('signal part 2: continuous iff inside tau', all((t <= set(tau)) == all(pre_open(W) for W in t) for t in all_tops))
+OLDSIG and check('signal part 2: continuous iff inside tau', all((t <= set(tau)) == all(pre_open(W) for W in t) for t in all_tops))
 
 
 def connected(A, top):
@@ -149,15 +152,15 @@ def connected(A, top):
 
 nonempty = [A for A in subsets(S) if A]
 conn = [A for A in nonempty if connected(A, tau)]
-numeric('signal part 3', sg['parts'][2], len(conn), {'all': 7, 'singletons': 3, 'no-pairs': 4}, printed=[': 6', '6 of the 7'])
-check('signal part 3 key 6', len(conn) == 6 and [A for A in nonempty if A not in conn] == [frozenset({'sell', 'buy'})])
-check('signal part 3 slip no-pairs = singletons + S', 3 + 1 == 4)
+OLDSIG and numeric('signal part 3', sg['parts'][2], len(conn), {'all': 7, 'singletons': 3, 'no-pairs': 4}, printed=[': 6', '6 of the 7'])
+OLDSIG and check('signal part 3 key 6', len(conn) == 6 and [A for A in nonempty if A not in conn] == [frozenset({'sell', 'buy'})])
+OLDSIG and check('signal part 3 slip no-pairs = singletons + S', 3 + 1 == 4)
 opts = {o['id']: o for o in sg['parts'][3]['widget']['options']}
-check('signal part 4 one correct option', [k for k, o in opts.items() if o.get('correct')] == ['connected-image'])
-check('signal part 4: connected subsets with sell and buy', [A for A in conn if {'sell', 'buy'} <= A] == [frozenset(S)])
-check('signal part 4: f not continuous into discrete', not pre_open(frozenset({'hold'})))
-check('signal part 4: S connected, constant map not onto', connected(frozenset(S), tau))
-check('signal part 4: ends', f(LO - 1) == 'sell' and f(HI + 2) == 'buy')
+OLDSIG and check('signal part 4 one correct option', [k for k, o in opts.items() if o.get('correct')] == ['connected-image'])
+OLDSIG and check('signal part 4: connected subsets with sell and buy', [A for A in conn if {'sell', 'buy'} <= A] == [frozenset(S)])
+OLDSIG and check('signal part 4: f not continuous into discrete', not pre_open(frozenset({'hold'})))
+OLDSIG and check('signal part 4: S connected, constant map not onto', connected(frozenset(S), tau))
+OLDSIG and check('signal part 4: ends', f(LO - 1) == 'sell' and f(HI + 2) == 'buy')
 
 # kept problems of set 2: the parts the fix pass changed
 fp = item(P2, 'p-four-point-line')
@@ -400,9 +403,9 @@ check('plotter part 4: nearest point (3.7, 0.9) on 3x + y = 12, distance 1.2649 
 p = sg['parts']
 finding(1, 'only member of $\\tau$ holding hold is $S$' in p[2]['explain']['text'] and set(map(len, tau)) == {0, 1, 2, 3},
         'p-signal-bands: tau is the three-point space of l5 screens[0] and l8 screens[1] relabelled, and part 3 gives l8 screens[1]\'s reason')
-finding(2, r'\{\text{sell}, \text{buy}\}' not in p[1]['question'] or r'\{\text{sell}\}' not in p[2]['question'],
+finding(2, OLDSIG and (r'\{\text{sell}, \text{buy}\}' not in p[1]['question'] or r'\{\text{sell}\}' not in p[2]['question']),
         'p-signal-bands parts 2 and 3 restate the count 5, not the sets of tau they need')
-finding(3, 'f(p(t))' not in p[3]['question'], 'p-signal-bands part 4 uses f o p, which no lesson of the course writes or defines')
+finding(3, OLDSIG and 'f(p(t))' not in p[3]['question'], 'p-signal-bands part 4 uses f o p, which no lesson of the course writes or defines')
 finding(4, '98' in sg['prose'] and '104' in p[3]['question'], 'p-signal-bands shares "sell below 98, otherwise hold" and 104 with first-python l5')
 finding(5, 'which bounds the distance from $f_0$ to $f^*$' in ke['parts'][3]['feedback']['byKey']['over-one-minus'],
         'p-kernel-equation part 4 slip line over-one-minus paraphrases h3-aposteriori')

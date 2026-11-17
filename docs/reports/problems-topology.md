@@ -91,3 +91,22 @@ Re-authored: `p-bond-yield-map` as `p-signal-bands`, `p-quadratic-iteration` as 
 | playthrough `--why` / `--mobile` | green / green | green, 29 slips / green | green, 33 slips / green |
 
 Layout: the 440 px shots showed the first draft's $\{\text{sell}, \text{buy}\}$ without maths delimiters and one choice line of `p-trapping-interval` running off the right edge; both fixed and reshot.
+
+## Author pass AH: `p-signal-bands` re-authored (KNOWN_ISSUES session AG close, `review-delta-ag-topology.md` finding 1)
+
+The three-point space is gone. The id, difficulty 4, skills (`tg-open`, `tg-continuity`, `tg-connected`) and the four-part shape stay; nothing of the old problem is kept, since its counts 5, 7 and 6 belonged to that space.
+
+New space: $\mathbb{R}$ with $\tau$ = the usual open sets $U$ with $U = -U$ (a desk that sees only the size of a move). It is infinite, not $T_0$, and it is in no lesson, review, homework or exam of the course (grep for symmetric, mirror, $-x \in$ and pull-back topologies: no hit).
+
+| part | old deciding step | new deciding step | key |
+|---|---|---|---|
+| 1 | preimages of three price bands, open only without the closed middle band (5) | a set is in $\tau$ when it passes two tests, open and symmetric, of five sets | 2 |
+| 2 | sub-topologies of $\tau$, one family of 8 missing a union (l5 screens[0], `h2-five-families`) | $h^{-1}(U) = \{t : \lvert h(t)\rvert \in W\}$, so $h$ is continuous into $\tau$ exactly when $\lvert h\rvert$ is; count of five maps (the sign step $s(t)$ counts) | 3 |
+| 3 | the only open set round hold is $S$ (l8 screens[1]) | $A$ is connected exactly when its set of sizes $\lvert A\rvert$ is an interval or a point; six sets, $\{-2, 2\}$ and $(-1, 0) \cup (0, 1)$ connected | 4 |
+| 4 | a connected image holding sell and buy is $S$ | $\lvert p\rvert$ is continuous on $[0, 1]$, so the intermediate value theorem gives $\lvert p(t)\rvert = 4$; $p = 0$ and $p = 4$ are not forced (jump paths in the `why` lines) | choice `size-four` |
+
+Slips: part 1 `usual` 4, `symmetric` 3; part 2 `usual` 1, `two-valued` 4; part 3 `usual` 1, `joined` 5. Integer keys with `abs` 0, so no rounding tie or band edge.
+
+Numbers: `problems-topology-numbers.py` checks each count by two routes (sympy boundaries and reflections against a grid test; $\lvert h\rvert$ by hand against preimages of 153 sets $\{a < \lvert x\rvert < b\}$; sympy $\lvert A\rvert$ against cuts $\{\lvert x\rvert < c\}$, $\{\lvert x\rvert > c\}$), every slip rebuilt, the witnesses in the feedback, and the two jump paths of part 4. 759 checks, 0 failures, exit 0. The delta reader's script (`delta-review-delta-ag-topology-numbers.py`) runs its three-point checks only while that version is in the file (finding 1 now prints `resolved`); 302 checks, 0 failed. The first reader's script: 541 checks, 0 FINDING.
+
+Gates: validator 0 errors, no warning on `problems-2.json`; voice scan 35 on `topology`: 0 and 0; `fresh-check --file` 0 hits, 0 advisory on the item; `grade-all --file` 16 widgets, 0 failures; `playthrough --problems topology/problems-2 --why` with and without `--mobile`: all passed (27 typed slips routed). The 440 px shots of parts 1 to 4 wrap inside the column.

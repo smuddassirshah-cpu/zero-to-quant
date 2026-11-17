@@ -293,39 +293,103 @@ def level2():
     ok({frozenset(rev[x] for x in u) for u in tau} != tau, 'reversal is not a homeomorphism')
     num(it, 'p-four-point-line', 4, len(homeos), len(homeos2), {'reversal': 2, 'every-bijection': math.factorial(4)}, places=None)
 
-    # p-signal-bands. f: R -> S = {sell, hold, buy}: sell below 60, hold on [60, 64], buy above 64.
-    S3 = frozenset('shb')
-    subs = [frozenset(c) for r in range(4) for c in itertools.combinations('shb', r)]
-    # route 1: a preimage holding hold contains [60, 64]; it is open only when it is all of R
-    tau_s = [W for W in subs if 'h' not in W or W == S3]
-    # route 2: the preimage as a union of bands, tested for openness at its end points on a fine grid
-    band = lambda xv: 's' if xv < 60 else ('h' if xv <= 64 else 'b')
-    def pre_open(W):
-        pts = [50 + k / 100 for k in range(0, 2001)]
-        inside = [p for p in pts if band(p) in W]
-        return all(band(p - 0.001) in W and band(p + 0.001) in W for p in inside)
-    tau_s2 = [W for W in subs if pre_open(W)]
-    num(it, 'p-signal-bands', 1, len(tau_s), len(tau_s2), {'all-subsets': 8, 'no-ends': len(tau_s) - 2}, places=None)
-    ok(set(tau_s) == set(tau_s2), 'signal: both routes give the same open-preimage sets')
-    mids = [W for W in tau_s if W not in (frozenset(), S3)]
-    def is_top(fam):
-        return frozenset() in fam and S3 in fam and all(a | b in fam and a & b in fam for a in fam for b in fam)
-    subtops = [c for r in range(len(mids) + 1) for c in itertools.combinations(mids, r) if is_top(set(c) | {frozenset(), S3})]
-    # route 2: every topology on three points (brute force over all families), kept when inside tau
-    all_tops = [fam for r in range(len(subs) + 1) for fam in itertools.combinations(subs, r) if is_top(set(fam))]
-    inside_tau = [fam for fam in all_tops if set(fam) <= set(tau_s)]
-    num(it, 'p-signal-bands', 2, len(subtops), len(inside_tau), {'all-choices': 2 ** len(mids), 'tau-only': 1, 'all-topologies': len(all_tops)}, places=None)
-    ok(len(all_tops) == 29, 'signal: 29 topologies on three points')
-    conn = [A for A in subs if A and connected(set(tau_s), A)]
-    # route 2: a subset is connected when no two disjoint non-empty relatively open sets cover it
-    def conn2(A):
-        rel = {U & A for U in tau_s}
-        return not any(U and V and not (U & V) and (U | V) == A for U in rel for V in rel)
-    conn_b = [A for A in subs if A and conn2(A)]
-    num(it, 'p-signal-bands', 3, len(conn), len(conn_b), {'all': 7, 'singletons': 3, 'no-pairs': 4}, places=None)
-    ok(frozenset('sb') not in conn and all(A in conn for A in subs if A and 'h' in A), 'signal: only {sell, buy} splits')
-    one_correct(it, 'p-signal-bands', 4, 'connected-image')
-    ok(band(58) == 's' and band(67) == 'b', 'signal: the path starts at sell and ends at buy')
+    # p-signal-bands (re-authored, session AH): tau = the usual open sets U of R with U = -U.
+    # Sets are unions of pieces (lo, hi, closed-left, closed-right); a point is (a, a, True, True).
+    INF = float('inf')
+    def to_sp(pcs):
+        out = sp.EmptySet
+        for lo, hi, lc, rc in pcs:
+            L = -sp.oo if lo == -INF else sp.nsimplify(lo)
+            R = sp.oo if hi == INF else sp.nsimplify(hi)
+            out = out | (sp.FiniteSet(L) if lo == hi else sp.Interval(L, R, not lc, not rc))
+        return out
+    def mem(pcs):
+        return lambda t: any((lo < t < hi) or (lc and t == lo) or (rc and t == hi) for lo, hi, lc, rc in pcs)
+    xs = sp.Symbol('x', real=True)
+    def sp_open(S):          # route 1: open when it meets none of its boundary points
+        return (S.boundary & S) == sp.EmptySet
+    def sp_mirror(S):
+        return sp.imageset(sp.Lambda(xs, -xs), S) == S
+    GRID = [F(k, 64) for k in range(-6 * 64, 6 * 64 + 1)]
+    def grid_open(m):        # route 2: every grid point inside has its neighbours a hair away inside too
+        return all(m(float(t) - 1e-9) and m(float(t) + 1e-9) for t in GRID if m(float(t)))
+    def grid_mirror(m):
+        return all(m(float(t)) == m(float(-t)) for t in GRID)
+    p1sets = {'(-2,2)': [(-2, 2, False, False)], '(0,3)': [(0, 3, False, False)],
+              '(-3,-1)u(1,3)': [(-3, -1, False, False), (1, 3, False, False)],
+              '[-1,1]': [(-1, 1, True, True)], '(-2,1)': [(-2, 1, False, False)]}
+    in_tau1 = [n for n, pc in p1sets.items() if sp_open(to_sp(pc)) and sp_mirror(to_sp(pc))]
+    in_tau2 = [n for n, pc in p1sets.items() if grid_open(mem(pc)) and grid_mirror(mem(pc))]
+    ok(in_tau1 == in_tau2 == ['(-2,2)', '(-3,-1)u(1,3)'], f'signal p1: sets in tau {in_tau1} / {in_tau2}')
+    usual1 = [n for n, pc in p1sets.items() if sp_open(to_sp(pc))]
+    mirror1 = [n for n, pc in p1sets.items() if sp_mirror(to_sp(pc))]
+    ok(usual1 == [n for n, pc in p1sets.items() if grid_open(mem(pc))], 'signal p1: usual-open sets by both routes')
+    num(it, 'p-signal-bands', 1, len(in_tau1), len(in_tau2), {'usual': len(usual1), 'symmetric': len(mirror1)}, places=None)
+    ok(mem(p1sets['(-2,1)'])(-1.5) and not mem(p1sets['(-2,1)'])(1.5) and mem(p1sets['(0,3)'])(1) and not mem(p1sets['(0,3)'])(-1),
+       'signal p1: the witnesses -1.5 and 1 named in feedback')
+    # tau is a topology: unions and intersections of symmetric open sets are symmetric open (spot check on the two members)
+    A1, A2 = to_sp(p1sets['(-2,2)']), to_sp(p1sets['(-3,-1)u(1,3)'])
+    ok(all(sp_open(S) and sp_mirror(S) for S in (A1 | A2, A1 & A2)), 'signal: union and meet of the two members lie in tau')
+    # part 2: h into (R, tau) is continuous exactly when |h| is (U = {x : |x| in W}).
+    sgn = lambda t: 1 if t >= 0 else -1
+    maps = {'t': lambda t: t, 's': sgn, 'floor': math.floor, 't+s': lambda t: t + sgn(t), '2+s': lambda t: 2 + sgn(t)}
+    size_cont = {'t': True, 's': True, 'floor': False, 't+s': True, '2+s': False}       # route 1, by hand: |h| = |t|, 1, jumps, 1+|t|, jumps
+    usual_cont = {'t': True, 's': False, 'floor': False, 't+s': False, '2+s': False}
+    TG = [k / 50 for k in range(-200, 201)]
+    def preimage_open(h, a, b):   # route 2: h^{-1}({x : a < |x| < b}) open, tested at grid points by tiny steps
+        m = lambda t: a < abs(h(t)) < b
+        return all(m(t - 1e-9) and m(t + 1e-9) for t in TG if m(t))
+    Ws = [(a / 4, b / 4) for a in range(-1, 16) for b in range(a + 1, 17)]
+    cont2 = {n: all(preimage_open(h, a, b) for a, b in Ws) for n, h in maps.items()}
+    ok(cont2 == size_cont, f'signal p2: continuity into tau by preimages {cont2}')
+    jump = lambda h: any(abs(h(t + 1e-9) - h(t - 1e-9)) > 1e-6 for t in TG)
+    ok({n: not jump(h) for n, h in maps.items()} == usual_cont, 'signal p2: usual continuity by sampling')
+    ok({n: not jump(lambda t, h=h: abs(h(t))) for n, h in maps.items()} == size_cont, 'signal p2: |h| continuous by sampling')
+    ok(all(abs(abs(t + sgn(t)) - (1 + abs(t))) < 1e-12 for t in TG), 'signal p2: |t + s(t)| = 1 + |t|')
+    two_valued = dict(size_cont, **{'2+s': True})
+    num(it, 'p-signal-bands', 2, sum(size_cont.values()), sum(cont2.values()),
+        {'usual': sum(usual_cont.values()), 'two-valued': sum(two_valued.values())}, places=None)
+    # part 3: A is connected in tau exactly when |A| is an interval or a point.
+    p3sets = {'{-2,2}': [(-2, -2, True, True), (2, 2, True, True)], '{1,2}': [(1, 1, True, True), (2, 2, True, True)],
+              '(-1,0)u(0,1)': [(-1, 0, False, False), (0, 1, False, False)],
+              '[-3,-2]u[1,2]': [(-3, -2, True, True), (1, 2, True, True)],
+              '[-4,-3]u[1,2]': [(-4, -3, True, True), (1, 2, True, True)], '[-1,2]': [(-1, 2, True, True)]}
+    def sizes(S):
+        return ((S | sp.imageset(sp.Lambda(xs, -xs), S)) & sp.Interval(0, sp.oo))
+    def sp_conn(S):          # route 1: an interval or a single point
+        return isinstance(S, sp.Interval) or (isinstance(S, sp.FiniteSet) and len(S) == 1)
+    conn1 = {n: sp_conn(sizes(to_sp(pc))) for n, pc in p3sets.items()}
+    CG = [k / 80 for k in range(0, 400)]   # cut levels, end points among them
+    def split_by_level(pc, c, absolute=True):     # route 2: {|x| < c} and {|x| > c} (or x < c, x > c) split A
+        m = mem(pc)
+        pts = [k / 400 for k in range(-2400, 2401)]
+        val = (lambda t: abs(t)) if absolute else (lambda t: t)
+        inA = [t for t in pts if m(t)]
+        return any(val(t) < c for t in inA) and any(val(t) > c for t in inA) and not any(abs(val(t) - c) < 1e-12 for t in inA)
+    conn2 = {n: not any(split_by_level(pc, c) for c in CG) for n, pc in p3sets.items()}
+    ok(conn1 == conn2, f'signal p3: connected sets by both routes {conn1} {conn2}')
+    usual3 = {n: sp_conn(to_sp(pc)) for n, pc in p3sets.items()}
+    usual3b = {n: not any(split_by_level(pc, c, absolute=False) for c in [k / 80 - 5 for k in range(800)]) for n, pc in p3sets.items()}
+    ok(usual3 == usual3b, 'signal p3: usual connectedness by both routes')
+    joined = dict(conn1, **{'[-4,-3]u[1,2]': True})
+    num(it, 'p-signal-bands', 3, sum(conn1.values()), sum(conn2.values()),
+        {'usual': sum(usual3.values()), 'joined': sum(joined.values())}, places=None)
+    ok([str(sizes(to_sp(p3sets[n]))) for n in ('{-2,2}', '(-1,0)u(0,1)', '[-3,-2]u[1,2]', '[-1,2]')] ==
+       ['{2}', 'Interval.open(0, 1)', 'Interval(1, 3)', 'Interval(0, 2)'], 'signal p3: the sizes named in explain')
+    ok(split_by_level(p3sets['[-4,-3]u[1,2]'], 2.5) and not split_by_level(p3sets['{-2,2}'], 2.5), 'signal p3: the cut at 2.5 in the joined line')
+    # part 4: |p| is continuous, so it takes 4; the two jump paths in the why lines are continuous into tau and miss 0 and 4.
+    one_correct(it, 'p-signal-bands', 4, 'size-four')
+    T4 = [k / 1000 for k in range(1001)]
+    pA = lambda t: -3 - 2 * t if t < 0.5 else 3 + 2 * t
+    pB = lambda t: -3 - 2 * t if t < 1 else 5
+    for nm, pth in (('half-jump', pA), ('end-jump', pB)):
+        ok(pth(0) == -3 and pth(1) == 5, f'signal p4: {nm} runs from -3 to 5')
+        ok(all(abs(abs(pth(t)) - (3 + 2 * t)) < 1e-12 for t in T4), f'signal p4: {nm} has size 3 + 2t')
+    ok(all(pA(t) != 0 for t in T4) and min(abs(pA(t)) for t in T4) >= 3, 'signal p4: the half-jump path never reads 0')
+    ok(all(pB(t) < 0 for t in T4[:-1]) and pB(1) == 5, 'signal p4: the end-jump path never reads 4')
+    ok(abs(pA(0.4999999) + 4) < 1e-5 and pA(0.5) == 4, 'signal p4: the path jumps from -4 to 4 at one half')
+    tstar = (4 - 3) / 2
+    ok(abs(abs(pA(tstar)) - 4) < 1e-12, 'signal p4: size 4 is reached at t = 1/2 on the jump path')
 
     # p-gapped-domain. Y = [0,1) u (1,2] u {4}
     def inY(t):
@@ -378,8 +442,9 @@ def level2():
     num(it, 'p-right-rays', 3, len(good), 3, {'with-flip': len(usual)}, places=None)
     one_correct(it, 'p-right-rays', 4, 'conn-not-haus')
 
-    lv.expect('problems', 'items[1].prose', 60)
-    lv.expect('problems', 'items[1].prose', 64)
+    lv.expect('problems', 'items[1].parts[3].question', 5)
+    lv.expect('problems', 'items[1].parts[3].question', -3)
+    lv.expect('problems', 'items[1].parts[2].feedback.byKey.joined', 2.5)
     lv.expect('problems', 'items[2].prose', 0.9)
     lv.check_wrongs()
     return lv
