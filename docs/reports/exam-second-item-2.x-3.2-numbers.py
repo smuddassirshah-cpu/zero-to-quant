@@ -42,11 +42,12 @@ check(round(tau / 46 / dx ** 2, 4) == 0.4993, 'lambda at 46 is 0.4993')
 check(round(tau / 45 / dx ** 2, 4) == 0.5104, 'lambda at 45 is 0.5104')
 check(close(s * s * T, 0.0735) and close(0.5 * s * T, 0.105) and close(s * s, 0.1225) and close(dx * dx, 0.0016), 'printed 0.0735, 0.105, 0.1225, 0.0016')
 it = item('topic-3.2', 'e-heat-grid-steps')
-key_and_wrongs(it['widget'], steps, {
-    'no-half': math.ceil(s * s * T / cap),
+check('widget' not in it and len(it['parts']) == 2, 'heat-grid: two parts')
+key_and_wrongs(it['parts'][0]['widget'], tau, {'no-half': s * s * T, 'sigma-unsquared': s * T / 2, 'calendar': T}, 'heat-grid part 1')
+key_and_wrongs(it['parts'][1]['widget'], steps, {
     'lambda-one': math.ceil(tau / dx ** 2),
-    'round-down': math.floor(tau / cap),
-    'sigma-unsquared': math.ceil(0.5 * s * T / cap)}, 'heat-grid')
+    'round-down': math.floor(tau / cap)}, 'heat-grid part 2')
+check(it['parts'][0]['widget']['answer'] == 0.03675 and '0.03675' in it['parts'][1]['question'], 'heat-grid: part 2 prints the part 1 key')
 
 # topic-3.2 e-fk-reverting: dX = 0.3(3 - X) dt + 0.4 dW, V = e^{-0.04 * 2} E[X_2], payoff x
 k, th, x0, t, r = 0.3, 3.0, 1.0, 2.0, 0.04
@@ -85,45 +86,46 @@ key_and_wrongs(it['widget'], 1.5, {
     'summed': 2 * (pd(1.0) - pd(0.0))}, 'pd-trees')
 check(close(sum(hi) / len(hi) - sum(lo) / len(lo), 4.0), 'conditional gap 4.0')
 
-# topic-2.3 e-honest-bar: expected best of N standard normals, by integration and by simulation
+# topic-2.3 e-honest-bar: five contracts x 12 settings = 60 runs, sd 0.39; expected best by integration
 def emax(N):
     return integrate.quad(lambda z: z * N * stats.norm.pdf(z) * stats.norm.cdf(z) ** (N - 1), -12, 12, limit=200)[0]
 import numpy as np
 rng = np.random.default_rng(7)
-for N, printed in ((24, 1.948), (60, 2.319)):
+for N, printed in ((12, 1.629), (60, 2.319)):
     e = emax(N); sim = rng.standard_normal((200000, N)).max(axis=1).mean()
     check(round(e, 3) == printed and abs(sim - e) < 0.01, f'E[max of {N}] {e:.4f} (simulated {sim:.4f}) prints {printed}')
-sd = 0.38
+sd = 0.39
 bar = sd * emax(60)
-check(round(bar, 2) == 0.88 and round(bar, 3) == 0.881 and round(sd * 2.319, 2) == 0.88, f'bar 0.88 / 0.881 ({bar:.5f})')
-check(round(sd * emax(24), 3) == 0.740 and round(sd * 1.948, 2) == 0.74, 'grid-only bar 0.740')
-check(0.84 < bar and 0.84 > sd * emax(24), 'best 0.84 below the honest bar, above the grid-only bar')
-check(36 + 24 == 60, 'count 60')
+check(round(bar, 2) == 0.90 and round(sd * 2.319, 2) == 0.90, f'bar 0.90 ({bar:.5f})')
+check(round(sd * emax(12), 2) == 0.64 and round(sd * 1.629, 2) == 0.64, 'one-contract bar 0.64')
+check(sd * emax(12) < 0.84 < bar, 'best 0.84 below the honest bar, above the one-contract bar')
+check(5 * 12 == 60, 'count 60')
 it = item('topic-2.3', 'e-honest-bar')
-key_and_wrongs(it['parts'][0]['widget'], bar, {'grid-only': sd * emax(24), 'no-scale': emax(60)}, 'honest-bar')
+key_and_wrongs(it['parts'][0]['widget'], bar, {'one-contract': sd * emax(12), 'no-scale': emax(60)}, 'honest-bar')
 opts = it['parts'][1]['widget']['options']
 check([o['id'] for o in opts if o.get('correct')] == ['a'], 'choice key a')
 
-# topic-2.6 e-two-fund-shrink: normal-normal shrinkage, B = s^2 / (s^2 + tau^2)
-mu, tau_ = 1.0, 2.0
+# topic-2.6 e-two-fund-shrink: normal-normal shrinkage, B = s^2 / (s^2 + tau^2), forecasters in bp
+mu, tau_ = 2.0, 2.5
 def shrink(a, se):
     B = se ** 2 / (se ** 2 + tau_ ** 2)
     post = (mu / tau_ ** 2 + a / se ** 2) / (1 / tau_ ** 2 + 1 / se ** 2)     # second way: precision-weighted mean
     assert abs(post - (mu + (1 - B) * (a - mu))) < 1e-12
     return B, post
-BA, A = shrink(9, 6); BB, Bv = shrink(5, 1.2)
-check(close(BA, 0.9) and close(A, 1.8), 'fund A: B 0.9, 1.8%')
-check(round(BB, 4) == 0.2647 and round(1 - BB, 4) == 0.7353 and round(Bv, 2) == 3.94, f'fund B: B 0.2647, keeps 0.7353, 3.94% ({Bv:.5f})')
-check(close(1.2 ** 2, 1.44) and close(1.44 + 4, 5.44) and close(36 + 4, 40), 'printed 1.44, 5.44, 40')
-check(Bv > A and 0.7 < 1 - BB < 0.75, 'B ends higher; keeps nearly three quarters')
+BA, A = shrink(11, 7.5); BB, Bv = shrink(6, 1.0)
+check(close(BA, 0.9) and close(A, 2.9), 'forecaster A: B 0.9, 2.9 bp')
+check(round(BB, 4) == 0.1379 and round(1 - BB, 4) == 0.8621 and round(Bv, 2) == 5.45, f'forecaster B: B 0.1379, keeps 0.8621, 5.45 bp ({Bv:.5f})')
+check(close(7.5 ** 2, 56.25) and close(2.5 ** 2, 6.25) and close(56.25 + 6.25, 62.5) and close(1 + 6.25, 7.25), 'printed 56.25, 6.25, 62.5, 7.25')
+check(Bv > A and 0.8 < 1 - BB < 0.9, 'B ends higher; keeps over four fifths')
 it = item('topic-2.6', 'e-two-fund-shrink')
 pa, pb = it['parts'][0]['widget'], it['parts'][1]['widget']
-check(pa['unit'] == '%' and pb['unit'] == '%', 'unit % on both parts')
-key_and_wrongs(pa, A / 100, {'raw': 0.09, 'inverted': (mu + BA * (9 - mu)) / 100,
-                             'se-not-squared': (mu + (1 - 6 / (6 + 2)) * 8) / 100, 'decimal': A / 10000}, 'fund-A')
-key_and_wrongs(pb, Bv / 100, {'raw': 0.05, 'inverted': (mu + BB * (5 - mu)) / 100,
-                              'se-not-squared': (mu + (1 - 1.2 / (1.2 + 2)) * 4) / 100, 'decimal': Bv / 10000}, 'fund-B')
-check(round(mu + BB * 4, 2) == 2.06 and round(mu + (1 - 1.2 / 3.2) * 4, 2) == 3.5, 'B slips 2.06 and 3.50')
+check(pa['unit'] == 'bp' and pb['unit'] == 'bp', 'unit bp on both parts')
+key_and_wrongs(pa, A, {'raw': 11, 'inverted': mu + BA * (11 - mu), 'se-not-squared': mu + (1 - 7.5 / (7.5 + 2.5)) * 9}, 'forecaster-A')
+key_and_wrongs(pb, Bv, {'raw': 6, 'inverted': mu + BB * 4, 'se-not-squared': mu + (1 - 1 / (1 + 2.5)) * 4}, 'forecaster-B')
+
+# topic-2.1 e-pd-two-trees: the feature is gap_z, the story a share borrow fee
+txt = json.dumps(item('topic-2.1', 'e-pd-two-trees'))
+check('vol_z' not in txt and 'gap_z' in txt and 'borrow fee' in txt, 'pd: gap_z and borrow fee wording')
 
 # exam minutes: topic-2.6 grows from 25 to 26 items, 75 * 26 / 25 = 78, rounded to 5
 d = json.load(open(os.path.join(EX, 'topic-2.6.json')))

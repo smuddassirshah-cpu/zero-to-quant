@@ -21,11 +21,11 @@ Pairs left: none.
 
 | exam | id | skills | d | widget | task |
 |---|---|---|---|---|---|
-| topic-3.2 | e-heat-grid-steps | pe-bs, pe-fd | 3 | numeric (46) | fewest explicit steps: heat time $\tfrac12\sigma^2T$ (pe-bs) against $\lambda \le \tfrac12$ (pe-fd); neither alone gives it |
+| topic-3.2 | e-heat-grid-steps | pe-bs, pe-fd | 3 | two numeric parts (0.03675, 46) | part 1 heat time $\tfrac12\sigma^2T$ (pe-bs), part 2 the fewest explicit steps under $\lambda \le \tfrac12$ (pe-fd); split after the second read, because the two halves cancel in one number |
 | topic-3.2 | e-fk-reverting | pe-fk | 3 | numeric (1.7561) | read a mean-reverting process off its PDE, then $e^{-rT}E[X_T]$ for a linear payoff |
 | topic-2.1 | e-pd-two-trees | en-interpret | 3 | numeric, console canvas (1.5 bp) | partial dependence by hand on a two-tree forest; the conditional-means slip gives 4.0 |
-| topic-2.3 | e-honest-bar | bt-report | 3 | parts: numeric (0.88) and choice | honest count of settings (36 dropped + 24) and the no-edge bar, then the note's line |
-| topic-2.6 | e-two-fund-shrink | sm-hier | 4 | parts: two numeric, unit % (1.8%, 3.94%) | normal-normal shrinkage with each fund's own $B_j$ |
+| topic-2.3 | e-honest-bar | bt-report | 3 | parts: numeric (0.9045) and choice | honest count of runs (5 contracts x 12 settings = 60) and the no-edge bar, then the note's line; title `Counting every run` |
+| topic-2.6 | e-two-fund-shrink | sm-hier | 4 | parts: two numeric, unit bp (2.9, 5.4483) | normal-normal shrinkage with each forecaster's own $B_j$ (forecasters' mean errors, $\hat\mu = 2$, $\hat\tau = 2.5$); id kept, the review gives none |
 
 Rule (b) used once (e-heat-grid-steps carries pe-bs and pe-fd), so topic 3.2 needed two swaps, not three.
 
@@ -46,7 +46,7 @@ Topics 2.1, 2.3 and 3.2 keep 30 items and 90 minutes. Topic 2.6: 75 × 26/25 = 7
 
 ## Reuse
 
-`fresh-check.mjs --file` on each exam: 0 hits; no advisory on any new item after one rewording (the bt-report question first shared the stem "what is the expected best under no edge" with `l15` screen 4, `review-4` and `homework-4`). Number sets are new against the courses and exams: σ 35%, T 0.6, Δx 0.04 (e-heat-change uses σ 25%, T 0.75; l12 and homework-3 use Δx 0.02 and 0.05); κ 0.3, level 3, r 4% (l11's Vasicek uses κ 0.5); the forest trees and rows; 36 + 24 settings with sd 0.38 (l15: 48, 72 + 48, sd 0.40, 0.451, 0.345); μ 1%, τ 2%, funds 9%/6% and 5%/1.2% (l18: μ 2.2478, τ 1.6943; e-alpha-prior: 8%/3%, prior sd 1.5).
+`fresh-check.mjs --file` on each exam: 0 hits; no advisory on any new item after one rewording (the bt-report question first shared the stem "what is the expected best under no edge" with `l15` screen 4, `review-4` and `homework-4`). Number sets are new against the courses and exams: σ 35%, T 0.6, Δx 0.04 (e-heat-change uses σ 25%, T 0.75; l12 and homework-3 use Δx 0.02 and 0.05); κ 0.3, level 3, r 4% (l11's Vasicek uses κ 0.5); the forest trees and rows; 5 contracts x 12 settings with sd 0.39 (l15: 48, 72 + 48, sd 0.40, 0.451, 0.345; homework-4: sd 0.38); forecasters' errors μ 2 bp, τ 2.5 bp, A 11 bp with se 7.5, B 6 bp with se 1 (l18: μ 2.2478, τ 1.6943; r4-shrink: 9%/4%, μ 1%, τ 3%; e-alpha-prior: 8%/3%). `e-pd-two-trees` now uses a share's borrow fee and the feature `gap_z`. Fix pass: see `docs/reviews/review-exam-second-item-2.x-3.2.md`.
 
 ## Gates
 

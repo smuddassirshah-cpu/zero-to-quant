@@ -57,3 +57,17 @@ Format: `N. file | JSON path | severity | problem | evidence | exact fix`.
 ## For the Fixer
 
 Findings 1, 3 and 5 change keys: update `docs/reports/exam-second-item-2.x-3.2-numbers.py` to the new numbers, and the first block of the reader's script expects the old ones (its last block already checks the new). `topic-2.6` stays at 26 items and 80 minutes; no item count changes.
+
+## Fix pass
+
+Edited `topic-3.2`, `topic-2.1`, `topic-2.3` and `topic-2.6` only, item blocks replaced field by field as the review wrote them. Every number recomputed first. The reader's script (first block rewritten to the new items) and the author's script both exit 0, no FINDING line. Gates: validator 0 errors; voice scan 0 and 0; `grade-all.mjs --file` 0 failures on all four exams; `playthrough.mjs --exam` green with and without `--mobile` on all four.
+
+1. fixed. e-heat-grid-steps split into two parts as written (0.03675 with `no-half`, `sigma-unsquared`, `calendar`; then 46 with `lambda-one` 23 and `round-down` 45). Recomputed 0.03675/0.0008 = 45.94 and 0.03675/0.0016 = 22.97 (23). `pe-bs` (e-heat-grid-steps, e-heat-change) and `pe-fd` (e-heat-grid-steps, e-explicit-code) each still have two auto items. Item count and minutes unchanged.
+2. noted, no edit (the review asked for none).
+3. fixed. e-honest-bar is now five contracts by 12 settings, sd 0.39, key 0.9045 (0.39 x 2.3193), `one-contract` 0.6354 (0.39 x 1.6292); id kept, none given.
+4. fixed by 3 (sd 0.39).
+5. fixed. e-two-fund-shrink is now two forecasters in bp: A 2.9 (B 0.9), B 5.4483 (B 4/29); slips 11, 10.1, 4.25 and 6, 2.5517, 4.8571 recomputed exactly; the `decimal` entries dropped with the % unit; id kept, none given.
+6. fixed. `a bond's bid-ask spread` became `a share's borrow fee` in e-pd-two-trees.
+7. fixed. `vol_z` became `gap_z` throughout e-pd-two-trees (console, feedback, explanation).
+
+Disputed 0, deferred 0. Graded answers changed: e-heat-grid-steps (one numeric becomes two, 0.03675 and 46), e-honest-bar part 1 (0.8813 to 0.9045), e-two-fund-shrink both parts (new keys, unit bp). The item table of `docs/reports/exam-second-item-2.x-3.2.md` is updated.
