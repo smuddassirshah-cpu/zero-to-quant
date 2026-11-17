@@ -237,9 +237,142 @@ def level1():
     return lv
 
 
-lv1 = level1()
+# ---------------------------------------------------------------- level 2
+def topo_from_basis(pieces):
+    out = {frozenset()}
+    for r in range(1, len(pieces) + 1):
+        for c in itertools.combinations(pieces, r):
+            out.add(frozenset().union(*c))
+    return out
+
+
+def subspace(tau, Y):
+    return {u & frozenset(Y) for u in tau}
+
+
+def connected(tau, Y):
+    Y = frozenset(Y)
+    t = subspace(tau, Y)
+    return not any(u and u != Y and (Y - u) in t for u in t)
+
+
+def level2():
+    it = load(2)
+    lv = Level('topology', 2)
+    X = 'abcd'
+    pieces = [frozenset('a'), frozenset('c'), frozenset('abc'), frozenset('cd')]
+    tau = topo_from_basis(pieces)
+    ok(frozenset() in tau and frozenset(X) in tau, 'topology has the empty set and X')
+    ok(all(a | b in tau and a & b in tau for a in tau for b in tau), 'topology closed under unions and intersections')
+    # route 2: every subset that is the union of the pieces it contains
+    tau2 = {frozenset(S) for r in range(5) for S in itertools.combinations(X, r)
+            if frozenset().union(*[b for b in pieces if b <= frozenset(S)]) == frozenset(S)}
+    ok(tau == tau2, 'four-point topology by both routes')
+    num(it, 'p-four-point-line', 1, len(tau), len(tau2), {'pieces-only': len(pieces), 'no-empty': len(tau) - 1, 'all-subsets': 2 ** 4}, places=None)
+    txt = it['p-four-point-line']['parts'][0]['feedback']['correct']
+    ok(all(('\\{' + ', '.join(sorted(u)) + '\\}') in txt for u in tau if u and u != frozenset(X)), 'listed open sets match tau')
+    Y = 'abd'
+    tY = subspace(tau, Y)
+    tY2 = {frozenset(x for x in Y if x in u) for u in tau}
+    num(it, 'p-four-point-line', 2, len(tY), len(tY2), {'no-merging': len(tau), 'inside-only': sum(1 for u in tau if u <= frozenset(Y))}, places=None)
+    ok(not connected(tau, Y), 'Y = X minus c is disconnected')
+    cuts = [x for x in X if not connected(tau, set(X) - {x})]
+    rest = lambda x: frozenset(X) - {x}
+    cuts2 = [x for x in X if any(u and u != rest(x) and (rest(x) - u) in subspace(tau, rest(x)) for u in subspace(tau, rest(x)))]
+    ok(cuts == ['b', 'c'], f'cut points {cuts}')
+    num(it, 'p-four-point-line', 3, len(cuts), len(cuts2), {'only-c': 1, 'every-point': 4}, places=None)
+    homeos = [p for p in itertools.permutations(X) if {frozenset(dict(zip(X, p))[x] for x in u) for u in tau} == tau]
+    homeos2 = [p for p in itertools.permutations(X)
+               if all(frozenset(x for x in X if dict(zip(X, p))[x] in v) in tau for v in tau)
+               and all(frozenset(dict(zip(X, p))[x] for x in u) in tau for u in tau)]
+    rev = dict(zip('abcd', 'dcba'))
+    ok({frozenset(rev[x] for x in u) for u in tau} != tau, 'reversal is not a homeomorphism')
+    num(it, 'p-four-point-line', 4, len(homeos), len(homeos2), {'reversal': 2, 'every-bijection': math.factorial(4)}, places=None)
+
+    # p-bond-yield-map
+    P, yy = sp.symbols('P y', positive=True)
+    inv = sp.solve(sp.Eq(P, 100 / (1 + yy)), yy)[0]
+    expr(it, 'p-bond-yield-map', 1, inv, ['P'], lambda pt: 100 / pt['P'] - 1)
+    Pf = lambda y: 100 / (1 + y)
+    lo1 = float(sp.Rational(100, 105))
+    lo2 = min(Pf(0.02 + k * 0.03 / 100000) for k in range(100001))
+    num(it, 'p-bond-yield-map', 2, lo1 * 100, lo2, {'upper-end': Pf(0.02), 'linear': 100 * (1 - 0.05)}, agree=1e-9)
+    y1 = float(sp.Rational(3, 97))
+    lo, hi = 0.02, 0.05
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if Pf(mid) > 97 else (lo, mid)
+    num(it, 'p-bond-yield-map', 3, y1, lo, {'linear': 0.03, 'flipped': 97 / 100 - 1}, agree=1e-12)
+    ok(round(Pf(0.05), 4) < 97 < round(Pf(0.02), 4), '97 lies in the price interval')
+    lv.expect('problems', 'items[1].parts[2].question', round(Pf(0.02), 4))
+    grid = [0.02 + k * 0.03 / 30000 for k in range(30001)]
+    A = [g for g in grid if abs(g - y1) > 1e-7]
+    prices = sorted(Pf(g) for g in A)
+    gaps = sum(1 for a, b in zip(prices, prices[1:]) if a < 97 < b)
+    num(it, 'p-bond-yield-map', 4, 2, 1 + gaps, {'one-piece': 1, 'three': 3}, places=None)
+
+    # p-gapped-domain. Y = [0,1) u (1,2] u {4}
+    def inY(t):
+        return (0 <= t < 1) or (1 < t <= 2) or t == 4
+    cands = {'[0,1)': (lambda t: 0 <= t < 1, (-1, 1)), '{4}': (lambda t: t == 4, (3, 5)), '(1,2]': (lambda t: 1 < t <= 2, (1, 3)),
+             '[0,0.5]': (lambda t: 0 <= t <= 0.5, None), '(1.5,2]': (lambda t: 1.5 < t <= 2, (1.5, 3))}
+    pts = sorted(set([k / 100 for k in range(0, 201)] + [4.0]))
+    open1 = 0
+    for name, (mem, U) in cands.items():
+        if U is not None:
+            ok(all(mem(t) == (inY(t) and U[0] < t < U[1]) for t in pts), f'{name} = Y cut by {U}')
+            open1 += 1
+
+    def open_in_Y(mem):   # route 2: each point has a small interval whose Y-part stays in the set
+        for t in pts:
+            if mem(t) and inY(t):
+                for h in (1e-7, 1e-9):
+                    if any(inY(t + s * h) and not mem(t + s * h) for s in (-1, 1)):
+                        return False
+        return True
+    open2 = sum(1 for mem, _ in cands.values() if open_in_Y(mem))
+    num(it, 'p-gapped-domain', 1, open1, open2, {'open-in-r': 0, 'no-singleton': 3}, places=None)
+    comps, prev = 0, None
+    for t in pts:
+        if inY(t):
+            if prev is None or t - prev > 0.0101 or (prev < 1 < t):
+                comps += 1
+            prev = t
+    num(it, 'p-gapped-domain', 2, 3, comps, {'joined': 2, 'one': 1}, places=None)
+    data = [(0, -1), (0.9, 2), (1.5, -3), (2, 1), (4, 5)]
+    comp_of = lambda t: 0 if t < 1 else (1 if t <= 2 else 2)
+    zeros = sum(1 for (a, fa), (b, fb) in zip(data, data[1:]) if comp_of(a) == comp_of(b) and fa * fb < 0)
+    zeros_naive = sum(1 for (a, fa), (b, fb) in zip(data, data[1:]) if fa * fb < 0)
+    num(it, 'p-gapped-domain', 3, 2, zeros, {'across-gap': zeros_naive, 'one-zero': 1}, places=None)
+    forced = sp.Union(sp.Interval(-1, 2), sp.Interval(-3, 1), sp.FiniteSet(5))
+    grid = [k / 1000 for k in range(-5000, 6001)]
+    meas2 = sum(1 for g in grid if (-1 <= g <= 2) or (-3 <= g <= 1)) / 1000
+    num(it, 'p-gapped-domain', 4, float(forced.measure), round(meas2), {'one-interval': 8, 'added': 3 + 4}, places=None)
+
+    # p-right-rays
+    num(it, 'p-right-rays', 1, 5, max([1.5, 5]), {'ignore-point': 2}, places=None)
+    inB = lambda t: (3 <= t <= 8) or t > 10
+    tt = next(t / 100 for t in range(0, 2000) if all(inB(u / 100) for u in range(t + 1, 3000)))
+    num(it, 'p-right-rays', 2, 10, tt, {'usual': 3, 'closed-end': 8}, places=None)
+    maps = {'2x+1': (lambda t: 2 * t + 1, True), '-x': (lambda t: -t, True), 'x^3': (lambda t: t ** 3, True),
+            'e^x': (lambda t: math.exp(t), False), 'x+1': (lambda t: t + 1, True)}
+    sample = [k / 10 for k in range(-30, 31)]
+    good = [n for n, (h, onto) in maps.items() if onto and all(h(a) < h(b) for a, b in zip(sample, sample[1:]))]
+    usual = [n for n, (h, onto) in maps.items() if onto]
+    num(it, 'p-right-rays', 3, len(good), 3, {'with-flip': len(usual)}, places=None)
+    one_correct(it, 'p-right-rays', 4, 'conn-not-haus')
+
+    lv.expect('problems', 'items[1].prose', 100)
+    lv.expect('problems', 'items[2].prose', 0.9)
+    lv.check_wrongs()
+    return lv
+
+
+LEVELS = {1: level1, 2: level2}
+reports = [fn() for fn in LEVELS.values()]
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
     print('FAIL', f)
-lv1.report()
+for r in reports:
+    r.report()
 sys.exit(1 if fails else 0)
