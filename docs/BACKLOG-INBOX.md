@@ -9,3 +9,5 @@ Raised later (exam second item 1.3-1.4):
 
 Raised later (exam second item 1.5):
 - Graph canvas (`markov: true`) at 440 px: a four-node chain in a row draws at about 330 px wide with small nodes, so the label on a short edge (topic-1.5 `e-floor-walk`, 2 to 3) sits tight between the nodes. A width-filling layout or a minimum node radius on phones would help.
+Raised later (exam second item stage0):
+- A numeric `answers` set (unordered) draws the same narrow field as a single number: at 440 px a placeholder of 26 characters ("angles, separated by commas") was cut off, and four angles typed with commas fill the box. Workaround: placeholder "angles, with commas" on `topic-0.3` `e-double-angle-roots`. Widen the field for a set, or size it to the expected count.

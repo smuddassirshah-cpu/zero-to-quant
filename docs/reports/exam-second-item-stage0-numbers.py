@@ -208,5 +208,32 @@ check(cnt['quad-factor'] >= 2 and cnt['quad-solve'] >= 2, f'quad-factor {cnt["qu
 N = ramp('topic-0.2')
 check(N == 30 and doc['minutes'] == 75, 'topic-0.2 still 30 items and 75 minutes')
 
+# ================= topic-0.4 =================
+doc, it = load('topic-0.4')
+
+# e-left-hand-commands: home-row columns (terminal l1-home-row: left index takes R F V and T G B)
+left_cols = ['QAZ', 'WSX', 'EDC', 'RFV', 'TGB']
+right_cols = ['YHN', 'UJM', 'IK', 'OL', 'P']
+LEFT = set(''.join(left_cols)); RIGHT = set(''.join(right_cols))
+check(not (LEFT & RIGHT) and len(LEFT | RIGHT) == 26, 'the two hands split the 26 letters with no overlap')
+keyboard_rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM']   # route 2: left hand = first five keys of each row
+LEFT2 = {c for r in keyboard_rows for c in r[:5]}
+check(LEFT == LEFT2, 'left-hand letters by columns = first five keys of each row')
+w = it['e-left-hand-commands']['widget']
+for o in w['options']:
+    word = o['text'].strip('`').upper()
+    only_left = set(word) <= LEFT
+    check(only_left == bool(o.get('correct')), f'e-left-hand-commands {word}: left hand only = {only_left}')
+    if not only_left:
+        rk = sorted(set(word) & RIGHT)
+        check(len(rk) == 1 and rk[0] in o['why'].replace('semicolon', ''), f'{word} needs one right-hand key, {rk}, named in its why')
+check(sum(1 for o in w['options'] if o.get('correct')) == 3, 'three correct options (the other multi items have two)')
+check('H' in right_cols[0] and 'U' in right_cols[1] and 'P' in right_cols[4], 'H in Y H N, U in U J M, P in the right little finger column')
+
+cnt = auto_floor('topic-0.4')
+check(cnt['tm-typing'] == 2, f'tm-typing now on 2 auto items ({cnt["tm-typing"]})')
+N = ramp('topic-0.4')
+check(N == 21 and doc['minutes'] == 5 * round(60 * 21 / 20 / 5) == 65, f'topic-0.4 21 items, minutes 60 x 21/20 = {60 * 21 / 20:.0f} -> 65')
+
 print(f'{n[0] - len(fails)} of {n[0]} checks passed')
 sys.exit(1 if fails else 0)
