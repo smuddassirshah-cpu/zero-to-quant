@@ -2657,6 +2657,7 @@ Status lines of engine pass 8 part C (`docs/reports/engine-pass-8.md`, `## Part 
 1209. [Should] No rule finds a doubled word in learner text ("the the open balls lesson proof", `topology/problems-1` `p-plotter-zone` part 3 `explain`). A voice-scan or validator warning on `\b(\w+) \1\b` outside maths would. [inbox: review-delta-ag-topology]
 1211. [Should] Predict first: `canvas.controlsAfter` (`"correct"` or `"check"`) holds the canvas controls disabled, with a note, until the widget is checked (report row 2 of `docs/reports/prototype-compare-ai.md`).
 1212. [Should] Quiz chip: a wrong end-of-lesson quiz answer shows "Added to your Redo queue." (report row 12).
+1217. [Should] A `dice-sim` canvas for the reference lesson's simulate screen (`conditional/l3-shrinking`): dice drawn as they roll, counters Rolled / Kept / Filtered out, a share bar, a running-share trace converging on the exact share (report row 3 of `docs/reports/prototype-compare-ai.md`). Data-driven: dice, sides, keep rule, trials, seed, exact, labels.
 1210. [Should] No rule finds a restated key that, at its rounded value, fails the inequality it was the smallest solution of (`topology/problems-3` `p-trapping-interval` part 4 takes $r = 0.2711$; the root is 0.27110667, so part 2's condition fails there by $4.4 \times 10^{-6}$). [inbox: review-delta-ag-topology]
 
 Engine pass 9 status (`docs/reports/engine-pass-9.md`):
@@ -2720,6 +2721,7 @@ Engine pass 9 status (`docs/reports/engine-pass-9.md`):
 1210 status: post-completion (not required for DONE; session AH, 17 Nov), listed in the last section.
 1211 status: done (predict-first pass, `docs/reports/predict-first-ai.md`): `canvas.controlsAfter` in player.js, validator rule, `tools/test-predict-first.mjs`.
 1212 status: done (same pass): `quizFinished` does queue every wrong quiz item, so the wrong chip now says so.
+1217 status: done (`docs/reports/dice-sim-ai.md`): canvas kind `dice-sim` (`app/js/engine/canvas/dice-sim.js`, styles in `css/canvases.css`), validator rules, System gallery entries, `tools/test-dice-sim.mjs` (fixture `tools/fixtures/dice-sim/l1-dice.json`) and `tools/test-validate-dice-sim.mjs`, both in `acceptance.yml`. The content screen still has to adopt it (a content task).
 
 
 ## Engine pass 7 triage (session AH, `docs/reports/engine-pass-7-triage.md`): status lines for items that had none

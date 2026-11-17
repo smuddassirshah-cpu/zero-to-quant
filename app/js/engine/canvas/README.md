@@ -309,6 +309,36 @@ Two canvases side by side (stacked below 480px, or always with `stack: true`), f
 
 **Integration pass 7 additions:** `split: 0.6` (0.3 to 0.7) gives the left side that share of the width (a compact chart beside a wider table). A pair holding `bars` stacks automatically when side by side would shrink a chart below 70% (as matrices do at 80%); `minScale` overrides it.
 
+## dice-sim
+
+A seeded dice experiment (ENGINE-BACKLOG 1217): roll `dice` dice, keep a roll when a rule holds, add rolls with the Run buttons. It draws the dice of the latest roll (pips; a kept roll has an orange outline and the tag "Kept", a filtered roll fades and reads "Filtered out"), the counters Rolled / Kept / Filtered out, a share bar (kept share of rolls, the exact share as a dashed marker) and a running-share trace over the rolls with the exact line. It is the prototype's simulate screen as data. Use `bars` with `sim` when the point is a distribution of outcomes; use `dice-sim` when the point is one yes-or-no rule on a roll and the share settling on a known value.
+
+**params**
+
+| key | default | meaning |
+|---|---|---|
+| `dice` | 2 | number of dice, 1 to 6 |
+| `sides` | 6 | faces per die, 2 to 20 (pips up to 6, numerals above) |
+| `keep` | required | the keep rule, the engine's seeded expression language: `d1`, `d2`, ... (one value per die), `dice` (the list, `max(dice)`, `dice[0]`) and `total`; comparisons, `&&`, `||`, `!`, `?:`, `%`. Example: `"d1 == 5 \|\| d2 == 5"`, `"total >= 10"`. Do not draw inside it (`d6()`): the dice shown are the dice the rule saw |
+| `trials` | `[10, 100, 1000]` | batch sizes of the Run buttons (one to five, 1 to 100000) |
+| `seed` | 1 | number or string. Same seed, same sequence on every device: roll i is the same whatever batches reached it, so Run 10 then Run 100 shows the first 110 rolls. Dice are drawn in order from the `ZQ.sim.rng` stream, one draw per die, so seed 4226 with two dice reproduces the prototype's rolls |
+| `exact` | none | the exact share, a number or a fraction string (`"11/36"`), drawn as the dashed line on the bar and the trace |
+| `exactLabel` | the fraction string, else the number to 3 places | text beside the line |
+| `max` | `ceil(1.5 * exact)` to one place, else 1 | top of the share axis (0 to 1) |
+| `labels` | | rename the text: `rolled`, `kept`, `out`, `share`, `last`, `run`, `reset`, `none` |
+
+**state**: `ran` (rolls shown; `explain.canvas: { "ran": 1000 }` shows 1,000 at once), `reset: true` (back to 0), `caption`, `highlight` with the ids `dice`, `counters`, `share`, `trace`.
+
+**Controls**: Run n and Reset are buttons in the `.cvb-extra` row, so `controlsAfter` holds them like the bars chips. A batch animates for about 0.4 to 1.1 seconds (the dice flicker through the rolls, the counters and the trace grow); with reduced motion it shows the final state at once. Reset is instant. A hidden `aria-live` region announces the totals once a batch has finished ("100 rolled, 31 kept, share 0.310. Last roll 5 and 2, kept.") and the drawing's accessible name carries the current counters.
+
+**methods**: `run(n)`, `reset()`, `counts()` (`{ rolled, kept }`), `values()` (`{ share }`), `last()` (`{ dice, keep }`). **events**: change `{ type: 'run', ran, added }`.
+
+```json
+{ "kind": "dice-sim", "controlsAfter": "check",
+  "params": { "dice": 2, "keep": "d1 == 5 || d2 == 5", "trials": [10, 100, 1000], "seed": 4226, "exact": "11/36" },
+  "state": { "caption": "Filter: keep a roll when at least one die shows a 5" } }
+```
+
 ## Canvas-bound widgets
 
 - **tap-regions** (`answer`, `max`, `wrong: [{ "id", "set", "flash" }]`, `countWord`): works on any canvas with tap mode (grid, tree, venn, area, boxes, table, number-line points, and E4's tappable kinds). Keys: a matching `wrong[]` id, else the first wrongly selected id, else the first missed answer id. `showWhy` flashes the extra ids of the matched set (or `flash`), else the wrong picks. Count mode: `{ "count": 3, "among": ["c11", "c12", "c13", "c14"] }` with no `answer` is correct when exactly `count` regions are selected, all within `among` when given; keys are a matching `wrong[]` id, else the first pick outside `among`, else `too-few` or `too-many`; the count reads "2 of 3 shaded" (with `countWord`); reveal selects the first `count` of `among`.
