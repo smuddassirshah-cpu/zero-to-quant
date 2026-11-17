@@ -450,6 +450,47 @@ const noChainRule = (file, where, it) => {
   };
   if (parts.length >= 2 && !parts.slice(1).some((p, j) => cites(p.question, parts.slice(0, j + 1)))) warn(file, where, `[no-chain] no part after the first cites an earlier part ("from part 2", "using the 0.34 of part 1") or states an earlier part's key: the ${parts.length} parts are separate questions, not a chain (docs/briefs/chained.md); restate the value each later part needs`);
 };
+/* Engine pass 9b, item-level rules on a problem (all warnings).
+   [carry-band] (ENGINE-BACKLOG 1182): a question that carries "<value> from part k" is held against part k's own printed working: the span whose result is within 1% of part k's key is re-evaluated,
+     and a carried value that is further from it than half a unit of its own last place is reported (pdes p-grid-modes: "0.2200 from part 3" where $0.9702^{50}$ is 0.22032).
+   [later-key] (ENGINE-BACKLOG 1205): a byKey, generic or why line of part k that prints the answer of a later numeric part of the item (three or more significant digits), when part k's own question does not. */
+const numbersIn = (text) => (String(text || '').replace(/\{,\}/g, ',').replace(/(\d),(?=\d{3}\b)/g, '$1').match(/\d+(?:\.\d+)?/g) || []);
+const sigDigits = (v) => String(+Math.abs(v).toPrecision(12)).replace(/^0\.0*|\./g, '').replace(/^0+/, '').replace(/0+$/, '').length;
+const prints = (text, K) => numbersIn(text).some((n) => { const dn = (n.split('.')[1] || '').length; return n.replace(/\./, '').replace(/^0+/, '').length >= 3 && Math.abs(+n - K) <= 0.5 * Math.pow(10, -dn) + 1e-9 * Math.max(1, K); });
+const pass9bItemRules = (file, where, it) => {
+  if (!isObj(it) || !Array.isArray(it.parts)) return;
+  const parts = it.parts.filter(isObj), num = (p) => (isObj(p.widget) && p.widget.kind === 'numeric' && Number.isFinite(p.widget.answer) ? p.widget : null);
+  parts.forEach((p, k) => {
+    const q = String(p.question || '');
+    for (const m of q.replace(/\{,\}/g, ',').matchAll(/(-?\d[\d,]*(?:\.\d+)?)\s+from\s+parts?\s*(\d)/gi)) {
+      const j = +m[2] - 1, src = parts[j], sw = src && j < k ? num(src) : null;
+      if (!sw || sw.unit === '%') continue;
+      const c = +m[1].replace(/,/g, ''), dc = (m[1].split('.')[1] || '').length, half = 0.5 * Math.pow(10, -dc) + 1e-9, ans = sw.answer;
+      if (Math.abs(c - ans) > 0.01 * Math.abs(ans) + 1e-12) continue;
+      for (const [name, text] of [['feedback.correct', isObj(src.feedback) ? src.feedback.correct : null], ['explain.text', isObj(src.explain) ? src.explain.text : null]]) {
+        const seen = new Set();
+        for (const mm of String(text || '').matchAll(/\$\$([^$]+)\$\$|\$([^$]+)\$/g)) for (const seg of (mm[1] ?? mm[2]).split(/\\approx|=/)) {
+          if (!/\\times|\\cdot|\\div|\/|\\[dt]?frac|\^|\\sqrt|\\ln|\(/.test(seg) || seen.has(seg.trim())) continue;
+          const R = evalLatexArith(seg);
+          if (R == null || R === 0 || Math.abs(R - ans) > 0.01 * Math.abs(ans) || Math.abs(c - R) <= half) continue;
+          seen.add(seg.trim());
+          warn(file, `${where}.parts[${k}]`, `[carry-band] the question carries ${m[1]} from part ${j + 1}, but part ${j + 1}'s ${name} prints $${seg.trim().length > 50 ? seg.trim().slice(0, 47) + '...' : seg.trim()}$, which comes to ${+R.toPrecision(7)}, ${+R.toFixed(dc)} at the ${dc} decimal place${dc === 1 ? '' : 's'} carried: a learner who carries the printed working is refused or lands outside the band`);
+        }
+      }
+    }
+  });
+  parts.forEach((p, k) => {
+    const f = isObj(p.feedback) ? p.feedback : {}, lines = [...Object.entries(isObj(f.byKey) ? f.byKey : {}).map(([id, t]) => [`byKey.${id}`, t]), ['generic', f.generic], ['why', f.why]].filter(([, t]) => typeof t === 'string');
+    if (!lines.length) return;
+    parts.forEach((later, j) => {
+      const w = j > k ? num(later) : null;
+      if (!w || sigDigits(w.answer) < 3) return;
+      const K = Math.abs(w.unit === '%' ? w.answer * 100 : w.answer);
+      if (prints(p.question, K)) return;
+      for (const [name, text] of lines) if (prints(text, K)) { warn(file, `${where}.parts[${k}].feedback.${name}`, `[later-key] the line prints ${+K.toPrecision(10)}, the answer of part ${j + 1}, which part ${k + 1}'s question does not print: a learner who reads the line learns a later part's result; reword it without the figure`); break; }
+    });
+  });
+};
 const pass8Rules = (file, where, it, p) => {
   const w = isObj(p) && isObj(p.widget) ? p.widget : null;
   if (!w || w.kind !== 'numeric' || typeof w.answer !== 'number' || !Number.isFinite(w.answer) || !isObj(w.tol)) return;
@@ -555,6 +596,12 @@ const pass8Rules = (file, where, it, p) => {
     if (Math.abs(typed - x.value) <= 1e-12 || Math.abs(x.value - ans) <= hw + tol1) return;   // already at the asked places, or inside the band ([wrong-fire] reports it)
     if (Math.abs(typed - ans) <= hw + tol1) warn(file, `${where}.wrong[${i}]`, `[slip-in-key-band] wrong "${x.id || i}" (${x.value}) rounds to ${+typed.toPrecision(10)} at the ${d} decimal place${d === 1 ? '' : 's'} asked, which is inside the key ${ans} band +-${+hw.toPrecision(3)}: a learner who makes this slip and rounds as asked is marked right, so its line cannot fire; separate the slip from the key or narrow the key's band`);
   });
+  /* [band-edge] (ENGINE-BACKLOG 1203, pass 9b): a key stored at more places than asked whose band edge lands on the next rounding at the asked places (within a hundredth of a step): the
+     rounding the key does not have is taken only by a float margin (0.46654 +-0.00006 at 4 places takes 0.4666). Keys within 7% of a tie are [rounding-tie]'s. */
+  if (d != null && !scaled && decimalsOf(ans) > d + (scale === 100 ? 2 : 0)) {
+    const r0 = Math.round(ans / step) * step, nb = r0 + (ans >= r0 ? 1 : -1) * step, dist = Math.abs(nb - ans), fr = Math.abs(ans) / step - Math.floor(Math.abs(ans) / step);
+    if (Math.abs(fr - 0.5) > 0.07 && dist <= hw + 1e-12 && hw - dist <= 0.01 * step + 2e-9) warn(file, where, `[band-edge] the key ${+ans.toPrecision(10)} rounds to ${+r0.toPrecision(10)} at the ${d} decimal place${d === 1 ? '' : 's'} asked, but its band +-${+hw.toPrecision(3)} reaches ${+nb.toPrecision(10)}, the next rounding, by a float margin: narrow the band to take the key's rounding only, or widen it on purpose to a full step`);
+  }
   /* [carry-band] (ENGINE-BACKLOG 1130): a part that carries a value "from part k" is worked by some learners from the printed (rounded) carry and by others from the unrounded one, so a slip's
      band must be as wide as the key's: a narrower wrong band refuses the slip made with the other carry (garch p-recalibrate-short-var part 3, inverted at 1.5 against a key band of 5) */
   if (!scaled && /\bfrom\s+parts?\s*\d/i.test(q)) wrongs.forEach((x, i) => {
@@ -2032,6 +2079,7 @@ const checkProblemSet = (file, courseId, doc, items, skills, levelSkills) => {
     it.parts.forEach((p, k) => { if (isObj(p) && isObj(p.widget) && ['code', 'longform'].includes(p.widget.kind)) err(file, `${at}.parts[${k}].widget`, `a ${p.widget.kind} part cannot be in a problem set: each part is a typed or chosen answer the engine grades`); });
     it.parts.forEach((p, k) => pass8Rules(file, `${at}.parts[${k}]`, it, p));   // engine pass 8 part A
     noChainRule(file, at, it);   // ENGINE-BACKLOG 1079
+    pass9bItemRules(file, at, it);   // ENGINE-BACKLOG 1182, 1205 (pass 9b)
     /* [answer-form] (advisory): a numeric part whose answer is not a whole number must say the form asked for (found on 35 parts, docs/reviews/review-problems-1.5-a.md) */
     it.parts.forEach((p, k) => {
       const w = isObj(p) && isObj(p.widget) ? p.widget : null;

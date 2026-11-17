@@ -2659,11 +2659,11 @@ Status lines of engine pass 8 part C (`docs/reports/engine-pass-8.md`, `## Part 
 
 Engine pass 9 status (`docs/reports/engine-pass-9.md`):
 
-1154 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1154 status: post-completion (not required for DONE; session AH, 17 Nov), listed in the last section.
 1155 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1156 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1157 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
-1158 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1158 status: session AH, with the gallery fix pass (the option-code overflow is a CSS item; engine pass 9b does not touch CSS).
 1159 status: done in engine pass 9 item d: `WIDE_PROBE` in `playthrough.mjs` fails an item at 600 px or less when text runs past the window or a clipping box holds wider text (problem sets per part, homework marked items, exam items, the wideNow checks); `test-playthrough-text-overflow.mjs`.
 1160 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1161 status: done in engine pass 9 item f: `--problems` and `--set` stop with "Run the validator first" when `content/manifest.json` lacks the set; `test-playthrough-manifest.mjs`.
@@ -2687,7 +2687,7 @@ Engine pass 9 status (`docs/reports/engine-pass-9.md`):
 1179 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1180 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1181 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
-1182 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1182 status: done in engine pass 9b: today's `[carry-band]` (1130, package 2) did not catch it (it compares wrong[] bands only); `[carry-band]` now also holds a "<value> from part k" in a question against part k's printed working (the `pdes` `p-grid-modes` case as at 9a5a0937: 0.2200 against $0.9702^{50}$ = 0.22032 is reported). 1 hit on content (`validation/problems-1` `p-rent-seeds` part 2, 0.0468 against $0.81 \times 0.0577$). `docs/reports/engine-pass-9b.md`.
 1183 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1184 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1185 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
@@ -2695,7 +2695,7 @@ Engine pass 9 status (`docs/reports/engine-pass-9.md`):
 1187 status: done in engine pass 9 item e: `voice-scan.py` lists a lesson id written as a code span.
 1188 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1189 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
-1190 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1190 status: post-completion (not required for DONE; session AH, 17 Nov), listed in the last section.
 1191 status: done in engine pass 9 item a (same rule as 1178).
 1192 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1193 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
@@ -2708,14 +2708,14 @@ Engine pass 9 status (`docs/reports/engine-pass-9.md`):
 1200 status: done in engine pass 9 item c (same rule as 1186).
 1201 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1202 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
-1203 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1203 status: done in engine pass 9b: `[band-edge]` (key stored past the asked places whose band edge lands on the next rounding by a float margin). `docs/reports/engine-pass-9b.md`.
 1204 status: done in engine pass 9 item b (a printed product or quotient evaluated from the printed figures).
-1205 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1205 status: done in engine pass 9b: `[later-key]` (a byKey, generic or why line of part k that prints the answer of a later numeric part, three or more significant digits, unless part k's question prints it). The exponent-in-a-slip case with a one-digit key (`p-settlement-fails`, 0.5) is below the noise floor and is not read. `docs/reports/engine-pass-9b.md`.
 1206 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1207 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1208 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
-1209 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
-1210 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1209 status: done in engine pass 9b: `voice-scan.py` lists "# doubled word" (prose only; maths, code and templates masked; "had had" and "that that" left alone). `docs/reports/engine-pass-9b.md`.
+1210 status: post-completion (not required for DONE; session AH, 17 Nov), listed in the last section.
 
 
 ## Engine pass 7 triage (session AH, `docs/reports/engine-pass-7-triage.md`): status lines for items that had none
@@ -2883,6 +2883,13 @@ Every item below is a post-completion item: it does not gate DONE. Each item's o
 - 1206: An explain or feedback line of part k that cites "part k" itself or a later part is cheap to ...
 - 1207: fresh-check did not match the option set and why lines of a choice part against a lesson ...
 - 1208: fresh-check reads no finite topology up to a renaming of its points: topology/problems-2 ...
+
+### Pass 9 [Should] items moved to post-completion (session AH, 17 Nov)
+
+- 1154: A validator warning per topic or stage exam for an (exam, essential skill) pair with fewer than two non-longform items.
+- 1190: An `expression` part with no `form` whose key is a polynomial and whose stem holds a `\div` or a fraction of polynomials.
+- 1210: A restated key that, at its rounded value, fails the inequality it was the smallest solution of (`topology/problems-3` `p-trapping-interval` part 4).
+- 1158 is not post-completion: it goes with the session AH gallery fix pass.
 
 ### From the second triage (section 10): the 32 not required for correctness, 412, and the number-line labels
 
