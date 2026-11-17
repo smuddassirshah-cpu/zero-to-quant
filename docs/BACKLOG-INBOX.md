@@ -92,3 +92,6 @@ Raised later (problems measure-prob re-author AF):
 
 Raised later (problems topology fix pass):
 - `fresh-check.mjs --file content/courses/topology/problems-3.json` runs for more than two minutes on its own (sets 1 and 2 finish well inside), so it cannot meet the brief's two-minute command rule; it was run in the background. A progress line or a cache of the course corpus between runs would help.
+
+Raised later (review-delta-ag-algebra):
+- A problem-set numeric part whose key is printed in its own `question` as a stated value (`algebra/problems-3` `p-affine-five` part 3: "Using $\operatorname{ord}(fT) = 4$ from part 2 ... What is the order of $f$ itself", key 4) passes by retyping. A validator warning could read the key, at the asked form, after "=" in the same part's `question`.
