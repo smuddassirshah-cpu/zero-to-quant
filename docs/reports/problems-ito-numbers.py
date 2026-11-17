@@ -404,7 +404,7 @@ def level3():
     u, v = b - math.log(111.2), b - math.log(110.3)
     numeric(it, 2, ps[2], ps_pdf[2],
             {'no-two': math.exp(-u * v / s2), 'whole-year': math.exp(-2 * u * v / (s * s)), 'survival': 1 - round(ps[2], 4)},
-            agree=1e-12, shown={'0.007168': u, '0.015295': v, '0.0003111': s2, '0.7048': 2 * u * v / s2, '0.4942': ps[2], '0.01764': sd,
+            agree=1e-12, shown={'0.007168': u, '0.015295': v, '0.0003111': s2, '0.7048': 2 * u * v / s2, '0.4942': ps[2],
                                 '0.0784': s * s, '0.28': s})
     # simulated bridges for the gap, fine grid with per-step exact correction
     def sim_touch(x_, y_, npth=20000, nst=400, seed=0):

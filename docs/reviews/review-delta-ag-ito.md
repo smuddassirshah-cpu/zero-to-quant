@@ -86,3 +86,13 @@ Claims checked and held: a drift does not change the law of a path pinned at bot
 
 - `[rounding-tie]` reads only exact ties of the stored value. It misses a key within $10^{-5}$ of a tie at the asked places (`p-touch-note` part 3, 0.691956 at 4 places) and a tie reached by one printed factor at 4 places ($75 \times 0.8666 = 64.995$, `p-twin-shares` part 4).
 - `[working-band]` reads the last figure only. It misses a printed intermediate figure that leads outside the band: an sd printed as 0.01764 beside its square printed as 0.0003111 (`p-bridge-closes` part 2).
+
+## Fix pass
+
+1. Fixed. `p-bridge-closes` part 2 `tol.abs` 0.00015, explain sentence 1 as given; part 3 `tol.abs` 0.00015. Nearest `wrong` values (0.5058; 0.2488) stay refused. Author's script: the `0.01764` shown entry removed (0.0784 and 0.0003111 already checked).
+2. Fixed. `p-touch-note` part 3 `tol.abs` 0.0001; nearest `wrong` 0.8318 refused.
+3. Fixed. `p-twin-shares` part 4 `tol.abs` 0.01; nearest `wrong` 64.06 refused.
+4. Fixed. `p-bridge-closes` part 2 question sentence replaced with the reader's text.
+5. Fixed. `p-twin-shares` part 2 `question` and `no-r` feedback replaced with the reader's text; $95/600 = 0.158333$ and $0.05 \times 400 = 20$ recomputed.
+
+Gates: author's script, reader's script and delta script exit 0 (delta: 0 FINDING rows). Validator 0 errors, no warning on `ito/problems-3`. Voice 35: 0 and 0. `fresh-check`: 0 hits (same two advisories). `grade-all`: 0 failures. Playthrough `ito/problems-3` with and without `--mobile`: all passed. Keys and graded answers unchanged.
