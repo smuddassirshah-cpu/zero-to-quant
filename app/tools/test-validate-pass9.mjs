@@ -51,6 +51,9 @@ const CASES = [
   [4, 2, 'key-equals-the-places-asked', 'What is the order? Give 4 decimal places.', num(4, { abs: 0 }), OK_FB, OK_EX, [['nowarn', '[key-in-question]']]],
   [4, 3, 'long-key-printed-anywhere', 'The ratio 0.4942 is wanted again. What is it? Give 4 decimal places.', num(0.494188, { abs: 5e-5 }), OK_FB, OK_EX, [['warn', '[key-in-question]']]],
   [4, 4, 'key-not-in-the-question', 'What is the order of $f$ if $\\operatorname{ord}(fT) = 6$?', num(4, { abs: 0 }), OK_FB, OK_EX, [['nowarn', '[key-in-question]']]],
+  /* working-band (9b): a whole-number key that is the printed result rounded up and printed after the span is a ceiling, not a fault */
+  [5, 0, 'ceiling-key-printed-after-the-span', 'How many are needed? Give a whole number.', num(3899, { abs: 0 }), 'Take $2 \\times 1949.2 = 3898.4$, so 3899 are needed.', OK_EX, [['nowarn', '[working-band]']]],
+  [5, 1, 'ceiling-key-not-printed-after-the-span', 'How many are needed? Give a whole number.', num(3899, { abs: 0 }), 'Take $2 \\times 1949.2 = 3898.4$ and stop.', OK_EX, [['warn', '[working-band]']]],
 ];
 const items = [...new Set(CASES.map((c) => c[0]))];
 while (d.items.length < items.length) d.items.push(JSON.parse(JSON.stringify(d.items[0])));

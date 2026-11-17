@@ -510,6 +510,8 @@ const pass8Rules = (file, where, it, p) => {
         if (fin != null && closeTo(fin, R) && Math.abs(fin - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans))) return;   // the plain final-figure case is reported above
         const key = seg.trim();
         if (seen.has(key)) return;
+        /* pass 9b: a whole-number key that is the printed result rounded up ("smallest whole N", "bring it under") and is printed after the span is a deliberate ceiling */
+        if (Number.isInteger(ans) && ans === Math.ceil(R - 1e-9) && keyPrinted(String(text).slice(m.index + m[0].length), ans, 0, w.unit)) return;
         seen.add(key); wbSeen.add(`${name}|${key}`);
         warn(file, where, `[working-band] ${name} prints $${key.length > 60 ? key.slice(0, 57) + '...' : key}$, which comes to ${+R.toPrecision(8)}${typed !== R ? `, ${+typed.toPrecision(8)} at the asked places` : ''} from the printed figures, outside the key ${ans} band +-${+hw.toPrecision(3)}: a learner who follows the working is marked wrong`);
       });
