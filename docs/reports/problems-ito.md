@@ -1,6 +1,6 @@
 # Problem sets: ito levels 1 to 3 (brief `docs/briefs/wave-c-author-ag.md`, `docs/briefs/chained-prompts.md`, `docs/briefs/chained.md`)
 
-Files: `app/content/courses/ito/problems-1.json` to `problems-3.json`. Level 4 has its own author. Numbers: `docs/reports/problems-ito-numbers.py` (956 of 956 checks, exit 0). Commits: `074c470a` (level 1, with the script), `d72d1fbf` (level 2), `223fd3ab` (level 3).
+Files: `app/content/courses/ito/problems-1.json` to `problems-3.json`. Level 4 has its own author. Numbers: `docs/reports/problems-ito-numbers.py` (988 of 988 checks after the fix pass, exit 0). Commits: `074c470a` (level 1, with the script), `d72d1fbf` (level 2), `223fd3ab` (level 3).
 
 ## Sets
 
@@ -13,10 +13,10 @@ Files: `app/content/courses/ito/problems-1.json` to `problems-3.json`. Level 4 h
 | problems-2 | p-cube-path | 4 (3 / 1) | l5, l6 (l3 table) | 4 |
 | problems-2 | p-results-vol | 4 (4 / 0) | l5, l7 | 4 |
 | problems-3 | p-touch-note | 4 (3 / 1) | l9, l12 | 5 |
-| problems-3 | p-digital-measures | 4 (4 / 0) | l10, l11 | 4 |
-| problems-3 | p-one-touch | 4 (4 / 0) | l10, l11, l12 | 4 |
+| problems-3 | p-twin-shares | 4 (4 / 0) | l9, l10, l11 | 4 |
+| problems-3 | p-bridge-closes | 4 (3 / 1) | l10, l11, l12 | 4 |
 
-Every lesson of each level appears; every problem draws on two or more. Skills: level 1 `it-bm`, `it-calculus`; level 2 `it-calculus`, `it-martingale`; level 3 `it-pricing`, `it-martingale`, all from the level's lessons. Typed parts 12/12, 11/12, 11/12. The two choice parts are judgements (which integral a weighted sum of squared moves tends to; which root fits the note's boundary conditions). Each later part restates the value it uses. Every part that needs $\Phi$ names software or a normal table.
+Every lesson of each level appears; every problem draws on two or more. Skills: level 1 `it-bm`, `it-calculus`; level 2 `it-calculus`, `it-martingale`; level 3 `it-pricing`, `it-martingale`, all from the level's lessons. Typed parts 12/12, 11/12, 10/12. The three choice parts are judgements (which integral a weighted sum of squared moves tends to; which root fits the note's boundary conditions; why the drift drops out between two closes). Each later part restates the value it uses. Every part that needs $\Phi$ names software or a normal table.
 
 ## Checks
 
@@ -40,8 +40,8 @@ During authoring the checker found my own sets retelling each other (one table-s
 | p-cube-path | l5 S1, S4 ($\sum W_k\Delta W_k$, squaring the path): here $W^2$ against $dW$ and the cube's expansion. | l5 q-left-small: the $W\,dW$ left sum on a three-step path. | r-left-sum: same task as the quiz. | h-iso-w2: variance of $\int W^2\,dW$; here its left sum and the source of the $3W\,dt$ term. | e-moment-and-isometry: moments and an isometry, not a sum on a path. |
 | p-results-vol | l7 S8 ($\sigma(t) = 0.1 + 0.2t$, variance of $\ln S_1$): here a step in $\sigma$ at a results date, the term volatility, the median and a loss chance. | l5 q-det: constant integrand. | r-iso-det: $\int(2 + t)\,dW$ variance only. | none. | none. |
 | p-touch-note | l9 S5 (forward checked in the equation): here $V = S^a$ solved for $a$, roots chosen by boundary conditions, a hedge. | l9 q-vt: $V_t$ from the equation. | r-pde-vt: same. | h-pde-check: a numerical residual. | e-theta-from-pde: theta from given Greeks; e-cubed-claim prices $S_T^m$ by expectation, not by the PDE with a barrier. |
-| p-digital-measures | l11 S8 (digital call at the money): here a digital put, priced under $Q$ and against a junior's $P$ price via the shift $\theta\sqrt T$. | l10 q-theta; l11 q-digital (chance given). | r-weight; r-digital (chance given). | h-girsanov-ratio: average weight on an event; here the $z$ shift and the £ cost of using $P$. | e-tree-price: a tree, not a lognormal digital. |
-| p-one-touch | l12 S1 (driftless touch of 1), S3 (shift table): here a driftless log price under $Q$ found from $r = \tfrac12\sigma^2$, then a no-touch by parity, daily. | l12 q-touch, q-shift. | r-touch, r-shift (shifted level given). | h-touch-shift (shifted level and $\Phi$ given). | e-daily-touch: the shifted touch chance; here the $Q$ drift, parity to a no-touch and discounting. |
+| p-twin-shares | l9 S0 (slide $\Delta$ until a share hedges an option): here one share hedges another, then the noiseless book fixes the second drift. | l10 q-theta ($\theta$ from $\mu$, $r$, $\sigma$): here $\theta$ is never asked; it is implied by no arbitrage across two shares. | r-qmean ($E_Q[S_1]$ of one share): here the $Q$ mean of a ratio of two shares, which is not a martingale. | homework-3 h-derive-black (option on a forward, longform): one asset; here two on one $W$. | e-pick-martingales (classify processes): here a drift of $S_B/S_A$ is computed and priced. |
+| p-bridge-closes | l12 S1 (touch chance of $W$ by reflection) and S6 (knock-out pricer): here reflection gives the touch chance between two known closes, and the path is weighted by survival. | l12 q-touch (touch chance from the start). | r-shift and r-parity (daily against continuous): here no shift and no parity; a per-path correction. | homework-3 h-barrier-report (four pricers of one knock-out): no bridge weight. | e-daily-touch and s3-touch (shifted barrier, touch chance from the start): here the chance between two closes, conditioned on both. |
 
 No problem walks through several items in a row, and none retells a lesson screen: each joins two or three lessons in a chain the course does not run.
 
@@ -76,3 +76,11 @@ Closest material to each problem (screens numbered from 1):
 | p-dividend-hedge | l17 S2 to S5 (the no-dividend derivation and where $\mu$ goes) and S8 (forward check): here a dividend term changes the coefficient to $r - q$, then a prepaid share and a forward price follow from it. | l17 q-vt ($V_t$ from given Greeks); l16 q-fwd2 ($100e^{0.1}$, no dividends). | r-mu (what the price depends on). | h-derivation, h-aloud-unknown-drift (the derivation aloud, no dividends). | e-theta-from-pde (theta from given Greeks). |
 
 No problem walks through several items in a row, and none retells a lesson screen. No engine limit bent a part; no inbox bullets.
+## Re-author and fix pass (session AF, `docs/briefs/reauthor-fix-af.md`)
+
+Review `docs/reviews/review-problems-ito-1-3.md`. Re-authored: `p-digital-measures` as `p-twin-shares`, `p-one-touch` as `p-bridge-closes`. Findings 1 to 8 and 10 applied exactly as the reader wrote them, numbers recomputed first; finding 9 fell with `p-one-touch`.
+
+- `p-twin-shares`: two shares on one $W$; hedge one with the other (£600), the noiseless book fixes $\mu_B = 12.5\%$, the drift rate of $R = S_B/S_A$ under $P$ (0.84%), then under $Q$ ($-2.16\%$) to price a note on $R$ (£64.99). The trap: a ratio of two prices that drift at $r$ is not a martingale.
+- `p-bridge-closes`: a four-day up-and-out call simulated on daily closes; why the drift drops out between two known closes (the change-of-measure weight depends on end values only), the reflection touch chance between closes (0.4942), the path's survival chance (0.3837) and its corrected payoff (£3.60).
+- Fresh-check `--files` on the three sets: 0 hits. New advisories, judged fine: `p-twin-shares` shares 45 and 0.25 with `p-quarter-rally` (a price and a time there, a price and a price of risk here) and 400 and 0.25 with l1 S3. By grep: 0.0084 sits in l11 as a tree error, £112.75 in l10 as a mean, 0.3632 (a `p-maker-tally` slip, $\Phi(-0.35)$) in l9 as a put delta and among path values; no story or chain is shared.
+- Gates: validator 0 errors, no warning on the three sets (the two `[table-source]` warnings are gone); voice scan 35, 0 and 0; `grade-all --file` 0 failures on each; author script 988 of 988; reader script 320 checks, 0 FINDING lines (its digital and one-touch checks removed, the maker and touch-note checks retargeted); playthrough green with and without `--mobile` for all three sets, part shots at 440 px read.

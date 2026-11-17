@@ -105,30 +105,30 @@ def mc_below(level, start, logmean, sd):
 
 
 # ---------------------------------------------------------------- problems-1
-# p-maker-tally
-n_tr, size, pw = 625, 40, F(51, 100)
+# p-maker-tally (fix pass: win chance 0.507, review finding 1)
+n_tr, size, pw = 625, 40, F(507, 1000)
 mean_tr = size * pw - size * (1 - pw)
 day = n_tr * mean_tr
-check(mean_tr == F(4, 5) and day == 500, "maker mean")
+check(mean_tr == F(14, 25) and day == 350, "maker mean")
 # second route: the binomial law of the 625 trades, summed exactly
 pmf = [F(math.comb(n_tr, j)) * pw ** j * (1 - pw) ** (n_tr - j) for j in range(n_tr + 1)]
-check(sum(p * (2 * j - n_tr) * size for j, p in enumerate(pmf)) == 500, "maker mean by the binomial law")
-var_day = sum(p * ((2 * j - n_tr) * size) ** 2 for j, p in enumerate(pmf)) - 500 ** 2
-check(var_day == 999600, "maker day variance", str(var_day))
-numeric(1, 0, 0, 500, {"wins-only": 625 * 40 * 0.51, "half-edge": 250, "per-trade-count": 625 * 0.02}, forms=[500])
-numeric(1, 0, 1, 625 * 1600, {"variance": 999600, "abs-sum": 625 * 40}, forms=[1000000])
+check(sum(p * (2 * j - n_tr) * size for j, p in enumerate(pmf)) == 350, "maker mean by the binomial law")
+var_day = sum(p * ((2 * j - n_tr) * size) ** 2 for j, p in enumerate(pmf)) - 350 ** 2
+check(var_day == 999804, "maker day variance", str(var_day))
+numeric(1, 0, 0, 350, {"wins-only": 625 * 40 * 0.507, "half-edge": 175, "per-trade-count": 625 * 0.014}, forms=[350])
+numeric(1, 0, 1, 625 * 1600, {"variance": 999804, "abs-sum": 625 * 40}, forms=[1000000])
 sd_week = 1000 * math.sqrt(5)
 numeric(1, 0, 2, sd_week, {"sd-times-t": 5000, "one-day": 1000}, forms=[2236])
-z = -2500 / 2236.07
-check(abs(z - (-1.1180)) < 5e-5, "maker z printed")
-numeric(1, 0, 3, Phi(-2500 / sd_week),
-        {"sd-times-t": Phi(-0.5), "no-drift": 0.5, "ends-up": 1 - Phi(z), "one-day": Phi(-2.5)},
-        forms=[round(Phi(z), 4)], table_z=z)
-# reuse: the model is homework-1 h-drift-below (X = 0.5t + W, in thousands) in other units
-ratio = 500 / 1000
+z = -1750 / 2236.07
+check(abs(z - (-0.7826)) < 5e-5, "maker z printed")
+numeric(1, 0, 3, Phi(-1750 / sd_week),
+        {"sd-times-t": Phi(-0.35), "no-drift": 0.5, "ends-up": 1 - Phi(z), "one-day": Phi(-1.75)},
+        forms=[round(Phi(z), 4)])
+check("table" not in part(1, 0, 3)["question"], "maker part 4 names no table")
+# reuse: homework-1 h-drift-below runs X = 0.5t + W; the drift over sigma here, read from the set, must differ
+ratio = widget(1, 0, 0)["answer"] / 1000
 check(abs(ratio - 0.5) > 1e-12, "maker reuse",
-      "drift over sigma is 0.5, the process of homework-1 h-drift-below scaled by 1,000; "
-      "its printed rule Phi(-0.5 sqrt t) gives this key at t = 5: %.4f" % Phi(-0.5 * math.sqrt(5)))
+      "drift over sigma is 0.5, the process of homework-1 h-drift-below scaled by 1,000")
 
 # p-quarter-rally
 mu, sg, s0, s_q, left = 0.13, 0.35, 45.0, 52.0, 0.75
@@ -268,7 +268,7 @@ check(abs(p_mc - Phi(-lm / math.sqrt(v))) < 4 * math.sqrt(0.25 / 1_000_000), "re
 
 # ---------------------------------------------------------------- problems-3
 # p-touch-note
-r, sg, B, S = 0.04, 0.25, 80.0, 100.0
+r, sg, B, S = 0.04, 0.25, 75.0, 100.0
 a_s = sp.symbols("a")
 res = sp.expand((sp.Rational(1, 2) * sp.Rational(1, 16) * a_s * (a_s - 1) + sp.Rational(1, 25) * a_s - sp.Rational(1, 25)))
 roots = sorted(sp.solve(res, a_s))
@@ -284,81 +284,17 @@ V = (S / B) ** -1.28
 check(abs(math.exp(-lam * math.log(S / B)) - V) < 1e-15, "touch value two routes")
 opts = {o["id"]: o for o in widget(3, 0, 1)["options"]}
 check(opts["negative-power"].get("correct") is True and sum(1 for o in opts.values() if o.get("correct")) == 1, "touch choice key")
-numeric(3, 0, 2, V, {"sign": 1.25 ** 1.28, "no-half": 1.25 ** -0.64, "root-one": 1.25}, forms=[round(V, 4)])
+numeric(3, 0, 2, V, {"sign": (S / B) ** 1.28, "no-half": (S / B) ** -0.64, "root-one": S / B}, forms=[round(V, 4)])
 h = 1e-4
 delta = ((S + h) / B) ** -1.28 - ((S - h) / B) ** -1.28
 delta /= 2 * h
 check(abs(delta - (-1.28 * V / S)) < 1e-9, "touch delta by central difference")
 numeric(3, 0, 3, 10000 * delta, {"sign": -10000 * delta, "no-power": -10000 * V / S},
-        forms=[-96.2, round(-1.28 * 0.7515 * 100, 1)])
+        forms=[-88.6, round(-1.28 * 0.6920 * 100, 1)])
 
-# p-digital-measures
-S0, mu, sg, r, T, K = 40.0, 0.11, 0.32, 0.03, 0.5, 36.0
-theta = (mu - r) / sg
-numeric(3, 1, 0, theta, {"excess": mu - r, "sum": (mu + r) / sg, "inverse": sg / (mu - r)}, forms=[0.25])
-sdT = sg * math.sqrt(T)
-zq = (math.log(K / S0) - (r - sg ** 2 / 2) * T) / sdT
-check(abs(zq - (-0.4188)) < 5e-5 and abs((r - sg ** 2 / 2) * T + 0.0106) < 1e-12 and abs(sdT - 0.2263) < 5e-5, "digital z printed")
-q = Phi(zq)
-zp_direct = (math.log(K / S0) - (mu - sg ** 2 / 2) * T) / sdT
-check(abs(zp_direct - (zq - theta * math.sqrt(T))) < 1e-12, "digital z shift is theta root T")
-p_real = Phi(zp_direct)
-numeric(3, 1, 1, q, {"real-drift": p_real, "no-drag": Phi((math.log(K / S0) - r * T) / sdT), "upper": 1 - q},
-        forms=[round(q, 4)])
-p_mc, se = mc_below(36, 40, (r - sg ** 2 / 2) * T, sdT)
-check(abs(p_mc - q) < 4 * se, "digital Q chance by simulation")
-df = math.exp(-r * T)
-check(abs(df - 0.985112) < 5e-7, "digital discount factor printed")
-numeric(3, 1, 2, df * q, {"undiscounted": q, "mu-discount": math.exp(-mu * T) * q, "whole-year": math.exp(-r) * q},
-        forms=[round(df * q, 4), round(0.985112 * 0.3377, 4)])
-gap = 10000 * df * (q - p_real)
-numeric(3, 1, 3, gap,
-        {"undiscounted": 10000 * (q - p_real), "theta-t": 10000 * df * (q - Phi(zq - theta * T)),
-         "mu-discount": 10000 * (df * q - math.exp(-mu * T) * p_real)},
-        forms=[610, round(10000 * 0.985112 * (0.3377 - 0.2757)), round(10000 * (0.3327 - round(0.985112 * 0.2757, 4)))])
-check(abs(p_real - 0.275734) < 5e-7 and abs(q - p_real - 0.061953) < 1.5e-6, "digital printed chances", f"{p_real} {q - p_real}")
-
-# p-one-touch
-sg, T, S0, B = 0.24, 0.75, 100.0, 120.0
-r = sg ** 2 / 2
-numeric(3, 2, 0, r, {"full-square": sg ** 2, "half-vol": sg / 2}, forms=[0.0288])
-check(widget(3, 2, 0).get("unit") == "%", "one-touch percentage unit")
-b = math.log(B / S0)
-sdT = sg * math.sqrt(T)
-check(abs(b - 0.1823) < 5e-5 and abs(sdT - 0.2078) < 5e-5 and abs(b / sdT - 0.8772) < 5e-5, "one-touch printed working")
-touch = 2 * (1 - Phi(b / sdT))
-check(abs(math.erfc(b / (sdT * math.sqrt(2))) - touch) < 1e-15, "one-touch reflection two routes")
-numeric(3, 2, 1, touch,
-        {"no-reflection": 1 - Phi(b / sdT), "price-gap": 2 * (1 - Phi(0.2 / sdT)), "whole-year": 2 * (1 - Phi(b / sg))},
-        forms=[round(2 * (1 - Phi(0.8772)), 4)], table_z=b / sdT, tails=2.0)
-# simulation on a fine grid with the same 0.5826 correction for the grid itself
-r3 = np.random.default_rng(12)
-steps = 3000
-hit = 0
-paths = 0
-for _ in range(10):
-    inc = r3.standard_normal((2000, steps)) * sg * math.sqrt(T / steps)
-    mx = np.max(np.cumsum(inc, axis=1), axis=1)
-    hit += int(np.sum(mx >= b - 0.5826 * sg * math.sqrt(T / steps)))
-    paths += 2000
-p_mc = hit / paths
-check(abs(p_mc - touch) < 4 * math.sqrt(touch * (1 - touch) / paths), "one-touch by simulation", f"{p_mc} {touch}")
-df = math.exp(-r * T)
-check(abs(df - 0.978632) < 5e-7, "one-touch discount factor printed")
-numeric(3, 2, 2, df * (1 - touch), {"undiscounted": 1 - 0.3804, "one-touch": df * touch},
-        forms=[round(df * (1 - touch), 4), round(0.978632 * 0.6196, 4)])
-shift = 0.5826 * sg * math.sqrt(1 / 252)
-check(abs(shift - 0.008808) < 5e-7, "one-touch shift printed")
-touch_d = 2 * (1 - Phi((b + shift) / sdT))
-check(abs(touch_d - 0.3578) < 5e-5 and abs((b + shift) / sdT - 0.9196) < 5e-5, "one-touch daily printed", str(touch_d))
-touch_in = 2 * (1 - Phi((b - shift) / sdT))
-numeric(3, 2, 3, df * (1 - touch_d),
-        {"shift-in": df * (1 - touch_in), "continuous": df * (1 - touch), "one-touch": df * touch_d},
-        forms=[round(df * (1 - touch_d), 4), round(0.978632 * 0.6422, 4)])
-# daily closes, simulated: 189 closes in nine months
-inc = np.random.default_rng(21).standard_normal((200000, 189)) * sg * math.sqrt(1 / 252)
-p_day = float(np.mean(np.max(np.cumsum(inc, axis=1), axis=1) >= b))
-check(abs(p_day - touch_d) < 0.004, "one-touch daily by simulation", f"{p_day} {touch_d}")
+# p-digital-measures and p-one-touch were re-authored in the fix pass (review findings 11 and 12);
+# their checks are removed. The new p-twin-shares and p-bridge-closes are checked by the author script
+# and read next by the delta reader.
 
 # ------------------------------------------------------------ set shape
 for n in (1, 2, 3):
@@ -371,24 +307,8 @@ for n in (1, 2, 3):
     kinds = [p["widget"]["kind"] for it in d["items"] for p in it["parts"]]
     check(sum(k in ("numeric", "expression") for k in kinds) * 3 >= 2 * len(kinds), f"problems-{n} typed share")
 
-# ------------------------------------------------------------ numbers of the review's fixes
-print("PROPOSED finding 1 (p-maker-tally, win chance 0.507):")
-pw2 = F(507, 1000)
-mt = size * pw2 - size * (1 - pw2)
-day2 = n_tr * mt
-var2 = n_tr * (1600 - mt ** 2)
-print("  mean per trade", float(mt), "day", float(day2), "wins-only", float(625 * 40 * pw2), "half-edge", float(day2 / 2),
-      "per-trade-count", float(625 * (2 * pw2 - 1)), "day variance", float(var2))
-zw = -5 * float(day2) / 2236.07
-print("  week mean", 5 * float(day2), "z %.4f" % zw, "key %.6f" % Phi(-5 * float(day2) / sd_week),
-      "sd-times-t %.4f" % Phi(-5 * float(day2) / 5000), "ends-up %.4f" % (1 - Phi(zw)),
-      "one-day %.4f" % Phi(-5 * float(day2) / 1000), "drift over sigma", float(day2) / 1000)
-print("PROPOSED finding 10 (p-touch-note, barrier 75):")
-V75 = (100 / 75) ** -1.28
-print("  value %.6f" % V75, "sign %.4f" % ((100 / 75) ** 1.28), "no-half %.4f" % ((100 / 75) ** -0.64),
-      "root-one %.4f" % (100 / 75), "shares %.4f" % (-128 * V75), "rounded route %.2f" % (-1.28 * round(V75, 4) * 100),
-      "no-power %.2f" % (-100 * V75))
-print("PROPOSED findings 4 and 9 (table bands): results-vol reading at z = -0.13 is %.4f, key %.6f; "
-      "one-touch reading at z = 0.88 is %.4f, key %.6f" % (Phi(-0.13), Phi(-lm / math.sqrt(v)), 2 * round(1 - Phi(0.88), 4), touch))
+# ------------------------------------------------------------ the review's fixes
+# Findings 1, 4 and 10 are applied; their numbers are now checked above as keys and bands.
+check(widget(2, 2, 3)["tol"]["abs"] >= abs(round(Phi(-0.13), 4) - Phi(-lm / math.sqrt(v))), "results-vol table band")
 
 print(f"{checks} checks, {findings} FINDING line(s)")

@@ -125,3 +125,24 @@ Severities: `wrong`, `misleading`, `reuse`, `voice`, `continuity`.
 - `fresh-check` passed `p-maker-tally` although its process is `h-drift-below`'s in other units ($500t + 1000W$ against $0.5t + W$ in thousands). A drift-to-volatility ratio shared with a same-course item that asks the same chance would catch it.
 - `retold` passed a stem that keeps a homework sentence with the numbers and the opening clause changed ("a share's squared daily log returns add to", finding 2) and a story kept with one noun changed ("A junior ... the same ... with the real drift ... discounts at $r$", finding 11).
 - The chain rule of `retold` did not see `p-one-touch` walk l12 S1, S8 and S3 in order, nor its three lines shared with `e-daily-touch`.
+
+## Fix pass
+
+Session AF, `docs/briefs/reauthor-fix-af.md`, one agent as author and fixer. Every replacement number recomputed in `docs/reports/problems-ito-numbers.py` before writing.
+
+1. fixed: win chance 0.507; keys 350 and 0.216924, every `wrong` value and line as written; the table dropped from part 4. 0.3632 occurs in the course only as path values and as l9's put delta $-0.3632$ (also $\Phi(-0.35)$, another context); kept as a slip.
+2. fixed: prose and part 1 question as written; no number changes.
+3. fixed: both slip lines as written ($0.35^2 \times 0.75 = 0.0919$ checked).
+4. fixed: `tol.abs` 0.001; the table reading 0.4483 is taken, the nearest `wrong` stays outside.
+5. fixed: question and `feedback.correct` as written.
+6. fixed: question as written.
+7. fixed: `explain` sentence 1 and the `zero` option's `why` as written.
+8. fixed: `correct`, `generic` and `explain` as written.
+9. superseded: `p-one-touch` re-authored (finding 12).
+10. fixed (applied by ruling; barrier £75 collides with no course material): keys 0.691956 and $-88.5704$, `wrong` values 1.4452, 0.8318, 1.3333, 88.6, $-69.20$, every line as written.
+11. re-authored as `p-twin-shares` (l9, l10, l11): hedge one share with another, the noiseless book fixes $\mu_B$, the drift rate of $S_B/S_A$ under $P$ and then $Q$, a note on the ratio. No $\theta$ question, no digital, no junior.
+12. re-authored as `p-bridge-closes` (l10, l11, l12): a daily-simulated up-and-out call; why the drift drops out between two known closes, the reflection touch chance between closes, survival over four gaps, the path's corrected payoff. No touch chance from the start, no shift, no parity.
+
+Reader's script: `p-maker-tally` and `p-touch-note` checks retargeted to the applied values (the maker reuse check now reads the drift from the set); `p-digital-measures` and `p-one-touch` checks removed (re-authored); the PROPOSED block replaced by a band check. 320 checks, 0 FINDING lines.
+
+Gates: validator 0 errors, no warning on the three sets; voice scan 35, 0 and 0; `fresh-check --files` 0 hits (advisories in the report); author script 988 of 988, exit 0; `grade-all --file` 0 failures on each set; playthrough `--problems ito/problems-<n>` green with and without `--mobile` for n = 1, 2, 3.
