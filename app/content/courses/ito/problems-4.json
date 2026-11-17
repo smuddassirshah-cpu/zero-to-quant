@@ -1,0 +1,605 @@
+{
+  "id": "problems-4",
+  "course": "ito",
+  "level": 4,
+  "title": "Problems: stochastic calculus at interview",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-tracking-review",
+      "difficulty": 5,
+      "skills": [
+        "it-martingale",
+        "it-bm"
+      ],
+      "prose": "A fund's return gap to its index, in percentage points, moves like $X_t = 0.4W_t$, with $t$ in trading days and no drift. It starts at 0. The risk team reviews the fund at $\\tau$, the first time the gap reaches $+2$ or $-4$.",
+      "parts": [
+        {
+          "question": "For $X = \\sigma W$, Itô's lemma gives $f(t, X_t)$ the drift $f_t + \\tfrac12\\sigma^2f_{xx}$. Which constant $c$ makes $X_t^3 - c\\,tX_t$ a martingale? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.48,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "unit-vol",
+                "value": 3,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sigma-unsquared",
+                "value": 1.2,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "no-half",
+                "value": 0.96,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$f_t = -cx$ and $\\tfrac12\\sigma^2f_{xx} = \\tfrac12 \\times 0.16 \\times 6x = 0.48x$, so the drift $(0.48 - c)x$ vanishes at $c = 0.48$.",
+            "generic": "Not quite. Write $f = x^3 - ctx$, then add $f_t$ to $\\tfrac12\\sigma^2f_{xx}$ with $\\sigma^2 = 0.16$.",
+            "byKey": {
+              "unit-vol": "That constant suits $W$ itself. Here the noise is $0.4\\,dW$, so $f_{xx}$ is weighted by $\\sigma^2 = 0.16$.",
+              "sigma-unsquared": "You weighted $f_{xx}$ by $\\sigma = 0.4$, not by $\\sigma^2$. The weight comes from $(dX)^2 = \\sigma^2\\,dt$.",
+              "no-half": "You dropped the $\\tfrac12$ in front of $\\sigma^2f_{xx}$, which doubles $c$."
+            }
+          },
+          "explain": {
+            "text": "With $f = x^3 - ctx$ we have $f_t = -cx$ and $f_{xx} = 6x$. The drift is $-cx + \\tfrac12(0.16)(6x) = (0.48 - c)x$. It is zero for every $x$ only at $c = 0.48$."
+          }
+        },
+        {
+          "question": "What is the chance that the gap reaches $+2$ before $-4$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.666667,
+            "tol": {
+              "abs": 5e-05
+            },
+            "wrong": [
+              {
+                "id": "swapped",
+                "value": 0.333333,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "even",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Stopping the martingale $X_t$ gives $2P - 4(1 - P) = 0$, so $P = 4/6 \\approx 0.6667$.",
+            "generic": "Not quite. $X$ itself is a martingale: stop it at $\\tau$ and set its mean to 0.",
+            "byKey": {
+              "swapped": "That is the chance of reaching $-4$ first. The nearer level, $+2$, is the likelier one.",
+              "even": "Even odds would need the two levels equally far from 0. Here $-4$ is twice as far away as $+2$."
+            }
+          },
+          "explain": {
+            "text": "$X_\\tau$ is $+2$ or $-4$, and $E[X_\\tau] = 0$. So $P = b/(a + b) = 4/6$, and the volatility 0.4 plays no part. In decimals, $P \\approx 0.6667$."
+          }
+        },
+        {
+          "question": "Using the martingale $X_t^2 - 0.16t$, what is $E[\\tau]$ in trading days?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 50,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "no-sigma",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sigma-unsquared",
+                "value": 20,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$E[X_\\tau^2] = 0.16E[\\tau]$ and $E[X_\\tau^2] = ab = 8$, so $E[\\tau] = 8/0.16 = 50$ trading days.",
+            "generic": "Not quite. Stop $X_t^2 - 0.16t$ at $\\tau$, and use $X_\\tau^2 = 4$ or $16$.",
+            "byKey": {
+              "no-sigma": "That is $ab = 8$, the mean wait at unit volatility. This gap's variance grows at 0.16 a day.",
+              "sigma-unsquared": "You divided by $\\sigma = 0.4$. Variance builds as $\\sigma^2t$, so $ab$ is divided by $0.16$."
+            }
+          },
+          "explain": {
+            "text": "With $P = \\tfrac23$ from part 2, $E[X_\\tau^2] = 4 \\times \\tfrac23 + 16 \\times \\tfrac13 = 8$. The martingale keeps its mean 0, so $0.16E[\\tau] = 8$ and $E[\\tau] = 50$."
+          }
+        },
+        {
+          "question": "Stop the martingale $X_t^3 - 0.48tX_t$ from part 1 at $\\tau$, so $E[X_\\tau^3] = 0.48E[\\tau X_\\tau]$. Using $P = \\tfrac23$ from part 2, what is $E[\\tau X_\\tau]$? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -33.333333,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "no-divide",
+                "value": -16,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sign-cube",
+                "value": 55.555556,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "unit-c",
+                "value": -5.333333,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "dropped-sign",
+                "value": 33.333333,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$E[X_\\tau^3] = 8 \\times \\tfrac23 - 64 \\times \\tfrac13 = -16$, so $E[\\tau X_\\tau] = -16/0.48 \\approx -33.33$.",
+            "generic": "Not quite. Find $E[X_\\tau^3]$ from the two levels and their chances, then divide by 0.48.",
+            "byKey": {
+              "no-divide": "That is $E[X_\\tau^3]$ itself. The martingale says it equals $0.48E[\\tau X_\\tau]$, so one more division is needed.",
+              "sign-cube": "You cubed $-4$ as $+64$. An odd power keeps the sign: $(-4)^3 = -64$.",
+              "unit-c": "You divided by 3, the constant for $W$ alone. Part 1 gives $c = 0.48$ for this gap.",
+              "dropped-sign": "The size is right but the sign is not. The far level $-4$ has the larger cube, so the mean is negative."
+            }
+          },
+          "explain": {
+            "text": "The cube is $8$ at $+2$ and $-64$ at $-4$, so its mean is $-16$. The stopped martingale has mean 0: $E[X_\\tau^3] - 0.48E[\\tau X_\\tau] = 0$. Hence $E[\\tau X_\\tau] = -16/0.48 \\approx -33.33$."
+          }
+        },
+        {
+          "question": "Write $A = E[\\tau\\,\\mathbf{1}_{\\{X_\\tau = 2\\}}]$ and $B = E[\\tau\\,\\mathbf{1}_{\\{X_\\tau = -4\\}}]$, so $A + B = E[\\tau]$ and $2A - 4B = E[\\tau X_\\tau]$. Using $E[\\tau] = 50$ from part 3 and $E[\\tau X_\\tau] = -\\tfrac{100}{3}$ from part 4, what is $E[\\tau \\mid X_\\tau = 2]$ in trading days? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 41.666667,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "joint",
+                "value": 27.777778,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "unconditional",
+                "value": 50,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "far-level",
+                "value": 66.666667,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$6A = 200 - \\tfrac{100}{3}$ gives $A \\approx 27.78$, and $A/P = 27.78/\\tfrac23 \\approx 41.67$ trading days.",
+            "generic": "Not quite. Solve the two equations for $A$, then divide by the chance of reaching $+2$.",
+            "byKey": {
+              "joint": "That is $A$, which still carries the factor $P = \\tfrac23$. Divide by it to condition on reaching $+2$.",
+              "unconditional": "That is $E[\\tau]$ over both levels. Conditioning on the nearer level shortens the wait.",
+              "far-level": "That is the mean wait given an exit at $-4$, the far level. The question wants $A$, not $B$."
+            }
+          },
+          "explain": {
+            "text": "Substituting $B = 50 - A$ gives $2A - 200 + 4A = -\\tfrac{100}{3}$, so $A = \\tfrac{250}{9}$. Dividing by $P = \\tfrac23$ gives $\\tfrac{125}{3}$ trading days. The general result is $a(a + 2b)/(3\\sigma^2)$, here $20/0.48 \\approx 41.67$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-two-date-product",
+      "difficulty": 4,
+      "skills": [
+        "it-calculus",
+        "it-pricing"
+      ],
+      "prose": "A claim pays $S_1S_2/100$ pounds at $t = 2$, where $S_1$ and $S_2$ are a share's prices at years 1 and 2. Under $Q$ the share follows GBM from $S_0 = 50$, with $r = 3\\%$ and $\\sigma = 30\\%$.",
+      "parts": [
+        {
+          "question": "Under $Q$, $\\ln S_t = \\ln 50 + (r - \\tfrac12\\sigma^2)t + \\sigma W_t$. What is $\\text{Cov}(\\ln S_1, \\ln S_2)$? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.09,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "later-time",
+                "value": 0.18,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "independent",
+                "value": 0,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "unsquared",
+                "value": 0.3,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\text{Cov}(\\sigma W_1, \\sigma W_2) = \\sigma^2\\min(1, 2) = 0.09 \\times 1 = 0.09$.",
+            "generic": "Not quite. Only the $\\sigma W_t$ terms are random, and $\\text{Cov}(W_s, W_t) = \\min(s, t)$.",
+            "byKey": {
+              "later-time": "You used the later time, 2. The two logs share only the first year's increment, so the overlap is one year.",
+              "independent": "$\\ln S_2$ contains the whole first year's move, so the two logs are not independent.",
+              "unsquared": "You scaled the covariance by $\\sigma = 0.3$. Both logs carry a factor $\\sigma$, so the scale is $\\sigma^2$."
+            }
+          },
+          "explain": {
+            "text": "The constants and drifts do not affect a covariance. What is left is $\\sigma^2\\text{Cov}(W_1, W_2) = 0.09 \\times \\min(1, 2) = 0.09$."
+          }
+        },
+        {
+          "question": "Using the covariance 0.09 from part 1, what is $\\text{Var}(\\ln S_1 + \\ln S_2)$ under $Q$? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.45,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "no-cov",
+                "value": 0.27,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "cov-once",
+                "value": 0.36,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "later-time",
+                "value": 0.63,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.09 + 0.18 + 2 \\times 0.09 = 0.45$.",
+            "generic": "Not quite. Add the two variances, $\\sigma^2 \\times 1$ and $\\sigma^2 \\times 2$, and twice the covariance.",
+            "byKey": {
+              "no-cov": "You added the two variances alone. The logs move together, so twice their covariance joins the sum.",
+              "cov-once": "The covariance enters twice: $\\text{Var}(X + Y)$ holds $2\\,\\text{Cov}(X, Y)$.",
+              "later-time": "That uses a covariance of 0.18, from taking the later time in part 1. The shared stretch is one year."
+            }
+          },
+          "explain": {
+            "text": "The variances are $0.09$ and $0.18$, one year and two years of $\\sigma^2$. The shared first year adds $2 \\times 0.09$. In all, $0.09 + 0.18 + 0.18 = 0.45$."
+          }
+        },
+        {
+          "question": "Under $Q$, $\\ln S_1 + \\ln S_2$ is normal with mean $2\\ln 50 + 3(r - \\tfrac12\\sigma^2) = 2\\ln 50 - 0.045$. Using the variance 0.45 from part 2, what is $E_Q[S_1S_2/100]$? Give 2 decimal places, in £.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 29.930434,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "no-cov",
+                "value": 27.354357,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "r-drift",
+                "value": 34.256483,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-half",
+                "value": 37.482563,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ],
+            "unit": "£"
+          },
+          "feedback": {
+            "correct": "$E[e^Y] = e^{m + v/2}$ for a normal $Y$, so the mean is $2{,}500e^{-0.045 + 0.225}/100 = 25e^{0.18} \\approx 29.93$.",
+            "generic": "Not quite. For a normal $Y$ with mean $m$ and variance $v$, $E[e^Y] = e^{m + v/2}$.",
+            "byKey": {
+              "no-half": "You added the whole variance to the mean. The mgf adds half of it, $0.225$.",
+              "no-cov": "That is $25e^{0.09}$, from the variance 0.27 with no covariance. The shared year lifts the variance to 0.45.",
+              "r-drift": "You used the drift $r$ in the log mean. The log of a GBM drifts at $r - \\tfrac12\\sigma^2$, so the mean is $2\\ln 50 - 0.045$."
+            }
+          },
+          "explain": {
+            "text": "$S_1S_2 = e^Y$ with $Y = \\ln S_1 + \\ln S_2$. The exponent is $-0.045 + \\tfrac12(0.45) = 0.18$, so the expected payoff is $25e^{0.18} \\approx 29.93$. Each price alone has mean equal to its forward, and the product earns $e^{0.09}$ more from the shared year."
+          }
+        },
+        {
+          "question": "Using $E_Q[S_1S_2/100] = 25e^{0.18}$ from part 3, what is the claim worth today? Give 2 decimal places, in £.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 28.187421,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "forwards",
+                "value": 25.761363,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "one-year",
+                "value": 29.045856,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "undiscounted",
+                "value": 29.930434,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ],
+            "unit": "£"
+          },
+          "feedback": {
+            "correct": "Discount over the two years to payment: $e^{-0.06} \\times 25e^{0.18} = 25e^{0.12} \\approx 28.19$.",
+            "generic": "Not quite. The claim pays at $t = 2$, so discount at $r$ for two years.",
+            "byKey": {
+              "undiscounted": "That is the $Q$-mean of the payoff. A price is that mean discounted to today.",
+              "one-year": "You discounted for one year. The payment comes at $t = 2$, two years away.",
+              "forwards": "That is $25e^{0.03}$, the product of the two forwards, discounted. It leaves out the shared year's covariance."
+            }
+          },
+          "explain": {
+            "text": "The price is $e^{-2r}E_Q[S_1S_2]/100$. With $e^{-0.06}$ and $25e^{0.18}$ it is $25e^{0.12}$. Ignoring the covariance would give £25.76, about £2.43 less than $25e^{0.12} \\approx 28.19$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-dividend-hedge",
+      "difficulty": 4,
+      "skills": [
+        "it-pricing"
+      ],
+      "prose": "A share pays a dividend yield $q$: holding $\\Delta$ shares pays cash $q\\Delta S\\,dt$ over each $dt$. It follows $dS = \\mu S\\,dt + \\sigma S\\,dW$, and cash earns $r$. A desk sells one claim $V(t, S)$ and holds $\\Delta = V_S$ shares.",
+      "parts": [
+        {
+          "question": "With $\\Delta = V_S$ the $dW$ terms cancel. Which is the $dt$ coefficient of the book $\\Pi = -V + \\Delta S$, dividends included?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "with-yield",
+                "text": "$-V_t - \\tfrac12\\sigma^2S^2V_{SS} + qSV_S$",
+                "correct": true
+              },
+              {
+                "id": "no-yield",
+                "text": "$-V_t - \\tfrac12\\sigma^2S^2V_{SS}$",
+                "why": "You left out the dividend cash. Each share held pays $qS\\,dt$, so the book gains $qSV_S\\,dt$."
+              },
+              {
+                "id": "mu-kept",
+                "text": "$-V_t - \\mu SV_S - \\tfrac12\\sigma^2S^2V_{SS} + qSV_S$",
+                "why": "You kept the drift from $dV$ but not from the shares. The shares bring $+\\mu SV_S\\,dt$, which removes it."
+              },
+              {
+                "id": "gamma-sign",
+                "text": "$-V_t + \\tfrac12\\sigma^2S^2V_{SS} + qSV_S$",
+                "why": "You gave the gamma term a plus sign. The book is short the claim, so the term arrives through $-dV$ with a minus."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The claim gives $-(V_t + \\mu SV_S + \\tfrac12\\sigma^2S^2V_{SS})$, the shares $+\\mu SV_S$ and the dividends $+qSV_S$.",
+            "generic": "Not quite. Collect the $dt$ terms of $-dV$, of $V_S\\,dS$ and of the dividend cash."
+          },
+          "explain": {
+            "text": "Itô's lemma gives $dV$ the $dt$ part $V_t + \\mu SV_S + \\tfrac12\\sigma^2S^2V_{SS}$. The shares add $\\mu SV_S$ back, and the dividends add $qSV_S$. What is left is $-V_t - \\tfrac12\\sigma^2S^2V_{SS} + qSV_S$."
+          }
+        },
+        {
+          "question": "The book has no noise, so it earns $r\\Pi = r(-V + SV_S)$. Setting the coefficient from part 1 equal to that gives $V_t + (\\ldots)SV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV = 0$. Enter the bracket in terms of $r$ and $q$.",
+          "widget": {
+            "kind": "expression",
+            "answer": "r-q",
+            "accept": [
+              "r-q",
+              "-q+r"
+            ],
+            "keyboard": "algebra",
+            "wrong": [
+              {
+                "id": "plus",
+                "tex": "r+q"
+              },
+              {
+                "id": "no-yield",
+                "tex": "r"
+              },
+              {
+                "id": "sign",
+                "tex": "q-r"
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$-V_t - \\tfrac12\\sigma^2S^2V_{SS} + qSV_S = -rV + rSV_S$ rearranges to $V_t + (r - q)SV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV = 0$.",
+            "generic": "Not quite. Move every term to one side and collect the two $SV_S$ terms.",
+            "byKey": {
+              "plus": "The dividends help the book, so they reduce what the shares must earn: the coefficient is $r$ minus $q$.",
+              "no-yield": "That is the equation for a share with no dividends. The $qSV_S$ term from part 1 changes the coefficient.",
+              "sign": "You moved the terms with the wrong sign. With $q = 0$ the coefficient must be $r$, as in the usual equation."
+            }
+          },
+          "explain": {
+            "text": "Equate $-V_t - \\tfrac12\\sigma^2S^2V_{SS} + qSV_S$ with $-rV + rSV_S$. The $SV_S$ terms combine to $(r - q)SV_S$. With $q = 0$ it is the usual equation, a quick check."
+          }
+        },
+        {
+          "question": "Take $r = 4.5\\%$, $q = 2\\%$ and $S = 120$. A claim pays one share at $T$, with no dividends before then: $V = Se^{-q(T - t)}$, so $V_S = e^{-q(T - t)}$ and $V_{SS} = 0$. Using the equation from part 2 at $T - t = 0.75$, what is $V_t$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.364269,
+            "tol": {
+              "abs": 5e-05
+            },
+            "wrong": [
+              {
+                "id": "plus",
+                "value": -2.364269,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-yield",
+                "value": 0,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-discount",
+                "value": 2.4,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$V = 120e^{-0.015} = 118.2134$, and $V_t = rV - (r - q)SV_S = qV = 0.02 \\times 118.2134 \\approx 2.3643$.",
+            "generic": "Not quite. Put $V_{SS} = 0$ and $SV_S = V$ into the equation, then solve for $V_t$.",
+            "byKey": {
+              "no-yield": "That treats the share as paying no dividends, where $SV_S = V$ cancels $rV$. The $(r - q)$ coefficient leaves $qV$.",
+              "plus": "That uses $r + q$ in the equation, which flips the sign. The claim gains value as the dividend dates pass.",
+              "no-discount": "You used $q \\times 120$. The equation needs $qV$, with $V = 120e^{-0.015}$."
+            }
+          },
+          "explain": {
+            "text": "Here $SV_S = V$, so the equation reads $V_t + (r - q)V - rV = 0$. Hence $V_t = qV$, and differentiating $Se^{-q(T - t)}$ in $t$ gives the same. With $V = 118.2134$ that is $0.02 \\times 118.2134 \\approx 2.3643$."
+          }
+        },
+        {
+          "question": "A forward pays $S_T - K$ at $T = 0.75$ and costs nothing to enter. It is the claim of part 3, worth £118.2134, less $K$ bonds worth $e^{-0.045 \\times 0.75}$ each. Which $K$ sets its value to 0? Give 2 decimal places, in £.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 122.271226,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "prepaid",
+                "value": 118.213433,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-yield",
+                "value": 124.119119,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "plus",
+                "value": 125.994939,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ],
+            "unit": "£"
+          },
+          "feedback": {
+            "correct": "$K = 118.2134 \\times e^{0.03375} = 120e^{0.01875} \\approx 122.27$.",
+            "generic": "Not quite. Set $118.2134 - Ke^{-0.03375} = 0$ and solve for $K$.",
+            "byKey": {
+              "no-yield": "That is $120e^{0.03375}$, the forward with no dividends. The holder of the forward misses the yield, so $K$ is lower.",
+              "plus": "You grew the price at $r + q$. Dividends lower the forward: the growth rate is $r - q$.",
+              "prepaid": "That is today's price of the prepaid claim. The forward price is that value grown at $r$ to $T$."
+            }
+          },
+          "explain": {
+            "text": "The forward is worth $Se^{-qT} - Ke^{-rT}$, so $K = Se^{(r - q)T}$. Under $Q$ the share grows at $r - q$, the coefficient of part 2. Here $K = 120e^{0.025 \\times 0.75} \\approx 122.27$."
+          }
+        }
+      ]
+    }
+  ]
+}

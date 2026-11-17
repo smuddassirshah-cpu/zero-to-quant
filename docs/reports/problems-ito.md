@@ -44,3 +44,35 @@ During authoring the checker found my own sets retelling each other (one table-s
 | p-one-touch | l12 S1 (driftless touch of 1), S3 (shift table): here a driftless log price under $Q$ found from $r = \tfrac12\sigma^2$, then a no-touch by parity, daily. | l12 q-touch, q-shift. | r-touch, r-shift (shifted level given). | h-touch-shift (shifted level and $\Phi$ given). | e-daily-touch: the shifted touch chance; here the $Q$ drift, parity to a no-touch and discounting. |
 
 No problem walks through several items in a row, and none retells a lesson screen: each joins two or three lessons in a chain the course does not run.
+
+## Level 4
+
+File: `app/content/courses/ito/problems-4.json` ("Problems: stochastic calculus at interview", 45 minutes). Numbers: `docs/reports/problems-ito-4-numbers.py` (323 of 323 checks, exit 0); `problems-ito-numbers.py` is untouched.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-tracking-review | 5 (5 / 0) | l13, l14 | 5 |
+| problems-4 | p-two-date-product | 4 (4 / 0) | l15, l16 | 4 |
+| problems-4 | p-dividend-hedge | 4 (3 / 1) | l16, l17 | 4 |
+
+Every lesson of the level appears; every problem draws on two. Skills `it-martingale`, `it-bm`, `it-calculus`, `it-pricing`, all from the level's lessons. Typed parts 12 of 13; the choice part is a judgement (which $dt$ coefficient the hedged book has once dividends are paid). The dividend yield is stated in the stem as a cash flow ($q\Delta S\,dt$), so the derivation needs only the steps of l17.
+
+Chains. p-tracking-review: the constant $c = \tfrac12\sigma^2 \cdot 6 = 0.48$ that makes $X^3 - ctX$ a martingale for $X = 0.4W$, the exit chance $\tfrac23$, $E[\tau] = 50$, then $E[\tau X_\tau] = -16/0.48$ from the cubic martingale, and the result $E[\tau \mid X_\tau = 2] = \tfrac{125}{3} \approx 41.67$ days. p-two-date-product: $\text{Cov}(\ln S_1, \ln S_2) = 0.09$, the variance 0.45 of the sum, $E_Q[S_1S_2/100] = 25e^{0.18}$, the price $25e^{0.12} \approx 28.19$. p-dividend-hedge: the book's $dt$ coefficient, the bracket $r - q$, $V_t = qV \approx 2.3643$ for the prepaid share, the forward price $120e^{0.01875} \approx 122.27$.
+
+Checks:
+1. Number script: 323 of 323, exit 0. Method 2: sympy differentiation for the drift tests and the dividend equation; the symmetric gambler's-ruin chain on the levels $-4, \ldots, 2$ solved as linear systems (exact for $P$, $E[\tau]$ and $E[\tau\,\mathbf 1_{\{X_\tau = 2\}}]$, each step lasting $1/\sigma^2$); Monte Carlo of $S_1S_2$ under $Q$ (2,000,000 paths) and the split $E[S_1^2]e^{r}$; `brentq` for the forward price.
+2. Validator: 0 errors; no warnings on this file (one `[negative-key]` warning was fixed by a `dropped-sign` slip).
+3. Voice scan 35 on the course folder: 0 and 0 (8,752 sentences).
+4. `fresh-check --file` (and `--pairs`): 0 hits. Own greps of 41.67, 33.33, 0.48, 29.93, 28.19, 122.27, 2.3643, 118.21, $S_1S_2$ and the stories: no match in the course. A first draft used a market maker's inventory between two limits, which is the setting of markov l10; it was changed to a fund's return gap reviewed at two levels.
+5. `grade-all --file`: 13 widgets, 0 failures.
+6. Playthrough `--problems ito/problems-4 --local-cdn <pkgs>`: green, desktop and `--mobile`. Part shots at 440 px read; no layout faults.
+
+Closest material to each problem (screens numbered from 1):
+
+| problem | lesson screen | quiz | review | homework | exam |
+|---|---|---|---|---|---|
+| p-tracking-review | l13 S1 ($W^3 - ctW$, $c = 3$) and l14 S3, S7 ($b/(a + b)$, $ab/\sigma^2$): here $c$ carries $\sigma^2$, and the cubic martingale is stopped to split $E[\tau]$ by the level reached, which the course never does. | l14 q-ratio ($+4$ or $-1$, chance only). | r-exit-sigma ($ab/\sigma^2 = 12$): one step of the chain. | h-stopping (order the derivation of $P$ and $E[\tau]$): no conditional time. | e-exit-drift (drifting exit, $P$ and $E[\tau]$): no cubic martingale, no conditioning. |
+| p-two-date-product | l15 S5 ($\text{Var}(W_2 + W_3)$ by $\min(s, t)$) and l16 S4, S5 (power payoff $S_T^2$): here the covariance of two log prices feeds a lognormal mean of a product at two dates. | l15 q-const; l16 q-cube ($S_T^3$). | r-sqrt ($\sqrt{S_T}$): one date only. | h-moments ($E[W_2^4W_3^2]$): moments of $W$, not a price. | e-cubed-claim ($S_T^m$ at one date). |
+| p-dividend-hedge | l17 S2 to S5 (the no-dividend derivation and where $\mu$ goes) and S8 (forward check): here a dividend term changes the coefficient to $r - q$, then a prepaid share and a forward price follow from it. | l17 q-vt ($V_t$ from given Greeks); l16 q-fwd2 ($100e^{0.1}$, no dividends). | r-mu (what the price depends on). | h-derivation, h-aloud-unknown-drift (the derivation aloud, no dividends). | e-theta-from-pde (theta from given Greeks). |
+
+No problem walks through several items in a row, and none retells a lesson screen. No engine limit bent a part; no inbox bullets.
