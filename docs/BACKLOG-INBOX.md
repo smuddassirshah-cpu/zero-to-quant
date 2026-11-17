@@ -73,3 +73,7 @@ Raised later (review problems algebra 4):
 
 Raised later (fix pass problems measure-prob 4):
 - `[rounding-tie]` did not fire on `app/content/courses/measure-prob/problems-4.json` items[2].parts[1].widget.wrong[0] (`no-weight`): slip value 0.0546875 (7/128) at 5 places, band abs 5e-06 around the stored 0.054688, so 0.05468 was refused. The rule reads the stored value, one digit past the asked places, and misses the tie.
+
+Raised later (delta read AG ito 4):
+- `fresh-check` passes `ito/problems-4` `p-band-wait` part 2: its `explain` is l13 `screens[0]`'s `explain` with $\sigma^2$ folded into each coefficient (3 to 12, $6x$ to $4 \times 6x$), and `no-half` is the lesson's `whole` line. One more instance of the bullet under "review problems ito" (a course item with one constant folded in).
+- `fresh-check --file <path outside the content root>` reads the file as an exam and reports the set against itself; `--content <copy> --file <copy path>` works. Say so in the usage text.
