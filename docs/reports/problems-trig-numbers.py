@@ -480,34 +480,34 @@ if L3:
     ok(abs(max(sols, key=lambda v: float(v)) - 5 * sp.pi / 6) == 0 and abs(rad(max(brute)) - ev(5 * sp.pi / 6)) < 1e-12, 'quad p4: largest root two ways')
 
     # ---- p-daylight-model
-    a3 = (F(164, 10) - F(76, 10)) / 2
-    Lm = lambda t: 4.4 * math.sin(math.pi / 6 * (t - 3)) + 12
+    a3 = (F(176, 10) - F(64, 10)) / 2
+    Lm = lambda t: 5.6 * math.sin(math.pi / 6 * (t - 3)) + 12
     g3 = [i / 1000 for i in range(0, 12001)]
     num(L3, 'p-daylight-model', 1, a3, (max(map(Lm, g3)) - min(map(Lm, g3))) / 2,
-        {'range': 2 * a3, 'longest': 16.4, 'midline': 12}, agree=1e-6, printed='4.4')
-    ok(abs(Lm(6) - 16.4) < 1e-12 and abs(Lm(12) - 7.6) < 1e-12, 'daylight: the model gives 16.4 in month 6 and 7.6 in month 12')
+        {'range': 2 * a3, 'longest': 17.6, 'midline': 12}, agree=1e-6, printed='5.6')
+    ok(abs(Lm(6) - 17.6) < 1e-12 and abs(Lm(12) - 6.4) < 1e-12, 'daylight: the model gives 17.6 in month 6 and 6.4 in month 12')
     expr_part(L3, 'p-daylight-model', 2, sp.pi / 6, {'period': sp.Integer(12), 'half-cycle': sp.pi / 3, 'flipped': 6 / sp.pi})
     num(L3, 'p-daylight-model', 3, 6 - sp.Rational(12, 4), bisect(lambda t: Lm(t) - 12, 0.5, 5.5),
         {'peak': 6, 'falling': 9, 'trough': 12}, agree=1e-9)
-    # fix pass, delta aa-3 (c2): the level is 10 hours, so sin(pi/6 (t - 3)) = -5/11, not -1/2
-    s_lvl = sp.Rational(10 - 12, 1) / sp.Rational(22, 5)
-    ok(s_lvl == -sp.Rational(5, 11), 'daylight p4: the sine is (10 - 12) / 4.4 = -5/11 exactly')
-    u1 = sp.asin(sp.Rational(5, 11))
+    # fix pass, delta aa-3 (c2): the level is 10 hours, so sin(pi/6 (t - 3)) = -5/14, not -1/2
+    s_lvl = sp.Rational(10 - 12, 1) / sp.Rational(28, 5)
+    ok(s_lvl == -sp.Rational(5, 14), 'daylight p4: the sine is (10 - 12) / 5.6 = -5/14 exactly')
+    u1 = sp.asin(sp.Rational(5, 14))
     roots = [3 - 6 * u1 / sp.pi, 3 + 6 * (sp.pi + u1) / sp.pi]
     num_set(L3, 'p-daylight-model', 4, roots, [bisect(lambda t: Lm(t) - 10, 0, 3), bisect(lambda t: Lm(t) - 10, 9, 12)],
-            {'no-shift': [6.9, 11.1], 'above': [3.9, 8.1]}, asked=[2.1, 9.9])
+            {'no-shift': [6.7, 11.3], 'above': [3.7, 8.3]}, asked=[2.3, 9.7])
     ok(abs(Lm(float(roots[0])) - 10) < 1e-12 and abs(Lm(float(roots[1])) - 10) < 1e-12, 'daylight p4: the model gives 10 hours at both roots')
-    ok(abs(float(roots[0]) - 2.0988) < 5e-5 and abs(float(roots[1]) - 9.9012) < 5e-5 and abs(float(roots[0] + roots[1]) - 12) < 1e-12, 'daylight p4: roots 2.0988 and 9.9012, symmetric about t = 6')
-    ok(abs(math.asin(5 / 11) - 0.4719) < 5e-5 and abs(math.pi + 0.4719 - 3.6135) < 5e-5, 'daylight p4: u = -0.4719 and pi + 0.4719 = 3.6135 as printed')
-    sl = [float(r) for r in (6 * (math.pi + math.asin(5 / 11)) / math.pi, 6 * (2 * math.pi - math.asin(5 / 11)) / math.pi)]
-    ok(abs(sl[0] - 6.9012) < 1e-4 and abs(sl[1] - 11.0988) < 1e-4, 'daylight p4: no-shift slips 6.90 and 11.10 solve sin(pi t / 6) = -5/11')
-    ok(all(abs(math.sin(math.pi * t_ / 6) + 5 / 11) < 1e-3 for t_ in (6.9, 11.1)), 'daylight p4: 6.9 and 11.1 have sine -5/11 to 3 dp')
-    ok(abs(Lm(3.9) - 14) < 0.02 and abs(Lm(8.1) - 14) < 0.02 and abs(12 + 4.4 * 5 / 11 - 14) < 1e-12, 'daylight p4: above slips 3.9 and 8.1 give 14 hours (sine +5/11)')
+    ok(abs(float(roots[0]) - 2.3025) < 5e-5 and abs(float(roots[1]) - 9.6975) < 5e-5 and abs(float(roots[0] + roots[1]) - 12) < 1e-12, 'daylight p4: roots 2.3025 and 9.6975, symmetric about t = 6')
+    ok(abs(math.asin(5 / 14) - 0.3652) < 5e-5 and abs(math.pi + 0.3652 - 3.5068) < 5e-5, 'daylight p4: u = -0.3652 and pi + 0.3652 = 3.5068 as printed')
+    sl = [float(r) for r in (6 * (math.pi + math.asin(5 / 14)) / math.pi, 6 * (2 * math.pi - math.asin(5 / 14)) / math.pi)]
+    ok(abs(sl[0] - 6.6975) < 1e-4 and abs(sl[1] - 11.3025) < 1e-4, 'daylight p4: no-shift slips 6.70 and 11.30 solve sin(pi t / 6) = -5/14')
+    ok(all(abs(math.sin(math.pi * t_ / 6) + 5 / 14) < 2e-3 for t_ in (6.7, 11.3)), 'daylight p4: 6.7 and 11.3 have sine -5/14 to 3 dp')
+    ok(abs(Lm(3.7) - 14) < 0.02 and abs(Lm(8.3) - 14) < 0.02 and abs(12 + 5.6 * 5 / 14 - 14) < 1e-12, 'daylight p4: above slips 3.7 and 8.3 give 14 hours (sine +5/14)')
     above = sum(1 for t_ in g3[:-1] if Lm(t_ + 0.0005) > 10) / 1000
-    num(L3, 'p-daylight-model', 5, float(roots[1] - roots[0]), above, {'outside': 12 - 7.8, 'whole-months': 10 - 2}, asked=9.90 - 2.10, agree=2e-3)
-    ok(abs(above - 7.8024) < 2e-3 and abs(12 - above - 4.1976) < 2e-3, 'daylight p5: 7.8 months above, 4.2 below, by a 12,000-step scan')
-    ok(L3['p-daylight-model']['parts'][4]['widget']['tol']['abs'] == 0.05, 'daylight p5: one decimal place band 7.8 +- 0.05 (takes 7.80 and 7.8024, refuses 7.7 and 7.9)')
-    ok(not within(7.7, 7.8, 0.05) and not within(7.9, 7.8, 0.05) and within(7.8024, 7.8, 0.05), 'daylight p5: band edges')
+    num(L3, 'p-daylight-model', 5, float(roots[1] - roots[0]), above, {'outside': 12 - 7.4, 'whole-months': 10 - 2}, asked=9.70 - 2.30, agree=2e-3)
+    ok(abs(above - 7.3950) < 2e-3 and abs(12 - above - 4.6050) < 2e-3, 'daylight p5: 7.4 months above, 4.6 below, by a 12,000-step scan')
+    ok(L3['p-daylight-model']['parts'][4]['widget']['tol']['abs'] == 0.05, 'daylight p5: one decimal place band 7.4 +- 0.05 (takes 7.40 and 7.3950, refuses 7.3 and 7.5)')
+    ok(not within(7.3, 7.4, 0.05) and not within(7.5, 7.4, 0.05) and within(7.3950, 7.4, 0.05), 'daylight p5: band edges')
     for pp in (3, 4):
         ok('9.8' not in L3['p-daylight-model']['parts'][pp]['question'] + L3['p-daylight-model']['parts'][pp]['feedback']['correct'], f'daylight p{pp + 1}: no 9.8 left')
 
