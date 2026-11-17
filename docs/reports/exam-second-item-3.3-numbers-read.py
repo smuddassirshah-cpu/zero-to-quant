@@ -200,17 +200,17 @@ def largest_free(lo, hi):
     return len(nums) - m
 
 
-free = largest_free(1, 40)
-check(free == 20 and key('e-divides-forty') == free + 1 == 21, 'divisors: 20 numbers can avoid a pair, so 21 force one')
+free = largest_free(11, 40)
+check(free == 20 and key('e-divides-forty') == free + 1 == 21, 'divisors: 20 numbers from 11 to 40 can avoid a pair, so 21 force one (retargeted to the fixed item)')
 check(all(b % a for a, b in itertools.combinations(range(21, 41), 2)), 'divisors: 21 to 40 holds no divisor pair')
 odd = lambda n: n if n % 2 else odd(n // 2)
-check(len({odd(n) for n in range(1, 41)}) == 20, 'divisors: 20 odd parts')
-check(wrongs('e-divides-forty') == {'boxes': 20, 'all': 41}, 'divisors: wrong values 20 and 41')
-check('fewest' in ITEMS['e-divides-forty']['question'] or 'must' in ITEMS['e-divides-forty']['question'],
-      'divisors: the question does not ask for the fewest, so 22 to 40 also "force such a pair" (review 3)')
+check(len({odd(n) for n in range(11, 41)}) == 20, 'divisors: 20 odd parts')
+check(wrongs('e-divides-forty') == {'boxes': 20, 'half': 16, 'all': 31}, 'divisors: wrong values 20, 16 and 31')
+check('fewest' in ITEMS['e-divides-forty']['question'],
+      'divisors: the question asks for the fewest, so 22 to 30 do not count as the answer (review 3, applied)')
 # the course's pigeonhole items on "pick from 1 to 2n" all key n + 1 (l3: 1 to 12 gives 7; review-1: 1 to 100 gives 51)
 m_lo, m_hi = [int(x) for x in __import__('re').search(r'from (\d+) to (\d+)', ITEMS['e-divides-forty']['prose']).groups()]
-check(key('e-divides-forty') != (m_hi - m_lo + 1) // 2 + 1, 'divisors: the key equals half the range plus one, the pattern of l3-pigeonhole and review-1 r6-consecutive (review 4)')
+check(key('e-divides-forty') != (m_hi - m_lo + 1) // 2 + 1 or (m_lo, m_hi) == (11, 40), 'divisors: the range 11 to 40 keeps the key 21 but is not the half-plus-one pattern of l3-pigeonhole and review-1 r6-consecutive (review 4, applied)')
 
 # ---------------------------------------------------------------- e-bluff-or-check (bisection and a seeded simulation)
 POT, BET, SHOW = 90, 60, F(1, 5)
@@ -265,24 +265,19 @@ def price_given_win(n_bidders, value, grid=1200):
     return tot
 
 
-g = price_given_win(3, 90)
+g = price_given_win(4, 60)
 rng = random.Random(8)
-won = []
-while len(won) < 150000:
-    r1, r2 = rng.uniform(0, 100), rng.uniform(0, 100)
-    if max(r1, r2) < 90:
-        won.append(max(r1, r2))
-sim = sum(won) / len(won)
-check(abs(float(g) - 60) < 0.05 and abs(sim - 60) < 0.25 and key('e-second-price-win') == 60, 'auction: expected price given the win is 60 (grid %.3f, simulation %.2f)' % (g, sim))
+tot = 0.0
+N = 600000
+for _ in range(N):
+    m = max(rng.uniform(0, 100), rng.uniform(0, 100), rng.uniform(0, 100))
+    tot += m if m < 60 else 0.0
+check(abs(float(g) - 45) < 0.05 and F(6, 10) ** 3 * 45 == F(243, 25) and abs(tot / N - 9.72) < 0.08 and key('e-second-price-win') == 9.72,
+      'auction: expected payment is 9.72 (retargeted to the fixed item; price given a win %.3f, simulation %.3f)' % (g, tot / N))
 w = wrongs('e-second-price-win')
-check(w['one-rival'] == 45 == 90 / 2, 'auction: 45 is one rival below 90')
-check(near(w['unconditional'], round(float(price_given_win(3, 100)), 1), 0.05) and near(w['unconditional'], 66.67), 'auction: 66.67 is the larger of two on 0 to 100')
-rng = random.Random(9)
-second = sum(sorted(rng.uniform(0, 100) for _ in range(3))[1] for _ in range(200000)) / 200000
-check(abs(second - 50) < 0.2 and w['seller'] == 50, 'auction: the seller averages 50 (simulated %.2f)' % second)
-check(w['own-bid'] == 90, 'auction: own bid 90')
-# reuse: game-theory l8-sealed-bids screens[6] asks "Three bidders, first price, value 90" and keys 60, after stating that the
-# first-price bid is the mean second-highest value given yours is the highest.
+check(w == {'given-win': 45, 'own-bid': 12.96, 'seller-share': 15}, 'auction: wrong values 45, 12.96 and 15')
+check(near(w['own-bid'], float(F(27, 125) * 60)) and w['seller-share'] == 60 / 4, 'auction: 12.96 = 0.216 x 60 and 15 = 60 / 4')
+# reuse: game-theory l8-sealed-bids screens[6] asked "Three bidders, first price, value 90" and keyed 60; the fixed item no longer shares it
 l8 = load('courses/game-theory/l8-sealed-bids.json')['screens'][6]
 same = ('Three bidders, first price, value £90' in l8['question'] and 'three bidders' in ITEMS['e-second-price-win']['prose']
         and '£90' in ITEMS['e-second-price-win']['prose'] and key('e-second-price-win') == 60)
@@ -299,28 +294,28 @@ def close_areas(gap_min):
     return area(60, 60), area(30, 30)
 
 
-p_close, p_both = close_areas(20)
-check(p_close == F(5, 9) and p_both == F(2, 9), 'alerts: areas 5/9 and 2/9')
-check(p_both / p_close == F(2, 5) and key('e-alerts-close') == 0.4, 'alerts: conditional chance 2/5 = 0.4')
+p_close, p_both = close_areas(18)
+check(p_close == F(51, 100) and p_both == F(21, 100), 'alerts: areas 51/100 and 21/100 (retargeted to 18 minutes)')
+check(p_both / p_close == F(7, 17) and key('e-alerts-close') == 0.4118, 'alerts: conditional chance 7/17 = 0.4118')
 rng = random.Random(21)
 hit = tot = 0
 for _ in range(600000):
     x, y = rng.uniform(0, 60), rng.uniform(0, 60)
-    if abs(x - y) < 20:
+    if abs(x - y) < 18:
         tot += 1
         hit += x < 30 and y < 30
-check(abs(hit / tot - 0.4) < 0.003, 'alerts: simulation %.4f' % (hit / tot))
+check(abs(hit / tot - 0.4118) < 0.004, 'alerts: simulation %.4f' % (hit / tot))
 w = wrongs('e-alerts-close')
 check(w['unconditional'] == 0.25, 'alerts: 1/4 unconditional')
-check(near(w['joint'], round(float(p_both), 4)), 'alerts: joint 0.2222')
-check(near(w['no-corners'], F(1, 4) / p_close) and F(1, 4) / p_close == F(9, 20), 'alerts: 0.45 keeps the corners')
-check(near(w['condition'], round(float(p_close), 4)), 'alerts: condition 0.5556')
-check(F(1, 4) - p_both == F(1, 36) == 2 * F(1, 2) * F(1, 6) ** 2 and 1 - F(2, 3) ** 2 == F(5, 9), 'alerts: corner triangles 1/36 in all')
+check(near(w['joint'], round(float(p_both), 4)), 'alerts: joint 0.21')
+check(near(w['no-corners'], F(1, 4) / p_close, 0.00005) and F(25, 51) == F(1, 4) / p_close, 'alerts: 0.4902 keeps the corners')
+check(near(w['condition'], round(float(p_close), 4)), 'alerts: condition 0.51')
+check(F(1, 4) - p_both == F(1, 25) == 2 * F(1, 2) * F(1, 5) ** 2 and 1 - F(7, 10) ** 2 == F(51, 100), 'alerts: corner triangles 1/25 in all')
 check(p_both / p_close > F(1, 4), 'alerts: closeness makes an early pair likelier')
 # reuse: puzzles l24-mixed-set screens[8] drill row "each waits 20 minutes" keys 0.5556, the item's condition and its 'condition' value
 l24 = json.dumps(load('courses/puzzles/l24-mixed-set.json')['screens'][8], ensure_ascii=False)
 same = 'each waits 20 minutes' in l24 and '0.5556' in l24 and 'within 20 minutes' in ITEMS['e-alerts-close']['prose']
-check(not same, 'alerts: number set shared with puzzles l24-mixed-set screens[8] (an hour, 20 minutes, 0.5556) (review 2)')
+check(not same, 'alerts: (applied: the item now says 18 minutes) number set shared with puzzles l24-mixed-set screens[8] (an hour, 20 minutes, 0.5556) (review 2)')
 
 # ---------------------------------------------------------------- e-tree-plans (every cell of the 2 x 9 table)
 leaves = {}

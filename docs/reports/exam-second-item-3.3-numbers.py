@@ -116,7 +116,7 @@ check(wrong(iid, 'patterns') == 32 and wrong(iid, 'one-each') == 5, f'{iid} wron
 check(not distinct((1, 1, 1, 1, 1)), f'{iid} one coin each tells only how many')
 wrongs_outside(iid)
 
-# 4. e-divides-forty: largest set in 1..40 with no divisor pair is 20, so 21 force a pair
+# 4. e-divides-forty: largest set in 11..40 with no divisor pair is 20, so 21 force a pair
 iid = 'e-divides-forty'
 
 
@@ -127,19 +127,37 @@ def odd_part(n):
 
 
 classes = {}
-for n in range(1, 41):
+for n in range(11, 41):
     classes.setdefault(odd_part(n), []).append(n)
 check(len(classes) == 20 and sorted(classes) == list(range(1, 40, 2)), f'{iid} 20 odd parts 1 to 39')
 check(all(b % a == 0 for c in classes.values() for a, b in zip(c, c[1:])), f'{iid} each class is a divisor chain')
 top = list(range(21, 41))
 check(len(top) == 20 and not any(b % a == 0 for a, b in itertools.combinations(top, 2)), f'{iid} 21 to 40: 20 numbers with no pair')
+# second method: minimum chain cover of 11..40 = 30 - maximum matching on the divisibility order (Dilworth), equals the largest antichain
+rng = list(range(11, 41))
+adj = {a: [b for b in rng if b != a and b % a == 0] for a in rng}
+match = {}
+
+
+def aug(u, seen):
+    for v in adj[u]:
+        if v not in seen:
+            seen.add(v)
+            if v not in match or aug(match[v], seen):
+                match[v] = u
+                return True
+    return False
+
+
+check(len(rng) - sum(aug(u, set()) for u in rng) == 20, f'{iid} largest pair-free set of 11..40 is 20 by matching')
 # second method: greedy largest antichain by exhaustive search on 1..12 matches ceil(n/2), and the chain cover bound gives 20 for 40
 for n in range(1, 13):
     m = max(len(s) for r in range(n + 1) for s in itertools.combinations(range(1, n + 1), r)
             if not any(b % a == 0 for a, b in itertools.combinations(s, 2)))
     check(m == (n + 1) // 2, f'{iid} brute force largest pair-free set of 1..{n} is ceil(n/2)')
 check(key(iid) == 21 == len(classes) + 1, f'{iid} key 21')
-check(wrong(iid, 'boxes') == 20 and wrong(iid, 'all') == 41, f'{iid} wrongs 20 and 41')
+check(wrong(iid, 'boxes') == 20 and wrong(iid, 'half') == 30 // 2 + 1 == 16 and wrong(iid, 'all') == 31, f'{iid} wrongs 20, 16 and 31')
+check('11 to 40' in items[iid]['prose'] and key(iid) != 30 // 2 + 1, f'{iid} range 11 to 40 breaks the n + 1 pattern')
 wrongs_outside(iid)
 
 # 5. e-consecutive-numbers: Ana 3, Ben 4, Ana speaks first
@@ -169,23 +187,27 @@ check({b for b in (2, 4)} - ben_knows == {4}, f'{iid} Ana with 3 is left with 4'
 check(len({s[0] for s in after1 if s[1] == 4}) == 2, f'{iid} Ben with 4 still faces 3 or 5 at statement 2')
 check([o['id'] for o in items[iid]['widget']['options'] if o.get('correct')] == ['ana-3'], f'{iid} key option ana-3')
 
-# 6. e-second-price-win: E[max of two rivals | both below 90]
+# 6. e-second-price-win: four bidders, value 60: P(win) x E[max of three rivals | all below 60]
 iid = 'e-second-price-win'
-exact = F(2, 3) * 90
-check(exact == 60 and key(iid) == 60, f'{iid} key 60 by the order-statistic rule')
-N = 600
-grid = [(i + 0.5) * 90 / N for i in range(N)]
-num = sum(max(x, y) for x in grid for y in grid) / N ** 2
-check(close(num, 60, 0.01), f'{iid} key 60 by a grid over the two rival values ({num:.4f})')
+pwin = F(6, 10) ** 3
+emax = F(3, 4) * 60
+exact = pwin * emax
+check(pwin == F(27, 125) == F(216, 1000) and emax == 45 and exact == F(243, 25) and float(exact) == 9.72 == key(iid), f'{iid} key 9.72 by the order-statistic rule')
+N = 120
+grid = [(i + 0.5) * 60 / N for i in range(N)]
+num = sum(max(x, y, z) for x in grid for y in grid for z in grid) / N ** 3
+check(close(num, 45, 0.05) and close(0.216 * num, 9.72, 0.02), f'{iid} key 9.72 by a grid over the three rival values ({0.216 * num:.4f})')
 random.seed(1)
-sims = []
-while len(sims) < 200000:
-    v = [random.uniform(0, 100), random.uniform(0, 100)]
-    if max(v) < 90:
-        sims.append(max(v))
-check(close(sum(sims) / len(sims), 60, 0.3), f'{iid} simulation near 60')
-check(wrong(iid, 'one-rival') == 45 and wrong(iid, 'unconditional') == round(200 / 3, 2) == 66.67, f'{iid} wrongs 45 and 66.67')
-check(wrong(iid, 'seller') == 50 == F(3 - 1, 3 + 1) * 100 and wrong(iid, 'own-bid') == 90, f'{iid} wrongs 50 = (n-1)/(n+1) x 100 and 90')
+tot = 0.0
+M = 1000000
+for _ in range(M):
+    v = [random.uniform(0, 100) for _ in range(3)]
+    if max(v) < 60:
+        tot += max(v)
+check(close(tot / M, 9.72, 0.05), f'{iid} simulation near 9.72 ({tot / M:.3f})')
+check(wrong(iid, 'given-win') == 45 and close(wrong(iid, 'own-bid'), float(pwin * 60)) == (wrong(iid, 'own-bid') == 12.96) and wrong(iid, 'own-bid') == 12.96, f'{iid} wrongs 45 and 12.96 = 0.216 x 60')
+check(wrong(iid, 'seller-share') == 60 / 4 == 15, f'{iid} wrong 15 = 60 / 4')
+check(key(iid) == 9.72 and items[iid]['widget'].get('unit') == '\u00a3', f'{iid} unit')
 wrongs_outside(iid)
 
 # 7. e-bluff-or-check: 90(1 - c) - 60c = 0.2 x 90
@@ -199,25 +221,25 @@ check(close(wrong(iid, 'folds'), 1 - 0.48) and round(60 / 210, 2) == wrong(iid, 
 check(90 - 150 * 0.48 == 18, f'{iid} 90 - 150 x 0.48 = 18')
 wrongs_outside(iid)
 
-# 8. e-alerts-close: P(both < 1/2 | |X - Y| < 1/3)
+# 8. e-alerts-close: P(both < 1/2 | |X - Y| < 3/10)
 iid = 'e-alerts-close'
-pB = 1 - F(2, 3) ** 2
-pAB = F(1, 4) - 2 * F(1, 2) * F(1, 6) ** 2
-check(pB == F(5, 9) and F(1, 2) - F(1, 3) == F(1, 6) and 2 * F(1, 2) * F(1, 6) ** 2 == F(1, 36), f'{iid} 5/9, legs 1/6, corners 1/36')
-check(pAB == F(2, 9) and pAB / pB == F(2, 5) and key(iid) == 0.4, f'{iid} key 2/5 = 0.4 by areas')
+pB = 1 - F(7, 10) ** 2
+pAB = F(1, 4) - 2 * F(1, 2) * F(1, 5) ** 2
+check(pB == F(51, 100) and F(1, 2) - F(3, 10) == F(1, 5) and 2 * F(1, 2) * F(1, 5) ** 2 == F(1, 25), f'{iid} 51/100, legs 1/5, corners 1/25')
+check(pAB == F(21, 100) and pAB / pB == F(7, 17) and key(iid) == round(7 / 17, 4) == 0.4118, f'{iid} key 7/17 = 0.4118 by areas')
 M = 1200
 inB = inAB = 0
 for i in range(M):
     x = (i + 0.5) / M
     for j in range(M):
         y = (j + 0.5) / M
-        if abs(x - y) < 1 / 3:
+        if abs(x - y) < 0.3:
             inB += 1
             if x < 0.5 and y < 0.5:
                 inAB += 1
-check(close(inAB / inB, 0.4, 0.002), f'{iid} key 0.4 by a {M} x {M} grid ({inAB / inB:.4f})')
-check(wrong(iid, 'unconditional') == 0.25 and wrong(iid, 'joint') == round(2 / 9, 4), f'{iid} wrongs 0.25 and 0.2222')
-check(wrong(iid, 'no-corners') == float(F(1, 4) / F(5, 9)) == 0.45 and wrong(iid, 'condition') == round(5 / 9, 4), f'{iid} wrongs 0.45 and 0.5556')
+check(close(inAB / inB, 0.4118, 0.002), f'{iid} key 0.4118 by a {M} x {M} grid ({inAB / inB:.4f})')
+check(wrong(iid, 'unconditional') == 0.25 and wrong(iid, 'joint') == 0.21, f'{iid} wrongs 0.25 and 0.21')
+check(wrong(iid, 'no-corners') == round(float(F(1, 4) / pB), 4) == 0.4902 and wrong(iid, 'condition') == 0.51, f'{iid} wrongs 0.4902 and 0.51')
 wrongs_outside(iid)
 
 # 9. e-tree-plans: pure Nash cells of the tree's table, read from the canvas

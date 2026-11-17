@@ -63,3 +63,15 @@ No course of the topic has a problem set. No Fluency drill carries these skills'
 - `e-bluff-or-check`: 0.48 and 0.52 are 0.04 apart with bands of 0.005; $\tfrac{60}{210} = 0.2857$ rounds to 0.29 with no tie.
 - `e-tree-plans`: the two branches reuse child ids `x`, `y`, `z`; `tree.js` keys nodes by path (`left-x`, `right-x`), so no clash.
 - `e-consecutive-numbers`: each option's `why` matches the model (Ben with 4 faces 3 or 5; Ben's answer rules out 2).
+
+## Fix pass
+
+Applied to `app/content/exams/topic-3.3.json` only, each replacement as the reader wrote it. Every number recomputed first: 0.6^3 x 45 = 9.72 (exact, by grid, and simulation), 7/17 = 0.4118 (areas, grid, simulation), 20 as the largest pair-free set in 11 to 40 (maximum matching). Course and exam grep for the new key numbers and stories (four bidders at £60, 9.72, 12.96, 18 minutes, 0.51, 7/17, 11 to 40): no hit. Gates: validator 0 errors; voice scan 0 and 0; `grade-all.mjs --file` 32 widgets, 0 failures; playthrough green with and without `--mobile`.
+
+1. fixed. `e-second-price-win` rewritten (four bidders, value £60, expected payment 9.72, wrongs 45, 12.96, 15). Id, difficulty, skill and tag kept (the review gives no new id). Note: the reader's `byKey.seller-share` text ("a quarter of the seller's £60") is applied verbatim; it reads loosely, so a later wording pass may tidy it.
+2. fixed. `e-alerts-close` at 18 minutes, key 0.4118, wrongs 0.25, 0.21, 0.4902, 0.51.
+3. fixed. `e-divides-forty` question asks for the fewest.
+4. fixed. `e-divides-forty` on 11 to 40, wrongs 20, 16, 31, `byKey.half` added, explanation replaced.
+5. fixed. `e-bags-any-fake` prose says "Five large bags".
+
+Scripts: `exam-second-item-3.3-numbers.py` retargeted to the new values (97 checks, exit 0); the reader's `-numbers-read.py` checks of the three rewritten items retargeted to the new values, with the reuse checks kept to show the old overlap is gone (117 checks, 0 FINDING). Item table in `docs/reports/exam-second-item-3.3.md` updated. Graded answers changed: e-second-price-win 60 to 9.72, e-alerts-close 0.4 to 0.4118; e-divides-forty key stays 21 with new range and wrong values.

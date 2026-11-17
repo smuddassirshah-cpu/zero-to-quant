@@ -43,12 +43,12 @@ New items:
 |---|---|---|---|
 | e-divide-4512 | 2 | mp-speed | numeric (4512 / 48 = 94) |
 | e-thousand-days | 2 | bz-quick | choice (Monday + 1000 days: Sunday) |
-| e-bags-any-fake | 3 | bz-search | numeric (any subset of 5 bags fake, digital scale: 31 coins) |
-| e-divides-forty | 3 | bz-invariant | numeric (pigeonhole on odd parts, 1 to 40: 21) |
+| e-bags-any-fake | 3 | bz-search | numeric (any subset of 5 large bags fake, digital scale: 31 coins) |
+| e-divides-forty | 3 | bz-invariant | numeric (pigeonhole on odd parts, 11 to 40, fewest numbers: 21) |
 | e-bluff-or-check | 3 | gm-poker, gm-mixed | numeric (call share making bet and check equal: 0.48) |
 | e-consecutive-numbers | 3 | bz-strategy | choice (consecutive numbers, Ana 3, Ben 4: Ana on statement 3) |
-| e-second-price-win | 3 | gm-auction | numeric (price expected given a win at £90, three bidders: £60) |
-| e-alerts-close | 4 | pz-conditioning, pz-geometry | numeric (both in first half hour given within 20 minutes: 0.4) |
+| e-second-price-win | 3 | gm-auction | numeric (expected payment before the bids, four bidders, value £60: £9.72) |
+| e-alerts-close | 4 | pz-conditioning, pz-geometry | numeric (both in first half hour given within 18 minutes: 0.4118) |
 | e-tree-plans | 5 | gm-sequential, gm-normal | numeric on a tree canvas (pure Nash cells of the 2 x 9 table: 3) |
 
 Pairs left: none. After the edit every skill of the exam has at least two auto items (pz-expectation 3, all others 2).
