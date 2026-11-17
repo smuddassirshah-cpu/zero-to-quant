@@ -473,18 +473,20 @@ def level3():
     num(n, 'p-grid-budget', 2, est, geo, {'difference': db * 1e6, 'quarter': db / 4 * 1e6}, 557.6, agree=1e-9)
     Vbs = bs_call(120, 120, 0.045, 0.18, 1.25)[0]
     ok(abs((Vbs - V4) * 1e6 - est) < 10, f'L3 grid estimated shortfall {est:.1f} near the true {(Vbs - V4) * 1e6:.1f}')
-    s16 = 557.6 / 16
-    num(n, 'p-grid-budget', 3, s16, 557.6 * (400 / 1600) ** 2, {'one-halving': 557.6 / 4, 'per-interval': 557.6 / 256}, 34.85, agree=1e-9)
-    ok(abs(est / 16 - s16) <= part(n, 'p-grid-budget', 3)['widget']['tol']['abs'], 'L3 grid p3 from the unrounded shortfall lands in the band')
-    true16 = (Vbs - Vs[1600]) * 1e6                                # the 1,600 run against the formula (a check of the model only)
-    ok(abs(true16 - s16) < 0.1 * s16, f'L3 grid the 1,600 run is {true16:.2f}e-6 below the formula, within 10% of the predicted 34.85')
-    ratio = 557.6 / 34.85
-    num(n, 'p-grid-budget', 4, ratio ** 2, 16 ** 2, {'linear': 16, 'root': 4}, 256, agree=1e-9)
-    se_paths = lambda m_: 557.6 / math.sqrt(m_)                    # error after m times the paths
-    ok(abs(se_paths(256) - 34.85) < 1e-9, 'L3 grid 256 times the paths reach 34.85')
+    s6 = 557.6 / 2.5 ** 2                                          # 6.25 times the work: 2.5 times the intervals
+    num(n, 'p-grid-budget', 3, 557.6 / 6.25, 557.6 * (400 / 1000) ** 2, {'per-interval': 557.6 / 6.25 ** 2, 'first-order': 557.6 / 2.5}, 89.22, agree=1e-9)
+    ok(abs(est / 6.25 - s6) <= part(n, 'p-grid-budget', 3)['widget']['tol']['abs'], 'L3 grid p3 from the unrounded shortfall lands in the band')
+    ok(abs(round(s6, 2) - 89.22) < 1e-9, 'L3 grid p3 prints 89.22')
+    V1000 = cn_price(120, 120, 0.045, 0.18, 1.25, 1000)
+    true1000 = (Vbs - V1000) * 1e6                                 # the 1,000 run against the formula (a check of the model only)
+    ok(abs(true1000 - s6) < 0.1 * s6 and 92 < true1000 < 94, f'L3 grid the 1,000 run is {true1000:.2f}e-6 below the formula, "about 93"')
+    ok(1.01 < (Vbs - V4) * 1e6 / est < 1.02, 'L3 grid "about 1% higher" holds for the 400 run')
+    ratio = 557.6 / 89.22
+    num(n, 'p-grid-budget', 4, (557.6 / 89.216) ** 2, 6.25 ** 2, {'linear': 6.25, 'root': 2.5}, 39.1, agree=1e-9)
+    ok(abs(round(ratio ** 2, 1) - 39.1) < 1e-9 and abs(round(ratio, 2) - 6.25) < 1e-9, 'L3 grid p4 prints 6.25 and 39.1')
     says(n, 'p-grid-budget', 1, '0.0066796', '0.0016728', '3.993')
     says(n, 'p-grid-budget', 2, '557.6')
-    says(n, 'p-grid-budget', 3, '34.85', '1,600')
+    says(n, 'p-grid-budget', 3, '89.22', '1,000')
     lv = Level('pdes', 3)
     lv.check_wrongs('problems')
     return lv

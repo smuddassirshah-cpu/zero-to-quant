@@ -89,3 +89,15 @@ The `p-drift-walk` change beyond the reader's text. Part 3 now reads "what chanc
 4. No tool compares a stated grid error with the pricer's own run. An author script that prices the next grid would have caught finding 2.
 
 Inbox bullets are under `Raised later (review-delta-ag-pdes):` in `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+1. Fixed. `p-log-contract` part 4 question and explain name the risk-neutral chance; key unchanged in value (see 7).
+2. Fixed. `p-grid-budget` part 2 question, correct line and explain now call 557.6 an order-2 estimate, with "about 1% higher" for the pricer's own runs. Recomputed: pricer gap on 400 is 564.36e-6 (1.2% above 557.59). Parts 3 and 4 carry the same wording via finding 3.
+3. Fixed, recomputed with the delta script's own Crank-Nicolson solver (not the review's figures): V200 = 12.99631924, V400 = 12.99799202, V1000 = 12.99846359, limit 12.99855638. Part 3 key 89.216 (557.6 / 6.25; band 0.006 takes 89.22, 89.21 sits on the 0.006 edge, not asked at this rounding; refuses both wrongs); wrongs per-interval 14.2746 (557.6 / 39.0625) and first-order 223.04 (557.6 / 2.5). The pricer's own 1,000 run is 92.79e-6 below the limit ("about 93"). Part 4 key 39.0625 (carried (557.6 / 89.216)^2 = 39.0625; from the printed 89.22, 39.0587), band 0.06: takes 39.1 and 39.06, refuses 39.0 (0.0625 away) and 39.2; wrongs 6.25 and 2.5. Replacement texts applied as written; no later sentence restates the old 34.85, 16 or 256.
+4. Partly fixed. Part 1 explain replaced as written. Open, for KNOWN_ISSUES: `p-grid-budget` parts 1 and 2 against `numerics/problems-3` `p-rate-path-euler`. Numerics: "With no exact value to hand, the gaps between successive runs shrink as the errors do. What order $p$ do the three runs show?" then "estimate the 16-step value's error" (slip "You divided by 3, as for a second-order method"). Set: "The error can still be read from the grids alone. From the differences ... what is the observed order $p$" then the finest run's error as a third of the last difference.
+5. Fixed. `p-drift-walk` part 4 now reads "the model's chance of being below the start".
+6. Fixed. `p-straddle-vol` part 1 `no-root` line replaced.
+7. Fixed. `p-log-contract` part 4 key 0.466535, band 0.00006: takes 0.4665, refuses 0.4666 (0.000065 away), 0.4664, and both wrongs.
+
+Gates: validator 0 errors, none of the four advisories new and none on pass 8; voice scan 35 0 and 0; `fresh-check --files problems-1,2,3 --pairs` on the real tree: 0 hits (12 advisory); `fresh-check --file` sets 1 and 3: 0 hits; `grade-all --file` sets 1 and 3: 0 failures; playthrough `--problems pdes/problems-1` and `-3`, with and without `--mobile`: All passed. Scripts: `problems-pdes-numbers.py` 639 checks 0 failures, reader 0 FINDING, delta reader 0 FINDING, all exit 0. Graded answers changed: `p-grid-budget` parts 3 and 4, `p-log-contract` part 4 (key 0.466535).

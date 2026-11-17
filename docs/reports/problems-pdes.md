@@ -124,3 +124,5 @@ Two bullets under `Raised later (problems pdes):` in `docs/BACKLOG-INBOX.md`: th
 No `course.json` change proposed.
 
 Screenshots at 440 px read: no overflow, maths wraps inside the column.
+
+Delta fix pass (AG): `p-grid-budget` parts 3 and 4 now ask a 6.25-times-work refinement (1,000 intervals; keys 89.216 and 39.0625), and the order-2 figures are worded as predictions.
