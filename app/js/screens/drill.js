@@ -324,7 +324,7 @@ if not callable(globals().get(${py(P.fn)})):
         const msg = (e && e.message) || 'The Python worker could not start.';
         if (run) { end({ crash: msg }); start(true); } else unavailable(msg);
       };
-      w.postMessage({ type: 'init', indexURL: null }); // the worker loads Pyodide from the jsDelivr CDN
+      w.postMessage({ type: 'init', indexURL: new URL('vendor/pyodide/', location.href).href }); // the worker tries the jsDelivr CDN first, then this local copy
       loadTimer = setTimeout(() => { if (my === gen) unavailable('Python took more than a minute to load.'); }, LOAD_LIMIT_MS);
     };
     const exec = (code, spec, onEvent, onEnd) => {

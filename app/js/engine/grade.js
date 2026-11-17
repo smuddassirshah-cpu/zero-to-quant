@@ -7,7 +7,7 @@
      sameSet(a, b), sameList(a, b)
      normExpr(s)                   normalised typed expression for the fallback comparison
      loadScript(url, ms)           lazy script loader with a timeout; one promise per url
-     maths()                       Promise<{ mathlive: bool, ce: ComputeEngine|null }> for the expression widget, 6 s budget
+     maths()                       Promise<{ mathlive: bool, ce: ComputeEngine|null }> for the expression widget; CDN first (6 s), then vendor/ (10 s in all)
      exprEqual(ce, a, b, { functions })  symbolic equivalence after simplify, with a 6-point numeric second opinion; real and
                                    imaginary parts both compared when an i appears; vectors and matrices entry by entry
      exprGrade(ce, spec, latex, ascii)   the whole grade of one typed expression, { ok, key, line }: equal to answer or accept (typed left side
@@ -106,12 +106,16 @@
     // The 0.30.2 package ships its browser build as compute-engine.min.umd.js (there is no compute-engine.min.js in dist/)
     ce: 'https://cdn.jsdelivr.net/npm/@cortex-js/compute-engine@0.30.2/dist/compute-engine.min.umd.js',
   };
+  /* Self-hosted copies (tools/fetch-vendor.sh), tried only when the CDN script fails to load. Resolved against the page. MathLive finds its fonts/
+     and sounds/ folders next to its own script, so vendor/mathlive/ holds those as well. */
+  const LOCAL = { mathlive: 'vendor/mathlive/mathlive.min.js', ce: 'vendor/compute-engine/compute-engine.min.umd.js' };
+  const loadLib = (key, ms) => loadScript(LIBS[key], ms).then(ok => ok || loadScript(new URL(LOCAL[key], location.href).href, 4000));
   let mathsP = null;
   const maths = () => {
     if (mathsP) return mathsP;
-    const deadline = new Promise(r => setTimeout(() => r('timeout'), 6000));
-    const ml = loadScript(LIBS.mathlive, 6000).then(ok => ok && !!window.customElements.get('math-field'));
-    const ce = loadScript(LIBS.ce, 6000).then(ok => {
+    const deadline = new Promise(r => setTimeout(() => r('timeout'), 10000)); // 6 s for the CDN, then up to 4 s for the local copy
+    const ml = loadLib('mathlive', 6000).then(ok => ok && !!window.customElements.get('math-field'));
+    const ce = loadLib('ce', 6000).then(ok => {
       try { const C = window.ComputeEngine && (window.ComputeEngine.ComputeEngine || window.ComputeEngine); return ok && typeof C === 'function' ? new C() : null; } catch { return null; }
     });
     mathsP = Promise.race([Promise.all([ml, ce]), deadline]).then(r => (r === 'timeout' ? { mathlive: false, ce: null } : { mathlive: r[0], ce: r[1] }));

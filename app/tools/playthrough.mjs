@@ -433,7 +433,7 @@ const main = async () => {
       consoleErrors.push({ where, text: m.text() + (loc ? `  (${loc})` : '') });
     });
     page.on('pageerror', (e) => consoleErrors.push({ where, text: 'Uncaught ' + (e.stack || e.message) }));
-    page.on('requestfailed', (r) => { if (!IGNORE_HOSTS.test(hostOf(r.url()))) consoleErrors.push({ where, text: `request failed: ${r.url()} (${r.failure() && r.failure().errorText})` }); });
+    page.on('requestfailed', (r) => { if (r.method() === 'HEAD' && r.url().startsWith(base + '/vendor/')) return; /* the workers probe vendor/ with HEAD (cpp-worker.js, drill-worker.js); Chromium reports a finished HEAD as aborted */ if (!IGNORE_HOSTS.test(hostOf(r.url()))) consoleErrors.push({ where, text: `request failed: ${r.url()} (${r.failure() && r.failure().errorText})` }); });
     page.on('response', (r) => { if (r.status() >= 400 && r.url().startsWith(base)) consoleErrors.push({ where, text: `HTTP ${r.status()} ${r.url().slice(base.length)}` }); });
   };
   /* engine pass AC: write the greens. A sweep first drops any item whose id appears as a whole token in a failure line or a console error's place; a batch is
