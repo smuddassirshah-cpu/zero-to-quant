@@ -19,3 +19,6 @@ Raised later (exam second item 1.6-1.11):
 Raised later (problems ito):
 - Playthrough at 440 px passes a part whose inline maths overflows the page: one KaTeX span holding a comma list (`$W = 0, 0.3, -0.2, 0.4, 0.6$`) does not wrap, widened the whole card and clipped the question text, yet `--problems ito/problems-2 --shots` was green. Fail a part when `document.documentElement.scrollWidth` exceeds the viewport, as the homework `-marked` shot already does for `.katex-display`.
 - `retold` learns stock sentences from committed content, so an instruction line repeated across new sets ("Read $\Phi$ from software or a normal table, and give 4 decimal places.", the wording `[table-source]` asks for) fires as a retelling between the new sets themselves. Treat a sentence that only meets `[table-source]` or `[answer-form]` as stock, or list such lines in the stoplist.
+
+Raised later (problems algebra):
+- `playthrough.mjs --problems <course>/problems-<n>` on a new set fails as "the level review's card ... has no Problem set row" and "the set opened in state empty" when `content/manifest.json` was restored with `git checkout` (as the commit rule asks) after the last validator run. The fix is to rerun `validate.mjs` first; the playthrough could say "set not in manifest.json: run tools/validate.mjs" instead.

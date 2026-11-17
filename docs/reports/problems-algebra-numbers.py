@@ -311,7 +311,10 @@ order2 = [z for z in G6 if z != e6 and m6(z, z) == e6]
 normal2 = [z for z in order2 if all(m6(m6(g, z), [y for y in G6 if m6(g, y) == e6][0]) == z for g in G6)]
 ok(normal2 == [(3, 0)], f'L3 the only normal subgroup of order 2 is <r^3> ({normal2})')
 conj = m6(m6((0, 1), (3, 0)), (0, 1))
-num(3, 'p-hexagon-quotient', 2, (-3) % 6, conj[0], {'negative': -3, 'identity': 0})
+ok(conj == (3, 0), 'L3 s r^3 s^-1 = r^3')
+flips_normal = [j for j in range(6) if all(m6(m6(g, (j, 1)), [y for y in G6 if m6(g, y) == e6][0]) == (j, 1) for g in G6)]
+num(3, 'p-hexagon-quotient', 2, 1 + len(flips_normal), len(normal2), {'all-seven': len(order2), 'flips': 6, 'none': 0})
+ok(len(order2) == 7, 'L3 seven elements of order 2 in D_6')
 ok(all(m6(m6((1, 0), (j, 1)), (5, 0)) == ((j + 2) % 6, 1) for j in range(6)), 'L3 r (r^j s) r^-1 = r^(j+2) s')
 N = [e6, (3, 0)]
 Nset = frozenset(N)
@@ -388,7 +391,7 @@ for lv in SETS:
         lv_obj.expect('problems', P(1, 2, 'feedback.correct'), 13)
         lv_obj.expect('problems', P(1, 3, 'feedback.correct'), 35)
         lv_obj.expect('problems', P(2, 0, 'feedback.correct'), 2)
-        lv_obj.expect('problems', P(2, 1, 'feedback.correct'), 3)
+        lv_obj.expect('problems', P(2, 1, 'feedback.correct'), 1)
         lv_obj.expect('problems', P(2, 2, 'feedback.correct'), 3)
         lv_obj.expect('problems', P(2, 3, 'feedback.correct'), 3)
     rc = lv_obj.report()
