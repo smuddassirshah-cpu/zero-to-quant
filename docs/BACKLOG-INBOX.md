@@ -22,6 +22,7 @@ Raised later (problems ito):
 
 Raised later (problems algebra):
 - `playthrough.mjs --problems <course>/problems-<n>` on a new set fails as "the level review's card ... has no Problem set row" and "the set opened in state empty" when `content/manifest.json` was restored with `git checkout` (as the commit rule asks) after the last validator run. The fix is to rerun `validate.mjs` first; the playthrough could say "set not in manifest.json: run tools/validate.mjs" instead.
+- (session AF re-author) `fresh-check` `transform` reports any two six-term sets that are arithmetic progressions with the same gap pattern as "equal after x -> a x + b" (here the kernel {1, 20, 39, 58, 96, 115} of `p-units-133` against the coset union {2, 5, 8, 11, 17, 20} of `p-units-21-cosets`). Such pairs share no number; the rule could require a shared number or a small multiplier before raising an error. Worked round by not listing the kernel.
 
 Raised later (problems measure-prob):
 - `fresh-check` same-course reuse warns when a choice option names the four modes of convergence in the usual order ("almost surely, in probability, in mean square and in distribution"), which any modes item must say. Workaround: problems-2 `p-root-of-uniform` part 5 reworded its options. A list of fixed course vocabulary that does not count towards a shared run would stop these warnings.

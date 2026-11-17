@@ -128,3 +128,25 @@ Keys changed by the exact fixes: none. Re-author: `p-shifted-product`, `p-desk-r
 
 1. `fresh-check --files` reported 0 hits on sets that carry findings 5, 6 and 8. Three gaps, raised in `docs/BACKLOG-INBOX.md` under `Raised later (review problems algebra):`: a key pair inside one formula (`15x \bmod 36` against "order of 15 modulo 36") with a shared derivation line ("$12 \mid 5x$, so $12 \mid x$"); a sentence skeleton whose masked part is a comma list ("has bottom row ... So $\sigma(1) = 7$, $\sigma(2) = 9$, and so on."); a permutation in cycle form against its inverse or a relabelled start.
 2. Findings 5, 8 and 9 are one class, a problem whose parts each match a different item of one review, lesson or exam file. If other reviews of this wave show it too, protocol 6 applies: a checker could flag a set problem whose parts each match a different item of one review or exam file by task shape (same question skeleton after masking numbers).
+
+## Fix pass
+
+Session AF, one author doing the re-author and the fix pass (`docs/briefs/reauthor-fix-af.md`). Every number was recomputed in `docs/reports/problems-algebra-numbers.py` before it was written.
+
+1. Fixed: re-authored as `p-pixel-scrambler` (order of $\mathbf{M} = \begin{pmatrix}1&2\\1&3\end{pmatrix}$ modulo 7 from $\mathbf{M}^4 \equiv -\mathbf{I}$, the inverse as $-\mathbf{M}^3$, a preimage pixel). It walks none of l2 s9, s10, l2 quiz 2, homework-1 i5, i6, review-1 i6 or "Orders modulo 17"; difficulty 5 on l1 to l4.
+2. Moot: its problem is re-authored. The new order step uses only l4 ($\mathbf{M}^8 \equiv \mathbf{I}$, $\mathbf{M}^4 \not\equiv \mathbf{I}$), no Lagrange or Fermat.
+3. Fixed as written: part 1 `question`, `feedback.correct`, `byKey.gcd`, `byKey.full`, part 2 `byKey.all`. Key 8 and slips 7, 56 unchanged.
+4. Fixed as written: part 2 and part 3 `question`. Keys 24 and 25 unchanged.
+5. Fixed: re-authored as `p-server-moves` (solve $\xi\sigma = \tau$ in $S_8$, its sign from the product rule first, its order, its even powers). It walks none of l8 s0, s1, s5, s8, l9 s9, l9 quiz 2, review-2 i4 to i6, homework-2 i7 or the two exam items.
+6. Fixed as written: $\sigma = (1\,5\,3\,2)$ in parts 3 and 4. Keys 3, 1, 6, every slip and every feedback line stand (author's and reader's scripts).
+7. Fixed as written: part 1 `explain.text` and `options[3].why`.
+8. Fixed: re-authored as `p-units-133` (reduction $\mathbb{Z}_{133}^{\times} \to \mathbb{Z}_{19}^{\times}$; kernel by listing, preimage of the cube roots of 1, then cube roots of 1 modulo 133 from the trivial overlap of two kernels). No image-size part, no multiplier map on $\mathbb{Z}_n$, no 15 and 36.
+9. Fixed: re-authored as `p-affine-five` (the 20 maps $ax + b$ on $\mathbb{Z}_5$; a conjugate of a translation, a coset order through $G/T \cong \mathbb{Z}_5^{\times}$, an element with its coset's order, the 10 elements of order 4). No dihedral group.
+
+Engine 1 and 2: left to the engine pass (inbox bullets already raised). One more inbox bullet: the `transform` rule matched two unrelated six-term progressions.
+
+Counts: fixed 8 (four re-authored, four exact fixes), disputed 0, deferred 0, moot 1 (finding 2). Keys changed on kept problems: none. New keys: `p-pixel-scrambler` 6, 8, 3, 5; `p-server-moves` a, 6, 6, 3; `p-units-133` 6, 18, 9; `p-affine-five` 2, 4, 4, 10.
+
+Reader's script: the blocks of the four re-authored problems and the held checks of findings 2 and 8 are removed (each marked in the script); the $\sigma$ check is tightened to $(1\,5\,3\,2)$ in both questions. The delta reader checks the new problems.
+
+Gates: validator 0 errors, no warning on the three sets; voice scan 35, 0 and 0; `fresh-check --file` 0 hits on each set; author's script 541 of 541, exit 0; reader's script 266 checks, 0 FINDING lines, exit 0; `grade-all --file` 12, 14 and 11 widgets, 0 failures; playthrough `--problems algebra/problems-1`, `-2`, `-3` green with and without `--mobile`.

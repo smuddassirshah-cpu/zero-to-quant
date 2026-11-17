@@ -2,7 +2,8 @@
 
 Method 1 works by a rule (Euler's phi, gcd and lcm, the order formula n/gcd(k, n), Lagrange, the first
 isomorphism theorem, Euclid's back-substitution). Method 2 is a brute enumeration over the group itself (every
-element of Z_n, D_8, D_6, S_5 or S_10 as needed, composed right to left). For each numeric part the script checks
+element of Z_n, D_8, S_5, S_8, Z_133^x, the 2 by 2 matrices modulo 7 or the 20 maps ax + b on Z_5 as needed,
+composed right to left; the re-authored problems of session AF are p-pixel-scrambler, p-server-moves, p-units-133, p-affine-five). For each numeric part the script checks
 that the two methods agree, that the JSON key equals the value, that every `wrong` value equals its named slip
 recomputed here, has a byKey line and differs from the key. Numeric sets check the set and each slip set. Choice
 parts check the keyed option and verify each option's claim where it is a fact about the group. Figures stated in
@@ -156,70 +157,105 @@ num(1, 'p-octagon-orders', 4, 8 + len([k for k in range(8) if 4 * k % 8 == 0]), 
     {'squares': x2, 'turns-only': 4, 'flips-only': 8})
 ok([gorder((k, 0), m8, e8) for k in (0, 2, 4, 6)] == [1, 4, 2, 4], 'L1 orders of e, r^2, r^4, r^6')
 
-# p-shifted-product: a * b = a + b + ab mod 19
-st = lambda a, b: (a + b + a * b) % 19  # noqa: E731
-ok(all(st(18, b) == 18 for b in range(19)), 'L1 18 absorbs')
-ok(all(st(a, b) != 18 for a in range(18) for b in range(18)), 'L1 G = 0..17 closed')
-ok(all(st(st(a, b), c) == st(a, st(b, c)) for a in range(19) for b in range(19) for c in range(19)), 'L1 star associative')
-num(1, 'p-shifted-product', 1, (19 * 5 + 18 - 19 * 5) % 19 if False else (18 + 19 * 5) % 19, st(18, 5),
-    {'product': 18 * 5 % 19, 'sum': (18 + 5) % 19})
-ok(18 + 5 + 90 == 113 == 5 * 19 + 18, 'L1 113 = 5*19 + 18')
-num(1, 'p-shifted-product', 2, (pow(5, -1, 19) * 15) % 19, next(b for b in range(18) if st(4, b) == 0),
-    {'plain-inverse': pow(4, -1, 19), 'negative': (-4) % 19})
-ok(st(4, 15) == 3 and 4 + 15 + 60 == 79, 'L1 4*15 = 79 = 3')
+# p-pixel-scrambler: M = [[1, 2], [1, 3]] on (Z_7)^2
+def mm(X, Y, n=7):
+    return tuple(tuple(sum(X[i][k] * Y[k][j] for k in range(2)) % n for j in range(2)) for i in range(2))
 
 
-def star_order(a):
-    x, m = a, 1
-    while x != 0:
-        x, m = st(x, a), m + 1
-    return m
+def mv(X, v, n=7):
+    return tuple(sum(X[i][k] * v[k] for k in range(2)) % n for i in range(2))
 
 
-num(1, 'p-shifted-product', 3, mord(2, 19), star_order(1), {'half': 9, 'sixth': 6, 'modulus': 19})
-ok(pow(2, 6, 19) == 7 and pow(2, 9, 19) == 18 and (pow(2, 9, 19) - 1) == 17, 'L1 2^6 = 7, 2^9 = 18, element 17')
-num(1, 'p-shifted-product', 4, int(totient(18)), sum(1 for a in range(18) if star_order(a) == 18),
-    {'non-identity': 17, 'phi-modulus': int(totient(19)), 'odd': 9})
-ok(star_order(st(1, 1)) == 9 and st(1, 1) == 3, 'L1 1*1 = 3 has order 9')
-ok(18 // gcd(3, 18) == 6 and 18 // gcd(9, 18) == 2, 'L1 orders of the 3rd and 9th powers')
-ok([k for k in range(1, 18) if gcd(k, 18) == 1] == [1, 5, 7, 11, 13, 17], 'L1 exponents coprime to 18')
+def mpow(X, k):
+    R = ((1, 0), (0, 1))
+    for _ in range(k):
+        R = mm(R, X)
+    return R
+
+
+BIG = 10 ** 9
+MM, I2 = ((1, 2), (1, 3)), ((1, 0), (0, 1))
+ok(MM[0][0] * MM[1][1] - MM[0][1] * MM[1][0] == 1, 'L1 det M = 1')
+M2 = mm(MM, MM, BIG)
+ok(M2 == ((3, 8), (4, 11)), 'L1 M^2 over Z')
+ok(mm(M2, M2, BIG) == ((41, 112), (56, 153)), 'L1 M^4 over Z: 41, 112, 56, 153')
+M4 = mpow(MM, 4)
+ok(M4 == ((6, 0), (0, 6)), 'L1 M^4 = 6I = -I mod 7')
+num(1, 'p-pixel-scrambler', 1, (3 * 3 + 8 * 4) % 7, M4[0][0],
+    {'entrywise': (1 ** 4) % 7, 'dropped-term': (3 * 3) % 7})
+ordM = next(k for k in range(1, 100) if mpow(MM, k) == I2)
+num(1, 'p-pixel-scrambler', 2, 8 if mpow(MM, 8) == I2 and mpow(MM, 4) != I2 else -1, ordM, {'minus-one': 4, 'modulus': 7})
+ok(mm(MM, M2, BIG) == ((11, 30), (15, 41)), 'L1 M^3 over Z: 11, 30, 15, 41')
+M3 = mpow(MM, 3)
+ok(M3 == ((4, 2), (1, 6)) and mpow(MM, 7) == tuple(tuple(-x % 7 for x in r) for r in M3), 'L1 M^7 = -M^3 mod 7')
+ok(mpow(MM, 7) != I2 and mpow(MM, 2) != I2, 'L1 M^7 and M^2 are not I')
+Minv = mpow(MM, 7)
+ok(Minv == ((3, 5), (6, 1)) and mm(Minv, MM) == I2, 'L1 M^-1 = [[3, 5], [6, 1]]')
+adj = ((MM[1][1] % 7, -MM[0][1] % 7), (-MM[1][0] % 7, MM[0][0] % 7))
+ok(adj == Minv, 'L1 adjugate agrees with M^7')
+num(1, 'p-pixel-scrambler', 3, adj[0][0], Minv[0][0], {'no-minus': M3[0][0], 'forward': MM[0][0]})
+pre = [v for v in [(x, y) for x in range(7) for y in range(7)] if mv(MM, v) == (3, 1)]
+ok(pre == [(0, 5)] and mv(Minv, (3, 1)) == (0, 5), 'L1 the pixel sent to (3, 1) is (0, 5)')
+ok((9 + 5, 18 + 1) == (14, 19) and (0 + 2 * 5, 0 + 3 * 5) == (10, 15), 'L1 part 4 printed sums')
+num(1, 'p-pixel-scrambler', 4, mv(Minv, (3, 1))[1], pre[0][1],
+    {'forward': mv(MM, (3, 1))[1], 'no-minus': mv(M3, (3, 1))[1]})
+ok(mv(MM, (3, 1)) == (5, 6) and mv(M3, (3, 1)) == (0, 2) and mv(MM, (0, 2)) == (4, 6), 'L1 part 4 slip pixels')
 
 # ============================================================ level 2
-# p-desk-rota: sigma in S_10
-row = [7, 9, 10, 6, 8, 2, 3, 1, 4, 5]
-sig = {k + 1: v for k, v in enumerate(row)}
+# p-server-moves: S_8, xi sigma = tau
+def cyc(n, cs):
+    p = {i: i for i in range(1, n + 1)}
+    for c in cs:
+        for i, a in enumerate(c):
+            p[a] = c[(i + 1) % len(c)]
+    return p
 
 
 def cycles(s):
-    seen, cs = set(), []
+    seen, out = set(), []
     for i in sorted(s):
-        if i in seen:
+        if i in seen or s[i] == i:
+            seen.add(i)
             continue
         c, j = [], i
         while j not in seen:
             seen.add(j)
             c.append(j)
             j = s[j]
-        cs.append(c)
-    return cs
+        out.append(c)
+    return out
 
 
-cs = cycles(sig)
-ok(cs == [[1, 7, 3, 10, 5, 8], [2, 9, 4, 6]], f'L2 cycle form {cs}')
-k, x = 1, sig[1]
-while x != 1:
-    x, k = sig[x], k + 1
-num(2, 'p-desk-rota', 1, len(cs[0]), k, {'other-cycle': 4, 'all-desks': 10})
-pw, m = dict(sig), 1
-while any(pw[i] != i for i in pw):
-    pw, m = {i: sig[pw[i]] for i in pw}, m + 1
-num(2, 'p-desk-rota', 2, lcm(6, 4), m, {'product': 24, 'sum': 10})
-inversions = sum(1 for i in range(1, 11) for j in range(i + 1, 11) if sig[i] > sig[j])
-ok((5 + 3) % 2 == 0 and inversions % 2 == 0 and (10 - len(cs)) == 8, f'L2 sigma even ({inversions} inversions)')
-key(2, 'p-desk-rota', 3, 'a')
-num(2, 'p-desk-rota', 4, factorial(10) // 2 // lcm(6, 4), (factorial(10) // 2) // m,
-    {'in-s10': factorial(10) // 12, 'product-order': factorial(10) // 2 // 24})
-ok(factorial(10) // 2 == 1814400, 'L2 |A_10| = 1,814,400')
+def sgn_inv(s):
+    k = sorted(s)
+    return (-1) ** sum(1 for a in range(len(k)) for b in range(a + 1, len(k)) if s[k[a]] > s[k[b]])
+
+
+c8 = lambda a, b: {i: a[b[i]] for i in range(1, 9)}  # noqa: E731
+i8 = lambda a: {v: k for k, v in a.items()}  # noqa: E731
+sig = cyc(8, [(1, 2, 3, 4, 5, 6)])
+tau = cyc(8, [(1, 3, 5, 7), (2, 8)])
+xi = c8(tau, i8(sig))
+ok(c8(xi, sig) == tau, 'L2 xi sigma = tau')
+sols = [p for p in permutations(range(1, 9)) if c8(dict(zip(range(1, 9), p)), sig) == tau]
+ok(len(sols) == 1 and dict(zip(range(1, 9), sols[0])) == xi, 'L2 xi is the unique solution (all of S_8)')
+ok(cycles(xi) == [[1, 6, 7], [2, 3, 8], [4, 5]], f'L2 xi cycle form {cycles(xi)}')
+ok(sgn_inv(sig) == -1 and sgn_inv(tau) == 1 and sgn_inv(xi) == -1, 'L2 signs by inversions: sigma odd, tau even, xi odd')
+ok((-1) ** 5 == sgn_inv(sig) and (-1) ** (3 + 1) == sgn_inv(tau), 'L2 transposition counts 5 and 3 + 1')
+key(2, 'p-server-moves', 1, 'a')
+ok(sgn_inv(xi) * sgn_inv(sig) == sgn_inv(tau), 'L2 sign of a product')
+num(2, 'p-server-moves', 2, tau[i8(sig)[1]], xi[1], {'no-inverse': c8(tau, sig)[1], 'wrong-side': c8(i8(sig), tau)[1]})
+ok(i8(sig)[1] == 6 and tau[6] == 6 and tau[2] == 8 and i8(sig)[3] == 2, 'L2 part 2 printed images')
+pw = [xi]
+while pw[-1] != cyc(8, []):
+    pw.append(c8(pw[-1], xi))
+num(2, 'p-server-moves', 3, lcm(3, 3, 2), len(pw), {'product': 3 * 3 * 2, 'sum': 3 + 3 + 2, 'longest': 3})
+x3 = pw[2]
+ok(x3[4] == 5 and x3[5] == 4 and all(x3[i] == i for i in (1, 2, 3, 6, 7, 8)), 'L2 xi^3 is the swap (4 5)')
+evens = [k + 1 for k, p in enumerate(pw) if sgn_inv(p) == 1]
+num(2, 'p-server-moves', 4, sum(1 for k in range(1, 7) if (-1) ** k == 1), len(evens), {'same-sign': 0, 'missed-identity': 2})
+ok(evens == [2, 4, 6], 'L2 even powers are xi^2, xi^4, xi^6')
+ok(c8(pw[1], pw[1]) == pw[3] and c8(pw[3], pw[1]) == pw[5], 'L2 <xi^2> = {xi^2, xi^4, e}')
 
 # p-units-21-cosets
 U21 = units(21)
@@ -272,21 +308,29 @@ t35 = {1: 1, 2: 2, 3: 5, 4: 4, 5: 3}
 ok(tup(t35) in {tup(t) for t in L} and tup(t35) not in {tup(t) for t in R}, 'L2 (3 5) in sigma H, not in H sigma')
 
 # ============================================================ level 3
-# p-fifteen-times: Z_24 -> Z_36
-phi = lambda x: 15 * x % 36  # noqa: E731
-ok(15 * 24 % 36 == 0 and 15 * 24 == 360 == 10 * 36, 'L3 well defined')
-ok(all(phi((a + b) % 24) == (phi(a) + phi(b)) % 36 for a in range(24) for b in range(24)), 'L3 homomorphism')
-ker = [x for x in range(24) if phi(x) == 0]
-num(3, 'p-fifteen-times', 1, 24 // 12, len(ker), {'in-z36': len([x for x in range(36) if 15 * x % 36 == 0]), 'one': 1})
-im = {phi(x) for x in range(24)}
-num(3, 'p-fifteen-times', 2, 24 // len(ker), len(im), {'target': 36 // 2, 'from-three': 24 // 3})
-ok(im == set(range(0, 36, 3)), 'L3 image is the multiples of 3')
-numset(3, 'p-fifteen-times', 3, [(35 % 12), (35 % 12) + 12], [x for x in range(24) if phi(x) == 21],
-       {'no-inverse': [7, 19]})
-ok(pow(5, -1, 12) == 5 and 15 * 11 == 165 == 4 * 36 + 21, 'L3 5^-1 = 5 mod 12; 165 = 4*36 + 21')
-kk = next(k for k in range(1, 25) if 2 * k % 24 in ker)
-num(3, 'p-fifteen-times', 4, 36 // gcd(phi(2), 36), kk, {'in-z24': aord(2, 24), 'in-target': aord(2, 36)})
-ok(phi(2) == 30, 'L3 phi(2) = 30')
+# p-units-133: rho(x) = x mod 19 on Z_133^x
+U133 = units(133)
+ok(len(U133) == int(totient(133)) == 6 * 18 == 108, 'L3 |Z_133^x| = 108')
+ok(all((a * b % 133) % 19 == (a % 19) * (b % 19) % 19 for a in U133 for b in U133), 'L3 rho is a homomorphism')
+K19 = [x for x in U133 if x % 19 == 1]
+cand = [1 + 19 * j for j in range(7)]
+num(3, 'p-units-133', 1, len([c for c in cand if gcd(c, 133) == 1]), len(K19), {'kept-77': len(cand), 'trivial': 1})
+ok(K19 == [1, 20, 39, 58, 96, 115] and cand == [1, 20, 39, 58, 77, 96, 115] and 77 == 7 * 11, 'L3 kernel listed')
+ok({x % 19 for x in U133} == set(range(1, 19)) and 108 // 6 == 18, 'L3 rho onto, 18 cosets')
+roots19 = [y for y in range(1, 19) if pow(y, 3, 19) == 1]
+ok(roots19 == [1, 7, 11] and 7 ** 3 == 343 == 18 * 19 + 1 and 49 % 19 == 11, 'L3 cube roots of 1 mod 19')
+L = [x for x in U133 if pow(x, 3, 19) == 1]
+num(3, 'p-units-133', 2, len(roots19) * len(K19), len(L), {'roots-only': len(roots19), 'only-one': 6, 'seven-each': len(roots19) * 7})
+ok(all(sum(1 for x in U133 if x % 19 == y) == 6 for y in range(1, 19)), 'L3 each value taken by 6 units')
+ok(all(sum(1 for c in range(1, 133) if c % 19 == y) == 7 for y in range(1, 19)), 'L3 seven numbers below 133 per residue')
+roots7 = [x for x in range(1, 7) if pow(x, 3, 7) == 1]
+ok(roots7 == [1, 2, 4] and [pow(x, 3, 7) for x in range(1, 7)] == [1, 1, 6, 1, 6, 6], 'L3 cubes mod 7')
+K7 = [x for x in U133 if x % 7 == 1]
+ok(sorted(set(K7) & set(K19)) == [1], 'L3 kernels meet in 1')
+ok(all(len({x % 7 for x in U133 if x % 19 == y}) == 6 for y in roots19), 'L3 each coset meets each residue mod 7 once')
+all3 = [x for x in U133 if pow(x, 3, 133) == 1]
+num(3, 'p-units-133', 3, len(roots19) * len(roots7), len(all3), {'mod-19-only': len(L), 'one-only': len(roots19)})
+ok(27 % 7 == 6 and 8 % 7 == 1 and 64 % 7 == 1, 'L3 slip lines: 3^3 = 6, 2^3 = 1, 4^3 = 1 mod 7')
 
 # p-powers-of-seven
 num(3, 'p-powers-of-seven', 1, int(totient(45)), len(units(45)), {'no-fives': 30, 'no-threes': 36, 'all': 44})
@@ -303,42 +347,58 @@ num(3, 'p-powers-of-seven', 4, 13 * 20 % 45, next(x for x in range(45) if 7 * x 
     {'times-seven': 7 * 20 % 45, 'from-28': 28 * 20 % 45})
 ok(7 * 13 == 91 and 91 % 45 == 1 and 260 == 5 * 45 + 35 and 245 == 5 * 45 + 20 and 7 * 28 % 45 == 16, 'L3 inverse and checks')
 
-# p-hexagon-quotient: D_6
-G6, m6 = dihedral(6)
-e6 = (0, 0)
-num(3, 'p-hexagon-quotient', 1, 12 // 6, 12 // 6, {'image-size': 6, 'product': 72})
-order2 = [z for z in G6 if z != e6 and m6(z, z) == e6]
-normal2 = [z for z in order2 if all(m6(m6(g, z), [y for y in G6 if m6(g, y) == e6][0]) == z for g in G6)]
-ok(normal2 == [(3, 0)], f'L3 the only normal subgroup of order 2 is <r^3> ({normal2})')
-conj = m6(m6((0, 1), (3, 0)), (0, 1))
-ok(conj == (3, 0), 'L3 s r^3 s^-1 = r^3')
-flips_normal = [j for j in range(6) if all(m6(m6(g, (j, 1)), [y for y in G6 if m6(g, y) == e6][0]) == (j, 1) for g in G6)]
-num(3, 'p-hexagon-quotient', 2, 1 + len(flips_normal), len(normal2), {'all-seven': len(order2), 'flips': 6, 'none': 0})
-ok(len(order2) == 7, 'L3 seven elements of order 2 in D_6')
-ok(all(m6(m6((1, 0), (j, 1)), (5, 0)) == ((j + 2) % 6, 1) for j in range(6)), 'L3 r (r^j s) r^-1 = r^(j+2) s')
-N = [e6, (3, 0)]
-Nset = frozenset(N)
-coset = lambda g: frozenset(m6(g, x) for x in N)  # noqa: E731
-cosets = {coset(g) for g in G6}
+# p-affine-five: x -> ax + b on Z_5
+AFF = [(a, b) for a in range(1, 5) for b in range(5)]
+af = lambda f, g: (f[0] * g[0] % 5, (f[0] * g[1] + f[1]) % 5)  # noqa: E731  f after g
+ev = lambda f, x: (f[0] * x + f[1]) % 5  # noqa: E731
+ok(all(ev(af(f, g), x) == ev(f, ev(g, x)) for f in AFF for g in AFF for x in range(5)), 'L3 composition rule')
+ok(len(AFF) == 20 and all(af(f, g)[0] == f[0] * g[0] % 5 for f in AFF for g in AFF), 'L3 |G| = 20, mu a homomorphism')
+eA = (1, 0)
+ainv = lambda f: next(g for g in AFF if af(f, g) == eA)  # noqa: E731
+T = [f for f in AFF if f[0] == 1]
+h, t = (2, 0), (1, 1)
+ok(ainv(h) == (3, 0), 'L3 h^-1 = 3x')
+conj = af(af(h, t), ainv(h))
+num(3, 'p-affine-five', 1, (2 * 3 * 0 + 2 * 1) % 5, conj[1] if conj[0] == 1 else -1,
+    {'reversed': af(af(ainv(h), t), h)[1], 'commuted': 1})
+ok(af(h, t) == (2, 2) and af(t, h) == (2, 1), 'L3 ht = 2x + 2, th = 2x + 1')
+ok(all(af(af(g, x), ainv(g)) in T for g in AFF for x in T), 'L3 T is normal')
+f = (2, 3)
 
 
-def cord(A):
-    g0 = next(iter(A))
-    g, mm = g0, 1
-    while coset(g) != Nset:
-        g, mm = m6(g, g0), mm + 1
-    return mm
+def cos(g):
+    return frozenset(af(g, x) for x in T)
 
 
-num(3, 'p-hexagon-quotient', 3, next(k for k in range(1, 7) if (k % 6, 0) in N), cord(coset((1, 0))), {'order-of-r': 6, 'two': 2})
-ords = sorted(cord(A) for A in cosets)
-ok(ords == [1, 2, 2, 2, 3, 3], f'L3 coset orders {ords}')
-num(3, 'p-hexagon-quotient', 4, 6 // 2, ords.count(2), {'cyclic': 1, 'flips': 6, 'all-but-e': 5})
+Tset = frozenset(T)
+k, g = 1, f
+while cos(g) != Tset:
+    g, k = af(g, f), k + 1
+num(3, 'p-affine-five', 2, mord(2, 5), k, {'translations': 5, 'whole-group': 20})
+ok(len({cos(g) for g in AFF}) == 4, 'L3 |G/T| = 4')
+
+
+def aorder(f):
+    g, m = f, 1
+    while g != eA:
+        g, m = af(g, f), m + 1
+    return m
+
+
+f4 = af(af(f, f), af(f, f))
+ok(f4 == eA and 16 + 0 == 16 and 3 * (8 + 4 + 2 + 1) == 45 and 45 % 5 == 0, 'L3 f^4 = 16x + 45 = x')
+num(3, 'p-affine-five', 3, 4, aorder(f), {'times-five': 20, 'translation': 5})
+ok(aorder((1, 3)) == 5, 'L3 a translation has order 5')
+ok(all(aorder(g) == mord(g[0], 5) for g in AFF if g[0] != 1), 'L3 order of ax + b is ord(a) for a != 1')
+o4 = [g for g in AFF if aorder(g) == 4]
+num(3, 'p-affine-five', 4, sum(5 for a in range(1, 5) if mord(a, 5) == 4), len(o4),
+    {'cosets': 2, 'one-multiplier': 5, 'all-but-t': 20 - 5})
+ok(sorted({g[0] for g in o4}) == [2, 3] and aorder((4, 0)) == 2 and 3 ** 2 % 5 == 4 and 81 % 5 == 1, 'L3 multipliers of order 4 are 2 and 3; a = 4 has order 2')
 
 # ============================================================ set shape
-LESSONS = {1: {'p-probe-stride': ['l3', 'l4'], 'p-octagon-orders': ['l1', 'l2', 'l4'], 'p-shifted-product': ['l2', 'l3', 'l4']},
-           2: {'p-desk-rota': ['l7', 'l8', 'l9'], 'p-units-21-cosets': ['l5', 'l6', 'l7'], 'p-fixing-five': ['l5', 'l6', 'l7', 'l8']},
-           3: {'p-fifteen-times': ['l10', 'l11', 'l12'], 'p-powers-of-seven': ['l10', 'l12', 'l13'], 'p-hexagon-quotient': ['l10', 'l11', 'l12']}}
+LESSONS = {1: {'p-probe-stride': ['l3', 'l4'], 'p-octagon-orders': ['l1', 'l2', 'l4'], 'p-pixel-scrambler': ['l1', 'l2', 'l3', 'l4']},
+           2: {'p-server-moves': ['l8', 'l9'], 'p-units-21-cosets': ['l5', 'l6', 'l7'], 'p-fixing-five': ['l5', 'l6', 'l7', 'l8']},
+           3: {'p-units-133': ['l10', 'l12'], 'p-powers-of-seven': ['l10', 'l12', 'l13'], 'p-affine-five': ['l10', 'l11', 'l12']}}
 LEVEL_LESSONS = {1: {'l1', 'l2', 'l3', 'l4'}, 2: {'l5', 'l6', 'l7', 'l8', 'l9'}, 3: {'l10', 'l11', 'l12', 'l13'}}
 SKILLS = {1: {'ag-groups'}, 2: {'ag-cosets', 'ag-perm'}, 3: {'ag-hom', 'ag-cosets', 'ag-groups'}}
 for lv, (d, items) in SETS.items():
@@ -367,14 +427,16 @@ for lv in SETS:
         lv_obj.expect('problems', P(1, 1, 'feedback.correct'), 4)
         lv_obj.expect('problems', P(1, 2, 'feedback.correct'), 2)
         lv_obj.expect('problems', P(1, 3, 'feedback.correct'), 12)
-        lv_obj.expect('problems', P(2, 0, 'feedback.correct'), 113)
-        lv_obj.expect('problems', P(2, 1, 'feedback.correct'), 3)
-        lv_obj.expect('problems', P(2, 2, 'feedback.correct'), 18)
-        lv_obj.expect('problems', P(2, 3, 'feedback.correct'), 6)
+        lv_obj.expect('problems', P(2, 0, 'feedback.correct'), 41)
+        lv_obj.expect('problems', P(2, 0, 'feedback.correct'), 6)
+        lv_obj.expect('problems', P(2, 1, 'feedback.correct'), 8)
+        lv_obj.expect('problems', P(2, 2, 'feedback.correct'), 3)
+        lv_obj.expect('problems', P(2, 3, 'feedback.correct'), 19)
+        lv_obj.expect('problems', P(2, 3, 'feedback.correct'), 5)
     if lv == 2:
-        lv_obj.expect('problems', P(0, 0, 'feedback.correct'), 6)
-        lv_obj.expect('problems', P(0, 1, 'feedback.correct'), 12)
-        lv_obj.expect('problems', P(0, 3, 'feedback.correct'), 151200)
+        lv_obj.expect('problems', P(0, 1, 'feedback.correct'), 6)
+        lv_obj.expect('problems', P(0, 2, 'feedback.correct'), 6)
+        lv_obj.expect('problems', P(0, 3, 'feedback.correct'), 3)
         lv_obj.expect('problems', P(1, 0, 'feedback.correct'), 12)
         lv_obj.expect('problems', P(1, 1, 'feedback.correct'), 16)
         lv_obj.expect('problems', P(1, 2, 'feedback.correct'), 4)
@@ -382,18 +444,18 @@ for lv in SETS:
         lv_obj.expect('problems', P(2, 2, 'feedback.correct'), 3)
         lv_obj.expect('problems', P(2, 4, 'feedback.correct'), 6)
     if lv == 3:
-        lv_obj.expect('problems', P(0, 0, 'feedback.correct'), 2)
-        lv_obj.expect('problems', P(0, 1, 'feedback.correct'), 12)
-        lv_obj.expect('problems', P(0, 2, 'feedback.correct'), 23)
-        lv_obj.expect('problems', P(0, 3, 'feedback.correct'), 6)
+        lv_obj.expect('problems', P(0, 0, 'feedback.correct'), 115)
+        lv_obj.expect('problems', P(0, 1, 'feedback.correct'), 18)
+        lv_obj.expect('problems', P(0, 2, 'feedback.correct'), 9)
         lv_obj.expect('problems', P(1, 0, 'feedback.correct'), 24)
         lv_obj.expect('problems', P(1, 1, 'feedback.correct'), 12)
         lv_obj.expect('problems', P(1, 2, 'feedback.correct'), 13)
         lv_obj.expect('problems', P(1, 3, 'feedback.correct'), 35)
         lv_obj.expect('problems', P(2, 0, 'feedback.correct'), 2)
-        lv_obj.expect('problems', P(2, 1, 'feedback.correct'), 1)
-        lv_obj.expect('problems', P(2, 2, 'feedback.correct'), 3)
-        lv_obj.expect('problems', P(2, 3, 'feedback.correct'), 3)
+        lv_obj.expect('problems', P(2, 1, 'feedback.correct'), 4)
+        lv_obj.expect('problems', P(2, 2, 'feedback.correct'), 45)
+        lv_obj.expect('problems', P(2, 2, 'feedback.correct'), 4)
+        lv_obj.expect('problems', P(2, 3, 'feedback.correct'), 10)
     rc = lv_obj.report()
     ok(rc in (0, None), f'L{lv} numbers_lib report')
 
