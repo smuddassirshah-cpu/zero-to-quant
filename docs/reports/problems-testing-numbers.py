@@ -493,9 +493,9 @@ if L3 is not None:
     pick(L3, 'p-gene-screen', 5, 'right')
     stale(L3, 'p-gene-screen', ['0.0948', '0.1065', '0.0071', '0.0079', '0.0038', '0.0125', '0.474', '0.8715', '0.1285', '0.00125', '0.0488', '0.9512', '40 genes', '0.0011', '0.0052', '0.0060', '0.0081', '0.031', '0.05}{40'])
 
-    # ---------- p-fund-managers: 8 managers, H has SR 0.9 over 9 years, BH at q = 0.10 ----------
-    tH = sp.Rational(9, 10) * sp.sqrt(9)
-    num(L3, 'p-fund-managers', 1, tH, 0.9 / (1 / math.sqrt(9)), {'over-root': sp.Rational(9, 10) / 3, 'times-t': sp.Rational(81, 10)})
+    # ---------- p-fund-managers: 8 managers, H has SR 0.54 over 25 years, BH at q = 0.10 ----------
+    tH = sp.Rational(54, 100) * sp.sqrt(25)
+    num(L3, 'p-fund-managers', 1, tH, 0.54 / (1 / math.sqrt(25)), {'over-root': sp.Rational(54, 100) / 5, 'times-t': sp.Rational(54, 100) * 25})
     ok(round(Phi(2.7), 4) == 0.9965, 'p-fund-managers: Phi(2.7)')
     pH = 1 - sp.Rational(9965, 10000)
     num(L3, 'p-fund-managers', 2, pH, stats.norm.sf(2.7), {'two-sided': 2 * pH, 'lower': 1 - pH}, agree=5e-5, round_tol=0.00006)
