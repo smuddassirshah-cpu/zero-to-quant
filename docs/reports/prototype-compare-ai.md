@@ -29,3 +29,7 @@ Items 1, 2 and 3 are the substantive departures; 9 to 11 are deliberate wording 
 ## Fix pass (session AI)
 
 Rows 2, 4 and 6 now match the prototype. Simulate: `controlsAfter: "check"` locks Run until a checked estimate. Stocks: a correct answer dims Both down and captions "each 1/3". Shade: wrong cells (1, 1), (2, 2), (3, 3), (1, 5), (5, 5), (6, 6) name their totals. Validator 0 errors; playthrough green, desktop and mobile.
+
+## Fix pass 2 (session AI)
+
+Row 3 now matches: `conditional/l3-shrinking` simulate uses `dice-sim` (seed 4226: 308 kept, 28 total 10, share 0.091 against 1/11). Feedback already had "Now roll to test it."; explanation now points at the share settling near 1/11. Validator 0 errors, playthrough green, desktop and mobile.
