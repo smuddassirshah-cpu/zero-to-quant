@@ -52,3 +52,7 @@ None. The brief's exam grep (`grep -l stat-models app/content/exams/*.json`) fin
 ## Summary
 
 1 finding: `other` 1 (a wording slip in one explain line, exact fix above, tested). Keys changed by the fix: none. `p-hedge-ranks` is ruled `clean` on reuse and needs no further read.
+
+## Fix pass
+
+1. fixed by the main session: part 3 explain reads "half the rank total of 105". Delta script 0 FINDING, author script exit 0, voice 0 and 0, validator 0 errors.
