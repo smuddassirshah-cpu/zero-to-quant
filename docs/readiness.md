@@ -138,9 +138,9 @@ Plan: probability, numeracy, uncertainty, communication and games first. Machine
 <!-- generated:totals:trader -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 453 | 0 | 453 | 269 | 945 |
+| Required | 453 | 0 | 453 | 270 | 944 |
 | Recommended | 194 | 0 | 194 | 113 | 476 |
-| Learn header (required plus recommended) | 647 | 0 | 647 | 382 | 1421 |
+| Learn header (required plus recommended) | 647 | 0 | 647 | 383 | 1420 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -270,8 +270,8 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
 | Required | 556 | 0 | 556 | 357 | 1296 |
-| Recommended | 340 | 0 | 340 | 189 | 919 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 546 | 2215 |
+| Recommended | 340 | 0 | 340 | 189 | 918 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 546 | 2214 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -401,8 +401,8 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
 | Required | 233 | 0 | 233 | 125 | 555 |
-| Recommended | 254 | 0 | 254 | 152 | 684 |
-| Learn header (required plus recommended) | 487 | 0 | 487 | 277 | 1239 |
+| Recommended | 254 | 0 | 254 | 153 | 683 |
+| Learn header (required plus recommended) | 487 | 0 | 487 | 278 | 1238 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -533,9 +533,9 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 <!-- generated:totals:strats -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 580 | 0 | 580 | 353 | 1319 |
+| Required | 580 | 0 | 580 | 353 | 1318 |
 | Recommended | 234 | 0 | 234 | 136 | 488 |
-| Learn header (required plus recommended) | 814 | 0 | 814 | 489 | 1807 |
+| Learn header (required plus recommended) | 814 | 0 | 814 | 489 | 1806 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -787,9 +787,9 @@ Undecided never reads "ready". It reads "foundation done" once the required cour
 <!-- generated:totals:undecided -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 263 | 0 | 263 | 160 | 559 |
+| Required | 263 | 0 | 263 | 160 | 558 |
 | Recommended | 0 | 0 | 0 | 0 | 0 |
-| Learn header (required plus recommended) | 263 | 0 | 263 | 160 | 559 |
+| Learn header (required plus recommended) | 263 | 0 | 263 | 160 | 558 |
 <!-- /generated -->
 
 **Dependency conflicts**
