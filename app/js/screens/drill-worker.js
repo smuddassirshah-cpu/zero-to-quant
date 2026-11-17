@@ -153,8 +153,8 @@ def drl_run(code, spec_json, emit):
     emit(json.dumps({'kind': 'done', 'ms': (time.perf_counter() - start) * 1000}))
 `;
 
-/* Pyodide comes from the jsDelivr CDN (docs/PLAN.md section 3). A local copy (vendor/pyodide/, passed by the page as
-   indexURL) is used only when the CDN cannot be reached and that copy actually exists. */
+/* Pyodide comes from the jsDelivr CDN (docs/PLAN.md section 3). A local copy (vendor/pyodide/, passed by the page as an
+   absolute indexURL ending in '/') is used only when the CDN cannot be reached and that copy actually exists. */
 const CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
 const reachable = async (url) => { try { const r = await fetch(url, { method: 'HEAD' }); return r.ok; } catch { return false; } };
 const pickIndexURL = async (local) => {
