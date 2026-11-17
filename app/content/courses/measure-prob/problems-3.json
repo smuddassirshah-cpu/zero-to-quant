@@ -1,0 +1,728 @@
+{
+ "id": "problems-3",
+ "course": "measure-prob",
+ "level": 3,
+ "title": "Problems: information and martingales",
+ "minutes": 45,
+ "items": [
+  {
+   "id": "p-nested-forecasts",
+   "difficulty": 3,
+   "skills": [
+    "mt-condexp"
+   ],
+   "prose": "A desk models a note's payoff $X$, in £, over six scenarios with chances $0.1, 0.15, 0.25, 0.2, 0.2, 0.1$ and payoffs $-3, 1, 5, 2, 6, -4$. A rate decision tells scenarios $\\{1, 2, 3\\}$ from $\\{4, 5, 6\\}$: call this $\\mathcal H$. An inflation print adds more, giving $\\mathcal G$ with atoms $\\{1\\}, \\{2, 3\\}, \\{4, 5\\}, \\{6\\}$.",
+   "parts": [
+    {
+     "question": "How many events of $\\mathcal G$ are not in $\\mathcal H$? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 12,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "all",
+        "value": 16,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "atoms",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\mathcal G$ has 4 atoms, so $2^4 = 16$ events, and $\\mathcal H \\subset \\mathcal G$ has $2^2 = 4$. That leaves $16 - 4 = 12$.",
+      "generic": "Not quite. Count the events of each from its atoms, then subtract.",
+      "byKey": {
+       "all": "That is every event of $\\mathcal G$. The 4 events of $\\mathcal H$ are in $\\mathcal G$ too, so take them away.",
+       "atoms": "That compares atoms, 4 against 2. Count the events, $2^4$ against $2^2$."
+      }
+     },
+     "explain": {
+      "text": "Every event of $\\mathcal H$ is a union of atoms of $\\mathcal G$, so $\\mathcal H \\subset \\mathcal G$. With 4 and 2 atoms they hold 16 and 4 events. So 12 events are new."
+     }
+    },
+    {
+     "question": "What is $E[X \\mid \\mathcal G]$ on the atom $\\{2, 3\\}$? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.5,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "unweighted",
+        "value": 3,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "no-divide",
+        "value": 1.4,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$E[X \\mid \\mathcal G] = \\tfrac{0.15 \\times 1 + 0.25 \\times 5}{0.4} = \\tfrac{1.4}{0.4} = 3.5$ on $\\{2, 3\\}$.",
+      "generic": "Not quite. Average $X$ over the atom, weighted by the chances.",
+      "byKey": {
+       "unweighted": "That averages 1 and 5 equally. Scenario 3 has the larger chance, so weight by 0.15 and 0.25.",
+       "no-divide": "That is $E[X\\mathbf{1}_{\\{2,3\\}}]$. Divide by the atom's chance, 0.4."
+      }
+     },
+     "explain": {
+      "text": "On an atom the conditional expectation is the chance-weighted average of $X$ there. The atom $\\{2, 3\\}$ has chance 0.4 and $E[X\\mathbf{1}_{\\{2,3\\}}] = 1.4$. So $E[X \\mid \\mathcal G] = 3.5$ there."
+     }
+    },
+    {
+     "question": "Using $E[X \\mid \\mathcal G] = -3$ on $\\{1\\}$ and $3.5$ on $\\{2, 3\\}$ from part 2, find $E\\big[E[X \\mid \\mathcal G] \\mid \\mathcal H\\big]$ on $\\{1, 2, 3\\}$. Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.2,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "unweighted",
+        "value": 0.25,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "finer",
+        "value": 3.5,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac{0.1 \\times (-3) + 0.4 \\times 3.5}{0.5} = \\tfrac{1.1}{0.5} = 2.2$, which is $E[X \\mid \\mathcal H]$ there, as the tower property says.",
+      "generic": "Not quite. Average the two values over $\\{1, 2, 3\\}$, weighted by the chances 0.1 and 0.4.",
+      "byKey": {
+       "unweighted": "That averages $-3$ and $3.5$ equally. The atom $\\{2, 3\\}$ carries 0.4 of the chance against 0.1.",
+       "finer": "That keeps the finer forecast. Conditioning on the coarser $\\mathcal H$ averages it out over $\\{1, 2, 3\\}$."
+      }
+     },
+     "explain": {
+      "text": "$\\mathcal H \\subset \\mathcal G$, so the tower property gives $E[E[X \\mid \\mathcal G] \\mid \\mathcal H] = E[X \\mid \\mathcal H]$. Weight $-3$ by 0.1 and $3.5$ by 0.4, then divide by 0.5. The result is 2.2."
+     }
+    },
+    {
+     "question": "$E[X \\mid \\mathcal G]$ is $-3, 3.5, 4, -4$ on the four atoms. Find its mean-square error $E\\big[(X - E[X \\mid \\mathcal G])^2\\big]$. Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.1,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "one-atom",
+        "value": 1.5,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "overall-mean",
+        "value": 11.61,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Only $\\{2, 3\\}$ and $\\{4, 5\\}$ have errors: $0.15(2.5)^2 + 0.25(1.5)^2 + 0.2(2)^2 + 0.2(2)^2 = 1.5 + 1.6 = 3.1$.",
+      "generic": "Not quite. Square each scenario's error from its atom's forecast and weight by its chance.",
+      "byKey": {
+       "one-atom": "That is the error on $\\{2, 3\\}$ alone. The atom $\\{4, 5\\}$ adds $0.2 \\times 4 + 0.2 \\times 4 = 1.6$.",
+       "overall-mean": "That is $\\mathrm{Var}(X)$, the error of the constant forecast $E[X] = 2.3$. Use the forecast on each atom."
+      }
+     },
+     "explain": {
+      "text": "The single-scenario atoms are forecast exactly. On $\\{2, 3\\}$ the errors are $-2.5$ and $1.5$, and on $\\{4, 5\\}$ they are $-2$ and $2$. Weighting the squares gives $1.5 + 1.6 = 3.1$."
+     }
+    },
+    {
+     "question": "$E[X \\mid \\mathcal H]$ is 2.2 on $\\{1, 2, 3\\}$ and 2.4 on $\\{4, 5, 6\\}$. By Pythagoras, its mean-square error exceeds part 4's by $E\\big[(E[X \\mid \\mathcal G] - E[X \\mid \\mathcal H])^2\\big]$. Find that gap: the error the inflation print removes. Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 8.5,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "mse-h",
+        "value": 11.6,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "one-side",
+        "value": 3.38,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The gap is $0.1(5.2)^2 + 0.4(1.3)^2 + 0.4(1.6)^2 + 0.1(6.4)^2 = 2.704 + 0.676 + 1.024 + 4.096 = 8.5$.",
+      "generic": "Not quite. Square the difference of the two forecasts on each atom of $\\mathcal G$ and weight by its chance.",
+      "byKey": {
+       "mse-h": "That is the whole error of $E[X \\mid \\mathcal H]$, $3.1 + 8.5$. The print removes only the gap.",
+       "one-side": "That counts the cut scenarios $\\{1, 2, 3\\}$ only. The hold side adds $1.024 + 4.096$."
+      }
+     },
+     "explain": {
+      "text": "The residual $X - E[X \\mid \\mathcal G]$ is orthogonal to every $\\mathcal G$-measurable variable. So the two errors add like the sides of a right triangle, and the gap is $0.1(5.2)^2 + 0.4(1.3)^2 + 0.4(1.6)^2 + 0.1(6.4)^2 = 8.5$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-doob-split",
+   "difficulty": 4,
+   "skills": [
+    "mt-condexp",
+    "mt-martingale"
+   ],
+   "prose": "A price walk starts at $S_0 = 0$ and moves $+1$ with chance 0.7 or $-1$ with chance 0.3 at each step, independently. $(\\mathcal F_n)$ is its natural filtration. We split $S_n^2$ into a martingale and a predictable part.",
+   "parts": [
+    {
+     "question": "Write $E[S_{n+1}^2 - S_n^2 \\mid \\mathcal F_n]$ in terms of $s = S_n$.",
+     "widget": {
+      "kind": "expression",
+      "answer": "0.8s+1",
+      "accept": [
+       "1+0.8s",
+       "\\frac{4s}{5}+1"
+      ],
+      "wrong": [
+       {
+        "id": "fair",
+        "tex": "1"
+       },
+       {
+        "id": "no-square",
+        "tex": "0.8s"
+       },
+       {
+        "id": "half-drift",
+        "tex": "0.4s+1"
+       }
+      ],
+      "keyboard": "algebra"
+     },
+     "feedback": {
+      "correct": "$S_{n+1}^2 - S_n^2 = 2S_nX + X^2$ with $X = \\pm 1$, $E[X] = 0.4$ and $X^2 = 1$, so the mean given $\\mathcal F_n$ is $0.8s + 1$.",
+      "generic": "Not quite. Write $S_{n+1} = S_n + X$ and expand the square.",
+      "byKey": {
+       "fair": "That is the answer for a fair walk. Here $E[X] = 0.4$, so the cross term $2S_nX$ has mean $0.8S_n$.",
+       "no-square": "$X^2 = 1$ on every step, so its mean 1 stays.",
+       "half-drift": "The cross term is $2S_nX$, so its mean is $2 \\times 0.4 \\times s$."
+      }
+     },
+     "explain": {
+      "text": "Write $S_{n+1} = S_n + X$ with $X$ independent of $\\mathcal F_n$. Then $S_{n+1}^2 - S_n^2 = 2S_nX + X^2$, and $S_n$ is known at time $n$. Taking out what is known gives $2s \\times 0.4 + 1 = 0.8s + 1$."
+     }
+    },
+    {
+     "question": "Let $A_n = \\sum_{k=0}^{n-1} (0.8S_k + 1)$, so that $M_n = S_n^2 - A_n$ is a martingale. On the path up, up, down, find $A_3$. Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 5.4,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "one-more",
+        "value": 7.2,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "shifted",
+        "value": 6.2,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "fair",
+        "value": 3,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$A_3 = (0.8 \\times 0 + 1) + (0.8 \\times 1 + 1) + (0.8 \\times 2 + 1) = 1 + 1.8 + 2.6 = 5.4$.",
+      "generic": "Not quite. $A_3$ adds $0.8S_k + 1$ for $k = 0, 1, 2$.",
+      "byKey": {
+       "one-more": "You also added the term for $k = 3$. The sum stops at $k = n - 1 = 2$.",
+       "shifted": "You used $S_1, S_2, S_3$. The sum runs over $S_0, S_1, S_2$, the values before each step.",
+       "fair": "That is $n$, the fair walk's part. Here each term is $0.8S_k + 1$."
+      }
+     },
+     "explain": {
+      "text": "$A_3$ uses $S_0, S_1, S_2 = 0, 1, 2$, never $S_3$, so it is fixed one step ahead. Adding the three terms gives $1 + 1.8 + 2.6 = 5.4$."
+     }
+    },
+    {
+     "question": "Using part 2, which statement about the process $A$ is right?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "pred",
+        "text": "$A$ is predictable: $A_n$ is fixed by time $n - 1$",
+        "correct": true
+       },
+       {
+        "id": "adapt-not",
+        "text": "$A$ is adapted but not predictable, since it changes with the path",
+        "why": "Changing with the path is allowed; what matters is when $A_n$ is known. $A_3$ was known at time 2."
+       },
+       {
+        "id": "det",
+        "text": "$A$ is the same on every path, like the fair walk's $n$",
+        "why": "On down, down, up, $A_3 = 1 + 0.2 - 0.6 = 0.6$, not 5.4: $A$ depends on the path."
+       },
+       {
+        "id": "not-adapted",
+        "text": "$A$ is not adapted, since it sums over the whole history",
+        "why": "A sum of past values is known at the present time. A process that looks back is adapted."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$A_n$ is built from $S_0, \\dots, S_{n-1}$, so it is $\\mathcal F_{n-1}$-measurable: predictable.",
+      "generic": "Not quite. Ask at which time $A_n$ is known."
+     },
+     "explain": {
+      "text": "Predictable means $A_n$ is $\\mathcal F_{n-1}$-measurable. $A_n$ sums $0.8S_k + 1$ for $k \\le n - 1$, so it is. It still varies with the path, unlike the fair walk's part $n$."
+     }
+    },
+    {
+     "question": "$M = S^2 - A$ is a martingale with $M_0 = 0$, so $E[S_3^2] = E[A_3]$. Using $E[S_k] = 0.4k$, find $E[S_3^2]$. Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.96,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "fair",
+        "value": 3,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "mean-squared",
+        "value": 1.44,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "path",
+        "value": 5.4,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$E[A_3] = \\sum_{k=0}^{2} (0.8 \\times 0.4k + 1) = 3 + 0.32 \\times 3 = 3.96$.",
+      "generic": "Not quite. Take the mean of each term $0.8S_k + 1$ and add them.",
+      "byKey": {
+       "fair": "That is $E[S_3^2]$ for a fair walk. The drift adds $0.8E[S_k]$ to each term.",
+       "mean-squared": "That is $(E[S_3])^2 = 1.2^2$. The spread of $S_3$ adds to it.",
+       "path": "That is $A_3$ on one path from part 2. Average over all paths."
+      }
+     },
+     "explain": {
+      "text": "Take means term by term: $E[A_3] = 3 + 0.8(0 + 0.4 + 0.8)$. As a check, $\\mathrm{Var}(S_3) + (E[S_3])^2 = 3 \\times 0.84 + 1.2^2$. Both give $3.96$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-two-ups-stop",
+   "difficulty": 5,
+   "skills": [
+    "mt-martingale"
+   ],
+   "prose": "A strategy's P&L $S_n$, in £000, moves $+1$ or $-1$ each day with equal chance, from $S_0 = 0$. It stops after the first two up days in a row, or at the close of day 4, whichever comes first. Call the stopping day $T$.",
+   "parts": [
+    {
+     "question": "What is $P(T = 3)$? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.125,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "any-pair",
+        "value": 0.25,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "four-days",
+        "value": 0.0625,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$T = 3$ needs days 2 and 3 up with day 1 down, or the strategy would have stopped on day 2. So $P(T = 3) = \\tfrac18 = 0.125$.",
+      "generic": "Not quite. Which first three days stop the strategy on day 3 and not before?",
+      "byKey": {
+       "any-pair": "That is the chance days 2 and 3 are up. If day 1 is also up, the strategy stops on day 2.",
+       "four-days": "Only the first three days matter for $T = 3$, so the chance is one in $2^3$."
+      }
+     },
+     "explain": {
+      "text": "Days 2 and 3 must both be up. If day 1 were up too, the strategy would stop on day 2, so day 1 is down. One pattern of three days in eight: $0.125$."
+     }
+    },
+    {
+     "question": "$T$ is 2 with chance $\\tfrac14$, and 4 when it is neither 2 nor 3. Using part 1, find $E[T]$. Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.375,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "any-pair",
+        "value": 3.25,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "equal",
+        "value": 3,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$P(T = 4) = 1 - \\tfrac14 - \\tfrac18 = \\tfrac58$, so $E[T] = 2 \\times 0.25 + 3 \\times 0.125 + 4 \\times 0.625 = 3.375$.",
+      "generic": "Not quite. Find $P(T = 4)$ first, then weight each day by its chance.",
+      "byKey": {
+       "any-pair": "That uses $P(T = 3) = \\tfrac14$. Part 1 gives $\\tfrac18$.",
+       "equal": "That weights days 2, 3 and 4 equally. Most paths run to day 4."
+      }
+     },
+     "explain": {
+      "text": "The three chances add to 1, so $P(T = 4) = \\tfrac58$. Weight each stopping day by its chance. That gives $0.5 + 0.375 + 2.5 = 3.375$."
+     }
+    },
+    {
+     "question": "$T$ is a stopping time bounded by 4, and $S$ is a martingale. What is $E[S_T]$, in £000? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "early-only",
+        "value": 0.625,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Optional stopping for a bounded stopping time gives $E[S_T] = E[S_0] = 0$.",
+      "generic": "Not quite. Use optional stopping for a bounded stopping time.",
+      "byKey": {
+       "early-only": "That counts only the paths that stop early, $2 \\times \\tfrac14 + 1 \\times \\tfrac18$. The paths that run to day 4 lose on average and cancel it."
+      }
+     },
+     "explain": {
+      "text": "$T \\le 4$ and $\\{T = n\\}$ is decided by the first $n$ days, so $T$ is a bounded stopping time. Optional stopping gives $E[S_T] = E[S_0]$. Stopping after gains does not create a gain on average: $E[S_T] = 0$."
+     }
+    },
+    {
+     "question": "$S_n^2 - n$ is also a martingale. Using optional stopping on it with $E[T]$ from part 2, find $E[S_T^2]$. Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.375,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "fixed-day",
+        "value": 4,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "square-of-mean",
+        "value": 0,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Optional stopping gives $E[S_T^2 - T] = 0$, so $E[S_T^2] = E[T] = 3.375$.",
+      "generic": "Not quite. Apply optional stopping to $S_n^2 - n$ at $T$.",
+      "byKey": {
+       "fixed-day": "That is $E[S_4^2] = 4$, as if every path ran to day 4. Stopping early cuts the time, so use $E[T]$.",
+       "square-of-mean": "That is $(E[S_T])^2$. A mean of squares is not the square of the mean."
+      }
+     },
+     "explain": {
+      "text": "$T$ is still bounded, so optional stopping applies to $S_n^2 - n$: $E[S_T^2] - E[T] = 0$. With $E[T]$ from part 2, $E[S_T^2] = 3.375$."
+     }
+    },
+    {
+     "question": "Using $E[S_T] = 0$ from part 3, find $E[S_T \\mathbf{1}_{\\{T = 4\\}}]$, in £000. This is the share of the mean P&L from paths that run to day 4. Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.625,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "sign",
+        "value": 0.625,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "conditional",
+        "value": -1,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Early stops contribute $2 \\times \\tfrac14 + 1 \\times \\tfrac18 = 0.625$, so the paths that run to day 4 contribute $0 - 0.625 = -0.625$.",
+      "generic": "Not quite. Split $E[S_T]$ by the stopping day.",
+      "byKey": {
+       "sign": "That is what the early stops contribute. The total is 0, so the day-4 paths contribute the negative of it.",
+       "conditional": "That is the mean given $T = 4$, $-0.625 \\div \\tfrac58$. The question asks for $E[S_T \\mathbf{1}_{\\{T = 4\\}}]$, which carries the chance $\\tfrac58$."
+      }
+     },
+     "explain": {
+      "text": "Split $E[S_T]$ by $T$: stopping on day 2 earns 2 and on day 3 earns 1. Those contribute $0.5 + 0.125 = 0.625$. The total is 0, so the rest is $-0.625$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-red-card-call",
+   "difficulty": 4,
+   "skills": [
+    "mt-condexp",
+    "mt-martingale"
+   ],
+   "prose": "A dealer turns over a shuffled deck of 4 red and 3 black cards, one at a time. Once, before any card, you may call, and you win £1 if the next card is red. Let $M_n$ be the share of red among the cards left after $n$ are shown, so $M_0 = \\tfrac47$.",
+   "parts": [
+    {
+     "question": "What is $E[M_1]$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.571429,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "fraction or decimal",
+      "wrong": [
+       {
+        "id": "unweighted",
+        "value": 0.5833,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "red-shown",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$E[M_1] = \\tfrac47 \\times \\tfrac36 + \\tfrac37 \\times \\tfrac46 = \\tfrac{24}{42} = \\tfrac47 \\approx 0.5714$.",
+      "generic": "Not quite. Weight the two values of $M_1$ by the chances of a red or a black first card.",
+      "byKey": {
+       "unweighted": "That averages $\\tfrac36$ and $\\tfrac46$ equally. A red first card is more likely, $\\tfrac47$ against $\\tfrac37$.",
+       "red-shown": "That is $M_1$ after a red card. A black first card leaves $\\tfrac46$; weight the two."
+      }
+     },
+     "explain": {
+      "text": "A red first card has chance $\\tfrac47$ and leaves $M_1 = \\tfrac36$; a black one leaves $\\tfrac46$. Weighting gives $\\tfrac{12 + 12}{42} = \\tfrac47 \\approx 0.5714$."
+     }
+    },
+    {
+     "question": "Given the first card shown is red, find $E[M_2 \\mid \\mathcal F_1]$ on that event. Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "red-again",
+        "value": 0.4,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "start",
+        "value": 0.5714,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "After a red, 3 red and 3 black remain. Then $M_2$ is $\\tfrac25$ or $\\tfrac35$ with chance $\\tfrac12$ each, so $E[M_2 \\mid \\mathcal F_1] = 0.5$, which is $M_1$.",
+      "generic": "Not quite. List the two values of $M_2$ after a red, with their chances.",
+      "byKey": {
+       "red-again": "That assumes the second card is red too. It is black with chance $\\tfrac12$, which leaves $\\tfrac35$.",
+       "start": "That is $M_0$. Given the first card, the forecast moves to $M_1 = \\tfrac36$."
+      }
+     },
+     "explain": {
+      "text": "$M_n$ is a martingale: given what is shown, the next share averages to the current one. Here $\\tfrac12 \\times \\tfrac25 + \\tfrac12 \\times \\tfrac35 = 0.5 = M_1$."
+     }
+    },
+    {
+     "question": "A rule calls as soon as $M_n > \\tfrac47$, and otherwise calls before the last card. The call time $T$ is a bounded stopping time, and the chance of a win given $\\mathcal F_T$ is $M_T$. What is the chance the rule calls right after the first card and wins? Give an exact fraction or a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.285714,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "fraction or decimal",
+      "wrong": [
+       {
+        "id": "call-only",
+        "value": 0.4286,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "win-only",
+        "value": 0.6667,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "It calls after one card when that card is black, chance $\\tfrac37$, leaving $M_1 = \\tfrac46$. So the chance is $\\tfrac37 \\times \\tfrac23 = \\tfrac27 \\approx 0.2857$.",
+      "generic": "Not quite. When does $M_1$ exceed $\\tfrac47$, and what is the chance of a red next?",
+      "byKey": {
+       "call-only": "That is the chance the rule calls after one card. It still has to win, with chance $\\tfrac46$.",
+       "win-only": "That is the chance of a win once it has called. Multiply by the chance $\\tfrac37$ of calling then."
+      }
+     },
+     "explain": {
+      "text": "Only a black first card lifts the share above $\\tfrac47$, to $\\tfrac46$. That card has chance $\\tfrac37$, and the next card is then red with chance $\\tfrac23$. Together $\\tfrac27 \\approx 0.2857$."
+     }
+    },
+    {
+     "question": "Using optional stopping on $M$, what is the rule's total chance of winning? Give an exact fraction or a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.571429,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "fraction or decimal",
+      "wrong": [
+       {
+        "id": "threshold",
+        "value": 0.6667,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "coin",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$P(\\text{win}) = E[M_T] = M_0 = \\tfrac47 \\approx 0.5714$, by optional stopping for the bounded time $T$.",
+      "generic": "Not quite. Write the chance of a win as $E[M_T]$ and use optional stopping.",
+      "byKey": {
+       "threshold": "That assumes the rule always calls at a share of $\\tfrac46$. On many paths the share never rises above $\\tfrac47$, and the rule calls late at worse odds.",
+       "coin": "The deck holds more red than black, so a call at the start already wins with chance $\\tfrac47$."
+      }
+     },
+     "explain": {
+      "text": "The tower property gives $P(\\text{win}) = E[P(\\text{win} \\mid \\mathcal F_T)] = E[M_T]$. $T \\le 6$ is a bounded stopping time, so optional stopping gives $E[M_T] = M_0$. Waiting for a good moment gains nothing: $\\tfrac47 \\approx 0.5714$."
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -418,7 +418,163 @@ def level2():
     ok(all(r_[0] for r_ in lv.results), 'level 2: numbers_lib check_wrongs')
 
 
+# ---------------------------------------------------------------- level 3
+def level3():
+    it = load(3)
+    if it is None:
+        return
+    structural(it, 3)
+    # p-nested-forecasts
+    pr = [F(1, 10), F(3, 20), F(1, 4), F(1, 5), F(1, 5), F(1, 10)]
+    x = [-3, 1, 5, 2, 6, -4]
+    G = [[0], [1, 2], [3, 4], [5]]
+    H = [[0, 1, 2], [3, 4, 5]]
+    ok(sum(pr) == 1, 'forecasts: chances add to 1')
+    def ce(at):
+        y = [None] * 6
+        for A in at:
+            m = sum(pr[i] * x[i] for i in A) / sum(pr[i] for i in A)
+            for i in A:
+                y[i] = m
+        return y
+    def proj(at):   # method 2: weighted least squares onto the indicators of the atoms
+        B = np.array([[1.0 if i in A else 0.0 for A in at] for i in range(6)])
+        W = np.sqrt(np.array([float(q) for q in pr]))
+        coef = np.linalg.lstsq(B * W[:, None], np.array(x, float) * W, rcond=None)[0]
+        return B @ coef
+    yG, yH = ce(G), ce(H)
+    pG, pH = proj(G), proj(H)
+    def count_events(at):
+        fam = {frozenset()}
+        for A in at:
+            fam |= {f | frozenset(A) for f in fam}
+        return fam
+    eG, eH = count_events(G), count_events(H)
+    ok(eH <= eG, 'forecasts: H is inside G')
+    num_part(it, 'p-nested-forecasts', 1, 2 ** 4 - 2 ** 2, len(eG - eH))
+    wrong_is(it, 'p-nested-forecasts', 1, 'all', 16)
+    wrong_is(it, 'p-nested-forecasts', 1, 'atoms', 4 - 2)
+    num_part(it, 'p-nested-forecasts', 2, float(yG[1]), float(pG[1]), 1)
+    wrong_is(it, 'p-nested-forecasts', 2, 'unweighted', (1 + 5) / 2)
+    wrong_is(it, 'p-nested-forecasts', 2, 'no-divide', float(pr[1] * 1 + pr[2] * 5))
+    tower = (pr[0] * yG[0] + (pr[1] + pr[2]) * yG[1]) / (pr[0] + pr[1] + pr[2])
+    num_part(it, 'p-nested-forecasts', 3, float(tower), float(pH[0]), 1)
+    ok(tower == yH[0], 'forecasts: tower property on the cut atom')
+    wrong_is(it, 'p-nested-forecasts', 3, 'unweighted', float((yG[0] + yG[1]) / 2))
+    wrong_is(it, 'p-nested-forecasts', 3, 'finer', float(yG[1]))
+    mse = lambda y: sum(pr[i] * (x[i] - y[i]) ** 2 for i in range(6))
+    mG = mse(yG)
+    num_part(it, 'p-nested-forecasts', 4, float(mG), float(sum(float(pr[i]) * (x[i] - pG[i]) ** 2 for i in range(6))), 2)
+    wrong_is(it, 'p-nested-forecasts', 4, 'one-atom', float(pr[1] * (1 - yG[1]) ** 2 + pr[2] * (5 - yG[2]) ** 2))
+    EX = sum(pr[i] * x[i] for i in range(6))
+    ok(EX == F(23, 10), 'forecasts: E[X] = 2.3 as printed')
+    wrong_is(it, 'p-nested-forecasts', 4, 'overall-mean', float(mse([EX] * 6)))
+    ok(yH[3] == F(12, 5) and yH[0] == F(11, 5), 'forecasts: E[X|H] is 2.2 and 2.4 as printed')
+    gap = sum(pr[i] * (yG[i] - yH[i]) ** 2 for i in range(6))
+    num_part(it, 'p-nested-forecasts', 5, float(gap), float(mse(yH) - mG), 2)
+    ok([float(q) for q in (pr[0] * (yG[0] - yH[0]) ** 2, (pr[1] + pr[2]) * (yG[1] - yH[1]) ** 2, (pr[3] + pr[4]) * (yG[3] - yH[3]) ** 2, pr[5] * (yG[5] - yH[5]) ** 2)] == [2.704, 0.676, 1.024, 4.096], 'forecasts: printed gap terms')
+    wrong_is(it, 'p-nested-forecasts', 5, 'mse-h', float(mse(yH)))
+    wrong_is(it, 'p-nested-forecasts', 5, 'one-side', 2.704 + 0.676)
+
+    # p-doob-split
+    sv = sp.Symbol('s')
+    Xs = {1: F(7, 10), -1: F(3, 10)}
+    drift = sp.expand(sum(sp.Rational(q.numerator, q.denominator) * ((sv + st) ** 2 - sv ** 2) for st, q in Xs.items()))
+    SYM['s'] = sv
+    expr_part(it, 'p-doob-split', 1, drift)
+    ok(sp.simplify(drift - (sp.Rational(4, 5) * sv + 1)) == 0, 'doob: drift of S^2 is 0.8s + 1')
+    A = lambda path: sum(F(4, 5) * sum(path[:k]) + 1 for k in range(len(path)))   # S_k = sum of first k steps
+    num_part(it, 'p-doob-split', 2, float(A([1, 1, -1])), 1 + 1.8 + 2.6, 1)
+    wrong_is(it, 'p-doob-split', 2, 'one-more', float(A([1, 1, -1]) + F(4, 5) * 1 + 1))
+    wrong_is(it, 'p-doob-split', 2, 'shifted', 1.8 + 2.6 + 1.8)
+    wrong_is(it, 'p-doob-split', 2, 'fair', 3)
+    ok(A([-1, -1, 1]) == F(3, 5), 'doob: A_3 on down, down, up is 0.6')
+    choice_key(it, 'p-doob-split', 3, 'pred')
+    paths = list(itertools.product([1, -1], repeat=3))
+    ES2 = sum(np.prod([float(Xs[st]) for st in pth]) * sum(pth) ** 2 for pth in paths)
+    EA = sum(np.prod([float(Xs[st]) for st in pth]) * float(A(list(pth))) for pth in paths)
+    num_part(it, 'p-doob-split', 4, ES2, EA, 2)
+    ok(abs(3 * 0.84 + 1.2 ** 2 - ES2) < 1e-12, 'doob: variance check 3.96')
+    # M is a martingale: E[M_{n+1} - M_n | F_n] = 0 on every prefix
+    for pre in itertools.chain.from_iterable(itertools.product([1, -1], repeat=r) for r in range(3)):
+        pre = list(pre)
+        Mn = sum(pre) ** 2 - A(pre)
+        nxt = sum(float(Xs[st]) * float(sum(pre + [st]) ** 2 - A(pre + [st])) for st in (1, -1))
+        ok(abs(nxt - float(Mn)) < 1e-12, f'doob: M is a martingale after {pre}')
+    wrong_is(it, 'p-doob-split', 4, 'fair', 3)
+    wrong_is(it, 'p-doob-split', 4, 'mean-squared', 1.2 ** 2)
+    wrong_is(it, 'p-doob-split', 4, 'path', 5.4)
+
+    # p-two-ups-stop
+    res = []
+    for pth in itertools.product([1, -1], repeat=4):
+        S, T = 0, 4
+        for k in range(4):
+            S += pth[k]
+            if k >= 1 and pth[k] == 1 and pth[k - 1] == 1:
+                T = k + 1
+                break
+        res.append((T, S))
+    q = F(1, 16)
+    PT = {t: sum(q for T, S in res if T == t) for t in (2, 3, 4)}
+    ok(PT[2] == F(1, 4) and PT[3] == F(1, 8) and PT[4] == F(5, 8), 'stop: P(T) by enumeration')
+    num_part(it, 'p-two-ups-stop', 1, float(PT[3]), 0.5 ** 3, 3)
+    wrong_is(it, 'p-two-ups-stop', 1, 'any-pair', 0.25)
+    wrong_is(it, 'p-two-ups-stop', 1, 'four-days', 1 / 16)
+    ET = sum(q * T for T, S in res)
+    num_part(it, 'p-two-ups-stop', 2, float(ET), 2 * 0.25 + 3 * 0.125 + 4 * 0.625, 3)
+    wrong_is(it, 'p-two-ups-stop', 2, 'any-pair', 2 * 0.25 + 3 * 0.25 + 4 * 0.5)
+    wrong_is(it, 'p-two-ups-stop', 2, 'equal', 3)
+    ES = sum(q * S for T, S in res)
+    num_part(it, 'p-two-ups-stop', 3, float(ES), 0, 3)
+    wrong_is(it, 'p-two-ups-stop', 3, 'early-only', 2 * 0.25 + 1 * 0.125)
+    ES2 = sum(q * S * S for T, S in res)
+    num_part(it, 'p-two-ups-stop', 4, float(ES2), float(ET), 3)
+    wrong_is(it, 'p-two-ups-stop', 4, 'fixed-day', 4)
+    wrong_is(it, 'p-two-ups-stop', 4, 'square-of-mean', 0)
+    E4 = sum(q * S for T, S in res if T == 4)
+    num_part(it, 'p-two-ups-stop', 5, float(E4), 0 - (2 * 0.25 + 1 * 0.125), 3)
+    ok(all(S == 2 for T, S in res if T == 2) and all(S == 1 for T, S in res if T == 3), 'stop: early stops earn 2 and 1')
+    wrong_is(it, 'p-two-ups-stop', 5, 'sign', 0.625)
+    wrong_is(it, 'p-two-ups-stop', 5, 'conditional', float(E4 / PT[4]))
+
+    # p-red-card-call
+    orders = set(itertools.permutations('RRRRBBB'))
+    nO = len(orders)
+    ok(nO == 35, 'cards: 35 distinct orders')
+    M = lambda o, n: F(o[n:].count('R'), 7 - n)
+    EM1 = sum(M(o, 1) for o in orders) / nO
+    num_part(it, 'p-red-card-call', 1, float(EM1), float(F(4, 7) * F(3, 6) + F(3, 7) * F(4, 6)), 4)
+    wrong_is(it, 'p-red-card-call', 1, 'unweighted', float((F(3, 6) + F(4, 6)) / 2), 4)
+    wrong_is(it, 'p-red-card-call', 1, 'red-shown', 0.5)
+    red1 = [o for o in orders if o[0] == 'R']
+    EM2 = sum(M(o, 2) for o in red1) / len(red1)
+    num_part(it, 'p-red-card-call', 2, float(EM2), 0.5 * 0.4 + 0.5 * 0.6, 3)
+    wrong_is(it, 'p-red-card-call', 2, 'red-again', 0.4)
+    wrong_is(it, 'p-red-card-call', 2, 'start', 4 / 7, 4)
+    def call_time(o):
+        for n in range(0, 7):
+            if M(o, n) > F(4, 7) or n == 6:
+                return n
+    wins = [(call_time(o), o[call_time(o)] == 'R') for o in orders]
+    p_t1_win = F(sum(1 for t, w in wins if t == 1 and w), nO)
+    num_part(it, 'p-red-card-call', 3, float(p_t1_win), float(F(3, 7) * F(4, 6)), 4)
+    ok(all(t >= 1 for t, w in wins), 'cards: the rule never calls at time 0')
+    wrong_is(it, 'p-red-card-call', 3, 'call-only', 3 / 7, 4)
+    wrong_is(it, 'p-red-card-call', 3, 'win-only', 2 / 3, 4)
+    pwin = F(sum(1 for t, w in wins if w), nO)
+    num_part(it, 'p-red-card-call', 4, float(pwin), 4 / 7, 4)
+    ok(pwin == F(4, 7), 'cards: optional stopping value 4/7 by enumeration')
+    wrong_is(it, 'p-red-card-call', 4, 'threshold', 2 / 3, 4)
+    wrong_is(it, 'p-red-card-call', 4, 'coin', 0.5)
+
+    lv = Level('measure-prob', 3)
+    lv.check_wrongs('problems')
+    ok(all(r_[0] for r_ in lv.results), 'level 3: numbers_lib check_wrongs')
+
+
 level1()
 level2()
+level3()
 print(f'{checks} checks, {len(fails)} failures')
 sys.exit(1 if fails else 0)
