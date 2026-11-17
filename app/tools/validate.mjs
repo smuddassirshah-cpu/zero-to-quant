@@ -104,20 +104,42 @@ const arithEval = (t) => {
   if (i !== t.length || !Number.isFinite(v)) throw 0;
   return v;
 };
+/* ENGINE-BACKLOG 1142: two more shapes. A number stated in the text beside a pure-arithmetic span ("2.4005 is $1.95996 \times 1.224745$", "$a \times b$ is 2.40"), and a quotient inside
+   \Phi\big(...\big) set equal to the same Phi at a stated figure ("\Phi\big((-4 - 0.85)/1.92738\big) = \Phi(-2.5164)"): the argument is recomputed and held to the stated figure. */
+const arithMismatch = (ltSrc, rtSrc, approx) => {
+  const lt = arithTokens(ltSrc), rt = arithTokens(rtSrc);
+  if (lt == null || rt == null || !/^-?\d+(?:\.\d+)?$/.test(rt) || !/\d[-+*/^]|\)[-+*/^(]|\)\(/.test(lt) || /^-?\d+(?:\.\d+)?$/.test(lt)) return null;
+  let lv; try { lv = arithEval(lt); } catch { return null; }
+  const dp = (rt.split('.')[1] || '').length, tz = !dp && approx ? (rt.match(/0+$/) || [''])[0].length : 0, unit = Math.pow(10, tz - dp), c = +rt;   // \approx 6{,}780 is three figures
+  if (Math.abs(lv - c) > 0.02 * Math.max(Math.abs(c), unit)) return null;   // a wide miss is a deliberate wrong claim (a distractor, a slip shown), not rounding drift
+  if (Math.abs(lv) >= 1e15 || Math.abs(lv - c) <= unit * (approx ? 1 : 0.5) + 1e-9 * Math.max(1, Math.abs(c))) return null;
+  return { lv, rt };
+};
+const phiArg = (seg) => { const m = /^\s*\\Phi\s*\(([\s\S]*)\)\s*$/.exec(seg.replace(/\\(?:big|Big|bigg|Bigg)[lr]?(?![A-Za-z])/g, '')); return m ? m[1] : null; };
 const shownArithmetic = (file, where, noCode) => {
   for (const m of noCode.match(/\$\$[\s\S]*?\$\$|\$[^$]*\$/g) || []) {
     const body = m.replace(/^\$+|\$+$/g, '');
     const parts = body.split(/(=|\\approx|\\simeq)/);
     for (let k = 0; k + 2 < parts.length; k += 2) {
-      const lt = arithTokens(parts[k]), rt = arithTokens(parts[k + 2]), approx = parts[k + 1] !== '=';
-      if (lt == null || rt == null || !/^-?\d+(?:\.\d+)?$/.test(rt) || !/\d[-+*/^]|\)[-+*/^(]|\)\(/.test(lt) || /^-?\d+(?:\.\d+)?$/.test(lt)) continue;
-      let lv; try { lv = arithEval(lt); } catch { continue; }
-      const dp = (rt.split('.')[1] || '').length, tz = !dp && approx ? (rt.match(/0+$/) || [''])[0].length : 0, unit = Math.pow(10, tz - dp), c = +rt;   // \approx 6{,}780 is three figures
-      if (Math.abs(lv - c) > 0.02 * Math.max(Math.abs(c), unit)) continue;   // a wide miss is a deliberate wrong claim (a distractor, a slip shown), not rounding drift
-      if (Math.abs(lv) >= 1e15 || Math.abs(lv - c) <= unit * (approx ? 1 : 0.5) + 1e-9 * Math.max(1, Math.abs(c))) continue;
-      warn(file, where, `[shown-arithmetic] "${parts[k].trim()} ${approx ? '\\approx' : '='} ${parts[k + 2].trim()}": the left side works out to ${+lv.toPrecision(7)}, not ${rt}; recompute from the numbers as printed, or print the unrounded inputs`);
+      const approx = parts[k + 1] !== '=';
+      let a = parts[k], b = parts[k + 2];
+      const pa = phiArg(a), pb = phiArg(b);
+      if (pa != null && pb != null) { a = pa; b = pb; }   // \Phi(expr) = \Phi(figure): compare the argument with the figure
+      const r = arithMismatch(a, b, approx);
+      if (!r) continue;
+      warn(file, where, `[shown-arithmetic] "${parts[k].trim()} ${approx ? '\\approx' : '='} ${parts[k + 2].trim()}": the left side works out to ${+r.lv.toPrecision(7)}, not ${r.rt}; recompute from the numbers as printed, or print the unrounded inputs`);
       return;
     }
+  }
+  /* a stated figure and a span of pure arithmetic joined by "is", "equals", "gives" or "comes to" (either order), outside the maths */
+  const NUMP = String.raw`-?\d+(?:\.\d+)?`, JOIN = String.raw`(?:is|equals|gives|comes\s+to|makes)`;
+  const pairs = [...[...noCode.matchAll(new RegExp(String.raw`(?<![\w.$])(${NUMP})\s+${JOIN}\s+\$([^$]+)\$`, 'g'))].map(x => [x[2], x[1]]), ...[...noCode.matchAll(new RegExp(String.raw`\$([^$]+)\$\s+${JOIN}\s+(${NUMP})(?![\d.]*\w)`, 'g'))].map(x => [x[1], x[2]])];
+  for (const [expr, fig] of pairs) {
+    if (/=|\\approx|\\simeq/.test(expr)) continue;
+    const r = arithMismatch(expr, fig, false);
+    if (!r) continue;
+    warn(file, where, `[shown-arithmetic] "${fig} is ${expr.trim()}": the arithmetic works out to ${+r.lv.toPrecision(7)}, not ${r.rt}; recompute from the numbers as printed, or print the unrounded inputs`);
+    return;
   }
 };
 /* Session V: float artefacts (and, ENGINE-BACKLOG 611, a signed zero) in shown text */
@@ -410,6 +432,19 @@ const keyInQuestion = (q, ans, hw, step, unit) => {
   }
   return null;
 };
+/* ENGINE-BACKLOG 1079: [no-chain] (docs/briefs/chained.md: part k + 1 uses the result of part k, and restates the value it needs). A problem in a problem set where no part after the
+   first cites an earlier part (the words "part 2", "parts 1 and 2", or a number that is an earlier numeric part's key) is a list of separate questions, not a chain. Warning. */
+const noChainRule = (file, where, it) => {
+  if (!isObj(it) || !Array.isArray(it.parts) || it.parts.length < 2) return;
+  const parts = it.parts.filter(isObj), cites = (q, earlier) => {
+    const t = String(q || '');
+    if (/\bparts?\s*\d/i.test(t.replace(/\$/g, ' ')) || /(?:^|[.?]\s+)Using\s+(?:\$|\d|-?\\)/.test(t)) return true;   // "from part 2", or "Using $P(A) = \tfrac{3}{10}$, ..." (the restated value of the brief)
+    const fr = [], flat = t.replace(/\{,\}/g, ',').replace(/(\d),(?=\d{3}\b)/g, '$1').replace(/(\d+)\s*\\[dt]?frac\s*\{(\d+)\}\s*\{(\d+)\}|\\[dt]?frac\s*\{(\d+)\}\s*\{(\d+)\}/g, (m, w, a, b, c, d) => { fr.push(w != null ? +w + a / b : c / d); return ' '; });   // 4\tfrac{1}{6}, \tfrac{13}{20}
+    const nums = (flat.match(/\d+(?:\.\d+)?/g) || []).map(Number).concat(fr);
+    return earlier.some(e => { const w = isObj(e.widget) ? e.widget : null; if (!w || w.kind !== 'numeric' || !Number.isFinite(w.answer)) return false; const k = Math.abs(w.unit === '%' ? w.answer * 100 : w.answer); return k !== 0 && !(Number.isInteger(k) && k < 10) && nums.some(n => Math.abs(n - k) <= 0.005 * k + 1e-9); });
+  };
+  if (parts.length >= 2 && !parts.slice(1).some((p, j) => cites(p.question, parts.slice(0, j + 1)))) warn(file, where, `[no-chain] no part after the first cites an earlier part ("from part 2", "using the 0.34 of part 1") or states an earlier part's key: the ${parts.length} parts are separate questions, not a chain (docs/briefs/chained.md); restate the value each later part needs`);
+};
 const pass8Rules = (file, where, it, p) => {
   const w = isObj(p) && isObj(p.widget) ? p.widget : null;
   if (!w || w.kind !== 'numeric' || typeof w.answer !== 'number' || !Number.isFinite(w.answer) || !isObj(w.tol)) return;
@@ -462,6 +497,7 @@ const pass8Rules = (file, where, it, p) => {
     if (Math.abs(typed - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans))) warn(file, where, `[working-band] ${name} ends at ${+v.toPrecision(10)}${typed !== v ? `, ${+typed.toPrecision(10)} at the asked places` : ''}, outside the key ${ans} band +-${+hw.toPrecision(3)}: a learner who follows the working is marked wrong`);
   });
   /* [working-band] widened (engine pass 9): each span re-evaluated from its own printed figures; a recomputed value that leaves the band is reported */
+  const wbSeen = new Set();
   if (!scaled && Math.abs(ans) > 0) fb.forEach(([name, text]) => {
     const seen = new Set(), fin = finalPrinted(text, w.unit);
     for (const m of String(text || '').matchAll(/\$\$([^$]+)\$\$|\$([^$]+)\$/g)) {
@@ -479,9 +515,29 @@ const pass8Rules = (file, where, it, p) => {
         if (fin != null && closeTo(fin, R) && Math.abs(fin - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans))) return;   // the plain final-figure case is reported above
         const key = seg.trim();
         if (seen.has(key)) return;
-        seen.add(key);
+        seen.add(key); wbSeen.add(`${name}|${key}`);
         warn(file, where, `[working-band] ${name} prints $${key.length > 60 ? key.slice(0, 57) + '...' : key}$, which comes to ${+R.toPrecision(8)}${typed !== R ? `, ${+typed.toPrecision(8)} at the asked places` : ''} from the printed figures, outside the key ${ans} band +-${+hw.toPrecision(3)}: a learner who follows the working is marked wrong`);
       });
+    }
+  });
+  /* [quotient-band] (ENGINE-BACKLOG 1138): a printed quotient of two restated figures ($a \div b$, $a \times 10^k \div b \times 10^m$, \tfrac{a}{b} of two literals, in a scientific form too) is evaluated
+     and, at the asked places, held against the key's band: a learner who divides the figures as printed lands there. Skipped when the result is a wrong[] value, the key is printed beside it, or [working-band] has it. */
+  if (w.scale == null && !/units? of\b/i.test(q) && Math.abs(ans) > 0) fb.forEach(([name, text]) => {   // a "10^k" in the question is fine here: the figures printed are the ones divided
+    const SCI = String.raw`-?\d[\d,]*(?:\.\d+)?(?:\s*\\(?:times|cdot)\s*10\^\{?-?\d+\}?)?`, sci = (s) => { const m = /^(-?\d[\d,]*(?:\.\d+)?)(?:\s*\\(?:times|cdot)\s*10\^\{?(-?\d+)\}?)?$/.exec(s.trim()); return m ? +m[1].replace(/,/g, '') * Math.pow(10, m[2] == null ? 0 : +m[2]) : null; };
+    const QA = new RegExp(String.raw`^\s*(${SCI})\s*(?:\\div|/)\s*(${SCI})\s*$`), QB = new RegExp(String.raw`^\s*\\[dt]?frac\s*\{\s*(${SCI})\s*\}\s*\{\s*(${SCI})\s*\}\s*$`);
+    const fin = finalPrinted(text, w.unit), seen = new Set();
+    if (keyPrinted(text, ans, step, w.unit)) return;
+    for (const m of String(text || '').matchAll(/\$\$([^$]+)\$\$|\$([^$]+)\$/g)) for (const seg of (m[1] ?? m[2]).replace(/\{,\}/g, ',').split(/\\approx|=/)) {
+      const q2 = QA.exec(seg) || QB.exec(seg);
+      if (!q2) continue;
+      const a = sci(q2[1]), b = sci(q2[2]);
+      if (a == null || b == null || b === 0) continue;
+      const R = a / b, key = seg.trim();
+      if (!Number.isFinite(R) || R === 0 || Math.abs(R - ans) > 0.03 * Math.abs(ans) || seen.has(key) || wbSeen.has(`${name}|${key}`)) continue;
+      const typed = step != null && Math.abs(R / step - Math.round(R / step)) > 1e-6 ? Math.round(R / step) * step : R;
+      if (Math.abs(typed - ans) <= hw + 1e-9 * Math.max(1, Math.abs(ans)) || wrongs.some(x => closeTo(x.value, R) || closeTo(x.value, typed)) || (fin != null && closeTo(fin, R))) continue;
+      seen.add(key);
+      warn(file, where, `[quotient-band] ${name} prints $${key.length > 60 ? key.slice(0, 57) + '...' : key}$, which is ${+R.toPrecision(8)}${typed !== R ? `, ${+typed.toPrecision(8)} at the asked places` : ''}, outside the key ${ans} band +-${+hw.toPrecision(3)}: a learner who divides the figures as printed is marked wrong`);
     }
   });
   /* [key-in-question] (engine pass 9) */
@@ -489,8 +545,22 @@ const pass8Rules = (file, where, it, p) => {
     const hit = keyInQuestion(q, ans, hw, step, w.unit);
     if (hit != null) warn(file, where, `[key-in-question] the key (${hit}) is printed in the part's own question: a learner can type it back without working; ask for the quantity without stating its value`);
   }
+  /* [slip-in-key-band] (ENGINE-BACKLOG 1175): a wrong[] value stored outside the key's band whose rounding at the asked places lies inside it: the learner who follows the slip and rounds as asked
+     types the key's figure and is marked right, so the entry's byKey line cannot fire (the stored value clears the band only by its extra digits). [wrong-band] holds the other side: a slip typed at the
+     asked places that its own band refuses (0.3333 +-0.001 at 2 places). */
+  if (d != null && !scaled) wrongs.forEach((x, i) => {
+    const typed = Math.round(x.value / step) * step, tol1 = 1e-9 * Math.max(1, Math.abs(ans));
+    if (Math.abs(typed - x.value) <= 1e-12 || Math.abs(x.value - ans) <= hw + tol1) return;   // already at the asked places, or inside the band ([wrong-fire] reports it)
+    if (Math.abs(typed - ans) <= hw + tol1) warn(file, `${where}.wrong[${i}]`, `[slip-in-key-band] wrong "${x.id || i}" (${x.value}) rounds to ${+typed.toPrecision(10)} at the ${d} decimal place${d === 1 ? '' : 's'} asked, which is inside the key ${ans} band +-${+hw.toPrecision(3)}: a learner who makes this slip and rounds as asked is marked right, so its line cannot fire; separate the slip from the key or narrow the key's band`);
+  });
+  /* [carry-band] (ENGINE-BACKLOG 1130): a part that carries a value "from part k" is worked by some learners from the printed (rounded) carry and by others from the unrounded one, so a slip's
+     band must be as wide as the key's: a narrower wrong band refuses the slip made with the other carry (garch p-recalibrate-short-var part 3, inverted at 1.5 against a key band of 5) */
+  if (!scaled && /\bfrom\s+parts?\s*\d/i.test(q)) wrongs.forEach((x, i) => {
+    const wh = halfWidth(x.value, x.tol ?? { abs: 1e-9 });
+    if (wh < hw * (1 - 1e-6) - 1e-12) warn(file, `${where}.wrong[${i}]`, `[carry-band] the question carries a value "from part k" and wrong "${x.id || i}" (${x.value}) has a band of +-${+wh.toPrecision(3)}, narrower than the key's +-${+hw.toPrecision(3)}: a slip worked from the unrounded carry (or the printed one) lands outside it; widen it to the key's band`);
+  });
   /* [table-source] */
-  const printed = fb.map(([, t]) => String(t || '')).join(' ');
+  const printed =fb.map(([, t]) => String(t || '')).join(' ');
   if (TABLE_NEEDS.test(printed) || TABLE_ASKED.test(stripMathsAndCode(q))) {
     if (!TABLE_GIVEN.test(`${(it && it.prose) || ''} ${q}`)) warn(file, where, `[table-source] the part needs a tail area, quantile or table value (${(printed.match(TABLE_NEEDS) || stripMathsAndCode(q).match(TABLE_ASKED) || [''])[0].trim()}) but neither the stem nor the question gives it or names its source: state the value, or say where to read it (a table to 4 places, software)`);
   }
@@ -898,7 +968,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       wrongBandNarrow(file, where, w, ctx);
       bandRules(file, where, w, ctx);   // ENGINE-BACKLOG 894, 909
       acceptFormCheck(file, where, w);   // ENGINE-BACKLOG 911
-      ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
+      ids(w.wrong, 'wrong').forEach(k => keys.add(String(k))); keys.add('percent-sign'); keys.add('decimal');   // package 1, item 951: built-in lines for a typed % in a field with no % unit, and a hundredth typed for a percentage
       (w.wrong || []).forEach((x, i) => { if (typeof x.value !== 'number') err(file, `${where}.wrong[${i}].value`, 'must be a number'); if (x.tol) tol(x.tol, `${where}.wrong[${i}].tol`); });
       text(w.accept, `${where}.accept`);
       /* item 515: with unit "%" the engine divides what the learner types by 100, so the key is the fraction (0.1587, not 15.87) */
@@ -1959,6 +2029,7 @@ const checkProblemSet = (file, courseId, doc, items, skills, levelSkills) => {
     if (it.parts.length < 3 || it.parts.length > 5) err(file, `${at}.parts`, `a problem in a problem set has 3 to 5 parts (found ${it.parts.length})`);
     it.parts.forEach((p, k) => { if (isObj(p) && isObj(p.widget) && ['code', 'longform'].includes(p.widget.kind)) err(file, `${at}.parts[${k}].widget`, `a ${p.widget.kind} part cannot be in a problem set: each part is a typed or chosen answer the engine grades`); });
     it.parts.forEach((p, k) => pass8Rules(file, `${at}.parts[${k}]`, it, p));   // engine pass 8 part A
+    noChainRule(file, at, it);   // ENGINE-BACKLOG 1079
     /* [answer-form] (advisory): a numeric part whose answer is not a whole number must say the form asked for (found on 35 parts, docs/reviews/review-problems-1.5-a.md) */
     it.parts.forEach((p, k) => {
       const w = isObj(p) && isObj(p.widget) ? p.widget : null;

@@ -78,6 +78,21 @@ ok_s = n_sl == 4 and rs == {'good': True, 'rounded': True, 'bad': False, 'prose'
 print(f"{'PASS' if ok_s else 'FAIL'} check_slips: matching and rounded expressions pass, a wrong value and unreadable text fail, nothing else is read")
 if not ok_s:
     sys.exit(1)
+# ENGINE-BACKLOG 1081: slip(), every route of one slip inside its band and outside the key band
+sp = Level('odes', 3)
+sp.files = {'problems-3': {'items': [{'parts': [{'widget': {'kind': 'numeric', 'answer': 76945, 'tol': {'abs': 5}, 'wrong': [
+    {'id': 'inverted', 'value': 59425, 'tol': {'abs': 5}}, {'id': 'near', 'value': 76948, 'tol': {'abs': 1}}]},
+    'feedback': {'byKey': {'inverted': 'You divided.'}}}]}]}}
+with contextlib.redirect_stdout(io.StringIO()):
+    s1 = sp.slip('problems', 'items[0].parts[0]', 'inverted', ('printed', 59425.3), ('unrounded', 59424.1))
+    s2 = sp.slip('problems', 'items[0].parts[0]', 'inverted', ('printed', 59425.3), ('from the printed error', 59432))
+    s3 = sp.slip('problems', 'items[0].parts[0]', 'near', 76948)
+    s4 = sp.slip('problems', 'items[0].parts[0]', 'missing', 1)
+    s5 = sp.slip('problems', 'items[0].parts[0].widget', 'inverted', 59425)
+ok_p = s1 and not s2 and not s3 and not s4 and s5
+print(f"{'PASS' if ok_p else 'FAIL'} slip: routes inside the band pass, a route outside it, a band meeting the key band and an unknown id fail")
+if not ok_p:
+    sys.exit(1)
 # B2-E4: Bank("<file id>") reads items[<item id>] paths; expect with and without the file argument, a wrong id and a missing item fail, check_wrongs runs
 from numbers_lib import Bank
 with contextlib.redirect_stdout(io.StringIO()):

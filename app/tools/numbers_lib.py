@@ -16,7 +16,8 @@ Use from docs/reports/<course>-L<n>-numbers.py:
     lv.expect("l12", "screens[2]", 7)                             # a path that ends on an object or list searches every string below it
     lv.expect("l12", "screens[*].prose", 7)                       # [*] joins every element
     lv.check_wrongs()                                             # every numeric wrong[].value: outside the answer tolerance (ENGINE-BACKLOG 582)
-    lv.check_slips()                                              # a wrong[] entry's optional "slip" expression must give its value (ENGINE-BACKLOG 1029)
+    lv.slip("problems", "items[1].parts[2]", "inverted", ("printed", 59425.3), ("unrounded", 59424.9))   # every route of one slip inside its band, outside the key band (ENGINE-BACKLOG 1081)
+    lv.check_slips()                                            # a wrong[] entry's optional "slip" expression must give its value (ENGINE-BACKLOG 1029)
     lv.claim(abs(a - b) < 0.01, "a and b agree")                # a claim that is not one number: an inequality, a coverage statement (ENGINE-BACKLOG 606)
     lv.stated("l7", "screens[2].prose", "is always positive", x > 0)    # tied to its wording: fails while the sentence is in the text and false, passes once reworded
     lv.claim_text("l7", "screens[2].prose", "phrase", ok, "label")      # the same with your own label
@@ -257,6 +258,35 @@ class Level:
         elif hand:
             print(f'check by hand: {len(hand)} byKey line(s) state numbers other than the wrong value (not failures; rerun with --verbose to list them)')
         return hand
+
+    def slip(self, ref, path, wid, *routes):
+        """ENGINE-BACKLOG 1081: one slip as a list of routes. `path` selects the part (or the widget) holding the numeric answer, e.g. "items[1].parts[2]"; `wid` is the id of its wrong[]
+        entry; each route is a value a learner who makes the slip reaches (from the stated inputs, from the unrounded inputs, from the printed error: a number, or a (label, number) pair).
+        Every route must lie inside the slip's band and outside the key's band, the two bands must not meet, and a part must carry a byKey line for the id.
+        Pattern: lv.slip("problems", "items[1].parts[2]", "inverted", ("printed", 59425.3), ("unrounded", 59424.9))"""
+        label = f'{ref} {path} slip "{wid}"'
+        try:
+            node = _walk(self._file(ref)[1], path)
+        except KeyError as e:
+            return self._rec(False, label, str(e))
+        if len(node) != 1:
+            return self._rec(False, label, f'the path selects {len(node)} nodes, not one')
+        part = node[0]
+        w = part.get('widget') if isinstance(part, dict) and isinstance(part.get('widget'), dict) else part
+        ans, ent = (w.get('answer') if isinstance(w, dict) else None), [x for x in (w.get('wrong') or []) if isinstance(x, dict) and x.get('id') == wid] if isinstance(w, dict) else []
+        if not isinstance(ans, (int, float)) or isinstance(ans, bool) or len(ent) != 1 or not isinstance(ent[0].get('value'), (int, float)):
+            return self._rec(False, label, 'no numeric answer, or no single numeric wrong entry with this id')
+        e, ha = ent[0], _half(ans, w.get('tol'))
+        hs, ok = _half(e['value'], e.get('tol') or {'abs': 1e-9}), True
+        ok &= self._rec(abs(e['value'] - ans) > ha + hs, f'{label}: band apart from the key band', f'the slip band {e["value"]!r} +-{hs:.6g} meets the key band {ans!r} +-{ha:.6g}')
+        fb = part.get('feedback') if isinstance(part, dict) else None
+        if isinstance(fb, dict):
+            ok &= self._rec(isinstance((fb.get('byKey') or {}).get(wid), str), f'{label}: byKey line', 'no feedback.byKey line for this id')
+        for r in routes:
+            name, v = r if isinstance(r, tuple) else ('route', r)
+            ok &= self._rec(abs(v - e['value']) <= hs, f'{label}: {name} {v:.6g} inside its band', f'misses the slip band {e["value"]!r} +-{hs:.6g}')
+            ok &= self._rec(abs(v - ans) > ha, f'{label}: {name} {v:.6g} outside the key band', f'lies inside the key band {ans!r} +-{ha:.6g}: graded correct')
+        return bool(ok)
 
     def check_slips(self, file=None):
         """ENGINE-BACKLOG 1029: every wrong[] entry that carries a "slip" expression must evaluate to its value (within its band, or once rounded to the value's own

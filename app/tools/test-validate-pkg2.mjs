@@ -32,9 +32,38 @@ const PARTS = [
   ['slip-expression-does-not-read', Q2, num(1.73, { abs: 0.005 }, { wrong: [{ id: 'cubed', value: 0.43, tol: { abs: 0.005 }, slip: 'one quarter of 1.2 cubed' }] }), OK_FB, OK_EX, [['warn', 'does not read as arithmetic']]],
   ['slip-expression-with-functions-and-a-rounded-value', Q4, num(2.1, { abs: 0.0005 }, { wrong: [{ id: 'root', value: 1.4142, slip: 'sqrt(2)' }, { id: 'lg', value: 0.6931, slip: 'ln(2)' }, { id: 'ex', value: 7.3891, slip: 'exp(2)' }] }), OK_FB, OK_EX, [['nowarn', '[slip-expr]']]],
   ['slip-expression-that-is-not-a-string', Q2, num(1.73, { abs: 0.005 }, { wrong: [{ id: 'cubed', value: 0.43, tol: { abs: 0.005 }, slip: 0.43 }] }), OK_FB, OK_EX, [['warn', 'slip is an arithmetic expression']]],
+  /* 1130 [carry-band] */
+  ['carry-slip-band-narrower-than-the-key', 'Using $c = 1.1379$ from part 2, what is the VaR? Give the nearest whole number.', num(76945, { abs: 5 }, { wrong: [{ id: 'inverted', value: 59425, tol: { abs: 1.5 } }] }), OK_FB, OK_EX, [['warn', '[carry-band]'], ['warn', 'wrong "inverted"']]],
+  ['carry-slip-band-as-wide-as-the-key', 'Using $c = 1.1379$ from part 2, what is the VaR? Give the nearest whole number.', num(76945, { abs: 5 }, { wrong: [{ id: 'inverted', value: 59425, tol: { abs: 5 } }] }), OK_FB, OK_EX, [['nowarn', '[carry-band]']]],
+  ['narrow-slip-band-without-a-carry', 'What is the VaR? Give the nearest whole number.', num(76945, { abs: 5 }, { wrong: [{ id: 'inverted', value: 59425, tol: { abs: 1.5 } }] }), OK_FB, OK_EX, [['nowarn', '[carry-band]']]],
+  /* 1138 [quotient-band] */
+  ['quotient-of-scientific-figures-leaves-the-band', 'Using 0.0596% from part 2 and a factor error of $3.16 \\times 10^{-8}$, by what factor is the error enlarged? Give the nearest whole number.', num(18850, { abs: 5 }), '$5.96 \\times 10^{-4} \\div 3.16 \\times 10^{-8} \\approx 18{,}861$.', OK_EX, [['warn', '[quotient-band]'], ['warn', '18861']]],
+  ['quotient-of-scientific-figures-in-the-band', 'Using 0.0596% from part 2 and a factor error of $3.16 \\times 10^{-8}$, by what factor is the error enlarged? Give the nearest whole number.', num(18850, { abs: 12 }), '$5.96 \\times 10^{-4} \\div 3.16 \\times 10^{-8} \\approx 18{,}861$.', OK_EX, [['nowarn', '[quotient-band]']]],
+  ['quotient-as-a-fraction-leaves-the-band', Q2, num(5.35, { abs: 0.004 }), 'The ratio is $\\tfrac{0.1135}{0.0211}$ pounds.', OK_EX, [['warn', '[quotient-band]'], ['warn', '5.3791']]],
+  ['quotient-with-a-plain-slash-in-the-band', Q2, num(5.18, { abs: 0.01 }), 'The ratio is $0.1135 / 0.0219$ pounds.', OK_EX, [['nowarn', '[quotient-band]']]],
+  ['quotient-that-is-a-wrong-value', Q2, num(5.18, { abs: 0.004 }, { wrong: [{ id: 'near', value: 5.18265, tol: { abs: 0.004 } }] }), 'The ratio is $\\tfrac{0.1135}{0.0219}$ pounds.', OK_EX, [['nowarn', '[quotient-band]']]],
+  ['quotient-far-from-the-key', Q2, num(25.6, { abs: 0.004 }), 'The ratio is $\\tfrac{0.1135}{0.0219}$ pounds.', OK_EX, [['nowarn', '[quotient-band]']]],
+  /* 1142 [shown-arithmetic] */
+  ['stated-figure-then-is-then-a-product-off-by-a-unit', Q4, num(3.4312, { abs: 0.0001 }), 'The gain on the line, 2.4005 is $1.95996 \\times 1.22474$, then add the power.', OK_EX, [['warn', '[shown-arithmetic]'], ['warn', '2.4005 is']]],
+  ['stated-figure-then-is-then-a-product-right', Q4, num(3.4312, { abs: 0.0001 }), 'The gain on the line, 2.4004 is $1.95996 \\times 1.22474$, then add the power.', OK_EX, [['nowarn', '[shown-arithmetic]']]],
+  ['product-then-is-then-a-stated-figure', Q4, num(3.4312, { abs: 0.0001 }), 'The gain on the line is $1.95996 \\times 1.22474$ is 2.4005 before the power.', OK_EX, [['warn', '[shown-arithmetic]']]],
+  ['quotient-inside-a-phi-matches-the-stated-argument', Q4, num(3.4312, { abs: 0.0001 }), 'The fit gives $\\Phi\\big((-4 - 0.85)/1.92738\\big) = \\Phi(-2.5164) = 0.00593$.', OK_EX, [['nowarn', '[shown-arithmetic]']]],
+  ['quotient-inside-a-phi-misses-the-stated-argument', Q4, num(3.4312, { abs: 0.0001 }), 'The fit gives $\\Phi\\big((-4 - 0.85)/1.92738\\big) = \\Phi(-2.5165) = 0.00593$.', OK_EX, [['warn', '[shown-arithmetic]'], ['warn', '-2.5165']]],
+  ['phi-of-a-figure-equals-a-probability-is-not-read', Q4, num(3.4312, { abs: 0.0001 }), 'The fit gives $\\Phi(1.5/2) = \\Phi(0.75) = 0.7734$.', OK_EX, [['nowarn', '[shown-arithmetic]']]],
+  /* 1175 [slip-in-key-band] and the [wrong-band] side */
+  ['slip-rounds-into-the-key-band', Q2, num(0.33, { abs: 0.002 }, { wrong: [{ id: 'third', value: 0.3349, tol: { abs: 0.0001 } }] }), OK_FB, OK_EX, [['warn', '[slip-in-key-band]'], ['warn', 'wrong "third"']]],
+  ['slip-rounds-clear-of-the-key-band', Q2, num(0.5, { abs: 0.006 }, { wrong: [{ id: 'third', value: 0.3349, tol: { abs: 0.0001 } }] }), OK_FB, OK_EX, [['nowarn', '[slip-in-key-band]']]],
+  ['slip-already-at-the-asked-places', Q2, num(0.5, { abs: 0.006 }, { wrong: [{ id: 'third', value: 0.33, tol: { abs: 0.0001 } }] }), OK_FB, OK_EX, [['nowarn', '[slip-in-key-band]']]],
+  ['slip-typed-at-the-places-refused-by-its-own-band', Q2, num(0.5, { abs: 0.006 }, { wrong: [{ id: 'third', value: 0.3333, tol: { abs: 0.001 } }] }), OK_FB, OK_EX, [['warn', '[wrong-band]'], ['nowarn', '[slip-in-key-band]']]],
 ];
 /* an item: [name, [[question, widget, feedback.correct, explain.text], ...], expect] */
+const P = (q, ans = 12.5) => [q, num(ans, { abs: 0.05 }), OK_FB, OK_EX];
 const ITEMS = [
+  /* 1079 [no-chain] */
+  ['three-separate-questions', [P('What is the first value? Give 1 decimal place.'), P('What is the second value? Give 1 decimal place.', 7.5), P('What is the third value? Give 1 decimal place.', 3.5)], [['warn', '[no-chain]']]],
+  ['later-part-cites-an-earlier-part', [P('What is the first value? Give 1 decimal place.'), P('Using the first value from part 1, what is the second? Give 1 decimal place.', 7.5), P('What is the third value? Give 1 decimal place.', 3.5)], [['nowarn', '[no-chain]']]],
+  ['later-part-restates-an-earlier-key', [P('What is the first value? Give 1 decimal place.', 12.34), P('The desk holds 12.3 of the stock. What is the second value? Give 1 decimal place.', 7.5), P('What is the third value? Give 1 decimal place.', 3.5)], [['nowarn', '[no-chain]']]],
+  ['small-whole-key-is-not-a-citation', [P('How many days? Give the nearest whole number.', 4), P('A spread of 4 days costs how much? Give 1 decimal place.', 7.5), P('What is the third value? Give 1 decimal place.', 3.5)], [['warn', '[no-chain]']]],
 ];
 const place = PARTS.map((c, n) => [Math.floor(n / 5), n % 5, c]);
 const itemBase = Math.ceil(PARTS.length / 5);
