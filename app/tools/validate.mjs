@@ -139,6 +139,7 @@ const checkText = (file, where, s, { copy = true } = {}) => {
     for (const [re, uk] of AMERICAN) { const m = outside.match(re); if (m) err(file, where, `American spelling "${m[0]}": use "${uk}"`); }
   }
   if (s.includes('\u2014')) err(file, where, 'no em-dashes');
+  if (/\\'/.test(outside)) warn(file, where, `[escaped-apostrophe] a backslash before an apostrophe ("${(outside.match(/.{0,12}\\'.{0,6}/) || [''])[0].trim()}") shows on screen: write the apostrophe alone`);   // engine pass 8 (ENGINE-BACKLOG 1092): a warning until the one hit in content is fixed
   const noCode = s.replace(/```[\s\S]*?```/g, '').replace(/`[^`]*`/g, '').replace(/\\\$/g, '');
   const dollars = (noCode.replace(/\$\$/g, '').match(/\$/g) || []).length;
   if ((noCode.match(/\$\$/g) || []).length % 2) err(file, where, 'unbalanced $$...$$');
@@ -218,6 +219,7 @@ const wrongBandNarrow = (file, where, w, ctx) => {
     /* ENGINE-BACKLOG 610: judge the slip as a learner rounds it: the value at the asked places must sit outside the band, else it still fires */
     const step = Math.pow(10, -d) / scale, rounded = Math.round(x.value / step) * step;
     if (Math.abs(rounded - x.value) <= hw + 1e-12) return;
+    if (Math.abs(rounded) < 1e-15) return;   // engine pass 8 (ruling of session AF): a slip that rounds to 0 at the asked places is a value in other units, typed as it stands; the band the rule would ask for takes unrelated answers ([wide-wrong-tol] guards the other side)
     if (hw < half * 0.999) warn(file, `${where}.wrong[${i}]`, `[wrong-band] wrong "${x.id || i}" (${x.value}, band +-${+hw.toPrecision(3)}) is narrower than the rounding the question asks for (${d} decimal place${d === 1 ? '' : 's'}, +-${+half.toPrecision(3)}), so a learner who rounds this slip as asked misses it; widen its tol or give the value at the asked rounding`);
   });
 };
@@ -290,6 +292,100 @@ const bandRules = (file, where, w, ctx) => {
     /* triage-bands-ab rule 6: only a band that reaches the answer band or another wrong value (a right answer's line or another slip's line could be taken) */
     const lo = x.value - wh, hi = x.value + wh, reaches = (lo <= ans + hw && hi >= ans - hw) || (Array.isArray(w.wrong) ? w.wrong : []).some((y, j) => j !== i && isObj(y) && typeof y.value === 'number' && y.value >= lo && y.value <= hi);
     if (wh > 0.5 * Math.abs(x.value) && reaches) warn(file, `${where}.wrong[${i}]`, `[wide-wrong-band] wrong "${x.id || i}" (${x.value}) has a band of +-${+wh.toPrecision(3)}, over half its own value: it takes in answers that are not this slip`);
+  });
+};
+/* Engine pass 8 part A (ENGINE-BACKLOG 1082 to 1146; SESSION PROTOCOL 6): rules on the numeric parts of a problem set (checkProblemSet), all warnings for now
+   (docs/reports/engine-pass-8-hits.md lists the hits on the 149 sets; an error needs a clean list).
+     [working-band]   the final figure the part's own feedback.correct or explain.text prints (the last maths span, ending in "= number" or "\approx number" with at most a unit
+                      after it and no number after the span), taken at the asked places, lies outside the key's band, and is neither a wrong[] value nor the plain
+                      "rounded to fewer places" case that [tight-band] already reports
+     [rounding-tie]   a key or a wrong[] value that is an exact tie at the asked places (8.645 at 2 places, 0.03125 at 4, 5,550 to the nearest hundred), or a key that is one rounding of a tie
+                      the working prints, with a band that does not take both roundings
+     [table-source]   the working prints a tail area, quantile or table value (\Phi(, P(t, P(F, P(\chi^2, t_{k}, F_{a,b}, z_{p}, a critical value), but neither the stem nor the question gives
+                      the value or names its source (a table, software, a stated z or t)
+     [percent-unit]   (error: 0 hits on the 149 sets) the question asks for a percentage and the field has no unit "%"
+     [wide-wrong-tol] a wrong[] band wider than its own value: unrelated answers land in it
+   These run on problem sets only: the printed-working and source rules read a part's own lines, which lessons, reviews and exams word otherwise (see docs/reports/engine-pass-8.md). */
+const askedPlaces = (q) => {
+  const t = stripMathsAndCode(q || '').toLowerCase();
+  const m = t.match(/\bto\s+(zero|one|two|three|four|five|six|\d)\s+(?:decimal\s+)?places?\b/);
+  const r = roundingAsked(q) ?? (m ? (WORD_NUM[m[1]] ?? +m[1]) : null);
+  if (r != null) return r;
+  if (/nearest (?:ten|10)\b/.test(t)) return -1;
+  if (/nearest (?:hundred|100)\b/.test(t)) return -2;
+  if (/nearest (?:thousand|1,?000)\b/.test(t)) return -3;
+  return null;
+};
+const isTie = (v, d, scale) => {
+  const q = Math.abs(+(v * scale).toPrecision(12)) / Math.pow(10, -d), f = q - Math.floor(q);
+  return Math.abs(f - 0.5) < 1e-7 && Math.abs(q) < 1e12;
+};
+const UNIT_REST = /^(?:\\[,;! ]|~|\s)*(?:(?:\\(?:text|mathrm|operatorname)\{[^}]*\}|\\%|%|[A-Za-z£]+(?:\/[A-Za-z]+)?|\^\{?\\circ\}?|\\,)\s*)*[.,;]?\s*$/;
+const finalPrinted = (text, unit) => {
+  const s = String(text || ''), spans = [...s.matchAll(/\$\$([^$]+)\$\$|\$([^$]+)\$/g)];
+  if (!spans.length) return null;
+  const last = spans[spans.length - 1];
+  if (/\d/.test(s.slice(last.index + last[0].length))) return null;   // a number after the span: it is not the end of the working
+  const sp = last[1] ?? last[2], a = sp.lastIndexOf('\\approx'), e = sp.lastIndexOf('=');
+  if (a < 0 && e < 0) return null;
+  const tail = (a > e ? sp.slice(a + 7) : sp.slice(e + 1)).replace(/\{,\}/g, ',').replace(/\\text\{£\}|\\pounds|£/g, '').replace(/−/g, '-').trim();
+  const nm = /^(-?)\s*(\d[\d,]*(?:\.\d+)?|\.\d+)\s*(.*)$/.exec(tail);
+  if (!nm || !UNIT_REST.test(nm[3]) || /^\\?(?:times|cdot)/.test(nm[3])) return null;
+  const v = (nm[1] ? -1 : 1) * +nm[2].replace(/,/g, ''), pct = /^(?:\\?%|\\(?:text|mathrm)\{\s*\\?%)/.test(nm[3]);
+  if (!Number.isFinite(v)) return null;
+  return unit === '%' ? (pct ? v / 100 : null) : (pct ? null : v);
+};
+const TABLE_NEEDS = /\\Phi\s*(?:\^\{-1\}\s*)?\(|\\Phi\^\{-1\}|\bP\(\s*(?:Z\b|t\b|T_\{?\d|\\chi)|\\chi\^2_\{|\b[tT]_\{\s*(?:\d|\\alpha|[^}]*,)|\bF_\{\s*(?:\d|\\alpha|[^}]*,)|\bz_\{\s*(?:\d|0\.|\\alpha|[^}]*,)|\bcritical value\s*(?:is|of|=)?\s*\$?-?\d|\bt-table|normal table/;
+const TABLE_ASKED = /\btail (?:area|probability)\b|\bcritical value\b|\bquantile\b|\bp-value\b|\bpercentile point\b/i;
+const TABLE_GIVEN = /\btables?\b|software|calculator|statistical package|\bscipy\b|\bpython\b|\bR\b|\bexcel\b|\bNORM\.|distribution function|\bCDF\b|\bcumulative\b|\bgiven\b|\bprovided\b|\bquoted\b|\buse\s+(?:the\s+)?(?:\$?[ztF]\b|\\Phi|critical|tabulated|standard normal)|\\Phi\s*\([^)]*\)\s*=\s*(?:[\d.]|\\t?frac)|\b[ztF]\s*=\s*\\?[\d.]|\b[ztF]_\{?[^=$]{0,12}=\s*[\d.]|(?:critical value|quantile|percentile|tail(?: area| probability)?|p-value)[^.?$]{0,60}?(?:is|are|of|=|at)\s*\$?\\?[\d.]|(?:critical value|quantile|percentile|tail(?: area| probability)?|p-value)[^.?$]{0,60}?\s\$?\\?\d+\.\d{2,}|\bP\([^)]*\)\s*=\s*(?:e\^|1\s*-|\\t?frac)|\bp\s*=\s*[\d.]|\\Phi\s*\(\s*[\d.\-]+\s*\)\s*=\s*[\d.]/i;
+const PERCENT_ASK2 = /\bwhat\s+(?:per\s?cent|percent(?:age)?)\b|\b(?:give|state|write|express|report|find)\b[^.?]{0,80}?\b(?:per\s?cent|percent(?:age)?)\b|\(\s*\\?%\s*\)/i;
+const pass8Rules = (file, where, it, p) => {
+  const w = isObj(p) && isObj(p.widget) ? p.widget : null;
+  if (!w || w.kind !== 'numeric' || typeof w.answer !== 'number' || !Number.isFinite(w.answer) || !isObj(w.tol)) return;
+  const q = String(p.question || ''), ans = w.answer, hw = halfWidth(ans, w.tol), scale = w.unit === '%' ? 100 : 1;
+  const scaled = w.scale != null || /units? of\b/i.test(q) || /10\s*\^/.test(q);
+  const d = askedPlaces(q) ?? askedPlaces(it && it.prose);
+  const step = d == null ? null : Math.pow(10, -d) / scale;
+  const wrongs = (Array.isArray(w.wrong) ? w.wrong : []).filter(x => isObj(x) && typeof x.value === 'number' && Number.isFinite(x.value));
+  const fb = [['feedback.correct', isObj(p.feedback) ? p.feedback.correct : null], ['explain.text', isObj(p.explain) ? p.explain.text : null]];
+  /* [rounding-tie] */
+  if (d != null && !scaled) {
+    const covers = (c, h, v) => Math.abs(c - v) <= h + 1e-9 * Math.max(1, Math.abs(v));
+    const fmt = (v) => +v.toPrecision(10), pl = `${d} decimal place${d === 1 ? '' : 's'}`;
+    if (isTie(ans, d, scale) && hw < step / 2 * (1 - 1e-6)) warn(file, where, `[rounding-tie] the key ${fmt(ans)} is exactly on a rounding tie at ${pl}; its band +-${+hw.toPrecision(3)} takes neither rounding (${fmt(ans - step / 2)}, ${fmt(ans + step / 2)}): widen it to +-${fmt(step / 2)} or move the key off the tie`);
+    wrongs.forEach((x, i) => {
+      const wh = halfWidth(x.value, x.tol ?? { abs: 1e-9 });
+      if (isTie(x.value, d, scale) && wh < step / 2 * (1 - 1e-6)) warn(file, `${where}.wrong[${i}]`, `[rounding-tie] wrong "${x.id || i}" (${fmt(x.value)}) is exactly on a rounding tie at ${pl}; its band +-${+wh.toPrecision(3)} takes neither rounding (${fmt(x.value - step / 2)}, ${fmt(x.value + step / 2)})`);
+    });
+    fb.forEach(([name, text]) => {
+      const v = finalPrinted(text, w.unit);
+      if (v == null || !isTie(v, d, scale) || Math.abs(v - ans) > step) return;
+      if (!(covers(v - step / 2, hw, ans) && covers(v + step / 2, hw, ans))) warn(file, where, `[rounding-tie] ${name} prints ${fmt(v)}, a rounding tie at ${pl}; the key ${fmt(ans)} +-${+hw.toPrecision(3)} takes only one of its roundings (${fmt(v - step / 2)}, ${fmt(v + step / 2)})`);
+    });
+  }
+  /* [working-band] */
+  if (!scaled && Math.abs(ans) > 0) fb.forEach(([name, text]) => {
+    const v = finalPrinted(text, w.unit);
+    if (v == null || Math.abs(v - ans) > 0.03 * Math.abs(ans)) return;
+    if (wrongs.some(x => closeTo(x.value, v))) return;
+    const dv = decimalsOf(v), da = decimalsOf(ans);
+    if (dv < da && Math.abs(Math.round(ans * Math.pow(10, dv)) / Math.pow(10, dv) - v) <= 1e-9 * Math.max(1, Math.abs(v)) && Math.abs(v - ans) <= 0.02 * Math.abs(ans)) return;   // [tight-band] reports it
+    const typed = step != null && Math.abs(v / step - Math.round(v / step)) > 1e-6 ? Math.round(v / step) * step : v;
+    if (Math.abs(typed - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans))) warn(file, where, `[working-band] ${name} ends at ${+v.toPrecision(10)}${typed !== v ? `, ${+typed.toPrecision(10)} at the asked places` : ''}, outside the key ${ans} band +-${+hw.toPrecision(3)}: a learner who follows the working is marked wrong`);
+  });
+  /* [table-source] */
+  const printed = fb.map(([, t]) => String(t || '')).join(' ');
+  if (TABLE_NEEDS.test(printed) || TABLE_ASKED.test(stripMathsAndCode(q))) {
+    if (!TABLE_GIVEN.test(`${(it && it.prose) || ''} ${q}`)) warn(file, where, `[table-source] the part needs a tail area, quantile or table value (${(printed.match(TABLE_NEEDS) || stripMathsAndCode(q).match(TABLE_ASKED) || [''])[0].trim()}) but neither the stem nor the question gives it or names its source: state the value, or say where to read it (a table to 4 places, software)`);
+  }
+  /* [percent-unit] */
+  const qPct = q.replace(/\\?%\s*(?:\^\s*\{?2\}?|²)|percentage points?/gi, ' ').replace(/\$\$|\$/g, ' ');   // "%²" and percentage points are not a percentage answer
+  if (w.unit !== '%' && !scaled && (PERCENT_ASKED.test(qPct) || PERCENT_ASK2.test(qPct))) err(file, where, '[percent-unit] the question asks for a percentage but the field has no unit "%": set unit "%" (key as a fraction), so the learner can type the % sign');
+  /* [wide-wrong-tol] */
+  wrongs.forEach((x, i) => {
+    if (x.value === 0) return;
+    const wh = halfWidth(x.value, x.tol ?? { abs: 1e-9 });
+    if (wh > Math.abs(x.value) * 1.0001) warn(file, `${where}.wrong[${i}]`, `[wide-wrong-tol] wrong "${x.id || i}" (${x.value}) has a band of +-${+wh.toPrecision(3)}, wider than its own value: unrelated answers land in it`);
   });
 };
 /* ENGINE-BACKLOG 910: [wrong-equals-answer], an expression wrong[].tex that the grader reads as the answer (or an accept form), so the entry can never
@@ -1731,6 +1827,7 @@ const checkProblemSet = (file, courseId, doc, items, skills, levelSkills) => {
     if (!Array.isArray(it.parts)) { err(file, `${at}.parts`, 'every problem in a problem set uses parts: 3 to 5 chained parts, each graded on its own'); return; }
     if (it.parts.length < 3 || it.parts.length > 5) err(file, `${at}.parts`, `a problem in a problem set has 3 to 5 parts (found ${it.parts.length})`);
     it.parts.forEach((p, k) => { if (isObj(p) && isObj(p.widget) && ['code', 'longform'].includes(p.widget.kind)) err(file, `${at}.parts[${k}].widget`, `a ${p.widget.kind} part cannot be in a problem set: each part is a typed or chosen answer the engine grades`); });
+    it.parts.forEach((p, k) => pass8Rules(file, `${at}.parts[${k}]`, it, p));   // engine pass 8 part A
     /* [answer-form] (advisory): a numeric part whose answer is not a whole number must say the form asked for (found on 35 parts, docs/reviews/review-problems-1.5-a.md) */
     it.parts.forEach((p, k) => {
       const w = isObj(p) && isObj(p.widget) ? p.widget : null;
