@@ -25,3 +25,7 @@ Same: 9 lesson screens plus a 3-question quiz; same order (title, shade 8, first
 Not checked: derive wrong-order feedback (keyboard reorder always landed on the correct order); mobile widths; the prototype's "Start over" link, absent from the app on some screens (cross, ten).
 
 Items 1, 2 and 3 are the substantive departures; 9 to 11 are deliberate wording changes. A strict reading of item 5 should be amended to "same teaching sequence and grading, with listed differences".
+
+## Fix pass (session AI)
+
+Rows 2, 4 and 6 now match the prototype. Simulate: `controlsAfter: "check"` locks Run until a checked estimate. Stocks: a correct answer dims Both down and captions "each 1/3". Shade: wrong cells (1, 1), (2, 2), (3, 3), (1, 5), (5, 5), (6, 6) name their totals. Validator 0 errors; playthrough green, desktop and mobile.
