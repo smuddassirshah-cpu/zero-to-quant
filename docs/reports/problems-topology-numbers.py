@@ -434,12 +434,23 @@ def level2():
     inB = lambda t: (3 <= t <= 8) or t > 10
     tt = next(t / 100 for t in range(0, 2000) if all(inB(u / 100) for u in range(t + 1, 3000)))
     num(it, 'p-right-rays', 2, 10, tt, {'usual': 3, 'closed-end': 8}, places=None)
-    maps = {'2x+1': (lambda t: 2 * t + 1, True), '-x': (lambda t: -t, True), 'x^3': (lambda t: t ** 3, True),
-            'e^x': (lambda t: math.exp(t), False), 'x+1': (lambda t: t + 1, True)}
+    # chain (fix pass): part 2's B uses 2c with c = part 1's key, part 3 uses c and k = part 2's key, part 4 uses c
+    c1 = 5
+    ok(2 * c1 == tt, 'right-rays: 2c from part 1 is the left end of part 2')
+    k2 = int(tt)
+    maps = {'x+c': (lambda t: t + c1, True), 'c-x': (lambda t: c1 - t, True), 'x^3': (lambda t: t ** 3, True),
+            'e^x': (lambda t: math.exp(t), False), 'x-k': (lambda t: t - k2, True)}
     sample = [k / 10 for k in range(-30, 31)]
     good = [n for n, (h, onto) in maps.items() if onto and all(h(a) < h(b) for a, b in zip(sample, sample[1:]))]
     usual = [n for n, (h, onto) in maps.items() if onto]
     num(it, 'p-right-rays', 3, len(good), 3, {'with-flip': len(usual)}, places=None)
+    qs = [p_['question'] for p_ in it['p-right-rays']['parts']]
+    ok('from part 1' in qs[1] and '2c' in qs[1], 'right-rays part 2 cites part 1 and uses c')
+    ok('$c$ from part 1' in qs[2] and '$k$ from part 2' in qs[2] and '$x - k$' in qs[2], 'right-rays part 3 cites parts 1 and 2')
+    ok('from part 1' in qs[3] and '(-\\infty, c]' in qs[3], 'right-rays part 4 cites part 1')
+    # part 4 subspace (-inf, 5]: open sets are the whole set and (t, 5]; two non-empty open sets always meet (route 2: grid)
+    opens = [(t_ / 2, 5.0) for t_ in range(-20, 10)]
+    ok(all(max(a[0], b[0]) < 5.0 for a in opens for b in opens), 'right-rays part 4: any two non-empty open sets of (-inf, 5] meet')
     one_correct(it, 'p-right-rays', 4, 'conn-not-haus')
 
     lv.expect('problems', 'items[1].parts[3].question', 5)

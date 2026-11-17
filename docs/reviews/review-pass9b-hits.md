@@ -116,3 +116,7 @@ Nothing here marks a learner wrongly, and no later part needs a figure it is not
 10. `fin-ml/l11-deflated-sharpe` screen 11 `0.0976` to `0.09762` in three fields: applied; both `[shown-arithmetic]` lines gone.
 
 Checks: validator 0 errors, only warning lines removed (no new `[tight-band]` or other); voice scan 35 clean on the edited files; number scripts of the seven courses pass unchanged; `grade-all.mjs --file` 0 failures on all eight files; playthroughs green with and without `--mobile`.
+
+## Fix pass (session AI)
+
+`topology/problems-2` `p-right-rays` re-authored as a real chain, same topology, skills, id and four parts. Part 2 builds B from $2c$ (c from part 1), part 3 uses c and k = 10 from part 2 in its five maps, part 4 asks about the subspace $(-\infty, c]$. Graded keys unchanged (5, 10, 3, same option). Recompute: `docs/reports/problems-topology-numbers.py` extended. `[no-chain]` gone; validator, voice scan, fresh-check, grade-all, playthrough (both) green.
