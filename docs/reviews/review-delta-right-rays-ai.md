@@ -13,3 +13,7 @@ Keys, bands, distractors and their `why` lines are all correct. Findings:
 4. style | part 2 `byKey.usual` | "the left end of (3, 8) ∪ (10, inf)" is true but awkward, since that set has left end 3 only because of its first piece. Fix: "That is the left end of the usual-topology interior, (3, 8) ∪ (10, inf)."
 
 Wrong: none.
+
+## Fix pass
+
+1 fixed: part 3 now asks for the image of the ray from part 2 under the shift by part 1's c, key 15 (was 3), so it needs both. 2 fixed: part 4 options use $c$. 3 fixed: key option shortened. 4 fixed: `usual` reworded. Script extended; all checks green.
