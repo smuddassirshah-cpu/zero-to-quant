@@ -155,6 +155,28 @@ if (opt.mobile) EXTRA.push({ w: 440, h: 956, mode: 'mobile' });
 if (opt.narrow) EXTRA.push({ w: 390, h: 844, mode: 'narrow' });
 if (opt.tablet) EXTRA.push({ w: 1032, h: 1376, mode: 'tablet' }, { w: 1376, h: 1032, mode: 'tablet' });
 const ANY_EXTRA = EXTRA.length > 0;
+/* Engine pass 9 item d: at a phone width (600 px or less) learner text must stay inside the window. WIDE_PROBE runs in the page and returns false, or a short reason: the page is wider
+   than the window, or a text element (one KaTeX span, a paragraph, an option) ends past the right edge, or a box that clips its overflow (overflow-x hidden or clip) holds text wider than
+   itself. Boxes a learner can scroll (overflow-x auto or scroll) and svg, canvas and fixed or hidden elements are left out. */
+const WIDE_PROBE = () => {
+  const vw = window.innerWidth, page = document.documentElement.scrollWidth > vw + 1;
+  const describe = (e) => `${e.tagName.toLowerCase()}${e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/)[0] : ''} "${(e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40)}"`;
+  if (page) return 'the page is wider than the window';
+  if (vw > 600) return false;
+  const root = document.querySelector('.lsn, .hw, #app, main') || document.body;
+  const scrolls = (e) => { for (let a = e; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowX; if (o === 'auto' || o === 'scroll') return true; } return false; };
+  for (const pass of [0, 1]) for (const e of root.querySelectorAll('*')) {
+    if (e.closest('svg, canvas, [hidden], [aria-hidden="true"], .sr-only, .zq-toast, .katex-mathml')) continue;
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || cs.position === 'fixed' || +cs.opacity === 0) continue;
+    const r = e.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) continue;
+    const own = [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+    if (pass === 0 && (own || e.classList.contains('katex')) && (r.right > vw + 1 || r.left < -1) && !scrolls(e)) return `text runs past the window: ${describe(e)} ends at ${Math.round(r.right)} px`;
+    if (pass === 1 && (cs.overflowX === 'hidden' || cs.overflowX === 'clip') && e.scrollWidth > e.clientWidth + 1 && (e.textContent || '').trim() && !scrolls(e.parentElement || e) && e.clientWidth > 0) return `text clipped by its box: ${describe(e)} is ${e.scrollWidth} px in ${e.clientWidth} px`;
+  }
+  return false;
+};
 let curVp = DESKTOP;
 const onlySets = !opt.all && (opt.sets || opt.exams);
 if (opt.all) { opt.sets = true; opt.exams = true; }
@@ -307,6 +329,14 @@ const main = async () => {
   for (const x of opt.fluencyIds) if (!allFluency.includes(x)) die(`--fluency ${x}: no such fluency set (content/courses/<course>/fluency-<lesson>.json, or fixture/<id> under tools/fixtures/fluency)`);
   for (const x of opt.problemsIds) if (!allProblems.includes(x)) die(`--problems ${x}: no such problem set (content/courses/<course>/problems-<n>.json, or fixture/<file> under tools/fixtures/problems)`);
   const problems0 = opt.problemsIds.length ? opt.problemsIds : (opt.all || opt.problemsAll) ? allProblems : [];
+  /* engine pass 9 item f (ENGINE-BACKLOG 1161, 1164, 1166): a set the manifest does not list opens as "state empty" and fails with a misleading line. After `git checkout content/manifest.json`
+     (the commit rule) the manifest lacks a new set until the validator rewrites it: say so, before any browser starts */
+  {
+    let man = null; try { man = JSON.parse(fs.readFileSync(path.join(CONTENT, 'manifest.json'), 'utf8')); } catch { /* no manifest: the app cannot load either */ }
+    const files = new Set((man && man.files) || []);
+    const missing = [...problems0.filter(x => !x.startsWith('fixture/') && !(man && man.problems && man.problems[x])).map(x => `--problems ${x}`), ...sets0.filter(st => !st.sample && !files.has(`courses/${st.id}.json`)).map(st => `--set ${st.id}`)];
+    if (missing.length) die(`${missing.join(', ')}: not listed in content/manifest.json (the file the app loads its sets from), so the page would open empty. Run the validator first (from app/: node tools/validate.mjs), which rewrites the manifest, then play again`);
+  }
   /* ENGINE-BACKLOG 550, 973: the full ordered item list is lessons, then sets, then exams. --shard i/n keeps the items whose shard is i: a hash of the kind and id mod n, not the position, so adding a lesson or a problem set moves no other item to another shard (a shard's green cache holds only its own items; by position, 12 new sets moved most of a 54-item shard in CI run 10) */
   const shardOf = (k, id, n) => parseInt(crypto.createHash("sha1").update(k + "|" + id).digest("hex").slice(0, 8), 16) % n;
   const fluency0 = opt.fluencyIds.length ? opt.fluencyIds : (opt.all || opt.fluencyAll) ? allFluency : [];
@@ -456,7 +486,7 @@ const main = async () => {
       return out;
     });
     const checkDisplays = async (file, id, fails) => {
-      const seen = new Set(), run = async () => { for (const x of await wideDisplays()) { const k = x.w + x.tex; if (!seen.has(k)) { seen.add(k); fails.push(`${file}#${id}: display wider than its column at ${x.w}px: ${x.tex}`); } } };
+      const seen = new Set(), run = async () => { for (const x of await wideDisplays()) { const k = x.w + x.tex; if (!seen.has(k)) { seen.add(k); fails.push(`${file}#${id}: display wider than its column at ${x.w}px: ${x.tex}`); } }  if (ANY_EXTRA) { const why = await page.evaluate(WIDE_PROBE); if (why && !seen.has(why)) { seen.add(why); fails.push(`${file}#${id}: at ${curVp.w} px ${why}`); } } };
       await run();
       for (const v of (ANY_EXTRA ? EXTRA : [])) { await setVp(v, 350); await run(); }
       if (ANY_EXTRA) await setVp(DESKTOP, 150);
@@ -969,9 +999,9 @@ const main = async () => {
         await page.evaluate(([c, i]) => { if (ZQ.state.doc.fluency) delete ZQ.state.doc.fluency[`${c}/${i}`]; }, [course, id]);
         if (ref.startsWith('fixture/')) await page.evaluate(([c, d]) => ZQ.content._addFluency([{ course: c, doc: d }]), [course, doc]);
         await unlockRoute(`lesson/${course}/${lesson}`);
-        const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const wideNow = () => page.evaluate(WIDE_PROBE);
         const overflowAt = async (what) => {
-          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); if (await wideNow()) fails.push(`${what} at ${v.w} px: the page is wider than the window`); }
+          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); const why = await wideNow(); if (why) fails.push(`${what} at ${v.w} px: ${why}`); }
           if (EXTRA.length) await setVp(DESKTOP, 150);
         };
         /* the lesson done, as a learner's save would have it: the set shows on Today and the course row offers it */
@@ -1159,9 +1189,9 @@ const main = async () => {
         await page.evaluate(([c, i]) => { if (ZQ.state.doc.problems) delete ZQ.state.doc.problems[`${c}/${i}`]; }, [course, id]);
         if (ref.startsWith('fixture/')) await page.evaluate(([c, d]) => ZQ.content._addProblems([{ course: c, doc: d }]), [course, doc]);
         await unlockRoute(`problems/${course}/${id}`);
-        const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const wideNow = () => page.evaluate(WIDE_PROBE);
         const overflowAt = async (what) => {
-          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); if (await wideNow()) fails.push(`${what} at ${v.w} px: the page is wider than the window`); }
+          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); const why = await wideNow(); if (why) fails.push(`${what} at ${v.w} px: ${why}`); }
           if (EXTRA.length) await setVp(DESKTOP, 150);
         };
         const snap = () => page.evaluate(() => { const d = ZQ.state.doc; return JSON.stringify({ reviews: d.reviews, homework: d.homework, redo: d.redo, prereq: d.prereq.met, perf: d.perf }); });
@@ -1223,6 +1253,8 @@ const main = async () => {
               if (wrong && EXTRA.some(v => v.w === 440)) {
                 const was2 = curVp;
                 await setVp({ w: 440, h: 956 }, 300);
+                const spill = await page.evaluate(WIDE_PROBE);
+                if (spill) fails.push(`item ${c.screenIndex + 1} part ${(c.part || 0) + 1}: at 440 px ${spill}`);
                 const cover = await page.evaluate(() => {
                   const body = document.querySelector('.lsn-set-body'), foot = document.querySelector('.lsn-set-foot');
                   if (!body || !foot) return null;
@@ -1786,7 +1818,7 @@ const main = async () => {
       for (const id of want) if (!names.includes(id)) die(`--bank ${id}: no such file in content/bank (${names.join(', ')})`);
       let tot = 0, bad = 0;
       const bankFailed = new Set();
-      const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+      const wideNow = () => page.evaluate(WIDE_PROBE);
       const textOf = (x) => String(x || '').replace(/\$|\\[a-z]+|[*_`{}\\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
       /* the slips of an item (or of its part): [{ id, what }] from wrong[] and the distractors of a choice */
       const slipsOf = (w) => (!w ? [] : [...(w.wrong || []).filter(x => x && x.id).map(x => ({ id: x.id, what: 'wrong' })), ...((w.kind === 'choice' || w.kind === 'multi') ? (w.options || []).filter(o => !o.correct && o.id).map(o => ({ id: o.id, what: 'option', why: o.why })) : [])]);
@@ -2766,9 +2798,9 @@ const main = async () => {
         if (keys.length < 6) fails.push(`only ${keys.length} written levels to meet`);
         const rowIn = () => page.evaluate(() => { const b = document.querySelector('.zt-due [data-go="weekly"]'); return b ? b.innerText.replace(/\s+/g, ' ').trim() : null; });
         const todayAgain = async () => { await page.evaluate(() => { delete window.ZQ.test; }); await go('review'); await go('today'); };
-        const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const wideNow = () => page.evaluate(WIDE_PROBE);
         const overflowAt = async (what) => {
-          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); if (await wideNow()) fails.push(`${what} at ${v.w} px: the page is wider than the window`); }
+          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); const why = await wideNow(); if (why) fails.push(`${what} at ${v.w} px: ${why}`); }
           if (EXTRA.length) await setVp(DESKTOP, 150);
         };
         await todayAgain();
