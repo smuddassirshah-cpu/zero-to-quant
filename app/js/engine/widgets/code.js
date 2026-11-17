@@ -417,6 +417,26 @@ def __zq_case(_i):
     return out.join('\n');
   };
 
+  /* The Python source, empty result rows and time limits of one run of `cases` (item 1031: shared with tools/code-runner.mjs, which runs
+     it in node, so the tool grades exactly what the page runs). script: any case is a stdout, stdin, argv or raises-with-no-call case. */
+  const casePlan = (spec, cases, src, script, dataTexts) => {
+    const pre = String(spec.prelude || ''), post = String(spec.postlude || '');
+    const own = spec.files && typeof spec.files === 'object' && Object.keys(spec.files).length ? spec.files : null;
+    const files = dataTexts && Object.keys(dataTexts).length ? { ...(own || {}), ...dataTexts } : own; // data files are written like files, before the prelude
+    const code = script ? scriptHarness(src, cases, pre, post, files) : (pre || post || files ? loadHarness(src, pre, post, files) : src) + harness(cases, src);
+    const rows = cases.map(c => ({ tol: tolOf(c), argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
+    /* item 143: spec.budget (ms) is added to the run's limit; code importing numpy, pandas or scipy gets 30 s on top
+       without one, so the first package load is not charged against the 5 s per case */
+    const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib|pytest|sklearn|statsmodels)\b/m.test(src + '\n' + String(spec.prelude || '') + '\n' + String(spec.postlude || '') + '\n' + Object.values(spec.files || {}).join('\n'));
+    const extra = (spec.budget != null ? Math.max(0, +spec.budget || 0) : 0) + (heavy ? 30000 : 0); // inbox (alpha 4): budget adds to the heavy-import allowance
+    const limit = TEST_MS * Math.max(1, cases.length) + extra;
+    /* the load gets 5 s plus the widget's budget (or 30 s for heavy imports); each case 5 s plus its own budget, the
+       widget's caseBudget, or, when the widget has a budget, that budget again (a slow numpy case keeps its room) */
+    const caseMs = (k) => (k < 0 ? TEST_MS + extra : TEST_MS + (cases[k] && cases[k].budget != null ? Math.max(0, +cases[k].budget || 0) : spec.caseBudget != null ? Math.max(0, +spec.caseBudget || 0) : extra));
+    return { code, rows, limit, caseMs };
+  };
+  Z.widgets.codePlan = { casePlan, isOut, cleanTb, quietLib, MARK, TEST_MS, PYODIDE };   // read by tools/code-runner.mjs (item 1031)
+
   Z.widgets.register('code', (host, spec, ctx) => {
     if (spec.language === 'cpp' && Z.cppCode) return Z.cppCode(host, spec, ctx); // item 304: C++ is compiled and graded by js/engine/widgets/cpp-grade.js
     const examples = spec.examples || [], tests = spec.tests || [];
@@ -480,20 +500,8 @@ def __zq_case(_i):
     /* Run a list of cases; resolves to { rows, error } */
     const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null || c.argv != null || (c.compare === 'raises' && c.call == null));
     const runCases0 = (cases, dataTexts) => new Promise((resolve) => {
-      const pre = String(spec.prelude || ''), post = String(spec.postlude || '');
-      const own = spec.files && typeof spec.files === 'object' && Object.keys(spec.files).length ? spec.files : null;
-      const files = dataTexts && Object.keys(dataTexts).length ? { ...(own || {}), ...dataTexts } : own; // data files are written like files, before the prelude
-      const code = script ? scriptHarness(ed.value, cases, pre, post, files) : (pre || post || files ? loadHarness(ed.value, pre, post, files) : ed.value) + harness(cases, ed.value);
-      const rows = cases.map(c => ({ tol: tolOf(c), argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
+      const { code, rows, limit, caseMs } = casePlan(spec, cases, ed.value, script, dataTexts);
       let loadErr = null, loaded = '';
-      /* item 143: spec.budget (ms) is added to the run's limit; code importing numpy, pandas or scipy gets 30 s on top
-         without one, so the first package load is not charged against the 5 s per case */
-      const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib|pytest|sklearn|statsmodels)\b/m.test(ed.value + '\n' + String(spec.prelude || '') + '\n' + String(spec.postlude || '') + '\n' + Object.values(spec.files || {}).join('\n'));
-      const extra = (spec.budget != null ? Math.max(0, +spec.budget || 0) : 0) + (heavy ? 30000 : 0); // inbox (alpha 4): budget adds to the heavy-import allowance
-      const limit = TEST_MS * Math.max(1, cases.length) + extra;
-      /* the load gets 5 s plus the widget's budget (or 30 s for heavy imports); each case 5 s plus its own budget, the
-         widget's caseBudget, or, when the widget has a budget, that budget again (a slow numpy case keeps its room) */
-      const caseMs = (k) => (k < 0 ? TEST_MS + extra : TEST_MS + (cases[k] && cases[k].budget != null ? Math.max(0, +cases[k].budget || 0) : spec.caseBudget != null ? Math.max(0, +spec.caseBudget || 0) : extra));
       const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, limit,
         (d) => {
           if (d.kind === 'error') { loadErr = d.error; loaded = quietLib(d.stdout); }

@@ -14,8 +14,13 @@
    (families with `vars`) are drawn the way tools/fluency-sample.mjs does (--fluency-seeds, default 2 seeds of the set's own n items) and their
    items checked the same way; a wrong draw that coincides with another family wrong id is a note, not a failure (as in tools/test-fluency.mjs).
    NOT covered (the grade needs a real DOM or a canvas, so the browser playthrough is the check): order, tap-regions, place, drag-point, sketch,
-   manipulate, balance, slider, sliders, trade (DOM or canvas), code (Pyodide or C++), longform (self-graded rubric). tools/fixtures is skipped.
-     node tools/grade-all.mjs [--local-cdn <pkgs>] [--file <json path>]... [--jobs 4] [--shard i/n] [--fluency-seeds 2] [--root <app dir>] [--quiet]
+   manipulate, balance, slider, sliders, trade (DOM or canvas), code in C++, longform (self-graded rubric). tools/fixtures is skipped.
+   --code (ENGINE-BACKLOG 1031, 1008, 1028, 1032) also runs every Python code widget in node, under the local Pyodide of --local-cdn (needed), through
+   tools/code-runner.mjs (the page's own harness and worker grader, the page's per-case time limits): the solution must pass the hidden tests and the
+   examples, the starter must fail one, and each `mutants` entry ({ source, test: N, timeout?, factor? }) must first fail test N (see the checks listed
+   at checkCodeWidget in tools/code-runner.mjs; kinds solution-fails, examples-fail, starter-passes, mutant-passes, mutant-wrong-test,
+   mutant-thin-margin). A named file needs no other flag; without --file it runs all content (about an hour for the whole course set: use --shard).
+     node tools/grade-all.mjs [--local-cdn <pkgs>] [--file <json path>]... [--jobs 4] [--shard i/n] [--fluency-seeds 2] [--root <app dir>] [--quiet] [--code]
    The Compute Engine comes from --local-cdn (or ZQ_LOCAL_CDN) if given, else from ZQ_CE_URL or the CDN the app itself uses (cached in the temp
    folder), so CI needs no local copy. Output: one line per failure "file#path: kind: detail", then a count per kind. Exit 0 none, 1 failures, 2 setup. */
 import fs from 'node:fs';
@@ -237,6 +242,45 @@ const collect = (only, seeds) => {
   return { jobs, skipped };
 };
 
+/* ---------- Python code widgets (--code) ---------- */
+const collectCode = (only) => {
+  let files = only.length ? only.map((f) => path.resolve(f)) : walk(CONTENT).sort();
+  const sh = /^(\d+)\/(\d+)$/.exec(arg('--shard', ''));
+  if (sh) files = files.filter((_, i) => i % +sh[2] === +sh[1] - 1);
+  const jobs = []; let cpp = 0;
+  for (const file of files) {
+    if (/(^|[\\/])tools[\\/]fixtures[\\/]/.test(path.relative(ROOT, file)) && !only.length) continue;
+    let data; try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { if (only.length) die(`${file}: ${e.message}`); continue; }
+    const rel0 = path.relative(CONTENT, file), rel = rel0.startsWith('..') ? path.relative(process.cwd(), file) : rel0;
+    const go = (v, p) => {
+      if (Array.isArray(v)) return v.forEach((x, i) => go(x, `${p}[${i}]`));
+      if (!v || typeof v !== 'object') return;
+      if (v.kind === 'code' && Array.isArray(v.tests)) { if (v.language === 'cpp') cpp++; else jobs.push({ file: rel, path: p, spec: v }); }
+      Object.entries(v).forEach(([k, x]) => go(x, p ? `${p}.${k}` : k));
+    };
+    go(data, '');
+  }
+  return { jobs, cpp };
+};
+const codePhase = async (only, nJobs, ce) => {
+  if (!cdnDir) die('--code needs --local-cdn <pkgs> (or ZQ_LOCAL_CDN) holding pyodide-0.27.7');
+  const { makeRunner, checkCodeWidget } = await import('./code-runner.mjs');
+  const { jobs, cpp } = collectCode(only);
+  const runner = makeRunner({ pkgs: cdnDir, root: ROOT, jobs: nJobs });
+  const out = []; let next = 0;
+  const lane = async () => {
+    for (;;) {
+      const j = jobs[next++]; if (!j) return;
+      let fails;
+      try { fails = await checkCodeWidget(runner, j.spec); } catch (e) { fails = [['error', String(e && e.message || e).split('\n')[0].slice(0, 120)]]; }
+      fails.forEach(([kind, detail]) => out.push({ file: j.file, path: j.path, kind, detail: tail(detail) }));
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(nJobs, Math.max(1, jobs.length)) }, lane));
+  await runner.close();
+  return { out, n: jobs.length, cpp };
+};
+
 /* ---------- worker and master ---------- */
 const tail = (s) => (s.length > 160 ? s.slice(0, 157) + '...' : s);
 if (process.env.ZQ_GA_WORKER) {
@@ -266,11 +310,14 @@ if (process.env.ZQ_GA_WORKER) {
   const fails = []; let widgets = 0, coincide = 0, left = slices.length;
   const byKind = {};
   jobs.forEach((j) => { if (j.spec) byKind[j.spec.kind] = (byKind[j.spec.kind] || 0) + 1; });
-  const finish = () => {
+  const finish = async () => {
+    let codeN = null;
+    if (argv.includes('--code')) { const c = await codePhase(only, nJobs, ce); fails.push(...c.out); codeN = c; }
     fails.sort((a, b) => (a.file + a.path).localeCompare(b.file + b.path));
     fails.forEach((f) => console.log(`${f.file}#${f.path}: ${f.kind}: ${f.detail}`));
     const counts = {}; fails.forEach((f) => { counts[f.kind] = (counts[f.kind] || 0) + 1; });
     if (!quiet || fails.length) console.log(`grade-all: ${widgets} widgets checked (${Object.entries(byKind).map(([k, n]) => `${k} ${n}`).join(', ')}), ${skipped.carry} carried answers and ${skipped.template} Fluency family templates (drawn at ${seeds} seeds instead)${coincide ? `, ${coincide} coinciding Fluency draws noted` : ''}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+    if (codeN && !quiet) console.log(`grade-all: ${codeN.n} Python code widgets run (${codeN.cpp} C++ ones skipped)`);
     console.log(fails.length ? `grade-all: ${fails.length} failure${fails.length === 1 ? '' : 's'}: ${Object.entries(counts).map(([k, n]) => `${k} ${n}`).join(', ')}` : 'grade-all: 0 failures');
     process.exit(fails.length ? 1 : 0);
   };
