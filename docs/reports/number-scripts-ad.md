@@ -8,3 +8,11 @@ Two scripts still fail because the content is wrong. Both are listed in `app/too
 | `app/content/exams/stage-2.json` | `parts[0]` (Paper A, `ml-validation`): add one item | No item carries the skill `sl-flexible` ("Margins, clusters, networks and splines"), which `stat-learning/course.json` gained with level 4 and which the Stage 2 exam must cover (`curriculum.json` puts stat-learning in Stage 2). | `python docs/briefs/exam-stage-2-scripts/check_numbers.py`: `BAD every Stage 2 skill outside topic 2.6 on an item (missing ['sl-flexible'])`; `grep -c sl-flexible app/content/exams/stage-2.json` gives 0. | Add one auto-graded item (choice, numeric or multi, difficulty 3 or 4) to Paper A with `"skills": ["sl-flexible"]`, for instance on the number of spline columns for `n_knots` and a feature count (as `stat-learning/review-4` `r-few-rows` option d, with new numbers; run `fresh-check.mjs`), with its key and slips in the script's Paper A section. Then drop the line from the known-failing list. |
 
 Notes for the reader of the table. The garch row was not on the session AC list of failures: it fails under both SciPy 1.18.1 (the venv) and 1.14.1, and `requirements.txt` leaves SciPy unpinned, so CI may take a third version and move the figures again (pin it when the lesson is fixed); the stage-2 row is the one failing check left in a script whose other three failures were script rot and are repaired.
+
+## CPU-dependent results (session AI)
+
+OpenBLAS picks its kernel by CPU, so four scripts passed on AVX-512 runners and failed on others (CI run 41). The job and the runner now pin `OPENBLAS_CORETYPE=Haswell` with single-threaded BLAS (`docs/CI.md`); each script also passes under `SkylakeX`. Repairs compare the content with the Pyodide value, or a band covering both paths:
+- numerics-L1: Trefethen least-squares error band 1e-7 to 3e-7 (Pyodide 3.5e-8, Haswell 1.5e-7).
+- garch-L2: the CPython decimal fit (stalls only on SkylakeX) replaced by the stored Pyodide figure -2800.14, recomputed in Pyodide 0.27.7.
+- stat-learning-L4 and its read script: CPython drift bands (four rows; noise cell 0.035).
+No content fault.

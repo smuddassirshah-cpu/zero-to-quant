@@ -542,7 +542,8 @@ moves = []
 for s, (ptr, pte) in PYO_N.items():
     m = MLPClassifier(hidden_layer_sizes=(8,), solver="lbfgs", alpha=0.01, random_state=s, max_iter=500).fit(Xn, yn)
     moves.append(abs(round(m.score(Xn2, yn2) * 300) - round(pte * 300)))
-ok(moves == [3, 4, 0] and max(moves) == 4, f"l17 s9: test scores move by up to four rows in 300 between runtimes ({moves})")
+# desktop CPython drifts from the Pyodide table by a CPU-dependent amount (OpenBLAS kernel: Haswell [1, 2, 0] rows, SkylakeX [3, 4, 0]); the band is the 0.015 the noise checks above use (4.5 rows)
+ok(max(moves) <= 4, f"l17 s9: test scores move by at most four rows in 300 between runtimes ({moves})")
 ok(round(0.5567 * 300) - round(0.55 * 300) == 2 and int(yn2.sum()) == 165 and max(pte for _, pte in PYO_N.values()) == 0.5567, "l17 s9: best test score is 167 rows, two above the base rate's 165")
 lv.expect("l17", "screens[9].explain.text", "four rows in 300")
 lv.expect("l17", "screens[9].widget.options[0].text", "two rows in 300")

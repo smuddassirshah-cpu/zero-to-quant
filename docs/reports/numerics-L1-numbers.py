@@ -214,7 +214,8 @@ check('45 gaps', 1e-14 / EPS, 45, abs_=0.1)
 tt = np.linspace(0, 1, 100); V15 = np.vander(tt, 15, increasing=True); b15 = np.exp(np.sin(4 * tt)) / 2006.787453080206
 check('trefethen kappa', np.linalg.cond(V15), 2.27e10, rel=0.005)
 xq = np.linalg.lstsq(V15, b15, rcond=None)[0][-1]
-check('trefethen lstsq ~7 digits', abs(xq - 1) < 1e-7, True)
+# the content says a stable method keeps about 7 digits: Pyodide 0.27.7 gives 3.5e-8, desktop OpenBLAS 4e-9 (SkylakeX) to 1.5e-7 (Haswell), so the band is 3e-7
+check('trefethen lstsq ~7 digits', abs(xq - 1) < 3e-7, True)
 xn = np.linalg.solve(V15.T @ V15, V15.T @ b15)[-1]
 check('trefethen normal no digit', abs(xn - 1) > 0.5, True)   # Pyodide 2.0.2: -0.2654; this CPython prints its own value
 check('trefethen kappa u', np.linalg.cond(V15) * 2**-53, 2.5e-6, rel=0.01)

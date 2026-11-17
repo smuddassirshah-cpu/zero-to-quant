@@ -95,7 +95,7 @@ function changedSelection(all) {
 function runOne(script) {
   return new Promise((resolve) => {
     const t0 = Date.now();
-    const p = spawn(PY, [path.join(ROOT, script)], { cwd: path.join(ROOT, path.dirname(script)), detached: true, stdio: ['ignore', 'pipe', 'pipe'], env: { OMP_NUM_THREADS: '1', OPENBLAS_NUM_THREADS: '1', MKL_NUM_THREADS: '1', ...process.env, PYTHONIOENCODING: 'utf-8' } });
+    const p = spawn(PY, [path.join(ROOT, script)], { cwd: path.join(ROOT, path.dirname(script)), detached: true, stdio: ['ignore', 'pipe', 'pipe'], env: { OPENBLAS_CORETYPE: 'Haswell', OMP_NUM_THREADS: '1', OPENBLAS_NUM_THREADS: '1', MKL_NUM_THREADS: '1', ...process.env, PYTHONIOENCODING: 'utf-8' } });
     let buf = '';
     const keep = (d) => { buf += d.toString(); if (buf.length > 20000) buf = buf.slice(-10000); };
     p.stdout.on('data', keep); p.stderr.on('data', keep);
