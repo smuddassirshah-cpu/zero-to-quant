@@ -2,7 +2,9 @@
    Flat option cards: two columns when there are 4 or fewer short options, otherwise stacked. Keys 1 to 9 pick
    (the player calls pick(i)); arrows move a roving focus inside the group. Graded states: the chosen card takes a
    check or cross badge; on a correct answer the unchosen cards dim. reveal() marks the correct card in hint indigo.
-   Optional per-option "canvas": a state patch that showWhy(key) applies to the screen canvas after a wrong pick. */
+   Optional per-option "canvas": a state patch that showWhy(key) applies to the screen canvas after a wrong pick, and that
+   showSolved() applies after a correct check when the correct option has one (ENGINE-BACKLOG 1213); it stays on the solved
+   screen and is undone only by Try again or Start over. Never applied before the check. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -87,6 +89,11 @@
       showWhy(key) {
         const o = opts.find(x => x.id === key);
         if (!o || !o.canvas || !ctx.canvas) return false;
+        clearWhy(); undoWhy = Z.grade.patchCanvas(ctx.canvas, o.canvas); return true;
+      },
+      showSolved() {
+        const o = sel >= 0 ? opts[sel] : null;
+        if (!o || !o.correct || !o.canvas || !ctx.canvas) return false;
         clearWhy(); undoWhy = Z.grade.patchCanvas(ctx.canvas, o.canvas); return true;
       },
       reset() { clearWhy(); strip(); sel = -1; btns.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-checked', 'false'); }); roving(0); },

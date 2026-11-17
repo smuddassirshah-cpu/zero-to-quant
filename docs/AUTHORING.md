@@ -115,7 +115,7 @@ Exactly one `correct`. Every distractor has `why` (one named misconception each)
 
 An option may hold a fenced code block (```` ```python ... ``` ````): it is drawn as a small multi-line code block inside the option, with no Copy button, and any text around it stays inline.
 
-Any `choice` or `multi` option, and any `numeric`, `slider` or `tap-regions` `wrong[]` entry, may carry a `canvas` patch: it is applied by Show why after that wrong answer and reverted on Try again. Use it to show the consequence of the misconception on the diagram (highlight the double-counted cell, mark it `×2`).
+Any `choice` or `multi` option, and any `numeric`, `slider` or `tap-regions` `wrong[]` entry, may carry a `canvas` patch: it is applied by Show why after that wrong answer and reverted on Try again. A correct `choice` option (and each correct option a `multi` answer kept) may carry one too: it is applied once the answer is checked correct, never before the check, and it stays on the solved screen (Continue moves on; Start over reverts it). Use it to let the diagram show the result, for example greying the cell the news ruled out (ENGINE-BACKLOG 1213). A patch on a correct option must read as true of the solved state. Use it to show the consequence of the misconception on the diagram (highlight the double-counted cell, mark it `×2`).
 
 ### `multi`
 

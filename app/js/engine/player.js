@@ -363,7 +363,7 @@
         if (!widget) return { ok: true, key: null };
         try { const r = (await widget.grade()) || { ok: false, key: null }; storeCarry(); if (gateMode && !r.pending && (gateMode === 'check' || r.ok)) gateOpenNow(); return r; } catch (e) { console.error(e); return { ok: false, key: 'error', line: 'This answer could not be checked.' }; }
       },
-      mark(r) { if (!widget) return; widget.markGraded(r); if (!r.ok && !r.final && widget.showWhy) { try { widget.showWhy(r.key); } catch (e) { console.error(e); } } },
+      mark(r) { if (!widget) return; widget.markGraded(r); if (r.ok && widget.showSolved) { try { widget.showSolved(); } catch (e) { console.error(e); } } if (!r.ok && !r.final && widget.showWhy) { try { widget.showWhy(r.key); } catch (e) { console.error(e); } } },
       clear() { widget && widget.unlock(); },
       reset() { widget && widget.reset(); resetCanvas(); if (w && w.kind === 'tap-regions') count(tapCount(0)); },
       reveal() {

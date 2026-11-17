@@ -70,6 +70,15 @@
         if (!o || !o.canvas || !ctx.canvas) return false;
         clearWhy(); undoWhy = Z.grade.patchCanvas(ctx.canvas, o.canvas); return true;
       },
+      showSolved() {
+        if (!ctx.canvas) return false;
+        const ps = opts.filter((o, i) => on.has(i) && o.correct && o.canvas);
+        if (!ps.length) return false;
+        clearWhy();
+        const undos = ps.map(o => Z.grade.patchCanvas(ctx.canvas, o.canvas));
+        undoWhy = () => undos.reverse().forEach(u => u());
+        return true;
+      },
       reset() { clearWhy(); strip(); on.clear(); sync(); },
       focus() { btns[0]?.focus({ preventScroll: true }); },
       destroy() { clearWhy(); },

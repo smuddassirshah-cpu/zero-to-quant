@@ -4,7 +4,9 @@
      1. controlsAfter "correct": the bars sim chips are disabled (disabled and aria-disabled) with the note "Answer first, then run it."
         before the check and after a wrong check; after the correct check they are enabled, the note is gone and Run works;
      2. controlsAfter "check": a wrong check already opens them;
-     3. a wrong quiz answer shows "Added to your Redo queue." in its chip, and finishing the quiz does queue the item.
+     3. (l2-correct-patch, ENGINE-BACKLOG 1213) an option's canvas patch shows after a wrong pick, is undone by Try again, shows after the correct
+        pick and stays on the solved screen, and does not show before the check;
+     4. a wrong quiz answer shows "Added to your Redo queue." in its chip, and finishing the quiz does queue the item.
    Usage: node tools/test-predict-first.mjs [--mobile] [--local-cdn <dir>]   Exit 0 when all pass, 1 on a failure, 2 on a setup problem. */
 import { spawn, execSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -15,6 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '..');
 const FIXTURE = path.join(HERE, 'fixtures', 'predict-first', 'l1-gate.json');
+const FIXTURE2 = path.join(HERE, 'fixtures', 'predict-first', 'l2-correct-patch.json');
 const argv = process.argv.slice(2);
 const mobile = argv.includes('--mobile');
 const li = argv.indexOf('--local-cdn');
@@ -57,6 +60,7 @@ const main = async () => {
     });
     await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ status: 200, body: '', headers: { 'content-type': 'text/css' } }));
     await ctx.route(/\/content\/courses\/zq-fixture\/l1-gate\.json$/, r => r.fulfill({ status: 200, body: fs.readFileSync(FIXTURE), headers: { 'content-type': 'application/json' } }));
+    await ctx.route(/\/content\/courses\/zq-fixture\/l2-correct-patch\.json$/, r => r.fulfill({ status: 200, body: fs.readFileSync(FIXTURE2), headers: { 'content-type': 'application/json' } }));
     const page = await ctx.newPage();
     await page.goto(base + '/#today');
     await page.waitForFunction(() => window.ZQ && ZQ.state && ZQ.content, null, { timeout: 30000 });
@@ -99,7 +103,34 @@ const main = async () => {
     c = await chips();
     check('check: a wrong check opens the controls', c.disabled === 0 && c.aria === 0 && c.note === null, JSON.stringify(c));
 
-    /* 3: the quiz line */
+    /* 3: correct-option canvas patch (1213) */
+    await page.evaluate(() => { location.hash = 'lesson/zq-fixture/l2-correct-patch'; });
+    await page.waitForFunction(() => window.ZQ.test && ZQ.test.current().lesson === 'zq-fixture/l2-correct-patch' && ZQ.test.current().kind === 'problem', null, { timeout: 20000 });
+    await page.waitForTimeout(600);
+    const cvText = () => page.evaluate(() => (document.querySelector('.lsn-canvas') || {}).textContent || '');
+    const has = async (v) => (await cvText()).includes(v);
+    check('patch: neither value shows before the check', !(await has('77.7')) && !(await has('55.5')), await cvText());
+    await page.click('.wd-opt[data-id="right"]');
+    await page.waitForTimeout(300);
+    check('patch: picking does not apply the patch before the check', !(await has('77.7')), await cvText());
+    await page.click('.wd-opt[data-id="slip"]');
+    await t('await h.check();');
+    await page.waitForTimeout(600);
+    check('patch: a wrong pick applies its own patch', await has('55.5'), await cvText());
+    await t('await h.tryAgain();');
+    await page.waitForTimeout(500);
+    check('patch: Try again undoes it', !(await has('55.5')), await cvText());
+    await page.click('.wd-opt[data-id="right"]');
+    await t('await h.check();');
+    await page.waitForTimeout(900);
+    check('patch: the correct pick applies the correct option patch', await has('77.7'), await cvText());
+    await page.waitForTimeout(1200);
+    check('patch: it stays on the solved screen', await has('77.7'), await cvText());
+
+    /* 4: the quiz line */
+    await page.evaluate(() => { location.hash = 'lesson/zq-fixture/l1-gate'; });
+    await page.waitForFunction(() => window.ZQ.test && ZQ.test.current().lesson === 'zq-fixture/l1-gate', null, { timeout: 20000 });
+    await page.waitForTimeout(600);
     await t('await h.goto("quiz");');
     await page.waitForTimeout(500);
     await t('h.answerWrong(); await h.check();');
