@@ -359,154 +359,162 @@
         "pe-fd",
         "pe-fk"
       ],
-      "prose": "A desk weighs what more work buys, on a grid and by simulation. Its Crank-Nicolson pricer works in heat variables on $[-1, 1]$ with $n_t = n_x/5$ steps. For a call with $S = K = \\text{£}120$, $r = 4.5\\%$, $\\sigma = 18\\%$ and $T = 1.25$ it returns £12.9896396 on 100 intervals, £12.9963192 on 200 and £12.9979920 on 400. No formula is used.",
+      "prose": "A desk weighs what more work buys, on a grid and by simulation. Its Crank-Nicolson pricer works in heat variables on $[-1, 1]$ with $n_t = n_x/5$ steps. For a call with $S = K = \\text{£}120$, $r = 4.5\\%$, $\\sigma = 18\\%$ and $T = 1.25$ it returns £12.9963192 on 200 intervals and £12.9975576 on 300. No formula is used.",
       "parts": [
         {
-          "question": "The error can still be read from the grids alone. From the differences $V_{200} - V_{100}$ and $V_{400} - V_{200}$, what is the observed order $p$, where each halving cuts the error by $2^p$? Give 1 decimal place.",
+          "question": "Crank-Nicolson is second order. Take a run with spacing $h = 2/n_x$ to fall short of the grids' limit $V$ by $V - V_h = Ch^2$. From the runs on 200 and 300 intervals, what is $C$? Give 2 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 1.9975,
+            "answer": 22.2912,
             "tol": {
-              "abs": 0.05
+              "abs": 0.005
             },
             "wrong": [
               {
-                "id": "ratio",
-                "value": 3.9931,
+                "id": "n-not-h",
+                "value": 89.1648,
                 "tol": {
-                  "abs": 0.05
+                  "abs": 0.007
                 }
               },
               {
-                "id": "inverted",
-                "value": -1.9975,
+                "id": "no-square",
+                "value": 0.37152,
                 "tol": {
-                  "abs": 0.05
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "one-run",
+                "value": 12.384,
+                "tol": {
+                  "abs": 0.008
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "The differences are 0.0066796 and 0.0016728, a ratio of 3.993, so $p = \\log_2 3.993 \\approx 2.0$.",
-            "generic": "Not quite. Divide the first difference by the second, then take $\\log_2$.",
+            "correct": "The gap is $12.9975576 - 12.9963192 = 0.0012384$. It equals $C(h_{200}^2 - h_{300}^2) = \\tfrac{C}{18000}$, so $C = 18{,}000 \\times 0.0012384 \\approx 22.29$.",
+            "generic": "Not quite. Write the gap $V_{300} - V_{200}$ as $C(h_{200}^2 - h_{300}^2)$, then solve for $C$.",
             "byKey": {
-              "ratio": "3.993 is $2^p$, the factor per halving. The order is the power of 2 that gives it.",
-              "inverted": "You divided the later difference by the earlier one. The steps shrink, so the earlier difference is the larger."
+              "n-not-h": "You used $C/n_x^2$, with $n_x$ in place of $h$. Here $h = 2/n_x$, so the constant on $h^2$ is a quarter of yours.",
+              "no-square": "You divided the gap by the change in $h$. The shortfall is $Ch^2$, so divide by the change in $h^2$.",
+              "one-run": "You took the gap as the whole shortfall of the 200 run. The 300 run falls short too, by $Ch_{300}^2$, so the gap is $C(h_{200}^2 - h_{300}^2)$."
             }
           },
           "explain": {
-            "text": "A second-order scheme quarters its error at each halving, and the gaps between neighbouring grids shrink in step. Here they shrink by 3.993, so the pricer behaves as order 2."
+            "text": "Both runs fall short of the same limit, by $Ch_{200}^2$ and $Ch_{300}^2$, so the limit cancels from their gap. With $h_{200} = 0.01$ and $h_{300} = \\tfrac{1}{150}$ the gap is $C(10^{-4} - \\tfrac{1}{22500}) = \\tfrac{C}{18000}$. So $C = 18{,}000 \\times 0.0012384 \\approx 22.29$."
           }
         },
         {
-          "question": "With order 2 from part 1, about how far below the limit of the grids is the 400-interval price? Give the estimate times $10^6$, to 1 decimal place.",
+          "question": "Using $C = 22.29$ from part 1, what shortfall $Ch^2$ does the model predict for the run on 400 intervals? Give it times $10^6$, to the nearest whole number.",
           "widget": {
             "kind": "numeric",
-            "answer": 557.6,
+            "answer": 557.28,
             "tol": {
-              "abs": 0.06
+              "abs": 0.5
             },
             "wrong": [
               {
-                "id": "difference",
-                "value": 1672.8,
+                "id": "unit-length",
+                "value": 139.3125,
                 "tol": {
-                  "abs": 0.06
+                  "abs": 0.5
                 }
               },
               {
-                "id": "quarter",
-                "value": 418.2,
+                "id": "wrong-run",
+                "value": 990.6667,
                 "tol": {
-                  "abs": 0.06
+                  "abs": 0.5
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "At order 2 the steps still to come are $\\tfrac14$, $\\tfrac1{16}$ and so on of the last one, a third in all. So the estimate is $0.0016728 \\div 3 = 557.6 \\times 10^{-6}$.",
-            "generic": "Not quite. At order 2 each later step is a quarter of the one before. Add up the steps still to come.",
+            "correct": "On 400 intervals $h = 0.005$ and $h^2 = 0.000025$. So the shortfall is $22.29 \\times 0.000025 \\approx 0.000557$, about $557 \\times 10^{-6}$.",
+            "generic": "Not quite. Find $h$ for 400 intervals on $[-1, 1]$, then work out $Ch^2$.",
             "byKey": {
-              "difference": "That is the whole last step, $V_{400} - V_{200}$. At order 2 only a third of it is still to come.",
-              "quarter": "That is only the next step. The steps after it add up too, to a third of the last step in all."
+              "unit-length": "You took $h = 1/400$. The grid spans $[-1, 1]$, of length 2, so $h = 2/400 = 0.005$.",
+              "wrong-run": "That is the shortfall of the 300 run, with $h = \\tfrac{1}{150}$. The 400 run has $h = 0.005$."
             }
           },
           "explain": {
-            "text": "At order 2 the remaining steps form the series $\\tfrac14 + \\tfrac1{16} + \\dots = \\tfrac13$ of $V_{400} - V_{200}$. So the 400 price sits about $557.6 \\times 10^{-6}$ below the limit. Finer runs of this pricer put the gap about 1% higher."
+            "text": "On 400 intervals $h = 0.005$, so $Ch^2 = 22.29 \\times 0.000025$, about $557 \\times 10^{-6}$. That is a prediction from the two coarser runs. Finer runs of this pricer put the 400 run's gap about 1% higher."
           }
         },
         {
-          "question": "The work of a run is $n_x \\times n_t = n_x^2/5$ grid values. Using 557.6 from part 2, what shortfall does order 2 predict for a run with 6.25 times the work of the 400 run? Give it times $10^6$, to 2 decimal places.",
+          "question": "The work of a run is $n_x \\times n_t = n_x^2/5$ grid values. Part 2 predicts a shortfall of $557.28 \\times 10^{-6}$ for the 400 run, before rounding. What shortfall does order 2 predict for a run with 2.25 times its work? Give it times $10^6$, to 2 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 89.216,
+            "answer": 247.68,
             "tol": {
-              "abs": 0.006
+              "abs": 0.007
             },
             "wrong": [
               {
                 "id": "per-interval",
-                "value": 14.2746,
+                "value": 110.08,
                 "tol": {
-                  "abs": 0.006
+                  "abs": 0.005
                 }
               },
               {
                 "id": "first-order",
-                "value": 223.04,
+                "value": 371.52,
                 "tol": {
-                  "abs": 0.006
+                  "abs": 0.005
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "Work grows as $n_x^2$, so 6.25 times the work is 2.5 times the intervals, 1,000 in all. Order 2 then predicts $557.6 \\div 2.5^2 = 89.22 \\times 10^{-6}$.",
+            "correct": "Work grows as $n_x^2$, so 2.25 times the work is 1.5 times the intervals, 600 in all. Order 2 then predicts $557.28 \\div 1.5^2 = 247.68 \\times 10^{-6}$.",
             "generic": "Not quite. Find how many times the intervals grow, then divide the shortfall by the square of that.",
             "byKey": {
-              "per-interval": "You took 6.25 times the intervals. With $n_t$ growing too, the work grows as $n_x^2$, so the intervals grow 2.5 times.",
-              "first-order": "You divided by 2.5, the growth in the intervals. At order 2 the shortfall falls by the square of that."
+              "per-interval": "You took 2.25 times the intervals. With $n_t$ growing too, the work grows as $n_x^2$, so the intervals grow 1.5 times.",
+              "first-order": "You divided by 1.5, the growth in the intervals. At order 2 the shortfall falls by the square of that."
             }
           },
           "explain": {
-            "text": "The work is $n_x^2/5$, so 6.25 times the work means $\\sqrt{6.25} = 2.5$ times the intervals. At order 2 that divides the shortfall by $2.5^2 = 6.25$, a prediction of $89.22 \\times 10^{-6}$. The pricer's own 1,000 run sits about $93 \\times 10^{-6}$ below the limit, since its observed order slips a little under 2."
+            "text": "The work is $n_x^2/5$, so 2.25 times the work means $\\sqrt{2.25} = 1.5$ times the intervals. At order 2 that divides the shortfall by $1.5^2 = 2.25$, a prediction of $247.68 \\times 10^{-6}$. The pricer's own 600 run sits about $253 \\times 10^{-6}$ below the limit, since its observed order slips a little under 2."
           }
         },
         {
-          "question": "A simulation's standard error falls like $1/\\sqrt{n}$ in the number of paths $n$. Part 3's run cut the predicted shortfall from 557.6 to 89.22. How many times the paths does a simulation need for the same cut? Give 1 decimal place.",
+          "question": "A simulation's standard error falls like $1/\\sqrt{n}$ in the number of paths $n$. Part 3's run cut the predicted shortfall from 557.28 to 247.68. How many times the paths does a simulation need for the same cut? Give 2 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 39.0625,
+            "answer": 5.0625,
             "tol": {
-              "abs": 0.06
+              "abs": 0.005
             },
             "wrong": [
               {
                 "id": "linear",
-                "value": 6.25,
+                "value": 2.25,
                 "tol": {
-                  "abs": 0.06
+                  "abs": 0.005
                 }
               },
               {
                 "id": "root",
-                "value": 2.5,
+                "value": 1.5,
                 "tol": {
-                  "abs": 0.06
+                  "abs": 0.005
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "The error must fall by $557.6 \\div 89.22 = 6.25$, so the paths grow by $6.25^2 \\approx 39.1$.",
+            "correct": "The error must fall by $557.28 \\div 247.68 = 2.25$, so the paths grow by $2.25^2 \\approx 5.06$.",
             "generic": "Not quite. Find the factor the error must fall by, then square it.",
             "byKey": {
               "linear": "That is the factor the error falls by. A standard error falls like $1/\\sqrt{n}$, so the paths grow by its square.",
-              "root": "You took the square root of 6.25. The paths grow by the square of the factor, not its root."
+              "root": "You took the square root of 2.25. The paths grow by the square of the factor, not its root."
             }
           },
           "explain": {
-            "text": "On this grid 6.25 times the work cuts the predicted error 6.25 times. A simulation needs about 39 times the paths for the same cut. For this second-order grid in one dimension, refining is far cheaper than adding paths."
+            "text": "On this grid 2.25 times the work cuts the predicted error 2.25 times. A simulation needs $2.25^2 \\approx 5.06$ times the paths for the same cut. For this second-order grid in one dimension, the work grows by under half the factor the paths need."
           }
         }
       ]

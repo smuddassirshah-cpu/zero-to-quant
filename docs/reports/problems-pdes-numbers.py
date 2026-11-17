@@ -456,37 +456,103 @@ def level3():
     says(n, 'p-log-contract', 3, '0.028801', '1.02922', '2.92%', '65.87')
     says(n, 'p-log-contract', 4, '0.34293', '0.0840', '0.4665')
 
-    # p-grid-budget: S = K = 120, r 4.5%, sigma 18%, T 1.25
-    Vs = {nx: cn_price(120, 120, 0.045, 0.18, 1.25, nx) for nx in (100, 200, 400, 1600)}
-    stated = {100: 12.9896396, 200: 12.9963192, 400: 12.9979920}
-    for nx in stated:
-        ok(abs(Vs[nx] - stated[nx]) < 5e-8, f'L3 CN on {nx} intervals is {Vs[nx]:.7f}')
-    V1, V2, V4 = stated[100], stated[200], stated[400]
-    da, db = V2 - V1, V4 - V2
-    shown(da, 0.0066796, 7, 'L3 grid first difference')
-    shown(db, 0.0016728, 7, 'L3 grid second difference')
-    shown(da / db, 3.993, 3, 'L3 grid ratio')
-    pord = math.log2(da / db)
-    num(n, 'p-grid-budget', 1, pord, math.log(da / db) / math.log(2), {'ratio': da / db, 'inverted': -pord}, 2.0)
-    est = db / 3 * 1e6
-    geo = sum(db * 0.25 ** j for j in range(1, 200)) * 1e6        # second method: the remaining steps summed
-    num(n, 'p-grid-budget', 2, est, geo, {'difference': db * 1e6, 'quarter': db / 4 * 1e6}, 557.6, agree=1e-9)
-    Vbs = bs_call(120, 120, 0.045, 0.18, 1.25)[0]
-    ok(abs((Vbs - V4) * 1e6 - est) < 10, f'L3 grid estimated shortfall {est:.1f} near the true {(Vbs - V4) * 1e6:.1f}')
-    s6 = 557.6 / 2.5 ** 2                                          # 6.25 times the work: 2.5 times the intervals
-    num(n, 'p-grid-budget', 3, 557.6 / 6.25, 557.6 * (400 / 1000) ** 2, {'per-interval': 557.6 / 6.25 ** 2, 'first-order': 557.6 / 2.5}, 89.22, agree=1e-9)
-    ok(abs(est / 6.25 - s6) <= part(n, 'p-grid-budget', 3)['widget']['tol']['abs'], 'L3 grid p3 from the unrounded shortfall lands in the band')
-    ok(abs(round(s6, 2) - 89.22) < 1e-9, 'L3 grid p3 prints 89.22')
-    V1000 = cn_price(120, 120, 0.045, 0.18, 1.25, 1000)
-    true1000 = (Vbs - V1000) * 1e6                                 # the 1,000 run against the formula (a check of the model only)
-    ok(abs(true1000 - s6) < 0.1 * s6 and 92 < true1000 < 94, f'L3 grid the 1,000 run is {true1000:.2f}e-6 below the formula, "about 93"')
-    ok(1.01 < (Vbs - V4) * 1e6 / est < 1.02, 'L3 grid "about 1% higher" holds for the 400 run')
-    ratio = 557.6 / 89.22
-    num(n, 'p-grid-budget', 4, (557.6 / 89.216) ** 2, 6.25 ** 2, {'linear': 6.25, 'root': 2.5}, 39.1, agree=1e-9)
-    ok(abs(round(ratio ** 2, 1) - 39.1) < 1e-9 and abs(round(ratio, 2) - 6.25) < 1e-9, 'L3 grid p4 prints 6.25 and 39.1')
-    says(n, 'p-grid-budget', 1, '0.0066796', '0.0016728', '3.993')
-    says(n, 'p-grid-budget', 2, '557.6')
-    says(n, 'p-grid-budget', 3, '89.22', '1,000')
+    # p-grid-budget (parts 1 and 2 re-authored, session AH): S = K = 120, r 4.5%, sigma 18%, T 1.25.
+    # Route 1: cn_price above (Thomas sweep, edge from the formula). Route 2: a banded solve with scipy and the
+    # heat-variable edge e^{a1 L + a1^2 t} - e^{a2 L + a2^2 t}, written apart from route 1.
+    from scipy.linalg import solve_banded
+    def cn_banded(S, K, r, sg, T, nx, L=1.0):
+        k = 2 * r / sg ** 2; a1, a2 = (k + 1) / 2, (k - 1) / 2; te = 0.5 * sg * sg * T
+        h = 2 * L / nx; nt = nx // 5; dt = te / nt; lam = dt / h / h
+        xg = -L + h * np.arange(nx + 1)
+        u = np.maximum(np.exp(a1 * xg) - np.exp(a2 * xg), 0.0)
+        edge = lambda t: math.exp(a1 * L + a1 * a1 * t) - math.exp(a2 * L + a2 * a2 * t)
+        ab = np.zeros((3, nx - 1)); ab[0, 1:] = -lam / 2; ab[1, :] = 1 + lam; ab[2, :-1] = -lam / 2
+        for j in range(nt):
+            rhs = (1 - lam) * u[1:-1] + lam / 2 * (u[:-2] + u[2:])
+            rhs[-1] += lam / 2 * edge((j + 1) * dt)
+            u = np.concatenate([[0.0], solve_banded((1, 1), ab, rhs), [edge((j + 1) * dt)]])
+        return K * math.exp(-a2 * math.log(S / K) - a1 * a1 * te) * u[nx // 2]
+    opt = (120, 120, 0.045, 0.18, 1.25)
+    Vs = {nx: cn_price(*opt, nx) for nx in (200, 300, 400, 1000)}
+    Vb = {nx: cn_banded(*opt, nx) for nx in Vs}
+    for nx in Vs:
+        ok(abs(Vs[nx] - Vb[nx]) < 1e-9, f'L3 grid: both solvers agree on {nx} intervals ({Vs[nx]:.9f}, {Vb[nx]:.9f})')
+    ok(abs(cn_banded(100, 100, 0.05, 0.2, 1, 100) - 10.4427214) < 5e-8 and abs(cn_banded(100, 100, 0.05, 0.2, 1, 200) - 10.4486123) < 5e-8,
+       'L3 grid: route 2 gives lesson 12 prices on 100 and 200 intervals')
+    stated = {200: 12.9963192, 300: 12.9975576}
+    for nx, v in stated.items():
+        shown(Vs[nx], v, 7, f'L3 grid price on {nx} intervals')
+    says(3, 'p-grid-budget', None, '12.9963192', '12.9975576', 'n_x/5', '4.5', '18', '1.25')
+    gap = stated[300] - stated[200]
+    shown(gap, 0.0012384, 7, 'L3 grid gap of the two runs')
+    h2, h3, h4 = 2 / 200, 2 / 300, 2 / 400
+    ok(abs((h2 ** 2 - h3 ** 2) - 1 / 18000) < 1e-18 and abs(h3 - 1 / 150) < 1e-15 and abs(1e-4 - 1 / 22500 - 1 / 18000) < 1e-18,
+       'L3 grid: h200^2 - h300^2 = 10^-4 - 1/22500 = 1/18000')
+    C1 = gap / (h2 ** 2 - h3 ** 2)                                  # route 1: the gap over the change in h^2
+    C2 = float(np.linalg.lstsq(np.array([[1, -h2 ** 2], [1, -h3 ** 2]]), np.array([stated[200], stated[300]]), rcond=None)[0][1])
+    #                                                                 route 2: solve V_h = V - C h^2 for V and C together
+    num(3, 'p-grid-budget', 1, C1, C2, {'n-not-h': gap / (1 / 200 ** 2 - 1 / 300 ** 2), 'no-square': gap / (h2 - h3),
+        'one-run': gap / h2 ** 2}, rounded=22.29, agree=1e-7)
+    ok(abs(18000 * 0.0012384 - C1) < 1e-9 and round(C1, 2) == 22.29, 'L3 grid p1 prints 18,000 x 0.0012384 = 22.29')
+    Cfull = (Vs[300] - Vs[200]) / (h2 ** 2 - h3 ** 2)
+    ok(round(Cfull, 2) == 22.29, f'L3 grid p1 the unrounded runs give C = {Cfull:.5f}, also 22.29')
+    ok(abs(gap / (1 / 200 ** 2 - 1 / 300 ** 2) / 4 - C1) < 1e-9, 'L3 grid p1 slip n-not-h is four times the key')
+    w1 = part(3, 'p-grid-budget', 1)['widget']
+    for typed in (22.29,):
+        ok(abs(typed - w1['answer']) < w1['tol']['abs'] - 0.003, f'L3 grid p1 takes {typed} away from the band edge')
+    for typed in (22.28, 22.30):
+        ok(abs(typed - w1['answer']) > w1['tol']['abs'] + 0.003, f'L3 grid p1 refuses {typed} away from the band edge')
+    # part 2: C h^2 at 400 intervals
+    e400 = C1 * h4 ** 2 * 1e6
+    e400b = (stated[300] - stated[200]) * (h4 ** 2 / (h2 ** 2 - h3 ** 2)) * 1e6
+    num(3, 'p-grid-budget', 2, e400, e400b, {'unit-length': 22.29 / 400 ** 2 * 1e6, 'wrong-run': 22.29 * h3 ** 2 * 1e6}, rounded=557, agree=1e-9)
+    carried2 = 22.29 * 0.000025 * 1e6
+    w2 = part(3, 'p-grid-budget', 2)['widget']
+    ok(round(carried2) == 557 and round(e400) == 557 and abs(carried2 - w2['answer']) < w2['tol']['abs'], f'L3 grid p2 carried 22.29 gives {carried2:.2f}, also 557')
+    ok(abs(22.29 * 0.000025 - 0.000557) < 1e-6, 'L3 grid p2 prints 22.29 x 0.000025 = 0.000557')
+    ok(abs(round(e400, 2) - 557.28) < 1e-9, 'L3 grid p3 restates the unrounded 557.28')
+    Vbs = bs_call(*opt)[0]
+    true400 = (Vbs - Vs[400]) * 1e6
+    ok(1.005 < true400 / e400 < 1.02, f'L3 grid "about 1% higher": the 400 run is {true400:.2f}e-6 below the formula, {true400 / e400:.4f} times the prediction')
+    for wid, typed in (('unit-length', 139), ('wrong-run', 991)):
+        x = [w for w in w2['wrong'] if w['id'] == wid][0]
+        ok(abs(typed - x['value']) < x['tol']['abs'] - 0.1, f'L3 grid p2 slip {wid} takes {typed}')
+    # part 3: 2.25 times the work is 1.5 times the intervals (work n_x^2/5), so divide by 2.25
+    s3 = 557.28 / 1.5 ** 2
+    n600 = next(m for m in range(400, 2000, 5) if abs(m * m / 5 - 2.25 * 400 * 400 / 5) < 1e-9)
+    num(3, 'p-grid-budget', 3, s3, 557.28 * (400 / n600) ** 2, {'per-interval': 557.28 / 2.25 ** 2, 'first-order': 557.28 / 1.5}, rounded=247.68, agree=1e-9)
+    ok(n600 == 600 and 600 // 5 == 120, 'L3 grid p3 600 intervals (n_t 120) carry 2.25 times the work')
+    w3 = part(3, 'p-grid-budget', 3)['widget']
+    for typed in (247.68,):           # 557.28 / 2.25 is 247.68 exactly: rounded and cut to 2 places alike
+        ok(abs(typed - w3['answer']) < w3['tol']['abs'] - 0.005, f'L3 grid p3 takes {typed} clear of the band edge')
+    for typed in (247.67, 247.69):
+        ok(abs(typed - w3['answer']) > w3['tol']['abs'] + 0.002, f'L3 grid p3 refuses {typed} clear of the band edge')
+    ok(abs(C1 * (2 / 600) ** 2 * 1e6 - w3['answer']) < 1e-6 and abs(Cfull * (2 / 600) ** 2 * 1e6 - w3['answer']) < w3['tol']['abs'],
+       'L3 grid p3 key is C h^2 at 600 intervals too (rounded and unrounded C)')
+    ok(abs(557.28 / 2.25 - 247.68) < 1e-9, 'L3 grid p3 prints 557.28 / 1.5^2 = 247.68')
+    for wid, typed in (('per-interval', 110.08), ('first-order', 371.52)):
+        x = [w for w in w3['wrong'] if w['id'] == wid][0]
+        ok(abs(typed - x['value']) < 1e-9 and x['tol']['abs'] >= 0.005, f'L3 grid p3 slip {wid} is {typed} exactly')
+    Vs[600] = cn_price(*opt, 600)
+    ok(abs(Vs[600] - cn_banded(*opt, 600)) < 1e-9, 'L3 grid both solvers agree on 600 intervals')
+    true600 = (Vbs - Vs[600]) * 1e6
+    ok(round(true600) == 253, f'L3 grid the 600 run is {true600:.2f}e-6 below the formula, "about 253"')
+    ok(true600 > s3 and (Vs[400] - Vs[200]) / (Vs[600] - Vs[400]) > 0, 'L3 grid the true gap exceeds the order-2 prediction')
+    # the observed order slips under 2: the error constant C grows on finer grids
+    Cs = [(Vbs - Vs[nx]) * nx ** 2 / 4 for nx in (200, 300, 400, 600, 1000)]
+    ok(all(c2 > c1 for c1, c2 in zip(Cs, Cs[1:])), f'L3 grid the constant creeps up on finer grids {[round(c, 3) for c in Cs]}')
+    # part 4: the paths grow by the square of the error factor
+    num(3, 'p-grid-budget', 4, (557.28 / s3) ** 2, 2.25 ** 2, {'linear': 2.25, 'root': 1.5}, rounded=5.06, agree=1e-9)
+    car4 = (557.28 / 247.68) ** 2
+    w4 = part(3, 'p-grid-budget', 4)['widget']
+    ok(abs(557.28 / 247.68 - 2.25) < 1e-12 and round(car4, 2) == 5.06, f'L3 grid p4 carried 557.28 / 247.68 = 2.25, squared {car4}')
+    for typed in (5.06,):             # 5.0625 rounds and cuts to 5.06
+        ok(abs(typed - w4['answer']) < w4['tol']['abs'] - 0.002, f'L3 grid p4 takes {typed} clear of the edge')
+    for typed in (5.05, 5.07):
+        ok(abs(typed - w4['answer']) > w4['tol']['abs'] + 0.002, f'L3 grid p4 refuses {typed} clear of the edge')
+    ok(2.25 < 0.5 * 5.0625, 'L3 grid p4 explain: the work grows by under half the factor the paths need')
+    says(3, 'p-grid-budget', 3, '557.28', '247.68', '600', '253', '1.5')
+    says(3, 'p-grid-budget', 4, '557.28', '247.68', '2.25', '5.06')
     lv = Level('pdes', 3)
     lv.check_wrongs('problems')
     return lv

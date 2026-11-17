@@ -390,97 +390,102 @@ check('solver gives lesson 12 price on 200', close(cn_price(100, 100, 0.05, 0.2,
 
 opt = (120.0, 120.0, 0.045, 0.18, 1.25)
 check('grid prose numbers', all(s in it['prose'] for s in ('120', '4.5', '18', '1.25', '[-1, 1]', 'n_x/5')))
-V = {}
-for nx, shown in ((100, '12.9896396'), (200, '12.9963192'), (400, '12.9979920')):
-    V[nx] = cn_price(*opt, nx, nx // 5)
-    check('grid price on %d is %s' % (nx, shown), abs(rnd(V[nx], 7) - float(shown)) < 1e-12 and shown in it['prose'],
-          'mine %.9f' % V[nx])
-V[800] = cn_price(*opt, 800, 160)
-V[1600] = cn_price(*opt, 1600, 320)
-bs = bs_call(*opt)
-check('grids converge on the formula', abs(V[1600] - bs) < 5e-5, 'V1600 %.7f formula %.7f' % (V[1600], bs))
+# Session AH: parts 1 and 2 of p-grid-budget were re-authored (finding 4: a constant C h^2 fitted from runs on 200
+# and 300 intervals), and parts 3 and 4 moved with them. The checks below are of the version this read saw and run
+# only while it is in the file; the author's script problems-pdes-numbers.py checks the new parts by two solvers.
+OLDGRID = '12.9896396' in it['prose']
+if OLDGRID:
+    V = {}
+    for nx, shown in ((100, '12.9896396'), (200, '12.9963192'), (400, '12.9979920')):
+        V[nx] = cn_price(*opt, nx, nx // 5)
+        check('grid price on %d is %s' % (nx, shown), abs(rnd(V[nx], 7) - float(shown)) < 1e-12 and shown in it['prose'],
+              'mine %.9f' % V[nx])
+    V[800] = cn_price(*opt, 800, 160)
+    V[1600] = cn_price(*opt, 1600, 320)
+    bs = bs_call(*opt)
+    check('grids converge on the formula', abs(V[1600] - bs) < 5e-5, 'V1600 %.7f formula %.7f' % (V[1600], bs))
 
-# part 1
-d1f, d2f = V[200] - V[100], V[400] - V[200]
-d1p, d2p = 12.9963192 - 12.9896396, 12.9979920 - 12.9963192
-p_exact = math.log2(d1f / d2f)
-p_car = math.log2(3.993)
-band_checks('grid p1', P[0]['widget'], p_exact, p_car, 1,
-            slips={'ratio': d1p / d2p, 'inverted': math.log2(d2p / d1p)})
-txt = alltext(P[0])
-printed('grid p1', txt, d1p, '0.0066796')
-printed('grid p1', txt, d2p, '0.0016728')
-printed('grid p1', txt, d1p / d2p, '3.993')
-check('grid p1 claim: differences shrink by 2^p when the error is c h^p',
-      close((1 - 2 ** -2.0) / (2 ** -2.0 - 2 ** -4.0), 4.0, 1e-12))
+    # part 1
+    d1f, d2f = V[200] - V[100], V[400] - V[200]
+    d1p, d2p = 12.9963192 - 12.9896396, 12.9979920 - 12.9963192
+    p_exact = math.log2(d1f / d2f)
+    p_car = math.log2(3.993)
+    band_checks('grid p1', P[0]['widget'], p_exact, p_car, 1,
+                slips={'ratio': d1p / d2p, 'inverted': math.log2(d2p / d1p)})
+    txt = alltext(P[0])
+    printed('grid p1', txt, d1p, '0.0066796')
+    printed('grid p1', txt, d2p, '0.0016728')
+    printed('grid p1', txt, d1p / d2p, '3.993')
+    check('grid p1 claim: differences shrink by 2^p when the error is c h^p',
+          close((1 - 2 ** -2.0) / (2 ** -2.0 - 2 ** -4.0), 4.0, 1e-12))
 
-# part 2: a third of the last step, by the series and by the limit of my own grids
-short_car = d2p / 3
-series = d2p * sum(0.25 ** j for j in range(1, 60))
-check('grid p2 series is a third', close(series, short_car, 1e-15))
-band_checks('grid p2', P[1]['widget'], d2f / 3 * 1e6, short_car * 1e6, 1,
-            slips={'difference': d2p * 1e6, 'quarter': d2p / 4 * 1e6})
-# the claim itself: the limit of the grids, from two further halvings and their own tail
-# the limit of the grids is the formula's price: a wider domain moves nothing, so there is no truncation term
-limit = bs
-check('grid limit by Richardson on 800 and 1,600 is the formula to 3e-6', abs(V[1600] + (V[1600] - V[800]) / 3 - bs) < 3e-6)
-true400, true1600 = (limit - V[400]) * 1e6, (limit - V[1600]) * 1e6
-check('grid true shortfalls are 564.4 and 37.2', close(true400, 564.4, 0.05) and close(true1600, 37.2, 0.05),
-      '%.2f %.2f' % (true400, true1600))
-check('grid observed order slips below 2 on finer grids',
-      (V[400] - V[200]) / (V[800] - V[400]) < d1f / d2f and (V[800] - V[400]) / (V[1600] - V[800]) < (V[400] - V[200]) / (V[800] - V[400]))
-t2 = P[1]['question'] + ' ' + P[1]['feedback']['correct'] + ' ' + P[1]['explain']['text']
-check('grid p2 states 557.6 as an estimate (review finding 2)', re.search(r'about|estimate|predict', t2) is not None,
-      'feedback says "the 400 price is ... 557.6 x 10^-6 below the limit"; this pricer is %.1f below it (%.1f%% more)'
-      % (true400, 100 * (true400 / 557.6 - 1)))
-printed('grid p2', alltext(P[1]), short_car * 1e6, '557.6')
+    # part 2: a third of the last step, by the series and by the limit of my own grids
+    short_car = d2p / 3
+    series = d2p * sum(0.25 ** j for j in range(1, 60))
+    check('grid p2 series is a third', close(series, short_car, 1e-15))
+    band_checks('grid p2', P[1]['widget'], d2f / 3 * 1e6, short_car * 1e6, 1,
+                slips={'difference': d2p * 1e6, 'quarter': d2p / 4 * 1e6})
+    # the claim itself: the limit of the grids, from two further halvings and their own tail
+    # the limit of the grids is the formula's price: a wider domain moves nothing, so there is no truncation term
+    limit = bs
+    check('grid limit by Richardson on 800 and 1,600 is the formula to 3e-6', abs(V[1600] + (V[1600] - V[800]) / 3 - bs) < 3e-6)
+    true400, true1600 = (limit - V[400]) * 1e6, (limit - V[1600]) * 1e6
+    check('grid true shortfalls are 564.4 and 37.2', close(true400, 564.4, 0.05) and close(true1600, 37.2, 0.05),
+          '%.2f %.2f' % (true400, true1600))
+    check('grid observed order slips below 2 on finer grids',
+          (V[400] - V[200]) / (V[800] - V[400]) < d1f / d2f and (V[800] - V[400]) / (V[1600] - V[800]) < (V[400] - V[200]) / (V[800] - V[400]))
+    t2 = P[1]['question'] + ' ' + P[1]['feedback']['correct'] + ' ' + P[1]['explain']['text']
+    check('grid p2 states 557.6 as an estimate (review finding 2)', re.search(r'about|estimate|predict', t2) is not None,
+          'feedback says "the 400 price is ... 557.6 x 10^-6 below the limit"; this pricer is %.1f below it (%.1f%% more)'
+          % (true400, 100 * (true400 / 557.6 - 1)))
+    printed('grid p2', alltext(P[1]), short_car * 1e6, '557.6')
 
-# part 3: 16 times the work is two halvings
-check('grid p3 work is nx * nt = nx^2 / 5', (1600 * 320) == 16 * (400 * 80))
-FIXED3 = close(P[2]['widget']['answer'], 89.216, 0.01)      # the review's replacement: 6.25 times the work
-if FIXED3:
-    s3_car = 557.6 / 6.25
-    band_checks('grid p3', P[2]['widget'], d2f / 3 / 6.25 * 1e6, s3_car, 2,
-                slips={'per-interval': 557.6 / 6.25 ** 2, 'first-order': 557.6 / 2.5})
-else:
-    s3_car = 557.6 / 16
-    band_checks('grid p3', P[2]['widget'], d2f / 3 / 16 * 1e6, s3_car, 2,
-                slips={'one-halving': 557.6 / 4, 'per-interval': 557.6 / 256})
-t3 = alltext(P[2])
-check('grid p3 states its answer as a prediction (review finding 2)', re.search(r'about|estimate|predict', t3) is not None,
-      'feedback says the shortfall on 1,600 intervals is 34.85 x 10^-6; the 1,600 run is %.1f below the limit (%.1f%% more)'
-      % (true1600, 100 * (true1600 / 34.85 - 1)))
-# homework-3 h-sequence: the 400 error, two halvings, divided by 16, on 1,600 intervals (review finding 3)
-with open(os.path.join(PDES, 'homework-3.json'), encoding='utf-8') as f:
-    hw = {i['id']: i for i in json.load(f)['items']}
-hs = hw.get('h-sequence')
-if hs:
-    a = P[2]['feedback']['correct']
-    b = hs['feedback']['correct']
-    same = ('two halvings' in a.lower() and 'two halvings' in b.lower() and '1,600' in a and '1,600' in hs['prose']
-            and '16' in a and '16' in b and 'n_t = n_x/5' in hs['prose'] and 'n_t = n_x/5' in it['prose'])
-    check('grid p3 is not the step of homework h-sequence (review finding 3)', not same,
-          'pdes set: "%s" | homework: "%s"' % (a[:110], b[:80]))
-# the replacement the review gives: 6.25 times the work, 1,000 intervals
-V1000 = cn_price(*opt, 1000, 200)
-check('fix text: order 2 predicts 89.22 on 1,000 intervals', close(557.6 / 2.5 ** 2, 89.216, 1e-9) and 1000 * 200 == 6.25 * 400 * 80)
-check('fix text: the 1,000 run is about 93 below the limit', abs(rnd((limit - V1000) * 1e6, 0) - 93) < 1e-9, '%.2f' % ((limit - V1000) * 1e6))
-check('fix text: 39.1 times the paths', abs(rnd(6.25 ** 2, 1) - 39.1) < 1e-9 and abs(rnd((557.6 / 89.22) ** 2, 1) - 39.1) < 1e-9)
-check('fix text: the gap is about 1% above 557.6', abs(rnd(100 * (true400 / 557.6 - 1), 0) - 1) < 1e-9)
-check('fix text: the 1,600 run is about 37 below the limit', abs(rnd(true1600, 0) - 37) < 1e-9)
+    # part 3: 16 times the work is two halvings
+    check('grid p3 work is nx * nt = nx^2 / 5', (1600 * 320) == 16 * (400 * 80))
+    FIXED3 = close(P[2]['widget']['answer'], 89.216, 0.01)      # the review's replacement: 6.25 times the work
+    if FIXED3:
+        s3_car = 557.6 / 6.25
+        band_checks('grid p3', P[2]['widget'], d2f / 3 / 6.25 * 1e6, s3_car, 2,
+                    slips={'per-interval': 557.6 / 6.25 ** 2, 'first-order': 557.6 / 2.5})
+    else:
+        s3_car = 557.6 / 16
+        band_checks('grid p3', P[2]['widget'], d2f / 3 / 16 * 1e6, s3_car, 2,
+                    slips={'one-halving': 557.6 / 4, 'per-interval': 557.6 / 256})
+    t3 = alltext(P[2])
+    check('grid p3 states its answer as a prediction (review finding 2)', re.search(r'about|estimate|predict', t3) is not None,
+          'feedback says the shortfall on 1,600 intervals is 34.85 x 10^-6; the 1,600 run is %.1f below the limit (%.1f%% more)'
+          % (true1600, 100 * (true1600 / 34.85 - 1)))
+    # homework-3 h-sequence: the 400 error, two halvings, divided by 16, on 1,600 intervals (review finding 3)
+    with open(os.path.join(PDES, 'homework-3.json'), encoding='utf-8') as f:
+        hw = {i['id']: i for i in json.load(f)['items']}
+    hs = hw.get('h-sequence')
+    if hs:
+        a = P[2]['feedback']['correct']
+        b = hs['feedback']['correct']
+        same = ('two halvings' in a.lower() and 'two halvings' in b.lower() and '1,600' in a and '1,600' in hs['prose']
+                and '16' in a and '16' in b and 'n_t = n_x/5' in hs['prose'] and 'n_t = n_x/5' in it['prose'])
+        check('grid p3 is not the step of homework h-sequence (review finding 3)', not same,
+              'pdes set: "%s" | homework: "%s"' % (a[:110], b[:80]))
+    # the replacement the review gives: 6.25 times the work, 1,000 intervals
+    V1000 = cn_price(*opt, 1000, 200)
+    check('fix text: order 2 predicts 89.22 on 1,000 intervals', close(557.6 / 2.5 ** 2, 89.216, 1e-9) and 1000 * 200 == 6.25 * 400 * 80)
+    check('fix text: the 1,000 run is about 93 below the limit', abs(rnd((limit - V1000) * 1e6, 0) - 93) < 1e-9, '%.2f' % ((limit - V1000) * 1e6))
+    check('fix text: 39.1 times the paths', abs(rnd(6.25 ** 2, 1) - 39.1) < 1e-9 and abs(rnd((557.6 / 89.22) ** 2, 1) - 39.1) < 1e-9)
+    check('fix text: the gap is about 1% above 557.6', abs(rnd(100 * (true400 / 557.6 - 1), 0) - 1) < 1e-9)
+    check('fix text: the 1,600 run is about 37 below the limit', abs(rnd(true1600, 0) - 37) < 1e-9)
 
-# part 4
-if FIXED3:
-    fac = 6.25
-    band_checks('grid p4', P[3]['widget'], fac ** 2, (557.6 / 89.22) ** 2, 1,
-                slips={'linear': fac, 'root': math.sqrt(fac)})
-else:
-    fac = 557.6 / 34.85
-    check('grid p4 factor is 16', close(fac, 16.0, 1e-9))
-    band_checks('grid p4', P[3]['widget'], fac ** 2, (557.6 / 34.85) ** 2, 0,
-                slips={'linear': fac, 'root': math.sqrt(fac)})
-# 1 / sqrt(n): paths times 256 cuts a standard error 16 times
-check('grid p4 square law', close(1 / math.sqrt(256.0), 1 / 16.0, 1e-15))
+    # part 4
+    if FIXED3:
+        fac = 6.25
+        band_checks('grid p4', P[3]['widget'], fac ** 2, (557.6 / 89.22) ** 2, 1,
+                    slips={'linear': fac, 'root': math.sqrt(fac)})
+    else:
+        fac = 557.6 / 34.85
+        check('grid p4 factor is 16', close(fac, 16.0, 1e-9))
+        band_checks('grid p4', P[3]['widget'], fac ** 2, (557.6 / 34.85) ** 2, 0,
+                    slips={'linear': fac, 'root': math.sqrt(fac)})
+    # 1 / sqrt(n): paths times 256 cuts a standard error 16 times
+    check('grid p4 square law', close(1 / math.sqrt(256.0), 1 / 16.0, 1e-15))
 
 # Reuse, another course: numerics problems-3 p-rate-path-euler opens the same way (review finding 2)
 num3 = os.path.join(ROOT, 'app', 'content', 'courses', 'numerics', 'problems-3.json')
