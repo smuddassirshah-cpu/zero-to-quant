@@ -9,6 +9,9 @@
    failed request, and the Compute Engine from vendor/compute-engine/ grades x^2-1 equal to (x-1)(x+1) and not to x^2+1.
    Part 2: playthrough.mjs --local-cdn <empty folder> (every jsDelivr request answered 404, the same as an unreachable CDN, and nothing else served) plays one
    Python lesson (code widgets run by Pyodide), one C++ lesson (YoWASP Clang) and one expression lesson; each must pass, so each can only have loaded from vendor/.
+   Part 3 (--absent only, ENGINE-BACKLOG 1214): with the CDN refused, no vendor/ copy, and a Python and a C++ code screen of a lesson, and the Python drill page:
+   the page reports the load failure within 20 s under a neutral heading ("Python could not load", "C++ could not load"), not "Not quite right.": no wrong-answer
+   chip or frame, no XP, Try again offered and it retries the load. In a normal run the numpy lesson (numpy-pandas/l1-not-lists) is the NumPy-from-vendor case (1215).
    Needs Playwright and Chromium. Exit 1 on a failure. */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -23,7 +26,8 @@ const arg = (n) => { const i = argv.indexOf(n); return i >= 0 ? argv[i + 1] : nu
 const ABSENT = argv.includes('--absent');
 const SRC = arg('--vendor') ? path.resolve(arg('--vendor')) : null;
 const NAMES = ['pyodide', 'mathlive', 'compute-engine', 'yowasp-clang'];
-const LESSONS = { python: 'first-python/l1-calculator', cpp: 'cpp-pricing/l1-doubles', expr: 'algebra/l1-symmetries' };
+const LESSONS = { python: 'first-python/l1-calculator', cpp: 'cpp-pricing/l1-doubles', expr: 'algebra/l1-symmetries', ...(ABSENT ? {} : { numpy: 'numpy-pandas/l1-not-lists' }) };   // numpy: a lesson whose code imports NumPy, so its wheels load from vendor/pyodide (ENGINE-BACKLOG 1215)
+const GIVE_UP_MS = 20000;   // ENGINE-BACKLOG 1214: with the CDN refusing and no vendor/ copy, Python (lesson and drill) and C++ must report within this
 const CHROMIUM = '/opt/pw-browsers/chromium';
 const loadPlaywright = async () => {
   try { return await import('playwright'); } catch { /* not local */ }
@@ -104,6 +108,63 @@ const base = `http://127.0.0.1:${server.address().port}`;
     check('maths: Compute Engine from vendor/compute-engine grades x^2-1 equal to (x-1)(x+1), not to x^2+1', r.ce && r.same === true && r.diff === false, JSON.stringify(r));
   }
   check('the CDN was blocked (the page asked for it and got nothing)', blocked.some(u => /cdn\.jsdelivr\.net/.test(u)));
+  await browser.close();
+}
+/* ---------- part 3 (--absent): a load failure is not a wrong answer, and it is reported within seconds ---------- */
+if (ABSENT) {
+  const browser = await chromium.launch({ headless: true, ...(fs.existsSync(CHROMIUM) ? { executablePath: CHROMIUM } : {}) });
+  const open = async (hash, setup, arg, hang = false) => {
+    const ctx = await browser.newContext({ viewport: { width: 1000, height: 900 } });
+    await ctx.route(/^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com)\//, (r) => (hang && /cdn\.jsdelivr/.test(r.request().url()) ? undefined : r.abort()));   // hang: the request is never answered, as behind a proxy that holds the connection
+    const page = await ctx.newPage();
+    await page.goto(base + '/#setup');
+    await page.waitForFunction(() => window.ZQ && ZQ.content && ZQ.content.ready && ZQ.state, null, { timeout: 20000 });
+    await page.evaluate(() => ZQ.content.ready);
+    await page.waitForSelector('[data-name]', { timeout: 20000 });
+    await page.fill('[data-name]', 'Offline');
+    await page.click('[data-next]'); await page.click('[data-track="Trader"]'); await page.click('[data-next]');
+    await page.click('[data-h="15"]'); await page.click('[data-stage="1"]'); await page.click('[data-next]');
+    await page.waitForFunction(() => ZQ.state.flags.setupDone === true, null, { timeout: 20000 });
+    if (setup) await page.evaluate(setup, arg);
+    const t0 = Date.now();
+    await page.evaluate((h) => { location.hash = h; }, hash);
+    return { ctx, page, t0 };
+  };
+  const lessonCase = async (what, course, lesson, screen, sel, hang = false) => {
+    const { ctx, page, t0 } = await open(`lesson/${course}/${lesson}`, ([c, l, i]) => { ZQ.prereq.unlock(c, l); ZQ.state.lessonPosition.set(c, l, { phase: 'lesson', i, xp: 0, checks: 0, okChecks: 0, anyCheck: false, results: {}, quiz: [] }); }, [course, lesson, screen], hang);
+    try {
+      await page.waitForSelector(`${sel} .wd-py[data-s="unavailable"]`, { timeout: GIVE_UP_MS });
+      const ms = Date.now() - t0;
+      check(`absent: ${what} reports the failed load within ${GIVE_UP_MS / 1000} s${hang ? ' with the CDN holding the connection open' : ''} (${(ms / 1000).toFixed(1)} s)`, ms < GIVE_UP_MS);
+      const btn = page.locator('.lsn-primary');
+      await page.waitForFunction(() => { const b = document.querySelector('.lsn-primary'); return b && !b.disabled; }, null, { timeout: 5000 });
+      const xp0 = await page.textContent('.lsn-xp-n');
+      await btn.click();
+      await page.waitForSelector('.lsn-chip', { timeout: 5000 });
+      const r = await page.evaluate(() => ({ head: document.querySelector('.lsn-chip-h b').textContent, cls: document.querySelector('.lsn-chip').className, frame: document.querySelector('.lsn').className, primary: document.querySelector('.lsn-primary').textContent, xp: document.querySelector('.lsn-xp-n').textContent, text: document.querySelector('.lsn-verdict').textContent }));
+      check(`absent: ${what} heading is neutral ("${r.head}"), not "Not quite right."`, r.head === `${what} could not load` && !/Not quite right|Give it another shot/.test(r.text), JSON.stringify(r));
+      check(`absent: ${what} shows no wrong-answer styling, no XP change`, !/is-no/.test(r.cls) && !/is-no/.test(r.frame) && r.xp === xp0, JSON.stringify(r));
+      check(`absent: ${what} offers Try again`, r.primary === 'Try again', r.primary);
+      await btn.click();
+      const loading = await page.evaluate(() => document.querySelector('.lsn-chip') === null);
+      check(`absent: ${what} Try again clears the notice and retries the load`, loading);
+      await page.waitForSelector(`${sel} .wd-py[data-s="unavailable"]`, { timeout: GIVE_UP_MS });
+      check(`absent: ${what} reports again after the retry`, true);
+    } catch (e) { check(`absent: ${what} lesson case`, false, String(e.message || e).split('\n')[0] + ' | ' + await page.evaluate(() => location.hash + ' ' + [...document.querySelectorAll('.wd-py, .drl-py')].map(e => e.textContent).join(' / ') + ' ' + document.body.innerText.replace(/\s+/g, ' ').slice(0, 120)).catch(() => '')); }
+    await ctx.close();
+  };
+  await lessonCase('Python', 'first-python', 'l1-calculator', 2, '.wd-code:not(.wd-cpp)');
+  await lessonCase('Python', 'first-python', 'l1-calculator', 2, '.wd-code:not(.wd-cpp)', true);
+  await lessonCase('C++', 'cpp-pricing', 'l1-doubles', 5, '.wd-cpp');
+  {
+    const { ctx, page, t0 } = await open('drill/annualised-vol');
+    try {
+      await page.waitForSelector('.drl-notice', { state: 'attached', timeout: GIVE_UP_MS });
+      const ms = Date.now() - t0, head = (await page.textContent('.drl-notice .t-h2')).trim();
+      check(`absent: the drill page reports the failed load within ${GIVE_UP_MS / 1000} s (${(ms / 1000).toFixed(1)} s) as "Python could not load"`, ms < GIVE_UP_MS && /^Python could not load$/.test(head), head);
+    } catch (e) { check('absent: drill page case', false, String(e.message || e).split('\n')[0] + ' | ' + await page.evaluate(() => location.hash + ' ' + [...document.querySelectorAll('.wd-py, .drl-py')].map(e => e.textContent).join(' / ') + ' ' + document.body.innerText.replace(/\s+/g, ' ').slice(0, 120)).catch(() => '')); }
+    await ctx.close();
+  }
   await browser.close();
 }
 server.close();

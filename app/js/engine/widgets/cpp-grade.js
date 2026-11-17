@@ -28,7 +28,8 @@
      app/vendor/yowasp-clang/, which is used when the CDN cannot be reached. */
   const CLANG = 'https://cdn.jsdelivr.net/npm/@yowasp/clang@21.1.4-3/gen/';
   const LOCAL = 'vendor/yowasp-clang/';
-  const TEST_MS = 5000, LOAD_MS = 300000, COMPILE_MS = 90000;
+  /* ENGINE-BACKLOG 1214: the load is given up when no download progress has arrived for STALL_MS (the worker reports it as bytes come), or at LOAD_MS */
+  const TEST_MS = 5000, LOAD_MS = 300000, STALL_MS = 90000, COMPILE_MS = 90000;
   const OUT = '\u001eZQR', EXC = '\u001eZQX', SEP = '\u001f';
 
   /* ---------- One shared compiler and runner ---------- */
@@ -85,7 +86,7 @@
       cw.onmessage = (e) => {
         if (my !== gen) return;
         const m = e.data || {};
-        if (m.type === 'progress') { progress = String(m.text || ''); notify(); return; }
+        if (m.type === 'progress') { progress = String(m.text || ''); notify(); if (status === 'loading' || status === 'restarting') armLoad(my, t0); return; }
         if (m.type === 'ready') { clearTimeout(loadTimer); progress = ''; stats.loadMs = Math.round(performance.now() - t0); stats.workerMs = m.ms; stats.version = m.version; stats.patched = !!m.patched; set('ready'); wanted.forEach(want); return; }
         if (m.type === 'fail') { unavailable(m.message); return; }
         if (m.type === 'compiled') { const p = pend.get(m.id); if (!p) return; pend.delete(m.id); clearTimeout(p.timer); p.resolve(m); }
@@ -97,7 +98,12 @@
         if (status === 'ready') start(true); else unavailable(msg);
       };
       cw.postMessage(init());
-      loadTimer = setTimeout(() => { if (my === gen) unavailable('The C++ compiler took more than five minutes to load.'); }, LOAD_MS);
+      armLoad(my, t0);
+    };
+    const armLoad = (my, t0) => {
+      clearTimeout(loadTimer);
+      const used = performance.now() - t0;
+      loadTimer = setTimeout(() => { if (my === gen) unavailable(performance.now() - t0 >= LOAD_MS ? 'The C++ compiler took more than five minutes to load.' : 'The C++ compiler stopped loading: no data arrived for 90 seconds.'); }, Math.max(1000, Math.min(STALL_MS, LOAD_MS - used)));
     };
     /* The starter's headers are precompiled while the learner reads the question */
     const warm = (head) => { if (!head) return; wanted.add(head); if (status === 'ready') want(head); };
@@ -140,6 +146,7 @@
     });
     return {
       ensure() { if (status === 'idle') start(); },
+      retry() { if (status === 'unavailable') start(); },   // ENGINE-BACKLOG 1214: the player's Try again after "C++ could not load"
       warm, compile, run, sub(f) { subs.add(f); return () => subs.delete(f); },
       get status() { return status; }, get reason() { return reason; }, get progress() { return progress; },
     };
@@ -576,6 +583,8 @@ inline int test_count() { return (int)zq_tk::all().size(); }
       if (D && !quiet) { clearTimeout(saveT); saveT = setTimeout(() => draft(ed.value === (spec.starter || '') ? null : ed.value), 400); }
       ctx.change && ctx.change({ code: ed.value });
     }, onRun: () => runExamples() });
+    /* ENGINE-BACKLOG 1214: a load failure is not a wrong answer: offline: true tells the player to show a neutral heading, count nothing, and offer Try again, which calls retry() */
+    const OFFLINE = (line) => ({ ok: false, key: 'unavailable', offline: true, title: 'C++ could not load', line, detail: null });
     const sync = (s = Cpp.status) => {
       if (!alive) return;
       const txt = { idle: 'C++ not loaded', loading: Cpp.progress || 'Loading the C++ compiler', restarting: 'Restarting the C++ compiler', ready: 'C++ ready', unavailable: 'C++ is not available here' }[s] || '';
@@ -726,7 +735,7 @@ inline int test_count() { return (int)zq_tk::all().size(); }
       async grade() {
         const src = ed.value;
         if (cache && cache.src === src) return cache.result;
-        if (Cpp.status === 'unavailable') return { ok: false, key: 'unavailable', line: 'The C++ compiler could not load in this browser, so the tests cannot run.', detail: null };
+        if (Cpp.status === 'unavailable') return OFFLINE('The C++ compiler could not load in this browser (' + Cpp.reason + '), so the tests cannot run.');
         const r = await runCases(tests);
         const n = r.rows.filter(x => x.ok).length;
         const first = r.rows.findIndex(x => !x.ok);
@@ -738,6 +747,7 @@ inline int test_count() { return (int)zq_tk::all().size(); }
         if (!r.error || r.compileError) cache = { src, result }; // a runner or loading failure is worth retrying
         return result;
       },
+      retry() { Cpp.retry(); },
       lock() { locked = true; ed.readOnly(true); sync(); },
       unlock() { locked = false; ed.readOnly(false); el.classList.remove('is-ok', 'is-bad'); sync(); },
       markGraded(r) { el.classList.toggle('is-ok', !!r.ok); el.classList.toggle('is-bad', !r.ok); },

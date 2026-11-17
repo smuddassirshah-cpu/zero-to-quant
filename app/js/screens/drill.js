@@ -26,8 +26,8 @@
 
   const lib = () => ZQ.drillLib || {}; // js/screens/drill-lib.js: patterns, filters, stopwatch, C++ drills, sessions (item 472)
   const LIMIT_MS = 5000;
-  const LOAD_LIMIT_MS = 60000;
-  const PKG_MS = 120000;
+  /* ENGINE-BACKLOG 1214: a load or a package download is given up when no bytes have arrived for STALL_MS (the worker posts 'alive' as they come), or at the cap */
+  const STALL_MS = 30000, LOAD_CAP_MS = 300000, PKG_CAP_MS = 300000;
   const MARK = '\u001eZQ';
   const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   const num = (n) => (n < WORDS.length ? WORDS[n] : String(n));
@@ -286,7 +286,7 @@ if not callable(globals().get(${py(P.fn)})):
 
   /* ---------- Python runner: owns the worker, the load state and the 5-second limit ---------- */
   function PyRunner(onStatus) {
-    let w = null, status = 'idle', version = '', reason = '', loadTimer = 0, run = null, gen = 0;
+    let w = null, status = 'idle', version = '', reason = '', loadTimer = 0, loadT0 = 0, run = null, gen = 0;
     const workerURL = new URL('js/screens/drill-worker.js', location.href).href;
     const set = (s) => { status = s; onStatus(s); };
     const kill = () => {
@@ -307,16 +307,18 @@ if not callable(globals().get(${py(P.fn)})):
         const m = e.data || {};
         if (m.type === 'ready') { clearTimeout(loadTimer); version = m.version; set('ready'); return; }
         if (m.type === 'fail') { unavailable(m.message); return; }
+        if (m.type === 'alive') { if (status === 'loading' || status === 'restarting') armLoad(my); else if (run && run.pkg) armPkg(run); return; }
         if (!run || m.id !== run.id) return;
         if (m.type === 'event') { let d = null; try { d = JSON.parse(m.data); } catch { return; } run.onEvent(d); }
         else if (m.type === 'pkgs') { // ENGINE-BACKLOG 500: package loading is kept out of the run's limit (2 minutes of its own), as in the lesson widget
           const r = run;
           clearTimeout(r.timer);
-          if (m.phase === 'end') r.timer = setTimeout(() => { end({ timeout: true }); start(true); }, LIMIT_MS);
-          else r.timer = setTimeout(() => { end({ timeout: true }); start(true); }, PKG_MS);
+          if (m.phase === 'end') { r.pkg = false; r.timer = setTimeout(() => { end({ timeout: true }); start(true); }, LIMIT_MS); }
+          else { if (!r.pkg) { r.pkg = true; r.pkgT0 = Date.now(); } armPkg(r); }
         }
+        else if (m.type === 'pkgfail') run.pkgFail = m.message;
         else if (m.type === 'crash') run.crash = m.message;
-        else if (m.type === 'end') { const crash = run.crash; end({ crash }); set('ready'); if (crash) start(true); }
+        else if (m.type === 'end') { const crash = run.crash, pkgFail = run.pkgFail; end({ crash, pkgFail }); set('ready'); if (crash) start(true); }
       };
       w.onerror = (e) => {
         if (e && e.preventDefault) e.preventDefault();
@@ -325,7 +327,15 @@ if not callable(globals().get(${py(P.fn)})):
         if (run) { end({ crash: msg }); start(true); } else unavailable(msg);
       };
       w.postMessage({ type: 'init', indexURL: new URL('vendor/pyodide/', location.href).href }); // the worker tries the jsDelivr CDN first, then this local copy
-      loadTimer = setTimeout(() => { if (my === gen) unavailable('Python took more than a minute to load.'); }, LOAD_LIMIT_MS);
+      loadT0 = Date.now(); armLoad(my);
+    };
+    const armLoad = (my) => {
+      clearTimeout(loadTimer);
+      loadTimer = setTimeout(() => { if (my === gen) unavailable(Date.now() - loadT0 >= LOAD_CAP_MS ? 'Python took more than five minutes to load.' : 'Python stopped loading: no data arrived for 30 seconds.'); }, Math.max(1000, Math.min(STALL_MS, LOAD_CAP_MS - (Date.now() - loadT0))));
+    };
+    const armPkg = (r) => {
+      clearTimeout(r.timer);
+      r.timer = setTimeout(() => { end({ timeout: true, loading: true }); start(true); }, Math.max(1000, Math.min(STALL_MS, PKG_CAP_MS - (Date.now() - r.pkgT0))));
     };
     const exec = (code, spec, onEvent, onEnd) => {
       if (status !== 'ready' || !w) return false;
@@ -742,8 +752,8 @@ if not callable(globals().get(${py(P.fn)})):
         body.innerHTML = `<div class="drl-notice" role="alert">
           <span class="drl-notice-i" aria-hidden="true">${I('terminal')}</span>
           <div class="drl-notice-t">
-            <p class="t-h2">Python could not start here</p>
-            <p class="t-body">This drill loads Python from the jsDelivr CDN and runs it in a background worker. The download or the worker was blocked. You can still read the brief and write your solution.</p>
+            <p class="t-h2">Python could not load</p>
+            <p class="t-body">This drill loads Python from the jsDelivr CDN (or a copy in vendor/) and runs it in a background worker. The download or the worker was blocked. Nothing was checked and nothing was counted. You can still read the brief and write your solution.</p>
             <p class="t-caption drl-reason">Reason: ${esc(pyr.reason || 'unknown')}</p>
             <button type="button" class="btn secondary drl-retry">${I('replay', 'sm')}<span>Try again</span></button>
           </div></div>`;
@@ -846,8 +856,20 @@ if not callable(globals().get(${py(P.fn)})):
       return note;
     };
 
-    const onEnd = (R, { timeout, crash }) => {
+    const onEnd = (R, { timeout, crash, pkgFail, loading }) => {
       if (R !== S.run) return;
+      if (pkgFail || loading) {
+        /* ENGINE-BACKLOG 1214: a package that could not be downloaded is the connection, not the answer: no verdict, no attempt counted */
+        S.run = null;
+        body.innerHTML = `<div class="drl-notice" role="alert"><span class="drl-notice-i" aria-hidden="true">${I('terminal')}</span><div class="drl-notice-t">
+          <p class="t-h2">Python could not load a package</p>
+          <p class="t-body">A package your code imports could not be downloaded, so nothing was checked and nothing was counted. Check the connection, then try again.</p>
+          ${pkgFail ? `<p class="t-caption drl-reason">Reason: ${esc(pkgFail)}</p>` : ''}
+          <button type="button" class="btn secondary drl-retry">${I('replay', 'sm')}<span>Try again</span></button></div></div>`;
+        body.querySelector('.drl-retry').addEventListener('click', () => go(R.mode));
+        badge.hidden = true; setVerdict(null); paintButtons(); say('A package could not be downloaded. Nothing was checked.');
+        return;
+      }
       R.timeout = !!timeout; R.crash = crash || null;
       const n = R.defs.length;
       const changed = [];

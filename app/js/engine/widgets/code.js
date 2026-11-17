@@ -24,7 +24,8 @@
   const Z = window.ZQ;
   const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';   // read by tools/code-runner.mjs; the worker itself tries this CDN first
   const PYODIDE_LOCAL = 'vendor/pyodide/';   // self-hosted fallback, used by the worker only when the CDN is unreachable
-  const TEST_MS = 5000, LOAD_MS = 60000, PKG_MS = 120000;
+  /* ENGINE-BACKLOG 1214: a load or a package download is given up when no bytes have arrived for STALL_MS (the worker posts 'alive' as they come), or at the cap, so a slow first download of a large wheel still succeeds and a connection that hangs fails in seconds */
+  const TEST_MS = 5000, STALL_MS = 30000, LOAD_CAP_MS = 300000, PKG_CAP_MS = 300000;
   const MARK = '\u001eZQ';
 
   /* ---------- Python highlighting (from drill.js) ---------- */
@@ -129,7 +130,7 @@
 
   /* ---------- One shared Python runner (the drill's PyRunner, trimmed) ---------- */
   const Py = (() => {
-    let w = null, status = 'idle', reason = '', run = null, gen = 0, loadTimer = 0;
+    let w = null, status = 'idle', reason = '', run = null, gen = 0, loadTimer = 0, loadT0 = 0;
     const subs = new Set();
     const set = (s) => { status = s; subs.forEach(f => f(s)); };
     const kill = () => { clearTimeout(loadTimer); if (run) { clearTimeout(run.timer); run = null; } if (w) { w.onmessage = null; w.onerror = null; w.terminate(); w = null; } };
@@ -146,6 +147,11 @@
         const m = e.data || {};
         if (m.type === 'ready') { clearTimeout(loadTimer); set('ready'); return; }
         if (m.type === 'fail') { unavailable(m.message); return; }
+        if (m.type === 'alive') { // bytes are arriving: a load, or a package download, that is slow but moving is not given up on
+          if (status === 'loading' || status === 'restarting') armLoad(my);
+          else if (run && run.pkg) armPkg(run);
+          return;
+        }
         if (!run || m.id !== run.id) return;
         if (m.type === 'event') {
           let d = null; try { d = JSON.parse(m.data); } catch { return; }
@@ -155,12 +161,13 @@
         else if (m.type === 'pkgs') { // item 161: package loading is kept out of the run's limit (2 minutes of its own)
           clearTimeout(run.timer);
           const r = run;
-          if (m.phase === 'end') r.timer = setTimeout(() => { end({ timeout: true, at: r.at }); start(true); }, r.limit);
-          else r.timer = setTimeout(() => { end({ timeout: true, loading: true }); start(true); }, PKG_MS);
+          if (m.phase === 'end') { r.pkg = false; r.timer = setTimeout(() => { end({ timeout: true, at: r.at }); start(true); }, r.limit); }
+          else { if (!r.pkg) { r.pkg = true; r.pkgT0 = Date.now(); } armPkg(r); }
           if (m.phase === 'msg' && r.onPkgs) r.onPkgs(String(m.text || ''));
         }
+        else if (m.type === 'pkgfail') run.pkgFail = m.message; // a package could not be downloaded: reported at 'end', not as an answer
         else if (m.type === 'crash') run.crash = m.message;
-        else if (m.type === 'end') { const crash = run.crash; end({ crash }); set('ready'); if (crash) start(true); }
+        else if (m.type === 'end') { const crash = run.crash, pkgFail = run.pkgFail; end({ crash, pkgFail }); set('ready'); if (crash) start(true); }
       };
       w.onerror = (e) => {
         if (e && e.preventDefault) e.preventDefault();
@@ -169,7 +176,15 @@
         if (run) { end({ crash: msg }); start(true); } else unavailable(msg);
       };
       w.postMessage({ type: 'init', indexURL: new URL(PYODIDE_LOCAL, location.href).href }); // the local fallback; the worker tries the CDN first
-      loadTimer = setTimeout(() => { if (my === gen) unavailable('Python took more than a minute to load.'); }, LOAD_MS);
+      loadT0 = Date.now(); armLoad(my);
+    };
+    const armLoad = (my) => {
+      clearTimeout(loadTimer);
+      loadTimer = setTimeout(() => { if (my === gen) unavailable(Date.now() - loadT0 >= LOAD_CAP_MS ? 'Python took more than five minutes to load.' : 'Python stopped loading: no data arrived for 30 seconds.'); }, Math.max(1000, Math.min(STALL_MS, LOAD_CAP_MS - (Date.now() - loadT0))));
+    };
+    const armPkg = (r) => {
+      clearTimeout(r.timer);
+      r.timer = setTimeout(() => { end({ timeout: true, loading: true }); start(true); }, Math.max(1000, Math.min(STALL_MS, PKG_CAP_MS - (Date.now() - r.pkgT0))));
     };
     /* items 394, 419: perCase(k) is the limit for case k (k = -1 while the code loads); each event re-arms the timer, so
        a timeout names the case that hit it */
@@ -184,6 +199,7 @@
     };
     return {
       ensure() { if (status === 'idle') start(); },
+      retry() { if (status === 'unavailable') start(); },   // ENGINE-BACKLOG 1214: the player's Try again after "Python could not load"
       exec, sub(f) { subs.add(f); return () => subs.delete(f); },
       get status() { return status; }, get reason() { return reason; },
     };
@@ -475,6 +491,8 @@ def __zq_case(_i):
       <div class="wd-res" aria-live="polite"></div>
     </div>`);
     host.append(el);
+    /* ENGINE-BACKLOG 1214: a load failure is not a wrong answer. offline: true tells the player to show a neutral heading, count nothing, and offer Try again, which calls retry() */
+    const OFFLINE = (line) => ({ ok: false, key: 'unavailable', offline: true, title: 'Python could not load', line, detail: null });
     const runBtn = el.querySelector('.wd-run'), pyEl = el.querySelector('.wd-py'), res = el.querySelector('.wd-res'), edHost = el.querySelector('.wd-ed');
     let alive = true, busy = false, cache = null, locked = false, saveT = 0, quiet = false;
     /* Drafts: with ctx.draftKey (the player passes course/lesson/item or exam/item) the source is kept with
@@ -540,11 +558,13 @@ def __zq_case(_i):
             rows.forEach((x, i) => { if (i > k) x.error = 'Not run: an earlier test went past its time limit.'; });
             resolve({ rows, printed: loaded, error: null }); return;
           }
-          resolve({ rows, printed: loaded, error: loadErr ? cleanTb(loadErr) : info.loading ? 'The packages your code imports took more than two minutes to load. Check the connection and try again.' : info.timeout ? 'Stopped after the time limit. Look for a loop that never ends, or an input() waiting for a line the test does not give.' : info.crash || null });
+          /* ENGINE-BACKLOG 1214: a package that could not be downloaded, or stalled, is the connection, not the answer: no result rows are used */
+          if (info.pkgFail || (info.loading && !loadErr)) { resolve({ rows, printed: '', error: null, offline: info.pkgFail ? 'A package your code imports could not be downloaded (' + info.pkgFail + ').' : 'A package your code imports stopped downloading.' }); return; }
+          resolve({ rows, printed: loaded, error: loadErr ? cleanTb(loadErr) : info.loading ? 'The packages your code imports stopped downloading. Check the connection and try again.' : info.timeout ? 'Stopped after the time limit. Look for a loop that never ends, or an input() waiting for a line the test does not give.' : info.crash || null });
         },
         (msg) => { if (alive && /^Loading\b/.test(msg)) res.innerHTML = `<p class="t-caption wd-res-load" aria-live="polite">${Z.esc(msg.replace(/\s*$/, ''))}. The first run that imports a package fetches it once.</p>`; },
         caseMs);
-      if (!ok) resolve({ rows, printed: '', error: Py.status === 'unavailable' ? 'Python could not load: ' + Py.reason : 'Python is still loading. Try again in a moment.' });
+      if (!ok) resolve(Py.status === 'unavailable' ? { rows, printed: '', error: null, offline: 'Python could not load: ' + Py.reason } : { rows, printed: '', error: 'Python is still loading. Try again in a moment.' });
     });
     /* the data files are fetched once (cached by Z.content.dataFiles); a file that cannot be read stops the run with a plain message */
     const runCases = async (cases) => {
@@ -574,6 +594,7 @@ def __zq_case(_i):
       busy = false; if (!alive) return;
       /* Item 110: outside script mode, what the code printed when it loaded is shown above the example rows */
       const printed = !script && r.printed.trim() ? `<div class="t-caption">Your code printed</div>${pre(r.printed.replace(/\n$/, ''))}` : '';
+      if (r.offline) { res.innerHTML = `<div class="wd-res-top"><span class="t-label">Python could not load</span></div><p class="t-caption">${Z.esc(r.offline)} Nothing was run. Check the connection, then press Check to try again.</p>`; sync(); return; }
       render('Examples', r.rows, examples, (r.error ? pre(r.error, 'wd-res-err') : '') + printed);
       sync();
     };
@@ -590,10 +611,11 @@ def __zq_case(_i):
       async grade() {
         const src = ed.value;
         if (cache && cache.src === src) return cache.result;
-        if (Py.status === 'unavailable') return { ok: false, key: 'unavailable', line: 'Python could not load in this browser, so the tests cannot run.', detail: null };
+        if (Py.status === 'unavailable') return OFFLINE('Python could not load in this browser (' + Py.reason + '), so the tests cannot run.');
         busy = true; sync();
         const r = await runCases(tests);
         busy = false; sync();
+        if (r.offline) return OFFLINE(r.offline);   // ENGINE-BACKLOG 1214: the connection, not the answer: no tests ran
         const n = r.rows.filter(x => x.ok).length;
         const first = r.rows.findIndex(x => !x.ok);
         const ok = !r.error && n === tests.length && tests.length > 0;
@@ -604,6 +626,7 @@ def __zq_case(_i):
         cache = { src, result };
         return result;
       },
+      retry() { Py.retry(); },
       lock() { locked = true; ed.readOnly(true); sync(); },
       unlock() { locked = false; ed.readOnly(false); el.classList.remove('is-ok', 'is-bad'); sync(); },
       markGraded(r) { el.classList.toggle('is-ok', !!r.ok); el.classList.toggle('is-bad', !r.ok); },

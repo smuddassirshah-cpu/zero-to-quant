@@ -283,7 +283,8 @@ self.onmessage = async (e) => {
     try {
       if (typeof WebAssembly !== 'object') throw new Error('This browser has no WebAssembly support.');
       if (/^-O[0-3s]$/.test(m.opt || '')) FLAGS = FLAGS.map(f => (/^-O/.test(f) ? m.opt : f)); // a benchmarking knob; the page sends none
-      const reachable = async (u) => { try { const r = await fetch(u + 'bundle.js', { method: 'HEAD' }); return r.ok; } catch { return false; } };
+      /* ENGINE-BACKLOG 1214: a refusal answers at once; a connection that is held open counts as unreachable after 8 s */
+      const reachable = async (u) => { const ac = new AbortController(), t = setTimeout(() => ac.abort(), 8000); try { const r = await fetch(u + 'bundle.js', { method: 'HEAD', signal: ac.signal }); return r.ok; } catch { return false; } finally { clearTimeout(t); } };
       const base = (await reachable(m.base)) ? m.base : m.local && (await reachable(m.local)) ? m.local : null;
       if (!base) throw new Error('the compiler CDN (' + m.base + ') is unreachable and there is no local copy in vendor/yowasp-clang/.');
       clang = await importClang(base);
