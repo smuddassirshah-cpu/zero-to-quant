@@ -136,4 +136,20 @@ const kinds = (r, id) => r.hits.filter((h) => h.itemId === id).map((h) => h.kind
   });
 }
 
+// ---- --all-exams: each hit once, no ratio or rate; mocks (parts[].items) read ----
+{
+  const les = lesson('l1', [screen({ prose: 'A dealer buys a coin for 640 and sells it for 1,000.', question: 'What is the gain?' })]);
+  const prob = set([{ id: 'p-r', prose: 'A fund grows from 32,000 to 50,000 over its first year. A bag holds 1234.5 grams, then 6789.1 grams and 4321.7 grams of salt.', widget: num(2), feedback: fb() }]);
+  const les2 = lesson('l2', [screen({ prose: 'A sack holds 1234.5 kilos, then 6789.1 kilos and 4321.7 kilos of grain.', question: 'What is the total?' })]);
+  const exam = { id: 'ex-1', items: [{ id: 'x-r', skills: ['sk-other'], prose: 'A shop buys a vase for 6.4 and sells it for 10.', widget: num(1), feedback: fb() }] };
+  const mock = { id: 'mock-8', parts: [{ title: 'Part A', items: [{ id: 'm-r', skills: ['sk-other'], prose: 'A shop buys a lamp for 12.8 and sells it for 20.', widget: num(1), feedback: fb() }] }] };
+  withTree({ 'courses/c/course.json': COURSE, 'courses/c/l1.json': les, 'courses/c/l2.json': les2, 'exams/ex-1.json': exam, 'exams/mock-8.json': mock, 'courses/c/problems-1.json': prob }, (root) => {
+    const d = scan(root), a = scan(root, ['--all', '--all-exams']);
+    const key = (h) => `${h.itemId}|${h.kind}|${h.source}`;
+    check('--all-exams: no hit of the default run is printed a second time', d.hits.every((h) => a.hits.filter((x) => key(x) === key(h)).length === 1) && a.hits.filter((x) => x.allExams).every((x) => x.exam), JSON.stringify(a.hits.map(key)));
+    check('--all-exams: no ratio or rate kind among the all-exams hits', !a.hits.some((x) => x.allExams && (x.kind === 'ratio' || x.kind === 'rate')), JSON.stringify(a.hits.map(key)));
+    check('same-course mode keeps the ratio kind (the lesson against the set)', d.hits.some((x) => x.kind === 'ratio' && !x.allExams), JSON.stringify(d.hits.map(key)));
+  });
+}
+
 if (process.argv[1].endsWith('test-fresh-check-pkg3.mjs')) { console.log(fails ? `${fails} FAILED` : 'all passed'); process.exitCode = fails ? 1 : 0; }

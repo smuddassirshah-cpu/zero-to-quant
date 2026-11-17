@@ -368,7 +368,8 @@ export function scanSet(corpus, rel, doc, opts = {}) {
   }
   const waive = waivers(rel, doc);
   for (const h of best.values()) {
-    const NEW = ['ratio', 'xparam', 'story', 'chain-union', 'question'].includes(h.kind);
+    if (allExams && (!h.exam || h.kind === 'ratio' || h.kind === 'rate')) continue;   // --all-exams: only exam and mock sources (the sentence index also holds the course's own files, which the default mode already reports: no second line), and no ratio or rate (27 of 27 were chance, review-pkg3-reuse-hits)
+    const NEW =['ratio', 'xparam', 'story', 'chain-union', 'question'].includes(h.kind);
     h.level = h.kind === 'matrix' || SHAPE_KINDS.includes(h.kind) || RETOLD_KINDS.includes(h.kind) || (h.kind === 'text' && h.score >= errorRun) ? 'error' : 'warn';   // the four shapes became errors in ENGINE-BACKLOG 1059 (rules tightened in 1053 to 1058)
     // [exam-reuse] and [slip-line]: the two checks of engine pass 8 B. A set that existed before them (tools/reuse-baseline.json) is told, not failed, until its hits are triaged; a new set fails.
     let tag = h.exam ? 'exam-reuse' : h.tag;
