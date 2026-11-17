@@ -77,3 +77,7 @@ Raised later (fix pass problems measure-prob 4):
 Raised later (delta read AG ito 4):
 - `fresh-check` passes `ito/problems-4` `p-band-wait` part 2: its `explain` is l13 `screens[0]`'s `explain` with $\sigma^2$ folded into each coefficient (3 to 12, $6x$ to $4 \times 6x$), and `no-half` is the lesson's `whole` line. One more instance of the bullet under "review problems ito" (a course item with one constant folded in).
 - `fresh-check --file <path outside the content root>` reads the file as an exam and reports the set against itself; `--content <copy> --file <copy path>` works. Say so in the usage text.
+
+Raised later (review-delta-ag-ito):
+- `[rounding-tie]` reads only exact ties of the stored value: it misses a key within 1e-5 of a tie at the asked places (`ito/problems-3` `p-touch-note` part 3, 0.691956 at 4 places, band 5e-05, refuses 0.6919) and a tie reached by one printed factor at 4 places ($75 \times 0.8666 = 64.995$, `p-twin-shares` part 4).
+- `[working-band]` reads the last printed figure only: it misses a printed intermediate that leads outside the band (`ito/problems-3` `p-bridge-closes` part 2 prints the sd 0.01764 beside its square 0.0003111; the sd gives 0.4943 against a band of 5e-05 on 0.494188).
