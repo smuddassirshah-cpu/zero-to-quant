@@ -143,7 +143,7 @@
   const hit = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
   /* Small boxes along a drawn line (pixel points [[x, y]]), as obstacles so labels keep clear of the line */
   const lineBoxes = (pts, every = 10, pad = 3) => { const out = []; let last = null; for (const [x, y] of pts) { if (!Number.isFinite(y)) { last = null; continue; } if (last && Math.hypot(x - last[0], y - last[1]) < every) continue; out.push({ x0: x - pad, x1: x + pad, y0: y - pad, y1: y + pad }); last = [x, y]; } return out; };
-  const placeLabels = (labels, fixed = [], bounds) => {
+  const placeLabels = (labels, fixed = [], bounds, slide = false) => {
     const placed = fixed.slice();
     for (const l of labels) {
       const y0 = l.y; let best = null;
@@ -153,6 +153,16 @@
         const b = boxOf(l);
         if (bounds && (b.y0 < bounds.y0 || b.y1 > bounds.y1)) continue;
         if (!placed.some((q) => hit(b, q))) { best = l.y; break; }
+      }
+      if (best == null && slide) { // gallery fix (plane only): no clear spot above or below, so slide the label along the line (away from the plot edge) before overlapping
+        const x0 = l.x, away = l.anchor === 'start' ? 1 : -1;
+        search: for (const dx of [24, 48, 72, 96, 120]) for (const dy of [0, -16, 16, -32, 32]) {
+          l.x = x0 + away * dx; l.y = y0 + dy;
+          const b = boxOf(l);
+          if (bounds && (b.x0 < bounds.x0 || b.x1 > bounds.x1 || b.y0 < bounds.y0 || b.y1 > bounds.y1)) continue;
+          if (!placed.some((q) => hit(b, q))) { best = l.y; break search; }
+        }
+        if (best == null) l.x = x0;
       }
       l.y = best ?? clamp(y0, bounds ? bounds.y0 + 8 : -Infinity, bounds ? bounds.y1 - 8 : Infinity); placed.push(boxOf(l));
     }
@@ -1382,7 +1392,7 @@
         /* Labels last, placed clear of each other and of the axis labels, inside the plot */
         for (const l of labels) { l.anchor = l.anchor || 'end'; l.y00 = l.y; }
         /* item 448: labels keep clear of the points too (a point's own label sits beside it, outside its box) */
-        K.placeLabels(labels, fixed.concat(params.labelsAvoidPoints === false ? [] : marks.map((b) => ({ x0: b.x0 + 2, x1: b.x1 - 2, y0: b.y0 + 2, y1: b.y1 - 2 }))), { x0: px0, x1: px1, y0: py1, y1: py0 });
+        K.placeLabels(labels, fixed.concat(params.labelsAvoidPoints === false ? [] : marks.map((b) => ({ x0: b.x0 + 2, x1: b.x1 - 2, y0: b.y0 + 2, y1: b.y1 - 2 }))), { x0: px0, x1: px1, y0: py1, y1: py0 }, true);
         const fnIds = new Set(Object.keys(fns));
         for (const l of labels) {
           /* item 388: a curve label pushed well away from its curve gets a thin leader back to it */
