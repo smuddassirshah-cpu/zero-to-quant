@@ -1,0 +1,537 @@
+{
+  "id": "problems-2",
+  "course": "ito",
+  "level": 2,
+  "title": "Problems: Itô calculus",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-cable-inverse",
+      "difficulty": 5,
+      "skills": [
+        "it-calculus",
+        "it-martingale"
+      ],
+      "prose": "The pound costs $X_t$ dollars, and $X$ follows $dX = \\mu X\\,dt + \\sigma X\\,dW$ with $\\mu = 2\\%$ and $\\sigma = 12\\%$. Today $X_0 = 1.25$. A dollar then costs $Y_t = 1/X_t$ pounds, so $Y_0 = 0.8$.",
+      "parts": [
+        {
+          "question": "Itô's lemma gives $dY = Y\\big[(\\ldots)\\,dt - \\sigma\\,dW\\big]$. Enter the bracketed $dt$ coefficient in terms of $\\mu$ and $\\sigma$.",
+          "widget": {
+            "kind": "expression",
+            "answer": "\\sigma^2-\\mu",
+            "accept": [
+              "-\\mu+\\sigma^2"
+            ],
+            "keyboard": "algebra",
+            "wrong": [
+              {
+                "id": "chain-only",
+                "tex": "-\\mu"
+              },
+              {
+                "id": "half",
+                "tex": "\\frac{1}{2}\\sigma^2-\\mu"
+              },
+              {
+                "id": "signs",
+                "tex": "\\mu-\\sigma^2"
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "With $f = 1/x$, $f_x = -1/x^2$ and $f_{xx} = 2/x^3$. The $dt$ term is $\\mu X(-1/X^2) + \\tfrac12\\sigma^2X^2(2/X^3) = (\\sigma^2 - \\mu)Y$.",
+            "generic": "Not quite. Take $f = 1/x$, find $f_x$ and $f_{xx}$, and put them into $af_x + \\tfrac12b^2f_{xx}$.",
+            "byKey": {
+              "chain-only": "That is the chain rule on its own. The second derivative $2/x^3$ adds $\\sigma^2$ to the drift.",
+              "half": "$f_{xx} = 2/x^3$, so its 2 cancels the $\\tfrac12$ and leaves $\\sigma^2$, not $\\tfrac12\\sigma^2$.",
+              "signs": "Both signs are flipped. A rise in the pound lowers $Y$, so $\\mu$ enters with a minus."
+            }
+          },
+          "explain": {
+            "text": "Itô's lemma for $f(X)$ gives the drift $\\mu Xf_x + \\tfrac12\\sigma^2X^2f_{xx}$. For $f = 1/x$ that is $-\\mu/X + \\sigma^2/X$. So $dY = Y[(\\sigma^2 - \\mu)\\,dt - \\sigma\\,dW]$."
+          }
+        },
+        {
+          "question": "Using the drift rate $\\sigma^2 - \\mu$ from part 1, what is $E[Y_3]$, the expected pound cost of a dollar in three years? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.786672,
+            "tol": {
+              "abs": 5e-05
+            },
+            "wrong": [
+              {
+                "id": "inverse-mean",
+                "value": 0.7534,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "median",
+                "value": 0.7699,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The $dW$ term has mean 0, so $E[Y_t]$ grows at $\\sigma^2 - \\mu = -0.0056$ a year: $0.8e^{-0.0168} \\approx 0.7867$.",
+            "generic": "Not quite. Take expectations in $dY$: the mean follows $dm = (\\sigma^2 - \\mu)m\\,dt$.",
+            "byKey": {
+              "inverse-mean": "That is $1/E[X_3]$, which leaves out the $\\sigma^2$ term. The mean of a reciprocal is not the reciprocal of the mean.",
+              "median": "That is the median of $Y_3$, where $\\ln Y$ drifts at $-(\\mu - \\tfrac12\\sigma^2)$. The mean sits above it by $e^{\\sigma^2T/2}$."
+            }
+          },
+          "explain": {
+            "text": "Taking expectations, $m(t) = E[Y_t]$ obeys $dm = (\\sigma^2 - \\mu)m\\,dt$ with $m(0) = 0.8$. So $m(3) = 0.8e^{3(0.0144 - 0.02)}$. That is $0.8e^{-0.0168} \\approx 0.7867$."
+          }
+        },
+        {
+          "question": "Using $E[Y_3] = 0.8e^{-0.0168}$ from part 2 and $E[X_3] = 1.25e^{0.06}$, what is the product $E[X_3]\\,E[Y_3]$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.044147,
+            "tol": {
+              "abs": 5e-05
+            },
+            "wrong": [
+              {
+                "id": "one",
+                "value": 1,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "median-y",
+                "value": 1.0218,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.25 \\times 0.8 = 1$, so the product is $e^{0.06 - 0.0168} = e^{0.0432} \\approx 1.0441$.",
+            "generic": "Not quite. Multiply the two exponentials by adding their exponents, and note $1.25 \\times 0.8 = 1$.",
+            "byKey": {
+              "one": "$X_3Y_3 = 1$ on every path, yet the two means multiply to more. Each mean is lifted by the spread.",
+              "median-y": "That multiplies the mean of $X_3$ by the median of $Y_3$. Use the mean from part 2."
+            }
+          },
+          "explain": {
+            "text": "$E[X_3] = 1.25e^{3\\mu}$ and $E[Y_3] = 0.8e^{3(\\sigma^2 - \\mu)}$. The drifts cancel and leave $e^{3\\sigma^2}$. That is $e^{0.0432} \\approx 1.0441$."
+          }
+        },
+        {
+          "question": "From part 1, $Y$ has zero drift when $\\sigma^2 - \\mu = 0$. Which $\\mu$ makes $Y$ a martingale? Give it as a percentage.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0144,
+            "tol": {
+              "abs": 5e-05
+            },
+            "unit": "%",
+            "accept": "1.44%",
+            "wrong": [
+              {
+                "id": "log-flat",
+                "value": 0.0072,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "zero",
+                "value": 0,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "sigma",
+                "value": 0.12,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$X$ would then drift at $\\mu$ itself, so $X$ and $Y$ cannot both be martingales. The drift of $Y$ vanishes at $\\mu = \\sigma^2 = 0.0144$.",
+            "generic": "Not quite. Set the drift rate from part 1 to zero and solve for $\\mu$.",
+            "byKey": {
+              "log-flat": "$\\mu = \\tfrac12\\sigma^2$ makes $\\ln Y$ driftless, which fixes the median. A martingale needs the drift of $Y$ itself to vanish.",
+              "zero": "With $\\mu = 0$, $X$ is the martingale and $Y$ drifts up at $\\sigma^2$.",
+              "sigma": "You set $\\mu$ to $\\sigma$. The drift term is $\\sigma^2 - \\mu$, so $\\mu$ must equal $\\sigma^2$."
+            }
+          },
+          "explain": {
+            "text": "$Y$ is a martingale when the $dt$ term of $dY$ is zero. From part 1 that needs $\\sigma^2 - \\mu = 0$. So $\\mu = 0.12^2 = 0.0144$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-cube-path",
+      "difficulty": 4,
+      "skills": [
+        "it-calculus"
+      ],
+      "prose": "A coarse Brownian path is read at $t = 0$, $0.25$, $0.5$, $0.75$ and $1$, where it takes the values $0$, $0.3$, $-0.2$, $0.4$ and $0.6$. We build $\\int_0^1 W_t^2\\,dW_t$ from left-point sums on it.",
+      "parts": [
+        {
+          "question": "What is the left-point sum $\\sum_k W_k^2\\,\\Delta W_k$? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.011,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "right-point",
+                "value": 0.175,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "ordinary",
+                "value": 0.072,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "no-square",
+                "value": -0.19,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The moves are $0.3$, $-0.5$, $0.6$ and $0.2$. The sum is $0 + 0.09(-0.5) + 0.04(0.6) + 0.16(0.2) = 0.011$.",
+            "generic": "Not quite. Square the value at the start of each step, and multiply by that step's move.",
+            "byKey": {
+              "right-point": "You squared the value at the end of each step. Itô's sum fixes the value at the start of the step.",
+              "ordinary": "$0.6^3/3 = 0.072$ is the ordinary-calculus answer. The left-point sum on this path is another number.",
+              "no-square": "That is $\\sum W_k\\,\\Delta W_k$. The integrand here is $W^2$."
+            }
+          },
+          "explain": {
+            "text": "The left points are $0$, $0.3$, $-0.2$ and $0.4$, with squares $0$, $0.09$, $0.04$ and $0.16$. Each square multiplies the move that follows: $-0.045 + 0.024 + 0.032$. The sum is $0.011$."
+          }
+        },
+        {
+          "question": "Each step has $(W_k + \\Delta W_k)^3 - W_k^3$ equal to $3W_k^2\\Delta W_k + 3W_k(\\Delta W_k)^2 + (\\Delta W_k)^3$. Summing over the steps gives $W_1^3 = 0.216$ on the left. On this path $\\sum(\\Delta W_k)^3 = 0.126$. Using the left sum 0.011 from part 1, what is $\\sum_k W_k(\\Delta W_k)^2$? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.019,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "no-third",
+                "value": 0.057,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "no-cube",
+                "value": 0.061,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Writing $S$ for the sum, $0.216 = 3(0.011) + 3S + 0.126$, so $3S = 0.057$ and $S = 0.019$.",
+            "generic": "Not quite. Write $0.216$ as the three summed pieces, then solve for the middle one.",
+            "byKey": {
+              "no-third": "$0.057$ is three times the sum. The middle term carries a factor 3, so divide once more.",
+              "no-cube": "You left out $\\sum(\\Delta W_k)^3 = 0.126$. It is the third piece of the expansion."
+            }
+          },
+          "explain": {
+            "text": "The left side telescopes to $W_1^3 - W_0^3 = 0.216$. Taking off $3 \\times 0.011$ and $0.126$ leaves $3\\sum W_k(\\Delta W_k)^2 = 0.057$. So the sum is $0.019$."
+          }
+        },
+        {
+          "question": "Refine the grid so that $\\Delta t \\to 0$. Then $\\sum(\\Delta W_k)^3 \\to 0$. Using the sum $\\sum_k W_k(\\Delta W_k)^2$ from part 2, what does it tend to?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "time-integral",
+                "text": "$\\int_0^1 W_t\\,dt$",
+                "correct": true
+              },
+              {
+                "id": "zero",
+                "text": "0, as every term holds a product of small moves",
+                "why": "You treated $(\\Delta W)^2$ as negligible. It is of size $\\Delta t$, so the terms add up like $W_k\\,\\Delta t$."
+              },
+              {
+                "id": "ito",
+                "text": "$\\int_0^1 W_t\\,dW_t$",
+                "why": "You read the square as a single move. A $dW$ integral needs $\\Delta W$ beside $W_k$, not $(\\Delta W)^2$."
+              },
+              {
+                "id": "qv",
+                "text": "1, the quadratic variation of $W$ on $[0, 1]$",
+                "why": "You dropped the weights $W_k$. Unweighted squares give 1, but here each square is weighted by the path."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each $(\\Delta W_k)^2$ acts like $\\Delta t$, so the sum behaves as $\\sum W_k\\,\\Delta t$, the time integral $\\int_0^1 W_t\\,dt$.",
+            "generic": "Not quite. Replace each $(\\Delta W)^2$ by $\\Delta t$, as the multiplication table of Itô calculus says."
+          },
+          "explain": {
+            "text": "The rule $(dW)^2 = dt$ turns $W_k(\\Delta W_k)^2$ into $W_k\\,\\Delta t$. Summed over the grid, that is a Riemann sum. It tends to $\\int_0^1 W_t\\,dt$."
+          }
+        },
+        {
+          "question": "The limit in part 3 says $W_1^3 = 3\\int_0^1 W^2\\,dW + 3\\int_0^1 W\\,dt$. Check it with Itô's lemma: for $f = x^3$, $a = 0$ and $b = 1$, $d(W_t^3) = 3W_t^2\\,dW_t + (\\ldots)\\,dt$. Writing $w$ for $W_t$, enter the $dt$ coefficient.",
+          "widget": {
+            "kind": "expression",
+            "answer": "3w",
+            "accept": [
+              "3w",
+              "3*w"
+            ],
+            "keyboard": "algebra",
+            "wrong": [
+              {
+                "id": "no-half",
+                "tex": "6w"
+              },
+              {
+                "id": "ordinary",
+                "tex": "0"
+              },
+              {
+                "id": "first",
+                "tex": "3w^2"
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$f_{xx} = 6x$, so $\\tfrac12 f_{xx} = 3w$, the same $3\\int W\\,dt$ as the path gave.",
+            "generic": "Not quite. With no drift and $b = 1$, the $dt$ coefficient is $\\tfrac12 f_{xx}$.",
+            "byKey": {
+              "no-half": "$6w$ is $f_{xx}$ itself. Itô's term takes half of it.",
+              "ordinary": "Ordinary calculus has no $dt$ term here. The squared move $(dW)^2 = dt$ adds one.",
+              "first": "$3w^2$ is $f_x$, which sits in front of $dW$. The $dt$ term comes from $f_{xx}$."
+            }
+          },
+          "explain": {
+            "text": "Taylor to second order gives $d(W^3) = 3W^2\\,dW + \\tfrac12 \\cdot 6W\\,(dW)^2$. With $(dW)^2 = dt$ the second term is $3W\\,dt$. So the coefficient is $3w$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-results-vol",
+      "difficulty": 4,
+      "skills": [
+        "it-calculus"
+      ],
+      "prose": "A share at £72 reports results in three months. Its volatility is 40% a year until then and 15% a year after. Take GBM with that $\\sigma(t)$ and $\\mu = 6\\%$, so $\\ln S_1 = \\ln 72 + \\mu - \\tfrac12\\int_0^1\\sigma(t)^2\\,dt + \\int_0^1\\sigma(t)\\,dW_t$.",
+      "parts": [
+        {
+          "question": "What is the variance of $\\int_0^1 \\sigma(t)\\,dW_t$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.056875,
+            "tol": {
+              "abs": 5e-05
+            },
+            "wrong": [
+              {
+                "id": "average-first",
+                "value": 0.045156,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-weights",
+                "value": 0.1825,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "not-squared",
+                "value": 0.2125,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A fixed integrand gives a normal with variance $\\int_0^1\\sigma(t)^2\\,dt = 0.16(0.25) + 0.0225(0.75) = 0.056875$.",
+            "generic": "Not quite. Square $\\sigma(t)$ on each stretch and weight it by the stretch's length.",
+            "byKey": {
+              "average-first": "You averaged the volatility first and then squared it. Square on each stretch, then average.",
+              "no-weights": "You added the two variance rates without their time weights, 0.25 and 0.75.",
+              "not-squared": "$0.2125$ averages $\\sigma$ itself. The variance of the integral averages $\\sigma^2$."
+            }
+          },
+          "explain": {
+            "text": "For a fixed integrand the integral is normal with variance $\\int_0^1\\sigma(t)^2\\,dt$. That is $0.4^2 \\times 0.25 + 0.15^2 \\times 0.75$. So the variance is $0.056875$."
+          }
+        },
+        {
+          "question": "One constant volatility $\\bar\\sigma$ gives $\\ln S_1$ the same variance. Using the variance 0.056875 from part 1, what is $\\bar\\sigma$? Give it as a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.238485,
+            "tol": {
+              "abs": 5e-05
+            },
+            "unit": "%",
+            "accept": "23.85%",
+            "wrong": [
+              {
+                "id": "time-average",
+                "value": 0.2125,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "plain-average",
+                "value": 0.275,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.056875,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Matching variances, $\\bar\\sigma^2 \\times 1 = 0.056875$, so $\\bar\\sigma = \\sqrt{0.056875} \\approx 0.2385$.",
+            "generic": "Not quite. Match the variances over the year: $\\bar\\sigma^2 \\times 1 = 0.056875$.",
+            "byKey": {
+              "time-average": "21.25% is the time-weighted average of $\\sigma$. Variances, not volatilities, add over time.",
+              "plain-average": "27.5% gives 40% and 15% equal weight. The calm stretch lasts three times as long.",
+              "variance": "That is the variance itself. The volatility is its square root."
+            }
+          },
+          "explain": {
+            "text": "Matching $\\bar\\sigma^2 T$ to the integrated variance with $T = 1$ gives $\\bar\\sigma^2 = 0.056875$. Desks quote its root as the term volatility for the year. It is $\\bar\\sigma \\approx 0.2385$."
+          }
+        },
+        {
+          "question": "Using the variance 0.056875 from part 1, what is the median of $S_1$? Give 2 decimal places, in £.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 74.30874,
+            "tol": {
+              "abs": 0.005
+            },
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "mean",
+                "value": 76.45,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "average-vol",
+                "value": 74.75,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "full-variance",
+                "value": 72.23,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The median sets the noise to 0: $72e^{0.06 - 0.0284375} = 72e^{0.0315625} \\approx 74.31$.",
+            "generic": "Not quite. Put $\\int\\sigma\\,dW = 0$ and keep the $-\\tfrac12\\int\\sigma^2\\,dt$ term.",
+            "byKey": {
+              "mean": "$72e^{0.06}$ is the mean. The median keeps the drag $-\\tfrac12 \\times 0.056875$.",
+              "average-vol": "You used 21.25% as the volatility. The drag needs the integrated variance 0.056875.",
+              "full-variance": "You took off the whole variance. The drag is half of it, $0.0284375$."
+            }
+          },
+          "explain": {
+            "text": "The median of a lognormal is $e$ to the median of its log. Here that log is $\\ln 72 + 0.06 - \\tfrac12(0.056875)$. So the median is $72e^{0.0315625} \\approx 74.31$."
+          }
+        },
+        {
+          "question": "Using the log mean $0.0315625$ from part 3 and $\\bar\\sigma = 0.2385$ from part 2, what is $P(S_1 < 72)$? A normal table or software gives $\\Phi$; answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.447355,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "average-vol",
+                "value": 0.4301,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "no-drag",
+                "value": 0.4007,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "upper",
+                "value": 0.5526,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$z = -0.0315625/0.2385 = -0.1323$, and $\\Phi(-0.1323) \\approx 0.4474$.",
+            "generic": "Not quite. Standardise $\\ln(72/72) = 0$ against the log mean and the term volatility.",
+            "byKey": {
+              "average-vol": "21.25% understates the spread and the drag. With the term volatility 23.85% the score is $z = -0.1323$.",
+              "no-drag": "With 0.06 as the log mean the half-variance drag is missing; part 3 put the log mean at 0.0315625.",
+              "upper": "$1 - 0.4474$ is the chance of a gain. The question asks for a finish under the £72 start."
+            }
+          },
+          "explain": {
+            "text": "$S_1 < 72$ means $\\ln(S_1/72) < 0$. The log has mean 0.0315625 and sd 0.2385, so $z = -0.1323$. The lower tail is $\\Phi(-0.1323) \\approx 0.4474$."
+          }
+        }
+      ]
+    }
+  ]
+}
