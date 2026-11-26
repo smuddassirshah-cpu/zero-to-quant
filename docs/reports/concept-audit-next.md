@@ -10,4 +10,4 @@ Next: those four; then functions L4 and quadratics L4; then the researcher route
 
 ## Verdict
 
-New levels audited this session: 58 (plus problem sets, fluency sets and two delta batches); 60 log rows. Serious findings: 38, `wrong` findings: 65, all fixed except in the four open items. `wrong` findings concentrate in slip lines naming the wrong mistake, hidden tests that pass wrong programs, and quoted figures; no graded key in any closed course is wrong. Engine checks for those classes are owed (notes, session 13).
+New levels audited this session: 58 (plus problem sets, fluency sets and two delta batches); 60 log rows. Serious findings: 38, `wrong` findings: 65, all fixed except in the four open items. `wrong` findings concentrate in slip lines naming the wrong mistake, hidden tests that pass wrong programs, and quoted figures; the few graded keys found wrong (e.g. number-sense l15, contests l2, markets l4 after a fix) were corrected. Engine checks for those classes are owed (notes, session 13).
