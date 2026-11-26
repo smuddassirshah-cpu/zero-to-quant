@@ -1,15 +1,20 @@
-NEXT_PROMPT: after DONE (session AJ or later)
+NEXT_PROMPT: after session AJ (concept audit, session 13)
 
-The build is complete. `DONE` exists; acceptance run 43 at 529f3c3a is green (full suite, full mode). Read CLAUDE.md, then `docs/reports/final-report-ai.md`, KNOWN_ISSUES "session AI close" and DECISIONS "Session AI". Run the census; if it disagrees with the figures below, fix the state files first.
+The build is complete (`DONE`). Read CLAUDE.md, `docs/reports/concept-audit-next.md`, audit notes session 13 and DECISIONS "Session AJ". If the census disagrees with the figures below, fix the state files first.
 
-Nothing below reopens DONE. Every change still passes the SESSION PROTOCOL checks (validator 0 errors, voice scan, number scripts, playthrough `--changed`, a green acceptance run before a push counts as finished). Lesson ids are never renamed. Push to the branch the harness assigns and to `claude/amazing-wright-d4mx7i` (CI), only when no run is in progress there.
+Push to the branch the harness assigns and to `claude/amazing-wright-d4mx7i` (CI), only when no run is in progress there. `claude/fable-audit` is stale and fully merged: do not use it. Lesson ids are never renamed.
 
-Default track, unless the user picks another: the concept audit.
+Default track: the concept audit (PLAN 5b), run from the content session with the rules of `docs/briefs/concept-audit.md` and the procedure of `docs/briefs/fable-audit-session-prompt.md`.
 
-1. Concept audit (PLAN 5b). Brief `docs/briefs/concept-audit.md`, log `docs/reports/concept-audit-log.md`, branch `claude/fable-audit`. One course per Fable auditor, then one fix pass on Sonnet. Merge the audit branch into the CI branch at start and close; run `same-course-reuse.mjs --all` and the number scripts. A course closes under the convergence rule (at most one new `wrong` per three levels).
-2. Post-completion engine work: the last section of `docs/ENGINE-BACKLOG.md` (every [Could], E15 to E19, 34 [Should]); the two bullets in `docs/BACKLOG-INBOX.md`; gated `controlsAfter` buttons not visibly dimmed; item 1036 (documented, not built); `grade-all --code` over all content; the pkg3 duplicate-line test not shown to fail; `read-numbers.py` (stat-learning 4) to compare with Pyodide values, not widened bands.
-3. Small content leftovers: `ensembles/problems-2` `p-ipo-forest` part 1 feeds nothing; the gallery's 27-leaf tree labels at 440 px.
+1. ds L4 round 2 (round 1: 5 `wrong`, all fixed and read).
+2. graphs-dp L4, cpp L4 and L5, markets (check scope rule (a) first).
+3. Problem sets added since close in conditional, ito, limits-thm, markov, measure-prob, numerics, odes, pdes, random-vars: one course per read.
+4. Fluency sets: number-sense L1 to L3, markov fluency-l2.
 
-The pilot (PLAN task 12) is human-owned and never ticked by a session; help prepare its materials only when asked.
+Agent worktrees start on the repository's three-commit initial history: every agent prompt begins with `git checkout -B <own branch> <commit>`. Code courses: sweep every `test-N` line by submission and add `mutants`. Local number scripts need the pinned versions (`.github/actions/zq-setup/requirements.txt`); unpinned scikit-learn 1.9 and pandas 3.1 fail 6 scripts in untouched courses. Local `playthrough --changed` has no green cache here and replays everything: play edited files only.
 
-Expected census: lessons 1,236; levels 283; reviews 283 (items 2,558); exams 29 topic, 4 stage, 16 mock; drills 270; Fluency 100 (families 318); problem sets 167 (items 617); bank 36 files, 400 items; hours 3,695, gap 0; edges 266; validator 0 errors (4,606 warnings); same-course reuse 0 errors, 44 waived; number scripts 436; ENGINE-BACKLOG 0 lines "status: open".
+Other track (user's choice): post-completion engine work, `docs/ENGINE-BACKLOG.md` and `docs/BACKLOG-INBOX.md`.
+
+Acceptance: validator 0 errors; edited files played desktop and mobile; a green `acceptance.yml` run on the pushed HEAD.
+
+Expected census: lessons 1,236; levels 283; reviews 283 (items 2,558); exams 29 topic, 4 stage, 16 mock; drills 270; Fluency 100 (families 318); problem sets 167 (items 617); bank 36 files, 400 items; hours 3,695, gap 0; edges 266; validator 0 errors (4,610 warnings); same-course reuse 0 errors, 44 waived; number scripts 436.
