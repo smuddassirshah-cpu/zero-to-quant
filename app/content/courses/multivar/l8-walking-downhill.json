@@ -1205,7 +1205,29 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 7 hidden tests on three different functions, including 0 steps and a step that is too big. Each coordinate is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`."
+        "how": "Check runs 7 hidden tests on three different functions, including 0 steps and a step that is too big. Each coordinate is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`.",
+        "mutants": [
+          {
+            "source": "def descend(grad, x0, y0, step, n):\n    x, y = x0, y0\n    for _ in range(n):\n        gx, gy = grad(x, y)\n        x, y = x + step * gx, y + step * gy\n    return x, y\n",
+            "test": 1,
+            "symptom": "adds `step * gx` and `step * gy`: walks uphill"
+          },
+          {
+            "source": "def descend(grad, x0, y0, step, n):\n    x, y = x0, y0\n    for _ in range(n):\n        g = grad(x, y)\n        x, y = x - step * g, y - step * g\n    return x, y\n",
+            "test": 1,
+            "symptom": "`g = grad(x, y)` not unpacked: `step * g` raises a TypeError in test 1"
+          },
+          {
+            "source": "def descend(grad, x0, y0, step, n):\n    x, y = x0, y0\n    for _ in range(n):\n        gx = grad(x, y)\n        x, y = x - step * gx, y - step * gx\n    return x, y\n",
+            "test": 1,
+            "symptom": "`gx = grad(x, y)` keeps the pair: `step * gx` raises a TypeError in test 1"
+          },
+          {
+            "source": "def descend(grad, x0, y0, step, n):\n    x, y = x0, y0\n    for _ in range(n):\n        x, y = (x, y) - step * grad(x, y)\n    return x, y\n",
+            "test": 1,
+            "symptom": "`(x, y) - step * grad(x, y)` on tuples raises a TypeError in test 1"
+          }
+        ]
       },
       "hints": [
         {
@@ -1228,10 +1250,10 @@
         "correct": "Ten steps of 0.1 take you to about (0.43, 0.018).",
         "generic": "Not quite right. Read the first failing test.",
         "byKey": {
-          "test-1": "Test 1 expects (3.2, 1.8) after one step. Check that you subtract `step * gx`, not add it.",
+          "test-1": "Test 1 expects (3.2, 1.8) after one step. Unpack with `gx, gy = grad(x, y)`, then subtract `step * gx`, not add it.",
           "test-2": "Test 2 needs the gradient recomputed at the new point on every pass of the loop.",
           "test-4": "Test 4 takes 0 steps: the start point should come back unchanged.",
-          "error": "Your code stopped with an error. `grad(x, y)` returns two numbers: unpack them with `gx, gy = grad(x, y)`."
+          "error": "Your code did not run. Check the colon after `for` and the indentation of the loop body."
         }
       },
       "explain": {
@@ -1712,7 +1734,7 @@
           {
             "id": "best",
             "text": "Only $s = \\tfrac16$",
-            "why": "At $\\tfrac16$ the $x$ factor is 0, a perfect $x$ step. Other steps settle too, just more slowly."
+            "why": "At $\\tfrac16$ the $x$ factor is 0, but the $y$ factor is $\\tfrac23$. Every $s$ below $\\tfrac13$ settles, and $s = \\tfrac14$ is faster: both factors have size $\\tfrac12$."
           },
           {
             "id": "any",
@@ -1820,7 +1842,64 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 6 hidden tests. Three check 0, 1 and 3 steps exactly. Three run 3,000 steps and compare with the exact least-squares line, which the descent reaches by then. Each number is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`."
+        "how": "Check runs 6 hidden tests. Three check 0, 1 and 3 steps exactly. Three run 3,000 steps and compare with the exact least-squares line, which the descent reaches by then. Each number is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`.",
+        "mutants": [
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    for _ in range(n):\n        a -= step * 2 / m * sum(a + b * x - y for x, y in zip(xs, ys))\n        b -= step * 2 / m * sum((a + b * x - y) * x for x, y in zip(xs, ys))\n    return a, b\n",
+            "test": 1,
+            "symptom": "$a$ updated first, so $b$ sees new residuals"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    for _ in range(n):\n        b -= step * 2 / m * sum((a + b * x - y) * x for x, y in zip(xs, ys))\n        a -= step * 2 / m * sum(a + b * x - y for x, y in zip(xs, ys))\n    return a, b\n",
+            "test": 1,
+            "symptom": "$b$ updated first, so $a$ sees new residuals"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    for _ in range(n):\n        r = [a + b * x - y for x, y in zip(xs, ys)]\n        a = a - step * 2 / m * sum(r)\n        r = [a + b * x - y for x, y in zip(xs, ys)]\n        b = b - step * 2 / m * sum(ri * x for ri, x in zip(r, xs))\n    return a, b\n",
+            "test": 1,
+            "symptom": "residuals rebuilt between the $a$ and $b$ updates"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    for _ in range(n):\n        r = [a + b * x - y for x, y in zip(xs, ys)]\n        ga = 1 / m * sum(r)\n        gb = 1 / m * sum(ri * x for ri, x in zip(r, xs))\n        a, b = a - step * ga, b - step * gb\n    return a, b\n",
+            "test": 1,
+            "symptom": "factor $1/m$ in place of $2/m$"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    for _ in range(n):\n        r = [a + b * x - y for x, y in zip(xs, ys)]\n        ga = 2 / m * sum(r)\n        gb = 2 / m * sum(ri * x for ri, x in zip(r, xs))\n        a, b = a + step * ga, b + step * gb\n    return a, b\n",
+            "test": 1,
+            "symptom": "steps with the gradient, uphill"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    r = [a + b * x - y for x, y in zip(xs, ys)]\n    for _ in range(n):\n        ga = 2 / m * sum(r)\n        gb = 2 / m * sum(ri * x for ri, x in zip(r, xs))\n        a, b = a - step * ga, b - step * gb\n    return a, b\n",
+            "test": 2,
+            "symptom": "residuals built once, before the loop"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    r = [a + b * x - y for x, y in zip(xs, ys)]\n    ga = 2 / m * sum(r)\n    gb = 2 / m * sum(ri * x for ri, x in zip(r, xs))\n    for _ in range(n):\n        a, b = a - step * ga, b - step * gb\n    return a, b\n",
+            "test": 2,
+            "symptom": "gradient computed once, before the loop"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    r = [a + b * x - y for x, y in zip(xs, ys)]\n    ga = 2 / m * sum(r)\n    gb = 2 / m * sum(ri * x for ri, x in zip(r, xs))\n    return a - n * step * ga, b - n * step * gb\n",
+            "test": 2,
+            "symptom": "one jump of `n * step` along the starting gradient"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    for _ in range(n):\n        r = [a + b * x - y for x, y in zip(xs, ys)]\n        ga = 2 / m * sum(r)\n        gb = 2 / m * sum(ri * x for ri, x in zip(r, xs))\n        if abs(ga) < 1e-6 and abs(gb) < 1e-6:\n            break\n        a, b = a - step * ga, b - step * gb\n    return a, b\n",
+            "test": 4,
+            "symptom": "stops when both partials are below 1e-6"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    for _ in range(n):\n        r = [a + b * x - y for x, y in zip(xs, ys)]\n        ga = 2 / m * sum(r)\n        gb = 2 / m * sum(ri * x for ri, x in zip(r, xs))\n        if (ga ** 2 + gb ** 2) ** 0.5 < 1e-8:\n            break\n        a, b = a - step * ga, b - step * gb\n    return a, b\n",
+            "test": 4,
+            "symptom": "stops when the gradient length is below 1e-8"
+          },
+          {
+            "source": "def fit_line(xs, ys, step, n):\n    a, b = 0.0, 0.0\n    m = len(xs)\n    for _ in range(n):\n        r = [a + b * x - y for x, y in zip(xs, ys)]\n        ga = 2 / m * sum(r)\n        gb = 2 / m * sum(ri * x for ri, x in zip(r, xs))\n        na, nb = a - step * ga, b - step * gb\n        if abs(na - a) + abs(nb - b) < 1e-7:\n            return na, nb\n        a, b = na, nb\n    return a, b\n",
+            "test": 4,
+            "symptom": "stops when a step moves $a$ and $b$ by under 1e-7"
+          }
+        ]
       },
       "hints": [
         {
@@ -1843,9 +1922,9 @@
         "correct": "Beta about 1.20, alpha about 0.047% a day.",
         "generic": "Not quite right. Read the first failing test.",
         "byKey": {
-          "test-1": "Test 1 is one step from (0, 0), expecting (0.0733, 0.252). Check the factor $2/m$ and that you step against the gradient.",
-          "test-2": "Test 2 is three steps. Update $a$ and $b$ together: if $a$ changes first, $b$ sees new residuals.",
-          "test-4": "Test 4 runs 3,000 steps and expects the least-squares line. If the numbers blow up, check the sign of each step.",
+          "test-1": "Test 1 is one step from (0, 0), expecting (0.0733, 0.252). Check the factor $2/m$, the sign, and that $b$ uses the same residuals as $a$.",
+          "test-2": "Test 2 is three steps. Rebuild the residuals inside the loop, from the current $a$ and $b$, on every pass.",
+          "test-4": "Test 4 runs 3,000 steps and expects the least-squares line. Take all `n` steps: do not stop early when the gradient gets small.",
           "error": "Your code stopped with an error. Replace `pass` with the update, and keep the loop body indented."
         }
       },
@@ -1981,7 +2060,7 @@
           {
             "id": "start",
             "text": "The start (4, 3) is too far from the bottom",
-            "why": "The start does not matter: a factor of size above 1 grows from anywhere."
+            "why": "The start hardly matters: a factor of size above 1 grows from any start with $y \\neq 0$."
           }
         ]
       },
