@@ -241,3 +241,51 @@ Accept forms: the table's big-O normaliser (`js/engine/widgets/table.js`, `bigO`
 Gates on the two edited files: validator 0 errors, no warning on an edited field; voice scan 35: 0 and 0; `contests-L1-3-concepts-r3.py --cxx` exit 0, 485 checks; `contests-L1-3-fixread-r3.py` exit 0; neither script encodes the changed text, so no check was re-pointed; `run-number-scripts --only contests` 5 of 5 pass; `grade-all --code --file` 0 failures on each; playthrough of l2 and l12, desktop and `--mobile`: all passed (4 runs).
 
 Not applied, out of scope as the reader noted: homework-3 test-7 third sentence ($n^2/2$ reads; two reads per comparison gives about $n^2$).
+
+## Fix-pass read 2
+
+Fresh reader, blind to this file until the rows below were written. Diff read: `git show fecf64c1 -- app/content/courses` (contests `l2-limits-to-complexity.json` screens[2]; `l12-difference-arrays.json` screens[4] `test-7`). Stated budget, from l2 screens[0] to [2]: about $10^8$ simple steps for a 1 s limit in C++.
+
+Arithmetic used: $2^{20} = 1{,}048{,}576$; $20 \cdot 2^{20} = 2.1 \cdot 10^7$; $20^2 \cdot 2^{20} = 4.2 \cdot 10^8$; $3^{20} = 3.5 \cdot 10^9$; $500^3 = 1.25 \cdot 10^8$; $500^3 \log_2 500 = 1.1 \cdot 10^9$; $5{,}000^2 = 2.5 \cdot 10^7$; $5{,}000^2 \log_2 5{,}000 = 3.1 \cdot 10^8$; $5{,}000^3 = 1.25 \cdot 10^{11}$; $\log_2 10^{18} = 59.8$; $\sqrt{10^{18}} = 10^9$. Convention source for "usual growth": Laaksonen, *Competitive Programmer's Handbook*, ch. 2 "Estimating efficiency" ($n \le 20$: $2^n$; $n \le 500$: $n^3$; $n \le 5{,}000$: $n^2$; large $n$: $\log n$ or $O(1)$).
+
+Accept forms were run through the widget's own `bigO` normaliser (copied from `app/js/engine/widgets/table.js` line 53) in node.
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | l2 | screens[2].question | "Fill in the growth each limit usually calls for." | correct | No longer claims a unique "slowest that fits"; matches the Laaksonen table convention. Each editable cell has a `byKey` line, so a fitting but unusual entry never gets the "compare with $10^8$" generic line. |
+| 2 | l2 | screens[2].widget.columns[1] | "Usual growth" | correct | Same convention as row 1; the fixed row $2 \cdot 10^5 \to n \log n$ agrees ($3.5 \cdot 10^6$ steps). |
+| 3 | l2 | screens[2].widget.rows[0][1].answer (key, unchanged) | $n \le 20$: $2^n$ | correct | $2^{20} \approx 10^6$ fits; subsets or bitmask is the usual intent at 20. |
+| 4 | l2 | rows[0][1].accept[2] | `O(n*2^n)` accepted | correct | $20 \cdot 2^{20} = 2.1 \cdot 10^7 \le 10^8$, and $n \cdot 2^n$ bitmask DP is as usual as $2^n$ here. Normalises to `n2^n`; `O(n 2^n)`, `n·2^n`, `O(n × 2**n)`, `O(N * 2^N)`, `O(n2^n)` all accepted. |
+| 5 | l2 | rows[0][1].accept[3] | `O(2^n*n)` accepted | correct | Same growth. Normalises to `2^nn`; `2^n n`, `O(2^n · n)`, `2^{n} n` accepted. Note: the normaliser drops braces, so `2^{n*n}`, `2^{nn}` and bare `2^nn` also match this form (not `2^(n*n)`). No learner is likely to type these; engine quirk, no content fix. |
+| 6 | l2 | rows[0][1] forms that must stay wrong | `n^2*2^n`, `O(n^2 2^n)`, `n²·2^n`, `O(2^n*n^2)`, `O(n*n*2^n)`, `3^n`, `O(3^n)`, `4^n`, `2^2n`, `n!`, `2^n*2^n`, `O(2^n log n)` rejected | correct | All rejected in node. $n^2 2^n = 4.2 \cdot 10^8$ and $3^{20} = 3.5 \cdot 10^9$ are over the stated budget, so `r0c1` ("not the growth meant here", unchanged) is true of them. Polynomial entries fit but are not the usual growth; the line does not say they fail. |
+| 7 | l2 | rows[1][1].answer (key, unchanged) | $n \le 500$: $n^3$ | correct | $1.25 \cdot 10^8$, at the "about $10^8$" budget; standard cubic limit. $n^3 \log n = 1.1 \cdot 10^9$ is out. |
+| 8 | l2 | rows[2][1].answer (key, unchanged) | $n \le 5{,}000$: $n^2$ | correct | $2.5 \cdot 10^7$ fits; $n^2 \log n = 3.1 \cdot 10^8$ and $n^3$ do not. |
+| 9 | l2 | rows[4][1].answer (key, unchanged) | $10^{18}$, a value: $\log n$ | correct | $\log_2 10^{18} \approx 60$; $\sqrt n = 10^9$ and $n$ do not fit. |
+| 10 | l2 | screens[2].hints[2].text | "A value of $10^{18}$ usually calls for $\log n$." | correct | "Usually" covers the $O(1)$ formula case; "allows only" was false for $O(1)$. |
+| 11 | l2 | screens[2].feedback.correct | "Each row is the growth a setter usually intends at that limit." | correct | Rows 3, 7, 8, 9 and the fixed row, against Laaksonen ch. 2. |
+| 12 | l2 | feedback.byKey.r1c1 | "not the growth meant here. $500^3 = 1.25 \cdot 10^8$ fits, just." | correct | Arithmetic right. True for every rejected entry: slower-growing ones ($n^2$, $n^2 \log n = 2.2 \cdot 10^6$) fit but are not the usual intent, and the line no longer says they fail. "Fits, just" leans on "about $10^8$": 25% over the round figure, so not a strict fit. |
+| 13 | l2 | feedback.byKey.r2c1 | "not the growth meant here. $5{,}000^2 = 2.5 \cdot 10^7$ fits." | correct | Arithmetic right; true for `n log n` (fits, not meant) and for `n^2 log n`, `n^3` (do not fit). `O(n*n)` is rejected and would get this line; rare, optional accept below. |
+| 14 | l2 | feedback.byKey.r4c1 | "Your entry for $10^{18}$ is not the growth meant here. ... halving fits: enter $\log n$." | imprecise (minor) | The sentence is true for a different growth, but the cell rejects `log(n)`, `O(log(n))` and `O(log2(n))` (normalise to `log(n)`, key is `logn`). A learner who types the meant growth with function brackets is told it is not the growth meant, then told to enter $\log n$. `O(log_2 n)`, `lg n`, `ln n`, `log2 n` are accepted; `O(1)`, `sqrt(n)`, `O(n)`, `O(log^2 n)` are rejected, and the line is true of those. The accept gap is older than this commit; the new wording makes the line false for it. |
+| 15 | l2 | screens[2].explain.text | "Small limits allow brute force; large ones usually call for $n \log n$ or better." | correct | $2 \cdot 10^5 \to n \log n$; "usually" covers $n \sqrt n$ limits. "Demand" was too strong. |
+| 16 | l12 | screens[4].feedback.byKey.test-7 | "Test 7 counted no reads of the updates list, or more than 2,500." | correct | The test is `0 < update_reads(1000, ups) <= 2500`. Run in Python against the prelude: solution 500 reads (pass), indexing 2,000 (pass), `reversed()` 0 and `.copy()` 0 (fail), seven passes 3,500 (fail), per-day scan 500,000 $= n \cdot q$ (fail). "Far more" was false for 3,500; the new wording covers both failure sides exactly. |
+
+Counts: 16 rows. correct 15, imprecise 1 (minor), wrong 0, misleading 0, unverified 0. No new `wrong` for the convergence rule.
+
+### Findings
+
+1. `app/content/courses/contests/l2-limits-to-complexity.json` | screens[2].widget.rows[4][1].accept (with feedback.byKey.r4c1) | imprecise, minor | `O(log(n))` and `log(n)` are the keyed growth but are graded wrong, and `r4c1` then says the entry "is not the growth meant here". | Node run of the `bigO` normaliser: `O(log(n))` and `O(log2(n))` give `log(n)`; the key and its accept form give `logn`. | Replace the accept list with:
+
+```json
+"accept": [
+  "log n",
+  "O(log(n))"
+]
+```
+
+   One added form is enough: `log(n)`, `O(log(n))`, `O(log2(n))`, `O(log_2(n))`, `lg(n)` and `ln(n)` all normalise to `log(n)`. Checked that it adds no false accept: `O(1)`, `sqrt(n)`, `O(n)`, `O(log^2 n)` still differ.
+
+Optional, same class, not a finding: add `"O(n*n)"` to rows[2][1].accept (normalises to `nn`; currently rejected with `r2c1`).
+
+Engine note for the inbox, not raised here because this pass commits one file: the `bigO` normaliser strips `{}` after removing `*`, so `2^{n*n}` equals `2^n*n`. Bracket-aware stripping would close it.
+
+Not run: validator, number scripts and playthrough (read-only pass, no content changed).
