@@ -90,3 +90,35 @@ Opus fixer, from commit `8d0dd3dc`. Each basis below was derived afresh, not cop
 4. Fixed (auditor's text). Basis: $(1+a)(1+b) - 1 = a + b + ab$; the sum understates only when $ab > 0$. Lesson 8's +20%, −10%, +5% gives $1.2 \times 0.9 \times 1.05 - 1 = 13.4\%$ against a 15% sum. Sentence now reads "Adding up monthly gains understates compounded growth."
 
 Runs: validator 0 errors; voice scan 35 on the four files 0 and 0 (0 explanations over three sentences); `markets-L1-3-concepts-r3.py` 665 checks, 0 failed, exit 0 (no re-pointing needed: the finding 1 check looks for the old text, the finding 2 check recomputes the slip); r2, r1 and fixread scripts exit 0; `run-number-scripts --only markets` 1 passed; `grade-all --file` on the four files 0 failures; playthrough of l1, l3, l6 and review-2, desktop and `--mobile`, all passed. No key, slip band, hidden test or solution changed beyond the slip value in finding 2.
+
+## Fix-pass read
+
+Fresh reader, blind to the audit above until these rows were written. Read `git show f65c09a4 -- app/content/courses` (five changed strings or values in four files). Figures recomputed in the reader's scratch script (cash-flow sum and annuity formula, plus `decimal` for the rounded quotients); no committed script was opened.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | l1-interest-on-interest.json | screens[8].explain.text | "Adding up monthly gains understates compounded growth." | imprecise (minor) | True if "gains" means the 1% monthly returns: $12 \times 1\% = 12\% < 1.01^{12} - 1 = 12.68\%$, and for any non-negative returns $\prod(1 + g_i) - 1 \ge \sum g_i$. But the screen's prose uses "gains" for the reinvested pound amounts ("with gains reinvested"), and its table shows the balances. Those monthly gains, £100.00, £101.00, £102.01, ..., sum to £1,268.25, which is the compounded growth exactly, not less. The sentence is true under one reading and false under the screen's own use of the word. Rest of the string unchanged and correct: $1.01^{12} - 1 = 0.126825$, £11,268.25. |
+| 2 | l3-comparing-rates.json | screens[6].explain.text | "Dividing by 12 works only for a nominal rate credited monthly, not for an effective rate." | correct | Hull, *Options, Futures and Other Derivatives* §4.2 (Measuring interest rates): a rate $R$ a year compounded $m$ times a year grows a sum by $(1 + R/m)^{mn}$, so $R/12$ is the per-month rate exactly when $R$ is quoted with monthly compounding. From an effective annual 12% the monthly rate is $1.12^{1/12} - 1 = 0.0094888$; $0.12/12 = 0.01$ compounds to 12.68%. "Only" is read within the lesson's nominal and effective rates; the lesson has no simple-interest case. The keyed 0.949% stays the one true answer, and slips 1% and 12% lie outside its band. |
+| 3 | l3-comparing-rates.json | summary.trap, sentence 1 | "Dividing by 12 gives the monthly rate only for a nominal rate credited monthly." | correct | Same source and derivation as row 2. Agrees with the summary formula with $m = 12$: the rate per period is $r/m$. |
+| 4 | l3-comparing-rates.json | summary.trap, sentence 2 | From an effective annual rate, the monthly rate is $(1 + r_{\text{eff}})^{1/12} - 1$. | correct | Solve $(1 + x)^{12} = 1 + r_{\text{eff}}$; Hull §4.2 equivalent-rate conversion. Check: $1.12^{1/12} - 1 = 0.0094888$ and $1.0094888^{12} - 1 = 0.1200001$. |
+| 5 | l6-yield.json | screens[5].hints[2].text | 10-year: $-7.00/92.28 = -7.59\%$ | correct | $85.28 - 92.28 = -7.00$; $-7.00/92.28 = -7.5856\%$ (float and `decimal`), which rounds to $-7.59\%$. Displayed prices recomputed two ways: 92.2783 and 85.2798. |
+| 6 | l6-yield.json | screens[5].hints[2].text | "or $-7.58\%$ from the unrounded prices" | correct | $85.279826/92.278265 - 1 = -7.5841\%$, cash-flow sum and annuity formula agree. Matches the key $-7.58$, the feedback and the explain. |
+| 7 | l6-yield.json | screens[5].hints[2].text | "Both are accepted." | correct | Key $-7.58$ with `tol.abs` 0.02 accepts $-7.60$ to $-7.56$, so $-7.59$ and $-7.58$ both pass. The 2-year line is unchanged: $-1.81/98.14 = -1.8443\%$ rounded, $-1.8416\%$ unrounded, both $-1.84\%$. |
+| 8 | review-2.json | items[0].widget.wrong[1] (`full-coupon`) value | 110.83 | correct | The mistake its feedback names, "You paid £5 every six months": £5 coupons, 3% a period, 6 periods. Cash-flow sum 110.83438; annuity form $5 \times \tfrac{1 - 1.03^{-6}}{0.03} + \tfrac{100}{1.03^6} = 27.0860 + 83.7484 = 110.8344$. Rounds to 110.83, not 110.84. |
+| 9 | review-2.json | items[0].widget.wrong[1] band | 110.78 to 110.88 does not meet the key or the other slips | correct | Key 97.29 ± 0.01 (exact 97.2914, two ways); `annual` 97.33 ± 0.005 (exact 97.3270); `full-rate` 82.79 ± 0.05 (exact 82.7894). All bands are disjoint. Other natural slips fall in none of them wrongly: £5 at 6% for 6 periods 95.08; £2.50 at 3% for 3 periods 98.59. |
+
+Counts: 9 rows. correct 8, imprecise 1 (minor), wrong 0, misleading 0, unverified 0.
+
+### Fix for row 1
+
+`l1-interest-on-interest.json` `screens[8].explain.text`, second sentence. Replace
+
+`Adding up monthly gains understates compounded growth.`
+
+with
+
+`Adding the twelve 1% returns gives 12%, which understates the compounded growth.`
+
+Basis: $12 \times 0.01 = 0.12 < 1.01^{12} - 1 = 0.126825$. It names the percentages being added, so it cannot be read as the pound gains (which sum to the true £1,268.25), and it makes no claim about returns of mixed sign, where a sum of simple returns can overstate (+10% then −10% sums to 0 but compounds to −1%). Twelve words, no new number beyond those already on the screen.
+
+After reading the audit: row 1 is the wording finding 4 asked for ("gains" to exclude losing months). The reader agrees with that aim; the fix above keeps it and removes the pound-gains reading.
