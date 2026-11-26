@@ -129,3 +129,24 @@ Two bullets under "Raised later (audit integrals):" in `docs/BACKLOG-INBOX.md`: 
 | `docs/reports/integrals-L1-3-test-line-sweep-r3.mjs <pkgs>` | exit 0 |
 
 The venv has newer NumPy, SciPy and SymPy than CI's pins. No figure depends on the version. No playthrough was run, as the common rules say.
+
+## Fix pass
+
+Opus fixer, on `claude/sleepy-heisenberg-bhwkqw` at `0ea4d7b4`. No key, tolerance, slip value or hidden test changed.
+
+1. **Fixed.** l4 `screens[7].explain` now ends "the same squeeze as in lesson 2." Basis: `course.json` level 1 order is l1, l2, l3, l4; l2 `screens[7]` line d5 is the squeeze $L_n \le A \le R_n$; l3 has no squeeze, sandwich or bound between sums (searched).
+2. **Fixed.** l7 `screens[8].prose` now reads "In lesson 5, for a continuous $f$, ...". Basis: level 2 order is l5, l6, l7; l5 `screens[6]` proves and `screens[7]` states $\frac{d}{dx}\int_a^x f = f$ for continuous $f$; l6 has no $A(x)$ (searched).
+3. **Fixed.** l10 `quiz[3]` `byKey.no-integral` now reads "You evaluated $x\ln x$ alone. The antiderivative is $x\ln x - x$, so take off $\big[x\big]_1^e = e - 1$ as well." Basis: $\big[x\ln x\big]_1^e = e$ (the slip 2.7183), and $e - (e - 1) = 1$, the key; subtracting "the $-x$ part" literally gives $2e - 1 \approx 4.437$.
+4. **Fixed differently.** The eleven lines now state the grader's own band: "a decimal within $t$ of" the exact value (written as the fraction, $2\ln 4$, $\sqrt{99}$, $4(1 - e^{-2})$, $1 - e^{-2}$), plus the rounded figure as an example. Two differ from the paste: problems-3 `items[2].parts[1]` names the exact value $(1.5\ln 1.5 - 1.5) - (0.5\ln 0.5 - 0.5)$, and `parts[2]` names $0.0267 / 16 = 0.00166875$, because the pasted centres $-0.045229$ and $0.001669$ are rounded, so their far band edges ($-0.045279$, $0.001719$) are refused. Basis: `grade.js` `within` accepts $|v - \text{answer}| \le t + 10^{-9}$, and every key equals its named exact value to $10^{-12}$. Probe through the real `numGrade` (`scratchpad/fix-int13r3/probe.mjs`): for all eleven, the example figure and exact $\pm 0.999999t$ are accepted and exact $\pm 1.02t$ refused. This reopens the "no edit" ruling of `review-delta-problems-1.3-ab.md` finding 1 for these lines, as the orchestrator asked; the `docs/AUTHORING.md` example is engine-side and left to the inbox bullet.
+
+Script: `docs/reports/integrals-L1-3-concepts-r3.py` exits 0 without `--allow-known` (6419 checks; the eleven band checks no longer match, and section B gains a check that each "within $t$ of" line states the widget's own `tol.abs`). No check re-pointed.
+
+| gate | result |
+|---|---|
+| `node tools/validate.mjs` | 0 errors |
+| `voice-scan.py 35` on the six edited files | 0 and 0 |
+| concepts scripts r1, r2, r3 | exit 0 each (r3 without `--allow-known`) |
+| test-line sweeps r1, 2, r2, r3 | exit 0 each |
+| `run-number-scripts.mjs --only integrals` | 5 of 5 passed |
+| `grade-all.mjs --code --file` (six files) | 90 widgets, 0 failures |
+| playthrough l4, l7, l10, problems-1 to -3, desktop and `--mobile` | all passed |

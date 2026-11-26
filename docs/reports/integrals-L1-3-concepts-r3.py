@@ -16,6 +16,8 @@ Exit 0 when every check passes. A check that fails because the content is wrong 
 Checks tagged KNOWN are the findings of this audit (docs/reviews/audit-integrals-1-3-r3.md, findings 1 to 4). They fail the run
 (exit 1) until the content is fixed. Pass --allow-known to count them apart and exit 0 when nothing else fails, which makes the
 script a regression guard for everything else.
+Fix pass: findings 1 to 4 are fixed in the content, so the KNOWN checks pass without --allow-known. No check was re-pointed;
+section B gains one check that a "within t of" accept line states the widget's own absolute tolerance.
 
 Python: NumPy, SciPy and SymPy (venv versions newer than CI's pins; no figure here depends on the version).
 """
@@ -376,6 +378,10 @@ for key, w in numeric_widgets():
         check(close(x, w['answer'], t), f'B {key}: the centre {x} of the printed band is refused')
         ends_ok = close(x - band * 0.98, w['answer'], t) and close(x + band * 0.98, w['answer'], t)
         check(ends_ok, f'B {key}: accept line says "{m.group(0)}" but the accepted set is {w["answer"]:.6f} +- {t:g}; part of the printed band is refused', known=True)
+    # "within t of ..." (the fix-pass wording of finding 4): t must be the widget's own absolute tolerance
+    for mw in re.finditer(r'within ([\d.]+) of', acc):
+        check(isinstance(w.get('tol'), dict) and 'abs' in w['tol'] and close(float(mw.group(1)), w['tol']['abs'], 1e-12),
+              f'B {key}: accept line says "within {mw.group(1)}" but the widget tol is {w.get("tol")}')
 check(accept_hits > 100, f'B only {accept_hits} accept figures were read')
 
 # ---------- C. other printed figures ----------
