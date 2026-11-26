@@ -67,3 +67,42 @@ Plain words. New terms (domain, range, gradient, intercept, parabola, asymptote,
 - `node tools/grade-all.mjs --file <each of the 23 files> --local-cdn <pkgs>`: 0 failures on every file.
 - `docs/reports/functions-L1-3-concepts.py`: 687 checks, 686 pass, exit 1. The one failing check is FINDING 1 and stays failing until the `why` is corrected.
 - No playthrough, as the common rules set.
+
+## Overlap with the earlier reads
+
+Read after the blind-stage commit: `docs/reviews/review-functions-1-2.md` (27 findings on L1 and L2, with its fix pass), `docs/reviews/review-functions-3-4.md` (its L3 findings 3 to 8, 10, 13, 16 to 18, 20 to 25, 27, 31, with its fix pass), `docs/reviews/review-problems-0.2-a.md` (functions findings 8 to 20) and `docs/reviews/review-delta-problems-aa-2.md` (functions findings 3 and 4). There is no earlier concept audit of this course and no row for it in `docs/reports/concept-audit-log.md`. Every earlier finding had been applied before this audit, so the text audited is the post-fix course and "both" can only count defects that survived a fix pass.
+
+| Conceptual findings | Count | Items |
+|---|---:|---|
+| Audit only | 11 | 1 to 11 above |
+| Earlier reads only | 13 | listed below; all fixed before this audit, and each fixed string has a `correct` ledger row |
+| Both | 0 | |
+
+New `wrong` that no earlier read found: 1 (finding 1, minor).
+
+Earlier conceptual findings, each checked against the audited text:
+
+- review-functions-1-2, 1: l2 s[6], three rows did not fix $f(4)$. Fixed with a fourth row; the ledger row notes the key now rests on the pattern the hint names.
+- review-functions-1-2, 4: l3 s[4], a `reversed` region held the target of `hi`. Removed. Same class as finding 4 here, on a different screen and region (s[2] `ends`), so not counted as "both".
+- review-functions-1-2, 6: homework-2 item 6, parallel needs $a_1 \ne a_2$. Fixed; verified.
+- review-functions-1-2, 8: l9 s[5], "the one perpendicular pair". Fixed to "one kind of"; verified.
+- review-functions-1-2, 11: l8 quiz[2], `why` did not explain the slip. Fixed; verified ($8x + 1$).
+- review-functions-3-4, 3: homework-3 model (d), shown arithmetic. Fixed; 1.2522 and 79.86 recomputed.
+- review-functions-3-4, 4: l12 s[9] `max-min` diagnosis. Fixed; $420 - 90 = 330$ verified.
+- review-functions-3-4, 5: l10 summary and s[6], shape claims need a positive leading term. Fixed; verified.
+- review-functions-3-4, 6: l11 s[6] option b `why`. Fixed; $h = (x + 1)(x - 2)^2$ verified.
+- review-functions-3-4, 7: l11 quiz[1], key was also a root. Fixed to $x^2 - 6x + 8$; verified.
+- review-problems-0.2-a, 8: problems-3 track cubic, "a cubic with positive $x^3$ rises, turns down, turns up". Fixed with "and two turning points"; verified.
+- review-problems-0.2-a, 19: problems-3 sledge `lost-t` band. Fixed to 0.05; no overlap with the key or part 2's answer.
+- review-delta-problems-aa-2, 3: problems-3 track `count` line left over from the old cubic. Fixed; verified.
+
+The earlier reads' other items (undefined option terms, GCSE wording, the left-hand-side typing note, freshness repeats, chains between parts, length giveaways, sentence counts, one label) are not conceptual and are outside this audit.
+
+Two notes on how the misses arose.
+
+- Finding 3's sentence ("A table whose climb changes has no rule of the form $mx + c$") was written by the earlier fix pass, as the paste-ready text of review-functions-1-2 finding 13 (a voice fix). It is fix-pass text that no reader had checked as a claim.
+- Finding 1 is the class "a `why` names a slip that does not produce the option". The earlier reads caught three of that class in these levels (l8 quiz[2], l12 s[9], l11 s[6]) and this audit one more. With finding 4 the class "a region line that is false for one of two points" has now been seen twice in this course. Both are raised in `docs/BACKLOG-INBOX.md`.
+
+## Inbox
+
+Two bullets under "Raised later (audit functions):" in `docs/BACKLOG-INBOX.md`: point-scoped `drag-point` regions (finding 4), and coincident draggable points in a `derive` equality test (finding 5).
