@@ -48,3 +48,12 @@ Opened only after the ledger and the findings above were written: `docs/reviews/
 New `wrong` from this audit: 0.
 
 All seven earlier-only findings were fixed or made moot by re-authoring before this read, so they were not present to find; the ledger rows for the fixed text (2.2057 and 2.2056, "risk-neutral chance", "a prediction from the two coarser runs", the 0.4665 band) are `correct`. On finding 1: the earlier fix passes reworded the prose and parts 3 and 4 to "the model", which makes each sentence true, and `homework-1` `h-derive-lazy-walk` states the gap ($c^2\Delta t\,t$ below $2Dt$). What is left is that this item gives $D = 1.25$ for a walk whose own coefficient is 1.2 and never says so. Blind, I tagged that serious; given the deliberate wording and the homework, the residual is minor, and the one-sentence fix above closes it. `p-grid-budget` has been re-authored again since `review-delta-ag-pdes` (its keys are now 22.29, 557.28, 247.68 and 5.0625), so its twelve part rows here are a first concept read of that text: all correct.
+
+## Fix pass
+
+Opus fixer, from ba3359b4. Both findings re-derived before editing; no key, slip or test changed.
+
+1. Fixed (`p-drift-walk` prose and part 3 explain, the auditor's sentences). Basis: a step is $+0.05$ with chance 0.6 and $-0.05$ with chance 0.4, so its mean is 0.01 and its variance $0.0025 - 0.0001 = 0.0024$. That is $2.4$ a unit of time ($D_{\text{walk}} = 1.2$, not 1.25). Exact Bin(320, 0.6) at $t = 0.32$: variance 0.7680, $P(\text{below } 2) = 0.0774$; a normal with variance 0.768 gives 0.0855; the model gives 0.0899. So "a little lower" holds both ways. Keys stay the model's, as worded.
+2. Fixed (`p-tick-spread` prose now names $u_t = Du_{xx}$). Basis: the course defines $D$ as the coefficient in $u_t = Du_{xx}$ (lesson 2 summary, $D = \Delta x^2/(2\Delta t)$, variance $2Dt$), which gives 0.8. In the diffusion-process convention $u_t = \tfrac12\sigma^2u_{xx}$ the name "diffusion coefficient" usually goes to $\sigma^2 = \Delta x^2/\Delta t = 1.6$ (the `no-half` slip), so naming the equation removes the ambiguity. Its feedback text stays right under the stated form.
+
+Gates: validator 0 errors; voice scan 35 on problems-1 0 and 0; `pdes-problems-concepts.py` 369 checks, exit 0 (no check encodes the edited text); number scripts `--only pdes` 4 of 4; `grade-all.mjs --file problems-1.json` 17 widgets, 0 failures; playthrough `--problems pdes/problems-1` green desktop and `--mobile`.
