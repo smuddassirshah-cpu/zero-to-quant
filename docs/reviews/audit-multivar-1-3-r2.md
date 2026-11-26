@@ -137,3 +137,7 @@ and quiz[1] `prose`:
 > "Take an $f$ with continuous second partials that bends in the step's direction. Its tangent plane's error is 0.04 at a step of 0.2 from the point."
 
 Basis: Apostol 9.10 Theorem 9.4; the ratio of errors tends to 4 exactly when $\mathbf u H \mathbf u^t \neq 0$.
+
+## Fix-pass follow-up (orchestrator)
+
+- l7 quiz[1] prose and option `eighth` why: the reader's text applied (the error is quadratic where the surface bends in the step's direction; f = 5x^3 shows a cubic error at a point with zero second derivative). No key changed. Gates: validator 0 errors, voice scan 0, both concepts scripts 0, grade-all 0 failures, playthrough desktop and mobile green.
