@@ -612,7 +612,7 @@
         }
       },
       "explain": {
-        "text": "With half-yearly coupons we use £2, 2.5% and 10 periods. The coupons are worth £17.50 and the face £78.12, so £95.62. It is a little below £95.67 because 2.5% a half compounds to 5.06% a year.",
+        "text": "With half-yearly coupons we use £2, 2.5% and 10 periods. The coupons are worth £17.50 and the face £78.12, so £95.62. It sits a little further below par than £95.67: half-yearly, it works like an annual bond paying £4.05 at a 5.06% yield, so the coupon falls a little further short.",
         "canvas": {
           "highlight": [
             "h10"
@@ -1140,7 +1140,69 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 8 hidden tests. Each answer is accepted when it is within a relative error of 1e-9 of the exact price."
+        "how": "Check runs 8 hidden tests. Each answer is accepted when it is within a relative error of 1e-9 of the exact price.",
+        "mutants": [
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + coupon) ** t\n    price += face / (1 + coupon) ** years\n    return price\n",
+            "test": 1,
+            "symptom": "coupons and face discounted at the coupon rate"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + coupon) ** t\n    price += face / (1 + yld) ** years\n    return price\n",
+            "test": 1,
+            "symptom": "coupons discounted at the coupon rate"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + yld) ** t\n    price += face / (1 + coupon) ** years\n    return price\n",
+            "test": 1,
+            "symptom": "face discounted at the coupon rate"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + yld) ** t\n    price += face\n    return price\n",
+            "test": 1,
+            "symptom": "face not discounted"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + yld) ** t\n    price += face / (1 + yld)\n    return price\n",
+            "test": 1,
+            "symptom": "face discounted one year only"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + yld)\n    price += face / (1 + yld) ** years\n    return price\n",
+            "test": 1,
+            "symptom": "every coupon discounted one year only"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / 1.05 ** t\n    price += face / 1.05 ** years\n    return price\n",
+            "test": 2,
+            "symptom": "the example yield 1.05 written in both lines"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + 0.05) ** t\n    price += face / (1 + yld) ** years\n    return price\n",
+            "test": 2,
+            "symptom": "coupons discounted at a fixed 5%"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + yld) ** t\n    price += face / 1.05 ** years\n    return price\n",
+            "test": 2,
+            "symptom": "face discounted at a fixed 5%"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + yld) ** t\n    price += face / (1 + yld) ** 5\n    return price\n",
+            "test": 3,
+            "symptom": "face discounted over a fixed 5 years"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, 6):\n        price += face * coupon / (1 + yld) ** t\n    price += face / (1 + yld) ** 5\n    return price\n",
+            "test": 3,
+            "symptom": "loop and face both fixed at 5 years"
+          },
+          {
+            "source": "def bond_price(face, coupon, years, yld):\n    price = 0.0\n    for t in range(1, years + 1):\n        price += face * coupon / (1 + yld) ** t\n    price += face * (1 + yld) ** -5\n    return price\n",
+            "test": 3,
+            "symptom": "face discounted over a fixed 5 years, negative power"
+          }
+        ]
       },
       "hints": [
         {
@@ -1161,8 +1223,9 @@
         "generic": "Some tests failed. Discount every coupon at the yield, then add the discounted face value.",
         "byKey": {
           "error": "Your code stopped with an error. Check that both `...` are replaced.",
-          "test-2": "A bond whose yield equals its coupon should price at par. Check you discount at `yld`, not `coupon`.",
-          "test-3": "A zero coupon bond should give $100/1.05^{10}$. Check the face value is discounted over `years`."
+          "test-1": "The 5-year 4% bond at a 5% yield should give 95.67. Discount every coupon and the face at `yld`: each coupon over its own year, the face over `years`.",
+          "test-2": "A bond whose yield equals its coupon should price at par, 100. Check that both lines discount at `yld`, not at the fixed 5% of the example.",
+          "test-3": "A 10-year zero-coupon bond at 5% should give $100/1.05^{10} = 61.39$. Check that the face is discounted over `years`, not over the fixed 5 years of the example."
         }
       },
       "explain": {
