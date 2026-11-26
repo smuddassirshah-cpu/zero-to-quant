@@ -146,3 +146,7 @@ Points asked:
 - Canvas caption: matches the table shown (rows 13 and 14).
 
 Fix for rows 1 and 3 (optional, minor): in homework-4 items[4] and l17 screens[7], write each value call as `round(0.0 + stop_value(...), 6)` and `round(0.0 + dice_value(...), 6)` in place of `round(float(...), 6)`. Basis, run in `mine2.mjs`: with these calls the model and the `Fraction` solutions still pass every test, the starter still fails test 1, and a `str` return fails test 1 with `TypeError`. Expected values, `how` lines and the `6.0` symptom stay as they are. Leaving `float()` is defensible: a text return of the right number is the only thing it lets through.
+
+## Fix-pass follow-up (orchestrator)
+
+- l17 screens[7] and homework-4 items[4] value calls: `round(float(f(...)), 6)` became `round(0.0 + f(...), 6)`, the reader's form. A `Fraction` still passes (0.0 + Fraction is a float); a value returned as text raises `TypeError` again, as before the round 2 fix. Gates: validator 0 errors, grade-all --code 0 failures (all mutants), r1 and r2 concepts and fixread 0, playthrough desktop and mobile green on both files.
