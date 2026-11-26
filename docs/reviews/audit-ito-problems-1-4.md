@@ -57,3 +57,13 @@ Finding 1 here is not counted as "both", but the first read saw the same fact: i
 Convergence: 0 new `wrong` over four problem sets, so these files are within the rule.
 
 Engine: no engine limit met; nothing added to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Opus fixer, content commit 1fade7ab. No key, slip, test or method changed.
+
+1. Fixed (`p-maker-tally` part 3 question). Basis: a walk of 625 moves of ±40 has quadratic variation 625 × 1600 = 1,000,000 on every path, and $X_t = 350t + \sigma W_t$ has quadratic variation $\sigma^2 t$ because the drift has finite variation (Shreve II Thm 3.4.3). The variance is $625(1600 - 0.56^2) = 999{,}804$, a gap of 0.0196%. Week sd: 2,236.07 against 2,235.85, both within the key's 0.5. The question now says the model matches quadratic variation, and gives the variance with the 0.02% gap.
+2. Fixed (`p-bridge-closes` part 4 question). Basis: the feedback discounts by $e^{-0.045 \times 4/252} = 0.999286$, giving £3.6042; a $4/365$ clock gives £3.6050. Both sit inside the key's 0.01, so only the convention needed stating. The question now says "over $4/252$ of a year, the simulation's clock".
+3. Fixed (`p-results-vol` part 1 feedback.correct and explain.text). Basis: Shreve II Thm 4.4.9 needs a nonrandom integrand for the normal law with variance $\int \sigma(t)^2\,dt$; lesson 5 says "deterministic". The integrand here steps from 0.40 to 0.15, so "fixed" read as constant. Both sentences now say "deterministic"; $0.16(0.25) + 0.0225(0.75) = 0.056875$ is unchanged.
+
+Gates: validator 0 errors; voice scan 35 on the three files 0 and 0; `ito-problems-concepts.py` 386 checks, exit 0 (no check encodes the old text, so nothing re-pointed); `run-number-scripts --only ito` 9 of 9 passed; `grade-all --file` 12, 12 and 12 widgets, 0 failures; playthrough `--problems ito/problems-1`, `-2`, `-3` desktop and `--mobile`, all passed. problems-4 untouched.
