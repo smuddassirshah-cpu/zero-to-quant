@@ -7,6 +7,11 @@ fluency families over their whole range (sympy), and the empirical claims
 (Kelly growth, minimum variance, Jensen) by simulation. Exits 0 when the
 content agrees; a check that fails because the content is wrong stays failing.
 
+Fix pass (Opus fixer): the three finding checks are conditional on the old
+text and now pass because the text changed; the block "Fix pass checks" at
+the end adds positive checks of the new figures (findings 1 to 3 and 8).
+No existing check was re-pointed.
+
 Run from the repository root:  python docs/reports/limits-L4-5-concepts-r2.py
 """
 import itertools
@@ -641,6 +646,27 @@ for fam in FL["families"]:
             ok(env["ans"] not in act and len(set(act)) == len(act), tag + ": key and active slips distinct")
     counts[fam["id"]] = n_ok
     ok(n_ok >= 20, f"fluency {fam['id']}: only {n_ok} variants")
+
+# ---------------------------------------------------------------- Fix pass checks
+l17 = L["l17-somewhere-in-between"]
+s2 = screen(l17, 2)
+snap = [pt for pt in s2["canvas"]["state"]["points"] if pt["id"] == "P"][0]["snapX"]
+tg = s2["widget"]["points"][0]
+acc = [round(k*snap, 2) for k in range(0, int(2/snap) + 1) if abs(k*snap - tg["target"]["x"]) <= tg["tol"] + 1e-9]
+ok(acc == [1.1, 1.15, 1.2], "fix l17 s2: accepted snapped x %s" % acc)
+lab = {xx: f"{3*xx*xx - 3:.2f}" for xx in acc}
+ok("0.97" in s2["hints"][1]["text"] and lab[1.15] == "0.97", "fix l17 s2: hint quotes the label at 1.15 (%s)" % lab)
+ok(min(abs(3*xx*xx - 4) for xx in acc) == abs(3*1.15**2 - 4), "fix l17 s2: 1.15 gives the label closest to 1")
+Gk = lambda fr: 0.6*math.log(1 + fr) + 0.4*math.log(1 - fr)
+l14 = L["l14-best-value"]
+ok("$-0.085$" in screen(l14, 9)["feedback"]["byKey"]["p"] and f"{Gk(0.6):.3f}" == "-0.085", "fix l14 s9: G(0.6)")
+dom = screen(l14, 9)["canvas"]["params"]["functions"][0]["domain"]
+ok("Drag P to 0.5" in screen(l14, 9)["feedback"]["byKey"]["p"] and dom[1] == 0.5 and Gk(0.5) < 0, "fix l14 s9: P reaches 0.5, G < 0 there")
+pp, bb = sp.symbols("p b", positive=True)
+ff = sp.symbols("f")
+Gp0 = sp.diff(pp*sp.log(1 + bb*ff) + (1 - pp)*sp.log(1 - ff), ff).subs(ff, 0)
+ok(sp.simplify(Gp0 - bb*(pp - (1 - pp)/bb)) == 0 and "stake nothing" in l14["summary"]["formula"]["note"], "fix l14 Kelly note: G'(0) = b f*, so f* <= 0 means G falls from 0")
+ok("whole fraction upside down" in H5["h-risk"]["feedback"]["byKey"]["flipped"], "fix h5 risk: slip names the whole-fraction inversion")
 
 print("fluency variants:", counts)
 print(f"{N[0]} checks, {len(FAILS)} failed")
