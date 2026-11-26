@@ -124,3 +124,37 @@ Opus fixer, 26 Nov 2026, on `f69104f4`. Each basis below is my own derivation or
 11. Fixed. Basis: the l13 straddle is lowest at a corner (one-sided gradients −1, +1) and $x^2$ on $[-2, 3]$ is highest at $x = 3$ with gradient 6. summary.ideas[2] now restricts the rule to a smooth bend and names corners and ends. The same defect sat in summary.trap ("A graph at its highest is not still rising": false at an end maximum), so that string was reworded to "the top of a smooth bend" too.
 
 Gates: validator 0 errors; voice scan 35 on the nine edited files 0 and 0; `functions-L1-3-concepts.py` 687 checks, exit 0; number scripts `--only functions` 6 of 6; `grade-all.mjs --file` 0 failures on all nine; playthrough desktop and `--mobile` green on the eight lessons and `--set functions/homework-3`.
+
+## Fix-pass read
+
+Fresh reader, blind to the audit above and to the course's reports and scripts until these rows were written. Scope: content strings changed by `d89b2898` in `app/content/courses/functions/`. Scratch work: a node replay of the l8 `derive` rules (the engine's `deriveExpr` guard and `evalOne` from `app/js/engine/canvas/_base.js`) over every snapped A, B pair on the plane (13 × 9 × 13 × 9 = 13,689 pairs), and a Python recompute of the bond prices.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | homework-3 | items[7].model (b) | The curve bends upwards, so it is convex | correct | $P = 100(1+r)^{-5}$, $P'' = 3000(1+r)^{-7} > 0$; convex iff second derivative non-negative (Boyd and Vandenberghe, *Convex Optimization*, 3.1.4) |
+| 2 | homework-3 | items[7].model (b) | Because it is falling, the bend shows as flattening as the yield grows | correct | $P' < 0$ and increasing, so $\lvert P' \rvert$ shrinks; same for $1/x$ on $x > 0$ |
+| 3 | homework-3 | items[7].model (c) | Falls £9.43 then £7.46, so the gradient is rising (getting less negative) | correct | Rounded table prices 100.00, 90.57, 82.19, 74.73 give 9.43 and 7.46; chord gradients −4.715 and −3.73 per point; recomputed in Python and by hand |
+| 4 | homework-3 | items[7].model (c) | A rising gradient is what convex means; on a falling curve that shows as flattening | correct | For a differentiable function, convex iff the gradient is non-decreasing (Boyd and Vandenberghe 3.1.3; Rockafellar, *Convex Analysis*, Thm 24.1) |
+| 5 | homework-3 | items[7].rubric[1].text | Decreasing and convex (bending upwards, so flattening as it falls), never reaching 0 | correct | Rows 1, 2; $P > 0$ for every $r > -1$ |
+| 6 | l10 | screens[4].explain.text | A line that a curve gets closer and closer to like this is an asymptote | correct | Standard school definition; "like this" ties it to the unbounded approach just described. No longer says "never reaches", which is right since a curve may cross an asymptote (Stewart, *Calculus*, 2.2 and 2.6) |
+| 7 | l10 | screens[9].question | The marked prices fall by £14.47 from 2% to 4% | correct | Marked 82.03 − 67.56 = 14.47. Unrounded prices 82.0348 and 67.5564 fall 14.4784, which rounds to 14.48, so "marked prices" is the qualifier that makes 14.47 true. Key 55.84 − 46.32 = 9.52 (unrounded 9.5201) unchanged; slip `same` = 14.47 is not the answer |
+| 8 | l11 | screens[5].question | At which points does the graph of $g$ meet the x-axis | correct | $g(x) = 4x - x^2 = x(4 - x)$; zeros 0 and 4. Keys $(0,0)$, $(4,0)$ true; $(2,4)$ is on the graph, not the axis; $(2,0)$ is not on the graph ($g(2) = 4$) |
+| 9 | l11 | screens[5].widget.options[t].why | A point on the x-axis has height 0 | correct | Definition of the x-axis, $y = 0$ |
+| 10 | l11 | screens[5].hints[0].text | Look for the points where the height is 0 | correct | Nudge only; names no answer |
+| 11 | l11 | screens[5].feedback.correct | so the roots are 0 and 4 | correct | Roots are $x$-values; $g(0) = g(4) = 0$ |
+| 12 | l11 | screens[5].explain.text | 0 is a root, and the y-intercept is 0 as well | correct | $g(0) = 0$ is both the solution $x = 0$ of $g(x) = 0$ and the height $g(0)$ |
+| 13 | l11 | screens[8].prose | Roots are the $x$-values where the curve meets the x-axis | correct | "Meets" covers a touching (repeated) root, which "crosses" did not, for example $(x-1)^2$ |
+| 14 | l11 | summary.ideas[0] | Same sentence | correct | As row 13 |
+| 15 | l12 | summary.ideas[2] | At the top or bottom of a smooth bend the gradient is 0; a corner, or the end of a graph, can be highest or lowest without that | correct | Fermat's theorem on interior extrema of a differentiable function (Stewart 4.1; Rudin, *Principles*, Thm 5.8). Counterexamples the sentence names: $\lvert x \rvert$ at 0; $y = x$ on $[0, 1]$ at its ends |
+| 16 | l12 | summary.trap | At the top of a smooth bend the gradient there is 0 | correct | As row 15 |
+| 17 | l13 | screens[7].widget.options[b].why | You changed the sign of the $x$ but not of the 2 | correct | From $x^2 - x - 2 = 0$ the true line is $y = x + 2$. Option b, $y = x - 2$, has $-x \to +x$ (changed) and $-2 \to -2$ (unchanged). Check: $x^2 = x - 2$ has discriminant −7, so it is not equivalent; $x^2 = x + 2$ gives −1 and 2. Exactly one option true: c gives $x^2 = 2$, d gives $x^2 = 0$ |
+| 18 | l2 | screens[4].explain.text | When the inputs go up in equal steps and the climb still changes, no rule of the form $mx + c$ fits | correct | $f(x + h) - f(x) = mh$ is constant for equal steps $h$; contrapositive. The equal-steps condition is needed and now stated |
+| 19 | l3 | screens[2].feedback.byKey.ends | You marked 4, the output at the left end, $x = -2$. The lowest output is 0, at $x = 0$, and the highest is $f(3) = 9$ | correct | Slip region 3.7 to 4.3 on the number line; $f(-2) = 4$, $f(0) = 0$, $f(3) = 9$ on $-2 \le x \le 3$. True whichever of the two points is dropped at 4 |
+| 20 | l8 | screens[1].canvas.derive vert.from, vert.to | Vertical segment drawn only when A and B share $x$ and differ in $y$ | correct | Node replay: for all 13,572 pairs with A ≠ B and for the 117 with A = B the segment is at $x = A.x$ spanning beyond the plane exactly when the line is vertical, and parked off-plane otherwise; `f` is hidden whenever B.x = A.x |
+| 21 | l8 | screens[1].canvas.derive.caption | Same point: "many lines pass through it"; same $x$: "the line is vertical"; else "Rise … over run …" | correct | Node replay, 0 failures over 13,689 pairs: the caption matches the case, the derived $m$, $c$ pass through both points, and rise and run equal B − A (for example A (2, 1), B (−2, −1) gives "Rise −2 over run −4"). With A = B the non-finite $m$ and $c$ are skipped by the engine and no line is drawn. Infinitely many lines through one point is Euclid's first postulate read in reverse; it agrees with option `many`'s why |
+| 22 | l9 | screens[8].feedback.correct | A quarter turn of a sloping line always gives a product of −1 | correct | Direction $(a, b)$ turns to $(b, -a)$; $\tfrac{b}{a} \cdot \tfrac{-a}{b} = -1$ when $a, b \ne 0$. "Sloping" excludes the horizontal and vertical cases |
+| 23 | l9 | screens[8].explain.text | Product is always −1, whatever $a$ and $b$ are, as long as neither is 0 | correct | As row 22; with $a = 0$ or $b = 0$ one gradient is undefined |
+
+Counts: 23 rows; correct 23, wrong 0, imprecise 0, misleading 0, unverified 0. No fixes needed.
+
+Choice items changed: l13 screens[7] (one true option, a), l11 screens[5] (multi; the two keyed options true, the other two false). No keys, slips, tests or mutant groups changed, so there was nothing to submit to the grader.
