@@ -49,3 +49,28 @@ Notes that are not findings:
 - Number scripts: `node tools/run-number-scripts.mjs --only number-sense` with the venv Python first on PATH: 7 of 436 scripts, 7 passed, 0 new failures, exit 0.
 - Concepts script: `docs/reports/number-sense-L4-concepts.py`, exit 0, 0 failures, 3 INFO lines (findings 4, 5 and 6).
 - No playthrough, as instructed. No content, engine or state file was edited.
+
+## Overlap table
+
+Earlier reads of level 4, opened only after the WIP commit `9abdae76`: `docs/reviews/review-number-sense-4.md` (lessons, review, homework; 20 findings, all fixed), `docs/reviews/review-holes-0.1-0.2.md` (problems-4 and the five fluency sets; findings 6 to 10, 15, 20, 21) and `docs/reviews/review-delta-holes.md` (problems-4; findings 1, 7, 8). Conceptual findings are those about meaning or grading: a false statement, a slip whose feedback names another mistake, a key or tolerance that marks a taught method wrong, a true line used as a distractor, a rule without its condition. Freshness, coverage, untaught-term, unit-parsing and layout findings are not counted.
+
+| Conceptual findings | Count | Which |
+|---|---|---|
+| This audit only | 8 | findings 1 to 8 above |
+| Earlier reviews only | 15 | `review-number-sense-4` 1, 2, 3, 4, 5, 7, 8, 9, 11, 19, 20; `review-holes-0.1-0.2` 15, 21; `review-delta-holes` 1, 7 |
+| Both | 0 | |
+
+All 15 earlier findings were fixed before this read, so none could be found again. Each fixed line was read here and carries a `correct` row in the ledger: for example `l18` `screens[7]` `two-r`, `l19` `quiz[3]` `first-last` = 40, the `after` rules of `l16` `screens[9]`, the false distractor of `homework-4` `h-euclid`, the widened π tolerances. The earlier fix passes introduced no `wrong`.
+
+What the earlier reads missed, by class:
+
+- Finding 1 is the class of earlier findings 4 and 5 (a valid answer marked wrong), on an item neither read flagged.
+- Finding 5's sentence was written by the first review's fix (its finding 10 proposed the exact text), so one of the eight is fix-pass text.
+- Findings 6 and 7 are generated-family slip lines that are right for most draws and off for a sub-range (one direction; square numbers). The holes read sampled 20 draws a family and judged values, not each line against each sub-range.
+- Findings 2, 3, 4 and 8 are author sentences that number checks cannot see.
+
+Single-read miss rate on this level: the earlier reads found 15 conceptual faults and left 8 (0 `wrong`, 1 `serious`).
+
+## Inbox
+
+Two bullets added to `docs/BACKLOG-INBOX.md` under "Raised later (audit number-sense):". One asks for a validator warning on a non-keyed `choice` option whose `why` concedes it is true (finding 1). The other is a second vote for the π tolerance probe already requested.
