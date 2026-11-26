@@ -5,6 +5,10 @@ Run from anywhere:  python docs/reports/estimation-L1-3-concepts.py
 Exits 0 when every CHECK holds. A CHECK that fails because the content is false as stated stays
 failing (it is a finding in docs/reviews/audit-estimation-1-3.md). NOTE lines carry the evidence for
 `imprecise` and `misleading` findings and never fail the script.
+Fix pass (Opus): the two checks that failed on findings 1 and 2 encoded the old text and are re-pointed. The homework-3
+`h-bootstrap-code` test-4 checks now read the test call from the file (targets, tolerance, B) and evaluate it on fresh runs,
+on four seed-1 codings and on the 5% cut, 1% cut and min/max programs; the l12 trap check reads the new trap. One check is
+added for the fluency-l10 range (finding 4). Every other check is unchanged.
 NumPy/SciPy only; seeds fixed. Replication counts are chosen so the Monte Carlo standard error is at
 most a fifth of the gap between the claim and its negation.
 """
@@ -197,6 +201,11 @@ for n in (16, 25, 64):
     tz = xs.mean(axis=1) / (xs.std(axis=1, ddof=1) / math.sqrt(n))
     note('fluency-l10 half-width-from-s keys z with s at n = %d' % n, 'normal data: 1.645 / 1.96 / 2.576 cover %.3f / %.3f / %.3f (t values %.3f / %.3f / %.3f)' % ((np.abs(tz) <= 1.645).mean(), (np.abs(tz) <= 1.96).mean(), (np.abs(tz) <= 2.576).mean(), stats.t.ppf(0.95, n - 1), stats.t.ppf(0.975, n - 1), stats.t.ppf(0.995, n - 1)))
 check('fluency-l10: z with s at n = 16 does not give the stated level (93.1% and 97.9% for "95%" and "99%")', close(2 * stats.t.cdf(1.96, 15) - 1, 0.931, 1e-3) and close(2 * stats.t.cdf(2.576, 15) - 1, 0.979, 1e-3))
+# Fix pass: the family's n now runs from 64 (was 16), read from the file; at every n the z multiplier is within 3.2% of the t one
+fl10 = [f_ for f_ in load('fluency-l10-catching-the-truth')['families'] if f_['id'] == 'half-width-from-s'][0]
+ns_ = [p_[0] for p_ in fl10['vars']['nr']['pick']]
+gap_ = max(stats.t.ppf(0.5 + lv_ / 200, n_ - 1) / z_ - 1 for n_ in ns_ for lv_, z_ in ((90, 1.645), (95, 1.96), (99, 2.576)))
+check('fluency-l10 half-width-from-s: every n is at least 64 with a whole root, and the t multiplier is within 3.2%% of z (largest gap %.4f)' % gap_, min(ns_) >= 64 and all(r_ * r_ == n_ for n_, r_ in fl10['vars']['nr']['pick']) and gap_ < 0.032, ns_)
 check('l10 S9 / S10 / quiz: 0.08 +/- 0.149; vol half-width 0.988 (no-two 1.397); hit rate 0.5012; 99% upper 0.2488', close(1.96 * 1.2 / math.sqrt(250), 0.149, 5e-4) and close(1.96 * 16 / math.sqrt(1008), 0.988, 5e-4) and close(1.96 * 16 / math.sqrt(504), 1.397, 5e-4) and close(0.55 - 1.96 * math.sqrt(0.2475 / 400), 0.5012, 5e-5) and close(0.12 + 2.576 * 0.05, 0.2488, 1e-9))
 # S6 option "95% of future 100-day means will lie in this interval" is false: average capture is about 83%
 c0 = 0.1 * rng.standard_normal(1000000); c1 = 0.1 * rng.standard_normal(1000000)
@@ -289,12 +298,24 @@ def np_sharpe(mat):
     return mat.mean(axis=1) / mat.std(axis=1, ddof=1) * math.sqrt(252)
 bigs = np.concatenate([np_sharpe(dn[rng.integers(0, 250, (20000, 250))]) for _ in range(10)])
 slo, shi = np.quantile(bigs, [0.025, 0.975])
-runs = np.array([np.quantile(np_sharpe(dn[rng.integers(0, 250, (1000, 250))]), [0.025, 0.975]) for _ in range(600)])
-pass3 = ((np.abs(runs[:, 0] + 1.10) < 0.15) & (np.abs(runs[:, 1] - 2.90) < 0.15)).mean()
-alt3 = {d: (lambda c: abs(c[0] + 1.10) < 0.15 and abs(c[1] - 2.90) < 0.15)(bootstrap_ci(daily, 1000, 1, d, sharpe)) for d in ('choice', 'randrange', 'randint')}
-note('hw3 h-bootstrap-code test 4 (Sharpe ends within 0.15 of -1.10 and 2.90, B = 1000)', 'long-run ends %.3f and %.3f; one run of B = 1000 has end sd %.3f and %.3f; share of fresh correct runs that pass %.3f; fixed-seed alternatives %s' % (slo, shi, runs[:, 0].std(), runs[:, 1].std(), pass3, alt3))
-check('hw3 h-bootstrap-code test 4 accepts other correct ways of drawing (random.choice, randrange, randint at seed 1)', all(alt3.values()), alt3)
-check('hw3 h-bootstrap-code "within 0.1 to 0.15 of their long-run ends": a correct program with its own draws passes test 4 at least 95% of the time', pass3 >= 0.95, round(float(pass3), 3))
+# Fix pass: test 4 now reads "within 0.25 of -0.98 and 3.00 at B = 2000" (was within 0.15 of the seed-1 values -1.10 and 2.90 at
+# B = 1000). The checks below read the test call from the file and evaluate it, so they follow the content.
+t4 = hb['widget']['tests'][3]['call']
+t4_test = eval(t4.split(')(bootstrap_ci(')[0] + ')', {'abs': abs})
+t4_B = int(t4.split('bootstrap_ci(daily, sharpe, ')[1].split(',')[0])
+check('hw3 h-bootstrap-code test 4 targets the long-run ends (within 0.03 of the 2.5% and 97.5% points of the bootstrap law)', close(slo, -0.98, 0.03) and close(shi, 3.00, 0.03) and '+ 0.98)' in t4 and '- 3.00)' in t4, (round(slo, 3), round(shi, 3), t4))
+runs = np.array([np.quantile(np_sharpe(dn[rng.integers(0, 250, (t4_B, 250))]), [0.025, 0.975]) for _ in range(600)])
+cut5 = np.array([np.quantile(np_sharpe(dn[rng.integers(0, 250, (t4_B, 250))]), [0.05, 0.95]) for _ in range(300)])
+pass3 = np.mean([t4_test(r) for r in runs]); pass5 = np.mean([t4_test(r) for r in cut5])
+alt3 = {d: t4_test(bootstrap_ci(daily, t4_B, 1, d, sharpe)) for d in ('choices', 'choice', 'randrange', 'randint')}
+def cut_ci(frac, lohi=False):
+    random.seed(1); v = sorted(sharpe(random.choices(daily, k=250)) for _ in range(t4_B)); k_ = int(frac * t4_B)
+    return (v[0], v[-1]) if lohi else (v[k_], v[t4_B - 1 - k_])
+note('hw3 h-bootstrap-code test 4 (B = %d)' % t4_B, 'long-run ends %.3f and %.3f; one run has end sd %.3f and %.3f; fresh correct runs pass %.4f; fresh 5%%-cut runs pass %.4f; seed-1 codings %s' % (slo, shi, runs[:, 0].std(), runs[:, 1].std(), pass3, pass5, alt3))
+check('hw3 h-bootstrap-code test 4 accepts other correct ways of drawing (random.choices, choice, randrange, randint at seed 1)', all(alt3.values()), alt3)
+check('hw3 h-bootstrap-code: a correct program with its own draws passes test 4 at least 99% of the time', pass3 >= 0.99, round(float(pass3), 4))
+check('hw3 h-bootstrap-code test 4 refuses the 5% cut, the 1% cut and min/max at seed 1, and fresh 5%-cut runs pass at most 2% of the time', not t4_test(cut_ci(0.05)) and not t4_test(cut_ci(0.01)) and not t4_test(cut_ci(0, True)) and pass5 <= 0.02, round(float(pass5), 4))
+check('hw3 h-bootstrap-code how and explain say the ends depend on the seed', 'depend on the seed' in hb['widget']['how'] and 'another seed moves each end' in hb['explain']['text'])
 
 # ---------------------------------------------------------------- L12: beta posteriors
 q = lambda a_, b_: tuple(round(v, 3) for v in stats.beta.ppf([0.025, 0.975], a_, b_))
@@ -303,7 +324,9 @@ check('l12 S1: 6 heads in 6 gives 0.8; 70 in 100 gives 0.692; Beta(2,2) density 
 # conjugate update by simulation: p ~ Beta(2,2), 10 flips, condition on 7 heads
 pp = rng.beta(2, 2, 3000000); kk = rng.binomial(10, pp); sel = pp[kk == 7]
 check('l12 S2/S3: simulated posterior after 7 heads in 10 from Beta(2,2) has mean 9/14 and the Beta(9,5) quantiles', close(sel.mean(), 9 / 14, 0.002) and close(np.quantile(sel, 0.025), 0.386, 0.004) and close(np.quantile(sel, 0.975), 0.861, 0.004), (round(sel.mean(), 4), len(sel)))
-check('l12 summary trap "a dogmatic prior such as Beta(100,100) ignores the data": the posterior mean does not move', close(160 / 300, 0.5, 1e-9), 'posterior mean 160/300 = %.3f, moved from 0.5; S6 feedback itself says the data do move the analyst' % (160 / 300))
+# Fix pass: the trap said Beta(100, 100) "ignores the data"; it now says the prior "outweighs 100 flips but does not ignore them".
+trap12 = load('l12-updating-a-belief')['summary']['trap']
+check('l12 summary trap: Beta(100, 100) after 60 heads in 100 moves (0.5 to 0.533) but stays nearer the prior mean than the MLE 0.6 (data weight 1/3)', 'ignores the data' not in trap12 and 'outweighs 100 flips' in trap12 and 160 / 300 > 0.5 and abs(160 / 300 - 0.5) < abs(160 / 300 - 0.6) and close(100 / 300, 1 / 3, 1e-12), 'posterior mean %.3f' % (160 / 300))
 # S8: flat prior and many flips, credible and confidence intervals nearly coincide
 kq, nq = 5400, 10000
 cr = stats.beta.ppf([0.025, 0.975], 1 + kq, 1 + nq - kq); ph = kq / nq; wald = (ph - 1.96 * math.sqrt(ph * (1 - ph) / nq), ph + 1.96 * math.sqrt(ph * (1 - ph) / nq))

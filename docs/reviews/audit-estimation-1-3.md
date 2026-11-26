@@ -102,3 +102,26 @@ What the earlier reads could not have caught by their method: findings 3 to 8 ne
 ## Inbox
 
 Two bullets added to `docs/BACKLOG-INBOX.md` under "Raised later (audit estimation):".
+
+## Fix pass
+
+Opus fixer, from commit 23f260c6. Own checks: `scratchpad/fix-est13/` (`sim1.py`, `sim3.py`: bootstrap ends over fresh seeds; `verify.py`: findings 2 to 10 and 14; `sweep.mjs`: 45 submissions under the page Pyodide through `app/tools/code-runner.mjs`; `flcheck.py`: 200 fluency draws recomputed). The concepts script now exits 0; its docstring names the re-pointed checks.
+
+1. fixed differently. Basis: over 4,000 fresh-seed runs (NumPy), the B = 1000 ends have sd 0.084 and 0.087 around long-run ends $-0.98$ and 3.00, so tolerance 0.25 still refuses 0.7% of correct programs. At B = 2000 the sd is 0.06, and tolerance 0.25 accepts 99.97% of fresh correct runs (3,000 runs), while fresh 5% cuts pass 0.2% and 1% cuts 0.7%. Test 4 is now `(lambda ci: abs(ci[0] + 0.98) < 0.25 and abs(ci[1] - 3.00) < 0.25)(bootstrap_ci(daily, sharpe, 2000, 1))` (solution at seed 1: $-1.104$, 2.927). Under the page Pyodide 13 correct codings pass every test: `random.choices`, `choice`, `randrange`, `randint`, `default_rng().choice`, `rng.integers`, `np.random.seed` with `np.random.choice`, `np.percentile`, `statistics.quantiles`, and `random.Random(seed + k)` for four `k`. The 5% cut fails test 3 or 4 (three codings), the 1% cut and min/max fail; five `mutants` pin this. Test 3 (median, B = 2000) passes 100% of fresh runs, so it stays. `how` and `explain` now say the ends depend on the seed and name the long-run ends. Efron and Tibshirani, chapter 13 (the percentile interval).
+2. fixed differently: "A strong prior such as Beta(100, 100) outweighs 100 flips but does not ignore them". Basis: posterior mean $(a + k)/(a + b + n)$ puts weight $n/(a + b + n) = 1/3$ on the MLE; 0.5 moves to 0.533 (CB Example 7.2.14).
+3. fixed, plus problems-2 part 4 (the same rule, also unqualified). Basis: delta method, $\operatorname{Var}(\hat\sigma) \approx (\kappa - 1)\sigma^2/(4n)$, so 2 times the rule for $t(5)$ ($\kappa = 9$); own MC 1.84 at $n = 504$ and 1.90 at 1,250. Quiz q-vol and review-3 `r-vol-se` prose now say "Treat the returns as normal", as their keys assume it. l8 is left: its screen 9 and summary already sit under "For normal returns".
+4. fixed differently: `nr.pick` is now 64, 100, 144, 196, 256, 400, 625 (roots whole), with a solution line that the $t$ multiplier is close to $z$. Basis: at $n = 36$ the 99% $t$ multiplier is 5.7% above 2.576; from 64 every gap is at most 3.1% and the keyed interval covers at least 99.45% of its level (`scipy.stats.t`, CB §5.3.2). 200 draws recomputed: every key and slip right, slips clear of the key.
+5. fixed; h-small-t prose also says the returns are normal, since its key claims 95% coverage. Basis: CB Theorem 5.3.1; own MC at $n = 10$: 0.950 normal, 0.901 exponential, 0.840 lognormal.
+6. fixed, with "close to it otherwise" for "very nearly so otherwise". Basis: own MC, exponential days at $n = 100$ miss 4.93% at 1.96 and 9.85% at 1.645; the CLT is a limit (CB §5.5.3).
+7. fixed. Basis: exact binomial cover of $\hat p \pm 1.96\,\mathrm{SE}$ at $n = 50$ is 0.934 to 0.945 for $p$ from 0.45 to 0.7.
+8. fixed. Basis: exact $P(X \ge 55) = 0.184$, $P(X > 55) = 0.136$, normal tail beyond 1 SE 0.159.
+9. fixed. Basis: minimum of $w^2 v + (1 - w)^2\mu^2$ at $\mu^2/(\mu^2 + v)$, crossing at $\mu/(\mu + \sqrt v)$; equal only when $v = \mu^2$, as on this chart (both 0.04).
+10. fixed. Basis: own MC at $n = 20$, $E$ of the $n$ volatility $0.962\sigma$ and of $s$ $0.987\sigma$; 2.6% is the gap between them.
+11. fixed. Basis: Hull §15.4, volatility of $\ln(S_i/S_{i-1})$; log returns add over time, simple returns compound.
+12. fixed. Basis: under the page Pyodide, three normal approximations, two wrong delays and two wrong cuts all first fail test 1; three count codings, a fresh generator and counting misses first fail test 6. The test-1 line now names them, test 6 adds "Return a share, not a count", tests 2, 5 and 8 name no mistake. Eleven `mutants` record this.
+13. fixed. Basis: under the page Pyodide four log-of-product codings in l7 first fail test 3 (domain error or $-\infty$), and three in homework-2 first fail test 9 (`inf`); only a load failure (a syntax error, tried) gives key `error`. The new `test-3` and `test-9` lines say so, the `error` lines point at a typo; seven `mutants`.
+14. fixed. Basis: a factor above 1 gives a positive log whatever the product; here each factor is below 1.
+15. fixed. Basis: $L(\mu) \propto \sigma^{-n} e^{-S(\mu)/(2\sigma^2)}$; $\sigma$ sets the height and the curvature, and $\partial S/\partial\mu = 0$ fixes the peak.
+16. fixed. Basis: the chart's dashed line is the exact law; 1,000 trials estimate it (CB §5.2).
+
+Gates on the edited files: validator 0 errors (4,617 warnings, one more long-sentence warning); voice scan 35: 0 and 0; concepts script exit 0; number scripts 4 of 4; `grade-all.mjs --code` 0 failures on all 14 files (mutants included, fluency at 20 seeds); playthrough desktop and `--mobile` green on the nine lessons, homework-2, homework-3, review-3, problems-2 and fluency-l10.

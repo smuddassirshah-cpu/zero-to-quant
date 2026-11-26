@@ -413,7 +413,7 @@
           "multiply": "You multiplied the three logs. The log of a product is the sum of the logs.",
           "nolog": "That is $L(\\tfrac{2}{3})$ itself. Take its natural log.",
           "log10": "You used base-10 logs. Here $\\ln$ is the natural log.",
-          "sign": "L = 4/27 is below 1, so every log in the sum is negative: −0.4055 − 0.4055 − 1.0986. A positive 1.910 drops the minus signs."
+          "sign": "Each factor, 2/3, 2/3 and 1/3, is below 1, so every log in the sum is negative: −0.4055 − 0.4055 − 1.0986. A positive 1.910 drops the minus signs."
         }
       },
       "explain": {
@@ -781,7 +781,29 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 7 hidden tests, each accepted within a relative error of 1e-9. One has 5,000 flips. Plain Python with `math` is enough; numpy is available but loads slowly."
+        "how": "Check runs 7 hidden tests, each accepted within a relative error of 1e-9. One has 5,000 flips. Plain Python with `math` is enough; numpy is available but loads slowly.",
+        "mutants": [
+          {
+            "source": "import math\n\n# Likelihood of 1,000, then 2,000, fair flips at p = 0.5\nprint(0.5 ** 1000)\nprint(0.5 ** 2000)\nprint(2000 * math.log(0.5))\n\ndef log_lik(heads, tails, p):\n    \"\"\"Log-likelihood of the flips at p, for 0 < p < 1.\"\"\"\n    return math.log(p ** heads * (1 - p) ** tails)\n",
+            "test": 3,
+            "symptom": "log of the product: 0.5 ** 2000 underflows to 0, a domain error (test-3 line)"
+          },
+          {
+            "source": "import math\n\n# Likelihood of 1,000, then 2,000, fair flips at p = 0.5\nprint(0.5 ** 1000)\nprint(0.5 ** 2000)\nprint(2000 * math.log(0.5))\n\ndef log_lik(heads, tails, p):\n    \"\"\"Log-likelihood of the flips at p, for 0 < p < 1.\"\"\"\n    return math.log(math.pow(p, heads) * math.pow(1 - p, tails))\n",
+            "test": 3,
+            "symptom": "log of the product with math.pow (test-3 line)"
+          },
+          {
+            "source": "import math\n\n# Likelihood of 1,000, then 2,000, fair flips at p = 0.5\nprint(0.5 ** 1000)\nprint(0.5 ** 2000)\nprint(2000 * math.log(0.5))\n\ndef log_lik(heads, tails, p):\n    \"\"\"Log-likelihood of the flips at p, for 0 < p < 1.\"\"\"\n    L = 1.0\n    for _ in range(heads):\n        L *= p\n    for _ in range(tails):\n        L *= 1 - p\n    return math.log(L)\n",
+            "test": 3,
+            "symptom": "multiplies in a loop, then takes the log (test-3 line)"
+          },
+          {
+            "source": "import numpy as np\nimport math\n\n# Likelihood of 1,000, then 2,000, fair flips at p = 0.5\nprint(0.5 ** 1000)\nprint(0.5 ** 2000)\nprint(2000 * math.log(0.5))\n\ndef log_lik(heads, tails, p):\n    \"\"\"Log-likelihood of the flips at p, for 0 < p < 1.\"\"\"\n    return float(np.log(p ** heads * (1 - p) ** tails))\n",
+            "test": 3,
+            "symptom": "np.log of the product gives -inf, no error (test-3 line)"
+          }
+        ]
       },
       "hints": [
         {
@@ -801,7 +823,8 @@
         "correct": "Your function adds logs and never underflows.",
         "generic": "Some tests failed. Add `heads` copies of $\\ln p$ and `tails` copies of $\\ln(1 - p)$.",
         "byKey": {
-          "error": "Your code stopped with an error. A domain error means you took the log of a product that underflowed to 0."
+          "error": "Your code stopped with an error before any test ran. Check the line you added for a typo or a missing bracket.",
+          "test-3": "Test 3 has 2,000 flips. If you took the log of the product, that product underflowed to 0 there. Add the logs instead."
         }
       },
       "explain": {
