@@ -63,3 +63,32 @@ Watch list from the brief, each read on every screen and item:
 - `node tools/grade-all.mjs --file <file> --local-cdn <pkgs>` on each of the 26 files: 0 failures every time. No code widgets in this course, so no `test-N` sweep.
 - `docs/reports/trig-L1-3-concepts.py` (venv Python, numpy 2.x; no figure depends on the version): 127,164 passed, 6 failed, exit 1. The six failures are findings 1, 2, 7 (two lines), 8 and 9, left failing on purpose. Findings 3 to 6 and 10 are statements a number cannot fail; the script holds the counterexample or the basis for each fix.
 - No playthrough (auditor brief, common rule 7).
+
+## Overlap with the earlier reads
+
+Read after the blind-stage commit (`Concept audit trig levels 1 to 3, round 1: blind stage`): `docs/reviews/review-trig-1-3.md` (39 findings on the 13 lessons, three reviews and three homeworks, with its fix pass), `docs/reviews/review-problems-0.3-c.md` (its trig findings 8 to 20 on `problems-1` to `-3`, with its fix pass), and the trig lines of `review-pass8-hits.md`, `review-pass8-hits-fix-2.md`, `review-pass9b-hits.md`, `review-reuse-af-hits.md`, `review-pkg3-reuse-hits.md`, `review-delta-ae-1.md`, `review-delta-ah-2.md`, `review-delta-problems-aa-3.md` and `review-exam-second-item-stage0.md` (bands, freshness and reuse; no conceptual finding on trig). The author reports `docs/reports/problems-trig.md` and `fluency-trig.md` hold no findings. No earlier audit of trig exists.
+
+| Conceptual findings | Count | Items |
+|---|---:|---|
+| Audit only | 10 | 1 to 10 above |
+| Earlier reads only | 11 | listed below; all fixed before this audit, and each fixed string has a `correct` ledger row |
+| Both | 0 | |
+
+New `wrong` that no earlier read found: 1 (finding 1, minor).
+
+Earlier conceptual findings, each checked against the audited text:
+
+- review-trig-1-3 finding 1 (`l2` `screens[9]`: a gradient called the tangent of a chart angle on unequal scales, wrong): fixed; the equal-scale condition is now in the sentence.
+- finding 2 (`l12`: three printed sums that did not add): fixed; $0.61237 + 0.35355 = 0.96592$ and $0.35777 + 0.53666 = 0.89443$ recomputed.
+- finding 3 (`l5` `quiz[0]`: "with an angle under 90° it is subtracted"): fixed; the line now says the rule always subtracts. Related to my finding 4 but a different defect.
+- finding 4 (`l11`: "the cosine rule" used for the second-solution pattern): fixed; "mirror" throughout.
+- finding 5 (`l12` `screens[8]`: $\angle AOB = a - b$ past 180°): fixed; condition and the other case stated.
+- finding 7 (`l10`: a root "never" splits): fixed. Finding 8 (`l8`: "once more every $2\pi$"): fixed. Finding 9 (`l2` `screens[5]` option why): fixed.
+- finding 17 (`l6`: direction of measurement not stated): fixed. Finding 20 (`l9`: $|a|$ undefined, $b > 0$ dropped): fixed.
+- review-problems-0.3-c finding 8 (`problems-1`: a ratio typed for an angle told "radians"): fixed with the `half`, `ratio-tan` and `ratio-sin` entries. Its finding 9 (level 1 feedback names radians) touches the same gap as my finding 5 from the other side: it reworded the slip lines, and the calculator mode is still never stated in a level 1 lesson.
+
+Two notes on the miss. The sentence in finding 2 ("A portfolio holds both, so its arrow is A's arrow followed by B's") is not the author's: it is the replacement text of review-trig-1-3 finding 29 (freshness), applied in commit `5730a360`, so it had no second read until now. The "de-meaned returns over two days" of finding 1 is original text; review-trig-1-3 finding 22 edited that very prose (to add the dot-product formula) and its fix pass recomputed the angle, without testing the word "de-meaned" against the numbers.
+
+## Inbox
+
+Added to `docs/BACKLOG-INBOX.md` under "Raised later (audit trig):" (2 bullets): a stated rounded figure ("Use $\tan 15^\circ \approx 0.2679$") is not recomputed against a keyed choice option (finding 7); a `drag-point` `wrong[]` region's line can state a value that holds at two points of a 179° region (finding 8).
