@@ -393,9 +393,9 @@ back = pi[0] * C[0, 1] / pi[1]
 check("homework-4 i2 P(A yesterday | B today) = 0.8", near(back, h4[2]["widget"]["answer"], 1e-9))
 w2 = wrongs(h4[2]["widget"])
 fb2 = h4[2]["feedback"]["byKey"]
-check("F8 homework-4 i2 slip 'half' is the even split between A and C, and 'forward' is the reversible reading P_BA",
+check("F8 homework-4 i2 slip 'half' is the even split between A and C, and 'forward' is the reading P_BA, right only if the A-B flows balanced (re-pointed 26 Nov, fix-pass follow-up)",
       C[0, 1] > 0 and C[2, 1] > 0 and C[1, 1] == 0 and near(w2["half"], 1 / 2, 1e-9) and near(w2["forward"], C[1, 0], 1e-9)
-      and "evenly" in fb2["half"] and "reversible" in fb2["forward"],
+      and "evenly" in fb2["half"] and "balanced" in fb2["forward"],
       f"reversible reading gives P_BA = {C[1, 0]}, the slip 'forward'")
 check("homework-4 i4 Bin(4,0.6) at 3 = 0.3456; sells mean 6", near(4 * 0.6 ** 3 * 0.4, h4[4]["widget"]["rows"][0][1]["answer"], 1e-6)
       and h4[4]["widget"]["rows"][1][1]["answer"] == 6)

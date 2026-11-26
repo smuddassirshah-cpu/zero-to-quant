@@ -158,3 +158,7 @@ Basis: $P_{ii}$ is 0.5 at both ends and at most 0.256 elsewhere; the count of fl
 ### Checks run
 
 `docs/reports/markov-L4-5-fixread.py`: exit 0. It rebuilds the Metropolis chains from the content JSON, recomputes each changed slip two ways, tests band separation, and simulates rows 3, 12, 14, 18, 19, 20, 22 and 26. No content was edited, so the validator and playthrough were not rerun.
+
+## Fix-pass follow-up (orchestrator)
+
+- Both imprecise rows of the fix-pass read applied with the reader's text: homework-4 `items[2].feedback.byKey.forward` (P_BA is right when the A-B pair balances, π_A P_AB = π_B P_BA, which needs no full reversibility) and l15 `screens[1].widget.options[2].why` (rejection chance per step, not by count). Concepts check F8 re-pointed from "reversible" to "balanced". Gates: validator 0 errors, voice scan 0 and 0, concepts 112 of 112, fixread 0, markov number scripts 5 of 5, grade-all 0 failures, playthrough desktop and mobile green on both files.
