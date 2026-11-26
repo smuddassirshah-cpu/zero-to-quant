@@ -68,7 +68,17 @@ Claims that pass but deserve a note:
 
 ## Overlap table
 
-OVERLAP_PLACEHOLDER
+Earlier reads, opened after the WIP commit `a264d895`: `docs/reviews/review-1.3.md` (course read; for these levels it has one content finding, on `homework-4`, and no entry for `l13` to `l16` or `review-4`), `docs/reviews/review-problems-1.3-c.md` (`problems-4` and `problems-5`, five findings on limits), and the author report `docs/reports/limits-5.md`. No second read of `l17` to `l20`, `review-5` or `homework-5` is on record: this audit is their first.
+
+Conceptual findings of the earlier reads on these files, all fixed before this audit: `homework-4` `h-second-order` (7p and 6p for a 6.5p gap); `problems-5` `p-app-adoption` part 5 (the question asked for a time the prose fixes at $\ln 81$ while the key was the bound 3.2); `problems-4` `p-level-annuity` part 5 (a rounding tie refused); `problems-5` `p-impact-curve` part 4 (a slip band that made its line false). The other two problem-set findings were about chaining, not concepts.
+
+| | Count |
+|---|---|
+| Found by this audit only | 15 (4 wrong, 11 imprecise) |
+| Found by the earlier reads only | 4 (all fixed before the audit) |
+| Found by both | 0 |
+
+New `wrong` that no earlier read found: 4 (findings 1 to 4), all minor. That is two per level over two levels, above the convergence rule of one per three levels, so the course needs another blind round after the fix pass.
 
 ## Inbox
 
