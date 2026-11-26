@@ -336,7 +336,7 @@
     {
       "type": "ladder",
       "difficulty": 3,
-      "prose": "Some integrals have no formula. For $\\int_0^1 \\frac{e^{-x}}{\\sqrt{x}}\\,dx$, compare. On $(0, 1]$, $e^{-x} \\le 1$, so the curve sits under $\\frac{1}{\\sqrt{x}}$, the dashed one.",
+      "prose": "Some integrands have no elementary antiderivative (l12). For $\\int_0^1 \\frac{e^{-x}}{\\sqrt{x}}\\,dx$, compare. On $(0, 1]$, $e^{-x} \\le 1$, so the curve sits under $\\frac{1}{\\sqrt{x}}$, the dashed one.",
       "canvas": {
         "kind": "plane",
         "params": {
@@ -437,7 +437,7 @@
         }
       },
       "explain": {
-        "text": "The integrand is positive and at most $\\frac{1}{\\sqrt{x}}$, so its area is at most 2. The exact value is $\\sqrt{\\pi}\\,\\text{erf}(1) \\approx 1.4936$. Also $e^{-x} \\ge e^{-1}$ gives a lower bound of $\\frac{2}{e} = 0.7358$."
+        "text": "The integrand is positive and at most $\\frac{1}{\\sqrt{x}}$, so its area is at most 2. The exact value is $\\sqrt{\\pi}\\,\\text{erf}(1) \\approx 1.4936$, where erf is the error function, a named integral of $e^{-t^2}$ that is not elementary. Also $e^{-x} \\ge e^{-1}$ gives a lower bound of $\\frac{2}{e} = 0.7358$."
       }
     },
     {
@@ -451,7 +451,8 @@
             ">>> trapezium(lambda x: x**-0.5, 0, 1, 10)",
             "Traceback (most recent call last):",
             "  File \"<stdin>\", line 1, in <module>",
-            "  File \"<stdin>\", line 5, in trapezium",
+            "  File \"<stdin>\", line 7, in trapezium",
+            "  File \"<stdin>\", line 1, in <lambda>",
             "ZeroDivisionError: 0.0 cannot be raised to a negative power"
           ],
           "numbers": true,
@@ -460,7 +461,7 @@
         },
         "state": {
           "tone": {
-            "l5": "err"
+            "l6": "err"
           }
         }
       },
@@ -515,7 +516,24 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 7 hidden tests, including $\\frac{1}{\\sqrt{x}}$ on $[0, 1]$. Each answer is accepted when `math.isclose(result, expected, rel_tol=1e-9)`."
+        "how": "Check runs 7 hidden tests, including $\\frac{1}{\\sqrt{x}}$ on $[0, 1]$. Each answer is accepted when `math.isclose(result, expected, rel_tol=1e-9)`.",
+        "mutants": [
+          {
+            "source": "import math\n\ndef midpoint(f, a, b, n):\n    h = (b - a) / n\n    total = 0.0\n    for i in range(n):\n        total += f(a + i * h)\n    return h * total\n",
+            "test": 1,
+            "symptom": "left ends: returns 0.21875"
+          },
+          {
+            "source": "import math\n\ndef midpoint(f, a, b, n):\n    h = (b - a) / n\n    total = 0.0\n    for i in range(n):\n        total += f(a + (i + 1) * h)\n    return h * total\n",
+            "test": 1,
+            "symptom": "right ends: returns 0.46875"
+          },
+          {
+            "source": "import math\n\ndef midpoint(f, a, b, n):\n    h = (b - a) / n\n    total = 0.0\n    for i in range(n):\n        total += (f(a + i * h) + f(a + (i + 1) * h)) / 2\n    return h * total\n",
+            "test": 1,
+            "symptom": "trapezium from the two ends: returns 0.34375"
+          }
+        ]
       },
       "hints": [
         {
@@ -538,8 +556,8 @@
         "correct": "Each strip is judged by its centre, so $f$ is never evaluated at 0.",
         "generic": "Not quite right. Read the first failing test.",
         "byKey": {
-          "test-1": "Test 1 expects 0.328125 for $x^2$ on $[0, 1]$ with 4 strips: the centres are 0.125, 0.375, 0.625, 0.875.",
-          "test-6": "Test 6 is $\\frac{1}{\\sqrt{x}}$ with 10 strips. If you evaluate at an end of a strip, the first call divides by zero.",
+          "test-1": "Test 1 expects 0.328125 for $x^2$ on $[0, 1]$ with 4 strips: the centres are 0.125, 0.375, 0.625, 0.875. A result of 0.21875, 0.46875 or 0.34375 means you used strip ends.",
+          "test-6": "Test 6 is $\\frac{1}{\\sqrt{x}}$ on $[0, 1]$ with 10 strips, where the first centre is 0.05. Check that no call reaches $x = 0$.",
           "error": "Your code stopped with an error. Read the last line of the message under the editor."
         }
       },
@@ -1132,7 +1150,7 @@
     {
       "type": "transfer",
       "difficulty": 3,
-      "prose": "The share $X$ of time a fair game's P&L is positive has the arcsine density $\\frac{1}{\\pi\\sqrt{x(1 - x)}}$ on $(0, 1)$. It blows up at both ends. Use $x = \\sin^2\\theta$, from l15.",
+      "prose": "Take a long fair game. The share $X$ of time its P&L is positive has, very nearly, the arcsine density $\\frac{1}{\\pi\\sqrt{x(1 - x)}}$ on $(0, 1)$. It blows up at both ends. Use $x = \\sin^2\\theta$, from l15.",
       "canvas": {
         "kind": "plane",
         "params": {
@@ -1224,7 +1242,7 @@
         }
       },
       "explain": {
-        "text": "A fair game is ahead at most 10% of the time on about 20% of paths, and at least 90% of the time on as many. Long one-sided stretches are normal, not a sign of skill. Markov Chains and Random Walks shows the walk itself."
+        "text": "A long fair game is ahead at most 10% of the time on about 20% of paths, and at least 90% of the time on as many. Long one-sided stretches are normal, not a sign of skill. Markov Chains and Random Walks shows the walk itself."
       }
     }
   ],
@@ -1312,7 +1330,7 @@
           {
             "id": "inf",
             "text": "$\\displaystyle\\int_1^\\infty x^{-0.9}\\,dx$",
-            "why": "This trouble is at infinity, where $p$ must exceed 1. With $p = 0.9$ the area grows like $a^{0.1}$."
+            "why": "This trouble is at infinity, where $p$ must exceed 1. With $p = 0.9$ the area up to $b$ grows like $b^{0.1}$."
           }
         ]
       },

@@ -5,6 +5,10 @@ Recomputes every graded key and slip value from its named mistake (sympy / scipy
 and runs Monte Carlo checks for the empirical claims. Exits 0 only if every check passes. A check that fails
 because the content is wrong stays failing (see docs/reviews/audit-integrals-4.md).
 
+Fix pass (findings 1 to 4): the four CONTENT checks that encoded the old text were re-pointed to read the
+fixed text (l14 summary.ideas[0], review-4 items[5] ln 2 reason, homework-4 items[5] strip count and figure,
+l17 screens[1] 12-disc figure at its printed precision). No other check changed.
+
 Run from the repository root:  python docs/reports/integrals-L4-concepts.py
 """
 import json, math, os, re, sys
@@ -91,8 +95,10 @@ numeric(L14, 'quiz[3]', quad(lambda t: (3 * t + 5) / ((t + 1) * (t + 2)), 0, 1),
         {'first-only': 2 * ln(2), 'swapped': ln(2) + 2 * ln(1.5)})
 # Summary claim "each piece integrates to a logarithm or an arctangent": the repeated-factor piece B/x^2 does neither.
 piece = sp.integrate(1 / x**2, x)
-check('l14 summary.ideas[0]: every partial-fraction piece is a log or an arctan (CONTENT)', piece.has(sp.log) or piece.has(sp.atan),
-      f'integral of 1/x^2 is {piece}')
+# Fix pass: the summary now names the power piece; check that it does and that the power is -1/x.
+s0 = at(load(L14), 'summary.ideas[0]')
+check('l14 summary.ideas[0]: names the power piece a repeated factor gives (CONTENT)',
+      'power' in s0 and '-\\frac{1}{x}' in s0 and sp.simplify(piece + 1 / x) == 0, f'integral of 1/x^2 is {piece}; text {s0!r}')
 
 # ---------------------------------------------------------------- l15 trig integrals and substitution
 L15 = 'l15-circles-and-powers'
@@ -180,7 +186,8 @@ numeric(L17, 'screens[0]', pi * mid(lambda v: (v / 3)**2, 0, 3, 3), {'right-edge
 numeric(L17, 'screens[1]', pi * quad(lambda v: (v / 3)**2, 0, 3), {'no-pi': 1, 'not-squared': pi * quad(lambda v: v / 3, 0, 3)})
 twelve = pi * mid(lambda v: (v / 3)**2, 0, 3, 12)
 quoted = float(re.search(r'12 would give ([0-9.]+)', at(load(L17), 'screens[1].explain.text')).group(1).rstrip('.'))
-check('l17 s1 explain: 12 discs figure (CONTENT)', abs(round(twelve, 2) - quoted) < 1e-9, f'12 midpoint discs give {twelve:.4f}, printed {quoted}')
+dp = len(str(quoted).split('.')[1])
+check('l17 s1 explain: 12 discs figure (CONTENT)', dp >= 3 and abs(round(twelve, dp) - quoted) < 1e-9, f'12 midpoint discs give {twelve:.4f}, printed {quoted}')
 numeric(L17, 'screens[2]', pi * quad(lambda v: v, 0, 4), {'no-pi': 8, 'lost-half': 16 * pi})
 numeric(L17, 'screens[3]', pi * quad(lambda v: v**2 - v**4, 0, 1),
         {'squared-gap': pi * quad(lambda v: (v - v * v)**2, 0, 1), 'no-pi': 2 / 15, 'ignored-hole': pi / 3})
@@ -212,8 +219,11 @@ numeric(R, 'items[6]', quad(lambda v: 1 / (v * v - 1), 2, np.inf), {'forgot-lowe
 numeric(R, 'items[7]', quad(lambda v: sqrt(4 - v * v), 0, 2), {'kept-limits': 4 * F(2), 'forgot-dx': 2})
 numeric(R, 'items[8]', quad(lambda v: 1 / sqrt(1 - v * v), 0, 1), {'area': pi / 4, 'whole-circle': pi})
 # items[5], option "ln 2": its why names "evaluated ln|x| at 1 and at -1", which gives 0 (option B's value), not ln 2.
-named = ln(abs(1)) - ln(abs(-1))
-check('review-4 items[5] option ln 2: named mistake gives ln 2 (CONTENT)', abs(named - ln(2)) < 1e-9, f'named mistake gives {named}')
+# Fix pass: the why now names ln of the width 1 - (-1); that gives ln 2, and ln|1| - ln|-1| (option B's route) gives 0.
+why = [o for o in at(load(R), 'items[5].widget.options') if o['id'] == 'ln2'][0]['why']
+named = ln(1 - (-1))
+check('review-4 items[5] option ln 2: named mistake gives ln 2 (CONTENT)', 'width' in why and abs(named - ln(2)) < 1e-9
+      and abs(ln(abs(1)) - ln(abs(-1))) < 1e-12, f'named mistake gives {named}; why {why!r}')
 
 # ---------------------------------------------------------------- homework-4
 H = 'homework-4'
@@ -222,7 +232,11 @@ numeric(H, 'items[4]', quad(lambda v: math.log(v) / sqrt(v), 0, 1), {'sign': 4, 
 g = lambda v: 1 / (1 + v * v)**2
 numeric(H, 'items[5]', quad(g, 0, 1), {'kept-limits': F(1), 'no-extra': pi / 8})
 t16 = trap(lambda v: 1 / (1 + v * v)**2, 0, 1, 16)
-check('homework-4 items[5] explain: 16 trapezium strips give 0.6427 (CONTENT)', round(t16, 4) == 0.6427, f'T16 = {t16:.6f}')
+# Fix pass: the explain now quotes 32 strips; read the strip count and figure from the text.
+mh = re.search(r'with (\d+) trapezium strips gives ([0-9.]+)', at(load(H), 'items[5].explain.text'))
+tn = trap(lambda v: 1 / (1 + v * v)**2, 0, 1, int(mh.group(1)))
+check('homework-4 items[5] explain: printed trapezium check figure (CONTENT)', round(tn, 4) == float(mh.group(2).rstrip('.')),
+      f'T{mh.group(1)} = {tn:.6f}, printed {mh.group(2)}; T16 = {t16:.6f}')
 check('homework-4 items[5]: 32 strips do give 0.6427 (fix)', round(trap(lambda v: 1 / (1 + v * v)**2, 0, 1, 32), 4) == 0.6427)
 check('homework-4 items[6] values', abs(quad(lambda v: v**-0.99, 0, 1) - 100) < 1e-4 and abs(1 / (1.01 - 1) - 100) < 1e-9)
 numeric(H, 'items[7]', 2 * ln(19) / 0.8, {'half': ln(19) / 0.8, 'no-k': 2 * ln(19)})
