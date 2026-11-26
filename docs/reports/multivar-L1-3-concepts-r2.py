@@ -4,6 +4,8 @@ Independent recomputation of the claims in the ledger docs/reports/audit-multiva
 Exits 0 only if every CONTENT check passes. A content check that fails is a finding and stays failing.
 SUPPORT checks establish the auditor's own counter-examples; they must pass for a finding to stand.
 Run: python docs/reports/multivar-L1-3-concepts-r2.py   (NumPy and SciPy; no version-dependent figure)
+Fix pass (Opus fixer): the review-3 item 8 note was re-pointed to fire only on the old question wording, since the
+question now asks what the second derivative test shows (key unchanged). No content or support check was changed.
 """
 import json, math, os, sys, warnings
 warnings.filterwarnings("ignore")
@@ -243,7 +245,8 @@ for fn, p, typ, D in cases:
 check('l10 D=0: x^4+y^4 pit, x^4-y^4 saddle, (x-y)^2 lowest along y=x', mc_type(lambda x, y: x ** 4 + y ** 4, (0, 0)) == 'pit' and mc_type(lambda x, y: x ** 4 - y ** 4, (0, 0)) == 'saddle'
       and classify(lambda x, y: (x - y) ** 2, (2, 2))[0] == 'none' and mc_type(lambda x, y: (x - y) ** 2, (2, 2)) == 'pit')
 # review-3 item 8: at |k| = 2 the origin is still a lowest point (not strict). NOTE only: imprecise, finding 4.
-if mc_type(lambda x, y: x * x + 2 * x * y + y * y, (0, 0)) == 'pit' and J('review-3')['items'][8]['widget']['options'][0]['text'] == '$-2 < k < 2$':
+if mc_type(lambda x, y: x * x + 2 * x * y + y * y, (0, 0)) == 'pit' and J('review-3')['items'][8]['widget']['options'][0]['text'] == '$-2 < k < 2$' \
+        and 'derivative test' not in J('review-3')['items'][8]['question']:
     notes.append('review-3 item 8: at k = +-2 the origin is a (non-strict) lowest point, which l10 s6 calls a pit; the key -2 < k < 2 leaves it out')
 check('l9 values: 28 at (4,2); quiz 2 points', close(40 + 16 - 16 - 4 - 8, 28) and np.allclose(grad(lambda x, y: x * x - y ** 3 + 3 * y, (0, -1)), 0, atol=1e-6))
 check('homework-3 item 6 global minimum -2 (grid search on [-3,3]^2, f > 0 outside)', abs(min(x ** 4 + y ** 4 - 4 * x * y for x in np.linspace(-3, 3, 601) for y in np.linspace(-3, 3, 601)) + 2) < 1e-6)
