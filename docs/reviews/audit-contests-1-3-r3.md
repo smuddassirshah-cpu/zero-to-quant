@@ -289,3 +289,7 @@ Optional, same class, not a finding: add `"O(n*n)"` to rows[2][1].accept (normal
 Engine note for the inbox, not raised here because this pass commits one file: the `bigO` normaliser strips `{}` after removing `*`, so `2^{n*n}` equals `2^n*n`. Bracket-aware stripping would close it.
 
 Not run: validator, number scripts and playthrough (read-only pass, no content changed).
+
+## Fix-pass follow-up 2 (orchestrator)
+
+- `l2` screens[2] rows[4][1].accept gains `log(n)` and rows[2][1].accept gains `n*n` (the reader's fix and its optional one). Basis: the widget's `bigO` normaliser (app/js/engine/widgets/table.js line 53) maps `O(log(n))` to `log(n)` and the key `O(log n)` to `logn`, so the keyed growth typed with brackets was refused; `n*n` maps to `nn`, not `n^2`. Keys unchanged. Engine note for the inbox: the normaliser drops braces, so `2^{n*n}` grades as `O(2^n*n)`. Gates: validator 0 errors, concepts-r3 `--cxx` 0, fixread-r3 0 (run from the repo root), contests number scripts 5 of 5, grade-all --code 0 failures, playthrough desktop and mobile green.
