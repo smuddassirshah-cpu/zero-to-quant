@@ -8,6 +8,8 @@ Exits 0 only when the content is right. A check that fails because the content
 is wrong stays failing: it is a finding in docs/reviews/audit-graphs-dp-4.md.
 Expected failures at commit 6c01af87 (exit 1): F1 (l15 trap crash site), F2 (l17 dealer
 slip value), F3 (homework-4 grid slip value).
+After the round 1 fix pass: exits 0, 161 checks; F1 to F3 pass on the corrected content and
+no check was re-pointed.
 """
 import itertools
 import json

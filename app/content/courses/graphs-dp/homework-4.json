@@ -175,7 +175,7 @@
         "wrong": [
           {
             "id": "edge",
-            "value": 12,
+            "value": 11,
             "tol": {
               "abs": 0
             }
@@ -310,7 +310,39 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 9 hidden tests, each rounded to 6 places. They cover dice, dealer bids, a single quote, negative offers and a 50-stage game."
+        "how": "Check runs 9 hidden tests, each rounded to 6 places. They cover dice, dealer bids, a single quote, negative offers and a 50-stage game.",
+        "mutants": [
+          {
+            "source": "def stop_value(n, quotes):\n    k = len(quotes)\n    value = sum(quotes) / k\n    for _ in range(n):\n        value = sum(max(q, value) for q in quotes) / k\n    return value\n",
+            "test": 1,
+            "symptom": "loops n times from the average: 4.25 for one stage"
+          },
+          {
+            "source": "def stop_value(n, quotes):\n    k = len(quotes)\n    if n == 0:\n        return sum(quotes) / k\n    later = stop_value(n - 1, quotes)\n    return sum(max(q, later) for q in quotes) / k\n",
+            "test": 1,
+            "symptom": "recursion with the average as the value at n = 0: 4.25"
+          },
+          {
+            "source": "def stop_value(n, quotes):\n    k = len(quotes)\n    value = max(quotes)\n    for _ in range(n - 1):\n        value = sum(max(q, value) for q in quotes) / k\n    return value\n",
+            "test": 1,
+            "symptom": "one stage worth the best quote: 6"
+          },
+          {
+            "source": "def stop_value(n, quotes):\n    k = len(quotes)\n    value = 0\n    for _ in range(n):\n        value = sum(max(q, value) for q in quotes) / k\n    return value\n",
+            "test": 8,
+            "symptom": "starts from 0 and loops n times: 0.9375"
+          },
+          {
+            "source": "def stop_value(n, quotes):\n    if n == 0:\n        return 0\n    later = stop_value(n - 1, quotes)\n    return sum(max(q, later) for q in quotes) / len(quotes)\n",
+            "test": 8,
+            "symptom": "recursion with 0 at n = 0: 0.9375"
+          },
+          {
+            "source": "def stop_value(n, quotes):\n    value = 0.0\n    while n > 0:\n        value = sum(max(q, value) for q in quotes) / len(quotes)\n        n -= 1\n    return value\n",
+            "test": 8,
+            "symptom": "while loop from 0.0: 0.9375"
+          }
+        ]
       },
       "feedback": {
         "correct": "Backward induction over stages, with the quotes in place of the die.",
@@ -397,7 +429,42 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 9 hidden tests. They include capacity 0, an item too heavy for the bag, no items, and 8 items with capacity 10,000."
+        "how": "Check runs 9 hidden tests. They include capacity 0, an item too heavy for the bag, no items, and 8 items with capacity 10,000.",
+        "mutants": [
+          {
+            "source": "def unbounded_knapsack(weights, values, cap):\n    dp = [0] * (cap + 1)\n    for wt, val in zip(weights, values):\n        for w in range(cap, wt - 1, -1):\n            dp[w] = max(dp[w], dp[w - wt] + val)\n    return dp[cap]\n",
+            "test": 1,
+            "symptom": "0/1 downward loop: 70"
+          },
+          {
+            "source": "def unbounded_knapsack(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    return best[n][cap]\n",
+            "test": 1,
+            "symptom": "0/1 table reading the row above: 70"
+          },
+          {
+            "source": "def unbounded_knapsack(weights, values, cap):\n    best = 0\n    from itertools import combinations\n    n = len(weights)\n    for k in range(n + 1):\n        for pick in combinations(range(n), k):\n            if sum(weights[i] for i in pick) <= cap:\n                best = max(best, sum(values[i] for i in pick))\n    return best\n",
+            "test": 1,
+            "symptom": "every subset, each item once: 70"
+          },
+          {
+            "source": "def unbounded_knapsack(weights, values, cap):\n    top = 0\n    for wt, val in zip(weights, values):\n        if wt <= cap:\n            top = max(top, val + unbounded_knapsack(weights, values, cap - wt))\n    return top\n",
+            "test": 9,
+            "symptom": "recursion over the next item with no memo: times out at capacity 10,000",
+            "timeout": true
+          },
+          {
+            "source": "def unbounded_knapsack(weights, values, cap):\n    def go(i, room):\n        if i == len(weights):\n            return 0\n        best = go(i + 1, room)\n        if weights[i] <= room:\n            best = max(best, values[i] + go(i, room - weights[i]))\n        return best\n    return go(0, cap)\n",
+            "test": 9,
+            "symptom": "take-again-or-move-on recursion with no memo: times out",
+            "timeout": true
+          },
+          {
+            "source": "def unbounded_knapsack(weights, values, cap):\n    def go(i, room):\n        if i == len(weights):\n            return 0\n        return max(c * values[i] + go(i + 1, room - c * weights[i]) for c in range(room // weights[i] + 1))\n    return go(0, cap)\n",
+            "test": 9,
+            "symptom": "recursion over counts per item with no memo: times out",
+            "timeout": true
+          }
+        ]
       },
       "feedback": {
         "correct": "One row indexed by capacity, and every item tried at every capacity.",
@@ -511,7 +578,7 @@
       "widget": {
         "kind": "longform",
         "prompt": "A desk has 40 trade ideas. Trade $k$ uses $r_k$ whole units of a daily risk budget of 200 units and has expected profit $p_k$. A trade is taken in full or not at all. The head of desk wants the plan with the most total expected profit, and its list of trades.\n\nSet out the dynamic programme: state, recurrence, base cases, fill order and answer. Explain how to list the chosen trades, and give the cost. Say why ranking by profit per risk unit is not enough. Say what changes if risk were measured in pounds of VaR, to the penny, with a budget of £2,000,000.",
-        "model": "**State.** $\\text{best}[i][b]$ is the largest expected profit using only the first $i$ trades with at most $b$ risk units. Here $0 \\le i \\le 40$ and $0 \\le b \\le 200$.\n\n**Recurrence.** Trade $i$ is either skipped or taken:\n$$\\begin{aligned} \\text{best}[i][b] &= \\max\\big(\\text{best}[i-1][b], \\\\ &\\qquad \\text{best}[i-1][b - r_i] + p_i\\big), \\end{aligned}$$\nwith the second option only when $r_i \\le b$. Reading row $i - 1$ when taking makes each trade usable once.\n\n**Base cases.** $\\text{best}[0][b] = 0$ for every $b$: no trades, no profit. Capacity 0 also gives 0 unless a trade uses 0 units.\n\n**Order.** Fill row by row, $i = 1$ to $40$, each row for $b = 0$ to $200$; every cell reads only the row above. (A one-row version must loop $b$ downwards, or a trade is counted twice.)\n\n**Answer.** $\\text{best}[40][200]$.\n\n**Which trades.** Walk back from $(40, 200)$. If $\\text{best}[i][b] = \\text{best}[i-1][b]$, trade $i$ is not needed. Otherwise it was taken, so record it and set $b \\leftarrow b - r_i$. This needs the full table and costs $O(n)$.\n\n**Cost.** $41 \\times 201 \\approx 8{,}000$ cells, each $O(1)$: instant. Trying every subset would be $2^{40} \\approx 10^{12}$ plans.\n\n**Why not greedy.** Ranking by $p_k / r_k$ can leave budget unused. Take trades of (4 units, £18k), (5, £21k) and (6, £25k) with 10 units. Greedy takes the first two for £39k, while the first and third give £43k.\n\n**Risk in pence.** The table needs a column per budget value: $2 \\times 10^8$ columns, times 41 rows, which is too large. The method is pseudo-polynomial: fast only while the budget is a small whole number. Then round risk to coarse units (say £10,000, giving 200 columns again) and accept a small error. Or switch to a solver for the general problem, which is NP-hard.",
+        "model": "**State.** $\\text{best}[i][b]$ is the largest expected profit using only the first $i$ trades with at most $b$ risk units. Here $0 \\le i \\le 40$ and $0 \\le b \\le 200$.\n\n**Recurrence.** Trade $i$ is either skipped or taken:\n$$\\begin{aligned} \\text{best}[i][b] &= \\max\\big(\\text{best}[i-1][b], \\\\ &\\qquad \\text{best}[i-1][b - r_i] + p_i\\big), \\end{aligned}$$\nwith the second option only when $r_i \\le b$. Reading row $i - 1$ when taking makes each trade usable once.\n\n**Base cases.** $\\text{best}[0][b] = 0$ for every $b$: no trades, no profit. Capacity 0 also gives 0 unless a trade uses 0 units.\n\n**Order.** Fill row by row, $i = 1$ to $40$, each row for $b = 0$ to $200$; every cell reads only the row above. (A one-row version must loop $b$ downwards, or a trade is counted twice.)\n\n**Answer.** $\\text{best}[40][200]$.\n\n**Which trades.** Walk back from $(40, 200)$. If $\\text{best}[i][b] = \\text{best}[i-1][b]$, trade $i$ is not needed. Otherwise it was taken, so record it and set $b \\leftarrow b - r_i$. This needs the full table and costs $O(n)$.\n\n**Cost.** $41 \\times 201 \\approx 8{,}000$ cells, each $O(1)$: instant. Trying every subset would be $2^{40} \\approx 10^{12}$ plans.\n\n**Why not greedy.** Ranking by $p_k / r_k$ can leave budget unused. Take trades of (4 units, £18k), (5, £21k) and (6, £25k) with 10 units. Greedy takes the first two for £39k, while the first and third give £43k.\n\n**Risk in pence.** The table needs a column per budget value: $2 \\times 10^8$ columns, times 41 rows, which is too large. The method is pseudo-polynomial: fast only while the budget is a small whole number. Then round each trade's risk up to coarse units (say £10,000, giving 200 columns again). The plan stays within budget but may no longer be the best. Or switch to a solver for the general problem, which is NP-hard.",
         "rubric": [
           {
             "points": 2,

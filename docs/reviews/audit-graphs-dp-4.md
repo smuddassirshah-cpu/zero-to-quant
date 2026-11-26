@@ -113,3 +113,28 @@ Read after the ledger and findings above were written: `docs/reviews/review-1.8.
 New `wrong` that no earlier read found: 4 (F1 serious; F2, F3, F4 minor). That is over the convergence limit of one per three levels, so level 4 needs a fix pass, a fix-pass read and a second blind audit.
 
 Finding class for SESSION PROTOCOL 6: ten `byKey` lines (F4 to F9) sit on a test their named mistake never reaches first, or on the `error` key for an in-test exception. The class is already ENGINE-BACKLOG 1028 and 1036; none of the nine level 4 code widgets declares `mutants`. The fixer should add a `mutants` entry for each rewritten line, using the mistakes named in this audit's table.
+
+## Fix pass
+
+Opus fixer, from commit 26f0197c. Every figure below was recomputed in this pass with exact fractions or a CPython run, and every mutant was graded under the page's Pyodide through `app/tools/code-runner.mjs`. No graded key, hidden test or solution changed; two slip values changed (F2, F3).
+
+| # | status | basis (own) |
+|---|---|---|
+| 1 | fixed | CPython on HEDGE, EDGY: row `i = 1` reads `a[1]` fine and stops at `j = 4` on `b[4]` (EDGY has 4 letters). The eight strings now name `b[4]` in row 1. `hints[1]` now names cell $(i, j)$ with both letters; it and the explain canvas highlight `r2c5`, the crash cell. |
+| 2 | fixed | Accept 99.5 or 99.9 first, then the two-dealer value: (99.5 + 99.9)/4 + (1/2)(99.55) = 99.625 exact; a 400,000-sale simulation gives 99.6247. Slip set to 99.625, 0.0125 clear of the key. |
+| 3 | fixed | Table with the whole first row and column at 1 ends 1 3 0 4 11; brute force over all 70 routes gives 9. Slip set to 11. |
+| 4 | fixed differently | Mutants: rule applied once and loop against 3.5 both give 4.25 at test 3; always stopping on 4 gives 4.625 at test 3; a loop of n − 2 fails test 2. The line now names both 4.25 codings and says to compare with the value just computed. |
+| 5 | fixed | Threshold against 3.5, against `dice_value(n - 2)` and against `dice_value(1)` all return 4 at test 8. New `test-8` line. `test-9` now describes its test; guessing the pattern (n + 2, a lookup of 4, 5 then 6, 3 + (n + 1) // 2) returns 6 there first. |
+| 6 | fixed | No fit check (three codings) gives 170 at test 1; same-row read and the upward one-row loop give 50 at test 4; subsets, bit masks and plain recursion run past 25 s on test 9. Lines moved to `test-1`, `test-4` (plus the downward loop for one row) and `test-9`. |
+| 7 | fixed differently | My codings of "add 1 without a match" give 4, 7 and 8 on test 1, not only 4, so the line says "more than 3". `a[i]`, `b[j]` codings raise inside test 1 (key `test-1`). `test-2` kept: three unpadded tables raise `IndexError` there. |
+| 8 | fixed | No first column (three codings) gives 1 at test 1; adding 1 on a match (three codings) gives 5. Also added: insert and delete only gives 3 at test 1 (three codings, $5 + 4 - 2 \times 3$), so the line names it. `test-3` kept (three codings). |
+| 9 | fixed | Missing neighbour as 0, wrapped index and a 0-padded table give 6 at test 1. Also added: leaving out the start fee gives 9 at test 1 (three codings). `test-2` and `test-7` kept as descriptions: none of the 14 codings tried fails either first. |
+| 10 | fixed | $0.55^3 = 0.166375$; times 0.45 is 0.0749; times 4 is 0.2995. |
+| 11 | fixed | The chance of no 6 in n rolls is $(5/6)^n > 0$; exact fractions give $V_n \le 6 - (5/6)^n$ for n = 1 to 79. |
+| 12 | fixed | Ferguson ch. 2: after the first r − 1, take the first candidate better than all seen so far. |
+| 13 | fixed | Exact optimum by cutoff: 1/2 at n = 2 and 3, 0.4583 at 4, 0.3987 at 10, above 1/e and non-increasing for n = 1 to 60. |
+| 14 | fixed | Rounding risk up makes the rounded total at least the true total, so a plan within 200 units is within £2,000,000. Trades (5,001, 5,001, 9,999) with profits 10, 10, 11 and budget 10,002 drop from 20 to 11 when rounded up to units of 5,000. |
+
+Mutants: 77 entries over all 9 level 4 code widgets, each first failing the test its `byKey` line names (`grade-all --code`: 0 failures; 9 are `timeout: true`, checked at 5 times the limit). Kept lines with no mutant: l16 `screens[7]` `test-2` and `test-7`, homework `items[5]` `test-5`; each describes its test, and none of the codings tried reaches it first. Not changed: homework `items[0]` slip `ratio` (value 3, no line; packing by value per kg gives the key, 7), left for the author.
+
+Gates: validator 0 errors; voice scan 35 on the five files, 0 and 0; concepts script exit 0, 161 checks, none re-pointed; `run-number-scripts --only graphs-dp` 3 of 3 passed; `grade-all --code` on the five files, 0 failures; playthrough of l14 to l17 and `homework-4`, desktop and `--mobile`, all passed. Files: `l14-knapsack`, `l15-common-subsequence`, `l16-grid-paths`, `l17-dice-stopping`, `homework-4`.
