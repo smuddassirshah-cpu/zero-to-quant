@@ -73,3 +73,20 @@ Notes on near overlaps, not counted as "both":
 ## Inbox
 
 One bullet added to `docs/BACKLOG-INBOX.md` under "Raised later (audit series):" (a sweep rule for fluency slips that share a value).
+
+## Fix pass
+
+Opus fixer, from commit 4ee99428. Each basis is my own check (scratch script recomputed the figures independently of part D), not the auditor's text.
+
+1. Fixed. Basis: the payments $\tfrac{C}{(1+r)^t}$ form a geometric series with ratio $\tfrac{1}{1+r}$, which is below 1 for $r > 0$, so $S_n = \tfrac{C}{r}(1 - (1+r)^{-n}) \to \tfrac{C}{r}$; the harmonic series diverges (Oresme's grouping: each block $\tfrac{1}{2^k+1}$ to $\tfrac{1}{2^{k+1}}$ adds at least $\tfrac12$; partial sums pass 5 at $n = 83$, 10 at $n = 12{,}367$, recomputed). The idea now gives the fixed-fraction reason and adds one sentence: "Shrinking to 0 alone is not enough: $1 + \tfrac12 + \tfrac13 + \dots$ grows without limit."
+2. Fixed differently. Basis: for $1 + r + r^2 + \dots$ the sum settles because each term is $r$ times the last with $|r| < 1$, not because terms reach 0. Feedback now reads "Only for $-1 < r < 1$ does each term shrink in size by the same factor, and then the sums level off." I avoided "$r^n$" here, as the formula linking $r^n$ to $S_n$ only arrives at screen 7. The harmonic note sits in l13 (finding 1), not in the l8 trap, which keeps one trap per summary.
+3. Fixed (auditor's wording). Basis: the gap obeys $g_{n+1} = a g_n$; at $a = -1$, $u_1 = 5$, $u_{n+1} = -u_n + 6$ gives 5, 1, 5, 1, ... (neither settles nor runs away), and $g_1 = 0$ stays 0 for any $a$. The new text no longer claims settle-or-run-away is exhaustive.
+4. Fixed (auditor's wording). Basis: $u_n - L = (u_1 - L)a^{n-1}$ is 0 for all $n$ when $u_1 = L$; otherwise it tends to 0 iff $|a| < 1$ ($|a| = 1$ keeps its size).
+5. Fixed (auditor's wording). Basis: pound gain $100(1.04^{-t} - 1.05^{-t})$ peaks where $(1.05/1.04)^t = \ln 1.05 / \ln 1.04$, $t = 22.8$, at £8.02, and is £0.03 at $t = 200$; the ratio $(1.05/1.04)^t$ rises without limit.
+6. Fixed (auditor's wording). Basis: for $(1 - 0.5)^{10}$ the errors with 1, 2, 3 terms are 0.999, 4.001, 7.249; at $x = 0.02$ they are 0.219, 0.019, 0.001, so "Here" makes it true.
+7. Fixed. Basis: $k(2a + (k-1)d) = \tfrac{k}{2}(2a + kd)$ reduces to $2a + (k-2)d = 0$ for $k \ne 0$. Brute force over the whole range: 53 of 9,708 cases before, 0 of 9,655 after adding `"2*a + (k - 2)*d != 0"` to `where`; no slip equals the key in any remaining case. No key, slip value or line changed.
+8. Fixed (auditor's wording). Basis: positions start at 1, so for $u_n = 3n + 2$ the values 2 and $-1$ give $n = 0$ and $n = -1$, whole but no position.
+
+Script: `docs/reports/series-L1-3-concepts.py` check E4 re-pointed (noted in its docstring), since "exactly when $-1 < a < 1$" survives a correct fix; it now also passes when the phrase carries the $u_1 = L$ caveat. Exit 0: 1,507 passes, 0 failing, 0 finding checks failing.
+
+Gates on the eight edited files: validator 0 errors; voice scan 35: 0 and 0; `run-number-scripts --only series` 5 of 5; `grade-all --file` 0 failures each; playthrough of the five lessons, homework-1, review-3 and fluency-l6-gauss green desktop and `--mobile`.
