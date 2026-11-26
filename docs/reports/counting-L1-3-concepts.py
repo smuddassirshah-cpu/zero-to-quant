@@ -11,6 +11,10 @@ their whole variable range.
 
 Exit 0 only if every check passes. A check that fails because the content is
 wrong stays failing (see docs/reviews/audit-counting-1-3.md).
+Fix pass (re-pointed checks, as they encoded the old text): the l3 s9 check
+also recomputes the added slip `no-zero-first` (4536) by enumeration, and the
+finding 4 check now accepts a "swapped" line that names the mistake the option
+shows: sizes swapped with the signs left in place.
 Run: python docs/reports/counting-L1-3-concepts.py   (Python 3.9+, stdlib only)
 """
 import json, os, re, sys, random
@@ -187,7 +191,8 @@ ok(0.70 < 1 - ordered(6, 4) / 6 ** 4 < 0.75, 'l3 s5: banning repeats removes alm
 chk(L, 's6', ordered(6, 2), {'kim': fact(6) // 2, 'groups': subsets(6, 2), 'repeats': 36}, right='right')
 ok(ordered(6, 4) == 360, 'l3 s6: 6!/2! is the count for 4 places')
 chk(L, 's7', 10 - 4 + 1, {'left-over': 6, 'r': 4, 'one': 1}, right='right')
-chk(L, 's9', ordered(10, 4), {'repeats': 10 ** 4, 'groups': subsets(10, 4), 'added': 34, 'no-zero': 9 * 8 * 7 * 6})
+chk(L, 's9', ordered(10, 4), {'repeats': 10 ** 4, 'groups': subsets(10, 4), 'added': 34,
+                              'no-zero': ordered(10, 4, lambda p: 0 not in p), 'no-zero-first': ordered(10, 4, lambda p: p[0] != 0)})
 chk(L, 'q0', ordered(10, 3), {'groups': subsets(10, 3), 'repeats': 1000, 'added': 27}, right='right')
 ok(9 * 8 * 7 * 6 == fact(9) // fact(5) == 3024, 'l3 q1: 9x8x7x6 = 9!/5!')
 chk(L, 'q2', ordered(26, 3), {'repeats': 26 ** 3, 'groups': comb(26, 3), 'added': 75})
@@ -639,7 +644,9 @@ for name, loc, oid, base in (('l10-adding-arrows', 's4', 'd', (2, -1)), ('l10-ad
     o = [x for x in node(name, loc)['widget']['options'] if x['id'] == oid][0]
     nums = tuple(float(x) for x in re.findall(r'-?\d+(?:\.\d+)?', o['text']))
     swapped = (base[1], base[0])
-    ok(nums == swapped or 'swapped' not in o['why'], f'FINDING 4 {name}#{loc} option {oid}: text {nums} is called a swap of {base}, whose swap is {swapped}')
+    sizes_only = (abs(base[1]) * (1 if base[0] > 0 else -1), abs(base[0]) * (1 if base[1] > 0 else -1))
+    named = 'left the signs where they were' in o['why'] and nums == sizes_only
+    ok(nums == swapped or named or 'swapped' not in o['why'], f'FINDING 4 {name}#{loc} option {oid}: text {nums} is called a swap of {base}, whose swap is {swapped}')
 
 # every graded numeric or choice widget in the course must have been visited
 missing = []
