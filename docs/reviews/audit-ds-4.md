@@ -111,4 +111,19 @@ Conventions are stated once and kept: root at depth 0, height in links, one node
 
 ## Overlap with the earlier review
 
-(Filled after the ledger and findings above were committed.)
+Filled after commit 117aa267 (ledger and findings). The earlier reads of these files are the topic 1.8 second read `docs/reviews/review-1.8.md` (ds l1 to l18, with its fix pass), the answer check `docs/reviews/answers-2026-11-03.md`, and `docs/reviews/review-perf-retrofit-12.md` (h4-save-tree: no finding). `docs/reports/ds-4-perf.md` is the author report of h4-save-tree. All were opened only after that commit.
+
+| Count | Conceptual findings |
+|---|---|
+| Audit only | 23 (findings 1 to 23 above) |
+| Earlier reads only | 4 (listed below, all applied before this audit) |
+| Both | 0 |
+
+Earlier conceptual findings at level 4 and why this audit did not raise them:
+
+- review-1.8, l15 quiz[3] option c why said a dict "keeps no order": fixed to "does not keep keys sorted" before this audit; the ledger records the fixed line as correct.
+- review-1.8, homework-4 h4-merge: `sorted(...)` passed all tests. Fixed with the `NO_SORT` test 9, which the audit's runs exercise. The review quoted the `how` sentence "re-sorting everything ignores that each list is already sorted" but did not question it; finding 6 here is about that sentence being false for CPython, a different point.
+- review-1.8, l17 screens[9] `top_k`: `sorted(xs, reverse=True)[:k]` passed. Fixed with the `peak_bytes` test 11; nothing left to find.
+- answers-2026-11-03, `NO_SORT` read the raw source, so a comment tripped it: fixed with the tokenised postlude, which the audit read. The raw `'heapq' not in __learner_source__` check of l17 screens[5] test 11 still has the comment weakness that file notes; it is an engine matter, not a concept.
+
+The rest of the earlier findings on these files are style (sentence counts and lengths, 390 px layout). The earlier read ran every solution and 39 naive versions for complexity claims, but did not submit the mistakes the `test-N` lines name, which is where 12 of this audit's 23 findings come from; the two accepted wrong programs (findings 4 and 21) are wrong on correctness, not speed, so the naive-version method did not meet them.
