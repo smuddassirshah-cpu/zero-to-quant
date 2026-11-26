@@ -58,7 +58,24 @@ By the convergence rule every course stays within "at most one new `wrong` per t
 
 ## Overlap table
 
-OVERLAP_PLACEHOLDER
+Filled after the ledger and findings were committed (`7a9c5d50`). Earlier reads opened: the `audit-<course>-*` files of the eleven courses, `review-perf-retrofit-2.md` (the lazy walk's second read), `review-delta-ag-pdes.md` and `review-problems-pdes-1-3.md`.
+
+| course | this audit only | earlier read only | both |
+|---|---|---|---|
+| conditional | 1 | 0 | 0 |
+| ito | 1 | 0 | 0 |
+| research-int | 1 | 0 | 0 |
+| the other eight | 0 | 0 | 0 |
+| total | 3 | 0 | 0 |
+
+All three findings sit on strings added after the courses closed, so no earlier read could have met them. Nothing an earlier read raised on the changed strings is still open:
+
+- `algo-think/l9` `test-12`: `audit-algo-think-1-3-r3` row 13 called the old line imprecise (a miss takes 19 or 20 passes; the `<`, `>`, `==` order reads less). The new line says "this miss" and names the `==`, `<`, `>` order. Read blind, it is correct.
+- `ds/l4` loop `why`: the new text is the paste-ready fix of `audit-ds-1-3-r2`. Read blind, correct.
+- `limits-thm/l19` Cauchy line: the new text is the fix quoted in `audit-limits-thm-4-r2`. Read blind, correct.
+- `pdes/homework-1` `h-derive-lazy-walk`: `review-perf-retrofit-2` raised PD1-1 and PD1-2 (both "could"), and both are in the text audited here (the "sharper $\Delta x^2$" clause, the "first dropped term" route). It found no error in the derivation; neither did this audit.
+
+No inbox bullet: no engine or canvas limit met.
 
 ## Runs
 
