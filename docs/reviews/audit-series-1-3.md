@@ -90,3 +90,30 @@ Opus fixer, from commit 4ee99428. Each basis is my own check (scratch script rec
 Script: `docs/reports/series-L1-3-concepts.py` check E4 re-pointed (noted in its docstring), since "exactly when $-1 < a < 1$" survives a correct fix; it now also passes when the phrase carries the $u_1 = L$ caveat. Exit 0: 1,507 passes, 0 failing, 0 finding checks failing.
 
 Gates on the eight edited files: validator 0 errors; voice scan 35: 0 and 0; `run-number-scripts --only series` 5 of 5; `grade-all --file` 0 failures each; playthrough of the five lessons, homework-1, review-3 and fluency-l6-gauss green desktop and `--mobile`.
+
+## Fix-pass read
+
+Fresh reader, blind to the audit above; read `git show 3ec7276d -- app/content/courses`. Enumeration script and recomputes in the scratch folder `fpr-ser13/` (not committed); `fluency-sample.mjs --stats` run on the family.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | l13-stream-of-payments.json | summary.ideas[2], sentence 1 | A never-ending stream has finite value $C/r$ "because each payment is the same fraction, $1/(1+r)$, of the one before" | imprecise (minor) | The value and the reason (fixed ratio below 1 in size, Rudin 3.26) are right: $\sum_{t\ge1} C(1+r)^{-t} = C/r$ for $r > 0$. But the payments are equal (idea 2 says "Equal payments"); it is each payment's value today that is $1/(1+r)$ of the one before. As worded the line contradicts idea 2. |
+| 2 | l13-stream-of-payments.json | summary.ideas[2], sentence 2 | Shrinking to 0 alone is not enough: $1 + \tfrac12 + \tfrac13 + \dots$ grows without limit | correct | Harmonic series diverges (Oresme grouping; Rudin 3.28). Partial sum to $10^6$ terms is 14.39 and still climbing like $\ln n$. |
+| 3 | l8-adding-forever.json | screens[1].feedback.correct | Only for $-1 < r < 1$ does each term shrink in size by the same factor, and then the sums level off | correct | Term sizes are $\lvert r\rvert^n$: shrink iff $\lvert r\rvert < 1$; geometric series converges iff $\lvert r\rvert < 1$ (Rudin 3.26). Keyed option "strictly between −1 and 1" stays the only true one; $r = \pm1$ excluded as the `why` lines say. |
+| 4 | l4-last-step.json | summary.ideas[2] | Unless they start at $L$, terms settle only when each step shrinks the gap to $L$; if each step grows the gap, they run away | correct | Every rule in the lesson is $u_{n+1} = au_n + b$, where gap$_{n+1}$ = $a$ × gap$_n$: a non-zero gap goes to 0 iff $\lvert a\rvert < 1$, grows without bound iff $\lvert a\rvert > 1$, and $a = \pm1$ fits neither clause, as written. Matches the formula note. Note, not a finding: for a general non-linear $f$ the "each step" form is sufficient, not necessary; the lesson never leaves the linear case. |
+| 5 | homework-1.json | h-gap-proof explain.text | Unless $u_1 = L$, the gap shrinks to 0 exactly when $-1 < a < 1$ | correct | $u_n - L = (u_1 - L)a^{n-1}$ (line s5); with $u_1 \ne L$ this tends to 0 iff $\lvert a\rvert < 1$; with $u_1 = L$ it is 0 for every $a$, so the exception is exactly the one needed. $a = 0$ checked (gap 0 from term 2). |
+| 6 | review-3.json | I8 explain.text | Rise £2,000.00 to £2,500.00, £500.00 or 25%; in proportion, far-off payments gain the most | correct | $100/0.05 = 2000$, $100/0.04 = 2500$, $500/2000 = 0.25$. Year-$t$ value rises by the factor $(1.05/1.04)^t$, increasing in $t$ (1.0096, 1.100, 1.614 at $t$ = 1, 10, 50). The qualifier is needed: the absolute gain $100(1.04^{-t} - 1.05^{-t})$ peaks at $t = 23$ and then falls. |
+| 7 | l12-small-x.json | screens[3].explain.text | Estimate 1.218, exact 1.21899, within 0.001; here each kept term shrinks the error | correct | $1.02^{10} = 1.2189944$; errors after 1, 2, 3 terms are 0.2190, 0.0190, 0.00099. All terms positive for $x > 0$, so each addition closes the gap; "Here" rightly limits the claim. |
+| 8 | l2-any-term.json | summary.ideas[2] | A number is a term only when solving for $n$ gives a positive whole number | correct | Terms are indexed $n = 1, 2, 3, \dots$ (formula note tests $n = 1$); $n = 0$ or negative gives no term. |
+| 9 | fluency-l6-gauss.json | families first-n-terms `where[3]` | `2*a + (k - 2)*d != 0` removes exactly the draws where the two slips coincide | correct | `whole` = `kd` ⇔ $2(2a + (k-1)d) = 2a + kd$ ⇔ $2a + (k-2)d = 0$. Full enumeration of $a \in [-10, 20]\setminus\{0\}$, $d \in [-6, 9]\setminus\{0\}$, $k \in [8, 30]$: 10,350 draws, 9,708 pass the old `where`, 53 of those had `whole` = `kd`, the new clause removes those 53 and no other, leaving 9,655. |
+| 10 | fluency-l6-gauss.json | first-n-terms key and slips over the range | Key `sum` is right; no slip equals the key; slips distinct; enough draws | correct | Key checked against a term-by-term sum for all 10,350 draws, always an integer. Among the 9,655 kept: `whole` = `sum` never (needs sum = 0, excluded), `kd` = `sum` never (needs $kd = 0$), `whole` = `kd` never. `fluency-sample --stats`: 195 distinct prompts in 200 draws, 12 of 212 rejected. |
+
+Counts: 10 rows; 9 correct, 1 imprecise (minor), 0 wrong, 0 misleading, 0 unverified.
+
+Fix for row 1 (l13 `summary.ideas[2]`, paste-ready):
+
+`"A stream that never ends has a finite value, $\\tfrac{C}{r}$, because each payment's value today is the same fraction, $\\tfrac{1}{1 + r}$, of the one before. Shrinking to 0 alone is not enough: $1 + \\tfrac12 + \\tfrac13 + \\dots$ grows without limit."`
+
+Basis: idea 1 of the same summary gives the value today as $C/(1+r)^t$, so consecutive values have ratio $1/(1+r)$; the payments themselves are all $C$.
+
+Out of scope, unchanged by this commit, noted only: in `first-n-terms` the `k-steps` slip value $k(2a + kd)/2$ is a half-integer in 2,464 of the 9,655 draws (odd $k$ and odd $d$), under a "A whole number" placeholder. It is what the slip truly gives, so the line still fires for a learner who types it.
