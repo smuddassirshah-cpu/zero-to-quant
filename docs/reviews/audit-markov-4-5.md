@@ -75,3 +75,29 @@ Conceptual findings of the earlier reads, all fixed before this audit and so not
 | By both | 0 |
 
 All 13 are in text no earlier read had judged: the lessons, review-4, and homework-4 items 2, 3 and 9 (index 1, 2 and 8), a file that `review-perf-retrofit-8` opened only for its last item. Neither earlier read saw a `wrong` that is still in the text. New `wrong` findings for the convergence rule: 4 across two levels (findings 3, 7, 8, 9), each a single option or slip line and none a key, definition or theorem. That is above one per three levels, so the rule calls for a second blind round after the fix pass.
+
+## Fix pass
+
+Opus fixer, on `cab9929d`. Each basis below is my own derivation or check, made before reading the auditor's suggested wording as a source. Scratch checks in the fixer's scratchpad `fix-mk45/` (Metropolis matrix powers, network distances, Poisson age simulation).
+
+| # | status | basis |
+|---|---|---|
+| 1 | fixed differently in basis | The cut between {0..i} and {i+1..n} carries zero net flow at stationarity, so balance holds for any finite birth-death chain; but the ratio formula needs $P_{i+1,i} > 0$ (Levin, Peres and Wilmer 2.5 take every down chance positive). The auditor's evidence chain (one-way step, $\pi = (0, 0.5, 0.5)$) still satisfies balance, so this is a formula-hypothesis fix, not a reversibility fix. l13 screens[6] and summary, homework-4 items[1] option `bd` now carry the "can be undone" condition. |
+| 2 | fixed differently | A CCP is a hub by design (Hull, OTC markets and clearing), so a single-point-of-failure argument does not lead to it. The auditor's replacement "every other route gets longer" is false: without D1, D2 to D3 and D3 to D4 stay 1 hop and D2 to D4 stays 2 hops via D3; only D5 is cut off. New text says only that. |
+| 3 | fixed | Diagonal of the canvas matrix: 0.500, 0.256, 0.197, 0.130, 0.0995, 0.146, 0.500; rejections are rarest at 0.60 and commonest at both ends. |
+| 4 | fixed | My matrix powers: TV distance 0.069 at k = 18, 0.0027 at k = 40; second eigenvalue 0.863, so the distance halves every 4.7 steps and never reaches 0. l15 screens[2] feedback and explain, homework-4 items[8] model point 4 reworded. |
+| 5 | fixed | Age at a fixed time t is min(Exp(λ), t), mean (1 − e^{−λt})/λ: 0.316 at t = 0.5 by formula and by simulation, 0.50 at t = 10. Prose now says trading has run a long while. |
+| 6 | fixed | 0.9817 = 1 − e^{−4} and 0.1353 = e^{−2} hold only at 2 a minute; the rate is now stated, and the explain notes it plays no part. |
+| 7 | fixed differently (slip changed) | π = (1, 2, 4)/7, move chances 1/2, 3/4, 1/4: key 3/7; equal-weight average 1/2 (already `half`). Replaced `third` 0.3333 with `stay` 0.5714 (tol 0.002): 1 − 3/7, and again as Σπ_i P_ii = (0.5 + 0.5 + 3)/7 = 4/7. `half` feedback now also names equal averaging. Clear of key 0.4286, `half` 0.5, `accept-top` 0.75. |
+| 8 | fixed | Bayes with uniform π: P(A yesterday given B) = P_AB = 0.8; the reversible reading gives P_BA = 0.2 (`forward`); 0.5 is an even split over the two predecessors A and C. Feedback for `half` and `forward` swapped to these mistakes; values unchanged. |
+| 9 | fixed (slip values changed) | `one-minute`: e^{−3}·9/2 × e^{−2}·2 = 9e^{−5} = 0.0606, two ways. `sum`: 0.04462 + 0.07326 = 0.1179, by hand and by SciPy. Set to 0.0606 and 0.1179, tol 0.001; clear of key 0.00327 and `merged` 0.0076. |
+| 10 | fixed | Risk-neutral p = (e^{rΔt} − d)/(u − d) = 0.2/0.45 = 4/9 only at r = 0 (Shreve I, 1.1); explain now says so and that with a rate the discounted price is the fair game. |
+| 11 | fixed | 0.2 × 5 = 1, and no named route (dropping chances gives −2, equal average gives 2) reaches 5; feedback now names the equation solved and the 0.2 still needed. |
+| 12 | fixed | A fair bet on chance 1/26 must return R with R/26 = 1, so R = 26 for a £1 stake: a net 25, odds of 25 to 1, and the wait 26^11 + 26^4 + 26 already uses the 26 return; prose now says "fair odds: a winning £1 bet returns £26". |
+| 13 | fixed | N_10 is set by the arrival clock, independent of the sizes, so E[S | N = n] = nE[Y] and the tower rule gives E[N]E[Y] (Grimmett and Stirzaker, conditional expectation and random sums); it is not a stopping time of the sizes in l19's sense. Prose cites Random sums (random-vars l18) and gives independent increments as the martingale reason; explain conditions on the count. |
+
+Keys and hidden tests: none changed. Slip values changed: review-4 items[6] `third` 0.3333 replaced by `stay` 0.5714; review-4 items[7] `one-minute` 0.0558 to 0.0606 and `sum` 0.0222 to 0.1179.
+
+Concepts script: three checks encoded the old defects and were re-pointed to the fixed text (F3, F7, F8; stated in its docstring). The F9 checks were already right and now pass. 112 checks, 0 failing, exit 0.
+
+Gates on the nine edited files: validator 0 errors; voice scan 35 gives 0 and 0; `markov-L4-5-concepts.py` exit 0; `run-number-scripts.mjs --only markov` 5 of 5 passed; `grade-all.mjs --file` 0 failures on each; playthrough desktop and `--mobile` all passed (18 runs).

@@ -11,6 +11,15 @@ apart. The script exits 0 when every check passes. A check that fails because
 the content is wrong stays failing: it is a finding in
 docs/reviews/audit-markov-4-5.md (the F-number is in the check name).
 Lines marked NOTE print evidence for an `imprecise` finding and never fail.
+
+Fix pass (Opus fixer): three checks encoded the old defects and are re-pointed
+to the fixed text. F3 now checks that rejections are most common at the two
+ends of the grid, as the reworded option reason says. F7 now checks the new
+slip 'stay' (4/7, the share of steps that stay put) and that the equal-weight
+average of the move chances is the slip 'half'. F8 now checks that 'half' is
+the even split between the two venues that lead to B and that 'forward' is
+the reversible reading P_BA. The two F9 checks were already correct tests and
+pass once the slip values were set to what their mistakes give.
 """
 import json
 import math
@@ -208,8 +217,10 @@ check("l15 s0 acceptance 0.898 and slips", near(w[5] / w[4], S[0]["widget"]["ans
 check("l15 s1 canvas matrix is the Metropolis chain", np.abs(np.array(S[1]["canvas"]["params"]["P"]) - PM).max() < 6e-5)
 check("l15 s3 chain is reversible for the posterior", balanced(PM, post) and np.allclose(stationary(PM), post))
 stay = np.diag(PM)
-check("F3 l15 s1 'rejections are common near the peak' (stay chance at 0.60 is not below the grid average)",
-      stay[4] >= stay.mean(), f"stay chances {np.round(stay, 3)}; lowest at the peak")
+why_done = next(o["why"] for o in S[1]["widget"]["options"] if o["id"] == "done")
+check("F3 l15 s1 rejections are most common at the two ends of the grid, as the option reason says",
+      stay[0] == stay.max() and stay[-1] == stay.max() and stay[4] == stay.min() and "two ends" in why_done,
+      f"stay chances {np.round(stay, 3)}; lowest at the peak")
 d = np.zeros(7)
 d[0] = 1
 at0, tv = [], []
@@ -359,8 +370,10 @@ w3 = np.array([1.0, 2, 4])
 P3 = metropolis_P(w3)
 move = 1 - np.diag(P3)
 check("review-4 i6 share of steps that move 3/7", near((w3 / 7) @ move, r4[6]["widget"]["answer"], 1e-3))
-check("F7 review-4 i6 slip 'third' (0.3333) is the equal-weight average of the move chances",
-      near(wrongs(r4[6]["widget"])["third"], move.mean(), 1e-3), f"equal-weight average is {move.mean():.4f}, the slip 'half'")
+w6 = wrongs(r4[6]["widget"])
+check("F7 review-4 i6 slip 'stay' is the share of steps that stay put, 4/7, and 'half' is the equal-weight average",
+      "third" not in w6 and near(w6["stay"], (w3 / 7) @ np.diag(P3), 1e-3) and near(w6["stay"], 4 / 7, 1e-3)
+      and near(w6["half"], move.mean(), 1e-3), f"stay share {(w3 / 7) @ np.diag(P3):.4f}, equal-weight average {move.mean():.4f}")
 key7 = pois(2, 6) * pois(1, 4)
 check("review-4 i7 key 0.00327 and the binomial identity", near(key7, r4[7]["widget"]["answer"], 1e-4)
       and near(key7, pois(3, 10) * 3 * 0.36 * 0.4, 1e-12))
@@ -378,8 +391,12 @@ check("homework-4 i0 king: total degree 420, corner return 140 by hitting equati
 pi = stationary(C)
 back = pi[0] * C[0, 1] / pi[1]
 check("homework-4 i2 P(A yesterday | B today) = 0.8", near(back, h4[2]["widget"]["answer"], 1e-9))
-check("F8 homework-4 i2 slip 'half' (0.5) is what 'treating the chain as reversible' gives",
-      near(wrongs(h4[2]["widget"])["half"], C[1, 0], 1e-9), f"reversible reading gives P_BA = {C[1, 0]}, the slip 'forward'")
+w2 = wrongs(h4[2]["widget"])
+fb2 = h4[2]["feedback"]["byKey"]
+check("F8 homework-4 i2 slip 'half' is the even split between A and C, and 'forward' is the reversible reading P_BA",
+      C[0, 1] > 0 and C[2, 1] > 0 and C[1, 1] == 0 and near(w2["half"], 1 / 2, 1e-9) and near(w2["forward"], C[1, 0], 1e-9)
+      and "evenly" in fb2["half"] and "reversible" in fb2["forward"],
+      f"reversible reading gives P_BA = {C[1, 0]}, the slip 'forward'")
 check("homework-4 i4 Bin(4,0.6) at 3 = 0.3456; sells mean 6", near(4 * 0.6 ** 3 * 0.4, h4[4]["widget"]["rows"][0][1]["answer"], 1e-6)
       and h4[4]["widget"]["rows"][1][1]["answer"] == 6)
 nb = rs.poisson(9, M)
