@@ -106,3 +106,27 @@ Convergence: the rule allows at most one new `wrong` per three levels. This roun
 ## Inbox
 
 One bullet in `docs/BACKLOG-INBOX.md` under "Raised later (audit first-python):", for the finding class of finding 2.
+
+## Fix pass
+
+Opus fixer, on commit `7ac0ec7e`. Every code-behaviour claim written here was run inside the page's Pyodide 0.27.7 (concepts section G, run through the sweep with `--concepts`), and every new `test-N` line was checked by submitting natural codings of its mistake through `tools/code-runner.mjs` (61 submissions, all first failing the test the line names; recorded as `mutants`, which `grade-all.mjs --code` now enforces).
+
+| # | Status | Basis |
+|---|---|---|
+| 1 | fixed | `math.ceil(20 / 6)` is 4 and `round(20 / 6)` is 3, so the slip 4 is rounding up: the line now says "You rounded 3.33 up to 4." Slip value and key unchanged. |
+| 2 | fixed | Own submissions: in script mode a `NameError`, `TypeError` or `ValueError` fails test 1; in function mode the raising or endless call fails its own test (`l8` test 4, `review-2` test 2, `homework-2` item 0 tests 3 and 4, item 2 tests 2 and 4); only a `SyntaxError` keys `error` (`code.js` line 622: `error` only when the run cannot load). Each sentence moved to the `test-N` line it reaches, worded as a condition; all thirteen `error` lines now say the code stopped before any test could run (`homework-2` item 0 keeps its colon hint). Differently from the audit: `review-1` item 6 also names `ValueError` (an unconverted price repeats the text, then `:.2f` raises `ValueError`); `homework-2` item 0 gains a `test-4` line (strict `elif` for hold, and `<=` on the stop, fail test 4) and item 2 a `test-4` line (`rate != 0` runs for ever on the negative rate); `l12` screen 10 moves the `Close` advice into its `test-1` line. |
+| 3 | fixed | Python tutorial 3.1.3 ("simple assignment never copies data") and a run: `b = prices; prices.append(99.50)` shows through `b`, `prices.copy()` does not, and assigning a new list to `a` leaves `b`. `l2` summary and screen 5 now say "Assigning to a again later"; screen 4's `a7` line says "For a number"; `l8` screen 8 adds the list warning with `append`, index assignment and `.copy()`. |
+| 4 | fixed differently | Own submissions: fee forgotten gives 101.2, `+ "1.50"` gives `'101.201.50'`, no conversion with the print deleted gives `TypeError`, `int` with it deleted gives `ValueError`, all at test 1. The line names all four; the starter and `int` with the print kept still key `error`, whose line already covers them. |
+| 5 | fixed | `f"{-3.61:+.2f}" == f"{-3.61:.2f}"` and `f"{3.61:+.2f}"` is `+3.61`: no graded value can show the sign. Both lines reworded as the audit gives. |
+| 6 | fixed | `"a"` keeps an existing line, `"w"` empties it (run). Added `l12` screen 5 test 4 and screen 7 test 5, each on a file holding an old line, with `test-4` and `test-5` lines and three append-mode mutants each. Expected values computed twice: `f"{1050.0:.2f}"` and the model solution; `1000 * 1.05` and `round(1000 * 1.05 ** 2, 2)` against the solution's lines. Solutions pass, starters fail, append programs fail the new test first. |
+| 7 | fixed | Library reference, Truth Value Testing: `if 5:` runs. The sentence now states a sufficient condition only. |
+| 8 | fixed | Language reference 2.3; `'_price'.isidentifier()` is True, `'1price'` and `'unit price'` are not. |
+| 9 | fixed | `repr` of a float is the shortest text that gives back the same float (`str(12.5)` is `12.5`, `str(0.1 + 0.2)` is `0.30000000000000004`). |
+| 10 | fixed | `table.js` line 57 keys a matching `wrong[]` id first. Added `wrong: simple, 1140` on `rows[1][1]` (1000 + 70 + 70; clear of 1144.90); the £70 line moved to `simple`, `r1c1` now gives the working. |
+| 11 | fixed differently | Python tutorial 7.2.1; a run: `list(open(...))` on `101.20\n102.50` ends `'102.50'`. Wording: "Each line ends in a newline, except perhaps the last." |
+| 12 | fixed | Python tutorial 7.2; a run: the `with` form reads the same list and `f.closed` is True after the block. One paragraph added to `l11` screen 3; no solution changed. |
+| 13 | fixed | `len("ABCDEFGHIJ"[2:15])` is 8 and `s[7:2]` is empty. `l3` screen 8 prose adds the condition; `l10` summary adds it and says a slice past the end holds fewer. The `l3` summary note also gains "a is not after b". |
+
+Scripts: the concepts script's old-text checks are re-pointed (the `q-floor` check tests the new line; each NOTE fires only while its old wording is present; the `l6` 74.90 check reads the new `simple` line), and section G checks the fix-pass claims: 815 checks, 0 failing, 0 notes, in CPython 3.13 and in Pyodide (strict tracebacks). The sweep's 17 routing facts and the two append programs are re-pointed in its `FIXED` map, so `KNOWN` is empty: 133 submissions, 0 differing, exit 0, also with `--concepts`.
+
+Gates: validator 0 errors (4,618 warnings, as before); voice scan 35 on the 14 edited files 0 and 0; `run-number-scripts --only first-python` 5 of 5; `grade-all.mjs --code` on the 14 files 0 failures (mutants checked); playthrough of the 10 lessons and 4 sets green desktop and `--mobile`.

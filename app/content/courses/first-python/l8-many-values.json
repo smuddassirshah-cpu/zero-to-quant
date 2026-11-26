@@ -655,7 +655,24 @@
             "expect": "None"
           }
         ],
-        "how": "Check runs 6 hidden tests. An empty list must return `None`, Python's value for 'nothing'."
+        "how": "Check runs 6 hidden tests. An empty list must return `None`, Python's value for 'nothing'.",
+        "mutants": [
+          {
+            "source": "def largest(values):\n    best = values[0]\n    for v in values:\n        if v > best:\n            best = v\n    return best\n",
+            "test": 4,
+            "symptom": "values[0] with no check: IndexError"
+          },
+          {
+            "source": "def largest(values):\n    best = None\n    best = values[0]\n    if len(values) > 0:\n        for v in values:\n            if v > best:\n                best = v\n    return best\n",
+            "test": 4,
+            "symptom": "values[0] before the check: IndexError"
+          },
+          {
+            "source": "def largest(values):\n    best = 0\n    if len(values) > 0:\n        best = values[0]\n        for v in values:\n            if v > best:\n                best = v\n    return best\n",
+            "test": 4,
+            "symptom": "returns 0 for the empty list"
+          }
+        ]
       },
       "hints": [
         {
@@ -675,7 +692,8 @@
         "correct": "All six tests passed, the empty list and the all-negative list included.",
         "generic": "Some tests failed. Try `largest([])` by hand: it must not touch `values[0]`.",
         "byKey": {
-          "error": "Your code stopped with an error. If it is an `IndexError`, `values[0]` ran on the empty list: put it inside the length check."
+          "error": "Your code stopped before any test could run. Read the last line of the message under the editor, then the line it points to.",
+          "test-4": "Test 4 passes an empty list and expects `None`. An `IndexError` means `values[0]` ran on it: put that line inside the length check."
         }
       },
       "explain": {
@@ -790,7 +808,7 @@
       "type": "generalise",
       "difficulty": 2,
       "title": "Lists in one place",
-      "prose": "A list of length $n$ has indexes $0$ to $n - 1$, and `-1` is the last. A running peak follows $\\text{peak}_t = \\max(\\text{peak}_{t-1},\\ p_t)$, starting from $\\text{peak}_0 = p_0$.\n\n```python\nx = prices[0]          # first value\ny = prices[-1]         # last value\nn = len(prices)        # how many\nprices.append(99.50)   # add at the end\nprices[0] = 100.00     # replace the first\n```",
+      "prose": "A list of length $n$ has indexes $0$ to $n - 1$, and `-1` is the last. A running peak follows $\\text{peak}_t = \\max(\\text{peak}_{t-1},\\ p_t)$, starting from $\\text{peak}_0 = p_0$.\n\n```python\nx = prices[0]          # first value\ny = prices[-1]         # last value\nn = len(prices)        # how many\nprices.append(99.50)   # add at the end\nprices[0] = 100.00     # replace the first\n```\n\nOne warning about lists. `b = prices` does not copy the list: both names now refer to one list. Changing it in place, as `append` and `prices[0] = ...` do, shows through `b` too. To get a separate list, write `b = prices.copy()`.",
       "question": "A list has 8 values. What is the index of its last value?",
       "widget": {
         "kind": "choice",

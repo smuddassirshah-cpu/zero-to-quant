@@ -5,6 +5,7 @@
    time limits). `expect` is the key the page should give if the line is right: test-N, error, or pass (a wrong program the hidden
    tests do not reject). A line printed DIFF is a routing fact recorded in the audit (finding 2); the script exits 0 when the
    differing lines are exactly the ones the audit lists (KNOWN below), 1 otherwise.
+   Fix pass: expectations the fix pass changed are re-pointed in FIXED (see there); KNOWN is then empty.
    With --concepts it also runs first-python-L1-3-concepts.py inside the same Pyodide, where its traceback checks are exact.
      node docs/reports/first-python-L1-3-test-line-sweep.mjs --local-cdn <pkgs> [--concepts] */
 import fs from 'node:fs';
@@ -192,16 +193,20 @@ const M2 = {
                         { name: 'no else, word unset at 0', src: 'def label(change):\n    if change > 0:\n        word = "up"\n    elif change < 0:\n        word = "down"\n    return word\n', expect: 'test-3' }] },
 };
 
-// Lines that differ from `expect`, each one recorded in the audit (finding 2: a runtime error or a timeout keys as test-N, not error:
-// in script mode it fails test 1; in function mode it fails the test whose call raised or ran too long).
-const KNOWN = new Set([
-  'l1-calculator[9] NameError', 'l2-naming-a-value[3] NameError (Price/price)', 'l4-asking-and-printing[4] int',
-  'l4-asking-and-printing[7] starter (TypeError)', 'l4-asking-and-printing[9] still text', 'l4-asking-and-printing[10] no slice',
-  'review-1[6] TypeError', 'l12-savings-script[10] header kept', 'l11-numbers-from-a-file[8] header kept: script print raises',
-  'homework-3[8] prints, with the script print line', 'homework-3[8] int(fee), with the script print line',
-  'l6-until-done[6] block never changes value (runs too long)', 'l6-until-done[9] block never changes balance (runs too long)',
-  'l8-many-values[6] values[0] outside the length check', 'review-2[6] pnls[0] on the empty list',
-  'homework-2[0] a branch does not set action', 'homework-2[2] no guard (runs too long)',
+// Lines that differ from `expect` and are recorded in the audit. Empty after the fix pass: each of the 17 routing facts of finding 2
+// is now expected as the key the page gives (FIXED below), because the fix pass moved every such sentence to that test-N line.
+const KNOWN = new Set([]);
+// Fix pass (audit "## Fix pass"): expectations re-pointed. The 17 crashes and timeouts of finding 2 key as test-N (in script mode test 1;
+// in function mode the test whose call raised or ran too long), and finding 6 added a hidden test that rejects append mode.
+const FIXED = new Map([
+  ['l1-calculator[9] NameError', 'test-1'], ['l2-naming-a-value[3] NameError (Price/price)', 'test-1'], ['l4-asking-and-printing[4] int', 'test-1'],
+  ['l4-asking-and-printing[7] starter (TypeError)', 'test-1'], ['l4-asking-and-printing[9] still text', 'test-1'], ['l4-asking-and-printing[10] no slice', 'test-1'],
+  ['review-1[6] TypeError', 'test-1'], ['l12-savings-script[10] header kept', 'test-1'], ['l11-numbers-from-a-file[8] header kept: script print raises', 'test-1'],
+  ['homework-3[8] prints, with the script print line', 'test-1'], ['homework-3[8] int(fee), with the script print line', 'test-1'],
+  ['l6-until-done[6] block never changes value (runs too long)', 'test-1'], ['l6-until-done[9] block never changes balance (runs too long)', 'test-1'],
+  ['l8-many-values[6] values[0] outside the length check', 'test-4'], ['review-2[6] pnls[0] on the empty list', 'test-2'],
+  ['homework-2[0] a branch does not set action', 'test-3'], ['homework-2[2] no guard (runs too long)', 'test-2'],
+  ['l12-savings-script[5] append mode instead of w', 'test-4'], ['l12-savings-script[7] append mode opened inside the loop', 'test-5'],
 ]);
 const { makeRunner } = await import(pathToFileURL(path.join(appDir, 'tools/code-runner.mjs')).href);
 const runner = makeRunner({ pkgs, root: appDir, jobs: 3 });
@@ -218,9 +223,9 @@ for (const set of [M, M2]) for (const [file, items] of Object.entries(set)) {
       const key = r.ok ? 'pass' : r.key;
       const first = r.rows && r.rows.find((x) => !x.ok);
       const got = first ? String(first.error || JSON.stringify(first.actual)).split('\n').pop().slice(0, 90) : '';
-      const id = `${file}[${idx}] ${m.name}`, ok = key === m.expect;
+      const id = `${file}[${idx}] ${m.name}`, want = FIXED.get(id) || m.expect, ok = key === want;
       if (!ok) { differing++; if (!KNOWN.has(id)) unexpected++; }
-      return `${ok ? 'ok  ' : 'DIFF'} ${id}: expect ${m.expect} got ${key} | ${got}`;
+      return `${ok ? 'ok  ' : 'DIFF'} ${id}: expect ${want} got ${key} | ${got}`;
     }));
   }
 }

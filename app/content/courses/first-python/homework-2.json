@@ -50,13 +50,47 @@
             "expect": "'sell'"
           }
         ],
-        "how": "Check runs 6 hidden tests. Prices exactly on the stop or on the target hold."
+        "how": "Check runs 6 hidden tests. Prices exactly on the stop or on the target hold.",
+        "mutants": [
+          {
+            "source": "def decide(price, stop, target):\n    if price < stop:\n        action = \"sell\"\n    elif price > target:\n        action = \"take profit\"\n    return action\n",
+            "test": 3,
+            "symptom": "no else: UnboundLocalError"
+          },
+          {
+            "source": "def decide(price, stop, target):\n    if price < stop:\n        action = \"sell\"\n    if price > target:\n        action = \"take profit\"\n    return action\n",
+            "test": 3,
+            "symptom": "two ifs, no hold: UnboundLocalError"
+          },
+          {
+            "source": "def decide(price, stop, target):\n    if price < stop:\n        action = \"sell\"\n    elif price > target:\n        action = \"take profit\"\n    else:\n        action = \"Hold\"\n    return action\n",
+            "test": 3,
+            "symptom": "returns Hold with a capital"
+          },
+          {
+            "source": "def decide(price, stop, target):\n    if price < stop:\n        action = \"sell\"\n    elif price > target:\n        action = \"take profit\"\n    elif price > stop and price < target:\n        action = \"hold\"\n    return action\n",
+            "test": 4,
+            "symptom": "hold only strictly between: UnboundLocalError on the stop"
+          },
+          {
+            "source": "def decide(price, stop, target):\n    if price <= stop:\n        action = \"sell\"\n    elif price > target:\n        action = \"take profit\"\n    else:\n        action = \"hold\"\n    return action\n",
+            "test": 4,
+            "symptom": "sells on the stop: <="
+          },
+          {
+            "source": "def decide(price, stop, target):\n    action = \"hold\"\n    if price <= stop:\n        action = \"sell\"\n    if price >= target:\n        action = \"take profit\"\n    return action\n",
+            "test": 4,
+            "symptom": "<= and >= on both edges"
+          }
+        ]
       },
       "feedback": {
         "correct": "All six tests passed, both edges included.",
         "generic": "Some tests failed. Check prices exactly on the stop and on the target: both hold.",
         "byKey": {
-          "error": "Your code stopped with an error. Check the colons and that every branch sets `action`."
+          "error": "Your code stopped before any test could run. Check the colons after `if`, `elif` and `else`.",
+          "test-3": "Test 3 is a price between the stop and the target, so it holds. An error naming `action` means no branch set it: add an `else`.",
+          "test-4": "Test 4 is a price exactly on the stop, which holds: use `price < stop`, not `<=`. An error naming `action` means no branch set it."
         }
       },
       "explain": {
@@ -151,13 +185,52 @@
             "expect": "9"
           }
         ],
-        "how": "Check runs 7 hidden tests, including a zero and a negative rate. A loop that never ends fails after 5 seconds."
+        "how": "Check runs 7 hidden tests, including a zero and a negative rate. A loop that never ends fails after 5 seconds.",
+        "mutants": [
+          {
+            "source": "def years_to_target(balance, rate, target):\n    years = None\n    if balance >= target:\n        years = 0\n    else:\n        years = 0\n        while balance < target:\n            balance = balance * (1 + rate)\n            years = years + 1\n    return years\n",
+            "test": 2,
+            "symptom": "no rate guard",
+            "timeout": true
+          },
+          {
+            "source": "def years_to_target(balance, rate, target):\n    years = 0\n    while balance < target:\n        balance = balance * (1 + rate)\n        years = years + 1\n    return years\n",
+            "test": 2,
+            "symptom": "plain loop, no guard",
+            "timeout": true
+          },
+          {
+            "source": "def years_to_target(balance, rate, target):\n    years = 0\n    if balance < target and rate > 0:\n        while balance < target:\n            balance = balance * (1 + rate)\n            years = years + 1\n    return years\n",
+            "test": 2,
+            "symptom": "returns 0, not None, for a rate of 0"
+          },
+          {
+            "source": "def years_to_target(balance, rate, target):\n    years = None\n    if balance >= target:\n        years = 0\n    elif rate != 0:\n        years = 0\n        while balance < target:\n            balance = balance * (1 + rate)\n            years = years + 1\n    return years\n",
+            "test": 4,
+            "symptom": "guard rate != 0: a negative rate runs for ever",
+            "timeout": true
+          },
+          {
+            "source": "def years_to_target(balance, rate, target):\n    years = None\n    if balance >= target:\n        years = 0\n    elif rate == 0:\n        years = None\n    else:\n        years = 0\n        while balance < target:\n            balance = balance * (1 + rate)\n            years = years + 1\n    return years\n",
+            "test": 4,
+            "symptom": "only a rate of 0 is caught",
+            "timeout": true
+          },
+          {
+            "source": "def years_to_target(balance, rate, target):\n    if balance >= target:\n        return 0\n    if rate == 0:\n        return None\n    years = 0\n    while balance < target:\n        balance = balance * (1 + rate)\n        years = years + 1\n    return years\n",
+            "test": 4,
+            "symptom": "early returns, only a rate of 0 caught",
+            "timeout": true
+          }
+        ]
       },
       "feedback": {
         "correct": "All seven tests passed, and no loop ran for ever.",
         "generic": "Some tests failed. Check the order of your tests: an already-reached target is 0 even when the rate is 0.",
         "byKey": {
-          "error": "Your code stopped with an error or ran too long. A rate of 0 never grows the balance: guard the loop with `rate > 0`."
+          "error": "Your code stopped before any test could run. Read the last line of the message under the editor, then the line it points to.",
+          "test-2": "Test 2 has a rate of 0, so the balance never grows and the answer is `None`. If its row says it stopped after 5 seconds, the loop never ends: guard it with `rate > 0`.",
+          "test-4": "Test 4 has a negative rate, so the balance shrinks and the answer is `None`. If its row says it stopped after 5 seconds, guard the loop with `rate > 0`, not `rate != 0`."
         }
       },
       "explain": {

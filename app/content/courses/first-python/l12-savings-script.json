@@ -440,14 +440,36 @@
             "call": "(open('s3.txt', 'w').close(), save_line('s3.txt', 1, 1050.0), open('s3.txt').read())[2]",
             "expect": "'Year 1: £1050.00\\n'",
             "compare": "equal"
+          },
+          {
+            "call": "(open('s4.txt', 'w').write('old line\\n'), save_line('s4.txt', 1, 1050.0), open('s4.txt').read())[2]",
+            "expect": "'Year 1: £1050.00\\n'",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 3 hidden tests. Each empties a file, calls your function on it, then reads back what it wrote.",
+        "how": "Check runs 4 hidden tests. Three empty a file first and one leaves an old line in it. Each calls your function, then reads back what the file holds.",
         "examples": [
           {
             "call": "(open('s1.txt', 'w').close(), save_line('s1.txt', 10, 1628.894626777442), open('s1.txt').read())[2]",
             "expect": "'Year 10: £1628.89\\n'",
             "compare": "equal"
+          }
+        ],
+        "mutants": [
+          {
+            "source": "def save_line(name, year, balance):\n    with open(name, \"a\") as f:\n        f.write(f\"Year {year}: £{balance:.2f}\\n\")\n\nsave_line(\"result.txt\", 10, 1628.894626777442)\nprint(open(\"result.txt\").read())\n",
+            "test": 4,
+            "symptom": "append mode keeps the old line"
+          },
+          {
+            "source": "def save_line(name, year, balance):\n    f = open(name, \"a\")\n    f.write(f\"Year {year}: £{balance:.2f}\\n\")\n    f.close()\n\nsave_line(\"result.txt\", 10, 1628.894626777442)\nprint(open(\"result.txt\").read())\n",
+            "test": 4,
+            "symptom": "append mode without with"
+          },
+          {
+            "source": "def save_line(name, year, balance):\n    open(name, \"a\").write(f\"Year {year}: £{balance:.2f}\\n\")\n\nsave_line(\"result.txt\", 10, 1628.894626777442)\nprint(open(\"result.txt\").read())\n",
+            "test": 4,
+            "symptom": "append mode in one line"
           }
         ]
       },
@@ -469,7 +491,8 @@
         "correct": "The file now holds one line, to the penny.",
         "generic": "Not quite right. Compare what test 1 read back with what it expected.",
         "byKey": {
-          "test-1": "Test 1 expects `'Year 10: £1628.89\\n'`. A missing `\\n` at the end, or many decimal places, are the usual differences."
+          "test-1": "Test 1 expects `'Year 10: £1628.89\\n'`. A missing `\\n` at the end, or many decimal places, are the usual differences.",
+          "test-4": "Test 4 writes to a file that already holds a line. Open it with `\"w\"`, so the old line goes."
         }
       },
       "explain": {
@@ -562,14 +585,36 @@
             "call": "(open('p4.txt', 'w').close(), save_plan('p4.txt', 1000.00, 0.05, 10), len(open('p4.txt').read().splitlines()))[2]",
             "expect": "10",
             "compare": "equal"
+          },
+          {
+            "call": "(open('p5.txt', 'w').write('Year 9: old\\n'), save_plan('p5.txt', 1000.00, 0.05, 2), open('p5.txt').read().splitlines())[2]",
+            "expect": "['Year 1: £1050.00', 'Year 2: £1102.50']",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 4 hidden tests. Each empties a file, calls your function on it, then reads back the lines it wrote.",
+        "how": "Check runs 5 hidden tests. Four empty a file first and one leaves an old line in it. Each calls your function, then reads back the lines the file holds.",
         "examples": [
           {
             "call": "(open('p1.txt', 'w').close(), save_plan('p1.txt', 2000.00, 0.04, 3), open('p1.txt').read().splitlines())[2]",
             "expect": "['Year 1: £2080.00', 'Year 2: £2163.20', 'Year 3: £2249.73']",
             "compare": "equal"
+          }
+        ],
+        "mutants": [
+          {
+            "source": "def save_plan(name, balance, rate, years):\n    for year in range(1, years + 1):\n        balance = balance * (1 + rate)\n        with open(name, \"a\") as f:\n            f.write(f\"Year {year}: £{balance:.2f}\\n\")\n\nsave_plan(\"plan.txt\", 2000.00, 0.04, 3)\nprint(open(\"plan.txt\").read())\n",
+            "test": 5,
+            "symptom": "append mode opened inside the loop"
+          },
+          {
+            "source": "def save_plan(name, balance, rate, years):\n    with open(name, \"a\") as f:\n        for year in range(1, years + 1):\n            balance = balance * (1 + rate)\n            f.write(f\"Year {year}: £{balance:.2f}\\n\")\n\nsave_plan(\"plan.txt\", 2000.00, 0.04, 3)\nprint(open(\"plan.txt\").read())\n",
+            "test": 5,
+            "symptom": "append mode opened once"
+          },
+          {
+            "source": "def save_plan(name, balance, rate, years):\n    f = open(name, \"a\")\n    for year in range(1, years + 1):\n        balance = balance * (1 + rate)\n        f.write(f\"Year {year}: £{balance:.2f}\\n\")\n    f.close()\n\nsave_plan(\"plan.txt\", 2000.00, 0.04, 3)\nprint(open(\"plan.txt\").read())\n",
+            "test": 5,
+            "symptom": "append mode without with"
           }
         ]
       },
@@ -591,7 +636,8 @@
         "correct": "Three lines, one per year, ending at £2,249.73.",
         "generic": "Not quite right. Compare test 1's lines with the ones expected.",
         "byKey": {
-          "test-1": "Test 1 expects three lines ending `Year 3: £2249.73`. One line means the file is opened inside the loop; two lines means `range` stops a year early; `£2000.00` on line 1 means you wrote before growing."
+          "test-1": "Test 1 expects three lines ending `Year 3: £2249.73`. One line means the file is opened inside the loop; two lines means `range` stops a year early; `£2000.00` on line 1 means you wrote before growing.",
+          "test-5": "Test 5 writes to a file that already holds a line. Open it once with `\"w\"`, before the loop, so the old plan goes."
         }
       },
       "explain": {
@@ -777,6 +823,23 @@
             "expect": "0.012845849802371512",
             "compare": "isclose"
           }
+        ],
+        "mutants": [
+          {
+            "source": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef daily_return(p0, p1):\n    return (p1 - p0) / p0\n\ndef returns_from_file(name):\n    closes = []\n    for line in open(name):\n        closes.append(float(line.split(\",\")[1]))\n    returns = []\n    for i in range(1, len(closes)):\n        returns.append(daily_return(closes[i - 1], closes[i]))\n    return returns\n\nfor r in returns_from_file(\"prices.csv\"):\n    print(f\"{r:.2%}\")\n",
+            "test": 1,
+            "symptom": "header kept: ValueError about Close"
+          },
+          {
+            "source": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef daily_return(p0, p1):\n    return (p1 - p0) / p0\n\ndef returns_from_file(name):\n    closes = []\n    for line in open(name).readlines():\n        closes.append(float(line.split(\",\")[1]))\n    returns = []\n    for i in range(1, len(closes)):\n        returns.append(daily_return(closes[i - 1], closes[i]))\n    return returns\n\nfor r in returns_from_file(\"prices.csv\"):\n    print(f\"{r:.2%}\")\n",
+            "test": 1,
+            "symptom": "readlines with the header: ValueError about Close"
+          },
+          {
+            "source": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef daily_return(p0, p1):\n    return (p1 - p0) / p0\n\ndef returns_from_file(name):\n    closes = []\n    for line in open(name).readlines()[1:]:\n        closes.append(float(line.split(\",\")[1]))\n    returns = []\n    for i in range(len(closes)):\n        returns.append(daily_return(closes[i - 1], closes[i]))\n    return returns\n\nfor r in returns_from_file(\"prices.csv\"):\n    print(f\"{r:.2%}\")\n",
+            "test": 1,
+            "symptom": "loop from index 0: 5 returns"
+          }
         ]
       },
       "hints": [
@@ -800,8 +863,8 @@
         "correct": "Four returns from five closes, printed as percentages.",
         "generic": "Not quite right. Look at the first failing test.",
         "byKey": {
-          "error": "Your script stops before the tests run. Read the traceback from the bottom: a `ValueError` about `Close` means the header is still being read.",
-          "test-1": "Test 1 expects 4 returns from 5 closes. Five means the loop started at index 0, pairing the last close with the first. An error means the script stops: read its traceback from the bottom.",
+          "error": "Your code stopped before any test could run. Read the last line of the message under the editor, then the line it points to.",
+          "test-1": "Test 1 expects 4 returns from 5 closes. Five means the loop started at index 0, pairing the last close with the first. A `ValueError` about `Close` means the header line is still being read: skip it.",
           "test-2": "Test 2 expects Tuesday's return, about +0.0128. A small negative number means the two closes are passed the wrong way round.",
           "test-7": "Your returns are right, but the script should print exactly four lines: `1.28%`, `-2.63%`, `0.60%` and `0.70%`. Use `f\"{r:.2%}\"` and remove any other `print`."
         }

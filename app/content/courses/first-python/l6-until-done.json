@@ -733,7 +733,27 @@
             "expect": "3"
           }
         ],
-        "how": "Check runs 6 hidden tests, each with a start, a target and a positive step. A start already at the target needs 0 steps."
+        "how": "Check runs 6 hidden tests, each with a start, a target and a positive step. A start already at the target needs 0 steps.",
+        "mutants": [
+          {
+            "source": "def steps_to_reach(start, target, step):\n    value = start\n    count = 0\n    while value < target:\n        count = count + 1\n    return count\n",
+            "test": 1,
+            "symptom": "value never changes",
+            "timeout": true
+          },
+          {
+            "source": "def steps_to_reach(start, target, step):\n    value = start\n    count = 0\n    while value < target:\n        start = start + step\n        count = count + 1\n    return count\n",
+            "test": 1,
+            "symptom": "start changes, not value",
+            "timeout": true
+          },
+          {
+            "source": "def steps_to_reach(start, target, step):\n    value = start\n    count = 0\n    while value < target:\n        value + step\n        count = count + 1\n    return count\n",
+            "test": 1,
+            "symptom": "value + step not stored",
+            "timeout": true
+          }
+        ]
       },
       "hints": [
         {
@@ -753,7 +773,8 @@
         "correct": "All six tests passed, including the start that needs no steps.",
         "generic": "Some tests failed. Check a start equal to the target: the loop should run 0 times.",
         "byKey": {
-          "error": "Your code stopped with an error or ran too long. Check that the block changes `value`, so the test can fail."
+          "error": "Your code stopped before any test could run. Read the last line of the message under the editor, then the line it points to.",
+          "test-1": "Test 1 expects 3 steps from 100 to 150. If its row says it stopped after 5 seconds, the loop never ends: check that the block changes `value`, so `value < target` can turn False."
         }
       },
       "explain": {
@@ -840,7 +861,16 @@
               "tol": {
                 "abs": 0.01
               },
-              "accept": "1144.90"
+              "accept": "1144.90",
+              "wrong": [
+                {
+                  "id": "simple",
+                  "value": 1140,
+                  "tol": {
+                    "abs": 0.01
+                  }
+                }
+              ]
             },
             {
               "edit": true,
@@ -888,7 +918,8 @@
         "correct": "£1,070.00, £1,144.90, £1,225.04: the interest itself earns interest.",
         "generic": "Not quite right. Multiply the latest balance by 1.07 on each pass.",
         "byKey": {
-          "r1c1": "You added £70 again. The second year's 7% is on £1,070.00, so it adds £74.90.",
+          "simple": "You added £70 again. The second year's 7% is on £1,070.00, so it adds £74.90.",
+          "r1c1": "Multiply £1,070.00 by 1.07: £1,144.90.",
           "r2c1": "Multiply £1,144.90 by 1.07: £1,225.04 to the penny."
         }
       },
@@ -939,7 +970,27 @@
             "expect": "11"
           }
         ],
-        "how": "Check runs 6 hidden tests. `rate` is a decimal, so 7% is `0.07`. A balance that lands exactly on double counts as doubled."
+        "how": "Check runs 6 hidden tests. `rate` is a decimal, so 7% is `0.07`. A balance that lands exactly on double counts as doubled.",
+        "mutants": [
+          {
+            "source": "def years_to_double(balance, rate):\n    target = 2 * balance\n    years = 0\n    while balance < target:\n        years = years + 1\n    return years\n",
+            "test": 1,
+            "symptom": "balance never changes",
+            "timeout": true
+          },
+          {
+            "source": "def years_to_double(balance, rate):\n    target = 2 * balance\n    years = 0\n    while balance < target:\n        new_balance = balance * (1 + rate)\n        years = years + 1\n    return years\n",
+            "test": 1,
+            "symptom": "growth stored under a new name",
+            "timeout": true
+          },
+          {
+            "source": "def years_to_double(balance, rate):\n    target = 2 * balance\n    years = 0\n    while balance < target:\n        balance = balance * rate\n        years = years + 1\n    return years\n",
+            "test": 1,
+            "symptom": "times rate, not 1 + rate: the balance shrinks",
+            "timeout": true
+          }
+        ]
       },
       "hints": [
         {
@@ -959,7 +1010,8 @@
         "correct": "All six tests passed. At 7% the balance doubles in 11 years.",
         "generic": "Some tests failed. Try a rate of 1.0 by hand: the balance doubles in exactly 1 year.",
         "byKey": {
-          "error": "Your code stopped with an error or ran too long. Check that the block changes `balance`."
+          "error": "Your code stopped before any test could run. Read the last line of the message under the editor, then the line it points to.",
+          "test-1": "Test 1 expects 11 years at 7%. If its row says it stopped after 5 seconds, the loop never ends: check that the block grows `balance` by `1 + rate` and stores it."
         }
       },
       "explain": {
