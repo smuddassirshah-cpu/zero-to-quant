@@ -492,19 +492,72 @@
             "setup": "v = np.array([0.01, 0.012, 0.015, 0.02]); C = np.full((4, 4), 0.3) + 0.7 * np.eye(4)",
             "call": "np.round(min_var_weights(np.outer(v, v) * C), 6).tolist()",
             "expect": "[0.543807, 0.309668, 0.132931, 0.013595]"
+          },
+          {
+            "call": "min_var_weights([[0.04, 0.044], [0.044, 0.0484]])",
+            "expect": "LinAlgError",
+            "compare": "raises"
           }
         ],
-        "how": "Check runs 8 hidden tests: six compare weights after rounding to 6 decimal places, two expect `LinAlgError` for a singular matrix. The first run loads NumPy, which takes a few seconds."
+        "how": "Check runs 9 hidden tests: six compare weights after rounding to 6 decimal places, three expect `LinAlgError` for a singular matrix. The first run loads NumPy, which takes a few seconds.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    if np.linalg.matrix_rank(S) < len(S):\n        raise np.linalg.LinAlgError(\"s\")\n    return np.linalg.solve(S, ones)\n",
+            "test": 1,
+            "symptom": "does not divide by the sum"
+          },
+          {
+            "source": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    return ones / len(S)\n",
+            "test": 1,
+            "symptom": "equal weights"
+          },
+          {
+            "source": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    z = 1 / np.sqrt(np.diag(S))\n    return z / z.sum()\n",
+            "test": 1,
+            "symptom": "inverse-volatility weights"
+          },
+          {
+            "source": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    if np.linalg.det(S) == 0:\n        raise np.linalg.LinAlgError(\"s\")\n    z = np.linalg.solve(S, ones)\n    return z / z.sum()\n",
+            "test": 7,
+            "symptom": "the computed determinant is 4.2e-19, not 0"
+          },
+          {
+            "source": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    z = np.linalg.solve(S, ones)\n    if np.isnan(z).any():\n        raise np.linalg.LinAlgError(\"s\")\n    return z / z.sum()\n",
+            "test": 7,
+            "symptom": "solve returns huge numbers, not nan"
+          },
+          {
+            "source": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    z = np.linalg.solve(S, ones)\n    if not np.all(np.isfinite(z)):\n        raise np.linalg.LinAlgError(\"s\")\n    return z / z.sum()\n",
+            "test": 7,
+            "symptom": "the huge numbers are finite"
+          },
+          {
+            "source": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    if S[0, 0] * S[1, 1] - S[0, 1] * S[1, 0] == 0:\n        raise np.linalg.LinAlgError(\"s\")\n    z = np.linalg.solve(S, ones)\n    return z / z.sum()\n",
+            "test": 9,
+            "symptom": "hand ad - bc is 2.2e-19 here, not 0"
+          },
+          {
+            "source": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    if S[0, 0] * S[1, 1] == S[0, 1] * S[1, 0]:\n        raise np.linalg.LinAlgError(\"s\")\n    z = np.linalg.solve(S, ones)\n    return z / z.sum()\n",
+            "test": 9,
+            "symptom": "the two hand products differ in the last bit"
+          },
+          {
+            "source": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    if S[0, 0] * S[1, 1] == S[0, 1] ** 2:\n        raise np.linalg.LinAlgError(\"s\")\n    z = np.linalg.solve(S, ones)\n    return z / z.sum()\n",
+            "test": 9,
+            "symptom": "exact test on the squared covariance"
+          }
+        ]
       },
       "feedback": {
         "correct": "Solve, then normalise; refuse a singular $\\Sigma$.",
         "generic": "Some tests failed. For two uncorrelated assets with variances 0.04 and 0.09 the weights are about 0.692 and 0.308.",
         "byKey": {
-          "test-1": "Uncorrelated assets get weights proportional to $1/\\sigma^2$: 25 and 11.1, which normalise to 0.692 and 0.308. Did you divide by the sum?",
+          "test-1": "Uncorrelated assets get weights proportional to $1/\\sigma^2$: 25 and 11.1, which normalise to 0.692 and 0.308. Fill in all three steps, and divide by the sum in step 3.",
           "test-6": "Two share classes with correlation 1 give a singular $\\Sigma$. Check `np.linalg.matrix_rank(S) < len(S)` and raise `np.linalg.LinAlgError`.",
-          "test-7": "Correlation 1 with different volatilities is singular too: $\\det = 0.0036 - 0.0036$.",
-          "error": "Your code stopped with an error. Fill in the three numbered steps in place of the `...`.",
-          "test-8": "Four assets with daily volatilities of 1% to 2% give a healthy $\\Sigma$ with determinant about $8 \\times 10^{-16}$. A determinant cut-off refuses it; the rank is 4."
+          "test-7": "Correlation 1 with different volatilities is singular too. Rounding leaves the computed determinant near $4 \\times 10^{-19}$, not 0, and `solve` returns huge numbers, not `nan`. Test the rank.",
+          "error": "Your code stopped before any test ran. The message under the editor says why. Then fill in the three numbered steps.",
+          "test-8": "Four assets with daily volatilities of 1% to 2% give a healthy $\\Sigma$ with determinant about $8 \\times 10^{-16}$. A determinant cut-off refuses it; the rank is 4.",
+          "test-9": "Volatilities of 20% and 22% with correlation 1: singular again. Even $ad - bc$ by hand leaves about $2 \\times 10^{-19}$ here, not 0. Test the rank."
         }
       },
       "explain": {
@@ -676,7 +729,7 @@
         "correct": "Build the cash-flow matrix, check its rank, solve, then multiply the targets' rows by the curve.",
         "generic": "Some tests failed. Read the first failing test against the description above.",
         "byKey": {
-          "error": "Your code stopped with an error. Give every bond a row with one entry per year, from year 1 to the longest maturity.",
+          "error": "Your code stopped before any test ran. The message under the editor says why. Each bond needs a row with one entry per year, from year 1 to the longest maturity.",
           "test-1": "Test 1 expects 0.96, 0.92 and 0.88. A bond's row holds its coupon in every year and £100 more at maturity. If the test shows an error, check the targets' rows too: pad them with zeros to the curve's length.",
           "test-2": "Test 2 expects 104.56, 92 and 101.4. Give each target a row on the same years, with zeros after its maturity, and multiply by the curve.",
           "test-3": "Test 3 has no one-year bond. Two two-year bonds with different coupons still fix years 1 and 2, so solve the whole system at once.",

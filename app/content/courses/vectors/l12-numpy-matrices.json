@@ -100,7 +100,7 @@
         "generic": "Some tests failed. The first test should give `[200.0, 150.0]`.",
         "byKey": {
           "test-1": "For 225 of P and 350 of Q the greeks are 200 and 150. Use `A @ x`, the matrix product.",
-          "error": "Your code stopped with an error. Replace the `...` with an expression that uses `A` and `x`."
+          "error": "Your code stopped before any test ran. The message under the editor says why. The one line to fill in is `total = A @ x`."
         }
       },
       "explain": {
@@ -225,9 +225,13 @@
           {
             "call": "is_inverse([[2, 0], [0, 2]], [[0.6, 0], [0, 0.6]])",
             "expect": "False"
+          },
+          {
+            "call": "is_inverse([[2, 3], [1, 4]], [[0.8, -0.6], [-0.2, 0.4]])",
+            "expect": "True"
           }
         ],
-        "how": "Check runs 8 hidden tests, comparing the values returned. The first run loads NumPy, which takes a few seconds.",
+        "how": "Check runs 9 hidden tests, comparing the values returned. The first run loads NumPy, which takes a few seconds.",
         "mutants": [
           {
             "source": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    return bool((B @ A == np.eye(n)).all())\n",
@@ -273,6 +277,36 @@
             "source": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    return np.allclose(B @ A, np.eye(n), atol=0.5)\n",
             "test": 8,
             "symptom": "tolerance far too loose"
+          },
+          {
+            "source": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    return B @ A == np.eye(n)\n",
+            "test": 1,
+            "symptom": "returns an array of booleans, not one `True`"
+          },
+          {
+            "source": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    return np.isclose(B @ A, np.eye(n))\n",
+            "test": 1,
+            "symptom": "`np.isclose` compares entry by entry and returns an array"
+          },
+          {
+            "source": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    pass\n",
+            "test": 1,
+            "symptom": "returns `None`"
+          },
+          {
+            "source": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    return bool((B == np.linalg.inv(A)).all())\n",
+            "test": 9,
+            "symptom": "exact comparison with the computed inverse"
+          },
+          {
+            "source": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    return np.array_equal(B, np.linalg.inv(A))\n",
+            "test": 9,
+            "symptom": "`np.array_equal` with the computed inverse, also exact"
+          },
+          {
+            "source": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    return bool(np.all(np.linalg.inv(A) == B))\n",
+            "test": 9,
+            "symptom": "`inv` gives -0.6000000000000001 where the decimals have -0.6"
           }
         ]
       },
@@ -294,12 +328,14 @@
         "correct": "`np.allclose(B @ A, np.eye(n))` passes true inverses and catches near misses.",
         "generic": "Some tests failed. Compare `B @ A` with the identity, using a tolerance.",
         "byKey": {
+          "test-1": "Test 1 passes a true inverse, so the answer is `True`. Return one `True` or `False`: compare `B @ A` with `np.eye(n)` using `np.allclose`.",
           "test-2": "That candidate forgot to divide by the determinant: it gives $5\\mathbf{I}$, so the answer is `False`.",
           "test-3": "Test 3 passes `np.linalg.inv(A)` itself as `B`, so the answer is `True`. Compare `B @ A` with `np.eye(n)`.",
-          "error": "Your code stopped with an error. Replace the `...` with a comparison of `B @ A` and `np.eye(n)`.",
+          "error": "Your code stopped before any test ran. The message under the editor says why. The return line compares `B @ A` with `np.eye(n)` using `np.allclose`.",
           "test-6": "With `==` the rounding error in `np.linalg.inv` breaks this 3 by 3 test. Use `np.allclose`.",
           "test-7": "Here $\\mathbf{B}\\mathbf{A}$ has 1s on its diagonal but a 1 off it, so it is not $\\mathbf{I}$. Compare every entry, not just the diagonal.",
-          "test-8": "Here $\\mathbf{B}\\mathbf{A} = 1.2\\mathbf{I}$: it rounds to $\\mathbf{I}$, yet it is not $\\mathbf{I}$. Compare with `np.allclose` at its default tolerance."
+          "test-8": "Here $\\mathbf{B}\\mathbf{A} = 1.2\\mathbf{I}$: it rounds to $\\mathbf{I}$, yet it is not $\\mathbf{I}$. Compare with `np.allclose` at its default tolerance.",
+          "test-9": "Test 9 types the inverse as decimals, so the answer is `True`. `np.linalg.inv(A)` returns `-0.6000000000000001` where the decimals have `-0.6`, so `==` against it fails. Compare `B @ A` with `np.eye(n)` using `np.allclose`."
         }
       },
       "explain": {
@@ -345,7 +381,24 @@
             "expect": "[200.0, 300.0, 100.0]"
           }
         ],
-        "how": "Check runs 5 hidden tests. Results are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+        "how": "Check runs 5 hidden tests. Results are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\ndef solve_system(A, b):\n    A = np.array(A, dtype=float)\n    b = np.array(b, dtype=float)\n    return np.linalg.solve(b, A)\n",
+            "test": 1,
+            "symptom": "arguments in the wrong order"
+          },
+          {
+            "source": "import numpy as np\n\ndef solve_system(A, b):\n    A = np.array(A, dtype=float)\n    b = np.array(b, dtype=float)\n    return A @ b\n",
+            "test": 1,
+            "symptom": "multiplies by A instead of solving"
+          },
+          {
+            "source": "import numpy as np\n\ndef solve_system(A, b):\n    A = np.array(A, dtype=float)\n    b = np.array(b, dtype=float)\n    return b / A\n",
+            "test": 1,
+            "symptom": "divides entry by entry"
+          }
+        ]
       },
       "hints": [
         {
@@ -365,8 +418,8 @@
         "correct": "The crossing (2, 3), the hedge (225, 350) and a 3 by 3 system, all from one line.",
         "generic": "Some tests failed. The first test should return `[2.0, 3.0]`.",
         "byKey": {
-          "test-1": "For $x + y = 5$ and $2x - y = 1$ the answer is (2, 3). Pass `A` first, then `b`.",
-          "error": "Your code stopped with an error. Check the order of the arguments: `np.linalg.solve(A, b)`."
+          "test-1": "For $x + y = 5$ and $2x - y = 1$ the answer is (2, 3). Use `np.linalg.solve(A, b)`, with `A` first, then `b`.",
+          "error": "Your code stopped before any test ran. The message under the editor says why. The one line to fill in is `x = np.linalg.solve(A, b)`."
         }
       },
       "explain": {
@@ -723,7 +776,24 @@
             "expect": "[225.0, 350.0]"
           }
         ],
-        "how": "Check runs 5 hidden tests. Results are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+        "how": "Check runs 5 hidden tests. Results are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\ndef three_way_hedge(greeks, target):\n    A = np.array(greeks, dtype=float)\n    b = np.array(target, dtype=float)\n    return np.clip(np.linalg.solve(A, b), -1000, 1000)\n",
+            "test": 3,
+            "symptom": "caps each trade at 1000"
+          },
+          {
+            "source": "import numpy as np\n\ndef three_way_hedge(greeks, target):\n    A = np.array(greeks, dtype=float)\n    b = np.array(target, dtype=float)\n    x = np.linalg.solve(A, b)\n    if np.abs(x).max() > 1000:\n        raise ValueError(\"too big\")\n    return x\n",
+            "test": 3,
+            "symptom": "refuses large trades"
+          },
+          {
+            "source": "import numpy as np\n\ndef three_way_hedge(greeks, target):\n    A = np.array(greeks, dtype=float)\n    b = np.array(target, dtype=float)\n    x = np.linalg.solve(A, b)\n    if np.abs(x).max() > 1000:\n        return np.zeros(len(b))\n    return x\n",
+            "test": 3,
+            "symptom": "returns no trade when the answer is large"
+          }
+        ]
       },
       "hints": [
         {
@@ -749,8 +819,8 @@
         "generic": "Some tests failed. The first should return `[200.0, 300.0, 100.0]`.",
         "byKey": {
           "test-1": "For the desk's targets the answer is 200, 300 and 100. Solve with `np.linalg.solve(A, b)`.",
-          "test-3": "Large answers are right here: a small gamma target with little delta needs big offsetting trades.",
-          "error": "Your code stopped with an error. Replace the `...` with a call to `np.linalg.solve`."
+          "test-3": "Large answers are right here. Every option has gamma near 0.08 of its delta, but this target has 0.05, so it needs big offsetting trades.",
+          "error": "Your code stopped before any test ran. The message under the editor says why. The one line to fill in calls `np.linalg.solve(A, b)`."
         }
       },
       "explain": {
@@ -875,7 +945,7 @@
           "test-1": "The P, Q, T matrix has rank 2, yet no error was raised. Test `np.linalg.matrix_rank(A) < len(A)` and `raise np.linalg.LinAlgError(...)`.",
           "test-3": "The options from the last lesson, with greeks in proportion, are singular too: rank 1. Compare the rank with `len(A)`.",
           "test-4": "A solvable hedge must still return its quantities. Raise only when the rank falls short.",
-          "error": "Your code stopped with an error. Replace the `...` with an `if` that raises when the rank falls short.",
+          "error": "Your code stopped before any test ran. The message under the editor says why. The check you add is an `if` on the rank, with a `raise` inside it.",
           "test-6": "This is the desk's hedge with every greek and target scaled by $10^{-4}$. Its determinant is about $2 \\times 10^{-16}$, yet it solves as before. Test the rank, not the size of the determinant.",
           "test-7": "Test 7 is singular: row 2 is 1.5 times row 1. Rounding leaves its determinant near $4 \\times 10^{-19}$, not 0, and `solve` returns huge numbers, not `nan`. Test the rank."
         }
