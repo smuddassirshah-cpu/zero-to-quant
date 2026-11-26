@@ -73,3 +73,22 @@ Earlier reads, opened only after the WIP commit `83c997b2`: `docs/reviews/review
 ## Inbox
 
 One bullet appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit limits):" an advisory lint for universal sentences ("Only ...", "always", "never", "anywhere", "the function whose") in `why`, `explain` and summary lines, since unhedged universals are a finding class seen three times in this audit alone (findings 1, 3 and 5; also 8 and 9).
+
+## Fix pass
+
+Opus fixer, 26 Nov 2026, on `32e15ef8`. Each basis is my own derivation (sympy checks in the fixer's scratch `verify.py`, not committed) or the named source. No graded key, slip value, hidden test or stated number changed.
+
+1. **fixed differently.** l8 s6 why now: "A derivative fails at a break, a corner, a cusp or a vertical tangent. A smooth peak is none of these: its tangent is flat, slope 0." (two sentences, to stay under 20 words). `summary.ideas[2]` as proposed. Levels 2 and 3 never stated that a derivative forces continuity (searched l5 to l12, homework, review and problems 2 and 3: problems-2 teaches only the converse, "continuity is not enough"). So it is now stated once where it first matters, l8 s5 prose: "Then the rise is close to slope × run, so it shrinks to 0 with the run. That rules out a break: a curve has no derivative where it breaks." Basis: Spivak ch. 9 Thm 1, `f(a+h) − f(a) = [(f(a+h) − f(a))/h]·h → f′(a)·0`; step function left quotient `−1/h → +∞`, misplaced hole `(h − 1)/h → −∞`; the new why makes no "only" claim, so `x sin(1/x)` at 0 is not contradicted.
+2. **fixed.** As proposed, both sentences. Basis: circle `x = √(25 − y²)` has `dx/dy = 0` at `y = 0` (top −5, bottom 0: vertical); folium branch `x²/6 + x⁵/1296` fits to `O(x⁹)` with slope 0 where `y′` is `0/0`.
+3. **fixed differently.** "Once nothing more cancels, a non-zero number over 0 means no finite limit." Kept "finite", matching `summary.ideas[2]`. Basis: `(x − 1)/(x − 1)²` is 0/0 at 1, one-sided limits +∞ and −∞.
+4. **fixed differently.** l9 line as proposed. l10 line c2: "As Δx → 0, Δu → 0 too: the inside has a derivative, so it has no break". I left out `g′(x)` there because c3 introduces it; using it in c2 would let c1, c3, c2, c4 read as a valid order. Basis: Spivak ch. 9 Thm 1, now taught at l8 s5.
+5. **fixed differently.** s5 why: "$\cos x$ is not its own slope graph. At x = 0, cos x is flat, but cos 0 = 1." ("Among these four" says nothing about the option chosen.) s6 why and summary as proposed. Basis: `(3eˣ)′ = 3eˣ`; `(bˣ)′/bˣ = ln b`, which is 1 only for b = e.
+6. **fixed.** As proposed, all three. Basis: `x³` is strictly increasing with `f′(0) = 0`, so "rises ⇒ f′ > 0" fails while "f′ > 0 ⇒ rises" holds (mean value theorem).
+7. **fixed.** As proposed, both. Basis: Stewart §2.3 direct substitution is stated for polynomials and rational functions in the domain; l1 s6 has `k(2) = 1` against limit 4.
+8. **fixed.** As proposed. Basis: `sin(1/x)` is bounded at 0 with no one-sided limits, so it is none of hole, jump or asymptote.
+9. **fixed.** As proposed, both. Basis: `∛(x³) = x` has slope 1 at 0 with a flat inside; the outside `u^(1/3)` has slope `u^(−2/3)/3 → ∞` at 0, so the chain rule's hypothesis fails.
+10. **fixed.** As proposed, both. Basis: `x³ − 3x` minus its tangent `−3x` at 0 is `x³`, which changes sign; Spivak ch. 9 opening.
+11. **fixed.** As proposed. Basis: `(3x + 2)/(x + 1) → 3`.
+12. **fixed differently.** trap: "$(uv)'$ is not $u'v'$. That product belongs to the corner, about $u'v'h^2$, which vanishes even after dividing by $h$." s7 last sentence likewise. Basis: for `u = x²`, `v = x³`, `ΔuΔv/h → 0` and `ΔuΔv/h² → 6x³`; product rule gives `5x⁴` against `((x + h)⁵ − x⁵)/h → 5x⁴`.
+
+Gates: validator 0 errors (4,617 warnings, none new); voice scan 35 on the ten edited files 0 and 0; concepts script 351 checks, exit 0 (no check re-pointed); `run-number-scripts --only limits` 9 of 9 passed; `grade-all --file` 0 failures on each edited file; playthrough desktop and `--mobile` green on l2, l3, l4, l5, l6, l8, l9, l10, l11, l12. No fluency file or problem set edited.
