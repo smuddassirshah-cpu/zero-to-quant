@@ -266,3 +266,7 @@ N3. l16 s9: "best total started at 0" has two more natural codings. One running 
 ```
 
 After the rows: read against the audit above. F1 is in a sentence finding 6 rewrote; neither the audit nor the fix pass questioned its last clause. F2 is the wording of finding 16's own paste-ready fix, applied as written. The one `wrong` (F1) counts towards the convergence rule for this round.
+
+## Fix-pass follow-up (orchestrator)
+
+- The fix-pass read's wrong row (l17 `quiz[1]` option d `why`) and imprecise row (review-4 `items[5].explain`) applied with the reader's text. Basis checked by the orchestrator: `heapq.heappop` on `[9, 5, 4, 3, 1]` returns 9, then 1, 3, 4, 5 (CPython 3.13); the options are shuffled, so "the last" names no fixed option. The wrong counts towards round 1 (5 wrong in all). Gates: validator 0 errors, voice scan 0 and 0, concepts and fixread scripts 0, ds number script 1 of 1, grade-all --code 0 failures, playthrough desktop and mobile green on both files.
