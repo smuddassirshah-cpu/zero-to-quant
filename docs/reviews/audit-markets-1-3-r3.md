@@ -79,3 +79,14 @@ No engine limit met; no bullet added to `docs/BACKLOG-INBOX.md`.
 - `python docs/reports/markets-L1-3-concepts-r3.py`: 665 checks, 2 failed, exit 1. The two failures are findings 1 and 2 and stay failing until fixed. Venv NumPy is newer than CI's pin; no figure depends on the version.
 - `node scratchpad/mkts13-r3/sweep.mjs app <pkgs>`: 43 submissions, all as the table above.
 - No playthrough (auditor rule 7).
+
+## Fix pass
+
+Opus fixer, from commit `8d0dd3dc`. Each basis below was derived afresh, not copied from the finding.
+
+1. Fixed (auditor's text). Basis: $-7.00/92.28 = -0.075856$, so −7.59% from the table's rounded prices; the unrounded prices (92.27827 and 85.27983, recomputed by summing discounted coupons) give −7.584%, so −7.58. The key −7.58 stays; both values sit inside its 0.02 tolerance, so the hint now says so.
+2. Fixed. Basis: £5 a period for 6 periods at 3% plus £100 at $1.03^{-6}$ is 110.83438, once by summing the six discounted coupons in exact fractions and once by the annuity formula. Slip set to 110.83; it stays clear of the key 97.29 and the other slips (97.33, 82.79). No key changed.
+3. Fixed differently (own wording, same substance). Basis: Hull 4.2, a rate $R$ compounded $m$ times a year grows by $R/m$ each period, so $r/12$ is the true monthly rate for a nominal rate credited monthly; the trap's error is dividing an effective rate. Explain, third sentence: "Dividing by 12 works only for a nominal rate credited monthly, not for an effective rate." Trap: "Dividing by 12 gives the monthly rate only for a nominal rate credited monthly. From an effective annual rate, the monthly rate is $(1 + r_{\text{eff}})^{1/12} - 1$."
+4. Fixed (auditor's text). Basis: $(1+a)(1+b) - 1 = a + b + ab$; the sum understates only when $ab > 0$. Lesson 8's +20%, −10%, +5% gives $1.2 \times 0.9 \times 1.05 - 1 = 13.4\%$ against a 15% sum. Sentence now reads "Adding up monthly gains understates compounded growth."
+
+Runs: validator 0 errors; voice scan 35 on the four files 0 and 0 (0 explanations over three sentences); `markets-L1-3-concepts-r3.py` 665 checks, 0 failed, exit 0 (no re-pointing needed: the finding 1 check looks for the old text, the finding 2 check recomputes the slip); r2, r1 and fixread scripts exit 0; `run-number-scripts --only markets` 1 passed; `grade-all --file` on the four files 0 failures; playthrough of l1, l3, l6 and review-2, desktop and `--mobile`, all passed. No key, slip band, hidden test or solution changed beyond the slip value in finding 2.
