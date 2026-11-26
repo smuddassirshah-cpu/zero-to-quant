@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Blind concept audit, numerics problems-1 to problems-4: independent recomputation
-of every key, slip and stated figure. Exits 0 when all content checks pass."""
+of every key, slip and stated figure. Exits 0 when all content checks pass.
+Fix pass: the P4 I0 P0 finding check encoded the old explain text and is re-pointed
+to the new sentence; the P2 I0 P1 slip check is unchanged."""
 import json, math, os, sys
 import numpy as np
 import mpmath
@@ -292,8 +294,12 @@ def bs_put(S, K, r, s, T):
 near('BS put 10.00', bs_put(20, 30, .04, .5, .5), 10.00, 5e-3)
 near('errs about 4p', bs_put(20, 30, .04, .5, .5) - V[1], 0.04, 5e-3)
 near('1.145 = step over weight condition at j = 3', dt * (sg**2 * 9 + r), 1.145, 1e-12)
-# FINDING CHECK: the course's explicit bound (l13) is Delta tau <= 1/(sigma^2 M^2 + r) with M = 4 here
-near("P4 I0 P0 explain: '1.145 times the longest the explicit bound allows' under the l13 bound (j = M)", dt * (sg**2 * 16 + r), 1.145, 1e-3)
+# FINDING CHECK (re-pointed in the fix pass): the l13 bound with j = M gives 2.02, not 1.145, so the
+# explain must tie 1.145 to the weight condition at j = 3 and not call it the explicit bound
+ex4 = P[4]['items'][0]['parts'][0]['explain']['text']
+ck("P4 I0 P0 explain no longer calls 1.145 the explicit bound", 'explicit bound allows' not in ex4 and 'keeps the $j = 3$ weight non-negative' in ex4, ex4)
+near('l13 bound at j = M: step / longest step = 2.02', dt * (sg**2 * 16 + r), 2.02, 1e-12)
+near('1.145 = step over longest step keeping the j = 3 weight non-negative', dt / (1 / (sg**2 * 9 + r)), 1.145, 1e-12)
 
 vy, vx, cv = 64.0, 100.0, 77.0; bh = 0.77
 vc = vy - 2 * bh * cv + bh * bh * vx; rho = cv / math.sqrt(vy * vx)

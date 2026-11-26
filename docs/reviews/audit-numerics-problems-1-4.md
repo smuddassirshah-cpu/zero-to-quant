@@ -51,3 +51,14 @@ Read after the ledger and findings were written: `docs/reviews/review-problems-n
 Finding 1's sentence was written by the first reader's fix (`review-problems-numerics-4` finding 5, a reuse replacement, checked there against the bound at $j = 3$). Finding 2 is the class of `review-problems-numerics-1-3` finding 8 and `review-delta-af-numerics` finding 2 (a slip value built from the unrounded figure), on a part neither read flagged. The earlier fixes hold: each one's text was a ledger row here and recomputes.
 
 Inbox: one bullet under "Raised later (audit numerics)" in `docs/BACKLOG-INBOX.md` (slip values against carried figures).
+
+## Fix pass
+
+Opus fixer, from commit bea50a86. Figures recomputed in `scratchpad/fix-num-ps/check.py` (exact fractions and mpmath Horner).
+
+1. Fixed differently. Basis: l13 sets the bound with $j = M$, which here gives $0.5 \times (0.25 \times 16 + 0.04) = 2.02$; the weight condition at $j = 3$ gives $0.5 \times 2.29 = 1.145$, that is $0.5 / (1/2.29)$. The sentence now reads "The step is 1.145 times the longest that keeps the $j = 3$ weight non-negative, so the checker steps implicitly." The auditor's wording ran to 25 words and raised an O2 warning, so it was shortened.
+2. Fixed differently. Basis: $f(1.1395) = 60.10318$ and $f(1.1395349) = 60.11420$, each by exact fractions and by Horner at 30 digits. The slip now centres on the value its line names, `"value": 60.1032, "tol": { "abs": 0.012 }`, so it fires for 60.1032, the unrounded 60.1142 and the 2 dp entries 60.10 and 60.11. The key $-33.90625$ and the slips 20 and 33.90625 are far outside the band.
+
+Scripts: `docs/reports/numerics-problems-concepts.py` finding check 1 encoded the old sentence and is re-pointed (docstring says so); 603 checks, 0 failed, exit 0. `docs/reports/delta-review-delta-af-numerics-numbers.py` line "finding 5 applied" matched the old sentence and is re-pointed to the new one; 265 checks, 0 failed.
+
+Gates: validator 0 errors (4,615 warnings, none new); voice scan 35 on both files 0 and 0; `run-number-scripts --only numerics` 8 of 8 passed; `grade-all --file` problems-2 (15 widgets) and problems-4 (18 widgets) 0 failures; playthrough `--problems numerics/problems-2` and `problems-4`, desktop and `--mobile`, all passed. No key, hidden test or solution changed; one slip value and band changed.

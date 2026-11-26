@@ -7,6 +7,7 @@ whole-number key. Each band is rebuilt with the engine's rule (abs tolerance plu
 100) and fed what a learner types from the rounded numbers the part prints.
 
 Exit 0 always. A FINDING line prints while the content is as the review describes and `resolved` once it is fixed.
+The numerics-problems concept-audit fix pass re-pointed the finding 5 text check to the new explain sentence.
 """
 import json
 import math
@@ -431,7 +432,7 @@ check('findings 3 and 4 applied', has(4, PID, 4, 'question', 'What is the first 
 PID = 'p-hand-implicit-put'
 br = F(1, 4) * 9 + F(4, 100)
 check('put centre weight -0.145 and 1.145 times the bound', 1 - F(1, 2) * br == F(-145, 1000) and F(1, 2) / (1 / br) == F(1145, 1000))
-check('finding 5 applied', has(4, PID, 1, 'feedback', 'not 2.25') and has(4, PID, 1, 'explain', '1.145 times the longest the explicit bound allows'))
+check('finding 5 applied', has(4, PID, 1, 'feedback', 'not 2.25') and has(4, PID, 1, 'explain', '1.145 times the longest that keeps the $j = 3$ weight non-negative'))
 w = part(4, PID, 1)['widget']
 check('put part 1 slip no-r', grade(w, rnd(float(1 - F(1, 2) * F(9, 4)), 3)) == 'no-r')
 
