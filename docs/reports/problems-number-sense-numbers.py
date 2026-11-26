@@ -240,6 +240,27 @@ def frac_part(items, iid, kk, exact, alt, slips):
     ok(last_value(part['feedback']['correct']) == exact, f'{tag}: correct line does not end on {exact}')
     ok(last_value(part['explain']['text']) == exact or str(exact.numerator) in part['explain']['text'], f'{tag}: explain does not state {exact}')
     wrongs = {z['id']: z for z in w.get('wrong', [])}
+    # Concept-audit fix (audit-number-sense-problems-1-3, finding 2): a key with no terminating decimal carries
+    # two bands either side of the key window, from the value cut at 2 d.p. up to the window and from the window
+    # to the value rounded up at 2 d.p., so a rounded or cut-short decimal gets a line that says the method is right.
+    den = exact.denominator
+    while den % 2 == 0:
+        den //= 2
+    while den % 5 == 0:
+        den //= 5
+    if den != 1:
+        cut, up = F(int(exact * 100), 100), F(-(-exact.numerator * 100 // exact.denominator), 100)
+        slips = dict(slips, **{'decimal-low': cut, 'decimal-high': up})
+        lo, hi = wrongs.get('decimal-low'), wrongs.get('decimal-high')
+        ok(lo is not None and hi is not None, f'{tag}: rounded-decimal bands missing')
+        if lo and hi:
+            kt = w['tol']['abs']
+            ok(lo['value'] - lo['tol']['abs'] <= float(cut) + 1e-12 and lo['value'] + lo['tol']['abs'] >= w['answer'] - kt - 3e-6,
+               f'{tag}: decimal-low band does not run from {float(cut)} to the key window')
+            ok(hi['value'] + hi['tol']['abs'] >= float(up) - 1e-12 and hi['value'] - hi['tol']['abs'] <= w['answer'] + kt + 3e-6,
+               f'{tag}: decimal-high band does not run from the key window to {float(up)}')
+            for z in (lo, hi):
+                ok('method is right' in part['feedback']['byKey'].get(z['id'], ''), f'{tag}: {z["id"]} line does not say the method is right')
     ok(set(wrongs) == set(slips), f'{tag}: wrong ids {sorted(wrongs)} vs slips {sorted(slips)}')
     for wid, val in slips.items():
         if wid not in wrongs:
@@ -247,7 +268,7 @@ def frac_part(items, iid, kk, exact, alt, slips):
         z = wrongs[wid]
         wt = z['tol']['abs']
         ok(wid in part['feedback']['byKey'], f'{tag}: wrong {wid} has no byKey line')
-        ok(abs(z['value'] - float(F(val))) <= max(wt, 1e-6), f'{tag}: wrong {wid} {z["value"]} vs slip {float(F(val))}')
+        ok(abs(z['value'] - float(F(val))) <= max(wt, 1e-6) + 1e-9, f'{tag}: wrong {wid} {z["value"]} vs slip {float(F(val))}')
         ok(F(val) != exact and abs(z['value'] - w['answer']) > w['tol']['abs'] + wt, f'{tag}: wrong {wid} inside the key band')
     for a_, b_ in itertools.combinations(list(wrongs), 2):
         A, B = wrongs[a_], wrongs[b_]
