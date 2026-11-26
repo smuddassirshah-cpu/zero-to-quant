@@ -62,3 +62,18 @@ Opus fixer, from commit bea50a86. Figures recomputed in `scratchpad/fix-num-ps/c
 Scripts: `docs/reports/numerics-problems-concepts.py` finding check 1 encoded the old sentence and is re-pointed (docstring says so); 603 checks, 0 failed, exit 0. `docs/reports/delta-review-delta-af-numerics-numbers.py` line "finding 5 applied" matched the old sentence and is re-pointed to the new one; 265 checks, 0 failed.
 
 Gates: validator 0 errors (4,615 warnings, none new); voice scan 35 on both files 0 and 0; `run-number-scripts --only numerics` 8 of 8 passed; `grade-all --file` problems-2 (15 widgets) and problems-4 (18 widgets) 0 failures; playthrough `--problems numerics/problems-2` and `problems-4`, desktop and `--mobile`, all passed. No key, hidden test or solution changed; one slip value and band changed.
+
+## Fix-pass read
+
+Fresh reader, blind to the audit above until these rows were written. Diff read: the content lines of commit 750c7515 under `app/content/courses` (two changed lines). Numbers recomputed with exact fractions and again with `decimal` Horner evaluation.
+
+| # | file | JSON path | claim | verdict | basis |
+|---|------|-----------|-------|---------|-------|
+| 1 | problems-4.json | `p-hand-implicit-put` parts[0].explain.text, sentence 2 | "The step is 1.145 times the longest that keeps the $j = 3$ weight non-negative, so the checker steps implicitly." | correct | l13 screen 5: centre weight $1 + b_j = 1 - \Delta\tau(\sigma^2j^2 + r) \ge 0$ iff $\Delta\tau \le 1/(\sigma^2j^2 + r)$. At $j = 3$: $\sigma^2j^2 + r = 0.25 \times 9 + 0.04 = 2.29$, longest step $1/2.29 = 0.43668$, and $0.5 \times 2.29 = 1.145$. The old wording ("the explicit bound") was false: l13's bound is taken at $j = M = 4$ (nodes 0 to 40, $\Delta S = 10$), where $0.5 \times (0.25 \times 16 + 0.04) = 2.02$. A negative weight at an interior node also breaks the $j = M$ bound, so "steps implicitly" follows. |
+| 2 | problems-4.json | same text, sentences 1 and 3 (unchanged, read in context) | $-0.145$; implicit diagonal $1 + 1.145 = 2.145$, last matrix entry | correct | $1 - 1.145 = -0.145$; matrix entry (3,3) in the prose is 2.145. The 1.145 at entry (1,1) is the $j = 1$ diagonal $1 + 0.5 \times 0.29$, a coincidence that does not clash with the sentence. |
+| 3 | problems-2.json | `p-project-irr` parts[1].widget.wrong[0].value | `accepted` slip value 60.1032 = $f(1.1395)$ | correct | Exact: $f(2279/2000) = 9616509239/160000000 = 60.10318274375$. Horner in decimal gives 60.103182743750. It matches the byKey line "That is $f(1.1395)$" and the question's carried value 1.1395. |
+| 4 | problems-2.json | `p-project-irr` parts[1].widget.wrong[0].tol | band 0.012, that is [60.0912, 60.1152] | correct | Catches the carried form 60.1032 (typed 60.10, 60.1, 60.103) and the unrounded form $f(49/43) = 4779500/79507 = 60.11420$ (typed 60.11, 60.114, 60.1142; offset 0.0110, margin 0.0010). Does not catch the key $-33.90625$, `endpoint` 20 or `sign` 33.90625, and no other route lands in the band: $f(1.14) = 60.2612$ and the part 1 sign slip gives $f(-0.1395) = -103.54$, both of which fall to the generic line. The old pair (60.1142, 0.006) had a floor of 60.1082 and missed the carried 60.1032 and a typed 60.10. |
+
+Counts: 4 rows; correct 4, wrong 0, imprecise 0, misleading 0, unverified 0. No fix needed.
+
+Note, outside the diff and not a finding: a learner who rounds part 1 to 2 decimal places and evaluates $f(1.14) = 60.26$ gets the generic line. The question carries 1.1395, so the band rightly stops short of it.
