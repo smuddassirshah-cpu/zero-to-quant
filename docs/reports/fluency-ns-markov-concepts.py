@@ -16,6 +16,12 @@ Fix pass (26 Nov 2026): findings 3 to 6 are fixed by a `where` that drops the dr
 to the new rule (they reject those draws, and the slip they guarded is always offered); Part A4 checks that each file
 carries that `where` and no longer the `when`. Part B still compares every sampler draw with the re-pointed model.
 
+Follow-up (Opus, after the fix-pass read): subtract-unlike now draws two fractions and writes the larger first (the
+model orders them as the file's `let` does), and drops draws where the old tops over b times d give the key;
+brackets-first draws a bracket from 3 to 5 (doubling equals squaring only at 2); two-state drops symmetric P
+(a + b = 1) and three-state drops draws where row times row, column times column, reading P the wrong way round or
+2P gives the key. Part A2 checks each of these wrong methods on every kept draw; Part A4 checks the new `where`s.
+
 Exit 0 when every check passes. A check that fails because the content is wrong stays failing (see the audit).
 Run from the repo root or anywhere: python3 docs/reports/fluency-ns-markov-concepts.py [--no-node]
 """
@@ -83,13 +89,23 @@ def m_add_unlike(v):
                        ('mediant lies strictly below the sum', F(a + c, b + d) < key)])
 
 
+def sub_order(v):
+    """Follow-up fix: two fractions are drawn (x1/y1, x2/y2) and the larger is written first, so the prompt's a/b - c/d."""
+    x1, y1, x2, y2 = v['x1'], v['y1'], v['x2'], v['y2']
+    return (x1, y1, x2, y2) if F(x1, y1) > F(x2, y2) else (x2, y2, x1, y1)
+
+
 def m_sub_unlike(v):
-    a, b, c, d = v['a'], v['b'], v['c'], v['d']
+    if v['y1'] == v['y2']:
+        return None
+    a, b, c, d = sub_order(v)
     L = b * d // math.gcd(b, d)
-    if b == d or L > 36 or not a * d > b * c:
+    if L > 36 or not a * d > b * c:
         return None
     key = F(a, b) - F(c, d)
     if F(a - c, L) == key:          # fix pass, finding 4: `where` drops the draws on which keeping the old tops scores
+        return None
+    if F(a - c, b * d) == key:      # follow-up: the same slip over b times d, the other natural common bottom
         return None
     slips = {}
     if a > c and b > d and F(a - c, b - d) != key:
@@ -231,9 +247,22 @@ def P2(P):
     return [[sum(P[i][k] * P[k][j] for k in range(n)) for j in range(n)] for i in range(n)]
 
 
+def mixups(P, i, j):
+    """Wrong methods for a two-step chance from i to j, worked here: row i times row j, column i times column j,
+    reading P the wrong way round (P^2 from j to i; the same sum when i = j, so not a wrong method there), and 2P."""
+    n = len(P)
+    out = {'row-times-row': sum(P[i][k] * P[j][k] for k in range(n)), 'column-times-column': sum(P[k][i] * P[k][j] for k in range(n)),
+           'twice-one-step': 2 * P[i][j]}
+    if i != j:
+        out['transposed'] = P2(P)[j][i]
+    return out
+
+
 def m_two_state(v):
     a, b, i, j = v['a'], v['b'], v['i'], v['j']
     if a == b:
+        return None
+    if a + b == 1:                  # follow-up: a symmetric P, on which a row and column mix-up gives the key
         return None
     P = [[a, 1 - a], [b, 1 - b]]
     names = ['bull', 'bear']
@@ -254,6 +283,8 @@ def m_three_state(v):
     j = v['j'] - 1
     key = P2(P)[0][j]
     if P[0][j] == key:              # fix pass, finding 6: `where` drops the draws on which the one-step entry scores
+        return None
+    if any(w == key for w in mixups(P, 0, j).values()):   # follow-up: a row and column mix-up, or 2P for P squared, scores
         return None
     slips = {}
     if P[0][j] ** 2 != key:
@@ -357,10 +388,12 @@ def wrong_method_hits():
         r = m_sub_unlike(v)
         if r is None:
             continue
-        a, b, c, d = v['a'], v['b'], v['c'], v['d']
+        a, b, c, d = sub_order(v)
         L = b * d // math.gcd(b, d)
         if F(a - c, L) == r['key']:
             out.setdefault('fluency-l3-adding-pieces#subtract-unlike tops-not-renamed', []).append(v)
+        if F(a - c, b * d) == r['key']:
+            out.setdefault('fluency-l3-adding-pieces#subtract-unlike old tops over b times d', []).append(v)
         if a > c and b > d and F(a - c, b - d) == r['key']:
             out.setdefault('fluency-l3-adding-pieces#subtract-unlike tops-and-bottoms', []).append(v)
     fams = load(MK, 'fluency-l2-transition-matrix')
@@ -373,6 +406,9 @@ def wrong_method_hits():
             out.setdefault('fluency-l2-transition-matrix#two-state-two-step squared-entry', []).append(v)
         if P[v['i']][v['j']] == r['key']:
             out.setdefault('fluency-l2-transition-matrix#two-state-two-step one-step', []).append(v)
+        for name, w in mixups(P, v['i'], v['j']).items():
+            if w == r['key']:
+                out.setdefault(f'fluency-l2-transition-matrix#two-state-two-step {name}', []).append(v)
     for v in space(fams['three-state-two-step']):
         r = m_three_state(v)
         if r is None:
@@ -382,6 +418,16 @@ def wrong_method_hits():
             out.setdefault('fluency-l2-transition-matrix#three-state-two-step squared-entry', []).append(v)
         if p == r['key']:
             out.setdefault('fluency-l2-transition-matrix#three-state-two-step one-step', []).append(v)
+        P = [[v['a1'], v['a2'], v['a3']], [v['b1'], v['b2'], v['b3']], [v['c1'], v['c2'], v['c3']]]
+        for name, w in mixups(P, 0, v['j'] - 1).items():
+            if w == r['key']:
+                out.setdefault(f'fluency-l2-transition-matrix#three-state-two-step {name}', []).append(v)
+    for v in space(load(NS, 'fluency-l12-which-first')['brackets-first']):
+        r = m_brackets_first(v)
+        if r is not None and v['a'] + v['b'] * 2 * v['g'] == r['key']:     # follow-up: doubling the bracket in place of squaring it
+            out.setdefault('fluency-l12-which-first#brackets-first doubled', []).append(v)
+        if r is not None and v['a'] + v['b'] * ((v['d'] + v['g']) ** 2 - v['d'] ** 2) == r['key']:   # info: (c - d)^2 read as c^2 - d^2
+            out.setdefault('fluency-l12-which-first#brackets-first squared each term', []).append(v)
     for v in space(fams['distribution-forward']):
         r = m_distribution(v)
         if r is None:
@@ -421,15 +467,28 @@ print(f'Info: l8 subtract-signed "reversed" equals a dropped-signs sum or differ
 
 # ---------------------------------------- Part A4: the files carry the fix-pass `where` (findings 3 to 6) ----------------------------------------
 print('Part A4: each fix-pass `where` is in its file and the `when` it replaces is gone')
-for folder, sid, fid, cond, wid in [(NS, 'fluency-l3-adding-pieces', 'subtract-unlike', '(a - c)/lcm(b, d) != a/b - c/d', 'tops-not-renamed'),
+for folder, sid, fid, cond, wid in ([(NS, 'fluency-l3-adding-pieces', 'subtract-unlike', '(a - c)/lcm(b, d) != a/b - c/d', 'tops-not-renamed'),
+                                    (NS, 'fluency-l3-adding-pieces', 'subtract-unlike', '(a - c)/(b*d) != a/b - c/d', None),
                                     (NS, 'fluency-l12-which-first', 'brackets-first', '(a + b)*g^2 != a + (b*g)^2', None),
                                     (MK, 'fluency-l2-transition-matrix', 'two-state-two-step', 'sq != key', 'squared-entry'),
-                                    (MK, 'fluency-l2-transition-matrix', 'three-state-two-step', 'p1j != key', 'one-step')]:
+                                    (MK, 'fluency-l2-transition-matrix', 'two-state-two-step', 'a + b != 1', None),
+                                    (MK, 'fluency-l2-transition-matrix', 'three-state-two-step', 'p1j != key', 'one-step')]
+                                    + [(MK, 'fluency-l2-transition-matrix', 'three-state-two-step', c, None)
+                                       for c in ('rr != key', 'cc != key', 'j == 1 or tr != key', '2*p1j != key')]):
     fam = load(folder, sid)[fid]
     check(cond in fam.get('where', []), f'{sid}#{fid}: where carries "{cond}"', str(fam.get('where')))
     if wid:
         w = [x for x in fam['wrong'] if x['id'] == wid]
         check(len(w) == 1 and 'when' not in w[0], f'{sid}#{fid}: slip {wid} has no `when`', str(w))
+
+# Follow-up: the bracket is never worth 2 (where doubling is squaring), and the subtract family's rejection stays well under 80%.
+g = load(NS, 'fluency-l12-which-first')['brackets-first']['vars']['g']['int']
+check(g[0] >= 3, 'fluency-l12-which-first#brackets-first: bracket value starts at 3', str(g))
+fam = load(NS, 'fluency-l3-adding-pieces')['subtract-unlike']
+allv = list(space(fam))
+kept_sub = sum(1 for v in allv if m_sub_unlike(v) is not None)
+print(f'  subtract-unlike: {kept_sub} of {len(allv)} drawn pairs kept ({1 - kept_sub / len(allv):.1%} rejected)')
+check(1 - kept_sub / len(allv) <= 0.6, 'fluency-l3-adding-pieces#subtract-unlike: rejection at most 60%', f'{kept_sub} of {len(allv)}')
 
 # ------------------------------------------------- Part B: sampler draws -------------------------------------------------
 def texval(t):

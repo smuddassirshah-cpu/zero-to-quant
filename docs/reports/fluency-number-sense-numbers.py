@@ -102,10 +102,14 @@ def l3_add(it, V):
 
 
 def l3_sub(it, V):
-    a, b, c, d = (int(V[k]) for k in 'abcd')
+    # two fractions are drawn and the larger is written first (follow-up fix pass), so order them here from the vars
+    p, q = (int(V['x1']), int(V['y1'])), (int(V['x2']), int(V['y2']))
+    (a, b), (c, d) = (p, q) if F(*p) > F(*q) else (q, p)
     L = b * d // gcd(b, d)
     key = F(a, b) - F(c, d)
     check(key > 0, f"subtract seed {it['seed']}: the answer is positive")
+    check(b != d and L <= 36, f"subtract seed {it['seed']}: unlike bottoms with a common bottom of at most 36")
+    check(F(a - c, b * d) != key, f"subtract seed {it['seed']}: old tops over {b} x {d} do not give the key (where, follow-up)")
     slips = {}
     if a > c and b > d and F(a - c, b - d) != key:
         slips['tops-and-bottoms'] = F(a - c, b - d)
@@ -201,6 +205,7 @@ def l12_powers(it, V):
 def l12_brackets(it, V):
     a, b, d, g = int(V['a']), int(V['b']), int(V['d']), int(V['g'])
     c = d + g
+    check(a + b * 2 * g != ev(f"{a} + {b} \\times ({c} - {d})^2"), f"brackets seed {it['seed']}: doubling the bracket does not give the key (follow-up)")
     expr = f"{a} + {b} \\times ({c} - {d})^2"
     item(it, f"Work out ${expr}$.", ev(expr),
          {'added-first': ev(f"({a} + {b}) \\times ({c} - {d})^2"), 'multiplied-then-squared': ev(f"{a} + ({b} \\times ({c} - {d}))^2")})
