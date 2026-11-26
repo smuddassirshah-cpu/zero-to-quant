@@ -60,3 +60,14 @@ New `wrong`: 0.
 ## Engine
 
 No new engine limit. Nothing added to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Opus fixer. Each fix was checked against my own derivation and run (`scratchpad/fix-odes-ps/check.py`: closed form and `solve_ivp`, plus `expm`), not taken from the text above. No key, slip value, tolerance or test changed.
+
+1. Fixed. `p-rising-pension` prose now reads "rise by 2% a year. The fund earns 4% a year. Both rates are compounded continuously." Basis: $B(10) = 2000(e^{10k} - e^{0.2})/(k - 0.02)$ gives £27,042.19 for $k = 0.04$ and £26,933.60 for $k = \ln 1.04$, both matched by `solve_ivp`; so the key needs the continuous reading (Boyce and DiPrima 2.3). The key stays.
+2. Fixed differently. Last sentence is now "Between 2 and 6, $f(m) > 0$, so membership that starts at 2.5 rises towards 6 and never passes it." Basis: $f(m) = -(m - 2)(m - 6) > 0$ on $(2, 6)$ and uniqueness stops a path crossing the equilibrium 6, so it rises and tends to 6 without reaching it (Strogatz 2.2 phase line; 2.4 for the linear test being local). I avoided "all the way to 6", which suggests 6 is reached.
+3. Fixed differently. `feedback.correct` says "without spiralling"; `explain` says the modes "decay without oscillating, since the eigenvalues are real. So the path does not spiral, though each gap can cross zero once on the way". Basis: `expm(At)(4, 2)` crosses $y = 0$ at $t = 0.1277$ and $x = 0$ at $t = 0.4024$, equal to $\tfrac14\ln\tfrac53$ and $\tfrac14\ln 5$; a sum of two real exponentials has at most one zero (Strogatz 5.2).
+4. Fixed. `byKey.signs` now "Each diagonal entry is a loss rate with a minus sign, so both modes decay: $-6$ and $-0.5$." Basis: with $g(0) = 1$, $b(0) = 0$, `expm` puts the blood peak at $t = 0.452$ hours, equal to $\ln 12 / 5.5$, so the blood amount rises first; the eigenvalues of the triangular $\mathbf{A}$ are $-6$ and $-0.5$ (Boyce and DiPrima 7.5).
+
+Gates: validator 0 errors; voice scan 35 on the three edited files 0 and 0; `odes-problems-concepts.py` 169 checks, exit 0, unchanged (no check encodes the old text); `run-number-scripts --only odes` 9 of 9 passed; `grade-all --file` problems-1, 3, 4 0 failures; playthrough `--problems odes/problems-1`, `-3`, `-4` desktop and `--mobile` all passed.
