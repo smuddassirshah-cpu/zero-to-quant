@@ -54,3 +54,6 @@ Raised later (audit cpp):
 
 Raised later (audit numerics):
 - (audit numerics-problems-1-4, finding 2) `[carry-band]` reads keys only. A `wrong` entry whose `byKey` line prints the carried figure ("That is $f(1.1395)$", `problems-2` `p-project-irr` part 2) can hold the value of the unrounded figure with a band that excludes the value of the printed one (60.1142 with 0.006 against $f(1.1395) = 60.1032$). Third sighting of the class (`review-problems-numerics-1-3` finding 8, `review-delta-af-numerics` finding 2). Proposed: when a slip line prints `f(<number>)` or "uses <number>" and the question carries that number from an earlier part, warn if the slip's band is narrower than the change the carried rounding makes.
+
+Raised later (audit number-sense):
+- numeric widget: a part that asks for an exact fraction has no way to say so to the grader. With `tol.abs 0.0005` a 3-place decimal of a recurring key is marked right and a 2-place one gets the generic method line (`number-sense/problems-1`, nine parts; `docs/reviews/audit-number-sense-problems-1-3.md` finding 2). Wanted: an `exact: true` flag (or a built-in `rounded` key) so that a decimal within about 1% of the key that is not the key gets "right amount, rounded; type the exact fraction", and a validator note on whether a slip may share the key's value with a wider window.
