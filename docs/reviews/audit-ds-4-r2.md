@@ -187,3 +187,46 @@ Opus fixer, from commit 50fc0df9. Each basis is the fixer's own derivation or so
 8. **fixed** (homework-4 item 7 `model`). Basis: own tick-array run, emptying the best level with the next live bid 500 ticks away moves the pointer 500 steps; add, cancel and lookup stay $O(1)$.
 
 Gates: validator 0 errors (4,610 warnings, unchanged); voice scan 35 on the five files 0 and 0; `ds-L4-concepts-r2.py` exit 0 (99 checks), with `--sweep` 153 submissions, 0 unexpected; `ds-L4-concepts.py` and `ds-L4-fixread.py` exit 0; `run-number-scripts --only ds` 1 passed; `grade-all --code` on the five files 0 failures; playthrough of l14, l17, l18, review-4, homework-4 green desktop and `--mobile`. Re-pointed in `ds-L4-concepts-r2.py` (docstring says so): "hw i1 expects" skips the new peak test, a new check covers it, and the H2 sweep expects test-9 and test-10 where the test list moved.
+
+## Fix-pass read
+
+Fresh reader, blind to this file and to the course's review, audit, concepts and fixread scripts until the rows below were written. Read: `git show 03f4d1e3 -- app/content/courses` (five files). Runs: `app/tools/code-runner.mjs` with one Pyodide worker (`jobs: 1`), 41 submissions in a row; `grade-all.mjs --code` on the five files (39 widgets, 9 code widgets, 0 failures).
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | l14-binary-trees | trap "Which change makes it return D, B, E, A, F, C, G?" `options[d].why` | Sorting gives A to G, which is not this tree's in-order; in-order follows positions, so sorting cannot repair the walk | correct | Derivation on the tree A(B(D,E),C(F,G)): in-order D B E A F C G, sorted A B C D E F G. Exactly one option (a) yields the target; b gives A C G F B E D as its `why` says |
+| 2 | l14-binary-trees | same item `feedback.byKey.d` | Sorted output is A to G, not D, B, E, A, F, C, G | correct | Same derivation |
+| 3 | l17-always-the-smallest | sift-up explore `explain.text` | A push makes at most one swap fewer than the tree has levels | correct | CLRS 6.1 and 6.5: height is floor(lg n), sift-up is O(height). Here n = 8, four levels, the new item starts on level 4, at most 3 swaps; the screen's case makes 2 |
+| 4 | l17-always-the-smallest | `screens[5].widget.how` | Test 11 fails if `heapq` appears anywhere in the code, comments included | correct | Test 11 is `'heapq' not in __learner_source__`. Run: solution plus a comment, plus an import, plus a docstring naming `heapq` each give `test-11`; the solution passes |
+| 5 | l17-always-the-smallest | `screens[5].feedback.byKey.test-11` | Same claim, then "write the swaps yourself" | correct | Same runs |
+| 6 | l17-always-the-smallest | `screens[5].feedback.byKey.test-5` | Do not write to index 0 after the last `heap.pop()`; an `IndexError` on a read means the right child was read without `2 * i + 2 < len(heap)` | correct | Three own codings run: `heap[0] = heap.pop()` unguarded (assignment IndexError, first failure test 5); `c = l if heap[l] < heap[r] else r` with only the left child checked (read IndexError, test 5); `if heap[c + 1] < heap[c]` unchecked (read IndexError, test 5). Both halves of the line name what the learner sees. A swap-ends-then-pop coding is correct and passes |
+| 7 | l18-order-book-heaps | "Cancelling from a heap" `hints[0]` | With `heapq` alone only the top comes off cheaply; finding any other entry is O(n) | correct | A binary heap orders only root-to-leaf paths (CLRS 6.1), so a search for an arbitrary key is a linear scan; `heapq` has no public remove-at-index or handle |
+| 8 | l18-order-book-heaps | same item `explain.text` | A heap that tracks each entry's index could delete it in O(log n) | correct | CLRS 6.5: handles map an object to its heap index; HEAP-DELETE in O(lg n) is exercise 6.5-8 (3rd edition; 6.5-10 in the 4th): move the last item into the hole, then sift up or down. Sentence is 28 words, explanation still three sentences |
+| 9 | l18-order-book-heaps | `summary.ideas[2]` | With `heapq`, do not delete from the middle: finding the entry costs O(n) | correct | As rows 7 and 8; the absolute "never" is gone and the reason given is the true one |
+| 10 | review-4 | `r4-valid.prose` | As in lesson 15, values may not repeat: left strictly smaller, right strictly larger | correct | Lesson 15 states the rule ("strictly between `lo` and `hi`", "a value already in the tree is not inserted again"). Under it exactly one option is valid: a passes; b has 9 in 8's left side; c has 7 in 8's right side; d repeats 3. CLRS 12.1 allows equal keys, so naming the course's convention here is needed and now done |
+| 11 | homework-4 | order-book longform `model`, Recommendation | Add, cancel and lookup are O(1); only the best-quote pointer can take longer, when its level empties | correct | Index into the level array, append to the level's queue, dict from id to order: O(1) each. The pointer scan is O(ticks) in the worst case. Cancel is O(1) when the order is unlinked through its dict entry (linked queue) or marked dead as in lesson 18; that hypothesis is the paragraph's own "with a dict from id to order" |
+| 12 | homework-4 | `h4-merge.widget.tests[8]` (new test 9) | `peak_heap(...) <= 20` on 20 lists of 100 items is True for a one-entry-per-list merge | correct | Expected value: pop then push keeps at most k = 20 entries; `range(i, 2000, 20)` has 100 items, 2,000 in all. Run: model solution passes all 10; starter fails `test-1`; correct variants pass (`heapify` + `heapreplace`, `from heapq import`, `import heapq as hq`, iterators, `heapq.merge`). Note, not a finding: a push-everything coding that imports `heapq` inside the function body passes test 9, because the real module is back by call time |
+| 13 | homework-4 | `h4-merge.widget.how` | 10 hidden tests; test 9 is the heap-size check; test 10 is the no-sort check | correct | Test list counted: 10; 9 is `peak_heap`, 10 is `NO_SORT`. Run: `sorted(...)` submission gives `test-10`. "500 lists of 200 items" is test 8 (100,000 items) |
+| 14 | homework-4 | `h4-merge.feedback.byKey.test-9` | Test 9 measures the heap on 20 lists; keep one entry per list | correct | Four own codings, each first failing at test 9: push every item; two entries per list refilled two ahead; `heapify` on the joined lists through `from heapq import`; refill with the whole rest of a list after its first pop. The line's advice is the repair for each. `test-3` and `test-4` lines are unchanged and still point at the only-empty and repeats tests |
+| 15 | homework-4 | `h4-merge.widget.mutants[0..2]` | Three codings fail first at test 9; "holds all 2,000 items of test 9" | correct | Run: all three give `test-9` and pass tests 1 to 8; 20 x 100 = 2,000 |
+| 16 | homework-4 | `h4-merge.widget.prelude` / `postlude` | "the real heapq goes back for other widgets" | imprecise (minor) | Run in one worker: after any submission that loads, a following widget sees the plain module (`sys.modules['heapq']` has no `_zq_real`, `heappush` is the builtin): 15 of 15. After a submission that fails to load (a `NameError` at top level, or a `SyntaxError`) the postlude never runs (`__zq_load` in `js/engine/widgets/code.js` stops at the learner's code), and the next widget imports the counting copy: probe gave `(True, 'function', False)`. The copy behaves like `heapq`, only slower, and the next `h4-merge` run unwraps it, so no graded result changes; the comment's claim is what fails |
+
+Counts: 16 rows. correct 15, wrong 0, imprecise 1 (minor), misleading 0, unverified 0.
+
+### Fix for row 16 (optional, minor; tested)
+
+Do not touch `sys.modules`. After the learner's code has run, point the learner's own names at the counting copy. Tested through `code-runner.mjs` in one worker: model solution passes, starter `test-1`, the three committed mutants and my four codings `test-9`, `sorted` `test-10`, all correct variants pass, and the probe sees plain `heapq` after every run, load errors included.
+
+`h4-merge.widget.prelude`:
+
+```json
+"_zhq = __import__('heapq')\n_zpeak = [0]\n_zwrap = {}\ndef _zwatch(f):\n    def g(heap, *a):\n        r = f(heap, *a)\n        _zpeak[0] = max(_zpeak[0], len(heap))\n        return r\n    return g\n_zshim = __import__('types').ModuleType('heapq')\n_zshim.__dict__.update(_zhq.__dict__)\nfor _zn in ('heappush', 'heapreplace', 'heappushpop', 'heapify'):\n    _zwrap[id(getattr(_zhq, _zn))] = _zwatch(getattr(_zhq, _zn))\n    setattr(_zshim, _zn, _zwrap[id(getattr(_zhq, _zn))])\ndef peak_heap(f):\n    _zpeak[0] = 0\n    f()\n    return _zpeak[0]\n"
+```
+
+`h4-merge.widget.postlude`: replace its first two lines (the comment and `_zs.modules['heapq'] = _zhq`) with
+
+```json
+"# the learner's own names for heapq and its functions are pointed at a counting copy; sys.modules is never touched\nfor _zk, _zv in list(globals().items()):\n    if _zk.startswith('_z'):\n        continue\n    if _zv is _zhq:\n        globals()[_zk] = _zshim\n    elif id(_zv) in _zwrap:\n        globals()[_zk] = _zwrap[id(_zv)]\n"
+```
+
+and keep the `_nosort_tokens` block as it is. The function-local import gap in row 12 stays either way.
