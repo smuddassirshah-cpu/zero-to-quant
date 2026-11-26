@@ -332,13 +332,31 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests, each number accepted within a relative error of 1e-9. One has 5,000 returns; one checks that your fit beats nearby values. Plain Python with `math` is enough; numpy is available but loads slowly."
+        "how": "Check runs 10 hidden tests, each number accepted within a relative error of 1e-9. One has 5,000 returns; one checks that your fit beats nearby values. Plain Python with `math` is enough; numpy is available but loads slowly.",
+        "mutants": [
+          {
+            "source": "import math\ndef fit_normal(returns):\n    n = len(returns)\n    mu = sum(returns) / n\n    return [mu, math.sqrt(sum((r - mu) ** 2 for r in returns) / n)]\ndef log_lik(returns, mu, sigma):\n    p = 1.0\n    for r in returns:\n        p *= math.exp(-(r - mu) ** 2 / (2 * sigma ** 2)) / (sigma * math.sqrt(2 * math.pi))\n    return math.log(p)\n",
+            "test": 9,
+            "symptom": "log of a product of 5,000 densities of 24.2: inf (test-9 line)"
+          },
+          {
+            "source": "import math\ndef fit_normal(returns):\n    n = len(returns)\n    mu = sum(returns) / n\n    return [mu, math.sqrt(sum((r - mu) ** 2 for r in returns) / n)]\ndef log_lik(returns, mu, sigma):\n    return math.log(math.prod(math.exp(-(r - mu) ** 2 / (2 * sigma ** 2)) / (sigma * math.sqrt(2 * math.pi)) for r in returns))\n",
+            "test": 9,
+            "symptom": "math.prod of the densities overflows (test-9 line)"
+          },
+          {
+            "source": "import math\ndef fit_normal(returns):\n    n = len(returns)\n    mu = sum(returns) / n\n    return [mu, math.sqrt(sum((r - mu) ** 2 for r in returns) / n)]\nimport numpy as np\nfrom scipy.stats import norm\ndef log_lik(returns, mu, sigma):\n    return float(np.log(np.prod(norm.pdf(returns, mu, sigma))))\n",
+            "test": 9,
+            "symptom": "np.prod of norm.pdf overflows (test-9 line)"
+          }
+        ]
       },
       "feedback": {
         "correct": "Your fit and log-likelihood pass every test.",
         "generic": "Some tests failed. Divide by $n$ in `fit_normal`, and sum logs rather than multiplying densities.",
         "byKey": {
-          "error": "Your code stopped with an error. Check that both `...` are replaced, and that no product overflows."
+          "error": "Your code stopped with an error before any test ran. Check the lines you changed for a typo or a missing bracket.",
+          "test-9": "Test 9 has 5,000 returns. A product of 5,000 densities overflows, so sum the log densities instead."
         }
       },
       "explain": {
