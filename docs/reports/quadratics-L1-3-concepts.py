@@ -12,6 +12,11 @@ Sections
   B  graded keys, slips and stated numbers, recomputed by hand-coded formulae
   C  fluency families swept over their whole range (own enumeration)
   D  canvas points lie on the curve they are drawn on (plane canvases)
+
+Fix pass (re-pointed): the finding checks for l7 screens[7] slip neg and
+problems-3 items[0].parts[1] slip no-a encoded "set the value" (-1 and -100).
+The fix kept each value and renamed the mistake instead, so those two checks now
+test that the value equals the mistake the feedback line names.
 """
 import itertools, json, math, os, re, sys
 from fractions import Fraction as F
@@ -328,16 +333,18 @@ for a_, b_, c_ in itertools.product(range(-4, 5), repeat=3):
 EXPECTED_FAIL = []
 w = key('l7-the-formula', 'screens', 7)
 have = wrongs(w)
-# feedback: "You made b^2 negative": -(3^2) - 4*2*(-1) = -1, but the slip value is -17 (= 4ac - b^2)
-if not near(have['neg'], -(3 ** 2) - 4 * 2 * -1):
-    EXPECTED_FAIL.append('F l7-the-formula screens[7] slip neg: value %s, but "made b^2 negative" gives %s; -17 is 4ac - b^2'
-                         % (have['neg'], -(3 ** 2) - 4 * 2 * -1))
+# fix pass: the value -17 is kept and the line now names 4ac - b^2 = -8 - 9; check value and wording agree
+fb_neg = load('l7-the-formula')['screens'][7]['feedback']['byKey']['neg']
+if not (near(have['neg'], 4 * 2 * -1 - 3 ** 2) and '4ac - b^2' in fb_neg and 'negative' not in fb_neg):
+    EXPECTED_FAIL.append('F l7-the-formula screens[7] slip neg: value %s, line "%s"; 4ac - b^2 = %s'
+                         % (have['neg'], fb_neg, 4 * 2 * -1 - 3 ** 2))
 w = key('problems-3', 'items', 0, 1)
 have = wrongs(w)
-# feedback: "You left out the -0.2": 10 * (10 - 20) = -100, but the slip value is +100
-if not near(have['no-a'], 10 * (10 - 20)):
-    EXPECTED_FAIL.append('F problems-3 items[0].parts[1] slip no-a: value %s, but leaving out -0.2 gives %s'
-                         % (have['no-a'], 10 * (10 - 20)))
+# fix pass: the value 100 is kept and the line now names "left out the 0.2 but kept its minus": -10 * (10 - 20) = 100
+fb_noa = load('problems-3')['items'][0]['parts'][1]['feedback']['byKey']['no-a']
+if not (near(have['no-a'], -10 * (10 - 20)) and 'kept its minus' in fb_noa and '-0.2$.' not in fb_noa):
+    EXPECTED_FAIL.append('F problems-3 items[0].parts[1] slip no-a: value %s, line "%s"; -10 * (10 - 20) = %s'
+                         % (have['no-a'], fb_noa, -10 * (10 - 20)))
 # l7 quiz[2]: a = 1 is a valid choice (multiply the equation by -1): same roots
 r_as_written = sorted(roots(-x ** 2 - 3 * x + 5))
 r_times_minus = sorted(roots(x ** 2 + 3 * x - 5))

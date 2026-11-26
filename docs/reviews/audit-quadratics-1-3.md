@@ -76,3 +76,17 @@ The earlier review's finding 14 deleted a slip in `homework-3` `items[4]` and re
 - `node tools/grade-all.mjs --file <file> --local-cdn <pkgs>` on each of the 28 files: 0 failures on every file.
 - Concepts script `docs/reports/quadratics-L1-3-concepts.py`: 16,619 checks pass, 0 unexpected failures, 6 finding lines kept failing (findings 1 to 6; finding 7 is a wording finding with no number to test). Exit code 1 until the fix pass, then 0.
 - No playthrough (auditor rules). Venv versions are newer than the CI pins; no figure here depends on a version.
+
+## Fix pass
+
+Opus fixer, from `f03f04b5`. Every value below recomputed by hand and again by the concepts script; wording edits only, no key, slip value or test changed.
+
+1. Fixed. Basis: for $2x^2 + 3x - 1$, $4ac - b^2 = 4(2)(-1) - 9 = -17$, and also $-(b^2 - 4ac) = -17$; making only $b^2$ negative gives $-9 + 8 = -1$. Value −17 kept (clear of key 17 and slips 1, 13); line now "You worked out $4ac - b^2 = -8 - 9$, the wrong way round. The order is $b^2 - 4ac = 9 + 8$."
+2. Fixed (renamed, value kept). Basis: $-10 \times (10 - 20) = 100$ and $10 \times (10 - 20) = -100$, so 100 is "drop the 0.2, keep its minus". Value 100 stays clear of key 20 and slip −20; line now "You left out the 0.2 but kept its minus: $-10 \times (-10) = 100$. With it, $-0.2 \times 10 \times (-10) = 20$."
+3. Fixed (exactly one option true). Basis: $-x^2 - 3x + 5$ and $x^2 + 3x - 5$ differ by a factor −1, so both have roots $\tfrac{-3 \pm \sqrt{29}}{2}$; reading as written fixes $a = -1$ uniquely. Question now "Reading the equation as it stands, what is $a$ in the formula?"; `dropsign` why names the ×(−1) route and its sign changes to $b$ and $c$; explain gains the third sentence on that route.
+4. Fixed. Basis: $(x - 4)(x + 2) < 0$ on $-2 < x < 4$ gives −1 to 3 (5; 4 without negatives); $(x + 5)(x - 2) < 0$ gives −4 to 1 (6; 2 without negatives). Both questions now say "negative ones included"; keys unchanged. `l12` `quiz[1]` (2 to 5) needs no change.
+5. Fixed. Basis: divisors of 24 give 4 positive and 4 negative pairs; the table lists the 4 positive ones. Prose and caption now say "positive whole numbers".
+6. Fixed differently. Basis: $P(2) = 100 - 14 + 1.2 = 87.20$, $P(-2) = 100 + 14 + 1.2 = 115.20$, so a fall gains £15.20 and a rise loses £12.80; the rise still loses, so "help" is false on the screen's numbers. Last sentence now "the curve opens upwards, so a fall in yields gains £15.20 but a rise loses only £12.80: this is **convexity**." (the screen's own figures rather than the auditor's general sentence).
+7. Fixed. Basis: real $p, q$ with $pq = 9 > 0$ share a sign, so $|p + q| = |p| + |q| > 0$; over the complex numbers $\pm 3i$ would do. Explain sentence 2 now gives that reason "on the number line"; `summary.trap` and `quiz[3]` option `d` say "No two numbers on the number line". The new explain sentence is 26 words (validator O2 soft warning, under the 35 gate), kept because the reason is the teaching.
+
+Concepts script: the finding checks for 1 and 2 encoded "set the value" (−1, −100); re-pointed to test that the kept value equals the mistake the line now names (docstring says so). Gates: concepts script exit 0 (16,619 checks); validator 0 errors; voice scan 35 on the seven files 0 and 0; number scripts `--only quadratics` 7 of 7 pass; `grade-all.mjs --file` 0 failures on each edited file; playthrough of the five lessons, `homework-3` and `problems-3`, desktop and `--mobile`, all passed.
