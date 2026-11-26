@@ -5,6 +5,10 @@ sympy and scipy.integrate, plus Monte Carlo checks of the empirical claims.
 Exit 0 means every check that should pass on correct content passes. Checks listed in EXPECTED_FAIL are
 content defects (audit findings): they stay failing until the content is fixed, and the script exits 1
 while any of them fails. Run: python docs/reports/integrals-L1-3-concepts.py [--quiet]
+
+Fix pass (round 1): findings 1, 2, 7 and 9 encoded the old text. They are re-pointed at the new text
+(the l3 area comparison, the l8 signed integral of f - b, the l4 products from the unrounded rates, and
+homework-3 test 8), so EXPECTED_FAIL is now empty and the script exits 0 on the fixed content.
 """
 import math, sys
 import numpy as np
@@ -89,17 +93,19 @@ chk('l3.s5 midpoint n=1000', riemann(math.sin, 0, math.pi, 1000, 'mid'), 2.000, 
 chk('l3.s6 area two humps', Q(lambda v: abs(math.sin(v)), 0, 2 * math.pi), 4, 1e-9)
 chk('l3.s9 inventory', I(400 - 100 * t, 0, 6, t), 600, 1e-9); chk('l3.s9 traded', Q(lambda v: abs(400 - 100 * v), 0, 6), 1000, 1e-6)
 chk('l3.q0', I(x, -2, 2), 0, 1e-12); chk('l3.q3 area', Q(lambda v: abs(v - 1), 0, 3), 2.5, 1e-9)
-# l3.s7.ex claims a negative integral means f "spends more of [2, 5] below the axis than above it". Counterexample:
+# l3.s7.ex (fixed text): a negative integral means the area below the axis on [2, 5] outweighs the area above it.
+# The old text said "more of [2, 5] below the axis"; the counterexample below is above the axis for 5/6 of [2, 5].
 fx = sp.Piecewise((-10, x < sp.Rational(5, 2)), (1, True))   # below the axis on [2, 2.5), above on [2.5, 5]
 neg, time_below, time_above = I(fx, 2, 5), 0.5, 2.5
-truth('l3.s7.ex negative integral => more of the interval below the axis (FINDING 1)', not (neg < 0 and time_below < time_above))
+area_below, area_above = 10 * time_below, 1 * time_above
+truth('l3.s7.ex negative integral <=> area below outweighs area above, not time (FINDING 1, fixed)', neg < 0 and area_below > area_above and time_below < time_above and abs(neg - (area_above - area_below)) < 1e-12)
 # l4
 chk('l4.s0 week', 120 + 80 + 150 + 60 + 90, 500, 0); chk('l4.s1 half time', math.sqrt(18), 4.24, 5e-3); chk('l4.s2 A(5)', I(20 * t, 0, 5, t), 250, 1e-9)
 chk('l4.s3 van', Q(lambda v: min(2 * v, 20), 0, 30), 500, 1e-6); chk('l4.s4 P&L', I(400 - 200 * t, 0, 3, t), 300, 1e-9); chk('l4.s5 back to 0', I(400 - 200 * t, 0, 4, t), 0, 1e-9)
 d1, d2 = 1e7 * 0.04 / 365, 1e7 * 0.045 / 365
 chk('l4.s8 daily 4%', d1, 1095.89, 5e-3); chk('l4.s8 daily 4.5%', d2, 1232.88, 5e-3); chk('l4.s8 total', 30 * d1 + 60 * d2, 106849.32, 5e-3)
 chk('l4.s8 first piece', 30 * d1, 32876.71, 5e-3); chk('l4.s8 second piece', 60 * d2, 73972.60, 5e-3)
-truth('l4.s8.ex "60 x 1,232.88 = 73,972.60" as printed arithmetic (FINDING 7)', abs(60 * 1232.88 - 73972.60) < 0.005)
+truth('l4.s8.ex printed products from the unrounded rates: 10,000,000 x 0.04 x 30/365 and x 0.045 x 60/365 (FINDING 7, fixed)', round(1e7 * 0.04 * 30 / 365, 2) == 32876.71 and round(1e7 * 0.045 * 60 / 365, 2) == 73972.60)
 chk('l4.s8 slip average', 1e7 * 0.0425 * 90 / 365, 104794.52, 5e-3); chk('l4.s8 slip 4%', 1e7 * 0.04 * 90 / 365, 98630.14, 5e-3); chk('l4.s8 slip 4.5%', 1e7 * 0.045 * 90 / 365, 110958.90, 5e-3)
 chk('l4.q0', 2000 * 15 + 500 * 30, 45000, 0); chk('l4.q1', I(3 * t, 0, 4, t), 24, 1e-9); chk('l4.q2', -50 * 6 + 80 * 2, -140, 0); chk('l4.q3', 1e6 * 0.06 * 73 / 365, 12000, 1e-6)
 # review-1, homework-1, problems-1
@@ -153,7 +159,7 @@ chk('l8.s6 area', Q(lambda v: abs(math.sin(v) - math.cos(v)), 0, math.pi), 2 * m
 chk('l8.q2 one piece', I(sp.sin(x) - sp.cos(x), sp.pi / 4, sp.pi), 2.414, 5e-4)
 net, area = I(30 - 2 * t - 20, 0, 12, t), Q(lambda v: abs(10 - 2 * v), 0, 12)
 chk('l8.s8 net gap', net, -24, 1e-12); chk('l8.s8 enclosed area', area, 74, 1e-6); chk('l8.s8 lead', I(10 - 2 * t, 0, 5, t), 25, 1e-12)
-truth('l8.s8.pr "the area between the rate curves is the gap between the equity curves" (FINDING 2)', abs(area - net) < 1e-6)
+truth('l8.s8.pr "the signed integral of f - b, not the area between the rate curves, is the gap" (FINDING 2, fixed)', abs((I(30 - 2 * t, 0, 12, t) - I(20 + 0 * t, 0, 12, t)) - net) < 1e-9 and abs(area - net) > 1)
 chk('l8.q0', I(x - x**2, 0, 1), 0.167, 5e-4); chk('l8.q1', I(4 - x**2, -2, 2), 10.67, 5e-3)
 chk('rev2.i2', I(sp.sqrt(x), 1, 4), 4.67, 5e-3); chk('rev2.i3', I(2 * x - x**2, 0, 2), 1.33, 5e-3); chk('rev2.i4', I(5 - t, 0, 5, t), 12.5, 1e-12); chk('rev2.i4 end', I(5 - t, 0, 10, t), 0, 1e-12)
 chk('rev2.i6', I(x**3, -2, 0), -4, 1e-12); chk('rev2.i8', pv(5000, 0.06, 3), 13727.48, 5e-3); chk('rev2.i8 slip', 15000 * math.exp(-0.18), 12529.05, 5e-3)
@@ -225,10 +231,11 @@ def n_successive(f, a, c, exact, tol):   # a wrong program: ignores `exact`
     m = 1
     while abs(riemann(f, a, c, 2 * m, 'trap') - riemann(f, a, c, m, 'trap')) >= tol: m *= 2
     return m
-T7 = [(sq, 0, 1, 1 / 3, 1e-4, 64), (lambda v: v, 0, 1, 0.5, 1e-9, 1), (cube, 0, 2, 4, 0.01, 32), (math.sin, 0, math.pi, 2, 1e-3, 64), (math.exp, 0, 1, math.e - 1, 1e-5, 128)]
+T7 = [(sq, 0, 1, 1 / 3, 1e-4, 64), (lambda v: v, 0, 1, 0.5, 1e-9, 1), (cube, 0, 2, 4, 0.01, 32), (math.sin, 0, math.pi, 2, 1e-3, 64), (math.exp, 0, 1, math.e - 1, 1e-5, 128),
+      (sq, 0, 1, 1 / 3, 1.5e-4, 64)]   # test 8, added in the fix pass
 for i, (f, a, c, ex, tol, want) in enumerate(T7): chk(f'hw3.i4 n_needed test {i + 3}', n_needed(f, a, c, ex, tol), want, 0)
 chk('hw3.i4 T3', riemann(sq, 0, 1, 3, 'trap'), 0.35185185185185186, 1e-12); chk('hw3.i4 T16 cube', riemann(cube, 0, 2, 16, 'trap'), 4.015625, 1e-12)
-truth('hw3.i4 hidden tests reject the "successive estimates" program that ignores exact (FINDING 9)', any(n_successive(f, a, c, ex, tol) != want for f, a, c, ex, tol, want in T7))
+truth('hw3.i4 hidden tests reject the "successive estimates" program that ignores exact (FINDING 9, fixed by test 8)', any(n_successive(f, a, c, ex, tol) != want for f, a, c, ex, tol, want in T7))
 truth('hw3.i4 proposed extra test separates them', n_needed(sq, 0, 1, 1 / 3, 1.5e-4) == 64 and n_successive(sq, 0, 1, 1 / 3, 1.5e-4) == 32)
 chk('hw3.i5', integrate.quad(lambda v: max(v - 104, 0) * tri(v), 104, 110)[0], 0.36, 1e-6); chk('hw3.i5 uniform', Q(lambda v: max(v - 104, 0) / 20, 104, 110), 0.90, 1e-6)
 truth('hw3.i6 diverges', sp.integrate(sp.log(x) / x, (x, 1, sp.oo)) == sp.oo); chk('hw3.i7 fall', (1 / 0.04 - 1 / 0.041) / 25 * 100, 2.44, 5e-3)
@@ -303,12 +310,7 @@ chk('MC p3.i2 E[ln X]', np.mean(np.log(R)), -0.0452, 1e-3); chk('MC p3.i2 mean g
 truth(f'MC p3.i2 compounded wealth tends to shrink: after 50 years median {np.median(W):.3f}, share below 1 {np.mean(W < 1):.3f}', np.median(W) < 0.2 and np.mean(W < 1) > 0.8)
 truth(f'MC p3.i2 ... although mean wealth stays near 1 ({np.mean(W):.2f}): the typical path shrinks, not the mean (FINDING 11, informational)', abs(np.mean(W) - 1) < 0.15)
 
-EXPECTED_FAIL = {
-    'l3.s7.ex negative integral => more of the interval below the axis (FINDING 1)',
-    'l8.s8.pr "the area between the rate curves is the gap between the equity curves" (FINDING 2)',
-    'l4.s8.ex "60 x 1,232.88 = 73,972.60" as printed arithmetic (FINDING 7)',
-    'hw3.i4 hidden tests reject the "successive estimates" program that ignores exact (FINDING 9)',
-}
+EXPECTED_FAIL = set()   # emptied by the fix pass: findings 1, 2, 7 and 9 now check the new text
 unexpected = [f for f in fails if f not in EXPECTED_FAIL]
 print(f'\n{npass} checks pass, {len(fails)} fail ({len(fails) - len(unexpected)} are content findings, {len(unexpected)} unexpected).')
 for f in fails: print('  failing:', f)
