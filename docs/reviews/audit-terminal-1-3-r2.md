@@ -142,3 +142,7 @@ Opus fixer, from commit 56950689. Every header below was submitted under the pag
 Script: `terminal-L1-3-concepts.py`'s NOTE check on `cd "desk"` encoded the old refusal and was re-pointed (docstring says so): `cd "desk"` is now accepted and a quoted `~` refused.
 
 Gates: validator 0 errors; voice scan 35 on homework-3: 0 and 0; `terminal-L1-3-concepts-r2.py` 191 checks, 0 failed; `terminal-L1-3-concepts.py` 168 OK, exit 0; `run-number-scripts --only terminal` 5 of 5; `grade-all --code --file homework-3` 2 code widgets, 0 failures (mutants included); playthrough of homework-3 desktop and `--mobile`, all passed.
+
+## Orchestrator note
+
+The Opus follow-up (230a7372) changed hidden checker code in homework-3 items[8] (`_runs`) and added one learner report string ("put cd on its own comment line, above the python3 line"). The orchestrator read the diff; the fixer ran 33 headers under Pyodide with true reports and checked the quoted `~` case in bash. No further fix-pass read was run. The l12 `exit()` edge and the SyntaxError frame note are in docs/BACKLOG-INBOX.md.
