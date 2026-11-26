@@ -61,4 +61,14 @@ Level 3: rows as equations and columns as unknowns; the $2 \times 2$ inverse on 
 
 ## Overlap with earlier reads
 
-(filled after the blind part was committed)
+Read after the blind part was committed (26ce5314): `docs/reviews/review-1.4.md` (vectors section and its fix pass), `review-problems-1.4-a.md`, `review-delta-problems-ab-1.md` (part A), `review-perf-retrofit-12.md` (the `h-bond-curve` rows) and `docs/reports/vectors-3-perf.md`. No earlier concept audit of this course exists (`concept-audit-log.md` has no row for it). The earlier findings counted are the conceptual ones and those on the truth of a feedback line; style, length, typesetting, freshness and grader-form findings are left out.
+
+| | count | which |
+|---|---|---|
+| found by this audit only | 14 | findings 1 to 14 |
+| found by the earlier reads only | 15 | review-1.4: l2 `pair-sum` value against its line; l4 screens[7] logic backwards; l8 screens[5] "socks and shoes" used for a transpose; l11 screens[10] "two assets carry the same risk"; l11 screens[8] converse asserted; l12 screens[7] "`np.allclose` catches a near-singular one"; l12 determinant cut-off; l12 quiz `np.allclose` tolerance; homework-3 determinant cut-off. review-problems-1.4-a: 3 (angle of a pipe, two conventions), 7 (`added` line and the sign slip), 10 (`Minv @ r` against "prefer solving"). review-delta-problems-ab-1: A1 (`decimal` lines). review-perf-retrofit-12: VC3-1 (nan line), VC3-2 ("square with full rank") |
+| found by both | 0 | |
+
+All fifteen earlier findings were fixed before this read, and the fixed text was checked here as ledger rows (all correct, among them the tolerance $10^{-8} + 10^{-5}|b|$, "some mix has zero variance" and the rank test). Nearest misses: review-1.4 dropped an unproved converse on l11 screens[8], and finding 10 is a gap in the set-up of the same proof; VC3-1 saw that a `nan` check is steered to in homework-3, and finding 3 is that the same check, and `det == 0`, pass the hidden tests of l12 screens[9]. Neither pair is the same defect.
+
+New `wrong` that no earlier read found: 3 (finding 1, serious; findings 2 and 11, minor). By the convergence rule (at most one new `wrong` per three levels) the course is not closed by this round.
