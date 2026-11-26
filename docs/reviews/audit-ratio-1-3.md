@@ -88,3 +88,26 @@ Opus fixer, from c4268e7c. Each basis is my own working, not the audit's.
 9. fixed differently. The part says "Using £39,185.69", and $39{,}185.69 \times 1.295029 = 50{,}746.6049$, so £50,746.60 is right as asked; unrounded, $52{,}000 \times 0.91^3 \times 1.09^3 = 50{,}746.6075$ (rational and float), £50,746.61. Key 50,746.605 ± 0.01 already accepts both and is unchanged. `accept` stays the plain figure, as `problems-ratio-numbers.py` requires; the explanation now names £50,746.61 and says both are accepted.
 
 Scripts re-pointed (old text or old value only): `ratio-L1-3-concepts.py` (finding 2 skip removed and its row added, finding 6 note reads the text with the Monte Carlo split kept as a check, finding 9 note reads the explanation); `ratio-L1-numbers.py` line 83, slip value 7.25. Gates: validator 0 errors, voice scan 35 0 and 0, concepts script exit 0 (0 fail, 0 note), number scripts 5 of 5, grade-all 0 failures on all seven files, playthrough of all seven green desktop and `--mobile`.
+
+## Fix-pass read
+
+Fresh reader, blind to the audit and to the course scripts until the rows below were written. Read `git show 957a62ee -- app/content/courses` at 238f0bea. Graded values come from the engine's own `numGrade` (grade.js loaded in node) and from the `sameOrder` rule of `widgets/order.js`.
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | l1-out-of-a-hundred.json | screens[8].widget.options[three].why | 850% moves the point four places; times 100 moves it two | correct | 0.085, 0.85, 8.5, 85, 850 is four moves; $0.085 \times 10^4 = 850$; 8.5 is two moves |
+| 2 | l1-out-of-a-hundred.json | quiz[0].widget.wrong[digits].value 7.25 | a learner who writes 7 and 25 side by side types 725 | correct | `numGrade`: "725" and "725%" store 7.25 and return key `digits`; "28", "28%" ok; band 7.2499 to 7.2501 is clear of the key band 0.2799 to 0.2801 and of `flipped` 3.5704 to 3.5724. The old 0.725 matched only a typed 72.5 |
+| 3 | l1-out-of-a-hundred.json | quiz[0].widget.over100 | the flag is honest | correct | grade.js never reads `over100`; validate.mjs 1047 uses it only to silence the above-1 warning. The slip is a real figure over 100% (725%) and the key stays 0.28 |
+| 4 | l10-scaling.json | screens[7].widget.same | `origin` and `slope` may swap; nothing else may | correct | Dependencies: `times` needs `ratio`; `origin` and `slope` each need only `times`. That gives 2 valid orders of 24. Enumerated all 24 with the widget rule: accepted exactly ratio, times, origin, slope and ratio, times, slope, origin; 22 refused, 0 disagreements with the dependency rule. AUTHORING line 324 matches the code (group members share a key by place) |
+| 5 | l10-scaling.json | screens[7].hints[step] | fixed ratio, rearrange, then the last two either way | correct | same as row 4 |
+| 6 | l10-scaling.json | screens[7].feedback.correct | the last two lines each follow from $y = kx$ | correct | $x = 0$ gives $y = 0$; $k(x+1) - kx = k$; neither uses the other |
+| 7 | l10-scaling.json | quiz[0].explain | 1,500 : 600 is 5 : 2; both are weights, so match units first | correct | 1.5 kg = 1,500 g; gcd(1500, 600) = 300; no universal claim about ratios is left |
+| 8 | l11-direct-or-inverse.json | screens[5].widget.options[direct].why | direct proportion is a straight line through (0, 0); this line misses it | correct | fuel $= 40 - 5t$ is 40 at $t = 0$; $y = kx$ is 0 at $x = 0$; no claim that the line rises |
+| 9 | l2-building-percentages.json | screens[7].explain | divide by 100 for 1%, then multiply by the percentage | correct | $300 \div 100 = 3$, $3 \times 4 = 12$; $A \times p / 100$ in general; no "never divides" |
+| 10 | l3-what-percentage.json | summary.formula.note | when the parts make one total, the whole is the total | correct | screen 7: 15 of 25 is 60%; screen 5 (£500 against £400, 125%) falls outside the condition, so the note no longer contradicts it |
+| 11 | l8-growth-on-growth.json | screens[9].explain | adding misses that the 4% fall came off £210; here it overstates | correct | 200, 210, 201.60, 206.64; $1.05 \times 0.96 \times 1.025 = 1.0332$; sum 3.5% against 3.32%. Note: the fall off £210 costs 40p and the rise on £201.60 gives 4p back, net 36p. The sentence names the larger effect and does not claim it is the only one |
+| 12 | problems-2.json | items[3].parts[1].explain | unrounded value £50,746.61; both accepted | correct | Decimal and Fraction: $39{,}185.69 \times 1.295029 = 50{,}746.6049$; $52{,}000 \times 0.91^3 \times 1.09^3 = 50{,}746.6075$. Key 50,746.605 with 0.01: 50,746.60 and 50,746.61 pass by 0.005 each, 50,746.59 and 50,746.62 fail |
+
+Counts: 12 rows, 12 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified. No fix needed.
+
+Observation, not a finding: on row 2 a learner who types 7.25 (0.0725 stored) gets the generic line, not `digits`. The byline says "side by side", which is 725, so the slip is keyed to its own description.
