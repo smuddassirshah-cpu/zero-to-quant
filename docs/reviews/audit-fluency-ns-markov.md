@@ -67,3 +67,21 @@ New `wrong`: 1 (finding 3). Notes on the earlier reads: the author report says k
 - `run-number-scripts.mjs --only number-sense`: 7 of 7 passed. `--only markov`: 5 of 5 passed.
 - `grade-all.mjs --file` on each of the six files, `--fluency-seeds 40`: 0 failures each; `fluency-l12-which-first` prints "1 coinciding Fluency draws noted" (finding 3).
 - No playthrough, as the auditor rules set.
+
+## Fix pass
+
+Opus fixer, 26 Nov 2026, from commit `724091bb`. Every change was checked over the family's whole range by my own enumeration in exact fractions (scratch `fix-fluency/ranges_check.py`), then by the engine's sampler.
+
+1. Fixed. `add-unlike` prompt now ends "as one fraction in its lowest terms, not a mixed number." Basis: `shapeFraction` in `js/engine/grade.js` accepts only a whole number or a single `\frac{p}{q}` (or `p/q`) in lowest terms, so `1\frac{5}{12}` fails the shape; 228 of 456 draws have a key above 1, none whole; lesson `l3` quiz `accept` lists $1\tfrac{1}{2}$. `subtract-unlike` keys are all below 1 (216 kept draws), so its prompt is unchanged.
+2. Fixed. Both `l5` prompts now read "as a whole number or one fraction in its lowest terms, not a mixed number." Basis: same grader; 58 of 152 and 149 of 259 draws have a non-whole key above 1 (enumerated); lesson `l5` accepts $1\tfrac{1}{2}$.
+3. Fixed. `brackets-first` gains `"where": ["(a + b)*g^2 != a + (b*g)^2"]`. Basis: equality needs $a(g^2 - 1) = b(b - 1)g^2$; enumerating $g = 2, 3, 4$ and $b = 2$ to 5 leaves only $a = 8$, $b = 3$, $g = 2$ (7 of 1,008 draws). Neither slip equals the key on any draw ($g \ge 2$, $b \ge 2$), slips carry no band and the key tolerance is 0. 1,001 draws kept, 179 distinct prompts in 200; 5,000 sampler draws hold no $(8, 3, 2)$.
+4. Fixed. `subtract-unlike` gains the `where` `(a - c)/lcm(b, d) != a/b - c/d` and `tops-not-renamed` loses its `when`. Basis: enumerated, 12 of 228 draws have $\tfrac{a - c}{L}$ equal to the key (first $\tfrac{2}{3} - \tfrac{1}{2}$). I also checked the other `when` (`tops-and-bottoms`): its key-guard part never fires (0 draws), and $a > c$, $b > d$ is a shape condition, so it stays. 216 draws kept; validator sample 604 of 804 tries rejected (75%, under 80%), 131 distinct prompts in 200.
+5. Fixed. `two-state-two-step` `where` becomes `["a != b", "sq != key"]` and `squared-entry` loses its `when`. Basis: enumerated, 8 of 288 draws (first $a = 0.1$, $b = 0.2$, bull to bear: $0.9^2 = 0.81 = (P^2)_{01}$). `one-step`'s `when` is always true ($P^2 = P$ entrywise only when $a = b$, enumerated) and stays. 280 draws kept, 144 distinct prompts in 200.
+6. Fixed. `three-state-two-step` gains `"where": ["p1j != key"]` and `one-step` loses its `when`. Basis: enumerated, 10 of 648 draws; `squared-entry` never equals the key (0 draws), so its `when` stays. 638 draws kept, 171 distinct prompts in 200.
+7. Fixed. `reversed` line now: "The size is right but the sign is not: that is ${b:()} - {a:()}$. Start at ${a}$ and move ${m}$ to the {dir}." Basis: the slip value is $b - a = -(a - b)$ on all 765 draws and the key is never 0 (`a != s*m`), so the line is true whichever slip produced the number; 435 of 765 draws match a dropped-signs value (enumerated), so the old line named the wrong mistake there.
+
+No key, slip value or test changed; four `when`s removed, four `where` conditions added, three prompts and one line reworded. Distinct prompts stay far above the set's n of 20.
+
+Scripts re-pointed: `docs/reports/fluency-ns-markov-concepts.py` (the four models now reject the draws the new `where` drops; new Part A4 checks each file carries the `where` and no `when`; docstring says so) and `docs/reports/fluency-number-sense-numbers.py` (prompt text of three families; `tops-not-renamed` always offered, with a check that it never gives the key).
+
+Gates: concepts script exit 0 (5,521 checks); validator 0 errors, output identical to the pre-fix run; voice scan 35 on the five files 0 and 0; `run-number-scripts --only number-sense` 7 of 7, `--only markov` 5 of 5; `grade-all --file --fluency-seeds 4` (and 40) 0 failures on all five, no coinciding-draw note on l12; `test-fluency` l3 and l5 300 of 300; playthrough `--fluency` of the five sets desktop and `--mobile` all passed.

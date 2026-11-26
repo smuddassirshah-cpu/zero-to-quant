@@ -12,6 +12,10 @@ the wrong mistake), and the rules the feedback states hold.
 Part B draws 300 items per family with tools/fluency-sample.mjs and compares the printed key and slips with Part A's
 derivation from the printed vars.
 
+Fix pass (26 Nov 2026): findings 3 to 6 are fixed by a `where` that drops the draws, so the four models below re-point
+to the new rule (they reject those draws, and the slip they guarded is always offered); Part A4 checks that each file
+carries that `where` and no longer the `when`. Part B still compares every sampler draw with the re-pointed model.
+
 Exit 0 when every check passes. A check that fails because the content is wrong stays failing (see the audit).
 Run from the repo root or anywhere: python3 docs/reports/fluency-ns-markov-concepts.py [--no-node]
 """
@@ -85,11 +89,12 @@ def m_sub_unlike(v):
     if b == d or L > 36 or not a * d > b * c:
         return None
     key = F(a, b) - F(c, d)
+    if F(a - c, L) == key:          # fix pass, finding 4: `where` drops the draws on which keeping the old tops scores
+        return None
     slips = {}
     if a > c and b > d and F(a - c, b - d) != key:
         slips['tops-and-bottoms'] = (F(a - c, b - d), 0)
-    if F(a - c, L) != key:
-        slips['tops-not-renamed'] = (F(a - c, L), 0)
+    slips['tops-not-renamed'] = (F(a - c, L), 0)
     u, w = a * L // b, c * L // d
     return dict(key=key, slips=slips, rules=[('difference over the common size', F(u - w, L) == key), ('key positive', key > 0),
                                              ('key is not a whole number', key.denominator != 1)])
@@ -199,6 +204,8 @@ def m_powers_next(v):
 def m_brackets_first(v):
     a, b, d, g = v['a'], v['b'], v['d'], v['g']
     c = d + g
+    if (a + b) * g ** 2 == a + (b * g) ** 2:    # fix pass, finding 3: `where` keeps the two slips apart
+        return None
     key = a + b * ((c - d) ** 2)
     return dict(key=key, slips={'added-first': ((a + b) * (c - d) ** 2, 0), 'multiplied-then-squared': (a + (b * (c - d)) ** 2, 0)},
                 rules=[('bracket is positive', c - d >= 2)])
@@ -231,9 +238,9 @@ def m_two_state(v):
     P = [[a, 1 - a], [b, 1 - b]]
     names = ['bull', 'bear']
     key = P2(P)[i][j]
-    slips = {}
-    if P[i][j] ** 2 != key:
-        slips['squared-entry'] = (P[i][j] ** 2, 0)
+    if P[i][j] ** 2 == key:         # fix pass, finding 5: `where` drops the draws on which squaring the entry scores
+        return None
+    slips = {'squared-entry': (P[i][j] ** 2, 0)}
     if P[i][j] != key:
         slips['one-step'] = (P[i][j], 0)
     return dict(key=key, slips=slips, rules=[('rows sum to 1', all(sum(r) == 1 for r in P)), ('entries strictly between 0 and 1', all(0 < x < 1 for r in P for x in r)),
@@ -246,11 +253,12 @@ def m_three_state(v):
     P = [[v['a1'], v['a2'], v['a3']], [v['b1'], v['b2'], v['b3']], [v['c1'], v['c2'], v['c3']]]
     j = v['j'] - 1
     key = P2(P)[0][j]
+    if P[0][j] == key:              # fix pass, finding 6: `where` drops the draws on which the one-step entry scores
+        return None
     slips = {}
     if P[0][j] ** 2 != key:
         slips['squared-entry'] = (P[0][j] ** 2, 0)
-    if P[0][j] != key:
-        slips['one-step'] = (P[0][j], 0)
+    slips['one-step'] = (P[0][j], 0)
     return dict(key=key, slips=slips, rules=[('rows sum to 1', all(sum(r) == 1 for r in P)), ('entries strictly between 0 and 1', all(0 < x < 1 for r in P for x in r)),
                                              ('state word matches column', v['tj'] == ['Sunny', 'Cloudy', 'Rain'][j]),
                                              ('key has at most 2 decimal places', (key * 100).denominator == 1)])
@@ -367,6 +375,8 @@ def wrong_method_hits():
             out.setdefault('fluency-l2-transition-matrix#two-state-two-step one-step', []).append(v)
     for v in space(fams['three-state-two-step']):
         r = m_three_state(v)
+        if r is None:
+            continue
         p = [v['a1'], v['a2'], v['a3']][v['j'] - 1]
         if p ** 2 == r['key']:
             out.setdefault('fluency-l2-transition-matrix#three-state-two-step squared-entry', []).append(v)
@@ -408,6 +418,18 @@ for v in space(fam):
     b = v['s'] * v['m']
     same += r['slips']['reversed'][0] in (abs(v['a']) - abs(b), abs(v['a']) + abs(b))
 print(f'Info: l8 subtract-signed "reversed" equals a dropped-signs sum or difference of sizes on {same} of {tot} draws')
+
+# ---------------------------------------- Part A4: the files carry the fix-pass `where` (findings 3 to 6) ----------------------------------------
+print('Part A4: each fix-pass `where` is in its file and the `when` it replaces is gone')
+for folder, sid, fid, cond, wid in [(NS, 'fluency-l3-adding-pieces', 'subtract-unlike', '(a - c)/lcm(b, d) != a/b - c/d', 'tops-not-renamed'),
+                                    (NS, 'fluency-l12-which-first', 'brackets-first', '(a + b)*g^2 != a + (b*g)^2', None),
+                                    (MK, 'fluency-l2-transition-matrix', 'two-state-two-step', 'sq != key', 'squared-entry'),
+                                    (MK, 'fluency-l2-transition-matrix', 'three-state-two-step', 'p1j != key', 'one-step')]:
+    fam = load(folder, sid)[fid]
+    check(cond in fam.get('where', []), f'{sid}#{fid}: where carries "{cond}"', str(fam.get('where')))
+    if wid:
+        w = [x for x in fam['wrong'] if x['id'] == wid]
+        check(len(w) == 1 and 'when' not in w[0], f'{sid}#{fid}: slip {wid} has no `when`', str(w))
 
 # ------------------------------------------------- Part B: sampler draws -------------------------------------------------
 def texval(t):
