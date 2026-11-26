@@ -221,3 +221,7 @@ Fixes (paste-ready).
    Basis: the three row messages measured above.
 
 Scripts (scratch, not committed): `fpr-fp13/run.mjs` with `subs.mjs` and `subs2.mjs` (submissions), `fpr-fp13/claims.mjs` (Pyodide claims and numbers, 23 checks, all ok).
+
+## Fix-pass follow-up (orchestrator)
+
+- The reader's four lines applied: homework-2 items[2], l6 screens[6] and screens[9] `byKey.error` now say what to do when the message names the time limit; review-1 items[6] `test-1` separates a `ValueError` from `int` (decimal point) from text left unconverted. Gates: validator 0 errors, voice scan 0 and 0, concepts 0, sweep 0, grade-all --code 0 failures, playthrough desktop and mobile green on all three files.
