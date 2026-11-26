@@ -122,3 +122,7 @@ with
 Basis: $12 \times 0.01 = 0.12 < 1.01^{12} - 1 = 0.126825$. It names the percentages being added, so it cannot be read as the pound gains (which sum to the true £1,268.25), and it makes no claim about returns of mixed sign, where a sum of simple returns can overstate (+10% then −10% sums to 0 but compounds to −1%). Twelve words, no new number beyond those already on the screen.
 
 After reading the audit: row 1 is the wording finding 4 asked for ("gains" to exclude losing months). The reader agrees with that aim; the fix above keeps it and removes the pound-gains reading.
+
+## Fix-pass follow-up (orchestrator)
+
+- l1 `screens[8].explain`: the reader's sentence applied ("Adding the twelve 1% returns gives 12%, which understates the compounded growth."); the screen calls the reinvested pound amounts gains, so "adding up monthly gains" was ambiguous. Gates: validator 0 errors, voice scan 0 and 0, all four markets concepts and fixread scripts 0, grade-all 0 failures, playthrough desktop and mobile green.
