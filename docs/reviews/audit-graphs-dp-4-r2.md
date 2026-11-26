@@ -101,3 +101,48 @@ Not applied: the notes for the fixer (test-N lines for other codings); outside t
 Concepts script: the mutant total check re-pointed from 85 to 100 (old count only, noted in its docstring); 149 checks, 0 failing. Round 1 concepts (165 checks) and fixread scripts: 0 failed.
 
 Gates: validator 0 errors; voice scan 35 on the five files 0 and 0; `run-number-scripts --only graphs-dp` 3 of 3 passed; `grade-all.mjs --code` on the five files 0 failures (48 widgets, 9 Python code widgets); playthrough of l14, l15, l16, l17 and homework-4, desktop and `--mobile`, all passed.
+
+## Fix-pass read
+
+Reader: fresh Fable reader, blind to this file and to the course's scripts until the rows below were written. Diff read: `git show 1896dfc5 -- app/content/courses` at bb441f4a. Own scripts in the scratch folder `fpr-gdp4r2/` (`chk.py`, `old10.py`, `mine.mjs`, `mine2.mjs`, `sym.mjs`); none committed.
+
+Runs: `grade-all.mjs --code` on the five files: 48 widgets, 9 Python code widgets, 0 failures. All 100 committed mutants in the five files fail first at their stated test with the stated symptom (`sym.mjs`). Own codings submitted through `code-runner.mjs` under the local Pyodide.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | homework-4 | items[4] (h4-stop-value) widget.examples[0..1].call, tests[0..8].call | `round(float(stop_value(...)), 6)` grades the same values and also accepts a `Fraction` | imprecise (minor) | Run: model and a `Fraction` solution pass 9 of 9; int division fails test 1. But `float()` also parses text, so the model solution ending `return str(value)` passes all 9 tests. Before the change it failed with `TypeError`. No numerically wrong value passes: `float` is the identity on numbers, and compare and rounding are unchanged. |
+| 2 | homework-4 | items[4].widget.mutants[1].symptom | best-quote mutant now shows 6.0 | correct | Run: actual `6.0` at test 1. |
+| 3 | l17 | screens[7].widget.examples[0].call, tests[0..4].call, tests[11].call | `round(float(dice_value(n)), 6)` | imprecise (minor) | Same basis as row 1. A `Fraction` solution passes 12 of 12; 2 dp rounding fails test 3; `int` fails test 1. `dice_value` returning `str(value)` passes all 12 when `dice_threshold` converts the string itself. |
+| 4 | l14 | screens[9].widget.tests[9] | `knapsack_items([1, 9, 1], [7, 100, 5], 1)` is `[0]` | correct | Brute force over the 8 subsets: best value 7, only by `[0]`. Model passes, starter fails (grade-all). |
+| 5 | l14 | screens[9].widget.how | 12 hidden tests; the last two are the 60-item case | correct | Count 12; tests 11 and 12 are the old 10 and 11. No `test-N` line or mutant pointed at the old 10 or 11. |
+| 6 | l14 | screens[9].widget.mutants[13..16] | four guarded-walk mutants fail first at test 10 with `[2]` | correct | Run (`sym.mjs`). |
+| 7 | l14 | screens[9].feedback.byKey.test-10 | zero row gives wrong values below it; no walk check repairs them | correct | Three own codings (comprehension rows with 0 where no fit; whole heavy row skipped by `if`; memo recursion returning 0 when too heavy, each with `w >= weights[i - 1]` in the walk) all pass tests 1 to 9 and fail first at test 10 with `[2]`. |
+| 8 | l14 | screens[10].explain.text | pence budgets make the table too large; NP-hard, so no known method is fast on every input | correct | Table size is $n \times W$, pseudo-polynomial. Garey and Johnson, *Computers and Intractability*, problem MP9. 27 words. |
+| 9 | l15 | screens[6].widget.tests[9] | `lcs_length("ACGT" * 50, "TGCA" * 50)` is 99, replacing `"AB" * 100` against `"BA" * 100` | correct | 99 by a bottom-up table and by a memoised recursion from the front. The swap is needed: on the old pair every mismatch is followed by a run of matches, so all three plain-recursion mutants return 199 at once in CPython. On the new pair they pass 8 s in CPython and stop at 5 s in Pyodide. At least as strong: the six value or crash mutants give the same pass or fail on old and new, and a greedy left-to-right matcher passes the old (199) and fails the new (67). A memoised recursion and a two-row table pass all 10. |
+| 10 | l15 | screens[6].widget.mutants[9..11] | three plain recursions time out at test 10 | correct | Run: each fails first at test 10 with "Stopped after 5 s". |
+| 11 | l15 | screens[6].feedback.byKey.test-10 | two 200-letter strings; a timeout means recursing on every choice | correct | Lengths 200 and 200. Own codings: recursion on `a[:-1]`, `b[:-1]`, and an index recursion that always tries all three branches. Both fail first at test 10 by timeout. |
+| 12 | l15 | screens[8].widget wrong option `four`, why | four edits can do it, fewer suffice; delete H, replace the last E with Y | correct | Distance 2 by table and by recursion. Any count of at least 2 is reachable with wasted edits, so the line is true. Key 2 stays the only true option. |
+| 13 | l15 | screens[9].canvas.params.cells | 6 by 5 edit-distance table for HEDGE and EDGY | correct | Equal cell by cell to my own table, and to a slice recursion on all 30 prefix pairs. The old cells were the LCS table. |
+| 14 | l15 | screens[9].canvas.state.caption | "Edit distances between prefixes of HEDGE and EDGY" | correct | Matches row 13 and the row and column heads. `_base.js` shows `state.caption` under the drawing. |
+| 15 | l15 | screens[9].widget.tests[10] | `edit_distance("aa", "a")` is 1 | correct | Table and recursion. Model passes, starter fails. |
+| 16 | l15 | screens[9].widget.how | 11 hidden tests, with a repeated letter | correct | Count 11. |
+| 17 | l15 | screens[9].widget.mutants[12..15] | four "min of three plus cost" mutants fail first at test 11 with 0 | correct | Run (`sym.mjs`). |
+| 18 | l15 | screens[9].hints[1].highlight | `r3c2` and `r2c1` show a match copying the diagonal | correct | `grid.js` ids are 1-based. `r3c2` is row E of HE against column E, value 1; `r2c1` is its diagonal, value 1. |
+| 19 | l15 | screens[9].feedback.byKey.test-11 | aa to a is one delete; a 0 means a match made up or left free | correct | Own codings: two-row rolling array with min of three plus a 0 or 1 cost; `best = min(three)` plus 1 only on a mismatch. Both pass tests 1 to 10 and fail first at test 11 with 0. The correct cost form (plus 1 on up and left) passes 11 of 11. |
+| 20 | l15 | screens[10].feedback.correct | five match; Sell 75 never matches; one of the broker's first three is left over | correct | LCS 5. Enumerating all 5-subsets of the broker log that embed in ours leaves broker fills {1, 5}, {2, 5} or {3, 5}. |
+| 21 | l15 | screens[10].feedback.byKey.one | same statement for the slip 1 | correct | Row 20; 7 − 6 = 1. |
+| 22 | l15 | screens[10].explain.text | 2 broker fills; more than one longest match, so the table cannot name the stray | correct | Row 20: three longest matches. Key 2 unchanged. |
+| 23 | l16 | screens[7].widget.tests[9] | the 5 by 3 grid costs 15 | correct | Memo recursion and brute force over all 15 right and down routes: 15. Model passes, starter fails. |
+| 24 | l16 | screens[7].widget.how | 10 hidden tests, with a grid where doubling back would be cheaper | correct | Count 10; four-direction Dijkstra gives 11. |
+| 25 | l16 | screens[7].widget.mutants[10..13] | four four-direction mutants fail first at test 10 with 11 | correct | Run (`sym.mjs`). |
+| 26 | l16 | screens[7].feedback.byKey.test-10 | expects 15; doubling back left could cost 11 | correct | Own codings: repeated sweeps over four neighbours; Dijkstra on a distance grid. Both pass tests 1 to 9 and fail first at test 10 with 11. |
+
+Counts: 26 rows. correct 24, imprecise 2 (both minor, one cause), wrong 0, misleading 0, unverified 0.
+
+Points asked:
+- l15 s6 test 10: needed and stronger (row 9). Expected 99 confirmed two ways.
+- Renumbering: only l14 renumbers (old 10 and 11 are now 11 and 12). Every `test-N` line, `how` count and mutant points at the right test.
+- `float()`: no numerically wrong answer passes. A right number returned as text now passes (rows 1 and 3).
+- Canvas caption: matches the table shown (rows 13 and 14).
+
+Fix for rows 1 and 3 (optional, minor): in homework-4 items[4] and l17 screens[7], write each value call as `round(0.0 + stop_value(...), 6)` and `round(0.0 + dice_value(...), 6)` in place of `round(float(...), 6)`. Basis, run in `mine2.mjs`: with these calls the model and the `Fraction` solutions still pass every test, the starter still fails test 1, and a `str` return fails test 1 with `TypeError`. Expected values, `how` lines and the `6.0` symptom stay as they are. Leaving `float()` is defensible: a text return of the right number is the only thing it lets through.
