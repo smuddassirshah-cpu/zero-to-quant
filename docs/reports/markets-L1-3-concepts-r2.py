@@ -8,6 +8,9 @@ see docs/reviews/audit-markets-1-3-r2.md for the findings behind any FAIL line.
 
 Run from the repository root:  python docs/reports/markets-L1-3-concepts-r2.py
 Needs NumPy and SciPy (any recent version; no figure depends on a version).
+
+Fix pass: the two checks that encoded the old text of findings 1 and 2 (the mistake each line named)
+are re-pointed to the mistake the fixed line names; each still recomputes the slip's value.
 """
 import json
 import math
@@ -167,9 +170,11 @@ true("hw1 best AER is the quarterly account, and the four AERs are 4.698, 4.700,
 ck("hw1 nominal monthly for 5% AER", 12 * (1.05 ** (1 / 12) - 1), 0.0489, 6e-5)
 u = (550 + math.sqrt(550 ** 2 + 4 * 1000 * 550)) / 2000
 ck("hw1 quadratic IRR", u - 1, I("homework-1", 6)["answer"], 1e-6)
-# FINDING 2: the 'simple' slip, 0.0667, is said to solve 1000(1 + 2r) = 1100. That equation gives r = 0.05.
-ck("hw1 quadratic slip 'simple': root of 1000(1 + 2r) = 1100, the mistake its feedback names",
-   (1100 / 1000 - 1) / 2, slip(I("homework-1", 6), "simple"), 2e-4)
+# FINDING 1 (fixed): the 'simple' line now names 1000(1 + 1.5r) = 1100, the gain over the mean wait of 1.5 years.
+ck("hw1 quadratic slip 'simple': root of 1000(1 + 1.5r) = 1100, the mistake its feedback names",
+   (1100 / 1000 - 1) / 1.5, slip(I("homework-1", 6), "simple"), 2e-4)
+true("hw1 quadratic slip 'simple': its feedback quotes 1000(1 + 1.5r) = 1100",
+     "1000(1 + 1.5r) = 1100" in load("homework-1")["items"][6]["feedback"]["byKey"]["simple"])
 ck("hw1 quadratic slip 'simple' is in fact the gain over the mean wait, 0.10/1.5", 0.10 / 1.5, slip(I("homework-1", 6), "simple"), 2e-4)
 ck("hw1 pension 4%", 45000 * ann(.04, 20), 611564.69, 0.01); ck("hw1 pension 5%", 45000 * ann(.05, 20), 560799.47, 0.01)
 ck("hw1 pension 4.2%", 45000 * ann(.042, 20), 600875.25, 0.01); ck("hw1 pension 4.3%", 45000 * ann(.043, 20), 595634.83, 0.01)
@@ -252,8 +257,8 @@ ck("l7 s8 each dividend at g = r", 2 / 1.08, 1.85)
 ck("l7 s11 rights", (20 + 3) / 5, 4.60, 1e-9)
 ck("l8 s3 annualised", 1.134 ** (1 / 3) - 1, 0.0428, 1e-4); ck("l8 s4 log sum", math.log(1.2) + math.log(.9) + math.log(1.05), 0.1258, 1e-4)
 ck("l8 s5 annualised -25% over 2y (%)", 100 * (0.75 ** .5 - 1), -13.4, 0.05)
-# FINDING 1: option 'up' (£125) is explained as -50% applied to the original £100 with the +50% kept on top.
-ck("l8 s5 option 'up': 100 + 50% of 100 - 50% of 100, the mistake its 'why' names, against the option's £125", 100 + 50 - 50, 125)
+# FINDING 2 (fixed): option 'up' (£125) is now explained as halving only the £50 gain.
+ck("l8 s5 option 'up': 100 + 50 - 50% of the £50 gain, the mistake its 'why' names, against the option's £125", 100 + 50 - 0.5 * 50, 125, 1e-9)
 ck("l8 s5 option 'up' is in fact the loss taken off the gain alone: 150 - 50% of 50", 150 - 0.5 * 50, 125, 1e-9)
 ck("l8 s6 monthly", 1.0075 ** 12 - 1, 0.0938, 1e-4); ck("l8 s6 2% a month (%)", 100 * (1.02 ** 12 - 1), 26.82)
 ck("l8 s9 total", 1.12 * .92 * 1.15, 1.18496, 1e-9); ck("l8 s9 annualised %", 100 * (1.18496 ** (1 / 3) - 1), 5.82)
