@@ -57,8 +57,19 @@ No finding needs more than the sentences above. Finding 4's fix is the cheapest 
 
 ## Overlap table
 
-OVERLAP_PLACEHOLDER
+Earlier reads, opened only after the WIP commit `83c997b2`: `docs/reviews/review-1.3.md` (the topic's second read, limits sections for l1 to l12 and homework-1 to homework-3, with its fix pass), `docs/reviews/review-problems-1.3-a.md` and `review-delta-problems-1.3-ab.md` (problems-1 to problems-3), and `docs/reports/limits-2-perf.md`. There is no earlier concept audit of these levels.
+
+| | count |
+|---|---|
+| Conceptual findings found by this audit only | 12 |
+| Found by the earlier reads only | 11 |
+| Found by both | 0 |
+
+- The 11 earlier conceptual findings, all in `review-1.3.md` and all fixed in the audited text: the `0/0` rule scoped to polynomials and "no finite limit" (l2, two findings); the share figures at x = 1,000 (l4, a number error); "drift" misused (l5); the toy delta of 0.50 stated as a fact about calls (l8); the quotient-rule proof assuming `q` has a derivative (l9); the tangent estimate £6.60 against the true £6.27 (l10); the unexplained 0.3 of weight (l12); the curve "climbing towards the axis" and delta read as a probability (homework-2, two findings); the one-sided reason in the correlated-portfolio explain (homework-3). I checked each fixed sentence as a ledger row and all stand.
+- Not counted as conceptual: the sentence-length notes, two canvas-reference lines (l1 hint, l12 dashed line), and the problems reads' 5 limits findings (a grading band, a `%` field slip, freshness, option length, wording). The problems read found no false claim in problems-1 to problems-3; neither did this audit.
+- New `wrong` found by this audit that no earlier read found: 1 (finding 1). That is within the convergence rule's allowance of one per three levels.
+- Miss pattern: the earlier read caught number errors, finance misstatements and one missing proof hypothesis. It did not test "only", "anywhere" and "the function whose" sentences against counterexamples, which is where 7 of these 12 findings sit (1, 3, 5, 6, 8, 9, and the zero-denominator rule of 2).
 
 ## Inbox
 
-INBOX_PLACEHOLDER
+One bullet appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit limits):" an advisory lint for universal sentences ("Only ...", "always", "never", "anywhere", "the function whose") in `why`, `explain` and summary lines, since unhedged universals are a finding class seen three times in this audit alone (findings 1, 3 and 5; also 8 and 9).
