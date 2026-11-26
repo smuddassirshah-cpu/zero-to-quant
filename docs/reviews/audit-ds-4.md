@@ -163,3 +163,106 @@ Not changed: no existing hidden test, solution or key. Two hidden tests added (l
 Concepts script: `docs/reports/ds-L4-concepts.py` now exits 0. The checks for findings 1, 3, 5, 6, 7, 8, 15 and 16 encoded the old text as a computation the content cannot change; they are re-pointed to the content strings and keep the computation as evidence (docstring says so). The test-N checks name the line each coding now lands on, and the script also runs the fixer's 56 codings in CPython. On the old content it fails 48 checks (the 23 findings plus the 25 fixer codings whose lines did not exist).
 
 Gates: validator 0 errors (4,608 warnings, the same as before the fix); voice scan 35 on the seven files 0 and 0; concepts script 0 failing, exit 0; number scripts `--only ds` 1 of 1 passed; `grade-all.mjs --code --file` on each of the seven files 0 failures (mutants included); playthrough of l14 to l18, review-4 and homework-4 green desktop and `--mobile` (14 runs).
+
+## Fix-pass read
+
+Fresh reader, blind to the audit, the earlier reviews and the fixer's script and codings until the rows below were written. Read: `git show dc9834ae -- app/content/courses` (ds l14 to l18, review-4, homework-4). Content at `a229f564` is identical to `dc9834ae` for these seven files.
+
+Script: `docs/reports/ds-L4-fixread.py --local-cdn <pkgs>` exits 0 (95 checks; the one failing check is finding F1 and is listed in `KNOWN`). Part A derives the two new hidden-test expects and the numbers in the changed text. Part B grades 45 of my own codings, plus solution and starter of the 11 changed code widgets, under the page's Pyodide through `app/tools/code-runner.mjs`. `grade-all.mjs --code --file` on the seven files: 15 code widgets, 0 failures, so all 24 committed mutants first fail the test they name. Validator 0 errors.
+
+Counts found in the diff: 18 `test-N` lines added or rewritten, 4 deleted (l15 s5 `test-2` and `test-10`, l16 s9 `test-6`, l17 s5 `test-6`), 24 mutants in 11 groups, 2 hidden tests added.
+
+### Ledger (55 rows)
+
+Sources: CLRS 4th ed. (ch. 6 heaps, 12 search trees, B.5 trees), Sedgewick and Wayne *Algorithms* 4th ed. (2.4, 3.2), CPython `heapq`, `bisect` and `listsort.txt` docs. "run" means the script above.
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | homework-4 | items[1].prose | general sort O(N log N); k-way heap merge O(N log k), one trade at a time | correct | CLRS ex. 6.5-9; heap holds at most k entries |
+| 2 | homework-4 | items[1].widget.how | one entry per list lets the merge work item by item | correct | derivation: each pop needs only the heads; 9 tests counted |
+| 3 | homework-4 | items[2].feedback.byKey.test-1 | first value −5.0 means the lower top was read un-negated; wrong second value is the even case | correct | run: my 3 codings first fail test 1 with `[-5.0, ...]`, `[5.0, 5.0, ...]`, `[5.0, 5.0, ...]` |
+| 4 | homework-4 | items[2].feedback.byKey.test-7 | negate the lower top; `abs` gives the wrong sign on negatives | correct | run: 2 codings pass tests 1 to 6, first fail test 7 with `[1.0, 0.5, 2.0]` |
+| 5 | homework-4 | items[2].widget.mutants (2) | first fail tests 1 and 7; symptoms as stated | correct | grade-all run |
+| 6 | homework-4 | items[2].explain.text | each step O(log n); re-sorting costs at least O(n) | correct | CLRS 6.5; a sort must read every item. See note N1 |
+| 7 | homework-4 | items[5].explain.text | indices 50 to 99 are leaves; build sifts from 49 to 0; most items sink a level or two; build is O(n) | correct | run: 88% of 100 items (87.5% of 10^5) can sink at most two levels, total sink room 97 < 2n; CLRS 6.3 |
+| 8 | l14-binary-trees | screens[6].feedback.byKey.test-1 | pre-order is node, left, right; `AttributeError` means the walk stepped onto `None` | correct | run: stack walk pushing `None` raises at test 1; node-after-left gives `[4, 2, 5, 1, 6, 3, 7]` at test 1 |
+| 9 | l14-binary-trees | screens[6].feedback.byKey.test-5 | checking children before each call still fails `preorder(None)` | correct | run: 2 codings pass tests 1 to 4, raise at test 5 |
+| 10 | l14-binary-trees | screens[6].widget.mutants (2) | first fail tests 1 and 5 | correct | grade-all run |
+| 11 | l14-binary-trees | screens[8].prose | `+` copies the lists at every level: O(n²) on a chain; one shared list keeps O(n) | correct | run: copies on a chain of 400 are 80,200 = n(n+1)/2, of 800 are 320,400 (ratio 4.0) |
+| 12 | l14-binary-trees | screens[9].feedback.byKey.gross | 5388 is 50 × 108 − 12; inner node 108 − 100 = 8, 50 × 8 = 400 | correct | arithmetic, and the `gross` value is 5388 |
+| 13 | l14-binary-trees | screens[10].feedback.byKey.test-1 | 388; 412 is right minus left; `AttributeError` is recursion below a leaf | correct | run: `b - a` gives 412 at test 1 (12 − 50 × (100 − 108)); no leaf case raises at test 1 |
+| 14 | l14-binary-trees | screens[10].feedback.byKey.test-4 | the root can be a leaf: test `node`, not only its children | correct | run: 2 codings pass tests 1 to 3, raise at test 4 |
+| 15 | l14-binary-trees | screens[10].feedback.byKey.test-7 | do not clip `'-'` at 0; only `'max'` with a 0 child does that | correct | run: 2 clipped codings pass tests 1 to 6, give 0 at test 7. See note N2 |
+| 16 | l14-binary-trees | screens[10].feedback.byKey.test-8 | tell a leaf by its missing children, not the type of its value | correct | run: `type(...) is int` and `str(...).isdigit()` pass tests 1 to 7, raise at test 8 |
+| 17 | l14-binary-trees | screens[10].widget.mutants (4) | first fail tests 1, 4, 7, 8 | correct | grade-all run |
+| 18 | l14-binary-trees | summary.formula.note | O(n) when the walk appends to one list | correct | as row 11 |
+| 19 | l15-search-trees | screens[3].explain.text | in-order on a BST is sorted, O(n) when appending to one list | correct | CLRS thm 12.1; as row 11 |
+| 20 | l15-search-trees | screens[5].feedback.byKey.test-1 | first call gets `None`: return `Node(v)`; smaller left, larger right; assign the result | correct | run: no empty case raises, unassigned call gives `[50]`, mirrored sides give descending, all at test 1 |
+| 21 | l15-search-trees | screens[5].feedback.byKey test-2, test-10 (deleted) | neither can be the first failing test for the mistakes they named | correct | test 1 calls `insert(None, v)` and checks order first; the three codings of row 20 all stop at test 1 |
+| 22 | l15-search-trees | screens[5].widget.mutants (1) | first fails test 1 | correct | grade-all run |
+| 23 | l15-search-trees | screens[6].explain.text | a search for 6 goes left at 10 and never finds it | correct | run: path 10 left, 5 right, `None` |
+| 24 | l15-search-trees | screens[9].feedback.byKey.test-7 | a node with no left child can still have a right one | correct | run: 2 codings pass tests 1 to 6, return `[]` at test 7 |
+| 25 | l15-search-trees | screens[9].widget.mutants (1) | first fails test 7 | correct | grade-all run |
+| 26 | l15-search-trees | quiz[3].widget.options[3].why | `sort()` on a nearly sorted list still compares all n items; `insort` needs O(log n) comparisons and one shift | correct | run: 1,020 comparisons at n = 1,000 and 4,024 at 4,000 against 10 and 12; CPython `listsort.txt` (run detection reads every item) |
+| 27 | l16-tree-recursion | screens[4].feedback.byKey.test-2 | one node has height 0; `1 + max(-1, -1)` is 0, so no leaf case | correct | CLRS B.5.2 (height in edges, leaf 0); run: 2 codings pass test 1, give 1 at test 2 |
+| 28 | l16-tree-recursion | screens[4].feedback.byKey.test-4 | `size(None)` is 0, not −1; add both sides | correct | run: −1 base gives −1 (n nodes, n + 1 empty links); `max` gives 4; both at test 4 |
+| 29 | l16-tree-recursion | screens[4].feedback.byKey.test-5 | child checks are not enough for `size(None)` | correct | run: 2 codings pass tests 1 to 4, raise at test 5 |
+| 30 | l16-tree-recursion | screens[4].widget.mutants (3) | first fail tests 2, 4, 5 | correct | grade-all run |
+| 31 | l16-tree-recursion | screens[6].widget.tests[12] | `build([1, None, 2, 3, None, None, 4, 5])` is not balanced | correct | run: shape 1 R 2 L 3 R 4 L 5; by the definition with a separate edge height, False, and 3 is the only unbalanced node (sides −1 and 1). Solution passes, starter fails |
+| 32 | l16-tree-recursion | screens[6].widget.how | 13 hidden tests | correct | counted |
+| 33 | l16-tree-recursion | screens[6].feedback.byKey.test-13 | five-node zigzag, unbalanced at 3; return −1 as soon as either child returns −1 | correct | run: flag never passed, right-only and left-only codings all pass tests 1 to 12 and answer `True` at test 13 |
+| 34 | l16-tree-recursion | screens[6].widget.mutants (4) | all first fail test 13 | correct | grade-all run; my no-propagation helper also answers the four older unbalanced builds, so only test 13 separates it |
+| 35 | l16-tree-recursion | screens[9].feedback.byKey.test-4 | route is 1 + (−5) = −4; a 1 comes from a missing child or a best started at 0 | correct | run: both codings give 1 at test 4. See note N3 |
+| 36 | l16-tree-recursion | screens[9].feedback.byKey.test-6 (deleted) | no false text remains | correct | see note N3: one coding does reach test 6 first and now gets the generic line |
+| 37 | l16-tree-recursion | screens[9].widget.mutants (2) | both first fail test 4 with 1 | correct | grade-all run |
+| 38 | l17-always-the-smallest | screens[4].prose | level d holds up to 2^d items, every level but the last is full, ⌊log₂ n⌋ + 1 levels | correct | CLRS 6.1 and ex. 6.1-2; run for n = 1 to 5,000 |
+| 39 | l17-always-the-smallest | screens[5].feedback.byKey.test-5 (test-6 deleted) | the drain's last pop empties the list: do not write to index 0 | correct | run: `heap[0] = heap.pop()` in two forms passes tests 1 to 4, `IndexError` at test 5; test 6 can no longer be first |
+| 40 | l17-always-the-smallest | screens[5].widget.mutants (1) | first fails test 5 | correct | grade-all run |
+| 41 | l17-always-the-smallest | screens[7].prose | re-sorting reads all n items: at least O(n), O(n log n) for a general sort | correct | as rows 6 and 26; CLRS thm 8.1 for the general bound |
+| 42 | l17-always-the-smallest | screens[9].feedback.byKey.test-4 | keep every copy: no set, no skipping a value already in the heap | correct | run: both codings give `[7, 3]` at test 4; a `>=` replace passes all 11, so the old "strictly larger" advice was rightly dropped |
+| 43 | l17-always-the-smallest | screens[9].widget.mutants (1) | first fails test 4 | correct | grade-all run |
+| 44 | l17-always-the-smallest | quiz[1].widget.options[3].why | reverse-sorting after each push "still leaves `heapq` popping the smallest" | **wrong** | run: after push and `sort(reverse=True)` of 5, 1, 3, 9, 4, `heappop` returns 9, 1, 3, 4, 5. `heappop` returns index 0 (CPython `heapq` docs), which is the largest. Finding F1 |
+| 45 | l18-order-book-heaps | screens[7].prose | n counts heap entries live or dead; dead entries below the top wait, so the heap can outgrow the live book | correct | derivation: lazy deletion pops only at the top; Sedgewick 2.4 |
+| 46 | l18-order-book-heaps | screens[8].widget.options[3].why | re-sorting reads the whole book, at least O(n) per message | correct | as row 6 |
+| 47 | l18-order-book-heaps | screens[8].widget.options[4].why | fills at the resting order's price: it made the offer, the arriving order accepts | correct | Harris, *Trading and Exchanges*, ch. 6 (discriminatory pricing in continuous order-driven markets) |
+| 48 | l18-order-book-heaps | screens[8].feedback.byKey.d | same as row 46 | correct | as row 6 |
+| 49 | l18-order-book-heaps | screens[9].widget.tests[12] | expect `[[('B1','A9',100.02,200), ('B1','A1',100.02,50)], [('B9','A5',100.0,100), ('B2','A5',100.0,50)]]` | correct | run: my reference book (no heap, minimum of (price, time), fill at the earlier order's price) gives the same, and agrees with tests 1 to 11. Solution passes, starter fails |
+| 50 | l18-order-book-heaps | screens[9].widget.how | 13 hidden tests; test 12 has 8,000 orders | correct | counted |
+| 51 | l18-order-book-heaps | screens[9].feedback.byKey.test-13 | A9 before A1 and B9 before B2 at one price; time decides, so time goes second in the tuple | correct | run: (price, id) and (price, id, time) pass tests 1 to 12 and fill A1 and B2 first at test 13; (price, time, id) passes. Tuples compare left to right (Python reference, 6.10.1) |
+| 52 | l18-order-book-heaps | screens[9].widget.mutants (3) | all first fail test 13 | correct | grade-all run |
+| 53 | l18-order-book-heaps | quiz[3].widget.options[2].why | heap never holds more entries than orders added; size enters only through log n; deep dead entries cost memory | correct | derivation: one push per add |
+| 54 | review-4 | items[3].widget.options[3].why | in option d, 5 and 3 have changed places; 1 climbs 5 to 2 to 0, 3 drops to index 2, 5 never moves | correct | run: `heappush` gives `[1, 5, 3, 9, 6, 4]` |
+| 55 | review-4 | items[5].explain.text | two others fail an ancestor; "the last" repeats a value | imprecise | run: b and c pass the parent check and fail 8; d repeats 3. But the options have `"shuffle": true`, so "the last" names a different option on most draws. Finding F2 |
+
+Counts: 55 rows. correct 53, wrong 1, imprecise 1, misleading 0, unverified 0.
+
+Conventions checked in the changed text: height in edges with `None` at −1 and a leaf at 0 (l16 s4), node-count heights only inside the `is_balanced` helper and said so (l16 s6), heap levels ⌊log₂ n⌋ + 1 with swaps one fewer (l17 s4), price then arrival time with fills at the resting price (l18 s8, s9). All consistent with each other and with CLRS and Sedgewick.
+
+### Findings
+
+F1. l17-always-the-smallest | quiz[1].widget.options[3].why | wrong, minor | The line says a reverse sort "still leaves `heapq` popping the smallest". `heappop` returns index 0, and after a reverse sort that is the largest item. The fix pass changed only the cost clause; the false clause is older text in the same sentence. | Run in the script: pops are 9, 1, 3, 4, 5. Derivation: `heappop` then moves the last item, the smallest, to the root, where it stays, so the second pop returns the smallest. | Paste-ready:
+
+```json
+"why": "That costs at least $O(n)$ per push, and it breaks the order `heapq` relies on. The first pop returns the largest, but the next returns the smallest."
+```
+
+F2. review-4 | items[5].explain.text | imprecise, minor | "The last repeats a value" points by position, and the options are shuffled. | The repeated 3 is option d only in file order. | Paste-ready:
+
+```json
+"text": "In the valid tree, 8's left side is below 8 and its right side is above 8, at every level. Two of the others hide a node that passes its parent but fails an ancestor. The one with two 3s repeats a value, which the strict rule forbids."
+```
+
+### Notes (no verdict changes)
+
+N1. "At least $O(n)$" appears in six changed lines. CLRS 3.2 would write Ω(n); the course has not taught Ω, and the meaning ("no cheaper than linear") is right. No fix asked.
+
+N2. l14 s10: `'-'` coded as `abs(a - b)` first fails test 3 (gets 7 for `max(98 − 105, 0)`), which has no line. Optional: `"test-3": "Test 3 expects 0: 98 − 105 is −7, and 'max' with 0 lifts it to 0. If you got 7, '-' dropped the sign."`
+
+N3. l16 s9: "best total started at 0" has two more natural codings. One running best over all routes fails test 3 first (returns 0 for the single node −3). One-child nodes handled apart, with a two-child best started at 0, fails test 6 first (−10), the line the fix pass deleted. Both get only the generic line. Optional:
+
+```json
+"test-3": "Test 3 is one node, −3, so the answer is −3. Do not start the best total at 0.",
+"test-6": "Test 6 has only negative values: the best route is −10 + (−2) = −12. Do not start the best total at 0."
+```
+
+After the rows: read against the audit above. F1 is in a sentence finding 6 rewrote; neither the audit nor the fix pass questioned its last clause. F2 is the wording of finding 16's own paste-ready fix, applied as written. The one `wrong` (F1) counts towards the convergence rule for this round.
