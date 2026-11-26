@@ -101,3 +101,60 @@ Keys and hidden tests: none changed. Slip values changed: review-4 items[6] `thi
 Concepts script: three checks encoded the old defects and were re-pointed to the fixed text (F3, F7, F8; stated in its docstring). The F9 checks were already right and now pass. 112 checks, 0 failing, exit 0.
 
 Gates on the nine edited files: validator 0 errors; voice scan 35 gives 0 and 0; `markov-L4-5-concepts.py` exit 0; `run-number-scripts.mjs --only markov` 5 of 5 passed; `grade-all.mjs --file` 0 failures on each; playthrough desktop and `--mobile` all passed (18 runs).
+
+## Fix-pass read
+
+Fresh reader, blind to the audit above and to the earlier reviews. Scope: the content strings changed by commit `35ecf9f8` (`git show 35ecf9f8 -- app/content/courses`), read at `321d59f8`. Script: `docs/reports/markov-L4-5-fixread.py` (exit 0, 55 checks; two of them document the imprecise rows). Sources: Norris, *Markov Chains*; Levin, Peres and Wilmer, *Markov Chains and Mixing Times* (LPW); Williams, *Probability with Martingales*; Grimmett and Stirzaker, *Probability and Random Processes* (GS); Shreve, *Stochastic Calculus for Finance I*.
+
+### Ledger
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | homework-4 | items[1].widget.options[0].text | A chain on a line that moves only to a neighbour or stays, and can step both ways between neighbours, must be reversible | correct | Both-way positive steps make the chain irreducible; $\pi_{i+1} = \pi_i P_{i,i+1}/P_{i+1,i}$ solves detailed balance (LPW 2.5; Norris 1.9). Script: 2,000 random birth-death chains, all balanced. |
+| 2 | homework-4 | items[2].feedback.byKey.forward | $P_{BA}$ "would be right only for a reversible chain" | imprecise (minor) | $P(X_t = A \mid X_{t+1} = B) = \pi_AP_{AB}/\pi_B$ equals $P_{BA}$ exactly when the A-B flows balance. That one pair can balance in a chain that is not reversible. Script: four-state chain, A linked only to B while B, C, D circulate; pair balanced, chain not reversible, backward chance 0.2 = $P_{BA}$. "Only" is false as stated; "if" would be true. |
+| 3 | homework-4 | items[2].feedback.byKey.half | 0.5 splits evenly between A and C; weight by flows $\tfrac13 \times 0.8$ and $\tfrac13 \times 0.2$ | correct | Bayes: $0.8/3 \div (0.8/3 + 0.2/3) = 0.8$. Simulated 0.7992 on 1,000,000 steps, clear of 0.5 and 0.2. |
+| 4 | homework-4 | items[8].model | The chain needs about 20 steps to lose most of the pull of its start | correct | Second eigenvalue 0.8626; total-variation distance from 0.40 is 0.051 at step 20, from 0.958 at step 0. |
+| 5 | l13 | screens[6].prose | When every step up can be undone by a step down, a birth-death chain on a finite set is reversible, with the ratio formula | correct | The hypothesis gives $P_{i+1,i} > 0$ wherever $P_{i,i+1} > 0$, so the recursion defines a $\pi$ in detailed balance (LPW 2.5, Prop. 2.8 setting; Norris 1.9). Non-neighbour pairs balance at 0 = 0. Walker 0 to 5 checked: $\pi_{i+1} = 6\pi_i$. |
+| 6 | l13 | summary.ideas[1] | Same statement in the summary | correct | As row 5. Finite state space keeps $\pi$ normalisable. |
+| 7 | l14 | screens[11].explain.text | If D1 fails, D5 is cut off from every other dealer | correct | Edge list: D5's only link is D1. Removing D1 leaves D2, D3, D4 connected and D5 isolated (script). |
+| 8 | l14 | screens[11].explain.text | Degree counts show which firms a network leans on most | correct | Stationary share is degree over $2\lvert E\rvert$ (LPW 1.4, 9.1); stated as a reading of the counts, not a theorem. |
+| 9 | l15 | screens[1].widget.options[2].why | Flat steps are rejections, "and here they are most common at the two ends of the grid" | imprecise (minor) | Per visit the claim holds: $P_{ii}$ = 0.5, 0.256, 0.197, 0.130, 0.100, 0.146, 0.5. As a share of all flat steps in a long run, $\pi_iP_{ii}$ = 0.021, 0.022, 0.028, 0.025, 0.021, 0.028, 0.068: the low end 0.40 has fewer flat steps than 0.50 or 0.65. "Most common at the two ends" reads as the count, which is false at 0.40. |
+| 10 | l15 | screens[2].feedback.correct | After about 18 steps most of the start's pull has gone | correct | Excess chance at 0.40 is 0.017 at step 18, from 0.958; total-variation distance 0.069. |
+| 11 | l15 | screens[2].explain.text | The pull never vanishes exactly, but here it halves about every five steps | correct | Half-life $\ln 0.5/\ln 0.8626 = 4.69$ steps; five-step total-variation ratios 0.486, 0.479, 0.478, 0.478 (LPW 12.2, relaxation time). Distance stays positive at every finite step. |
+| 12 | l16 | screens[8].prose | Trading has run for a long while; the time since the last trade is exponential, mean 0.5 | correct | Age at time $t$ is $\min(\text{Exp}(\lambda), t)$, exponential in the limit (GS 10.3 on current and excess life; Norris 2.4). Simulated at $t = 30$, 400,000 runs: wait ahead 0.5017, time since 0.4995, covering gap 1.0012, against 0.5 for a typical gap. |
+| 13 | l16 | quiz[1].prose | Poisson at 2 a minute; exactly one trade in a quiet 10-minute stretch | correct | Setup now states the rate that the slips 0.9817 = $1 - e^{-4}$ and 0.1353 = $e^{-2}$ rely on. "Quiet" is apt: one trade against a mean of 20. |
+| 14 | l16 | quiz[1].explain.text | Given one arrival its time is uniform; the rate plays no part | correct | $P(N_2 = 1)P(N_8 = 0)/P(N_{10} = 1) = 0.2$ for every $\lambda$ (Norris Thm 2.4.6; GS 6.12). Exact at three rates, simulated 0.2005 and 0.2006 on over 800,000 conditioned windows. |
+| 15 | l17 | screens[4].explain.text | With interest rates at zero, $p = \tfrac49$ is the risk-neutral chance | correct | $\tilde p = (1 + r - d)/(u - d)$ with $r = 0$, $u = 1.25$, $d = 0.8$ gives $\tfrac49$ (Shreve I, 1.1 to 1.2). |
+| 16 | l17 | screens[4].explain.text | With a rate, the discounted price is the fair game | correct | Shreve I, Thm 2.4.4. Check at $r = 5\%$: $\tilde p = \tfrac59$, discounted mean 100. |
+| 17 | l17 | quiz[3].feedback.byKey.five | 5 solves $0.2x = 1$; known moves give 1.8, so $0.2x$ supplies 0.2 | correct | $1/0.2 = 5$; $1.5 + 0.3 = 1.8$; $2 - 1.8 = 0.2$; key $x = 1$. Slip 5 and slip 2 are clear of the key band 1 ± 0.001. |
+| 18 | l21 | screens[7].prose | Fair odds: a winning £1 bet returns £26 | correct | Chance $\tfrac1{26}$ times return 26 is the stake, so expected profit is zero. This is 25 to 1 in bookmaker's terms, and it is the payout the martingale argument needs (Williams, E10.6; Li 1980). Wait $26^{11} + 26^4 + 26$ recomputed; rule simulated on ABA over three letters: 30.10 against 30, not 27. |
+| 19 | l22 | screens[6].prose | The count is independent of the sizes, so Random sums gives $E[S_{10}] = E[N_{10}]E[Y]$ | correct | $E[S \mid N] = N\,E[Y]$ needs exactly that independence, plus finite means (GS 3.7, Thm 4). Simulated 4,195.7 against 4,200 (se 12). Dropping independence breaks it: counting trades before the first 500 lot gives $E[S] = 550$ against $E[N]E[Y] = 841$. Note: the lesson cited is titled "Sums of a random number of terms"; "Random sums" is the short name this lesson already used. |
+| 20 | l22 | screens[6].prose | Each later stretch adds volume independent of the past, so $S_t - \lambda tE[Y]$ is a martingale | correct | A compound Poisson process has independent, stationary increments with mean $\lambda sE[Y]$ (GS 6.12; Norris 2.4). Simulated increment over 5 minutes, less 2,100: mean −0.9 after a low past and 0.0 after a high past (se about 5). |
+| 21 | l22 | screens[6].explain.text | Given the count, the total is that many independent sizes; averaging over the count gives $E[N]E[Y]$ | correct | Tower rule. Wald's identity is no longer cited here, which is right: its hypotheses are a stopping time (or $\{T \ge n\}$ independent of $Y_n$), $E[T] < \infty$ and $E\lvert Y\rvert < \infty$ (GS 10.2, Lemma 9; Williams 10.10). An independent count meets the general form, but conditioning is the direct argument. |
+| 22 | review-4 | items[6].widget.wrong[1] | Slip "stay" = 0.5714 ± 0.002 | correct | Two ways: $1 - \tfrac37 = \tfrac47$; and $\tfrac17 \cdot \tfrac12 + \tfrac27 \cdot \tfrac14 + \tfrac47 \cdot \tfrac34 = \tfrac47 = 0.5714$. Bands: key 0.4286, 0.5, 0.5714, 0.75, each ± 0.002, all disjoint. Key simulated 0.4288 on 2,000,000 steps. |
+| 23 | review-4 | items[6].feedback.byKey.stay | That is the share of steps that stay put, $\tfrac47$ | correct | As row 22. |
+| 24 | review-4 | items[6].feedback.byKey.half | 0.5 is the proposal chance, or the three move chances averaged equally | correct | Two ways: proposal chance $\tfrac12$; $(\tfrac12 + \tfrac34 + \tfrac14)/3 = \tfrac12$. |
+| 25 | review-4 | items[7].widget.wrong[0] | Slip "one-minute" = 0.0606 ± 0.001 | correct | Two ways: $e^{-3}\tfrac{9}{2} \times e^{-2} \cdot 2 = 0.2240 \times 0.2707$; and $9e^{-5} = 0.06064$. Matches its feedback (means 3 and 2). |
+| 26 | review-4 | items[7].widget.wrong[2] | Slip "sum" = 0.1179 ± 0.001 | correct | Two ways: $0.04462 + 0.07326$; and $18e^{-6} + 4e^{-4} = 0.11788$. Bands: key 0.00327 ± 0.0001, 0.0076 ± 0.0005, 0.0606 ± 0.001, 0.1179 ± 0.001, all disjoint. The compound slip (one minute and added, 0.4947) lands in no band. Key simulated 0.00325 on 4,000,000 windows. |
+
+### Counts
+
+26 rows: 24 correct, 0 wrong, 2 imprecise (both minor), 0 misleading, 0 unverified. Nothing here counts towards the convergence rule.
+
+### Fixes (paste-ready)
+
+R1. homework-4.json | items[2].feedback.byKey.forward | imprecise, minor. Replace the string with:
+
+`"That is the chance of going from B to A. It would be right if the flows between A and B balanced, and here they do not. Yesterday's state given today's uses $P_{AB}$, A to B."`
+
+Basis: $\pi_AP_{AB}/\pi_B = P_{BA}$ if and only if $\pi_AP_{AB} = \pi_BP_{BA}$, a condition on the one pair (LPW 1.6, time reversal).
+
+R2. l15-sampling-by-chain.json | screens[1].widget.options[2].why | imprecise, minor. Replace the string with:
+
+`"A converged chain keeps moving. Flat steps are rejections, and here a step is most likely to be rejected at the two ends of the grid."`
+
+Basis: $P_{ii}$ is 0.5 at both ends and at most 0.256 elsewhere; the count of flat steps, $\pi_iP_{ii}$, is not largest at 0.40.
+
+### Checks run
+
+`docs/reports/markov-L4-5-fixread.py`: exit 0. It rebuilds the Metropolis chains from the content JSON, recomputes each changed slip two ways, tests band separation, and simulates rows 3, 12, 14, 18, 19, 20, 22 and 26. No content was edited, so the validator and playthrough were not rerun.
