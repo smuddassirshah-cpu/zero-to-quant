@@ -150,3 +150,30 @@ Script: `docs/reports/integrals-L1-3-concepts-r3.py` exits 0 without `--allow-kn
 | `run-number-scripts.mjs --only integrals` | 5 of 5 passed |
 | `grade-all.mjs --code --file` (six files) | 90 widgets, 0 failures |
 | playthrough l4, l7, l10, problems-1 to -3, desktop and `--mobile` | all passed |
+
+## Fix-pass read
+
+Fresh reader, blind to this file until the rows below were fixed. Read `git show 3eb0f5ec -- app/content/courses` (six files, 14 changed strings) at `cf2bfdbe`. Script: `docs/reports/integrals-L1-3-r3-fixread.mjs` (run from the repo root; loads the real `app/js/engine/grade.js` and calls `numGrade`, which is what `widgets/numeric.js` `grade()` calls); exit 0.
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | l4-accumulating-a-rate | `screens[7].explain.text` | "the same squeeze as in lesson 2" | correct | `course.json` level 1 order l1, l2, l3, l4, so lesson 2 is l2-thinner, which traps the area ($L_n \le A \le R_n$) between sums that converge and calls it the squeeze; l3 has no squeeze (searched), so the old "last lesson" was false. The app numbers lessons course-wide (`screens/course.js` line 111, `screens/today.js` line 202), so the learner sees l2 as "Lesson 2". |
+| 2 | l7-evaluating | `screens[8].prose` | "In lesson 5, for a continuous $f$, $A(x) = \int_a^x f(t)\,dt$ had $A' = f$" | correct | Level 2 order l5, l6, l7; l5-area-undoes-slope proves "$A'(x) = f(x)$ for any continuous $f$" with a fixed start $a$. Course-wide count makes it "Lesson 5". The rest of the derivation ($F - A$ has zero derivative, $C = F(a)$) is unchanged and still follows. |
+| 3 | l10-undo-product | `quiz[3].feedback.byKey.no-integral` | "You evaluated $x\ln x$ alone. The antiderivative is $x\ln x - x$, so take off $[x]_1^e = e - 1$ as well." | correct | $[x\ln x]_1^e = e \cdot 1 - 0 = e \approx 2.7183$, the slip value; $[x]_1^e = e - 1$; $e - (e - 1) = 1$, the key. Second way: midpoint sum of $\ln x$ on $[1, e]$ with $2 \times 10^6$ strips gives 1.0000000000. Typed 2.7183 and 2.718 route to `no-integral`, 1 grades correct, 0 routes to `top-only`. |
+| 4 | problems-1 | `items[2].parts[3].widget.accept` | $-\tfrac{16}{3}$, decimal within 0.005, such as $-5.33$ | correct | $\tfrac{8}{3} - 8 = -5.3333$; `tol.abs` 0.005; $-5.33$ is 0.0033 off; `-16/3` accepted. |
+| 5 | problems-1 | `items[2].parts[4].widget.accept` | $\tfrac{7}{3}$, within 0.005, such as $2.33$ | correct | $-3 - (-\tfrac{16}{3}) = 2.3333$; tol 0.005; 2.33 is 0.0033 off; `7/3` accepted. |
+| 6 | problems-2 | `items[0].parts[3].widget.accept` | $\tfrac{20}{3}$, within 0.0005, such as $6.667$ | correct | $\tfrac{8}{3} - 12 + 16 = 6.66667$; tol 0.0005; 6.667 is 0.00033 off; `20/3` accepted. |
+| 7 | problems-2 | `items[1].parts[3].widget.accept` | $2\ln 4 \approx 2.77$, or any decimal within 0.005 of $2\ln 4$ | correct | $16e^{-0.5t} = 4$ gives $t = 2\ln 4 = 2.772589$; tol 0.005; 2.77 is 0.0026 off. |
+| 8 | problems-2 | `items[2].parts[1].widget.accept` | $\tfrac{125}{24}$, within 0.0005, such as $5.208$ | correct | $[\tfrac{x^2}{2} + 3x - \tfrac{2x^3}{3}]_{-1}^{1.5} = 3.375 + \tfrac{11}{6} = 5.208333$; tol 0.0005; 5.208 is 0.00033 off; `125/24` accepted. |
+| 9 | problems-2 | `items[2].parts[2].widget.accept` | $\tfrac{19}{6}$, within 0.0005, such as $3.167$ | correct | $[\tfrac{2x^3}{3} - \tfrac{x^2}{2} - 3x]_{-2}^{-1} = \tfrac{11}{6} + \tfrac{4}{3} = 3.166667$; tol 0.0005; 3.167 is 0.00033 off; `19/6` accepted. |
+| 10 | problems-3 | `items[0].parts[3].widget.accept` | $\sqrt{99} \approx 9.95$, or any decimal within 0.005 of $\sqrt{99}$ | correct | $1 + q^2 = 100$, $q = \sqrt{99} = 9.949874$; tol 0.005; 9.95 is 0.00013 off; the `drop-one` band (10 ± 0.001) is 0.05 away. |
+| 11 | problems-3 | `items[2].parts[1].widget.accept` | $-0.0452$, or within 0.00005 of $(1.5\ln 1.5 - 1.5) - (0.5\ln 0.5 - 0.5)$ | correct | The expression is $-0.04522875$, equal to the key to $10^{-12}$; tol 0.00005; $-0.0452$ is 0.000029 off. |
+| 12 | problems-3 | `items[2].parts[2].widget.accept` | $0.0017$, or within 0.00005 of $0.0267 / 16 = 0.00166875$ | correct | $0.0267 / 16 = 0.00166875$ exactly, the key; tol 0.00005; 0.0017 is 0.000031 off. The only terminating centre, so the only one with decimals on the band edge: 0.00171875 and 0.00161875 are both accepted, as "within" promises. The unrounded route ($0.026692 / 16 = 0.001668$) is accepted too. |
+| 13 | problems-3 | `items[3].parts[1].widget.accept` | $4(1 - e^{-2}) \approx 3.459$, or within 0.0005 of $4(1 - e^{-2})$ | correct | $[-4e^{-t^2/8}]_0^4 = 4 - 4e^{-2} = 3.458659$; tol 0.0005; 3.459 is 0.00034 off. |
+| 14 | problems-3 | `items[3].parts[2].widget.accept` | $1 - e^{-2} \approx 0.865$, or within 0.0005 of $1 - e^{-2}$ | correct | $3.458659 / 4 = 0.864665$; tol 0.0005; 0.865 is 0.00034 off. |
+
+Counts: 14 rows; 14 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified.
+
+Rows 4 to 14, the promise against the grader. `within` accepts $|v - \text{answer}| \le t + 10^{-9}$. For each item the script recomputes the exact value from the question (not from the stored key), then checks: key equals it to $10^{-12}$; the stated $t$ is the item's `tol.abs`; the example figure grades correct; decimals at exact $\pm (t - 2 \times 10^{-9})$ and $\pm 0.5t$ grade correct and at exact $\pm (t + 2 \times 10^{-9})$ and $\pm 2t$ are refused; a sweep of 4,000 random seven-place decimals across exact $\pm 3t$ agrees with $|x - \text{exact}| \le t$ every time; and no `wrong[]` band reaches the promised band. All pass for all eleven. Ten centres are irrational or recurring, so no typed decimal can sit on an edge; row 12 covers the eleventh.
+
+One note, not a finding and not from this diff: the numeric field parses only decimals, fractions and mixed numbers, so `2ln4`, `sqrt(99)` and `4(1-e^-2)` cannot be submitted at all (`parseNum` returns NaN, so the field is not ready). Rows 7, 10, 13 and 14 name the closed form only as the centre of the decimal band, and each question asks for a decimal, so nothing promised is refused. "Any form equal to" in rows 4 to 6, 8 and 9 is older wording and holds for fractions and mixed numbers.
