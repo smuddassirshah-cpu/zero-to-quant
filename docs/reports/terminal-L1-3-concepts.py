@@ -11,6 +11,9 @@ Exit 0 when nothing fails.
 Fix pass (Opus): the eight FINDING checks encoded the old wording and were re-pointed to the fixed text, each with
 the same run that disproved the old claim, now asserting the true behaviour. Checks for findings 2, 9, 11, 12 and 13
 were added (text plus a run where one is possible). Marked "(fixed)".
+
+Fix-pass follow-up (Opus, audit r2): the NOTE check on `cd "desk"` encoded the old refusal; `_runs` now strips quotes,
+so it was re-pointed to assert that `cd "desk"` is accepted and a quoted `~` is still refused, as in a real shell.
 """
 import json, os, posixpath, re, shutil, subprocess, sys, tempfile
 
@@ -508,7 +511,8 @@ def runs(comment):
 check('H3 trade comments: cd desk / cd ~/desk / cd /home/sam/desk then python3 trade.py accepted; python3 desk/trade.py and bare python3 trade.py refused',
       all(runs(c) == 'ok' for c in ('# cd desk\n# python3 trade.py\n', '# cd ~/desk && python3 trade.py\n', '# cd /home/sam/desk\n# python3 ./trade.py\n'))
       and runs('# python3 desk/trade.py\n') != 'ok' and runs('# python3 trade.py\n') != 'ok')
-check('H3 trade comments NOTE (inbox, not a content finding): valid shell cd "desk" is refused', runs('# cd "desk"\n# python3 trade.py\n') != 'ok')
+check('H3 trade comments (fixed, r2 follow-up): valid shell cd "desk" is accepted; cd "~/desk" (quoted ~, not swapped) is refused',
+      runs('# cd "desk"\n# python3 trade.py\n') == 'ok' and runs('# cd "~/desk"\n# python3 trade.py\n') != 'ok')
 
 l9t = json.dumps(load('l9-installing-python'), ensure_ascii=False) + json.dumps(load('review-3'), ensure_ascii=False)
 check('L9 (fixed) no pandas 1.5 beside Python 3.12 (no 3.12 build); pandas 2.1 and 2.2 both have cp312 wheels (PyPI, 2.1.1 on)',
