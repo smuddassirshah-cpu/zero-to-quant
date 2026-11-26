@@ -251,16 +251,38 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 7 hidden tests on $x^2 + 2y^2$ and $x^2 + 9y^2$. They cover good steps, a tiny step, a start at the minimum, and steps that never settle. Each count must match exactly."
+        "how": "Check runs 7 hidden tests on $x^2 + 2y^2$ and $x^2 + 9y^2$. They cover good steps, a tiny step, a start at the minimum, and steps that never settle. Each count must match exactly.",
+        "mutants": [
+          {
+            "source": "import math\n\ndef steps_needed(grad, x0, y0, step, tol, max_steps):\n    x, y = x0, y0\n    for k in range(max_steps):\n        g = grad(x, y)\n        if math.hypot(g) < tol:\n            return k\n        x, y = x - step * g[0], y - step * g[1]\n    return max_steps\n",
+            "test": 1,
+            "symptom": "`math.hypot(g)` on the pair raises a TypeError in test 1"
+          },
+          {
+            "source": "import math\n\ndef steps_needed(grad, x0, y0, step, tol, max_steps):\n    x, y = x0, y0\n    for k in range(max_steps):\n        g = grad(x, y)\n        if abs(g) < tol:\n            return k\n        x, y = x - step * g[0], y - step * g[1]\n    return max_steps\n",
+            "test": 1,
+            "symptom": "`abs(g)` on the pair raises a TypeError in test 1"
+          },
+          {
+            "source": "import math\n\ndef steps_needed(grad, x0, y0, step, tol, max_steps):\n    x, y = x0, y0\n    for k in range(max_steps):\n        g = grad(x, y)\n        if math.hypot(*g) < tol:\n            return k\n        x, y = x - step * g, y - step * g\n    return max_steps\n",
+            "test": 1,
+            "symptom": "`step * g` on the pair raises a TypeError in test 1"
+          },
+          {
+            "source": "import math\n\ndef steps_needed(grad, x0, y0, step, tol, max_steps):\n    x, y = x0, y0\n    for k in range(max_steps):\n        gx, gy = grad(x, y)\n        if math.hypot(gx, gy) < tol:\n            return k + 1\n        x, y = x - step * gx, y - step * gy\n    return max_steps\n",
+            "test": 1,
+            "symptom": "returns $k + 1$: counts from 1"
+          }
+        ]
       },
       "feedback": {
         "correct": "Step 0.3 needs 10 steps where 0.1 needs 41 and 0.01 needs 445.",
         "generic": "Not quite right. Read the first failing test.",
         "byKey": {
-          "test-1": "Test 1 expects 41. Check the gradient's length before each step, and count from 0.",
+          "test-1": "Test 1 expects 41. Unpack with `gx, gy = grad(x, y)`, check `math.hypot(gx, gy)` before each step, and count from 0.",
           "test-4": "Test 4 starts at the minimum, where the gradient is already 0: return 0.",
           "test-5": "Test 5 never settles. Stop after `max_steps` steps and return `max_steps`.",
-          "error": "Your code stopped with an error. `grad(x, y)` returns two numbers; use `math.hypot(gx, gy)` for the length."
+          "error": "Your code did not run. Check the colons and the indentation, and give the function a body in place of `pass`."
         }
       },
       "explain": {
