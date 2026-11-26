@@ -162,3 +162,7 @@ No key, slip or solution changed; two hidden tests replaced (widgets at the 15-t
 Scripts: no check re-pointed. `cpp-L4-5-concepts-r2-mutants.mjs` gains 10 `FP2` codings (eight wrong, two valid); the r2 docstring says so.
 
 Gates: validator 0 errors (4617 warnings); voice scan 35 on the three files 0 and 0; `cpp-L4-5-concepts-r2.py` exit 0 (part A 92, part B 258); `cpp-L4-5-concepts.py` exit 0 (340 of 340); `cpp-L4-5-r2-fixread.py` exit 0; number scripts `--only cpp` 7 of 7; `grade-all --file` 0 failures on the three files; playthrough of `l19`, `l23` and `homework-5` green desktop and `--mobile`.
+
+## Orchestrator note
+
+The Opus follow-up (71e1b86f) changed one learner sentence (l19 `screens[1].explain`, the 16 and 24 byte counts) and two hidden tests at the 15-test cap (l23 `tests[8]`, homework-5 `tests[14]`). The orchestrator checked the sentence: the class holds `int` and `double*`, four field stores, 2 x (4 + 4) = 16 on wasm32 and 2 x (4 + 8) = 24 on x86-64. The test replacements were run by the fixer against 28 and 19 codings with no regression; no further fix-pass read was run.
