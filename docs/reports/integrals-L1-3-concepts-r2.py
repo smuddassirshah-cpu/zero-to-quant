@@ -6,6 +6,7 @@ Run with the audit venv Python (sympy 1.14, scipy 1.18, numpy 2.5 here; no figur
 Exits 0 when every check on correct content passes. A check that fails because the content is wrong stays
 failing (it is a finding in docs/reviews/audit-integrals-1-3-r2.md); INFO lines are imprecise/misleading
 findings and do not fail the run.
+Fix pass: the review-3 items[8] check encoded the old accept text ("£0.63"); it now reads the figure the accept line prints.
 """
 import json, math, os, re, sys
 import numpy as np
@@ -228,8 +229,10 @@ info('l13 screens[5] explain and summary.ideas[2] state E[g(X)] != g(E[X]) witho
 chk('review-3', round(0.5 * math.log(5), 4) == 0.8047 and close(integrate.quad(lambda v: v * math.exp(-v * v), 0, np.inf)[0], 0.5, 1e-8)
     and close(integrate.quad(lambda v: v * math.exp(-v), 0, np.inf)[0], 1, 1e-8))
 r3 = J('review-3')['items'][8]['widget']
-ok63 = abs(0.63 - r3['answer']) <= r3['tol']['abs'] + 1e-9
-chk('review-3 items[8]: the accept line prints "£0.63" as accepted; the tolerance must accept 0.63 (answer %s, tol %s)' % (r3['answer'], r3['tol']), ok63)
+# Re-pointed in the fix pass: the check first read "£0.63" from the old accept line; it now reads the figure the accept line prints.
+acc = float(re.search(r'£([0-9.]+)', r3['accept']).group(1))
+ok63 = abs(acc - r3['answer']) <= r3['tol']['abs'] + 1e-9
+chk('review-3 items[8]: the accept line prints "£%s" as accepted; the tolerance must accept it (answer %s, tol %s)' % (acc, r3['answer'], r3['tol']), ok63)
 chk('homework-3', close(integrate.quad(lambda v: v * math.exp(-0.05 * v), 0, np.inf)[0], 400, 1e-5)
     and close(integrate.quad(lambda y: y * (6 - y) / 100, 0, 6)[0], 0.36) and round(riemann(lambda v: math.exp(-v * v), 0, 1, 4, 'trap'), 4) == 0.7430
     and round(integrate.quad(lambda v: math.exp(-v * v), 0, 1)[0], 4) == 0.7468 and round(0.25 * sum(math.exp(-(i / 4) ** 2) for i in range(5)), 3) == 0.914

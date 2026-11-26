@@ -270,6 +270,21 @@
             "source": "def trapezium(f, a, b, n):\n    h = (b - a) / n\n    total = 0.0\n    for i in range(n):\n        left = a + i * h\n        total += h * (f(left) + f(left + h)) / 2\n    return total\n\ndef n_needed(f, a, b, exact, tol):\n    n = 1\n    for _ in range(40):\n        if abs(trapezium(f, a, b, 2 * n) - trapezium(f, a, b, n)) < tol:\n            return n\n        n *= 2\n    return n\n",
             "test": 8,
             "symptom": "successive estimates in a bounded loop: returns 32"
+          },
+          {
+            "source": "def trapezium(f, a, b, n):\n    h = (b - a) / n\n    total = 0.0\n    for i in range(n):\n        left = a + i * h\n        total += h * (f(left) + f(left + h)) / 2\n    return total\n\ndef n_needed(f, a, b, exact, tol):\n    n = 1\n    while abs(trapezium(f, a, b, n) - exact) >= tol:\n        n *= 2\n    return n // 2 if n > 1 else n\n",
+            "test": 3,
+            "symptom": "returns the n before the first one below tol: returns 32"
+          },
+          {
+            "source": "def trapezium(f, a, b, n):\n    h = (b - a) / n\n    total = 0.0\n    for i in range(n):\n        left = a + i * h\n        total += h * (f(left) + f(left + h)) / 2\n    return total\n\ndef n_needed(f, a, b, exact, tol):\n    n = 1\n    while True:\n        err = abs(trapezium(f, a, b, n) - exact)\n        n *= 2\n        if err < tol:\n            return n\n",
+            "test": 3,
+            "symptom": "doubles after the check passes: returns 128"
+          },
+          {
+            "source": "def trapezium(f, a, b, n):\n    h = (b - a) / n\n    total = 0.0\n    for i in range(n):\n        left = a + i * h\n        total += h * (f(left) + f(left + h)) / 2\n    return total\n\ndef n_needed(f, a, b, exact, tol):\n    n = 1\n    while abs(trapezium(f, a, b, 2 * n) - trapezium(f, a, b, n)) >= tol:\n        n *= 2\n    return 2 * n\n",
+            "test": 3,
+            "symptom": "successive estimates, returning the finer n: returns 128"
           }
         ]
       },
@@ -279,7 +294,7 @@
         "byKey": {
           "test-1": "Test 1 expects $T_3$ for $x^2$ on $[0, 1]$, about 0.35185. Check that you make exactly `n` strips of width `h`.",
           "test-4": "Test 4 is a straight line, which $T_1$ gets exactly. Start the search at `n = 1` and test before doubling.",
-          "test-3": "Test 3 expects 64: at $n = 32$ the error is 0.000163, still above 0.0001. Stop only when the error is below `tol`.",
+          "test-3": "Test 3 expects 64: the error is 0.000163 at $n = 32$ and 0.000041 at $n = 64$. Return the first $n$ whose own error against `exact` is below `tol`, neither the one before nor the one after.",
           "test-8": "Test 8 expects 64. Compare each estimate with `exact`, not with the estimate before it.",
           "error": "Your code stopped with an error. Read the last line of the message under the editor."
         }
