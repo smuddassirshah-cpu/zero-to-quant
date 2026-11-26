@@ -208,6 +208,28 @@
         "label": "hello.py",
         "starter": "print(\"hello\")\n",
         "solution": "print(\"hello\")\nprint(\"Ready to code\")\n",
+        "mutants": [
+          {
+            "source": "print(hello)\nprint(\"Ready to code\")\n",
+            "test": 1,
+            "symptom": "hello without quotes: NameError, nothing printed"
+          },
+          {
+            "source": "print(\"hello\")\nPrint(\"Ready to code\")\n",
+            "test": 1,
+            "symptom": "capital P: NameError after hello"
+          },
+          {
+            "source": "print(\"hello\")\nprint(\"Ready To Code\")\n",
+            "test": 1,
+            "symptom": "capitals in the second line"
+          },
+          {
+            "source": "print(\"Ready to code\")\nprint(\"hello\")\n",
+            "test": 1,
+            "symptom": "lines in the wrong order"
+          }
+        ],
         "examples": [
           {
             "compare": "stdout",
@@ -252,7 +274,8 @@
         "correct": "Two lines out, in the order you wrote them.",
         "generic": "Not quite right. Compare your printed lines with the two asked for, letter by letter.",
         "byKey": {
-          "error": "Your script stopped with an error. Read its last line, then check the quotes and brackets."
+          "test-1": "Test 1 compares what your script printed with `hello` and `Ready to code`. If it stopped with a NameError, check that each text has its quotes and that `print` is lower case.",
+          "error": "Your script cannot start: Python found a slip in the typing before it ran. Read the last line of the message, then check the quotes and brackets."
         }
       },
       "explain": {
@@ -289,9 +312,52 @@
           {
             "call": "len(printed)",
             "expect": "1"
+          },
+          {
+            "call": "run_from(250.00)",
+            "expect": "245.0",
+            "compare": "isclose"
           }
         ],
-        "how": "Check runs your script as `python3` would. Test 1 compares everything it prints with the expected output; the other tests look at the printed lines and at your names."
+        "postlude": "import io as _io, re as _re, sys as _sys\n\ndef run_from(start):\n    # Runs the script again with its first price set to start, and gives back the final price.\n    _src = _re.sub(r\"^(\\s*price\\s*=\\s*)[\\d.]+\", lambda _m: _m.group(1) + repr(float(start)), __learner_source__, count=1, flags=_re.M)\n    _g, _old = {\"__name__\": \"__main__\"}, _sys.stdout\n    _sys.stdout = _io.StringIO()\n    try:\n        exec(_src, _g)\n    finally:\n        _sys.stdout = _old\n    return _g.get(\"price\")\n",
+        "how": "Check runs your script as `python3` would. Test 1 compares everything it prints with the expected output; tests 2 and 3 look at `price` and at the printed lines. Test 4 runs it again from a start price of 250.00.",
+        "mutants": [
+          {
+            "source": "price = 100.00\nprice = price - 2\nprint(price)\n",
+            "test": 4,
+            "symptom": "takes 2 off instead of 2%: 248.0 from 250.00"
+          },
+          {
+            "source": "price = 100.00\nprice -= 2\nprint(price)\n",
+            "test": 4,
+            "symptom": "-= 2: 248.0 from 250.00"
+          },
+          {
+            "source": "price = 100.00\nprice = 98.0\nprint(price)\n",
+            "test": 4,
+            "symptom": "types 98.0 on line 2: still 98.0 from 250.00"
+          },
+          {
+            "source": "price = 100.00 - 2\nprint(price)\n",
+            "test": 4,
+            "symptom": "100.00 - 2 on line 1: 248.0 from 250.00"
+          },
+          {
+            "source": "price = 100.00\nprice = Price * 0.98\nprint(price)\n",
+            "test": 1,
+            "symptom": "Price with a capital: NameError, nothing printed"
+          },
+          {
+            "source": "price = 100.00\nprice = price * 0,98\nprint(price)\n",
+            "test": 1,
+            "symptom": "decimal comma: prints (0.0, 98)"
+          },
+          {
+            "source": "price = 100.00\nprice = price * 1.02\nprint(price)\n",
+            "test": 1,
+            "symptom": "a 2% rise: prints 102.0"
+          }
+        ]
       },
       "hints": [
         {
@@ -311,11 +377,13 @@
         "correct": "Multiplying by 0.98 keeps 98% of any price.",
         "generic": "Not quite right. Change the multiplier on line 2, not the print.",
         "byKey": {
-          "error": "Your script stopped with an error. Read its last line, then compare with the starting script."
+          "test-1": "Test 1 expected your script to print 98.0. If it stopped with an error, read its last line, then compare with the starting script.",
+          "test-4": "Test 4 runs your script again from a start price of 250.00, where a 2% fall gives 245.0. Taking 2 off, or typing 98, gives the right answer only from 100: multiply by 0.98.",
+          "error": "Your script cannot start: Python found a slip in the typing before it ran. Read the last line of the message, then compare with the starting script."
         }
       },
       "explain": {
-        "text": "You swapped 1.04 for 0.98. Line 2 replaced the old price with 98% of it, and line 3 printed the new value. The test on `price` checks the sum was really done, not just printed."
+        "text": "You swapped 1.04 for 0.98. Line 2 replaced the old price with 98% of it, and line 3 printed the new value. Test 4 reruns the script from 250.00, where 98% is 245.0 and taking 2 off would give 248.0."
       }
     },
     {
@@ -718,6 +786,28 @@
         "label": "week.py",
         "starter": "# week.py: one week of a share price, in pounds\nmonday = 250.00\nfriday = 262.50\n\n# 1. Work out change: Friday's price minus Monday's.\n# 2. Print it as: Change: 12.5\n# 3. Work out ret, the return: change / Monday's price.\n# 4. Print it as: Return: 0.05\n",
         "solution": "# week.py: one week of a share price, in pounds\nmonday = 250.00\nfriday = 262.50\n\nchange = friday - monday\nprint(\"Change:\", change)\n\nret = change / monday\nprint(\"Return:\", ret)\n",
+        "mutants": [
+          {
+            "source": "# week.py: one week of a share price, in pounds\nmonday = 250.00\nfriday = 262.50\n\nchange = Friday - monday\nprint(\"Change:\", change)\n\nret = change / monday\nprint(\"Return:\", ret)\n",
+            "test": 1,
+            "symptom": "Friday with a capital: NameError, nothing printed"
+          },
+          {
+            "source": "# week.py: one week of a share price, in pounds\nmonday = 250.00\nfriday = 262.50\n\nchange = friday - monday\nprint(\"Change: \" + change)\n\nret = change / monday\nprint(\"Return:\", ret)\n",
+            "test": 1,
+            "symptom": "text + number: TypeError, nothing printed"
+          },
+          {
+            "source": "# week.py: one week of a share price, in pounds\nmonday = 250.00\nfriday = 262.50\n\nchange = friday - monday\nprint(\"Change:\", change)\n\nret = change / monday\nprint(\"Return:\", Ret)\n",
+            "test": 1,
+            "symptom": "Ret with a capital: NameError after the first line"
+          },
+          {
+            "source": "# week.py: one week of a share price, in pounds\nmonday = 250.00\nfriday = 262.50\n\nchange = friday - monday\nprint(\"change:\", change)\n\nret = change / monday\nprint(\"Return:\", ret)\n",
+            "test": 1,
+            "symptom": "label in lower case"
+          }
+        ],
         "examples": [
           {
             "compare": "stdout",
@@ -764,7 +854,8 @@
         "correct": "A 5% week: £12.50 gained on £250.00.",
         "generic": "Not quite right. Compare what you printed with the expected text, character by character.",
         "byKey": {
-          "error": "Your script stopped with an error. Read the last line of the message, then the line number."
+          "test-1": "Test 1 compares your two printed lines with `Change: 12.5` and `Return: 0.05`. If the script stopped with an error, read its last line, then the line number.",
+          "error": "Your script cannot start: Python found a slip in the typing before it ran. Read the last line of the message, then the line number."
         }
       },
       "explain": {
