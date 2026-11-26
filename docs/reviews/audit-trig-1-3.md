@@ -148,3 +148,7 @@ Fresh reader, blind to the audit and fix-pass text above (rows written before th
 1. Row 12, `l3-sides-and-angles.json` screens[1].prose: replace `set to degrees (DEG on its screen),` with `set to degrees (D or DEG on its screen),`.
 2. Row 15, `l5-no-right-angle.json` screens[2].explain.text, last sentence: replace with `Past $90^\\circ$ a calculator gives a negative cosine, such as $\\cos 120^\\circ = -0.5$, so the correction adds and the rule still holds; level 2 shows why the cosine turns negative.` Basis: l6 teaches the sign of the cosine past 90°; no level-2 screen treats the cosine rule.
 3. Row 16, `l5-no-right-angle.json` screens[6].explain.text, last sentence: replace with `When it gives an angle from two sides and one angle, the calculator shows the acute $x$; $180^\\circ - x$ has the same sine, and fits too if the angles still add to under $180^\\circ$.` Basis: the angle-sum test is exact for two sides and a facing angle (simulation above); with a third side known, as on the lake, only one angle fits.
+
+## Fix-pass follow-up (orchestrator)
+
+- The reader's three lines applied: l5 screens[6] explain limits the two-angle rule to "an angle from two sides and one angle" (the lake's 102.1° at B passes the sum test yet is false); l5 screens[2] explain ends "level 2 shows why the cosine turns negative"; l3 screens[1] prose "(D or DEG on its screen)". Gates: validator 0 errors, voice scan 0 and 0, concepts and fixread 0, grade-all 0 failures, playthrough desktop and mobile green.
