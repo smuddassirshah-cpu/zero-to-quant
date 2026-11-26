@@ -604,7 +604,19 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 6 hidden tests: the example, two and three test cases, and blank lines at the end. Then no final newline, and two separate calls in a row. Answers are compared exactly."
+        "how": "Check runs 6 hidden tests: the example, two and three test cases, and blank lines at the end. Then no final newline, and two separate calls in a row. Answers are compared exactly.",
+        "mutants": [
+          {
+            "source": "def solve_all(text):\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    seen = set()\n    for _ in range(t):\n        n = int(data[pos])\n        pos += 1\n        before = len(seen)\n        for s in data[pos:pos + n]:\n            seen.add(s)\n        pos += n\n        out.append(len(seen) - before)\n    return out\n",
+            "test": 3,
+            "symptom": "counts only tickers new to the call: [1, 0, 1]"
+          },
+          {
+            "source": "seen = set()\n\n\ndef solve_all(text):\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    for case in range(t):\n        n = int(data[pos])\n        pos += 1\n        if case > 0:\n            seen.clear()\n        for s in data[pos:pos + n]:\n            seen.add(s)\n        pos += n\n        out.append(len(seen))\n    return out\n",
+            "test": 3,
+            "symptom": "the first case keeps tickers from an earlier call: [2, 1, 2]"
+          }
+        ]
       },
       "hints": [
         {
@@ -628,7 +640,7 @@
         "generic": "Not quite right. Look at the first failing test.",
         "byKey": {
           "test-2": "Test 2's second case is CCC CCC, one distinct ticker. Your answer counted AAA and BBB from the first case too.",
-          "test-3": "Test 3's first case is AAA alone, so its answer is 1. A set kept outside `solve_all` still holds tickers from an earlier call."
+          "test-3": "Test 3's cases are AAA, then AAA, then BBB AAA, so the answers are 1, 1 and 2. A ticker counts again in a later case: count each case's distinct tickers, not just the new ones. Start every case, the first included, with an empty set."
         }
       },
       "explain": {

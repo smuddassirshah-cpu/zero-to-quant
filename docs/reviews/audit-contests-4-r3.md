@@ -80,3 +80,37 @@ Written to `docs/BACKLOG-INBOX.md` under "Raised later (audit contests):".
 
 - `l13` problem C needs a twelfth hidden test, `can_ship([5, 5], 3, 4)` expecting False, so the solution's `w > cap` guard is required (finding 3; open since round 2).
 - A `test-N` line can be true and reachable and still not fit what reaches it. A check that a committed submission reaches test N (item 1028) would pass both new findings here; the committed submission would also need its returned value compared with what the line says.
+
+## Fix pass
+
+Opus fixer, on `92870c42`. Each line was checked by submitting natural codings of the mistakes it names under the page's own harness (Pyodide 0.27.7, `tools/code-runner.mjs`); results in the table. The codings are in the concepts script as the `fix-` variants, and each new line has `mutants` entries, so `grade-all.mjs --code` now fails if a coding stops landing on its test.
+
+1. `l14` `screens[10]` `test-4`: **fixed differently**. Basis: test 4's answer is `(0, ['A'])`, and seven codings of two mistakes all fail first on test 4 with the total 0 already right and the names wrong. A best total started at 0 with a strict `>` never keeps an order worth 0, so it returns `(0, None)` or `(0, [])` (four codings). Dropping the problems that cannot fit leaves only the empty order, `(0, [])` (three codings). The auditor's text covers the first mistake only, so the line names both. New line: "Test 4's only problem cannot finish in 5 minutes, so it scores 0, but the order still names it: `(0, ['A'])`. Start the best total below 0, so an order worth 0 is still kept. Keep the problems that cannot fit in every order you try." Mutants: the zero start and the filter, both test 4.
+2. `l15` `screens[5]` `test-3`: **fixed**. Basis: each case's answer is its own count of distinct tickers, so test 3 is 1, 1 and 2. Two mistakes land there. Counting only tickers new to the call gives `[1, 0, 1]` (three codings, plus the auditor's `t3-increments-per-call`). Emptying the set between cases but not before a call's first case gives `[2, 1, 2]` (three codings, plus the auditor's two). The old line fitted the second only. New line, the auditor's with its second sentence made to name the first mistake: "Test 3's cases are AAA, then AAA, then BBB AAA, so the answers are 1, 1 and 2. A ticker counts again in a later case: count each case's distinct tickers, not just the new ones. Start every case, the first included, with an empty set." Mutants: one of each, both test 3.
+3. `l13` `screens[5]` tests: **fixed**. Basis: an order of 5 fits no load of a van of 4, so `can_ship([5, 5], 3, 4)` is False whatever `k` is; the greedy without the guard counts 3 days and returns True. Added as test 12, so no `test-N` line is renumbered; the model solution passes it, the starter still fails (test 1), and four guard-free codings pass tests 1 to 11 and fail first on test 12. `how` now says 12 hidden tests and adds "Test 12 has two orders heavier than the van and three days." New `test-12`: "Test 12 has two orders of 5, a van of 4 and three days. Counting days gives 3, but no day can carry an order of 5. Return False as soon as an order is heavier than the van." Mutant: the plain greedy, test 12. `can_ship` is in no homework or review file, so there is no other copy.
+
+| Widget | Coding | First failing test | Returned there |
+| --- | --- | --- | --- |
+| l14 s10 | best total 0, names `None` | 4 | `(0, None)` |
+| l14 s10 | best total 0, names `[]` | 4 | `(0, [])` |
+| l14 s10 | best kept as a tuple `(0, [])` | 4 | `(0, [])` |
+| l14 s10 | keep only orders worth more than 0 | 4 | `(0, [])` |
+| l14 s10 | filter inside `permutations` | 4 | `(0, [])` |
+| l14 s10 | filter the list first | 4 | `(0, [])` |
+| l14 s10 | return `(0, [])` when nothing fits | 4 | `(0, [])` |
+| l14 s10 | late problem scores its floor (other mistake) | 2 | `(3550.0, ...)` |
+| l15 s5 | new tickers, before and after | 3 | `[1, 0, 1]` |
+| l15 s5 | new tickers, counted when not seen | 3 | `[1, 0, 1]` |
+| l15 s5 | new tickers, set difference | 3 | `[1, 0, 1]` |
+| l15 s5 | outside set cleared if case > 0 | 3 | `[2, 1, 2]` |
+| l15 s5 | outside set cleared after all but the last case | 3 | `[2, 1, 2]` |
+| l15 s5 | outside set replaced after all but the last case | 3 | `[2, 1, 2]` |
+| l15 s5 | one set per call, never emptied (other mistake) | 2 | `[2, 3]` |
+| l13 s5 | plain greedy, no guard | 12 | `True` |
+| l13 s5 | days counted at the ends, no guard | 12 | `True` |
+| l13 s5 | new day starts with the order, no guard | 12 | `True` |
+| l13 s5 | early exit on days, no guard | 12 | `True` |
+
+Concepts script: only the checks that encoded the old defects changed, as its docstring says. The three `FINDING` checks now test the fixed content. Five sweep labels moved with the new lines: the two unguarded greedies now land on test 12 (`pyodide` recorded as `test-12`), `t3-increments-per-call` is now test 3's named mistake, and the two codings that never empty the set between cases are test 2's mistake, not test 3's. Twelve `fix-` codings were added.
+
+Gates: validator 0 errors (4,606 warnings, unchanged); voice scan 35 on the three lessons 0 and 0; `contests-L4-concepts-r3.py` 356 checks, 0 failing, exit 0; number scripts `--only contests` 5 of 5 passed; `grade-all.mjs --code --file` on each lesson 0 failures (mutants included); playthrough of l13, l14 and l15 green desktop and `--mobile`.

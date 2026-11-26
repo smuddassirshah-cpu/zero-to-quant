@@ -610,9 +610,21 @@
             "call": "checks_used(w, 500)[0]",
             "expect": "1002823",
             "compare": "equal"
+          },
+          {
+            "call": "can_ship([5, 5], 3, 4)",
+            "expect": "False",
+            "compare": "equal"
           }
         ],
-        "how": "Problem C, about 1300. Check runs 11 hidden tests: the example, `can_ship` on its own, $k = 1$, $k = n$, one order and equal weights. Test 4 has an order heavier than the van. Test 10 wraps `can_ship` in a counter on 40 orders with a total of 1,807, and allows 13 calls. Test 11 is 100,000 orders with $k = 500$. Answers are compared exactly."
+        "how": "Problem C, about 1300. Check runs 12 hidden tests: the example, `can_ship` on its own, $k = 1$, $k = n$, one order and equal weights. Test 4 has an order heavier than the van. Test 10 wraps `can_ship` in a counter on 40 orders with a total of 1,807, and allows 13 calls. Test 11 is 100,000 orders with $k = 500$. Test 12 has two orders heavier than the van and three days. Answers are compared exactly.",
+        "mutants": [
+          {
+            "source": "def can_ship(weights, k, cap):\n    days, load = 1, 0\n    for w in weights:\n        if load + w > cap:\n            days += 1\n            load = 0\n        load += w\n    return days <= k\n\n\ndef min_capacity(weights, k):\n    lo, hi = max(weights), sum(weights)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if can_ship(weights, k, mid):\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n",
+            "test": 12,
+            "symptom": "no `w > cap` guard: the day count is 3, so it returns True"
+          }
+        ]
       },
       "hints": [
         {
@@ -638,6 +650,7 @@
           "test-4": "Test 4 has an order of 5 and a van of 4. No day can carry it, so return False.",
           "test-10": "Test 10 counted more than 13 calls to `can_ship`. Search between the heaviest order and the total, and halve that range each time.",
           "test-11": "Test 11 has 100,000 orders. Each check is $O(n)$, so the number of checks must be about 30, not a million.",
+          "test-12": "Test 12 has two orders of 5, a van of 4 and three days. Counting days gives 3, but no day can carry an order of 5. Return False as soon as an order is heavier than the van.",
           "test-1": "Test 1 expects 12. If you got less, check `can_ship` at 11 by hand: it needs 4 days (4, then 8 and 2, then 7, then 5 and 3).",
           "test-2": "Test 2 calls `can_ship` alone and asks whether 11 ships in 3 days. Greedily it needs 4 days: 4, then 8 and 2, then 7, then 5 and 3."
         }

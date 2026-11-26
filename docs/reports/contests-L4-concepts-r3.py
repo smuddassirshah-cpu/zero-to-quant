@@ -14,6 +14,11 @@ Three parts.
     (tools/code-runner.mjs, recorded in the `pyodide` field when the audit was run) and (ii) the line it was written for.
     Rule (docs/briefs/concept-audit.md, round-3 task): a line that names a mistake is right only if at least half of the
     failing codings of that mistake fail first on test N. Timing-dependent keys are marked TIMING.
+
+Fix pass (docs/reviews/audit-contests-4-r3.md, "Fix pass"): the three FINDING checks now test the fixed content, the
+`fix-` codings were added (each graded under Pyodide by the fixer), and five labels moved with the new lines: the two
+unguarded greedies now land on test 12, `t3-increments-per-call` is test 3's named mistake, and the two codings that
+never empty the set between cases are test 2's mistake, not test 3's.
 """
 import json, math, os, subprocess, sys, itertools
 from concurrent.futures import ThreadPoolExecutor
@@ -591,9 +596,9 @@ VARIANTS = json.loads(r'''[
 "file": "l13-virtual-contest",
 "at": "screens[5]",
 "id": "t4-heavy-order-newday",
-"line": "test-4",
-"named": false,
-"pyodide": null,
+"line": "test-12",
+"named": true,
+"pyodide": "test-12",
 "src": "def can_ship(weights, k, cap):\n    days, load = 1, 0\n    for w in weights:\n        if load + w > cap:\n            days += 1\n            load = 0\n        load += w\n    return days <= k\n\n\ndef min_capacity(weights, k):\n    lo, hi = max(weights), sum(weights)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if can_ship(weights, k, mid):\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n"
 },
 {
@@ -789,9 +794,9 @@ VARIANTS = json.loads(r'''[
 "file": "l13-virtual-contest",
 "at": "screens[5]",
 "id": "t4-count-day-ends",
-"line": "test-4",
-"named": false,
-"pyodide": null,
+"line": "test-12",
+"named": true,
+"pyodide": "test-12",
 "src": "def can_ship(weights, k, cap):\n    days, load = 0, 0\n    for w in weights:\n        if load + w > cap:\n            days += 1\n            load = 0\n        load += w\n    if load > 0:\n        days += 1\n    return days <= k\n\ndef min_capacity(weights, k):\n    lo, hi = max(weights), sum(weights)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if can_ship(weights, k, mid):\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n"
 },
 {
@@ -1132,7 +1137,7 @@ VARIANTS = json.loads(r'''[
 "at": "screens[5]",
 "id": "t3-global-clear-at-end-of-call",
 "line": "test-3",
-"named": true,
+"named": false,
 "pyodide": "test-2",
 "src": "seen = set()\n\n\ndef solve_all(text):\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    for _ in range(t):\n        n = int(data[pos])\n        pos += 1\n        for s in data[pos:pos + n]:\n            seen.add(s)\n        pos += n\n        out.append(len(seen))\n    seen.clear()\n    return out\n"
 },
@@ -1141,7 +1146,7 @@ VARIANTS = json.loads(r'''[
 "at": "screens[5]",
 "id": "t3-global-clear-start-of-call",
 "line": "test-3",
-"named": true,
+"named": false,
 "pyodide": "test-2",
 "src": "seen = set()\n\n\ndef solve_all(text):\n    seen.clear()\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    for _ in range(t):\n        n = int(data[pos])\n        pos += 1\n        for s in data[pos:pos + n]:\n            seen.add(s)\n        pos += n\n        out.append(len(seen))\n    return out\n"
 },
@@ -1159,7 +1164,7 @@ VARIANTS = json.loads(r'''[
 "at": "screens[5]",
 "id": "t3-increments-per-call",
 "line": "test-3",
-"named": false,
+"named": true,
 "pyodide": "test-3",
 "src": "def solve_all(text):\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    seen = set()\n    for _ in range(t):\n        n = int(data[pos])\n        pos += 1\n        before = len(seen)\n        for s in data[pos:pos + n]:\n            seen.add(s)\n        pos += n\n        out.append(len(seen) - before)\n    return out\n"
 },
@@ -1711,6 +1716,114 @@ VARIANTS = json.loads(r'''[
 "named": true,
 "pyodide": "test-6",
 "src": "def max_profit_k(prices, k):\n    n = len(prices)\n    if k == 0 or n < 2:\n        return 0\n    if k > n:\n        return 0\n    buy = [float(\"-inf\")] * (k + 1)\n    sell = [0] * (k + 1)\n    for p in prices:\n        for j in range(1, k + 1):\n            buy[j] = max(buy[j], sell[j - 1] - p)\n            sell[j] = max(sell[j], buy[j] + p)\n    return sell[k]\n"
+},
+{
+"file": "l14-which-first",
+"at": "screens[10]",
+"id": "fix-A3",
+"line": "test-4",
+"named": true,
+"pyodide": "test-4",
+"src": "from itertools import permutations\n\n\ndef best_order(problems, minutes):\n    best = (0, [])\n    for order in permutations(sorted(problems)):\n        names = [p[0] for p in order]\n        clock = total = 0\n        for _, value, time in order:\n            clock += time\n            if clock <= minutes:\n                total += decayed_score(value, clock, 0, value / 250, 50, 0.3)\n        if total > best[0]:\n            best = (total, names)\n    return best\n"
+},
+{
+"file": "l14-which-first",
+"at": "screens[10]",
+"id": "fix-A4",
+"line": "test-4",
+"named": true,
+"pyodide": "test-4",
+"src": "from itertools import permutations\n\n\ndef best_order(problems, minutes):\n    best_total, best_names = -1, None\n    for order in permutations(sorted(problems)):\n        clock, total = 0, 0\n        for name, value, time in order:\n            clock += time\n            if clock <= minutes:\n                total += decayed_score(value, clock, 0, value / 250, 50, 0.3)\n        if total > 0 and total > best_total:\n            best_total, best_names = total, [p[0] for p in order]\n    if best_names is None:\n        return 0, []\n    return best_total, best_names\n"
+},
+{
+"file": "l14-which-first",
+"at": "screens[10]",
+"id": "fix-B2",
+"line": "test-4",
+"named": true,
+"pyodide": "test-4",
+"src": "from itertools import permutations\n\n\ndef best_order(problems, minutes):\n    fits = sorted(p for p in problems if p[2] <= minutes)\n    best_total, best_names = -1, None\n    for order in permutations(fits):\n        clock, total = 0, 0\n        for name, value, time in order:\n            clock += time\n            if clock <= minutes:\n                total += decayed_score(value, clock, 0, value / 250, 50, 0.3)\n        if total > best_total:\n            best_total, best_names = total, [p[0] for p in order]\n    return best_total, best_names\n"
+},
+{
+"file": "l14-which-first",
+"at": "screens[10]",
+"id": "fix-B3",
+"line": "test-4",
+"named": true,
+"pyodide": "test-4",
+"src": "from itertools import permutations\n\n\ndef best_order(problems, minutes):\n    if all(t > minutes for _, _, t in problems):\n        return 0, []\n    best_total, best_names = -1, None\n    for order in permutations(sorted(problems)):\n        clock, total = 0, 0\n        for name, value, time in order:\n            clock += time\n            if clock <= minutes:\n                total += decayed_score(value, clock, 0, value / 250, 50, 0.3)\n        if total > best_total:\n            best_total, best_names = total, [p[0] for p in order]\n    return best_total, best_names\n"
+},
+{
+"file": "l15-debugging-under-time",
+"at": "screens[5]",
+"id": "fix-N1",
+"line": "test-3",
+"named": true,
+"pyodide": "test-3",
+"src": "def solve_all(text):\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    seen = set()\n    for _ in range(t):\n        n = int(data[pos])\n        pos += 1\n        before = len(seen)\n        for s in data[pos:pos + n]:\n            seen.add(s)\n        pos += n\n        out.append(len(seen) - before)\n    return out\n"
+},
+{
+"file": "l15-debugging-under-time",
+"at": "screens[5]",
+"id": "fix-N2",
+"line": "test-3",
+"named": true,
+"pyodide": "test-3",
+"src": "def solve_all(text):\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    seen = set()\n    for _ in range(t):\n        n = int(data[pos])\n        pos += 1\n        count = 0\n        for s in data[pos:pos + n]:\n            if s not in seen:\n                count += 1\n                seen.add(s)\n        pos += n\n        out.append(count)\n    return out\n"
+},
+{
+"file": "l15-debugging-under-time",
+"at": "screens[5]",
+"id": "fix-N3",
+"line": "test-3",
+"named": true,
+"pyodide": "test-3",
+"src": "def solve_all(text):\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    seen = set()\n    for _ in range(t):\n        n = int(data[pos])\n        pos += 1\n        new = set(data[pos:pos + n]) - seen\n        out.append(len(new))\n        seen |= new\n        pos += n\n    return out\n"
+},
+{
+"file": "l15-debugging-under-time",
+"at": "screens[5]",
+"id": "fix-F1",
+"line": "test-3",
+"named": true,
+"pyodide": "test-3",
+"src": "seen = set()\n\n\ndef solve_all(text):\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    for case in range(t):\n        n = int(data[pos])\n        pos += 1\n        if case > 0:\n            seen.clear()\n        for s in data[pos:pos + n]:\n            seen.add(s)\n        pos += n\n        out.append(len(seen))\n    return out\n"
+},
+{
+"file": "l15-debugging-under-time",
+"at": "screens[5]",
+"id": "fix-F2",
+"line": "test-3",
+"named": true,
+"pyodide": "test-3",
+"src": "seen = set()\n\n\ndef solve_all(text):\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    for i in range(t):\n        n = int(data[pos])\n        pos += 1\n        for s in data[pos:pos + n]:\n            seen.add(s)\n        pos += n\n        out.append(len(seen))\n        if i < t - 1:\n            seen.clear()\n    return out\n"
+},
+{
+"file": "l15-debugging-under-time",
+"at": "screens[5]",
+"id": "fix-F3",
+"line": "test-3",
+"named": true,
+"pyodide": "test-3",
+"src": "seen = set()\n\n\ndef solve_all(text):\n    global seen\n    data = text.split()\n    t = int(data[0])\n    pos = 1\n    out = []\n    for _ in range(t):\n        n = int(data[pos])\n        pos += 1\n        seen.update(data[pos:pos + n])\n        pos += n\n        out.append(len(seen))\n        if len(out) < t:\n            seen = set()\n    return out\n"
+},
+{
+"file": "l13-virtual-contest",
+"at": "screens[5]",
+"id": "fix-U3",
+"line": "test-12",
+"named": true,
+"pyodide": "test-12",
+"src": "def can_ship(weights, k, cap):\n    days, load = 1, 0\n    for w in weights:\n        if load + w <= cap:\n            load += w\n        else:\n            days += 1\n            load = w\n    return days <= k\n\n\ndef min_capacity(weights, k):\n    lo, hi = max(weights), sum(weights)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if can_ship(weights, k, mid):\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n"
+},
+{
+"file": "l13-virtual-contest",
+"at": "screens[5]",
+"id": "fix-U4",
+"line": "test-12",
+"named": true,
+"pyodide": "test-12",
+"src": "def can_ship(weights, k, cap):\n    days, load = 1, 0\n    for w in weights:\n        load += w\n        if load > cap:\n            days += 1\n            load = w\n            if days > k:\n                return False\n    return True\n\n\ndef min_capacity(weights, k):\n    lo, hi = max(weights), sum(weights)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if can_ship(weights, k, mid):\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n"
 }
 ]''')
 CHILD = r'''
@@ -1786,18 +1899,20 @@ for (fname, at, line), vs in sorted(lines.items()):
 
 # two lines whose text does not fit the codings that reach them (findings 1 and 2 of the audit), and one untested guard (finding 3)
 bo4 = [v for v in VARIANTS if v['file'] == 'l14-which-first' and v['at'] == 'screens[10]' and v['key'] == 'test-4']
-check("FINDING 1  l14 screens[10] test-4 ('It scores 0, and the total is 0'): some coding that fails first on test 4 has a total other than 0",
-      any(not v['why'].startswith('(0,') for v in bo4), [(v['id'], v['why']) for v in bo4])
+L4 = S14[10]['feedback']['byKey']['test-4']
+check("FINDING 1 (fixed)  l14 screens[10] test-4: every coding that fails first on test 4 has the total 0 and the names wrong, and the line names the order `(0, ['A'])`, the start below 0 and the problems that cannot fit",
+      len(bo4) >= 5 and all(v['why'].startswith('(0,') and "['A']" not in v['why'] for v in bo4) and "(0, ['A'])" in L4 and 'below 0' in L4 and 'cannot fit' in L4, [(v['id'], v['why']) for v in bo4])
 late = [v for v in VARIANTS if v['id'] == 't4-late-scores-floor(named mistake)'][0]
 check('          (the coding that does score the late problem fails first on test 2, not test 4)', late['key'] == 'test-2')
 sa3 = [v for v in VARIANTS if v['file'] == 'l15-debugging-under-time' and v['at'] == 'screens[5]' and v['key'] == 'test-3']
-check("FINDING 2  l15 screens[5] test-3 ('A set kept outside solve_all still holds tickers from an earlier call'): every coding that fails first on test 3 has its first case wrong",
-      all(not v['why'].startswith('[1,') for v in sa3), [(v['id'], v['why']) for v in sa3])
+L3 = S15[5]['feedback']['byKey']['test-3']
+check("FINDING 2 (fixed)  l15 screens[5] test-3: every coding that fails first on test 3 counts only new tickers ([1, 0, 1]) or keeps an earlier call's tickers in its first case, and the line names both",
+      len(sa3) >= 6 and all(v['why'] == '[1, 0, 1]' or (v['why'].startswith('[') and not v['why'].startswith('[1,')) for v in sa3) and '1, 1 and 2' in L3 and 'not just the new ones' in L3 and 'the first included' in L3, [(v['id'], v['why']) for v in sa3])
 outside = [v for v in VARIANTS if v['file'] == 'l15-debugging-under-time' and v['at'] == 'screens[5]' and v['id'].startswith('t3-global')]
 check('          (most codings that keep the set outside solve_all fail first on test 2, whose line fits them)', sum(v['key'] == 'test-2' for v in outside) > sum(v['key'] == 'test-3' for v in outside))
 
 ung = [v for v in VARIANTS if v['id'] == 't4-heavy-order-newday'][0]
-check("FINDING 3  l13 screens[5] tests: a can_ship without the `w > cap` guard fails some hidden test (it returns True for can_ship([5, 5], 3, 4))", ung['key'] is not None, 'passes all 11 tests')
+check("FINDING 3 (fixed)  l13 screens[5] tests: a can_ship without the `w > cap` guard fails first on the new test 12, can_ship([5, 5], 3, 4)", ung['key'] == 'test-12', ung['key'])
 gs = ns_of(S13[5]['widget'])
 check('          (the proposed twelfth test separates them: the solution gives False on can_ship([5, 5], 3, 4), the unguarded greedy True)', gs['can_ship']([5, 5], 3, 4) is False and days_at([5, 5], 4)[0] <= 3)
 

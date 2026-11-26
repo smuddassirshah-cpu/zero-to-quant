@@ -1199,7 +1199,19 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 6 hidden tests: the round above at 120 and 60 minutes, and the problems listed backwards. Then a problem that cannot finish, two problems, and six problems in 180 minutes (720 orders). `decayed_score` is already defined. Answers are compared exactly. The result is only as good as the time estimates."
+        "how": "Check runs 6 hidden tests: the round above at 120 and 60 minutes, and the problems listed backwards. Then a problem that cannot finish, two problems, and six problems in 180 minutes (720 orders). `decayed_score` is already defined. Answers are compared exactly. The result is only as good as the time estimates.",
+        "mutants": [
+          {
+            "source": "from itertools import permutations\n\n\ndef best_order(problems, minutes):\n    best_total, best_names = 0, None\n    for order in permutations(sorted(problems)):\n        clock, total = 0, 0\n        for name, value, time in order:\n            clock += time\n            if clock <= minutes:\n                total += decayed_score(value, clock, 0, value / 250, 50, 0.3)\n        if total > best_total:\n            best_total, best_names = total, [p[0] for p in order]\n    return best_total, best_names\n",
+            "test": 4,
+            "symptom": "best total starts at 0 with a strict >: returns (0, None)"
+          },
+          {
+            "source": "from itertools import permutations\n\n\ndef best_order(problems, minutes):\n    best_total, best_names = -1, None\n    for order in permutations(sorted(p for p in problems if p[2] <= minutes)):\n        clock, total = 0, 0\n        for name, value, time in order:\n            clock += time\n            if clock <= minutes:\n                total += decayed_score(value, clock, 0, value / 250, 50, 0.3)\n        if total > best_total:\n            best_total, best_names = total, [p[0] for p in order]\n    return best_total, best_names\n",
+            "test": 4,
+            "symptom": "drops the problem that cannot fit: returns (0, [])"
+          }
+        ]
       },
       "hints": [
         {
@@ -1224,7 +1236,7 @@
         "byKey": {
           "test-2": "Test 2 has only 60 minutes. No three problems fit, and B then C is worth 2,090.",
           "test-3": "Test 3 lists the problems backwards. Sort by name before trying orders, so ties come out the same.",
-          "test-4": "Test 4's only problem needs 10 minutes of a 5-minute round. It scores 0, and the total is 0."
+          "test-4": "Test 4's only problem cannot finish in 5 minutes, so it scores 0, but the order still names it: `(0, ['A'])`. Start the best total below 0, so an order worth 0 is still kept. Keep the problems that cannot fit in every order you try."
         }
       },
       "explain": {
