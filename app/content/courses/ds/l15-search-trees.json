@@ -471,7 +471,7 @@
         "generic": "Not quite right. Left side, node, right side, starting from 50."
       },
       "explain": {
-        "text": "Every left side is smaller and every right side larger, so left, node, right reads in ascending order. In-order on a BST gives sorted output in $O(n)$.",
+        "text": "Every left side is smaller and every right side larger, so left, node, right reads in ascending order. In-order on a BST gives sorted output, in $O(n)$ when the walk appends to one list.",
         "canvas": {
           "current": "l-l",
           "caption": "In-order: 20 30 40 50 60 70 80"
@@ -718,7 +718,14 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 13 hidden tests. `bst_from(values)` inserts values one by one with your `insert`; `to_list` reads the shape back level by level."
+        "how": "Check runs 13 hidden tests. `bst_from(values)` inserts values one by one with your `insert`; `to_list` reads the shape back level by level.",
+        "mutants": [
+          {
+            "source": "def insert(root, v):\n    if v < root.val:\n        if root.left is None:\n            root.left = Node(v)\n        else:\n            insert(root.left, v)\n    elif v > root.val:\n        if root.right is None:\n            root.right = Node(v)\n        else:\n            insert(root.right, v)\n    return root\n\n\ndef contains(root, v):\n    node = root\n    while node is not None:\n        if v == node.val:\n            return True\n        node = node.left if v < node.val else node.right\n    return False\n\n\ndef min_value(root):\n    node = root\n    while node.left is not None:\n        node = node.left\n    return node.val\n",
+            "test": 1,
+            "symptom": "no empty-tree case: the first insert reads `None.val`"
+          }
+        ]
       },
       "hints": [
         {
@@ -741,11 +748,10 @@
         "correct": "Insert, search and minimum all walk one path down.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-2": "Test 2 checks the shape. Each value must go where its walk falls off the tree.",
           "test-6": "Test 6 searches an empty tree, `None`. Return `False`, not an error.",
           "test-8": "Test 8's root has no left child, so the root itself is the minimum.",
           "test-9": "Test 9 inserts 5 and 3 twice. A value already present must not be added again.",
-          "test-10": "Test 10 inserts into an empty tree. Return `Node(v)` as the new root."
+          "test-1": "Test 1 builds the tree from empty with your `insert`, so the first call gets `None`: return `Node(v)`. Then send smaller values left and larger right, and assign the result: `root.left = insert(root.left, v)`."
         }
       },
       "explain": {
@@ -830,7 +836,7 @@
         }
       },
       "explain": {
-        "text": "6 is in 10's right side, so it must be larger than 10. Against its parent, 15, it looks fine, and that is all `looks_ok` checks. A search for 6 would go right at 10 and never find it.",
+        "text": "6 is in 10's right side, so it must be larger than 10. Against its parent, 15, it looks fine, and that is all `looks_ok` checks. A search for 6 would go left at 10, because 6 < 10, and never find it.",
         "canvas": {
           "highlight": [
             "r-l"
@@ -1178,7 +1184,14 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 11 hidden tests. Tests 9 to 11 count the nodes you read in a 1,023-node tree. A narrow range must read at most 40."
+        "how": "Check runs 11 hidden tests. Tests 9 to 11 count the nodes you read in a 1,023-node tree. A narrow range must read at most 40.",
+        "mutants": [
+          {
+            "source": "def levels_between(root, lo, hi):\n    out = []\n    def walk(node):\n        if node is None:\n            return\n        if node.left is None:\n            if lo <= node.val <= hi:\n                out.append(node.val)\n            return\n        if node.val > lo:\n            walk(node.left)\n        if lo <= node.val <= hi:\n            out.append(node.val)\n        if node.val < hi:\n            walk(node.right)\n    walk(root)\n    return out\n",
+            "test": 7,
+            "symptom": "a node with no left child treated as a leaf: returns []"
+          }
+        ]
       },
       "hints": [
         {
@@ -1203,7 +1216,7 @@
         "byKey": {
           "test-2": "Test 2 asks for a range with no level in it: return an empty list.",
           "test-9": "Test 9 counts nodes read. Skip the left side when `node.val <= lo` and the right side when `node.val >= hi`.",
-          "test-7": "Test 7 is a chain with no left children. Check for `None` before reading a node."
+          "test-7": "Test 7 is a chain with no left children. A node with no left child can still have a right one: do not treat it as a leaf."
         }
       },
       "explain": {
@@ -1383,7 +1396,7 @@
           {
             "id": "d",
             "text": "Call `sort()` after every insert",
-            "why": "That costs $O(n \\log n)$ per insert. `bisect.insort` puts each value in place instead."
+            "why": "Python's sort is quick on a nearly sorted list, but it still compares all $n$ items each time. `bisect.insort` finds the place in $O(\\log n)$ comparisons and shifts once."
           }
         ],
         "shuffle": true

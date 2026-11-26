@@ -8,6 +8,14 @@ whose message starts EXPECTED_FAIL fails because the content is wrong or impreci
 failing until the content is fixed. Costs are counted in comparisons, node reads or element copies,
 never in wall-clock time. Code widgets are run in CPython with the widget's own prelude and hidden tests
 (the Pyodide sweep of the same sources is recorded in the audit file, section "test-N sweep").
+
+Fix pass (Opus fixer, audit file section "Fix pass"). Checks that encoded the old text as a computation that can
+never change (an arithmetic identity, a cost count or a tree shape that the content does not control) are re-pointed
+to the content string they judge, keeping the computation as evidence: findings 1, 3, 5, 6, 7, 8, 15 and 16. The
+test-N checks (findings 9 to 20) now name the line each coding lands on after the fix; a coding whose line was
+deleted is checked against the line that now catches it. Findings 4 and 21 are unchanged: they pass because hidden
+test 13 was added. The fixer's own codings (docs/reports/ds-L4-fix-codings.txt, also swept under Pyodide) are run
+at the end: each must first fail the test its header names, and that byKey line must exist.
 """
 import bisect, heapq, json, math, os, random, statistics, sys
 from collections import deque
@@ -103,7 +111,10 @@ check(depth_of(AG, 'G') == 2 and depth_of(AG, 'A') == 0 and height(AG) == 2 and 
 # expression tree: 50 x (108 - 100) - 12
 check(50 * (108 - 100) - 12 == 388 and 50 * (108 - 100) == 400 and 12 - 50 * (108 - 100) == -388, 'l14 s9 key 388, slips fee 400 and sign -388')
 check(50 * 108 - 12 == 5388, 'l14 s9 slip gross 5388 is "skipped the inner minus"')
-check(50 + (108 - 100) - 12 == 5388, 'EXPECTED_FAIL l14 s9 feedback.byKey.gross: "treated x as +" gives 46, not 5388 (finding 3)')
+_gross = L14['screens'][9]['feedback']['byKey']['gross']
+_gval = [w_['value'] for w_ in L14['screens'][9]['widget']['wrong'] if w_['id'] == 'gross'][0]
+check(50 + (108 - 100) - 12 == 46 and 'as +' not in _gross and 'skipped the inner' in _gross and _gval == 50 * 108 - 12,
+      'EXPECTED_FAIL l14 s9 feedback.byKey.gross: "treated x as +" gives 46, not 5388; the line must name only the skipped inner minus (finding 3)')
 check(max(110 - 95, 0) - max(110 - 105, 0) == 10 and 100 * max(120 - 110, 0) == 1000, 'l14 s10 test 6 bull call spread is 10; caption 1000')
 # cost of the taught concatenating walk on a chain, counted in list elements copied
 class L(list):
@@ -120,7 +131,8 @@ c1 = []
 for n in (200, 400, 800):
     L.copies = 0; ino_concat(chain_left(n)); c1.append(L.copies)
 check(c1[2] / c1[1] > 3.5 and c1[1] / c1[0] > 3.5, 'l14 s8: the concatenating walk copies about n^2/2 elements on a chain (doubling n quadruples the copies)')
-check(c1[2] / c1[1] < 2.5, 'EXPECTED_FAIL l14 summary.formula.note and l15 s3 explain: "O(n)" does not hold for the walk as written with + (it is O(n h)); only the shared-list walk is O(n) (finding 5)')
+check(c1[2] / c1[1] > 3.5 and 'appends to one list' in L14['summary']['formula']['note'] and 'appends to one list' in L15['screens'][3]['explain']['text']
+      and '$O(n^2)$ on a chain' in L14['screens'][8]['prose'], 'EXPECTED_FAIL l14 summary.formula.note and l15 s3 explain: "O(n)" does not hold for the walk as written with + (it is O(n h)); only the shared-list walk is O(n) (finding 5)')
 
 # ---------------------------------------------------------------- l15 search trees
 def bst_insert(root, v):
@@ -149,7 +161,7 @@ check(len(search_path(CH, 50)[0]) == 5 and height(CH) == 4, 'l15 s4: sorted inse
 BAD = build([10, 5, 15, None, None, 6, 20])
 p6 = search_path(BAD, 6)
 check(p6[2] is False, 'l15 s6: a search for 6 does not find it')
-check(p6[1][0] == 'R', 'EXPECTED_FAIL l15 s6 explain: "A search for 6 would go right at 10": 6 < 10, so it goes left at 10, then right at 5 onto None (finding 1)')
+check(p6[1][0] == 'L' and 'go left at 10' in L15['screens'][6]['explain']['text'] and 'go right at 10' not in L15['screens'][6]['explain']['text'], 'EXPECTED_FAIL l15 s6 explain: "A search for 6 would go right at 10": 6 < 10, so it goes left at 10, then right at 5 onto None (finding 1)')
 # height bounds on random insertion orders (Monte Carlo over shapes)
 ok = True
 for _ in range(400):
@@ -175,7 +187,10 @@ xs = [C(i) for i in range(N)]
 C.n = 0; bisect.bisect_left(xs, C(N // 3)); check(C.n <= math.log2(N) + 1, 'l15 q-bisect: bisect finds a place in at most log2 n + 1 comparisons')
 ys = xs + [C(N // 3)]; C.n = 0; ys.sort(); cmp_sort_append = C.n
 check(cmp_sort_append < 3 * N, 'l15 q-bisect: CPython sort() after one append makes O(n) comparisons (Timsort is adaptive)')
-check(cmp_sort_append > 0.5 * N * math.log2(N), 'EXPECTED_FAIL l15 q-bisect option d, l17 s7 prose, l17 q-max option d, l18 s8 option d: "sort after every insert costs O(n log n)" is the generic bound; CPython re-sorts a sorted list plus one item in O(n) (finding 6)')
+def _opt(doc, part, i, oid):
+    return [o_ for o_ in doc[part][i]['widget']['options'] if o_['id'] == oid][0]['why']
+_resort = [_opt(L15, 'quiz', 3, 'd'), L17['screens'][7]['prose'], _opt(L17, 'quiz', 1, 'd'), _opt(L18, 'screens', 8, 'd'), L18['screens'][8]['feedback']['byKey']['d']]
+check(cmp_sort_append < 3 * N and not any('\\log n)$ per' in t_ or '\\log n)$ each time' in t_ for t_ in _resort), 'EXPECTED_FAIL l15 q-bisect option d, l17 s7 prose, l17 q-max option d, l18 s8 option d: "sort after every insert costs O(n log n)" is the generic bound; CPython re-sorts a sorted list plus one item in O(n) (finding 6)')
 # validate
 def validate(root, lo=None, hi=None):
     if root is None: return True
@@ -191,7 +206,8 @@ check(looks_ok(BAD) and not validate(BAD), 'l15 s6, s7: the children-only check 
 opts = [o['text'].strip('`') for o in R4['items'][5]['widget']['options']]
 trees = [build(eval(o)) for o in opts]   # option texts are level-order lists
 check([validate(t) for t in trees] == [True, False, False, False], 'review-4 r4-valid: only the first list is a BST')
-check(all(looks_ok(t) for t in trees[1:]), 'EXPECTED_FAIL review-4 r4-valid explain: "The others each hide one node that passes its parent but fails an ancestor": the repeated 3 in option d fails against its own parent (finding 16)')
+_r4v = R4['items'][5]['explain']['text']
+check(all(looks_ok(t) for t in trees[1:3]) and not looks_ok(trees[3]) and 'each hide one node' not in _r4v and 'Two of the others' in _r4v and 'repeats a value' in _r4v, 'EXPECTED_FAIL review-4 r4-valid explain: "The others each hide one node that passes its parent but fails an ancestor": the repeated 3 in option d fails against its own parent (finding 16)')
 
 # ---------------------------------------------------------------- l16 recursion
 T16 = build([1, 2, 3, 4, 5, None, None, 6])
@@ -281,13 +297,17 @@ check(h == [2, 4, 3, 5, 6, 7, 8, 9] and sw == 2, 'l17 s2: push 4, two swaps')
 check(pop(h) == 2 and h == [3, 4, 7, 5, 6, 9, 8], 'l17 s3: pop gives [3, 4, 7, 5, 6, 9, 8]')
 h = [3, 5, 4, 9, 6]; push(h, 1); check(h == [1, 5, 3, 9, 6, 4], 'review-4 r4-push key')
 h = [3, 5, 4, 9, 6, 1]; h[5], h[1] = h[1], h[5]; h[1], h[0] = h[0], h[1]
-check(h == [1, 3, 5, 9, 6, 4], 'EXPECTED_FAIL review-4 r4-push option d why: swapping 1 with index 1 (then the root) gives [1, 3, 4, 9, 6, 5], not the option [1, 3, 5, 9, 6, 4] (finding 15)')
+_key = [1, 5, 3, 9, 6, 4]; _key[1], _key[2] = _key[2], _key[1]
+_r4p = _opt(R4, 'items', 3, 'd')
+_r4d = [o_ for o_ in R4['items'][3]['widget']['options'] if o_['id'] == 'd'][0]['text'].strip('`')
+check(h == [1, 3, 4, 9, 6, 5] and _key == eval(_r4d)
+      and 'swapped 1 with index 1' not in _r4p and '5 and 3 have changed places' in _r4p, 'EXPECTED_FAIL review-4 r4-push option d why: swapping 1 with index 1 (then the root) gives [1, 3, 4, 9, 6, 5], not the option [1, 3, 5, 9, 6, 4] (finding 15)')
 levels = lambda n: math.floor(math.log2(n)) + 1
 check(levels(10 ** 6) == 20 and levels(10) - 1 == 3, 'l17 s4, s7: 20 levels for a million, at most 19 swaps; 3 for a heap of 10')
 worst = max(push(list(range(2, 2 + n)), 1) for n in range(1, 300)); check(all(push(list(range(2, 2 + n)), 1) == levels(n + 1) - 1 for n in range(1, 300)), 'l17 s4: worst push climbs levels - 1')
 def level_sizes(n): return [min(2 ** d, n - (2 ** d - 1)) for d in range(levels(n))]
 check(level_sizes(7) == [1, 2, 4], 'l17 s4: full levels hold 2^d')
-check(level_sizes(8)[-1] == 2 ** 3, 'EXPECTED_FAIL l17 s4 prose: "Level d of a heap holds 2^d items": the last level may hold fewer (the screen\'s own 8-item heap has 1 item on level 3) (finding 7)')
+check(level_sizes(8)[-1] == 1 < 2 ** 3 and 'holds up to $2^d$ items' in L17['screens'][4]['prose'] and 'every level but the last is full' in L17['screens'][4]['prose'], 'EXPECTED_FAIL l17 s4 prose: "Level d of a heap holds 2^d items": the last level may hold fewer (the screen\'s own 8-item heap has 1 item on level 3) (finding 7)')
 hq = []
 for x in [120, 45, 300, 80, 210, 60]:
     heapq.heappush(hq, -x)
@@ -361,7 +381,9 @@ finally:
     ns['heapq'].heappop = _orig
 check(pops[0] <= cancels, 'l18 s7, q-amortised: all reads together pop at most one dead entry per cancel')
 live = sum(1 for o in book.live.values() if o[0] == 'buy')
-check(len(book.bids) <= 2 * live + 10, 'EXPECTED_FAIL l18 s7 prose "With n live entries" and q-amortised option c why: cancelled entries below the top never surface, so the heap holds far more than the live orders (here %d entries for %d live) and n is the heap size, dead entries included (finding 8)' % (len(book.bids), live))
+_s7, _qc = L18['screens'][7]['prose'], _opt(L18, 'quiz', 3, 'c')
+check(len(book.bids) > 2 * live + 10 and 'live entries' not in _s7 and 'live or dead' in _s7 and 'outgrow the live book' in _s7
+      and 'never holds more entries than orders were added' in _qc and 'as soon as they reach the top' not in _qc, 'EXPECTED_FAIL l18 s7 prose "With n live entries" and q-amortised option c why: cancelled entries below the top never surface, so the heap holds far more than the live orders (here %d entries for %d live) and n is the heap size, dead entries included (finding 8)' % (len(book.bids), live))
 try:
     hd = []; heapq.heappush(hd, (100.02, {'id': 'A7'})); heapq.heappush(hd, (100.02, {'id': 'A9'})); raised = False
 except TypeError:
@@ -386,12 +408,19 @@ def merge_heap():
         if j + 1 < per: heapq.heappush(hh, (runs[i][j + 1], i, j + 1))
 cmp_heap = count(merge_heap)
 check(cmp_heap <= 3 * Ntot * math.log2(k), 'homework-4 h4-merge: the heap merge is O(N log k)')
-check(cmp_timsort > 0.8 * Ntot * math.log2(Ntot), 'EXPECTED_FAIL homework-4 h4-merge prose and how: "Sorting everything again costs O(N log N)" and "re-sorting everything ignores that each list is already sorted": CPython\'s sort finds the k runs and merges them in about N log2 k comparisons (%d here, against N log2 N = %d and the heap\'s %d) (finding 6)' % (cmp_timsort, Ntot * math.log2(Ntot), cmp_heap))
+_hm = H4['items'][1]['prose'] + ' ' + H4['items'][1]['widget']['how']
+check(cmp_timsort < 0.8 * Ntot * math.log2(Ntot) and 'Sorting everything again' not in _hm and 'ignores that each list is already sorted' not in _hm
+      and 'A general sort' in _hm, 'EXPECTED_FAIL homework-4 h4-merge prose and how: "Sorting everything again costs O(N log N)" and "re-sorting everything ignores that each list is already sorted": CPython\'s sort finds the k runs and merges them in about N log2 k comparisons (%d here, against N log2 N = %d and the heap\'s %d) (finding 6)' % (cmp_timsort, Ntot * math.log2(Ntot), cmp_heap))
 
 # ---------------------------------------------------------------- test-N lines: natural codings of the named mistake (CPython replica of the Pyodide sweep)
-def expect_line(doc, i, n, name, src, tag):
+def by_key(doc, i):
+    return (doc['screens'] if 'screens' in doc else doc['items'])[i]['feedback']['byKey']
+def expect_line(doc, i, n, name, src, tag, line=True, text_ok=True):
+    """Fix pass: n is the test the coding lands on after the fix; line=True also needs a byKey line for it;
+    text_ok is a judgement on the text of a line that no longer names this coding."""
     got = mutant(doc, i, src)
-    check(got == n, f"EXPECTED_FAIL {doc.get('id')} widget {i} feedback.byKey.test-{n}: the named mistake ({name}) first fails test {got or 'none (passes all)'}, not test {n} ({tag})")
+    ok = got == n and (not line or f'test-{n}' in by_key(doc, i)) and text_ok
+    check(ok, f"EXPECTED_FAIL {doc.get('id')} widget {i} feedback.byKey.test-{n}: the named mistake ({name}) first fails test {got or 'none (passes all)'}, not test {n}, or the line is missing ({tag})")
 EV = '''
 def evaluate(node):
     if node.left is None and node.right is None:
@@ -402,18 +431,18 @@ def evaluate(node):
     if node.val == '*': return a * b
     return max(a, b)
 '''
-expect_line(L14, 6, 5, 'no None base case', 'def preorder(root):\n    return [root.val] + preorder(root.left) + preorder(root.right)\n', 'finding 9')
-expect_line(L14, 10, 4, 'no leaf case', 'def evaluate(node):\n    a = evaluate(node.left); b = evaluate(node.right)\n    return {"+": a + b, "-": a - b, "*": a * b}.get(node.val, node.val)\n', 'finding 10')
-expect_line(L14, 10, 7, 'right minus left', EV % 'b - a', 'finding 11')
-expect_line(L15, 5, 10, 'insert with no None case', 'def insert(root, v):\n    if v < root.val:\n        if root.left is None: root.left = Node(v)\n        else: insert(root.left, v)\n    elif v > root.val:\n        if root.right is None: root.right = Node(v)\n        else: insert(root.right, v)\n    return root\n', 'finding 12')
-expect_line(L15, 5, 2, 'left and right swapped', 'def insert(root, v):\n    if root is None: return Node(v)\n    if v < root.val: root.right = insert(root.right, v)\n    elif v > root.val: root.left = insert(root.left, v)\n    return root\n', 'finding 12')
-expect_line(L15, 9, 7, 'no None check', 'def levels_between(root, lo, hi):\n    out = []\n    def walk(node):\n        if node.val > lo: walk(node.left)\n        if lo <= node.val <= hi: out.append(node.val)\n        if node.val < hi: walk(node.right)\n    walk(root)\n    return out\n', 'finding 13')
-expect_line(L16, 4, 2, 'None returns 0', 'def height(root):\n    if root is None: return 0\n    return 1 + max(height(root.left), height(root.right))\n', 'finding 2')
-expect_line(L16, 4, 5, 'size with the wrong or no base case', 'def size(root):\n    if root is None: return -1\n    return 1 + size(root.left) + size(root.right)\n', 'finding 14')
-expect_line(L16, 9, 6, 'best total starts at 0', 'def max_root_to_leaf(root):\n    if root.left is None and root.right is None: return root.val\n    best = 0\n    for c in (root.left, root.right):\n        if c is not None: best = max(best, max_root_to_leaf(c))\n    return root.val + best\n', 'finding 17')
-expect_line(L17, 5, 6, 'write to index 0 after the last pop', 'def pop(heap):\n    top = heap[0]\n    heap[0] = heap.pop()\n    i, n = 0, len(heap)\n    while True:\n        s = i\n        for c in (2 * i + 1, 2 * i + 2):\n            if c < n and heap[c] < heap[s]: s = c\n        if s == i: break\n        heap[i], heap[s] = heap[s], heap[i]; i = s\n    return top\n', 'finding 18')
+expect_line(L14, 6, 1, 'no None base case', 'def preorder(root):\n    return [root.val] + preorder(root.left) + preorder(root.right)\n', 'finding 9')
+expect_line(L14, 10, 1, 'no leaf case', 'def evaluate(node):\n    a = evaluate(node.left); b = evaluate(node.right)\n    return {"+": a + b, "-": a - b, "*": a * b}.get(node.val, node.val)\n', 'finding 10')
+expect_line(L14, 10, 1, 'right minus left', EV % 'b - a', 'finding 11', text_ok='412' in by_key(L14, 10).get('test-1', '') and 'right child from the left' not in by_key(L14, 10).get('test-7', ''))
+expect_line(L15, 5, 1, 'insert with no None case', 'def insert(root, v):\n    if v < root.val:\n        if root.left is None: root.left = Node(v)\n        else: insert(root.left, v)\n    elif v > root.val:\n        if root.right is None: root.right = Node(v)\n        else: insert(root.right, v)\n    return root\n', 'finding 12')
+expect_line(L15, 5, 1, 'left and right swapped', 'def insert(root, v):\n    if root is None: return Node(v)\n    if v < root.val: root.right = insert(root.right, v)\n    elif v > root.val: root.left = insert(root.left, v)\n    return root\n', 'finding 12')
+expect_line(L15, 9, 1, 'no None check (no test-1 line: the generic line shows)', 'def levels_between(root, lo, hi):\n    out = []\n    def walk(node):\n        if node.val > lo: walk(node.left)\n        if lo <= node.val <= hi: out.append(node.val)\n        if node.val < hi: walk(node.right)\n    walk(root)\n    return out\n', 'finding 13', line=False)
+expect_line(L16, 4, 1, 'None returns 0', 'def height(root):\n    if root is None: return 0\n    return 1 + max(height(root.left), height(root.right))\n', 'finding 2')
+expect_line(L16, 4, 4, 'size with the wrong or no base case', 'def size(root):\n    if root is None: return -1\n    return 1 + size(root.left) + size(root.right)\n', 'finding 14')
+expect_line(L16, 9, 4, 'best total starts at 0', 'def max_root_to_leaf(root):\n    if root.left is None and root.right is None: return root.val\n    best = 0\n    for c in (root.left, root.right):\n        if c is not None: best = max(best, max_root_to_leaf(c))\n    return root.val + best\n', 'finding 17')
+expect_line(L17, 5, 5, 'write to index 0 after the last pop', 'def pop(heap):\n    top = heap[0]\n    heap[0] = heap.pop()\n    i, n = 0, len(heap)\n    while True:\n        s = i\n        for c in (2 * i + 1, 2 * i + 2):\n            if c < n and heap[c] < heap[s]: s = c\n        if s == i: break\n        heap[i], heap[s] = heap[s], heap[i]; i = s\n    return top\n', 'finding 18')
 TK = 'def top_k(xs, k):\n    if k <= 0: return []\n    h = []\n    for x in xs:\n        if len(h) < k: heapq.heappush(h, x)\n        elif x >= h[0]: heapq.heapreplace(h, x)\n    return sorted(h, reverse=True)\n'
-expect_line(L17, 9, 4, 'replace on >= rather than >', TK, 'finding 19')
+expect_line(L17, 9, 0, 'replace on >= rather than >, which is correct', TK, 'finding 19', line=False, text_ok='strictly' not in by_key(L17, 9).get('test-4', ''))
 RM = '''
 def running_median(xs):
     lo, hi, out = [], [], []
@@ -425,7 +454,12 @@ def running_median(xs):
         out.append(float(lo[0]) if len(lo) > len(hi) else (lo[0] + hi[0]) / 2)
     return out
 '''
-expect_line(H4, 2, 7, 'lower top read without negating', RM, 'finding 20')
+expect_line(H4, 2, 1, 'lower top read without negating', RM, 'finding 20', text_ok='without negating' in by_key(H4, 2).get('test-1', ''))
+# fix pass: deleted lines stay gone, and rewritten lines no longer name codings that cannot reach them
+check(not {'test-2', 'test-10'} & set(by_key(L15, 5)) and 'test-6' not in by_key(L16, 9) and 'test-6' not in by_key(L17, 5),
+      'EXPECTED_FAIL l15 s5 test-2 and test-10, l16 s9 test-6, l17 s5 test-6: lines no natural coding reaches are deleted (findings 12, 17, 18)')
+check('Check for `None`' not in by_key(L15, 9).get('test-7', '') and 'treat it as a leaf' in by_key(L15, 9).get('test-7', ''), 'EXPECTED_FAIL l15 s9 test-7: the line names the leaf mistake that reaches test 7 (finding 13)')
+check('`None` returned 0' not in by_key(L16, 4).get('test-2', ''), 'EXPECTED_FAIL l16 s4 test-2: a None at 0 fails test 1, so test 2 must not diagnose it (finding 2)')
 # wrong programs that the hidden tests accept
 FLAG = '''
 def is_balanced(root):
@@ -457,6 +491,20 @@ env = {}; exec(W(L18, 9)['prelude'] + W(L18, 9)['solution'] + NOTIME, env)
 g = env['play']([('add', 'A9', 'sell', 100.02, 200), ('add', 'A1', 'sell', 100.02, 300), ('add', 'B1', 'buy', 100.02, 250), ('match',)])
 check(g[0][0][1] == 'A1', 'l18 s9: a book with (price, id) tuples and no time fills the later order A1 before the earlier A9')
 check(mutant(L18, 9, NOTIME) != 0, 'EXPECTED_FAIL l18 s9 tests: a book with no time priority at all (ties broken by order id) passes all 12 hidden tests, because every test names its orders in arrival order (finding 4)')
+
+# ---------------------------------------------------------------- fix pass: the fixer's codings (docs/reports/ds-L4-fix-codings.txt)
+_DOCS = {'l14-binary-trees': L14, 'l15-search-trees': L15, 'l16-tree-recursion': L16, 'l17-always-the-smallest': L17,
+         'l18-order-book-heaps': L18, 'homework-4': H4}
+with open(os.path.join(ROOT, 'docs', 'reports', 'ds-L4-fix-codings.txt')) as f_:
+    _blocks = f_.read().split('### ')[1:]
+for b_ in _blocks:
+    head_, src_ = b_.split('\n', 1)
+    fname_, loc_, n_, cname_ = head_.split()
+    d_, i_, n_ = _DOCS[fname_], int(loc_[1:]), int(n_)
+    got_ = mutant(d_, i_, src_)
+    check(got_ == n_ and (n_ == 0 or f'test-{n_}' in by_key(d_, i_)),
+          f'fix coding {fname_} {loc_} {cname_}: first fails test {got_ or "none"}, line test-{n_} expected')
+check(len(_blocks) == 56, 'fix pass: 56 codings read')
 
 # ---------------------------------------------------------------- report
 print(f'{len(FAILS)} failing check(s)')

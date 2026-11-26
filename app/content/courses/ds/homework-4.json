@@ -91,7 +91,7 @@
       "skills": [
         "ds-trees"
       ],
-      "prose": "Three venues send their trades as lists of timestamps, each list already sorted. The tape needs one sorted stream. Sorting everything again costs $O(N \\log N)$ for $N$ trades; a heap holding one item per venue does it in $O(N \\log k)$.",
+      "prose": "Three venues send their trades as lists of timestamps, each list already sorted. The tape needs one sorted stream. A general sort of all $N$ trades costs $O(N \\log N)$; a heap holding one item per venue merges them in $O(N \\log k)$, one trade at a time.",
       "question": "Write `merge_k(lists)`: merge $k$ sorted lists into one sorted list, using `heapq` with one entry per list.",
       "widget": {
         "kind": "code",
@@ -154,7 +154,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 9 hidden tests: empty lists, repeats, and 500 lists of 200 items. Use `heapq`: re-sorting everything ignores that each list is already sorted. Test 9 checks that you did not call `sorted` or `.sort`."
+        "how": "Check runs 9 hidden tests: empty lists, repeats, and 500 lists of 200 items. Use `heapq` with one entry per list, so the merge works item by item as a live feed needs. Test 9 checks that you did not call `sorted` or `.sort`."
       },
       "feedback": {
         "correct": "One entry per list, refilled from the same list.",
@@ -241,18 +241,30 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests. An even count gives the mean of the two middle values. Tests 9 and 10 use 20,000 values."
+        "how": "Check runs 10 hidden tests. An even count gives the mean of the two middle values. Tests 9 and 10 use 20,000 values.",
+        "mutants": [
+          {
+            "source": "import heapq\n\n\ndef running_median(xs):\n    lo, hi, out = [], [], []\n    for x in xs:\n        if lo and x > -lo[0]:\n            heapq.heappush(hi, x)\n        else:\n            heapq.heappush(lo, -x)\n        if len(lo) > len(hi) + 1:\n            heapq.heappush(hi, -heapq.heappop(lo))\n        elif len(hi) > len(lo):\n            heapq.heappush(lo, -heapq.heappop(hi))\n        if len(lo) > len(hi):\n            out.append(float(lo[0]))\n        else:\n            out.append((-lo[0] + hi[0]) / 2)\n    return out\n",
+            "test": 1,
+            "symptom": "lower top read without negating: -5.0 first"
+          },
+          {
+            "source": "import heapq\n\n\ndef running_median(xs):\n    lo, hi, out = [], [], []\n    for x in xs:\n        if lo and x > abs(lo[0]):\n            heapq.heappush(hi, x)\n        else:\n            heapq.heappush(lo, -x)\n        if len(lo) > len(hi) + 1:\n            heapq.heappush(hi, -heapq.heappop(lo))\n        elif len(hi) > len(lo):\n            heapq.heappush(lo, -heapq.heappop(hi))\n        if len(lo) > len(hi):\n            out.append(float(abs(lo[0])))\n        else:\n            out.append((abs(lo[0]) + hi[0]) / 2)\n    return out\n",
+            "test": 7,
+            "symptom": "`abs` of the lower top: right on positives only"
+          }
+        ]
       },
       "feedback": {
         "correct": "Two heaps, balanced after every value.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-1": "Test 1 expects `[5.0, 10.0, 5.0, 4.0]`. If the second value is wrong, check the even case: the mean of the two tops.",
-          "test-7": "Test 7 has negative values. Remember the lower heap stores negated values: negate again when you read it."
+          "test-1": "Test 1 expects `[5.0, 10.0, 5.0, 4.0]`. A first value of −5.0 means the lower heap was read without negating. A wrong second value is the even case: the mean of the two tops, the lower one negated back.",
+          "test-7": "Test 7 has negative values. Negate the lower heap's top to read it; `abs` gives the wrong sign here."
         }
       },
       "explain": {
-        "text": "Each value goes to one half; one move restores the sizes. With an odd count the lower top is the median, with an even count the mean of both tops. Each step is $O(\\log n)$, where re-sorting would be $O(n \\log n)$."
+        "text": "Each value goes to one half; one move restores the sizes. With an odd count the lower top is the median, with an even count the mean of both tops. Each step is $O(\\log n)$, where re-sorting would cost at least $O(n)$."
       }
     },
     {
@@ -401,7 +413,7 @@
         }
       },
       "explain": {
-        "text": "Index $i$ has a child when $2i + 1 \\le 99$, that is $i \\le 49$. So indices 50 to 99 are leaves: 50 of them, half the heap. That is why sift-down from the middle builds a heap in $O(n)$."
+        "text": "Index $i$ has a child when $2i + 1 \\le 99$, that is $i \\le 49$. So indices 50 to 99, half the heap, are leaves, and a build sifts down from 49 to 0. Most items sit near the bottom and sink only a level or two, which makes that build $O(n)$."
       }
     },
     {

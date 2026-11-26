@@ -830,7 +830,19 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 14 hidden tests and compares lists exactly. They include an empty tree (`None`), one node, and long chains."
+        "how": "Check runs 14 hidden tests and compares lists exactly. They include an empty tree (`None`), one node, and long chains.",
+        "mutants": [
+          {
+            "source": "def preorder(root):\n    return [root.val] + preorder(root.left) + preorder(root.right)\n\n\ndef inorder(root):\n    if root is None:\n        return []\n    return inorder(root.left) + [root.val] + inorder(root.right)\n\n\ndef level_order(root):\n    out = []\n    q = deque([root] if root else [])\n    while q:\n        node = q.popleft()\n        out.append(node.val)\n        if node.left:\n            q.append(node.left)\n        if node.right:\n            q.append(node.right)\n    return out\n",
+            "test": 1,
+            "symptom": "no `None` case: AttributeError at the first leaf"
+          },
+          {
+            "source": "def preorder(root):\n    out = [root.val]\n    if root.left:\n        out += preorder(root.left)\n    if root.right:\n        out += preorder(root.right)\n    return out\n\n\ndef inorder(root):\n    if root is None:\n        return []\n    return inorder(root.left) + [root.val] + inorder(root.right)\n\n\ndef level_order(root):\n    out = []\n    q = deque([root] if root else [])\n    while q:\n        node = q.popleft()\n        out.append(node.val)\n        if node.left:\n            q.append(node.left)\n        if node.right:\n            q.append(node.right)\n    return out\n",
+            "test": 5,
+            "symptom": "children checked before each call: `preorder(None)` raises"
+          }
+        ]
       },
       "hints": [
         {
@@ -854,8 +866,9 @@
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
           "test-2": "Test 2 expects `[4, 2, 5, 1, 6, 3, 7]`. If 1 came first, you added the node before its left side.",
-          "test-5": "Test 5 passes `None`, an empty tree. Start with `if root is None: return []`.",
-          "test-7": "Test 7 passes an empty tree. Start the queue empty when `root` is `None`, or `node.val` fails."
+          "test-5": "Test 5 passes `None`, an empty tree. Checking `root.left` and `root.right` before each call is not enough: start with `if root is None: return []`.",
+          "test-7": "Test 7 passes an empty tree. Start the queue empty when `root` is `None`, or `node.val` fails.",
+          "test-1": "Test 1 expects `[1, 2, 4, 5, 3, 6, 7]`: the node, then its left side, then its right. If it raised `AttributeError`, the walk stepped onto `None`: start with `if root is None: return []`."
         }
       },
       "explain": {
@@ -979,7 +992,7 @@
       "type": "generalise",
       "difficulty": 2,
       "title": "One pattern, three orders",
-      "prose": "We wrote three traversals with one pattern. Only the place of the node changes.\n\n```python\ndef walk(node):\n    if node is None:        # empty tree\n        return []\n    left = walk(node.left)\n    right = walk(node.right)\n    return [node.val] + left + right   # pre\n    # left + [node.val] + right        # in\n    # left + right + [node.val]        # post\n```\n\nEach node is visited once. Appending to one shared list keeps a walk $O(n)$.",
+      "prose": "We wrote three traversals with one pattern. Only the place of the node changes.\n\n```python\ndef walk(node):\n    if node is None:        # empty tree\n        return []\n    left = walk(node.left)\n    right = walk(node.right)\n    return [node.val] + left + right   # pre\n    # left + [node.val] + right        # in\n    # left + right + [node.val]        # post\n```\n\nEach node is visited once. But `+` copies the lists at every level: $O(n^2)$ on a chain. Appending to one shared list keeps a walk $O(n)$.",
       "question": "A parent needs its children's results before it can compute its own. Which order fits?",
       "widget": {
         "kind": "choice",
@@ -1120,7 +1133,7 @@
         "byKey": {
           "fee": "You stopped at the × node. The root still subtracts the £12 fee.",
           "sign": "You subtracted the wrong way round. Each operator takes its left child first: 400 − 12.",
-          "gross": "You treated × as + or skipped the inner −. The inner node gives 8, and 50 × 8 = 400."
+          "gross": "You skipped the inner −: 50 × 108 − 12. The inner node gives 108 − 100 = 8 first, and 50 × 8 = 400."
         }
       },
       "explain": {
@@ -1236,7 +1249,29 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests. `'-'` means left minus right. Test 6 is a bull call spread."
+        "how": "Check runs 8 hidden tests. `'-'` means left minus right. Test 6 is a bull call spread.",
+        "mutants": [
+          {
+            "source": "def evaluate(node):\n    if node.left is None and node.right is None:\n        return node.val\n    a = evaluate(node.left)\n    b = evaluate(node.right)\n    if node.val == '+':\n        return a + b\n    if node.val == '-':\n        return b - a\n    if node.val == '*':\n        return a * b\n    return max(a, b)\n",
+            "test": 1,
+            "symptom": "`'-'` as right minus left gives 412"
+          },
+          {
+            "source": "def evaluate(node):\n    def value(child):\n        if child.left is None and child.right is None:\n            return child.val\n        return evaluate(child)\n    a = value(node.left)\n    b = value(node.right)\n    if node.val == '+':\n        return a + b\n    if node.val == '-':\n        return a - b\n    if node.val == '*':\n        return a * b\n    return max(a, b)\n",
+            "test": 4,
+            "symptom": "leaves tested only as children: the lone root leaf raises"
+          },
+          {
+            "source": "def evaluate(node):\n    if node.left is None and node.right is None:\n        return node.val\n    a = evaluate(node.left)\n    b = evaluate(node.right)\n    if node.val == '+':\n        return a + b\n    if node.val == '-':\n        return max(a - b, 0)\n    if node.val == '*':\n        return a * b\n    return max(a, b)\n",
+            "test": 7,
+            "symptom": "`'-'` clipped at 0 gives 0 for 3 - 10"
+          },
+          {
+            "source": "def evaluate(node):\n    if isinstance(node.val, int):\n        return node.val\n    a = evaluate(node.left)\n    b = evaluate(node.right)\n    if node.val == '+':\n        return a + b\n    if node.val == '-':\n        return a - b\n    if node.val == '*':\n        return a * b\n    return max(a, b)\n",
+            "test": 8,
+            "symptom": "leaf told by `int` type: the 0.5 leaf recurses onto None"
+          }
+        ]
       },
       "hints": [
         {
@@ -1259,8 +1294,10 @@
         "correct": "Every payoff evaluates, from a single number to a spread.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-4": "Test 4 is a single leaf, 42. A leaf has no children: return its value without recursing.",
-          "test-7": "Test 7 expects −7 for 3 − 10. Subtract the right child from the left."
+          "test-4": "Test 4 is a single leaf, 42, so the root itself can be a leaf. Test `node` first, not only its children: a leaf returns its own value.",
+          "test-7": "Test 7 expects −7 for 3 − 10. Do not clip `'-'` at 0: only a `'max'` node with a 0 child does that.",
+          "test-1": "Test 1 is the P&L tree, 388. If you got 412, `'-'` ran right minus left. If it raised `AttributeError`, you recursed below a leaf: return a leaf's own value.",
+          "test-8": "Test 8 has a leaf of 0.5. Tell a leaf by its missing children, not by the type of its value."
         }
       },
       "explain": {
@@ -1280,7 +1317,7 @@
     "formula": {
       "name": "Three depth-first orders",
       "tex": "\\text{pre}: v, L, R \\qquad \\text{in}: L, v, R \\qquad \\text{post}: L, R, v",
-      "note": "$v$ is the node, $L$ and $R$ its left and right sides. Every node is visited once: $O(n)$."
+      "note": "$v$ is the node, $L$ and $R$ its left and right sides. Every node is visited once: $O(n)$ when the walk appends to one list."
     },
     "trap": "Adding the node before its left side gives pre-order, not in-order. And without `if node is None` the walk crashes at the first leaf."
   },

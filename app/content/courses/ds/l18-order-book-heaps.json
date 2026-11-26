@@ -737,7 +737,7 @@
       "type": "generalise",
       "difficulty": 2,
       "title": "What each operation costs",
-      "prose": "With $n$ live entries:\n\n$$\\begin{aligned} \\text{add: } & O(\\log n) \\\\ \\text{cancel: } & O(1) \\\\ \\text{best: } & O(1) \\text{ amortised} \\\\ \\text{each fill: } & O(\\log n) \\end{aligned}$$\n\n\"Amortised\" means averaged over all calls. A read may pop many dead entries, but each entry is pushed once and popped at most once.",
+      "prose": "With $n$ entries in the heap, live or dead:\n\n$$\\begin{aligned} \\text{add: } & O(\\log n) \\\\ \\text{cancel: } & O(1) \\\\ \\text{best: } & O(1) \\text{ amortised} \\\\ \\text{each fill: } & O(\\log n) \\end{aligned}$$\n\n\"Amortised\" means averaged over all calls. A read may pop many dead entries, but each entry is pushed once and popped at most once. Dead entries below the top wait until they surface, so the heap can outgrow the live book.",
       "question": "A day brings 1,000,000 adds and 900,000 cancels. At most how many dead entries can all the reads pop, in total?",
       "widget": {
         "kind": "numeric",
@@ -838,12 +838,12 @@
           {
             "id": "d",
             "text": "Re-sorting the whole book after every message",
-            "why": "That costs $O(n \\log n)$ per message. Heaps or arrays by tick keep the order as they go."
+            "why": "That reads the whole book again, at least $O(n)$ per message. Heaps or arrays by tick keep the order as they go."
           },
           {
             "id": "e",
             "text": "Filling a crossed order at the midpoint of the two prices",
-            "why": "Fills happen at the resting order's price. That is part of the price-time rule."
+            "why": "Fills happen at the resting order's price: it made the offer, and the arriving order accepts it."
           }
         ]
       },
@@ -868,7 +868,7 @@
         "correct": "Arrays by tick, an id map, and self-match prevention.",
         "generic": "Not quite right. Keep what makes each message cheap or prevents a bad trade.",
         "byKey": {
-          "d": "You picked re-sorting. That is $O(n \\log n)$ per message; engines keep order incrementally.",
+          "d": "You picked re-sorting. That reads the whole book, at least $O(n)$ per message; engines keep order incrementally.",
           "e": "You picked midpoint fills. The resting order's price is the rule."
         }
       },
@@ -1001,10 +1001,32 @@
             "expect": "(1500, 15000, 1000, 1019)",
             "compare": "equal",
             "setup": "evs = [('add', f'B{i}', 'buy', 1000 - i % 50, 10) for i in range(4000)] + [('add', f'S{i}', 'sell', 1001 + i % 50, 10) for i in range(4000)] + [('cancel', f'B{i}') for i in range(0, 4000, 3)] + [('add', 'BIG', 'buy', 1020, 15000), ('match',), ('best_bid',), ('best_ask',)]; r = play(evs)"
+          },
+          {
+            "call": "play([('add', 'A9', 'sell', 100.02, 200), ('add', 'A1', 'sell', 100.02, 300), ('add', 'B1', 'buy', 100.02, 250), ('match',), ('add', 'B9', 'buy', 100.0, 100), ('add', 'B2', 'buy', 100.0, 100), ('add', 'A5', 'sell', 100.0, 150), ('match',)])",
+            "expect": "[[('B1', 'A9', 100.02, 200), ('B1', 'A1', 100.02, 50)], [('B9', 'A5', 100.0, 100), ('B2', 'A5', 100.0, 50)]]",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 12 hidden tests. `play(events)` runs a list of method calls on a new book and collects what `best_bid`, `best_ask` and `match` return. Test 12 has 8,000 orders.",
-        "budget": 5000
+        "how": "Check runs 13 hidden tests. `play(events)` runs a list of method calls on a new book and collects what `best_bid`, `best_ask` and `match` return. Test 12 has 8,000 orders.",
+        "budget": 5000,
+        "mutants": [
+          {
+            "source": "import heapq\nclass OrderBook:\n    def __init__(self):\n        self.bids, self.asks, self.live = [], [], {}\n        self.time = 0\n    def add(self, order_id, side, price, qty):\n        self.time += 1\n        self.live[order_id] = [side, price, qty, self.time]\n        if side == \"buy\":\n            heapq.heappush(self.bids, (-price, order_id))\n        else:\n            heapq.heappush(self.asks, (price, order_id))\n    def cancel(self, order_id):\n        self.live.pop(order_id, None)\n    def _top(self, heap):\n        while heap and heap[0][1] not in self.live:\n            heapq.heappop(heap)\n        return heap[0] if heap else None\n    def best_bid(self):\n        t = self._top(self.bids)\n        return None if t is None else -t[0]\n    def best_ask(self):\n        t = self._top(self.asks)\n        return None if t is None else t[0]\n    def match(self):\n        fills = []\n        while True:\n            b, a = self._top(self.bids), self._top(self.asks)\n            if b is None or a is None or -b[0] < a[0]:\n                return fills\n            buy, sell = self.live[b[1]], self.live[a[1]]\n            price = buy[1] if buy[3] < sell[3] else sell[1]\n            qty = min(buy[2], sell[2])\n            fills.append((b[1], a[1], price, qty))\n            buy[2] -= qty\n            sell[2] -= qty\n            if buy[2] == 0:\n                del self.live[b[1]]\n            if sell[2] == 0:\n                del self.live[a[1]]\n",
+            "test": 13,
+            "symptom": "(price, id) tuples: A1 fills before the earlier A9"
+          },
+          {
+            "source": "import heapq\nclass OrderBook:\n    def __init__(self):\n        self.bids, self.asks, self.live = [], [], {}\n        self.time = 0\n    def add(self, order_id, side, price, qty):\n        self.time += 1\n        self.live[order_id] = [side, price, qty, self.time]\n        if side == \"buy\":\n            heapq.heappush(self.bids, (-price, order_id, self.time))\n        else:\n            heapq.heappush(self.asks, (price, order_id, self.time))\n    def cancel(self, order_id):\n        self.live.pop(order_id, None)\n    def _top(self, heap):\n        while heap and heap[0][1] not in self.live:\n            heapq.heappop(heap)\n        return heap[0] if heap else None\n    def best_bid(self):\n        t = self._top(self.bids)\n        return None if t is None else -t[0]\n    def best_ask(self):\n        t = self._top(self.asks)\n        return None if t is None else t[0]\n    def match(self):\n        fills = []\n        while True:\n            b, a = self._top(self.bids), self._top(self.asks)\n            if b is None or a is None or -b[0] < a[0]:\n                return fills\n            buy, sell = self.live[b[1]], self.live[a[1]]\n            price = buy[1] if b[2] < a[2] else sell[1]\n            qty = min(buy[2], sell[2])\n            fills.append((b[1], a[1], price, qty))\n            buy[2] -= qty\n            sell[2] -= qty\n            if buy[2] == 0:\n                del self.live[b[1]]\n            if sell[2] == 0:\n                del self.live[a[1]]\n",
+            "test": 13,
+            "symptom": "(price, id, time): the id decides the tie"
+          },
+          {
+            "source": "import bisect\nclass OrderBook:\n    def __init__(self):\n        self.bids, self.asks, self.live = [], [], {}\n        self.time = 0\n    def add(self, order_id, side, price, qty):\n        self.time += 1\n        self.live[order_id] = [side, price, qty, self.time]\n        if side == \"buy\":\n            bisect.insort(self.bids, (-price, order_id))\n        else:\n            bisect.insort(self.asks, (price, order_id))\n    def cancel(self, order_id):\n        self.live.pop(order_id, None)\n    def _top(self, book):\n        while book and book[0][1] not in self.live:\n            book.pop(0)\n        return book[0] if book else None\n    def best_bid(self):\n        t = self._top(self.bids)\n        return None if t is None else -t[0]\n    def best_ask(self):\n        t = self._top(self.asks)\n        return None if t is None else t[0]\n    def match(self):\n        fills = []\n        while True:\n            b, a = self._top(self.bids), self._top(self.asks)\n            if b is None or a is None or -b[0] < a[0]:\n                return fills\n            buy, sell = self.live[b[1]], self.live[a[1]]\n            price = buy[1] if buy[3] < sell[3] else sell[1]\n            qty = min(buy[2], sell[2])\n            fills.append((b[1], a[1], price, qty))\n            buy[2] -= qty\n            sell[2] -= qty\n            if buy[2] == 0:\n                del self.live[b[1]]\n            if sell[2] == 0:\n                del self.live[a[1]]\n",
+            "test": 13,
+            "symptom": "sorted lists keyed by (price, id)"
+          }
+        ]
       },
       "hints": [
         {
@@ -1031,7 +1053,8 @@
           "test-3": "Test 3 cancels the best bid. Skip dead entries before reading the top.",
           "test-5": "Test 5 has two asks at one price. The earlier one, A1, must fill first.",
           "test-6": "Test 6: the buy rested first at £100.05, so the fill is at £100.05, not the seller's £100.00.",
-          "test-7": "Test 7 cancels A1 before the buy arrives. `match` must skip dead entries too."
+          "test-7": "Test 7 cancels A1 before the buy arrives. `match` must skip dead entries too.",
+          "test-13": "Test 13 adds A9 before A1, and B9 before B2, at one price each. Time decides a price tie, not the id: keep the arrival time second in the tuple."
         }
       },
       "explain": {
@@ -1192,7 +1215,7 @@
           {
             "id": "c",
             "text": "No: lazy deletion makes the heap grow without limit",
-            "why": "Dead entries leave as soon as they reach the top, and each was pushed once."
+            "why": "The heap never holds more entries than orders were added, and its size only enters through $\\log n$. Dead entries deep in the book do wait, which costs memory."
           }
         ]
       },
