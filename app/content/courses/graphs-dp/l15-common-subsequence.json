@@ -1016,8 +1016,8 @@
             "compare": "equal"
           },
           {
-            "call": "lcs_length(\"AB\" * 100, \"BA\" * 100)",
-            "expect": "199",
+            "call": "lcs_length(\"ACGT\" * 50, \"TGCA\" * 50)",
+            "expect": "99",
             "compare": "equal"
           }
         ],
@@ -1067,6 +1067,24 @@
             "source": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * n for _ in range(m)]\n    for j in range(n):\n        t[0][j] = 1 if a[0] in b[:j + 1] else 0\n    for i in range(1, m):\n        for j in range(n):\n            if a[i] == b[j]:\n                t[i][j] = (t[i - 1][j - 1] if j else 0) + 1\n            else:\n                t[i][j] = max(t[i - 1][j], t[i][j - 1] if j else 0)\n    return t[m - 1][n - 1]\n",
             "test": 2,
             "symptom": "unpadded table seeded from a[0]: IndexError on an empty string"
+          },
+          {
+            "source": "def lcs_length(a, b):\n    def go(i, j):\n        if i == 0 or j == 0:\n            return 0\n        if a[i - 1] == b[j - 1]:\n            return go(i - 1, j - 1) + 1\n        return max(go(i - 1, j), go(i, j - 1))\n    return go(len(a), len(b))\n",
+            "test": 10,
+            "symptom": "plain recursion with no memo: times out on two 200-letter strings",
+            "timeout": true
+          },
+          {
+            "source": "def lcs_length(a, b):\n    if not a or not b:\n        return 0\n    if a[0] == b[0]:\n        return 1 + lcs_length(a[1:], b[1:])\n    return max(lcs_length(a[1:], b), lcs_length(a, b[1:]))\n",
+            "test": 10,
+            "symptom": "recursion on slices with no memo: times out on two 200-letter strings",
+            "timeout": true
+          },
+          {
+            "source": "def lcs_length(a, b):\n    def go(i, j):\n        if i == len(a) or j == len(b):\n            return 0\n        if a[i] == b[j]:\n            return 1 + go(i + 1, j + 1)\n        return max(go(i + 1, j), go(i, j + 1))\n    return go(0, 0)\n",
+            "test": 10,
+            "symptom": "recursion from the front with no memo: times out on two 200-letter strings",
+            "timeout": true
           }
         ]
       },
@@ -1092,7 +1110,8 @@
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
           "test-1": "Test 1 expects 3. If you got more, add 1 only when the letters match. If you see `IndexError`, compare `a[i - 1]` with `b[j - 1]`.",
-          "test-2": "Test 2 has an empty string. With the padded table nothing runs and `t[0][3]` is 0."
+          "test-2": "Test 2 has an empty string. With the padded table nothing runs and `t[0][3]` is 0.",
+          "test-10": "Test 10 has two 200-letter strings. If it timed out, fill the table rather than recursing on every choice."
         }
       },
       "explain": {
@@ -1266,7 +1285,7 @@
           {
             "id": "four",
             "text": "4",
-            "why": "You changed every letter outside a matching position. Keep the shared EDG in place."
+            "why": "Four edits can do it, but fewer suffice. Keep the shared EDG in place: delete H, then replace the last E with Y."
           }
         ],
         "shuffle": true
@@ -1309,50 +1328,52 @@
           "cells": [
             [
               "0",
-              "0",
-              "0",
-              "0",
-              "0"
-            ],
-            [
-              "0",
-              "0",
-              "0",
-              "0",
-              "0"
-            ],
-            [
-              "0",
-              "1",
-              "1",
-              "1",
-              "1"
-            ],
-            [
-              "0",
               "1",
               "2",
+              "3",
+              "4"
+            ],
+            [
+              "1",
+              "1",
               "2",
+              "3",
+              "4"
+            ],
+            [
+              "2",
+              "1",
+              "2",
+              "3",
+              "4"
+            ],
+            [
+              "3",
+              "2",
+              "1",
+              "2",
+              "3"
+            ],
+            [
+              "4",
+              "3",
+              "2",
+              "1",
               "2"
             ],
             [
-              "0",
-              "1",
-              "2",
+              "5",
+              "4",
               "3",
-              "3"
-            ],
-            [
-              "0",
-              "1",
               "2",
-              "3",
-              "3"
+              "2"
             ]
           ],
           "compact": true
         },
-        "state": {},
+        "state": {
+          "caption": "Edit distances between prefixes of HEDGE and EDGY"
+        },
         "maxHeight": 280
       },
       "question": "Write `edit_distance(a, b)`.",
@@ -1423,9 +1444,14 @@
             "call": "edit_distance(\"a\" * 150, \"b\" * 150)",
             "expect": "150",
             "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"aa\", \"a\")",
+            "expect": "1",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests. They cover empty strings on either side, identical strings, ticker spellings from two vendors, and two 150-letter strings.",
+        "how": "Check runs 11 hidden tests. They cover empty strings on either side, identical strings, a repeated letter, ticker spellings from two vendors, and two 150-letter strings.",
         "mutants": [
           {
             "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
@@ -1486,6 +1512,26 @@
             "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        d[i][0] = i\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
             "test": 3,
             "symptom": "sets d[i][0] in the main loop, never d[0][j]: 0"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            cost = 0 if a[i - 1] == b[j - 1] else 1\n            d[i][j] = min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1]) + cost\n    return d[m][n]\n",
+            "test": 11,
+            "symptom": "min of three plus a 0 or 1 cost, so a match makes delete and insert free: 0"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
+            "test": 11,
+            "symptom": "on a match takes the min of all three neighbours, not the diagonal: 0"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            d[i][j] = min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1]) + (a[i - 1] != b[j - 1])\n    return d[m][n]\n",
+            "test": 11,
+            "symptom": "adds a[i - 1] != b[j - 1] to the min of all three: 0"
+          },
+          {
+            "source": "from functools import lru_cache\n\n\ndef edit_distance(a, b):\n    @lru_cache(maxsize=None)\n    def go(i, j):\n        if i == 0:\n            return j\n        if j == 0:\n            return i\n        return min(go(i - 1, j), go(i, j - 1), go(i - 1, j - 1)) + (a[i - 1] != b[j - 1])\n    return go(len(a), len(b))\n",
+            "test": 11,
+            "symptom": "memoised recursion, min of all three plus the 0 or 1 cost: 0"
           }
         ]
       },
@@ -1498,8 +1544,8 @@
           "rung": "point",
           "text": "On a match, copy the diagonal with no cost.",
           "highlight": [
-            "col1",
-            "row1"
+            "r3c2",
+            "r2c1"
           ]
         },
         {
@@ -1512,7 +1558,8 @@
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
           "test-1": "Test 1 expects 2. If you got 1, set the first column to `d[i][0] = i`; if you got 5, copy the diagonal on a match without adding 1. If you got 3, keep the diagonal in the min: a substitution is one edit.",
-          "test-3": "Test 3 turns an empty string into abc: three inserts. Set the first row to `d[0][j] = j`."
+          "test-3": "Test 3 turns an empty string into abc: three inserts. Set the first row to `d[0][j] = j`.",
+          "test-11": "Test 11 turns aa into a: one delete. If you got 0, a match made the cell above or to the left free. Only the diagonal is free on a match; the other two always cost 1."
         }
       },
       "explain": {
@@ -1624,15 +1671,15 @@
         }
       ],
       "feedback": {
-        "correct": "Five fills match in order; the broker's extra Buy 100 and Sell 75 do not.",
+        "correct": "Five fills match in order. The Sell 75 never matches, and one of the broker's first three fills is left over.",
         "generic": "Not quite right. Find the length of the LCS, then subtract it from the broker's count.",
         "byKey": {
-          "one": "You matched by counting fills, 7 against 6. Order matters: Sell 75 has no partner, and one Buy 100 is unmatched.",
+          "one": "You matched by counting fills, 7 against 6. Order matters: Sell 75 has no partner, and one of the broker's first three fills is left over too.",
           "lcs": "5 is the length of the match. The question asks for the broker fills left over."
         }
       },
       "explain": {
-        "text": "`lcs_length(ours, broker)` is 5, so 2 broker fills (a Buy 100 and the Sell 75) need a look. So does 1 of ours. The same idea compares two versions of a config file line by line.",
+        "text": "`lcs_length(ours, broker)` is 5, so 2 broker fills need a look: the Sell 75 and one of the first three. More than one longest match exists, so the table alone cannot say which early fill is the stray. The same idea compares two versions of a config file line by line.",
         "canvas": {
           "highlight": [
             "r4"

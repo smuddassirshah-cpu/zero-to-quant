@@ -1540,6 +1540,11 @@
             "compare": "equal"
           },
           {
+            "call": "knapsack_items([1, 9, 1], [7, 100, 5], 1)",
+            "expect": "[0]",
+            "compare": "equal"
+          },
+          {
             "setup": "ws = [(i * 37) % 23 + 1 for i in range(60)]; vs = [(i * 53) % 41 + 5 for i in range(60)]",
             "call": "sum(vs[i] for i in knapsack_items(ws, vs, 200))",
             "expect": "877",
@@ -1552,7 +1557,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 11 hidden tests, with ties broken as stated: skip when skipping gives the same value. The last two check a 60-item case by its total value and weight.",
+        "how": "Check runs 12 hidden tests, with ties broken as stated: skip when skipping gives the same value. The last two check a 60-item case by its total value and weight.",
         "mutants": [
           {
             "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return chosen\n",
@@ -1618,6 +1623,26 @@
             "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            if wt > w:\n                continue\n            best[i][w] = max(best[i - 1][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
             "test": 9,
             "symptom": "continue inside the w loop when the item does not fit: [0, 1, 2]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        if wt > cap:\n            continue\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if weights[i - 1] <= w and best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
+            "test": 10,
+            "symptom": "row left at 0 for a too-heavy item, with a weight check in the walk: [2]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(wt, cap + 1):\n            best[i][w] = max(best[i - 1][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if weights[i - 1] <= w and best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
+            "test": 10,
+            "symptom": "fills only from w = wt, with a weight check in the walk: [2]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            if wt > w:\n                continue\n            best[i][w] = max(best[i - 1][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] > best[i - 1][w] and w >= weights[i - 1]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
+            "test": 10,
+            "symptom": "continue inside the w loop when the item does not fit, with a weight check in the walk: [2]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    best = [[0] * (cap + 1)]\n    for wt, val in zip(weights, values):\n        prev = best[-1]\n        if wt > cap:\n            best.append([0] * (cap + 1))\n            continue\n        row = prev[:]\n        for w in range(wt, cap + 1):\n            row[w] = max(prev[w], prev[w - wt] + val)\n        best.append(row)\n    chosen, w = [], cap\n    for i in range(len(weights), 0, -1):\n        if weights[i - 1] <= w and best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
+            "test": 10,
+            "symptom": "appends a row of 0s for a too-heavy item, with a weight check in the walk: [2]"
           }
         ]
       },
@@ -1649,7 +1674,8 @@
           "test-1": "Test 1 is the bag from this lesson: B and C, indices 1 and 2.",
           "test-5": "Test 5 is a tie: either item gives £5. Walking back, item 1 ties with the row above, so skip it and take item 0.",
           "test-4": "Test 4 has an item heavier than the bag. Its row copies the one above, so the answer is `[1]`. If you dropped that item first, return indices into the original list.",
-          "test-9": "Test 9 expects `[0, 2]`: the 8 kg item in the middle never fits. Its row must still copy the row above, and so must any cell where an item does not fit. A row left at 0 makes the walk back take it."
+          "test-9": "Test 9 expects `[0, 2]`: the 8 kg item in the middle never fits. Its row must still copy the row above, and so must any cell where an item does not fit. A row left at 0 makes the walk back take it.",
+          "test-10": "Test 10 expects `[0]`. The 9 kg item never fits, and the last row is built on its row. A row left at 0 gives wrong values below it, and no check in the walk back repairs them."
         }
       },
       "explain": {
@@ -1767,7 +1793,7 @@
         }
       },
       "explain": {
-        "text": "The table has 6 rows and 11 columns, so it is instant. The same method picks research projects under a headcount cap. With budgets in pence, $W$ would be huge, and since the general problem is NP-hard, no table trick saves us.",
+        "text": "The table has 6 rows and 11 columns, so it is instant. The same method picks research projects under a headcount cap. With budgets in pence, $W$ would be huge and this table too large; the general problem is NP-hard, so no known method is fast on every input.",
         "canvas": {
           "highlight": [
             "r0",

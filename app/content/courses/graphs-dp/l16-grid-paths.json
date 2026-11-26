@@ -1201,9 +1201,14 @@
             "call": "min_path_cost(cs)",
             "expect": "132",
             "compare": "equal"
+          },
+          {
+            "call": "min_path_cost([[1, 1, 1], [9, 9, 1], [1, 1, 1], [1, 9, 9], [1, 1, 1]])",
+            "expect": "15",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 9 hidden tests. They include a 1 by 1 grid, a single row, a single column and a 30 by 40 grid.",
+        "how": "Check runs 10 hidden tests. They include a 1 by 1 grid, a single row, a single column, a 30 by 40 grid and a grid where doubling back would be cheaper.",
         "mutants": [
           {
             "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            up = best[i - 1][j] if i > 0 else 0\n            left = best[i][j - 1] if j > 0 else 0\n            best[i][j] = min(up, left) + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
@@ -1254,6 +1259,26 @@
             "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                best[i][j] = costs[0][0]\n                continue\n            prev = []\n            if i > 0:\n                prev.append((i - 1, j))\n            if j > 0:\n                prev.append((i, j - 1))\n            pi, pj = min(prev, key=lambda p: costs[p[0]][p[1]])\n            best[i][j] = best[pi][pj] + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
             "test": 8,
             "symptom": "min over the neighbours keyed by fee: 12"
+          },
+          {
+            "source": "import heapq\n\n\ndef min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    dist = {(0, 0): costs[0][0]}\n    heap = [(costs[0][0], 0, 0)]\n    while heap:\n        d, i, j = heapq.heappop(heap)\n        if (i, j) == (rows - 1, cols - 1):\n            return d\n        if d > dist[(i, j)]:\n            continue\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols:\n                nd = d + costs[a][b]\n                if nd < dist.get((a, b), float(\"inf\")):\n                    dist[(a, b)] = nd\n                    heapq.heappush(heap, (nd, a, b))\n",
+            "test": 10,
+            "symptom": "shortest path with moves in all four directions: 11"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[float(\"inf\")] * cols for _ in range(rows)]\n    best[0][0] = costs[0][0]\n    changed = True\n    while changed:\n        changed = False\n        for i in range(rows):\n            for j in range(cols):\n                for a, b in ((i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)):\n                    if 0 <= a < rows and 0 <= b < cols and best[a][b] + costs[i][j] < best[i][j]:\n                        best[i][j] = best[a][b] + costs[i][j]\n                        changed = True\n    return best[-1][-1]\n",
+            "test": 10,
+            "symptom": "relaxes all four neighbours until nothing changes: 11"
+          },
+          {
+            "source": "import heapq\n\n\ndef min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    heap = [(costs[0][0], 0, 0)]\n    done = set()\n    while heap:\n        d, i, j = heapq.heappop(heap)\n        if (i, j) in done:\n            continue\n        done.add((i, j))\n        if (i, j) == (rows - 1, cols - 1):\n            return d\n        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n            a, b = i + di, j + dj\n            if 0 <= a < rows and 0 <= b < cols and (a, b) not in done:\n                heapq.heappush(heap, (d + costs[a][b], a, b))\n",
+            "test": 10,
+            "symptom": "Dijkstra with a done set, four directions: 11"
+          },
+          {
+            "source": "from collections import deque\n\n\ndef min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = {(0, 0): costs[0][0]}\n    queue = deque([(0, 0)])\n    while queue:\n        i, j = queue.popleft()\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols:\n                total = best[(i, j)] + costs[a][b]\n                if total < best.get((a, b), float(\"inf\")):\n                    best[(a, b)] = total\n                    queue.append((a, b))\n    return best[(rows - 1, cols - 1)]\n",
+            "test": 10,
+            "symptom": "queue of cells relaxed in four directions: 11"
           }
         ]
       },
@@ -1286,7 +1311,8 @@
           "test-1": "Test 1 expects 12. If you got 6, a missing neighbour was counted as 0 inside the min: on the edges use the one neighbour there is. If you got 9, count the start cell's fee too.",
           "test-2": "Test 2 is a single cell: the route starts and ends there, so it costs that cell's fee.",
           "test-7": "Test 7 expects 5: down the left edge, then along the bottom, 1 + 1 + 1 + 1 + 1. Every other route crosses a 9.",
-          "test-8": "Test 8 expects 8: along the top, then down the right edge. If you got 12, take the neighbour with the smaller running total, not the smaller fee."
+          "test-8": "Test 8 expects 8: along the top, then down the right edge. If you got 12, take the neighbour with the smaller running total, not the smaller fee.",
+          "test-10": "Test 10 expects 15. A route that doubles back to the left could cost 11, but moves go right or down only."
         }
       },
       "explain": {
