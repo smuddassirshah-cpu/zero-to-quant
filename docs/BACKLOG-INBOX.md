@@ -34,3 +34,7 @@ Raised later (audit ds):
 
 Raised later (audit contests, session AJ):
 - `table.js` `bigO` normaliser strips braces and brackets inconsistently: `O(log(n))` and `O(log n)` normalise differently (`log(n)` against `logn`), and `2^{n*n}` matches `O(2^n*n)`. Normalise function-call brackets and keep exponent grouping.
+
+Raised later (audit markets):
+- (audit markets-1-3, findings 3 and 6) A Python `code` widget may carry a `feedback.byKey.test-N` line for a later test and none for `test-1`, although the mistake the line names fails test 1 first (markets l5 `screens[9]` `test-2` and `test-3`, l8 `screens[10]` `test-2`). A validator warning `[code-test-key]` for a `test-N` line with N above 1 when no `test-1` line exists would have caught all three; better, a `mutants` field (source plus the key it must return) run by `grade-all.mjs --code`.
+- (same audit, tool results) `run-number-scripts.mjs --only markets` finds one script, the level 3 performance task's. Lessons l1 to l13 have no committed author number script, against "every stated number computed twice". The census could list each course with content and no number script.

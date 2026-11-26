@@ -77,3 +77,37 @@ Format: `N. file | JSON path | severity, tag | problem | evidence and basis | ex
 - `node tools/grade-all.mjs --file <each of the 19 files> --local-cdn <pkgs>`: 219 widgets, 0 failures. With `--code` on the six files that hold code widgets: 6 Python widgets run, 0 failures.
 - Concepts script: exit 1, 130 ok, 8 failing (the findings listed above).
 - No playthrough, as the common rules say.
+
+## Overlap with the earlier reads
+
+Read after the commit of the ledger and findings above (c242507c): `docs/reviews/review-1.7.md` (the second read of topic 1.7, markets section of 20 findings, and its fix pass, all 20 fixed), `docs/reports/markets-3-perf.md` and `docs/reviews/review-perf-retrofit-12.md` (the performance task homework-3 items[9]: no finding on markets). The other review files that name markets cite it only as a source for reuse or prerequisite checks and raise nothing on these lessons. All earlier findings were applied before this audit, so "both" can only count a defect that survived its fix, and none did.
+
+| Conceptual findings | Count | Items |
+|---|---:|---|
+| Audit only | 11 | 1 to 11 above |
+| Earlier review only | 13 | listed below; all fixed before this audit, and the fixed text is verified in the ledger |
+| Both | 0 | |
+
+New `wrong` that no earlier read found: 3 findings (3, 6 and 10; four ledger rows), all minor feedback lines whose named mistake cannot reach them. One is in level 3 and two are in level 2, so the round is above the convergence rule's one new `wrong` per three levels.
+
+The earlier review's conceptual findings (its other seven were spelling, code formatting, sentence counts, sentence length and a repeated item):
+
+- l1 quiz b-small "1% over 10 years" on a 20-year item: fixed; the why now gives £200.00 over 20 years (ledger: correct).
+- l2 screens[9] "overstates by about a third": fixed to "about a third below the headline" (679,516 / 1,000,000 = 0.68).
+- l4 screens[3] "exactly needs Newton's method": fixed to "numerically, for example by Newton's method".
+- l5 screens[1] `coupons-only` why (four coupons): fixed; 17.32 is five coupons, recomputed.
+- l6 screens[2] bisection prices: fixed; £92.18 and £91.97 recomputed (script check L2.l6.s2).
+- l6 screens[4] cross-reference to the wrong course: fixed; Limits and Derivatives l15 does hold the 4.40 (checked by search).
+- l6 screens[5] cell −7.59: fixed to −7.58 (−7.584%).
+- l6 screens[8] `inverse` value: fixed to 0.0453.
+- l6 screens[11] "a couple of points": fixed to "about three points".
+- l12 summary "a profit of P0": fixed to $P_0 - C$.
+- l13 screens[5] "magnifies losses more than gains": fixed; the line now says the interest drags on both outcomes.
+- homework-2 `five-year` value: fixed to −0.0010, recomputed.
+- review-3 `orig` value: fixed to 27,000, recomputed.
+
+Why the earlier read missed the audit's findings: it checked each number against its own why and each cross-reference, which is where its 13 hits are. It did not submit wrong programs to the code widgets (findings 3, 6, 7), did not test rules for their hypotheses (1, 4, 5, 11) and did not read conventions against market practice (2, 8, 9). Finding 10 is the one of its own kind it missed: a slip value that does not match the mistake its line names.
+
+## Inbox
+
+Two bullets added to `docs/BACKLOG-INBOX.md` under "Raised later (audit markets):".
