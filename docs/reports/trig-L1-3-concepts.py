@@ -12,6 +12,11 @@ Sections
   D  canvas lines: every straight line drawn on a plane ends on a drawn point
   E  Monte Carlo and numerical checks of the stated rules
   F  checks tied to findings (these fail while the content is as audited)
+
+Fix pass: the F2 gate matched '12 \\times 0.2679' as a substring, so it also
+caught the fixed text '0.26795'; it is re-pointed to the old figure followed by
+a non-digit. No check was changed otherwise; F1, F3, F4 and F5 skip on the
+fixed text because their old wording is gone.
 """
 import json, math, os, re, sys, itertools
 from fractions import Fraction
@@ -711,7 +716,7 @@ cc = np.sum(x2 * y2, axis=1) / (np.linalg.norm(x2, axis=1) * np.linalg.norm(y2, 
 ok(np.max(np.abs(np.abs(cc) - 1)) < 1e-9, 'E/F1 basis: every pair of de-meaned two-day series has correlation exactly +1 or -1')
 # F2 l3 trap: the step uses the given tan 15 = 0.2679, whose product rounds to 3.21, not the keyed 3.22
 t = node('l3-sides-and-angles', 'screens[7]')
-if '12 \\times 0.2679' in t['hints'][2]['text']:
+if re.search(r'12 \\times 0\.2679(?!\d)', t['hints'][2]['text']):
     ok(f'{12 * 0.2679:.2f}' == '3.22', f"F2 l3 screens[7]: the hint's 12 x 0.2679 = {12 * 0.2679:.4f} rounds to {12 * 0.2679:.2f}, but the keyed option is 3.22 (true 12 tan 15 = {12 * T(15):.4f})")
     ok(f'{12 / 0.2679:.2f}' == '44.78', f'F2 l3 screens[7]: 12 / 0.2679 = {12 / 0.2679:.2f}, option says 44.78')
 # F3 l6 screens[1]: the "below" feedback says the point is 0.5 from the axis anywhere in 180.5..359.5
