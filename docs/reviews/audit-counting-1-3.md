@@ -93,3 +93,26 @@ Opus fixer, from commit `9bf4f61c`. Each basis below was established independent
 Concepts script re-pointed where it encoded the old text (docstring says so): the `l3` `s9` check now recomputes `no-zero-first` by enumeration, and the finding 4 check accepts a "swapped" line that names signs-left-in-place when the option is exactly that. It exits 0 (1,910 checks).
 
 Gates: validator 0 errors (4,619 warnings); voice scan 35 on the five edited files 0 and 0; `run-number-scripts --only counting` 7 of 7 passed; `grade-all --file` on each edited file 0 failures; playthrough of `l3`, `l9`, `l10`, `l11`, `l12` desktop and `--mobile` all passed.
+
+## Fix-pass read
+
+Fresh Fable reader, content commit `4e6ca54e`, read blind (rows written before this file, the reviews or the concepts script were opened). Basis script: `docs/reports/counting-L1-3-fixread.py` (exit 0, 31 checks: PIN enumeration, atan against atan2 on a 13 by 13 grid, cross products, 19,528 random parallelograms).
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | `l3` | `screens[9].widget.wrong[4]` (`no-zero-first`) | 4536, tol 0 | correct | Enumeration: 4,536 of the 5,040 no-repeat PINs have a first digit other than 0; also $9 \times 9 \times 8 \times 7$ and $5040 - 504$. |
+| 2 | `l3` | `screens[9].widget` bands | Key and five slips do not collide | correct | Values 5040, 10000, 210, 34, 3024, 4536, all tol 0, pairwise distinct; `grade-all --file` 0 failures. |
+| 3 | `l3` | `screens[9].feedback.byKey.no-zero` | 3024 is 9 digits with 0 left out of every place, $9 \times 8 \times 7 \times 6$; start at 10 | correct | Enumeration: 3,024 no-repeat PINs contain no 0. See note below. |
+| 4 | `l3` | `screens[9].feedback.byKey.no-zero-first` | 4536 is 9 choices for the first place only; 0193 is allowed | correct | Row 1; the prose names 0193 as allowed, and it is in the enumerated set. |
+| 5 | `l9` | `quiz[3]` option `d` `why` | AC leaves A like AB, ends at a different corner, so is a different move | correct | $\overrightarrow{AC} = \overrightarrow{AB} + \overrightarrow{BC}$ with $\overrightarrow{BC} \ne \mathbf{0}$. In 19,528 random non-degenerate parallelograms only DC equals AB; AC was shorter than AB in 5,525, so dropping "longer" was needed. Exactly one option true. |
+| 6 | `l11` | `summary.ideas[1]`, sentence 1 | In the first quadrant the direction comes from $\tan\theta = u_2/u_1$ | correct | atan equals atan2 at every first-quadrant grid point; matches the lesson's convention (anticlockwise from the positive $x$-axis). |
+| 7 | `l11` | `summary.ideas[1]`, sentence 2 | Elsewhere sketch first; the calculator's angle can be 180° out | correct | atan against atan2, mod 360: quadrants 2 and 3 and the negative $x$-axis are exactly 180° out; quadrant 4 gives the same direction as a negative angle; never any other error. On the $y$-axis the ratio is undefined, and the sketch rule covers it. "Can" is the right strength. |
+| 8 | `l10` | `screens[4]` option `d` `why` | (1, −2) is u = (2, −1) with the 2 and 1 swapped, signs in place; not a multiple | correct | Sizes swapped with signs kept gives (1, −2); the plain swap is (−1, 2). Cross product −3. Parallel set is exactly a, b, c, as keyed. |
+| 9 | `l10` | `quiz[2]` option `b` `why` | (4, −6) is m = (6, −4) with the 6 and 4 swapped, signs in place; not a multiple | correct | Same construction; cross product −20. Only a, (−3, 2) = −½m, is parallel. |
+| 10 | `l12` | `quiz[2]` option `c` `why` | (2, −3) is AB = (3, −2) with the 3 and 2 swapped, signs in place; not a multiple | correct | AB = (4 − 1, 2 − 4) = (3, −2); cross product −5. Only a, (−6, 4) = −2AB, is parallel. |
+
+Counts: 10 rows, 10 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified. No fix needed.
+
+Note on row 3, not a finding: a learner who believes a PIN cannot start with 0 and then counts down ($9 \times 8 \times 7 \times 6$) also lands on 3024, not 4536. The `no-zero` line shows that product and ends "start at 10", so it still corrects that route.
+
+Gates: validator 0 errors; `grade-all --file` on `l3` 0 failures.
