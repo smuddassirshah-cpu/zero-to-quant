@@ -467,8 +467,9 @@ print(f'Info: l8 subtract-signed "reversed" equals a dropped-signs sum or differ
 
 # ---------------------------------------- Part A4: the files carry the fix-pass `where` (findings 3 to 6) ----------------------------------------
 print('Part A4: each fix-pass `where` is in its file and the `when` it replaces is gone')
-for folder, sid, fid, cond, wid in ([(NS, 'fluency-l3-adding-pieces', 'subtract-unlike', '(a - c)/lcm(b, d) != a/b - c/d', 'tops-not-renamed'),
-                                    (NS, 'fluency-l3-adding-pieces', 'subtract-unlike', '(a - c)/(b*d) != a/b - c/d', None),
+# (26 Nov, fix-pass read 2 follow-up: conditions now use abs(a - c), so the old-tops method is excluded either way round)
+for folder, sid, fid, cond, wid in ([(NS, 'fluency-l3-adding-pieces', 'subtract-unlike', 'abs(a - c)/lcm(b, d) != a/b - c/d', 'tops-not-renamed'),
+                                    (NS, 'fluency-l3-adding-pieces', 'subtract-unlike', 'abs(a - c)/(b*d) != a/b - c/d', None),
                                     (NS, 'fluency-l12-which-first', 'brackets-first', '(a + b)*g^2 != a + (b*g)^2', None),
                                     (MK, 'fluency-l2-transition-matrix', 'two-state-two-step', 'sq != key', 'squared-entry'),
                                     (MK, 'fluency-l2-transition-matrix', 'two-state-two-step', 'a + b != 1', None),

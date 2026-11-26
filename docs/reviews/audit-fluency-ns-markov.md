@@ -203,3 +203,7 @@ Each needs two slips at once, or a product that ignores the start or the target,
 - two-state: the reversed one-step entry $P_{ji}$ is the key on 2 draws ($a = 0.7, b = 0.2$, bear to bull; $a = 0.8, b = 0.3$, bull to bear); row $i$ times itself on 2 draws.
 - three-state: $P_{j1}$ on 2 draws; row Sunny times itself on 6 draws; column $j$ times itself on 18 draws.
 - subtract-unlike, unchanged line: when one bottom is already the common one, `tops-not-renamed` says "$\tfrac{9}{10}$ is $\tfrac{9}{10}$". True, slightly odd.
+
+## Fix-pass follow-up 2 (orchestrator)
+
+- Row 7 of fix-pass read 2 applied with the reader's text: number-sense fluency-l3 `subtract-unlike` `where` now uses `abs(a - c)` in both old-tops conditions, so the method is excluded whichever top is taken from which (2/5 − 3/10 gave the key). The reader measured 184 prompts kept, 56.2% rejection, 127 distinct in 200. Concepts check rows re-pointed. Gates: validator 0 errors, concepts 5,529 of 5,529, fixread-2 0, number-sense numbers 0, grade-all `--fluency-seeds 40` 0 failures, test-fluency 300/300, playthrough desktop and mobile green. The two uncounted observations (brackets-first added-first-and-doubled on 14 of 1,008 draws; unnamed products in markov) are left: no feedback line names those methods.
