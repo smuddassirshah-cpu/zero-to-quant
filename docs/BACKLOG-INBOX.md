@@ -34,3 +34,7 @@ Raised later (audit ds):
 
 Raised later (audit contests, session AJ):
 - `table.js` `bigO` normaliser strips braces and brackets inconsistently: `O(log(n))` and `O(log n)` normalise differently (`log(n)` against `logn`), and `2^{n*n}` matches `O(2^n*n)`. Normalise function-call brackets and keep exponent grouping.
+
+Raised later (audit graphs-dp):
+- (audit graphs-dp-4, findings 4 to 9) ENGINE-BACKLOG 1028 and 1036 seen again: 10 `byKey` lines over 5 of the 9 level 4 Python code widgets name a mistake that fails an earlier test, or sit on `error` for an exception raised inside test 1. None of the nine widgets declares `mutants`. A validator advisory for a `test-N` line with no `mutants` entry on test N would have caught all ten.
+- (same audit, findings 2 and 3) Two numeric slip values match no computation of their named mistake (l17 `screens[9]` 99.65 for 99.625; homework-4 `items[2]` 12 for 11). The number scripts for this course cover levels 1 to 3 only, so `run-number-scripts.mjs --only graphs-dp` passes with no level 4 script. A census line for "level with numeric slips and no number script" would show the gap.
