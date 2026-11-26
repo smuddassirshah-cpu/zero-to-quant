@@ -72,3 +72,19 @@ Two notes on the earlier reads. The earlier review fixed a sibling of finding 1 
 ## Engine and tooling notes
 
 Appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit ratio):", three bullets (findings 1 and 2; finding 8; finding 9).
+
+## Fix pass
+
+Opus fixer, from c4268e7c. Each basis is my own working, not the audit's.
+
+1. fixed. $0.085 \times 10^4 = 850$ and $0.085 \times 10^3 = 85$, so 850% is four places; the why now says four.
+2. fixed. "7 and 25 side by side" is a typed 725, stored 7.25 (725/100, computed in the concepts row and the L1 number script); band clear of the key 0.28 and of `flipped` 3.5714. Slip value changed; `over100: true` added. Byline unchanged.
+3. fixed. Screen 1 finds 10% as £240 ÷ 10, and $p\%$ of $A$ is $A \div p$ only for $p = 10$, so "never divides" is false; the last sentence now says divide by 100 for 1%, then multiply.
+4. fixed. Screen 5 measures £500 against £400 (125%), where the whole is the other amount; the note now limits "the whole is the total" to parts that make one total.
+5. fixed. Screen 2's "ratio of grams to people" is a ratio of unlike quantities; the reason now says both amounts are weights, so convert before simplifying.
+6. fixed. Prices £200, £210, £201.60, £206.64: adding counts each move on £200 (+10, −8, +5), but the fall took £8.40 off £210 and the rise added £5.04, so the sum is 36p high; cross terms sum to −0.00175 and the triple term −0.00005. New sentence: the 4% fall came off £210, not £200.
+7. fixed. $y = -2x$ keeps $y/x$ fixed and falls, so "rises" is not part of direct proportion; $40 - 5x$ gives 40 at $x = 0$, so it misses (0, 0). Why reworded.
+8. fixed. `origin` and `slope` each use only $y = kx$; `"same": [["origin", "slope"]]` added (order.js item 201 swaps them in places 3 and 4). Also changed: `feedback.correct` ("Each line uses the one before it" is false for either order, as `slope` does not use `origin`) and the step hint, which now allows either order.
+9. fixed differently. The part says "Using £39,185.69", and $39{,}185.69 \times 1.295029 = 50{,}746.6049$, so £50,746.60 is right as asked; unrounded, $52{,}000 \times 0.91^3 \times 1.09^3 = 50{,}746.6075$ (rational and float), £50,746.61. Key 50,746.605 ± 0.01 already accepts both and is unchanged. `accept` stays the plain figure, as `problems-ratio-numbers.py` requires; the explanation now names £50,746.61 and says both are accepted.
+
+Scripts re-pointed (old text or old value only): `ratio-L1-3-concepts.py` (finding 2 skip removed and its row added, finding 6 note reads the text with the Monte Carlo split kept as a check, finding 9 note reads the explanation); `ratio-L1-numbers.py` line 83, slip value 7.25. Gates: validator 0 errors, voice scan 35 0 and 0, concepts script exit 0 (0 fail, 0 note), number scripts 5 of 5, grade-all 0 failures on all seven files, playthrough of all seven green desktop and `--mobile`.

@@ -80,7 +80,7 @@ W(f, 'screens[10].widget', 'one-place', -0.8 / 10)   # typed -8
 W(f, 'screens[10].widget', 'decimal', -0.008 / 100)  # typed -0.008
 W(f, 'screens[10].widget', 'sign', 0.008)
 K(f, 'quiz[0].widget', 7 / 25)
-W(f, 'quiz[0].widget', 'digits', 0.725)              # typed 72.5
+W(f, 'quiz[0].widget', 'digits', 7.25)               # typed 725: 7 and 25 side by side (audit ratio-1-3 finding 2)
 W(f, 'quiz[0].widget', 'flipped', 25 / 7, 4)         # typed 357.14
 K(f, 'quiz[1].widget', 2.5 / 100)
 W(f, 'quiz[1].widget', 'one-place', 0.25); W(f, 'quiz[1].widget', 'no-scale', 2.5)
