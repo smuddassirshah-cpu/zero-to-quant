@@ -184,3 +184,11 @@ Issues
 - Blind-rule slip declared: the contests L4 round 1 auditor's grep of the number script printed nine comment lines naming earlier findings.
 - C++ in contests L1 to L3 was checked with native clang only, not the page's wasm32 clang 21.
 - (open) contests l9 `test-8`: `itertools.permutations` takes 1.4 to 4.3 s in Pyodide against the limit, so the line is reached or not by device speed. contests L4 round 2 finding 4 needs a new hidden test. Two citations in the L4 round 2 fix-pass read (Kattis, DOMjudge) are from recall.
+
+## Audit session 13 (26 Nov 2026, content session AJ acting as the audit session)
+
+- Lock check: newest commit on `origin/claude/fable-audit` was 3e95964e (13 Nov, touched `concept-audit-next.md`); the scheduled audit task is disabled. That branch is already merged into the content branch (e69cac72). No content commit since 17 Nov, so every course is settled.
+- Branch: the harness assigns `claude/sleepy-heisenberg-bhwkqw`; audit work is done there and merged to the CI branch at close, not on `claude/fable-audit`.
+- Delta scope, computed per course from its last audit file commit (or the delta batch that covered it) to e69cac72: text deltas in 11 closed courses (about 540 lines, 38 files) go to delta batch 2026-11-26-3. Four of the 11 (algo-think, coding-int, ds, limits-thm) total 14 lines, so the eight-course cap is exceeded by the orchestrator's choice.
+- Not in batch 3, owed: problem sets added since close in conditional, ito, limits-thm, markov, measure-prob, numerics, odes, pdes, random-vars (about 12,000 lines, mostly whole new files); they need course-sized reads, not a delta batch. number-sense L4 (l15 to l19, review-4, homework-4) is a new level, read as a full audit; its fluency sets are owed.
+- Ruling (content session, asked for by audit session 12): the concept audit stands in for the missing second read of markov L4 and L5, as session 9 did for limits-thm L4. markov L4 and L5 are eligible.
