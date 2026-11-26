@@ -139,3 +139,82 @@ Script: `docs/reports/contests-L1-3-concepts-r3.py` exits 0, 485 checks. No chec
 Gates on the five edited files: validator 0 errors, no warning on an edited field; voice scan 35: 0 and 0; `run-number-scripts --only contests` 5 of 5 pass; `grade-all --code --file` 0 failures on each of the five; playthrough desktop and `--mobile` of each, results below.
 
 Playthrough, `--local-cdn`: l3, l2, l6 and l12 with `--lesson`, homework-3 with `--set`, each desktop and `--mobile`: all passed (10 runs). Content commit for the fix-pass read: `ce87d1b0`.
+
+## Fix-pass read
+
+Fresh reader, blind to this audit and to the earlier contests reviews and scripts. Diff read: `git show ce87d1b0 -- app/content/courses` at HEAD 542cf515. Script: `docs/reports/contests-L1-3-fixread-r3.py` (exit 0; imprecise rows print as `note`). Pyodide runs through `app/tools/code-runner.mjs` (`makeRunner().grade(spec, src, 'tests')`, local CDN), keys as the page gives them.
+
+| # | File | JSON path | Claim (new or changed sentence) | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | l3-fast-io | quiz[2].feedback.byKey.lines | Slip 2 is "the lines with text, or only the numbers on the last line" | correct | Text `"2\n\n5 -3"`: lines with text are `2` and `5 -3`, so 2; last line holds 5 and −3, so 2. The old "words on the first line only" gave 1. Script. |
+| 2 | l2-limits-to-complexity | screens[2].feedback.byKey.r0c1, sentence 1 | A miss on $n \le 20$ "is not the growth meant here" | correct | True of any entry the key refuses; no longer claims the key is the slowest that fits (see open point). |
+| 3 | l2-limits-to-complexity | screens[2].feedback.byKey.r0c1, sentence 2 | $2^{20} \approx 10^6$, every subset fits, enter $2^n$ | correct | $2^{20} = 1{,}048{,}576 \le 10^8$. |
+| 4 | l2-limits-to-complexity | screens[2].feedback.byKey.r4c1, sentence 1 | A miss on $10^{18}$ "is not the slowest that fits" | imprecise | $\log n$ is not the slowest that fits $10^8$: $\sqrt[3]{n} = 10^6$ and $\log^2 n \approx 3{,}600$ steps both fit and grow faster. A learner who enters `O(n^(1/3))` is told something false. Same class as the open point. |
+| 5 | l2-limits-to-complexity | screens[2].feedback.byKey.r4c1, sentence 2 | Counting to $10^{18}$ does not fit; halving does | correct | $10^{18} > 10^8$; $\log_2 10^{18} = 59.8$. |
+| 6 | l6-gcd-and-primes | screens[9].widget.how, last sentence | Without the $\sqrt n$ stop the loop counts up to 999,999,999,989 and is stopped on it | correct | Pyodide: `while d <= n` and `while n > 1` variants both give key `test-9`, "Stopped after 5 s"; tests 7 and 8 pass (largest factor about $10^6$, since $n$ shrinks). All three numbers are prime (script). The old sentence said all three were stopped, which was false. |
+| 7 | l12-difference-arrays | screens[4].widget.how | Test 7: 500 updates, "from 1 to 2,500 pass" | correct | Test call is `0 < update_reads(1000, ups) <= 2500`; solution reads 500. |
+| 8 | l12-difference-arrays | screens[4].widget.how | Counts indexing and `for` loops, not `reversed()` or `.copy()` | correct | `_Counted` overrides only `__getitem__` and `__iter__`. Pyodide: index loop and `for` loop pass; correct solutions with `reversed(updates)` and `updates.copy()` give key `test-7`, actual `False` (0 reads). Not exhaustive, and does not claim to be: `pop()` is also uncounted, `list()`, `sorted()` and a slice are counted. |
+| 9 | l12-difference-arrays | screens[4].feedback.byKey.test-7, sentence 1 | Test 7 "counted no reads of the updates list, or far more than 2,500" | imprecise | True for 0 reads and for the per-day scan (500,000). False for a correct $O(n + q)$ answer just over the cap: six reads per update is 3,000, key `test-7` (Pyodide, six-pass variant). "Far" is the unstated part. |
+| 10 | l12-difference-arrays | screens[4].feedback.byKey.test-7, sentence 2 | Reads through `reversed()` or `.copy()` are not counted | correct | As row 8; this is the line a learner with a correct `reversed()` answer sees, and it names the cause. |
+| 11 | homework-3 | items[1].widget.how | Test 7: 1,000 rising closes, "from 1 to 10,000 pass" | correct | Test call is `0 < reads_for(spans, list(range(1000))) <= 10000`; solution passes. |
+| 12 | homework-3 | items[1].widget.how | Counts indexing and `for` loops, not `reversed()` or `.copy()` | correct | Same class. Pyodide: correct stack solutions that start `xs = closes.copy()` or loop `for c in reversed(closes)` give key `test-7`, actual `False`; `list(closes)`, `closes[:]` and direct indexing pass. |
+| 13 | homework-3 | items[1].feedback.byKey.test-7, sentence 1 | Test 7 "counted no reads of the list, or far more than 10,000" | correct | 0 reads as row 12; the walk-back answer reads about $10^6$ times. A stack answer needs more than 10 reads per close to land just over the cap, which no reasonable one does. |
+| 14 | homework-3 | items[1].feedback.byKey.test-7, sentence 2 | Reads through `reversed()` or `.copy()` are not counted | correct | As row 12. |
+
+Counts: 14 rows; correct 12, imprecise 2, wrong 0, misleading 0, unverified 0.
+
+The l12 and homework-3 text is true of what the learner sees: a correct `reversed()` or `.copy()` answer still fails test 7, and the new `how` and test-7 lines now say why. The harness itself still refuses those correct answers; that is an engine or test matter (count `__reversed__` and `copy`, or drop the `0 <` bound), not a wording one.
+
+### Fixes (paste-ready)
+
+Row 4, `l2-limits-to-complexity.json` `screens[2].feedback.byKey.r4c1`:
+
+```
+"r4c1": "Your entry for $10^{18}$ is not the growth meant here. You cannot even count to $10^{18}$ in time, but halving fits: enter $\\log n$."
+```
+
+Row 9, `l12-difference-arrays.json` `screens[4].feedback.byKey["test-7"]` (drop "far"; homework-3 may take the same edit for symmetry, with 10,000):
+
+```
+"test-7": "Test 7 counted no reads of the updates list, or more than 2,500. Reads through `reversed()` or `.copy()` are not counted. Scanning every update for each day costs $n \\cdot q$ reads."
+```
+
+### Open point: l2 screens[2], $n \le 20$ and $O(n \cdot 2^n)$
+
+Judgement: the key is not right as the question is worded. Screens 1 and 2 set the budget at about $10^8$ steps. $20 \cdot 2^{20} = 20{,}971{,}520$ fits and grows faster than $2^n$; $n^2 \cdot 2^n = 4.2 \cdot 10^8$ does not. So "the slowest growth that still fits" $n \le 20$ is $O(n \cdot 2^n)$, and a learner who works it out is marked wrong. The same holds for two more rows: $n \le 2 \cdot 10^5$ (given as `O(n log n)`, yet $n \sqrt n = 8.9 \cdot 10^7$ fits) and $10^{18}$ (row 4 above). Only the $n^3$ and $n^2$ rows are strictly the slowest ($n^3 \log n$ and $n^2 \log n$ overshoot). The `correct` line is also false as stated: $10^6$, $3.5 \cdot 10^6$ and 60 steps do not "land near $10^8$".
+
+The keys are the standard rule-of-thumb table (Laaksonen, *Competitive Programmer's Handbook*, ch. 2 "Estimating efficiency": $n \le 20 \to O(2^n)$, $n \le 500 \to O(n^3)$, $n \le 5000 \to O(n^2)$, large $n \to O(\log n)$; Halim, *Competitive Programming 3*, table 1.4 gives $O(2^n n)$ for $n \le 18$ to 22). So keep the keys, change what the question asks, and accept $n \cdot 2^n$. "Slowest growth" also reads two ways (a slowly growing function is the opposite of what is meant), which the new wording removes. The `explain` already speaks of "the setter's hint about the intended solution" and needs no change. Rows r1c1 and r2c1 are true as they stand.
+
+`screens[2].question`:
+
+```
+"question": "Fill in the growth each limit usually calls for."
+```
+
+`screens[2].widget.columns`:
+
+```
+"columns": ["Constraint", "Usual growth"]
+```
+
+`screens[2].widget.rows[0][1].accept` (the table's big-O normaliser drops `O( )`, spaces and `*`, so these cover `n 2^n`, `n·2^n` and `2^n n`):
+
+```
+"accept": ["2^n", "O(2**n)", "O(n*2^n)", "O(2^n*n)"]
+```
+
+`screens[2].feedback.correct`:
+
+```
+"correct": "Each row is the growth a setter usually intends at that limit."
+```
+
+`screens[2].feedback.byKey.r0c1` (so the line still holds beside the wider accept list):
+
+```
+"r0c1": "Your entry for $n \\le 20$ is not the growth meant here. $2^{20} \\approx 10^6$, so trying every subset fits: enter $2^n$."
+```
+
+(unchanged; listed to confirm it stays true.) After the edit run `node tools/grade-all.mjs --file content/courses/contests/l2-limits-to-complexity.json` for the new accept forms.
+
+Out of scope, noted only: homework-3 test-7 third sentence (unchanged) says the walk-back costs about $n^2 / 2$ reads; with `closes[j] <= closes[i]` it is two reads per comparison, about $n^2$ ($2 \cdot 500{,}500 = 1{,}001{,}000$ at $n = 1000$).
