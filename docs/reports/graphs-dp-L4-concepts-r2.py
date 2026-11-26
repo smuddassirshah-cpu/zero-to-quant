@@ -9,6 +9,10 @@ Exit 0 when every check passes. A check that fails because the content is defici
 failing: those are the findings of docs/reviews/audit-graphs-dp-4-r2.md (each is tagged
 FINDING n in its name; each passes once the audit's fix for it is applied). Run from the repository root or anywhere:
     python docs/reports/graphs-dp-L4-concepts-r2.py
+
+Fix pass (re-pointed, old text only): the mutant total check now counts 100, the 85
+read here plus the 15 mutants the fix pass added for findings 1, 2, 3 and 9. No other
+check was changed.
 """
 import itertools, json, math, os, re, sys, time, heapq
 from collections import Counter, deque
@@ -618,7 +622,7 @@ for name, i, s in code:
         elif "IndexError" in sym and got != "IndexError":
             bad.append((mi, "symptom IndexError, got", got))
     chk("%s[%d]: %d mutants first fail at their stated test with the stated symptom" % (name, i, len(w.get("mutants", []))), not bad, bad)
-chk("85 mutants across the nine code widgets", n_mut == 85, n_mut)
+chk("100 mutants across the nine code widgets (85, plus 15 added by the fix pass)", n_mut == 100, n_mut)
 
 # expected values recomputed by other methods
 ws = [(i * 37) % 23 + 1 for i in range(60)]
