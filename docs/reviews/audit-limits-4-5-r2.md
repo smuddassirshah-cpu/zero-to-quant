@@ -62,3 +62,19 @@ Convergence: round 1 gave 4 new `wrong` on these two levels, this round 3, all m
 ## Inbox
 
 One bullet added to `docs/BACKLOG-INBOX.md` under "Raised later (audit limits):": a validator warning for hint or feedback lines that quote a label value no snapped position renders, or an $x$ outside a dragged point's domain.
+
+## Fix pass
+
+Opus fixer, from commit 2aeed709. Each basis is my own recomputation (venv Python; scratch `fix-lim45r2/`), not the auditor's text.
+
+1. Fixed. `plane.js` snaps P with `snapX` 0.05 and grades `on: "f"` targets by $|x - x^*|$ alone; $3x^2 - 3$ at 1.10, 1.15, 1.20, 1.25 gives 0.63, 0.97, 1.32, 1.69 (formula and central difference agree), and 1.00 needs $x = 2/\sqrt3 = 1.1547$, off the grid. Kept the snap (a 0.005 step would reach 1.00 at 1.155 but is too fine to drag on a phone). Hint now quotes 0.97 at 1.15, generic asks for the label closest to 1, correct says "near 1.15" and gives the exact point, and `tol` 0.1 became 0.06 so only 1.10, 1.15, 1.20 pass. The flat region (to 1.0) stays clear of the band.
+2. Fixed. $G(0.6) = -0.0845$, $G(0.5) = -0.0340$, and $G$ crosses 0 at $f = 0.389$; the curve and the plane stop at 0.5, and the $y$ range reaches $-0.04$, so P at 0.5 shows a negative growth. The line now quotes $-0.085$ and sends P to 0.5.
+3. Fixed (mistake renamed, value kept). $-\tfrac{0.02 \times 0.4}{0.08 \times 0.3} \times 0.01 = -0.00333$, and as fractions $-\tfrac14 \cdot \tfrac43 \cdot \tfrac1{100} = -\tfrac1{300}$; $\tfrac{w_2}{w_1}$ with the 4 kept gives $-0.0533$. The line now names the whole fraction inverted. Band $[-0.0036, -0.0030]$ clear of the key $-0.03$ and the slip $-0.01$.
+4. Fixed. The slip value 4 is $c^2$ itself; the line now says so and takes the root.
+5. Fixed. `course.json` names level 4 "Using derivatives"; the rule is in `l15` "Sensitivity of a price". Prose now says "the lesson on sensitivity".
+6. Fixed. $(x^3)'' = 6x$ and $(x^4)'' = 12x^2$ differ as functions and agree only at 0; the line now says that.
+7. Fixed. MVT gives $\Delta C = \delta(c)\,\Delta S$ for some $c$; "delta times the move" holds only approximately for a non-constant delta. Prose now says "about" and lets the theorem make it exact.
+8. Fixed. $G'(0) = pb - q = b f^*$ and $G'' < 0$, so for $f^* \le 0$ the slope is negative on $(0, 1)$ and the best stake is 0 (also checked on 20,000 random $p$, $b$ with $pb \le q$). Note now ends "If this is 0 or negative, stake nothing."
+
+Concepts scripts: the three failing checks were conditional on the old text and now pass; a "Fix pass checks" block at the end of `limits-L4-5-concepts-r2.py` adds 8 positive checks of the new figures (docstring says so). r2: 34,823 checks, exit 0; round 1 script: 139 checks, exit 0.
+Gates: validator 0 errors (4,623 warnings, same as before the edits); voice scan 35 on the six files 0 and 0; number scripts limits 9 of 9; `grade-all.mjs --file` 0 failures on each; playthrough of l13, l14, l17, l18, review-5, homework-5 green desktop and `--mobile`. Keys unchanged; one tolerance changed (l17 screens[2] `tol` 0.1 to 0.06); no slip value changed.
