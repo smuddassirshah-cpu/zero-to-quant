@@ -122,3 +122,7 @@ Exact fix (text only; `answer`, `tol` and `wrong[]` stay as they are):
 - Optional, same screen, `feedback.byKey.sign` last sentence: `"A positive total books the net loss as a gain."` (a learner working from the table typed 0.1852, not 0.1853).
 
 Basis: direct arithmetic on the four table rows; full-precision path sum −0.185297 from `docs/reports/ito-L2-concepts.py` line 43.
+
+## Fix-pass follow-up (orchestrator)
+
+- ito l5 `screens[0].widget.accept` and `screens[0].explain.text`: the reader's text applied as given (the printed products add to −0.1852; the path before rounding gives −0.1853; tol 0.0005 accepts both). Key unchanged. Basis: 0 + 0.2675 − 0.2745 − 0.1782 = −0.1852. Gates: validator 0 errors, voice scan 0 and 0, concepts script 0, ito number scripts 9 of 9, playthrough desktop and mobile green.
