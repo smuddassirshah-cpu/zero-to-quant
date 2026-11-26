@@ -11,6 +11,9 @@ fractions, independently of the author's number script, and checks that
   * every chained part uses the value its question tells the learner to carry forward,
   * each rule or comparison stated in feedback or an explanation holds (CLAIMS).
 Nothing here is empirical, so there is no Monte Carlo. Exit 0 when the content is correct.
+Fix pass (Opus): the checks that encoded the old text were re-pointed. Finding 1's `imprecise` row is now a
+CLAIM on the reworded question (0.28 is exact, 7 in 25); finding 2's nine `imprecise` key rows are now `correct`,
+with rows that check the new `decimal-low` and `decimal-high` bands and their lines.
 `--ledger <path>` writes the claim ledger from the same table.
 """
 import json, math, os, sys
@@ -275,10 +278,15 @@ CLAIMS = [
 ]
 
 # Findings: ledger rows whose verdict is not `correct` (see docs/reviews/audit-number-sense-problems-1-3.md).
-FINDINGS = {
-    ('problems-2', 'items[1].parts[3].question'): ('imprecise', 'finding 1: 0.28 of an 18-hole round is not a whole number of holes, and 5/18 is 0.28 to 2 d.p.'),
-}
-EXACT_FORM = [  # finding 2: "exact fraction" asked, 3 d.p. accepted, 2 d.p. sent to a method line
+# Fix pass: finding 1 is fixed (the question now states 0.28 is exact, 7 holes in 25), so it is a CLAIM below.
+FINDINGS = {}
+CLAIMS.append(('problems-2', 'items[1].parts[3].question', 'exactly 0.28 of the holes, 7 in every 25',
+               F(7, 25) == D('0.28') and F(5, 18) < F(7, 25) and rnd(F(5, 18), 2) == D('0.28'),
+               '7/25 = 0.28 exactly; 5/18 is 0.28 only to 2 d.p.'))
+# Finding 2, fix pass: the nine parts keep the 0.0005 window (a 3 d.p. decimal is still marked right) and now carry
+# two bands either side of it, `decimal-low` from the value cut at 2 d.p. and `decimal-high` up to the value rounded
+# up at 2 d.p., whose line says the method is right and the answer needs the exact form.
+EXACT_FORM = [  # finding 2: "exact fraction" asked; 2 d.p. now caught by the decimal bands
     ('problems-1', 1, 0), ('problems-1', 1, 2), ('problems-1', 2, 0), ('problems-1', 2, 1), ('problems-1', 2, 2),
     ('problems-1', 2, 3), ('problems-1', 3, 2), ('problems-1', 3, 3), ('problems-1', 3, 4)]
 
@@ -313,9 +321,21 @@ def main():
                 ans, tol = F(str(w['answer'])), F(str(w['tol']['abs']))
                 key_ok = abs(ans - want) <= F(1, 10 ** 6)
                 verdict = None
-                if (name, i, j) in EXACT_FORM and key_ok:
-                    verdict = 'imprecise'
-                    basis += '; finding 2: exact form asked, window takes 3 d.p. and rejects 2 d.p.'
+                if (name, i, j) in EXACT_FORM:
+                    cut = F(math.floor(want * 100), 100)
+                    up = F(math.ceil(want * 100), 100)
+                    wrongs = dict(wrongs, **{'decimal-low': (cut, f'{want} cut at 2 d.p.'),
+                                             'decimal-high': (up, f'{want} rounded up at 2 d.p.')})
+                    bk = part['feedback'].get('byKey', {})
+                    for bid in ('decimal-low', 'decimal-high'):
+                        row(name, f'{p}.feedback.byKey.{bid}', 'a rounded or cut-short decimal is told the method is right',
+                            'method is right' in bk.get(bid, '') and ('fraction' in bk.get(bid, '')), 'finding 2 fix')
+                    gap = [x for x in w.get('wrong', []) if x['id'] in ('decimal-low', 'decimal-high')]
+                    edges = sorted((F(str(x['value'])) - F(str(x['tol']['abs'])), F(str(x['value'])) + F(str(x['tol']['abs']))) for x in gap)
+                    row(name, f'{p}.wrong.decimal-*', 'the bands run from the 2 d.p. cut to the 2 d.p. round-up, around the key window',
+                        len(edges) == 2 and edges[0][0] <= cut and edges[1][1] >= up
+                        and ans - tol - F(3, 10 ** 6) <= edges[0][1] < ans - tol and ans + tol < edges[1][0] <= ans + tol + F(3, 10 ** 6),
+                        'finding 2 fix')
                 row(name, p + '.answer', f'key {w["answer"]} = {want}', key_ok, basis, verdict)
                 ids = {x['id'] for x in w.get('wrong', [])}
                 row(name, p + '.wrong (set)', 'every slip is in the audit table', ids == set(wrongs), 'coverage')

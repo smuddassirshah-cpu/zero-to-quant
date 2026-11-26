@@ -54,3 +54,15 @@ Finding 2 was seen by the earlier reader and held to be intended ("Fraction part
 | playthrough | not run, as the auditor rules say |
 
 No content, engine or state file was edited.
+
+## Fix pass
+
+Opus fixer, from commit bf378b59. Files: `problems-1.json`, `problems-2.json`, `docs/reports/number-sense-problems-concepts.py`, `docs/reports/problems-number-sense-numbers.py`.
+
+1. Fixed. Basis: $0.28 \times 18 = 5.04$, so no 18-hole count gives 0.28 exactly, while $\tfrac{5}{18} = 0.2777\ldots$ is 0.28 to 2 d.p.; $0.28 = \tfrac{7}{25}$ exactly, and $\tfrac{7}{25} - \tfrac{5}{18} = \tfrac{1}{450} > 0$. The question now opens "Her rival played a longer run of holes. The rival was under par on exactly 0.28 of them, 7 holes in every 25." (two sentences, to stay under the 20-word target). Options, feedback and explanation unchanged; the key "The rival" now rests on a stated exact share.
+
+2. Fixed differently. Basis: in `grade.js`, `numGrade` tests the key window ($\pm 0.0005$) before `matchWrong`, and the validator refuses a slip that overlaps the key window, so the auditor's centred slip at the key value could not ship. Each of the nine parts keeps its key and tolerance, and gains two bands either side of the key window: `decimal-low` from the value cut at 2 d.p. up to the window, `decimal-high` from the window up to the value rounded up at 2 d.p. (gap 1e-6 to 2e-6 from the window, clear of every other slip). Both carry the line "Your method is right, but this decimal is rounded or cut short, so it is not exact. The question asks for an exact fraction: type ...", naming the exact form. Probed with the real `numGrade`: 0.71, 0.70, 0.7 and 0.709 for $\tfrac{17}{24}$ now reach the band line; $\tfrac{17}{24}$ and 0.708 stay right; 0.43 for $\tfrac{31}{72}$ (0.000556 below the key) reaches `decimal-low`; every existing slip still fires. The 3-place acceptance is left as it is, a design choice (the window was not to be changed); the correct line shows the exact fraction.
+
+No key, tolerance or existing slip changed; 18 slips added (two per part, nine parts). Scripts: the concepts script was re-pointed (its docstring says so): finding 1's `imprecise` row is now a claim on the new wording, and finding 2's nine `imprecise` key rows are now `correct`, with rows checking both bands and their lines (298 rows, exit 0). The author number script's `frac_part` now requires both bands on any key with no terminating decimal and checks their edges (1,183 checks, 0 failures).
+
+Gates: validator 0 errors (4,615 warnings, unchanged); voice scan 35 on both sets 0 and 0; `run-number-scripts --only number-sense` 7 passed; `grade-all --file` 17 and 12 widgets, 0 failures; playthrough `--problems number-sense/problems-1` and `problems-2`, desktop and `--mobile`, all passed.
