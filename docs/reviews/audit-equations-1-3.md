@@ -57,3 +57,15 @@ Read after the ledger and findings were written: `review-equations-1-2.md` (l1 t
 All 14 earlier findings were fixed before c7d4b505, and each fixed line was read here as a ledger row and stands `correct`. New `wrong` that no earlier read found: 1 (finding 1, minor). The three lesson-id citations noted for the fixer came from the earlier fix passes (review-equations-1-2 finding 17, review-equations-3-4 findings 11 and 12).
 
 Earlier findings counted as not conceptual: entry forms and grader behaviour (1-2 finding 8, 0.2-a findings 1 to 7), key length, bands, freshness, lesson shape and voice.
+
+## Fix pass
+
+Opus fixer, from 1a9cdc01. No key, slip value, hidden test or solution changed; all edits are `why`, `explain`, `prose` or `note` text.
+
+1. `review-1` `items[2]` option `sign-9` | fixed | Own check: $4 + 9 = 13$ would give $6n + 13$; $6n + 5$ is $|4 - 9|$ with the sign dropped, i.e. $9 - 4$. Text now: "You took 4 from 9 and lost the sign. The 9 follows a minus sign: $4 - 9 = -5$."
+2. `l10` `quiz[0]` option `e` | fixed | For $a, b < 0$, $a < b \iff |a| > |b|$ (order is reversed by $x \mapsto -x$); the digit rule fails on $-19$ against $-21$. Text now: "With negatives, the number further from 0 is the smaller one."
+3. `l12` `quiz[3]` explain | fixed differently | $a < x < b$ is non-empty exactly when $a < b$, while $2 \ge x > -3$ (screens[5]) is valid with the larger limit first. Last sentence now: "The solution set is empty. With $<$ signs, a number can pass only when the smaller limit is on the left." (Stated as the condition for any number to pass, rather than "must".)
+4. `l13` summary, `homework-3` `items[4]` | fixed | $P_0(1 + r) = P_1$ at $r = -1$ reads $0 = P_1$, so no division; $y = \frac{x+2}{x-1} = 1$ forces $x + 2 = x - 1$, impossible, so $y \neq 1$ is needed. Stated once in each: l13 `summary.formula.note` gains "Divide only by something that is not zero: here $r \neq -1$."; homework-3 explain ends "Then one division frees it, which needs $y \neq 1$." The $p - c$ step in `screens[4]` is left to the summary line, as asked ("state it once").
+5. Inbox note, lesson ids in learner prose | fixed | Each cited lesson checked to hold the idea: l1 teaches substituting, l4 `screens` and l9 define break-even. Replaced with italic titles from `course.json`, the form other courses use: l13 `screens[0].explain` "as in *Letters that stand for numbers*"; l13 `screens[4].prose` "as in *Turning a story into an equation*"; l9 `screens[7].prose` "as in *Putting brackets back*". A grep for `as in l<n>` in the course now finds nothing.
+
+Gates: validator 0 errors; voice scan 35 on the six edited files 0 and 0; concepts script 761 checks, exit 0, unchanged (it holds no check on the edited text); `run-number-scripts --only equations` 6 of 6 passed; `grade-all --file` 0 failures on each edited file; playthrough of l9, l10, l12, l13, review-1 and homework-3 green desktop and `--mobile`.
