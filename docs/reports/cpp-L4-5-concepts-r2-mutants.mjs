@@ -275,3 +275,20 @@ J('FP h4dd test-6: rising test checks only >= 0', 'homework-4', 'h4-test-drawdow
 J('FP h4dd test-6: rising test checks only < 0.25', 'homework-4', 'h4-test-drawdown', DD(D1, '    CHECK(max_drawdown({100.0, 101.0, 103.5}) < 0.25);', EDGE), 'test-6');
 J('FP l23s5 test-9: copy ctor adds to *count_ unguarded', 'l23-own-smart-pointer', 's5', SP({ members: all('    SharedPtr(const SharedPtr& other) : ptr_(other.ptr_), count_(other.count_) { *count_ += 1; }', S_CA, S_MC, S_MA, S_D) }), 'test-9');
 J('FP h5ptr-H CountedPtr copy and destructor both unguarded', 'homework-5', 'h5-sole-and-counted', (s) => rep('        if (count_ && --*count_ == 0) {', '        if (--*count_ == 0) {')(rep('        if (count_) ++*count_;\n    }\n    CountedPtr(CountedPtr&& other)', '        ++*count_;\n    }\n    CountedPtr(CountedPtr&& other)')(s)), 'test-15');
+
+/* ---------- fix-pass follow-up (Fix-pass read, outside the diff): a copy assignment from an empty pointer, and into one ----------
+   l23 tests[8] and h5 tests[14] now also assign a pointer into an empty one and an empty one over a sole owner. Each wrong coding
+   below passed all 15 tests before (scratch gap run, fix-cpp45-3) and now reaches the widened test first. */
+const LCA = 'long* c = other.count_;\n            if (c) ++*c;\n            drop();';
+J('FP2 l23s5 test-9: copy assign ++*c unguarded', 'l23-own-smart-pointer', 's5', rep(LCA, 'long* c = other.count_;\n            ++*c;\n            drop();'), 'test-9');
+J('FP2 l23s5 test-9: copy assign (*c)++ unguarded', 'l23-own-smart-pointer', 's5', rep(LCA, 'long* c = other.count_;\n            (*c)++;\n            drop();'), 'test-9');
+J('FP2 l23s5 test-9: copy assign *c += 1 unguarded', 'l23-own-smart-pointer', 's5', rep(LCA, 'long* c = other.count_;\n            *c += 1;\n            drop();'), 'test-9');
+J('FP2 l23s5 test-9: copy assign drops the old share inline, unguarded', 'l23-own-smart-pointer', 's5', rep(LCA, 'long* c = other.count_;\n            if (c) ++*c;\n            if (--*count_ == 0) { delete ptr_; delete count_; }'), 'test-9');
+J('FP2 l23s5 copy assign drops the old share inline, guarded (valid)', 'l23-own-smart-pointer', 's5', rep(LCA, 'long* c = other.count_;\n            if (c) ++*c;\n            if (count_ && --*count_ == 0) { delete ptr_; delete count_; }'), null);
+const HCA = (inc, drop) => (s) => { const re = /    CountedPtr& operator=\(const CountedPtr& other\) \{[\s\S]*?\n    \}\n/; if (!re.test(s)) throw new Error('h5 copy assignment anchor'); return s.replace(re, `    CountedPtr& operator=(const CountedPtr& other) {\n        if (count_ != other.count_) {\n            T* p = other.ptr_;\n            long* c = other.count_;\n            ${inc}\n            ${drop}\n            ptr_ = p;\n            count_ = c;\n        }\n        return *this;\n    }\n`); };
+const HDG = 'if (count_ && --*count_ == 0) { delete ptr_; delete count_; }', HDU = 'if (--*count_ == 0) { delete ptr_; delete count_; }';
+J('FP2 h5ptr test-15: copy assign ++*c unguarded', 'homework-5', 'h5-sole-and-counted', HCA('++*c;', HDG), 'test-15');
+J('FP2 h5ptr test-15: copy assign (*c)++ unguarded', 'homework-5', 'h5-sole-and-counted', HCA('(*c)++;', HDG), 'test-15');
+J('FP2 h5ptr test-15: copy assign *c += 1 unguarded', 'homework-5', 'h5-sole-and-counted', HCA('*c += 1;', HDG), 'test-15');
+J('FP2 h5ptr test-15: copy assign drops the old share unguarded', 'homework-5', 'h5-sole-and-counted', HCA('if (c) ++*c;', HDU), 'test-15');
+J('FP2 h5ptr copy assign read first, guarded (valid)', 'homework-5', 'h5-sole-and-counted', HCA('if (c) ++*c;', HDG), null);

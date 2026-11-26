@@ -869,8 +869,8 @@
             "compare": "equal"
           },
           {
-            "setup": "SharedPtr<Tracked> p; SharedPtr<Tracked> q = p;",
-            "call": "p.use_count() * 100 + q.use_count() * 10 + (p.get() == nullptr && q.get() == nullptr ? 1 : 0)",
+            "setup": "SharedPtr<Tracked> p; SharedPtr<Tracked> q = p; SharedPtr<Tracked> r; { SharedPtr<Tracked> t(new Tracked(3)); r = t; } r = p;",
+            "call": "Tracked::live * 10000 + p.use_count() * 1000 + q.use_count() * 100 + r.use_count() * 10 + (p.get() == nullptr && q.get() == nullptr && r.get() == nullptr ? 1 : 0)",
             "expect": 1,
             "compare": "equal"
           },
@@ -912,7 +912,7 @@
         ],
         "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Tracked objects are alive.\nstruct Tracked {\n    static inline int live = 0;\n    int v;\n    explicit Tracked(int x) : v(x) { ++live; }\n    ~Tracked() { --live; }\n};\n",
         "leakCheck": true,
-        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects; `leakCheck` also fails a test whose counter block is never freed. Two tests run `h = h->next` and `h = std::move(h->next)` on a hidden list, where the source lives inside the object `h` lets go. One test copies an empty pointer, which must add to no count.",
+        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects; `leakCheck` also fails a test whose counter block is never freed. Two tests run `h = h->next` and `h = std::move(h->next)` on a hidden list, where the source lives inside the object `h` lets go. One test copies an empty pointer and assigns to and from one; an empty pointer has no count to change.",
         "postlude": "\n// Hidden: a list whose nodes own the next one.\nstruct Link {\n    static inline int live = 0;\n    int v;\n    SharedPtr<Link> next;\n    explicit Link(int x) : v(x) { ++live; }\n    ~Link() { --live; }\n};\n"
       },
       "hints": [

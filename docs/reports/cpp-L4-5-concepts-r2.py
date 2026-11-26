@@ -14,6 +14,9 @@ Fix pass (Opus fixer): only checks that encoded the old content were re-pointed.
 -programs.mjs reads the l21 screen 9 listing from the content instead of a copy; and a block of FP codings sweeps each test-N line
 the fix pass wrote. The part A text checks are unchanged.
 
+Fix-pass follow-up (Opus fixer): no check re-pointed. -mutants.mjs gains a block of FP2 codings (copy assignment from an empty
+pointer or into one), which reach the widened l23 tests[8] and h5 tests[14] first.
+
   python3 docs/reports/cpp-L4-5-concepts-r2.py [--pkgs <local cdn folder>] [--no-cpp] [--jobs 3]
 The local CDN folder is --pkgs, else $ZQ_LOCAL_CDN (the folder the playthrough takes as --local-cdn). Part B takes about four minutes.
 """
