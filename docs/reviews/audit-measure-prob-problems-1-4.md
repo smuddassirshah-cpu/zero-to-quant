@@ -83,3 +83,13 @@ New `wrong` found by this audit: 0.
 | playthrough | not run (auditor rule) |
 
 Inbox: no engine limit was met, so no bullet was added to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Opus fixer, from commit 4ee62e13. Only the three `why`/`explain` strings were edited. No key, slip, tolerance or test changed.
+
+1. Fixed (auditor's text). Basis: dominated convergence (Williams 5.9) needs $|f_h| \le Y$ integrable, but that is only sufficient for swapping limit and mean; uniform integrability is the exact condition (Williams 13.7). Own example: $X_n = \tfrac{n}{\log n}$ on $[\tfrac1{n+1}, \tfrac1n)$ is uniformly integrable with $E[X_n] \to 0$, yet $E[\sup_n X_n] = \sum \tfrac{1}{(n+1)\log n} = \infty$, so no single bound dominates. The new `why` names the hypothesis of dominated convergence, which is what the stem asks for.
+2. Fixed (auditor's text, joined into three sentences). Basis: $E_P[\tfrac{dQ}{dP}] = Q(\Omega) = 1$, while the stem's densities have $E_P[2X] = \tfrac43$ and $E_P[4X^3] = \tfrac85$ (SymPy). Recomputed twice: $E_P[Z] = \int_0^1 4x^3\,dx = 1$, $E_P[Z^2] = \tfrac43$, variance $\tfrac13$; Monte Carlo with 4,000,000 draws gives mean 0.99996 and variance 0.33332.
+3. Fixed differently. The course uses "null set" for a set of chance 0, under which "every null set is an event" is true by definition, so the auditor's "Nor is every null set Borel" would contradict the course's own usage. The new sentence says "Nor does being small make a set an event: a subset of a null set need not be Borel." Basis: the middle-thirds Cantor set is Borel, null and of size $\mathfrak c$, so it has $2^{\mathfrak c}$ subsets, while the Borel sets number only $\mathfrak c$; every such subset is measurable only after completion.
+
+Gates: validator 0 errors; voice scan 35 at 0 and 0 on the three files; `measure-prob-problems-concepts.py` 590 checks, exit 0 (no check encodes the old text, so nothing re-pointed); number scripts 8 of 8 passed; `grade-all.mjs --file` 0 failures on problems-1, 2 and 4; playthrough `--problems` of problems-1, 2 and 4 green desktop and `--mobile`.
