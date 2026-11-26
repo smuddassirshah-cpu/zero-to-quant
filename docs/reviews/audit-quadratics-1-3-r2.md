@@ -104,3 +104,7 @@ Outside the diff, seen while reading the surrounding items (not counted, for the
 
 - `problems-1.json` `items[0].parts[3].question`: "take some seats out ... for every $x$" does not say the number removed is fixed. If it may depend on $x$, removing $3x + 8$ seats leaves $(x + 6)^2$ for every $x$ (run: $x^2 + 15x + 44 - (x + 6)^2 = 3x + 8$), and the keyed "No" fails. The feedback and explain assume a fixed number. Paste-ready: "Could the cinema take the same fixed number of seats out of $x^2 + 15x + 44$, whatever $x$ is, and leave a square block $(x + k)^2$ with $k$ a whole number?"
 - `problems-1.json` `items[0].parts[1].explain.text`: "Product 36 gives 1 and 36, ..." lists positive pairs only, the same pattern rows 3 and 4 fixed in l2. Paste-ready: "The positive pairs with product 36 are 1 and 36, 2 and 18, 3 and 12, 4 and 9, and 6 and 6."
+
+## Fix-pass follow-up (orchestrator)
+
+- The reader's two notes outside the diff applied: problems-1 items[0].parts[3] question now says "the same fixed number of seats ... whatever x is" (removing 3x + 8 seats leaves (x + 6)^2, so the keyed No needs a fixed number); parts[1] explain now names "the positive pairs with product 36". Gates: validator 0 errors, voice scan 0, both concepts scripts 0, quadratics number scripts 7 of 7, grade-all 0 failures, playthrough desktop and mobile green.
