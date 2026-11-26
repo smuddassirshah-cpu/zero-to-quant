@@ -106,3 +106,21 @@ Two notes on how the misses arose.
 ## Inbox
 
 Two bullets under "Raised later (audit functions):" in `docs/BACKLOG-INBOX.md`: point-scoped `drag-point` regions (finding 4), and coincident draggable points in a `derive` equality test (finding 5).
+
+## Fix pass
+
+Opus fixer, 26 Nov 2026, on `f69104f4`. Each basis below is my own derivation or run, not the audit's text. No graded key, slip value, hidden test or option id changed; only strings and the l8 `derive` changed.
+
+1. Fixed. Basis: from $x^2 - x - 2 = 0$, moving both terms unchanged gives $x^2 = -x - 2$; option b, $x - 2$, is $-x$ moved as $+x$ with $-2$ left. New `why`: "You changed the sign of the $x$ but not of the 2." Concepts check FINDING 1 re-pointed to require that text and the matching line.
+2. Fixed. Basis: convex means the gradient increases ($f'' > 0$); $2^x$ has steps 1, 2, 4, 8, 16 and is convex while steepening, so "flattening" holds only because this curve falls. Parts (b), (c) and rubric[1] now give "bends upwards / gradient rising" as the meaning and flattening as how it shows on a falling curve.
+3. Fixed. Basis: l2's own transfer rows (15, −10), (16, 30), (17.5, 90) have climbs 40 and 60 and fit $40s - 610$; the claim needs equal input steps. Sentence now states that hypothesis.
+4. Fixed. Basis: `drag-point.js` `grade()` returns a `wrong` key if either point lies in the region, and the number line snaps to whole numbers, so `ends` fires on a point at 4 whichever label it carries. New line is true for either point: it names the 4 as $f(-2)$ and gives both true ends, 0 and 9.
+5. Fixed in content. Basis: evaluated the new `derive` in node for coincident, vertical and sloping pairs: coincident hides `f`, parks `vert` off-canvas and captions "A and B are the same point: many lines pass through it"; the other two cases are unchanged. The engine-side inbox bullet the audit raised stays as a general guard.
+6. Fixed. Basis: a root of $g$ is an $x$ with $g(x) = 0$ (l11 s[3] and the summary say so), so points cannot be roots. Question now asks for the points where the graph meets the x-axis; feedback, explain, nudge hint and option `t` name the roots as 0 and 4. Key (`o`, `f`) unchanged.
+7. Fixed. Basis: $h(x) = (x + 1)(x - 2)^2 \ge 0$ on both sides of 2, so the graph touches without crossing at a root. "crosses" became "meets" in s[8] prose and summary.ideas[0].
+8. Fixed. Basis: $m_1 = b/a$ needs $a \ne 0$ and $m_2 = -a/b$ needs $b \ne 0$; $b = 0$ is the flat/vertical pair of s[5]. Explain adds "as long as neither is 0"; feedback says "a sloping line".
+9. Fixed. Basis: $x/(x^2 + 1) \to 0$ as $|x| \to \infty$ and equals 0 at $x = 0$, so "never reaches" is not part of the definition. Definition sentence now reads "gets closer and closer to"; the preceding sentence still says $1/x$ never touches the y-axis, which is true.
+10. Fixed. Basis: $100/1.02^{10} - 100/1.04^{10} = 82.0348 - 67.5564 = 14.4784$ (£14.48), while the marked £82.03 − £67.56 = £14.47; key $55.8395 - 46.3193 = 9.5202$ is £9.52 either way. Question now frames £14.47 as the fall in the marked prices; slip `same` (14.47) kept, still 4.95 clear of the key.
+11. Fixed. Basis: the l13 straddle is lowest at a corner (one-sided gradients −1, +1) and $x^2$ on $[-2, 3]$ is highest at $x = 3$ with gradient 6. summary.ideas[2] now restricts the rule to a smooth bend and names corners and ends. The same defect sat in summary.trap ("A graph at its highest is not still rising": false at an end maximum), so that string was reworded to "the top of a smooth bend" too.
+
+Gates: validator 0 errors; voice scan 35 on the nine edited files 0 and 0; `functions-L1-3-concepts.py` 687 checks, exit 0; number scripts `--only functions` 6 of 6; `grade-all.mjs --file` 0 failures on all nine; playthrough desktop and `--mobile` green on the eight lessons and `--set functions/homework-3`.
