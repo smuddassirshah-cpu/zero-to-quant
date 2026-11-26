@@ -134,3 +134,43 @@ Opus fixer, from commit `7e16a33b`. Each basis below is the fixer's own derivati
 No graded key, existing hidden test or solution changed. One slip tolerance changed (review 1 `decimal`). No hidden test added.
 
 Runs at the fix commit: validator 0 errors; `voice-scan.py 35` on the nine edited files: 0 over three sentences, 0 over 35 words; `estimation-L1-3-concepts-r2.py` 135 checks, 0 failed, and `estimation-L1-3-concepts.py` all passed; `run-number-scripts.mjs --only estimation` 4 of 4 passed; `grade-all.mjs --file` 0 failures on all nine files, with `--code` on l3 and l11 (mutants checked; a negative control with a wrong test number was caught); playthrough of the six lessons and three sets, desktop and `--mobile`: 18 runs, all passed.
+
+## Fix-pass read
+
+Fresh reader, blind to this file until the rows below were written. Read: `git show f94c24a5 -- app/content/courses`. Script: `docs/reports/estimation-L1-3-r2-fixread.py` (exit 0; 1,000,000 samples per distribution at n = 20, 4,000,000 for t5). Code runs: `grade-all.mjs --code --file` under the local Pyodide on the three committed files (0 failures each) and on scratch copies carrying my own codings (below).
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | homework-1 | `h-long-n-plus-one` model part 5, sentence 1 (kept) | Pooling or averaging many estimates: bias stays, noise averages away, so unbiased is better | correct | Derivation: mean of m estimates has bias b and variance v/m, so MSE tends to b² |
+| 2 | homework-1 | model part 5, sentence 2 | Dividing by n − 1 is unbiased for any distribution with a finite variance | correct | E[SS] = (n − 1)σ² needs only independent draws with finite variance (Casella and Berger, Theorem 5.2.6). Simulation: mean of s²/σ² 0.9997 normal, 0.9998 t8, 1.0002 t5, 1.0002 uniform, each within 1 standard error |
+| 3 | homework-1 | model part 5, sentence 3, first half | The gain at n = 20 is only about 10% | correct | 1 − (42/441)/(38/361) = 0.0952; simulated MSE 0.1053, 0.0975, 0.0953 |
+| 4 | homework-1 | model part 5, sentence 3, "$n + 1$ is exact only for normal data" | n + 1 is the best divisor only for normal data | imprecise (minor) | Derivation: with excess kurtosis g, Var(SS)/σ⁴ = (n − 1)²(2/(n − 1) + g/n), so the best divisor is c* = n + 1 + (n − 1)g/n. It equals n + 1 for every distribution with g = 0, not only the normal. The intended point (the derivation used normality) is right |
+| 5 | homework-1 | model part 5, sentence 3, "fat tails push the best divisor higher, not back to $n - 1$" | Fat tails raise the best divisor | correct | c* formula above: t8 (g = 1.5) 22.43, t5 (g = 6) 26.70; simulation 22.43 and 26.65. In simulation MSE(21) < MSE(20) < MSE(19) for both (t8 0.1569, 0.1655, 0.1806; t5 0.338, 0.366, 0.402). Thin tails lower it (uniform 19.86, simulated 19.86), but g ≥ −2 gives c* > n − 1 always |
+| 6 | homework-1 | rubric[6].text | Credits pooling or averaging many estimates, auditability, or unbiasedness whatever the distribution; refuses fat tails, which push the best divisor above n + 1 | correct | Rows 1, 2 and 5. Each credited reason is true; the refused one is false as a reason for n − 1 (t8 and t5 both prefer 21 to 19 in simulation) |
+| 7 | homework-2 | `hw2-log-score` explain | Expected log score per day p ln q + (1 − p) ln(1 − q) is highest at q = p | correct | Derivative p/q − (1 − p)/(1 − q) = 0 at q = p, second derivative negative (Gneiting and Raftery 2007, section 3, proper scoring rule); grid check at five p. −6.390 and −6.109 recomputed |
+| 8 | l11-bootstrap | screens[4].widget.how | Another correct way of drawing with `random` still passes; `random.seed` does not seed NumPy | correct | Run: five alternative solutions (`random.choice` in a loop, `randrange`, `randint(0, n − 1)`, `int(random.random() * n)`, `k=len(data)`) each pass all 7 tests under Pyodide. NumPy's generator is separate from the `random` module's (NumPy reference, `numpy.random.seed`) |
+| 9 | l11-bootstrap | screens[4].feedback.byKey.test-5 | Test 5 runs one seed twice; draws must come from the generator `random.seed(seed)` sets; `np.random.choice` ignores that seed | correct | Run: my five codings of the mistake (`np.random.default_rng().choice(data, size=n)`; the same on `np.array(data)` with `replace=True`; `random.SystemRandom().choices`; `data[int(np.random.rand() * n)]`; `secrets.choice`) each pass tests 1 to 4 and first fail test 5. The line reads true for each |
+| 10 | l11-bootstrap | screens[4].widget.mutants (3) | Each first fails test 5 | correct | Run: committed file, 0 failures; control (a mutant labelled with the wrong test) is reported, so the check bites |
+| 11 | l3-right-target | screens[10].feedback.byKey.test-1 | For [2, 4, 6]: sample sd 2.0; divide by n 1.633; `np.var` 2.667, or 4.0 with `ddof=1`, a variance; use `np.std` with `ddof=1` | correct | SS = 8: √(8/2) = 2, √(8/3) = 1.633, 8/3 = 2.667, 8/2 = 4; NumPy agrees. Run: my eight codings (divide by n by hand in NumPy two ways, `.var(ddof=1)` method, `np.var(ddof=0)`, `statistics.pstdev`, `statistics.variance`, `ddof=-1`, `ddof=2`) each first fail test 1, and the line states no "you returned" value, so it is true for all of them. Three other correct solutions (`statistics.stdev`, `np.sqrt(np.var(ddof=1))`, by hand over n − 1) pass all 6 |
+| 12 | l3-right-target | screens[10].widget.mutants (4) | Each first fails test 1 with the stated value | correct | Run: committed file, 0 failures; values as row 11 |
+| 13 | l2-estimates-vary | screens[4].explain | The square-root law assumes independent draws, here with replacement; 100 different days out of these 100 is a census with no error | correct | Screen 1 of the lesson draws "with replacement" from the 100 days; without replacement the variance carries the factor (N − n)/(N − 1), which is 0 at n = N (Cochran, *Sampling Techniques*, section 2.5). Lesson 1 defines the census as the no-error case |
+| 14 | l6-maximising | screens[..].explain "need not have a flat tangent" | A boundary maximum need not have zero slope | correct | "Need not" is right where "has no" was not: a boundary maximum can have zero slope (x² on [−1, 0] at −1 has not, −x² on [0, 1] at 0 has) |
+| 15 | l8-volatility-mle | hint step | With n = 20 and normal returns SE is about 1.0/√40 = 0.16% a day | correct | σ/√(2n) from Var(s²) = 2σ⁴/(n − 1) and the delta method; simulation sd(s)/(σ/√40) = 1.02 for normal data |
+| 16 | l8-volatility-mle | explain | 0.16% a day, 2.5% a year, if returns are normal, and more if tails are fat | correct | 0.158 × √252 = 2.51. General SE(s) ≈ σ√((2 + g)/(4n)); simulation ratio to σ/√(2n): t8 1.27 |
+| 17 | l8-volatility-mle | summary.ideas[2] | For normal returns SE(σ̂) is about σ/√(2n); fat tails make it larger | correct | Row 16. All three SE(σ̂) statements in the diff now carry the normal condition |
+| 18 | l9-how-precise | screens[..].prose | SE says how far an unbiased estimate, such as a mean, typically lands from the truth | correct | RMSE² = SE² + bias², so SE is the typical miss only when bias is 0 |
+| 19 | l9-how-precise | explain (proportion) | Same σ/√n rule: one day's 0 or 1 has variance p(1 − p), estimated by p̂(1 − p̂) | correct | Bernoulli variance; √(0.6 × 0.4/150) = 0.04. The old "s² = p̂(1 − p̂)" was off by n/(n − 1); the new wording is not |
+| 20 | l9-how-precise | summary.ideas[0] | SE is the spread of the sampling distribution; for an unbiased estimate it is the typical distance from the truth | correct | Row 18 |
+| 21 | review-1 | `r-s2-1357` wrong `decimal` tol 0.00004 | Band 0.00062667 to 0.00070667 takes the decimal slip only | correct | Key 20/3 = 6.6667 (band 6.6607 to 6.6727); slip (20/3)/10⁴ two ways. The band takes 0.00066667, 0.000667, 0.00067, 0.0007, and refuses the decimal forms of the other slips (0.0005 over n, 0.002 sum of squares, 0.02582 sd), 0, 0.001 and the key. The old 0.005 band took 0, 0.0005 and 0.002 and gave them the wrong line. Bands are disjoint; `grade-all.mjs --file` 0 failures |
+
+Counts: 21 rows; 20 correct, 1 imprecise (minor), 0 wrong, 0 misleading, 0 unverified.
+
+Fix for row 4 (homework-1 `h-long-n-plus-one`, model part 5, last sentence). Replace
+
+> The gain at $n = 20$ is only about 10%, and $n + 1$ is exact only for normal data; fat tails push the best divisor higher, not back to $n - 1$.
+
+with
+
+> The gain at $n = 20$ is only about 10%, and $n + 1$ was derived for normal data; fat tails push the best divisor higher, not back to $n - 1$.
+
+Basis: c* = n + 1 + (n − 1)g/n, which is n + 1 whenever the excess kurtosis g is 0. Optional; it changes no graded answer and no rubric line.
