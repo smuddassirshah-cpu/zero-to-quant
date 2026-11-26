@@ -73,3 +73,60 @@ Opus fixer, from commit 05489751. Every program named below was submitted under 
 5. five `byKey.error` lines | fixed | Basis: submitted, a NameError, a TypeError and an endless loop all give `test-1`; an unclosed quote or bracket and a missing comma give `error`. Each `error` line now opens "Your script cannot start: Python found a slip in the typing before it ran", and each widget has a `test-1` line that covers both a wrong print and a script that stopped. Mutants on test 1: l12 s2 four (`print(hello)`, `Print`, capitals, order), l12 s9 four (`Friday - monday`, `"Change: " + change`, `Ret`, lower-case label), homework-3 items[5] four (`Old`, text + number, no `f`, no `* 100`), items[8] four (`"Cost: " + cost`, `Buy`, `Profit =`, labels out of order).
 
 Gates: validator 0 errors; voice scan 35: 0 and 0; `terminal-L1-3-concepts-r2.py` 191 checks, 0 failed, exit 0 (no check re-pointed); `terminal-L1-3-concepts.py` 168 OK, exit 0; `run-number-scripts --only terminal` 5 of 5; `grade-all --code` on the four files, 8 code widgets, 0 failures (mutants included); playthrough of l12, l7, homework-1 and homework-3, desktop and `--mobile`, all passed.
+
+## Fix-pass read
+
+Fresh reader, blind to this file and to the course's scripts until the rows below were written. Read: `git show 48fb4124 -- app/content/courses` (four files). Runs are under the page's Pyodide 0.27.7 through `tools/code-runner.mjs` (the page's harness and worker grader): 151 submissions of my own, none of them the committed mutants. `grade-all.mjs --code` on the four files: 8 code widgets, 0 failures (so all 23 mutants first fail the test they name).
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | homework-1 | items[6].question | Functions 1 and 2 return a relative path to the file, 3 an absolute one, 4 a relative path to the results folder | correct | The four keys are `data/spx-daily.csv`, `../data/spx-daily.csv`, `/home/ana/project/data/spx-daily.csv`, `../results`: resolved by hand from each stated folder. An absolute path no longer satisfies the wording of 1 or 2. `./data/...` is also relative but `./` is not taught in L1 to L4 and `how` says the string must match exactly |
+| 2 | l7-looking-inside | screens[3].explain.text | `wc -l` prints `7 prices.csv`; a Mac pads the number with spaces first; 7 − 1 = 6 rows | correct | Apple `text_cmds` `wc/wc.c`: `xo_emit_h(xop, " {:lines/%7ju/%ju}", linect)` then `" {:filename/%s}\n"`, so macOS prints `       7 prices.csv`. GNU coreutils prints `7 prices.csv` for one file. Seven lines in the canvas table, one header |
+| 3 | l12-first-script | screens[2].feedback.byKey.test-1 | Test 1 compares the output with `hello` and `Ready to code`; a NameError comes from missing quotes or a capital in `print` | correct | Run: `print(ready)`, `PRINT(...)` give NameError and key test-1; `print("hello", "Ready to code")`, lower-case `r`, trailing full stop give test-1 |
+| 4 | l12-first-script | screens[2].feedback.byKey.error | The `error` key means the script cannot start (a slip found before it ran); check quotes and brackets | correct | Run: unclosed quote, unquoted words, unclosed bracket, stray indent all give key `error` with a SyntaxError or IndentationError and no output. Every runtime error I tried (NameError, TypeError, ZeroDivisionError, ModuleNotFoundError, EOFError, a 5 s timeout) gives `test-N`, never `error` |
+| 5 | l12-first-script | screens[2].widget.mutants (4) | Each first fails test 1, with the stated symptom | correct | `grade-all --code` 0 failures; symptoms read against the sources |
+| 6 | l12-first-script | screens[3].widget.tests[3] | `run_from(250.00)` is 245.0 | correct | 250 × 0.98 = 245; also 250 − 2% of 250 = 250 − 5 = 245. Run: model solution gives actual `245.0` and passes all four; the starter fails (test-1, prints 104.0) |
+| 7 | l12-first-script | screens[3].widget.postlude | `run_from` reruns the script with the first `price = <number>` set to the start, and returns the final `price` | correct | Run. Pass: `price - price * 0.02`, `price * (1 - 0.02)`, `*= 0.98`, `0.98 * price`, `price * 98 / 100`, `.98`, no spaces, `price = 100`, `price = 100.0`, one-line `price = 100.00 * 0.98`, a leading comment, a trailing comment, no final newline. Fail at test 4: `price - 2` (248.0), `price - 2.00`, `price -= 2`, `price = 98.00` on line 2 (98.0), one-line `price = 98.0` (250.0), `price * 1.04 - 6` (254.0). Residual, not natural under "Change one number": a first line rewritten as `+100.00`, `float(100)`, `1e2` or under another name fails test 4 with a correct 2% line |
+| 8 | l12-first-script | screens[3].widget.how | Tests 2 and 3 look at `price` and the printed lines; test 4 reruns from 250.00 | correct | Matches `tests[1..3]` |
+| 9 | l12-first-script | screens[3].widget.mutants (7) | Four fail test 4 first, three test 1, with the stated values | correct | `grade-all --code`; `price * 0,98` prints `(0.0, 98)` (run); 250 − 2 = 248; `100.00 - 2` becomes `250.0 - 2` = 248 |
+| 10 | l12-first-script | screens[3].feedback.byKey.test-1 | Test 1 expected 98.0; the script may have stopped with an error | correct | Run: `* 0.02` (2.0), `* 0.8` (80.0), `/ 1.02` (98.039...), integer `price = 98` (prints `98`), `prise` and `Print` NameErrors all give test-1 |
+| 11 | l12-first-script | screens[3].feedback.byKey.test-4 | From 250.00 a 2% fall gives 245.0; taking 2 off or typing 98 is right only from 100 | correct | x − 2 = 0.98x only at x = 100; a constant 98 equals 0.98x only at x = 100. Run: `price - 2` and `price -= 2` give key test-4 with 248.0; typed `98.0` gives test-4 |
+| 12 | l12-first-script | screens[3].feedback.byKey.error | Cannot start; compare with the starting script | correct | Run: `print(price` and `0.98.` give key `error`, SyntaxError |
+| 13 | l12-first-script | screens[3].explain.text | Test 4 reruns from 250.00, where 98% is 245.0 and taking 2 off gives 248.0 | correct | 0.98 × 250 = 245; 250 − 2 = 248; run as row 7 |
+| 14 | l12-first-script | screens[9].widget.mutants (4) | Each first fails test 1 | correct | `grade-all --code` |
+| 15 | l12-first-script | screens[9].feedback.byKey.test-1 | Test 1 compares the two lines with `Change: 12.5` and `Return: 0.05` | correct | 262.50 − 250.00 = 12.5; 12.5 ÷ 250 = 0.05. Run: `"Change:" + str(change)`, bare numbers, `change / friday` (0.0476...), reversed change, `Monday` and `chnage` NameErrors all give test-1 |
+| 16 | l12-first-script | screens[9].feedback.byKey.error | Cannot start; read the last line, then the line number | correct | Run: unclosed quote and an uncommented step line give key `error`. Note for the engine, not the content: the page's message carries a first frame `line 7, in <module>` that is the harness's own, above the true `line 6` |
+| 17 | homework-3 | items[5].widget.mutants (4) | Each first fails test 1; `{r1:.2f}%` prints 0.04% | correct | `grade-all --code`; 0.04 to two decimals is 0.04 |
+| 18 | homework-3 | items[5].feedback.byKey.test-1 | Test 1 compares the two lines with `Day 1: 4.00%` and `Day 2: -2.00%` | correct | 4 ÷ 100 = 0.04; −2.08 ÷ 104 = −0.02. Run: `.1f`, commas with no format, no `%`, one line only, `/ new` (3.85%), no brackets, a percent returned and multiplied again (400.00%), `odl` and `R1` NameErrors all give test-1 |
+| 19 | homework-3 | items[5].feedback.byKey.error | Cannot start; read the last line, then the line it names | correct | Run: unclosed quote, unindented `return`, unclosed bracket give key `error` |
+| 20 | homework-3 | items[8].widget.postlude (`_runs` split) | Commands in one comment line are split at `,`, `then` and `and`, and each report is true | imprecise (minor) | Run, 50 comment headers. All 16 plain right forms return `ok`; all 19 wrong forms fail with a true report (`cd desk, cd desk, python3 trade.py` passes, and it does run: the second `cd` fails and leaves the shell in `desk`). But a right header in backticks, quotes or brackets, or joined by `AND`, returns `no comment line runs python3`, which is false. So does one line joined by `followed by`, `before`, `->` or a single pipe, where the rest of the line is read as arguments to `cd`. Fix below |
+| 21 | homework-3 | items[8].widget.mutants (4) | Each first fails test 1 | correct | `grade-all --code`; `Profit` stored then `profit` read gives NameError (run) |
+| 22 | homework-3 | items[8].feedback.byKey.test-1 | Test 1 looks for the four labels in order | correct | The test's `match` is `Cost:…Proceeds:…Profit:…Return:`. Run: no Return line, lower-case labels, Profit before Proceeds, no colons, bare numbers, `Fee` NameError, NameError on the last print, ZeroDivisionError all give test-1; right labels with the fee forgotten give test-2 |
+| 23 | homework-3 | items[8].feedback.byKey.error | Cannot start; read the last line, then the line it names | correct | Run: `£12.25`, unclosed bracket, uncommented `cd ~/desk` give key `error` |
+
+Counts: 23 rows; correct 22, imprecise 1 (minor), wrong 0, misleading 0, unverified 0.
+
+### Fix for row 20 (homework-3 `items[8].widget.postlude`, inside `_runs`)
+
+Replace the split line
+
+```python
+        for _seg in _re.split(r"&&|;|,|\bthen\b|\band\b", _s.lstrip("#")):
+```
+
+with
+
+```python
+        for _seg in _re.split(r"&&|;|,|\bthen\b|\band\b", _re.sub(r"[`\"'()]", " ", _s.lstrip("#")), flags=_re.I):
+```
+
+and, in the `cd` branch, add after the `else: _last = "cd " + ... ": no such folder"` line, at the indent of `if _to in _DIRS:`
+
+```python
+                if any(_a.startswith("python") for _a in _args[1:]):
+                    _last = "put python3 on its own comment line, below the cd line"
+```
+
+Basis: run in CPython against the committed postlude on 23 headers. The backtick, quote, bracket and `AND` forms then return `ok`; the `followed by`, `before`, `->`, `|` and `&` forms report the new line; every plain right form still returns `ok`, every wrong form keeps its report, and the model solution returns `ok`. Add one mutant per new branch if the fixer applies it.
+
+Notes, no verdict: (a) in l12 `screens[3]`, a script that ends with `exit()` fails test 4 with `name 'run_from' is not defined`, since the postlude never runs; not a Stage 0 coding. (b) the spurious harness frame in a SyntaxError message (row 16) is an engine item.
