@@ -4085,7 +4085,29 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 6 hidden tests, each rounded to 6 decimal places. The first run loads NumPy, which is slow in the browser: allow 20 to 40 seconds. Later runs are quick."
+        "how": "Check runs 6 hidden tests, each rounded to 6 decimal places. The first run loads NumPy, which is slow in the browser: allow 20 to 40 seconds. Later runs are quick.",
+        "mutants": [
+          {
+            "source": "def vol(returns):\n    # the sample sd s, dividing by n - 1\n    m = sum(returns) / len(returns)\n    return (sum((x - m) ** 2 for x in returns) / len(returns)) ** 0.5\n",
+            "test": 1,
+            "symptom": "divides by $n$ by hand: 1.633 for `[2, 4, 6]`"
+          },
+          {
+            "source": "import numpy as np\n\ndef vol(returns):\n    # the sample sd s, dividing by n - 1\n    return float(np.var(returns, ddof=1))\n",
+            "test": 1,
+            "symptom": "`np.var` with `ddof=1`, a variance: 4.0"
+          },
+          {
+            "source": "import numpy as np\n\ndef vol(returns):\n    # the sample sd s, dividing by n - 1\n    return float(np.var(returns))\n",
+            "test": 1,
+            "symptom": "`np.var` with the default, a divide-by-$n$ variance: 2.667"
+          },
+          {
+            "source": "import numpy as np\n\ndef vol(returns):\n    # the sample sd s, dividing by n - 1\n    return float(np.std(returns, ddof=0))\n",
+            "test": 1,
+            "symptom": "`ddof=0` written out, still dividing by $n$: 1.633"
+          }
+        ]
       },
       "hints": [
         {
@@ -4109,7 +4131,7 @@
         "correct": "`ddof=1` divides by $n - 1$.",
         "generic": "Some tests failed. For `[2, 4, 6]` the sample sd is 2.0, not 1.633.",
         "byKey": {
-          "test-1": "For `[2, 4, 6]` you returned the divide-by-$n$ sd, 1.633. Pass `ddof=1`.",
+          "test-1": "For `[2, 4, 6]` the sample sd is 2.0. Dividing by $n$ gives 1.633, and `np.var` gives a variance (2.667, or 4.0 with `ddof=1`), not an sd. Use `np.std` with `ddof=1`.",
           "error": "Your code stopped with an error. Keep the `return` line and add `ddof=1` inside `np.std`."
         }
       },

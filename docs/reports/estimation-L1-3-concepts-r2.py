@@ -8,6 +8,7 @@ fails because the content is wrong stays failing.
 Run: python docs/reports/estimation-L1-3-concepts-r2.py [--quick]
   --quick cuts the bootstrap seed sweeps (used while drafting); the committed figures in
   the audit come from the full run.
+The round 2 fix pass added seven checks at the end ("fix r2"); no earlier check was re-pointed.
 """
 import json, math, os, random, statistics, sys, itertools
 import numpy as np
@@ -541,7 +542,7 @@ z = rng.standard_normal((200000, 50, 5)) if not QUICK else rng.standard_normal((
 s_ = z.std(2, ddof=1)
 check('HW1 MC: the average of fifty s is low (0.94); the root of the average s^2 is within 1% of sigma',
       close(s_.mean(1).mean(), 0.94, 0.003) and close(np.sqrt((s_ ** 2).mean(1)).mean(), 1.0, 0.01), f'{s_.mean(1).mean():.4f}, {np.sqrt((s_ ** 2).mean(1)).mean():.4f}')
-# HW1 longform part 5 gives "it relies on normality, which fat-tailed returns break" as a reason to keep n - 1.
+# HW1 longform part 5 gave (until the round 2 fix pass) "it relies on normality, which fat-tailed returns break" as a reason to keep n - 1.
 # Fact checked here: for fat tails the gain from a larger divisor does not vanish, it grows.
 # MSE(c)/sigma^4 = [2k + kappa k^2/n + (k - c)^2]/c^2 with k = n - 1 and excess kurtosis kappa; smallest near c = n + 1 + kappa.
 tt = rng.standard_t(8, (600000, 20)) / math.sqrt(8 / 6)   # variance 1, excess kurtosis 1.5
@@ -718,6 +719,39 @@ def fam_hw(e):
 for fam, fn in ((f9[0], fam_se), (f9[1], fam_prop), (f9[2], fam_need), (f10[0], fam_ci), (f10[1], fam_hw)):
     n_ok, probs = sweep_family(fam, fn)
     check(f'fluency {fam["id"]}: {n_ok} variable combinations, every key right and every slip distinct', not probs, str(probs[:3]))
+
+# ---------------------------------------------------------------- round 2 fix pass (added by the fixer)
+# Finding 1: s^2 is unbiased whatever the distribution; the MSE-best divisor is n + 1 + kappa (n - 1)/n.
+nn, kk = 20, 19
+def mse_k(c_, kap):
+    return (2 * kk + kap * kk * kk / nn + (kk - c_) ** 2) / c_ ** 2
+grid = np.linspace(15, 30, 150001)
+opt = {kap: grid[np.argmin(mse_k(grid, kap))] for kap in (-1.2, 0.0, 1.5, 6.0)}
+check('fix r2 HW1: MSE-best divisor n + 1 + kappa (n - 1)/n (19.86, 21, 22.43, 26.7 for kappa -1.2, 0, 1.5, 6)',
+      all(close(opt[k_], nn + 1 + k_ * kk / nn, 2e-4) for k_ in opt), str({k_: round(float(v), 3) for k_, v in opt.items()}))
+check('fix r2 HW1: E[s^2] = sigma^2 for fat-tailed t8 draws; dividing by 21 gains about 10% for normal data',
+      close(ss_t.mean() / 19, 1.0, 0.004) and close(1 - mz[21] / mz[19], 0.10, 0.01), f'{ss_t.mean() / 19:.4f}, gain {1 - mz[21] / mz[19]:.3f}')
+h1 = [it for it in load('homework-1')['items'] if it['id'] == 'h-long-n-plus-one'][0]
+check('fix r2 HW1 text: part 5 and rubric item 7 no longer give normality as a reason to keep n - 1',
+      'normality' not in h1['model'] and 'normality' not in h1['rubric'][6]['text'] and 'push the best divisor' in h1['model'])
+# Finding 4: for 0/1 data the divide-by-n variance is p(1 - p); s^2 is n/(n - 1) times it.
+xb = np.array([1] * 90 + [0] * 60)
+check('fix r2 l9: 0/1 data: np.var(ddof=0) = p(1 - p) = 0.24; ddof=1 gives 150/149 of it',
+      close(xb.var(), 0.24, 1e-12) and close(xb.var(ddof=1), 0.24 * 150 / 149, 1e-12))
+# Finding 7: the log score is strictly proper.
+qq = np.linspace(0.001, 0.999, 999)
+check('fix r2 HW2: expected log score p ln q + (1 - p) ln(1 - q) peaks at q = p (p = 0.3, 0.7, 0.8)',
+      all(close(qq[np.argmax(p_ * np.log(qq) + (1 - p_) * np.log(1 - qq))], p_, 1e-9) for p_ in (0.3, 0.7, 0.8)))
+# Finding 9: the l3 s10 test-1 line's numbers.
+v3 = np.array([2.0, 4.0, 6.0])
+check('fix r2 l3 s10 test-1 line: [2, 4, 6] gives sd 2.0, divide-by-n sd 1.633, np.var 2.667 and 4.0 with ddof=1',
+      close(v3.std(ddof=1), 2.0, 1e-12) and close(v3.std(), 1.633, 5e-4) and close(v3.var(), 2.667, 5e-4) and close(v3.var(ddof=1), 4.0, 1e-12))
+# Finding 10: the review 1 decimal slip band holds 0.000667, 0.00067 and 0.0007, and not 0, 0.005 or the key.
+dw = load('review-1')['items'][2]['widget']
+sl = [w_ for w_ in dw['wrong'] if w_['id'] == 'decimal'][0]
+inb = lambda v: abs(v - sl['value']) <= sl['tol']['abs']
+check('fix r2 review 1 decimal slip: 0.002/3 = 0.000667; band takes 0.000667, 0.00067, 0.0007, not 0, 0.005, 6.67',
+      close(0.002 / 3, sl['value'], 1e-8) and all(inb(v) for v in (0.000667, 0.00067, 0.0007)) and not any(inb(v) for v in (0, 0.005, 6.6667)))
 
 print()
 print(f'{n_checks} checks, {len(fails)} failed')
