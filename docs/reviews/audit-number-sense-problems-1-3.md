@@ -66,3 +66,61 @@ Opus fixer, from commit bf378b59. Files: `problems-1.json`, `problems-2.json`, `
 No key, tolerance or existing slip changed; 18 slips added (two per part, nine parts). Scripts: the concepts script was re-pointed (its docstring says so): finding 1's `imprecise` row is now a claim on the new wording, and finding 2's nine `imprecise` key rows are now `correct`, with rows checking both bands and their lines (298 rows, exit 0). The author number script's `frac_part` now requires both bands on any key with no terminating decimal and checks their edges (1,183 checks, 0 failures).
 
 Gates: validator 0 errors (4,615 warnings, unchanged); voice scan 35 on both sets 0 and 0; `run-number-scripts --only number-sense` 7 passed; `grade-all --file` 17 and 12 widgets, 0 failures; playthrough `--problems number-sense/problems-1` and `problems-2`, desktop and `--mobile`, all passed.
+
+## Fix-pass read
+
+Fresh reader, blind to this file and to the course's reports and scripts until the rows below were written. Read: `git show 9bdcea62 -- app/content/courses` (number-sense `problems-1.json`, `problems-2.json`). Script: `docs/reports/number-sense-problems-1-2-fixread.mjs` (run from the repo root: `node docs/reports/number-sense-problems-1-2-fixread.mjs app`, exit 0, "18 slips checked, 0 failures"). It loads the real `app/js/engine/grade.js` and calls `numGrade` on each part's widget. `node tools/grade-all.mjs --file` on both files: 0 failures (17 and 12 widgets).
+
+Scope note: all 18 new slips are in `problems-1.json`. The commit's only change to `problems-2.json` is the golf question.
+
+How the grader reads these parts (`grade.js` `numGrade`, `within`): the key is tried first, `|v - answer| <= 0.0005 + 1e-9`; only then the `wrong[]` entries, in order, each with its own `tol`. So a band can never take a value from the key window, whatever its numbers.
+
+Each key was derived twice: by hand from the question, and with exact `Fraction` arithmetic. Cut and rounded-up 2-place values come from integer arithmetic on the numerator and denominator. "Recurs" means the lowest-terms denominator has a prime factor other than 2 and 5, so no finite decimal equals the key and the line's "not exact" is true for every decimal that can be typed.
+
+### Rows 1 to 18: the slips (`problems-1.json`, `items[i].parts[j].widget.wrong[decimal-low | decimal-high]` and its `feedback.byKey` line)
+
+| # | path | key (derivation) | key window | band | 2-place cut / up | grader probe | verdict |
+|---|---|---|---|---|---|---|---|
+| 1 | items[1].parts[0] decimal-low | 5/6 ÷ 1/5 = 25/6 = 4.1666…, recurs (6 = 2 × 3) | [4.166167, 4.167167] | [4.160000, 4.166166] | 4.16 / 4.17 | 4.16 and 4.166 give decimal-low; 25/6, `4 1/6`, 50/12, 4.167 correct | correct |
+| 2 | items[1].parts[0] decimal-high | same | same | [4.167168, 4.170000] | | 4.17 gives decimal-high | correct |
+| 3 | items[1].parts[2] decimal-low | 5/6 − 4/5 = 25/30 − 24/30 = 1/30 = 0.0333…, recurs | [0.032833, 0.033833] | [0.030000, 0.032832] | 0.03 / 0.04 | 0.03 gives decimal-low; 1/30, 2/60, 0.033 correct | correct |
+| 4 | items[1].parts[2] decimal-high | same | same | [0.033834, 0.040000] | | 0.034, 0.04 give decimal-high | correct (see note A) |
+| 5 | items[2].parts[0] decimal-low | 3/8 + 1/3 = 9/24 + 8/24 = 17/24 = 0.70833…, recurs | [0.707833, 0.708833] | [0.700000, 0.707832] | 0.70 / 0.71 | 0.70, 0.7, 0.705 give decimal-low; 17/24, 0.708 correct | correct |
+| 6 | items[2].parts[0] decimal-high | same | same | [0.708834, 0.710000] | | 0.71, 0.709 give decimal-high | correct |
+| 7 | items[2].parts[1] decimal-low | 1 − 17/24 = 7/24 = 0.29166…, recurs | [0.291167, 0.292167] | [0.290000, 0.291166] | 0.29 / 0.30 | 0.29, 0.291 give decimal-low; 7/24, 0.292 correct | correct |
+| 8 | items[2].parts[1] decimal-high | same | same | [0.292168, 0.300000] | | 0.30 and 0.3 (the 1-place rounding) give decimal-high | correct |
+| 9 | items[2].parts[2] decimal-low | 7/24 ÷ 3/8 = 56/72 = 7/9 = 0.7777…, recurs | [0.777278, 0.778278] | [0.770000, 0.777276] | 0.77 / 0.78 | 0.77, 0.777 give decimal-low; 7/9, 14/18, 0.778 correct | correct |
+| 10 | items[2].parts[2] decimal-high | same | same | [0.778280, 0.780000] | | 0.78 gives decimal-high | correct |
+| 11 | items[2].parts[3] decimal-low | 60 + 7/9 × 60 = 60 + 46 2/3 = 320/3 = 106.666…, recurs | [106.666167, 106.667167] | [106.660000, 106.666166] | 106.66 / 106.67 | 106.66, 106.666 give decimal-low; 320/3, `106 2/3`, 106.667 correct | correct |
+| 12 | items[2].parts[3] decimal-high | same | same | [106.667168, 106.670000] | | 106.67 gives decimal-high | correct |
+| 13 | items[3].parts[2] decimal-low | 4/9 × 3/4 = 12/36 = 1/3 = 0.333…, recurs | [0.332833, 0.333833] | [0.330000, 0.332832] | 0.33 / 0.34 | 0.33 gives decimal-low; 1/3, 2/6, 0.333 correct | correct |
+| 14 | items[3].parts[2] decimal-high | same | same | [0.333834, 0.340000] | | 0.334, 0.34 give decimal-high | correct (see note A) |
+| 15 | items[3].parts[3] decimal-low | 1/3 + 5/16 = 16/48 + 15/48 = 31/48 = 0.64583…, recurs | [0.645333, 0.646333] | [0.640000, 0.645332] | 0.64 / 0.65 | 0.64, 0.645 give decimal-low; 31/48, 0.646 correct | correct |
+| 16 | items[3].parts[3] decimal-high | same | same | [0.646334, 0.650000] | | 0.65 gives decimal-high | correct |
+| 17 | items[3].parts[4] decimal-low | 31/48 ÷ 3/2 = 62/144 = 31/72 = 0.43055…, recurs (72 = 8 × 9) | [0.430056, 0.431056] | [0.430000, 0.430054] | 0.43 / 0.44 | 0.43, 0.430 give decimal-low; 31/72, 0.431 correct | correct |
+| 18 | items[3].parts[4] decimal-high | same | same | [0.431058, 0.440000] | | 0.44, 0.435 give decimal-high | correct (see note A) |
+
+Checks that hold for all 18 (script, a sweep of every 6-place value from cut − 0.005 to up + 0.005 through `within`):
+
+- Each low band starts at the 2-place cut value and each high band ends at the 2-place rounded-up value, to 1e-9. The rounded 2-place value a learner would type (4.17, 0.03, 0.71, 0.29, 0.78, 106.67, 0.33, 0.65, 0.43) is caught in every part.
+- No value matches the key and a band, and no value matches two `wrong[]` entries. The nearest older slip to any band is `loaf-sixth` 0.166667 against the 1/30 bands, far outside.
+- Values 0.001 and 0.01 outside [cut, up] get the generic line or an older slip, never a decimal line.
+- A one-step search over the part's given numbers (add, subtract, multiply, divide either way, tops-and-bottoms) finds no wrong-method value inside a band, except 1/25 in the 1/30 high band and 7/16 in the 31/72 high band; neither comes from a natural slip on that part's two numbers. So "Your method is right" holds for the answers these bands will in fact see.
+- Each line names its own part's key: 25/6 or 4 1/6, 1/30, 17/24, 7/24, 7/9, 106 2/3, 1/3, 31/48, 31/72. The parts that say "or a mixed number" in the line are the two whose question says it. Voice: plain words, sentences of 18 and at most 17 words, no banned punctuation.
+
+### Row 19: the golf question (`problems-2.json`, `p-golf-card`, part 4 question)
+
+| # | claim | verdict | basis |
+|---|---|---|---|
+| 19 | "Her rival played a longer run of holes. The rival was under par on exactly 0.28 of them, 7 holes in every 25. Using 5/18 = 0.2777…, who was under par on the larger share of holes?" | correct | 7/25 = 28/100 = 0.28 exactly. A share of 7 in 25 needs a multiple of 25 holes, so more than 18: "longer run" is consistent, and the old wording's 0.28 of 18 holes (5.04 holes) is gone. 7/25 − 5/18 = (126 − 125)/450 = 1/450 ≈ 0.0022 > 0, so "The rival" is the one true option; "The golfer" and "equal" are both false. The unchanged lines still fit ("less than 0.28 by about 0.002"; "match to 2 places"). grade-all: keyed option grades correct, 0 failures. |
+
+### Counts
+
+19 rows: 19 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified. No fix is required.
+
+### Notes for the orchestrator (not findings on the diff)
+
+- A. The three high bands on keys that round down at 2 places (1/30, 1/3, 31/72) reach up to 0.04, 0.34 and 0.44. No right-method learner rounds 0.0333 up to 0.04 (20% above the key), so the top of those bands is nearly unused; a learner who does land there is told the method is right. I found no natural wrong method that lands there, so the rows stand. If a tighter band is wanted, end each of the three at the 3-place rounded-up value instead: 1/30 `{"value": 0.033917, "tol": {"abs": 0.000083}}`, 1/3 `{"value": 0.333917, "tol": {"abs": 0.000083}}`, 31/72 `{"value": 0.431529, "tol": {"abs": 0.000471}}` (bands [0.033834, 0.034], [0.333834, 0.334], [0.431058, 0.432]).
+- B. Older than this commit: the key tolerance of 0.0005 grades the 3-place rounded decimal correct in all nine parts (4.167, 0.033, 0.708, 0.292, 0.778, 106.667, 0.333, 0.646, 0.431), while the question asks for an exact fraction and the new lines tell a 2-place typist the decimal "is not exact". The 3-place cut value (4.166, 0.291, 0.777, 106.666, 0.645, 0.430) gets the decimal line. Each line is true as written; the grading is uneven between 4.166 and 4.167. Closing it means an exact key (`tol` 0.0000005 on the 6-place answer) with the bands widened to meet it, which is an authoring decision, not a correction.
+- C. A right method with 2-place working can fall outside a band and get the generic line: 0.83 × 5 = 4.15 in the loaves part, 0.78 × 60 + 60 = 106.8 in the minutes part. The generic lines there restate the method, so nothing false is said.
+- D. Two parts leave a seam one millionth wide between band and key (7/9 at 0.777277 and 0.778279; 31/72 at 0.430055 and 0.431057). Those four 6-place values get the generic line. No learner types them.
