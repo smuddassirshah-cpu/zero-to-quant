@@ -117,3 +117,7 @@ Fix for row 1 (l13 `summary.ideas[2]`, paste-ready):
 Basis: idea 1 of the same summary gives the value today as $C/(1+r)^t$, so consecutive values have ratio $1/(1+r)$; the payments themselves are all $C$.
 
 Out of scope, unchanged by this commit, noted only: in `first-n-terms` the `k-steps` slip value $k(2a + kd)/2$ is a half-integer in 2,464 of the 9,655 draws (odd $k$ and odd $d$), under a "A whole number" placeholder. It is what the slip truly gives, so the line still fires for a learner who types it.
+
+## Fix-pass follow-up (orchestrator)
+
+- l13 `summary.ideas[2]`: the reader's text applied (the payments are equal; it is each payment's value today that is 1/(1 + r) of the one before). Gates: validator 0 errors, voice scan 0, concepts 0, grade-all 0 failures, playthrough desktop and mobile green.
