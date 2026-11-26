@@ -13,6 +13,10 @@ Exit code: 0 when every check passes. A check marked FINDING tests a sentence of
 content as written; it fails while the content is wrong and is listed under the same
 number in docs/reviews/audit-functions-1-3.md. Checks marked NOTE record a
 counterexample to an `imprecise` sentence and never fail.
+
+Fix pass (26 Nov 2026): FINDING 1 was re-pointed to the corrected `why`, which must name
+the slip that gives option b ("changed the sign of the $x$ but not of the 2"). The NOTE
+checks keep their counterexamples; they record why each sentence was reworded.
 """
 import itertools
 import json
@@ -346,7 +350,11 @@ no_sign_change = lambda x: -x - 2          # x^2 - x - 2 = 0 with -x and -2 move
 option_b = lambda x: x - 2
 diagnosis_matches = all(no_sign_change(x) == option_b(x) for x in range(-3, 4))
 says_unchanged = "without changing their signs" in opt["why"]
-check("FINDING 1 l13 s[7] option b: the named mistake produces the option", diagnosis_matches or not says_unchanged,
+# Fix pass: the why now names "changed the sign of the x but not of the 2"; that slip must give the option.
+x_only = lambda x: x - 2                    # -x moved across as +x, -2 left as -2
+says_x_only = "sign of the $x$ but not of the 2" in opt["why"]
+check("FINDING 1 l13 s[7] option b: the named mistake produces the option",
+      (diagnosis_matches or not says_unchanged) and says_x_only and all(x_only(x) == option_b(x) for x in range(-3, 4)),
       "moving -x and -2 across unchanged gives y = -x - 2; y = x - 2 changes the sign of x only", finding="1")
 
 num("review-3", "items", 0, (-2) ** 3 + 5, {"pos": 13, "times": -1, "square": 9, "sign": 3})
