@@ -74,3 +74,31 @@ Code widgets. Every Python widget ran under the page's Pyodide 0.27.7 through `a
 - `node tools/grade-all.mjs --file <file> --local-cdn <pkgs>` on all 23 files: 0 failures each.
 - `docs/reports/estimation-L1-3-concepts.py`: exit 1: 88 checks pass, 2 fail (findings 1 and 2), 15 notes carry the evidence for the other findings.
 - No playthrough, as instructed.
+
+## Overlap with the earlier reads
+
+Filled after the blind pass was committed (33d81d17). Earlier reads opened then: `docs/reviews/review-1.6.md` (estimation section and its fix pass), `review-problems-1.6-a.md` (section A), `review-holes-1.6-2.1.md`, `review-exam-second-item-1.6-1.11.md`, `review-delta-problems-ab-1.md`, `review-pass8-hits.md`, and the author reports `docs/reports/estimation-2-perf.md`, `estimation-3-perf.md`, `fluency-estimation.md` and `problems-estimation.md`. Only findings about a claim, a key, a slip's meaning or a line of reasoning are counted; tolerance bands, units, voice and reuse are not.
+
+| | count |
+|---|---|
+| conceptual findings by this audit only | 16 (findings 1 to 16) |
+| conceptual findings by the earlier reads only | 7 (all fixed before this audit) |
+| conceptual findings by both | 0 |
+
+New `wrong` findings that no earlier read found: 2 (findings 1 and 2).
+
+The earlier reads' conceptual findings, each seen fixed at this commit and marked correct in the ledger:
+
+- review-1.6, l1 `screens[1]` slip `dropped-minus` held 0.0082; now 0.0106 (the ten sizes add to 10.6; concepts script).
+- review-1.6, homework-2 `hw2-code` explain said "about 40 each"; now "about 24 each" (density 24.2; concepts script).
+- review-1.6, l4 `screens[1].explain` compared variance with bias, not bias²; now "the squared bias starts flat". Finding 9 here is on the hint of the same screen, a different sentence and a different defect.
+- review-1.6, l12 `screens[3]` slip `noprior` named no action; now "You added the prior's 2 heads but not its 2 tails".
+- review-problems-1.6-a, `p-robot-deliveries` part 3 accepted 0.85 to 0.95 for an estimate that sits at the edge; now tight, with a `middle` slip.
+- review-problems-1.6-a, `p-three-month-fund` part 4 feedback and explain disagreed in the third place; now both give 0.816 from the unrounded values.
+- review-problems-1.6-a, `p-tank-sensor` part 1 slip said "middle two" for the last two readings; now `last-two`.
+
+What the earlier reads could not have caught by their method: findings 3 to 8 need a simulation or an exact sum against the claim; findings 1, 12 and 13 need mistake codings submitted to the page's grader, which reads a line against the test that fires it. The level 3 performance report lists thirteen planted slips that fail, which is true; it does not check which line each one lands on.
+
+## Inbox
+
+Two bullets added to `docs/BACKLOG-INBOX.md` under "Raised later (audit estimation):".
