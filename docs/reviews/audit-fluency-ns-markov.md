@@ -142,3 +142,64 @@ No key, slip, line or test changed. Distinct prompts stay far above the set's n 
 Scripts: `docs/reports/fluency-ns-markov-concepts.py` (models re-pointed to the new draws; Part A2 now also checks old tops over b times d, doubling the bracket, $(c - d)^2$ as $c^2 - d^2$, and four matrix mix-ups on every kept draw; Part A4 checks the new `where`s; new checks for the bracket range and a subtract rejection of at most 60%; docstring says so) and `docs/reports/fluency-number-sense-numbers.py` (subtract orders the drawn fractions and checks the b times d slip; brackets checks doubling).
 
 Gates: concepts script exit 0 (5,529 checks); validator 0 errors; voice scan 35 on the three files 0 and 0; `run-number-scripts --only number-sense` 7 of 7, `--only markov` 5 of 5; `grade-all --file --fluency-seeds 40` 0 failures on all three; `test-fluency` l3 300 of 300; playthrough `--fluency` of the three sets desktop and `--mobile` all passed.
+
+## Fix-pass read 2
+
+Fresh reader, blind to this file, the reports and the concepts scripts until the rows below were written. Read: `git show bed3c57d -- app/content/courses` (four families in three files). Basis script: `docs/reports/fluency-ns-markov-fixread-2.py` (exit 1 at bed3c57d on row 7 only; exit 0 once the fix below is in). It enumerates each family's whole range in exact fractions from the drawn values alone, writes every wrong method from its description, and then reads 10,000 engine draws per family as a learner would (key, slips and solution numbers recomputed from the numbers printed in the prompt). For every family the set of engine prompts equals the enumerated kept range, so "every kept draw" below means the whole range, not a sample.
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | number-sense/fluency-l3-adding-pieces.json | subtract-unlike `vars`, `let` a to d | Two fractions drawn, larger written first; key $a/b - c/d$ | correct | 841 ordered draws, 390 kept, 195 prompts. Every key strictly between 0 and 1; engine key equals the prompt recomputed, in lowest terms, on 10,000 draws. Unlike bottoms in lowest terms are never equal, so `a*d > b*c` always holds after the swap |
+| 2 | same | `where` 4, tops over lowest common bottom | $(a-c)/\mathrm{lcm}$ never the key | correct | enumeration, 0 of 195 |
+| 3 | same | `where` 5 (new), tops over $b \times d$ | $(a-c)/(bd)$ never the key | correct | enumeration, 0 of 195 |
+| 4 | same | wrong `tops-and-bottoms` | $(a-c)/(b-d)$ never the key, signed or sizes only | correct | enumeration, 0 of 195 both ways; the `when` guard never has to switch it off for equalling the key |
+| 5 | same | wrong method: adding tops and bottoms | $(a+c)/(b+d)$ and $(a-c)/(b+d)$ never the key | correct | enumeration, 0 of 195 each |
+| 6 | same | wrong methods: added instead, wrong way round, one top renamed only | none gives the key | correct | enumeration; one-top-only tested only where the other top does change (bottom not already the common one) |
+| 7 | same | `where` 4 and 5 | Common bottom with old tops never scores | imprecise (minor) | True for the signed top only. With the larger fraction first, 30 of 195 prompts have $a < c$; a learner who keeps the old tops and takes the smaller from the larger types $\lvert a-c\rvert/\mathrm{lcm}$ or $\lvert a-c\rvert/(bd)$, which is the key on 11 prompts: $\tfrac12-\tfrac25$, $\tfrac12-\tfrac38$, $\tfrac12-\tfrac3{10}$, $\tfrac13-\tfrac29$, $\tfrac14-\tfrac29$, $\tfrac23-\tfrac35$, $\tfrac23-\tfrac49$, $\tfrac23-\tfrac59$, $\tfrac23-\tfrac5{12}$, $\tfrac25-\tfrac3{10}$, $\tfrac49-\tfrac5{12}$. Example: $\tfrac25-\tfrac3{10}$, old tops over 10 give $\tfrac{1}{10}$, the key. Fix below |
+| 8 | same | slips | No offered slip equals the key or the other slip; each is what its line names | correct | enumeration and 10,000 engine draws, 0 clashes; `tops-not-renamed` line restates both fractions over the common bottom correctly |
+| 9 | same | prompt and solution | "$a/b - c/d$ ... lowest terms" matches the draw; solution $u/cd - w/cd = p/cd$ right | correct | parsed from 10,000 engine draws, 0 bad |
+| 10 | same | generator | Rejection under 80%; at least 100 distinct in 200 | correct | true rate 53.6%; validator sample 253 of 453 (55.8%); 134 distinct in 200 |
+| 11 | number-sense/fluency-l12-which-first.json | brackets-first `vars.g` 3 to 5 | Key $a + b g^2$ with $g = c - d$ | correct | 1,008 draws, all kept, all distinct; engine key equals the prompt recomputed on 10,000 draws |
+| 12 | same | wrong method: doubling for squaring | $a + b \times 2g$ never the key | correct | $g^2 = 2g$ only at $g = 2$, now outside the range; enumeration 0 of 1,008 |
+| 13 | same | wrong `added-first` | $(a+b)g^2$ never the key | correct | differs by $a(g^2-1) > 0$; enumeration |
+| 14 | same | wrong `multiplied-then-squared` | $a + (bg)^2$ never the key | correct | $b \ge 2$; enumeration |
+| 15 | same | other wrong orders | strict left to right, whole line squared, brackets ignored (three readings), power on each term, power dropped: none gives the key | correct | enumeration, 0 of 1,008 each |
+| 16 | same | slips, lines, solution | Slips differ from key and each other; stated sums right | correct | `where` keeps the two slips apart (rejects nothing in this range); 10,000 engine draws, 0 bad |
+| 17 | same | generator | Rejection, distinct prompts | correct | 0 rejected; 179 distinct in 200 |
+| 18 | markov/fluency-l2-transition-matrix.json | two-state `where` adds `a + b != 1` | Key $(\mathbf P^2)_{ij}$ on every kept draw | correct | 324 draws, 248 kept; engine key equals $(\mathbf P^2)_{ij}$ from the printed matrix on 10,000 draws; rows sum to 1 |
+| 19 | same | wrong method: wrong way round or rows and columns swapped, $i \ne j$ | $(\mathbf P^2)_{ji}$ never the key | correct | $(\mathbf P^2)_{01} - (\mathbf P^2)_{10} = (1-a-b)(1+a-b)$, zero only at $a + b = 1$; enumeration 0 of 120 off-diagonal draws |
+| 20 | same | wrong method: row times row | never the key | correct | enumeration, 0 of 248 (for $i = j$ it needs $a + b = 1$) |
+| 21 | same | wrong method: column times column | never the key | correct | enumeration, 0 of 248 |
+| 22 | same | wrong method: $2\mathbf P$ entry | never the key | correct | enumeration, 0 of 248 |
+| 23 | same | wrong `one-step`, `squared-entry` | neither is the key; they differ | correct | $(\mathbf P^2 - \mathbf P) = (\lambda^2-\lambda)(\mathbf I - \boldsymbol\Pi)$ with $\lambda = a - b \ne 0$; enumeration. `one-step` is offered on every kept draw |
+| 24 | same | swapped reading, $i = j$ | Not separable | correct (limit, no fix) | $(\mathbf P^2)_{ii} = \sum_k P_{ik}P_{ki}$ is unchanged by transposing, so it equals the key on all 128 diagonal draws whatever the numbers. Same in three-state for Sunny to Sunny, which the new `where` rightly exempts |
+| 25 | same | prompt, solution, generator | Prompt matches the draw; both paths and sum right; rejection; distinct | correct | 10,000 draws 0 bad; true rejection 23.5%; validator sample 50 of 250; 134 distinct in 200 |
+| 26 | same | three-state new `let` rj1 to rj3, rr, cc, tr | rr is row Sunny times row $j$, cc column Sunny times column $j$, tr is $(\mathbf P^2)_{j1}$ | correct | kept set from my own row, column and transpose products equals the engine's kept set exactly (486 of 648) |
+| 27 | same | three-state key | $(\mathbf P^2)_{1j}$ on every kept draw | correct | engine key from the printed matrix on 10,000 draws; all 216 matrices have rows summing to 1 |
+| 28 | same | wrong method: row times row | never the key | correct | enumeration, 0 of 486 |
+| 29 | same | wrong method: column times column | never the key | correct | enumeration, 0 of 486 |
+| 30 | same | wrong method: rows and columns swapped, $j \ne$ Sunny | never the key | correct | enumeration, 0 of 312 |
+| 31 | same | wrong method: $2\mathbf P$ entry | never the key | correct | enumeration, 0 of 486 |
+| 32 | same | wrong `one-step`, `squared-entry` | neither is the key; they differ | correct | enumeration; squared entry is never the key on a kept draw, so its `when` never switches it off |
+| 33 | same | prompt, solution, generator | Prompt matches; three paths and sum right; rejection; distinct | correct | 10,000 draws 0 bad; true rejection 25.0%; validator sample 60 of 260; 163 distinct in 200 |
+
+Counts: 33 rows. correct 32, imprecise 1 (minor), wrong 0, misleading 0, unverified 0.
+
+### Fix for row 7 (paste-ready)
+
+`number-sense/fluency-l3-adding-pieces.json`, family `subtract-unlike`, replace the last two `where` conditions:
+
+```json
+"where": ["y1 != y2", "lcm(y1, y2) <= 36", "a*d > b*c", "abs(a - c)/lcm(b, d) != a/b - c/d", "abs(a - c)/(b*d) != a/b - c/d"],
+```
+
+The `abs` form covers the signed one (a negative top never equals a positive key). Tried on a copy: 184 prompts kept, true rejection 56.2%, validator sample 290 of 490, 127 distinct prompts in 200.
+
+### Observations outside the named methods (not counted, fixer's choice)
+
+Each needs two slips at once, or a product that ignores the start or the target, so none is a row.
+
+- brackets-first: added first and doubled, $(a+b) \times 2g$, is the key on 14 of 1,008 draws (with $g = 3$ or $5$, such as $3 + 5 \times (4-1)^2 = 48$). Optional `where`: `"(a + b)*2*g != a + b*g^2"`.
+- two-state: the reversed one-step entry $P_{ji}$ is the key on 2 draws ($a = 0.7, b = 0.2$, bear to bull; $a = 0.8, b = 0.3$, bull to bear); row $i$ times itself on 2 draws.
+- three-state: $P_{j1}$ on 2 draws; row Sunny times itself on 6 draws; column $j$ times itself on 18 draws.
+- subtract-unlike, unchanged line: when one bottom is already the common one, `tops-not-renamed` says "$\tfrac{9}{10}$ is $\tfrac{9}{10}$". True, slightly odd.
