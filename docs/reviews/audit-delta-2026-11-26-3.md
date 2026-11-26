@@ -94,3 +94,31 @@ Opus fixer, content commit `c7e51348`. No graded key, slip value, tolerance or h
 Observation, not edited: on `ito/l5` `screens[0]` the `accept` line writes "$0 + 0.2675 - 0.2745 - 0.1782$" beside $-0.1853$, and the explain implies the unrounded products give $-0.1853$. The products of the table's own 4 dp values sum to $-0.18523$, which rounds to $-0.1852$; $-0.1853$ needs the hidden full-precision path. Both lie inside the key's band, so no grade is affected.
 
 Gates: validator 0 errors (4,606 warnings); voice scan 35 on conditional, ito and research-int, 0 over and 0 explanations over three sentences; concepts script exit 0 (its two notes are hard-coded and still print); number scripts `--only` conditional (4), ito (9), research-int (3) all pass; playthrough desktop and `--mobile` of `conditional/l3-shrinking`, `ito/l5-integrating-noise`, `research-int/l2-correlation-limits` and set `research-int/homework-1`, all passed.
+
+## Fix-pass read
+
+Reader: fresh Fable reader, blind to the audit above until these rows were written. Diff read: `git show c7e51348 -- app/content/courses` (6 changed lines, 4 files). Numbers recomputed in Python from the values each screen shows.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | conditional/l3-shrinking.json | screens[6].explain.text | 11 of 36 outcomes contain a 5; 1000 × 11/36 ≈ 305.6; share of total 10 among kept rolls settles near 1/11 because, of the 11 kept outcomes, only (5, 5) totals 10 | correct | Count: 6 + 6 − 1 = 11; 1000 × 11/36 = 305.56. Total 10 is (4, 6), (5, 5), (6, 4), and only (5, 5) has a 5, so P(A given B) = (1/36)/(11/36) = 1/11. Matches the canvas `keep` rule and `exact`. Law of large numbers for "settle near". |
+| 2 | ito/l5-integrating-noise.json | screens[0].feedback.byKey.sign | Products 0, 0.2675, −0.2745, −0.1782 add to about −0.185; losses outweigh the one gain; positive 0.1853 books the net loss as a gain | correct | From the table: 0 × 0.5561 = 0; 0.5561 × 0.4810 = 0.26748; 1.0371 × (−0.2647) = −0.27452; 0.7724 × (−0.2307) = −0.17819; sum −0.18523. "About −0.185" holds for both the table sum and the full-precision path sum (−0.185297, `docs/reports/ito-L2-concepts.py`). |
+| 3 | research-int/homework-1.json | items[0].parts[0].feedback.byKey.sign | Centre 0.36, half-width 0.64, smallest c = 0.36 − 0.64 < 0; 0.28 is 0.64 − 0.36 | correct | Range c ∈ ab ± √((1 − a²)(1 − b²)): ab = 0.36, √(0.64 × 0.64) = 0.64, floor −0.28. The square-root term is half the interval's length, so "half-width" is the right name. |
+| 4 | research-int/homework-1.json | items[0].parts[1].feedback.byKey.sign | Half-width 0.5724 exceeds centre 0.24, so 0.24 − 0.5724 < 0; 0.3324 is 0.5724 − 0.24 | correct | ab = 0.24; √(0.36 × 0.91) = √0.3276 = 0.57236; floor −0.33236. |
+| 5 | research-int/l2-correlation-limits.json | screens[5].prose | det R = 1 + 2abc − a² − b² − c² ≥ 0 iff c ∈ ab ± √((1 − a²)(1 − b²)); more variables need no negative eigenvalue; centre is the product, half-width from what is left | correct | Expand the 3 × 3 determinant; as a quadratic in c, c² − 2abc + a² + b² − 1 ≤ 0 has roots ab ± √(a²b² − a² − b² + 1) = ab ± √((1 − a²)(1 − b²)). With a = cos α, b = cos β the ends are cos(α ± β), so the range stays inside [−1, 1]. Positive semidefinite iff all eigenvalues ≥ 0 (Horn and Johnson, *Matrix Analysis*, section 7.2). |
+| 6 | research-int/l2-correlation-limits.json | screens[5].feedback.byKey.sign | Centre 0.25, half-width 0.75, lowest c = 0.25 − 0.75 < 0; 0.5 is 0.75 − 0.25 | correct | ab = 0.25; √(0.75 × 0.75) = 0.75; floor −0.5, agreeing with the key and the explain's [−0.5, 1]. |
+| 7 | ito/l5-integrating-noise.json | screens[0].widget.accept and screens[0].explain.text (unchanged by the fixer; the point it left open) | "The products are 0, 0.2675, −0.2745 and −0.1782, which add to −0.1853 (the rounded products give −0.1852)" | imprecise (minor) | See below. |
+
+Counts: 7 rows; 6 correct, 0 wrong, 1 imprecise (minor), 0 misleading, 0 unverified. All six changed lines are correct. No `wrong` for the convergence rule.
+
+### Row 7: is the ito l5 screen consistent as a learner sees it?
+
+Not quite. The question asks for 4 decimal places from a table printed to 4 decimal places. From the printed values the products are 0, 0.26748, −0.27452, −0.17819, which sum to −0.18523, so the learner's 4dp answer is −0.1852 whether or not the products are rounded first. The −0.1853 in the key comes only from the path before the table was rounded (−0.185297), which the learner never sees. So the explain's sentence states a sum (0 + 0.2675 − 0.2745 − 0.1782 = −0.1853) that is off by one in the last place, and its bracket blames the rounding of the products when the cause is the rounding of the table. Grading is unaffected: answer −0.1853 with tolerance 0.0005 accepts −0.1852 and −0.18523, and the `sign` slip at 0.1853 catches 0.1852. The fixed `sign` line and `feedback.correct` ("about −0.185") are consistent with both values. Tag minor: no method or convention is taught wrongly, but a careful learner is told their correct arithmetic is the rounded variant.
+
+Exact fix (text only; `answer`, `tol` and `wrong[]` stay as they are):
+
+- `screens[0].widget.accept`: `"$-0.1852$: $0 + 0.2675 - 0.2745 - 0.1782$, from the table as printed. The path before rounding gives $-0.1853$, and either is marked right."`
+- `screens[0].explain.text`: `"The products are 0, 0.2675, $-0.2745$ and $-0.1782$, which add to $-0.1852$ (the path before rounding gives $-0.1853$, and both are marked right). The position is read at the start of each step, so it never depends on the move that follows."`
+- Optional, same screen, `feedback.byKey.sign` last sentence: `"A positive total books the net loss as a gain."` (a learner working from the table typed 0.1852, not 0.1853).
+
+Basis: direct arithmetic on the four table rows; full-precision path sum −0.185297 from `docs/reports/ito-L2-concepts.py` line 43.
