@@ -98,7 +98,7 @@
         "language": "python",
         "starter": "import heapq\n\n\ndef merge_k(lists):\n    ...\n",
         "solution": "import heapq\n\n\ndef merge_k(lists):\n    heap = []\n    for i, xs in enumerate(lists):\n        if xs:\n            heapq.heappush(heap, (xs[0], i, 0))\n    out = []\n    while heap:\n        value, i, j = heapq.heappop(heap)\n        out.append(value)\n        if j + 1 < len(lists[i]):\n            heapq.heappush(heap, (lists[i][j + 1], i, j + 1))\n    return out\n",
-        "prelude": "import sys as _zs, types as _zt\n_zhq = _zs.modules.get('heapq') or __import__('heapq')\n_zhq = getattr(_zhq, '_zq_real', _zhq)\n_zpeak = [0]\ndef _zwatch(f):\n    def g(heap, *a):\n        r = f(heap, *a)\n        _zpeak[0] = max(_zpeak[0], len(heap))\n        return r\n    return g\n_zshim = _zt.ModuleType('heapq')\n_zshim.__dict__.update(_zhq.__dict__)\n_zshim._zq_real = _zhq\nfor _zn in ('heappush', 'heapreplace', 'heappushpop', 'heapify'):\n    setattr(_zshim, _zn, _zwatch(getattr(_zhq, _zn)))\n_zs.modules['heapq'] = _zshim\ndef peak_heap(f):\n    _zpeak[0] = 0\n    f()\n    return _zpeak[0]\n",
+        "prelude": "# test 9 counts the heap: imports of heapq in this widget's code, at the top or inside a function, get a counting copy\n# only this run's namespace sees it; sys.modules and the real heapq are never changed, so no other widget can\n_zhq = __import__('heapq')\n_zpeak = [0]\ndef _zwatch(f):\n    def g(heap, *a):\n        r = f(heap, *a)\n        _zpeak[0] = max(_zpeak[0], len(heap))\n        return r\n    return g\n_zshim = __import__('types').ModuleType('heapq')\n_zshim.__dict__.update(_zhq.__dict__)\nfor _zn in ('heappush', 'heapreplace', 'heappushpop', 'heapify'):\n    setattr(_zshim, _zn, _zwatch(getattr(_zhq, _zn)))\n_zb = dict(__builtins__ if isinstance(__builtins__, dict) else vars(__builtins__))\n_zimp = _zb['__import__']\ndef _zimport(name, *a, **k):\n    m = _zimp(name, *a, **k)\n    return _zshim if m is _zhq else m\n_zb['__import__'] = _zimport\n__builtins__ = _zb\ndef peak_heap(f):\n    _zpeak[0] = 0\n    f()\n    return _zpeak[0]\n",
         "examples": [
           {
             "call": "merge_k([[1, 4, 7], [2, 5, 8], [3, 6, 9]])",
@@ -106,7 +106,7 @@
             "compare": "equal"
           }
         ],
-        "postlude": "# the real heapq goes back for other widgets; merge_k keeps the counting copy it imported\n_zs.modules['heapq'] = _zhq\ndef _nosort_tokens(src):\n    # names and operators only: comments, strings and docstrings are skipped\n    _tk = __import__('tokenize')\n    _io = __import__('io')\n    return [t.string for t in _tk.generate_tokens(_io.StringIO(src).readline) if t.type in (_tk.NAME, _tk.OP)]\ntry:\n    _nosort_t = _nosort_tokens(__learner_source__)\n    NO_SORT = 'sorted' not in _nosort_t and ('.', 'sort') not in set(zip(_nosort_t, _nosort_t[1:]))\nexcept Exception:\n    NO_SORT = 'sorted(' not in __learner_source__ and '.sort(' not in __learner_source__\n",
+        "postlude": "def _nosort_tokens(src):\n    # names and operators only: comments, strings and docstrings are skipped\n    _tk = __import__('tokenize')\n    _io = __import__('io')\n    return [t.string for t in _tk.generate_tokens(_io.StringIO(src).readline) if t.type in (_tk.NAME, _tk.OP)]\ntry:\n    _nosort_t = _nosort_tokens(__learner_source__)\n    NO_SORT = 'sorted' not in _nosort_t and ('.', 'sort') not in set(zip(_nosort_t, _nosort_t[1:]))\nexcept Exception:\n    NO_SORT = 'sorted(' not in __learner_source__ and '.sort(' not in __learner_source__\n",
         "tests": [
           {
             "call": "merge_k([[1, 4, 7], [2, 5, 8], [3, 6, 9]])",
@@ -175,6 +175,11 @@
             "source": "from heapq import heappush, heappop\n\n\ndef merge_k(lists):\n    heap = []\n    for i, xs in enumerate(lists):\n        for j, x in enumerate(xs):\n            heappush(heap, (x, i, j))\n    out = []\n    while heap:\n        out.append(heappop(heap)[0])\n    return out\n",
             "test": 9,
             "symptom": "Every `(value, list, position)` entry is pushed at the start, so the heap holds all items at once"
+          },
+          {
+            "source": "def merge_k(lists):\n    import heapq\n    heap = []\n    for xs in lists:\n        for x in xs:\n            heapq.heappush(heap, x)\n    return [heapq.heappop(heap) for _ in range(len(heap))]\n",
+            "test": 9,
+            "symptom": "Every item is pushed into one heap, with `import heapq` inside the function: test 9 still counts it"
           }
         ]
       },
