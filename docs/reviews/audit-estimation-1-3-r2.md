@@ -174,3 +174,7 @@ with
 > The gain at $n = 20$ is only about 10%, and $n + 1$ was derived for normal data; fat tails push the best divisor higher, not back to $n - 1$.
 
 Basis: c* = n + 1 + (n − 1)g/n, which is n + 1 whenever the excess kurtosis g is 0. Optional; it changes no graded answer and no rubric line.
+
+## Fix-pass follow-up (orchestrator)
+
+- homework-1 `h-long-n-plus-one` model part 5: "n + 1 is exact only for normal data" became "n + 1 was derived for normal data" (the reader's text: the MSE-best divisor is n + 1 + (n - 1)g/n, so n + 1 holds for any zero excess kurtosis). Gates: validator 0 errors, voice scan 0, all three estimation scripts 0, grade-all 0 failures, playthrough desktop and mobile green.
