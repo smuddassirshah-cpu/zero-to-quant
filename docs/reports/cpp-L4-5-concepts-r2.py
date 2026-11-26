@@ -9,6 +9,11 @@ undefined snippets do here); and the proposed new hidden tests.
 
 Exit 0 on correct content. A check tagged FINDING fails because the content is wrong (see the audit file) and stays failing until fixed.
 
+Fix pass (Opus fixer): only checks that encoded the old content were re-pointed. The six wrong programs tagged FINDING in
+-mutants.mjs now name the new test-N they must reach; the PROPOSED-FIX jobs run on the content as it stands (the tests are in it);
+-programs.mjs reads the l21 screen 9 listing from the content instead of a copy; and a block of FP codings sweeps each test-N line
+the fix pass wrote. The part A text checks are unchanged.
+
   python3 docs/reports/cpp-L4-5-concepts-r2.py [--pkgs <local cdn folder>] [--no-cpp] [--jobs 3]
 The local CDN folder is --pkgs, else $ZQ_LOCAL_CDN (the folder the playthrough takes as --local-cdn). Part B takes about four minutes.
 """

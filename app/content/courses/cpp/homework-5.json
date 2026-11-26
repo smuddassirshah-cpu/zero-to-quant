@@ -643,7 +643,7 @@
         }
       },
       "explain": {
-        "text": "A copy member or a destructor hides the moves, so moves copy. A lone move constructor deletes the copies, and a lone move assignment leaves the constructors deleted."
+        "text": "A copy member or a destructor hides the moves, so moves copy. A lone move constructor deletes the copies. A lone move assignment deletes them too, and no move constructor is written."
       }
     },
     {
@@ -1053,14 +1053,14 @@
             "compare": "equal"
           },
           {
-            "setup": "SolePtr<Quote> u; CountedPtr<Quote> s(std::move(u));",
-            "call": "s.use_count() * 10 + (s.get() == nullptr ? 1 : 0)",
+            "setup": "SolePtr<Quote> u; CountedPtr<Quote> s(std::move(u)); CountedPtr<Quote> e; long n = 0; { CountedPtr<Quote> c(e); n = c.use_count(); }",
+            "call": "s.use_count() * 1000 + n * 100 + e.use_count() * 10 + (s.get() == nullptr ? 1 : 0)",
             "expect": 1,
             "compare": "equal"
           }
         ],
         "leakCheck": true,
-        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 15 hidden tests. Hidden types count the objects alive, and a test also fails on a leak or a double delete. Freed memory is overwritten, so a read of a deleted object gives a wrong value or a crash. One test only compiles a copy of a `SolePtr`, which must be refused. No test can see whether the members are private, and none copies an empty `CountedPtr`, as a write through a null pointer does not stop the run here. Check those yourself."
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 15 hidden tests. Hidden types count the objects alive, and a test also fails on a leak or a double delete. Freed memory is overwritten, so a read of a deleted object gives a wrong value or a crash. One test only compiles a copy of a `SolePtr`, which must be refused. One test copies and destroys an empty `CountedPtr`, which must touch no count. No test can see whether the members are private, so check that yourself."
       }
     }
   ]

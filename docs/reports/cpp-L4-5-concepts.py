@@ -14,6 +14,7 @@ keeps the exit status non-zero until the content is fixed (auditor brief, step 4
 Fix pass (Opus fixer, after commit 7bc79413): checks that encoded the old content text were re-pointed to the new text,
 each marked `# re-pointed (fix pass, finding N)`; codings whose expected key changed with a new or changed hidden test
 carry the same mark, and new codings for the fix pass's test-N lines and hidden tests are marked `# fix pass`.
+Fix pass of audit cpp-4-5-r2: one coding re-pointed (`l18s9.pin_only`, now stopped by planted bug 3 at test-4), marked inline.
 """
 import json, math, os, shutil, subprocess, sys, tempfile
 
@@ -1112,7 +1113,7 @@ coding('l18s9.pin_1e-7', 'l18-unit-tests.json', 9, T9 % (PIN % '1e-7', CONV), 't
 coding('l18s9.pin_1e-9', 'l18-unit-tests.json', 9, T9 % (PIN % '1e-9', CONV), 'test-1')
 coding('l18s9.convergence_only', 'l18-unit-tests.json', 9, T9 % ('', CONV), 'test-3')
 coding('l18s9.pin_loose', 'l18-unit-tests.json', 9, T9 % (PIN % '0.05', CONV), 'test-3')
-coding('l18s9.pin_only', 'l18-unit-tests.json', 9, T9 % (PIN % '1e-6', ''), None)
+coding('l18s9.pin_only', 'l18-unit-tests.json', 9, T9 % (PIN % '1e-6', ''), 'test-4')  # re-pointed (fix pass of audit cpp-4-5-r2, finding 3): planted bug 3 now needs the convergence test
 
 # --- l22 s4 add_overflows: checks made after the addition
 AO = '#include <climits>\nconstexpr bool add_overflows(int a, int b) {\n%s\n}\n'  # re-pointed (fix pass, finding 6): the task now keeps constexpr
