@@ -7,6 +7,10 @@ Part 1 lists natural codings of every mistake a `feedback.byKey.test-N` line or 
 test each should fail first. Part 2 recomputes keys, slips, hidden-test expects and every empirical claim with its
 own code (no content solution is reused, except where a check is about the model solution itself).
 A check that fails because the content is wrong stays failing: see docs/reviews/audit-ds-4-r2.md.
+
+Fix pass (Opus fixer): homework-4 item 2 gained hidden test 9 (heap peak at most one entry per list; NO_SORT is now test 10).
+Re-pointed only where the old test list was encoded: "hw i1 expects" skips the peak test, which a new check covers; the H2
+sweep now expects test-9 for the one-heap submission and the three new mutants, and test-10 for `sorted`.
 """
 
 import json, sys, os
@@ -920,7 +924,7 @@ def kth_smallest(root, k):
 
 # ---- W13 hw merge_k
 f, p, w = "homework-4.json", "items[1].widget", "H2"
-std(w, f, p, [])
+std(w, f, p, [9, 9, 9])   # fix pass: three one-heap mutants on the new test 9
 add(w, f, p, "t3: pushes xs[0] with no empty check", "test-3", """
 import heapq
 def merge_k(lists):
@@ -969,7 +973,7 @@ def merge_k(lists):
             break
     return out
 """)
-add(w, f, p, "x: every item into one heap (not one entry per list)", "", """
+add(w, f, p, "x: every item into one heap (not one entry per list)", "test-9", """
 import heapq
 def merge_k(lists):
     heap = []
@@ -997,7 +1001,7 @@ import heapq
 def merge_k(lists):
     return list(heapq.merge(*lists))
 """)
-add(w, f, p, "t9: sorted(sum)", "test-9", """
+add(w, f, p, "t10: sorted(sum)", "test-10", """
 import heapq
 def merge_k(lists):
     return sorted(x for xs in lists for x in xs)
@@ -1695,7 +1699,23 @@ I = HW["items"]
 env = {"build": build, "balanced": balanced, "kth_smallest": lambda r, k: ino(r)[k - 1], "touched": lambda r, k: 0}
 check("hw i0 expects", all(eval(t["call"], env) == X(t) for t in I[0]["widget"]["tests"]))
 env = {"merge_k": lambda ls: sorted(x for l in ls for x in l), "NO_SORT": True}
-check("hw i1 expects", all(eval(t["call"], env) == X(t) for t in I[1]["widget"]["tests"]))
+check("hw i1 expects", all(eval(t["call"], env) == X(t) for t in I[1]["widget"]["tests"] if "peak_heap" not in t["call"]))
+# fix pass (finding 3): test 9 bounds the heap's peak size by the number of lists. Own k-way merge peaks at k = 20;
+# one heap of every item peaks at N = 2,000. Measured here with a hand count, not the widget's prelude.
+_ls = [list(range(i, 2000, 20)) for i in range(20)]
+def _kway_peak(lists):
+    import heapq as _h
+    hp, peak = [(xs[0], i, 0) for i, xs in enumerate(lists) if xs], 0
+    _h.heapify(hp); peak = len(hp)
+    while hp:
+        v, i, j = _h.heappop(hp)
+        if j + 1 < len(lists[i]):
+            _h.heappush(hp, (lists[i][j + 1], i, j + 1)); peak = max(peak, len(hp))
+    return peak
+_t9 = [t for t in I[1]["widget"]["tests"] if "peak_heap" in t["call"]]
+check("hw i1 test 9: k-way merge peaks at k = 20, one heap of all items at N = 2,000, bound is 20",
+      len(_t9) == 1 and _kway_peak(_ls) == 20 < sum(map(len, _ls)) == 2000 and _t9[0]["call"].endswith("<= 20")
+      and I[1]["widget"]["tests"].index(_t9[0]) == 8 and I[1]["widget"]["tests"][9]["call"] == "NO_SORT")
 env = {"running_median": lambda xs: [float(statistics.median(xs[:i + 1])) for i in range(len(xs))]}
 small = [t for t in I[2]["widget"]["tests"] if "20000" not in t["call"]]
 check("hw i2 expects against statistics.median", all(eval(t["call"], env) == X(t) for t in small))
