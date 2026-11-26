@@ -103,3 +103,26 @@ The five other earlier findings on problems-4 are grading-band and accept-line f
 - `node tools/grade-all.mjs --file` on each of the 8 files: 0 failures each.
 - `docs/reports/integrals-L4-concepts.py` (venv Python 3.13, NumPy, SciPy, SymPy; no figure depends on a version): 476 checks, 4 failed, exit 1. The four failures are findings 1 to 4.
 - No playthrough, as the brief sets.
+
+## Fix pass
+
+Opus fixer, content commit `ae66a002` on base `2b5af441`. Every changed figure recomputed two ways in `scratchpad/fix-int4/recompute.py` (not committed); bases below are the fixer's own.
+
+1. fixed. $\int \frac{dx}{x^2} = -\frac1x$ (power rule, and SymPy); summary now reads "a logarithm, an arctangent or a power such as $-\frac{1}{x}$".
+2. fixed. $\ln|1| - \ln|-1| = 0$ is option B's route; $\ln(1 - (-1)) = \ln 2$ is the only short route to $\ln 2$, so the reason now names the width.
+3. fixed. $T_{16} = 0.642536$ by direct sum and by $I + \frac{h^2}{12}(f'(1) - f'(0))$ with $f'(1) = -\frac12$; $T_{32} = 0.642658$ both ways, which rounds to 0.6427. Text now says 32 strips.
+4. fixed. Twelve midpoint discs: direct sum 3.136138, and $\pi - \frac{(b-a)h^2 f''}{24} = \pi - \frac{\pi}{576} = 3.136138$ (exact for a quadratic). Printed 3.136.
+5. fixed. $\int_0^1 \frac{e^{-x}}{\sqrt{x}}dx$ with $x = t^2$ is $2\int_0^1 e^{-t^2}dt = \sqrt{\pi}\,\text{erf}(1) = 1.493648$ (quad both forms). l16 prose and explain, l17 `screens[7]` reworded to "no elementary antiderivative" and erf named.
+6. fixed. Stewart 7.8 definition 1(c) and the Cauchy mean in part (b) show why the halves must converge separately. l15 sentence added; homework-4 (a) display now takes the two limits apart. The display was split over four lines because the mobile playthrough found it wider than the column at 440px.
+7. fixed. Normal with quartiles $\pm 1$: $\sigma = 1/z_{0.75} = 1.4826$, $P(|X| > 5) = 0.000745$ (scipy and erfc); Cauchy $1 - \frac{2}{\pi}\arctan 5 = 0.1257$ (scipy and closed form). `normal-habit` slip value 0.6827 unchanged; its line no longer claims a tail. l15 explain now opens with $P(|X| \le 1) = 0.5$.
+8. fixed. Exact discrete law (Feller III.4, $u_{2k}u_{2n-2k}$): $P(\text{share} \le 0.1) = 0.2689$ at 20 steps, 0.2056 at 2,000; own Monte Carlo 0.2655 at 20 steps; limit 0.2048. Prose now "Take a long fair game ... has, very nearly, the arcsine density" (split to keep under 20 words); explain says "A long fair game".
+9. fixed. $\frac{1}{\pi}e^{-(x^2+y^2)}$ equals the product of two $N(0, \frac12)$ densities (checked at a point) and $\int x^2 \frac{e^{-x^2}}{\sqrt\pi}dx = \frac12$.
+10. fixed. Same solid by washers in $y$: $\pi\int_0^1 (1 - y)\,dy = \frac{\pi}{2}$, equal to the shells; the four lines now tie the method to strips at each $x$.
+11. fixed. Ranges from the sign of each root: $\cos\theta \ge 0$ on $[-\frac{\pi}{2}, \frac{\pi}{2}]$, $\sec\theta > 0$ on $(-\frac{\pi}{2}, \frac{\pi}{2})$, $\tan\theta \ge 0$ on $[0, \frac{\pi}{2})$ for $x \ge a$. Caption extended as proposed.
+12. fixed. $\int_1^b x^{-0.9}dx = 10(b^{0.1} - 1)$ (quad at $b = 10^4$: 15.1189 both ways); now "the area up to $b$ grows like $b^{0.1}$".
+13. fixed. Test-1 values by direct sum and by $\frac13 \mp \frac18 + \frac{1}{96}$: left 0.21875, right 0.46875, trapezium 0.34375; the test-1 line now names them. test-6 line now describes its test only ("Check that no call reaches $x = 0$"), naming no mistake, since no natural coding fails test 6 first. Added three `mutants` (left, right, trapezium codings), each first failing test 1; grade-all `--code` confirms. No key, slip or hidden test changed.
+14. fixed. CPython 3.13 REPL run of l12 `screens[3]` solution: frames `<module>`, `line 7, in trapezium`, `line 1, in <lambda>`, then the same ZeroDivisionError. Console lines updated, tone moved to `l6`.
+
+Concepts script: the four CONTENT checks that encoded the old text (findings 1 to 4) were re-pointed to read the fixed text, noted in its docstring; 476 checks, 0 failed, exit 0.
+
+Gates: validator 0 errors (4624 warnings); voice scan 35 on the six files: 0 over 35, 0 explanations over three sentences; `run-number-scripts --only integrals` 5 of 5 passed; grade-all 0 failures on each edited file (`--code` on l16, mutants included); sweep `integrals-L4-test-line-sweep.mjs` exit 0, every ending-key unchanged; playthrough desktop and `--mobile` all passed on l14, l15, l16, l17, review-4, homework-4.
