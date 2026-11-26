@@ -13,6 +13,8 @@ A FAIL is content that is false as stated: it stays failing and is a finding. A 
 under a condition the content does not state (verdict imprecise): it is printed and does not fail the script.
 Exit 0 only when no check fails. Runs in CPython and, through first-python-L1-3-test-line-sweep.mjs --concepts,
 inside the page's Pyodide 0.27.7 (Python 3.12, wasm32). No third-party imports.
+Fix pass (Opus fixer): checks that encoded the old text are re-pointed (the q-floor slip check now tests the rounding-up line; each
+NOTE fires only while its old wording is present), and section G checks every claim the fix pass wrote.
 """
 import builtins, contextlib, glob, io, json, linecache, math, os, re, sys, tempfile, traceback
 
@@ -262,6 +264,8 @@ q = item('l1-calculator', 'q-floor'); line = q['feedback']['byKey']['nearest']
 if 'to the nearest' in line:
     check(round(20 / 6) == slip('l1-calculator', 'q-floor', 'nearest'), 'l1-calculator[q-floor].nearest',
           f'the line says "rounded 3.33 to the nearest", which is {round(20 / 6)}, but the slip value is {slip("l1-calculator", "q-floor", "nearest")} (rounding up)')
+else:  # fix pass: the line now names rounding up
+    check('up to 4' in line and math.ceil(20 / 6) == slip('l1-calculator', 'q-floor', 'nearest') == 4, 'l1-calculator[q-floor].nearest', 'rounding 3.33 up gives the slip value 4')
 # table keys
 k, vals = 10, []
 while k > 0:
@@ -271,7 +275,7 @@ bal, rows = 1000.0, item('l6-until-done', 8)['widget']['rows']
 for r in rows:
     bal *= 1.07
     check(abs(bal - r[1]['answer']) < 0.005, 'l6[8]', f'balance {bal:.3f} against key {r[1]["answer"]}')
-check(round(1070 * 0.07, 2) == 74.9 and '74.90' in item('l6-until-done', 8)['feedback']['byKey']['r1c1'], 'l6[8].r1c1', 'second year adds 74.90')
+check(round(1070 * 0.07, 2) == 74.9 and '74.90' in (item('l6-until-done', 8)['feedback']['byKey'].get('simple') or item('l6-until-done', 8)['feedback']['byKey']['r1c1']), 'l6[8].r1c1', 'second year adds 74.90')
 check(round(1000 * 1.07 ** 3 - 1000 * 1.07 ** 2, 2) == 80.14, 'l6[8].explain', 'third year adds 80.14')
 # a cell line fires for ANY wrong value of its cell (table.js: key is the cell id unless a cell wrong[] matches)
 r1 = rows[1][1]
@@ -350,7 +354,7 @@ check(str(182.40 * 25) == '4560.0' and str(185.10 * 25) == '4627.5' and round(46
 check(('12' == 12) is False and ('0' == 0) is False and '12' + '5' == '125' and '12' * 2 == '1212' and '3' * 2 == '33', 'l3 rules', 'text against numbers')
 s = 'ABCDEFGHIJ'
 check(all(len(s[a:b]) == b - a for a in range(11) for b in range(a, 11)), 'l3[8]', 'slice length b - a inside the string')
-note(len(s[2:15]) != 15 - 2 and len(s[7:2]) != 2 - 7, 'l3[8].prose, l10 summary',
+note('That count needs' not in item('l3-text', 8)['prose'] and len(s[2:15]) != 15 - 2 and len(s[7:2]) != 2 - 7, 'l3[8].prose, l10 summary',
      'slice length b - a needs 0 <= a <= b <= len(s); the l3 summary note states it, the l3 prose and the l10 summary do not')
 check(f'{12.5:.2f}' == '12.50' and f'{7:.2f}' == '7.00' and f'{37.25:+.2f}' == '+37.25' and f'{-8.5:+.2f}' == '-8.50' and f'+{-8.5:.2f}' == '+-8.50', 'l3 formats', '.2f and +.2f')
 check(int(7.5) == 7 and float(' 12.50\n') == 12.5 and float('12.75') * 4 == 51.0 and str(float('4.5') / 100) == '0.045' and f'{2000 * 0.045:.2f}' == '90.00', 'l4 conversions', 'int, float')
@@ -360,7 +364,7 @@ ran = []
 if 5: ran.append('int 5')
 if 'no': ran.append('text')
 if [0]: ran.append('list')
-note(len(ran) == 3, 'l5-decisions[2].explain', '"An if line only asks whether its condition\'s value is True": any truthy value runs the block (5, "no", [0])')
+note('only asks' in item('l5-decisions', 2)['explain']['text'] and len(ran) == 3, 'l5-decisions[2].explain', '"An if line only asks whether its condition\'s value is True": any truthy value runs the block (5, "no", [0])')
 def passes(a, b, st):
     n, c = a, 0
     while n < b:
@@ -389,11 +393,11 @@ check(p[-1] == p[len(p) - 1] and p[-len(p)] == p[0] and [][0:1] == [], 'l8 rules
 cl = []; r = cl.append(99.80)
 check(r is None and str([100.00, 101.25]) == '[100.0, 101.25]', 'l8[2], l10[4]', 'append returns None; 100.00 prints as 100.0')
 a = [1.0]; b = a; a.append(2.0)
-note(b == [1.0, 2.0], 'l2-naming-a-value summary.ideas[2], [5].explain',
+note('A later change to a' in DOC['l2-naming-a-value']['summary']['ideas'][2] and b == [1.0, 2.0], 'l2-naming-a-value summary.ideas[2], [5].explain',
      '"A later change to a leaves b where it was" / "Changing a later never changes b": true for reassignment, false for a list changed in place (a.append shows through b); l8 teaches append and index assignment without saying so')
 _x = 1
-note(_x == 1, 'l2-naming-a-value[3].prose', '"A name starts with a letter": a name may also start with an underscore (language reference 2.3)')
-note(str(0.1 + 0.2) != '0.3', 'l3-text[6].options[twodp].why', '"Python never adds digits on its own": print(0.1 + 0.2) shows 0.30000000000000004')
+note('a letter and has no spaces' in item('l2-naming-a-value', 3)['prose'] and _x == 1, 'l2-naming-a-value[3].prose', '"A name starts with a letter": a name may also start with an underscore (language reference 2.3)')
+note('never adds digits' in json.dumps(item('l3-text', 6), ensure_ascii=False) and str(0.1 + 0.2) != '0.3', 'l3-text[6].options[twodp].why', '"Python never adds digits on its own": print(0.1 + 0.2) shows 0.30000000000000004')
 peaks, pk = [], 100.0
 for v in [100.00, 104.00, 101.50, 106.20, 103.00]:
     pk = max(pk, v); peaks.append(round(pk - v, 2))
@@ -412,7 +416,7 @@ def mdd(prices):
 check(abs(mdd([100.0, 110.0, 99.0, 105.0, 88.0, 95.0]) - 0.2) < 1e-12 and mdd([120.0]) == 0.0 and abs(mdd([100.0, 120.0, 90.0, 130.0]) - 0.25) < 1e-12, 'l10[8], homework-3[1]', 'maximum drawdown')
 check(abs((130 - 90) / 130 - 0.31) < 5e-3 and (100 - 90) / 100 == 0.1 and abs((240 - 175) / 240 - 0.271) < 5e-4 and (250 - 175) / 250 == 0.3, 'homework-3[1].test-1, test-2', 'the wrong values the lines name')
 check('Tue,102.50\n'.split(',') == ['Tue', '102.50\n'] and '  101.20\n'.strip() == '101.20' and float('102.50\n') == 102.5, 'l11 rules', 'split, strip, float')
-note('a\nb'.splitlines(True)[-1] == 'b', 'l11-numbers-from-a-file summary.ideas[0]', '"each ending in a newline": the last line of a file need not (test 2 of screen 2 passes one without)')
+note('each ending in a newline' in DOC['l11-numbers-from-a-file']['summary']['ideas'][0] and 'a\nb'.splitlines(True)[-1] == 'b', 'l11-numbers-from-a-file summary.ideas[0]', '"each ending in a newline": the last line of a file need not (test 2 of screen 2 passes one without)')
 check(max(['101.20\n', '102.50\n', '99.80\n', '100.40\n', '101.10\n']) == '99.80\n' and '99.00' > '105.10', 'homework-3[2]', 'as text 99.80 beats 102.50')
 check(round(2000 * 1.04 ** 3, 2) == 2249.73 and round(1000 * 1.05 ** 10 - 1000, 2) == 628.89 and round(1000 * 1.1 ** 10 - 1000, 2) == 1593.74
       and round(1000 * 1.05 ** 10 - 1000 * 1.05 ** 9, 2) == 77.57, 'l12[0], l12[1]', 'compounding figures')
@@ -566,6 +570,83 @@ def kind(line):
 check(kind('\n') == 'IndexError' and kind('Day,Close\n') == 'ValueError' and kind('Wed,n/a\n') == 'ValueError', 'homework-3[4]', 'a line with no comma gives the IndexError')
 check(ans('homework-3', 6) == 630.5 and ((0 * 1.05 + 200) * 1.05 + 200) * 1.05 + 200 == 630.5, 'homework-3[6]', '630.50')
 check('Year 3' in key_of(item('l12-savings-script', 6)) and key_of(item('review-3', 7)).startswith('Open the file with "w" once'), 'l12[6], review-3[7]', 'open once')
+
+# ---------------------------------------------------------------- G: fix pass (claims the fix pass wrote, audit "## Fix pass")
+def raises(fn):
+    try:
+        fn(); return None
+    except Exception as e_:
+        return type(e_).__name__
+fp_l2 = DOC['l2-naming-a-value']
+check('Assigning to a again later' in fp_l2['summary']['ideas'][2] and 'Assigning to a again later never changes b.' in fp_l2['screens'][5]['explain']['text'],
+      'l2 summary.ideas[2], [5].explain', 'the copy rule is stated for assigning to a again')
+a = 7; b = a; a = 10
+a2 = [1.0]; b2 = a2; a2 = [2.0]
+check(b == 7 and b2 == [1.0], 'l2 rule', 'assigning to a again leaves b alone, for a number and for a list name alike')
+pr = item('l8-many-values', 8)['prose']
+check('does not copy the list' in pr and 'prices.copy()' in pr, 'l8[8].prose', 'the list warning is present')
+prices = [101.20, 99.80]; b = prices; prices.append(99.50); prices[0] = 100.00
+c = prices.copy(); prices.append(1.0)
+check(b is prices and b == [100.0, 99.8, 99.5, 1.0] and c == [100.0, 99.8, 99.5] and c is not prices, 'l8[8].prose',
+      'b = prices shares one list (append and index assignment show through b); prices.copy() is a separate list')
+check('a letter or an underscore' in item('l2-naming-a-value', 3)['prose'] and '_price'.isidentifier() and not '1price'.isidentifier() and not 'unit price'.isidentifier()
+      and raises(lambda: compile('unit price = 12.5\n', 'x', 'exec')) == 'SyntaxError', 'l2[3].prose', 'a name starts with a letter or an underscore, with no spaces')
+tw = next(o for o in item('l3-text', 6)['widget']['options'] if o['id'] == 'twodp')['why']
+check('fewest digits that pin it down: 12.5, not 12.50' in tw and str(12.5) == '12.5' and float('12.5') == 12.5 and str(0.1 + 0.2) == '0.30000000000000004'
+      and float('0.3') != 0.1 + 0.2 and all(float(repr(x)) == x for x in (12.5, 7.0, 1628.894626777442, 0.045)) and str(7.0) == '7.0' and str(0.045) == '0.045',
+      'l3[6].twodp', 'print shows the shortest text that gives back the same float')
+ran2 = []
+if 98.0 < 101.25: ran2.append('t')
+if 101.25 < 98.0: ran2.append('f')
+check('runs its block when its condition works out to `True`' in item('l5-decisions', 2)['explain']['text'] and ran2 == ['t'], 'l5[2].explain', 'a True condition runs the block')
+r1 = item('l6-until-done', 8)['widget']['rows'][1][1]; bk6 = item('l6-until-done', 8)['feedback']['byKey']
+check(r1['wrong'][0]['value'] == 1000 + 70 + 70 == 1140 and abs(1140 - r1['answer']) > 4 and 'You added £70 again' in bk6['simple']
+      and round(1070 * 1.07, 2) == 1144.9 and '£1,144.90' in bk6['r1c1'] and 'again' not in bk6['r1c1'], 'l6[8].simple, r1c1', 'the £70-again slip has its own wrong id, value 1140')
+check('except perhaps the last' in DOC['l11-numbers-from-a-file']['summary']['ideas'][0]
+      and run('print(list(open("x.txt")))\n', files={'x.txt': '101.20\n102.50'})[0] == "['101.20\\n', '102.50']\n", 'l11 summary.ideas[0]', 'a last line with no newline')
+out11 = run('with open("closes.txt") as f:\n    a = [line for line in f]\nprint(a == list(open("closes.txt")), f.closed)\n')[0]
+check('`with open(name) as f:` and then `for line in f:`' in item('l11-numbers-from-a-file', 3)['prose'] and out11 == 'True True\n', 'l11[3].prose', 'the with form reads the same lines and closes the file')
+s = 'ABCDEFGHIJ'
+check('That count needs a and b within the string, with a not after b.' in item('l3-text', 8)['prose'] and 'a is not after b' in DOC['l3-text']['summary']['formula']['note']
+      and all(len(s[a:b]) == b - a for a in range(11) for b in range(a, 11)) and s[7:2] == '' and len(s[2:15]) == 8 < 15 - 2, 'l3[8].prose, l3 summary note', 'slice length with its condition')
+L10 = DOC['l10-reading-errors']['summary']['ideas'][2]; xs = [101.20, 102.50, 99.80]
+check('past the end it holds fewer' in L10 and len(xs[1:3]) == 2 and len(xs[1:9]) == 2 < 8 and xs[5:] == [], 'l10 summary.ideas[2]', 'b - a inside the list; fewer past the end')
+t10 = item('l10-reading-errors', 6)['feedback']['byKey']['test-1']
+check(float('101.20') == 101.2 and '101.20' + '1.50' == '101.201.50' and "'101.201.50'" in t10 and '101.2 means' in t10
+      and raises(lambda: '101.20' + 1.50) == 'TypeError' and raises(lambda: int('101.20')) == 'ValueError' and abs(float('101.20') + 1.50 - 102.7) < 1e-9,
+      'l10[6].test-1', 'TypeError, ValueError, 101.2 and the joined text')
+ret4 = (98.7 - 102.4) / 102.4; ret6 = (98.2 - 104.5) / 104.5
+check(f'{3.61:+.2f}' == '+3.61' and f'{3.61:.2f}' == '3.61' and f'{ret4:+.2f}' == '-0.04' and f'{ret4:.3f}' == '-0.036' and str(round(ret4, 3)) == '-0.036'
+      and f'{ret4 * 100:+.2f}' == f'{ret4 * 100:.2f}' == '-3.61' and f'{ret6 * 100:+.2f}' == '-6.03' and f'{ret6:+.2f}' == '-0.06',
+      'homework-1[4], [6].test-1', 'plus sign on a gain, and the values without times 100')
+sol5 = item('l12-savings-script', 5)['widget']; sol7 = item('l12-savings-script', 7)['widget']
+check(len(sol5['tests']) == 4 and len(sol7['tests']) == 5 and 'test-4' in item('l12-savings-script', 5)['feedback']['byKey'] and 'test-5' in item('l12-savings-script', 7)['feedback']['byKey'],
+      'l12[5], l12[7]', 'one added hidden test each, with its line')
+o5 = run(sol5['solution'] + "open('s4.txt', 'w').write('old line\\n')\nsave_line('s4.txt', 1, 1050.0)\nprint(repr(open('s4.txt').read()))\n")[0].splitlines()[-1]
+o7 = run(sol7['solution'] + "open('p5.txt', 'w').write('Year 9: old\\n')\nsave_plan('p5.txt', 1000.00, 0.05, 2)\nprint(open('p5.txt').read().splitlines())\n")[0].splitlines()[-1]
+oa = run("open('a.txt', 'w').write('old line\\n')\nwith open('a.txt', 'a') as f:\n    f.write('Year 1: £1050.00\\n')\nprint(repr(open('a.txt').read()))\n")[0].strip()
+check(o5 == repr(eval(sol5['tests'][3]['expect'])) == repr(f'Year 1: £{1050.0:.2f}\n') and o7 == str(eval(sol7['tests'][4]['expect']))
+      and eval(sol7['tests'][4]['expect']) == [f'Year 1: £{1000 * 1.05:.2f}', f'Year 2: £{round(1000 * 1.05 ** 2, 2):.2f}'] and oa == repr('old line\nYear 1: £1050.00\n'),
+      'l12[5].test-4, l12[7].test-5', 'w empties the old line, a keeps it')
+def _decide(price, stop, target):
+    if price < stop:
+        action = 'sell'
+    elif price > target:
+        action = 'take profit'
+    return action
+try:
+    _decide(52.10, 50.00, 56.00); e2 = ''
+except Exception as e_:
+    e2 = f'{type(e_).__name__}: {e_}'
+check(e2.startswith('UnboundLocalError') and "'action'" in e2 and isinstance(UnboundLocalError(), NameError), 'homework-2[0].test-3', 'the error names action')
+check(1000.00 * (1 + 0.0) == 1000.00 and 1000.00 * (1 - 0.10) < 1000.00, 'homework-2[2].test-2, test-4', 'a rate of 0 never grows; a negative rate shrinks')
+check(raises(lambda: int('12.75')) == 'ValueError' and raises(lambda: 12.5 * '8') == 'TypeError' and raises(lambda: '189.35' - '184.20') == 'TypeError'
+      and raises(lambda: float('4.5%')) == 'ValueError' and raises(lambda: float('.5%')) == 'ValueError' and raises(lambda: 41.20 * '150') == 'TypeError'
+      and raises(lambda: f"{'41.20' * 150:.2f}") == 'ValueError' and 'Close' in str(raises(lambda: float('Close\n')) and run('float("Close\\n")\n')[1]),
+      'l4[4], l4[7], l4[9], l4[10], review-1[6], l12[10] test-1', 'the error each test-1 line names')
+ERR13 = [('l2-naming-a-value', 3), ('l4-asking-and-printing', 4), ('l4-asking-and-printing', 7), ('l4-asking-and-printing', 9), ('l4-asking-and-printing', 10), ('review-1', 6),
+         ('l12-savings-script', 10), ('l6-until-done', 6), ('l6-until-done', 9), ('l8-many-values', 6), ('review-2', 6), ('homework-2', 0), ('homework-2', 2)]
+check(all(item(f, i)['feedback']['byKey']['error'].startswith('Your code stopped before any test could run.') for f, i in ERR13), 'finding 2', 'every error line now names code that cannot start')
 
 print(f'{count[0]} checks, {len(fails)} failing, {len(notes)} notes (imprecise rules), Python {sys.version.split()[0]}, strict tracebacks: {STRICT_TB}')
 for n in notes:

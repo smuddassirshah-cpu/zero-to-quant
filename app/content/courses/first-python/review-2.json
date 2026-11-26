@@ -307,13 +307,31 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 5 hidden tests. An empty list returns `None`; a list of gains returns the smallest gain."
+        "how": "Check runs 5 hidden tests. An empty list returns `None`; a list of gains returns the smallest gain.",
+        "mutants": [
+          {
+            "source": "def worst_day(pnls):\n    worst = pnls[0]\n    for p in pnls:\n        if p < worst:\n            worst = p\n    return worst\n",
+            "test": 2,
+            "symptom": "pnls[0] with no check: IndexError"
+          },
+          {
+            "source": "def worst_day(pnls):\n    worst = None\n    worst = pnls[0]\n    if len(pnls) > 0:\n        for p in pnls:\n            if p < worst:\n                worst = p\n    return worst\n",
+            "test": 2,
+            "symptom": "pnls[0] before the check: IndexError"
+          },
+          {
+            "source": "def worst_day(pnls):\n    worst = 0\n    if len(pnls) > 0:\n        worst = pnls[0]\n        for p in pnls:\n            if p < worst:\n                worst = p\n    return worst\n",
+            "test": 2,
+            "symptom": "returns 0 for the empty list"
+          }
+        ]
       },
       "feedback": {
         "correct": "All five tests passed.",
         "generic": "Some tests failed. Start from `pnls[0]`, not 0, and guard the empty list.",
         "byKey": {
-          "error": "Your code stopped with an error. An `IndexError` means `pnls[0]` ran on the empty list."
+          "error": "Your code stopped before any test could run. Read the last line of the message under the editor, then the line it points to.",
+          "test-2": "Test 2 passes an empty list and expects `None`. An `IndexError` means `pnls[0]` ran on it: put that line inside the length check."
         }
       },
       "explain": {

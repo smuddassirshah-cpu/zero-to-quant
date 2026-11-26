@@ -551,6 +551,28 @@
             "expect": "102.7",
             "compare": "isclose"
           }
+        ],
+        "mutants": [
+          {
+            "source": "def with_fee(price_text):\n    return float(price_text)\n\nprint(with_fee(\"101.20\"))\n",
+            "test": 1,
+            "symptom": "converted, fee forgotten: 101.2"
+          },
+          {
+            "source": "def with_fee(price_text):\n    return price_text + \"1.50\"\n\nprint(with_fee(\"101.20\"))\n",
+            "test": 1,
+            "symptom": "fee joined as text"
+          },
+          {
+            "source": "def with_fee(price_text):\n    return price_text + 1.50\n",
+            "test": 1,
+            "symptom": "not converted, print deleted: TypeError"
+          },
+          {
+            "source": "def with_fee(price_text):\n    return int(price_text) + 1.50\n",
+            "test": 1,
+            "symptom": "int, print deleted: ValueError"
+          }
         ]
       },
       "hints": [
@@ -572,7 +594,7 @@
         "generic": "Not quite right. Look at test 1's error or result.",
         "byKey": {
           "error": "Your script still stops on its last line before the tests run. A `TypeError` means the price is still text when you add; a `ValueError` from `int` means `int` cannot read a decimal point: use `float`.",
-          "test-1": "Test 1 passes the text `\"101.20\"` and expects 102.7. Convert with `float` before adding 1.50."
+          "test-1": "Test 1 passes the text `\"101.20\"` and expects the number 102.7. A `TypeError` or `ValueError` in its row means the price is not yet a float: use `float`. 101.2 means the fee is missing; `'101.201.50'` means it was joined as text."
         }
       },
       "explain": {
@@ -728,7 +750,7 @@
     "ideas": [
       "Read a traceback from the bottom: the last line names the error, and the File line nearest the bottom is where Python stopped.",
       "The line that stopped is not always the line to fix. Check where its values came from, such as an `append` that stored `None`.",
-      "A list of $n$ values has indexes 0 to $n - 1$. A slice `[a:b]` stops before `b`, so it holds $b - a$ values."
+      "A list of $n$ values has indexes 0 to $n - 1$. A slice `[a:b]` stops before `b`. With both inside the list and a not after b, it holds $b - a$ values; past the end it holds fewer."
     ],
     "formula": {
       "name": "Last index of a list",
