@@ -82,3 +82,15 @@ No inbox bullet: no engine or canvas limit met.
 - Validator: `node tools/validate.mjs`, 0 errors (4,606 warnings, none new: no content edited).
 - Concepts script: 342 checks, exit 0.
 - No playthrough: content unchanged.
+
+## Fix pass
+
+Opus fixer, content commit `c7e51348`. No graded key, slip value, tolerance or hidden test changed.
+
+1. `conditional/l3-shrinking` `screens[6].explain.text` | fixed differently | Enumerated myself: 11 of 36 outcomes hold a 5; of the totals of 10, (4, 6) and (6, 4) hold no 5, so only (5, 5) is kept, giving $\tfrac{1}{11}$. The last clause now says why instead of naming a number as the space: "settle near $\tfrac{1}{11}$: of the 11 kept outcomes, only (5, 5) totals 10."
+2. `ito/l5-integrating-noise` `screens[0].feedback.byKey.sign` | fixed | From the table: $0.5561 \times 0.4810 = 0.26748$, $1.0371 \times (-0.2647) = -0.27452$, $0.7724 \times (-0.2307) = -0.17819$, sum $-0.18523$ (4 dp products: $-0.1852$), so "add to about −0.185" is right at either precision. The rest of the line is unchanged.
+3. `research-int/homework-1` parts 0 and 1 `byKey.sign`, `l2-correlation-limits` `screens[5].feedback.byKey.sign` | fixed | $\det R \ge 0$ is $-c^2 + 2abc + 1 - a^2 - b^2 \ge 0$, whose roots are $ab \pm \sqrt{(1 - a^2)(1 - b^2)}$, so the root term is the half-width. "the width" is now "the half-width" in the three lines. Also changed, same screen and same error, not in the finding: `l2` `screens[5].prose` "the width comes from what is left" now reads "the half-width".
+
+Observation, not edited: on `ito/l5` `screens[0]` the `accept` line writes "$0 + 0.2675 - 0.2745 - 0.1782$" beside $-0.1853$, and the explain implies the unrounded products give $-0.1853$. The products of the table's own 4 dp values sum to $-0.18523$, which rounds to $-0.1852$; $-0.1853$ needs the hidden full-precision path. Both lie inside the key's band, so no grade is affected.
+
+Gates: validator 0 errors (4,606 warnings); voice scan 35 on conditional, ito and research-int, 0 over and 0 explanations over three sentences; concepts script exit 0 (its two notes are hard-coded and still print); number scripts `--only` conditional (4), ito (9), research-int (3) all pass; playthrough desktop and `--mobile` of `conditional/l3-shrinking`, `ito/l5-integrating-noise`, `research-int/l2-correlation-limits` and set `research-int/homework-1`, all passed.
