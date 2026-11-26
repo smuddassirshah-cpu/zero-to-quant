@@ -51,3 +51,13 @@ New `wrong` no earlier read found: 1 (markov, minor); 0 in conditional, limits-t
 - `grade-all --file` on each of the ten files: 0 failures each.
 - `audit-delta-2026-11-26-4-concepts.py` (venv Python, NumPy and SciPy newer than CI's pins; no figure depends on the version): 53 checks, exit 0. The three findings are prose and are printed as notes, not asserted.
 - No playthrough (auditor rule 7). No code widgets in the changed content. No engine limits met, so no inbox bullet.
+
+## Fix pass
+
+Opus fixer, 2026-11-26, content commit 54e95533. No graded key, tolerance, slip value or test changed.
+
+1. markov/problems-1 carry trade part 4 `byKey.sign`: **fixed** (mistake renamed, slip kept at 4.7). Basis: $0.3 \times 3 + 0.7 \times (-8) = -4.7$, and $|-4.7| = 0.7 \times 8 - 0.3 \times 3 = 4.7$ two ways, while dropping only the minus on −8 gives $0.9 + 5.6 = 6.5$; so 4.7 is the sign of the total. New second sentence: "A positive 4.7 drops the minus sign of the total: the month loses money on average."
+2. conditional/problems-4 `p-dark-fills` part 5 explain, first sentence: **fixed**. Basis: prior odds $0.4/0.6 = \tfrac23$ times the per-order likelihood ratio $3/1$ gives posterior odds 2, i.e. $\tfrac23$ against $\tfrac13$ for the drawn fill, matching part 1 ($1.2/1.8$); so 3 is the likelihood ratio, not the odds. New sentence: "A large order is 3 times as likely as a small one to supply the drawn fill, since it has three fills to one."
+3. random-vars/problems-5 `p-startup-rounds` part 1 `byKey.sign`: **fixed**. Basis: $0.5108 - 0.4055 = 0.1053$ and $\tfrac12 \times 0.1053 = 0.0527$; directly $-\tfrac12 \ln 0.9 = 0.05268$. New second sentence: "A positive 0.0527 is half of 0.5108 − 0.4055, the wrong way round."
+
+Gates: validator 0 errors; voice scan 35 on the three files 0 and 0; `audit-delta-2026-11-26-4-concepts.py` exit 0 (unchanged: its three finding lines are notes, not asserts on the old text); number scripts markov 5/5, conditional 4/4, random-vars 3/3; `grade-all.mjs --file` 0 failures on each; playthrough `--problems` desktop and `--mobile` green on all three.
