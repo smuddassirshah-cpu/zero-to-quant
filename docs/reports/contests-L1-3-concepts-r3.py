@@ -7,6 +7,8 @@ claims. Exit 0 means every check passed. A check that fails because the content 
 is a finding in docs/reviews/audit-contests-1-3-r3.md (the finding number is in the check name).
 
 Run from anywhere:  python docs/reports/contests-L1-3-concepts-r3.py      (about one minute, standard library only)
+Fix pass: no check was re-pointed. The FINDING 5 check was widened to also require the fixed `how` to name reversed()
+and the test-7 line to name "no reads", since the fix changes the words, not the counting prelude.
 Not covered here (see the audit file, section "Code feedback sweep"): which hidden test a named mistake fails first
 (Pyodide, through app/tools/code-runner.mjs), the C++ widgets (YoWASP clang 21 for wasm32) and the pytest widget.
 """
@@ -712,14 +714,19 @@ rng = random.Random(13); tot = 0
 for _ in range(100000):
     a, b = rng.randint(0, 199999), rng.randint(0, 199999); tot += abs(a - b) + 1
 check('l12 s7 mean interval about 66,500 days, filling about 6.6e9 steps', abs(tot / 100000 - 66500) < 700 and 6.55e9 <= tot < 6.75e9, '%d %.0f' % (tot, tot / 100000))
-def zero_read_refused(w, counter_call, phrase):
-    """True while a correct pass that reads through reversed() or .copy() is refused by the counting test."""
+def zero_read_refused(w, fbk, counter_call, phrase):
+    """True while a correct pass that reads through reversed() or .copy() is refused by the counting test
+    and the learner-facing text does not say so (fix pass: the `how` and the test-7 line are checked too)."""
     t = [t for t in w['tests'] if counter_call in t['call']][0]
-    return t['call'].replace(' ', '').startswith('0<') and phrase in w['how'] and '__reversed__' not in w.get('prelude', '')
+    if not t['call'].replace(' ', '').startswith('0<') or '__reversed__' in w.get('prelude', ''):
+        return False
+    t7 = fbk['byKey']['test-7']
+    return phrase in w['how'] or 'reversed()' not in w['how'] or 'no reads' not in t7 or 'reversed()' not in t7
 
 
 check('FINDING 5: l12 s4 and homework-3 items[1]: `how` says "at most N pass", but the test needs at least one counted read and the counting list misses reversed() and .copy()',
-      not (zero_read_refused(w124, 'update_reads', 'at most 2,500 pass') or zero_read_refused(widget('homework-3', 'items', 1), 'reads_for', 'at most 10,000 pass')))
+      not (zero_read_refused(w124, L['l12-difference-arrays']['screens'][4]['feedback'], 'update_reads', 'at most 2,500 pass') or
+           zero_read_refused(widget('homework-3', 'items', 1), L['homework-3']['items'][1]['feedback'], 'reads_for', 'at most 10,000 pass')))
 
 # ============================================================ reviews
 check('review-1', 10 ** 9 * 10 ** 9 == 10 ** 18 < 9.2e18 and abs(2000 ** 2 * math.log2(2000) - 4.4e7) < 0.05e7 and 2000 ** 3 == 8 * 10 ** 9 and 10 ** 4 * 10 ** 6 == 10 ** 10 and
