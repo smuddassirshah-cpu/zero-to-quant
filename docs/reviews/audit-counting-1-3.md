@@ -80,3 +80,16 @@ The earlier review's class "the line names a slip that does not give the value" 
 ## Inbox
 
 No engine limit met; nothing added to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Opus fixer, from commit `9bf4f61c`. Each basis below was established independently (own enumeration and arithmetic in `scratchpad/fix-cnt13/check.py`), not taken from the audit text.
+
+1. `l3` `screens[9]` `no-zero` | fixed | Enumerating the 5,040 four-digit no-repeat PINs: 3,024 contain no 0 ($9 \times 8 \times 7 \times 6$), 4,536 have a first digit other than 0 ($9 \times 9 \times 8 \times 7$). The `no-zero` line now names "0 left out of every place" (value 3024, unchanged), and a new slip `no-zero-first` (4536, tol 0) carries the "PIN could not start with 0" line. Key 5040 unchanged; the slip is clear of the key and of 10000, 210, 34 and 3024.
+2. `l9` `quiz[3]` option `d` | fixed | A(0, 0), B(10, 0), C(8, 1), D(−2, 1): $\overrightarrow{DC} = \overrightarrow{AB} = (10, 0)$, so ABCD is a parallelogram, and $|AC| = \sqrt{65} \approx 8.06 < 10$. The `why` now says AC leaves A like AB but ends at a different corner, which holds for every parallelogram (C ≠ B).
+3. `l11` `summary.ideas[1]` | fixed | Inverse tangent returns values in (−90°, 90°) only: (−3, 3) gives −45° against atan2's 135°, (−3, −3) gives 45° against 225°. The idea now restricts the tan rule to the first quadrant and says to sketch the arrow first elsewhere, since the calculator's angle can be 180° out. No graded key asks for a non-first-quadrant angle.
+4. Three "you swapped" lines | fixed | The true swaps of (2, −1), (6, −4), (3, −2) are (−1, 2), (−4, 6), (−2, 3); the options (1, −2), (4, −6), (2, −3) are the sizes swapped with signs left in place, and each has a non-zero cross product with its base (−3, −20, −5), so none is parallel and the keys stand. Each line now says "You swapped the a and the b but left the signs where they were."
+
+Concepts script re-pointed where it encoded the old text (docstring says so): the `l3` `s9` check now recomputes `no-zero-first` by enumeration, and the finding 4 check accepts a "swapped" line that names signs-left-in-place when the option is exactly that. It exits 0 (1,910 checks).
+
+Gates: validator 0 errors (4,619 warnings); voice scan 35 on the five edited files 0 and 0; `run-number-scripts --only counting` 7 of 7 passed; `grade-all --file` on each edited file 0 failures; playthrough of `l3`, `l9`, `l10`, `l11`, `l12` desktop and `--mobile` all passed.
