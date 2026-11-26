@@ -10,6 +10,10 @@ Usage:  python3 docs/reports/cpp-L4-5-concepts.py [--pkgs <local-cdn>] [--dump] 
         <local-cdn> holds yowasp-clang-21.1.4-3/package (default: $ZQ_PKGS, else the session scratchpad pkgs).
 Exit 0 when every check holds. A check that fails because the content is wrong is listed as KNOWN-FINDING and
 keeps the exit status non-zero until the content is fixed (auditor brief, step 4).
+
+Fix pass (Opus fixer, after commit 7bc79413): checks that encoded the old content text were re-pointed to the new text,
+each marked `# re-pointed (fix pass, finding N)`; codings whose expected key changed with a new or changed hidden test
+carry the same mark, and new codings for the fix pass's test-N lines and hidden tests are marked `# fix pass`.
 """
 import json, math, os, shutil, subprocess, sys, tempfile
 
@@ -970,7 +974,8 @@ MA = '#include <vector>\nstd::vector<double> moving_average(const std::vector<do
 WIN = '        double s = 0;\n        for (int j = 0; j < n; ++j) s += xs[i + j];\n        out.push_back(s / n);\n'
 coding('l14s3.count_wraps_to_zero', 'l14-vector.json', 3, MA % ('    if (n < 1) return out;\n    for (std::size_t i = 0; i < xs.size() - n + 1; ++i) {\n' + WIN + '    }'), 'test-4')
 coding('l14s3.le_size_minus_n', 'l14-vector.json', 3, MA % ('    if (n < 1) return out;\n    for (std::size_t i = 0; i <= xs.size() - n; ++i) {\n' + WIN + '    }'), 'test-4')
-coding('l14s3.no_guards_count', 'l14-vector.json', 3, MA % ('    for (std::size_t i = 0; i < xs.size() - n + 1; ++i) {\n' + WIN + '    }'), 'test-7')
+coding('l14s3.last_wraps', 'l14-vector.json', 3, MA % ('    if (n < 1) return out;\n    std::size_t last = xs.size() - n;\n    for (std::size_t i = 0; i <= last; ++i) {\n' + WIN + '    }'), 'test-4')  # fix pass
+coding('l14s3.no_guards_count', 'l14-vector.json', 3, MA % ('    for (std::size_t i = 0; i < xs.size() - n + 1; ++i) {\n' + WIN + '    }'), 'test-4')  # re-pointed (fix pass, finding 2): with n = 5 in test 4 the unguarded loop now stops there
 coding('l14s3.no_n_lt_1', 'l14-vector.json', 3, MA % ('    if (static_cast<std::size_t>(n) > xs.size()) return out;\n    for (std::size_t i = 0; i + n <= xs.size(); ++i) {\n' + WIN + '    }'), 'test-7')
 coding('l14s3.int_arith_no_guard', 'l14-vector.json', 3, MA % ('    int m = static_cast<int>(xs.size());\n    for (int i = 0; i + n <= m; ++i) {\n' + WIN + '    }'), 'test-7')
 coding('l14s3.window_one_late', 'l14-vector.json', 3, MA % ('    if (n < 1 || static_cast<std::size_t>(n) > xs.size()) return out;\n    for (std::size_t i = 1; i + n <= xs.size(); ++i) {\n' + WIN + '    }'), 'test-2')
@@ -1024,18 +1029,21 @@ VW = '#include <numeric>\n#include <vector>\n\ndouble vwap(const std::vector<dou
 coding('l16s3.no_check', 'l16-algorithms.json', 3, VW % '    return std::inner_product(px.begin(), px.end(), qty.begin(), 0.0) / std::accumulate(qty.begin(), qty.end(), 0.0);', 'test-3')
 coding('l16s3.empty_check_only', 'l16-algorithms.json', 3, VW % '    if (px.empty()) return 0;\n    return std::inner_product(px.begin(), px.end(), qty.begin(), 0.0) / std::accumulate(qty.begin(), qty.end(), 0.0);', 'test-4')
 coding('l16s3.plain_mean', 'l16-algorithms.json', 3, VW % '    if (px.empty()) return 0;\n    return std::accumulate(px.begin(), px.end(), 0.0) / px.size();', 'test-1')
-coding('l16s3.int_start', 'l16-algorithms.json', 3, VW % '    double shares = std::accumulate(qty.begin(), qty.end(), 0);\n    if (shares == 0) return 0;\n    return std::inner_product(px.begin(), px.end(), qty.begin(), 0) / shares;', 'test-5')
+coding('l16s3.int_start', 'l16-algorithms.json', 3, VW % '    double shares = std::accumulate(qty.begin(), qty.end(), 0);\n    if (shares == 0) return 0;\n    return std::inner_product(px.begin(), px.end(), qty.begin(), 0) / shares;', 'test-6')  # re-pointed (fix pass, finding 8)
+coding('l16s3.int_value_only', 'l16-algorithms.json', 3, VW % '    double shares = std::accumulate(qty.begin(), qty.end(), 0.0);\n    if (shares == 0) return 0;\n    double value = std::inner_product(px.begin(), px.end(), qty.begin(), 0);\n    return value / shares;', 'test-6')  # fix pass
+coding('l16s3.int_loop', 'l16-algorithms.json', 3, VW % '    int value = 0;\n    double shares = 0;\n    for (std::size_t i = 0; i < px.size(); ++i) { value += px[i] * qty[i]; shares += qty[i]; }\n    if (shares == 0) return 0;\n    return value / shares;', 'test-6')  # fix pass
 # --- l16 s4 sort_book
 SB = '#include <algorithm>\n#include <vector>\n\nstd::vector<Order> sort_book(std::vector<Order> b) {\n    std::sort(b.begin(), b.end(), [](const Order& x, const Order& y) {\n%s\n    });\n    return b;\n}\n'
 coding('l16s4.price_only', 'l16-algorithms.json', 4, SB % '        return x.price > y.price;', 'test-2')
-coding('l16s4.price_ge', 'l16-algorithms.json', 4, SB % '        return x.price >= y.price;', 'test-4')
-coding('l16s4.time_le', 'l16-algorithms.json', 4, SB % '        if (x.price != y.price) return x.price > y.price;\n        return x.time <= y.time;', 'test-4')
-coding('l16s4.ge_then_le', 'l16-algorithms.json', 4, SB % '        if (x.price > y.price) return true;\n        if (x.price < y.price) return false;\n        return x.time <= y.time;', 'test-4')
+coding('l16s4.price_ge', 'l16-algorithms.json', 4, SB % '        return x.price >= y.price;', 'test-2')  # re-pointed (fix pass, finding 7): no tie-break, so test 2 first
+coding('l16s4.time_le', 'l16-algorithms.json', 4, SB % '        if (x.price != y.price) return x.price > y.price;\n        return x.time <= y.time;', 'test-6')  # re-pointed (fix pass, finding 7)
+coding('l16s4.ge_then_le', 'l16-algorithms.json', 4, SB % '        if (x.price > y.price) return true;\n        if (x.price < y.price) return false;\n        return x.time <= y.time;', 'test-6')  # re-pointed (fix pass, finding 7)
+coding('l16s4.or_le', 'l16-algorithms.json', 4, SB % '        return x.price > y.price || (x.price == y.price && x.time <= y.time);', 'test-6')  # fix pass
 coding('l16s4.ascending', 'l16-algorithms.json', 4, SB % '        if (x.price != y.price) return x.price < y.price;\n        return x.time < y.time;', 'test-1')
 # --- l16 s5 count_up_days
 CU = '#include <algorithm>\n#include <numeric>\n#include <vector>\n\nint count_up_days(const std::vector<double>& px) {\n%s\n}\n'
-coding('l16s5.counts_d0', 'l16-algorithms.json', 5, CU % '    if (px.size() < 2) return 0;\n    std::vector<double> d(px.size());\n    std::adjacent_difference(px.begin(), px.end(), d.begin());\n    return std::count_if(d.begin(), d.end(), [](double x) { return x > 0; });', 'test-4')
-coding('l16s5.counts_d0_no_guard', 'l16-algorithms.json', 5, CU % '    std::vector<double> d(px.size());\n    std::adjacent_difference(px.begin(), px.end(), d.begin());\n    return std::count_if(d.begin(), d.end(), [](double x) { return x > 0; });', 'test-4')
+coding('l16s5.counts_d0', 'l16-algorithms.json', 5, CU % '    if (px.size() < 2) return 0;\n    std::vector<double> d(px.size());\n    std::adjacent_difference(px.begin(), px.end(), d.begin());\n    return std::count_if(d.begin(), d.end(), [](double x) { return x > 0; });', 'test-1')  # re-pointed (fix pass, finding 11)
+coding('l16s5.counts_d0_no_guard', 'l16-algorithms.json', 5, CU % '    std::vector<double> d(px.size());\n    std::adjacent_difference(px.begin(), px.end(), d.begin());\n    return std::count_if(d.begin(), d.end(), [](double x) { return x > 0; });', 'test-1')  # re-pointed (fix pass, finding 11)
 coding('l16s5.no_guard', 'l16-algorithms.json', 5, CU % '    std::vector<double> d(px.size());\n    std::adjacent_difference(px.begin(), px.end(), d.begin());\n    return std::count_if(d.begin() + 1, d.end(), [](double x) { return x > 0; });', 'test-2')
 coding('l16s5.ge_zero', 'l16-algorithms.json', 5, CU % '    if (px.size() < 2) return 0;\n    std::vector<double> d(px.size());\n    std::adjacent_difference(px.begin(), px.end(), d.begin());\n    return std::count_if(d.begin() + 1, d.end(), [](double x) { return x >= 0; });', 'test-5')
 # --- l16 s9 worst_drawdown
@@ -1058,7 +1066,14 @@ coding('l17s4.wrong_param_types', 'l17-cmake.json', 4, RT % (FWD + 'double prese
 coding('l17s5.starter', 'l17-cmake.json', 5, '@starter', 'compile')
 coding('l17s5.double_params', 'l17-cmake.json', 5, 'double year_fraction(double days, double basis) {\n    return days / basis;\n}\n\ndouble accrued(double coupon, int days, int basis) {\n    return coupon * year_fraction(days, basis);\n}\n', 'compile')
 coding('l17s5.basis_fixed', 'l17-cmake.json', 5, 'double year_fraction(int days, int basis) {\n    return days / 365.0;\n}\n\ndouble accrued(double coupon, int days, int basis) {\n    return coupon * year_fraction(days, basis);\n}\n', 'test-1')
-coding('l17s5.int_division', 'l17-cmake.json', 5, 'double year_fraction(int days, int basis) {\n    return days / basis;\n}\n\ndouble accrued(double coupon, int days, int basis) {\n    return coupon * year_fraction(days, basis);\n}\n', 'test-2')
+coding('l17s5.int_division', 'l17-cmake.json', 5, 'double year_fraction(int days, int basis) {\n    return days / basis;\n}\n\ndouble accrued(double coupon, int days, int basis) {\n    return coupon * year_fraction(days, basis);\n}\n', 'test-1')  # re-pointed (fix pass, finding 11)
+DC = 'double year_fraction(int days, int basis) {\n    return %s;\n}\n\ndouble accrued(double coupon, int days, int basis) {\n    return coupon * year_fraction(days, basis);\n}\n'
+coding('l17s5.int_division_cast_after', 'l17-cmake.json', 5, DC % 'static_cast<double>(days / basis)', 'test-1')  # fix pass
+coding('l17s5.int_division_double_ctor', 'l17-cmake.json', 5, DC % 'double(days / basis)', 'test-1')  # fix pass
+coding('l17s5.basis_365_cast', 'l17-cmake.json', 5, DC % 'static_cast<double>(days) / 365', 'test-1')  # fix pass
+coding('l17s5.basis_360', 'l17-cmake.json', 5, DC % 'days / 360.0', 'test-2')  # fix pass
+coding('l17s5.basis_360_cast', 'l17-cmake.json', 5, DC % 'static_cast<double>(days) / 360', 'test-2')  # fix pass
+coding('l17s5.basis_360_ctor', 'l17-cmake.json', 5, DC % 'double(days) / 360.0', 'test-2')  # fix pass
 
 # --- l18 s3 bs_call tests
 T3 = 'TEST(at_the_money_matches_known_value) {\n%s\n}\n\nTEST(expiry_pays_intrinsic) {\n%s\n}\n'
@@ -1066,8 +1081,9 @@ ATM = '    CHECK_CLOSE(bs_call(100, 100, 0.05, 0.2, 1.0), 10.4506, %s);'
 EXP = '    CHECK_CLOSE(bs_call(90, 100, 0.05, 0.2, 0.0), 0.0, 1e-12);\n    CHECK_CLOSE(bs_call(110, 100, 0.05, 0.2, 0.0), 10.0, 1e-12);'
 coding('l18s3.eq', 'l18-unit-tests.json', 3, T3 % ('    CHECK(bs_call(100, 100, 0.05, 0.2, 1.0) == 10.4506);', EXP), 'test-1')
 coding('l18s3.tol_1e-5', 'l18-unit-tests.json', 3, T3 % (ATM % '1e-5', EXP), 'test-1')
-coding('l18s3.tol_5e-5', 'l18-unit-tests.json', 3, T3 % (ATM % '5e-5', EXP), 'test-1')
-coding('l18s3.tol_2e-5', 'l18-unit-tests.json', 3, T3 % (ATM % '2e-5', EXP), 'test-1')
+coding('l18s3.tol_5e-5', 'l18-unit-tests.json', 3, T3 % (ATM % '5e-5', EXP), None)  # re-pointed (fix pass, finding 3)
+coding('l18s3.tol_2e-5', 'l18-unit-tests.json', 3, T3 % (ATM % '2e-5', EXP), None)  # re-pointed (fix pass, finding 3)
+coding('l18s3.tol_1e-6', 'l18-unit-tests.json', 3, T3 % (ATM % '1e-6', EXP), 'test-1')  # fix pass
 coding('l18s3.starter', 'l18-unit-tests.json', 3, '@starter', 'test-2')
 coding('l18s3.expiry_only', 'l18-unit-tests.json', 3, T3 % ('', EXP), 'test-2')
 coding('l18s3.no_otm_expiry', 'l18-unit-tests.json', 3, T3 % (ATM % '1e-4', '    CHECK_CLOSE(bs_call(110, 100, 0.05, 0.2, 0.0), 10.0, 1e-12);'), 'test-3')
@@ -1099,13 +1115,18 @@ coding('l18s9.pin_loose', 'l18-unit-tests.json', 9, T9 % (PIN % '0.05', CONV), '
 coding('l18s9.pin_only', 'l18-unit-tests.json', 9, T9 % (PIN % '1e-6', ''), None)
 
 # --- l22 s4 add_overflows: checks made after the addition
-AO = '#include <climits>\nbool add_overflows(int a, int b) {\n%s\n}\n'
+AO = '#include <climits>\nconstexpr bool add_overflows(int a, int b) {\n%s\n}\n'  # re-pointed (fix pass, finding 6): the task now keeps constexpr
 coding('l22s4.starter', 'l22-undefined-behaviour.json', 4, '@starter', 'test-1')
 coding('l22s4.after_sum_lt', 'l22-undefined-behaviour.json', 4, AO % '    int s = a + b;\n    return (b > 0 && s < a) || (b < 0 && s > a);', 'fail')
 coding('l22s4.after_sign', 'l22-undefined-behaviour.json', 4, AO % '    int s = a + b;\n    return (a > 0 && b > 0 && s < 0) || (a < 0 && b < 0 && s >= 0);', 'fail')
 coding('l22s4.wide', 'l22-undefined-behaviour.json', 4, AO % '    long long s = static_cast<long long>(a) + b;\n    return s > INT_MAX || s < INT_MIN;', None)
 coding('l22s4.unsigned_wrap', 'l22-undefined-behaviour.json', 4, AO % '    int s = static_cast<int>(static_cast<unsigned>(a) + static_cast<unsigned>(b));\n    return (b > 0 && s < a) || (b < 0 && s > a);', None)
 coding('l22s4.positive_only', 'l22-undefined-behaviour.json', 4, AO % '    return b > 0 && a > INT_MAX - b;', 'test-3')
+coding('l22s4.after_sign_plain', 'l22-undefined-behaviour.json', 4, AO.replace('constexpr ', '') % '    int s = a + b;\n    return (a > 0 && b > 0 && s < 0) || (a < 0 && b < 0 && s >= 0);', 'test-14')  # fix pass
+coding('l22s4.unsplit', 'l22-undefined-behaviour.json', 4, AO % '    return a > INT_MAX - b || a < INT_MIN - b;', 'fail')  # fix pass
+coding('l22s4.builtin', 'l22-undefined-behaviour.json', 4, AO % '    int r = 0;\n    return __builtin_add_overflow(a, b, &r);', None)  # fix pass
+_l22sol = json.load(open(os.path.join(CPP, 'l22-undefined-behaviour.json')))['screens'][4]['widget']['solution']
+coding('l22s4.no_constexpr', 'l22-undefined-behaviour.json', 4, _l22sol.replace('constexpr bool', 'bool'), 'test-14')  # fix pass
 
 # --- l20 s5 Samples: the lesson's own copy assignment without the guard (is the guard needed for correctness?)
 _sol = json.load(open(os.path.join(CPP, 'l20-rule-of-five.json')))['screens'][5]['widget']['solution']
@@ -1117,8 +1138,12 @@ coding('l20s5.no_guard_alloc_first', 'l20-rule-of-five.json', 5, _sol.replace(_h
 HB = '#include <algorithm>\n#include <iomanip>\n#include <iostream>\n#include <map>\n#include <unordered_map>\n#include <string>\n#include <vector>\n\nstruct Trade { double price; int qty; };\n\nint main() {\n    %s<std::string, std::vector<Trade>> book;\n    std::string sym; double price; int qty;\n    while (std::cin >> sym >> price >> qty) book[sym].push_back({price, qty});\n%s\n    for (auto& [s, trades] : book) {\n%s\n        double value = 0, shares = 0, sum = 0;\n        for (const Trade& t : trades) { value += t.price * t.qty; shares += t.qty; sum += t.price; }\n        std::cout << s << \' \' << trades.size() << \' \' << %s << \' \' << trades.front().price << \' \' << trades.back().price << \'\\n\';\n    }\n    return 0;\n}\n'
 SORT = '        std::sort(trades.begin(), trades.end(), [](const Trade& a, const Trade& b) { return a.price < b.price; });'
 FIX = '    std::cout << std::fixed << std::setprecision(4);'
-coding('h4i0.unweighted', 'homework-4.json', 0, HB % ('std::map', FIX, SORT, 'sum / trades.size()'), 'test-4')
-coding('h4i0.unordered', 'homework-4.json', 0, HB % ('std::unordered_map', FIX, SORT, 'value / shares'), 'test-1')
+coding('h4i0.unweighted', 'homework-4.json', 0, HB % ('std::map', FIX, SORT, 'sum / trades.size()'), 'test-1')  # re-pointed (fix pass, finding 11)
+coding('h4i0.unweighted_cast', 'homework-4.json', 0, HB % ('std::map', FIX, SORT, 'sum / static_cast<double>(trades.size())'), 'test-1')  # fix pass
+coding('h4i0.unweighted_lambda', 'homework-4.json', 0, HB % ('std::map', FIX, SORT, '[&] { double m = 0; for (const Trade& t : trades) m += t.price / trades.size(); return m; }()'), 'test-1')  # fix pass
+coding('h4i0.unordered', 'homework-4.json', 0, HB % ('std::unordered_map', FIX, SORT, 'value / shares'), 'test-6')  # re-pointed (fix pass, finding 9)
+coding('h4i0.unordered_reserve8', 'homework-4.json', 0, HB % ('std::unordered_map', FIX + '\n    book.reserve(8);', SORT, 'value / shares'), 'test-6')  # fix pass
+coding('h4i0.unordered_reserve64', 'homework-4.json', 0, HB % ('std::unordered_map', FIX + '\n    book.reserve(64);', SORT, 'value / shares'), 'test-6')  # fix pass
 coding('h4i0.no_sort', 'homework-4.json', 0, HB % ('std::map', FIX, '', 'value / shares'), 'test-1')
 coding('h4i0.no_fixed', 'homework-4.json', 0, HB % ('std::map', '', SORT, 'value / shares'), 'test-1')
 # --- homework 4, item 1 drawdown tests
@@ -1165,7 +1190,10 @@ variant('x.l23s5.counter_never_freed', L23, 5, [('            delete ptr_;\n    
 H5 = 'homework-5.json'
 variant('x.h5i0.source_stays_active', H5, 0, [('        other.active_ = false;\n', '')], 'fail')
 variant('x.h5i0.move_not_noexcept', H5, 0, [('ScopeGuard(ScopeGuard&& other) noexcept :', 'ScopeGuard(ScopeGuard&& other) :')], 'fail')
-variant('x.h5i1.plain_move_on_growth', H5, 1, [('std::move_if_noexcept(data_[i])', 'std::move(data_[i])')], 'fail')
+variant('x.h5i1.plain_move_on_growth', H5, 1, [('std::move_if_noexcept(data_[i])', 'std::move(data_[i])')], 'test-15')  # re-pointed (fix pass, finding 10): the Wobbly test
+variant('x.h5i1.forward_cast_on_growth', H5, 1, [('std::move_if_noexcept(data_[i])', 'static_cast<T&&>(data_[i])')], 'test-15')  # fix pass
+variant('x.h5i1.trait_dispatch', H5, 1, [('new (fresh + i) T(std::move_if_noexcept(data_[i]));', 'if constexpr (std::is_nothrow_move_constructible_v<T> || !std::is_copy_constructible_v<T>) new (fresh + i) T(std::move(data_[i])); else new (fresh + i) T(data_[i]);')], None)  # fix pass
+variant('x.h5i1.trait_dispatch_noexcept_only', H5, 1, [('new (fresh + i) T(std::move_if_noexcept(data_[i]));', 'if constexpr (std::is_nothrow_move_constructible_v<T>) new (fresh + i) T(std::move(data_[i])); else new (fresh + i) T(data_[i]);')], None)  # fix pass: no hidden T is move-only
 variant('x.h5i1.copy_on_growth', H5, 1, [('T(std::move_if_noexcept(data_[i]))', 'T(data_[i])')], 'fail')
 variant('x.h5i1.build_after_free', H5, 1, [('            new (fresh + size_) T(std::forward<U>(x));      // x may live in the old block, so build it first\n', ''), ('            data_ = fresh;\n            cap_ = new_cap;', '            data_ = fresh;\n            cap_ = new_cap;\n            new (data_ + size_) T(std::forward<U>(x));')], 'fail')
 variant('x.h5i9.sole_assign_deletes_first', H5, 9, [('        T* taken = other.release();   // take the source first: the old object may own it\n        T* old = ptr_;\n        ptr_ = taken;\n        delete old;', '        if (this != &other) { delete ptr_; ptr_ = other.ptr_; other.ptr_ = nullptr; }')], 'fail')
@@ -1226,8 +1254,10 @@ if have('vec'):
     check('l14 screens[4] byKey.test-5: five pushes without reserve leave capacity 8', v['cap_no_reserve_5'] == '8')
     check('l14 screens[5] key: 101.5 + 99.8 + 102.3 = 303.6', v['iter_total'] == '303.6')
     check('l14 screens[0] key: prints 3 102', v['first'] == '3 102')
-    check('l14 screens[3] hints[1] and byKey.test-4: xs.size() - n + 1 wraps for 3 closes and n = 4', v['size_minus_n_plus_1'] != '0',
-          'it is 0: 3u - 4 + 1 is 0 modulo 2^32; it wraps from n = 5 (' + v['size_minus_5_plus_1'] + ')', finding=2)
+    # re-pointed (fix pass, finding 2): the hint and line now say 3 closes and n = 5
+    _t3 = load('l14-vector.json')['screens'][3]['widget']['tests'][3]['args']
+    check('l14 screens[3] hints[1] and byKey.test-4: with 3 closes and n = 5, xs.size() - n wraps (and 3u - 4 + 1 is 0)', v['size_minus_5_plus_1'] == '4294967295' and v['size_minus_n_plus_1'] == '0' and _t3 == [[100, 101, 102], 5],
+          'size_minus_5_plus_1 %s, tests[3].args %s' % (v['size_minus_5_plus_1'], _t3), finding=2)
 if have('l14s3.count_wraps_to_zero', 'x.fix_ma_n5'):
     check('l14 screens[3] tests: the loop `i < xs.size() - n + 1` (with n < 1 guarded) is rejected', key('l14s3.count_wraps_to_zero') is not None,
           'it passes all 7 hidden tests and stops only when n >= size + 2', finding=2)
@@ -1255,9 +1285,10 @@ if have('maps'):
 if have('x.map_depth'):
     d = K('x.map_depth')
     check('l15 screens[1] explain: the drawn tree (HSBA, BARC, SHEL, AZN, BP, LLOY, VOD) needs at most 3 comparisons', d['depth7_lesson_order'] == '3')
-    check('l15 screens[1] explain: 7 keys in a std::map need at most 3 steps', int(d['depth7_sorted_inserts']) <= 3,
+    # re-pointed (fix pass, finding 20): "this tree of 7 keys needs at most 3 steps"; "a million keys need 20 to 40"
+    check('l15 screens[1] explain: a std::map of 7 keys can sit deeper than the drawn tree (at most 2 log2(8) = 6)', 3 < int(d['depth7_sorted_inserts']) <= 6,
           '7 keys inserted in sorted order sit ' + d['depth7_sorted_inserts'] + ' deep', finding=20)
-    check('l15 screens[1] explain, summary.formula.note: a million keys need about 20 comparisons', int(d['depth_million_sorted']) <= 24,
+    check('l15 screens[1] explain, summary.formula.note: a million keys need 20 to 40 comparisons', 20 <= int(d['depth_million_random']) <= 40 and 20 <= int(d['depth_million_sorted']) <= 40 and 2 * math.log2(1e6 + 1) <= 40,
           'sorted inserts: ' + d['depth_million_sorted'] + '; random inserts: ' + d['depth_million_random'] + ' (a red-black tree is at most 2 log2(n + 1) deep)', finding=20)
 if have('algos'):
     a = K('algos')
@@ -1277,18 +1308,23 @@ if have('capture_by_value_assign'):
 if have('transform_empty'):
     t = K('transform_empty')
     check('l16 screens[6] key, in this app: size stays 0 and the run goes on', (t.get('size_after'), t.get('alive')) == ('0', '1'))
-    check('l16 screens[6] key holds beyond this app (the question does not say "in this app")', t.get('begin_is_null') != '1',
+    # re-pointed (fix pass, finding 14): the question now says "in this app's run" and the key names the desktop crash
+    _q6 = load('l16-algorithms.json')['screens'][6]
+    check('l16 screens[6] question says "in this app\'s run"; begin() is a null pointer, so a desktop write faults', t.get('begin_is_null') == '1' and "in this app's run" in _q6['question'] and 'desktop build usually crashes' in _q6['feedback']['correct'],
           'pence.begin() is a null pointer: this app writes at address 0 without complaint, a desktop build faults on the first write', finding=14)
 if have('max_empty_deref'):
     check('l16 screens[8] explain: reading through end() printed nothing at all here', 'v=' not in (R['max_empty_deref'].get('out') or ''))
 if have('sort_le3', 'sort_le_many', 'sort_le_int'):
-    check('l16 quiz q-le options[fine].why: this app stops sort with <= on the three prices shown', stopped('sort_le3'),
+    # re-pointed (fix pass, finding 7): the why now says the three prices sort and longer ranges stop
+    check('l16 quiz q-le options[fine].why: the three prices sort quietly to 99.8, 100.5, 100.5', not stopped('sort_le3') and K('sort_le3').get('out', '').startswith('99.8,100.5,100.5'),
           'the three prices sort without a stop (' + K('sort_le3').get('out', '') + '); the stop comes on longer ranges', finding=7)
     check('l16 quiz q-le, l22 screens[8]: with <= on a longer range the library stops with a strict-weak-ordering message', stopped('sort_le_many', 'strict-weak ordering') and stopped('sort_le_int', 'strict-weak ordering'))
-    check('l16 screens[4] byKey.test-4: six equal elements with <= stop with a strict-weak-ordering message', 'n6_after' not in K('sort_le_many'),
+    # re-pointed (fix pass, finding 7): test 4 is now about the tie order; the stop is test 6 (40 orders)
+    check('l16 screens[4] byKey.test-4: six equal elements with <= do not stop (so test 4 speaks of tie order only)', 'n6_after' in K('sort_le_many'),
           'six equal elements sort without a stop; the message first appears at 30', finding=7)
 if have('l16s4.time_le', 'l16s4.ge_then_le', 'l16s4.price_ge'):
-    check('l16 screens[4] byKey.test-4: a rule with <= or >= fails test 4 first', 'test-4' in (key('l16s4.time_le'), key('l16s4.ge_then_le'), key('l16s4.price_ge')),
+    # re-pointed (fix pass, finding 7)
+    check('l16 screens[4] byKey.test-6: a tie-break with <= fails test 6 first', key('l16s4.time_le') == 'test-6' and key('l16s4.ge_then_le') == 'test-6',
           'keys: time_le %s, ge_then_le %s, price_ge %s' % (key('l16s4.time_le'), key('l16s4.ge_then_le'), key('l16s4.price_ge')), finding=7)
     check('l16 screens[4] tests reject a non-strict rule', key('l16s4.time_le') is not None and key('l16s4.ge_then_le') is not None, 'both pass all 5 tests', finding=7)
 if have('x.fix_sort40_time_le', 'x.fix_sort40_price_ge', 'x.fix_sort40_strict'):
@@ -1301,11 +1337,14 @@ if have('l16s3.int_start', 'x.fix_misc'):
     check('homework-4 h4-vwap-book proposed test: unordered_map prints AZN, BP, SHEL out of order when they arrive in order', f['unordered_alpha_in'] != 'AZN,BP,SHEL,')
 if have('h4i0.unordered', 'h4i0.unweighted'):
     check('homework-4 h4-vwap-book tests reject std::unordered_map', key('h4i0.unordered') is not None, 'passes all 5 tests: every test happens to insert its symbols in reverse alphabetical order', finding=9)
-    check('homework-4 h4-vwap-book byKey.test-4: the unweighted mean fails test 4 first', key('h4i0.unweighted') == 'test-4', 'it fails ' + str(key('h4i0.unweighted')) + ' first', finding=11)
+    # re-pointed (fix pass, finding 11)
+    check('homework-4 h4-vwap-book byKey.test-1: the unweighted mean fails test 1 first (VOD 72.3000)', key('h4i0.unweighted') == 'test-1', 'it fails ' + str(key('h4i0.unweighted')) + ' first', finding=11)
 if have('l16s5.counts_d0'):
-    check('l16 screens[5] byKey.test-4: counting d[0] fails test 4 first', key('l16s5.counts_d0') == 'test-4', 'it fails ' + str(key('l16s5.counts_d0')) + ' first', finding=11)
+    # re-pointed (fix pass, finding 11): the test-1 line names it; test 4 is now descriptive
+    check('l16 screens[5] byKey.test-1: counting d[0] fails test 1 first', key('l16s5.counts_d0') == 'test-1', 'it fails ' + str(key('l16s5.counts_d0')) + ' first', finding=11)
 if have('l17s5.int_division'):
-    check('l17 screens[5] byKey.test-2: dividing two ints fails test 2 first', key('l17s5.int_division') == 'test-2', 'it fails ' + str(key('l17s5.int_division')) + ' first (90 / 360 is also 0)', finding=11)
+    # re-pointed (fix pass, finding 11)
+    check('l17 screens[5] byKey.test-1: dividing two ints fails test 1 first', key('l17s5.int_division') == 'test-1', 'it fails ' + str(key('l17s5.int_division')) + ' first (90 / 360 is also 0)', finding=11)
 if have('doubles'):
     d = K('doubles')
     check('l18 screens[7] key: 110.0 / 100.0 - 1 is 0.10000000000000009, not 0.1', (d['rise'], d['rise_eq_01'], d['rise_close']) == ('0.10000000000000009', '0', '1'))
@@ -1314,15 +1353,18 @@ if have('doubles'):
     check('l18 screens[9] canvas: 100 steps 10.430612, 2,000 steps 10.449584', ('%.6f' % float(d['crr100']), '%.6f' % float(d['crr2000'])) == ('10.430612', '10.449584'))
     check('l18 screens[9] byKey.test-3: 99 steps give 10.4683, and 1,999 steps stay within 0.002 of Black-Scholes', '%.4f' % float(d['crr99']) == '10.4683' and abs(float(d['crr1999']) - 10.450584) < 0.002)
     check('l18 screens[9] byKey.test-1: 1e-6 holds for the pin, 1e-7 does not', 1e-7 < abs(float(d['crr100']) - 10.430612) < 1e-6)
-    check('l18 screens[3] byKey.test-1: a tolerance below 1e-4 fails on the real bs_call', abs(float(d['bs']) - 10.4506) >= 1e-4,
+    # re-pointed (fix pass, finding 3): "the true value is 10.450584, 0.000016 from the pin, so == or 1e-5 fails"
+    check('l18 screens[3] byKey.test-1: the true value is 10.450584, 0.000016 from the pin', '%.6f' % float(d['bs']) == '10.450584' and round(abs(float(d['bs']) - 10.4506), 6) == 0.000016 and 1e-5 < abs(float(d['bs']) - 10.4506) < 2e-5,
           '|10.450584 - 10.4506| is 1.6e-5, so any tolerance from 2e-5 up passes', finding=3)
     check('l22 screens[2] byKey.t2, homework-5: -7 / 2 is -3 and 7 / 2 is 3', (d['neg7_div_2'], d['seven_div_2']) == ('-3', '3'))
     check('l17 screens[4] tests: discount factor, forward and the two present values', d['df'] == '0.9048374180359595' and abs(float(d['fwd']) - 105.12710963760242) < 1e-11 and abs(float(d['pv3']) - 102.54617478299633) < 1e-11 and abs(float(d['pv1']) - 98.51119396030627) < 1e-11)
 if have('l18s3.tol_2e-5', 'l18s3.tol_5e-5', 'l18s3.tol_1e-5', 'l18s3.eq'):
-    check('l18 screens[3] byKey.test-1 (graded): tolerances 2e-5 and 5e-5 fail test 1', key('l18s3.tol_2e-5') == 'test-1' and key('l18s3.tol_5e-5') == 'test-1', 'both pass every test; 1e-5 and == fail test 1', finding=3)
+    # re-pointed (fix pass, finding 3)
+    check('l18 screens[3] byKey.test-1 (graded): tolerances 2e-5 and 5e-5 pass, so the line no longer names them', key('l18s3.tol_2e-5') is None and key('l18s3.tol_5e-5') is None, 'both pass every test; 1e-5 and == fail test 1', finding=3)
     check('l18 screens[3] byKey.test-1: == and 1e-5 fail test 1', key('l18s3.eq') == 'test-1' and key('l18s3.tol_1e-5') == 'test-1')
 if have('l18s4.eq_exact', 'l18s4.percent'):
-    check('l18 screens[4] byKey.test-2: a test-2 failure means the hand value is wrong', key('l18s4.eq_exact') != 'test-2',
+    # re-pointed (fix pass, finding 12): the line now names == as well
+    check('l18 screens[4] byKey.test-2: CHECK(r[0] == 0.1) fails test 2, as the line now says', key('l18s4.eq_exact') == 'test-2',
           'CHECK(r[0] == 0.1), with the right hand value, also fails test 2 first', finding=12)
     check('l18 screens[4] byKey.test-2: a wrong hand value (10.0) fails test 2', key('l18s4.percent') == 'test-2')
 check('l17 screens[6], quiz q-mixed: 1.28 / 0.16 = 8; 4.1 / 0.16 is about 26; 4.1 / 1.3 is about 3', abs(1.28 / 0.16 - 8) < 1e-12 and round(4.1 / 0.16) == 26 and round(4.1 / 1.3) == 3 and abs(1.28 - 0.16 - 1.12) < 1e-12)
@@ -1332,7 +1374,8 @@ check('homework-4 h4-vwap-book expects: 72.26, 210.6667, 4.77, 27.09, 6.425; unw
 check('homework-4 h4-test-drawdown: worst fall 0.25 (120 to 90), last 0.2 (130 to 104)', abs((120 - 90) / 120 - 0.25) < 1e-15 and abs((130 - 104) / 130 - 0.2) < 1e-15)
 if have('linker_names_caller_symbol'):
     dg = R['linker_names_caller_symbol']['diag']
-    check('homework-4 h4-two-libs prose: with `report` linked to nothing the linker reports a `pricing` function', 'pricing' in dg,
+    # re-pointed (fix pass, finding 5): the prose now says a `risk` function
+    check('homework-4 h4-two-libs prose: with `report` linked to nothing the linker reports a `risk` function', 'risk' in dg and 'pricing' not in dg and 'undefined reference to a `risk` function' in load('homework-4.json')['items'][5]['prose'],
           'the linker names what report.o itself calls, a risk function: ' + ' '.join(l for l in dg.split('\n') if 'undefined symbol' in l)[:120], finding=5)
 
 # ---- level 5 ---------------------------------------------------------------------------------------------
@@ -1345,7 +1388,8 @@ if have('tracked', 'tracked_throwing'):
     check('l19 screens[6], quiz q-const-move, review-5 r5-take-copies: a const source copies', (t['const_move'], t['take_const'], t['take_move_const'], t['take_temp']) == ('1,0', '1,0', '1,0', '0,0'))
     check('l19 quiz q-return-move: return t runs 0 moves, return std::move(t) runs 1', (t['ret_plain'], t['ret_move']) == ('0,0', '0,1'))
     check('review-5 r5-growth-copies: emplace_back still copies on growth; reserve stops the copies', u['four_emplace'].startswith('3,') and u['four_reserved'].startswith('0,'))
-    check('l19 screens[4] options[all-move].why, summary.ideas[2]: a vector moves on growth ONLY if the move is noexcept; otherwise it copies', u['move_only_throwing_moves'] == '0',
+    # re-pointed (fix pass, finding 13): "if their move is noexcept, or if they cannot be copied"
+    check('l19 summary.ideas[2]: a vector also moves a type it cannot copy, even with a throwing move', u['move_only_throwing_moves'] != '0' and 'or if they cannot be copied' in load('l19-moving-not-copying.json')['summary']['ideas'][2],
           'a move-only type with a throwing move is still moved on growth (%s moves in 4 pushes): the copy needs a copy constructor' % u['move_only_throwing_moves'], finding=13)
 if have('special'):
     s = K('special')
@@ -1359,7 +1403,9 @@ if have('special'):
     want = {'a copy assignment': got[3], 'a move assignment': got[5], 'a move constructor': got[4], 'a destructor': got[1]}
     check('homework-5 h5-members-table: all 12 cells', all([c['answer'] for c in row[1:]] == want[row[0]][1:] for row in h5))
     check('l20 screens[3] key, review-5 r5-defaulted-nothrow: Pos is nothrow move constructible, Pos3 is not', (s['pos_nothrow'], s['pos3_nothrow'], s['string_nothrow'], s['vector_nothrow']) == ('1', '0', '1', '1'))
-    check('l20 screens[3] explain: the hand-written Pos3 (as drawn: no copy constructor) makes the vector copy', s['pos3_like_growth'].split(',')[0] != '0',
+    # re-pointed (fix pass, finding 13): the canvas now draws `Pos3(const Pos3&) = default;`
+    _c3 = load('l20-rule-of-five.json')['screens'][3]['canvas']['params']['lines']
+    check('l20 screens[3] explain: the hand-written Pos3, drawn with a defaulted copy, makes the vector copy', '    Pos3(const Pos3&) = default;' in _c3 and s['pos3_with_copy_growth'].split(',')[0] == '3' and s['pos3_like_growth'].split(',')[0] == '0',
           'Pos3 as drawn is not copy constructible (%s), so the vector moves it: copies,moves = %s; with a defaulted copy added: %s' % (s['pos3_copyable'], s['pos3_like_growth'], s['pos3_with_copy_growth']), finding=13)
     check('l20 screens[3] proposed canvas line `Pos3(const Pos3&) = default;`: the vector then copies on growth', s['pos3_with_copy_growth'].split(',')[0] == '3')
     check('review-5 r5-order-compiles: only `Order d;` compiles', s['order'] == '1,0,0,0,0')
@@ -1369,9 +1415,11 @@ if have('order_move_deleted', 'fill_move_ctor_only_ok'):
     check('l20 screens[0]: the move line compiles; the other three do not', R['fill_move_ctor_only_ok']['ok'] and not any(R['fill_move_ctor_only_' + n]['ok'] for n in ('copy', 'assign', 'move_assign')))
 if have('samples_no_guard', 'l20s5.no_guard_alloc_first'):
     g = K('samples_no_guard')
-    check('l20 quiz q-self-guard key: without the guard, a = a on the lesson\'s Samples frees the block it is about to copy from', (g.get('size'), g.get('sum')) != ('10', '15'),
+    # re-pointed (fix pass, finding 1): the quiz now asks about a free-first assignment; Samples is safe without the guard
+    check('l20 quiz q-self-guard explain: the lesson\'s Samples (allocate first) is safe for a = a without the guard', (g.get('size'), g.get('sum')) == ('10', '15') and 'frees its old block first' in [q for q in load('l20-rule-of-five.json')['quiz'] if q['id'] == 'q-self-guard'][0]['prose'],
           'the lesson\'s copy assignment allocates and copies before it frees: a = a without the guard leaves size 10 and the data intact', finding=1)
-    check('l20 quiz q-self-guard key (graded): the lesson\'s solution with the guard removed fails a hidden test', key('l20s5.no_guard_alloc_first') is not None, 'it passes all 13 tests, a = a included', finding=1)
+    # re-pointed (fix pass, finding 1)
+    check('l20 quiz q-self-guard explain (graded): the lesson\'s solution with the guard removed passes every hidden test', key('l20s5.no_guard_alloc_first') is None, 'it passes all 13 tests, a = a included', finding=1)
 if have('x.l19s5.no_self_guard'):
     check('l19 screens[8] explain: the move assignment needs its guard (a = std::move(a) otherwise loses the block)', key('x.l19s5.no_self_guard') == 'test-8')
 if have('virtuals', 'linux64_sizes', 'win64_D_is_24', 'win64_D_is_16', 'win64_long_is_4', 'win64_long_is_8'):
@@ -1379,9 +1427,11 @@ if have('virtuals', 'linux64_sizes', 'win64_D_is_24', 'win64_D_is_16', 'win64_lo
     check('l21 sizes here: Tick 4, VTick 8, B 8, D 12, Quote 24, W 8; review-5 S 8; homework-5 B{double} 16', [v[k] for k in ('Tick', 'VTick', 'B', 'D', 'Quote', 'W', 'S', 'BD')] == ['4', '8', '8', '12', '24', '8', '8', '16'])
     check('l19 screens[1] explain: Buffer is 8 bytes here; l23 screens[3]: unique_ptr 4, shared_ptr 8', (v['Buffer'], v['unique'], v['shared']) == ('8', '4', '8'))
     check('64-bit Linux (Itanium ABI): B 16, D 16, Quote 24, W 16, S 16, VTick 16, Buffer 16, long 8', R['linux64_sizes']['ok'])
-    check('l21 screens[2] explain and byKey.sixteen: "a desktop gives 16" for D', not R['win64_D_is_24']['ok'],
+    # re-pointed (fix pass, finding 16): 16 on 64-bit Linux and macOS, 24 on 64-bit MSVC
+    check('l21 screens[2] explain and byKey.sixteen: D is 16 on 64-bit Linux, 24 on 64-bit MSVC', R['win64_D_is_24']['ok'] and not R['win64_D_is_16']['ok'] and R['linux64_sizes']['ok'],
           'x86-64 Windows (MSVC ABI) gives 24: it does not reuse the padding after x', finding=16)
-    check('l22 screens[2] byKey.t3: sizeof(long) is 8 "on a desktop"', not R['win64_long_is_4']['ok'], 'it is 4 on 64-bit Windows (LLP64)', finding=17)
+    # re-pointed (fix pass, finding 17)
+    check('l22 screens[2] byKey.t3: sizeof(long) is 4 on 64-bit Windows and 8 on 64-bit Linux', R['win64_long_is_4']['ok'] and not R['win64_long_is_8']['ok'] and R['linux64_sizes']['ok'], 'it is 4 on 64-bit Windows (LLP64)', finding=17)
     check('l21 screens[4], quiz q-vector-slice, homework-5: a sliced copy runs the base version; a reference or unique_ptr runs Call', (v['sliced'], v['vector_slice'], v['via_ref'], v['via_unique']) == ('-1', '-1', '10', '10'))
     check('l21 screens[7] key: d.who is "Base"', (v['ctor_call'], v['later_call']) == ('Base', 'Derived'))
     check('l22 screens[2] byKey.t3: sizeof(long) is 4 here', v['long'] == '4')
@@ -1406,15 +1456,32 @@ if have('smart', 'shared_base_no_virtual'):
     check('l23 screens[5] solution comment: use_count of an empty pointer is 0', s['empty_count'] == '0')
     check('review-5 r5-virtual-dtor options[shared].why: shared_ptr<Base> from make_shared<Derived> runs ~Derived without a virtual destructor', K('shared_base_no_virtual')['shared_runs_derived'] == '1')
 if have('abstract_middle_class', 'abstract_middle_instantiated'):
-    check('l21 quiz q-abstract key: each derived class must override value', not R['abstract_middle_class']['ok'],
+    # re-pointed (fix pass, finding 18): "a derived class must override value before it can be built"
+    check('l21 quiz q-abstract key: a middle class may stay abstract; the built class overrides value', R['abstract_middle_class']['ok'],
           'a derived class may leave it pure and stay abstract; only a class that is built must have it overridden', finding=18)
     check('l21 quiz q-abstract: an abstract class cannot be built', not R['abstract_middle_instantiated']['ok'])
 check('l23 screens[9] key: 400,000 and 200,000 allocations, 10 ms saved', 200000 * 2 == 400000 and 200000 * 50e-9 * 1e3 == 10)
 check('l19 screens[1] explain: 8,000,000 bytes at 10 GB/s is 0.8 ms; homework-5 model: 1,000 x 1,000 doubles is 8 MB', 1e6 * 8 / 10e9 * 1e3 == 0.8 and 1000 * 1000 * 8 == 8_000_000)
 check('l22 screens[10]: INT_MAX pence is 21,474,836.47 pounds; unsigned doubles it to 42,949,672.95', round(2147483647 / 100, 2) == 21474836.47 and round(4294967295 / 100, 2) == 42949672.95 and 2 ** 53 > 2_500_000_000)
 
+# ---- fix pass: new hidden tests and the values they encode -------------------------------------------------
+_h5 = load('homework-5.json')['items'][1]['widget']
+check('homework-5 h5-vec Wobbly test: 8 pushes move 8 temporaries in, growth at 1, 2, 4 copies 1 + 2 + 4 = 7 (708)',
+      _h5['tests'][-1]['expect'] == 708 == (1 + 2 + 4) * 100 + 8 and 'Wobbly(Wobbly&& o) :' in _h5['prelude'] and 'Wobbly(Wobbly&& o) noexcept' not in _h5['prelude'])
+if have('x.h5i1.plain_move_on_growth'):
+    check('homework-5 h5-vec: a Vec that always moves on growth fails the Wobbly test (test 15)', key('x.h5i1.plain_move_on_growth') == 'test-15', str(key('x.h5i1.plain_move_on_growth')), finding=10)
+_l22 = load('l22-undefined-behaviour.json')['screens'][4]['widget']
+check('l22 screens[4]: starter and solution are constexpr and the last two tests are static_assert probes',
+      'constexpr bool add_overflows' in _l22['starter'] and 'constexpr bool add_overflows' in _l22['solution'] and [c.get('compiles', '')[:14] for c in _l22['tests'][13:]] == ['static_assert('] * 2 and len(_l22['tests']) == 15)
+if have('l22s4.after_sign'):
+    check('l22 screens[4]: the sign test after the sum now fails a compile-time test (test 14)', key('l22s4.after_sign') == 'test-14', str(key('l22s4.after_sign')), finding=6)
+check('l16 screens[3] test 6: vwap({10.25, 10.75}, {3, 1}) = 41.5 / 4 = 10.375; an int total gives 40 / 4 = 10',
+      abs((10.25 * 3 + 10.75 * 1) / 4 - 10.375) < 1e-15 and int(int(10.25 * 3) + 10.75 * 1) / 4 == 10)
+check('homework-4 h4-vwap-book test 6: one trade each, so VWAP, low and high are the price',
+      load('homework-4.json')['items'][0]['widget']['tests'][5]['expect'] == ''.join('%s 1 %.4f %.4f %.4f\n' % (s, p, p, p) for s, p in (('AZN', 118.5), ('BP', 4.75), ('SHEL', 27.15))))
+
 # ---- feedback.byKey.test-N sweep: each coding must reach the key its line implies -------------------------------
-SWEEP_FINDING = {'l14s3.count_wraps_to_zero': 2, 'l16s3.int_start': 8, 'l16s4.time_le': 7, 'l16s4.ge_then_le': 7, 'l16s4.price_ge': 7, 'l16s5.counts_d0': 11, 'l16s5.counts_d0_no_guard': 11,
+SWEEP_FINDING = {'l14s3.count_wraps_to_zero': 2, 'l22s4.no_constexpr': 6, 'l22s4.after_sign_plain': 6, 'l16s3.int_start': 8, 'l16s4.time_le': 7, 'l16s4.ge_then_le': 7, 'l16s4.price_ge': 7, 'l16s5.counts_d0': 11, 'l16s5.counts_d0_no_guard': 11,
                  'l17s5.int_division': 11, 'l18s3.tol_2e-5': 3, 'l18s3.tol_5e-5': 3, 'h4i0.unweighted': 11, 'h4i0.unordered': 9, 'l22s4.after_sign': 6, 'x.h5i1.plain_move_on_growth': 10}
 # codings whose first failure is an earlier test than the line being probed, with no claim attached
 NEUTRAL = {'l14s3.window_one_late': 'test-1', 'l16s9.peak_first': 'test-2'}
