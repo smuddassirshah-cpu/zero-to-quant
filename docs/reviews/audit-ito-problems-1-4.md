@@ -67,3 +67,26 @@ Opus fixer, content commit 1fade7ab. No key, slip, test or method changed.
 3. Fixed (`p-results-vol` part 1 feedback.correct and explain.text). Basis: Shreve II Thm 4.4.9 needs a nonrandom integrand for the normal law with variance $\int \sigma(t)^2\,dt$; lesson 5 says "deterministic". The integrand here steps from 0.40 to 0.15, so "fixed" read as constant. Both sentences now say "deterministic"; $0.16(0.25) + 0.0225(0.75) = 0.056875$ is unchanged.
 
 Gates: validator 0 errors; voice scan 35 on the three files 0 and 0; `ito-problems-concepts.py` 386 checks, exit 0 (no check encodes the old text, so nothing re-pointed); `run-number-scripts --only ito` 9 of 9 passed; `grade-all --file` 12, 12 and 12 widgets, 0 failures; playthrough `--problems ito/problems-1`, `-2`, `-3` desktop and `--mobile`, all passed. problems-4 untouched.
+
+## Fix-pass read
+
+Fresh reader, blind to this file until the rows below were written. Read `git show 1fade7ab -- app/content/courses` with each whole item for context. Script: `docs/reports/ito-problems-1-3-fixread.py` (22 checks, exit 0). No key, slip, test, mutant group or `vars` family changed, so the code and fluency steps do not apply.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | `problems-1.json` | `p-maker-tally` parts[2].question | $X_t = 350t + \sigma W_t$ has quadratic variation $\sigma^2$ over a day; matching it to the walk's gives $\sigma^2 = 1{,}000{,}000$ | correct | Shreve II §3.4.2 (Thm 3.4.3, $[W,W](T) = T$) and §4.4 (Lemma 4.4.4: an Itô process has $[X,X](t) = \int \Delta^2\,du$, the $dt$ term adds nothing). Walk: $625 \times 40^2$ on every path, as part 2 keys. Simulated sum of squares on a 200,000-step grid: 996,564. |
+| 2 | `problems-1.json` | same | The walk's daily variance is 999,804 | correct | Two ways: $625(1600 - 0.56^2)$ and $625 \times 1600 \times 4(0.507)(0.493)$, both 999,804 exactly. Simulation of 2,000,000 days: 998,438. Agrees with part 2's `variance` slip. |
+| 3 | `problems-1.json` | same | That variance is within 0.02% of 1,000,000 | correct | $196/1{,}000{,}000 = 0.0196\%$. |
+| 4 | `problems-1.json` | same, against the key | One keyed answer stays true: 2,236.068, tol 0.5 | correct | $\sqrt{5 \times 10^6} = 2236.068$. A learner who matches variance gets 2,235.849, also inside the tolerance. Slips 5,000 and 1,000 are untouched and far outside. |
+| 5 | `problems-2.json` | `p-results-vol` parts[0].feedback.correct | A deterministic integrand gives a normal with variance $\int_0^1 \sigma(t)^2\,dt = 0.16(0.25) + 0.0225(0.75) = 0.056875$ | correct | Shreve II Thm 4.4.9 (Itô integral of a deterministic integrand). Exact fraction 0.056875. Simulation of 100,000 paths: variance 0.05687, kurtosis 3.004. With a random integrand $\lvert W_t\rvert$ the kurtosis is 15.4, so the word carries the hypothesis. |
+| 6 | `problems-2.json` | `p-results-vol` parts[0].explain.text | Same statement; $0.4^2 \times 0.25 + 0.15^2 \times 0.75 = 0.056875$ | correct | As row 5. The step volatility of the prose is deterministic and not constant, so "deterministic" fits where "fixed" did not. |
+| 7 | `problems-3.json` | `p-bridge-closes` parts[3].question | The payoff is discounted at 4.5% over $4/252$ of a year, the simulation's clock | correct | Part 2 sets $\Delta t = 1/252$, so four steps are $4/252$. $e^{-0.045 \times 4/252} = 0.999286$, as the feedback and explain already say. Discounting a payoff at $e^{-rT}$: Shreve II §5.2.4. |
+| 8 | `problems-3.json` | same, against the key | One keyed answer stays true: 3.604419, tol 0.01 (£3.60) | correct | Touch chances recomputed: $6.0 \times 10^{-8}$, 0.1577, 0.4942, 0.0993; survival 0.38372. Full precision: $0.99928597 \times 9.40 \times 0.38372 = 3.60442$. Rounded route: $0.999286 \times 9.40 \times 0.3837 = 3.6042$. Plain figure 9.3933. Slips recomputed: 9.39, 5.79, 4.75, 2.34, each more than 1.1 from the key. Bridge touch chance simulated on a 2,000-step grid: 0.478, below 0.4942 as a discrete grid must be. |
+
+Counts: 8 rows; 8 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified. No fix needed.
+
+Notes, not findings.
+
+- Part 4's tolerance of 0.01 also accepts a $4/365$ clock (3.6052) and no discounting at all (3.6070). The stated clock is right; the grade cannot tell the clocks apart. That is harmless at four days.
+- The fix-pass note cites Thm 3.4.3 for the drifted process. That theorem is plain Brownian motion; the drift step is Lemma 4.4.4 with Remark 4.4.5. The content sentence does not depend on which is cited.
+- Part 3's stored key 0.383717 differs from the full-precision 0.383723 in the sixth place. It is unchanged by this commit and well inside its tolerance of 0.00015.
