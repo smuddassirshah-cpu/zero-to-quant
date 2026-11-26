@@ -130,3 +130,94 @@ Opus fixer, on commit `7ac0ec7e`. Every code-behaviour claim written here was ru
 Scripts: the concepts script's old-text checks are re-pointed (the `q-floor` check tests the new line; each NOTE fires only while its old wording is present; the `l6` 74.90 check reads the new `simple` line), and section G checks the fix-pass claims: 815 checks, 0 failing, 0 notes, in CPython 3.13 and in Pyodide (strict tracebacks). The sweep's 17 routing facts and the two append programs are re-pointed in its `FIXED` map, so `KNOWN` is empty: 133 submissions, 0 differing, exit 0, also with `--concepts`.
 
 Gates: validator 0 errors (4,618 warnings, as before); voice scan 35 on the 14 edited files 0 and 0; `run-number-scripts --only first-python` 5 of 5; `grade-all.mjs --code` on the 14 files 0 failures (mutants checked); playthrough of the 10 lessons and 4 sets green desktop and `--mobile`.
+
+## Fix-pass read
+
+Fresh reader, blind to this file until the rows below were written. Diff read: `git diff 7ac0ec7e 3157b5c1 -- app/content/courses/first-python` (14 files), at HEAD `eba9ca3e` (no later change to the course folder).
+
+Method. Every code claim ran under the page's Pyodide 0.27.7 through `tools/code-runner.mjs` (the widget's own `casePlan` and the page's worker grader). For each moved or new `test-N` line I wrote my own codings of the mistake it names (95 submissions over 18 widgets, none copied from the committed mutants) and read the key and the failing row. `grade-all.mjs --code --file` ran on the ten files that carry mutants: 0 failures (61 mutants first fail the test they name; solutions pass; starters fail). Numbers were recomputed in floats and in `Decimal`.
+
+How `error` is keyed (`js/engine/widgets/code.js` line 622, `tools/code-runner.mjs` `grade`): the key is `error` only when the run reports a load error, otherwise `test-N` for the first failing row. Measured: in script mode (a `stdout` test present) only a `SyntaxError` or `IndentationError` gives `error`, and a runtime error lands in row 1 (`test-1`). In call mode `error` also comes from a module-level runtime error (the learner's own call at the bottom of the file) and from a module-level loop that passes the load time limit. In every such case no test row ran, so "stopped before any test could run" is true as stated.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|------|-----------|-------|---------|-------|
+| 1 | homework-1 | items.4 feedback.byKey.test-1 | -0.04 or -0.036 means no times 100; `+.2f` shows a plus on a rising week | correct | Run: `f"{r:+.2f}"` is -0.04, `round(r, 3)` and `.3f` are -0.036, times 100 gives -3.61; a +0.0361 return prints +3.61. My two codings key test-1. `.2f` without the plus passes, so "keep", not "use", is the right verb |
+| 2 | homework-1 | items.4 widget.mutants (3) | each first fails test 1 | correct | grade-all 0 failures |
+| 3 | homework-1 | items.6 feedback.byKey.test-1 | return times 100, two decimals on both lines | correct | Run: my three codings (no times 100; P&L printed as -1890.0; return to one decimal) key test-1. -6.30 × 300 = -1890.00; -6.30 / 104.50 = -6.03% |
+| 4 | homework-1 | items.6 widget.mutants (3) | each first fails test 1 | correct | grade-all |
+| 5 | homework-2 | items.0 feedback.byKey.error | stopped before any test; check the colons | correct | Run: a missing colon after `if` or after `else` keys `error` (`SyntaxError: expected ':'`); a missing branch does not (rows 6, 7) |
+| 6 | homework-2 | items.0 feedback.byKey.test-3 | 52.10 between 50 and 56 holds; an error naming `action` means no branch set it | correct | Run: no-`else` coding and three-`if` coding give `UnboundLocalError ... 'action'` in row 3; a wrong word in `else` also keys test-3 |
+| 7 | homework-2 | items.0 feedback.byKey.test-4 | price on the stop holds: `<`, not `<=` | correct | Run: `<=` with early returns gives 'sell' in row 4; hold on `stop < price <= target` gives the `action` error in row 4 |
+| 8 | homework-2 | items.0 widget.mutants (6) | three first fail test 3, three test 4 | correct | grade-all |
+| 9 | homework-2 | items.2 feedback.byKey.error | read the last line of the message, then the line it points to | imprecise | Run: an unguarded loop plus the learner's own `print(years_to_target(1000.00, 0.0, 1500.00))` keys `error` with "Stopped after the time limit.", which points to no line. First sentence true. Minor |
+| 10 | homework-2 | items.2 feedback.byKey.test-2 | rate 0, answer `None`; a 5 second stop means guard with `rate > 0` | correct | Run: unguarded `while True` coding and a `rate < 0`-only guard both stop after 5 s in row 2; returning the text "None" keys test-2 on its value |
+| 11 | homework-2 | items.2 feedback.byKey.test-4 | negative rate, answer `None`; `rate > 0`, not `rate != 0` | correct | Run: `elif rate:` and `if rate == 0.0: return None` both stop after 5 s in row 4; 1000 × 0.9^n never reaches 1200 |
+| 12 | homework-2 | items.2 widget.mutants (6, 5 timeouts) | first fail test 2 or 4, margins hold | correct | grade-all, 129.5 s, 0 failures |
+| 13 | l1-calculator | quiz[2] (q-floor) feedback.byKey.nearest | 3.33 rounded up to 4; `//` rounds down; £2 left | correct | The `nearest` wrong value is 4; 20 / 6 = 3.33, 20 // 6 = 3, 20 % 6 = 2. The old "to the nearest" would have been 3, the key |
+| 14 | l10-reading-errors | screens.6 feedback.byKey.test-1 | `TypeError` or `ValueError` in the row means not yet a float; 101.2 means no fee; `'101.201.50'` means joined as text | correct | Run: print removed with text + number gives the TypeError in row 1; `int(...)` with print commented out gives the ValueError in row 1; fee dropped gives 101.2; `+ "1.50"` gives `'101.201.50'` (with `str(1.50)` the row shows `'101.201.5'`, same reading) |
+| 15 | l10-reading-errors | screens.6 widget.mutants (4) | each first fails test 1 | correct | grade-all |
+| 16 | l10-reading-errors | summary.ideas[2] | `[a:b]` holds b - a values with both inside and a not after b; fewer past the end | correct | Run: `len(s[i:j]) == j - i` for all 0 ≤ i ≤ j ≤ n; `s[7:2]` is empty; `s[8:15]` on 10 characters holds 2 |
+| 17 | l11-numbers-from-a-file | screens.3 prose | the short form leaves closing to Python; `with open(name) as f:` reads the same lines and closes at block end; lesson 12 explains `with` | correct | Run: same list both ways, `f.closed` True after the block. l12 screens.5 explains `with` |
+| 18 | l11-numbers-from-a-file | summary.ideas[0] | each line ends in a newline, except perhaps the last | correct | Run: a file written without a final `\n` gives a last line with none |
+| 19 | l12-savings-script | screens.5 widget.tests[3] | file holding `old line`, then `save_line('s4.txt', 1, 1050.0)`, reads back `'Year 1: £1050.00\n'` | correct | Run in Pyodide with a `"w"` model: equal. Solution passes; starter fails (`error`: its own read of a missing file). Append codings fail it: `"a"` with `with`, and `"a+"` with `close`, both give `'old line\nYear 1: £1050.00\n'` in row 4 |
+| 20 | l12-savings-script | screens.5 widget.how | 4 tests, three empty the file and one leaves an old line | correct | Count of tests; tests 1 to 3 call `open(..., 'w').close()` |
+| 21 | l12-savings-script | screens.5 feedback.byKey.test-4 | open with `"w"` so the old line goes | correct | Row 19. A `"w"` coding without `with` passes all four |
+| 22 | l12-savings-script | screens.5 widget.mutants (3) | append codings first fail test 4 | correct | grade-all |
+| 23 | l12-savings-script | screens.7 widget.tests[4] | file holding `Year 9: old`, then two years at 5% on 1000.00, reads `['Year 1: £1050.00', 'Year 2: £1102.50']` | correct | Run, and `Decimal`: 1000 × 1.05 = 1050.00, × 1.05 = 1102.50. Solution passes; starter fails. Append once with a `while` loop, and append inside a `for` loop, both give three lines in row 5 |
+| 24 | l12-savings-script | screens.7 widget.how | 5 tests, four empty the file | correct | Count |
+| 25 | l12-savings-script | screens.7 feedback.byKey.test-5 | open once with `"w"` before the loop | correct | Run: `"w"` inside the loop keys test-1 (one line), so test-5 is reached only by append codings. Emptying with `"w"` and then appending in the loop passes, as it should |
+| 26 | l12-savings-script | screens.7 widget.mutants (3) | each first fails test 5 | correct | grade-all |
+| 27 | l12-savings-script | screens.10 feedback.byKey.error | stopped before any test | correct | Script mode: only a syntax error keys `error` (run: missing colon) |
+| 28 | l12-savings-script | screens.10 feedback.byKey.test-1 | 5 means the loop began at index 0; a `ValueError` about `Close` means the header is still read | correct | Run: header kept, with or without a top-level call, gives `ValueError: could not convert string to float: 'Close\n'` in row 1; an index-0 loop gives 5, its first return pairing Friday with Monday |
+| 29 | l12-savings-script | screens.10 widget.mutants (3) | each first fails test 1 | correct | grade-all |
+| 30 | l2-naming-a-value | screens.3 prose | a name starts with a letter or an underscore | correct | Python reference, 2.3 Identifiers; run: `_x = 1` works, `1x = 2` is a SyntaxError |
+| 31 | l2-naming-a-value | screens.3 feedback.byKey.error | stopped before any test | correct | Script mode. Run: `my price = 12.5` and an unclosed bracket key `error` |
+| 32 | l2-naming-a-value | screens.3 feedback.byKey.test-1 | expects 50.0; a `NameError` means two spellings | correct | 12.5 × 4 = 50.0. Run: `Qty`/`qty` and `prise`/`price` give the NameError in row 1 |
+| 33 | l2-naming-a-value | screens.3 widget.mutants (3) | each first fails test 1 | correct | grade-all |
+| 34 | l2-naming-a-value | screens.4 feedback.byKey.a7 | for a number, assignment copies | correct | For an immutable value the copy model and the binding model predict the same output; the hedge "for a number" agrees with the l8 warning (row 59) |
+| 35 | l2-naming-a-value | screens.5 explain.text | assigning to a again later never changes b | correct | Run: `a = 7; b = a; a = 10` leaves b at 7; true for any type, since rebinding a never touches b |
+| 36 | l2-naming-a-value | summary.ideas[2] | same rule | correct | Row 35 |
+| 37 | l3-text | screens.6 widget.options[2] (twodp) why | `print` shows a float with the fewest digits that pin it down: 12.5, not 12.50 | correct | Python tutorial 15 (shortest repr that round-trips); run: `print(12.50)` shows 12.5 |
+| 38 | l3-text | screens.8 prose | the b - a count needs a and b within the string, a not after b | correct | Row 16; `len(s[2:7])` is 5, so the keyed answer stands |
+| 39 | l3-text | summary.formula.note | same condition | correct | Row 16 |
+| 40 | l4-asking-and-printing | screens.4 feedback.byKey.error, test-1 | expects 51.0; a `ValueError` means `int` on decimal text | correct | 12.75 × 4 = 51.0. Run: `int(typed)` and `int(typed) * 1.0` give the ValueError in row 1 |
+| 41 | l4-asking-and-printing | screens.4 widget.mutants (3) | each first fails test 1 | correct | grade-all |
+| 42 | l4-asking-and-printing | screens.7 feedback.byKey.error, test-1 | expects 100.0; a `TypeError` means a value is still text | correct | Run: `float(price * typed_qty)` gives the TypeError in row 1; the untouched starter does too |
+| 43 | l4-asking-and-printing | screens.7 widget.mutants (3) | each first fails test 1 | correct | grade-all |
+| 44 | l4-asking-and-printing | screens.9 feedback.byKey.error, test-1 | expects `Return: 2.80%`; a `TypeError` means a price is still text | correct | (189.35 - 184.20) / 184.20 = 2.80%. Run: one price left as text, and both left as text, give the TypeError in row 1 |
+| 45 | l4-asking-and-printing | screens.9 widget.mutants (3) | each first fails test 1 | correct | grade-all |
+| 46 | l4-asking-and-printing | screens.10 feedback.byKey.error, test-1 | expects 0.045 then `Interest: £90.00`; a `ValueError` means the % sign is still there | correct | 2000 × 0.045 = 90.00. Run: `float(text)`, `text[0:4]` and `text[-1]` all give a ValueError whose text still shows `%` |
+| 47 | l4-asking-and-printing | screens.10 widget.mutants (3) | each first fails test 1 | correct | grade-all |
+| 48 | l5-decisions | screens.2 explain.text | an `if` line runs its block when its condition works out to `True` | correct | Python reference 8.1; run |
+| 49 | l6-until-done | screens.6 feedback.byKey.error | read the last line of the message, then the line it points to | imprecise | Run: an endless loop plus the learner's own `print(steps_to_reach(100, 150, 20))` keys `error` with "Stopped after the time limit.", which points to no line. Minor |
+| 50 | l6-until-done | screens.6 feedback.byKey.test-1 | 3 steps from 100 to 150; a 5 second stop means the block never changes `value` | correct | 100, 120, 140, 160: 3 steps. Run: only `count` changing, and `value = start + step` on every pass, both stop after 5 s in row 1 |
+| 51 | l6-until-done | screens.6 widget.mutants (3 timeouts) | each first fails test 1 past five times the limit | correct | grade-all |
+| 52 | l6-until-done | screens.8 widget cell r1c1 wrong `simple` | 1140 is the slip of adding £70 again | correct | 1000 × 0.07 = 70; 1070 + 70 = 1140. The table grader keys a matching `wrong` id of the first wrong cell (`table.js` lines 57, 90). 1140 is within 0.01 of no keyed cell (1070.00, 1144.90, 1225.04) |
+| 53 | l6-until-done | screens.8 feedback.byKey.simple, r1c1 | year 2 adds £74.90; 1070.00 × 1.07 = 1144.90 | correct | 1070 × 0.07 = 74.90; `Decimal`: 1070 × 1.07 = 1144.90 exactly; 1144.90 × 1.07 = 1225.04 |
+| 54 | l6-until-done | screens.9 feedback.byKey.error | read the last line, then the line it points to | imprecise | As row 49 (run with `print(years_to_double(1000.00, 0.07))`). Minor |
+| 55 | l6-until-done | screens.9 feedback.byKey.test-1 | 11 years at 7%; a 5 second stop means the growth is not stored | correct | 1.07^10 = 1.967, 1.07^11 = 2.105. Run: `balance * (1 + rate)` unstored stops after 5 s in row 1 |
+| 56 | l6-until-done | screens.9 widget.mutants (3 timeouts) | each first fails test 1 past five times the limit | correct | grade-all |
+| 57 | l8-many-values | screens.6 feedback.byKey.error, test-4 | test 4 is the empty list and expects `None`; an `IndexError` means `values[0]` ran on it | correct | Run: `values[0]` before any check, with a `for` or a `while`, gives `IndexError` in row 4. With the learner's own `print(largest([]))` the key is `error` and its message does point to the line |
+| 58 | l8-many-values | screens.6 widget.mutants (3) | each first fails test 4 | correct | grade-all |
+| 59 | l8-many-values | screens.8 prose | `b = prices` does not copy; `append` and `prices[0] = ...` show through `b`; `b = prices.copy()` gives a separate list | correct | Run: after `b = prices`, an append and an item assignment leave `b is prices` with both changes; a `.copy()` taken earlier keeps its values |
+| 60 | review-1 | items.6 feedback.byKey.error | stopped before any test | correct | Script mode, row 31 |
+| 61 | review-1 | items.6 feedback.byKey.test-1 | a `TypeError` or a `ValueError` means a value is still text | imprecise | Run: `price = int(price_text)` with both values converted gives `ValueError: invalid literal for int() ... '41.20'` in row 1. No value is still text there; the cure is `float`, the l4 screen 4 mistake this review covers. The other two cases are right (`float(price_text) * qty_text` TypeError; text times int then `.2f` gives `ValueError: Unknown format code 'f'`). Minor |
+| 62 | review-1 | items.6 widget.mutants (3) | each first fails test 1 | correct | grade-all |
+| 63 | review-2 | items.6 feedback.byKey.error, test-2 | test 2 is the empty list; an `IndexError` means `pnls[0]` ran on it | correct | Run: no guard, and a guard placed after `pnls[0]`, both give `IndexError` in row 2 |
+| 64 | review-2 | items.6 widget.mutants (3) | each first fails test 2 | correct | grade-all |
+
+Counts: 64 rows. correct 60, wrong 0, imprecise 4 (all minor), misleading 0, unverified 0.
+
+Notes. The diff holds 61 mutants and 13 reworded `error` lines as briefed, but 11 timeout mutants, not 12 (5 in homework-2 items.2, 6 in l6). One coding outside the lesson passes l12 screens.5 test 4 without `"w"`: `"r+"` overwrites in place because the new line is longer than the old one. Nothing in the course teaches `"r+"`, so no change is asked.
+
+Fixes (paste-ready).
+
+1. Rows 9, 49, 54: `homework-2.json` items.2, `l6-until-done.json` screens.6 and screens.9, `feedback.byKey.error`. Replace with:
+   `"error": "Your code stopped before any test could run. Read the last line of the message under the editor. If it names the time limit, a loop never ends; otherwise go to the line it points to."`
+   Basis: the three loop exercises are the ones where a module-level call can pass the load limit; the engine's message then reads "Stopped after the time limit." with no line.
+
+2. Row 61: `review-1.json` items.6 `feedback.byKey.test-1`. Replace with:
+   ``"test-1": "Test 1 expects `Value: £6180.00`. A `TypeError`, or a `ValueError` about a format code, means a value is still text: convert both first. A `ValueError` from `int` means the price has a decimal point: use `float`."``
+   Basis: the three row messages measured above.
+
+Scripts (scratch, not committed): `fpr-fp13/run.mjs` with `subs.mjs` and `subs2.mjs` (submissions), `fpr-fp13/claims.mjs` (Pyodide claims and numbers, 23 checks, all ok).
