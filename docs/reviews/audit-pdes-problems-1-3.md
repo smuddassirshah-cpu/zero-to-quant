@@ -57,3 +57,21 @@ Opus fixer, from ba3359b4. Both findings re-derived before editing; no key, slip
 2. Fixed (`p-tick-spread` prose now names $u_t = Du_{xx}$). Basis: the course defines $D$ as the coefficient in $u_t = Du_{xx}$ (lesson 2 summary, $D = \Delta x^2/(2\Delta t)$, variance $2Dt$), which gives 0.8. In the diffusion-process convention $u_t = \tfrac12\sigma^2u_{xx}$ the name "diffusion coefficient" usually goes to $\sigma^2 = \Delta x^2/\Delta t = 1.6$ (the `no-half` slip), so naming the equation removes the ambiguity. Its feedback text stays right under the stated form.
 
 Gates: validator 0 errors; voice scan 35 on problems-1 0 and 0; `pdes-problems-concepts.py` 369 checks, exit 0 (no check encodes the edited text); number scripts `--only pdes` 4 of 4; `grade-all.mjs --file problems-1.json` 17 widgets, 0 failures; playthrough `--problems pdes/problems-1` green desktop and `--mobile`.
+
+## Fix-pass read
+
+Fresh reader, blind to the audit above (rows written and appended without opening this file). Diff read: `git show 676574e6 -- app/content/courses` (`pdes/problems-1.json`, three strings). Numbers recomputed two ways in the scratch folder (closed form and exact binomial, plus a 200,000-path simulation).
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | pdes/problems-1.json | p-tick-spread.prose | The spread is modelled by the heat equation $u_t = Du_{xx}$ | correct | Same convention as l2-heat-equation ($u_t = Du_{xx}$, $D = \Delta x^2/(2\Delta t)$, variance $2Dt$) and Strauss §2.4 ($u_t = ku_{xx}$, kernel $e^{-x^2/4kt}/\sqrt{4\pi kt}$, variance $2kt$). Key 0.16/0.2 = 0.8 unchanged and the only true answer under the stated equation. |
+| 2 | pdes/problems-1.json | p-tick-spread.parts[0].feedback.byKey.no-half (context, unchanged) | Dividing $\Delta x^2$ by $\Delta t$ alone gives 1.6; the bottom is $2\Delta t = 0.2$ | correct | With $u_t = Du_{xx}$ stated, 1.6 would be the coefficient of $\tfrac12 u_{xx}$ (the probabilist's $\sigma^2$), not $D$. Taylor: $\Delta t\,u_t = \tfrac12\Delta x^2u_{xx}$. Part 2 check: 600 steps of 0.16 give 96 = 2(0.8)(60); with 1.6 it would be 192. |
+| 3 | pdes/problems-1.json | p-drift-walk.prose | "The model keeps the leading terms only." | correct | Expanding $u(x,t+\Delta t) = q\,u(x-\Delta x,t) + (1-q)\,u(x+\Delta x,t)$ gives $u_t + \tfrac{\Delta t}{2}u_{tt} = -c\,u_x + \tfrac{\Delta x^2}{2\Delta t}u_{xx} + \dots$; the dropped $\tfrac{\Delta t}{2}u_{tt} \approx \tfrac{c^2\Delta t}{2}u_{xx}$ lowers the effective coefficient to $1.25 - 100(0.001)/2 = 1.2$. |
+| 4 | pdes/problems-1.json | p-drift-walk.prose | The walk's own variance grows at $4q(1-q)\Delta x^2/\Delta t = 2.4$ a unit of time | correct | Step variance $\Delta x^2 - ((2q-1)\Delta x)^2 = 0.0025 - 0.0001 = 0.0024$; also $4(0.6)(0.4)(0.0025) = 0.0024$; over 1000 steps a unit of time, 2.4. Agrees with $2 \times 1.2$ from row 3. |
+| 5 | pdes/problems-1.json | p-drift-walk.prose | 2.4 is a little under $2D = 2.5$ | correct | $2 \times 1.25 = 2.5$; ratio $4q(1-q) = 0.96$. |
+| 6 | pdes/problems-1.json | p-drift-walk.parts[2].explain | The walk itself has variance $2.4t = 0.768$ at $t = 0.32$ | correct | 320 steps, position $0.05(2K - 320)$, $K \sim \text{Bin}(320, 0.6)$: variance $4(0.0025)(320)(0.24) = 0.768$; simulation 0.7676. Mean 3.2 matches $ct$. |
+| 7 | pdes/problems-1.json | p-drift-walk.parts[2].explain | "so its own chance is a little lower" (than the model's 0.090) | correct | Below 2 means $K \le 179$: exact $P = 0.0774$ (simulation 0.0782); normal with variance 0.768 gives 0.0855; model $\Phi(-1.3416) = 0.0899$. All lower. Note only: 2 is a lattice point with mass 0.0177, so "at or below 2" would be 0.0951, higher. The question says "below", so the sentence stands. |
+
+Other quoted values rechecked in context: $c = 10$, $D = 1.25$, $z = 1.2/\sqrt{0.8} = 1.3416$, $\Phi(1.342) = 0.9102$, key 0.0899; part 4 speaks of "the model's chance" throughout, so it is consistent with the new prose.
+
+Counts: 7 rows; 7 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified. No fixes needed.
