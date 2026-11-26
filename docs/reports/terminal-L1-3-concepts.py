@@ -7,6 +7,10 @@ The content describes macOS zsh and BSD tools in places; where GNU and BSD wordi
 behaviour (who survives, what is counted), not the wording, and the audit names the difference.
 OK lines are claims that hold. FAIL lines are claims of the content that do not hold as stated (audit findings).
 Exit 0 when nothing fails.
+
+Fix pass (Opus): the eight FINDING checks encoded the old wording and were re-pointed to the fixed text, each with
+the same run that disproved the old claim, now asserting the true behaviour. Checks for findings 2, 9, 11, 12 and 13
+were added (text plus a run where one is possible). Marked "(fixed)".
 """
 import json, os, posixpath, re, shutil, subprocess, sys, tempfile
 
@@ -141,11 +145,17 @@ check('L5 quiz: cd .. at / stays at / silently', sh('cd ..; pwd', '/', **H)[1:] 
 check('L5 quiz: cd ../.. from backtest is home', sh('cd ../..; pwd', home + '/projects/backtest', **H)[1] == home + '\n')
 check('L5 Tab: one name in ana starts with pro', sh('compgen -f pro', home, **H)[1] == 'projects\n')
 os.makedirs(home + '/projects/other')
-check('L5 FINDING: "ls ../../Downloads works only from backtest" (it also works from any folder two levels below home)',
-      sh('ls ../../Downloads', home + '/projects/other', **H)[0] != 0)
-rc, _, err = sh(f'"{sys.executable}" -c "import os; print(os.path.isabs(\'~/data\')); open(\'~/data/prices.csv\')"', home + '/projects', **H)
-check('L5 FINDING: "a path that starts with ~ is absolute and works from anywhere" (only the shell expands ~; Python does not)',
-      rc == 0, err.strip().splitlines()[-1] if err else '')
+l5 = load('l5-where-am-i')
+check('L5 (fixed) "ls ../../Downloads works only from a folder two levels below home": works from projects/other, fails from data',
+      'only from a folder two levels below home' in l5['screens'][9]['explain']['text']
+      and sh('ls ../../Downloads', home + '/projects/other', **H)[0] == 0 and sh('ls ../../Downloads', home + '/data', **H)[0] != 0)
+rc, out, err = sh(f'"{sys.executable}" -c "import os; print(os.path.isabs(\'~/data\'), os.path.isabs(os.path.expanduser(\'~/data\'))); open(\'~/data/prices.csv\')"', home + '/projects', **H)
+t5 = json.dumps(l5, ensure_ascii=False)
+check('L5 (fixed) ~ is a shell shortcut the shell turns into an absolute path; Python does not expand it, os.path.expanduser does',
+      not re.search(r'~ is absolute|~ makes the path absolute|or ~ is absolute|absolute path with `~`|the absolute `cd ~', t5)
+      and 'shell shortcut' in l5['screens'][5]['prose'] and 'os.path.expanduser' in l5['screens'][5]['explain']['text']
+      and out.split() == ['False', 'True'] and 'FileNotFoundError' in err
+      and sh('echo ~/data', home + '/projects', **H)[1] == home + '/data\n', (out, err[-80:]))
 check('L5 the shell does not expand a quoted ~', sh('ls "~/Downloads"', home, **H)[0] != 0)
 
 d = tmp()
@@ -197,8 +207,14 @@ check('L6 quiz: rm old and mv old fail, rm -r old deletes', rc_plain != 0 and rc
 d = tmp()
 for n in ('prices.csv', '.prices.csv', 'notes.txt'):
     write(d + '/' + n, n)
-check('L6 FINDING: "*.csv stands for every name that ends in .csv" (a hidden .prices.csv is not matched)',
-      sorted(sh('echo *.csv', d)[1].split()) == ['.prices.csv', 'prices.csv'], sh('echo *.csv', d)[1].strip())
+l6 = load('l6-making-things')
+check('L6 (fixed) "*.csv ... hidden names apart": echo *.csv beside .prices.csv prints only prices.csv',
+      'It skips hidden names' in l6['screens'][2]['prose'] and 'hidden names apart' in l6['summary']['ideas'][1]
+      and sh('echo *.csv', d)[1].split() == ['prices.csv'], sh('echo *.csv', d)[1].strip())
+os.makedirs(d + '/start')
+sh('mkdir data', d + '/start')
+check('L6 (fixed) order slip mk: "mkdir makes the folder wherever the terminal is"',
+      'wherever the terminal is' in l6['screens'][8]['feedback']['byKey']['mk'] and os.path.isdir(d + '/start/data') and not os.path.exists(d + '/data'))
 
 d = tmp()
 write(d + '/prices.csv', PRICES)
@@ -230,6 +246,10 @@ rc, out, err = sh('grep aapl prices.csv', d)
 check('L7 quiz: grep aapl prints nothing and no error message', out == '' and err == '' and rc == 1)
 check('L7 quiz: two greps leave the 5 March MSFT line', sh('grep 2024-03-05 prices.csv | grep MSFT', d)[1] == '2024-03-05,MSFT,402.65\n')
 check('L7 note: the grep pattern is a regular expression (179.66 also matches 179x66)', sh('grep 179.66', d, stdin='179x66\n')[1] == '179x66\n')
+l7p = load('l7-looking-inside')['screens'][1]['prose']
+check('L7 (fixed) "a dot or a star means something special to grep"; letters, digits and hyphens match themselves',
+      'A dot or a star means something special to grep' in l7p and sh('grep 03-04', d, stdin='2024-03-04\n2024-0304\n')[1] == '2024-03-04\n'
+      and sh("grep 'a*'", d, stdin='xyz\n')[1] == 'xyz\n')
 
 d = tmp()
 write(d + '/prices.csv', PRICES)
@@ -251,8 +271,10 @@ write(e2 + '/a.csv', 'a')
 sh('ls -t > head -1', e2)
 check('L8 "ls -t > head -1" writes a file named head', os.path.exists(e2 + '/head'))
 ll = sh('ls -l', e)[1].splitlines()
-check('L8 FINDING: "the output of ls -l, one line per file" has only permissions, owner, bytes, date, name (real ls -l adds a total line, a link count and a group)',
-      len(ll) == 4 and all(len(l.split()) == 7 for l in ll), f'{len(ll)} lines; fields in a file line: {len(ll[1].split())}')
+cap8 = load('l8-options-and-help')['screens'][0]['canvas']['state']['caption']
+check('L8 (fixed) caption names the total line, link count and group: real ls -l prints a total line, then 9 fields a file',
+      'a total line, a link count and a group' in cap8 and len(ll) == 5 and ll[0].startswith('total') and all(len(l.split()) == 9 for l in ll[1:]),
+      f'{len(ll)} lines; fields in a file line: {len(ll[1].split())}')
 check('L8 48210 bytes is about five times 9120', round(48210 / 9120, 1) == 5.3)
 write(d + '/closes.txt', '9.85\n100.40\n102.30\n99.10\n')
 check('L8 sort -n -r: 102.30, 100.40, 99.10, 9.85', sh('sort -n -r closes.txt', d)[1].split() == ['102.30', '100.40', '99.10', '9.85'])
@@ -312,6 +334,9 @@ os.makedirs(d + '/charts')
 rc, _, err = sh('rm * .csv', d)
 check('H2 bash: rm * .csv deletes the three files, keeps charts, reports .csv missing',
       os.listdir(d) == ['charts'] and 'Is a directory' in err and "'.csv': No such file" in err, err)
+it2 = load('homework-2')['items'][3]
+check('H2 (fixed) the stray-space item names bash as its shell and says zsh on a Mac asks first',
+      'Your shell is bash' in it2['prose'] and 'zsh on a Mac would ask first' in it2['explain']['text'])
 write(d + '/short.csv', 'date,ticker,close\n2024-03-01,AAPL,179.66\n')
 check('H2 wc -w short.csv = 2', sh('wc -w < short.csv', d)[1].strip() == '2')
 h2 = load('homework-2')
@@ -359,7 +384,10 @@ check('L9 after activate, python3 means the private copy', rc == 0 and out.split
 check('L10 print("hello") is 14 characters; with a newline the file is 15 bytes', len('print("hello")') == 14 and len('print("hello")\n'.encode()) == 15)
 check('L10 quiz: print(2 + 2) plus newline is 13 bytes; R3 print("hi") is 12', len('print(2 + 2)\n'.encode()) == 13 and len('print("hi")\n'.encode()) == 12)
 curly = 'print(“hello”)\n'
-check('L10 FINDING: caption "The pasted line, byte by byte" over 15 cells (the curly-quote line is 15 characters but 19 bytes)', len(curly.encode('utf-8')) == 15, len(curly.encode('utf-8')))
+cv10 = load('l10-code-editor')['screens'][3]['canvas']
+check('L10 (fixed) caption "character by character" over 15 cells: the curly-quote line is 15 characters (and 19 bytes)',
+      cv10['state']['caption'] == 'The pasted line, character by character' and len(curly) == 15 == len(cv10['params']['cells'])
+      and len(curly.encode('utf-8')) == 19, len(curly.encode('utf-8')))
 write(d + '/curly.py', curly)
 write(d + '/hello.txt', 'print("hello")\n')
 rc, _, err = sh(f'"{sys.executable}" curly.py', d)
@@ -390,10 +418,15 @@ check('L11 quiz: cd into folder 2 does not change which python3 runs', sh(BI + f
 check('L11 transfer: with PATH = folders 2 and 3 only, the 3.9 copy runs', sh(f'PATH={d}/ub:{d}/b; hash -r; python3', d, path='/usr/bin:/bin')[1] == 'Python 3.9\n')
 check('L11 a running shell keeps its own PATH copy: a later change elsewhere does not reach it',
       sh('PATH=/nowhere /bin/bash -c "echo \\$PATH"; echo $PATH', d, path='/usr/bin:/bin')[1] == '/nowhere\n/usr/bin:/bin\n')
-check('L11 FINDING: "window A can never find Python" (the same window can reload or extend its PATH)',
-      sh(f'PATH={d}/b; hash -r; python3 2>/dev/null; PATH={d}/lb:$PATH; python3', d, path='/usr/bin:/bin')[1] != 'Python 3.12\n')
-check('L11 FINDING: "the shell does this hunt for every command you type" (cd, pwd and echo are built in and run with an empty PATH)',
-      sh('PATH=; cd / && pwd && echo ok', d, path='/usr/bin:/bin')[1] != '/\nok\n')
+l11 = load('l11-command-not-found')
+x5 = l11['screens'][5]['explain']['text']
+check('L11 (fixed) window A "goes on failing until that copy changes": the same shell finds python3 once its PATH changes',
+      'until that copy changes' in x5 and 'never' not in x5
+      and sh(f'PATH={d}/b; hash -r; python3 2>/dev/null; PATH={d}/lb:$PATH; python3', d, path='/usr/bin:/bin')[1] == 'Python 3.12\n')
+x0 = l11['screens'][0]['explain']['text']
+check('L11 (fixed) "every program you run; cd and echo are built into the shell": they run with an empty PATH, ls does not',
+      'every program you run' in x0 and 'built into the shell' in x0
+      and sh('PATH=; cd / && pwd && echo ok', d, path='/usr/bin:/bin')[1] == '/\nok\n' and sh('PATH=; ls', d, path='/usr/bin:/bin')[0] == 127)
 five = tmp()
 for i in range(1, 6):
     os.makedirs(f'{five}/f{i}')
@@ -402,8 +435,19 @@ os.chmod(f'{five}/f5/pytest', 0o755)
 # count the folders bash stats while it searches
 P5 = ':'.join(f'{five}/f{i}' for i in range(1, 6))
 searched = [i for i in range(1, 6)]  # a match in folder 5 needs folders 1 to 5 opened, by the search rule the lesson states
-check('H3 FINDING: "only a command that is not found makes the shell open all five" (a command found in folder 5 does too)',
-      not (sh(f'PATH={P5}; hash -r; pytest', five, path='/usr/bin:/bin')[1] == 'found\n' and len(searched) == 5))
+x3 = load('homework-3')['items'][1]['explain']['text']
+opened = None
+if shutil.which('strace'):
+    write(f'{five}/f4/tool4', '#!/bin/sh\necho found\n')
+    os.chmod(f'{five}/f4/tool4', 0o755)
+    r = subprocess.run(['strace', '-f', '-e', 'trace=newfstatat,stat,access,faccessat2', 'bash', '-c',
+                        f'PATH={P5}; tool4; echo =; pytest; echo =; nosuch 2>/dev/null; echo ='],
+                       capture_output=True, text=True, env={'LC_ALL': 'C', 'PATH': '/usr/bin:/bin'}, cwd=five)
+    opened = {n: sorted({int(m) for m in re.findall(re.escape(five) + r'/f(\d)/' + n + r'\b', r.stderr)}) for n in ('tool4', 'pytest', 'nosuch')}
+check('H3 (fixed) "opens all five only when the name is in folder 5 or in none" (strace: folder 4 -> 1..4, folder 5 -> 1..5, none -> 1..5)',
+      'only when the name is in folder 5 or in none' in x3
+      and sh(f'PATH={P5}; hash -r; pytest', five, path='/usr/bin:/bin')[1] == 'found\n'
+      and (opened is None or opened == {'tool4': [1, 2, 3, 4], 'pytest': [1, 2, 3, 4, 5], 'nosuch': [1, 2, 3, 4, 5]}), opened)
 check('H3 pytest in folder 4 of 5: found after four folders', True)
 
 def run_py(src, name='s.py'):
@@ -465,6 +509,16 @@ check('H3 trade comments: cd desk / cd ~/desk / cd /home/sam/desk then python3 t
       all(runs(c) == 'ok' for c in ('# cd desk\n# python3 trade.py\n', '# cd ~/desk && python3 trade.py\n', '# cd /home/sam/desk\n# python3 ./trade.py\n'))
       and runs('# python3 desk/trade.py\n') != 'ok' and runs('# python3 trade.py\n') != 'ok')
 check('H3 trade comments NOTE (inbox, not a content finding): valid shell cd "desk" is refused', runs('# cd "desk"\n# python3 trade.py\n') != 'ok')
+
+l9t = json.dumps(load('l9-installing-python'), ensure_ascii=False) + json.dumps(load('review-3'), ensure_ascii=False)
+check('L9 (fixed) no pandas 1.5 beside Python 3.12 (no 3.12 build); pandas 2.1 and 2.2 both have cp312 wheels (PyPI, 2.1.1 on)',
+      'pandas 1.5' not in l9t and 'pandas 2.1' in l9t and 'python-3.12.4.pkg' in l9t)
+bk = l12['screens'][5]['feedback']['byKey']
+check('L12 (fixed) week.py: the NameError line sits under test-1, the error line speaks of a script that cannot start',
+      'NameError' in bk['test-1'] and 'cannot start' in bk['error'] and 'not defined' not in bk['error']
+      and all(m['test'] == 1 for m in l12['screens'][5]['widget']['mutants']))
+_, err = run_py(l12['screens'][5]['widget']['starter'])
+check('L12 (fixed) week.py starter stops with NameError on friday (it starts, so it reaches test 1)', "NameError: name 'friday' is not defined" in err, err[-80:])
 
 print(f'\n{n_ok} OK, {len(fails)} FAIL')
 for f in fails:
