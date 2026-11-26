@@ -98,3 +98,27 @@ Mutants. l3 `screens[8].widget.mutants` now holds three entries: the `iter(self.
 Scripts re-pointed (said so in their docstrings). `docs/reports/contests-L1-3-concepts-r2.py`: the `list(map(...))` coding is now probed against the test-6 line, not an OTHER "finding" at test 7; the "> 90% on the first case" check is now "> 99% within ten"; text checks added for findings 1, 4 and 5, and the fixer's simulation added. `docs/reports/contests-L3-numbers.py` (round 1's finding 7 lookup) now looks up the new l12 phrase.
 
 Checks: validator 0 errors (4,606 warnings, as before); voice scan 35 on the five lessons 0 and 0; concepts script `--cxx --pkgs`: 219 checks, 0 failed, exit 0; `run-number-scripts --only contests`: 5 of 5 passed; `grade-all --code --file` on each edited lesson: 0 failures, except l4's two on the pytest widget `screens[8]`, which the original l4 at 5847cb4c also gives (the node runner limit in this audit's inbox); playthrough of l3, l4, l6, l9 and l12 desktop and `--mobile`: all passed.
+
+## Fix-pass read
+
+Fresh reader, blind to this file, the earlier contests reviews and the concepts script until the rows below were written. Diff read: `git show 15f568f7 -- app/content/courses` at HEAD `24ae7389`. Script: `docs/reports/contests-L1-3-fixread-r2.py` (exit 0). Code runs: the page's harness and worker grader under the local Pyodide 0.27.7, through `tools/code-runner.mjs`.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | l3-fast-io | screens[8].feedback.byKey.test-7, sentence 1 | Test 7 checks `iter(it) is it` | correct | tests[6].call is `(lambda it: iter(it) is it)(read_tokens(b'1 2'))`, expecting True. |
+| 2 | l3-fast-io | same, sentence 2 | A submission that first fails test 7 has `__next__`; an iterator's `__iter__` must `return self` | correct | Python docs, Library "Iterator Types": `iterator.__iter__()` returns the iterator object itself. Test 6 (`next(...)`) passed, so the type has `__next__`. Five codings submitted: `__iter__` returns `iter(self.v)`; `__iter__` written as a generator; a list subclass with `__next__`; `__next__` with `__getitem__` and no `__iter__`; `__iter__` returns a fresh copy. All five first fail test 7 with actual False. With `return self` the class passes all 10. `__next__` alone first fails test 1 (not iterable), so it never sees this line. |
+| 3 | l3-fast-io | same, sentence 3 | `map(...)` already returns itself from `__iter__` | correct | The solution `map(int, data.split())` passes test 7; `iter(m) is m` for a map object (same docs section). `iter([...])` and a generator function also pass all 10. |
+| 4 | l3-fast-io | screens[8].widget.mutants[0] | `__iter__` returns `iter(self.vals)`: first fails test 7 | correct | Run: key `test-7`, actual False; tests 1 to 6 pass. The symptom text matches the source. |
+| 5 | l3-fast-io | screens[8].widget.mutants[1] | A list subclass with `__next__`: `iter` gives a list iterator; first fails test 7 | correct | Run: key `test-7`, actual False. `list.__iter__` is inherited and returns a `list_iterator`. |
+| 6 | l3-fast-io | screens[8].widget.mutants[2] | Returning a list: `next` raises TypeError; first fails test 6 | correct | Run: key `test-6`, `TypeError: 'list' object is not an iterator`. A tuple does the same. `grade-all.mjs --code --file` on the lesson: 0 failures. |
+| 7 | l4-stress-testing | quiz[1].widget.options[time].why | A new seed gives new cases, so the lost case would not come back; seed 4 makes it again | correct | Python docs, `random.seed`: the same seed gives the same sequence. Script: seed 4 replays its 50 cases; none of 2,000 other seeds repeats them (the lesson's own `gen_pairs`). |
+| 8 | l6-gcd-and-primes | screens[8].hints[2] (step) | A composite $n$ has a divisor $d$ with $2 \le d \le \sqrt n$; $\lfloor \sqrt{1{,}000{,}003} \rfloor = 1000$ | correct | $n = ab$ with $2 \le a \le b$ gives $a^2 \le n$ (Hardy and Wright, ch. 1). $1000^2 = 1{,}000{,}000 \le 1{,}000{,}003 < 1{,}002{,}001 = 1001^2$. Script checks every $n$ to 200,000. The lower bound is needed: $d = 1$ divides a prime. |
+| 9 | l6-gcd-and-primes | summary.ideas[1] | Same bound, so trial division and factorising stop there | correct | Same derivation; factorising applies it to the remaining cofactor, as the lesson's code does. |
+| 10 | l9-constructive | screens[1].widget.options[odd].why | For $n = 5$, 2 4 1 3 5 has gaps 2, 3, 2 and 2 | correct | Recount: $|2-4| = 2$, $|4-1| = 3$, $|1-3| = 2$, $|3-5| = 2$. Four gaps for five numbers, none equal to 1. |
+| 11 | l12-difference-arrays | screens[5].explain.text, sentence 3 | A stress test against a brute force finds the missing $-v$ within ten random cases almost every time | correct | Monte Carlo, 20,000 seeded runs per generator, updates drawn as the lesson's hidden tests draw them ($l$ uniform, $r$ uniform on $[l, n-1]$, $v$ uniform). Within ten: 1.0000 ($n$ 1 to 6, up to 6 updates), 0.9999 ($n$ 1 to 8, up to 5), 1.0000 ($n$ and updates up to 10), 0.9990 ($n$ up to 5, up to 3 updates), 0.9553 for a tiny generator ($n$ up to 3, up to 2 updates). First-case rates are 0.63, 0.66, 0.79, 0.49 and 0.27, so the old "first random case" wording was false and the new one holds. |
+
+Counts: 11 rows; correct 11, wrong 0, imprecise 0, misleading 0, unverified 0.
+
+Fixes: none needed.
+
+Checks run: `node tools/grade-all.mjs --code --file content/courses/contests/l3-fast-io.json --local-cdn <pkgs>`: 2 Python code widgets run, 0 failures. `docs/reports/contests-L1-3-fixread-r2.py`: exit 0.
