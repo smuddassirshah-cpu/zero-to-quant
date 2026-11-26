@@ -74,3 +74,14 @@ Notes on near overlaps, none counted as "both":
 ## Engine
 
 No engine limit met. Nothing added to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Opus fixer, from `ab276fd4`. Each fix was derived from the item itself before the audit's text was used. No key, slip, hidden test or rubric line changed.
+
+1. `problems-1` items[0].parts[3] option `last-term` | fixed | Removing a fixed number of seats leaves $x^2 + 15x + c$, so the last term can change and only $2k = 15$ blocks a square; the new text "No. Taking seats out cannot change the last term, and 44 is not a square number." has a false first clause, so the key `no-middle` is the only true option, and the existing why-line now answers it directly.
+2. `l5` summary.ideas[2] | fixed differently | Division by $x$ is valid only where $x \ne 0$, so it loses a root exactly when 0 is one ($x^2 = 5x$ loses 0; $x^2 + 6x + 5 = 0$ loses nothing). New text: "Dividing both sides by $x$ can lose the root $x = 0$, so factorise instead, or check $x = 0$ separately." This keeps the lesson's method advice and adds the separate check, which the audit's wording lacked.
+3. `l2` screens[5].prose and quiz[0].explain.text | fixed | $(-1)(-25) = (-5)(-5) = 25$ and $(-1)(-15) = (-3)(-5) = 15$, so "the pairs" listed only the positive ones; both lines now say "The positive pairs". "Only 3 and 5 add to 8" stays true over all integer pairs, as negative pairs have negative sums.
+4. `homework-1` items[8].prompt (d) | fixed differently | The rubric's line 10 argument (positive product, so equal signs, so the sum is not 0) needs negatives in view; the prompt now reads "cannot be factorised into brackets $(x + p)(x + q)$, whatever whole numbers $p$ and $q$ are, positive or negative." I kept "whole numbers" rather than the audit's "whatever numbers", which would be false over complex numbers ($x^2 + 16 = (x + 4i)(x - 4i)$) and goes beyond the model's pair check.
+
+Gates: validator 0 errors; `voice-scan.py 35` on the four files 0 and 0; `quadratics-L1-3-concepts-r2.py` and `quadratics-L1-3-concepts.py` exit 0 (neither encodes the changed text, so neither was re-pointed); `run-number-scripts.mjs --only quadratics` 7 of 7 passed; `grade-all.mjs --file` 0 failures on each edited file; playthrough of `l2`, `l5`, `homework-1` and `problems-1`, desktop and `--mobile`, all passed.
