@@ -5,6 +5,7 @@ permutations on small cases; a different algorithm from the shipped solution on 
 the seeds in each test's setup). Each value is then looked up where the content states it
 (app/tools/numbers_lib.py). check_wrongs() checks every numeric wrong[] value. No shipped solution is imported.
 Run: python3 docs/reports/contests-L3-numbers.py
+The l12 screens[5] lookup (finding 7) was re-pointed to the text of the contests L1-3 round 2 fix pass.
 """
 import bisect, heapq, itertools, os, random, sys
 from itertools import accumulate
@@ -352,7 +353,7 @@ assert 8 & (7 == 0) == 0                                  # the C++ reading of t
 # finding 6
 E('l11', 'screens[3].explain.text', "the app's Python"); E('l11', 'screens[8].explain.text', "the app's Python")
 # finding 7
-E('l12', 'screens[5].explain.text', 'on the first random case almost every time')
+E('l12', 'screens[5].explain.text', 'within ten random cases almost every time')  # re-pointed by the contests L1-3 r2 fix pass (audit finding 3)
 # finding 8
 E('review', 'items[3].widget.answer', 10)
 # finding 9: mask holding B, C and E (bits 1, 2, 4); distractors 13, 26 and 20 read as the lesson says

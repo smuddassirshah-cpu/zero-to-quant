@@ -80,3 +80,21 @@ Written to `docs/BACKLOG-INBOX.md` under "Raised later (audit contests):".
 - `node tools/grade-all.mjs` on the 18 files: 168 widgets, 0 failures (keys, bands and slip routing).
 - `docs/reports/contests-L1-3-concepts-r2.py --cxx --pkgs <pkgs>`: 213 checks, exit 1, with 3 failing checks, which are findings 1, 2 and 3. The other 210 pass. Without `--pkgs` it runs part B in CPython and skips the 22 timing codings: 191 checks, the same 3 fail, exit 1. Findings 4 and 5 are wording and have no check.
 - No playthrough: content is unchanged.
+
+## Fix pass
+
+Opus fixer, on 5847cb4c. Each fix was established before the audit's suggested text was compared; no key, slip, tolerance, solution or hidden test changed.
+
+| # | File, location | Status | Basis (own) |
+|---|---|---|---|
+| 1 | l3 `screens[8].feedback.byKey.test-7` | fixed differently | Graded under the page's Pyodide (code-runner, 1 worker): four natural codings of a hand-made iterator stop first at test 7 (a class whose `__iter__` returns `iter(self.vals)`; one whose `__iter__` is a generator; a `list` subclass with `__next__`; one whose `__iter__` returns a new `map`). The list comprehension and `list(map(...))` stop at test 6; `iter(list)` and a class returning `self` pass. So the line now names the class mistake and the remedy: "Test 7 checks `iter(it) is it`. Your object has `__next__`, but an iterator's `__iter__` must `return self`. Or return `map(...)`, which already does." The audit's "not your own class" was not used: a class whose `__iter__` returns `self` passes. |
+| 2 | l9 `screens[1].widget.options[2].why` (`odd`) | fixed | $|2-4|, |4-1|, |1-3|, |3-5| = 2, 3, 2, 2$: five numbers, four gaps. Now "gaps 2, 3, 2 and 2". |
+| 3 | l12 `screens[5].explain.text` | fixed differently | Own simulation, 20,000 cases per generator, signed and unsigned $v$, $n$ from 1: the first case shows the missing $-v$ 44% to 83% of the time; within ten cases at least 99.7% in every generator tried (worst: $n \le 6$, 0 to 4 updates, $v$ in $-5..5$). Now "finds it within ten random cases almost every time". The run is in the concepts script part A. |
+| 4 | l4 `quiz[1].widget.options[2].why` (`time`) | fixed differently | `random.Random(4)` repeats its sequence (Python docs, `random`: a seeded generator is reproducible), so the stem's case is not lost; a time seed would give new cases. Now "A new seed gives new cases, so this one would not come back. Seed 4 makes it again." |
+| 5 | l6 `summary.ideas[1]`, `screens[8].hints[2].text` | fixed | If $n = de$ with $1 < d \le e < n$, then $d^2 \le de = n$, so $2 \le d \le \sqrt n$; checked for every composite up to 5,000 in the script. Both rows now read "a divisor $d$ with $2 \le d \le \sqrt n$". |
+
+Mutants. l3 `screens[8].widget.mutants` now holds three entries: the `iter(self.vals)` class and the `list` subclass (test 7) and the list comprehension (test 6). `grade-all --code` confirms each first fails its test.
+
+Scripts re-pointed (said so in their docstrings). `docs/reports/contests-L1-3-concepts-r2.py`: the `list(map(...))` coding is now probed against the test-6 line, not an OTHER "finding" at test 7; the "> 90% on the first case" check is now "> 99% within ten"; text checks added for findings 1, 4 and 5, and the fixer's simulation added. `docs/reports/contests-L3-numbers.py` (round 1's finding 7 lookup) now looks up the new l12 phrase.
+
+Checks: validator 0 errors (4,606 warnings, as before); voice scan 35 on the five lessons 0 and 0; concepts script `--cxx --pkgs`: 219 checks, 0 failed, exit 0; `run-number-scripts --only contests`: 5 of 5 passed; `grade-all --code --file` on each edited lesson: 0 failures, except l4's two on the pytest widget `screens[8]`, which the original l4 at 5847cb4c also gives (the node runner limit in this audit's inbox); playthrough of l3, l4, l6, l9 and l12 desktop and `--mobile`: all passed.
