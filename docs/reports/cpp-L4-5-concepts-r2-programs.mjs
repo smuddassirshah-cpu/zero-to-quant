@@ -1,4 +1,5 @@
 // Claim programs: each is compiled and run with the page's flags (YoWASP clang 21, wasm32, -O1, libc++ hardening, no exceptions).
+import fs from 'node:fs';
 export const jobs = [];
 const P = (name, prog, extra = {}) => jobs.push({ name, prog, ...extra });
 const TR = (noex) => `
@@ -273,17 +274,10 @@ int main() {
     Call c(100); Payoff q = c; const Payoff& r = c; std::printf("slice=%g ref=%g\\n", q.value(110), r.value(110));
 }
 `);
-jobs.push({ name: 'l21-s9-listing', cc: ['-std=c++17', '-fsyntax-only', 'f.cpp'], files: { 'f.cpp': `#include <memory>
-struct Payoff {
-    virtual ~Payoff() = default;
-    virtual double value(double) const = 0;
-};
-struct Call : Payoff {
-    double value(double) const override;
-};
-std::unique_ptr<Payoff> p =
-    std::make_unique<Call>(100);
-` }, diag: 700 });
+/* Fix pass: the listing is now read from the screen itself (l21 screens[9].prose), not copied here, so the check follows the content. */
+const l21s9 = JSON.parse(fs.readFileSync(new URL('../../app/content/courses/cpp/l21-virtual-dispatch.json', import.meta.url), 'utf8')).screens[9].prose;
+const l21listing = (l21s9.match(/```cpp\n([\s\S]*?)```/) || [, 'listing not found'])[1];
+jobs.push({ name: 'l21-s9-listing', cc: ['-std=c++17', '-fsyntax-only', 'f.cpp'], files: { 'f.cpp': '#include <memory>\n' + l21listing }, diag: 700 });
 P('length-error', `#include <vector>
 int main() {
     std::vector<double> px;
