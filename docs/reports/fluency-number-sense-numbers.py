@@ -97,7 +97,7 @@ def l3_add(it, V):
     L = b * d // gcd(b, d)
     key = F(a, b) + F(c, d)
     check(key == F(a * (L // b) + c * (L // d), L), f"add seed {it['seed']}: renamed tops add to the key")
-    item(it, f"Work out ${fr(a, b)} + {fr(c, d)}$ as a fraction in its lowest terms.", key,
+    item(it, f"Work out ${fr(a, b)} + {fr(c, d)}$ as one fraction in its lowest terms, not a mixed number.", key,
          {'tops-and-bottoms': F(a + c, b + d), 'tops-not-renamed': F(a + c, L)}, fraction=True)
 
 
@@ -109,8 +109,8 @@ def l3_sub(it, V):
     slips = {}
     if a > c and b > d and F(a - c, b - d) != key:
         slips['tops-and-bottoms'] = F(a - c, b - d)
-    if F(a - c, L) != key:
-        slips['tops-not-renamed'] = F(a - c, L)
+    check(F(a - c, L) != key, f"subtract seed {it['seed']}: keeping the old tops does not give the key (where, audit fix pass)")
+    slips['tops-not-renamed'] = F(a - c, L)
     item(it, f"Work out ${fr(a, b)} - {fr(c, d)}$ as a fraction in its lowest terms.", key, slips, fraction=True)
 
 
@@ -122,14 +122,14 @@ def l5_whole(it, V):
     slips = {'multiplied': n * F(a, b)}
     if a > 1:
         slips['bottom-only'] = F(n * b)
-    item(it, f"Work out ${n} \\div {fr(a, b)}$, as a whole number or a fraction in its lowest terms.", key, slips, fraction=True)
+    item(it, f"Work out ${n} \\div {fr(a, b)}$, as a whole number or one fraction in its lowest terms, not a mixed number.", key, slips, fraction=True)
 
 
 def l5_frac(it, V):
     a, b, c, d = (int(V[k]) for k in 'abcd')
     key = F(a, b) / F(c, d)
     check(key * F(c, d) == F(a, b), f"fraction seed {it['seed']}: key times the divisor gives the first fraction")
-    item(it, f"Work out ${fr(a, b)} \\div {fr(c, d)}$, as a whole number or a fraction in its lowest terms.", key,
+    item(it, f"Work out ${fr(a, b)} \\div {fr(c, d)}$, as a whole number or one fraction in its lowest terms, not a mixed number.", key,
          {'multiplied': F(a, b) * F(c, d), 'flipped-first': F(b, a) * F(c, d)}, fraction=True)
 
 
