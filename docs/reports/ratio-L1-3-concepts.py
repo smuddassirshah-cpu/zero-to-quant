@@ -5,6 +5,12 @@ Exits 0 when every checked claim holds. A check that fails because the content i
 wrong stays failing (see docs/reviews/audit-ratio-1-3.md). Checks marked NOTE print a
 wording finding but do not fail the run.
 
+Fix pass (Opus fixer): the finding 6 note re-pointed from the Monte Carlo split (which
+does not depend on the text) to the explanation text, with the split kept as an ok check;
+the q-seven-25ths "digits" slip now has its row (725 typed, 7.25) instead of a skip; the
+finding 9 note reads the explanation, since the part asks for rounded March working and
+its accept line stays the plain figure £50,746.60 that the problems number script requires.
+
 Parts
   1. Every numeric and slider key and every named slip value, recomputed from an
      independent expression (183 widgets), and every band checked against the key's.
@@ -67,7 +73,7 @@ l1|s2|45/100|half=50/100
 l1|s3|60/100|rows=6/100;decimal=0.6/100
 l1|s4|3/4|digits=34/100;decimal=0.75/100
 l1|s10|-0.008|one-place=-0.08;decimal=-0.008/100;sign=0.008
-l1|q-seven-25ths|7/25|flipped=25/7
+l1|q-seven-25ths|7/25|digits=725/100;flipped=25/7
 l1|q-fund-fee|2.5/100|one-place=0.25;no-scale=2.5
 l1|q-above-whole|1.2|twelve=12/100;rise=0.2
 l2|s1|240/10|hundred=240/100;times=240*10
@@ -270,8 +276,6 @@ for line in TABLE.strip().splitlines():
     stored = {x['id']: x for x in w.get('wrong', [])}
     # every authored numeric slip is covered by an expression, except the one finding
     for sid, x in stored.items():
-        if (fk, loc, sid) == ('l1', 'q-seven-25ths', 'digits'):
-            continue
         ok('slip covered ' + tag + ' ' + sid, sid in exprs)
     bands = [(key - tol, key + tol, 'key')]
     for sid, e in exprs.items():
@@ -524,8 +528,10 @@ for _ in range(N):
         under_mixed += sum(ms) < c
 ok('adding understates all-positive growth', under_pos == N, str(under_pos))
 ok('l8 s9 numbers', abs(1.05 * 0.96 * 1.025 - 1.0332) < 1e-12 and abs(200 * 1.0332 - 206.64) < 1e-9 and 0.035 > 0.0332)
-note('l8 s9: "ignores growth on growth, so here it overstates" is not a general direction (finding 6)',
-     not (over_mixed > 0.05 * n_mixed and under_mixed > 0.05 * n_mixed),
+ok('mixed signs go either way', over_mixed > 0.05 * n_mixed and under_mixed > 0.05 * n_mixed)
+note('l8 s9: the reason for overstating is specific to this path, not "growth on growth" (finding 6)',
+     'growth on growth' not in load('l8-growth-on-growth')['screens'][9]['explain']['text']
+     and abs(200 * 1.05 * 0.04 - 8.40) < 1e-9 and 1.05 * 0.96 * 1.025 - 1 < 0.05 - 0.04 + 0.025,
      'mixed-sign paths: sum above compound %.1f%%, below %.1f%% of %d' % (100 * over_mixed / n_mixed, 100 * under_mixed / n_mixed, n_mixed))
 
 # ------------------------------------------------------------------ 4. checks tied to findings
@@ -563,7 +569,7 @@ note('finding 8: l10 s7 interchangeable lines are grouped', w10['answer'][2:] !=
 # Finding 9 (imprecise): problems-2 p-fund-six-months part 2 states 50,746.60; the fund is worth 52,000 x 0.91^3 x 1.09^3.
 exact = float(52000 * F(91, 100) ** 3 * F(109, 100) ** 3)
 p2 = docs['problems-2']['p-fund-six-months.1']
-note('finding 9: stated June value is the fund\'s value to the penny', ('%.2f' % exact).replace('50746', '50,746') in p2['widget']['accept'],
+note('finding 9: the fund\'s unrounded June value is stated to the penny', ('%.2f' % exact).replace('50746', '50,746') in p2['explain']['text'],
      'exact %.4f, i.e. 50,746.61; accept says %s (from the rounded March value: %.4f)' % (exact, p2['widget']['accept'], 39185.69 * 1.09 ** 3))
 ok('finding 9: both pennies are accepted', abs(50746.60 - p2['widget']['answer']) <= 0.01 and abs(50746.61 - p2['widget']['answer']) <= 0.01)
 
