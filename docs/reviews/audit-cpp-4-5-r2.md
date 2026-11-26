@@ -91,3 +91,60 @@ Opus fixer, from commit `27045504`. Each basis below is my own derivation or run
 Scripts. `cpp-L4-5-concepts-r2.py`: only checks that encoded the old content were re-pointed (the six FINDING mutants now name their `test-N`, the PROPOSED-FIX jobs run on the content as it stands, the `l21` listing is read from the screen), plus 14 `FP` codings; its docstring says so. `cpp-L4-5-concepts.py`: `l18s9.pin_only` re-pointed to `test-4`, marked inline and in the docstring.
 
 Gates: validator 0 errors (warning count unchanged; the `q-return-move` key-length warning now reads 74 characters, was 77); voice scan 35 on the seven files 0 and 0; `cpp-L4-5-concepts-r2.py` exit 0 (part A 92, part B 248, 0 failing); `cpp-L4-5-concepts.py` exit 0 (340 of 340); number scripts `--only cpp` 7 of 7; `grade-all --file` 0 failures on all seven files; playthrough of the five lessons and two homeworks green desktop and `--mobile`.
+
+## Fix-pass read
+
+Fresh reader, blind to this file and to the course's concepts scripts until the rows below were written. Read: `git show 434980dd -- app/content/courses` (seven files). No content was edited.
+
+How it was checked. A harness of my own (scratch folder `fpr-cpp45r2`: `zq.mjs`, `mut.mjs`, `rob.mjs`, `gap.mjs`) loads `js/engine/widgets/cpp-grade.js` for the page's unit builder, literals, comparison and error reading, and `js/screens/cpp-worker.js` for its flags, link line, exception runtime and WASI shim. It compiles with YoWASP clang 21.1.4-3 from the local CDN (wasm32, `-std=c++17 -O1`, hardened libc++, no exceptions) and runs each case as its own instance. Every C++ widget in the seven files was graded: 14 widgets, each model solution passes all its tests, each starter fails. Every number has a second route in `docs/reports/cpp-L4-5-r2-fixread.py` (Python standard library, exit 0). Mutants below are mine, written before I opened the committed ones.
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | l16-algorithms | screens[3].widget.tests[6] | `vwap({10, 20}, {0.5, 1.5})` is 17.5 | correct | 5 + 30 = 35 over 2. Run: solution 17.5, starter fails. Python 35/2. |
+| 2 | l16-algorithms | screens[3].widget.how | 7 hidden tests | correct | Count of `tests`. |
+| 3 | l16-algorithms | screens[3].feedback.byKey.test-1 | 101 is the unweighted mean; 100 is both totals from `int` 0 | correct | 303 / 3 = 101; 40300 / 400 in `int` division = 100. Run: unweighted gives 101 at test 1; `inner_product(.., 0) / accumulate(.., 0)` and both `auto` give 100 at test 1. A value of 100 needs `int` / `int`, so one `int` total cannot give it (40300 / 400.0 = 100.75). |
+| 4 | l16-algorithms | screens[3].feedback.byKey.test-7 | 35 means the share total started at `int` 0 | correct | 0 + 0.5 → 0, 0 + 1.5 → 1, 35 / 1. Run, three codings (`double shares = accumulate(.., 0)`, `auto shares`, a loop with `int shares`): each passes tests 1 to 6 and fails test 7 first with 35. Value total `int` only, and both `int` held in `double` variables, fail test 6 first with 10, which its own line covers. |
+| 5 | l18-unit-tests | screens[7].prose | with the fix `px[i] / px[i - 1] - 1` the test prints `FAIL` | correct | 110.0 / 100.0 − 1 = 0.10000000000000009 ≠ 0.1 (run on run-time values and on constants, and Python). The screen 5 solution with this test appended, through its own prelude and runner: `FAIL rise_is_ten_percent`. The other natural fix, `(px[i] - px[i - 1]) / px[i - 1]`, gives exactly 0.1 and passes, so the formula had to be named; it now is, and one keyed answer is true. |
+| 6 | l18-unit-tests | screens[9].widget.prelude | planted bug 3 caps the steps at 100 | correct | Run under v = 3: 100 steps 10.430611662, 2,000 steps 10.430611662. Variants 0 to 2 unchanged (10.430612, 10.965401, 10.468306 at 100 steps). |
+| 7 | l18-unit-tests | screens[9].widget.tests[3] | input 3 expects `planted bug 3: caught` | correct | Solution: 0.019972 from 10.450584, over 0.002, so caught. Real pricer at 2,000 steps is 10.449584, 0.001000 away, so test 1 still passes. Starter fails at test 2. |
+| 8 | l18-unit-tests | screens[9].widget.how | tests 2 to 4 use inputs 1 to 3 | correct | The `tests` array. |
+| 9 | l18-unit-tests | screens[9].feedback.byKey.test-4 | 2,000 steps still give 10.4306; only the convergence test sees it | correct | Row 6. The pin passes under bug 3. Four codings reach `test-4` first: convergence test empty, tolerance 0.05, tolerance 0.02, run at 100 steps with tolerance 0.03. Pin empty or pin at 0.05 reach `test-3` first, as its line says. |
+| 10 | homework-4 | items[1].widget.prelude | planted bug 5 returns the rise when nothing fell | correct | Run under v = 5: 0.25 on 100, 120, 90, 130, 104; 0.035 on 100, 101, 103.5; 0 on a flat pair, one price and none. Variants 0, 1, 2, 4 unchanged (0.25, 0.1, 30, 0.2). |
+| 11 | homework-4 | items[1].widget.tests[5] | input 5 expects `planted bug 5: caught` | correct | Solution pins 0 on a rising series and gets 0.035. Starter fails at test 2. |
+| 12 | homework-4 | items[1].widget.how | tests 2, 3, 5, 6 use inputs 1, 2, 4, 5; test 4 is the crash | correct | The `tests` array. |
+| 13 | homework-4 | items[1].feedback.correct | five planted bugs | correct | Inputs 1 to 5. |
+| 14 | homework-4 | items[1].feedback.byKey.test-6 | a rise is reported as a drawdown; the rising test must pin 0 | correct | Five codings reach `test-6` first: rising test empty, a call with no check, `>= 0` only, tolerance 0.5, a flat series pinned at 0. Pins of 0 on a rising series (`== 0.0`, two prices, `< 1e-9`) pass all six. |
+| 15 | homework-5 | items (h5-members-table).explain | a lone move assignment deletes the copies and no move constructor is written | correct | [class.copy.ctor]/6 and /8, [class.copy.assign]/2 and /4. Run, all twelve cells with clang: copy, copy, copy; error, error, move; move, error, error; copy, copy, copy, each error a deleted function. |
+| 16 | homework-5 | items[9].widget.tests[14] | replaced test: empty from an empty `SolePtr`, plus copy and destroy an empty `CountedPtr`; expect 1 | correct | Solution 1. At least as strong: the old setup and both old terms are kept, a null `s` is still the units digit, and 12 codings were graded against the old and the new test with none passing new where old failed (always-counting constructors 11 → 1001, `use_count` of 1 when empty 11 → 1111). New catches more: an unguarded `++*count_` in the copy (five spellings) and an unguarded destructor (three spellings) all fail test 15 first; a copy that allocates gives 101. See the note on cancelling. |
+| 17 | homework-5 | items[9].widget.how | one test copies and destroys an empty `CountedPtr`, which must touch no count; no test sees private members | correct | Row 16. Guards on `ptr_` in place of `count_` pass, rightly. No test names a member. |
+| 18 | l19-moving-not-copying | screens[1].explain | the move writes a pointer and a size: 8 bytes on wasm32, 12 on a 64-bit desktop | imprecise, minor | Sizes are right for one pair: run on wasm32 gives pointer 4 and `int` 4; host g++ gives 8 and 4 (object 16 with padding). But the lesson's own move, and the frame "a (empty)", also store 0 and `nullptr` in the source. Four stores: 16 bytes here, 24 on a desktop. |
+| 19 | l19-moving-not-copying | summary.trap | `return std::move(t);` blocks elision; `return t;` usually runs no move | correct | C++17 [class.copy.elision]/1: eliding a named local is allowed, not required, and only when the operand is the name. Run at `-O0`, `-O1`, `-O2`: `return t;` 0 moves, `return std::move(t);` 1 move; a function returning one of two locals runs 1 move, so "usually" is the right word. |
+| 20 | l19-moving-not-copying | quiz[4].widget.options[0] | same sentence as the keyed option | correct | Row 19. The other three options stay false. |
+| 21 | l21-virtual-dispatch | screens[9].prose | the listing compiles | correct | Run: compiles with `<memory>`, no warning under `-Wall -Wextra`; the old listing fails with "no matching constructor for initialization of 'Call'". Linked with a body for `Call::value` it prints 30 and 0. |
+| 22 | l23-own-smart-pointer | screens[5].widget.tests[8] | replaced test: copy an empty pointer; expect 1 | correct | Solution 1. At least as strong: 12 codings graded against old and new, none passes new where old failed (default constructor that allocates 11 → 221, `use_count` of 1 when empty 11 → 111). New catches more: an unguarded `++*count_` in the copy constructor (five spellings) fails test 9 first; a copy that allocates gives 11. See the note on cancelling. |
+| 23 | l23-own-smart-pointer | screens[5].widget.how | one test copies an empty pointer, which must add to no count | correct | Row 22. |
+
+Counts: 23 rows. correct 22, wrong 0, imprecise 1 (minor), misleading 0, unverified 0.
+
+Note on cancelling (rows 16 and 22). The packed value is not one-to-one over all `long`s: in `l23`, `p.use_count()` 1 with `q.use_count()` −10 gives 100 − 100 + 1 = 1. It is one-to-one over counts that are 0 or more: a sum of non-negative terms is 0 only when each is 0, and a count of 10 or more only carries upward. So two wrong counts can cancel only if one is negative. A negative count was seen once, a count read from freed memory (the leak check's fill, 0xDDDDDDDD, −572662307 as a 32-bit `long`: value −1431655673 in `h5`). The script shows no pair or triple of counts from 0 to 999 (pairs) or 0 to 59 (triples), or the fill, sums to 0 in 32-bit arithmetic. In `l23` a shared counter also forces `p` and `q` to read the same count, and 110 times a count is 0 only at 0. No coding I wrote reaches a cancelling case.
+
+Note on how the null write is seen (rows 16, 17, 22, 23). A write through a null pointer does not trap in WebAssembly. These tests catch it because the empty pointer is a local the optimiser can see, so clang at `-O1` treats the null store as unreachable and the case ends with "The program ended with exit status 3." This is fixed by the pinned compiler and flags, and held for every spelling tried (`++*count_`, `(*count_)++`, `*count_ += 1`, read then write, a `retain()` helper). The learner's message does not name the cause; the `how` sentence does.
+
+Fix for row 18, `l19-moving-not-copying` `screens[1].explain.text`:
+
+> The copy writes 8,000,000 bytes, about 0.8 ms at 10 GB/s, a round figure. The move copies a pointer and a size and resets the source's pair: 16 bytes in this app's 32-bit WebAssembly build, 24 on a 64-bit desktop.
+
+Basis: `size_ = o.size_; data_ = o.data_; o.size_ = 0; o.data_ = nullptr;` is two `int` stores and two pointer stores: 4 × 4 = 16 on wasm32, 2 × (4 + 8) = 24 on LP64.
+
+Outside the diff, not a row. `l23` screen 5 still passes a copy assignment with an unguarded `++*c` (15 of 15): no test copy-assigns from an empty pointer. The widget is at the 15-test cap, so the cure is to widen `tests[8]` again. Run in `gap.mjs`: the solution gives 1, the unguarded copy assignment and the unguarded copy constructor both fail test 9, and every coding the committed test stops is still stopped.
+
+```json
+{
+  "setup": "SharedPtr<Tracked> p; SharedPtr<Tracked> q = p; SharedPtr<Tracked> r(new Tracked(3)); r = p;",
+  "call": "Tracked::live * 1000 + p.use_count() * 100 + (q.use_count() + r.use_count()) * 10 + (p.get() == nullptr && q.get() == nullptr && r.get() == nullptr ? 1 : 0)",
+  "expect": 1,
+  "compare": "equal"
+}
+```
+
+With it the `how` sentence would read: "One test copies an empty pointer and assigns from one, which must add to no count."
