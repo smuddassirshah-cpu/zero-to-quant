@@ -83,3 +83,29 @@ New `wrong` that no earlier read found: 4 (findings 1 to 4), all minor. That is 
 ## Inbox
 
 One bullet, added to `docs/BACKLOG-INBOX.md` under "Raised later (audit limits):".
+
+## Fix pass
+
+Fixer: Opus, 26 Nov 2026, from `970398bf`. Each basis is my own derivation or source, checked before the edit.
+
+1. Fixed. $(e^{0.01} - 1)/0.01 = 1.0050167$, so the gap to 1 is 0.00502 (and $\sin$ column 0.000017); "within 0.006" is true for all four entries.
+2. Fixed. Going 3 units at slope 3 from 5 gives $5 + 3 \times 3 = 14$, and also $11 + 3 = 14$ (one unit too many). Slip set to 14, clear of the key 11 and slips 3 and 6.
+3. Fixed differently. The slip 2.5 is most naturally $\tfrac{1}{0.40}$, the inverse slope with the £0.10 left out (hint 2 itself shows $\tfrac{1}{0.40}$). Feedback now names that mistake: "That is $\tfrac{1}{0.40}$, the slope of the inverse in points per pound. Multiply by the £0.10 change." Value unchanged.
+4. Fixed. $f'(1) = 0$, $f''(1) = 6 > 0$, $f(1) = -2$: the region $0.8 \le x \le 1$ is the bottom of the dip.
+5. Fixed differently. The mean value theorem needs differentiability inside (Spivak ch. 11 Thm 4); a P&L at £100 then £200 an hour is continuous and never at £150. `screens[0].explain` and `screens[4].question` now add "a definite speed (a speed) at every moment"; `quiz[2].prose` says "with no gaps and a definite rate at every moment". This mirrors `screens[5]` ("a tangent at every point inside") rather than "smooth".
+6. Fixed. Rolle needs continuity on $[a, b]$, differentiability on $(a, b)$ and $f(a) = f(b)$ (Spivak ch. 11 Thm 3); line `a` now states all three. Order key unchanged.
+7. Fixed. Spivak ch. 11 Thm 9 assumes $\lim f'/g'$ exists. Added "provided the limit on the right exists", the wording `screens[7]` uses.
+8. Fixed. $\cos x / x \to +\infty$ from the right and $-\infty$ from the left, so substitution gives no value. Explain now says two are substituted and $\tfrac{\cos x}{x}$ has the form $\tfrac{1}{0}$ with no limit.
+9. Fixed. $\tfrac{x + 1}{2x + 2} = \tfrac{1}{2}$ and the misapplied rule also gives $\tfrac{1}{2}$, so "gives" becomes "can give". "Substitute first" kept: substitution is how the form is checked.
+10. Fixed differently. The chain-rule step assumes $g'$ exists; Spivak ch. 12 Thm 5 supplies it where $f' \ne 0$. Prose now: "Implicit differentiation finds the formula, taking for granted that $f^{-1}$ has a slope. For a differentiable, increasing $f$ it does wherever $f' \ne 0$."
+11. Fixed differently. Where $f''(c)$ exists at an inflection point, $f'$ has a local extremum at $c$, so $f''(c) = 0$ (Fermat); the claim is true with that hypothesis. Kept the teaching point: "Where $f''$ exists it is needed, but the sign of $f''$ must also change".
+12. Fixed. $f''(a) = \lim_{h \to 0} \tfrac{f'(a + h) - f'(a)}{h} > 0$ gives $f'(a + h) - f'(a)$ the sign of $h$ for small $h$ only; $f'(x) = \tfrac{x}{2} + x^2 \sin\tfrac{1}{x}$ has $f''(0) = \tfrac{1}{2}$ and $f''(\tfrac{1}{200\pi}) = -\tfrac{1}{2}$. `d2`, `d3` and `explain` now say "$f'$ rises through $a$"; the `step` hint and the `d3` byKey line were changed to match. Order key unchanged.
+13. Fixed. The option states the conclusion; the proof (Rolle on $f$ minus the chord) has no intermediate-speed step, and the speed here is £1 wherever it exists.
+14. Fixed. $\ln x / x^p \to 0$ only for $p > 0$; $\ln x / 1 \to \infty$. Now "any positive power".
+15. Fixed. With $s^2 = x^2 + 25$ and the station on the ground, $x$ runs from the point below the plane to the station.
+
+Keys: none changed. Slips: `l17` `screens[7]` `double` 16 to 14 (computed two ways above). Tests: none (no code widgets).
+
+Concepts script: `FINDING 1` now reads the tolerance from the hint text and `FINDING 3` checks the slip against $\tfrac{1}{0.40}$, the mistake its new feedback names; both old checks encoded the old text (docstring says so). 139 checks, 0 failing, exit 0.
+
+Gates: validator 0 errors; voice scan 35 on the six edited files 0 and 0; `run-number-scripts --only limits` 9 of 9; `grade-all --file` 0 failures on each edited file; playthrough of `l13`, `l16`, `l17`, `l19`, `l20` and `review-5` green desktop and `--mobile`.

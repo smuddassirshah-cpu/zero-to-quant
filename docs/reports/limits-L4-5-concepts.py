@@ -8,6 +8,10 @@ their whole variable range. Exits 0 when every check passes. A check
 named FINDING n fails because the content is wrong; it stays failing
 until the content is fixed.
 
+Fix pass (Opus, 26 Nov 2026): FINDING 1 now reads the tolerance from the
+l16 hint text, and FINDING 3 now checks the slip against the mistake its
+re-worded feedback names (1/0.40); both old checks encoded the old text.
+
 Run: python docs/reports/limits-L4-5-concepts.py   (from the repo root)
 """
 import itertools
@@ -133,8 +137,11 @@ check("hw4 second-order", close(d2P(0.05), 2341.29, 0.005)
 check("l16 table", close(math.sin(0.1)/0.1, 0.998334, 5e-7) and close((math.exp(0.1) - 1)/0.1, 1.051709, 5e-7)
       and close((math.exp(-0.1) - 1)/-0.1, 0.951626, 5e-7) and close((math.exp(0.01) - 1)/0.01, 1.005017, 5e-7)
       and close((math.exp(-0.01) - 1)/-0.01, 0.995017, 5e-7) and close(math.sin(0.01)/0.01, 0.999983, 5e-7))
-check("FINDING 1: l16 s0 hint 'both columns within 0.005 of 1 at x = +-0.01'",
-      max(abs((math.exp(0.01) - 1)/0.01 - 1), abs((math.exp(-0.01) - 1)/-0.01 - 1)) <= 0.005)
+hint1 = load("l16-both-to-zero")["screens"][0]["hints"][1]["text"]
+tol1 = float(hint1.split("within ")[1].split(" ")[0])
+check(f"FINDING 1: l16 s0 hint 'both columns within {tol1} of 1 at x = +-0.01'",
+      max(abs((math.exp(0.01) - 1)/0.01 - 1), abs((math.exp(-0.01) - 1)/-0.01 - 1),
+          abs(math.sin(0.01)/0.01 - 1)) <= tol1)
 rat = lambda h: (math.exp(2*h) - 1)/math.sin(h)
 check("l16 s1", close(rat(0.5), 3.58, 0.005) and close(rat(0.1), 2.22, 0.005) and close(rat(0.01), 2.020, 0.0005))
 lims = [((x**2 - 4)/(x - 2), 2, 4), ((sp.exp(3*x) - 1)/sp.sin(2*x), 0, sp.Rational(3, 2)),
@@ -226,7 +233,9 @@ check("l19 s7", sp.simplify(sp.diff(sp.atan(2*x), x) - 2/(1 + 4*x**2)) == 0)
 check("l19 s8", close(1/(1 + math.e), 0.2689, 5e-5))
 vega = [v for v in load("l19-running-backwards")["screens"][10]["widget"]["wrong"] if v["id"] == "wrong-units"][0]
 check("l19 s10 key", close(0.10/0.40, 0.25, 1e-12))
-check("FINDING 3: l19 s10 slip 'wrong-units' value is 1/0.04, as its feedback says", close(vega["value"], 1/0.04, 0.05))
+fb3 = load("l19-running-backwards")["screens"][10]["feedback"]["byKey"]["wrong-units"]
+check("FINDING 3: l19 s10 slip 'wrong-units' value is 1/0.40 (1/vega, not scaled by 0.10), as its feedback says",
+      "\\tfrac{1}{0.40}" in fb3 and close(vega["value"], 1/0.40, 0.05) and not close(vega["value"], 0.25, 0.05))
 qn = stats.norm.ppf(0.99)
 check("l19 s11", close(qn, 2.3263, 5e-5) and close(stats.norm.pdf(qn), 0.02665, 5e-6) and close(1/stats.norm.pdf(qn), 37.5, 0.05)
       and close(stats.norm.ppf(0.991) - qn, 0.04, 0.005) and close(1/stats.norm.pdf(0), 2.5, 0.01)
