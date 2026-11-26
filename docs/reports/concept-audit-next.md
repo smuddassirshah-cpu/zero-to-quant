@@ -1,22 +1,24 @@
-# Concept audit: next (13 Nov 2026, audit session 12)
+# Concept audit: next (26 Nov 2026, audit session 13)
 
-State: `concept-audit-log.md`, `concept-audit-notes.md`. Branch `claude/fable-audit`.
+State: `concept-audit-log.md`, `concept-audit-notes.md`. Work is on the harness branch, merged to `claude/amazing-wright-d4mx7i`.
 
-Closed this session: limits-thm L4 (round 2, 0 new `wrong`).
+Closed: contests L1 to L3 and L4 (round 3), number-sense L4, markov L4 and L5 (round 2), delta batch 2026-11-26-3 (11 courses).
 
-Open: contests L1 to L3 (round 1 fixed and read; round 2 owed), contests L4 (rounds 1 and 2 fixed and read; round 3 owed).
+Open: ds L4 (5 `wrong` in round 1; round 2 owed).
 
-Not started: markov L4 and L5 (no second read on record, scope rule (a); the content session must rule); delta batch 3 (40-line rule until 20:31 UTC).
+Not started: problem sets added since close in nine closed courses (about 12,000 lines); number-sense L1 to L3 and markov fluency sets.
 
-Next: contests L4 round 3 and L1 to L3 round 2 (tell the auditor to sweep every `test-N` line with two or three codings of the named mistake, and to run C++ on the page's clang); delta batch 3 (pairs-rep, pdes, ito, numerics, random-vars, mental-pressure, research-int, number-sense, limits-thm and markov L1 to L3); then ds L4, graphs-dp L4, cpp L4 and L5, markets. Agent worktrees start stale: fast-forward first.
+Next: ds L4 round 2; graphs-dp L4, cpp L4 and L5, markets; then the problem sets. Agent worktrees start on the initial commits: begin each prompt with `git checkout -B <own branch> <commit>`. Code courses: sweep every `test-N` line by submission and add `mutants`.
 
-Miss rate: sessions 1 to 11 as logged (101 levels). Session 12, 4 new levels: 36 audit-only findings, 20 `wrong`; two re-reads added 24, 2 `wrong`.
+Miss rate, session 13: 4 new levels, 44 audit-only findings, 9 `wrong`; 9 level re-reads, 23 findings, 4 `wrong`.
 
 ## Verdict
 
-Session 12, levels audited: 4 new (105 in all), plus re-reads of 2 levels.
-Serious audit-only findings: 2, both on new levels, both fixed.
-- `contests/l14-which-first.json` screens[11]: no decay stated, so a wrong option earned the key's £15,000 (imprecise).
-- `contests/l8-invariants.json` prose, summary, screens[5], `homework-2.json` model: a monovariant "proves" termination with no bound (imprecise).
-Minor: 34 on new levels, 24 on re-reads, 7 from fix-pass reads (0 `wrong`).
-Serious per three levels: 1.5 on the 4 new levels; 0 on re-reads.
+Levels audited: 4 new (109 in all), 9 re-reads, one delta batch.
+Serious audit-only findings: 4, all fixed.
+- `number-sense/l15` screens[4]: two unkeyed options were also true.
+- `markov/l22` screens[6]: Wald justified by the wrong reason.
+- `markov/l19` screens[7] (re-read): Wald without its hypotheses.
+- `ds/l18` screens[9]: no time priority passed every hidden test.
+Minor: 41 new levels, 3 delta, 22 re-reads, 8 fix-pass rows (1 `wrong`).
+Serious per three levels: 2.25 new, 0.33 re-reads.
