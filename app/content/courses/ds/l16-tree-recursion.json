@@ -627,7 +627,24 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests, including the empty tree, one node and a 1,023-node tree."
+        "how": "Check runs 10 hidden tests, including the empty tree, one node and a 1,023-node tree.",
+        "mutants": [
+          {
+            "source": "def height(root):\n    if root is None:\n        return -1\n    if root.left is None and root.right is None:\n        return 1\n    return 1 + max(height(root.left), height(root.right))\n\n\ndef size(root):\n    if root is None:\n        return 0\n    return 1 + size(root.left) + size(root.right)\n",
+            "test": 2,
+            "symptom": "a leaf special-cased to 1"
+          },
+          {
+            "source": "def height(root):\n    if root is None:\n        return -1\n    return 1 + max(height(root.left), height(root.right))\n\n\ndef size(root):\n    if root is None:\n        return -1\n    return 1 + size(root.left) + size(root.right)\n",
+            "test": 4,
+            "symptom": "`size(None)` at -1 gives -1 nodes"
+          },
+          {
+            "source": "def height(root):\n    if root is None:\n        return -1\n    return 1 + max(height(root.left), height(root.right))\n\n\ndef size(root):\n    n = 1\n    if root.left:\n        n += size(root.left)\n    if root.right:\n        n += size(root.right)\n    return n\n",
+            "test": 5,
+            "symptom": "children checked before each call: `size(None)` raises"
+          }
+        ]
       },
       "hints": [
         {
@@ -651,8 +668,9 @@
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
           "test-1": "Test 1 is the empty tree. Our convention is `height(None) == -1`.",
-          "test-2": "Test 2 is one node, height 0. If you got 1, `None` returned 0 instead of −1.",
-          "test-5": "Test 5 is the empty tree, which has 0 nodes."
+          "test-2": "Test 2 is one node, height 0. A leaf needs no case of its own: with `None` at −1, `1 + max(-1, -1)` is already 0.",
+          "test-5": "Test 5 is the empty tree, which has 0 nodes. Checking each child before the call is not enough: start with `if root is None: return 0`.",
+          "test-4": "Test 4 expects 6 nodes. Start `size` with `if root is None: return 0`, not −1, then add both sides: `1 + size(root.left) + size(root.right)`."
         }
       },
       "explain": {
@@ -913,9 +931,36 @@
             "call": "is_balanced(build([1, 2, 3, 4, None, None, None, 5]))",
             "expect": "False",
             "compare": "equal"
+          },
+          {
+            "call": "is_balanced(build([1, None, 2, 3, None, None, 4, 5]))",
+            "expect": "False",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 12 hidden tests. Test 10 counts how often your code reads `.left` and `.right` on a 1,023-node tree. One pass reads each about once per node, and at most 6 reads per node pass."
+        "how": "Check runs 13 hidden tests. Test 10 counts how often your code reads `.left` and `.right` on a 1,023-node tree. One pass reads each about once per node, and at most 6 reads per node pass.",
+        "mutants": [
+          {
+            "source": "def is_balanced(root):\n    def check(node):\n        if node is None:\n            return 0\n        lh = check(node.left)\n        rh = check(node.right)\n        if abs(lh - rh) > 1:\n            return -1\n        return 1 + max(lh, rh)\n    return check(root) != -1\n",
+            "test": 13,
+            "symptom": "the -1 from below read as a height"
+          },
+          {
+            "source": "def is_balanced(root):\n    def check(node):\n        if node is None:\n            return 0\n        lh = check(node.left)\n        if lh == -1:\n            return -1\n        rh = check(node.right)\n        if abs(lh - rh) > 1:\n            return -1\n        return 1 + max(lh, rh)\n    return check(root) != -1\n",
+            "test": 13,
+            "symptom": "flag passed up from the left side only"
+          },
+          {
+            "source": "def is_balanced(root):\n    def check(node):\n        if node is None:\n            return 0\n        lh = check(node.left)\n        rh = check(node.right)\n        if rh == -1 or abs(lh - rh) > 1:\n            return -1\n        return 1 + max(lh, rh)\n    return check(root) != -1\n",
+            "test": 13,
+            "symptom": "flag passed up from the right side only"
+          },
+          {
+            "source": "def is_balanced(root):\n    def check(node):\n        if node is None:\n            return 0\n        lh = check(node.left)\n        rh = check(node.right)\n        if (lh == -1 and rh == -1) or abs(lh - rh) > 1:\n            return -1\n        return 1 + max(lh, rh)\n    return check(root) != -1\n",
+            "test": 13,
+            "symptom": "flag passed up only when both sides return -1"
+          }
+        ]
       },
       "hints": [
         {
@@ -940,7 +985,8 @@
         "byKey": {
           "test-1": "Test 1 is the empty tree, which is balanced: return `True`.",
           "test-5": "Test 5 is unbalanced at 2 although the root passes. Check every node, not just the root.",
-          "test-10": "Test 10 counts reads. Calling a separate `height` at every node re-walks subtrees: return the height from the same pass instead."
+          "test-10": "Test 10 counts reads. Calling a separate `height` at every node re-walks subtrees: return the height from the same pass instead.",
+          "test-13": "Test 13 zigzags down five nodes and is unbalanced at 3. Return −1 as soon as either child returns −1, so the flag reaches the root."
         }
       },
       "explain": {
@@ -1218,7 +1264,19 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests, with negative values, one-child nodes and a 1,023-node tree."
+        "how": "Check runs 10 hidden tests, with negative values, one-child nodes and a 1,023-node tree.",
+        "mutants": [
+          {
+            "source": "def max_root_to_leaf(root):\n    if root.left is None and root.right is None:\n        return root.val\n    best = 0\n    for child in (root.left, root.right):\n        if child is not None:\n            best = max(best, max_root_to_leaf(child))\n    return root.val + best\n",
+            "test": 4,
+            "symptom": "best total started at 0 gives 1"
+          },
+          {
+            "source": "def max_root_to_leaf(root):\n    if root is None:\n        return 0\n    return root.val + max(max_root_to_leaf(root.left), max_root_to_leaf(root.right))\n",
+            "test": 4,
+            "symptom": "a missing child counted as a route of 0 gives 1"
+          }
+        ]
       },
       "hints": [
         {
@@ -1241,8 +1299,7 @@
         "correct": "Every route ends at a leaf, negatives and all.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-4": "Test 4 is 1 with one child, −5. The only route is 1 + (−5) = −4. A `None` child counted as 0 gave 1.",
-          "test-6": "Test 6 has only negative values. Do not start the best total at 0.",
+          "test-4": "Test 4 is 1 with one child, −5. The only route is 1 + (−5) = −4. If you got 1, a missing child or a best total started at 0 beat the real route.",
           "test-1": "Test 1 is the lattice. Picking the larger child step by step gives 6; compare whole routes."
         }
       },
