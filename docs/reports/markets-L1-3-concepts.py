@@ -6,6 +6,17 @@ Each check prints `ok <name>` or `FAIL <name>`; exit 0 only when every check pas
 A check that fails because the content is wrong stays failing (it is a finding in
 docs/reviews/audit-markets-1-3.md).
 
+Fix pass (Opus fixer, round 1): checks re-pointed to the new wording, as the audit allowed.
+- L3.hw.3 slip `end`: the line now names checking the 2-contract balance against one contract's
+  4,500.00; the check recomputes that mistake and asserts it gives the slip value 0.
+- code l5 bond_price test-2 and test-3: the lines now name a yield fixed at the example's 5% and a
+  face discounted over a fixed 5 years; the checks submit those codings, and a new check asserts the
+  discount-at-coupon and wrong-period codings fail test 1, where the new test-1 line names them.
+- code l8 annualised test-2: the line now names a root fixed at 3; averaging codings are checked
+  against the new test-1 line, and the mean-log-return codings against the new test-6 line.
+- run_tests now returns N, not 'error', for an exception raised inside test N, as widgets/code.js does.
+- New: L2.l5.s3 half-yearly equals an annual bond paying 4.05 at 5.0625% (the new explanation).
+
 Sources: Hull, Options, Futures and Other Derivatives (ch. 2 futures mechanics, ch. 4
 interest rates, duration, convexity, ch. 5 forward and futures prices); Fabozzi, Bond Markets,
 Analysis and Strategies (ch. 2 to 4); Bodie, Kane and Marcus, Investments (ch. 3 margin and
@@ -162,6 +173,8 @@ key_and_wrongs('L2.l5.s3 half-yearly 95.62', f, 'screens', 3, bond(0.04, 0.05, 5
 # Finding 4: the half-yearly price is not always lower; it moves further from par (premium bonds price higher, as the lesson's own quiz 3 shows).
 check('L2.l5 half-yearly pricing moves away from par: discount lower, premium higher, par unchanged',
       bond(0.04, 0.05, 5, f=2) < bond(0.04, 0.05, 5) and bond(0.06, 0.04, 2, f=2) > bond(0.06, 0.04, 2) and close(bond(0.05, 0.05, 7, f=2), 100, 1e-9))
+check('L2.l5.s3 half-yearly price equals an annual bond paying 2 x 1.025 + 2 = 4.05 at 1.025^2 - 1 = 5.0625% (the explanation)',
+      close(2 * 1.025 + 2, 4.05, 1e-12) and close(4.05 * af(0.050625, 5) + 100 / 1.050625 ** 5, bond(0.04, 0.05, 5, f=2), 1e-9) and round(0.050625 * 100, 2) == 5.06)
 check('L2.l5.s3.explain gives a reason that also covers a premium bond (not only "compounds to 5.06%")',
       not re.search(r'because 2\.5% a half compounds to 5\.06% a year', L[f]['screens'][3]['explain']['text']), L[f]['screens'][3]['explain']['text'][-90:])
 key_and_wrongs('L2.l5.s5 zero', f, 'screens', 5, 100 / 1.05 ** 5, {'coupon-bond': bond(0.04, 0.05, 5), 'with-coupon': 104 / 1.05 ** 5, 'simple': 80})
@@ -284,8 +297,11 @@ once_bal = 12000 - 2 * 10 * (8000 - 7640)
 once_call = 12000 - once_bal if once_bal < 9000 else 0
 hw3 = L['homework-3']['items'][3]
 end_val = [x['value'] for x in hw3['widget']['wrong'] if x['id'] == 'end'][0]
-check('L3.hw.3 slip `end`: the mistake its feedback names ("settled the week at once") gives the slip\'s value',
+check('L3.hw.3 slip `end`: the line no longer names "settled the week at once" (that gives the key, 7200)',
       not ('settled the week at once' in hw3['feedback']['byKey']['end'] and once_call != end_val), f'settling once gives a call of {once_call}, the slip value is {end_val}')
+c4500, _ = margin_calls([8000, 7900, 7820, 7850, 7700, 7640], 2, 10, 6000, 2250)   # 2 contracts against 4500 in all: per-contract level 2250
+check('L3.hw.3 slip `end`: the mistake it now names (2-contract balance against one contract\'s 4,500) gives the slip value',
+      '£4,500.00' in hw3['feedback']['byKey']['end'] and sum(c4500) == end_val == 0, f'calls {c4500}, slip {end_val}')
 
 f = 'l12-selling-what-you-do-not-own'
 check('L3.l12.s3 profit 7025; s4 -15975; s9 -52000; q0 985; q2 -550; hw.5 -7180; rev.4 -920',
@@ -342,7 +358,7 @@ def run_tests(src, fname, tests):
             signal.alarm(3)          # the page stops a run that takes too long; a loop that never ends is an error there too
             got = eval(t['call'], env); exp = eval(t['expect'], {})
         except Exception:
-            return 'error'
+            return i                 # the page gives test-N for an exception inside test N (AUTHORING, engine pass 7)
         finally:
             signal.alarm(0)
         if t.get('compare') == 'isclose':
@@ -386,8 +402,19 @@ m3 = mutants_first_fail('l5-pricing-a-bond', 'screens', 9, {
     'face discounted years - 1': bp % ('face * coupon / (1 + yld) ** t', 'face / (1 + yld) ** (years - 1)'),
     'face left out': bp % ('face * coupon / (1 + yld) ** t', '0')})
 print('   l5 bond_price first failing test: discount-at-coupon codings', m2, '; face-discount codings', m3)
-check('code l5 bond_price byKey test-2 ("discount at yld, not coupon"): most natural codings of that mistake fail test 2 first', sum(v == 2 for v in m2.values()) * 2 > len(m2), str(m2))
-check('code l5 bond_price byKey test-3 ("face discounted over years"): most natural codings of that mistake fail test 3 first', sum(v == 3 for v in m3.values()) * 2 > len(m3), str(m3))
+fb5 = code_widget('l5-pricing-a-bond', 'screens', 9)[1]
+check('code l5 bond_price byKey test-1 (discount at `yld`, face over `years`): the discount-at-coupon and wrong-period codings all fail test 1 first',
+      'test-1' in fb5 and all(v == 1 for v in list(m2.values()) + list(m3.values())), str(m2) + str(m3))
+m2b = mutants_first_fail('l5-pricing-a-bond', 'screens', 9, {
+    'both at 1.05': bp % ('face * coupon / 1.05 ** t', 'face / 1.05 ** years'),
+    'coupons at 0.05': bp % ('face * coupon / (1 + 0.05) ** t', 'face / (1 + yld) ** years'),
+    'face at 1.05': bp % ('face * coupon / (1 + yld) ** t', 'face / 1.05 ** years')})
+m3b = mutants_first_fail('l5-pricing-a-bond', 'screens', 9, {
+    'face ** 5': bp % ('face * coupon / (1 + yld) ** t', 'face / (1 + yld) ** 5'),
+    'loop and face at 5': bp.replace('range(1, years + 1)', 'range(1, 6)') % ('face * coupon / (1 + yld) ** t', 'face / (1 + yld) ** 5'),
+    'face * v ** -5': bp % ('face * coupon / (1 + yld) ** t', 'face * (1 + yld) ** -5')})
+check('code l5 bond_price byKey test-2 (yield fixed at the example\'s 5%): every such coding fails test 2 first', 'fixed 5%' in fb5.get('test-2', '') and all(v == 2 for v in m2b.values()), str(m2b))
+check('code l5 bond_price byKey test-3 (face over a fixed 5 years): every such coding fails test 3 first', 'fixed 5 years' in fb5.get('test-3', '') and all(v == 3 for v in m3b.values()), str(m3b))
 
 # l8 annualised: byKey test-2 names "compound rather than average".
 an = "def annualised(returns):\n    %s"
@@ -396,7 +423,18 @@ m8 = mutants_first_fail('l8-measuring-returns', 'screens', 10, {
     'total return over T': an % "growth = 1.0\n    for r in returns:\n        growth *= 1 + r\n    return (growth - 1) / len(returns)",
     'mean of growth factors': an % 'return sum(1 + r for r in returns) / len(returns) - 1'})
 print('   l8 annualised first failing test for averaging codings', m8)
-check('code l8 annualised byKey test-2 ("compound rather than average"): most natural averaging codings fail test 2 first', sum(v == 2 for v in m8.values()) * 2 > len(m8), str(m8))
+fb8 = code_widget('l8-measuring-returns', 'screens', 10)[1]
+check('code l8 annualised byKey test-1 ("not the 6.33% average"): every averaging coding fails test 1 first', 'average' in fb8.get('test-1', '') and all(v == 1 for v in m8.values()), str(m8))
+m8r = mutants_first_fail('l8-measuring-returns', 'screens', 10, {
+    'root 1/3': an % "growth = 1.0\n    for r in returns:\n        growth *= 1 + r\n    return growth ** (1 / 3) - 1",
+    'root 1/3.0': an % "growth = 1.0\n    for r in returns:\n        growth *= 1 + r\n    return growth ** (1 / 3.0) - 1",
+    'math.pow 1/3': "import math\n" + an % "growth = 1.0\n    for r in returns:\n        growth *= 1 + r\n    return math.pow(growth, 1 / 3) - 1"})
+check('code l8 annualised byKey test-2 (root uses len(returns)): every fixed-root coding fails test 2 first', 'len(returns)' in fb8.get('test-2', '') and all(v == 2 for v in m8r.values()), str(m8r))
+m8l = mutants_first_fail('l8-measuring-returns', 'screens', 10, {
+    'mean log': "import math\n" + an % "return math.exp(sum(math.log(1 + r) for r in returns) / len(returns)) - 1",
+    'mean log1p': "import math\n" + an % "return math.exp(sum(math.log1p(r) for r in returns) / len(returns)) - 1",
+    'log loop': "import math\n" + an % "total = 0.0\n    for r in returns:\n        total += math.log(1 + r)\n    return math.exp(total / len(returns)) - 1"})
+check('code l8 annualised byKey test-6 (math.log(0)): every mean-log-return coding first fails test 6', 'test-6' in fb8 and all(v == 6 for v in m8l.values()), str(m8l))
 m8b = mutants_first_fail('l8-measuring-returns', 'screens', 10, {
     'no root': an % "growth = 1.0\n    for r in returns:\n        growth *= 1 + r\n    return growth - 1",
     'sum not product': an % "growth = 1.0\n    for r in returns:\n        growth += r\n    return growth ** (1 / len(returns)) - 1"})
