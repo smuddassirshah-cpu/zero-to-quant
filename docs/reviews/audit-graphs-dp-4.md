@@ -193,3 +193,19 @@ Counts: 34 rows. 31 correct, 3 imprecise (all minor), 0 wrong, 0 misleading, 0 u
 
 - **N1** `l14-knapsack.json` screens[9]: a coding that skips a too-heavy item's row with `continue` (leaving that row at 0) passes all 10 tests, because the only heavy item in the tests comes first. It is wrong when the heavy item is not first. Catching test: `knapsack_items([2, 8, 3], [5, 100, 4], 7)` expects `[0, 2]`; that coding returns `[0, 1, 2]`.
 - **N2** `l16-grid-paths.json` screens[7]: a coding that picks the predecessor by comparing the two neighbours' fees, not their running totals, passes all 8 tests but is wrong on 360 of 2,000 random 3 by 3 grids. Catching test: `min_path_cost([[1, 9, 1], [1, 2, 1], [5, 1, 1]])` expects 6; that coding returns 13 (greedy on the next fee returns 6, so the test isolates this mistake). Greedy itself first fails test 5, which has no `test-5` line.
+
+## Fix-pass follow-up (Opus)
+
+Opus fixer, from commit 9034de32, on the three imprecise rows and two notes of the fix-pass read. Every figure was recomputed in CPython (table and brute force over routes or subsets); every new mutant was graded under the page's Pyodide by `grade-all --code`. No graded key, existing hidden test or solution changed; one slip renamed, two hidden tests added.
+
+| # | status | basis (own) |
+|---|---|---|
+| F1 | fixed | Table run: forcing the blocked cell r4c1 to 1 gives 11 (rows 4 and 5: 1 2 4 4 7; 1 3 0 4 11); forcing only r5c1 to 1 gives 9, cut off by the block at r5c3; brute force over the 70 routes with r4c1 open gives 11. `byKey.edge` now names the blocked cell holding 0, then the cell below, and says counting the block as open gives 11. |
+| F2 | fixed (renamed) | Subsets give 7; packing by value per kg (1.50, 1.33, 1.25, 1.20 a kg) takes 2 kg then 3 kg for 7, so `ratio` named no mistake. 3 is the best value-per-kg item alone (also the lightest alone). Slip renamed `one-item`, value 3 kept, line added naming that mistake. |
+| F3 | fixed | Brute force over the 6 routes of test 7: DDRR costs 5, the next cheapest 13, and each of the other five crosses a 9. `test-7` now states the expected 5. |
+| N1 | fixed (test added) | CPython and Pyodide: `continue` past a too-heavy item (two codings) passes all 10 old tests; filling only from `w = wt` (two codings) reaches only the 60-item test, which has no line. New test 9, `knapsack_items([2, 8, 3], [5, 100, 4], 7)` expects `[0, 2]` (brute force: {0, 2} is the only best pack, £9); all four return `[0, 1, 2]` there first. Solution passes, starter fails test 1, the 9 old mutants keep their tests. New `test-9` line, 4 mutants. The 60-item tests are now 10 and 11, so "the last two" still holds; `how` says 11. |
+| N2 | fixed differently | The proposed grid `[[1, 9, 1], [1, 2, 1], [5, 1, 1]]` has a fee tie at the corner: choosing by fee with ties to the left (`<`, or `min` over (fee, total) pairs) returns 6 and passes it; only the tie-upwards codings return 13. A 20,000-grid search found `[[1, 1, 1], [4, 6, 3], [3, 2, 2]]`: no fee ties, key 8 (table and brute force, route RRDD), all four fee codings return 12, and greedy on the next fee returns 8, so the test isolates this mistake. Added as test 8 (the 30 by 40 grid is now 9; `how` says 9); new `test-8` line, 4 mutants. |
+
+Not changed: greedy on the next fee still first fails test 5 (9), which has no `test-5` line; outside this pass's findings.
+
+Gates: validator 0 errors; voice scan 35 on the three files, 0 and 0; `graphs-dp-L4-concepts.py` exit 0, 163 checks (the print-only note on the `ratio` id is re-pointed to a check on `one-item`; the l16 test loop picks up the new test); `graphs-dp-4-fixread.py` exit 0, unchanged; `run-number-scripts --only graphs-dp` 3 of 3 passed; `grade-all` and `grade-all --code` on the three files, 0 failures; playthrough of l14, l16 and homework-4, desktop and `--mobile`, all passed. Files: `homework-4`, `l14-knapsack`, `l16-grid-paths`.

@@ -1192,13 +1192,18 @@
             "compare": "equal"
           },
           {
+            "call": "min_path_cost([[1, 1, 1], [4, 6, 3], [3, 2, 2]])",
+            "expect": "8",
+            "compare": "equal"
+          },
+          {
             "setup": "cs = [[(i * 7 + j * 13) % 10 for j in range(40)] for i in range(30)]",
             "call": "min_path_cost(cs)",
             "expect": "132",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests. They include a 1 by 1 grid, a single row, a single column and a 30 by 40 grid.",
+        "how": "Check runs 9 hidden tests. They include a 1 by 1 grid, a single row, a single column and a 30 by 40 grid.",
         "mutants": [
           {
             "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            up = best[i - 1][j] if i > 0 else 0\n            left = best[i][j - 1] if j > 0 else 0\n            best[i][j] = min(up, left) + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
@@ -1229,6 +1234,26 @@
             "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j > 0:\n                best[i][j] = best[i][j - 1] + costs[i][j]\n            elif j == 0 and i > 0:\n                best[i][j] = best[i - 1][j] + costs[i][j]\n            elif i > 0 and j > 0:\n                best[i][j] = min(best[i - 1][j], best[i][j - 1]) + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
             "test": 1,
             "symptom": "start cell never filled: 9"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                best[i][j] = costs[0][0]\n            elif i == 0:\n                best[i][j] = best[i][j - 1] + costs[i][j]\n            elif j == 0:\n                best[i][j] = best[i - 1][j] + costs[i][j]\n            elif costs[i - 1][j] < costs[i][j - 1]:\n                best[i][j] = best[i - 1][j] + costs[i][j]\n            else:\n                best[i][j] = best[i][j - 1] + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
+            "test": 8,
+            "symptom": "takes the neighbour with the smaller fee, ties to the left: 12"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                best[i][j] = costs[0][0]\n            elif i == 0:\n                best[i][j] = best[i][j - 1] + costs[i][j]\n            elif j == 0:\n                best[i][j] = best[i - 1][j] + costs[i][j]\n            elif costs[i - 1][j] <= costs[i][j - 1]:\n                best[i][j] = best[i - 1][j] + costs[i][j]\n            else:\n                best[i][j] = best[i][j - 1] + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
+            "test": 8,
+            "symptom": "takes the neighbour with the smaller fee, ties upwards: 12"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                best[i][j] = costs[0][0]\n                continue\n            options = []\n            if i > 0:\n                options.append((costs[i - 1][j], best[i - 1][j]))\n            if j > 0:\n                options.append((costs[i][j - 1], best[i][j - 1]))\n            fee, total = min(options)\n            best[i][j] = total + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
+            "test": 8,
+            "symptom": "min over (fee, total) pairs, so the fee decides: 12"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                best[i][j] = costs[0][0]\n                continue\n            prev = []\n            if i > 0:\n                prev.append((i - 1, j))\n            if j > 0:\n                prev.append((i, j - 1))\n            pi, pj = min(prev, key=lambda p: costs[p[0]][p[1]])\n            best[i][j] = best[pi][pj] + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
+            "test": 8,
+            "symptom": "min over the neighbours keyed by fee: 12"
           }
         ]
       },
@@ -1260,7 +1285,8 @@
         "byKey": {
           "test-1": "Test 1 expects 12. If you got 6, a missing neighbour was counted as 0 inside the min: on the edges use the one neighbour there is. If you got 9, count the start cell's fee too.",
           "test-2": "Test 2 is a single cell: the route starts and ends there, so it costs that cell's fee.",
-          "test-7": "Test 7 rewards going down the left edge first, then along the bottom: 1 + 1 + 1 + 1 + 1."
+          "test-7": "Test 7 expects 5: down the left edge, then along the bottom, 1 + 1 + 1 + 1 + 1. Every other route crosses a 9.",
+          "test-8": "Test 8 expects 8: along the top, then down the right edge. If you got 12, take the neighbour with the smaller running total, not the smaller fee."
         }
       },
       "explain": {

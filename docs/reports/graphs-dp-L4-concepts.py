@@ -10,6 +10,8 @@ Expected failures at commit 6c01af87 (exit 1): F1 (l15 trap crash site), F2 (l17
 slip value), F3 (homework-4 grid slip value).
 After the round 1 fix pass: exits 0, 161 checks; F1 to F3 pass on the corrected content and
 no check was re-pointed.
+Follow-up fix pass (Opus): the print-only note on the h4-knap slip id `ratio` encoded old
+text; it is now a check on the renamed slip `one-item`. Nothing else re-pointed.
 """
 import itertools
 import json
@@ -447,7 +449,7 @@ check('r4 two dealers 99.75', stop_exact(2, [99.0, 100.0])[-1] == Fr('99.75'))
 # ================= homework-4 =================
 it = {x['id']: x for x in H4['items']}
 check('h4 knapsack 7; heavy slip 6', knap_brute([2, 3, 4, 5], [3, 4, 5, 6], 5) == 7 == it['h4-knap']['widget']['answer'])
-print('     note: h4-knap wrong[] value 3 (id ratio) has no feedback line; packing by value per kg gives %d here' % greedy_ratio([2, 3, 4, 5], [3, 4, 5, 6], 5))
+check('h4 knapsack slip one-item 3 = best value-per-kg item alone; packing by value per kg gives the key 7', wrongs(it['h4-knap']['widget']).get('one-item') == 3 == [3, 4, 5, 6][0] and greedy_ratio([2, 3, 4, 5], [3, 4, 5, 6], 5) == 7 and 'one-item' in it['h4-knap']['feedback']['byKey'])
 hv = stop_exact(3, [99.0, 99.4, 100.0])
 check('h4 dealers lines 99.4667, 99.6444, 99.7630', [round(float(x), 4) for x in hv] == [99.4667, 99.6444, 99.763])
 GH = [[0, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 0, 1, 0], [1, 0, 0, 0, 0], [0, 0, 1, 0, 0]]
