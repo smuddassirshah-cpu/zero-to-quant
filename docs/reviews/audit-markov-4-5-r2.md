@@ -89,3 +89,22 @@ Notes on the overlap.
 ## Inbox
 
 One bullet added to `docs/BACKLOG-INBOX.md` under "Raised later (audit markov):": a further slip whose feedback names a different computation (l21 `quiz[3]` `hh`), as evidence for the slip-recompute check already requested there. The existing stopped-walk bullet covers findings 4 and 5.
+
+## Fix pass
+
+Opus fixer, content commit `edc8ef32` (course folder only; six lesson files). No key, slip value, tolerance or hidden test changed. Scratch replay: `scratchpad/fix-mk45r2/l20s2.mjs` (not committed).
+
+| # | Status | Fixer's basis |
+|---|---|---|
+| 1 | fixed differently | Compound Poisson mean is $\lambda t E[Y]$ (GS 6.13); $\lambda E[Y] = 5 \times 0.2 = 1$ lot a minute, so 10 lots in 10 minutes and the next sentence's "minus $t$" stays right. Text: "10 lots, a drift of $5 \times 0.2 = 1$ lot a minute." |
+| 2 | fixed differently | Durrett Thm 4.8.6 (Wald): i.i.d. steps with $E\lvert X_1\rvert < \infty$ and a stopping time with $E[T] < \infty$. Own check of the counterexample: stakes $\pm 2^{n-1}$ are independent, mean 0, $E[T] = 2$, yet $S_T = -(2^{T-1} - 1) + 2^{T-1} = 1$ on every path; they fail "one shared distribution" (and bounded steps), so l20 stays consistent. Prose now says "independent steps that all share one distribution with finite mean $\mu$, and a stopping time $T$ with finite mean", and "for bounded steps it is condition (2) applied to $S_n - n\mu$"; summary idea 3 names both hypotheses. The die example meets both (i.i.d., bounded, geometric $T$). Problems-5 `p-two-loss-cut` already gives the bounded-step form. |
+| 3 | fixed differently | Unlimited doubling: $T$ geometric (no cap, (1) fails), stopped bankroll $-(2^k - 1)$ before the win (no floor, (3) fails), stakes unbounded ((2) fails) (W 10.10). Question now grants (1) and (3) and asks why (2) fails; the `time` option becomes the false inference "$T$ is not bounded, so condition (2) cannot apply", so only `steps` is true. Key unchanged. |
+| 4 | fixed | Engine replay (`perf-retrofit-8-scripts/l19_walk_sim.mjs`, rerun): up 23, down 175, open 2, mean 11.75; $2300 + 50 = 2350$ over 200. Text names the two unfinished games. |
+| 5 | fixed | Own replay of seed 2, run 0, $L = 99$: average length 40.0 (so "about 40" is this batch); exact $E[\min(T, 1000)] = 49.42$ by forward recursion, $P(T > 1000) = 0.025$. Text now says the chart stops at 1,000 bets. |
+| 6 | fixed | Biased coin, $p = 0.6$: HH wait $= 1/p + 1/p^2 = 1.6667 + 2.7778 = 4.4444$; $1/0.36$ alone is 2.7778. Feedback now names the HH wait. |
+| 7 | fixed | 8 by 8 knight's graph: degree sum 336 (ordered moves), so $\lvert E\rvert = 168$ unordered pairs (handshake lemma). |
+| 8 | fixed | Handshake lemma with weights: $\sum_i w(i) = 2 \sum_e w_e$ (LPW 9.1); equals $2\lvert E\rvert$ only for unit weights. Split into two sentences. |
+| 9 | fixed | Kac / Norris Thm 1.7.7 needs irreducibility; a finite connected network gives an irreducible, positive recurrent walk. Text: "On any connected network ...". |
+| 10 | fixed | The count of a Poisson process with rate $\lambda(t)$ over $[0, 60]$ is Poisson with mean $\int \lambda = 90$ (GS 6.13); the prose now states the process, so the feedback's "still Poisson" has its hypothesis. |
+
+Gates on the six edited files: validator 0 errors; `voice-scan.py 35` 0 and 0; `markov-L4-5-concepts-r2.py` exit 0 (finding 1's check now passes; the NOTE lines keyed on old text no longer print, no re-pointing needed), `markov-L4-5-concepts.py` exit 0, `markov-L4-5-fixread.py` exit 0; `run-number-scripts.mjs --only markov` 5 of 5 passed; `grade-all.mjs --file` 0 failures on each; playthrough desktop and `--mobile` all passed on each.
