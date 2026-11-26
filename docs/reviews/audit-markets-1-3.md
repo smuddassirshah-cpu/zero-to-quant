@@ -131,3 +131,57 @@ Opus fixer, round 1, on cb8e1702. Every basis below is my own derivation, run or
 Concepts script `docs/reports/markets-L1-3-concepts.py`: re-pointed, as its docstring now records: the hw.3 `end` check recomputes the newly named mistake; the l5 test-2 and test-3 checks submit the newly named codings, with a new test-1 check for the old ones; the l8 test-2 check is now a test-1 check for averaging plus a fixed-root test-2 check and a mean-log test-6 check; `run_tests` returns N for an exception in test N, as the page does; one new check for the £4.05 at 5.06% identity. Regex checks for findings 1, 4, 8 and 11 match the new wording unchanged. Exit 0, 143 checks.
 
 Gates: validator 0 errors; voice scan 35 on the nine files, 0 and 0; concepts script exit 0; `run-number-scripts --only markets` 1 passed; `grade-all --code --file` on the nine files 0 failures (mutants enforced: a probe with a wrong test number failed as expected); playthrough of the seven lessons and two sets, desktop and `--mobile`, all passed.
+
+## Fix-pass read
+
+Fresh reader, blind to the audit above until these rows were written. Read: `git show ead4b0b6 -- app/content/courses` (markets l3, l4, l5, l6, l8, l12, l13, review-3, homework-3). Script: `docs/reports/markets-L1-3-fixread.py` (every changed number two ways; exits 1 while row 4 stands, 0 after its fix). Code lines: 23 codings of my own plus the 21 committed mutants graded through `tools/code-runner.mjs` under the local Pyodide; every one first fails the test its line names, both solutions pass and both starters fail test 1.
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | l3-comparing-rates | screens/9/prose | Dollar and euro money markets quote on 360 days, sterling on 365 | correct | Hull ch. 6.1 (day counts: actual/360 for US money-market instruments); market convention ACT/360 for USD and EUR, ACT/365 for GBP. Key £920.50 recomputed |
+| 2 | l3-comparing-rates | screens/9/canvas rows[1][0] | "360-day (dollar and euro money markets)" | correct | as row 1 |
+| 3 | l4-npv | summary ideas[2] | For an outlay followed by inflows, NPV falls as the rate rises | correct | Derivation: each inflow's PV falls in r, the outlay is fixed. Brealey-Myers-Allen ch. 5 (IRR pitfalls 1 and 2: the rule fails for borrowing and mixed-sign streams). Grid check on two streams; counter-stream [+1000, −1100] rises |
+| 4 | l4-npv | quiz/q-different-rates/prose (with the key `right`) | A is £50.00 at 6%, B is £70.00 at 9%, both conventional; keyed "Nothing yet: compute both at the same rate" | **wrong** | The new premise makes NPV fall with the rate for both. So B(r) ≥ 70 > 50 ≥ A(r) at every shared rate from 6% to 9%, including both rates the analyst used. The key is no longer true and option `b` ("B is better") is. The item's own `why` on `b` ("B's NPV at 6% would be higher than £70.00") hands the learner the proof |
+| 5 | l4-npv | quiz/q-different-rates/options a/why | For an outlay followed by inflows, a lower rate raises the NPV | correct | as row 3 (reworded by the fix in row 4) |
+| 6 | l4-npv | quiz/q-irr-bracket/prose | Outlay today, inflows later; NPV £40.00 at 8%, −£25.00 at 10% | correct | Monotone NPV gives one root, between 8% and 10%; exactly one option true; the `below` and `above` reasons now follow from the premise |
+| 7 | l4-npv | quiz/q-irr-bracket/explain | NPV falls as the rate rises for such a stream; interpolation 9.23% | correct | 0.08 + 0.02 × 40/65 = 0.0923, two ways |
+| 8 | l5-pricing-a-bond | screens/3/explain | £95.62 sits further below par than £95.67; it works like an annual bond paying £4.05 at 5.06% | correct | Two coupons are worth 2 × 1.025 + 2 = 4.05 at each year end, and 1.025² − 1 = 5.0625%. Annual bond, £4.05, 5 years, 5.0625%: 95.623968, equal to the half-yearly price to 1e-9. Shortfall 1.0125 points against 1.00. (At the rounded 5.06% it prices at 95.63; "works like" covers it) |
+| 9 | l5-pricing-a-bond | screens/9/feedback test-1 | 5-year 4% bond at 5% gives 95.67; discount coupons and face at `yld` | correct | 95.6705 two ways. My codings (coupon undiscounted; coupon over `years`; rate used as the amount; discount at `coupon`; face over `years − 1`) all return test-1 |
+| 10 | l5-pricing-a-bond | screens/9/feedback test-2 | Yield equal to coupon prices at 100; fault is the fixed 5% | correct | Tests 1 and 2 differ only in `yld`, so passing 1 and failing 2 means the yield is not used. My codings (`r = 0.05` variable; closed form with 1.05 and 0.05) return test-2 |
+| 11 | l5-pricing-a-bond | screens/9/feedback test-3 | 100/1.05^10 = 61.39; face over `years`, not a fixed 5 | correct | 61.3913. My codings (`n = 5` for the face; list `[1..5]` with power 5) return test-3. A loop fixed at 5 with the face right first fails test 4 and gets the generic line, which fits |
+| 12 | l5-pricing-a-bond | screens/9/widget mutants, test 1 (6) | each first fails test 1 | correct | run: all test-1 |
+| 13 | l5-pricing-a-bond | screens/9/widget mutants, test 2 (3) | each first fails test 2 | correct | run: all test-2 |
+| 14 | l5-pricing-a-bond | screens/9/widget mutants, test 3 (3) | each first fails test 3 | correct | run: all test-3 |
+| 15 | l6-yield | screens/7/explain | Held to maturity it pays every promised pound, about 5% a year on £95.67 | correct | IRR of the flows on 95.67 is 5.00% by bisection; with coupons reinvested at 6% the realised rate is 5.08%. "About" is right. £91.58 and £4.10 recomputed (exact difference 4.095) |
+| 16 | l8-measuring-returns | screens/10/feedback test-1 | 1.18496^(1/3) − 1 = 0.0582, not the 6.33% mean | correct | 1.12 × 0.92 × 1.15 = 1.18496; root 0.05820 by power and by exp-log; mean 0.0633. My codings (mean; no "− 1"; product of returns; total not annualised; growth × 1/T) all return test-1. Note: the line names the mean, and a learner who only forgot "− 1" reads it too; optional tail "then subtract 1" |
+| 17 | l8-measuring-returns | screens/10/feedback test-2 | 0.75^(1/2) − 1 = −0.134; the root must use `len(returns)`, here 2 | correct | −0.13397. Test 1 has three returns, so a fixed cube root passes it. My codings (`n = 3`; literal 0.3333333333333333) return test-2 |
+| 18 | l8-measuring-returns | screens/10/feedback test-6 | A −100% year gives growth 0 and answer −1; `math.log(0)` fails | correct | 0^(1/2) − 1 = −1.0 exactly (compare `equal`). `math.log(0)` raises ValueError. My codings (log of the product; list of logs) return test-6, as does `statistics.geometric_mean`. NumPy logs give −inf and pass |
+| 19 | l8-measuring-returns | screens/10/widget mutants, test 1 (3) | each first fails test 1 | correct | run |
+| 20 | l8-measuring-returns | screens/10/widget mutants, test 2 (3) | each first fails test 2 | correct | run |
+| 21 | l8-measuring-returns | screens/10/widget mutants, test 6 (3) | each first fails test 6, by raising | correct | run: key test-6, not `error` |
+| 22 | l12-selling-what-you-do-not-own | screens/2/explain | You pay each dividend, but the share falls by about as much ex-dividend, so unlike the fee your profit is about the same | correct | Hull ch. 5.2 (the short pays the broker any income on the borrowed shares); Hull, chapter on dividends and options (the price falls on the ex-dividend date by about the dividend, a little less for tax). Consistent with the lesson's profit = P0 − P1 − C, where P1 is the ex-dividend price. Key "You do" still the one true option |
+| 23 | l13-leverage | screens/7/prose | Below 25% equity the broker makes a margin call: add cash at once, or it sells | correct | Hull ch. 5.2 and ch. 2 (maintenance margin, margin call, close-out if not met) |
+| 24 | l13-leverage | screens/7/question | "Below what position value does the broker make a margin call?" key 13,333.33 | correct | V − 10,000 ≥ 0.25V gives V ≥ 10,000/0.75; bisection agrees; at exactly 13,333.33 the rule holds, so "below" is the right word. One keyed value |
+| 25 | l13-leverage | screens/7/widget/label | "Position value at the margin call" | correct | as row 24 |
+| 26 | l13-leverage | screens/7/explain/text | Below it the broker calls for cash and sells if you cannot pay | correct | as row 23; a fall of a third checked |
+| 27 | l13-leverage | screens/7/explain/canvas points.call.label | "margin call £13,333.33" | correct | as row 24 |
+| 28 | review-3 | items/r-margin-loan/question | margin call below 25,714.29 | correct | 18,000/0.7 two ways |
+| 29 | review-3 | items/r-margin-loan/widget/label | "Position value at the margin call" | correct | as row 28 |
+| 30 | review-3 | items/r-margin-loan/feedback zero | "The broker calls earlier, at 30%" | correct | equity is zero at V = 18,000 < 25,714.29 |
+| 31 | homework-3 | items/h-two-calls/feedback end (slip value 0) | Checking against £4,500.00, one contract's maintenance, gives no call; the 2-contract level is £9,000.00 and day 2 closes at £8,400.00 | correct | Simulated with level 4,500: closes 10,000, 8,400, 9,000, 6,000, 4,800, no call, paid 0. Second way: low is 12,000 + 20 × (7,640 − 8,000) = 4,800 > 4,500. Key 7,200 and slips 3,600, 4,200 recomputed |
+| 32 | homework-3 | items/h-airline-hedge/prompt part 1 | "the forward price that buying and storing fuel implies" | correct | Hull ch. 5.11: F0 = (S0 + U) grown at r for an investment asset; 600 × 1.05 + 12 = 642 with storage paid at the end |
+| 33 | homework-3 | items/h-airline-hedge/model part 1, derivation | One way to own fuel in a year is to buy and store; this way costs £642.00 | correct | as row 32 |
+| 34 | homework-3 | items/h-airline-hedge/model part 1, limit | Above £642.00 is an arbitrage; for fuel, held for use, £642.00 is only an upper limit, since holders will not sell and buy forward | correct | Hull ch. 5.11, consumption commodities: F0 ≤ (S0 + U)e^{rT}, the reverse trade failing because owners keep the commodity for use (convenience yield). Part 4 uses the valid side, 660 > 642, profit 18. Rubric matches |
+
+Counts: 34 rows. correct 33, wrong 1, imprecise 0, misleading 0, unverified 0.
+
+### Finding
+
+1. l4-npv.json | quiz/q-different-rates | wrong, serious | The fix added "Each is an outlay today followed by inflows". With that premise B's NPV is above £70.00 at any rate under 9% and A's is below £50.00 at any rate over 6%. So B beats A at every shared rate from 6% to 9%, and the keyed "Nothing yet" is false while option `b` is true. | Monotone NPV for conventional streams (row 3; Brealey-Myers-Allen ch. 5); script check "l4 q-different-rates" fails. | Swap the two rates, so the known values bound the wrong way and either ranking is possible (script: "swapped rates: A can win at 6%", "B can win at 6%"). Paste-ready:
+   - `prose`: "An analyst reports project A's NPV as £50.00 at 9%, and project B's as £70.00 at 6%. Each is an outlay today followed by inflows, and both are risky in the same way."
+   - option `b` `why`: "You compared NPVs taken at different rates. B's NPV at 9% would be lower than £70.00."
+   - option `a` `text`: "A is better: it was tested at the higher rate"
+   - option `a` `why`: "The rate is not a score. For an outlay followed by inflows, a higher rate simply lowers the NPV."
+   - key, `feedback` and `explain` unchanged.
+
+Optional, not a finding (row 16): l8 `test-1` could end "Compound, take the root, then subtract 1."
