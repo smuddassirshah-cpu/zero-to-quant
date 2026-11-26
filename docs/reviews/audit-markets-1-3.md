@@ -185,3 +185,13 @@ Counts: 34 rows. correct 33, wrong 1, imprecise 0, misleading 0, unverified 0.
    - key, `feedback` and `explain` unchanged.
 
 Optional, not a finding (row 16): l8 `test-1` could end "Compound, take the root, then subtract 1."
+
+## Fix-pass follow-up (Opus)
+
+| finding | status | basis (own) |
+|---|---|---|
+| Fix-pass read 1, l4-npv quiz/q-different-rates | fixed | NPV of an outlay then inflows falls strictly in r (each inflow's PV falls, the outlay is fixed). With A £50.00 at 9% and B £70.00 at 6%: at 9%, B < 70 but may sit above or below 50; at 6%, A > 50 but may sit above or below 70. Own simulation (scratch `fix-mkts-l4/check.py`, one-cash-flow projects fitted to the two quotes): A wins at 6%, 7.5% and 9% when A's cash is late (A 763.64 v B 70.00 at 6%; B −59.83 at 9%); B wins at all three when both pay £300 in one year (57.79 v 70.00 at 6%; 50.00 v 62.21 at 9%). So no ranking follows and "Nothing yet" is true; key unchanged |
+
+Edits, all in `quiz/q-different-rates`: `prose` rates swapped (A at 9%, B at 6%); option `a` text "A is better: it was tested at the higher rate"; `a` why "The rate is not a score. A higher rate lowers the NPV of an outlay followed by inflows, so A's at 6% would exceed £50.00, but not necessarily £70.00."; option `b` why "... B's NPV at 9% would be lower than £70.00, perhaps below £50.00." (the first case above takes it to −£59.83). `feedback` and `explain` re-read under the new prose and left as they are: both still true, and "rankings can flip at another rate" holds for crossing conventional streams. No key, slip or test changed.
+
+Gates: `markets-L1-3-fixread.py` exit 0 (was 1); `markets-L1-3-concepts.py` exit 0; validator 0 errors; voice-scan 35 on l4 0 and 0; `run-number-scripts --only markets` 1 passed; `grade-all --file l4-npv.json` 0 failures; playthrough `markets/l4-npv` green desktop and `--mobile` (quiz 4/4).
