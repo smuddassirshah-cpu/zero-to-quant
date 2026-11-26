@@ -76,3 +76,17 @@ Earlier reads opened: `docs/reviews/review-exp-log-1-3.md` (48 findings, all fix
 New `wrong` that no earlier read found: 1 (finding 1, minor, an authored canvas number the engine does not show).
 
 Nearest neighbours, not counted as "both": the earlier review's finding 38 fixed two feedback lines that read a continuous rate as a daily step (`l12` screens[9], `review-3` items[3]); finding 4 here is the same class in a third sentence (`homework-3` `h-unwind-rate` explain) that the earlier fix did not reach. The fluency report lists the `logs-too-soon` slip ids without questioning their lines (finding 2).
+
+## Fix pass
+
+Opus fixer, on `eba9ca3e`. Each basis is my own recomputation or source; scratch scripts in the session scratchpad (`fix-el13/range.py`).
+
+1. Fixed. `"y": 2.6926`. Basis: $(53/52)^{52} = 2.692597$, twice (direct power and $e^{52\ln(53/52)}$).
+2. Fixed (fluency-l10 and homework-3 lines also keep the "divide first" step). Basis: $\ln(p g^v) = \ln p + v\ln g$, so logs first done right gives the key; the slip value $\ln t/\ln g$ (or $\ln t/k$, $\ln 1000/0.08 = 86.35$) solves the equation with the start amount dropped. Checked over every valid draw (money-target 522 draws counting both letters, continuous-growth 301) by closed form and by bisection; slip bands stay clear of key bands. Slip values and ids unchanged.
+3. Fixed, wording as proposed. Basis: Hull ch. 4, market zero and bond yields are quoted annual or semi-annual; continuous compounding is the modelling convention. No source for a quoted half-life convention, so the l12 sentence now claims only that it is one way to state speed.
+4. Fixed differently: "This rate is continuous. Over one whole day the desk sells $1 - e^{-0.2310} = 20.63\%$ of its opening holding." (split to keep under 20 words). Basis: $1 - e^{-0.2310} = 0.20626$; with the exact $k$, $1 - 2^{-1/3} = 0.20630$.
+5. Fixed, with "four decimal places". Basis: $e^{1.0986} = 2.999963$, $e^{0.6931} = 1.999906$ (the audit's 1.99996 is a slip of its own; the conclusion holds). No other option becomes right under the new wording.
+6. Fixed, wording as proposed. Basis: $\log_{1/2}(1/8) = 3 > 0$.
+7. Fixed, both sentences as proposed. Basis: $(-2)^{-1} = -0.5$; $a^0 = 1$ is defined for $a \neq 0$ (Gelfand and Shen), $0^0$ left undefined.
+
+Gates: validator 0 errors (4,619 warnings, as before); voice-scan 35 on the eight edited files 0 and 0; concepts script 6,214 checks, 0 failing, exit 0 (no check re-pointed); number scripts exp-log 5 of 5; grade-all 0 failures on each edited file; playthrough of the five lessons, `homework-3` and both fluency sets, desktop and `--mobile`: all passed (8 items each).
