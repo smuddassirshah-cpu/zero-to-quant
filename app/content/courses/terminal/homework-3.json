@@ -306,6 +306,28 @@
         "label": "returns.py",
         "starter": "# returns.py: three closing prices, in pounds\np0 = 100.00\np1 = 104.00\np2 = 101.92\n\n\ndef daily_return(old, new):\n    # Give back the return as a decimal: 0.04 for +4%.\n    return 0.0\n\n\nr1 = daily_return(p0, p1)\nr2 = daily_return(p1, p2)\n\n# Print one line per day, for example:\n# print(f\"Day 1: {r1 * 100:.2f}%\")\n",
         "solution": "# returns.py: three closing prices, in pounds\np0 = 100.00\np1 = 104.00\np2 = 101.92\n\n\ndef daily_return(old, new):\n    return (new - old) / old\n\n\nr1 = daily_return(p0, p1)\nr2 = daily_return(p1, p2)\n\nprint(f\"Day 1: {r1 * 100:.2f}%\")\nprint(f\"Day 2: {r2 * 100:.2f}%\")\n",
+        "mutants": [
+          {
+            "source": "# returns.py: three closing prices, in pounds\np0 = 100.00\np1 = 104.00\np2 = 101.92\n\n\ndef daily_return(old, new):\n    return (new - old) / Old\n\n\nr1 = daily_return(p0, p1)\nr2 = daily_return(p1, p2)\n\nprint(f\"Day 1: {r1 * 100:.2f}%\")\nprint(f\"Day 2: {r2 * 100:.2f}%\")\n",
+            "test": 1,
+            "symptom": "Old with a capital: NameError when r1 is worked out"
+          },
+          {
+            "source": "# returns.py: three closing prices, in pounds\np0 = 100.00\np1 = 104.00\np2 = 101.92\n\n\ndef daily_return(old, new):\n    return (new - old) / old\n\n\nr1 = daily_return(p0, p1)\nr2 = daily_return(p1, p2)\n\nprint(\"Day 1: \" + r1 * 100 + \"%\")\nprint(f\"Day 2: {r2 * 100:.2f}%\")\n",
+            "test": 1,
+            "symptom": "text + number: TypeError, nothing printed"
+          },
+          {
+            "source": "# returns.py: three closing prices, in pounds\np0 = 100.00\np1 = 104.00\np2 = 101.92\n\n\ndef daily_return(old, new):\n    return (new - old) / old\n\n\nr1 = daily_return(p0, p1)\nr2 = daily_return(p1, p2)\n\nprint(\"Day 1: {r1 * 100:.2f}%\")\nprint(f\"Day 2: {r2 * 100:.2f}%\")\n",
+            "test": 1,
+            "symptom": "no f: prints the braces as text"
+          },
+          {
+            "source": "# returns.py: three closing prices, in pounds\np0 = 100.00\np1 = 104.00\np2 = 101.92\n\n\ndef daily_return(old, new):\n    return (new - old) / old\n\n\nr1 = daily_return(p0, p1)\nr2 = daily_return(p1, p2)\n\nprint(f\"Day 1: {r1:.2f}%\")\nprint(f\"Day 2: {r2 * 100:.2f}%\")\n",
+            "test": 1,
+            "symptom": "no * 100: prints 0.04%"
+          }
+        ],
         "examples": [
           {
             "compare": "stdout",
@@ -358,7 +380,8 @@
         "correct": "A ten-line script that computes and prints returns: the Stage 0 exit test, passed in the browser. Now run it from your own terminal.",
         "generic": "Not quite right. Read the first failing test: compare what was expected with what your script gave.",
         "byKey": {
-          "error": "Your script stopped with an error. Read the message from the bottom: what went wrong, then which line."
+          "test-1": "Test 1 compares your two printed lines with `Day 1: 4.00%` and `Day 2: -2.00%`. If the script stopped with an error, read the message from the bottom: what went wrong, then which line.",
+          "error": "Your script cannot start: Python found a slip in the typing before it ran. Read the last line of the message, then the line it names."
         }
       },
       "explain": {
@@ -463,7 +486,7 @@
         "language": "python",
         "label": "trade.py",
         "starter": "# trade.py: Sam's round trip, in pounds\n",
-        "postlude": "import posixpath as _pp, re as _re\n\ndef _line(label):\n    # The number printed after \"label:\", or what is wrong with that line.\n    for _l in printed:\n        _s = _l.strip()\n        if _s.startswith(label + \":\"):\n            _v = _s[len(label) + 1:].strip().lstrip(\"£\").replace(\",\", \"\")\n            try:\n                return float(_v)\n            except ValueError:\n                return \"not a number after \" + label + \": \" + _v\n    return \"no line starts \" + label + \":\"\n\n_DIRS = {\"/\", \"/home\", \"/home/sam\", \"/home/sam/desk\"}\n\ndef _home(_p):\n    return \"/home/sam\" + _p[1:] if _p == \"~\" or _p.startswith(\"~/\") else _p\n\ndef _runs():\n    # Follows the cd and python3 commands in the comments, from a new terminal in /home/sam.\n    _here, _last = \"/home/sam\", \"no comment line runs python3\"\n    for _l in __learner_source__.splitlines():\n        _s = _l.strip()\n        if not _s.startswith(\"#\"):\n            continue\n        for _seg in _re.split(r\"&&|;\", _s.lstrip(\"#\")):\n            _m = _re.search(r\"(?:^|[\\s:$])(cd|python3(?:\\.\\d+)?|python|py)(?=\\s|$)(.*)\", _seg)\n            if not _m:\n                continue\n            _cmd, _args = _m.group(1), _m.group(2).split()\n            if _cmd == \"cd\":\n                _to = _pp.normpath(_pp.join(_here, _home(_args[0] if _args else \"~\")))\n                if _to in _DIRS:\n                    _here = _to\n                else:\n                    _last = \"cd \" + _args[0] + \" from \" + _here + \": no such folder\"\n            elif _cmd in (\"python\", \"py\"):\n                _last = _cmd + \" is not python3: run the script with python3\"\n            elif not _args:\n                _last = \"python3 needs the script's name\"\n            else:\n                _file = _pp.normpath(_pp.join(_here, _home(_args[0])))\n                if _file != \"/home/sam/desk/trade.py\":\n                    _last = \"python3 \" + _args[0] + \" from \" + _here + \" looks for \" + _file\n                elif _here != \"/home/sam/desk\":\n                    _last = \"that runs it from \" + _here + \", not from its own folder\"\n                else:\n                    return \"ok\"\n    return _last\n",
+        "postlude": "import posixpath as _pp, re as _re\n\ndef _line(label):\n    # The number printed after \"label:\", or what is wrong with that line.\n    for _l in printed:\n        _s = _l.strip()\n        if _s.startswith(label + \":\"):\n            _v = _s[len(label) + 1:].strip().lstrip(\"£\").replace(\",\", \"\")\n            try:\n                return float(_v)\n            except ValueError:\n                return \"not a number after \" + label + \": \" + _v\n    return \"no line starts \" + label + \":\"\n\n_DIRS = {\"/\", \"/home\", \"/home/sam\", \"/home/sam/desk\"}\n\ndef _home(_p):\n    return \"/home/sam\" + _p[1:] if _p == \"~\" or _p.startswith(\"~/\") else _p\n\ndef _runs():\n    # Follows the cd and python3 commands in the comments, from a new terminal in /home/sam.\n    _here, _last = \"/home/sam\", \"no comment line runs python3\"\n    for _l in __learner_source__.splitlines():\n        _s = _l.strip()\n        if not _s.startswith(\"#\"):\n            continue\n        for _seg in _re.split(r\"&&|;|,|\\bthen\\b|\\band\\b\", _s.lstrip(\"#\")):\n            _m = _re.search(r\"(?:^|[\\s:$])(cd|python3(?:\\.\\d+)?|python|py)(?=\\s|$)(.*)\", _seg)\n            if not _m:\n                continue\n            _cmd, _args = _m.group(1), _m.group(2).split()\n            if _cmd == \"cd\":\n                _to = _pp.normpath(_pp.join(_here, _home(_args[0] if _args else \"~\")))\n                if _to in _DIRS:\n                    _here = _to\n                else:\n                    _last = \"cd \" + _args[0] + \" from \" + _here + \": no such folder\"\n            elif _cmd in (\"python\", \"py\"):\n                _last = _cmd + \" is not python3: run the script with python3\"\n            elif not _args:\n                _last = \"python3 needs the script's name\"\n            else:\n                _file = _pp.normpath(_pp.join(_here, _home(_args[0])))\n                if _file != \"/home/sam/desk/trade.py\":\n                    _last = \"python3 \" + _args[0] + \" from \" + _here + \" looks for \" + _file\n                elif _here != \"/home/sam/desk\":\n                    _last = \"that runs it from \" + _here + \", not from its own folder\"\n                else:\n                    return \"ok\"\n    return _last\n",
         "tests": [
           {
             "compare": "stdout",
@@ -517,13 +540,36 @@
           }
         ],
         "how": "Check runs 10 hidden tests, each on a fresh run of your script as `python3` would run it. They read your four values and printed lines, then follow the commands in your comments from `/home/sam`.",
-        "solution": "# cd ~/desk\n# python3 trade.py\n\n# trade.py: Sam's round trip, in pounds\nshares = 40\nbuy = 12.25\nsell = 13.00\nfee = 10.00\n\ncost = shares * buy + fee\nproceeds = shares * sell - fee\nprofit = proceeds - cost\nret = profit / cost\n\nprint(\"Cost:\", cost)\nprint(\"Proceeds:\", proceeds)\nprint(\"Profit:\", profit)\nprint(\"Return:\", ret)\n"
+        "solution": "# cd ~/desk\n# python3 trade.py\n\n# trade.py: Sam's round trip, in pounds\nshares = 40\nbuy = 12.25\nsell = 13.00\nfee = 10.00\n\ncost = shares * buy + fee\nproceeds = shares * sell - fee\nprofit = proceeds - cost\nret = profit / cost\n\nprint(\"Cost:\", cost)\nprint(\"Proceeds:\", proceeds)\nprint(\"Profit:\", profit)\nprint(\"Return:\", ret)\n",
+        "mutants": [
+          {
+            "source": "# cd ~/desk\n# python3 trade.py\n\n# trade.py: Sam's round trip, in pounds\nshares = 40\nbuy = 12.25\nsell = 13.00\nfee = 10.00\n\ncost = shares * buy + fee\nproceeds = shares * sell - fee\nprofit = proceeds - cost\nret = profit / cost\n\nprint(\"Cost: \" + cost)\nprint(\"Proceeds:\", proceeds)\nprint(\"Profit:\", profit)\nprint(\"Return:\", ret)\n",
+            "test": 1,
+            "symptom": "text + number: TypeError, nothing printed"
+          },
+          {
+            "source": "# cd ~/desk\n# python3 trade.py\n\n# trade.py: Sam's round trip, in pounds\nshares = 40\nbuy = 12.25\nsell = 13.00\nfee = 10.00\n\ncost = shares * Buy + fee\nproceeds = shares * sell - fee\nprofit = proceeds - cost\nret = profit / cost\n\nprint(\"Cost:\", cost)\nprint(\"Proceeds:\", proceeds)\nprint(\"Profit:\", profit)\nprint(\"Return:\", ret)\n",
+            "test": 1,
+            "symptom": "Buy with a capital: NameError, nothing printed"
+          },
+          {
+            "source": "# cd ~/desk\n# python3 trade.py\n\n# trade.py: Sam's round trip, in pounds\nshares = 40\nbuy = 12.25\nsell = 13.00\nfee = 10.00\n\ncost = shares * buy + fee\nproceeds = shares * sell - fee\nProfit = proceeds - cost\nret = profit / cost\n\nprint(\"Cost:\", cost)\nprint(\"Proceeds:\", proceeds)\nprint(\"Profit:\", profit)\nprint(\"Return:\", ret)\n",
+            "test": 1,
+            "symptom": "Profit stored with a capital: NameError on profit"
+          },
+          {
+            "source": "# cd ~/desk\n# python3 trade.py\n\n# trade.py: Sam's round trip, in pounds\nshares = 40\nbuy = 12.25\nsell = 13.00\nfee = 10.00\n\ncost = shares * buy + fee\nproceeds = shares * sell - fee\nprofit = proceeds - cost\nret = profit / cost\n\nprint(\"Proceeds:\", proceeds)\nprint(\"Cost:\", cost)\nprint(\"Profit:\", profit)\nprint(\"Return:\", ret)\n",
+            "test": 1,
+            "symptom": "labels out of order"
+          }
+        ]
       },
       "feedback": {
         "correct": "The script works out the trade and says how to run it.",
         "generic": "Not quite right. Read what the first failing test reports, then check that part of your script.",
         "byKey": {
-          "error": "Your script stopped with an error. Read the message from the bottom: what went wrong, then which line."
+          "test-1": "Test 1 looks for the four labels in order: `Cost:`, `Proceeds:`, `Profit:`, `Return:`. If the script stopped with an error, read the message from the bottom: what went wrong, then which line.",
+          "error": "Your script cannot start: Python found a slip in the typing before it ran. Read the last line of the message, then the line it names."
         }
       },
       "explain": {
