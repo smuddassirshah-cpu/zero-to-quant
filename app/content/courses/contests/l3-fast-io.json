@@ -820,7 +820,24 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests: no final newline, Windows line endings, blank lines, tabs, an empty input, and 200,000 tokens. Tests 6 and 7 check that the result is an iterator, not a list."
+        "how": "Check runs 10 hidden tests: no final newline, Windows line endings, blank lines, tabs, an empty input, and 200,000 tokens. Tests 6 and 7 check that the result is an iterator, not a list.",
+        "mutants": [
+          {
+            "source": "class Tokens:\n    def __init__(self, data):\n        self.vals = [int(x) for x in data.split()]\n        self.i = 0\n\n    def __iter__(self):\n        return iter(self.vals)\n\n    def __next__(self):\n        if self.i == len(self.vals):\n            raise StopIteration\n        self.i += 1\n        return self.vals[self.i - 1]\n\n\ndef read_tokens(data):\n    return Tokens(data)\n",
+            "test": 7,
+            "symptom": "`__iter__` returns `iter(self.vals)`, not `self`"
+          },
+          {
+            "source": "class Tokens(list):\n    def __init__(self, data):\n        super().__init__(int(x) for x in data.split())\n        self.i = 0\n\n    def __next__(self):\n        if self.i == len(self):\n            raise StopIteration\n        self.i += 1\n        return self[self.i - 1]\n\n\ndef read_tokens(data):\n    return Tokens(data)\n",
+            "test": 7,
+            "symptom": "a list subclass with `__next__`: `iter` gives a list iterator"
+          },
+          {
+            "source": "def read_tokens(data):\n    return [int(x) for x in data.split()]\n",
+            "test": 6,
+            "symptom": "returns a list: `next` raises TypeError"
+          }
+        ]
       },
       "hints": [
         {
@@ -844,7 +861,7 @@
         "generic": "Not quite right. Look at the first failing test.",
         "byKey": {
           "test-6": "Test 6 calls `next` on your result. A list is not an iterator; wrap it in `iter(...)` or use `map`.",
-          "test-7": "Test 7 checks `iter(it) is it`, true only of an iterator. A list gives a new iterator each time.",
+          "test-7": "Test 7 checks `iter(it) is it`. Your object has `__next__`, but an iterator's `__iter__` must `return self`. Or return `map(...)`, which already does.",
           "test-3": "Test 3 has Windows line endings, `\\r\\n`. `split()` with no argument removes them; `split(b'\\n')` does not."
         }
       },

@@ -12,7 +12,13 @@ first failing test is compared with N.
   --cxx also compiles the C++ codings of l3 screens[10] with the native clang++ (x86-64: int 4 bytes, long 8; `-m32` has no
   headers in this container, so wasm32's 4-byte long is modelled with int32_t).
 Exit 0 when every check passes. A check that fails because the content is wrong stays failing: it is a finding in
-docs/reviews/audit-contests-1-3-r2.md (the failing checks are listed there)."""
+docs/reviews/audit-contests-1-3-r2.md (the failing checks are listed there).
+
+Fix pass (re-pointed, see "## Fix pass" in the audit file): the checks that encoded the old defects of findings 1 and 3
+now test the fixed text. Finding 1: the list(map(...)) coding is probed against the test-6 line, which names lists, and
+is no longer an OTHER "finding" against test 7; a check reads the new test-7 line. Finding 3: "first random case almost
+every time" (> 90%) is replaced by "within ten random cases almost every time" (> 99% for each generator). Findings 4
+and 5 gained text checks."""
 import itertools, json, math, os, random, subprocess, sys, tempfile, signal
 from pathlib import Path
 
@@ -421,7 +427,8 @@ def part_a():
     check('l12 test-7 line: mean interval length (stated "about 66,500")', '66,500' in line and abs(tot_len / 1e5 - 66500) < 500, round(tot_len / 1e5))
     check('l12 fill every day about 6.6e9', 6.4e9 < tot_len < 6.9e9, tot_len)
 
-    # l12 screens[5]: "a stress test ... finds it on the first random case almost every time"
+    # l12 screens[5]: "a stress test ... finds it within ten random cases almost every time" (fix pass; was "on the first
+    # random case almost every time")
     def buggy(n, ups):
         d = [0] * (n + 1)
         for l, r_, v in ups:
@@ -448,7 +455,35 @@ def part_a():
             hit += buggy(n, ups) != brute(n, ups)
         rates[name] = hit / 20000
     check('l12 screens[5]: it does show within the first five cases (> 98%)', all(1 - (1 - p_) ** 5 > 0.98 for p_ in rates.values()), rates)
-    check('l12 screens[5]: the missing -v shows on the first small random case "almost every time" (> 90%)', min(rates.values()) > 0.9, rates)
+    ex = load('l12-difference-arrays.json')['screens'][5]['explain']['text']
+    check('l12 screens[5]: the missing -v shows within ten small random cases "almost every time" (> 99%)',
+          'within ten random cases almost every time' in ex and all(1 - (1 - p_) ** 10 > 0.99 for p_ in rates.values()), rates)
+    # fix pass's own run, signed values and possibly no update (worst seen: first case 0.44, within ten 0.997)
+    mine = {}
+    for name, (nhi, mlo, mhi, vlo, vhi) in {'n 1..6, q 0..4, v -5..5': (6, 0, 4, -5, 5), 'n 1..6, q 1..4, v -9..9': (6, 1, 4, -9, 9)}.items():
+        r = random.Random(12)
+        hit = 0
+        for _ in range(20000):
+            n = r.randint(1, nhi)
+            ups = []
+            for _ in range(r.randint(mlo, mhi)):
+                l = r.randint(0, n - 1)
+                ups.append((l, r.randint(l, n - 1), r.randint(vlo, vhi)))
+            hit += buggy(n, ups) != brute(n, ups)
+        mine[name] = hit / 20000
+    check('l12 screens[5]: fix-pass generators, within ten cases > 99%, first case 40% to 60%',
+          all(1 - (1 - p_) ** 10 > 0.99 and 0.4 < p_ < 0.6 for p_ in mine.values()), mine)
+    # fix-pass text checks: l3 screens[8] test-7, l4 quiz[1] option time, l6 sqrt bound with d above 1
+    t7 = load('l3-fast-io.json')['screens'][8]['feedback']['byKey']['test-7']
+    check('l3 screens[8] test-7 line names __iter__ returning self, not a list', '`return self`' in t7 and 'list' not in t7, t7)
+    why = [o for o in load('l4-stress-testing.json')['quiz'][1]['widget']['options'] if o['id'] == 'time'][0]['why']
+    check('l4 quiz[1] option time: no claim the seeded case was lost', 'lost' not in why and 'Seed 4' in why, why)
+    l6 = load('l6-gcd-and-primes.json')
+    for where, txt in (('summary.ideas[1]', l6['summary']['ideas'][1]), ('screens[8].hints[2]', l6['screens'][8]['hints'][2]['text'])):
+        check('l6 %s: the divisor is bounded below by 2' % where, '2 \\le d \\le \\sqrt n' in txt, txt)
+    comp = [n for n in range(4, 5001) if any(n % d == 0 for d in range(2, n))]
+    check('l6: every composite n <= 5000 has a divisor d with 2 <= d <= sqrt n',
+          all(any(n % d == 0 for d in range(2, math.isqrt(n) + 1)) for n in comp))
 
     # ---- homework numbers
     def G(n):
@@ -698,7 +733,7 @@ m(F, 'screens.8', 6, 'a list comprehension', '''
 def read_tokens(data):
     return [int(x) for x in data.split()]
 ''')
-m(F, 'screens.8', 7, 'list(map(...)) (the list the line names)', '''
+m(F, 'screens.8', 6, 'list(map(...)) (a list: the test-6 line names it)', '''
 def read_tokens(data):
     return list(map(int, data.split()))
 ''')
@@ -1496,7 +1531,6 @@ def first_over_cap(n, updates, cap):
 OTHER = {
     ('l1-reading-statements.json', 'best = 0, day 1 forced'): ('test-1', 'info'),
     ('l2-limits-to-complexity.json', "the table's thresholds"): ('test-3', 'info'),
-    ('l3-fast-io.json', 'list(map(...)) (the list the line names)'): ('test-6', 'finding'),
     ('l3-fast-io.json', "split(b'\\n') then int per line"): ('test-1', 'info'),
     ('l3-fast-io.json', "split(b'\\n'), then split() per line"): (None, 'info'),
     ('l3-fast-io.json', 'sys.stdin.readline per line (line reading, line 4 names it)'): ('test-5', 'info'),
