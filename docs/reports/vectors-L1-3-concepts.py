@@ -2,6 +2,9 @@
 
 Each check names the ledger rows it backs (docs/reports/audit-vectors-1-3-ledger.md). The script exits 0 only when
 every check passes. A check that fails because the content is wrong stays failing: see the audit findings.
+Fix pass (docs/reviews/audit-vectors-1-3.md): the two checks that encoded the old text of findings 1 and 2 ("L3:q3", "L3:numpy l12
+s2 test 3") are re-pointed to the fixed text, and checks for the hidden tests added under findings 3 and 4 are added. NOTE lines
+for findings fixed in the pass say so; they still print, so the run shows what was imprecise before.
 NOTE lines record imprecise content that is not false as stated; they do not fail the run.
 
 Run: python docs/reports/vectors-L1-3-concepts.py   (NumPy only; written against NumPy 2.5, the page runs 2.0.2)
@@ -114,7 +117,7 @@ for _ in range(50000):
 check("L1:tri |u + v| <= |u| + |v|; equal for positive multiples, strict for opposite or non-parallel arrows", ok and eq_only_same_way)
 z = np.zeros(2)
 if close(np.linalg.norm(np.array([3., 4.]) + z), 5 + 0):
-    note("L1:tri-zero", "equality also holds when one arrow is the zero vector, which points no way (finding 9)")
+    note("L1:tri-zero", "equality also holds when one arrow is the zero vector, which points no way (finding 9; fixed: l3 s7 and the trap now add 'or one of them is zero')")
 
 # L1:angle  cosine formula against the cosine rule and atan2 (l3 s3, s4, s8, q2; review-1 i5; problems-1 i0, i1)
 ok = True
@@ -128,7 +131,7 @@ for _ in range(50000):
 check("L1:angle formula = cosine rule = atan2 angle, always in [0, 180]", ok)
 check("L1:angle keys 45, 135, 126.87, 58, 130", abs(angle((1, 2), (3, 1)) - 45) < 1e-9 and abs(angle((1, 0), (-1, 1)) - 135) < 1e-9 and abs(angle((1, 2), (2, -4)) - 126.87) < 0.005
       and round(angle((8, 2), (3, 9))) == 58 and round(angle((-.1, .15, -.05), (.02, -.01, .04))) == 130)
-note("L1:angle-domain", "the formula needs non-zero arrows and gives an angle in [0, 180]; the lesson states neither (finding 8)")
+note("L1:angle-domain", "the formula needs non-zero arrows and gives an angle in [0, 180]; the lesson stated neither (finding 8; fixed in l3 summary note and s8 line c4)")
 
 # L1:proj  projection k = u.v / v.v, residual perpendicular, closest point on the line (l3 s5, s6, summary; review-1 i6; homework-1 i7; fluency)
 ok = True
@@ -321,23 +324,26 @@ for _ in range(100):
     if not close(inv2(A @ B), inv2(A) @ inv2(B), 1e-6):
         ok = True
 check("L3:inv A^-1 B^-1 is not (AB)^-1 in general (l10 s5 same-order option; problems-3 i2 part 5)", ok)
-note("L3:inv-sides", "the course defines the inverse by A^-1 A = I only; homework-3 i2 uses A A^-1 = I and B B^-1 = I, never stated (finding 6)")
-note("L3:inv-hypothesis", "l10 s7 and the summary give the 2 x 2 rule without ad - bc != 0; l11 supplies it (finding 7)")
+note("L3:inv-sides", "the course defines the inverse by A^-1 A = I only; homework-3 i2 uses A A^-1 = I and B B^-1 = I, never stated (finding 6; fixed: the proof now shows (B^-1 A^-1)(AB) = I)")
+note("L3:inv-hypothesis", "l10 s7 and the summary give the 2 x 2 rule without ad - bc != 0; l11 supplies it (finding 7; fixed: both now say ad - bc != 0)")
 Ad = np.array([[.5, .25], [.2, .3]])
 check("L3:inv hedge keys (225, 350), (-150, 300), (50, 300), (-25, 50); homework-3 i8 (437.5, 100)", close(inv2(Ad), [[3, -2.5], [-2, 5]]) and close(inv2(Ad) @ [200, 150], [225, 350]) and close(inv2(Ad) @ [0, 60], [-150, 300])
       and close(inv2(Ad) @ [100, 100], [50, 300]) and close(inv2(Ad) @ [0, 10], [-25, 50]) and close(np.linalg.solve([[.4, .25], [.16, .3]], [200, 100]), [437.5, 100]))
 check("L3:inv l10 s5: R^-1 S^-1 sends (-1, 2) to (2, 0.5); S^-1 R^-1 sends it to (1, 1)", close(R(-90) @ np.diag([.5, 1]) @ [-1, 2], [2, .5]) and close(np.diag([.5, 1]) @ R(-90) @ [-1, 2], [1, 1]))
 
-# L3:q3  l10 quiz 3: "first rotates by 30 degrees and then stretches everything by 3". The item marks
-# "Rotate by -30, then shrink by 1/3" wrong. A stretch of everything by 3 is 3I, which commutes with every matrix.
-T = (3 * np.eye(2)) @ R(30)
-keyed = R(-30) @ (np.eye(2) / 3)           # shrink, then rotate back (the key)
-marked_wrong = (np.eye(2) / 3) @ R(-30)    # rotate back, then shrink (option "same-order")
+# L3:q3  l10 quiz 3, fixed text: "first rotates by 30 degrees and then stretches x by 3". The old text stretched
+# everything by 3, which is 3I and commutes with every matrix, so the option marked wrong also undid it (finding 1).
+T = np.diag([3., 1]) @ R(30)
+Si = np.diag([1 / 3, 1])
+keyed = R(-30) @ Si                         # shrink x, then rotate back (the key "right")
+same_order = Si @ R(-30)                    # rotate back, then shrink x (option "same-order")
+negate = R(-30) @ np.diag([-3., 1])         # stretch x by -3, then rotate back (option "negate")
+repeat = Si @ R(30)                         # rotate by 30 again, then shrink x (option "repeat")
 check("L3:q3 the keyed steps undo the transform", close(keyed @ T, np.eye(2)))
-check("L3:q3 the option marked wrong (same-order) does NOT undo the transform  [content wrong: it does; finding 1]", not close(marked_wrong @ T, np.eye(2)))
-Tx = np.diag([3., 1]) @ R(30)              # the proposed fix: stretch x by 3
-check("L3:q3 with the fix (stretch x by 3) the key undoes it and same-order, negate and repeat do not", close(R(-30) @ np.diag([1 / 3, 1]) @ Tx, np.eye(2))
-      and not close(np.diag([1 / 3, 1]) @ R(-30) @ Tx, np.eye(2)) and not close(R(-30) @ np.diag([-3., 1]) @ Tx, np.eye(2)) and not close(np.diag([1 / 3, 1]) @ R(30) @ Tx, np.eye(2)))
+check("L3:q3 same-order, negate and repeat do not undo it: exactly one option is right",
+      not close(same_order @ T, np.eye(2)) and not close(negate @ T, np.eye(2)) and not close(repeat @ T, np.eye(2)))
+T_old = (3 * np.eye(2)) @ R(30)
+check("L3:q3 why the old text was wrong: with 3I the same-order option also undoes it", close((np.eye(2) / 3) @ R(-30) @ T_old, np.eye(2)))
 
 # L3:det  |det| is the area factor and the sign is orientation; det(AB) = det A det B; det 0 iff parallel columns iff no inverse (l11; homework-3 i5, i6; problems-3)
 def shoelace(P):
@@ -358,7 +364,7 @@ for a, b, c, d in itertools.product(range(-4, 5), repeat=4):
     Mx = np.array([[a, b], [c, d]], float)
     ok &= ((a * d - b * c) == 0) == (np.linalg.matrix_rank(Mx) < 2)
 check("L3:det every integer matrix with entries in [-4, 4]: ad - bc = 0 iff the columns lie on one line", ok)
-note("L3:det-proof", "l11 s8 writes column 2 = t x column 1; that misses a zero first column with a non-zero second (finding 10)")
+note("L3:det-proof", "l11 s8 writes column 2 = t x column 1; that misses a zero first column with a non-zero second (finding 10; fixed: the set-up now assumes column 2 is a multiple of column 1)")
 check("L3:det keys: l11 s0 k = 2, s3 area 5, s7 k = 4, q0 11, q2 k = 2; review-3 i5 k = 4; homework-3 i3 k = 4, i5 0.0027", close(2 * 1 - 1 * 2, 0) and abs(np.linalg.det([[1, 3], [2, 1]])) - 5 < 1e-9 and close(4 * 3 - 12, 0)
       and close(np.linalg.det([[3, -2], [4, 1]]), 11) and close(2 * 6 - 12, 0) and close(24 - 6 * 4, 0) and close(16 - 16, 0) and close(.04 * .09 - .03 ** 2, .0027) and close(.04 * .09 * (1 - .25), .0027))
 
@@ -446,7 +452,7 @@ check("L3:numpy rank: P, Q, T matrix 2; proportional greeks 1; three three-year 
       and np.linalg.matrix_rank(np.array([[2.1, 2.1, 102.1], [3.3, 3.3, 103.3], [4.7, 4.7, 104.7]])) == 2 and np.linalg.matrix_rank(np.array([[12., 8], [3, 2]])) == 1)
 check("L3:numpy a singular matrix whose computed determinant is not 0 does not raise: [[0.04, 0.06], [0.06, 0.09]] and the three-year bonds", not raises([[.04, .06], [.06, .09]], [1, 1]) and np.linalg.det(np.array([[.04, .06], [.06, .09]])) != 0
       and not raises([[2.1, 2.1, 102.1], [3.3, 3.3, 103.3], [4.7, 4.7, 104.7]], [94.859, 98.207, 102.113]))
-note("L3:numpy-s9-tests", "l12 s9 has no such case, so `if np.linalg.det(A) == 0` and a nan check after solve pass all six hidden tests (sweep; finding 3)")
+note("L3:numpy-s9-tests", "l12 s9 had no such case, so `if np.linalg.det(A) == 0` and a nan check after solve passed all six hidden tests (sweep; finding 3; fixed: hidden test 7 is [[0.04, 0.06], [0.06, 0.09]])")
 # l12 s5: solve against inv on the 10 x 10 Hilbert matrix
 H = np.array([[1 / (i + j + 1) for j in range(10)] for i in range(10)])
 bh = H @ np.ones(10)
@@ -458,11 +464,23 @@ for _ in range(300):  # a well-conditioned 10 x 10 matrix: three times the arith
     bw = Mw @ np.ones(10)
     ratios.append(np.abs(Mw @ (np.linalg.inv(Mw) @ bw) - bw).max() / max(np.abs(Mw @ np.linalg.solve(Mw, bw) - bw).max(), 1e-16))
 check("L3:numpy on 300 well-conditioned 10 x 10 matrices inv's residual stays within 100 times solve's: the Hilbert gap comes from conditioning", np.median(ratios) < 100 and np.linalg.cond(H) > 1e12)
-note("L3:numpy-s5-reason", "the keyed option explains the gap by 'fewer steps'; the step count differs by 3, the residual by 1e11 (finding 5)")
+note("L3:numpy-s5-reason", "the keyed option explains the gap by 'fewer steps'; the step count differs by 3, the residual by 1e11 (finding 5; fixed: the key now says solve never multiplies a rounded inverse into b)")
 # l12 s2 feedback test-3: "With == the rounding error in np.linalg.inv can break the test." Test 3 is A = [[2, 3], [1, 4]].
 A23 = np.array([[2., 3], [1, 4]])
-check("L3:numpy l12 s2 test 3: an == comparison fails on inv([[2, 3], [1, 4]]) @ A  [content wrong: it is exactly I; == first fails test 6; finding 2]", not bool((np.linalg.inv(A23) @ A23 == np.eye(2)).all()))
-check("L3:numpy l12 s2 test 6: an == comparison fails on the 3 x 3 desk matrix", not bool((np.linalg.inv(G3) @ G3 == np.eye(3)).all()))
+check("L3:numpy l12 s2 test 3: B is np.linalg.inv(A) itself, so the key True holds (the fixed line says so; finding 2)", np.allclose(np.linalg.inv(A23) @ A23, np.eye(2)))
+check("L3:numpy l12 s2 test 6: an == comparison fails on the 3 x 3 desk matrix (the == line now sits on test 6)", not bool((np.linalg.inv(G3) @ G3 == np.eye(3)).all()))
+# l12 s2 tests 7 and 8 (finding 4): the key False, and the lax checks they catch
+B7A = np.eye(2) @ np.array([[1., 1], [0, 1]])
+B8A = np.array([[.6, 0], [0, .6]]) @ np.array([[2., 0], [0, 2]])
+check("L3:numpy l12 s2 test 7: BA has a unit diagonal and a 1 off it, so not I; a diagonal-only or trace check says True",
+      not np.allclose(B7A, np.eye(2)) and np.allclose(np.diag(B7A), 1) and np.isclose(np.trace(B7A), 2))
+check("L3:numpy l12 s2 test 8: BA = 1.2 I, so not I; rounding first or atol 0.5 says True",
+      close(B8A, 1.2 * np.eye(2)) and not np.allclose(B8A, np.eye(2)) and bool(np.all(np.round(B8A) == np.eye(2))) and np.allclose(B8A, np.eye(2), atol=.5))
+# l12 s9 test 7 (finding 3): singular in exact arithmetic (row 2 = 1.5 x row 1), rank 1 in floating point, determinant not 0
+N7 = np.array([[.04, .06], [.06, .09]])
+check("L3:numpy l12 s9 test 7: rank 1 so the solution raises; the computed determinant is non-zero and below 1e-18; solve gives huge finite numbers",
+      np.linalg.matrix_rank(N7) == 1 and 0 < abs(np.linalg.det(N7)) < 1e-18 and abs(.04 * 1.5 - .06) < 1e-15 and abs(.06 * 1.5 - .09) < 1e-15
+      and (raises(N7, [1, 1]) or np.all(np.isfinite(np.linalg.solve(N7, [1., 1]))) and np.abs(np.linalg.solve(N7, [1., 1])).max() > 1e15))
 
 # L3:bonds  homework-3 i9: prices = cash flows x discount factors; expected values of the hidden tests
 def rows(bonds, years):

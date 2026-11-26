@@ -1,7 +1,9 @@
 // Sweep of code-widget feedback lines for vectors L3 (audit vectors-1-3, round 1), under the page's Pyodide.
 // Run from the repository root: node docs/reports/vectors-L1-3-concepts-sweep.mjs app <pkgs>   (<pkgs> holds pyodide-0.27.7)
 // Each row: widget | coding of a mistake | first failing test (got) against the test whose feedback line names that mistake (want; 'any' = no line claims it).
-// The five DIFF rows are discussed in docs/reviews/audit-vectors-1-3.md (findings 2 and 14; `solve(b, A)` reaches the test-1 line, which fits it).
+// After the fix pass (docs/reviews/audit-vectors-1-3.md, `## Fix pass`) one DIFF row remains: `solve(b, A)` reaches the test-1 line, which fits it.
+// Rows re-pointed by the fix pass: the three `==` codings of s2 now want test-6, the s2 diagonal and rounding codings test-7 and test-8,
+// the lax s9 checks test-7 (finding 3), and the i9 padding coding test-1 (finding 14). The fix-pass rows below the main list became main rows.
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -34,31 +36,36 @@ const M = [
   ['s0', 'A * x', hg('A * x'), 'test-1'], ['s0', 'x @ A', hg('x @ A'), 'test-1'], ['s0', 'A.T @ x', hg('A.T @ x'), 'test-1'], ['s0', 'np.dot(A, x)', hg('np.dot(A, x)'), null],
   ['s0', 'A.sum(axis=1)', hg('A.sum(axis=1)'), 'test-1'],
   ['s2', 'return True', ii('True'), 'test-2'],
-  ['s2', '(B @ A == eye).all()', ii('bool((B @ A == np.eye(n)).all())'), 'test-3'],
-  ['s2', 'np.array_equal', ii('np.array_equal(B @ A, np.eye(n))'), 'test-3'],
-  ['s2', '(A @ B == eye).all()', ii('bool((A @ B == np.eye(n)).all())'), 'test-3'],
-  ['s2', 'np.all(np.round(B@A)==eye)', ii('bool(np.all(np.round(B @ A) == np.eye(n)))'), 'any'],
+  ['s2', '(B @ A == eye).all()', ii('bool((B @ A == np.eye(n)).all())'), 'test-6'],
+  ['s2', 'np.array_equal', ii('np.array_equal(B @ A, np.eye(n))'), 'test-6'],
+  ['s2', '(A @ B == eye).all()', ii('bool((A @ B == np.eye(n)).all())'), 'test-6'],
+  ['s2', 'np.all(np.round(B@A)==eye)', ii('bool(np.all(np.round(B @ A) == np.eye(n)))'), 'test-8'],
   ['s2', 'allclose(A @ B)', ii('np.allclose(A @ B, np.eye(n))'), null],
   ['s2', 'allclose(B, inv(A))', ii('np.allclose(B, np.linalg.inv(A))'), null],
   ['s2', 'allclose(B * A) elementwise', ii('np.allclose(B * A, np.eye(n))'), 'any'],
-  ['s2', 'diag only allclose(np.diag(B@A),1)', ii('np.allclose(np.diag(B @ A), 1)'), 'any'],
+  ['s2', 'diag only allclose(np.diag(B@A),1)', ii('np.allclose(np.diag(B @ A), 1)'), 'test-7'],
+  ['s2', 'trace check isclose(trace(B@A), n)', ii('bool(np.isclose(np.trace(B @ A), n))'), 'test-7'],
+  ['s2', 'diagonal allclose(np.diagonal(B@A), ones)', ii('np.allclose(np.diagonal(B @ A), np.ones(n))'), 'test-7'],
+  ['s2', 'array_equal(np.round(B@A), eye)', ii('np.array_equal(np.round(B @ A), np.eye(n))'), 'test-8'],
+  ['s2', 'loose tolerance allclose(atol=0.5)', ii('np.allclose(B @ A, np.eye(n), atol=0.5)'), 'test-8'],
   ['s3', 'A @ b', ss('A @ b'), 'test-1'], ['s3', 'inv(A) @ b', ss('np.linalg.inv(A) @ b'), null], ['s3', 'solve(A.T, b)', ss('np.linalg.solve(A.T, b)'), 'test-1'], ['s3', 'b / A', ss('b / A'), 'test-1'],
   ['s3', 'solve(b, A)', ss('np.linalg.solve(b, A)'), 'error'],
   ['s8', 'A @ b', th('A @ b'), 'test-1'], ['s8', 'inv(A) @ b', th('np.linalg.inv(A) @ b'), null], ['s8', 'solve(A.T, b)', th('np.linalg.solve(A.T, b)'), 'test-1'],
   ['s8', 'abs(solve)', th('np.abs(np.linalg.solve(A, b))'), 'any'], ['s8', 'clip to +-1000', th('np.clip(np.linalg.solve(A, b), -1000, 1000)'), 'test-3'],
   ['s8', 'hard-coded 3x3 first matrix', th('np.linalg.solve(np.array([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]]), b)'), 'any'],
   ['s9', 'starter (no check)', W.s9.starter, 'test-1'],
-  ['s9', 'det == 0', sh(['if np.linalg.det(A) == 0:', '    raise np.linalg.LinAlgError("s")', 'return np.linalg.solve(A, b)']), 'any'],
+  ['s9', 'det == 0', sh(['if np.linalg.det(A) == 0:', '    raise np.linalg.LinAlgError("s")', 'return np.linalg.solve(A, b)']), 'test-7'],
+  ['s9', 'not det (falsy zero)', sh(['if not np.linalg.det(A):', '    raise np.linalg.LinAlgError("s")', 'return np.linalg.solve(A, b)']), 'test-7'],
   ['s9', 'abs(det) < 1e-10', sh(['if abs(np.linalg.det(A)) < 1e-10:', '    raise np.linalg.LinAlgError("s")', 'return np.linalg.solve(A, b)']), 'test-6'],
   ['s9', 'abs(det) < 1e-12', sh(['if abs(np.linalg.det(A)) < 1e-12:', '    raise np.linalg.LinAlgError("s")', 'return np.linalg.solve(A, b)']), 'test-6'],
   ['s9', 'np.isclose(det, 0)', sh(['if np.isclose(np.linalg.det(A), 0):', '    raise np.linalg.LinAlgError("s")', 'return np.linalg.solve(A, b)']), 'test-6'],
   ['s9', 'always raise', sh(['raise np.linalg.LinAlgError("s")']), 'test-4'],
   ['s9', 'rank < 3 (hard-coded 3)', sh(['if np.linalg.matrix_rank(A) < 3:', '    raise np.linalg.LinAlgError("s")', 'return np.linalg.solve(A, b)']), 'any'],
-  ['s9', 'nan check after solve', sh(['x = np.linalg.solve(A, b)', 'if np.isnan(x).any():', '    raise np.linalg.LinAlgError("s")', 'return x']), 'any'],
-  ['s9', 'isfinite check after solve', sh(['x = np.linalg.solve(A, b)', 'if not np.all(np.isfinite(x)):', '    raise np.linalg.LinAlgError("s")', 'return x']), 'any'],
+  ['s9', 'nan check after solve', sh(['x = np.linalg.solve(A, b)', 'if np.isnan(x).any():', '    raise np.linalg.LinAlgError("s")', 'return x']), 'test-7'],
+  ['s9', 'isfinite check after solve', sh(['x = np.linalg.solve(A, b)', 'if not np.all(np.isfinite(x)):', '    raise np.linalg.LinAlgError("s")', 'return x']), 'test-7'],
   ['s9', 'raise ValueError on rank', sh(['if np.linalg.matrix_rank(A) < len(A):', '    raise ValueError("s")', 'return np.linalg.solve(A, b)']), 'test-1'],
   ['s9', 'cond > 1e12', sh(['if np.linalg.cond(A) > 1e12:', '    raise np.linalg.LinAlgError("s")', 'return np.linalg.solve(A, b)']), 'any'],
-  ['s9', 'residual check allclose(A@x,b)', sh(['x = np.linalg.solve(A, b)', 'if not np.allclose(A @ x, b):', '    raise np.linalg.LinAlgError("s")', 'return x']), 'any'],
+  ['s9', 'residual check allclose(A@x,b)', sh(['x = np.linalg.solve(A, b)', 'if not np.allclose(A @ x, b):', '    raise np.linalg.LinAlgError("s")', 'return x']), 'test-7'],
   ['i7', 'no normalise', mv(['if np.linalg.matrix_rank(S) < len(S):', '    raise np.linalg.LinAlgError("s")', 'return np.linalg.solve(S, ones)']), 'test-1'],
   ['i7', 'no rank check', mv(['z = np.linalg.solve(S, ones)', 'return z / z.sum()']), 'test-6'],
   ['i7', 'det == 0', mv(['if np.linalg.det(S) == 0:', '    raise np.linalg.LinAlgError("s")', 'z = np.linalg.solve(S, ones)', 'return z / z.sum()']), 'test-7'],
@@ -79,7 +86,7 @@ const M = [
   ['i9', 'square check only (years from len), rank', cb(rows, ['years = len(bonds)', 'C = cash_flow_rows(bonds, years)', 'if np.linalg.matrix_rank(C) < years:', '    raise ValueError("x")', 'd = np.linalg.solve(C, np.array(prices, dtype=float))', 'return d, cash_flow_rows(targets, years) @ d']), 'any'],
   ['i9', 'uses inv', cb(rows, ['years = max(m for c, m in bonds)', 'C = cash_flow_rows(bonds, years)', 'if len(bonds) != years or np.linalg.matrix_rank(C) < years:', '    raise ValueError("x")', 'd = np.linalg.inv(C) @ np.array(prices, dtype=float)', 'return d, cash_flow_rows(targets, years) @ d']), 'test-12'],
   ['i9', 'coupon only at maturity', cb('', ['years = max(m for c, m in bonds)', 'C = np.zeros((len(bonds), years))', 'for i, (c, m) in enumerate(bonds):', '    C[i, m - 1] = 100 + c', 'if len(bonds) != years or np.linalg.matrix_rank(C) < years:', '    raise ValueError("x")', 'd = np.linalg.solve(C, np.array(prices, dtype=float))', 'return d, np.array([(100 + c) * d[m - 1] for c, m in targets])']), 'test-1'],
-  ['i9', 'targets must be full length (no padding)', cb(rows, ['years = max(m for c, m in bonds)', 'C = cash_flow_rows(bonds, years)', 'if len(bonds) != years or np.linalg.matrix_rank(C) < years:', '    raise ValueError("x")', 'd = np.linalg.solve(C, np.array(prices, dtype=float))', 'return d, np.array([np.array([c] * (m - 1) + [100 + c]) @ d for c, m in targets])']), 'test-2'],
+  ['i9', 'targets must be full length (no padding)', cb(rows, ['years = max(m for c, m in bonds)', 'C = cash_flow_rows(bonds, years)', 'if len(bonds) != years or np.linalg.matrix_rank(C) < years:', '    raise ValueError("x")', 'd = np.linalg.solve(C, np.array(prices, dtype=float))', 'return d, np.array([np.array([c] * (m - 1) + [100 + c]) @ d for c, m in targets])']), 'test-1'],
   ['i9', 'returns list for d only (no values)', cb(rows, ['years = max(m for c, m in bonds)', 'C = cash_flow_rows(bonds, years)', 'd = np.linalg.solve(C, np.array(prices, dtype=float))', 'return d, d']), 'test-2'],
 ];
 // probes: expressions evaluated under the page's Pyodide
@@ -115,11 +122,6 @@ M.forEach(([k, name, src, want], i) => {
   out.push(`${okk ? 'ok ' : 'DIFF'} ${k} | ${name} | got ${got} want ${want} | ${first ? 'actual=' + String(first.actual).slice(0, 80) + ' err=' + String(first.error || r.error || '').split('\n').pop().slice(0, 90) : (r.error ? String(r.error).split('\n').pop().slice(0, 100) : '')}`);
 });
 out.push('differences from the expectation: ' + bad);
-// the fixes proposed in findings 3 and 4: one more hidden test each; the solution must pass and the lax programs must fail on the new test
-const s9x = { ...W.s9, tests: [...W.s9.tests, { call: 'safe_hedge([[0.04, 0.06], [0.06, 0.09]], [1, 1])', expect: 'LinAlgError', compare: 'raises' }] };
-const s2x = { ...W.s2, tests: [...W.s2.tests, { call: 'is_inverse([[1, 1], [0, 1]], [[1, 0], [0, 1]])', expect: 'False' }, { call: 'is_inverse([[2, 0], [0, 2]], [[0.6, 0], [0, 0.6]])', expect: 'False' }] };
-const X = [[s9x, 's9+', 'solution', W.s9.solution], ...M.filter(([k, n]) => k === 's9' && /det == 0|nan check|isfinite|residual|cond/.test(n)).map(([k, n, src]) => [s9x, 's9+', n, src]),
-  [s2x, 's2+', 'solution', W.s2.solution], ...M.filter(([k, n]) => k === 's2' && /diag only|round/.test(n)).map(([k, n, src]) => [s2x, 's2+', n, src])];
-for (const [spec, k, name, src] of X) { const r = await runner.grade(spec, src, 'tests'); const f = r.rows.find((x) => !x.ok); out.push(`fix ${k} | ${name} | ${r.ok ? 'passes all' : r.key} ${f ? '| actual=' + String(f.actual).slice(0, 70) : ''}`); }
+// the fixes proposed in findings 3 and 4 are now hidden tests 7 and 8 of s2 and test 7 of s9 (fix pass); the rows above cover them
 console.log(out.join('\n'));
 await runner.close();
