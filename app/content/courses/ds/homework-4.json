@@ -98,7 +98,7 @@
         "language": "python",
         "starter": "import heapq\n\n\ndef merge_k(lists):\n    ...\n",
         "solution": "import heapq\n\n\ndef merge_k(lists):\n    heap = []\n    for i, xs in enumerate(lists):\n        if xs:\n            heapq.heappush(heap, (xs[0], i, 0))\n    out = []\n    while heap:\n        value, i, j = heapq.heappop(heap)\n        out.append(value)\n        if j + 1 < len(lists[i]):\n            heapq.heappush(heap, (lists[i][j + 1], i, j + 1))\n    return out\n",
-        "prelude": "",
+        "prelude": "import sys as _zs, types as _zt\n_zhq = _zs.modules.get('heapq') or __import__('heapq')\n_zhq = getattr(_zhq, '_zq_real', _zhq)\n_zpeak = [0]\ndef _zwatch(f):\n    def g(heap, *a):\n        r = f(heap, *a)\n        _zpeak[0] = max(_zpeak[0], len(heap))\n        return r\n    return g\n_zshim = _zt.ModuleType('heapq')\n_zshim.__dict__.update(_zhq.__dict__)\n_zshim._zq_real = _zhq\nfor _zn in ('heappush', 'heapreplace', 'heappushpop', 'heapify'):\n    setattr(_zshim, _zn, _zwatch(getattr(_zhq, _zn)))\n_zs.modules['heapq'] = _zshim\ndef peak_heap(f):\n    _zpeak[0] = 0\n    f()\n    return _zpeak[0]\n",
         "examples": [
           {
             "call": "merge_k([[1, 4, 7], [2, 5, 8], [3, 6, 9]])",
@@ -106,7 +106,7 @@
             "compare": "equal"
           }
         ],
-        "postlude": "def _nosort_tokens(src):\n    # names and operators only: comments, strings and docstrings are skipped\n    _tk = __import__('tokenize')\n    _io = __import__('io')\n    return [t.string for t in _tk.generate_tokens(_io.StringIO(src).readline) if t.type in (_tk.NAME, _tk.OP)]\ntry:\n    _nosort_t = _nosort_tokens(__learner_source__)\n    NO_SORT = 'sorted' not in _nosort_t and ('.', 'sort') not in set(zip(_nosort_t, _nosort_t[1:]))\nexcept Exception:\n    NO_SORT = 'sorted(' not in __learner_source__ and '.sort(' not in __learner_source__\n",
+        "postlude": "# the real heapq goes back for other widgets; merge_k keeps the counting copy it imported\n_zs.modules['heapq'] = _zhq\ndef _nosort_tokens(src):\n    # names and operators only: comments, strings and docstrings are skipped\n    _tk = __import__('tokenize')\n    _io = __import__('io')\n    return [t.string for t in _tk.generate_tokens(_io.StringIO(src).readline) if t.type in (_tk.NAME, _tk.OP)]\ntry:\n    _nosort_t = _nosort_tokens(__learner_source__)\n    NO_SORT = 'sorted' not in _nosort_t and ('.', 'sort') not in set(zip(_nosort_t, _nosort_t[1:]))\nexcept Exception:\n    NO_SORT = 'sorted(' not in __learner_source__ and '.sort(' not in __learner_source__\n",
         "tests": [
           {
             "call": "merge_k([[1, 4, 7], [2, 5, 8], [3, 6, 9]])",
@@ -149,19 +149,42 @@
             "compare": "equal"
           },
           {
+            "call": "peak_heap(lambda: merge_k([list(range(i, 2000, 20)) for i in range(20)])) <= 20",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
             "call": "NO_SORT",
             "expect": "True",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 9 hidden tests: empty lists, repeats, and 500 lists of 200 items. Use `heapq` with one entry per list, so the merge works item by item as a live feed needs. Test 9 checks that you did not call `sorted` or `.sort`."
+        "how": "Check runs 10 hidden tests: empty lists, repeats, and 500 lists of 200 items. Use `heapq` with one entry per list, so the merge works item by item as a live feed needs. Test 9 checks that your heap never holds more than one entry per list. Test 10 checks that you did not call `sorted` or `.sort`.",
+        "mutants": [
+          {
+            "source": "import heapq\n\n\ndef merge_k(lists):\n    heap = []\n    for xs in lists:\n        for x in xs:\n            heapq.heappush(heap, x)\n    return [heapq.heappop(heap) for _ in range(len(heap))]\n",
+            "test": 9,
+            "symptom": "Every item is pushed into one heap: a heapsort, and the heap holds all 2,000 items of test 9 at once"
+          },
+          {
+            "source": "import heapq\n\n\ndef merge_k(lists):\n    heap = [x for xs in lists for x in xs]\n    heapq.heapify(heap)\n    out = []\n    while heap:\n        out.append(heapq.heappop(heap))\n    return out\n",
+            "test": 9,
+            "symptom": "`heapify` on all the lists joined builds one heap of every item"
+          },
+          {
+            "source": "from heapq import heappush, heappop\n\n\ndef merge_k(lists):\n    heap = []\n    for i, xs in enumerate(lists):\n        for j, x in enumerate(xs):\n            heappush(heap, (x, i, j))\n    out = []\n    while heap:\n        out.append(heappop(heap)[0])\n    return out\n",
+            "test": 9,
+            "symptom": "Every `(value, list, position)` entry is pushed at the start, so the heap holds all items at once"
+          }
+        ]
       },
       "feedback": {
         "correct": "One entry per list, refilled from the same list.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
           "test-3": "Test 3 has only empty lists. Push a list's first item only if the list has one.",
-          "test-4": "Test 4 has repeats across lists. Keep every copy."
+          "test-4": "Test 4 has repeats across lists. Keep every copy.",
+          "test-9": "Test 9 measures your heap on 20 lists. Keep one entry per list: after each pop, push only the next item from that same list."
         }
       },
       "explain": {
@@ -426,7 +449,7 @@
       "widget": {
         "kind": "longform",
         "prompt": "You are choosing the core structure of an order book for one instrument. It must report the best bid and ask after every message, add orders, and cancel orders (most orders are cancelled). It must also answer \"all levels between two prices\" for a dashboard.\n\nFor each structure give the cost of: best quote, add, cancel, and a range query. Say what each costs in memory or complexity. Then recommend one for this book and justify it in two or three sentences.",
-        "model": "**Sorted list with `bisect`.** Best quote $O(1)$ (an end of the list). Add: $O(\\log n)$ to find the place but $O(n)$ to shift items. Cancel: $O(\\log n)$ to find, $O(n)$ to remove. Range query: two bisections and a slice, $O(\\log n + k)$. Simple, and fast for a few thousand levels, but the shifting hurts on a busy book.\n\n**Balanced BST (AVL, red-black).** Best quote $O(\\log n)$, or $O(1)$ with a pointer kept to the extreme node. Add and cancel $O(\\log n)$. Range query: in-order walk with pruning, $O(\\log n + k)$. Correct for everything, but Python has no built-in one, and the code is long.\n\n**Two heaps with lazy deletion.** Best quote $O(1)$ amortised; add $O(\\log n)$; cancel $O(1)$ (mark the id dead). But a heap is not sorted beyond its top, so a range query must scan everything, $O(n)$. Dead entries also use memory until they reach the top.\n\n**Array indexed by tick.** Prices sit on a grid, for example £0.01 ticks in a £90 to £110 band: 2,001 slots. The level for a price is found by index, $O(1)$. Each level holds a first-in, first-out queue of orders, so time priority is kept. Add $O(1)$; cancel $O(1)$ with a dict from id to order; range query $O(\\text{ticks in range})$. The best quote needs a pointer that moves when its level empties. That is cheap, because nearby levels are usually busy. It costs memory for empty levels and needs a known price band.\n\n**Recommendation.** The array by tick, with a FIFO queue per level and an id dict. Every message is $O(1)$ and range queries are direct. This is what many real matching engines use. Two heaps are the right choice when prices have no fixed grid and range queries are rare.",
+        "model": "**Sorted list with `bisect`.** Best quote $O(1)$ (an end of the list). Add: $O(\\log n)$ to find the place but $O(n)$ to shift items. Cancel: $O(\\log n)$ to find, $O(n)$ to remove. Range query: two bisections and a slice, $O(\\log n + k)$. Simple, and fast for a few thousand levels, but the shifting hurts on a busy book.\n\n**Balanced BST (AVL, red-black).** Best quote $O(\\log n)$, or $O(1)$ with a pointer kept to the extreme node. Add and cancel $O(\\log n)$. Range query: in-order walk with pruning, $O(\\log n + k)$. Correct for everything, but Python has no built-in one, and the code is long.\n\n**Two heaps with lazy deletion.** Best quote $O(1)$ amortised; add $O(\\log n)$; cancel $O(1)$ (mark the id dead). But a heap is not sorted beyond its top, so a range query must scan everything, $O(n)$. Dead entries also use memory until they reach the top.\n\n**Array indexed by tick.** Prices sit on a grid, for example £0.01 ticks in a £90 to £110 band: 2,001 slots. The level for a price is found by index, $O(1)$. Each level holds a first-in, first-out queue of orders, so time priority is kept. Add $O(1)$; cancel $O(1)$ with a dict from id to order; range query $O(\\text{ticks in range})$. The best quote needs a pointer that moves when its level empties. That is cheap, because nearby levels are usually busy. It costs memory for empty levels and needs a known price band.\n\n**Recommendation.** The array by tick, with a FIFO queue per level and an id dict. Add, cancel and lookup are $O(1)$; only the best-quote pointer can take longer, when its level empties. Range queries are direct. This is what many real matching engines use. Two heaps are the right choice when prices have no fixed grid and range queries are rare.",
         "rubric": [
           {
             "points": 2,
