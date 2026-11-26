@@ -15,6 +15,8 @@ Parts
     harmonic series (terms shrink, sums do not settle), geometric partial sums.
  E. Text checks for the audit's findings. These FAIL while the content is as
     audited; they pass once the fix in docs/reviews/audit-series-1-3.md is applied.
+    Fix pass: E4 re-pointed, since its old test (the phrase absent) encoded the
+    audited text; it now also passes when the phrase carries the u1 = L caveat.
 
 Exit 0 only when every check passes.
 """
@@ -611,7 +613,7 @@ ok('makes the terms shrink to nothing' not in text('l8-adding-forever'),
 ok('otherwise they run away' not in text('l4-last-step'),
    'E3 l4 summary: "otherwise they run away" (a = -1 flips for ever; a start at L stays)', finding=True)
 ok(all(abs(rec(lambda u: -u + 6, 5, k)) < 10 for k in range(50)), 'E3 basis: a = -1 stays bounded')
-ok('exactly when $-1 < a < 1$' not in text('homework-1'),
+ok('exactly when $-1 < a < 1$' not in text('homework-1') or 'Unless $u_1 = L$, it shrinks to 0 exactly when' in text('homework-1'),
    'E4 homework-1 h-gap-proof: "shrinks to 0 exactly when -1 < a < 1" (also when u1 = L)', finding=True)
 ok('Far-off payments gain the most from the cut' not in text('review-3'),
    'E5 review-3 I8: far-off payments gain most only in proportion (absolute gain peaks near year %d)' % tmax, finding=True)
