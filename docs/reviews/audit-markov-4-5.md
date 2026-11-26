@@ -1,6 +1,6 @@
 # Concept audit: markov (topic 1.6), levels 4 and 5, round 1
 
-Scope: `app/content/courses/markov/` l13 to l16, review-4, homework-4 (with its performance task `items[9]`), problems-4, l17 to l22, review-5, homework-5 (with its performance task `items[10]`), problems-5. These levels have no separate second read on record, so this audit stands in for it and was read at full Stage 1 depth. Blind read: no earlier review, audit, ledger, concepts script or author report for this course was opened until the ledger, the findings below and the script were committed (commit "blind" on this branch). Ledger: `docs/reports/audit-markov-4-5-ledger.md` (291 hand-judged rows: 276 correct, 10 imprecise, 1 misleading, 4 wrong, 0 unverified). Script: `docs/reports/markov-L4-5-concepts.py` (112 checks: exact fractions and linear solves for every chain, ruin and pattern result, and seeded Monte Carlo for every empirical claim).
+Scope: `app/content/courses/markov/` l13 to l16, review-4, homework-4 (with its performance task `items[9]`), problems-4, l17 to l22, review-5, homework-5 (with its performance task `items[10]`), problems-5. These levels have no separate second read on record, so this audit stands in for it and was read at full Stage 1 depth. Blind read: no earlier review, audit, ledger, concepts script or author report for this course was opened until the ledger, the findings below and the script were committed (commit `c73c432e` on this branch). Ledger: `docs/reports/audit-markov-4-5-ledger.md` (291 hand-judged rows: 276 correct, 10 imprecise, 1 misleading, 4 wrong, 0 unverified). Script: `docs/reports/markov-L4-5-concepts.py` (112 checks: exact fractions and linear solves for every chain, ruin and pattern result, and seeded Monte Carlo for every empirical claim).
 
 Method. Every graded key and every slip value was recomputed. Each theorem was checked against its hypotheses as the screen states them: optional stopping against Williams 10.10, Wald's identity, the ergodic theorem, detailed balance, the Poisson characterisations. Every optional-stopping answer was checked against an independent first-step linear solve, and every pattern wait against an exact solve of the prefix automaton (ABRACADABRA included, in fractions). Poisson thinning, superposition, memorylessness, the inspection paradox, the uniform arrival time, compound Poisson moments, the Wald examples and the burn-in and acceptance claims of the Metropolis lesson each have a Monte Carlo or exact matrix check sized to separate the claim from its negation.
 
@@ -54,4 +54,24 @@ Checked and found correct, so a fixer need not revisit: the three optional-stopp
 
 ## Overlap with earlier reads
 
-OVERLAP
+Read after the blind commit `c73c432e`. Earlier reads that judged the content of these files: `review-problems-1.5-d.md` (problems-4 and problems-5, with its fix pass) and `review-perf-retrofit-8.md` (homework-4 `h-mh-network`, homework-5 `h-build-lazy-martingales`, and through them l19, l20 and `h-long-take-profit`). The lessons l13 to l22, review-4, review-5 and the other homework items had no earlier read. The reuse reads (`review-reuse-af-hits*.md`, `review-delta-af-1.md`, `review-delta-ae-1.md`) and the band read (`review-pass9-hits.md`) judged freshness and tolerances, not concepts, and are not counted. The author reports `docs/reports/markov-4.md`, `markov-5.md`, `markov-4-perf.md`, `markov-5-perf.md` and `problems-markov.md` were opened only for this table.
+
+Conceptual findings of the earlier reads, all fixed before this audit and so not open to rediscovery:
+
+| earlier finding | file | status in the text audited |
+|---|---|---|
+| review-problems-1.5-d 1 (`wrong`): an option marked wrong also made the target uniform | problems-4 items[0].parts[2] | fixed; the replacement option (accept with 1/deg(i), H rises to 16/26) is confirmed by the script |
+| review-problems-1.5-d 2 (`wrong`): lost passengers called a Poisson stream | problems-4 items[1].parts[3].explain | fixed; "a long-run rate, not a Poisson stream" is a ledger row, correct |
+| review-problems-1.5-d 3 (`unclear`): "extra room only helps when taxis outrun passengers" | problems-4 items[1].parts[4].explain | fixed; ledger row correct |
+| review-problems-1.5-d 4 (`unclear`): "biases towards the regime that proposes least" | problems-4 items[3].parts[4].explain | fixed; ledger row correct |
+| review-perf-retrofit-8 L19-1: condition (3) of optional stopping stated without "T finite with chance 1" | l19 screens[2], screens[3], summary; l20 screens[3]; homework-5 `h-long-take-profit` | fixed; all five strings carry the condition and are ledger rows, correct |
+| review-perf-retrofit-8 MK5-1: rubric row 3 asked no reason for a finite mean | homework-5 items[10].rubric[2] | fixed; ledger row correct |
+| review-perf-retrofit-8 MK5-2: required row named only condition (3) though (2) also holds | homework-5 items[10].rubric[3], model | fixed; the condition (2) bound (steps at most 1 − θ, E[T] ≤ 5/0.00243) is confirmed |
+
+| | count |
+|---|---|
+| Conceptual findings by this audit only | 13 (4 wrong, 8 imprecise, 1 misleading) |
+| By the earlier reads only | 7 (2 wrong, 2 unclear, 3 Should), all already fixed |
+| By both | 0 |
+
+All 13 are in text no earlier read had judged: the lessons, review-4, and homework-4 items 2, 3 and 9 (index 1, 2 and 8), a file that `review-perf-retrofit-8` opened only for its last item. Neither earlier read saw a `wrong` that is still in the text. New `wrong` findings for the convergence rule: 4 across two levels (findings 3, 7, 8, 9), each a single option or slip line and none a key, definition or theorem. That is above one per three levels, so the rule calls for a second blind round after the fix pass.
