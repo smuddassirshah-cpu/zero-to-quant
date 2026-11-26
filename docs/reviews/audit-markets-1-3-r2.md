@@ -99,3 +99,17 @@ Notes on the overlap:
 ## Inbox
 
 One bullet added to `docs/BACKLOG-INBOX.md` under "Raised later (audit markets):" (finding 5, ENGINE-BACKLOG 1036 seen again).
+
+## Fix pass
+
+Fixer: Opus, from `2c72aeba`. Each basis below is the fixer's own, checked before the edit. No graded key, slip value, hidden test or solution changed.
+
+1. **fixed differently**. `homework-1` `items[6]` `simple` now reads "6.67% solves $1000(1 + 1.5r) = 1100$: the £100.00 gain spread over the average wait of 1.5 years. That is simple interest. Compounding needs the quadratic." Basis: $0.10/1.5 = 0.06667$, and $(1100/1000 - 1)/1.5$ gives the same; the slip band 0.0667 ± 0.0001 stays clear of the key 0.065965 ± 0.00006. Simple discounting of each payment, $550/(1+r) + 550/(1+2r) = 1000$, gives 6.74% (brentq), outside the band, so the line names the mean-wait equation, not that one.
+2. **fixed differently**. `l8` `screens[5]` option `up` why: "You halved only the £50 gain, leaving £125. Each year applies to the value at its start, so the fall halves all £150." Basis: $150 - 0.5 \times 50 = 125$; the old line's mistake gives $100 + 50 - 50 = 100$. Chosen over the product-of-returns reading as the slip a learner who tracks pounds makes.
+3. **fixed**. `l13` `summary.ideas[2]` now starts "Ignoring interest,". Basis: $R_E = -1$ in $R_E = LR_A - (L-1)r$ gives $R_A = -(1 - (L-1)r)/L = -0.475$ at $L = 2$, $r = 5\%$.
+4. **fixed differently**. `l5` `screens[3]` prose: "UK and US government bonds pay coupons half-yearly, though many euro-area bonds pay yearly." Basis: gilts (UK DMO) and Treasury notes and bonds (TreasuryDirect) pay every six months; Bunds, OATs and Bonos pay annually. "Most" is arguable by value outstanding, so the line names markets instead of a majority.
+5. **fixed**. The five `byKey.error` lines now read "Your code could not be run. Check the syntax: brackets, colons and indentation."; `homework-1` `items[5]` `generic` gains "If a test is stopped for running too long, check that the loop changes `lo` or `hi` every time." Basis: own run through `app/tools/code-runner.mjs` (Pyodide 0.27.7, script `scratchpad/fix-mkts13r2/err.mjs`): every starter, including the `homework-1` loop that never ends and `pass` in its place, gives `test-1`; a missing colon (`l4`, `l5`, `homework-1`), a bad indent (`homework-1`) and an unclosed bracket (`homework-2`) give `error`; the solution gives none. The `generic` line now has three sentences.
+
+Script: `docs/reports/markets-L1-3-concepts-r2.py` re-points the two checks that encoded the old text of findings 1 and 2 (docstring says so) and adds one text check: 204 checks, exit 0. `markets-L1-3-concepts.py` and `markets-L1-3-fixread.py` exit 0.
+
+Gates: validator 0 errors; voice scan 35 on the six edited files 0 and 0; `run-number-scripts --only markets` 1 passed; `grade-all --code --file` on each edited file 0 failures; playthrough of `l4`, `l5`, `l8`, `l13`, `homework-1`, `homework-2`, desktop and `--mobile`, all passed.
