@@ -218,3 +218,26 @@ The keys are the standard rule-of-thumb table (Laaksonen, *Competitive Programme
 (unchanged; listed to confirm it stays true.) After the edit run `node tools/grade-all.mjs --file content/courses/contests/l2-limits-to-complexity.json` for the new accept forms.
 
 Out of scope, noted only: homework-3 test-7 third sentence (unchanged) says the walk-back costs about $n^2 / 2$ reads; with `closes[j] <= closes[i]` it is two reads per comparison, about $n^2$ ($2 \cdot 500{,}500 = 1{,}001{,}000$ at $n = 1000$).
+
+## Fix-pass follow-up (Opus)
+
+Fixer: Opus, on `10a48cbc`. Each point established by own derivation or run before the edit. Keys unchanged; one accept list widened.
+
+| # | point | status | basis (own) | edit |
+|---|---|---|---|---|
+| a | l2 `screens[2].feedback.byKey.r4c1` | fixed (reader's text) | $\sqrt[3]{10^{18}} = 10^6$ fits $10^8$ and grows faster than $\log n$, so "not the slowest that fits" was false for it. "Not the growth meant here" holds for every refused entry; $\log_2 10^{18} = 59.8$ fits. | "Your entry for $10^{18}$ is not the growth meant here. You cannot even count to $10^{18}$ in time, but halving fits: enter $\log n$." |
+| b | l12 `screens[4].feedback.byKey.test-7` | fixed (reader's text) | Test call `0 < update_reads(1000, ups) <= 2500`, 500 updates: six reads each is 3,000, so test 7 fails, and 3,000 is not "far more". Own CPython run of a seven-read variant: 3,500 reads, test false. "More than 2,500" is exact. | "far more than 2,500" to "more than 2,500". homework-3 left as is ("far more than 10,000" read correct). |
+| c | l2 `screens[2]` question, column, accept, correct | fixed (reader's text, plus three lines) | $20 \cdot 2^{20} = 20{,}971{,}520 \le 10^8$ and $n \sqrt n = 8.9 \cdot 10^7$ at $2 \cdot 10^5$, so "slowest that fits" was false in rows 0 and 3; in fact no slowest exists ($n \log n \cdot 2^n = 9.1 \cdot 10^7$ also fits at 20). Keys match the standard table (Laaksonen ch. 2; Halim table 1.4 gives $2^n n$ for $n \le 18$ to 22), so the question now asks for the usual growth. | `question` "Fill in the growth each limit usually calls for."; column "Usual growth"; `rows[0][1].accept` adds `O(n*2^n)`, `O(2^n*n)`; `correct` "Each row is the growth a setter usually intends at that limit." |
+
+Three lines beyond the reader's text, same class, so the screen uses one criterion throughout:
+- `byKey.r1c1` and `r2c1`: "is not the slowest that fits" to "is not the growth meant here" (second sentences kept). The old criterion is no longer what the question asks, and for $n \le 5{,}000$ it was false for contrived entries ($n^{2.1} = 5.9 \cdot 10^7$ fits).
+- `hints[2]`: "A value of $10^{18}$ allows only $\log n$" to "usually calls for $\log n$": $10^{18}$ to the power 1/3 is $10^6$ and fits, and Pollard rho at $n^{1/4} \approx 3 \cdot 10^4$ is a real such algorithm.
+- `explain`: "large ones demand $n \log n$ or better" to "usually call for": $n \sqrt n$ fits at $2 \cdot 10^5$.
+
+Rows checked under the new wording: r0 $2^n$ (and now $n \cdot 2^n$), r1 $n^3$ ($1.25 \cdot 10^8$), r2 $n^2$ ($2.5 \cdot 10^7$), r3 fixed $n \log n$, r4 $\log n$ are each the usual growth; every byKey line is true of every entry the cell refuses.
+
+Accept forms: the table's big-O normaliser (`js/engine/widgets/table.js`, `bigO`) drops `O( )`, spaces, `*`, `·`, `×` and maps `**` to `^`. Run on the live function: `n 2^n`, `n·2^n`, `n*2**n`, `O(n * 2^n)`, `2^n n`, `2^n·n`, `n2^n` grade correct; `n^2 2^n`, `3^n`, `n!`, `2^n n^2` still refuse. `grade-all --code --file` runs each accept form through the widget: 0 failures.
+
+Gates on the two edited files: validator 0 errors, no warning on an edited field; voice scan 35: 0 and 0; `contests-L1-3-concepts-r3.py --cxx` exit 0, 485 checks; `contests-L1-3-fixread-r3.py` exit 0; neither script encodes the changed text, so no check was re-pointed; `run-number-scripts --only contests` 5 of 5 pass; `grade-all --code --file` 0 failures on each; playthrough of l2 and l12, desktop and `--mobile`: all passed (4 runs).
+
+Not applied, out of scope as the reader noted: homework-3 test-7 third sentence ($n^2/2$ reads; two reads per comparison gives about $n^2$).
