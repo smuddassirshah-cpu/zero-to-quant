@@ -1021,7 +1021,54 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests. They cover empty strings, identical strings, no common letters, two classic pairs, lists of fills, and two 200-letter strings."
+        "how": "Check runs 10 hidden tests. They cover empty strings, identical strings, no common letters, two classic pairs, lists of fills, and two 200-letter strings.",
+        "mutants": [
+          {
+            "source": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            t[i][j] = max(t[i - 1][j], t[i][j - 1], t[i - 1][j - 1] + 1)\n    return t[m][n]\n",
+            "test": 1,
+            "symptom": "max of three with the diagonal always + 1: 4"
+          },
+          {
+            "source": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                t[i][j] = t[i - 1][j - 1] + 1\n            else:\n                t[i][j] = max(t[i - 1][j], t[i][j - 1]) + 1\n    return t[m][n]\n",
+            "test": 1,
+            "symptom": "adds 1 in both branches: 8"
+          },
+          {
+            "source": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            t[i][j] = max(t[i - 1][j], t[i][j - 1], t[i - 1][j - 1] + (a[i - 1] == b[j - 1]) + 1)\n    return t[m][n]\n",
+            "test": 1,
+            "symptom": "diagonal gets + 1 on a mismatch too: 7"
+          },
+          {
+            "source": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i] == b[j]:\n                t[i][j] = t[i - 1][j - 1] + 1\n            else:\n                t[i][j] = max(t[i - 1][j], t[i][j - 1])\n    return t[m][n]\n",
+            "test": 1,
+            "symptom": "compares a[i] with b[j]: IndexError inside test 1"
+          },
+          {
+            "source": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i] == b[j - 1]:\n                t[i][j] = t[i - 1][j - 1] + 1\n            else:\n                t[i][j] = max(t[i - 1][j], t[i][j - 1])\n    return t[m][n]\n",
+            "test": 1,
+            "symptom": "compares a[i] with b[j - 1]: IndexError inside test 1"
+          },
+          {
+            "source": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        for j in range(n + 1):\n            if a[i] == b[j]:\n                t[i][j] = t[i - 1][j - 1] + 1\n            else:\n                t[i][j] = max(t[i - 1][j], t[i][j - 1])\n    return t[m][n]\n",
+            "test": 1,
+            "symptom": "loops from 0 and compares a[i] with b[j]: IndexError inside test 1"
+          },
+          {
+            "source": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * n for _ in range(m)]\n    for i in range(m):\n        for j in range(n):\n            if a[i] == b[j]:\n                t[i][j] = (t[i - 1][j - 1] if i and j else 0) + 1\n            else:\n                t[i][j] = max(t[i - 1][j] if i else 0, t[i][j - 1] if j else 0)\n    return t[m - 1][n - 1]\n",
+            "test": 2,
+            "symptom": "unpadded m by n table, returns t[m - 1][n - 1]: IndexError on an empty string"
+          },
+          {
+            "source": "def lcs_length(a, b):\n    t = [[0] * len(b) for _ in a]\n    for i, x in enumerate(a):\n        for j, y in enumerate(b):\n            diag = t[i - 1][j - 1] if i > 0 and j > 0 else 0\n            up = t[i - 1][j] if i > 0 else 0\n            left = t[i][j - 1] if j > 0 else 0\n            t[i][j] = diag + 1 if x == y else max(up, left)\n    return t[-1][-1]\n",
+            "test": 2,
+            "symptom": "unpadded table, returns t[-1][-1]: IndexError on an empty string"
+          },
+          {
+            "source": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * n for _ in range(m)]\n    for j in range(n):\n        t[0][j] = 1 if a[0] in b[:j + 1] else 0\n    for i in range(1, m):\n        for j in range(n):\n            if a[i] == b[j]:\n                t[i][j] = (t[i - 1][j - 1] if j else 0) + 1\n            else:\n                t[i][j] = max(t[i - 1][j], t[i][j - 1] if j else 0)\n    return t[m - 1][n - 1]\n",
+            "test": 2,
+            "symptom": "unpadded table seeded from a[0]: IndexError on an empty string"
+          }
+        ]
       },
       "hints": [
         {
@@ -1044,9 +1091,8 @@
         "correct": "One cell per pair of prefixes, each read from three neighbours.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-2": "Test 2 has an empty string. With the padded table nothing runs and `t[0][3]` is 0.",
-          "test-5": "Test 5 has no common letters, so the answer is 0. Add 1 only when the letters match.",
-          "error": "If you see `IndexError`, compare `a[i - 1]` with `b[j - 1]`, not `a[i]` with `b[j]`."
+          "test-1": "Test 1 expects 3. If you got more, add 1 only when the letters match. If you see `IndexError`, compare `a[i - 1]` with `b[j - 1]`.",
+          "test-2": "Test 2 has an empty string. With the padded table nothing runs and `t[0][3]` is 0."
         }
       },
       "explain": {
@@ -1142,17 +1188,17 @@
           {
             "id": "three",
             "text": "It returns 3",
-            "why": "You read `a[i]` as the row's letter. Row $i$ is for `a[i - 1]`; `a[i]` is the next letter, and `a[5]` does not exist."
+            "why": "You read `a[i]` and `b[j]` as the cell's letters. Cell $(i, j)$ is for `a[i - 1]` and `b[j - 1]`; at $j = 4$ the code reads `b[4]`, which does not exist."
           },
           {
             "id": "two",
             "text": "It returns 2: the shift loses one match",
-            "why": "Before any wrong number comes out, $i = 5$ reads `a[5]`, past the end of HEDGE."
+            "why": "Before any wrong number comes out, the first row reaches $j = 4$ and reads `b[4]`, past the end of EDGY."
           },
           {
             "id": "zero",
             "text": "It returns 0",
-            "why": "The loop never finishes: `a[5]` does not exist."
+            "why": "The loop never finishes: `b[4]` does not exist."
           }
         ],
         "shuffle": true
@@ -1160,38 +1206,35 @@
       "hints": [
         {
           "rung": "nudge",
-          "text": "What is the largest `i` the loop reaches, and how long is HEDGE?"
+          "text": "What is the largest `j` the inner loop reaches, and how long is EDGY?"
         },
         {
           "rung": "point",
-          "text": "Row $i$ of the table is for the letter `a[i - 1]`.",
+          "text": "Cell $(i, j)$ of the table is for the letters `a[i - 1]` and `b[j - 1]`.",
           "highlight": [
-            "r6c2"
+            "r2c5"
           ]
         },
         {
           "rung": "step",
-          "text": "At `i = 5`, `a[5]` is read. HEDGE has indices 0 to 4."
+          "text": "At `i = 1`, `j = 4`, `b[4]` is read. EDGY has indices 0 to 3."
         }
       ],
       "feedback": {
-        "correct": "At `i = 5` it reads `a[5]`, one past the end.",
+        "correct": "In the first row, at `j = 4`, it reads `b[4]`, one past the end of EDGY.",
         "generic": "Not quite right. Trace the largest `i` and `j`.",
         "byKey": {
-          "three": "You expected the right answer. With the padded table, `a[i]` is one letter ahead, and at `i = 5` it runs off the end.",
+          "three": "You expected the right answer. With the padded table, `b[j]` is one letter ahead, and at `j = 4` it runs off the end.",
           "two": "You expected a wrong number. The loop raises an error before returning anything."
         }
       },
       "explain": {
-        "text": "Row 0 of the table is the empty prefix, so row $i$ holds the letter `a[i - 1]`. Writing `a[i]` compares the wrong letters for $i < 5$ and crashes at $i = 5$. With other loop bounds the same slip gives a silently wrong count, which is worse.",
+        "text": "Row 0 and column 0 are the empty prefixes, so cell $(i, j)$ compares `a[i - 1]` with `b[j - 1]`. Writing `a[i]` and `b[j]` compares the wrong letters, then crashes in the first row at $j = 4$, on `b[4]`. With other loop bounds the same slip gives a silently wrong count, which is worse.",
         "canvas": {
           "highlight": [
-            "r6c2",
-            "r6c3",
-            "r6c4",
-            "r6c5"
+            "r2c5"
           ],
-          "caption": "Row 5 holds a[4], the last E"
+          "caption": "Cell (1, 4) needs b[3], the Y; the code reads b[4]"
         }
       }
     },
@@ -1382,7 +1425,69 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests. They cover empty strings on either side, identical strings, ticker spellings from two vendors, and two 150-letter strings."
+        "how": "Check runs 10 hidden tests. They cover empty strings on either side, identical strings, ticker spellings from two vendors, and two 150-letter strings.",
+        "mutants": [
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
+            "test": 1,
+            "symptom": "first column left at 0: 1"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n] if m else n\n",
+            "test": 1,
+            "symptom": "first column left at 0, empty a handled apart: 1"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
+            "test": 1,
+            "symptom": "neither base row nor column set: 1"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1] + 1\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
+            "test": 1,
+            "symptom": "adds 1 on a match: 5"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
+            "test": 1,
+            "symptom": "always 1 + min of three: 5"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            same = a[i - 1] == b[j - 1]\n            d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + 1) if not same else min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1]) + 1\n    return d[m][n]\n",
+            "test": 1,
+            "symptom": "match branch takes min of three + 1: 5"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = min(d[i - 1][j], d[i][j - 1]) + 1\n    return d[m][n]\n",
+            "test": 1,
+            "symptom": "insert and delete only: 3"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                t[i][j] = t[i - 1][j - 1] + 1\n            else:\n                t[i][j] = max(t[i - 1][j], t[i][j - 1])\n    return m + n - 2 * t[m][n]\n",
+            "test": 1,
+            "symptom": "m + n - 2 LCS, insert and delete only: 3"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            delete = d[i - 1][j] + 1\n            insert = d[i][j - 1] + 1\n            keep = d[i - 1][j - 1] if a[i - 1] == b[j - 1] else delete\n            d[i][j] = min(delete, insert, keep)\n    return d[m][n]\n",
+            "test": 1,
+            "symptom": "mismatch diagonal costs a delete, no substitution: 3"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
+            "test": 3,
+            "symptom": "first row left at 0: 0"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(1, n + 1):\n        d[0][j] = d[0][j - 1]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
+            "test": 3,
+            "symptom": "first row copies its left neighbour without + 1: 0"
+          },
+          {
+            "source": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        d[i][0] = i\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
+            "test": 3,
+            "symptom": "sets d[i][0] in the main loop, never d[0][j]: 0"
+          }
+        ]
       },
       "hints": [
         {
@@ -1406,9 +1511,8 @@
         "correct": "Same table, a different base and a min instead of a max.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-3": "Test 3 turns an empty string into abc: three inserts. Set the first row to `d[0][j] = j`.",
-          "test-4": "Test 4 turns abc into an empty string: three deletes. Set the first column to `d[i][0] = i`.",
-          "test-6": "Identical strings need 0 edits. On a match, copy the diagonal without adding 1."
+          "test-1": "Test 1 expects 2. If you got 1, set the first column to `d[i][0] = i`; if you got 5, copy the diagonal on a match without adding 1. If you got 3, keep the diagonal in the min: a substitution is one edit.",
+          "test-3": "Test 3 turns an empty string into abc: three inserts. Set the first row to `d[0][j] = j`."
         }
       },
       "explain": {

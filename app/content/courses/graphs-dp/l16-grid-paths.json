@@ -995,7 +995,57 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests, including a blocked start, a blocked goal and a 1 by 1 grid. Others have one row, one column, a block in the first row and an open 17 by 17 grid."
+        "how": "Check runs 10 hidden tests, including a blocked start, a blocked goal and a 1 by 1 grid. Others have one row, one column, a block in the first row and an open 17 by 17 grid.",
+        "mutants": [
+          {
+            "source": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n    ways = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == 1:\n                continue\n            if i == 0 or j == 0:\n                ways[i][j] = 1\n            else:\n                ways[i][j] = ways[i - 1][j] + ways[i][j - 1]\n    return ways[rows - 1][cols - 1]\n",
+            "test": 2,
+            "symptom": "first row and column set to 1 past a block: 12"
+          },
+          {
+            "source": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n    ways = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        ways[i][0] = 1\n    for j in range(cols):\n        ways[0][j] = 1\n    for i in range(1, rows):\n        for j in range(1, cols):\n            if grid[i][j] == 0:\n                ways[i][j] = ways[i - 1][j] + ways[i][j - 1]\n    return ways[rows - 1][cols - 1] if grid[rows - 1][cols - 1] == 0 and grid[0][0] == 0 else 0\n",
+            "test": 2,
+            "symptom": "edges prefilled with 1s before blocks are read: 15"
+          },
+          {
+            "source": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n    ways = [[1] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == 1:\n                ways[i][j] = 0\n            elif i > 0 and j > 0:\n                ways[i][j] = ways[i - 1][j] + ways[i][j - 1]\n    return ways[rows - 1][cols - 1]\n",
+            "test": 2,
+            "symptom": "table of 1s with only the blocked cells zeroed: 12"
+          },
+          {
+            "source": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n    ways = [[0] * cols for _ in range(rows)]\n    ways[0][0] = 1\n    for i in range(rows):\n        for j in range(cols):\n            if (i, j) == (0, 0) or grid[i][j] == 1:\n                continue\n            up = ways[i - 1][j] if i > 0 else 0\n            left = ways[i][j - 1] if j > 0 else 0\n            ways[i][j] = up + left\n    return ways[rows - 1][cols - 1]\n",
+            "test": 3,
+            "symptom": "start set to 1 before checking for a block: 2"
+          },
+          {
+            "source": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n    ways = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                ways[0][0] = 1\n            elif grid[i][j] == 0:\n                up = ways[i - 1][j] if i > 0 else 0\n                left = ways[i][j - 1] if j > 0 else 0\n                ways[i][j] = up + left\n    return ways[rows - 1][cols - 1]\n",
+            "test": 3,
+            "symptom": "start branch before the block test: 2"
+          },
+          {
+            "source": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n    if grid[rows - 1][cols - 1] == 1:\n        return 0\n    ways = [[0] * cols for _ in range(rows)]\n    ways[0][0] = 1\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                continue\n            if grid[i][j] == 0:\n                ways[i][j] = (ways[i - 1][j] if i else 0) + (ways[i][j - 1] if j else 0)\n    return ways[-1][-1]\n",
+            "test": 3,
+            "symptom": "checks a blocked goal but not a blocked start: 2"
+          },
+          {
+            "source": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n\n    def go(i, j):\n        if i >= rows or j >= cols or grid[i][j] == 1:\n            return 0\n        if i == rows - 1 and j == cols - 1:\n            return 1\n        return go(i + 1, j) + go(i, j + 1)\n    return go(0, 0)\n",
+            "test": 10,
+            "symptom": "recursion on every route from the start: times out on 17 by 17",
+            "timeout": true
+          },
+          {
+            "source": "def count_paths(grid):\n    def go(i, j):\n        if i < 0 or j < 0 or grid[i][j] == 1:\n            return 0\n        if i == 0 and j == 0:\n            return 1\n        return go(i - 1, j) + go(i, j - 1)\n    return go(len(grid) - 1, len(grid[0]) - 1)\n",
+            "test": 10,
+            "symptom": "recursion on every route back from the goal: times out on 17 by 17",
+            "timeout": true
+          },
+          {
+            "source": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n    count = 0\n    stack = [(0, 0)]\n    while stack:\n        i, j = stack.pop()\n        if i >= rows or j >= cols or grid[i][j] == 1:\n            continue\n        if (i, j) == (rows - 1, cols - 1):\n            count += 1\n            continue\n        stack.append((i + 1, j))\n        stack.append((i, j + 1))\n    return count\n",
+            "test": 10,
+            "symptom": "stack search counting every route: times out on 17 by 17",
+            "timeout": true
+          }
+        ]
       },
       "hints": [
         {
@@ -1148,7 +1198,39 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests. They include a 1 by 1 grid, a single row, a single column and a 30 by 40 grid."
+        "how": "Check runs 8 hidden tests. They include a 1 by 1 grid, a single row, a single column and a 30 by 40 grid.",
+        "mutants": [
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            up = best[i - 1][j] if i > 0 else 0\n            left = best[i][j - 1] if j > 0 else 0\n            best[i][j] = min(up, left) + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
+            "test": 1,
+            "symptom": "a missing neighbour counts as 0 in the min: 6"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                best[i][j] = costs[0][0]\n            else:\n                best[i][j] = min(best[i - 1][j], best[i][j - 1]) + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
+            "test": 1,
+            "symptom": "index -1 wraps to an unfilled 0 cell: 6"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * (cols + 1) for _ in range(rows + 1)]\n    for i in range(1, rows + 1):\n        for j in range(1, cols + 1):\n            best[i][j] = min(best[i - 1][j], best[i][j - 1]) + costs[i - 1][j - 1]\n    return best[rows][cols]\n",
+            "test": 1,
+            "symptom": "padded with 0s, not infinity: 6"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                best[i][j] = 0\n            elif i == 0:\n                best[i][j] = best[i][j - 1] + costs[i][j]\n            elif j == 0:\n                best[i][j] = best[i - 1][j] + costs[i][j]\n            else:\n                best[i][j] = min(best[i - 1][j], best[i][j - 1]) + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
+            "test": 1,
+            "symptom": "start cell set to 0: 9"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    INF = float(\"inf\")\n    best = [[INF] * cols for _ in range(rows)]\n    best[0][0] = 0\n    for i in range(rows):\n        for j in range(cols):\n            if i > 0:\n                best[i][j] = min(best[i][j], best[i - 1][j] + costs[i][j])\n            if j > 0:\n                best[i][j] = min(best[i][j], best[i][j - 1] + costs[i][j])\n    return best[rows - 1][cols - 1]\n",
+            "test": 1,
+            "symptom": "best[0][0] = 0 with fees added on entry: 9"
+          },
+          {
+            "source": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j > 0:\n                best[i][j] = best[i][j - 1] + costs[i][j]\n            elif j == 0 and i > 0:\n                best[i][j] = best[i - 1][j] + costs[i][j]\n            elif i > 0 and j > 0:\n                best[i][j] = min(best[i - 1][j], best[i][j - 1]) + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
+            "test": 1,
+            "symptom": "start cell never filled: 9"
+          }
+        ]
       },
       "hints": [
         {
@@ -1176,8 +1258,8 @@
         "correct": "The same table with min in place of the sum.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
+          "test-1": "Test 1 expects 12. If you got 6, a missing neighbour was counted as 0 inside the min: on the edges use the one neighbour there is. If you got 9, count the start cell's fee too.",
           "test-2": "Test 2 is a single cell: the route starts and ends there, so it costs that cell's fee.",
-          "test-3": "Test 3 is one row. Each cell has only a left neighbour; do not take a min with a missing cell.",
           "test-7": "Test 7 rewards going down the left edge first, then along the bottom: 1 + 1 + 1 + 1 + 1."
         }
       },
@@ -1443,7 +1525,7 @@
         "generic": "Not quite right. Multiply the number of paths by one path's probability.",
         "byKey": {
           "one-path": "0.0749 is one path's probability. Four different paths end at this node.",
-          "no-down": "You left out the down day: each path also has one down-move, with probability 0.45."
+          "no-down": "0.1664 is $0.55^3$, the three up-moves alone. Each path also has one down-move, 0.45, and 4 paths reach the node."
         }
       },
       "explain": {

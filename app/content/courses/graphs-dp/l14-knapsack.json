@@ -1133,7 +1133,57 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests. They try the bag above, capacity 0, an oversized item, a bag that holds everything and no items. Two are large: 60 items with capacity 200, and 120 items with capacity 1,000."
+        "how": "Check runs 10 hidden tests. They try the bag above, capacity 0, an oversized item, a bag that holds everything and no items. Two are large: 60 items with capacity 200, and 120 items with capacity 1,000.",
+        "mutants": [
+          {
+            "source": "def knapsack(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = max(best[i - 1][w], best[i - 1][w - wt] + val)\n    return best[n][cap]\n",
+            "test": 1,
+            "symptom": "no fit check: best[i - 1][w - wt] wraps round, giving 170"
+          },
+          {
+            "source": "def knapsack(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(1, cap + 1):\n            take = best[i - 1][w - wt] + val\n            best[i][w] = max(best[i - 1][w], take)\n    return best[n][cap]\n",
+            "test": 1,
+            "symptom": "no fit check, loop from w = 1: 170"
+          },
+          {
+            "source": "def knapsack(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            take = best[i - 1][w - wt] + val\n            skip = best[i - 1][w]\n            best[i][w] = take if take > skip else skip\n    return best[n][cap]\n",
+            "test": 1,
+            "symptom": "no fit check, take computed before the compare: 170"
+          },
+          {
+            "source": "def knapsack(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i][w - wt] + val)\n    return best[n][cap]\n",
+            "test": 4,
+            "symptom": "reads the same row when taking (unbounded): 50"
+          },
+          {
+            "source": "def knapsack(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            if wt <= w:\n                best[i][w] = max(best[i - 1][w], best[i][w - wt] + val)\n            else:\n                best[i][w] = best[i - 1][w]\n    return best[n][cap]\n",
+            "test": 4,
+            "symptom": "reads the same row, skip branch first: 50"
+          },
+          {
+            "source": "def knapsack(weights, values, cap):\n    best = [0] * (cap + 1)\n    for wt, val in zip(weights, values):\n        for w in range(wt, cap + 1):\n            best[w] = max(best[w], best[w - wt] + val)\n    return best[cap]\n",
+            "test": 4,
+            "symptom": "one row, w looped upwards (unbounded): 50"
+          },
+          {
+            "source": "from itertools import combinations\n\n\ndef knapsack(weights, values, cap):\n    n = len(weights)\n    top = 0\n    for k in range(n + 1):\n        for pick in combinations(range(n), k):\n            if sum(weights[i] for i in pick) <= cap:\n                top = max(top, sum(values[i] for i in pick))\n    return top\n",
+            "test": 9,
+            "symptom": "tries every subset with combinations: times out on 60 items",
+            "timeout": true
+          },
+          {
+            "source": "def knapsack(weights, values, cap):\n    n = len(weights)\n    top = 0\n    for mask in range(1 << n):\n        wt = sum(weights[i] for i in range(n) if mask >> i & 1)\n        if wt <= cap:\n            top = max(top, sum(values[i] for i in range(n) if mask >> i & 1))\n    return top\n",
+            "test": 9,
+            "symptom": "tries every bit mask: times out on 60 items",
+            "timeout": true
+          },
+          {
+            "source": "def knapsack(weights, values, cap):\n    def go(i, room):\n        if i == len(weights):\n            return 0\n        skip = go(i + 1, room)\n        if weights[i] <= room:\n            return max(skip, values[i] + go(i + 1, room - weights[i]))\n        return skip\n    return go(0, cap)\n",
+            "test": 9,
+            "symptom": "plain take-or-skip recursion with no memo: times out on 60 items",
+            "timeout": true
+          }
+        ]
       },
       "hints": [
         {
@@ -1156,9 +1206,9 @@
         "correct": "A row per item, a cell per capacity, and each cell reads two cells above it.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-3": "Test 3 has one 8 kg item and a 7 kg bag. Take an item only when `wt <= w`, or the index `w - wt` goes negative.",
-          "test-5": "Test 5 expects 70: each item may be used once. Read the row above, `best[i - 1]`, when you take an item.",
-          "test-10": "Test 10 has 120 items. If it timed out, fill the table rather than trying every subset."
+          "test-1": "Test 1 expects 90. If you got 170, take an item only when `wt <= w`: a negative index `w - wt` wraps round in Python.",
+          "test-4": "Test 4 expects 18: each item may be used once. Read the row above, `best[i - 1]`, when you take an item. With one row, loop `w` downwards.",
+          "test-9": "Test 9 has 60 items. If it timed out, fill the table rather than trying every subset or recursing on every choice."
         }
       },
       "explain": {
@@ -1497,7 +1547,54 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests, with ties broken as stated: skip when skipping gives the same value. The last two check a 60-item case by its total value and weight."
+        "how": "Check runs 10 hidden tests, with ties broken as stated: skip when skipping gives the same value. The last two check a 60-item case by its total value and weight.",
+        "mutants": [
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return chosen\n",
+            "test": 1,
+            "symptom": "walk back without sorting: [2, 1]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w]:\n            chosen.append(i)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
+            "test": 1,
+            "symptom": "records i, not i - 1: [2, 3]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n    return sorted(chosen)\n",
+            "test": 1,
+            "symptom": "walk back without reducing w: [0, 1, 2]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    keep = [i for i in range(len(weights)) if weights[i] <= cap]\n    weights = [weights[i] for i in keep]\n    values = [values[i] for i in keep]\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
+            "test": 4,
+            "symptom": "drops items heavier than the bag, then returns indices into the shortened list: [0]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    pairs = [(wt, val) for wt, val in zip(weights, values) if wt <= cap]\n    n = len(pairs)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = pairs[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= pairs[i - 1][0]\n    return sorted(chosen)\n",
+            "test": 4,
+            "symptom": "filters (weight, value) pairs first: [0]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    weights, values = list(weights), list(values)\n    for k in range(len(weights) - 1, -1, -1):\n        if weights[k] > cap:\n            weights.pop(k)\n            values.pop(k)\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
+            "test": 4,
+            "symptom": "pops heavy items first: [0]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        wt, val = weights[i - 1], values[i - 1]\n        if wt <= w and best[i][w] == best[i - 1][w - wt] + val:\n            chosen.append(i - 1)\n            w -= wt\n    return sorted(chosen)\n",
+            "test": 5,
+            "symptom": "takes when best[i][w] equals the take value, so takes on a tie: [1]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        wt, val = weights[i - 1], values[i - 1]\n        if wt <= w and best[i - 1][w - wt] + val >= best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= wt\n    return sorted(chosen)\n",
+            "test": 5,
+            "symptom": "takes when take >= skip: [1]"
+          },
+          {
+            "source": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w and best[i - 1][w - wt] + val >= best[i][w]:\n                best[i][w] = best[i - 1][w - wt] + val\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w] or (weights[i - 1] <= w and best[i][w] == best[i - 1][w - weights[i - 1]] + values[i - 1]):\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
+            "test": 5,
+            "symptom": "table and walk both prefer taking on a tie: [1]"
+          }
+        ]
       },
       "hints": [
         {
@@ -1526,7 +1623,7 @@
         "byKey": {
           "test-1": "Test 1 is the bag from this lesson: B and C, indices 1 and 2.",
           "test-5": "Test 5 is a tie: either item gives £5. Walking back, item 1 ties with the row above, so skip it and take item 0.",
-          "test-4": "Test 4 has an item heavier than the bag. It can never be chosen, since its row copies the one above at every capacity below 8."
+          "test-4": "Test 4 has an item heavier than the bag. Its row copies the one above, so the answer is `[1]`. If you dropped that item first, return indices into the original list."
         }
       },
       "explain": {
