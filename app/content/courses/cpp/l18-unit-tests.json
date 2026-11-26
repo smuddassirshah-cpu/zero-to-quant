@@ -87,7 +87,7 @@
     }
    },
    "explain": {
-    "text": "`TEST_CASE(\"...\")` is the test function, named by a sentence. `REQUIRE` is `assert`, and `Approx(10.4506).margin(1e-4)` is `pytest.approx(10.4506, abs=1e-4)`. The shape is the same: arrange the inputs, act, assert.",
+    "text": "`TEST_CASE(\"...\")` is the test function, named by a sentence. `REQUIRE` is `assert`, and `Approx(10.4506).margin(1e-4)` is close to `pytest.approx(10.4506, abs=1e-4)`: `Approx` also accepts a relative 1.2e-5 by default. The shape is the same: arrange the inputs, act, assert.",
     "canvas": {
      "highlight": [
       "right:l8",
@@ -326,7 +326,7 @@
     "correct": "Both tests pass on the real pricer and fail on every planted bug.",
     "generic": "Not quite right. Read the first failing test.",
     "byKey": {
-     "test-1": "Your tests should pass on the real `bs_call`. If one failed, check its tolerance: 10.4506 is rounded, so `==` or a tolerance below `1e-4` fails.",
+     "test-1": "Your tests should pass on the real `bs_call`. If one failed, check its tolerance: the true value is 10.450584, 0.000016 from the pin, so `==` or `1e-5` fails. Use `1e-4`, the precision of the rounded 10.4506.",
      "test-2": "A broken `bs_call` slipped through. If your tests are still empty, they pass: a test with no check always passes. Pin the 10.4506 value.",
      "test-3": "This bug pays $S - K$ at expiry without the floor at 0. Check an out-of-the-money expiry, S = 90, which must pay 0.",
      "test-4": "This bug forgets to discount the strike. The at-the-money value catches it."
@@ -413,7 +413,7 @@
     "generic": "Not quite right. Read the first failing test.",
     "byKey": {
      "test-1": "Your new test should fail against the shipped code. If it passed, it pins the wrong value or checks nothing.",
-     "test-2": "Against a correct `simple_returns` both tests must pass. If yours failed, your hand value is wrong: 110 / 100 − 1 = 0.1."
+     "test-2": "Against a correct `simple_returns` both tests must pass. If yours failed, the hand value is wrong (110 / 100 − 1 = 0.1) or you compared with `==`: use `CHECK_CLOSE` with a tolerance."
     }
    },
    "explain": {
@@ -811,7 +811,7 @@
   "formula": {
    "name": "A tolerance check",
    "tex": "|\\text{actual} - \\text{expected}| \\le \\text{tol}",
-   "note": "Catch2: `REQUIRE(x == Approx(e).margin(tol))`."
+   "note": "Catch2: `REQUIRE_THAT(x, WithinAbs(e, tol))`. `Approx(e).margin(tol)` also passes within a relative 1.2e-5 of `e`."
   },
   "trap": "`CHECK(r[0] == 0.1)` fails on correct code: 110.0 / 100.0 − 1 is 0.10000000000000009."
  },

@@ -206,13 +206,7 @@
           },
           {
             "setup": "Vec<int> a; for (int i = 0; i < 100; ++i) a.push_back(i); reset_alloc_count(); Vec<int> b = std::move(a);",
-            "call": "alloc_count()",
-            "expect": 0,
-            "compare": "equal"
-          },
-          {
-            "setup": "Vec<int> a; for (int i = 0; i < 100; ++i) a.push_back(i); Vec<int> b = std::move(a);",
-            "call": "a.size() * 1000 + b.size()",
+            "call": "alloc_count() * 100000 + a.size() * 1000 + b.size()",
             "expect": 100,
             "compare": "equal"
           },
@@ -244,12 +238,18 @@
             "call": "std::is_nothrow_move_constructible_v<Vec<int>>",
             "expect": true,
             "compare": "equal"
+          },
+          {
+            "setup": "{ Vec<Wobbly> v; for (int i = 0; i < 8; ++i) v.push_back(Wobbly(i)); }",
+            "call": "Wobbly::copies * 100 + Wobbly::moves",
+            "expect": 708,
+            "compare": "equal"
           }
         ],
-        "prelude": "#include <cstdint>\n#include <utility>\n#include <type_traits>\n\n// Hidden: counts copies, moves and live objects. It has no assignment operators and no default constructor.\n// It also keeps a table of the addresses of its live objects (no heap use). A copy or move whose source\n// is not in the table was made from a destroyed object: it is counted in `bad` and never reads the source.\nstruct Counted {\n    static inline int copies = 0, moves = 0, live = 0, bad = 0;\n    static inline std::uintptr_t table[64] = {};\n    static bool is_live(const Counted* p) {\n        for (std::uintptr_t a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) return true;\n        return false;\n    }\n    static void add(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == 0) { a = reinterpret_cast<std::uintptr_t>(p); return; }\n    }\n    static void drop(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) { a = 0; return; }\n    }\n    int v;\n    Counted(int x) : v(x) { ++live; add(this); }\n    Counted(const Counted& o) : v(-2) { ++copies; ++live; add(this); if (is_live(&o)) v = o.v; else ++bad; }\n    Counted(Counted&& o) noexcept : v(-2) { ++moves; ++live; add(this); if (is_live(&o)) { v = o.v; o.v = -1; } else ++bad; }\n    Counted& operator=(const Counted&) = delete;\n    Counted& operator=(Counted&&) = delete;\n    ~Counted() { --live; drop(this); }\n};\n",
+        "prelude": "#include <cstdint>\n#include <utility>\n#include <type_traits>\n\n// Hidden: counts copies, moves and live objects. It has no assignment operators and no default constructor.\n// It also keeps a table of the addresses of its live objects (no heap use). A copy or move whose source\n// is not in the table was made from a destroyed object: it is counted in `bad` and never reads the source.\nstruct Counted {\n    static inline int copies = 0, moves = 0, live = 0, bad = 0;\n    static inline std::uintptr_t table[64] = {};\n    static bool is_live(const Counted* p) {\n        for (std::uintptr_t a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) return true;\n        return false;\n    }\n    static void add(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == 0) { a = reinterpret_cast<std::uintptr_t>(p); return; }\n    }\n    static void drop(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) { a = 0; return; }\n    }\n    int v;\n    Counted(int x) : v(x) { ++live; add(this); }\n    Counted(const Counted& o) : v(-2) { ++copies; ++live; add(this); if (is_live(&o)) v = o.v; else ++bad; }\n    Counted(Counted&& o) noexcept : v(-2) { ++moves; ++live; add(this); if (is_live(&o)) { v = o.v; o.v = -1; } else ++bad; }\n    Counted& operator=(const Counted&) = delete;\n    Counted& operator=(Counted&&) = delete;\n    ~Counted() { --live; drop(this); }\n};\n\n// Hidden: counts copies and moves. Its move constructor is not noexcept, so it may throw.\nstruct Wobbly {\n    static inline int copies = 0, moves = 0;\n    int v;\n    Wobbly(int x) : v(x) {}\n    Wobbly(const Wobbly& o) : v(o.v) { ++copies; }\n    Wobbly(Wobbly&& o) : v(o.v) { ++moves; o.v = -1; }\n    Wobbly& operator=(const Wobbly&) = delete;\n    Wobbly& operator=(Wobbly&&) = delete;\n};\n",
         "allocCheck": true,
         "leakCheck": true,
-        "how": "Submit runs 15 hidden tests. `alloc_count()` counts calls to `operator new` and `new[]`: 1,000 pushes must allocate 11 times. A hidden `Counted` type counts copies, moves and live objects. It also counts any copy or move made from a destroyed object (`Counted::bad`)."
+        "how": "Submit runs 15 hidden tests. `alloc_count()` counts calls to `operator new` and `new[]`: 1,000 pushes must allocate 11 times. A hidden `Counted` type counts copies, moves and live objects. It also counts any copy or move made from a destroyed object (`Counted::bad`). A hidden `Wobbly` type has a move that may throw, so growth must copy it."
       },
       "feedback": {
         "correct": "Every element is built once, moved or copied as the rules say, and destroyed once.",

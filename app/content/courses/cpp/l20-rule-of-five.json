@@ -459,6 +459,7 @@
             "    /* same members */",
             "    Pos3(Pos3&& o)",
             "        : sym(std::move(o.sym)), lots(std::move(o.lots)) {}",
+            "    Pos3(const Pos3&) = default;",
             "};"
           ],
           "title": "classes",
@@ -530,7 +531,7 @@
         }
       },
       "explain": {
-        "text": "`= default` is the safe way to write a move. It is `noexcept` when its members are, so `std::vector<Pos>` still moves on growth. The hand-written `Pos3` forgot the keyword, so the vector would copy."
+        "text": "`= default` is the safe way to write a move. It is `noexcept` when its members are, so `std::vector<Pos>` still moves on growth. The hand-written `Pos3` forgot the keyword, so the vector copies it on growth; a move-only type would be moved either way."
       }
     },
     {
@@ -627,7 +628,7 @@
         }
       ],
       "feedback": {
-        "correct": "Allocate and copy first, free after, then point. The guard keeps `a = a` safe.",
+        "correct": "Allocate and copy first, free after, then point. That order keeps `a = a` safe, and the guard skips the wasted copy.",
         "generic": "Not quite right. The old block must stay until the new one is ready.",
         "byKey": {
           "d1": "You freed the old block first. If `new` throws, `data_` points at freed memory.",
@@ -635,7 +636,7 @@
         }
       },
       "explain": {
-        "text": "Allocate and copy before freeing, so the old data survives a failed `new`; the guard handles `a = a`. Copying the pointer is the shallow copy that makes a double free."
+        "text": "Allocate and copy before freeing, so the old data survives a failed `new` and `a = a` still reads live data; the guard only skips that wasted copy. Copying the pointer is the shallow copy that makes a double free."
       }
     },
     {
@@ -1076,7 +1077,7 @@
     "ideas": [
       "Declare a destructor or a copy member and the moves are not written: `std::move` falls back to a copy, silently.",
       "Declare a move constructor and the copy members are deleted and no move assignment is written. A deleted function is chosen, not absent.",
-      "Own through members and declare nothing, or declare all five. A defaulted move is `noexcept` when its members are; a hand-written one is not."
+      "Own through members and declare nothing, or declare all five. A defaulted move is `noexcept` when its members are; a hand-written one only if you write `noexcept`."
     ],
     "formula": {
       "name": "Declare one, decide five",
@@ -1177,7 +1178,7 @@
       "tags": [
         "self-assignment"
       ],
-      "prose": "The copy assignment of `Samples` starts with `if (this != &other)`.",
+      "prose": "A copy assignment that frees its old block first, then allocates and copies, starts with `if (this != &other)`.",
       "question": "Why is the guard there?",
       "widget": {
         "kind": "choice",
@@ -1191,7 +1192,7 @@
           {
             "id": "time",
             "text": "To save time when the objects are equal",
-            "why": "It is for correctness: `a = a` would free the block it is about to copy from."
+            "why": "In this order it is for correctness: `a = a` would free the block it is about to copy from."
           },
           {
             "id": "compile",
@@ -1207,11 +1208,11 @@
         "shuffle": true
       },
       "feedback": {
-        "correct": "The guard protects `a = a`.",
+        "correct": "In this order the guard protects `a = a`.",
         "generic": "Not quite right. Think about what happens when both sides are one object."
       },
       "explain": {
-        "text": "In `a = a` the old block would be freed before it is read. The guard, or allocate-then-free, prevents that."
+        "text": "In `a = a` the old block would be freed before it is read, so that order needs the guard. `Samples` allocates and copies before it frees, so `a = a` is safe even without it. There the guard only saves a wasted copy."
       }
     },
     {

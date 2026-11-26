@@ -448,9 +448,28 @@
       ],
       "expect": 2.1035,
       "compare": "isclose"
+     },
+     {
+      "call": "vwap",
+      "args": [
+       [
+        10.25,
+        10.75
+       ],
+       [
+        3,
+        1
+       ]
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": 10.375,
+      "compare": "isclose"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 5 hidden tests that call vwap. Each answer is accepted within a relative 1e-9 (a zero must be exactly 0)."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 6 hidden tests that call vwap. Each answer is accepted within a relative 1e-9 (a zero must be exactly 0)."
    },
    "hints": [
     {
@@ -475,7 +494,8 @@
     "byKey": {
      "test-3": "No fills means no shares. Return 0 before dividing, or you get 0 / 0, which is NaN.",
      "test-4": "Two fills of 0 shares: the volume is 0, so return 0.",
-     "test-1": "Expected 100.75. If you got 101, you averaged the prices without weighting them by shares."
+     "test-1": "Expected 100.75. If you got 101, you averaged the prices without weighting them by shares.",
+     "test-6": "Expected 10.375. If you got 10, a total started at the `int` 0 and dropped its fractions: start at `0.0`."
     }
    },
    "explain": {
@@ -580,9 +600,15 @@
       "call": "b[3].qty",
       "expect": 300,
       "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Order> in(40, Order{99.9, 1, 5}); auto b = sort_book(in);",
+      "call": "b.size()",
+      "expect": 40,
+      "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 5 hidden tests that call sort_book and read prices, sizes or the order of the times. Each must match exactly."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 6 hidden tests that call sort_book and read prices, sizes or the order of the times. Each must match exactly."
    },
    "hints": [
     {
@@ -608,7 +634,8 @@
     "generic": "Not quite right. Read the first failing test.",
     "byKey": {
      "test-2": "Expected times 9, 2, 4, 7. If 7 came before 2, the tie on price was not broken by time.",
-     "test-4": "Six orders at one price. If the program stopped with a strict-weak-ordering message, your rule used `<=` or `>=`: use strict `<` and `>`.",
+     "test-4": "Six orders at one price must come out by time, 1 to 6. If they did not, the tie on price was not broken by time.",
+     "test-6": "Forty orders at one price and time. If the program stopped with a strict-weak-ordering message, your rule used `<=` or `>=`: use strict `<` and `>`.",
      "test-1": "The best bid is 100.6. If you got 100.4, the prices sort ascending: use `>` for price."
     }
    },
@@ -788,7 +815,7 @@
     "correct": "Differences, then a count that skips the first slot.",
     "generic": "Not quite right. Read the first failing test.",
     "byKey": {
-     "test-4": "Three falling closes have no up days. If you got 1, you counted `d[0]`, which is the first close itself: start at `d.begin() + 1`.",
+     "test-4": "Three falling closes have no up days: every difference is below 0.",
      "test-2": "An empty vector has no days. `d.begin() + 1` on an empty range is past the end, so return 0 first.",
      "test-1": "Expected 2. If you got 3, the first close, 100, was counted as a rise."
     }
@@ -822,7 +849,7 @@
      "caption": "`pence` is empty: `pence.begin() == pence.end()`"
     }
    },
-   "question": "What does `pence` hold afterwards?",
+   "question": "What does `pence` hold afterwards, in this app's run?",
    "widget": {
     "kind": "choice",
     "layout": "stack",
@@ -870,7 +897,7 @@
     }
    ],
    "feedback": {
-    "correct": "The writes went nowhere legal; `pence` is still empty.",
+    "correct": "The writes went nowhere legal; `pence` is still empty. Here they pass quietly; a desktop build usually crashes on the first.",
     "generic": "Not quite right. Does an algorithm ever change a vector's size?"
    },
    "explain": {
@@ -1214,7 +1241,7 @@
      {
       "id": "fine",
       "text": "Nothing: it sorts ascending",
-      "why": "It may look sorted, but for equal prices it answers true both ways. `sort` can then read past the range; this app's library stops it."
+      "why": "It may look sorted, and on these three prices it is. For equal prices the rule answers true both ways, so on longer ranges `sort` can read past the end; this app's library stops it there."
      },
      {
       "id": "desc",
@@ -1274,7 +1301,7 @@
     "generic": "Not quite right. How long does `limit` live?"
    },
    "explain": {
-    "text": "`[&limit]` stores a reference to a local that ends at `return`. Any later call reads freed stack memory. A lambda that outlives its scope must capture by value, `[limit]` or `[=]`."
+    "text": "`[&limit]` stores a reference to a local that ends at `return`. Any later call is undefined, and often reads stale stack memory. A lambda that outlives its scope must capture by value, `[limit]` or `[=]`."
    }
   },
   {

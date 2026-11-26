@@ -307,7 +307,7 @@
         "byKey": {
           "t1": "`UINT_MAX + 1u` is 0: unsigned arithmetic wraps by definition.",
           "t2": "`-7 / 2` is -3: division rounds towards zero since C++11.",
-          "t3": "`sizeof(long)` is implementation-defined: 4 here and 8 on a desktop, and the compiler documents it.",
+          "t3": "`sizeof(long)` is implementation-defined: 4 here and on 64-bit Windows, 8 on 64-bit Linux and macOS, and the compiler documents it.",
           "t4": "Plain `char` signedness is implementation-defined: the platform decides and the compiler documents it.",
           "t5": "The order of evaluation of arguments is unspecified: either may run first, and nothing is documented.",
           "t6": "Signed overflow is undefined: the standard puts no limit on what follows.",
@@ -407,7 +407,7 @@
       "type": "ladder",
       "difficulty": 3,
       "title": "A check that is defined",
-      "prose": "Return `true` when `a + b` does not fit in an `int`. The starter looks at the sum after it has overflowed. Your check must never overflow itself.",
+      "prose": "Return `true` when `a + b` does not fit in an `int`. The starter looks at the sum after it has overflowed. Your check must never overflow itself. Keep `constexpr`: the hidden tests also run your function at compile time, where an overflow is an error.",
       "tags": [
         "signed-overflow",
         "undefined-behaviour"
@@ -429,8 +429,8 @@
       "widget": {
         "kind": "code",
         "language": "cpp",
-        "starter": "#include <climits>\n\n// Return true if a + b does not fit in an int. The check itself must never overflow.\nbool add_overflows(int a, int b) {\n    return a + b > INT_MAX;    // TODO: this looks at the sum after it has already overflowed\n}\n",
-        "solution": "#include <climits>\n\n// Return true if a + b does not fit in an int. The check itself must never overflow.\nbool add_overflows(int a, int b) {\n    if (b > 0) return a > INT_MAX - b;\n    return a < INT_MIN - b;\n}\n",
+        "starter": "#include <climits>\n\n// Return true if a + b does not fit in an int. The check itself must never overflow.\n// Keep constexpr: the hidden tests also evaluate it at compile time.\nconstexpr bool add_overflows(int a, int b) {\n    return a + b > INT_MAX;    // TODO: this looks at the sum after it has already overflowed\n}\n",
+        "solution": "#include <climits>\n\n// Return true if a + b does not fit in an int. The check itself must never overflow.\n// Keep constexpr: the hidden tests also evaluate it at compile time.\nconstexpr bool add_overflows(int a, int b) {\n    if (b > 0) return a > INT_MAX - b;\n    return a < INT_MIN - b;\n}\n",
         "examples": [
           {
             "call": "add_overflows(INT_MAX, 1)",
@@ -508,10 +508,18 @@
             "call": "add_overflows(INT_MIN, INT_MIN)",
             "expect": true,
             "compare": "equal"
+          },
+          {
+            "compiles": "static_assert(add_overflows(INT_MAX, 1) && add_overflows(INT_MIN, -1), \"\");",
+            "expect": true
+          },
+          {
+            "compiles": "static_assert(!add_overflows(INT_MAX, -1) && !add_overflows(INT_MIN, 1), \"\");",
+            "expect": true
           }
         ],
         "prelude": "#include <climits>\n",
-        "how": "Submit runs 13 hidden tests. Each answer is `true` when `a + b` does not fit in an `int`. Every test uses values the correct check handles without overflowing."
+        "how": "Submit runs 15 hidden tests. Each answer is `true` when `a + b` does not fit in an `int`. Every test uses values the correct check handles without overflowing. The last two evaluate your function in a `static_assert`, where an overflow does not compile."
       },
       "hints": [
         {
@@ -532,13 +540,13 @@
       ],
       "feedback": {
         "correct": "Your check never overflows, so it stays defined on every input.",
-        "generic": "Not quite right. A test that calls `a + b` has already gone wrong.",
+        "generic": "Not quite right. A check that computes `a + b` in `int` has already gone wrong. If the last two tests fail, keep `constexpr` and check before adding.",
         "byKey": {
           "compile": "The compiler stopped. Check the return type and the `<climits>` names."
         }
       },
       "explain": {
-        "text": "Check before you do it: compare `a` with `INT_MAX - b` instead of adding. This app's compiler removes a check made after the addition. Another build might not, which is the point."
+        "text": "Check before you do it: compare `a` with `INT_MAX - b` instead of adding. After the addition, this app's compiler removes some checks and keeps others, which then pass only by luck. At compile time an overflow is an error, which is how the tests catch it."
       }
     },
     {

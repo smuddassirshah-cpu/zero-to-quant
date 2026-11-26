@@ -513,7 +513,7 @@
           {
             "id": "all-move",
             "text": "0 copies and 3 moves",
-            "why": "You assumed `vector` always moves. It moves only if the move cannot throw; otherwise it copies, so a failure leaves the old block whole."
+            "why": "You assumed `vector` always moves. For a type it can copy, it moves only if the move cannot throw; otherwise it copies, so a failure leaves the old block whole."
           },
           {
             "id": "all-copy",
@@ -549,11 +549,11 @@
         "correct": "Two moves put the temporaries in, and the growth copies the one old element.",
         "generic": "Not quite right. Separate the two pushes from the one relocation.",
         "byKey": {
-          "all-move": "You assumed `vector` always moves. It moves only if the move cannot throw; otherwise it copies."
+          "all-move": "You assumed `vector` always moves. For a type it can copy, it moves only if the move cannot throw; otherwise it copies."
         }
       },
       "explain": {
-        "text": "The library calls `std::move_if_noexcept`, which moves only when the move cannot throw (the strong exception guarantee). A move that threw half way would damage the old block, so it copies."
+        "text": "The library calls `std::move_if_noexcept`, which copies when the move may throw and a copy exists (the strong exception guarantee). A move that threw half way would damage the old block, so `Tracked` is copied."
       }
     },
     {
@@ -802,7 +802,7 @@
           {
             "id": "move",
             "text": "The move constructor",
-            "why": "`std::move` always moves. It yields a `const Order&&`, and the move constructor takes `Order&&`, not const."
+            "why": "You believed `std::move` always moves. It yields a `const Order&&`, and the move constructor takes `Order&&`, not const."
           },
           {
             "id": "error",
@@ -958,7 +958,7 @@
         "generic": "Not quite right. The source still gets destroyed at the end of its scope."
       },
       "explain": {
-        "text": "Nulling the pointer makes the source destructor a harmless `delete[] nullptr`. That is why the move assignment tests `this != &o` before freeing its own block."
+        "text": "Nulling the pointer makes the source destructor a harmless `delete[] nullptr`. The move assignment tests `this != &o` for another reason: `a = std::move(a)` would otherwise free the block and leave `a` empty."
       }
     },
     {
@@ -1042,7 +1042,7 @@
     "ideas": [
       "A copy duplicates what an object owns. A move takes it from an object that is about to go, and leaves it empty and safe to destroy.",
       "`std::move` is only a cast to an rvalue reference. The move constructor does the moving, and a `const` object cannot be moved, so it copies.",
-      "A vector moves its old elements on growth only if their move is `noexcept`. Otherwise it copies, to keep the old block whole."
+      "A vector moves its old elements on growth if their move is `noexcept`, or if they cannot be copied. Otherwise it copies, to keep the old block whole."
     ],
     "formula": {
       "name": "The move pattern",
