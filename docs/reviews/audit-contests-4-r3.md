@@ -114,3 +114,33 @@ Opus fixer, on `92870c42`. Each line was checked by submitting natural codings o
 Concepts script: only the checks that encoded the old defects changed, as its docstring says. The three `FINDING` checks now test the fixed content. Five sweep labels moved with the new lines: the two unguarded greedies now land on test 12 (`pyodide` recorded as `test-12`), `t3-increments-per-call` is now test 3's named mistake, and the two codings that never empty the set between cases are test 2's mistake, not test 3's. Twelve `fix-` codings were added.
 
 Gates: validator 0 errors (4,606 warnings, unchanged); voice scan 35 on the three lessons 0 and 0; `contests-L4-concepts-r3.py` 356 checks, 0 failing, exit 0; number scripts `--only contests` 5 of 5 passed; `grade-all.mjs --code --file` on each lesson 0 failures (mutants included); playthrough of l13, l14 and l15 green desktop and `--mobile`.
+
+## Fix-pass read
+
+Fresh reader, blind to this file until the rows below were written. Diff read: `git show 51c05b3e -- app/content/courses`. Script: `docs/reports/contests-L4-fixread-r3.py <pkgs> [scratch]`, exit 0 (8 brute-force checks independent of the model solutions, then 19 submissions through `app/tools/code-runner.mjs` under Pyodide 0.27.7). `grade-all.mjs --code --file` on l13, l14 and l15: 11 Python widgets, 0 failures (so each `mutants` entry first fails the test it names).
+
+| # | file | JSON path | claim | verdict | basis |
+|---|------|-----------|-------|---------|-------|
+| 1 | l13-virtual-contest | screens[5].widget.tests[11] | `can_ship([5, 5], 3, 4)` is False | correct | Brute force over every split of [5, 5] into at most 3 contiguous days: no day holds a 5 at capacity 4. Solution passes all 12; starter fails test 1. |
+| 2 | l13-virtual-contest | screens[5].widget.how | "Check runs 12 hidden tests" | correct | `tests` has 12 entries; the listed kinds (example, `can_ship` alone, k = 1, k = n, one order, equal weights) match tests 1 to 8. |
+| 3 | l13-virtual-contest | screens[5].widget.how | "Test 12 has two orders heavier than the van and three days." | correct | Weights 5 and 5, cap 4, k = 3. |
+| 4 | l13-virtual-contest | screens[5].feedback.byKey.test-12, sentence 1 | Two orders of 5, a van of 4, three days | correct | Reads off tests[11]. |
+| 5 | l13-virtual-contest | same, sentence 2 | "Counting days gives 3, but no day can carry an order of 5." | correct | Guard-free greedy by hand and in the script: day 1 empty, days 2 and 3 take one order each, 3 <= 3 gives True. 5 > 4, so no feasible day. |
+| 6 | l13-virtual-contest | same, sentence 3 | "Return False as soon as an order is heavier than the van." | correct | An order above the capacity makes every schedule infeasible, so the early return is exact. Codings A (else branch starts the day with w), B (add, then test overflow) and C (early exit once days pass k) all pass tests 1 to 11 and first fail test 12 with True. Contrast D (days counted from 0) first fails test 4, whose line gives the same repair. |
+| 7 | l13-virtual-contest | screens[5].widget.mutants[0] | No `w > cap` guard: day count 3, returns True, first fails test 12 | correct | grade-all `--code` 0 failures; same result as coding A to C. Test 4 does not catch it because [5] at k = 1 counts 2 days. |
+| 8 | l14-which-first | screens[10].feedback.byKey.test-4, sentence 1 | The only problem cannot finish in 5 minutes, scores 0, and the answer is `(0, ['A'])` | correct | Problem A needs 10 minutes; the prose says a late finish scores 0; brute force over orders gives (0, ['A']). Consistent with test 2, which also names unsolved problems. |
+| 9 | l14-which-first | same, sentence 2 | "Start the best total below 0, so an order worth 0 is still kept." | correct | Totals are sums of non-negative scores, so any start below 0 with a strict `>` keeps the first (alphabetically first) order. Codings A (start 0, names None) and B (start 0, names []) first fail test 4 with (0, None) and (0, []). Coding E (start -1, float total) passes all six. |
+| 10 | l14-which-first | same, sentence 3 | "Keep the problems that cannot fit in every order you try." | correct | Coding C (filter `p[2] <= minutes` before permuting) first fails test 4 with (0, []); the instruction repairs it. Contrast D (names only solved problems) first fails test 2, so it never reaches this line. Wording note, not a finding: the sentence can be parsed two ways. |
+| 11 | l14-which-first | screens[10].widget.mutants[0] | Start 0 with strict `>` returns (0, None), first fails test 4 | correct | grade-all `--code`; same as coding A. |
+| 12 | l14-which-first | screens[10].widget.mutants[1] | Dropping the problem that cannot fit returns (0, []), first fails test 4 | correct | grade-all `--code`; same as coding C. |
+| 13 | l15-debugging-under-time | screens[5].feedback.byKey.test-3, sentence 1 | Cases AAA, AAA, BBB AAA; answers 1, 1 and 2 | correct | Test input `3\n1\nAAA\n1\nAAA\n2\nBBB AAA\n`; independent per-case set count gives [1, 1, 2]. |
+| 14 | l15-debugging-under-time | same, sentence 2 | "A ticker counts again in a later case: count each case's distinct tickers, not just the new ones." | correct | The problem asks for distinct tickers per case. Coding A (one set per call, counts tickers not seen before) passes tests 1 and 2 and first fails test 3 with [1, 0, 1]. |
+| 15 | l15-debugging-under-time | same, sentence 3 | "Start every case, the first included, with an empty set." | correct | Hidden tests share one module state. Codings B (global set emptied between cases only) and C (cleared at the top of every case but the first) pass tests 1 and 2 and first fail test 3 with [2, 1, 2], from CCC left by test 2. Contrast D (one set per call, never emptied) first fails test 2. |
+| 16 | l15-debugging-under-time | screens[5].widget.mutants[0] | Counts only tickers new to the call: [1, 0, 1], first fails test 3 | correct | grade-all `--code`; same as coding A. |
+| 17 | l15-debugging-under-time | screens[5].widget.mutants[1] | First case keeps tickers from an earlier call: [2, 1, 2], first fails test 3 | correct | grade-all `--code`; same as coding C. |
+
+Counts: 17 rows; correct 17, wrong 0, imprecise 0, misleading 0, unverified 0.
+
+Fixes: none needed. Optional wording only for row 10, if the line is touched again: `Do not drop a problem that cannot fit: every order still names it.`
+
+Voice: all new sentences under 35 words, no em-dashes or exclamation marks.
