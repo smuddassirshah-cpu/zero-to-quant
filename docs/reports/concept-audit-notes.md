@@ -200,3 +200,4 @@ Issues
 - `mutants` entries are now on contests l3, l13 to l15 and ds L4 widgets, so `grade-all --code` keeps those `test-N` lines honest; no other code course has them.
 - Engine limits found (inbox): `grade-all --code` cannot run the pytest widget in contests l4 (Pyodide `fd` error, worker left dead); no node C++ runner, though YoWASP runs in node WASI; the read-counting harness in contests l12 and homework-3 refuses correct `reversed()` and `.copy()` passes; number scripts do not assert slip values against the mistake they name (seen again in markov and ds).
 - One Fable auditor signed its commit with its own attribution line. Left as it is.
+- Budget lifted by the user (26 Nov, "Continue with expanded scope"): further course reads run beyond four, up to four agents at once. Wave 2: ds L4 round 2, graphs-dp L4, cpp L4 and L5, markets L1 to L3. Shared prompts in the session scratchpad (auditor, fixer, fix-pass reader).
