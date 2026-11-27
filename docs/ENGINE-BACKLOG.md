@@ -2967,3 +2967,14 @@ Every item below is a post-completion item: it does not gate DONE. Each item's o
 
 1218. [Must] Strand `ai` (`docs/briefs/ai-strand-curriculum.md` engine item 0, review F1). status: done. `strand: "ai"` is accepted by the validator (an unknown value is still an error; a topic mixing ai and other courses is an error; an ai course may not be listed in `readiness.json`; a stage exam cannot use its skills) and by `content.js` (`strandOfCourse`, badge "AI strand" in `components.css` `.is-ai`, `learn.js` aria label). Settings "Show the AI strand" (`aiStrand`, default shown) and "AI strand in Today" (`aiToday`, default off); "Quant path only" hides it too. Left out of the stage topic count (`pathTopics`), stage and total hours, role sums (`hours.js`: `isAi`, `aiTopic`, `ai()`, `stageHours(s, skip)`), readiness (`readiness-sums.mjs`), census and `curriculum-hours.mjs` (each prints one AI line only when an ai course exists; with none the output is byte-identical to before). A topic is an AI topic when all its courses are ai (derived, no topic field). Fixture course `ai-sample` (topic 1.12) in `tools/fixtures/mini-app`; test `tools/test-strand-ai.mjs`. `docs/AUTHORING.md` section 9.
 
+### Engine pass AK canvas (AI strand A3, canvas part): `docs/reports/engine-pass-ak-canvas.md`
+Source: `docs/briefs/ai-strand-curriculum.md` "Engine work" items 1 to 3 and finding F13 (`docs/reviews/review-ai-strand.md`). Numbers start 10 above the highest existing one (1217).
+
+1227. [Should] `graph`: a second value line per node and edge width by weight. `params.valueLines` (up to two `{ label, colour }`) with `state.values` and `state.values2`; `params.edgeWidth` (`true` or `{ min, max, norm, sign }`), a negative weight dashed and red. Opt-in; `stat-learning/l17-a-small-network` renders unchanged.
+1228. [Should] `matrix`: `heat` per matrix (`true` or `{ mode, range, legend, decimals, label }`), a sequential or diverging fill with a legend and text that flips for contrast.
+1229. [Should] `grid`: `state.arrows` per-cell policy glyphs (`up`, `down`, `left`, `right`, `none`), as a rows-by-cols list or a cell-id map.
+
+Status block (engine pass AK canvas):
+- 1227: done. `graph.js`, `canvases.css`, validator, `README-B.md`, gallery entry "graph (computation graph)"; tests `test-canvas-ai.mjs`, `test-validate-canvas-ai.mjs`.
+- 1228: done. `matrix.js`, `canvases.css`, validator, `README-B.md`, gallery entry "matrix (heat, attention and signed)"; same tests (contrast of at least 3 to 1 on every cell, both themes).
+- 1229: done. `grid.js`, `canvases.css`, validator, `README.md`, gallery entry "grid (policy arrows)"; same tests.

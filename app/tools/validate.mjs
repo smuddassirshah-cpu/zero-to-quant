@@ -1506,6 +1506,21 @@ const checkCanvas = (file, where, c) => {
   const slotOk = (v) => v == null || (Number.isInteger(+v) && +v >= 1 && +v <= 6);
   if (c.kind === 'space') checkSpace(file, where, P, S);
   if (c.kind === 'grid') {
+    /* ENGINE-BACKLOG 1229: state.arrows, a rows x cols array of directions or a map from cell id to a direction or { dir, colour } */
+    if (S.arrows != null && !P.population) {
+      const DIRS = ['up', 'down', 'left', 'right', 'none', '', null], R = Math.max(1, P.rows || 6), NC = Math.max(1, P.cols || 6), at = `${where}.state.arrows`;
+      const dirOk = (v) => DIRS.includes(v) || (isObj(v) && DIRS.includes(v.dir ?? null) && slotOk(v.colour));
+      if (Array.isArray(S.arrows)) {
+        if (S.arrows.length !== R || !S.arrows.every(r => Array.isArray(r) && r.length === NC)) err(file, at, `a 2D arrows list has ${R} rows of ${NC} entries (rows by cols); use a map for a few cells`);
+        else S.arrows.forEach((r, i) => r.forEach((v, j) => { if (!dirOk(v)) err(file, `${at}[${i}][${j}]`, 'an arrow is "up", "down", "left", "right" or "none" (or { "dir", "colour": 1 to 6 })'); }));
+      } else if (isObj(S.arrows)) {
+        Object.entries(S.arrows).forEach(([id, v]) => {
+          const m = id.match(/^r(\d+)c(\d+)$/);
+          if (!m || +m[1] < 1 || +m[1] > R || +m[2] < 1 || +m[2] > NC) err(file, `${at}.${id}`, `arrow keys are cell ids r1c1 to r${R}c${NC}`);
+          else if (!dirOk(v)) err(file, `${at}.${id}`, 'an arrow is "up", "down", "left", "right" or "none" (or { "dir", "colour": 1 to 6 })');
+        });
+      } else err(file, at, 'arrows is a rows-by-cols list of directions or { "r2c3": "up" }');
+    }
     if (P.rowOffsets != null && !(Array.isArray(P.rowOffsets) && P.rowOffsets.every(v => typeof v === 'number' && v >= 0))) err(file, `${where}.params.rowOffsets`, 'rowOffsets is a list of offsets in cell widths, one per row, 0 or more');
     if (S.cells != null && !Array.isArray(S.cells) && !isObj(S.cells)) err(file, `${where}.state.cells`, 'state.cells is { "r1c2": "5" } or a 2D array of strings');
     if (isObj(S.shade)) Object.entries(S.shade).forEach(([k, v]) => { if (isObj(v) && (!Array.isArray(v.ids || v.cells) || !slotOk(v.colour))) err(file, `${where}.state.shade.${k}`, 'a coloured set is { "ids": [...], "colour": 1 to 6 }'); });
@@ -1519,7 +1534,38 @@ const checkCanvas = (file, where, c) => {
     if (P.layout != null && P.layout !== 'ring') err(file, `${where}.params.layout`, 'layout is "ring" (or leave it out and give each node x and y)');
     if (S.labels != null && !isObj(S.labels)) err(file, `${where}.state.labels`, 'labels maps node ids to new labels');
     if (S.rotate != null && typeof S.rotate !== 'number') err(file, `${where}.state.rotate`, 'rotate is a number of seats');
+    const listOf = (v) => Array.isArray(v) ? v : []; // 1227 to 1229 use it before the pass 4 definition below
+    /* ENGINE-BACKLOG 1227: valueLines (one or two { label, colour }), values2 keyed by node id, edgeWidth */
+    const nodeIds = Array.isArray(P.nodes) && !P.lattice ? new Set(P.nodes.filter(isObj).map((q, i) => String(q.id ?? 'n' + i))) : null;
+    if (P.valueLines != null) {
+      if (!Array.isArray(P.valueLines) || !P.valueLines.length || P.valueLines.length > 2 || !P.valueLines.every(q => isObj(q) && (q.label == null || typeof q.label === 'string') && (q.colour == null || slotOk(q.colour) || ['ink', 'manip', 'hint', 'neg', 'pos', 'muted'].includes(q.colour)))) err(file, `${where}.params.valueLines`, 'valueLines is one or two { "label": "v", "colour": 1 to 6 or ink, manip, hint, neg, pos, muted }');
+    }
+    if (S.values2 != null && !(P.valueLines && P.valueLines.length > 1)) err(file, `${where}.state.values2`, 'values2 is the second value line: give params.valueLines two entries (label and colour each)');
+    for (const key of ['values', 'values2']) {
+      if (S[key] == null) continue;
+      if (!isObj(S[key])) err(file, `${where}.state.${key}`, `${key} maps node ids to the text under the node`);
+      else if (nodeIds) Object.keys(S[key]).forEach(k => { if (!nodeIds.has(k)) err(file, `${where}.state.${key}.${k}`, `${key} names a node id that params.nodes does not have`); });
+    }
+    if (P.edgeWidth != null) {
+      const ew = P.edgeWidth;
+      if (ew !== true && !(isObj(ew) && (ew.max == null || (typeof ew.max === 'number' && ew.max > 0)) && (ew.min == null || (typeof ew.min === 'number' && ew.min > 0)) && (ew.norm == null || (typeof ew.norm === 'number' && ew.norm > 0)) && (ew.sign == null || ['colour', 'dash'].includes(ew.sign)) && (ew.min == null || ew.max == null || ew.min <= ew.max))) err(file, `${where}.params.edgeWidth`, 'edgeWidth is true or { "min": px, "max": px, "norm": the |w| drawn at max, "sign": "colour" | "dash" }');
+      listOf(P.edges).forEach((q, i) => { if (isObj(q) && q.w != null && typeof q.w !== 'number' && P.edgeWidth) err(file, `${where}.params.edges[${i}].w`, 'with edgeWidth an edge weight w is a number'); });
+    }
   }
+  /* ENGINE-BACKLOG 1228: matrix heat, per matrix: true or { mode, range, legend, decimals, label } */
+  if (c.kind === 'matrix') (Array.isArray(P.matrices) ? P.matrices : []).forEach((m, i) => {
+    const okNum = (v) => typeof v === 'number' && Number.isFinite(v);
+    if (!isObj(m) || m.heat == null) return;
+    const h = m.heat, at = `${where}.params.matrices[${i}].heat`;
+    if (h === true) return;
+    if (!isObj(h)) { err(file, at, 'heat is true or { "mode": "seq" | "div", "range": [lo, hi], "legend": false, "decimals": n, "label": text }'); return; }
+    if (h.mode != null && !['seq', 'div'].includes(h.mode)) err(file, `${at}.mode`, 'mode is "seq" (non-negative values) or "div" (signed values)');
+    if (h.range != null && !(Array.isArray(h.range) && h.range.length === 2 && h.range.every(okNum) && h.range[0] < h.range[1])) err(file, `${at}.range`, 'range is [lo, hi], two numbers with lo below hi');
+    if (h.legend != null && typeof h.legend !== 'boolean') err(file, `${at}.legend`, 'legend is true or false');
+    if (h.decimals != null && !(Number.isInteger(h.decimals) && h.decimals >= 0 && h.decimals <= 6)) err(file, `${at}.decimals`, 'decimals is a whole number from 0 to 6');
+    const nums = (Array.isArray(m.rows) ? m.rows : []).flat().filter(v => typeof v === 'number');
+    if (h.mode === 'seq' && !Array.isArray(h.range) && nums.some(v => v < 0)) err(file, `${at}.mode`, 'a sequential heat with negative entries needs a range (or mode "div")');
+  });
   /* pass 4 options: shapes only */
   const listOf = (v) => Array.isArray(v) ? v : [];
   if (c.kind === 'plane') {

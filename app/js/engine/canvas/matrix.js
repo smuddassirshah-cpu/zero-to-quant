@@ -1,6 +1,9 @@
 /* matrix: matrices with brackets and operators; row, column and cell highlights; pivots; row operation arrows;
    the product cell animation (a row and a column light up and the result cell fills).
-   Contract: docs/AUTHORING.md section 4; details in canvas/README-B.md. Builds on ZQ.cvb (canvas/plane.js). */
+   Contract: docs/AUTHORING.md section 4; details in canvas/README-B.md. Builds on ZQ.cvb (canvas/plane.js).
+   ENGINE-BACKLOG 1228: a matrix may carry heat: true | { mode: "seq" | "div", range: [lo, hi], legend, decimals }, which fills
+   each numeric cell by value (sequential seq-1 to seq-6 for non-negative data, diverging div-neg, div-mid, div-pos for signed
+   data) with a colour bar legend; the cell text flips to the page colour on the strong end so it stays readable in both themes. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -17,7 +20,10 @@
     const ops = params.ops || [];
     const maxRows = Math.max(1, ...mats.map((m) => (m.rows || []).length));
     const cellH = params.cellHeight || 36;
-    const H = maxRows * cellH + 64;
+    /* 1228: heat settings per matrix (heat: true, or an object); the legend adds a strip under the matrices */
+    const heatOf = (m) => (m.heat ? (m.heat === true ? {} : m.heat) : null);
+    const legendH = mats.some((m) => heatOf(m) && heatOf(m).legend !== false) ? 30 : 0;
+    const H = maxRows * cellH + 64 + legendH;
     /* item 234: numbers and text that starts as a negative number use the minus sign; item 235: {{expr}} in a cell is
        filled live from params (and state.params, which controls write) */
     const minus = (t) => t.replace(/^-(?=\d|\.\d)/, '−');
@@ -49,6 +55,25 @@
         (o.cells || []).forEach((c) => out.push(`${m}-${c[0]}-${c[1]}`));
       }
       return out;
+    };
+
+    /* 1228: the numeric cells of a matrix, the scale (mode, lo, hi) and a cell's fill and text class. Sequential walks the six
+       seq tokens (low value is seq-1 in both themes); diverging mixes div-mid towards div-neg or div-pos by |v| / the larger end. */
+    const numOf = (v) => { if (typeof v === 'number') return Number.isFinite(v) ? v : null; if (typeof v !== 'string' || /\$|\{\{/.test(v)) return null; const q = parseFloat(v.replace('−', '-')); return /^\s*[-−+]?\d*\.?\d+(e[-+]?\d+)?%?\s*$/i.test(v) && Number.isFinite(q) ? q : null; };
+    const heatScale = (h, vals) => {
+      const nums = vals.filter((v) => v != null), mn = Math.min(...nums, 0), mx = Math.max(...nums, 0);
+      const mode = h.mode || (nums.some((v) => v < 0) ? 'div' : 'seq');
+      if (Array.isArray(h.range) && h.range.length === 2) return { mode, lo: +h.range[0], hi: +h.range[1] };
+      if (mode === 'div') { const a = Math.max(Math.abs(mn), Math.abs(mx)) || 1; return { mode, lo: -a, hi: a }; }
+      return { mode, lo: mn, hi: mx || 1 };
+    };
+    const heatFill = (sc, v) => {
+      if (sc.mode === 'div') {
+        const a = Math.max(Math.abs(sc.lo), Math.abs(sc.hi)) || 1, t = K.clamp(Math.abs(v) / a, 0, 1);
+        return { fill: `color-mix(in srgb, var(${v < 0 ? '--div-neg' : '--div-pos'}) ${(t * 100).toFixed(1)}%, var(--div-mid))`, hi: t >= 0.6 };
+      }
+      const t = K.clamp((v - sc.lo) / ((sc.hi - sc.lo) || 1), 0, 1), u = t * 5, k = Math.min(4, Math.floor(u)), f = u - k;
+      return { fill: `color-mix(in srgb, var(--seq-${k + 2}) ${(f * 100).toFixed(1)}%, var(--seq-${k + 1}))`, hi: t >= 0.6 };
     };
 
     const def = {
@@ -98,6 +123,8 @@
           const { m, rows, cw } = L, nr = rows.length, nc = (rows[0] || []).length;
           const mx = x + 10 + L.lw + L.sw, my = top + (maxRows - nr) * cellH / 2, mh = nr * cellH;
           const mg = K.obj(m.id, 'cvb-mat'); g.append(mg);
+          const hs = heatOf(m), hnum = hs ? rows.map((row, ri) => row.map((v, c) => numOf(view.values && view.values[`${m.id}-${ri}-${c}`] != null ? view.values[`${m.id}-${ri}-${c}`] : v))) : null;
+          const hsc = hs ? heatScale(hs, hnum.flat()) : null;
           mg.append(K.washRect(mx - 12, my - 6, nc * cw + 24, mh + 12, 6));
           /* coloured emphasis (object highlight, product row and column) */
           const tint = (cls, id) => (colourOf.has(id) ? cls + ' has-c ' + K.colourCls(colourOf.get(id)) : cls);
@@ -114,6 +141,8 @@
             const id = `${m.id}-${r}-${c}`, cx = mx + c * cw + cw / 2, cy = my + r * cellH + cellH / 2;
             const o = K.obj(id, 'cvb-cell-o', 'ink');
             o.append(K.washRect(mx + c * cw + 3, my + r * cellH + 3, cw - 6, cellH - 6, 5));
+            const hv = hs && hnum[r][c] != null ? heatFill(hsc, hnum[r][c]) : null;
+            if (hv && !((hiddenSet.has(m.id) || hiddenSet.has(id)) && !shown.has(id))) o.append(svg('rect', { x: mx + c * cw + 2, y: my + r * cellH + 2, width: cw - 4, height: cellH - 4, rx: 5, class: 'cvb-heat', style: `fill: ${hv.fill}` }));
             const isEmph = emph.includes(id) || (shown.has(id) && !(prod && id === `${prod.c}-${prod.i}-${prod.j}` && p < 0.6));
             if (isEmph) o.append(svg('rect', { x: mx + c * cw + 3, y: my + r * cellH + 3, width: cw - 6, height: cellH - 6, rx: 5, class: tint('cvb-cell-w', id) }));
             o.append(svg('rect', { x: mx + c * cw + 1, y: my + r * cellH + 1, width: cw - 2, height: cellH - 2, rx: 5, class: 'cvb-cellbox cvb-tapbox cv-body' }));
@@ -125,7 +154,7 @@
               if (prod && id === `${prod.c}-${prod.i}-${prod.j}`) op = K.clamp((p - 0.55) / 0.45, 0, 1);
               else if (shown.has(id) && view._p != null && !prod) op = p;
               const t = text(val);
-              const el = t.includes('$') ? K.lab(cx, cy, t, { w: cw, h: cellH }) : K.txt(cx, cy, t, { size: 15, weight: isEmph ? 700 : null });
+              const el = t.includes('$') ? K.lab(cx, cy, t, { w: cw, h: cellH, cls: hv && hv.hi ? 'cvb-heat-hi' : '' }) : K.txt(cx, cy, t, { size: 15, weight: isEmph ? 700 : null, cls: hv && hv.hi ? 'cvb-heat-hi' : '' });
               if (op < 1) el.setAttribute('opacity', op.toFixed(3));
               o.append(el);
             }
@@ -141,7 +170,20 @@
           if (L.sw) { const st = String(m.scale); mg.append(K.lab(bx0 - 6, my + mh / 2, /\$/.test(st) ? st : /\\/.test(st) ? `$${st}$` : st, { anchor: 'end', size: 16, w: L.sw + 10, h: 40 })); }
           if (Array.isArray(m.rowLabels)) m.rowLabels.slice(0, nr).forEach((t, r) => mg.append(K.lab(bx0 - 6 - L.sw, my + r * cellH + cellH / 2, String(t), { anchor: 'end', size: 13, cls: 'cvb-muted', w: L.lw + 10 })));
           if (Array.isArray(m.colLabels)) m.colLabels.slice(0, nc).forEach((t, c) => mg.append(K.lab(mx + c * cw + cw / 2, my - 14, String(t), { size: 13, cls: 'cvb-muted', w: cw })));
-          if (m.label) mg.append(K.lab(mx + nc * cw / 2, H - 16, m.label, { w: 120 }));
+          if (m.label) mg.append(K.lab(mx + nc * cw / 2, H - legendH - 16, m.label, { w: 120 }));
+          if (hs && hs.legend !== false) {
+            /* the legend: a colour bar of the scale with its ends (and 0 for a diverging scale) labelled */
+            const lw = Math.min(180, Math.max(90, nc * cw)), lx = mx + nc * cw / 2 - lw / 2, ly = H - legendH + 2, dp = hs.decimals != null ? hs.decimals : 2;
+            const stops = hsc.mode === 'div' ? [-1, -0.5, 0, 0.5, 1] : [0, 0.2, 0.4, 0.6, 0.8, 1];
+            const gid = `${R.uid}-heat-${m.id}`;
+            let lgd = R.defs.querySelector('#' + CSS.escape(gid)); if (!lgd) { lgd = svg('linearGradient', { id: gid, x1: 0, x2: 1, y1: 0, y2: 0 }); R.defs.append(lgd); }
+            lgd.replaceChildren(...stops.map((q, i) => { const a = hsc.mode === 'div' ? Math.max(Math.abs(hsc.lo), Math.abs(hsc.hi)) * q : hsc.lo + (hsc.hi - hsc.lo) * q; return svg('stop', { offset: `${(i / (stops.length - 1) * 100).toFixed(1)}%`, style: `stop-color: ${heatFill(hsc, a).fill}` }); }));
+            const lo = hsc.mode === 'div' ? -Math.max(Math.abs(hsc.lo), Math.abs(hsc.hi)) : hsc.lo, hi = hsc.mode === 'div' ? -lo : hsc.hi, ft = (v) => K.fmt(+v.toFixed(dp), dp + 1);
+            const lg = K.obj(`${m.id}-legend`, 'cvb-heat-legend'); lg.append(svg('rect', { x: lx, y: ly, width: lw, height: 9, rx: 3, fill: `url(#${gid})`, class: 'cvb-heat-bar' }), K.txt(lx, ly + 19, ft(lo), { size: 12, anchor: 'start', cls: 'cvb-muted' }), K.txt(lx + lw, ly + 19, ft(hi), { size: 12, anchor: 'end', cls: 'cvb-muted' }));
+            if (hsc.mode === 'div') lg.append(K.txt(lx + lw / 2, ly + 19, '0', { size: 12, cls: 'cvb-muted' }));
+            if (hs.label) lg.append(K.txt(lx + lw / 2, ly + 19, String(hs.label), { size: 12, cls: 'cvb-muted' }));
+            mg.append(lg);
+          }
           /* row operation arrow on the right of this matrix */
           const ro = view.rowOp;
           const roM = ro && (ro.m || (mats.find((q) => rowsOf(q).length > Math.max(ro.from ?? 0, ro.to ?? 0)) || mats[0]).id); // item 238: the matrix that has those rows

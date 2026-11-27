@@ -58,6 +58,8 @@ A grid's `values()` gives each cell's number (its shown text, when numeric), so 
 
 **methods**: `flash(ids)`, `point(ids)`, `peek(ms)` (briefly undims), `expand(list)`. **events**: tap.
 
+`state.arrows` draws a policy glyph per cell (ENGINE-BACKLOG 1229), beside the values: a rows-by-cols list of `"up"`, `"down"`, `"left"`, `"right"` or `"none"` (`""` also draws nothing), or a map from cell id to a direction or `{ "dir": "up", "colour": 2 }`. The arrow is an SVG shape in the ink colour (the slot colour when `colour` is given), not a text glyph, so it renders the same in every font and theme. A cell that also has text keeps it: the arrow moves up and shrinks, the text drops below it. Arrows ignore taps, sit under `paths`, and a patch with `"arrows": null` removes them all. A grid without `arrows` is drawn exactly as before; the validator checks the list is `rows` by `cols` and the ids exist.
+
 `highlight` on a grid draws the union of the cells as one washed shape with an ink ring.
 
 ```json
