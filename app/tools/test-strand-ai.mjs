@@ -2,7 +2,7 @@
 /* The optional AI strand (course.json strand "ai"; ENGINE-BACKLOG 1218, docs/AUTHORING.md "strand").
    An ai course never touches the quant path. Each exclusion is proved on the fixture course tools/fixtures/mini-app/content/courses/ai-sample
    (topic 1.12, stage 1, the only topic whose courses are all ai):
-     validator    accepts "ai", rejects an unknown strand, rejects a topic mixing ai and other courses, keeps ai out of readiness.json and stage papers
+     validator    accepts "ai", rejects an unknown strand, rejects a topic mixing ai and other courses, accepts no readiness row (or an "optional" one), keeps ai out of stage papers and stage draws, lets ai require quant and never the reverse
      hours.js     a stage, the total and a role's sums leave the ai topic out; H.ai() reports it alone; with no ai course nothing moves
      content.js   strand, badge, "Quant path only" and the AI switch hide it, pathTopics leaves it out of the stage count, Today's plan skips it unless aiToday
      census and curriculum-hours  every existing figure unchanged, one AI line
@@ -45,16 +45,52 @@ const CONTENT = path.join(MINI, 'content');
   r = h.validate(); ok(r.errors.some((l) => /only AI-strand courses \(strand "ai"\) or none of them/.test(l)), 'a topic mixing ai and other courses is an error', r.errors.slice(0, 4).join('|'));
   h.reset();
   const rf = h.path('content/readiness.json'), rj = rd(rf);
-  rj.roles.trader.courses['ai-sample'] = 'optional';
+  rj.roles.trader.courses["ai-sample"] = "required";
   fs.writeFileSync(rf, JSON.stringify(rj, null, 2));
-  r = h.validate(); ok(r.errors.some((l) => /roles\.trader\.courses\.ai-sample.*AI-strand course is not part of role readiness/.test(l)), 'readiness.json may not list an ai course', r.errors.slice(0, 3).join('|'));
+  r = h.validate(); ok(r.errors.some((l) => /roles\.trader\.courses\.ai-sample.*must be "optional"/.test(l)), "readiness.json rejects a non-optional ai row", r.errors.slice(0, 3).join('|'));
   h.reset();
   const ex = { id: 'stage-1', stage: 1, parts: [{ kind: 'paper', name: 'Paper', minutes: 30, pass: 0.5, items: [{ id: 'x1', skills: ['ai-loss'], question: 'q' }, { id: 'x2', skills: ['at-complexity'], question: 'q' }] }] };
   fs.writeFileSync(h.path('content/exams/stage-1.json'), JSON.stringify(ex));
   r = h.validate();
   ok(r.errors.some((l) => /unknown skill "ai-loss"/.test(l)), 'a stage paper cannot test an ai skill', r.errors.slice(0, 3).join('|'));
   ok(!r.errors.some((l) => /unknown skill "at-complexity"/.test(l)), 'a quant skill is still allowed in a stage paper');
+  /* follow-up (ENGINE-BACKLOG 1260 to 1262): the readiness exemption, the requires direction, the stage-exam draw check */
+  h.reset();
+  r = h.validate(); ok(r.code === 0 && !r.errors.some((l) => /ai-sample/.test(l) && /readiness/.test(l)), 'an ai course with no readiness row in any role: 0 errors', r.errors.slice(0, 3).join('|'));
+  const rj2 = rd(rf); rj2.roles.trader.courses['ai-sample'] = 'optional'; fs.writeFileSync(rf, JSON.stringify(rj2, null, 2));
+  r = h.validate(); ok(r.code === 0, 'a readiness row for an ai course is accepted when "optional"', r.errors.slice(0, 3).join('|'));
+  rj2.roles.trader.courses['ai-sample'] = 'required'; fs.writeFileSync(rf, JSON.stringify(rj2, null, 2));
+  r = h.validate(); ok(r.errors.some((l) => /roles\.trader\.courses\.ai-sample.*must be "optional"/.test(l)), 'a "required" row for an ai course is an error', r.errors.slice(0, 3).join('|'));
+  h.reset();
+  const dropLevel = rd(cf); dropLevel.levels = dropLevel.levels.slice(0, 2); put(dropLevel);
+  r = h.validate(); ok(r.errors.some((l) => /3 to 5 levels \(found 2\)/.test(l)), 'an ai course keeps the 3 to 5 level rule');
+  h.reset();
+  const withReq = rd(cf); withReq.levels[1].requires = [{ ref: 'first-python/L1', why: 'Loops come before gradient descent.' }]; put(withReq);
+  r = h.validate(); ok(r.code === 0, 'an ai course may require a quant course level (and a quant course needs no edge into ai)', r.errors.slice(0, 3).join('|'));
+  h.reset();
+  const fpf = h.path('content/courses/first-python/course.json'), fp = rd(fpf);
+  fp.levels[1].requires = [{ ref: 'ai-sample/L1', why: 'Fitting first.' }]; fs.writeFileSync(fpf, JSON.stringify(fp, null, 2));
+  r = h.validate(); ok(r.errors.some((l) => /ai-sample\/L1.*non-AI course never requires it/.test(l)), 'a quant course requiring an ai level is an error', r.errors.slice(0, 3).join('|'));
+  h.reset();
+  const stageDraw = (from) => ({ id: 'stage-1', stage: 1, parts: [{ kind: 'paper', name: 'Paper', minutes: 30, pass: 0.5, items: [], draw: [{ from, n: 1 }] }] });
+  fs.writeFileSync(h.path('content/bank/ai-scratch.json'), JSON.stringify({ id: 'ai-scratch', name: 'Scratch', items: [{ id: 'a1', difficulty: 2, skills: ['ai-loss'], tags: ['t'] }] }));
+  fs.writeFileSync(h.path('content/exams/stage-1.json'), JSON.stringify(stageDraw('bank/ai-scratch')));
+  r = h.validate(); ok(r.errors.some((l) => /bank\/ai-scratch.*draws bank\/ai-scratch\/a1 from the AI strand/.test(l)), 'a stage exam drawing a bank item with an ai skill is an error', r.errors.slice(0, 3).join('|'));
+  fs.writeFileSync(h.path('content/exams/mock-ai.json'), JSON.stringify({ ...stageDraw('bank/ai-scratch'), id: 'mock-ai' }));
+  fs.rmSync(h.path('content/exams/stage-1.json'));
+  r = h.validate(); ok(!r.errors.some((l) => /from the AI strand/.test(l)), 'the draw rule applies to stage exams only');
+  fs.rmSync(h.path('content/exams/mock-ai.json')); fs.rmSync(h.path('content/bank/ai-scratch.json'));
+  fs.writeFileSync(h.path('content/drills/ai-drill.json'), JSON.stringify({ ...rd(h.path('content/drills/dsa-missing-seq.json')), id: 'ai-drill', course: 'ai-sample', skills: ['ai-loss'] }));
+  fs.writeFileSync(h.path('content/exams/stage-1.json'), JSON.stringify(stageDraw('drills/ai-drill')));
+  r = h.validate(); ok(r.errors.some((l) => /draws drills\/ai-drill from the AI strand/.test(l)), 'a stage exam drawing an ai course drill is an error', r.errors.slice(0, 3).join('|'));
   h.close();
+}
+
+/* ---- 1b. Learn and Review show the strand at topic level (the badge, as for Pure maths) ---- */
+{
+  const learn = fs.readFileSync(path.join(APP, 'js/screens/learn.js'), 'utf8'), review = fs.readFileSync(path.join(APP, 'js/screens/review.js'), 'utf8');
+  ok((learn.match(/strandBadge\(C\.topicStrand\(t\)/g) || []).length >= 2, 'Learn badges a topic heading and its exam chip by topicStrand');
+  ok(/strandBadge\(C\(\)\.topicStrand\(t\)/.test(review), 'Review badges a topic exam row by topicStrand');
 }
 
 /* ---- 2. hours.js ---- */

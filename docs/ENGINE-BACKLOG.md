@@ -2978,3 +2978,14 @@ Status block (engine pass AK canvas):
 - 1227: done. `graph.js`, `canvases.css`, validator, `README-B.md`, gallery entry "graph (computation graph)"; tests `test-canvas-ai.mjs`, `test-validate-canvas-ai.mjs`.
 - 1228: done. `matrix.js`, `canvases.css`, validator, `README-B.md`, gallery entry "matrix (heat, attention and signed)"; same tests (contrast of at least 3 to 1 on every cell, both themes).
 - 1229: done. `grid.js`, `canvases.css`, validator, `README.md`, gallery entry "grid (policy arrows)"; same tests.
+
+### Engine pass AK follow-up (`docs/reports/engine-pass-ak-followup.md`)
+
+1260. [Must] AI strand readiness exemption: no row needed for an `ai` course; a row must be `optional`; never counted.
+1261. [Must] Validator: a stage exam or paper may not draw from an `ai` course or skill; a non-ai course may not require an ai course or level.
+1262. [Should] Learn and Review show AI topics with the topic-level strand badge, hidden by the AI switch and "Quant path only".
+
+Status block (engine pass AK follow-up):
+- 1260: done. `validate.mjs`, `readiness-sums.mjs`, AUTHORING section 9; `test-strand-ai.mjs` (no row, optional, required rejected).
+- 1261: done. `validate.mjs` (`verifyDraws`, `checkRefs`); `test-strand-ai.mjs` (bank and drill draws, quant-requires-ai, ai-requires-quant, 3 to 5 levels).
+- 1262: done, already in place from 1218 (`learn.js`, `review.js` badge by `topicStrand`; `content.js` hiding); asserted in `test-strand-ai.mjs`. Badge, not a separate heading, as for Pure maths.

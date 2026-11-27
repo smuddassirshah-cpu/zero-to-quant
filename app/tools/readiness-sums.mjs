@@ -39,11 +39,12 @@ const topicStage = {};
 for (const s of cur.stages) for (const t of s.topics) topicStage[t.id] = s.id;
 const { H } = loadHours(C);
 const courses = {};
+const aiIds = new Set();   // AI-strand courses: no row needed in docs/readiness.md; a row, if present, must be "optional"
 for (const id of readdirSync(join(C, 'courses')).sort()) {
   const p = join(C, 'courses', id, 'course.json');
   if (!existsSync(p)) continue;
   const cj = read(p);
-  if ((cj.strand ?? cur.courses?.[id]?.strand) === 'ai') continue;   // the AI strand is outside role readiness (ENGINE-BACKLOG 1218): no status, no sums
+  if ((cj.strand ?? cur.courses?.[id]?.strand) === 'ai') { aiIds.add(id); continue; }   // the AI strand is outside role readiness (ENGINE-BACKLOG 1218): no status, no sums
   const c = { id, topic: cj.topic, stage: topicStage[cj.topic], mapped: 0, written: 0, edges: [], levelWritten: {} };
   for (const lv of cj.levels ?? []) {
     c.levelWritten[`L${lv.n}`] = 0;
@@ -73,7 +74,8 @@ for (const line of lines) {
   const cells = line.split('|').slice(1, -1).map((s) => s.trim());
   if (tableKind === 'class') {
     const id = cells[0].replace(/`/g, '');
-    if (!courses[id]) err(`${role}: unknown course ${id}`);
+    if (aiIds.has(id)) { if (cells[2] !== 'optional') err(`${role}: AI-strand course ${id} may only be listed as optional`); }
+    else if (!courses[id]) err(`${role}: unknown course ${id}`);
     else if (cls[role][id]) err(`${role}: course ${id} listed twice`);
     else {
       if (String(courses[id].stage) !== cells[1]) err(`${role}: ${id} stage ${cells[1]} should be ${courses[id].stage}`);
