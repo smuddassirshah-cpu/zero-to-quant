@@ -112,6 +112,7 @@ def _repr(v):
 def drl_run(code, spec_json, emit):
     spec = json.loads(spec_json)
     sys.setrecursionlimit(RECURSION_LIMIT)
+    __import__('builtins').__zq_emit__ = emit   # the trainer widget streams its step events through this (ENGINE-BACKLOG 1237)
     name = spec['fn']
     mode = spec.get('compare', 'isclose')
     env = {}

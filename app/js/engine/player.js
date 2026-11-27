@@ -190,7 +190,7 @@
     /* item 122: Start over only where there is something to put back: a canvas-bound widget, a canvas with controls or a
        draggable point, or a widget whose pieces move (order, place, manipulate, table); not on choice or code screens */
     const cvSpec = spec.canvas || {}, movable = (c) => !!(c && (c.kind === 'interleave' || (c.controls || []).length || ((c.state || {}).points || []).some(p => p && p.drag) || (c.params || {}).drag || (c.state || {}).drag));
-    const resettable = w && (bound || movable(cvSpec) || movable(cvSpec.left) || movable(cvSpec.right) || ['order', 'place', 'manipulate', 'table'].includes(w.kind));
+    const resettable = w && (bound || movable(cvSpec) || movable(cvSpec.left) || movable(cvSpec.right) || ['order', 'place', 'manipulate', 'table', 'trainer'].includes(w.kind));
     const cbarHTML = (cap) => `<div class="lsn-cbar"><span class="t-caption lsn-cap">${Z.esc(cap || '')}</span>${mode === 'lesson' && resettable ? '<button type="button" class="link-btn lsn-so" disabled>Start over</button>' : ''}</div>`;
     if (bound && qLine) { const q = add(qLine); countEl = q.querySelector('.lsn-count'); }
     if (spec.canvas) {
@@ -350,7 +350,7 @@
       gateApply();
       if (typeof MutationObserver === 'function') { gateObs = new MutationObserver(gateApply); gateObs.observe(el, { childList: true, subtree: true }); }
     }
-    const graded = !!widget;
+    const graded = !!widget && w.kind !== 'trainer';   // ENGINE-BACKLOG 1237: the trainer widget is never graded, so its screen is read-only and Continue stays open
     const step = {
       spec, el, type, mode, widget, canvas, cbar,
       kind: mode === 'quiz' ? 'quiz' : graded ? 'task' : 'read',
@@ -458,7 +458,7 @@
     const quizSpec = LSN.quiz || [];
     const N = screens.length + (LSN.summary ? 1 : 0);
     const SUMMARY = LSN.summary ? screens.length : -1;
-    const gradedLesson = screens.filter(s => s.widget).length;
+    const gradedLesson = screens.filter(s => s.widget && s.widget.kind !== 'trainer').length;
     const GRADED = gradedLesson + quizSpec.length;
     const rm = () => Z.reducedMotion();
     let alive = true, gen = 0;

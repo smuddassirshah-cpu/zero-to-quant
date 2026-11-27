@@ -50,7 +50,7 @@ const warn = (file, where, msg) => problems.push({ level: 'warning', file: rel(f
 
 /* ---------- Vocabulary ---------- */
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'sliders', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform', 'trade']);
+const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'sliders', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform', 'trade', 'trainer']);
 const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'dice-sim', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'complex-map', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console', 'space', 'interleave']);
 const SCREEN_TYPES = new Set(['title', 'explore', 'problem', 'ladder', 'demonstrate', 'trap', 'generalise', 'derive', 'transfer']);
 const GRADED = new Set(['problem', 'ladder', 'trap', 'transfer', 'derive']);
@@ -965,6 +965,7 @@ const bankCodeRules = (file, where, w) => {
 const checkWidget = (file, where, w, canvas, ctx = {}) => {
   if (!isObj(w)) { err(file, where, 'widget must be an object'); return null; }
   if (!WIDGETS.has(w.kind)) { err(file, `${where}.kind`, `unknown widget kind "${w.kind}"`); return null; }
+  if (w.kind === 'trainer' && !ctx.trainerOk) err(file, `${where}.kind`, 'a trainer widget is never graded: it belongs on an explore screen of a lesson');
   if (w.kind === 'longform' && !ctx.allowLongform) err(file, `${where}.kind`, 'longform belongs in homework and exams');
   const keys = new Set();
   if (w.carry != null && w.kind !== 'trade' && !(typeof w.carry === 'string' && /^[A-Za-z][A-Za-z0-9]*$/.test(w.carry))) err(file, `${where}.carry`, 'carry is a name of letters and digits');
@@ -1319,6 +1320,27 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       if (w.control != null && (typeof w.control !== 'number' || w.control < 2)) err(file, `${where}.control`, 'control must be a number of points, at least 2');
       keys.add('*');
       break;
+    case 'trainer': {
+      /* ENGINE-BACKLOG 1237: a live, never graded training run that streams report(step, loss) into a series canvas */
+      req(file, where, w, ['starter']);
+      if (w.starter != null && typeof w.starter !== 'string') err(file, `${where}.starter`, 'starter is the Python source text');
+      if (w.steps != null && !(Number.isInteger(w.steps) && w.steps >= 1 && w.steps <= 20000)) err(file, `${where}.steps`, 'steps is the step cap, a whole number from 1 to 20000 (default 500)');
+      if (w.maxSeconds != null && !(typeof w.maxSeconds === 'number' && w.maxSeconds >= 1 && w.maxSeconds <= 300)) err(file, `${where}.maxSeconds`, 'maxSeconds is the wall-clock cap, 1 to 300 (default 120; a phone is 3 to 5 times slower than a desktop)');
+      if (w.editable != null && typeof w.editable !== 'boolean') err(file, `${where}.editable`, 'editable is true or false (false shows a supplied loop the learner can only run)');
+      if (w.prelude != null && typeof w.prelude !== 'string') err(file, `${where}.prelude`, 'prelude is Python source text');
+      const sids = w.series == null ? ['loss'] : w.series;
+      if (!Array.isArray(sids) || !sids.length || sids.some(x => typeof x !== 'string' || !x)) err(file, `${where}.series`, 'series lists the series ids the run fills: ["loss"] by default, then names passed to report(step, loss, name=value)');
+      else if (!isObj(canvas) || canvas.kind !== 'series') err(file, `${where}`, 'a trainer widget draws into a series canvas on its own screen');
+      else {
+        const P = isObj(canvas.params) ? canvas.params : {}, have = new Set((Array.isArray(P.series) ? P.series : []).filter(isObj).map(x => x.id));
+        sids.forEach(id => { if (!have.has(id)) err(file, `${where}.series`, `the canvas has no series with id "${id}" (declare { "id": "${id}", "values": [] } in canvas.params.series)`); });
+        if (!(Array.isArray(P.y) && P.y.length === 2 && P.y.every(v => typeof v === 'number'))) err(file, `${where}`, 'the series canvas needs params.y: [min, max], because its range cannot be known before the run');
+        if (!(Number.isInteger(P.length) && P.length >= (w.steps ?? 500))) err(file, `${where}`, `the series canvas needs params.length of at least the step cap (${w.steps ?? 500}): it is the width of the x axis`);
+      }
+      dataFiles(file, where, w);
+      keys.add('*');
+      break;
+    }
     case 'code':
       req(file, where, w, ctx.bank ? ['starter'] : ['language', 'starter']);   // a bank code item may leave language out (Python)
       /* item 304: language is "python" (Pyodide) or "cpp" (clang in the browser); a starter with #include is C++ */
@@ -2079,7 +2101,7 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
     checkCanvas(file, `${at}.canvas`, s.canvas);
     if (s.difficulty != null || GRADED.has(s.type)) checkDifficulty(file, `${at}.difficulty`, s.difficulty, 1, 3, 'lesson screen');
     let keys = null;
-    if (s.widget) keys = checkWidget(file, `${at}.widget`, s.widget, s.canvas, { question: s.question, prose: s.prose });
+    if (s.widget) keys = checkWidget(file, `${at}.widget`, s.widget, s.canvas, { question: s.question, prose: s.prose, trainerOk: s.type === 'explore' });
     if (s.type === 'title') { if (!s.prose) err(file, `${at}.prose`, 'a title screen needs one framing sentence'); if (s.widget) err(file, `${at}.widget`, 'a title screen has no widget'); }
     if (s.type === 'demonstrate') {
       if (s.widget) err(file, `${at}.widget`, 'a demonstrate screen has no widget');
@@ -2088,9 +2110,9 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
     }
     if (s.type === 'explore') {
       if (!s.canvas) err(file, `${at}.canvas`, 'an explore screen needs a canvas');
-      else if (!(s.canvas.controls || []).length && !(s.widget && (CANVAS_BOUND.has(s.widget.kind) || (s.widget.kind === 'place' && ['boxes', 'array'].includes(s.widget.mode)) || (s.widget.kind === 'manipulate' && isObj(s.widget.states) && Object.values(s.widget.states).some(q => isObj(q) && isObj(q.canvas))))) && !authorMovable(s.canvas)) err(file, `${at}.canvas`, 'an explore screen needs an interactive canvas (controls or a canvas-bound widget)');
+      else if (!(s.canvas.controls || []).length && !(s.widget && (s.widget.kind === 'trainer' || CANVAS_BOUND.has(s.widget.kind) || (s.widget.kind === 'place' && ['boxes', 'array'].includes(s.widget.mode)) || (s.widget.kind === 'manipulate' && isObj(s.widget.states) && Object.values(s.widget.states).some(q => isObj(q) && isObj(q.canvas))))) && !authorMovable(s.canvas)) err(file, `${at}.canvas`, 'an explore screen needs an interactive canvas (controls or a canvas-bound widget)');
       if (!s.widget) err(file, `${at}.widget`, 'an explore screen ends with one observation question');
-      else checkFeedback(file, `${at}.feedback`, s.feedback, keys);
+      else if (s.widget.kind !== 'trainer') checkFeedback(file, `${at}.feedback`, s.feedback, keys);
       checkHints(file, `${at}.hints`, s.hints, s.canvas, false);
     }
     if (s.type === 'generalise') {
