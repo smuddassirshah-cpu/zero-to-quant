@@ -1,5 +1,7 @@
 NEXT_PROMPT: after session AJ (concept audit, session 13, expanded scope)
 
+(AI-strand build sessions use `NEXT_PROMPT-AI.md` instead; this file is for audit sessions only.)
+
 The build is complete (`DONE`). Read CLAUDE.md, `docs/reports/concept-audit-next.md`, audit notes session 13 and DECISIONS "Session AJ". If the census disagrees with the figures below, fix the state files first.
 
 Push to the branch the harness assigns and to `claude/amazing-wright-d4mx7i` (CI), only when no run is in progress there. `claude/fable-audit` is stale and fully merged. Lesson ids are never renamed.
