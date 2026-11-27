@@ -9,18 +9,18 @@ User decisions kept (DECISIONS "Session AK"): new topics inside the four stages;
 - Six **[AI]** topics: 0.8, 1.12, 2.7, 2.8, 2.9, 3.6. Every course carries `strand: "ai"` (engine item 0). No level is added to an existing quant course. A level added there would join the quant path, because strands are per course and role readiness needs every level of a required course (F1, F11). Folding happens inside the strand, and existing lessons are reused through `requires` edges.
 - What it builds on (lesson ids checked): `multivar` l8-walking-downhill and `convex` l14-gradient-descent (descent and step size); `estimation` L2 (likelihood); `stat-learning` l10 (sigmoid, log loss), l15 (SVM and kernels), l16 (clustering) and l17 (a small network); `eigen` l11 (PCA); `ensembles` l2 (entropy as impurity); `graphs-dp` l17 (backward induction); `markov` L4 (random walks on networks); `numerics` L4 (control variates).
 - In-app code is NumPy and pure Python in Pyodide 0.27.7. There is no PyTorch. GPU work (nanoGPT, ARENA, CS336) is outside study.
-- Size: 6 topics, 17 courses, 60 levels, about 240 lessons. 950 h stored: 126 h in the app, 824 h outside, about 15 months at 15 h a week.
+- Size: 6 topics, 17 courses, 63 levels, about 252 lessons. 950 h stored: 132 h in the app, 818 h outside, about 15 months at 15 h a week.
 - Marks used below: **(moved)** a level kept from the proposal but placed elsewhere; **(merged)** two proposed levels made one; **(new)** not in the proposal. No level is added to an existing course.
 
 ## Stage 0
 
-### 0.8 AI from nothing (40 h; app 13) [AI], alongside 0.3 and 0.4
+### 0.8 AI from nothing (40 h; app 15) [AI], alongside 0.3 and 0.4
 Requires: `functions`/L2 (slope and intercept), `counting`/L2 (l8-counts-to-chances), `first-python`/L3 (loops and functions), `number-sense`/L3 (powers).
 
 | Course | Levels |
 | --- | --- |
 | `ai-basics` What AI is | 1 Models from data (rules against learning, features, labels, questions the model has not seen). 2 Learning by nudging (error, mean squared error by hand, nudge a weight each way and keep the better; no derivatives). 3 One neuron (weighted sum, threshold, AND and OR by hand, why XOR needs a second layer; numbers differ from `stat-learning` l17). 4 Language by counting (next-word tables, probabilities, sampling, temperature as powers of probabilities, tokens) |
-| `ai-use` Using AI well | 1 How a chatbot is made, and why it makes things up (pretraining, fine-tuning, human feedback as a story; hallucination). 2 Asking, checking and the risks (prompting, checking sums and sources, privacy, bias, misuse) **(merged** old L2 and L3; alignment moves to `ai-safety`) |
+| `ai-use` Using AI well | 1 How a chatbot is made, and why it makes things up (pretraining, fine-tuning, human feedback as a story; hallucination). 2 Asking and checking (prompting, checking sums and sources). 3 Risks (privacy, bias, misuse; alignment previewed in one screen, taught in `ai-safety`) **(restored** to three levels: the validator requires 3 to 5 levels a course) |
 
 Resources: 3Blue1Brown Neural Networks ch. 1 and 2 (watch only); Elements of AI (University of Helsinki, free; hours unverified); Karpathy, Intro to Large Language Models (2023) and Deep Dive into LLMs like ChatGPT (2025); Anthropic prompt engineering docs. Dropped: Google ML Crash Course, which assumes algebra, Python and pandas.
 
@@ -28,12 +28,12 @@ Exit: a neuron's output by hand; a bigram table built from text and sampled from
 
 ## Stage 1
 
-### 1.12 Neural networks from scratch (150 h; app 19) [AI], opens when its edges are met, alongside 1.8
+### 1.12 Neural networks from scratch (150 h; app 21) [AI], opens when its edges are met, alongside 1.8
 Requires: `limits`/L3 and `multivar`/L1 (chain rule), `multivar`/L2 (gradient descent), `taylor`/L2 (central differences), `py-found`/L1 (floating point) and L3 (classes), `vectors`/L3 and `numpy-pandas`/L1 (arrays, broadcasting), `random-vars`/L5 (Jensen), `estimation`/L2 (likelihood), `testing`/L3 (out of sample), `graphs-dp`/L1 (`gate: false`: topological order is retaught in one screen).
 
 | Course | Levels |
 | --- | --- |
-| `info` Information theory **(new)** | 1 Surprise and entropy (bits, surprisal, entropy of a distribution, codes and compression; links `ensembles` l2 later). 2 Cross-entropy and KL (code length under the wrong model, KL at least 0 by Jensen, perplexity, maximum likelihood as least cross-entropy) |
+| `info` Information theory **(new)** | 1 Surprise and entropy (bits, surprisal, entropy of a distribution, codes and compression; links `ensembles` l2 later). 2 Cross-entropy and KL (code length under the wrong model, KL at least 0 by Jensen, perplexity, maximum likelihood as least cross-entropy). 3 Mutual information **(new**, level rule) (MI as KL between joint and product of marginals, MI of a feature with a label, data processing inequality, the bits a discrete signal carries about the next return's sign and its small-sample bias) |
 | `backprop` Backpropagation | 1 The chain rule on a graph (forward values, local derivatives, gradients by hand; builds on `limits` L3, no reteach). 2 The backward pass (topological order, gradients that add at a branch, a scalar autograd class). 3 Neuron, layer, MLP on scalars, trained by gradient descent (`multivar` l8); gradient check by central differences (`taylor` L2). 4 A small array autograd in NumPy (matmul, broadcast sums, tanh, ReLU, softmax with cross-entropy), checked to relative error 1e-6 in float64. Every later course reuses it |
 | `makemore` First language models | 1 Bigram by counting and as a one-layer net (normalised counts are the maximum likelihood estimate; softmax; one loss two ways, in nats and bits; `info` L2). 2 MLP with embeddings (Bengio et al. 2003; minibatches, a learning-rate sweep). 3 Sampling and held-out loss (train, dev and test names; overfitting seen first-hand; temperature) |
 
@@ -66,14 +66,14 @@ Requires: `markov`/L2, `graphs-dp`/L4 (l17-dice-stopping), `conditional`/L2, `li
 
 Resources: Sutton and Barto, 2nd ed. (2018, free PDF); DeepMind x UCL Reinforcement Learning Lectures (2021, 13 lectures, checked); OpenAI Spinning Up (old and unmaintained; the policy-gradient pages still stand); Silver et al. 2016 and 2018.
 
-### 2.9 Language models (200 h; app 23) [AI], after 2.7, and after 2.8 for `post-train` L2
+### 2.9 Language models (200 h; app 25) [AI], after 2.7, and after 2.8 for `post-train` L2
 Requires: `sequence`/L4, `backprop`/L4, `rl`/L4, `info`/L2, `stat-learning`/L3 (Bradley-Terry is a logistic regression), `testing`/L3, `numerics`/L1, `exp-log`/L2 with `regression`/L1 (power-law fits), `validation`/L3, `fin-ml`/L2 (hidden look-ahead).
 
 | Course | Levels |
 | --- | --- |
 | `gpt` Build a GPT | 1 Tokenisation (bytes, UTF-8, byte-pair encoding by hand; deduplication). 2 A tiny GPT forward pass in NumPy (from supplied weights). 3 Training it on Tiny Shakespeare with the `backprop` L4 autograd (graded on short runs; the long run is outside). 4 Scale (parameters, about 6ND FLOPs, memory; Kaplan and Chinchilla; fitting a power law in log space) **(merged** with `ai-papers` old L3). 5 Hardware and precision **(new)** (bandwidth against FLOPs, arithmetic intensity, bf16 rounding, KV cache size; `numerics` L1) |
 | `post-train` Base model to assistant | 1 Supervised fine-tuning and chat formats (loss masking). 2 Reward models, RLHF and DPO (Bradley-Terry, a KL penalty, `rl` L4). 3 Constitutional AI and AI feedback (the one home of constitutional methods). 4 Evaluation as statistics (standard errors, paired comparisons, contamination by n-gram overlap, judge bias; the one home of benchmark method) |
-| `llm-apps` Language models at work | 1 Retrieval (TF-IDF and embedding search, cosine, recall at k). 2 Language models in quant research (training cut-offs as look-ahead, leakage in text features) **(merged** from old L1 to L4; prompts, tools and agents are outside study, F10) |
+| `llm-apps` Language models at work | 1 Retrieval (TF-IDF and embedding search, cosine, recall at k). 2 Language models in quant research (training cut-offs as look-ahead, leakage in text features). 3 Tools and agents with a scripted model **(new**, level rule) (an agent loop against a deterministic stub model: tool schemas, parsing, stop conditions, step caps, trajectory evaluation; workflows against agents) |
 
 Resources: Karpathy, Let's build GPT, Let's build the GPT Tokenizer, Let's reproduce GPT-2 (124M), nanoGPT; Stanford CS336 (free lectures; the site points self-learners to paid cloud GPUs for assignments); Hugging Face LLM Course (free); Kaplan et al. 2020; Hoffmann et al. 2022; Ouyang et al. 2022; Bai et al. 2022; Rafailov et al. 2023; Anthropic, Building effective agents (outside study).
 
@@ -122,15 +122,15 @@ Dropped: the `contour` canvas (`plane` has contour, heat and paths), `tokens` (`
 
 | Topic | Levels | Stored h | App h | Outside h |
 | --- | --- | --- | --- | --- |
-| 0.8 | 6 | 40 | 13 | 27 |
-| 1.12 | 9 | 150 | 19 | 131 |
+| 0.8 | 7 | 40 | 15 | 25 |
+| 1.12 | 10 | 150 | 21 | 129 |
 | 2.7 | 16 | 240 | 33 | 207 |
 | 2.8 | 5 | 120 | 11 | 109 |
-| 2.9 | 11 | 200 | 23 | 177 |
+| 2.9 | 12 | 200 | 25 | 175 |
 | 3.6 | 13 | 200 | 27 | 173 |
-| All | 60 | 950 | 126 | 824 |
+| All | 63 | 950 | 132 | 818 |
 
-App hours are 2 h a level (four lessons of about 14 min, a 20 min review and a 45 min homework) plus 1 h for the topic exam. Check: 2 x 60 + 6 = 126, and 13 + 19 + 33 + 11 + 23 + 27 = 126. Stored: 40 + 150 + 240 + 120 + 200 + 200 = 950, and (40 + 120) + (150 + 200) + (240 + 200) = 950. Outside: 950 - 126 = 824, and 27 + 131 + 207 + 109 + 177 + 173 = 824. Months: 950 / 15 = 63.3 weeks, or 14.6 months at 4.33 weeks a month. Courses: 2 + 3 + 4 + 1 + 3 + 4 = 17.
+App hours are 2 h a level (four lessons of about 14 min, a 20 min review and a 45 min homework) plus 1 h for the topic exam. Check: 2 x 63 + 6 = 132, and 15 + 21 + 33 + 11 + 25 + 27 = 132. Stored: 40 + 150 + 240 + 120 + 200 + 200 = 950, and (40 + 120) + (150 + 200) + (240 + 200) = 950. Outside: 950 - 132 = 818, and 25 + 129 + 207 + 109 + 175 + 173 = 818. Months: 950 / 15 = 63.3 weeks, or 14.6 months at 4.33 weeks a month. Courses: 2 + 3 + 4 + 1 + 3 + 4 = 17.
 
 ## Build order
 
@@ -164,4 +164,5 @@ Engine item 0 and the spike first, then items 1 to 7, then waves of three or fou
 | 15 | `interp` L4 downscoped | F15 |
 | 16 | Licence and credit notes | F16 |
 | 17 | Totals 950, 126, 824; strand shown apart | F17 |
+| 19 | `ai-use`, `info` and `llm-apps` given a third level each (session AK, after approval): the validator requires 3 to 5 levels a course | main session |
 | 18 | 1.12 opens on its edges; performance tasks; no training in exams; strand final exam kind | F18 |
