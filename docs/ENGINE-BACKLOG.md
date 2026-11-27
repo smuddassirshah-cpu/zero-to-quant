@@ -2963,3 +2963,19 @@ Every item below is a post-completion item: it does not gate DONE. Each item's o
 1215 status: done. `test-vendor-fallback.mjs --vendor <dir>` plays `numpy-pandas/l1-not-lists` (its code imports NumPy) from `vendor/pyodide/` with jsDelivr blocked, and `--absent` has the 1214 cases (CDN refusing and CDN holding the connection open, lesson Python and C++, drill page; each under 20 s, neutral heading, Try again).
 1216 status: done. `acceptance.yml` caches `app/vendor/{pyodide,mathlive,compute-engine,yowasp-clang}` with `actions/cache@v4`, keyed on the versions and the hash of `fetch-vendor.sh`; a warm run downloads nothing. `docs/CI.md` "The vendor cache"; `test-ci-cache-keys.mjs` checks the key.
 
+
+### Engine pass AK (trainer and data): `docs/reports/engine-pass-ak-trainer.md`
+Source: `docs/briefs/ai-strand-curriculum.md` "Engine work" items 4, 6, 7; findings F9, F13, F16.
+
+1237. [Must] `trainer` widget: a live, never graded training run streaming `report(step, loss)` (or printed `step N loss X` lines) into a `series` canvas, with Run and Stop, a step cap and a wall-clock cap.
+1238. [Must] Data files for the AI strand under `content/data/ai/` with licences and credit lines (`names.txt`, Tiny Shakespeare as a 250,000-character slice plus its 65-character vocabulary).
+1239. [Should] Confirm `sklearn.datasets.load_digits` works offline in Pyodide and record the UCI CC BY 4.0 credit line.
+1240. [Should] A drill pattern for `ml-int` level 2 (from-scratch Python under time).
+1241. [Should] `series` canvas `params.length`, so a series can be drawn before its values exist.
+
+Status block (engine pass AK):
+- 1237: done. Widget in `js/engine/widgets/code.js` (shares `Py` and `Editor`), worker exposes `__zq_emit__`, `Py.stop()`, player treats `trainer` as ungraded, validator rules, `tools/test-trainer.mjs` (10 cases in Pyodide) and `tools/test-validate-trainer.mjs` (20 cases), AUTHORING "trainer". Not browser-tested on a screen: no content uses it yet.
+- 1238: done. `content/data/ai/names.txt` (MIT, verified) and `tiny-shakespeare.txt` (first 250,000 characters of the 1,115,394, to fit the 256 KB cap; 62 of the 65 characters) and `tiny-shakespeare-vocab.json` (all 65, from the full text); text public domain; the char-rnn repository's own licence could not be read from the sandbox, stated in `content/data/ai/README.md`. The cap is unchanged.
+- 1239: done. `load_digits()` loads offline in Pyodide (scikit-learn 1.6.1, 1,797 by 64); credit line in `content/data/ai/README.md`.
+- 1240: done, nothing added. The drill form already supports timed from-scratch NumPy tasks; the recipe and limits are in AUTHORING section 5 (no `budget` on a drill, `pattern` optional, no ML slug in `PATTERNS`).
+- 1241: done. `params.length` on `series`, documented in README-B.

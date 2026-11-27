@@ -199,6 +199,7 @@
     };
     return {
       ensure() { if (status === 'idle') start(); },
+      stop() { if (run) { end({ stopped: true }); start(true); } },   // ENGINE-BACKLOG 1237: the trainer's Stop button ends the run by replacing the worker
       retry() { if (status === 'unavailable') start(); },   // ENGINE-BACKLOG 1214: the player's Try again after "Python could not load"
       exec, sub(f) { subs.add(f); return () => subs.delete(f); },
       get status() { return status; }, get reason() { return reason; },
@@ -634,6 +635,183 @@ def __zq_case(_i):
       reset() { clearTimeout(saveT); if (D) draft(null); quiet = true; ed.set(spec.starter || ''); quiet = false; res.innerHTML = ''; cache = null; locked = false; ed.readOnly(false); el.classList.remove('is-ok', 'is-bad', 'wd-rev'); sync(); },
       focus() { ed.ta.focus({ preventScroll: true }); },
       destroy() { alive = false; unsub(); if (D && saveT) { clearTimeout(saveT); draft(ed.value === (spec.starter || '') ? null : ed.value); } },
+    };
+  });
+  /* ---------- trainer (ENGINE-BACKLOG 1237): a live, never graded training run ----------
+     A mode of this file, not a file of its own, because it needs the shared Python runner (Py) and the Editor above. The learner's (or the
+     author's supplied) loop runs in the same worker as a code widget; report(step, loss, name=value, ...) in that code, or a printed line
+     "step 12 loss 0.531", sends a point to the screen's series canvas as it happens. Run and Stop buttons; the run ends by itself at the
+     step cap (spec.steps, default 500, counted in report calls) or the wall-clock cap (spec.maxSeconds, default 120, counted from the first
+     line of the learner's code, package loading excluded). The widget never grades: the player treats it as a read-only screen, so Continue
+     is always open, and leaving the screen stops a run. */
+  const trainPlan = (spec, src, dataTexts) => {
+    const steps = Math.max(1, Math.min(20000, Math.round(+spec.steps || 500))), secs = Math.max(1, Math.min(300, +spec.maxSeconds || 120));
+    const files = dataTexts && Object.keys(dataTexts).length ? dataTexts : null;
+    const pre = String(spec.prelude || '');
+    const code = `${importHint(src, pre, ...Object.values(files || {}))}${filesCode(files)}import sys as _zs, time as _zt, json as _zj, math as _zm, re as _zre, linecache as _zlc
+__ZQ_SRC = ${JSON.stringify(src)}
+__ZQ_PRE = ${JSON.stringify(pre)}
+__ZQ_MAX = ${steps}
+__ZQ_MS = ${Math.round(secs * 1000)}
+_zlc.cache['solution.py'] = (len(__ZQ_SRC), None, __ZQ_SRC.splitlines(True), 'solution.py')
+class _ZQStop(BaseException):
+    pass
+_ZQ_LINE = _zre.compile(r'^\\s*step\\D*(\\d+)\\D+?loss\\D*?(-?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?|nan|inf)\\s*$', _zre.I)
+def __zq_train(_i):
+    _emit = __import__('builtins').__zq_emit__
+    _st = {'n': 0, 'last': _zt.perf_counter(), 'rows': []}
+    _t0 = _zt.perf_counter()
+    def _num(v):
+        try:
+            f = float(v)
+        except Exception:
+            return None
+        return f if _zm.isfinite(f) else None
+    def _flush():
+        if _st['rows']:
+            _emit(_zj.dumps({'kind': 'steps', 'rows': _st['rows']}))
+            _st['rows'] = []
+    def report(step=None, loss=None, **extra):
+        _st['n'] += 1
+        row = {'i': _st['n'] - 1, 'step': _num(step), 'loss': _num(loss)}
+        for k, v in extra.items():
+            row[k] = _num(v)
+        _st['rows'].append(row)
+        now = _zt.perf_counter()
+        if now - _st['last'] >= 0.05:
+            _flush()
+            _st['last'] = now
+        if _st['n'] >= __ZQ_MAX:
+            raise _ZQStop('steps')
+        if (now - _t0) * 1000 >= __ZQ_MS:
+            raise _ZQStop('time')
+    class _Tee:
+        def __init__(self, inner):
+            self.inner, self.buf = inner, ''
+        def write(self, s):
+            self.inner.write(s)
+            self.buf += s
+            while '\\n' in self.buf:
+                ln, self.buf = self.buf.split('\\n', 1)
+                m = _ZQ_LINE.match(ln)
+                if m:
+                    report(int(m.group(1)), float(m.group(2)))
+            return len(s)
+        def flush(self):
+            self.inner.flush()
+    _ns = {'__name__': '__main__', 'report': report, '__learner_source__': __ZQ_SRC}
+    _old = _zs.stdout
+    _zs.stdout = _Tee(_old)
+    why = 'done'
+    try:
+        if __ZQ_PRE:
+            exec(compile(__ZQ_PRE, '<prelude>', 'exec'), _ns)
+        exec(compile(__ZQ_SRC, 'solution.py', 'exec'), _ns)
+    except _ZQStop as _s:
+        why = str(_s)
+    finally:
+        _zs.stdout = _old
+        _flush()
+    _emit(_zj.dumps({'kind': 'stopped', 'why': why, 'n': _st['n'], 'ms': (_zt.perf_counter() - _t0) * 1000}))
+    return 1.0
+`;
+    return { code, steps, ms: Math.round(secs * 1000) };
+  };
+  Z.widgets.trainPlan = trainPlan;   // read by tools/test-trainer.mjs
+
+  Z.widgets.register('trainer', (host, spec, ctx) => {
+    const ids = Array.isArray(spec.series) && spec.series.length ? spec.series.map(String) : ['loss'];
+    const cap = Math.max(1, Math.min(20000, Math.round(+spec.steps || 500))), secs = Math.max(1, Math.min(300, +spec.maxSeconds || 120));
+    const dataMap = spec.data && typeof spec.data === 'object' && Object.keys(spec.data).length && Z.content && Z.content.dataFiles ? spec.data : null;
+    const editable = spec.editable !== false;
+    const idle = `Not run yet. It stops by itself after ${cap.toLocaleString('en-GB')} steps or ${secs} seconds.`;
+    const el = Z.h(`<div class="wd-code wd-trainer">
+      <div class="wd-code-head">
+        <span class="t-label">Training run</span>
+        <span class="wd-py t-caption" aria-live="polite"></span>
+        <button type="button" class="btn secondary wd-run" disabled>${Z.icon('play', 'sm')} Run</button>
+        <button type="button" class="btn secondary wd-stop" disabled>Stop</button>
+      </div>
+      <div class="wd-ed"></div>
+      <p class="t-caption wd-tr-live" aria-live="polite">${idle}</p>
+      ${spec.how ? `<p class="t-caption wd-code-how">${Z.grade.inline(spec.how)}</p>` : ''}
+      <div class="wd-res" aria-live="polite"></div>
+    </div>`);
+    host.append(el);
+    const runBtn = el.querySelector('.wd-run'), stopBtn = el.querySelector('.wd-stop'), pyEl = el.querySelector('.wd-py'), live = el.querySelector('.wd-tr-live'), res = el.querySelector('.wd-res'), edHost = el.querySelector('.wd-ed');
+    let alive = true, busy = false, stopping = false, series = {}, flushT = 0, last = {}, count = 0, saveT = 0;
+    const D = Z.state && Z.state.drills && typeof Z.state.drills.draft === 'function' && ctx.draftKey && editable ? Z.state.drills : null;
+    const draft = (v) => { try { return D ? D.draft(ctx.draftKey, v) : null; } catch (e) { console.error(e); return null; } };
+    const saved = D ? draft() : null;
+    const ed = Editor(edHost, { value: typeof saved === 'string' && saved.trim() ? saved : spec.starter || '', label: 'Training code', onInput: () => {
+      if (D) { clearTimeout(saveT); saveT = setTimeout(() => draft(ed.value === (spec.starter || '') ? null : ed.value), 400); }
+    }, onRun: () => run() });
+    if (!editable) ed.readOnly(true);
+    const sync = (s = Py.status) => {
+      if (!alive) return;
+      pyEl.textContent = { idle: 'Python not loaded', loading: 'Loading Python', restarting: 'Restarting Python', ready: 'Python ready', running: busy ? 'Running' : 'Python busy', unavailable: 'Python is not available here' }[s] || '';
+      pyEl.dataset.s = s;
+      runBtn.disabled = busy || s !== 'ready';
+      stopBtn.disabled = !busy || stopping;
+    };
+    const unsub = Py.sub(sync);
+    Py.ensure(); sync();
+    const pre = (t, cls = 'wd-res-out') => `<pre class="${cls} t-code">${Z.esc(t)}</pre>`;
+    const fmt = (v) => (v == null ? 'n/a' : Math.abs(v) >= 1000 || (v !== 0 && Math.abs(v) < 0.001) ? v.toExponential(2) : (+v.toFixed(4)).toString());
+    const status = () => `${count.toLocaleString('en-GB')} of ${cap.toLocaleString('en-GB')} steps. ` + ids.map(id => `${id} ${fmt(last[id])}`).join(', ') + '.';
+    const push = () => {
+      flushT = 0;
+      if (!alive) return;
+      if (ctx.canvas && ctx.canvas.set) {
+        const patch = {}; ids.forEach(id => { patch[id] = { values: series[id].slice() }; });
+        try { ctx.canvas.set({ series: patch }, { instant: true }); } catch (e) { console.error(e); }
+      }
+      if (busy) live.textContent = 'Running: ' + status();
+    };
+    const clear = () => { series = {}; last = {}; ids.forEach(id => { series[id] = []; last[id] = null; }); count = 0; };
+    clear();
+    const take = (rows) => rows.forEach((r) => {
+      count = Math.max(count, r.i + 1);
+      ids.forEach((id, k) => { const v = k === 0 ? r.loss : r[id]; if (v !== undefined) { series[id][r.i] = v; if (v != null) last[id] = v; } });
+    });
+    const run = async () => {
+      if (busy || Py.status !== 'ready') return;
+      let files = null;
+      if (dataMap) { try { files = await Z.content.dataFiles(dataMap); } catch { res.innerHTML = '<p class="t-caption">The data files for this run could not be loaded. Check the connection and press Run again.</p>'; return; } }
+      if (!alive || busy || Py.status !== 'ready') return;
+      const plan = trainPlan(spec, ed.value, files);
+      busy = true; stopping = false; clear(); res.innerHTML = '';
+      push(); live.textContent = 'Starting.'; sync();
+      let why = null, err = null, out = '';
+      Py.exec(plan.code, { fn: '__zq_train', compare: 'isclose', prelude: '', tests: [{ args: '(0,)', expected: 1 }] }, plan.ms + 8000,
+        (d) => {
+          if (d.kind === 'steps') { take(d.rows); if (!flushT) flushT = setTimeout(push, 80); }
+          else if (d.kind === 'stopped') why = d.why;
+          else if (d.kind === 'error') err = d.error;
+          else if (d.kind === 'test') { if (d.error) err = d.error; out = quietLib(d.stdout); }
+        },
+        (info) => {
+          busy = false; clearTimeout(flushT);
+          if (!alive) return;
+          const note = info.stopped ? 'Stopped.' : info.pkgFail ? 'A package your code imports could not be downloaded (' + info.pkgFail + ').' : info.timeout ? `Stopped after ${secs} s without finishing: a loop that never calls report(), or one step that takes too long.` : info.crash ? 'Python stopped: ' + info.crash : why === 'steps' ? `Reached the ${cap.toLocaleString('en-GB')}-step cap.` : why === 'time' ? `Stopped at the ${secs} s time cap.` : err ? 'The code stopped with an error.' : 'The code ran to the end.';
+          push();
+          live.textContent = note + ' Last run: ' + status();
+          res.innerHTML = (err ? pre(cleanTb(err), 'wd-res-err') : '') + (out.trim() ? `<div class="t-caption">Your code printed</div>${pre(out.replace(/\n$/, ''))}` : '');
+          sync();
+        },
+        (msg) => { if (alive && /^Loading\b/.test(msg)) live.textContent = msg.replace(/\s*$/, '') + '. The first run that imports a package fetches it once.'; });
+      sync();
+    };
+    runBtn.addEventListener('click', run);
+    stopBtn.addEventListener('click', () => { if (!busy) return; stopping = true; sync(); Py.stop(); });
+    return {
+      el,
+      value: () => ({ code: ed.value, steps: count }),
+      ready: () => false, dirty: () => false,
+      grade: async () => ({ ok: true, key: null }),
+      reset() { if (busy) Py.stop(); clear(); res.innerHTML = ''; live.textContent = idle; if (editable) { clearTimeout(saveT); if (D) draft(null); ed.set(spec.starter || ''); } },
+      focus() { if (editable) ed.ta.focus({ preventScroll: true }); },
+      destroy() { alive = false; unsub(); clearTimeout(flushT); if (busy) Py.stop(); if (D && saveT) { clearTimeout(saveT); draft(ed.value === (spec.starter || '') ? null : ed.value); } },
     };
   });
 })();

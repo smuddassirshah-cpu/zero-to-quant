@@ -293,6 +293,7 @@ One or more time series, with optional candles.
 - `candles: true` draws the `ohlc` arrays as candles.
 - `format`: `"pct"` (values are fractions), `"money"` (with `currency`, default `$`) or none. `money: "£"` is the same as `format: "money"` with that currency, and its `{value}` labels keep two places (£12.50). `decimals: n` fixes the places of `{value}` labels in any format, keeping trailing zeros.
 - A `null` in `values` leaves a gap: the line lifts and starts again at the next number (use it for a missing day or a series that starts late).
+- `length: n` fixes the x range at n points when the values arrive later (the `trainer` widget fills `state.series.<id>.values` as a run goes; give `y` too, and declare each series with `values: []`).
 - `y: [min, max]`, `baseline` (for example 0 for returns), `yLabel`, `xLabel`, `indexFrom`, `height`, `drawdownLabel`.
 - Each series is labelled directly at its line end; there is no legend.
 - `title`: a heading above the plot. `dateFormat` (with `x: "dates"`): tick labels by `%Y`, `%y`, `%m`, `%d`, `%e`, `%b`, `%B`, for example `"%b %Y"` (Jan 2024) or `"%d/%m"`, to match matplotlib's `DateFormatter`.

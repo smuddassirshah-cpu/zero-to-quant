@@ -17,7 +17,7 @@
       if (+sp.band > 0 && (sp.running || 'mean') === 'mean') { const k = +sp.band, lo = [], hi = []; let sum = 0, sq = 0; out.forEach((v, i) => { sum += v; sq += v * v; const m = sum / (i + 1), sd = i > 0 ? Math.sqrt(Math.max(0, (sq - (i + 1) * m * m) / i)) : NaN, half = k * sd / Math.sqrt(i + 1); lo.push(i > 0 ? m - half : NaN); hi.push(i > 0 ? m + half : NaN); }); vals.band = { lo, hi }; }
       return vals; } catch (e) { console.warn('series sim:', e.message); return []; } };
     const list0 = (params.series || []).map((s, i) => { const id = s.id || 's' + i; if (!s.sim) return { ...s, id, slot: s.colour || i + 1 }; const v = simValues(s.sim, { ...(params.params || {}) }); return { ...s, id, slot: s.colour || i + 1, values: v, band: v.band || s.band || null }; });
-    const n = Math.max(1, ...list0.map((s) => (s.values || s.ohlc || []).length));
+    const n = Math.max(1, Math.round(+params.length || 0), ...list0.map((s) => (s.values || s.ohlc || []).length)); // params.length: the x range when the values arrive later (the trainer widget)
     const dates = params.x === 'dates' ? (params.dates || []).map((d) => new Date(d + (String(d).length <= 10 ? 'T00:00:00Z' : ''))) : null;
     const fmtPct = (v, st) => K.fmtTick(v * 100, st * 100) + '%';
     const fmtY = params.format === 'pct' ? fmtPct : params.format === 'money' || params.money ? (v, st) => (v < 0 ? '−' : '') + (params.money || params.currency || '$') + K.fmtTick(Math.abs(v), st) : null;
