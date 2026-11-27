@@ -43,6 +43,7 @@ for (const id of readdirSync(join(C, 'courses')).sort()) {
   const p = join(C, 'courses', id, 'course.json');
   if (!existsSync(p)) continue;
   const cj = read(p);
+  if ((cj.strand ?? cur.courses?.[id]?.strand) === 'ai') continue;   // the AI strand is outside role readiness (ENGINE-BACKLOG 1218): no status, no sums
   const c = { id, topic: cj.topic, stage: topicStage[cj.topic], mapped: 0, written: 0, edges: [], levelWritten: {} };
   for (const lv of cj.levels ?? []) {
     c.levelWritten[`L${lv.n}`] = 0;

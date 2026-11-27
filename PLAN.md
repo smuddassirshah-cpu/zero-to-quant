@@ -316,7 +316,7 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 - [x] Final report to the user; create `DONE` (session AI; `docs/reports/final-report-ai.md`; CI run 43 at 529f3c3a green, full)
 
 ### 8. AI strand (user, 27 Nov; curriculum `docs/briefs/ai-strand-curriculum.md`, review `docs/reviews/review-ai-strand.md`; sessions separate from 5b, next task in `NEXT_PROMPT-AI.md`)
-- [ ] A1. Engine item 0: strand `ai` (validator, `content.js`, badge, own visibility setting; out of the stage count, Today unless opted in, quant-path hours, census, readiness, stage papers), with a fixture course in `tools/fixtures/mini-app` and tests
+- [x] A1. Engine item 0 (session AK; ENGINE-BACKLOG 1218, `docs/reports/engine-pass-ak.md`; open: Learn and Review list AI topics as ordinary rows, stage-exam `draw` sources not checked for ai origin): strand `ai` (validator, `content.js`, badge, own visibility setting; out of the stage count, Today unless opted in, quant-path hours, census, readiness, stage papers), with a fixture course in `tools/fixtures/mini-app` and tests
 - [x] A2. Timing spike (session AK; `docs/reports/ai-timing-spike.md`; phone figures still to take by hand with `app/tools/ai-timing/phone.html`): Pyodide NumPy throughput, digits CNN, 500 steps of a one-block GPT, `load_digits` offline, against the 5 s per-case limit (desktop Chromium in a session; the user's phone by hand)
 - [ ] A3. Engine items 1 to 7: `graph` gradient line and edge width, `matrix` heat fill, `grid` arrows, `trainer` widget, data files with licences, `ml-int` drill pattern, bank family
 - [ ] A4. Maps: six topics in `curriculum.json`, 17 `course.json` maps with `strand: "ai"` and `requires` with why; a brief per course in `docs/briefs/<course>.md` (`## Level n`)

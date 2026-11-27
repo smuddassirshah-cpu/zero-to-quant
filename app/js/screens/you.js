@@ -375,7 +375,9 @@
               <h3 class="t-overline muted">Study plan</h3>
               ${seg('goal', 'Weekly goal', [[5, '5 h'], [10, '10 h'], [15, '15 h'], [25, '25 h']], P.weeklyGoalH, goalHelp(P.weeklyGoalH))}
               ${seg('track', 'Track', TRACKS, P.track, 'Stages 0 and 1 are the same for every track. The track shapes Stage 2 onwards and the Paths view on Learn.')}
-              ${sw('quantonly', 'Quant path only', 'Hides the pure maths courses and topics, and leaves them out of stage progress. They stay one tap away if you open them from a link.', !!S.settings.quantOnly)}
+              ${sw('quantonly', 'Quant path only', 'Hides the pure maths courses and topics and the AI strand, and leaves them out of stage progress. They stay one tap away if you open them from a link.', !!S.settings.quantOnly)}
+              ${sw('aistrand', 'Show the AI strand', 'The optional AI courses sit beside the quant path and never count towards a stage, a stage test or role readiness. Off hides them. Quant path only hides them too.', S.settings.aiStrand !== false)}
+              ${sw('aitoday', 'AI strand in Today', 'Off keeps AI courses out of Today and the up-next course. On lets them appear in Today and as your up-next course.', !!S.settings.aiToday)}
               ${sw('strictprereqs', 'Strict prerequisites', `On keeps a lesson locked until the levels it relies on are met, with no way round except a test-out. Off adds Open anyway to the locked card.${Z.prereq && Z.prereq.openedCount() ? ` Opened early so far: ${Z.prereq.openedCount()}.` : ''}`, S.settings.strictPrereqs !== false)}
               ${sw('streak', 'Streak', 'Off hides the streak count, the bolt and the calendar everywhere.', !streakOff())}
               ${act('setup', 'Run setup again', 'Change your name, track, weekly hours or starting stage. Your progress stays.', 'Run setup', 'replay')}
@@ -684,6 +686,8 @@
           paint.head(); paint.hours();
         } else if (t.name === 'yu-track') { S.profile.set({ track: t.value }); paint.head(); }
         else if (t.id === 'yu-quantonly') { S.settings.set({ quantOnly: t.checked }); buildTopics(); paint.map(); paint.head(); }
+        else if (t.id === 'yu-aistrand') { S.settings.set({ aiStrand: t.checked }); buildTopics(); paint.map(); paint.head(); }
+        else if (t.id === 'yu-aitoday') { S.settings.set({ aiToday: t.checked }); }
         else if (t.id === 'yu-strictprereqs') { S.settings.set({ strictPrereqs: t.checked }); }
         else if (t.id === 'yu-streak') { S.settings.set({ streakMode: t.checked ? 'daily' : 'off' }); applyStreakMode(); Z.refreshShell(); }
       });

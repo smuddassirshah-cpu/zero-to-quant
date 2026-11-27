@@ -217,9 +217,9 @@
         const s = stageOf(view.stage);
         const ex = exam('stage-' + s.id);
         const done = ex.passed.length > 0;
-        const req = s.topics.filter(t => !t.optional);
+        const req = C.pathTopics(s).filter(t => !t.optional);   // the AI strand's topics never count towards a stage
         const nPassed = req.filter(passed).length;
-        const opt = s.topics.filter(t => t.optional);
+        const opt = C.pathTopics(s).filter(t => t.optional);
         const exit = /^[A-Z][a-z]/.test(s.exit) ? s.exit.charAt(0).toLowerCase() + s.exit.slice(1) : s.exit;
         const facts = [esc(s.name), both(s), `<span class="zl-months">about ${window.ZQ.hours ? window.ZQ.hours.months(s.hours) : MONTHS_FALLBACK[s.id]} months at 15 h a week</span>`,
           done ? `Exit test passed with ${Math.max(...ex.passed.map(pctOf))}%` : `${nPassed} of ${req.length} topics passed`,
@@ -280,7 +280,7 @@
         const rl = Z.prereq && Z.prereq.routeLimitsForCourse ? Z.prereq.routeLimitsForCourse(c.id) : [];   // ENGINE-BACKLOG 551: the computed route label replaces the static "route limited" note generated into readiness.json
         const lim = rl.length && /^route limited/i.test(C.readiness.limited(c.id)) ? '' : C.readiness.limited(c.id);
         const pp = C.prepForCourse(c.id), tags = C.strandBadge(c.strand, c.strandNote) + C.prepChip(pp);
-        const label = `${c.name}.${lim ? ` ${lim}.` : ''}${rl.map(x => ` ${Z.prereq.routeText(x)}.`).join('')}${c.strand ? ` ${c.strand === 'pure' ? 'Pure maths' : 'Quant'}.` : ''}${pp.length ? ' Interview prep.' : ''} ${counts}${sess ? `, includes ${sess.charAt(0).toLowerCase() + sess.slice(1)}` : ''}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
+        const label = `${c.name}.${lim ? ` ${lim}.` : ''}${rl.map(x => ` ${Z.prereq.routeText(x)}.`).join('')}${c.strand ? ` ${c.strand === 'pure' ? 'Pure maths' : c.strand === 'ai' ? 'AI strand' : 'Quant'}.` : ''}${pp.length ? ' Interview prep.' : ''} ${counts}${sess ? `, includes ${sess.charAt(0).toLowerCase() + sess.slice(1)}` : ''}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
         return `<button type="button" class="zl-card${cur ? ' is-current' : ''}${mapOnly ? ' is-map' : ''}" data-track="${t.track}" data-course="${c.id}" aria-label="${esc(label)}">
             <span class="zl-art" aria-hidden="true">${ZQArt(c.art)}</span>
             <span class="zl-body">

@@ -97,7 +97,8 @@
   const fallbackCourse = (Z) => {
     const start = Number(Z.state.profile.startStage) || 0;
     const all = Z.content.courses();
-    const c = all.find(x => x.stage === start) || all[0];
+    const quant = all.filter(x => x.strand !== 'ai');   // the AI strand is never the fallback
+    const c = quant.find(x => x.stage === start) || quant[0] || all[0];
     return c ? c.id : null;
   };
 

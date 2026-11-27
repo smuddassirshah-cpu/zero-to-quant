@@ -2326,7 +2326,8 @@ const checkExam = (file, id, doc, cur) => {
     req(file, '', doc, ['id', 'stage', 'parts']);
     if (!cur.stages.has(Number(doc.stage))) err(file, 'stage', `unknown stage "${doc.stage}"`);
     if (id !== `stage-${doc.stage}`) err(file, 'id', `a stage exam for stage ${doc.stage} is named stage-${doc.stage}`);
-    const allSkills = new Set(Object.values(cur.courseDocs).flatMap(c => Object.keys((c || {}).skills || {})));
+    /* a stage exam never tests the optional AI strand (strand "ai", ENGINE-BACKLOG 1218): its courses' skills are not offered to a stage paper */
+    const allSkills = new Set(Object.values(cur.courseDocs).filter(c => !c || c.strand !== 'ai').flatMap(c => Object.keys((c || {}).skills || {})));
     (doc.parts || []).forEach((p, i) => {
       if (!['paper', 'check'].includes(p.kind)) err(file, `parts[${i}].kind`, 'kind is paper or check');
       if (!p.name) err(file, `parts[${i}].name`, 'required field missing');
@@ -2567,6 +2568,7 @@ const lessonMinutesManifest = {};   // session Y: "course/lesson" -> the lesson'
 const setMinutesManifest = {};   // session Y: "course/review-1" -> minutes, only for a review or homework file that states `minutes` (none does yet); the others take the allowance in js/hours.js
 const selfExams = [];   // exam ids that hold a self-marked item or a check part (same test as ZQ.state.provenance); js/content.js reads it to split old exam passes
 const holdsSelf = (d) => { const L = (w) => !!w && w.kind === 'longform'; const it = (x) => !!x && (x.kind === 'longform' || L(x.widget) || (Array.isArray(x.parts) && x.parts.some(q => q && L(q.widget)))); return (Array.isArray(d.items) && d.items.some(it)) || (Array.isArray(d.parts) && d.parts.some(p => p && (p.kind === 'check' || (Array.isArray(p.items) && p.items.some(it))))); };
+const aiCourse = (id) => ((cur.courseDocs[id] || {}).strand || (C.courses[id] || {}).strand) === 'ai';
 const writtenByCourse = new Map();   // course id -> Set of written lesson ids, for the prerequisite rules
 const summary = [];
 const skillOwner = new Map();
@@ -2589,8 +2591,8 @@ Object.keys(C.courses || {}).forEach(cid => {
   if (D.name !== meta.name) warn(file, 'name', 'name differs from curriculum.json');
   if (ART && !ART.has(D.art)) err(file, 'art', `unknown art id "${D.art}"`);
   checkText(file, 'description', D.description); checkText(file, 'name', D.name);
-  /* strand ("quant" or "pure") and its roles note: both or neither (docs/AUTHORING.md, strand) */
-  if (D.strand !== undefined && D.strand !== 'quant' && D.strand !== 'pure') err(file, 'strand', `strand must be "quant" or "pure" (found ${JSON.stringify(D.strand)})`);
+  /* strand ("quant", "pure" or "ai") and its roles note: both or neither (docs/AUTHORING.md, strand) */
+  if (D.strand !== undefined && D.strand !== 'quant' && D.strand !== 'pure' && D.strand !== 'ai') err(file, 'strand', `strand must be "quant", "pure" or "ai" (found ${JSON.stringify(D.strand)})`);
   if (D.strand !== undefined && (typeof D.strandNote !== 'string' || !D.strandNote.trim())) err(file, 'strandNote', 'strandNote (a non-empty string naming the roles) is required when strand is set');
   if (D.strand === undefined && D.strandNote !== undefined) err(file, 'strandNote', 'strandNote needs strand');
   if (typeof D.strandNote === 'string') checkText(file, 'strandNote', D.strandNote);
@@ -2690,6 +2692,12 @@ Object.keys(C.courses || {}).forEach(cid => {
   }
   writtenByCourse.set(cid, new Set(written));
   summary.push({ cid, topic: meta.topic, lessons: lessonTotal, levels: levels.length, written: written.length, unwritten, reviews: levels.length - reviewsMissing, homework: levels.length - homeworkMissing });
+});
+
+/* A topic holds AI-strand courses only or none (strand "ai", ENGINE-BACKLOG 1218): a mixed topic would put quant-path work behind an optional badge */
+cur.topics.forEach((t, tid) => {
+  const n = (t.courses || []).filter(aiCourse).length;
+  if (n && n < (t.courses || []).length) err(curFile, `topic ${tid}`, 'a topic holds only AI-strand courses (strand "ai") or none of them, not a mix');
 });
 
 /* The fluency fixtures (tools/fixtures/fluency, never content): checked like a real set, so the sampler and the rules are exercised on every run */
@@ -2877,8 +2885,9 @@ else if (prepDoc.missing && PREP_FILE) err(prepFile, '', 'the file given to --pr
       KEYS.forEach(k => {
         const r = d.roles[k];
         if (!isObj(r) || !isObj(r.courses) || !isObj(r.totals) || !isObj(r.mocks)) { err(rf, `roles.${k}`, 'needs courses, totals and mocks'); return; }
-        courseIds.forEach(c => { if (!['required', 'recommended', 'optional'].includes(r.courses[c])) err(rf, `roles.${k}.courses.${c}`, 'status must be required, recommended or optional'); });
-        Object.keys(r.courses).forEach(c => { if (!courseIds.includes(c)) err(rf, `roles.${k}.courses.${c}`, 'unknown course'); });
+        /* an AI-strand course is outside role readiness (strand "ai", ENGINE-BACKLOG 1218): it has no status and may not be listed */
+        courseIds.filter(c => !aiCourse(c)).forEach(c => { if (!['required', 'recommended', 'optional'].includes(r.courses[c])) err(rf, `roles.${k}.courses.${c}`, 'status must be required, recommended or optional'); });
+        Object.keys(r.courses).forEach(c => { if (!courseIds.includes(c)) err(rf, `roles.${k}.courses.${c}`, 'unknown course'); else if (aiCourse(c)) err(rf, `roles.${k}.courses.${c}`, 'an AI-strand course is not part of role readiness: leave it out'); });
         ['required', 'recommended', 'header'].forEach(t => { if (!isObj(r.totals[t]) || typeof r.totals[t].total !== 'number' || typeof r.totals[t].hours !== 'number') err(rf, `roles.${k}.totals.${t}`, 'needs numeric total and hours'); });
       });
       Object.keys(d.limited || {}).forEach(c => { if (!courseIds.includes(c)) err(rf, `limited.${c}`, 'unknown course'); });

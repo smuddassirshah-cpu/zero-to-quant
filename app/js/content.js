@@ -53,12 +53,20 @@
   };
 
   /* ---------- Registry over the curriculum ---------- */
-  /* Strands: a course.json may carry strand ("quant" or "pure") and strandNote (the roles). The "Quant path only"
-     setting hides pure courses and the topics that hold only pure courses from stages() and courses(); topic(),
-     course() and stage() still find everything, so a link or a saved resume point to a pure course keeps working. */
+  /* Strands: a course.json may carry strand ("quant", "pure" or "ai") and strandNote (the roles). The "Quant path only"
+     setting hides pure and ai courses and the topics that hold only those from stages() and courses(); topic(),
+     course() and stage() still find everything, so a link or a saved resume point to a hidden course keeps working.
+     The AI strand (ENGINE-BACKLOG 1218) is optional and never part of the quant path: settings.aiStrand (default true) shows it,
+     "Quant path only" hides it too, and it stays out of the stage topic count, stage hours, role readiness and, unless
+     settings.aiToday is on, Today's queue. Topics hold only ai courses or none, so topicStrand(t) === 'ai' marks an AI topic. */
   const quantOnly = () => { try { const S = window.ZQ && window.ZQ.state; return !!(S && S.settings && S.settings.quantOnly); } catch { return false; } };
-  const isPure = (id) => { const m = (curriculum && curriculum.courses[id]) || {}, d = courseDocs[id] || {}; return (d.strand || m.strand) === 'pure'; };
-  const strandOfCourse = (id) => { const m = (curriculum && curriculum.courses[id]) || {}, d = courseDocs[id] || {}; const v = d.strand || m.strand; return v === 'pure' || v === 'quant' ? v : null; };
+  const aiShown = () => { try { const S = window.ZQ && window.ZQ.state; return !quantOnly() && !(S && S.settings && S.settings.aiStrand === false); } catch { return true; } };
+  const aiToday = () => { try { const S = window.ZQ && window.ZQ.state; return aiShown() && !!(S && S.settings && S.settings.aiToday); } catch { return false; } };
+  const strandOfCourse = (id) => { const m = (curriculum && curriculum.courses[id]) || {}, d = courseDocs[id] || {}; const v = d.strand || m.strand; return v === 'pure' || v === 'quant' || v === 'ai' ? v : null; };
+  const isPure = (id) => strandOfCourse(id) === 'pure';
+  const isAi = (id) => strandOfCourse(id) === 'ai';
+  /* hidden by a setting: pure under "Quant path only"; ai under "Quant path only" or when the AI strand is switched off */
+  const isHidden = (id) => (isPure(id) ? quantOnly() : isAi(id) ? !aiShown() : false);
   /* A topic has a strand when every one of its courses carries the same one; mixed or untagged topics have none */
   const topicStrand = (t) => {
     const ids = (t && t.courses) || [];
@@ -69,22 +77,22 @@
     const notes = [...new Set((ids || []).map(id => (courseDocs[id] || {}).strandNote).filter(Boolean))];
     return notes.join(' ');
   };
-  const STRAND_NAME = { pure: 'Pure maths', quant: 'Quant' };
+  const STRAND_NAME = { pure: 'Pure maths', quant: 'Quant', ai: 'AI strand' };
   const escAttr = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   /* The badge markup for a strand with its note as the tooltip and the screen-reader detail; '' for no strand */
   const strandBadge = (strand, note = '', cls = '') => {
     if (!STRAND_NAME[strand]) return '';
-    const n = escAttr(note || (strand === 'pure' ? 'Pure maths: not needed to be hired.' : 'Quant path: used in quant roles.'));
+    const n = escAttr(note || (strand === 'pure' ? 'Pure maths: not needed to be hired.' : strand === 'ai' ? 'AI strand: optional, outside the quant path and every stage test.' : 'Quant path: used in quant roles.'));
     return `<span class="strand-badge is-${strand}${cls ? ' ' + cls : ''}" title="${n}" aria-label="${STRAND_NAME[strand]}. ${n}">${STRAND_NAME[strand]}</span>`;
   };
   const allStages = () => (curriculum ? curriculum.stages : []);
   const stages = () => {
     const all = allStages();
-    if (!quantOnly()) return all;
+    if (!quantOnly() && aiShown()) return all;
     return all.map(s => ({
       ...s,
       topics: s.topics.flatMap(t => {
-        const cs = t.courses || [], kept = cs.filter(id => !isPure(id));
+        const cs = t.courses || [], kept = cs.filter(id => !isHidden(id));
         if (cs.length && !kept.length) return [];
         return [kept.length === cs.length ? t : { ...t, courses: kept }];
       }),
@@ -136,7 +144,9 @@
     };
   };
   const allCourses = () => allStages().flatMap(s => s.topics.flatMap(t => (t.courses || []).map(id => course(id)).filter(Boolean)));
-  const courses = () => (quantOnly() ? allCourses().filter(c => c.strand !== 'pure') : allCourses());
+  const courses = () => allCourses().filter(c => !isHidden(c.id));
+  /* The topics of a stage that count towards it (the topic count and "N of M topics passed"): AI topics never do */
+  const pathTopics = (s) => ((s && s.topics) || []).filter(t => topicStrand(t) !== 'ai');
 
   /* Ordered list of everything on a course map: each level's lessons, then its review, then its homework */
   const lessonCache = new Map();  // `${course}/${id}` -> loaded lesson title, for names when the map has none
@@ -245,6 +255,7 @@
     /* Next work for a track: required courses first, then recommended, never optional. Undecided, or no readiness file, leaves the list as it is. */
     offerable: (cid, track) => { const r = roleKey(track); return !readinessDoc || r === 'undecided' || roleStatus(cid, r) !== 'optional'; },
     plan: (list, track) => {
+      if (!aiToday()) list = list.filter(c => c.strand !== 'ai');   // the AI strand joins Today's queue only when the learner opts in (settings.aiToday)
       const r = roleKey(track);
       if (!readinessDoc || r === 'undecided') return list;
       const rank = (c) => (roleStatus(c.id, r) === 'required' ? 0 : roleStatus(c.id, r) === 'recommended' ? 1 : 2);
@@ -355,7 +366,7 @@
     if (HRS) {
       hoursModel = HRS.build({ curriculum, courses: Object.fromEntries(Object.entries(courseDocs).filter(([, d]) => d)), written: (c, l) => exists(c, l) === true, sessions, minutes: (c, l) => lessonMins[`${c}/${l}`], setMinutes: setMins, examMinutes: examMins || {}, problemsMinutes: problemsMinutes() });
       /* In-app and outside hours beside each stored figure (hoursApp, hoursOut): Learn and Setup show the two apart, never the stored total alone */
-      (cur.stages || []).forEach(s => { s.hoursApp = hoursModel.stageApp(s.id); s.hoursOut = hoursModel.stageOut(s.id); (s.topics || []).forEach(t => { t.hoursApp = hoursModel.topicApp(t.id); t.hoursOut = hoursModel.topicOut(t.id); }); });
+      (cur.stages || []).forEach(s => { s.hours = hoursModel.stage(s.id); s.hoursApp = hoursModel.stageApp(s.id); s.hoursOut = hoursModel.stageOut(s.id); (s.topics || []).forEach(t => { t.hoursApp = hoursModel.topicApp(t.id); t.hoursOut = hoursModel.topicOut(t.id); }); });
     }
     return api;
   })();
@@ -386,7 +397,7 @@
     ready,
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
-    stages, allStages, stage, topic, topicPassed, perfOf, _setPerf: setPerf, _setReadiness: (d) => { readinessDoc = d && d.roles ? d : null; }, _setCapstones: (a) => { capstoneDoc = Array.isArray(a) ? a : []; }, _setDrillMeta: (m) => { drillMeta = m && typeof m === 'object' ? m : {}; }, perfDrillsFor, examPassedAuto, examAutoAttempts, essentialSkills, loadEssentials, examPassedAt, courseTestedOut, resumeStands, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
+    stages, allStages, stage, topic, topicPassed, perfOf, _setPerf: setPerf, _setReadiness: (d) => { readinessDoc = d && d.roles ? d : null; }, _setCapstones: (a) => { capstoneDoc = Array.isArray(a) ? a : []; }, _setDrillMeta: (m) => { drillMeta = m && typeof m === 'object' ? m : {}; }, perfDrillsFor, examPassedAuto, examAutoAttempts, essentialSkills, loadEssentials, examPassedAt, courseTestedOut, resumeStands, course, courses, allCourses, pathTopics, aiShown, aiToday, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
     lesson, review, homework, exam, examMinutes, examWritten, mocks, bankIds, bank, drill, drills, dataFiles, drillSessionIds, drillSession, isSample, fileList,
     sessionOf, courseSessionLabel, get hours() { return hoursModel; },
     readiness, prep, prepPaths, prepPath, prepRefLessons, prepSteps, prepFor, prepForCourse, prepDetail, prepChip, prepMonth, prepStageLabel: (s) => STAGE_LABEL[s] || s,

@@ -32,8 +32,9 @@
   const REVIEW_MIN = 20, HOMEWORK_MIN = 45, EXAM_MIN = 60, PROBLEMS_MIN = 40;   // minutes allowed for a level review, a level homework and a topic exam whose file states none
 
   const topicHours = (t) => (t && Number(t.hours)) || 0;
-  const stageHours = (s) => ((s && s.topics) || []).reduce((a, t) => a + topicHours(t), 0);
-  const totalHours = (cur) => ((cur && cur.stages) || []).reduce((a, s) => a + stageHours(s), 0);
+  /* skip(t) leaves a topic out of the sum: the AI strand's topics (strand "ai", ENGINE-BACKLOG 1218) never count in a stage or the total */
+  const stageHours = (s, skip) => ((s && s.topics) || []).reduce((a, t) => a + (skip && skip(t) ? 0 : topicHours(t)), 0);
+  const totalHours = (cur, skip) => ((cur && cur.stages) || []).reduce((a, s) => a + stageHours(s, skip), 0);
   /* Whole months at a weekly rate: 555 h at 15 h a week is about 9 months */
   const months = (h, weekly = WEEKLY_H) => Math.round(h / weekly * 12 / 52);
 
@@ -62,6 +63,10 @@
     const topicRec = {};
     for (const s of stages) for (const t of s.topics || []) topicRec[t.id] = t;
     const cidTopic = (cid) => (courses[cid] && courses[cid].topic) || (curriculum && curriculum.courses && curriculum.courses[cid] && curriculum.courses[cid].topic) || topicOfCourse[cid];
+    /* The AI strand (strand "ai" in course.json or the curriculum entry, ENGINE-BACKLOG 1218): a topic whose courses are all "ai" is an AI topic.
+       Its hours stay on its topic and courses, but a stage, the total and a role's sums leave them out; ai() reports them on their own. */
+    const isAi = (cid) => ((courses[cid] && courses[cid].strand) || (curriculum && curriculum.courses && curriculum.courses[cid] && curriculum.courses[cid].strand)) === 'ai';
+    const aiTopic = (t) => !!t && (t.courses || []).length > 0 && (t.courses || []).every(isAi);
     const lessonsOf = (cid, n) => {
       const d = courses[cid]; if (!d) return [];
       return (d.levels || []).filter(lv => n == null || lv.n === n).flatMap(lv => (lv.lessons || []).map(id => ({ id, level: lv.n })));
@@ -102,13 +107,15 @@
     const courseOut = (cid) => outside(course(cid), courseApp(cid));
     const topicOut = (tid) => outside(topicHours(topicRec[tid]), topicApp(tid));
     const stageOf = (sid) => stages.find(s => s.id === Number(sid));
-    const stageApp = (sid) => ((stageOf(sid) || {}).topics || []).reduce((a, t) => a + topicApp(t.id), 0);
-    const stageOut = (sid) => ((stageOf(sid) || {}).topics || []).reduce((a, t) => a + topicOut(t.id), 0);
+    const stageApp = (sid) => ((stageOf(sid) || {}).topics || []).reduce((a, t) => a + (aiTopic(t) ? 0 : topicApp(t.id)), 0);
+    const stageOut = (sid) => ((stageOf(sid) || {}).topics || []).reduce((a, t) => a + (aiTopic(t) ? 0 : topicOut(t.id)), 0);
+    const aiTopics = stages.flatMap(s => (s.topics || []).filter(aiTopic));
+    const ai = () => ({ topics: aiTopics.length, hours: aiTopics.reduce((a, t) => a + topicHours(t), 0), app: aiTopics.reduce((a, t) => a + topicApp(t.id), 0), out: aiTopics.reduce((a, t) => a + topicOut(t.id), 0) });
     /* A role's sums over the courses whose status is in `statuses`: lessons and hours, written and unwritten (hours rounded as the readiness contract rounds them); app and out are the in-app and outside hours */
     const roleSums = (statusOf, statuses) => {
       let w = 0, u = 0, hw = 0, hu = 0, app = 0, out = 0;
       for (const cid of Object.keys(courses)) {
-        if (!statuses.includes(statusOf(cid))) continue;
+        if (isAi(cid) || !statuses.includes(statusOf(cid))) continue;
         const c = courseCounts(cid), h = course(cid), hwc = courseWritten(cid);
         w += c.written; u += c.mapped - c.written; hw += hwc; hu += h - hwc; app += courseApp(cid); out += courseOut(cid);
       }
@@ -117,8 +124,9 @@
     return {
       lesson, level, course, courseWritten, courseCounts,
       topic: (tid) => topicHours(topicRec[tid]),
-      stage: (sid) => stageHours(stageOf(sid)),
-      total: () => totalHours(curriculum),
+      stage: (sid) => stageHours(stageOf(sid), aiTopic),
+      total: () => totalHours(curriculum, aiTopic),
+      isAi, aiTopic, ai,
       lessonApp, levelApp, courseApp, topicApp, stageApp, totalApp: () => stages.reduce((a, s) => a + stageApp(s.id), 0),
       lessonOut, courseOut, topicOut, stageOut, totalOut: () => stages.reduce((a, s) => a + stageOut(s.id), 0),
       topicFromMinutes, roleSums, weight: wOf,

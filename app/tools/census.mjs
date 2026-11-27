@@ -27,7 +27,7 @@ for (const id of readdirSync(join(C, 'courses')).sort()) {
   if (!existsSync(p)) continue;
   const cj = read(p);
   const topic = cj.topic ?? cur.courses?.[id]?.topic ?? '?';
-  const row = { id, topic, stage: topicStage[topic] ?? '?', strand: cj.strand ?? 'core', levels: 0, levelsWritten: 0,
+  const row = { id, topic, stage: topicStage[topic] ?? '?', strand: cj.strand ?? cur.courses?.[id]?.strand ?? 'core', levels: 0, levelsWritten: 0,
     mapped: 0, authored: 0, reviewsMapped: 0, reviews: 0, homeworkMapped: 0, homework: 0, reviewItems: 0, reviewPassSet: 0, cross: 0, noWhy: 0 };
   for (const lv of cj.levels ?? []) {
     row.levels++;
@@ -112,20 +112,25 @@ if (args.has('--exams') || args.size === 0) {
 
 // Summary: the last 20 lines.
 const sum = (rows, k) => rows.reduce((a, r) => a + r[k], 0);
+// The AI strand (strand "ai", ENGINE-BACKLOG 1218) is optional and outside the quant path: every figure below leaves it out and an AI line reports it (shown only when an ai course exists)
+const aiRows = courses.filter((r) => r.strand === 'ai');
+const main = courses.filter((r) => r.strand !== 'ai');
+const aiTopicIds = new Set(cur.stages.flatMap((s) => s.topics).filter((t) => (t.courses ?? []).length && (t.courses ?? []).every((id) => aiRows.some((r) => r.id === id))).map((t) => t.id));
+const skipAi = (t) => aiTopicIds.has(t.id);
 const out = [];
 out.push('== Census summary (from source) ==');
 for (const s of cur.stages) {
-  const rows = courses.filter((r) => String(r.stage) === String(s.id));
-  const summed = s.topics.reduce((a, t) => a + (t.hours ?? 0), 0);
-  out.push(`Stage ${s.id}: lessons ${sum(rows, 'authored')}/${sum(rows, 'mapped')} (missing ${sum(rows, 'mapped') - sum(rows, 'authored')}), courses ${rows.length}, hours stored ${HOURS.stageHours(s)} summed ${summed}`);
+  const rows = main.filter((r) => String(r.stage) === String(s.id));
+  const summed = s.topics.filter((t) => !skipAi(t)).reduce((a, t) => a + (t.hours ?? 0), 0);
+  out.push(`Stage ${s.id}: lessons ${sum(rows, 'authored')}/${sum(rows, 'mapped')} (missing ${sum(rows, 'mapped') - sum(rows, 'authored')}), courses ${rows.length}, hours stored ${HOURS.stageHours(s, skipAi)} summed ${summed}`);
 }
 const real = exams.filter((e) => !e.sample);
-const storedH = HOURS.totalHours(cur);   // derived: what the Learn header and stage cards show
+const storedH = HOURS.totalHours(cur, skipAi);   // derived: what the Learn header and stage cards show
 const legacy = cur.stages.filter((s) => s.hours != null);
-const summedH = Object.values(topicHours).reduce((a, h) => a + h, 0);
-out.push(`Total lessons ${sum(courses, 'authored')}/${sum(courses, 'mapped')} (missing ${sum(courses, 'mapped') - sum(courses, 'authored')}); course maps ${courses.length}; courses with 0 lessons ${courses.filter((r) => r.authored === 0).length}`);
-out.push(`Levels fully written ${sum(courses, 'levelsWritten')}/${sum(courses, 'levels')}; cross-course requires edges ${sum(courses, 'cross')}, without why ${sum(courses, 'noWhy')}`);
-out.push(`Reviews ${sum(courses, 'reviews')}/${sum(courses, 'reviewsMapped')} (items ${sum(courses, 'reviewItems')}, with own pass ${sum(courses, 'reviewPassSet')}); homework ${sum(courses, 'homework')}/${sum(courses, 'homeworkMapped')}`);
+const summedH = Object.entries(topicHours).filter(([id]) => !aiTopicIds.has(id)).reduce((a, [, h]) => a + h, 0);
+out.push(`Total lessons ${sum(main, 'authored')}/${sum(main, 'mapped')} (missing ${sum(main, 'mapped') - sum(main, 'authored')}); course maps ${main.length}; courses with 0 lessons ${main.filter((r) => r.authored === 0).length}`);
+out.push(`Levels fully written ${sum(main, 'levelsWritten')}/${sum(main, 'levels')}; cross-course requires edges ${sum(main, 'cross')}, without why ${sum(main, 'noWhy')}`);
+out.push(`Reviews ${sum(main, 'reviews')}/${sum(main, 'reviewsMapped')} (items ${sum(main, 'reviewItems')}, with own pass ${sum(main, 'reviewPassSet')}); homework ${sum(main, 'homework')}/${sum(main, 'homeworkMapped')}`);
 out.push(`Exams (non-sample) ${real.length}: topic ${real.filter((e) => e.kind === 'topic').length}, stage ${real.filter((e) => e.kind === 'stage').length}, mock ${real.filter((e) => e.kind === 'mock').length} (mock versions included); samples ${exams.length - real.length}`);
 out.push(`Topic exams: ${real.filter((e) => e.kind === 'topic').map((e) => e.id.replace('topic-', '')).join(', ')}`);
 out.push(`Topics with no topic exam: ${Object.keys(topicStage).filter((t) => !existsSync(join(C, 'exams', `topic-${t}.json`))).join(', ')}`);
@@ -136,6 +141,7 @@ out.push(`Bank: ${bankReal.length} files, ${bankItems} items; sample files ${ban
 out.push(`Fluency sets ${fluencySets} (families ${fluencyFamilies})${fluencySamples ? `; sample sets ${fluencySamples}` : ''}`);
 out.push(`Problem sets ${problemSets} (items ${problemItems})`);
 out.push(`Prep paths ${prepPaths}; mock ids named in prep.json with no file: ${prepMissing.size} (${[...prepMissing].join(', ')})`);
+if (aiRows.length) out.push(`AI strand (optional, outside every figure above): courses ${aiRows.length}, topics ${aiTopicIds.size}, lessons ${sum(aiRows, 'authored')}/${sum(aiRows, 'mapped')}, levels ${sum(aiRows, 'levelsWritten')}/${sum(aiRows, 'levels')}, hours stored ${[...aiTopicIds].reduce((a, id) => a + topicHours[id], 0)}`);
 out.push(legacy.length ? `Legacy stage hours field present on ${legacy.length} stage(s), total ${legacy.reduce((a, s) => a + s.hours, 0)}, ignored by the engine (run tools/apply-item11-content.mjs)` : 'Legacy stage hours field: absent (stage hours are derived from topics)');
 out.push(`Hours: stored stage total ${storedH}, summed topic total ${summedH}, gap ${summedH - storedH}`);
 console.log(out.join('\n'));

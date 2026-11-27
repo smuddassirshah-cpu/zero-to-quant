@@ -18,8 +18,10 @@ const { H, cur, courses, hours } = loadHours(join(APP, 'content'));
 
 const strandOf = (id) => courses[id]?.strand ?? cur.courses?.[id]?.strand ?? null;
 const f = (n) => Number(n).toLocaleString('en-GB');
+// The AI strand (strand "ai", ENGINE-BACKLOG 1218) is optional and outside every stage figure: H.stageApp and H.stageOut leave its topics out, hours.stageHours is told to, and its own line follows the table (nothing is printed with no ai course)
+const skipAi = (t) => H.aiTopic(t);
 const rows = cur.stages.map((s) => {
-  const h = hours.stageHours(s);
+  const h = hours.stageHours(s, skipAi);
   // the share of the stage's hours that the pure courses carry (H.courseApp and H.courseOut: topic hours shared by lesson weight), rounded per stage
   const pureIds = s.topics.flatMap((t) => t.courses ?? []).filter((id) => strandOf(id) === 'pure');
   const pureApp = pureIds.reduce((a, id) => a + H.courseApp(id), 0), pureOut = pureIds.reduce((a, id) => a + H.courseOut(id), 0);
@@ -29,10 +31,12 @@ const rows = cur.stages.map((s) => {
 const sum = (k) => rows.reduce((a, r) => a + r[k], 0);
 const total = rows.reduce((a, r) => a + r.hours, 0), tApp = sum('app'), tOut = sum('out'), qApp = sum('qapp'), qOut = sum('qout');
 
+const ai = H.ai();
+const aiLine = ai.topics ? [`AI strand (optional, outside every stage figure above and the quant path): ${ai.topics} topic${ai.topics === 1 ? '' : 's'}, ${f(Math.round(ai.app))} h in the app, ${f(Math.round(ai.out))} h of outside study, ${f(ai.hours)} h stored.`, ''] : [];
 const block = [
   '| Stage | In the app | Outside study | Quant path in the app | Quant path outside study | At 15 h/week |', '| --- | --- | --- | --- | --- | --- |',
   ...rows.map((r) => `| ${r.id}. ${r.name} | ${f(r.app)} | ${f(r.out)} | ${f(r.qapp)} | ${f(r.qout)} | ${r.months} months |`),
-  `| All stages | ${f(tApp)} | ${f(tOut)} | ${f(qApp)} | ${f(qOut)} | ${hours.months(total)} months |`, '',
+  `| All stages | ${f(tApp)} | ${f(tOut)} | ${f(qApp)} | ${f(qOut)} | ${hours.months(total)} months |`, '', ...aiLine,
   `Stage hours are the sum of topic hours; nothing stores them. In the app counts each lesson's minutes, a level review (20 min) and homework (45 min) unless the file states minutes, and the topic exam's minutes. Outside study is the stored hours less that, never below 0; months use the stored hours. Quant path leaves out the courses tagged Pure maths, at their lesson share of a topic's hours. Topic hours:`, '',
   '| Topic | Name | In the app | Outside study | Lessons mapped | Lessons written |', '| --- | --- | --- | --- | --- | --- |',
   ...cur.stages.flatMap((s) => s.topics.map((t) => {
