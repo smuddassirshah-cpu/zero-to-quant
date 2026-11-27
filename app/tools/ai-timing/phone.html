@@ -1,0 +1,248 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Phone timing</title></head>
+<body style="font:16px system-ui;margin:16px"><h3>Pyodide timing (items 1 and 4)</h3><button id=go style="font-size:18px;padding:12px">Run (about 1 minute)</button><pre id=out>Tap Run.</pre>
+<script type=text/plain id=bench>import time, json, statistics
+import numpy as np
+
+def med(f, runs=3, warm=1):
+    for _ in range(warm): f()
+    ts = []
+    for _ in range(runs):
+        t = time.perf_counter(); f(); ts.append(time.perf_counter() - t)
+    return statistics.median(ts)
+
+# ---------- 1. matmul
+def bench_matmul():
+    out = {}
+    for n in (256, 512):
+        a = np.random.RandomState(0).randn(n, n); b = np.random.RandomState(1).randn(n, n)
+        reps = 1
+        t0 = time.perf_counter(); a @ b; one = time.perf_counter() - t0
+        reps = max(1, int(0.3 / max(one, 1e-6)))
+        def f():
+            for _ in range(reps): a @ b
+        t = med(f) / reps
+        out[n] = round(2 * n ** 3 / t / 1e9, 2)
+    return out
+
+# ---------- 3. CNN on digits
+def load_data():
+    from sklearn.datasets import load_digits
+    from sklearn.model_selection import train_test_split
+    X, y = load_digits(return_X_y=True)
+    return train_test_split(X / 16.0, y, test_size=0.3, random_state=0, stratify=y)
+
+def make_data_fake(seed=0):
+    r = np.random.RandomState(seed)
+    X = r.rand(1797, 64); y = r.randint(0, 10, 1797)
+    return X[:1257], X[1257:], y[:1257], y[1257:]
+
+def im2col(X):  # X (N,8,8) -> (N,36,9)
+    N = X.shape[0]
+    cols = np.empty((N, 6, 6, 9))
+    k = 0
+    for i in range(3):
+        for j in range(3):
+            cols[:, :, :, k] = X[:, i:i + 6, j:j + 6]; k += 1
+    return cols.reshape(N, 36, 9)
+
+def cnn_train(data, epochs, seed=0, bs=32, lr=0.1, record=()):
+    Xtr, Xte, ytr, yte = data
+    r = np.random.RandomState(seed)
+    Ctr = im2col(Xtr.reshape(-1, 8, 8)); Cte = im2col(Xte.reshape(-1, 8, 8))
+    W = r.randn(9, 8) * 0.3; b = np.zeros(8)
+    V = r.randn(288, 10) * 0.05; c = np.zeros(10)
+    def fwd(C):
+        z = C @ W + b; a = np.maximum(z, 0); f = a.reshape(len(C), -1)
+        return z, f, f @ V + c
+    accs = {}; etimes = []
+    for ep in range(1, epochs + 1):
+        t = time.perf_counter()
+        p = r.permutation(len(Ctr))
+        for s in range(0, len(p), bs):
+            idx = p[s:s + bs]; C = Ctr[idx]; n = len(idx)
+            z, f, lg = fwd(C)
+            lg -= lg.max(1, keepdims=True); e = np.exp(lg); pr = e / e.sum(1, keepdims=True)
+            pr[np.arange(n), ytr[idx]] -= 1; pr /= n
+            dV = f.T @ pr; dc = pr.sum(0)
+            da = (pr @ V.T).reshape(n, 36, 8) * (z > 0)
+            dW = C.reshape(-1, 9).T @ da.reshape(-1, 8); db = da.sum((0, 1))
+            W -= lr * dW; b -= lr * db; V -= lr * dV; c -= lr * dc
+        etimes.append(time.perf_counter() - t)
+        if ep in record:
+            accs[ep] = round(float((fwd(Cte)[2].argmax(1) == yte).mean()), 4)
+    return statistics.mean(etimes), accs
+
+def bench_cnn(data):
+    cnn_train(data, 1)
+    runs = [cnn_train(data, 40, record=(10, 40)) for _ in range(3)]
+    return {"epoch_s": round(statistics.median(r[0] for r in runs), 4), "acc": runs[0][1]}
+
+# ---------- 4. one-block GPT, hand-written backward
+class GPT:
+    def __init__(s, V=65, T=32, D=64, H=4, F=256, seed=0):
+        r = np.random.RandomState(seed); s.V, s.T, s.D, s.H, s.F = V, T, D, H, F
+        g = lambda *sh: r.randn(*sh) * 0.02
+        s.P = dict(tok=g(V, D), pos=g(T, D), Wq=g(D, D), Wk=g(D, D), Wv=g(D, D), Wo=g(D, D),
+                   W1=g(D, F), b1=np.zeros(F), W2=g(F, D), b2=np.zeros(D), Wh=g(D, V))
+        s.m = {k: np.zeros_like(v) for k, v in s.P.items()}; s.v = {k: np.zeros_like(v) for k, v in s.P.items()}; s.t = 0
+        s.mask = np.triu(np.full((T, T), -1e9), 1)
+    @staticmethod
+    def ln(x):
+        mu = x.mean(-1, keepdims=True); sd = np.sqrt(x.var(-1, keepdims=True) + 1e-5); xh = (x - mu) / sd
+        return xh, (xh, sd)
+    @staticmethod
+    def ln_b(dy, c):
+        xh, sd = c
+        return (dy - dy.mean(-1, keepdims=True) - xh * (dy * xh).mean(-1, keepdims=True)) / sd
+    def loss_grad(s, idx, tgt, need_grad=True):
+        P = s.P; B, T = idx.shape; D, H = s.D, s.H; hd = D // H
+        x = P['tok'][idx] + P['pos'][:T]
+        h1, c1 = s.ln(x)
+        q, k, v = h1 @ P['Wq'], h1 @ P['Wk'], h1 @ P['Wv']
+        sp = lambda a: a.reshape(B, T, H, hd).transpose(0, 2, 1, 3)
+        q4, k4, v4 = sp(q), sp(k), sp(v)
+        sc = q4 @ k4.transpose(0, 1, 3, 2) / np.sqrt(hd) + s.mask[:T, :T]
+        sc -= sc.max(-1, keepdims=True); att = np.exp(sc); att /= att.sum(-1, keepdims=True)
+        o = (att @ v4).transpose(0, 2, 1, 3).reshape(B, T, D)
+        x2 = x + o @ P['Wo']
+        h2, c2 = s.ln(x2)
+        pre = h2 @ P['W1'] + P['b1']; a = np.maximum(pre, 0)
+        x3 = x2 + a @ P['W2'] + P['b2']
+        hf, cf = s.ln(x3)
+        lg = hf @ P['Wh']; lg -= lg.max(-1, keepdims=True); e = np.exp(lg); pr = e / e.sum(-1, keepdims=True)
+        N = B * T
+        loss = -np.log(pr.reshape(N, -1)[np.arange(N), tgt.reshape(-1)] + 1e-12).mean()
+        if not need_grad: return loss, None
+        G = {}
+        d = pr.reshape(N, -1).copy(); d[np.arange(N), tgt.reshape(-1)] -= 1; d /= N
+        G['Wh'] = hf.reshape(N, D).T @ d
+        dx3 = s.ln_b((d @ P['Wh'].T).reshape(B, T, D), cf)
+        f2 = lambda a_: a_.reshape(N, -1)
+        G['W2'] = f2(a).T @ f2(dx3); G['b2'] = dx3.sum((0, 1))
+        dpre = (dx3 @ P['W2'].T) * (pre > 0)
+        G['W1'] = f2(h2).T @ f2(dpre); G['b1'] = dpre.sum((0, 1))
+        dx2 = dx3 + s.ln_b(dpre @ P['W1'].T, c2)
+        G['Wo'] = f2(o).T @ f2(dx2)
+        do = sp(dx2 @ P['Wo'].T)
+        datt = do @ v4.transpose(0, 1, 3, 2); dv4 = att.transpose(0, 1, 3, 2) @ do
+        ds = att * (datt - (datt * att).sum(-1, keepdims=True)) / np.sqrt(hd)
+        dq4 = ds @ k4; dk4 = ds.transpose(0, 1, 3, 2) @ q4
+        mg = lambda a_: a_.transpose(0, 2, 1, 3).reshape(B, T, D)
+        dq, dk, dv = mg(dq4), mg(dk4), mg(dv4)
+        G['Wq'] = f2(h1).T @ f2(dq); G['Wk'] = f2(h1).T @ f2(dk); G['Wv'] = f2(h1).T @ f2(dv)
+        dh1 = dq @ P['Wq'].T + dk @ P['Wk'].T + dv @ P['Wv'].T
+        dx = dx2 + s.ln_b(dh1, c1)
+        G['pos'] = np.zeros_like(P['pos']); G['pos'][:T] = dx.sum(0)
+        G['tok'] = np.zeros_like(P['tok']); np.add.at(G['tok'], idx, dx)
+        return loss, G
+    def step(s, idx, tgt, lr=3e-3):
+        loss, G = s.loss_grad(idx, tgt); s.t += 1
+        for k in s.P:
+            s.m[k] = 0.9 * s.m[k] + 0.1 * G[k]; s.v[k] = 0.999 * s.v[k] + 0.001 * G[k] ** 2
+            mh = s.m[k] / (1 - 0.9 ** s.t); vh = s.v[k] / (1 - 0.999 ** s.t)
+            s.P[k] -= lr * mh / (np.sqrt(vh) + 1e-8)
+        return loss
+
+def gradcheck():
+    g = GPT(V=7, T=5, D=8, H=2, F=16, seed=1); r = np.random.RandomState(2)
+    idx = r.randint(0, 7, (2, 5)); tgt = r.randint(0, 7, (2, 5))
+    for k in g.P: g.P[k] += r.randn(*g.P[k].shape) * 0.1
+    _, G = g.loss_grad(idx, tgt); worst = 0
+    for k in g.P:
+        for _ in range(3):
+            ix = tuple(r.randint(0, n) for n in g.P[k].shape); o = g.P[k][ix]
+            g.P[k][ix] = o + 1e-5; lp, _ = g.loss_grad(idx, tgt, False)
+            g.P[k][ix] = o - 1e-5; lm, _ = g.loss_grad(idx, tgt, False); g.P[k][ix] = o
+            num = (lp - lm) / 2e-5; worst = max(worst, abs(num - G[k][ix]) / (abs(num) + abs(G[k][ix]) + 1e-8))
+    return worst
+
+def bench_gpt():
+    g = GPT(); r = np.random.RandomState(0)
+    idx = r.randint(0, 65, (16, 32)); tgt = r.randint(0, 65, (16, 32))
+    for _ in range(2): g.step(idx, tgt)
+    def f():
+        for _ in range(3): g.step(idx, tgt)
+    t = med(f, warm=0) / 3
+    return {"step_s": round(t, 4), "steps_5s": int(5 / t), "steps_60s": int(60 / t),
+            "params": int(sum(v.size for v in g.P.values()))}
+
+# ---------- 5. micrograd
+class Val:
+    __slots__ = ('d', 'g', '_p', '_b')
+    def __init__(s, d, p=()): s.d = d; s.g = 0.0; s._p = p; s._b = None
+    def __add__(s, o):
+        o = o if isinstance(o, Val) else Val(o); r = Val(s.d + o.d, (s, o))
+        def b(): s.g += r.g; o.g += r.g
+        r._b = b; return r
+    def __mul__(s, o):
+        o = o if isinstance(o, Val) else Val(o); r = Val(s.d * o.d, (s, o))
+        def b(): s.g += o.d * r.g; o.g += s.d * r.g
+        r._b = b; return r
+    def relu(s):
+        r = Val(s.d if s.d > 0 else 0.0, (s,))
+        def b(): s.g += (r.d > 0) * r.g
+        r._b = b; return r
+    def __neg__(s): return s * -1
+    def __sub__(s, o): return s + (-o if isinstance(o, Val) else Val(-o))
+    def backward(s):
+        topo, seen = [], set()
+        def build(v):
+            if id(v) not in seen:
+                seen.add(id(v))
+                for c in v._p: build(c)
+                topo.append(v)
+        build(s); s.g = 1.0
+        for v in reversed(topo):
+            if v._b: v._b()
+
+def bench_micrograd():
+    r = np.random.RandomState(0); X = r.randn(100, 2); y = np.where(X[:, 0] * X[:, 1] > 0, 1.0, -1.0)
+    sizes = [2, 16, 16, 1]
+    L = [[([Val(r.randn() * 0.5) for _ in range(a)], Val(0.0)) for _ in range(b)] for a, b in zip(sizes, sizes[1:])]
+    params = [p for layer in L for (w, bb) in layer for p in (*w, bb)]
+    def epoch():
+        loss = Val(0.0)
+        for xi, yi in zip(X.tolist(), y.tolist()):
+            h = [Val(xi[0]), Val(xi[1])]
+            for li, layer in enumerate(L):
+                nh = []
+                for (w, bb) in layer:
+                    s = bb
+                    for wi, hi in zip(w, h): s = s + wi * hi
+                    nh.append(s.relu() if li < len(L) - 1 else s)
+                h = nh
+            m = (Val(1.0) - h[0] * yi).relu()
+            loss = loss + m
+        loss = loss * (1.0 / 100)
+        for p in params: p.g = 0.0
+        loss.backward()
+        for p in params: p.d -= 0.05 * p.g
+        return loss.d
+    epoch()
+    return {"epoch_s": round(med(epoch, warm=0), 4), "params": len(params)}
+
+def run_all(data=None, only=None):
+    res = {}
+    res['gradcheck_max_rel_err'] = gradcheck()
+    res['matmul_gflops'] = bench_matmul()
+    data = data or load_data()
+    res['cnn'] = bench_cnn(data)
+    res['gpt'] = bench_gpt()
+    res['micrograd'] = bench_micrograd()
+    return res
+
+if __name__ == '__main__':
+    try: data = load_data()
+    except Exception as e: print('no sklearn, fake data', e); data = make_data_fake()
+    print(json.dumps(run_all(data), indent=1))
+</script>
+<script>
+const CDN=new URLSearchParams(location.search).get('cdn')||'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
+const W=`importScripts('${CDN}pyodide.js');onmessage=async(e)=>{const py=await loadPyodide({indexURL:'${CDN}'});postMessage('Pyodide loaded');await py.loadPackage('numpy');postMessage('numpy loaded');
+py.FS.writeFile('/bench.py',e.data);await py.runPythonAsync("import sys;sys.path.insert(0,'/')\\nimport bench,json");
+const m=await py.runPythonAsync("json.dumps(bench.bench_matmul())");postMessage('matmul GFLOP/s: '+m);
+const g=await py.runPythonAsync("json.dumps(bench.bench_gpt())");postMessage('GPT: '+g);postMessage('DONE (worker: '+(typeof WorkerGlobalScope!=='undefined')+')');};`;
+document.getElementById('go').onclick=()=>{const o=document.getElementById('out');o.textContent='Loading...';
+const w=new Worker(URL.createObjectURL(new Blob([W],{type:'text/javascript'})));w.onmessage=e=>{o.textContent+='\n'+e.data};w.onerror=e=>{o.textContent+='\nerror '+e.message};
+w.postMessage(document.getElementById('bench').textContent);};
+</script></body></html>
