@@ -6,7 +6,10 @@
    Without nodeRadius, the radius grows to the longest label (up to 34) and longer labels shrink to fit.
    Pass 7: the radius follows labels set later too (item 416), the frame padding follows the nodes' own extents
    (item 439), edge labels may hold KaTeX, state.pointers names nodes (slow, fast) with labelled arrows (item 406),
-   state.values writes a value under a node, and params.lattice lays out a recombining binomial lattice (items 374, 444). */
+   state.values writes a value under a node, and params.lattice lays out a recombining binomial lattice (items 374, 444).
+   ENGINE-BACKLOG 1227: params.valueLines [{ label, colour }, ...] (up to two) with state.values and state.values2 draw
+   two coloured, labelled value lines under a node (forward value and gradient); params.edgeWidth sets edge width by |w|
+   and shows the sign by colour or dash. Both are opt-in. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -42,6 +45,10 @@
     const initLabels = (params.state && params.state.labels) || {};
     const fitR = (list, labels) => Math.round(K.clamp(Math.max(0, ...list.flatMap((n) => String((labels || {})[n.id] ?? n.label ?? n.id).split('\n').map((l) => plainW(l, 14)))) / 2 + 8, 22, 34));
     const r0 = params.nodeRadius || fitR(nodes0, initLabels);
+    /* 1227: valueLines: up to two { label, colour } for state.values and state.values2 */
+    const vLines = Array.isArray(params.valueLines) ? params.valueLines.filter(K.isObj).slice(0, 2) : [];
+    const ew = params.edgeWidth ? (K.isObj(params.edgeWidth) ? params.edgeWidth : {}) : null;
+    const ewMax = ew ? Math.max(1.5, +ew.max || 6) : 0, ewMin = ew ? Math.max(0.5, ew.min != null ? +ew.min : 1) : 0;
     let r = r0, padX = r + 26, padY = r + 22, small = false, capHw = {};
     /* item 152: a node may carry its own r, and shape: "pill" (a rounded box as wide as its label); edges stop at the rim */
     /* item 117: also shape "rect" (a rounded box sized to the label, multi-line labels too) and "diamond" */
@@ -97,7 +104,7 @@
       kind: 'graph', aria: params.aria || 'Graph',
       modes: ['tap'],
       size: () => ({ w: W, h: H }),
-      skip: ['visited', 'current', 'labels', 'gone', 'values', 'pointers'],
+      skip: ['visited', 'current', 'labels', 'gone', 'values', 'values2', 'pointers'],
       init: () => {
         const nodes = ring ? seat(nodes0) : nodes0;
         return { nodes, edges: normEdges(lat ? [...latEdges(), ...(params.edges || [])] : params.edges), rotate: 0, seats: nodes.length, labels: {}, visited: [], current: null, highlight: [], distribution: null, selected: [] };
@@ -143,7 +150,7 @@
            item 399: below 440px pills and rects size their text at 12px */
         small = W < 440;
         if (!params.nodeRadius) r = Math.max(r0, fitR(view.nodes || [], view.labels));
-        const layoutPad = () => { const ext = (view.nodes || []).filter((n) => !n.gone).map((n) => shapeOf(n, view)); const mw = Math.max(r, ...ext.map((q) => q.hw)), mh = Math.max(14, ...ext.map((q) => q.hh)); padX = mw + 26; padY = mh + 22 + (lat && lat.stepLabels ? 14 : 0); ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY)); };
+        const layoutPad = () => { const ext = (view.nodes || []).filter((n) => !n.gone).map((n) => shapeOf(n, view)); const mw = Math.max(r, ...ext.map((q) => q.hw)), mh = Math.max(14, ...ext.map((q) => q.hh)); padX = mw + 26; padY = mh + 22 + (lat && lat.stepLabels ? 14 : 0) + (vLines.length > 1 ? 16 : 0); ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY)); };
         capHw = {}; layoutPad();
         /* ENGINE-BACKLOG 609: on a phone a row of rect or pill nodes keeps its desktop widths and the boxes touch, so the edges between
            neighbours vanish. A rect or pill is capped at half the distance to its nearest neighbour in the row, less a 5px gap (never
@@ -205,7 +212,16 @@
             lx = mx + nx * (bend ? 8 : 0); ly = my + ny * (bend ? 8 : 0); hx = t[0]; hy = t[1];
             tx = t[0] - (bend ? 2 * mx - (s[0] + t[0]) / 2 : s[0]); ty = t[1] - (bend ? 2 * my - (s[1] + t[1]) / 2 : s[1]);
           }
-          o.append(K.washPath(d), svg('path', { d, class: 'cvb-edge' + (e.dashed ? ' cvb-dash' : '') }));
+          /* 1227: edgeWidth: width follows |w| (norm: the largest |w| unless given); a negative weight is red and dashed
+             by sign: "colour" (default, red against blue), "dash" (dashed only) */
+          let eStyle = null, eDash = !!e.dashed;
+          if (ew && typeof e.w === 'number' && Number.isFinite(e.w)) {
+            const norm = +ew.norm > 0 ? +ew.norm : Math.max(1e-9, ...edges.map((q) => Math.abs(+q.w) || 0));
+            eStyle = `stroke-width: ${(ewMin + (ewMax - ewMin) * K.clamp(Math.abs(e.w) / norm, 0, 1)).toFixed(2)}px`;
+            if (e.w < 0) { eDash = true; if (ew.sign !== 'dash' && !e.colour) o.style.setProperty('--c', 'var(--div-neg)'); }
+            else if (ew.sign !== 'dash' && !e.colour) o.style.setProperty('--c', 'var(--div-pos)');
+          }
+          o.append(K.washPath(d), svg('path', { d, class: 'cvb-edge' + (eDash ? ' cvb-dash' : ''), ...(eStyle ? { style: eStyle } : {}) }));
           /* item 117: edges are tappable in tap mode with params.tapEdges, or when the widget's ids name them */
           if (R.mode === 'tap' && (params.tapEdges || (R.modeOpts.only && R.modeOpts.only.includes(e.id)))) { o.append(svg('path', { d, class: 'cvb-tapbox cv-body', style: 'stroke: transparent; stroke-width: 20px; fill: none' })); R.tappable(o, e.id, `Edge from ${labOf(a, view)} to ${labOf(b, view)}`.replace(/\n/g, ' ')); }
           if (directed) { const L = Math.hypot(tx, ty) || 1, ux = tx / L, uy = ty / L, s = 9; o.append(svg('path', { d: `M${hx},${hy}L${hx - ux * s - uy * s * 0.5},${hy - uy * s + ux * s * 0.5}L${hx - ux * s + uy * s * 0.5},${hy - uy * s - ux * s * 0.5}Z`, class: 'cvb-head', style: 'fill: var(--c, var(--text-2))' })); }
@@ -244,9 +260,20 @@
           }
           const lt = labOf(n, view);
           o.append(nodeLabel(x, y, lt, sh.pill ? 2 * hw - (capHw[n.id] != null && hw <= capHw[n.id] ? 6 : 12) : sh.kind === 'diamond' ? hw * 1.1 : 2 * hw - 8));
-          /* state.values { id: text }: a value under the node (valueSide moves it), for a lattice's option values */
-          if (view.values && view.values[n.id] != null && view.values[n.id] !== '' && !(dist && dist[n.id] != null)) {
-            const vs = n.valueSide || (view.valueSide || {})[n.id] || 'below', vt = String(view.values[n.id]);
+          /* state.values { id: text }: a value under the node (valueSide moves it), for a lattice's option values.
+             1227: with params.valueLines a second line state.values2 stacks beside it, each as "label = value" in its colour */
+          const vsd = n.valueSide || (view.valueSide || {})[n.id] || 'below';
+          const vtxt = [view.values && view.values[n.id], view.values2 && view.values2[n.id]];
+          if (vLines.length) {
+            const have = [0, 1].filter((k) => vtxt[k] != null && vtxt[k] !== '' && vLines[k]);
+            have.forEach((k, idx) => {
+              if (dist && dist[n.id] != null) return;
+              const v = vtxt[k], t = (vLines[k].label ? `${vLines[k].label} = ` : '') + String(v), last = have.length - 1 - idx;
+              const [vx, vy, va] = vsd === 'above' ? [x, y - hh - 12 - last * 14, 'middle'] : vsd === 'left' ? [x - hw - 6, y + (idx - last / 2) * 14, 'end'] : vsd === 'right' ? [x + hw + 6, y + (idx - last / 2) * 14, 'start'] : [x, y + hh + 12 + idx * 14, 'middle'];
+              o.append(t.includes('$') ? K.lab(vx, vy, t, { anchor: va, size: 12, halo: true }) : K.txt(vx, vy, t, { size: 12, weight: 600, halo: true, cls: 'cvb-vline cvb-c ' + K.colourCls(vLines[k].colour ?? (k ? 2 : 'ink')), anchor: va }));
+            });
+          } else if (view.values && view.values[n.id] != null && view.values[n.id] !== '' && !(dist && dist[n.id] != null)) {
+            const vs = vsd, vt = String(view.values[n.id]);
             const [vx, vy, va] = vs === 'above' ? [x, y - hh - 12, 'middle'] : vs === 'left' ? [x - hw - 6, y, 'end'] : vs === 'right' ? [x + hw + 6, y, 'start'] : [x, y + hh + 12, 'middle'];
             o.append(vt.includes('$') ? K.lab(vx, vy, vt, { anchor: va, size: 12, halo: true }) : K.txt(vx, vy, vt, { size: 12, weight: 600, halo: true, cls: 'cvb-outink', anchor: va }));
           }

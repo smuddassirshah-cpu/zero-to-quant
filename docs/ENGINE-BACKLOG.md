@@ -2963,3 +2963,14 @@ Every item below is a post-completion item: it does not gate DONE. Each item's o
 1215 status: done. `test-vendor-fallback.mjs --vendor <dir>` plays `numpy-pandas/l1-not-lists` (its code imports NumPy) from `vendor/pyodide/` with jsDelivr blocked, and `--absent` has the 1214 cases (CDN refusing and CDN holding the connection open, lesson Python and C++, drill page; each under 20 s, neutral heading, Try again).
 1216 status: done. `acceptance.yml` caches `app/vendor/{pyodide,mathlive,compute-engine,yowasp-clang}` with `actions/cache@v4`, keyed on the versions and the hash of `fetch-vendor.sh`; a warm run downloads nothing. `docs/CI.md` "The vendor cache"; `test-ci-cache-keys.mjs` checks the key.
 
+### Engine pass AK canvas (AI strand A3, canvas part): `docs/reports/engine-pass-ak-canvas.md`
+Source: `docs/briefs/ai-strand-curriculum.md` "Engine work" items 1 to 3 and finding F13 (`docs/reviews/review-ai-strand.md`). Numbers start 10 above the highest existing one (1217).
+
+1227. [Should] `graph`: a second value line per node and edge width by weight. `params.valueLines` (up to two `{ label, colour }`) with `state.values` and `state.values2`; `params.edgeWidth` (`true` or `{ min, max, norm, sign }`), a negative weight dashed and red. Opt-in; `stat-learning/l17-a-small-network` renders unchanged.
+1228. [Should] `matrix`: `heat` per matrix (`true` or `{ mode, range, legend, decimals, label }`), a sequential or diverging fill with a legend and text that flips for contrast.
+1229. [Should] `grid`: `state.arrows` per-cell policy glyphs (`up`, `down`, `left`, `right`, `none`), as a rows-by-cols list or a cell-id map.
+
+Status block (engine pass AK canvas):
+- 1227: done. `graph.js`, `canvases.css`, validator, `README-B.md`, gallery entry "graph (computation graph)"; tests `test-canvas-ai.mjs`, `test-validate-canvas-ai.mjs`.
+- 1228: done. `matrix.js`, `canvases.css`, validator, `README-B.md`, gallery entry "matrix (heat, attention and signed)"; same tests (contrast of at least 3 to 1 on every cell, both themes).
+- 1229: done. `grid.js`, `canvases.css`, validator, `README.md`, gallery entry "grid (policy arrows)"; same tests.

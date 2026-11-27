@@ -1,7 +1,9 @@
 /* grid canvas: an n by m cell grid for sample spaces, two-dice tables, area models and Punnett squares.
    Reproduces the prototype's DiceGrid: dashed union outlines in the gutters, the fading "point" box, the show-why flash.
    Ids: r{i}c{j}, one-based (r5c1 is row 5, column 1). Names usable wherever ids are listed: row5, col3, cross5,
-   cross5-3 (row 5 and column 3), all. Params, state and events are documented in engine/canvas/README.md. */
+   cross5-3 (row 5 and column 3), all. Params, state and events are documented in engine/canvas/README.md.
+   ENGINE-BACKLOG 1229: state.arrows draws a policy glyph per cell ("up", "down", "left", "right", "none"), as a 2D array
+   or { r2c3: "up" | { dir, colour } }; a cell that also has text keeps it, moved down under the arrow. */
 (function () {
   'use strict';
   const Z = window.ZQ, C = Z.canvas, { svg, attrs } = C;
@@ -136,6 +138,32 @@
       el.dataset.two = '1';
     };
     cell.forEach((n, id) => { const t = baseText.get(id); if (t.includes('\n')) setText(ctext.get(id), t); });
+    const arrowG = svg('g', { class: 'cv-arrow-layer', 'aria-hidden': 'true' }); // joins the drawing only while arrows are shown, so grids without them are unchanged
+    /* 1229: arrows { id: dir | { dir, colour } } or a 2D array of dirs; a text cell moves its text down to make room */
+    const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+    const drawArrows = (st) => {
+      arrowG.replaceChildren();
+      const A = st.arrows;
+      if (!A && !arrowG.isConnected) return;
+      cell.forEach((n, id) => ctext.get(id).removeAttribute('transform'));
+      if (!A) { arrowG.remove(); return; }
+      if (!arrowG.isConnected) cellsG.after(arrowG);
+      cell.forEach((n, id) => {
+        const [i, j] = rc(id);
+        let v = Array.isArray(A) ? (Array.isArray(A[i - 1]) ? A[i - 1][j - 1] : null) : A[id];
+        if (v && typeof v === 'object') v = { ...v }; else v = { dir: v };
+        const d = DIRS[String(v.dir || '').toLowerCase()]; if (!d) return;
+        const el = ctext.get(id), has = !!String(el.dataset.text ?? el.textContent).trim() && !lattice;
+        const mx0 = cx(j, i) + s / 2, my0 = cy(i) + s / 2 + (has ? -s * 0.2 : 0), len = (has ? 0.17 : 0.3) * s, hd = Math.max(5, s * 0.1);
+        if (has) el.setAttribute('transform', `translate(0 ${(s * 0.2).toFixed(1)})`);
+        const x1 = mx0 - d[0] * len, y1 = my0 - d[1] * len, x2 = mx0 + d[0] * len, y2 = my0 + d[1] * len, nx = -d[1], ny = d[0];
+        const slot = v.colour != null ? Math.min(6, Math.max(1, Math.round(+v.colour))) : null;
+        arrowG.append(svg('g', { class: 'cv-arrow-g' + (slot ? ' cv-k' + slot : ''), 'data-for': id }, [
+          svg('line', { class: 'cv-arrow', x1: +x1.toFixed(1), y1: +y1.toFixed(1), x2: +(x2 - d[0] * hd * 0.6).toFixed(1), y2: +(y2 - d[1] * hd * 0.6).toFixed(1) }),
+          svg('path', { class: 'cv-arrow-head', d: `M${x2.toFixed(1)} ${y2.toFixed(1)}L${(x2 - d[0] * hd + nx * hd * 0.6).toFixed(1)} ${(y2 - d[1] * hd + ny * hd * 0.6).toFixed(1)}L${(x2 - d[0] * hd - nx * hd * 0.6).toFixed(1)} ${(y2 - d[1] * hd - ny * hd * 0.6).toFixed(1)}Z` }),
+        ]));
+      });
+    };
     const margG = svg('g', { class: 'cv-margins' }); if (marg) g.append(margG);
     const drawMargins = (st) => {
       if (!marg) return;
@@ -271,6 +299,7 @@
       }
       if ('point' in patch) point(st.point);
       applyText(st.cells);
+      drawArrows(st);
       drawMargins(st);
       drawPaths(st.paths, instant);
       refreshTop();
