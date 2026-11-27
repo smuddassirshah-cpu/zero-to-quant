@@ -2931,9 +2931,9 @@ else if (prepDoc.missing && PREP_FILE) err(prepFile, '', 'the file given to --pr
       KEYS.forEach(k => {
         const r = d.roles[k];
         if (!isObj(r) || !isObj(r.courses) || !isObj(r.totals) || !isObj(r.mocks)) { err(rf, `roles.${k}`, 'needs courses, totals and mocks'); return; }
-        /* an AI-strand course is outside role readiness (strand "ai", ENGINE-BACKLOG 1218): it has no status and may not be listed */
+        /* an AI-strand course is outside role readiness (strand "ai", ENGINE-BACKLOG 1218): it needs no row, and a row, if present, must be "optional" */
         courseIds.filter(c => !aiCourse(c)).forEach(c => { if (!['required', 'recommended', 'optional'].includes(r.courses[c])) err(rf, `roles.${k}.courses.${c}`, 'status must be required, recommended or optional'); });
-        Object.keys(r.courses).forEach(c => { if (!courseIds.includes(c)) err(rf, `roles.${k}.courses.${c}`, 'unknown course'); else if (aiCourse(c)) err(rf, `roles.${k}.courses.${c}`, 'an AI-strand course is not part of role readiness: leave it out'); });
+        Object.keys(r.courses).forEach(c => { if (!courseIds.includes(c)) err(rf, `roles.${k}.courses.${c}`, 'unknown course'); else if (aiCourse(c) && r.courses[c] !== 'optional') err(rf, `roles.${k}.courses.${c}`, 'an AI-strand course needs no readiness row; if listed, its status must be "optional" (it never counts towards readiness)'); });
         ['required', 'recommended', 'header'].forEach(t => { if (!isObj(r.totals[t]) || typeof r.totals[t].total !== 'number' || typeof r.totals[t].hours !== 'number') err(rf, `roles.${k}.totals.${t}`, 'needs numeric total and hours'); });
       });
       Object.keys(d.limited || {}).forEach(c => { if (!courseIds.includes(c)) err(rf, `limited.${c}`, 'unknown course'); });
@@ -3040,6 +3040,8 @@ guard(courseDir, () => {
         if (typeof why !== 'string' || !why.trim()) { crossNoWhy++; (STRICT_WHY ? err : warn)(file, w, `cross-course requires "${r}" has no why: add { "ref": "${r}", "why": "<one line>" }`); }
       }
       if (!C.courses || !C.courses[c] || !cur.courseDocs[c]) { err(file, w, `unknown course "${c}"`); return; }
+      /* the quant path never depends on the optional AI strand (strand "ai", ENGINE-BACKLOG 1261): only an ai course may require an ai level */
+      if (fromCid && c !== fromCid && aiCourse(c) && !aiCourse(fromCid)) err(file, w, `"${r}" is an AI-strand course: a non-AI course never requires it (the quant path must not depend on the strand)`);
       let node, lv, lessonRef = null;
       if (/^L\d+$/.test(rest)) {
         lv = levelsOf(c).find(x => x.n === +rest.slice(1));
@@ -3126,19 +3128,23 @@ const verifyDraws = () => {
     const [kind, name] = d.from.split('/'), want = Array.isArray(d.tags) ? d.tags : [];
     const band = Array.isArray(d.difficulty) ? d.difficulty : Number.isInteger(d.difficulty) ? [d.difficulty, d.difficulty] : null;
     const keep = (tags, diff) => (!want.length || (Array.isArray(tags) && tags.some(t => want.includes(t)))) && (!band || (diff >= band[0] && diff <= band[1]));
-    let files = 0, items = 0;
+    let files = 0, items = 0, aiHit = null;
     const uids = [];
+    /* a stage exam or stage paper never draws from the AI strand (ENGINE-BACKLOG 1261): an ai course's drills, or bank items tagged with an ai skill */
+    const stageFile = /^stage-\d+\.json$/.test(path.basename(file));
+    const aiSkill = (sk) => Object.keys(cur.courseDocs).some(cid => aiCourse(cid) && sk in ((cur.courseDocs[cid] || {}).skills || {}));
     if (kind === 'bank') {
       bankData.forEach((doc, id) => {
         if (!(name === '*' || id === name || id.startsWith(name + '-')) || (doc.sample === true && !sample)) return;
-        files++; (Array.isArray(doc.items) ? doc.items : []).forEach(it => { if (isObj(it) && keep(it.tags, it.difficulty)) { items++; uids.push(`bank/${id}/${it.id}`); } });
+        files++; (Array.isArray(doc.items) ? doc.items : []).forEach(it => { if (isObj(it) && keep(it.tags, it.difficulty)) { items++; uids.push(`bank/${id}/${it.id}`); if (!aiHit && (it.skills || []).some(aiSkill)) aiHit = `bank/${id}/${it.id}`; } });
       });
     } else if (kind === 'drills') {
       drillData.forEach((doc, id) => {
         if (!(name === '*' || doc.pack === name || doc.id === name || String(doc.id).startsWith(name + '-')) || (doc.sample === true && !sample)) return;
-        files++; if (keep(drillTags(doc), doc.difficulty)) { items++; uids.push(`drills/${id}`); }
+        files++; if (keep(drillTags(doc), doc.difficulty)) { items++; uids.push(`drills/${id}`); if (!aiHit && (aiCourse(doc.course) || (doc.skills || []).some(aiSkill))) aiHit = `drills/${id}`; }
       });
     }
+    if (stageFile && aiHit) err(file, `${at}.from`, `"${d.from}" draws ${aiHit} from the AI strand: a stage exam never tests it (strand "ai")`);
     if (!files) err(file, `${at}.from`, `"${d.from}" matches no ${kind === 'bank' ? 'bank file' : 'drill'}${sample ? '' : ' (sample files are drawn only by a sample exam)'}`);
     else if (items < d.n) err(file, `${at}.n`, `draws ${d.n} but only ${items} item${items === 1 ? '' : 's'} in ${d.from} match the tags and difficulty`);
     else {
