@@ -90,7 +90,7 @@ lv.claim(8 / 12 == 2 / 3, 'MLP two thirds', covers=[2 / 3, 0.5, 0.8])
 
 # ---------------- l14 ----------------
 F3 = two('GPT-3 6ND', 6 * 175e9 * 300e9, 6 * 1.75 * 3 * 1e22, covers=[3.15, 1.05, 31.5, 3.14])
-FC = two('Chinchilla 6ND', 6 * 70e9 * 1.4e12, 5.88e23, covers=[5.88, 20, 0.05, 300 / 175, 1.7])
+FC = two('Chinchilla 6ND (6ND, and 120 N^2 at 20 tokens per parameter)', 6 * 70e9 * 1.4e12, 6 * 20 * 70e9 ** 2, covers=[5.88, 20, 0.05, 300 / 175, 1.7])
 TOK = 5000 * 16 * 32
 FT = two('tiny run 6ND', 6 * 18017 * TOK, 6 * 18017 * 2560000, covers=[2560000, 6 * 18017 * TOK, 2.77, 36034, 18017 * 6])
 SEC = FT / 2.1e9
@@ -99,6 +99,10 @@ two('seconds at 2.1 GFLOP/s', SEC, 276741120000 / 2100000000, covers=[SEC, SEC /
 ATT = 2 * 12 * 1024 * 768
 NE = 2 * 85054464
 two('attention share', ATT / NE, 18874368 / 170108928, covers=[ATT, NE, ATT / NE, NE / ATT, ATT / (2 * GPT2)])
+A3 = two('GPT-3 attention share at T = 2,048 (2 L T d over 2 N for the blocks, and T / 12 d)', 2 * 96 * 2048 * 12288 / (2 * G3), 2048 / (12 * 12288), covers=[2 * 96 * 2048 * 12288 / (2 * G3)])
+lv.claim(round(100 * A3, 1) == 1.4 and round(100 * ATT / NE, 1) == 11.1, 'attention adds 1.4% at GPT-3 (T = 2,048, d = 12,288) and 11.1% for GPT-2 small (T = 1,024)', covers=[ATT / NE])
+TE = 65 * 32 + 32 * 32
+lv.claim(TE == 3104 and formula(65, 32, 32, 1, tied=False) - TE == 14913 and arrays(65, 32, 32, 1, tied=False) - TE == 14913 and 18017 - TE == 14913, 'tiny GPT non-embedding parameters: 18,017 - 3,104 = 14,913', covers=[14913])
 lv.claim(12 * 768 == 9216 and 12 * 12288 == 147456 and 768 * 768 == 589824, 'attention dominates past T = 12d', covers=[9216, 147456, 589824, 768])
 DAYS = two('GPT-3 days', F3 / (1000 * 312e12 * 0.4) / 86400, 3.15e23 / 1.248e17 / 86400, covers=[F3 / (1000 * 312e12 * 0.4) / 86400, F3 / (1000 * 312e12) / 86400, F3 / (1000 * 312e12 * 0.4) / 3600, 1.248, 0.4, 312])
 COST = 1000 * DAYS * 24 * 1.5
@@ -167,7 +171,7 @@ LIT('0.01%', why='the grid spacing over 8 decades, 0.0092% a step, stated as a b
 lv.claim(12 * 48 * 1600 ** 2 == 1474560000 and 12 * 1600 ** 2 == 30720000, 'r-rule', covers=[1474.6, 30.7, 1474560000, 2560000])
 RP = P(32000, 2048, 1024, 16)
 lv.claim(32000 * 1024 + 2048 * 1024 == 34865152 and formula(1, 1, 1024, 1) - formula(1, 1, 1024, 0) == 12596224, 'r-count parts', covers=[RP, 34865152, 12596224, 2048, formula(32000, 2048, 1024, 16, tied=False), 12 * 16 * 1024 ** 2])
-two('r-6nd', 6 * 1.3e9 * 26e9 / 1e20, 2.028, covers=[2.03, 2.028 / 3, 0.68, 1.3, 26, 2.6])
+two('r-6nd (6ND, and three times the forward 2ND)', 6 * 1.3e9 * 26e9 / 1e20, 3 * (2 * 1.3e9 * 26e9) / 1e20, covers=[2.03, 2.028 / 3, 0.68, 1.3, 26, 2.6])
 RD = 1e23 / (512 * 312e12 * 0.5) / 86400
 two('r-days', RD, 1e23 / 7.9872e16 / 86400, covers=[RD, RD / 2, RD * 24, 7.99, 512, 0.5])
 two('r-slope', math.log(3.2 / 2.4) / math.log(100), math.log10(3.2 / 2.4) / 2, covers=[math.log(3.2 / 2.4) / math.log(100), 0.4, math.log10(3.2 / 2.4), 0.0625])
@@ -242,6 +246,7 @@ def first_fail(w, src):
                 exec(ZQ_LIB, ns_)
                 exec((w.get('prelude') or '') + '\n', ns_)
                 exec(src, ns_)
+                exec((w.get('postlude') or '') + '\n', ns_)
         except Exception:
             return -1
         for i, c in enumerate(w['tests']):

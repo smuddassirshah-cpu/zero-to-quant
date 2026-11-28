@@ -70,3 +70,10 @@ None.
 ## Backlog
 
 One bullet under "Raised later (gpt level 3)" in `docs/BACKLOG-INBOX.md`.
+
+## Fix pass notes for later authors (frozen module `gpt_ops_l3.py`)
+
+Second reader (`docs/reviews/review-gpt-24.md`) found no module error. Two usage notes for `interp` and `post-train`:
+
+- `eval_loss` on fewer than $T + 1$ characters has no windows and returns `nan` with a NumPy warning instead of raising. Callers pass at least 33 characters (`interp`'s last 2,000 are safe).
+- `bigram_loss` defaults `V` to 65, while `loss_and_grads`, `train` and `eval_loss` read the vocabulary from `head_w`. A resized vocabulary must pass `V` to `bigram_loss`.

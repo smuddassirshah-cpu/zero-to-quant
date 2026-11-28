@@ -540,7 +540,8 @@
         "byKey": {
           "test-1": "Test 1: use both nudges, $(f(x+h) - f(x-h)) / 2h$.",
           "test-2": "Test 2: put each entry back after nudging it.",
-          "test-5": "Test 5: two zero arrays give 0.0, not a division by zero."
+          "test-5": "Test 5: two zero arrays give 0.0, not a division by zero.",
+          "test-4": "Test 4: divide by the sum of both norms, $\\lVert a \\rVert + \\lVert b \\rVert$, not by one of them."
         }
       },
       "explain": {
@@ -724,9 +725,18 @@
             "expect": "True",
             "compare": "equal",
             "budget": 8000
+          },
+          {
+            "call": "planted(TINY, 0)",
+            "expect": "0.3333333333333333",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "budget": 8000
           }
         ],
-        "how": "Submit runs 4 hidden tests on the tiny configuration: the worst error is below $10^{-6}$ for seeds 0 and 1 and for 4 heads, and above $10^{-13}$, so a check that compares nothing fails. Each case may take a few seconds.",
+        "how": "Submit runs 5 hidden tests on the tiny configuration: the worst error is below $10^{-6}$ for seeds 0 and 1 and for 4 heads, and above $10^{-13}$, so a check that compares nothing fails. A planted run doubles one array's gradient and expects about $1/3$, so a check that skips an array fails. Each case may take a few seconds.",
         "mutants": [
           {
             "source": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    w = {k: v.astype(np.float32) for k, v in init_weights(seed, config, sd=0.3).items()}\n    nh = config['n_head']\n    _, grads = loss_and_grads(w, XT, YT, nh)\n    worst = 0.0\n    for name in w:\n        num = numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-5)\n        worst = max(worst, rel_error(grads[name], num))\n    return worst\n",
@@ -747,9 +757,25 @@
             "source": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    w = init_weights(seed, config, sd=0.3)\n    nh = config['n_head']\n    _, grads = loss_and_grads(w, XT, YT, 4)\n    worst = 0.0\n    for name in w:\n        num = numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-5)\n        worst = max(worst, rel_error(grads[name], num))\n    return worst\n",
             "test": 1,
             "symptom": "Builds the gradients with 4 heads whatever the config says."
+          },
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    return 1e-9\n",
+            "test": 5,
+            "symptom": "Returns a fixed small number without comparing anything."
+          },
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    w = init_weights(seed, config, sd=0.3)\n    nh = config['n_head']\n    _, grads = loss_and_grads(w, XT, YT, nh)\n    worst = 0.0\n    for name in list(w)[:1]:\n        num = numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-5)\n        worst = max(worst, rel_error(grads[name], num))\n    return worst\n",
+            "test": 5,
+            "symptom": "Checks only the first array, so a wrong gradient elsewhere goes unseen."
+          },
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    w = init_weights(seed, config, sd=0.3)\n    nh = config['n_head']\n    _, grads = loss_and_grads(w, XT, YT, nh)\n    worst = 0.0\n    for name in w:\n        num = numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-5)\n        worst = max(worst, rel_error(grads[name], grads[name]))\n    return worst\n",
+            "test": 3,
+            "symptom": "Compares the backprop gradient with itself, so the error is exactly 0."
           }
         ],
-        "budget": 8000
+        "budget": 8000,
+        "postlude": "\nimport gpt_ops_l3 as _g\n\n\ndef planted(config, seed):\n    real = _g.loss_and_grads\n\n    def bad(w, X, Y, h):\n        loss, grads = real(w, X, Y, h)\n        return loss, {**grads, 'h0.fc_w': 2 * grads['h0.fc_w']}\n\n    globals()['loss_and_grads'] = _g.loss_and_grads = bad\n    try:\n        return check_model(config, seed)\n    finally:\n        globals()['loss_and_grads'] = _g.loss_and_grads = real\n"
       },
       "hints": [
         {
@@ -773,7 +799,8 @@
         "generic": "Not quite. Check the first failing test.",
         "byKey": {
           "test-1": "Test 1 needs the worst error below $10^{-6}$. Check float64, $h = 10^{-5}$ and the head count.",
-          "test-3": "Test 3 makes sure the check compares real numbers: an error of exactly 0 means nothing was compared."
+          "test-3": "Test 3 makes sure the check compares real numbers: an error of exactly 0 means nothing was compared.",
+          "test-5": "Test 5 plants a wrong gradient in one array (the MLP's first weights, doubled): your check must report about $1/3$. Loop over every array, and compare with the numerical gradient."
         }
       },
       "explain": {

@@ -1061,9 +1061,17 @@
             "call": "isinstance(loss(W, X1, Y1), float)",
             "expect": "True",
             "compare": "equal"
+          },
+          {
+            "call": "shifted_loss(W, X1, Y1)",
+            "expect": "1.7486697545334282",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
           }
         ],
-        "how": "Submit runs 4 hidden tests: one validation window, a batch of 16, a short window, and that the result is a float. Values are compared with the reference to $10^{-9}$ (relative).",
+        "how": "Submit runs 4 hidden tests: one validation window, a batch of 16, a short window, that the result is a float, and that shifting every logit by 1,000 leaves the loss unchanged. Values are compared with the reference to $10^{-9}$ (relative).",
         "mutants": [
           {
             "source": "import numpy as np\n\n\ndef loss(weights, idx, targets):\n    z = forward(weights, idx)\n    z = z - z.max(-1, keepdims=True)\n    logp = z - np.log(np.exp(z).sum(-1, keepdims=True))\n    targets = np.asarray(targets)\n    return float(-np.take_along_axis(logp, np.asarray(idx)[..., None], -1).mean())\n",
@@ -1084,8 +1092,14 @@
             "source": "import numpy as np\n\n\ndef loss(weights, idx, targets):\n    z = forward(weights, idx)\n    z = z - z.max(-1, keepdims=True)\n    logp = z - np.log(np.exp(z).sum(-1, keepdims=True))\n    targets = np.asarray(targets)\n    return np.array(-np.take_along_axis(logp, targets[..., None], -1).mean())\n",
             "test": 4,
             "symptom": "Returns an array instead of a float."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef loss(weights, idx, targets):\n    z = forward(weights, idx)\n    logp = z - np.log(np.exp(z).sum(-1, keepdims=True))\n    targets = np.asarray(targets)\n    return float(-np.take_along_axis(logp, targets[..., None], -1).mean())\n",
+            "test": 5,
+            "symptom": "Skips the shift by the largest logit, so large logits overflow to inf and nan."
           }
-        ]
+        ],
+        "postlude": "\ndef shifted_loss(weights, idx, targets):\n    real = forward\n    globals()['forward'] = lambda wt, i: real(wt, i) + 1000.0\n    try:\n        return loss(weights, idx, targets)\n    finally:\n        globals()['forward'] = real\n"
       },
       "hints": [
         {
@@ -1108,7 +1122,9 @@
         "correct": "Your loss is 1.7487 on the window, matching the reference.",
         "generic": "Not quite. Check the first failing test.",
         "byKey": {
-          "test-1": "Test 1 compares one window. Check that you score the targets, average and use natural logs."
+          "test-1": "Test 1 compares one window. Check that you score the targets, average and use natural logs.",
+          "test-4": "Test 4 wants a Python float, not an array: wrap the result in `float(...)`.",
+          "test-5": "Test 5 adds 1,000 to every logit, which must not change the loss. Subtract the largest logit before exponentiating."
         }
       },
       "explain": {

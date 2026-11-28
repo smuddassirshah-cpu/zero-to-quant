@@ -2153,3 +2153,30 @@ def config_costs(V, T, d, L, tokens):
     n = V * d + T * d + L * block + 2 * d
     return {'params': n, 'flops': 6 * n * tokens}
 ```
+
+## Fix pass
+
+Branch `fix-gpt-24`. 20 findings: 18 fixed, 1 declined, 1 fixed with a hedge (l16). No graded answer changed (no numeric `answer`, choice key or code solution edited); one choice item states a different figure (review-2 items[4]); code widgets gained hidden tests. Frozen files untouched: `gpt_ops_l2.py`, `gpt_ops_l3.py`, the weight files, `course.json`, level 5.
+
+1. l14 screens[7] option `att` why: fixed, "about 1.4% at GPT-3's context". `gpt-L4-numbers.py` computes $2LTd / 2N$ at $T = 2{,}048$, $d = 12{,}288$ two ways ($2 \cdot 96 \cdot 2048 \cdot 12288 / 2 G_3$ and $T / 12d$): 0.01389; and 11.1% for GPT-2 small.
+2. l14 screens[0] prose: fixed. "Here $N$ counts every parameter. Kaplan et al. leave out the embedding tables ... that leaves 14,913 of the tiny GPT's 18,017." Script: 18,017 - 3,104 = 14,913 by formula and by summing `shapes`.
+3. l10 screens[5]: fixed. Hidden `postlude` helper `planted(config, seed)` swaps in a `loss_and_grads` that doubles the gradient of `h0.fc_w`; new test 5 expects 0.3333 (abs $10^{-6}$). Mutants `return 1e-9` and first-array-only fail test 5; a self-comparison mutant fails test 3 (which made `test-3` reachable). Checked: grade-all green, script replays all.
+4. l12 screens[5] `beats_bigram`: fixed. Postlude `bigram_sizes` records the call; new test 7 expects `(225000, 25000)`. Mutant: bigram counted on train plus validation fails test 7.
+5. l7 screens[6]: fixed. Postlude `shifted_loss` adds 1,000 to every logit; test 5 expects the unshifted loss (rel $10^{-6}$). Mutant without the max-shift fails test 5. Script: the 1,000 shift leaves the loss unchanged.
+6. l8 screens[9]: fixed. The loop now ends `ids.append(argmax(z) if tau == 0 else draw(softmax(top_k(z / tau, k))))`.
+7. l16 screens[6] and review-4 items[9]: applied with a hedge. I could not reach arXiv either; the claim that the paper's own fit gives fewer tokens rests on the review. I checked the sensitivity: the exponent $\beta / (\alpha + \beta)$ moving from 0.45 to 0.46 shifts $N$ at $C / 6 \approx 10^{23}$ by about $10^{0.23} = 1.7$ times, so rounded constants do exaggerate the ratio. Text now says "constants rounded to two figures" and gives the reviewer's sentence. No new number.
+8. review-2 items[4]: fixed. Stated loss 3.75 (transposed `h0.proj_w`, 781 validation windows); feedback "far above 1.79 but below $\ln 65$"; option `text` why "not from 1.79 to 3.75". `gpt-L2-numbers.py` computes transposed `proj_w` 3.75 (two routes: `gpt_ops_l2` and `seq_ops_l4`), `wpe` 3.41, both 3.83, all below $\ln 65$.
+9. homework-3 items[0] `grad_check`: fixed. Postlude `planted_grad_check` doubles `h0.fc_w`'s gradient; test 8 expects about 0.3333 (abs $10^{-5}$). Mutants `return 1e-9` and first-array-only fail test 8; a self-comparison mutant fails test 6.
+10. homework-3 items[1] `find_lr`: fixed. Rate 0.2 added to the recorded runs with a `nan` at step 2 and a final loss of 2.0; test 7 `find_lr([0.01, 0.2])` expects 0.01. Mutant without the `isfinite` clause fails test 7.
+11. homework-3 items[0] prose "scale by 15 first": declined. The rule is a teaching hint about an input to the check, and an unscaled check still compares every array, which test 8 now enforces; nothing false is stated. No change.
+12. homework-4 items[0] widget.how: fixed, "within 50%" to match `abs(ratio - 1) < 0.5`.
+13. problems-2 items[2] parts[2]: fixed, "$\approx 1.9915$" in feedback and explain ($1.3804 / \ln 2 = 1.99150$); answer 1.9914 and its tolerance unchanged. Script covers it.
+14. `--strict-feedback`: fixed, 0 failures on all 21 files (was 25: 22 missing, 3 unreachable). Lines added for l6 s3 (tests 2, 4, 9), l6 s7 (3), l8 s4 (3, 4), homework-2 items[0] (1, 5), items[1] (2, 3, 4), l9 s5 (1), l10 s3 (4) and s5 (5), l11 s8 (3, 4), l12 s5 (1, 7), homework-3 items[0] (6, 8) and items[1] (2, 7), l13 s5 (2, 5), l14 s6 (3), l16 s5 (1, 4), l7 s6 (4, 5). Unreachable: l13 `test-4` removed (its text now on `test-2`, which the untied mutant fails first); homework-2 items[0] `test-6` replaced by `test-5` plus a new mutant (mask built for a fixed 32) that fails test 5 first; l10 `test-3` reached by the new self-comparison mutant.
+15. Number scripts, "two routes" labels: fixed. L2 'l7 hook loss' now compares the chances route with the per-position loop; 'validation loss in bits' and L3 'bigram in bits', 'p1 bits' compare division by $\ln 2$ with `log2(exp(x))`; L4 'Chinchilla 6ND' compares $6ND$ with $120 N^2$ and 'r-6nd' compares $6ND$ with three times $2ND$.
+16. gpt-L3-numbers.py claim with `or`: fixed; all four terms are now one conjunction with `abs(... ) < 1e-12` for the two float terms.
+17. Module note, `eval_loss` returns `nan` below $T + 1$ characters: recorded in `docs/reports/gpt-L3.md`.
+18. Module note, `bigram_loss` default `V = 65`: recorded in `docs/reports/gpt-L3.md`.
+19. Module note, `sample_text` ties: recorded in `docs/reports/gpt-L2.md`.
+20. Module note, `forward_cache` has no mask argument: recorded in `docs/reports/gpt-L2.md`.
+
+Also: the three scripts' code-widget replay (`first_fail`) now runs a widget's `postlude`, since the new tests call helpers defined there. Checks: validator 0 errors, no `[ai-mutants]` or `[source-ban]` warning on gpt; voice scan 0 and 0 (two new `how` texts were split to stay under 35 words); `same-course-reuse.mjs --all` lists nothing for gpt; number scripts through the CI runner (4 of 4) and directly with `ZQ_NUMBERS_STRICT=1` (298, 259, 197 checks) all exit 0; `grade-all --code --strict-feedback` on the 21 files alone, 0 failures.

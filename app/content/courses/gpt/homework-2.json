@@ -124,6 +124,11 @@
             "source": "import numpy as np\n\n\ndef layer_norm(x, g, b):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + 1e-5) + b\n\n\ndef gpt_loss(weights, text):\n    ids = np.array([VOCAB.index(c) for c in text])\n    x_ids, y = ids[:-1], ids[1:]\n    T = len(x_ids)\n    x = weights['wte'][x_ids]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    q, k, v = [qkv[:, j * 32:(j + 1) * 32].reshape(T, 4, 8).transpose(1, 0, 2) for j in range(3)]\n    s = q @ k.transpose(0, 2, 1) / np.sqrt(8) + np.triu(np.full((T, T), -np.inf), 1)\n    att = np.exp(s - s.max(-1, keepdims=True))\n    att = att / att.sum(-1, keepdims=True)\n    z = (att @ v).transpose(1, 0, 2).reshape(T, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    h = np.maximum(layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b']) @ weights['h0.fc_w'] + weights['h0.fc_b'], 0)\n    x = x + h @ weights['h0.out_w'] + weights['h0.out_b']\n    logits = layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n    logits = logits - logits.max(-1, keepdims=True)\n    logp = logits - np.log(np.exp(logits).sum(-1, keepdims=True))\n    return float(-logp[np.arange(T), y].mean())\n",
             "test": 1,
             "symptom": "Never adds the positions."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef layer_norm(x, g, b):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + 1e-5) + b\n\n\ndef gpt_loss(weights, text):\n    ids = np.array([VOCAB.index(c) for c in text])\n    x_ids, y = ids[:-1], ids[1:]\n    T = len(x_ids)\n    x = weights['wte'][x_ids] + weights['wpe'][:T]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    q, k, v = [qkv[:, j * 32:(j + 1) * 32].reshape(T, 4, 8).transpose(1, 0, 2) for j in range(3)]\n    s = q @ k.transpose(0, 2, 1) / np.sqrt(8) + np.triu(np.full((32, 32), -np.inf), 1)\n    att = np.exp(s - s.max(-1, keepdims=True))\n    att = att / att.sum(-1, keepdims=True)\n    z = (att @ v).transpose(1, 0, 2).reshape(T, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    h = np.maximum(layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b']) @ weights['h0.fc_w'] + weights['h0.fc_b'], 0)\n    x = x + h @ weights['h0.out_w'] + weights['h0.out_b']\n    logits = layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n    logits = logits - logits.max(-1, keepdims=True)\n    logp = logits - np.log(np.exp(logits).sum(-1, keepdims=True))\n    return float(-logp[np.arange(T), y].mean())\n",
+            "test": 5,
+            "symptom": "Builds the causal mask for a fixed window of 32, so a shorter text does not fit."
           }
         ]
       },
@@ -131,7 +136,8 @@
         "correct": "Your forward pass and loss match the reference on every text.",
         "generic": "Not quite. Check the first failing test.",
         "byKey": {
-          "test-6": "Test 6 is a two-character text: one input and one target. Check that your shapes work for $T = 1$."
+          "test-5": "Test 5 is a 32-character line, so $T = 31$: build the mask and the position slice from the text's own length, not a fixed 32.",
+          "test-1": "Test 1 scores one 33-character window of validation text. Check the causal mask, that positions are added, the scale by the head width, and the loss of each position's own next character."
         }
       },
       "explain": {
@@ -256,7 +262,10 @@
         "correct": "Your chances match at every temperature and $k$.",
         "generic": "Not quite. Check the first failing test.",
         "byKey": {
-          "test-8": "Test 8 has logits near 1,000: subtract the largest before the exponential."
+          "test-8": "Test 8 has logits near 1,000: subtract the largest before the exponential.",
+          "test-2": "Test 2 uses $\\tau = 0.5$, which sharpens: divide the logits by $\\tau$, do not multiply.",
+          "test-3": "Test 3 keeps the top 2: set the others to $-\\infty$ and take the softmax of what is left, so the kept chances sum to 1.",
+          "test-4": "Test 4 has $\\tau = 0$: return 1 at the largest logit and 0 elsewhere, without dividing by 0."
         }
       },
       "explain": {

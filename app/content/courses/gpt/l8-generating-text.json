@@ -560,7 +560,9 @@
         "byKey": {
           "test-1": "Test 1 uses temperature 0. Return the argmax without dividing.",
           "test-2": "Test 2 draws at $\\tau = 1$. Check the softmax and the call `rng.choice(len(z), p=p)`.",
-          "test-7": "Test 7: a greedy step must not touch `rng`, so later draws stay the same."
+          "test-7": "Test 7: a greedy step must not touch `rng`, so later draws stay the same.",
+          "test-3": "Test 3 uses $\\tau = 0.5$, which sharpens: divide the logits by $\\tau$, do not multiply.",
+          "test-4": "Test 4 keeps the 2 largest logits: set every other logit to $-\\infty$ before the softmax."
         }
       },
       "explain": {
@@ -977,7 +979,7 @@
       "type": "generalise",
       "difficulty": 2,
       "title": "Decoding choices",
-      "prose": "Every sampler is one loop with one choice inside it:\n```python\nfor _ in range(n):\n    z = forward(W, ids[-T:])[-1] / tau\n    z = top_k(z, k)       # optional\n    ids.append(draw(softmax(z)))\n```\n$\\tau = 0$ and $k = 1$ both give greedy decoding.",
+      "prose": "Every sampler is one loop with one choice inside it:\n```python\nfor _ in range(n):\n    z = forward(W, ids[-T:])[-1]\n    # top_k is optional\n    ids.append(argmax(z) if tau == 0 else draw(softmax(top_k(z / tau, k))))\n```\n$\\tau = 0$ and $k = 1$ both give greedy decoding.",
       "question": "Which setting makes two runs from the same prompt give different text?",
       "widget": {
         "kind": "choice",
