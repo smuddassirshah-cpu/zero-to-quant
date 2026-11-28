@@ -1,0 +1,513 @@
+{
+ "id": "homework-2",
+ "course": "representations",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-detector",
+   "difficulty": 5,
+   "skills": [
+    "rp-autoenc"
+   ],
+   "title": "An alarm for odd days",
+   "performance": "code",
+   "prose": "Write `anomaly_detector(R_train, R_val, R_test, k, q)` from nothing. Each argument is a days-by-stocks array of returns. Fit a linear autoencoder with `k` codes to the training days, centred by their mean (Adam for 500 steps works, as does the closed form of l6, since both span the same subspace). Score every day by its squared rebuild distance, set the threshold at the `q` quantile of the validation errors (`np.quantile`), and return the positions in `R_test`, from 0, of the days strictly above it.",
+   "question": "Write `anomaly_detector`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef anomaly_detector(R_train, R_val, R_test, k, q):\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\n\n\ndef train_linear_ae(X, k, steps=500, lr=0.05, seed=0):\n    n, d = X.shape\n    g = np.random.default_rng(seed)\n    W_enc = Tensor(0.1 * g.standard_normal((d, k)))\n    W_dec = Tensor(0.1 * g.standard_normal((k, d)))\n    params = [W_enc, W_dec]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        loss = ((X @ W_enc @ W_dec - X) ** 2).sum() / n\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, t, lr)\n        for p, q in zip(params, new):\n            p.data = q\n    return W_enc.data, W_dec.data\n\n\ndef anomaly_detector(R_train, R_val, R_test, k, q):\n    R_train = np.asarray(R_train, dtype=float)\n    mu = R_train.mean(axis=0)\n    W_enc, W_dec = train_linear_ae(R_train - mu, k)\n\n    def errors(R):\n        T = np.asarray(R, dtype=float) - mu\n        return ((T - T @ W_enc @ W_dec) ** 2).sum(axis=1)\n\n    thr = np.quantile(errors(R_val), q)\n    return [int(i) for i in np.where(errors(R_test) > thr)[0]]\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "setup": "g = np.random.default_rng(1)\nt = g.standard_normal(60)\nbase = np.stack([t, 2 * t], axis=1)\nRtr = base[:40] + 0.01 * g.standard_normal((40, 2))\nRva = base[40:] + 0.01 * g.standard_normal((20, 2))\nRte = np.array([[1.0, 2.0], [1.0, -0.5], [-2.0, -4.0], [0.0, 1.0], [3.0, 6.1]])\n",
+      "call": "anomaly_detector(Rtr, Rva, Rte, 1, 0.95)",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "[1, 3, 4]"
+     },
+     {
+      "setup": "import representations_ops_l2 as ops\nR, kind = ops.odd_day_panel(3)\nodd = [int(i) for i in np.where(kind[600:] == 1)[0]]\nfall = int(np.where(kind[600:] == 2)[0][0])\nf = anomaly_detector(R[:500], R[500:600], R[600:], 3, 0.99)\n",
+      "call": "set(odd) <= set(f)",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "g = np.random.default_rng(1)\nt = g.standard_normal(60)\nbase = np.stack([t, 2 * t], axis=1)\nRtr = base[:40] + 0.01 * g.standard_normal((40, 2))\nRva = base[40:] + 0.01 * g.standard_normal((20, 2))\nRte = np.array([[1.0, 2.0], [1.0, -0.5], [-2.0, -4.0], [0.0, 1.0], [3.0, 6.1]])\n",
+      "call": "anomaly_detector(Rtr, Rva, Rte, 1, 0.95)",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "[1, 3, 4]"
+     },
+     {
+      "setup": "import representations_ops_l2 as ops\nR, kind = ops.odd_day_panel(3)\nodd = [int(i) for i in np.where(kind[600:] == 1)[0]]\nfall = int(np.where(kind[600:] == 2)[0][0])\nf = anomaly_detector(R[:500], R[500:600], R[600:], 3, 0.99)\n",
+      "call": "set(odd) <= set(f)",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "import representations_ops_l2 as ops\nR, kind = ops.odd_day_panel(3)\nodd = [int(i) for i in np.where(kind[600:] == 1)[0]]\nfall = int(np.where(kind[600:] == 2)[0][0])\nf = anomaly_detector(R[:500], R[500:600], R[600:], 3, 0.99)\n",
+      "call": "[fall in f, len(f) <= 18]",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "[False, True]"
+     },
+     {
+      "setup": "import representations_ops_l2 as ops\nR, kind = ops.odd_day_panel(7)\nodd = [int(i) for i in np.where(kind[600:] == 1)[0]]\nfall = int(np.where(kind[600:] == 2)[0][0])\nf = anomaly_detector(R[:500], R[500:600], R[600:], 3, 0.99)\n",
+      "call": "[set(odd) <= set(f), fall in f, len(f) <= 18]",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "[True, False, True]"
+     },
+     {
+      "setup": "import representations_ops_l2 as ops\nR, kind = ops.odd_day_panel(4)\nf = anomaly_detector(R[:400], R[400:500], R[500:600], 3, 0.99)",
+      "call": "len(f) <= 4",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "import representations_ops_l2 as ops\nR, kind = ops.odd_day_panel(3)\nodd = [int(i) for i in np.where(kind[600:] == 1)[0]]\nfall = int(np.where(kind[600:] == 2)[0][0])\nf = anomaly_detector(R[:500] + 2.0, R[500:600] + 2.0, R[600:] + 2.0, 3, 0.99)\n",
+      "call": "[set(odd) <= set(f), fall in f]",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "[True, False]"
+     },
+     {
+      "setup": "g = np.random.default_rng(1)\nt = g.standard_normal(60)\nbase = np.stack([t, 2 * t], axis=1)\nRtr = base[:40] + 0.01 * g.standard_normal((40, 2))\nRva = base[40:] + 0.01 * g.standard_normal((20, 2))\nRte = np.array([[1.0, 2.0], [1.0, -0.5], [-2.0, -4.0], [0.0, 1.0], [3.0, 6.1]])\n",
+      "call": "anomaly_detector(Rtr, Rva, Rte[[0, 2]], 1, 1.0)",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "[]"
+     },
+     {
+      "setup": "g = np.random.default_rng(1)\nt = g.standard_normal(60)\nbase = np.stack([t, 2 * t], axis=1)\nRtr = base[:40] + 0.01 * g.standard_normal((40, 2))\nRva = base[40:] + 0.01 * g.standard_normal((20, 2))\nRte = np.array([[1.0, 2.0], [1.0, -0.5], [-2.0, -4.0], [0.0, 1.0], [3.0, 6.1]])\n",
+      "call": "anomaly_detector(Rtr + [5.0, -3.0], Rva + [5.0, -3.0], Rte + [5.0, -3.0], 1, 0.95)",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "[1, 3, 4]"
+     },
+     {
+      "setup": "import representations_ops_l2 as ops\nR, kind = ops.odd_day_panel(3)\nodd = [int(i) for i in np.where(kind[600:] == 1)[0]]\nfall = int(np.where(kind[600:] == 2)[0][0])\nf = anomaly_detector(R[:500], R[500:600], R[600:], 3, 0.99)\n",
+      "call": "[all(isinstance(i, int) for i in f), f == sorted(f), min(f) >= 0, max(f) < 150]",
+      "budget": 4000,
+      "compare": "equal",
+      "expect": "[True, True, True, True]"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. Two are exact lists on a two-stock toy, one of them shifted. On seeded 10-stock panels every planted odd day must be flagged and the market-wide fall must not; an all-normal block may raise at most 4 alarms. The result must be a sorted list of test-block positions.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\n\n\ndef train_linear_ae(X, k, steps=500, lr=0.05, seed=0):\n    n, d = X.shape\n    g = np.random.default_rng(seed)\n    W_enc = Tensor(0.1 * g.standard_normal((d, k)))\n    W_dec = Tensor(0.1 * g.standard_normal((k, d)))\n    params = [W_enc, W_dec]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        loss = ((X @ W_enc @ W_dec - X) ** 2).sum() / n\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, t, lr)\n        for p, q in zip(params, new):\n            p.data = q\n    return W_enc.data, W_dec.data\n\n\ndef anomaly_detector(R_train, R_val, R_test, k, q):\n    R_train = np.asarray(R_train, dtype=float)\n    mu = R_train.mean(axis=0)\n    W_enc, W_dec = train_linear_ae(R_train - mu, k)\n\n    def errors(R):\n        T = np.asarray(R, dtype=float) - mu\n        return ((T - T @ W_enc @ W_dec) ** 2).sum(axis=1)\n\n    thr = np.quantile(errors(R_test), q)\n    return [int(i) for i in np.where(errors(R_test) > thr)[0]]\n",
+      "test": 1,
+      "symptom": "Sets the threshold on the test days, so the odd days raise it and slip through."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\n\n\ndef train_linear_ae(X, k, steps=500, lr=0.05, seed=0):\n    n, d = X.shape\n    g = np.random.default_rng(seed)\n    W_enc = Tensor(0.1 * g.standard_normal((d, k)))\n    W_dec = Tensor(0.1 * g.standard_normal((k, d)))\n    params = [W_enc, W_dec]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        loss = ((X @ W_enc @ W_dec - X) ** 2).sum() / n\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, t, lr)\n        for p, q in zip(params, new):\n            p.data = q\n    return W_enc.data, W_dec.data\n\n\ndef anomaly_detector(R_train, R_val, R_test, k, q):\n    R_train = np.asarray(R_train, dtype=float)\n    mu = R_train.mean(axis=0)\n    W_enc, W_dec = train_linear_ae(R_train - mu, k)\n\n    def errors(R):\n        T = np.asarray(R, dtype=float) - mu\n        return ((T - T @ W_enc @ W_dec) ** 2).sum(axis=1)\n\n    thr = np.quantile(errors(R_val), q)\n    return [int(i) + len(R_train) + len(R_val) for i in np.where(errors(R_test) > thr)[0]]\n",
+      "test": 1,
+      "symptom": "Numbers the flagged days from the start of training, not of the test block."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\n\n\ndef train_linear_ae(X, k, steps=500, lr=0.05, seed=0):\n    n, d = X.shape\n    g = np.random.default_rng(seed)\n    W_enc = Tensor(0.1 * g.standard_normal((d, k)))\n    W_dec = Tensor(0.1 * g.standard_normal((k, d)))\n    params = [W_enc, W_dec]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        loss = ((X @ W_enc @ W_dec - X) ** 2).sum() / n\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, t, lr)\n        for p, q in zip(params, new):\n            p.data = q\n    return W_enc.data, W_dec.data\n\n\ndef anomaly_detector(R_train, R_val, R_test, k, q):\n    R_train = np.asarray(R_train, dtype=float)\n    mu = R_train.mean(axis=0)\n    W_enc, W_dec = train_linear_ae(R_train - mu, k)\n\n    def errors(R):\n        T = np.asarray(R, dtype=float)\n        return ((T - T @ W_enc @ W_dec) ** 2).sum(axis=1)\n\n    thr = np.quantile(errors(R_val), q)\n    return [int(i) for i in np.where(errors(R_test) > thr)[0]]\n",
+      "test": 8,
+      "symptom": "Forgets to centre the scored days with the training mean."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\n\n\ndef train_linear_ae(X, k, steps=500, lr=0.05, seed=0):\n    n, d = X.shape\n    g = np.random.default_rng(seed)\n    W_enc = Tensor(0.1 * g.standard_normal((d, k)))\n    W_dec = Tensor(0.1 * g.standard_normal((k, d)))\n    params = [W_enc, W_dec]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        loss = ((X @ W_enc @ W_dec - X) ** 2).sum() / n\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, t, lr)\n        for p, q in zip(params, new):\n            p.data = q\n    return W_enc.data, W_dec.data\n\n\ndef anomaly_detector(R_train, R_val, R_test, k, q):\n    R_train = np.asarray(R_train, dtype=float)\n    mu = R_train.mean(axis=0)\n    W_enc, W_dec = train_linear_ae(R_train - mu, 1)\n\n    def errors(R):\n        T = np.asarray(R, dtype=float) - mu\n        return ((T - T @ W_enc @ W_dec) ** 2).sum(axis=1)\n\n    thr = np.quantile(errors(R_val), q)\n    return [int(i) for i in np.where(errors(R_test) > thr)[0]]\n",
+      "test": 2,
+      "symptom": "Ignores k and keeps a single code, so ordinary sector moves look odd."
+     }
+    ],
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+     "representations_ops_l2.py": "content/data/ai/representations_ops_l2.py"
+    },
+    "budget": 4000
+   },
+   "feedback": {
+    "correct": "Your alarm catches every planted day, stays quiet on the market-wide fall and on an all-normal block.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "On the toy, the days off the line $(1, 2)$ should be flagged: centre with the training mean, keep $k$ codes, and set the threshold on the validation days.",
+     "test-2": "Every planted odd day must be flagged: set the threshold on the validation days, not on the test days.",
+     "test-8": "Shifting every day by the same amount must not change the flags: centre all three blocks with the training mean."
+    }
+   },
+   "explain": {
+    "text": "Train on normal days, calibrate on held-out normal days, and only then score the test block. The threshold must never see the days it judges."
+   }
+  },
+  {
+   "id": "h-choose-k",
+   "difficulty": 4,
+   "skills": [
+    "rp-autoenc"
+   ],
+   "title": "How many codes?",
+   "prose": "Write `choose_k(X_train, X_val, max_err)`: fit PCA (the best linear autoencoder) on the training rows, and return the smallest number of codes, from 0, whose mean squared rebuild distance on the held-out rows is at most `max_err`. With 0 codes every row is rebuilt as the training mean.",
+   "question": "Write `choose_k`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef choose_k(X_train, X_val, max_err):\n    # Smallest k (0 up to the number of columns) whose PCA rebuild,\n    # fitted on X_train, has a held-out error on X_val at most max_err.\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef choose_k(X_train, X_val, max_err):\n    X_train = np.asarray(X_train, dtype=float)\n    X_val = np.asarray(X_val, dtype=float)\n    mu = X_train.mean(axis=0)\n    lam, V = np.linalg.eigh((X_train - mu).T @ (X_train - mu))\n    V = V[:, ::-1]\n    T = X_val - mu\n    for k in range(X_train.shape[1] + 1):\n        top = V[:, :k]\n        err = ((T - T @ top @ top.T) ** 2).sum(axis=1).mean()\n        if err <= max_err:\n            return k\n    return X_train.shape[1]\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "setup": "g = np.random.default_rng(3)\nZ = g.standard_normal((600, 4)) @ np.diag([2.0, 1.0, 0.5, 0.1])\nQ = np.linalg.qr(g.standard_normal((4, 4)))[0]\nX = Z @ Q.T + 1.0\nXa, Xb = X[:400], X[400:]\n",
+      "call": "choose_k(Xa, Xb, 0.5)",
+      "compare": "equal",
+      "expect": "2"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "g = np.random.default_rng(3)\nZ = g.standard_normal((600, 4)) @ np.diag([2.0, 1.0, 0.5, 0.1])\nQ = np.linalg.qr(g.standard_normal((4, 4)))[0]\nX = Z @ Q.T + 1.0\nXa, Xb = X[:400], X[400:]\n",
+      "call": "choose_k(Xa, Xb, 0.5)",
+      "compare": "equal",
+      "expect": "2"
+     },
+     {
+      "setup": "g = np.random.default_rng(3)\nZ = g.standard_normal((600, 4)) @ np.diag([2.0, 1.0, 0.5, 0.1])\nQ = np.linalg.qr(g.standard_normal((4, 4)))[0]\nX = Z @ Q.T + 1.0\nXa, Xb = X[:400], X[400:]\n",
+      "call": "[choose_k(Xa, Xb, e) for e in (10.0, 2.0, 0.1, 0.02, 0.0)]",
+      "compare": "equal",
+      "expect": "[0, 1, 3, 3, 4]"
+     },
+     {
+      "call": "choose_k([[0, 0], [2, 2], [4, 4]], [[1, 1], [3, 3]], 0.0)",
+      "compare": "equal",
+      "expect": "2"
+     },
+     {
+      "call": "choose_k([[0, 0], [2, 0], [0, 2], [2, 2]], [[5, 5]], 1.0)",
+      "compare": "equal",
+      "expect": "2"
+     },
+     {
+      "setup": "g = np.random.default_rng(3)\nZ = g.standard_normal((600, 4)) @ np.diag([2.0, 1.0, 0.5, 0.1])\nQ = np.linalg.qr(g.standard_normal((4, 4)))[0]\nX = Z @ Q.T + 1.0\nXa, Xb = X[:400], X[400:]\n",
+      "call": "choose_k(Xa, Xa + [100.0, 0, 0, 0], 50.0)",
+      "compare": "equal",
+      "expect": "4"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests; each answer must equal the expected whole number or list.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef choose_k(X_train, X_val, max_err):\n    X_train = np.asarray(X_train, dtype=float)\n    X_val = np.asarray(X_val, dtype=float)\n    mu = X_train.mean(axis=0)\n    lam, V = np.linalg.eigh((X_train - mu).T @ (X_train - mu))\n    V = V[:, ::-1]\n    T = X_val - X_val.mean(axis=0)\n    for k in range(X_train.shape[1] + 1):\n        top = V[:, :k]\n        err = ((T - T @ top @ top.T) ** 2).sum(axis=1).mean()\n        if err <= max_err:\n            return k\n    return X_train.shape[1]\n",
+      "test": 4,
+      "symptom": "Centres the held-out days with their own mean instead of the training mean."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef choose_k(X_train, X_val, max_err):\n    X_train = np.asarray(X_train, dtype=float)\n    X_val = np.asarray(X_val, dtype=float)\n    mu = X_train.mean(axis=0)\n    lam, V = np.linalg.eigh((X_train - mu).T @ (X_train - mu))\n    T = X_val - mu\n    for k in range(X_train.shape[1] + 1):\n        top = V[:, :k]\n        err = ((T - T @ top @ top.T) ** 2).sum(axis=1).mean()\n        if err <= max_err:\n            return k\n    return X_train.shape[1]\n",
+      "test": 1,
+      "symptom": "Keeps the eigenvectors with the smallest eigenvalues first."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef choose_k(X_train, X_val, max_err):\n    X_train = np.asarray(X_train, dtype=float)\n    X_val = np.asarray(X_val, dtype=float)\n    mu = X_train.mean(axis=0)\n    lam, V = np.linalg.eigh((X_train - mu).T @ (X_train - mu))\n    V = V[:, ::-1]\n    T = X_val - mu\n    for k in range(1, X_train.shape[1] + 1):\n        top = V[:, :k]\n        err = ((T - T @ top @ top.T) ** 2).sum(axis=1).mean()\n        if err <= max_err:\n            return k\n    return X_train.shape[1]\n",
+      "test": 2,
+      "symptom": "Never tries k = 0, so a target the mean already meets returns 1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: the smallest bottleneck that meets the held-out target.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-3": "Points on the line $y = x$ need one code for zero error: keep the top eigenvectors, largest first.",
+     "test-4": "With 0 codes the held-out point is rebuilt as the training mean: centre with the training mean, and try $k = 0$ first."
+    }
+   },
+   "explain": {
+    "text": "Choosing $k$ on held-out rows guards against keeping codes that only fit the training sample."
+   }
+  },
+  {
+   "id": "h-derive",
+   "difficulty": 4,
+   "skills": [
+    "rp-autoenc"
+   ],
+   "title": "Why the dropped eigenvalues",
+   "prose": "Centred returns $\\mathbf{x}$ have covariance $\\boldsymbol{\\Sigma}$ with orthonormal eigenvectors $\\mathbf{v}_1, \\ldots, \\mathbf{v}_d$ and eigenvalues $\\lambda_1 \\ge \\cdots \\ge \\lambda_d$. The rebuild keeps the top $k$: $\\hat{\\mathbf{x}} = \\sum_{i \\le k} (\\mathbf{v}_i^\\top\\mathbf{x})\\mathbf{v}_i$.",
+   "question": "Put the steps in order to show that $\\mathbb{E}\\lVert \\mathbf{x} - \\hat{\\mathbf{x}}\\rVert^2 = \\sum_{i > k}\\lambda_i$. Leave out the two steps that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Expand $\\mathbf{x}$ in the eigenbasis: $\\mathbf{x} = \\sum_{i=1}^{d} (\\mathbf{v}_i^\\top\\mathbf{x})\\mathbf{v}_i$, since the $\\mathbf{v}_i$ are orthonormal."
+     },
+     {
+      "id": "o2",
+      "text": "Subtract the rebuild: $\\mathbf{x} - \\hat{\\mathbf{x}} = \\sum_{i > k} (\\mathbf{v}_i^\\top\\mathbf{x})\\mathbf{v}_i$."
+     },
+     {
+      "id": "o3",
+      "text": "By Pythagoras for orthonormal vectors, $\\lVert \\mathbf{x} - \\hat{\\mathbf{x}}\\rVert^2 = \\sum_{i > k} (\\mathbf{v}_i^\\top\\mathbf{x})^2$."
+     },
+     {
+      "id": "o4",
+      "text": "Take expectations: $\\mathbb{E}[(\\mathbf{v}_i^\\top\\mathbf{x})^2] = \\mathbf{v}_i^\\top\\boldsymbol{\\Sigma}\\mathbf{v}_i$, because $\\mathbf{x}$ is centred."
+     },
+     {
+      "id": "o5",
+      "text": "Since $\\boldsymbol{\\Sigma}\\mathbf{v}_i = \\lambda_i\\mathbf{v}_i$ and $\\mathbf{v}_i^\\top\\mathbf{v}_i = 1$, each term is $\\lambda_i$, so the error is $\\sum_{i > k}\\lambda_i$."
+     },
+     {
+      "id": "x1",
+      "text": "Each term is $\\lambda_i^2$, because the coordinate is scaled by $\\lambda_i$.",
+      "why": "The coordinate's variance is $\\mathbf{v}_i^\\top\\boldsymbol{\\Sigma}\\mathbf{v}_i = \\lambda_i$, not its square."
+     },
+     {
+      "id": "x2",
+      "text": "Cross terms $2(\\mathbf{v}_i^\\top\\mathbf{x})(\\mathbf{v}_j^\\top\\mathbf{x})$ remain and add $\\sum_{i \\ne j}\\lambda_i\\lambda_j$.",
+      "why": "Orthonormal vectors have $\\mathbf{v}_i^\\top\\mathbf{v}_j = 0$, so the cross terms vanish before any expectation."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "Expand, subtract, use Pythagoras, take expectations, use the eigenvalue equation.",
+    "generic": "Not quite. Build the residual before taking expectations.",
+    "byKey": {
+     "x1": "The variance of $\\mathbf{v}_i^\\top\\mathbf{x}$ is $\\lambda_i$.",
+     "x2": "Orthonormality removes the cross terms."
+    }
+   },
+   "explain": {
+    "text": "The residual is the dropped coordinates, which are orthogonal, so its squared length is their sum of squares. Each averages $\\lambda_i$."
+   }
+  },
+  {
+   "id": "h-deep-risk",
+   "difficulty": 5,
+   "skills": [
+    "rp-autoenc"
+   ],
+   "title": "A deep autoencoder for factor risk",
+   "kind": "longform",
+   "prompt": "A colleague proposes replacing your statistical risk model, which takes 10 PCA factors from 500 stocks, with a deep autoencoder with 10 codes. Argue when it can beat PCA, what it costs, and the test that would decide.",
+   "model": "**When it can beat PCA.** A linear autoencoder with 10 codes spans the same subspace as the top 10 principal components, so it can only match PCA. A deep one can win only if the returns lie near a curved surface: for example, if the way stocks move together changes with the size or sign of the market move. If co-movement is close to linear, PCA is already the best squeeze and the network adds noise.\n\n**What it costs.** Thousands of parameters instead of one $500 \\times 10$ loading matrix, so it needs far more data to fit without memorising, and returns are noisy and short-lived in their structure. Its codes have no fixed meaning (any invertible mixing fits as well even in the linear case), so they cannot be named or hedged like a market or sector factor. It needs retraining when the regime changes, and its results depend on the seed and settings, which must be recorded.\n\n**The deciding test.** Fit both on the same past window and compare them out of sample on later days. Compare the held-out reconstruction error at the same 10 codes and, better, what the risk model is for: realised portfolio variance against predicted variance. Repeat over several windows and seeds, and include stress periods. Adopt the deep model only if it wins clearly on held-out data, by more than the spread across seeds, and if its predictions stay stable.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States that a linear autoencoder spans the PCA subspace, so only nonlinearity can add anything.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Names when it can win: returns near a curved surface, such as co-movement that changes with the market's size or sign."
+    },
+    {
+     "points": 2,
+     "text": "Names the costs: many more parameters, overfitting risk on noisy data, codes without fixed meaning, retraining and seed dependence."
+    },
+    {
+     "points": 3,
+     "text": "Proposes an out-of-sample test at the same number of codes, over several windows and seeds, including stress periods.",
+     "required": true
+    },
+    {
+     "points": 1,
+     "text": "Judges on the risk model's purpose, such as predicted against realised portfolio variance, not reconstruction error alone."
+    }
+   ]
+  },
+  {
+   "id": "h-share-lost",
+   "difficulty": 3,
+   "skills": [
+    "rp-autoenc"
+   ],
+   "title": "What two codes lose",
+   "prose": "Four bonds have a covariance with eigenvalues 2.4, 0.9, 0.2 and 0.1.",
+   "question": "What share of the variance does a two-code linear autoencoder lose? Give a percentage to 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0833,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Percentage",
+    "wrong": [
+     {
+      "id": "kept",
+      "value": 0.9167,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "small",
+      "value": 0.0278,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ],
+    "unit": "%"
+   },
+   "feedback": {
+    "correct": "$0.3/3.6 \\approx 8.3\\%$.",
+    "generic": "Not quite. Dropped over total.",
+    "byKey": {
+     "kept": "That is the share kept.",
+     "small": "You dropped only the smallest eigenvalue. Two codes drop two of the four."
+    }
+   },
+   "explain": {
+    "text": "Two codes drop $0.2 + 0.1 = 0.3$ of a total $3.6$, so they lose about 8.3%."
+   }
+  },
+  {
+   "id": "h-params",
+   "difficulty": 3,
+   "skills": [
+    "rp-autoenc"
+   ],
+   "title": "Counting the cost",
+   "prose": "A tanh autoencoder for 10 stocks has weight tables $10 \\times 32$, $32 \\times 3$, $3 \\times 32$ and $32 \\times 10$, with one bias per output. PCA with 3 codes needs a mean and a $10 \\times 3$ loading matrix.",
+   "question": "How many more parameters does the net have than PCA?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 869,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "wrong": [
+     {
+      "id": "net",
+      "value": 909,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "w",
+      "value": 792,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$909 - 40 = 869$.",
+    "generic": "Not quite. Count the net's weights and biases, then subtract PCA's 40.",
+    "byKey": {
+     "net": "909 is the net alone. PCA needs $10 + 30 = 40$.",
+     "w": "You left out the net's 77 biases."
+    }
+   },
+   "explain": {
+    "text": "Weights: $320 + 96 + 96 + 320 = 832$; biases: $32 + 3 + 32 + 10 = 77$; so 909. PCA needs $10 + 30 = 40$, a difference of 869."
+   }
+  },
+  {
+   "id": "h-recall",
+   "difficulty": 3,
+   "skills": [
+    "rp-autoenc"
+   ],
+   "title": "A year of alarms",
+   "prose": "Over a year a desk's alarm fired on 12 days. Five days that year are known to have broken the usual cross-asset relationships, and 4 of them were among the 12.",
+   "question": "What is the alarm's precision? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.333,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "rec",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "miss",
+      "value": 0.667,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4/12 \\approx 0.333$.",
+    "generic": "Not quite. True alarms over all alarms.",
+    "byKey": {
+     "rec": "0.8 is the recall, $4/5$.",
+     "miss": "That is the share of alarms that were false."
+    }
+   },
+   "explain": {
+    "text": "Four of the 12 alarms were real: precision $4/12 \\approx 0.333$. Recall is $4/5 = 0.8$."
+   }
+  },
+  {
+   "id": "h-fall-day",
+   "difficulty": 4,
+   "skills": [
+    "rp-autoenc"
+   ],
+   "title": "A crash and a quiet alarm",
+   "prose": "A 3-code autoencoder alarm on 20 stocks stays quiet on a day when every stock falls 7%, the worst day in a decade. A manager says the alarm is broken.",
+   "question": "What is the best reply?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "shape",
+      "text": "It measures broken patterns, not size: pair it with a size alarm",
+      "correct": true
+     },
+     {
+      "id": "broken",
+      "text": "It is broken, so retrain it on a set of crash days",
+      "why": "Retraining would not change it. A crash in the usual shape will always rebuild well."
+     },
+     {
+      "id": "threshold",
+      "text": "Lower the threshold until the crash is flagged",
+      "why": "That would flood the desk with ordinary days. The tool answers a different question."
+     },
+     {
+      "id": "noise",
+      "text": "Crashes are noise, and the desk should ignore them",
+      "why": "A 7% fall matters; it is simply not what this alarm detects."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. Two different questions need two alarms.",
+    "generic": "Not quite. What does reconstruction error measure?"
+   },
+   "explain": {
+    "text": "Reconstruction error flags unusual shape across stocks. A size alarm, such as a volatility limit, covers the other question."
+   }
+  }
+ ]
+}

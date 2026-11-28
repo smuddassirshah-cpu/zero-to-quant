@@ -1,0 +1,1365 @@
+{
+ "id": "l6-linear-autoencoder-is-pca",
+ "course": "representations",
+ "title": "A linear autoencoder is PCA",
+ "minutes": 15,
+ "objectives": [
+  "Show that a trained linear autoencoder spans the top principal components."
+ ],
+ "skills": [
+  "rp-autoenc"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "title": "Where will it point?",
+   "difficulty": 1,
+   "prose": "These are `eigen` l11's ten days of two stocks, demeaned, with $\\boldsymbol{\\Sigma} = \\begin{pmatrix}5 & 2\\\\2 & 2\\end{pmatrix}$. We train a linear autoencoder with **one** code on 2,000 days drawn with this covariance. Its encoder is one column, a direction in the plane.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4.5,
+      4.5
+     ],
+     "y": [
+      -3.5,
+      3.5
+     ],
+     "equal": true,
+     "grid": 1,
+     "xLabel": "Stock A return (%)",
+     "yLabel": "Stock B return (%)",
+     "functions": [
+      {
+       "id": "half",
+       "x": "3*cos(t)",
+       "y": "3*sin(t)",
+       "t": [
+        -1.5708,
+        1.5708
+       ],
+       "dashed": true,
+       "colour": 6
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p0",
+       "x": 1.9,
+       "y": 1.2,
+       "tap": false
+      },
+      {
+       "id": "p1",
+       "x": -3.3,
+       "y": -1.9,
+       "tap": false
+      },
+      {
+       "id": "p2",
+       "x": -0.1,
+       "y": -1.3,
+       "tap": false
+      },
+      {
+       "id": "p3",
+       "x": -0.7,
+       "y": 0.9,
+       "tap": false
+      },
+      {
+       "id": "p4",
+       "x": 0.3,
+       "y": 0.9,
+       "tap": false
+      },
+      {
+       "id": "p5",
+       "x": 0.7,
+       "y": 1.6,
+       "tap": false
+      },
+      {
+       "id": "p6",
+       "x": -2.4,
+       "y": -1.7,
+       "tap": false
+      },
+      {
+       "id": "p7",
+       "x": -2.2,
+       "y": -1.1,
+       "tap": false
+      },
+      {
+       "id": "p8",
+       "x": 1.9,
+       "y": 1.7,
+       "tap": false
+      },
+      {
+       "id": "p9",
+       "x": 3.9,
+       "y": -0.3,
+       "tap": false
+      },
+      {
+       "id": "D",
+       "x": 0.0,
+       "y": 3.0,
+       "on": "half",
+       "drag": true,
+       "label": "your guess"
+      }
+     ],
+     "segments": [
+      {
+       "id": "G",
+       "from": [
+        0,
+        0
+       ],
+       "to": "D",
+       "arrow": true,
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "Drag the handle to where you predict the trained encoder's direction points.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "D",
+      "target": [
+       2.683,
+       1.342
+      ],
+      "tol": 0.25
+     }
+    ],
+    "wrong": [
+     {
+      "id": "axis",
+      "region": {
+       "x": [
+        2.85,
+        3.1
+       ],
+       "y": [
+        -0.6,
+        0.6
+       ]
+      }
+     },
+     {
+      "id": "diag",
+      "region": {
+       "x": [
+        1.9,
+        2.3
+       ],
+       "y": [
+        1.9,
+        2.3
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A one-number code should keep as much of each day as it can."
+    },
+    {
+     "rung": "point",
+     "text": "Which direction did `eigen` l11 find for the widest spread?",
+     "highlight": [
+      "D"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "PC1 is $(2, 1)/\\sqrt5$; at radius 3 that is $(2.68, 1.34)$."
+    }
+   ],
+   "feedback": {
+    "correct": "The trained encoder points along the data's own PC1, close to $(2, 1)/\\sqrt5$.",
+    "generic": "Not quite. Think about which line loses the least of each day.",
+    "byKey": {
+     "axis": "Along stock A alone, the code would drop all of B's own moves. The trained direction tilts up.",
+     "diag": "The diagonal treats the stocks alike, but A varies more (5 against 2). The trained direction leans towards A."
+    }
+   },
+   "explain": {
+    "text": "The trained encoder column, normalised, is $(0.902, 0.432)$: the PC1 of the 2,000 days to within 0.001 degrees, near $(2, 1)/\\sqrt5 \\approx (0.894, 0.447)$. Training found the principal component without being told about eigenvectors.",
+    "canvas": {
+     "points": {
+      "D": {
+       "x": 2.683,
+       "y": 1.342
+      }
+     },
+     "vectors": [
+      {
+       "id": "w",
+       "v": [
+        2.706,
+        1.295
+       ],
+       "from": [
+        0,
+        0
+       ],
+       "label": "trained",
+       "colour": 3
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "title": "The error it reaches",
+   "difficulty": 2,
+   "prose": "$\\boldsymbol{\\Sigma}$ has eigenvalues 6 and 1. The autoencoder's error settled at 1.0015; the 2,000 days' own covariance, divided by $n$, has eigenvalues 5.9418 and 1.0015.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "loss",
+       "label": "Training error",
+       "values": [
+        6.9385,
+        5.7673,
+        2.9576,
+        1.2274,
+        1.7672,
+        1.1547,
+        1.1707,
+        1.1676,
+        1.0115,
+        1.0486,
+        1.0227,
+        1.006,
+        1.0143,
+        1.0035,
+        1.006,
+        1.0025,
+        1.0031,
+        1.0019,
+        1.0019,
+        1.0017,
+        1.0016,
+        1.0016,
+        1.0016,
+        1.0016,
+        1.0016,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015,
+        1.0015
+       ]
+      }
+     ],
+     "xValues": [
+      0,
+      5,
+      10,
+      15,
+      20,
+      25,
+      30,
+      35,
+      40,
+      45,
+      50,
+      55,
+      60,
+      65,
+      70,
+      75,
+      80,
+      85,
+      90,
+      95,
+      100,
+      105,
+      110,
+      115,
+      120,
+      125,
+      130,
+      135,
+      140,
+      145,
+      150,
+      155,
+      160,
+      165,
+      170,
+      175,
+      180,
+      185,
+      190,
+      195,
+      200,
+      205,
+      210,
+      215,
+      220,
+      225,
+      230,
+      235,
+      240,
+      245,
+      250,
+      255,
+      260,
+      265,
+      270,
+      275,
+      280,
+      285,
+      290,
+      295,
+      300
+     ],
+     "xLabel": "Step",
+     "yLabel": "Error",
+     "y": [
+      0,
+      8
+     ],
+     "hlines": [
+      {
+       "id": "small",
+       "y": 1.0015,
+       "label": "smaller eigenvalue"
+      }
+     ]
+    }
+   },
+   "question": "For data with exactly this $\\boldsymbol{\\Sigma}$, what error does the best one-code linear autoencoder reach?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "Number",
+    "wrong": [
+     {
+      "id": "kept",
+      "value": 6,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "total",
+      "value": 7,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The code keeps one direction. What is left over?"
+    },
+    {
+     "rung": "step",
+     "text": "The variance across PC1 is the smaller eigenvalue."
+    }
+   ],
+   "feedback": {
+    "correct": "1: the variance along PC2, the direction the code drops.",
+    "generic": "Not quite. Which eigenvalue belongs to the direction the code cannot keep?",
+    "byKey": {
+     "kept": "6 is the variance the code keeps, along PC1. The error is what it loses.",
+     "total": "7 is the total variance. The code keeps 6 of it."
+    }
+   },
+   "explain": {
+    "text": "The code keeps PC1 and loses PC2, whose variance is the smaller eigenvalue, 1. The trained 1.0015 matches the sample's own smaller eigenvalue, 1.0015, to many places.",
+    "canvas": {
+     "highlight": [
+      "small"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "The share it keeps",
+   "difficulty": 2,
+   "prose": "The total variance is $6 + 1 = 7$, the trace of $\\boldsymbol{\\Sigma}$. The one-code autoencoder keeps the variance along PC1.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "pc1",
+       "label": "PC1, kept"
+      },
+      {
+       "id": "pc2",
+       "label": "PC2, dropped"
+      }
+     ],
+     "yLabel": "Variance",
+     "showValues": true
+    },
+    "state": {
+     "values": {
+      "pc1": 6,
+      "pc2": 1
+     }
+    }
+   },
+   "question": "What share of the variance does it keep? Give a percentage to 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8571,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Percentage",
+    "wrong": [
+     {
+      "id": "lost",
+      "value": 0.1429,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 0.1667,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ],
+    "unit": "%"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Kept over total."
+    },
+    {
+     "rung": "step",
+     "text": "$6/7$."
+    }
+   ],
+   "feedback": {
+    "correct": "$6/7 \\approx 85.7\\%$.",
+    "generic": "Not quite. Divide the kept variance by the total.",
+    "byKey": {
+     "lost": "That is the share lost. The question asks what is kept.",
+     "ratio": "You divided dropped by kept. Divide kept by the total, 7."
+    }
+   },
+   "explain": {
+    "text": "It keeps $6/7 \\approx 85.7\\%$ and loses the rest, which is exactly its error of 1 out of 7.",
+    "canvas": {
+     "highlight": [
+      "pc1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "Two codes from three",
+   "difficulty": 2,
+   "prose": "Three stocks have a covariance with eigenvalues 5, 2 and 0.5. A linear autoencoder keeps the top $k$ principal directions; its error is the sum of the eigenvalues it drops.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "e1",
+       "label": "λ₁"
+      },
+      {
+       "id": "e2",
+       "label": "λ₂"
+      },
+      {
+       "id": "e3",
+       "label": "λ₃"
+      }
+     ],
+     "yLabel": "Eigenvalue",
+     "showValues": true
+    },
+    "state": {
+     "values": {
+      "e1": 5,
+      "e2": 2,
+      "e3": 0.5
+     }
+    }
+   },
+   "question": "What is the error of the best linear autoencoder with 2 codes?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "Number",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "kept",
+      "value": 7,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two codes keep the two largest."
+    },
+    {
+     "rung": "step",
+     "text": "Only $\\lambda_3$ is dropped."
+    }
+   ],
+   "feedback": {
+    "correct": "0.5: only the smallest eigenvalue is dropped.",
+    "generic": "Not quite. Add the eigenvalues the code drops.",
+    "byKey": {
+     "one": "2.5 is the error with one code, $2 + 0.5$. Two codes also keep $\\lambda_2$.",
+     "kept": "7 is what two codes keep. The error is what is left."
+    }
+   },
+   "explain": {
+    "text": "Two codes keep 5 and 2 and drop 0.5, so the error is 0.5. With one code it would be $2 + 0.5 = 2.5$.",
+    "canvas": {
+     "highlight": [
+      "e3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "title": "Is it the eigenvector?",
+   "difficulty": 3,
+   "prose": "Two runs on the same days start from different random sizes. Run A ends with encoder $(0.91, 0.44)$ and decoder $(0.89, 0.43)$. Run B ends with $(0.66, 0.31)$ and $(1.24, 0.59)$. Both reach the error 1.0015.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.2,
+      1.6
+     ],
+     "y": [
+      -0.2,
+      1.0
+     ],
+     "equal": true,
+     "grid": 0.5,
+     "xLabel": "first entry",
+     "yLabel": "second entry"
+    },
+    "state": {
+     "vectors": [
+      {
+       "id": "ea",
+       "v": [
+        0.909,
+        0.435
+       ],
+       "from": [
+        0,
+        0
+       ],
+       "label": "A enc",
+       "colour": 1
+      },
+      {
+       "id": "eb",
+       "v": [
+        0.656,
+        0.314
+       ],
+       "from": [
+        0,
+        0
+       ],
+       "label": "B enc",
+       "colour": 3
+      },
+      {
+       "id": "db",
+       "v": [
+        1.241,
+        0.594
+       ],
+       "from": [
+        0,
+        0
+       ],
+       "label": "B dec",
+       "colour": 4
+      }
+     ]
+    }
+   },
+   "question": "Which reading is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sub",
+      "text": "Both point along PC1; only the product of encoder and decoder is fixed, not their lengths",
+      "correct": true
+     },
+     {
+      "id": "fail",
+      "text": "Run B failed, since a trained encoder should be the unit eigenvector",
+      "why": "Run B reaches the same error. Its encoder has length 0.73, and its decoder 1.38 makes up for it."
+     },
+     {
+      "id": "orth",
+      "text": "Both failed, since trained weights should be orthonormal like PCA's",
+      "why": "Nothing in the loss asks for unit length. Any length works if the decoder divides it back out."
+     },
+     {
+      "id": "other",
+      "text": "Run B found a different direction from run A",
+      "why": "Both columns lie on the same line through the origin. Only their lengths differ."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the directions, then the lengths."
+    },
+    {
+     "rung": "step",
+     "text": "Run B's encoder is 0.73 long and its decoder 1.38; multiply."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The loss fixes $\\mathbf{W}_{\\text{enc}}\\mathbf{W}_{\\text{dec}}$, the projection onto PC1, not each factor.",
+    "generic": "Not quite. Check the error first, then the directions.",
+    "byKey": {
+     "fail": "You expected the eigenvector itself. The loss cannot tell a long encoder with a short decoder from a unit pair.",
+     "orth": "You expected PCA's unit columns. Training has no reason to produce them."
+    }
+   },
+   "explain": {
+    "text": "Encoder length times decoder length is about 1 in both runs (1.00 and 1.00). With more codes, any invertible mixing $\\mathbf{A}$ of the codes, undone by $\\mathbf{A}^{-1}$ in the decoder, gives the same rebuild: only the subspace is fixed."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "Mixing the codes",
+   "difficulty": 3,
+   "prose": "A two-code autoencoder on three stocks has encoder $\\mathbf{W}_{\\text{enc}}$ ($3 \\times 2$) and decoder $\\mathbf{W}_{\\text{dec}}$ ($2 \\times 3$). We replace the encoder by $\\mathbf{W}_{\\text{enc}}\\mathbf{A}$ with $\\mathbf{A} = \\begin{pmatrix}2 & 0\\\\1 & 1\\end{pmatrix}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         2,
+         0
+        ],
+        [
+         1,
+         1
+        ]
+       ],
+       "label": "\\mathbf{A}"
+      },
+      {
+       "id": "Ai",
+       "rows": [
+        [
+         0.5,
+         0
+        ],
+        [
+         -0.5,
+         1
+        ]
+       ],
+       "label": "\\mathbf{A}^{-1}"
+      }
+     ]
+    }
+   },
+   "question": "Which decoder rebuilds every day exactly as before?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "inv",
+      "text": "$\\mathbf{A}^{-1}\\mathbf{W}_{\\text{dec}}$",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "$\\mathbf{W}_{\\text{dec}}$, unchanged",
+      "why": "The codes are now mixed by $\\mathbf{A}$. An unchanged decoder reads them wrongly."
+     },
+     {
+      "id": "a",
+      "text": "$\\mathbf{A}\\mathbf{W}_{\\text{dec}}$",
+      "why": "That mixes a second time. The decoder must undo $\\mathbf{A}$."
+     },
+     {
+      "id": "t",
+      "text": "$\\mathbf{A}^\\top\\mathbf{W}_{\\text{dec}}$",
+      "why": "$\\mathbf{A}$ is not a rotation, so its transpose does not undo it."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The rebuild is $\\mathbf{x}\\mathbf{W}_{\\text{enc}}\\mathbf{A}\\,\\mathbf{D}$ for the new decoder $\\mathbf{D}$."
+    },
+    {
+     "rung": "step",
+     "text": "You need $\\mathbf{A}\\mathbf{D} = \\mathbf{W}_{\\text{dec}}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $\\mathbf{W}_{\\text{enc}}\\mathbf{A}\\mathbf{A}^{-1}\\mathbf{W}_{\\text{dec}} = \\mathbf{W}_{\\text{enc}}\\mathbf{W}_{\\text{dec}}$.",
+    "generic": "Not quite. The new decoder must undo $\\mathbf{A}$."
+   },
+   "explain": {
+    "text": "Since $\\mathbf{A}\\mathbf{A}^{-1} = \\mathbf{I}$, the product and so the error are unchanged. The two new codes are mixtures of the old ones, so a single code has no fixed meaning."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "No favourite direction",
+   "difficulty": 3,
+   "prose": "Now $\\boldsymbol{\\Sigma} = 2\\mathbf{I}$, `eigen` l11's round cloud: every direction has variance 2. We draw three samples of 2,000 days and train a one-code autoencoder on each. The encoders point at 130, 3 and 25 degrees.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.2,
+      1.2
+     ],
+     "y": [
+      -0.2,
+      1.2
+     ],
+     "equal": true,
+     "grid": 0.5,
+     "xLabel": "first entry",
+     "yLabel": "second entry"
+    },
+    "state": {
+     "vectors": [
+      {
+       "id": "s0",
+       "v": [
+        -0.643,
+        0.766
+       ],
+       "from": [
+        0,
+        0
+       ],
+       "label": "sample 1",
+       "colour": 1
+      },
+      {
+       "id": "s1",
+       "v": [
+        0.999,
+        0.052
+       ],
+       "from": [
+        0,
+        0
+       ],
+       "label": "sample 2",
+       "colour": 2
+      },
+      {
+       "id": "s2",
+       "v": [
+        0.906,
+        0.423
+       ],
+       "from": [
+        0,
+        0
+       ],
+       "label": "sample 3",
+       "colour": 3
+      }
+     ]
+    }
+   },
+   "question": "What decides each direction?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "noise",
+      "text": "Each sample's own noise: the population has no preferred direction",
+      "correct": true
+     },
+     {
+      "id": "seed",
+      "text": "The random start of the weights, which differed between runs",
+      "why": "We kept the same start for all three. The days differed, and so did the directions."
+     },
+     {
+      "id": "bug",
+      "text": "A bug in training, since all three runs should agree",
+      "why": "With equal eigenvalues every direction is equally good, so nothing makes them agree."
+     },
+     {
+      "id": "axis",
+      "text": "The axes, since training prefers stock A's direction",
+      "why": "The directions are spread around. The loss has no favourite axis."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With $2\\mathbf{I}$, how much variance does each direction carry?"
+    },
+    {
+     "rung": "step",
+     "text": "Each sample's covariance is a little off $2\\mathbf{I}$ by chance."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Each sample's small chance tilt picks the direction.",
+    "generic": "Not quite. Ask what differs between the three runs."
+   },
+   "explain": {
+    "text": "Every direction keeps variance 2, so every run's error is close to 2 (1.949, 1.967, 1.970). The direction follows each sample's chance tilt, so reading meaning into it is a mistake."
+   }
+  },
+  {
+   "type": "derive",
+   "title": "Why the dropped eigenvalues",
+   "difficulty": 3,
+   "prose": "Take centred data with covariance $\\boldsymbol{\\Sigma} = \\sum_i \\lambda_i \\mathbf{v}_i\\mathbf{v}_i^\\top$, and keep the top $k$ eigenvectors. Then: $$\\begin{aligned}\\mathbf{x} - \\hat{\\mathbf{x}} &= \\textstyle\\sum_{i > k} (\\mathbf{v}_i^\\top\\mathbf{x})\\,\\mathbf{v}_i \\\\ \\mathbb{E}\\lVert\\mathbf{x} - \\hat{\\mathbf{x}}\\rVert^2 &= \\textstyle\\sum_{i > k} \\mathbb{E}[(\\mathbf{v}_i^\\top\\mathbf{x})^2] \\\\ &= \\;?\\end{aligned}$$",
+   "question": "Which line completes the derivation?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "lam",
+      "text": "$\\sum_{i > k} \\mathbf{v}_i^\\top\\boldsymbol{\\Sigma}\\mathbf{v}_i = \\sum_{i > k}\\lambda_i$",
+      "correct": true
+     },
+     {
+      "id": "kept",
+      "text": "$\\sum_{i \\le k} \\mathbf{v}_i^\\top\\boldsymbol{\\Sigma}\\mathbf{v}_i = \\sum_{i \\le k}\\lambda_i$",
+      "why": "That sums the kept directions. The residual lives on the dropped ones, $i > k$."
+     },
+     {
+      "id": "sq",
+      "text": "$\\sum_{i > k} (\\mathbf{v}_i^\\top\\boldsymbol{\\Sigma}\\mathbf{v}_i)^2 = \\sum_{i > k}\\lambda_i^2$",
+      "why": "$\\mathbb{E}[(\\mathbf{v}_i^\\top\\mathbf{x})^2] = \\mathbf{v}_i^\\top\\boldsymbol{\\Sigma}\\mathbf{v}_i$, which is $\\lambda_i$, not its square."
+     },
+     {
+      "id": "sqrt",
+      "text": "$\\sum_{i > k} \\sqrt{\\mathbf{v}_i^\\top\\boldsymbol{\\Sigma}\\mathbf{v}_i} = \\sum_{i > k}\\sqrt{\\lambda_i}$",
+      "why": "The square root would give a standard deviation. The error is a variance."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For centred $\\mathbf{x}$, $\\mathbb{E}[(\\mathbf{v}^\\top\\mathbf{x})^2] = \\mathbf{v}^\\top\\boldsymbol{\\Sigma}\\mathbf{v}$."
+    },
+    {
+     "rung": "step",
+     "text": "For an eigenvector, $\\boldsymbol{\\Sigma}\\mathbf{v}_i = \\lambda_i\\mathbf{v}_i$ and $\\mathbf{v}_i^\\top\\mathbf{v}_i = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Each dropped coordinate contributes its variance, $\\lambda_i$.",
+    "generic": "Not quite. What is the variance of the coordinate $\\mathbf{v}_i^\\top\\mathbf{x}$?"
+   },
+   "explain": {
+    "text": "The residual keeps the dropped coordinates, which are uncorrelated with mean 0. Each squared coordinate averages $\\mathbf{v}_i^\\top\\boldsymbol{\\Sigma}\\mathbf{v}_i = \\lambda_i$, so the error is the sum of the dropped eigenvalues; no linear map with $k$ codes does better (`eigen` l10)."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "The closed form in code",
+   "difficulty": 3,
+   "prose": "Write the closed form and a way to compare subspaces. `pca_recon_error` centres the rows and returns the sum of the dropped eigenvalues of $\\mathbf{X}^\\top\\mathbf{X}/n$. `subspace_angle` orthonormalises both column sets with `np.linalg.qr`; the singular values of $\\mathbf{Q}_W^\\top\\mathbf{Q}_V$ are the cosines of the angles; return the largest angle.",
+   "question": "Write `pca_recon_error` and `subspace_angle`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef pca_recon_error(X, k):\n    # Centre X; return the mean over rows of the squared distance\n    # to the rebuild from the top k principal components.\n    ...\n\n\ndef subspace_angle(W, V):\n    # W, V: d by k. Return the largest angle, in degrees,\n    # between the spaces their columns span.\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef pca_recon_error(X, k):\n    X = np.asarray(X, dtype=float)\n    X = X - X.mean(axis=0)\n    lam = np.linalg.eigvalsh(X.T @ X / len(X))     # ascending\n    return float(lam[:len(lam) - k].sum())\n\n\ndef subspace_angle(W, V):\n    Qw = np.linalg.qr(np.asarray(W, dtype=float))[0]\n    Qv = np.linalg.qr(np.asarray(V, dtype=float))[0]\n    s = np.linalg.svd(Qw.T @ Qv, compute_uv=False)\n    return float(np.degrees(np.arccos(np.clip(s.min(), -1.0, 1.0))))\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "pca_recon_error([[1.9, 1.2], [-3.3, -1.9], [-0.1, -1.3], [-0.7, 0.9], [0.3, 0.9], [0.7, 1.6], [-2.4, -1.7], [-2.2, -1.1], [1.9, 1.7], [3.9, -0.3]], 1)",
+      "compare": "isclose",
+      "expect": "0.8999999999999998"
+     },
+     {
+      "call": "subspace_angle([[1], [0]], [[1], [1]])",
+      "compare": "isclose",
+      "expect": "45.00000000000003"
+     }
+    ],
+    "tests": [
+     {
+      "call": "pca_recon_error([[1.9, 1.2], [-3.3, -1.9], [-0.1, -1.3], [-0.7, 0.9], [0.3, 0.9], [0.7, 1.6], [-2.4, -1.7], [-2.2, -1.1], [1.9, 1.7], [3.9, -0.3]], 1)",
+      "compare": "isclose",
+      "expect": "0.8999999999999998"
+     },
+     {
+      "call": "pca_recon_error([[1, 0, 2], [0, 1, 1], [2, 2, 0], [1, 3, 1], [0, 0, 0]], 2)",
+      "compare": "isclose",
+      "expect": "0.3608808650042631"
+     },
+     {
+      "call": "pca_recon_error([[1, 2], [3, 4], [5, 7]], 2)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      },
+      "expect": "0.0"
+     },
+     {
+      "call": "pca_recon_error([[11, 0], [9, 0], [10, 1], [10, -1]], 1)",
+      "compare": "isclose",
+      "expect": "0.5"
+     },
+     {
+      "call": "subspace_angle([[1], [0]], [[1], [1]])",
+      "compare": "isclose",
+      "expect": "45.00000000000003"
+     },
+     {
+      "call": "subspace_angle([[2], [1]], [[-2], [-1]])",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      },
+      "expect": "0.0"
+     },
+     {
+      "call": "subspace_angle([[1, 0], [0, 1], [0, 0]], [[1, 0], [0, 0], [0, 1]])",
+      "compare": "isclose",
+      "expect": "90.0"
+     },
+     {
+      "call": "subspace_angle([[1, 1], [1, 2], [0, 0]], [[3, 0], [0, 5], [0, 0]])",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      },
+      "expect": "0.0"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests, each within relative $10^{-9}$ (absolute $10^{-4}$ degrees where the angle is 0).",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef pca_recon_error(X, k):\n    X = np.asarray(X, dtype=float)\n    X = X - X.mean(axis=0)\n    lam = np.linalg.eigvalsh(X.T @ X / (len(X) - 1))     # ascending\n    return float(lam[:len(lam) - k].sum())\n\n\ndef subspace_angle(W, V):\n    Qw = np.linalg.qr(np.asarray(W, dtype=float))[0]\n    Qv = np.linalg.qr(np.asarray(V, dtype=float))[0]\n    s = np.linalg.svd(Qw.T @ Qv, compute_uv=False)\n    return float(np.degrees(np.arccos(np.clip(s.min(), -1.0, 1.0))))\n",
+      "test": 1,
+      "symptom": "Divides by n - 1; the error is a mean over the n rows, so it must divide by n."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef pca_recon_error(X, k):\n    X = np.asarray(X, dtype=float)\n    lam = np.linalg.eigvalsh(X.T @ X / len(X))     # ascending\n    return float(lam[:len(lam) - k].sum())\n\n\ndef subspace_angle(W, V):\n    Qw = np.linalg.qr(np.asarray(W, dtype=float))[0]\n    Qv = np.linalg.qr(np.asarray(V, dtype=float))[0]\n    s = np.linalg.svd(Qw.T @ Qv, compute_uv=False)\n    return float(np.degrees(np.arccos(np.clip(s.min(), -1.0, 1.0))))\n",
+      "test": 2,
+      "symptom": "Forgets to centre, so the mean itself counts as error."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef pca_recon_error(X, k):\n    X = np.asarray(X, dtype=float)\n    X = X - X.mean(axis=0)\n    lam = np.linalg.eigvalsh(X.T @ X / len(X))     # ascending\n    return float(lam[len(lam) - k:].sum())\n\n\ndef subspace_angle(W, V):\n    Qw = np.linalg.qr(np.asarray(W, dtype=float))[0]\n    Qv = np.linalg.qr(np.asarray(V, dtype=float))[0]\n    s = np.linalg.svd(Qw.T @ Qv, compute_uv=False)\n    return float(np.degrees(np.arccos(np.clip(s.min(), -1.0, 1.0))))\n",
+      "test": 1,
+      "symptom": "Sums the kept eigenvalues instead of the dropped ones."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef pca_recon_error(X, k):\n    X = np.asarray(X, dtype=float)\n    X = X - X.mean(axis=0)\n    lam = np.linalg.eigvalsh(X.T @ X / len(X))     # ascending\n    return float(lam[:len(lam) - k].sum())\n\n\ndef subspace_angle(W, V):\n    Qw = np.linalg.qr(np.asarray(W, dtype=float))[0]\n    Qv = np.linalg.qr(np.asarray(V, dtype=float))[0]\n    s = np.linalg.svd(Qw.T @ Qv, compute_uv=False)\n    return float(np.degrees(np.arccos(np.clip(s.max(), -1.0, 1.0))))\n",
+      "test": 7,
+      "symptom": "Reports the smallest principal angle, so two planes sharing one line look identical."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef pca_recon_error(X, k):\n    X = np.asarray(X, dtype=float)\n    X = X - X.mean(axis=0)\n    lam = np.linalg.eigvalsh(X.T @ X / len(X))     # ascending\n    return float(lam[:len(lam) - k].sum())\n\n\ndef subspace_angle(W, V):\n    Qw = np.asarray(W, dtype=float)\n    Qv = np.asarray(V, dtype=float)\n    s = np.linalg.svd(Qw.T @ Qv, compute_uv=False)\n    return float(np.degrees(np.arccos(np.clip(s.min(), -1.0, 1.0))))\n",
+      "test": 5,
+      "symptom": "Skips the orthonormalising, so lengths leak into the cosines."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.linalg.eigvalsh` returns eigenvalues in ascending order, so the dropped ones come first."
+    },
+    {
+     "rung": "step",
+     "text": "`np.degrees(np.arccos(...))` of the smallest singular value, clipped to $[-1, 1]$."
+    }
+   ],
+   "feedback": {
+    "correct": "Both match. On `eigen` l11's ten days the one-code error is $9/10 = 0.9$, the dropped eigenvalue with $n$ in place of $n - 1$.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "The ten days give 0.9: centre them and divide $\\mathbf{X}^\\top\\mathbf{X}$ by $n = 10$, not $n - 1$.",
+     "test-5": "The angle between $(1, 0)$ and $(1, 1)$ is 45 degrees: orthonormalise before taking cosines.",
+     "test-7": "Two planes that share one line still differ: report the largest angle, from the smallest singular value."
+    }
+   },
+   "explain": {
+    "text": "With $n$ rows the mean squared error divides by $n$, so on `eigen` l11's days it is $0.9$, not the eigenvalue 1 of $\\boldsymbol{\\Sigma}$ with $n - 1$. Signs and lengths of columns do not change the span, which is why the angle uses orthonormal bases."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "Check the claim in code",
+   "difficulty": 3,
+   "prose": "Put the pieces together. `check_pca` trains with l5's `train_autoencoder`, scores it on the centred days, and compares it with the closed form and with the top $k$ eigenvectors. The three helpers are already defined.",
+   "question": "Write `check_pca`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n# train_autoencoder (l5), pca_recon_error and subspace_angle\n# are defined for you.\n\n\ndef check_pca(X, k, steps, lr, seed):\n    # Train, then return (trained error, PCA error, angle in degrees\n    # between the encoder's columns and the top k eigenvectors).\n    ...\n",
+    "solution": "import numpy as np\n# train_autoencoder (l5), pca_recon_error and subspace_angle\n# are defined for you.\n\n\ndef check_pca(X, k, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    W_enc, W_dec = train_autoencoder(X, k, steps, lr, seed)\n    Xc = X - X.mean(axis=0)\n    trained = float(((Xc @ W_enc @ W_dec - Xc) ** 2).sum(axis=1).mean())\n    lam, V = np.linalg.eigh(Xc.T @ Xc / len(Xc))\n    top = V[:, ::-1][:, :k]\n    return trained, pca_recon_error(X, k), subspace_angle(W_enc, top)\n",
+    "prelude": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\n\n\ndef train_autoencoder(X, k, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    X = X - X.mean(axis=0)              # centre each column\n    n, d = X.shape\n    g = np.random.default_rng(seed)\n    W_enc = Tensor(0.1 * g.standard_normal((d, k)))\n    W_dec = Tensor(0.1 * g.standard_normal((k, d)))\n    params = [W_enc, W_dec]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        D = X @ W_enc @ W_dec - X\n        loss = (D ** 2).sum() / n\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, t, lr)\n        for p, q in zip(params, new):\n            p.data = q\n    return W_enc.data, W_dec.data\n\n\n\n\ndef pca_recon_error(X, k):\n    X = np.asarray(X, dtype=float)\n    X = X - X.mean(axis=0)\n    lam = np.linalg.eigvalsh(X.T @ X / len(X))     # ascending\n    return float(lam[:len(lam) - k].sum())\n\n\ndef subspace_angle(W, V):\n    Qw = np.linalg.qr(np.asarray(W, dtype=float))[0]\n    Qv = np.linalg.qr(np.asarray(V, dtype=float))[0]\n    s = np.linalg.svd(Qw.T @ Qv, compute_uv=False)\n    return float(np.degrees(np.arccos(np.clip(s.min(), -1.0, 1.0))))\n",
+    "examples": [
+     {
+      "call": "[round(v, 6) for v in check_pca([[1.9, 1.2], [-3.3, -1.9], [-0.1, -1.3], [-0.7, 0.9], [0.3, 0.9], [0.7, 1.6], [-2.4, -1.7], [-2.2, -1.1], [1.9, 1.7], [3.9, -0.3]], 1, 5, 0.1, 0)]",
+      "compare": "equal",
+      "expect": "[3.079003, 0.9, 16.37334]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(v, 6) for v in check_pca([[1.9, 1.2], [-3.3, -1.9], [-0.1, -1.3], [-0.7, 0.9], [0.3, 0.9], [0.7, 1.6], [-2.4, -1.7], [-2.2, -1.1], [1.9, 1.7], [3.9, -0.3]], 1, 5, 0.1, 0)]",
+      "compare": "equal",
+      "expect": "[3.079003, 0.9, 16.37334]"
+     },
+     {
+      "setup": "Xd = np.random.default_rng(0).standard_normal((2000, 2)) @ np.linalg.cholesky(np.array([[5, 2], [2, 2.]])).T\nt, p, a = check_pca(Xd, 1, 300, 0.05, 0)",
+      "call": "abs(t - p) < 1e-3 and a < 1",
+      "budget": 3000,
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "X3 = np.random.default_rng(2).standard_normal((1500, 3)) @ np.diag([2.0, 1.2, 0.4]) + 5\nt, p, a = check_pca(X3, 2, 400, 0.05, 1)",
+      "call": "abs(t - p) < 1e-3 and a < 1",
+      "budget": 3000,
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "X3 = np.random.default_rng(2).standard_normal((1500, 3)) @ np.diag([2.0, 1.2, 0.4]) + 5",
+      "call": "round(check_pca(X3, 2, 3, 0.05, 1)[1], 9)",
+      "compare": "equal",
+      "expect": "0.158679344"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. A 5-step run on `eigen` l11's days is compared to 6 places. Two full runs must come within 0.001 of the closed form, with an angle under 1 degree. The last checks the closed form for 2 codes of 3 shifted columns.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n# train_autoencoder (l5), pca_recon_error and subspace_angle\n# are defined for you.\n\n\ndef check_pca(X, k, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    W_enc, W_dec = train_autoencoder(X, k, steps, lr, seed)\n    Xc = X - X.mean(axis=0)\n    trained = float(((X @ W_enc @ W_dec - X) ** 2).sum(axis=1).mean())\n    lam, V = np.linalg.eigh(Xc.T @ Xc / len(Xc))\n    top = V[:, ::-1][:, :k]\n    return trained, pca_recon_error(X, k), subspace_angle(W_enc, top)\n",
+      "test": 3,
+      "symptom": "Scores the trained model on the uncentred days, so the mean counts as error."
+     },
+     {
+      "source": "import numpy as np\n# train_autoencoder (l5), pca_recon_error and subspace_angle\n# are defined for you.\n\n\ndef check_pca(X, k, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    W_enc, W_dec = train_autoencoder(X, k, steps, lr, seed)\n    Xc = X - X.mean(axis=0)\n    trained = float(((Xc @ W_enc @ W_dec - Xc) ** 2).sum(axis=1).mean())\n    lam, V = np.linalg.eigh(Xc.T @ Xc / len(Xc))\n    top = V[:, :k]\n    return trained, pca_recon_error(X, k), subspace_angle(W_enc, top)\n",
+      "test": 1,
+      "symptom": "Takes the bottom k eigenvectors: eigh sorts them in ascending order."
+     },
+     {
+      "source": "import numpy as np\n# train_autoencoder (l5), pca_recon_error and subspace_angle\n# are defined for you.\n\n\ndef check_pca(X, k, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    W_enc, W_dec = train_autoencoder(X, k, steps, lr, seed)\n    Xc = X - X.mean(axis=0)\n    trained = float(((Xc @ W_enc @ W_dec - Xc) ** 2).mean())\n    lam, V = np.linalg.eigh(Xc.T @ Xc / len(Xc))\n    top = V[:, ::-1][:, :k]\n    return trained, pca_recon_error(X, k), subspace_angle(W_enc, top)\n",
+      "test": 1,
+      "symptom": "Averages over every entry, halving the error for two stocks."
+     }
+    ],
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py"
+    },
+    "budget": 3000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Centre `X` before scoring the trained weights."
+    },
+    {
+     "rung": "step",
+     "text": "`np.linalg.eigh` sorts eigenvalues in ascending order: reverse the columns, then keep $k$."
+    }
+   ],
+   "feedback": {
+    "correct": "The trained error meets the closed form and the encoder spans the top eigenvectors.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "The 5-step run on the ten days must match to 6 places: score on the centred days, averaging over rows.",
+     "test-2": "Take the eigenvectors with the largest eigenvalues: reverse `eigh`'s columns before keeping $k$."
+    }
+   },
+   "explain": {
+    "text": "Training and the closed form agree because the loss's best value is the projection onto the top $k$ eigenvectors. The angle is measured between spans, so it ignores the arbitrary mixing of the codes."
+   }
+  },
+  {
+   "type": "transfer",
+   "title": "Factors from a risk model",
+   "difficulty": 3,
+   "prose": "A risk team builds statistical factors from PCA on 300 stocks. A colleague proposes a linear autoencoder with the same number of codes, trained with Adam, as the modern replacement.",
+   "question": "What would it give them?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "The same factor space as PCA, with codes mixed by an arbitrary invertible map",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "A better fit, since training finds what PCA misses",
+      "why": "For squared error and a linear model, PCA is already the best fit. Training can only match it."
+     },
+     {
+      "id": "named",
+      "text": "Factors with clearer meaning, such as one per sector",
+      "why": "Any invertible mixing fits equally well, so the codes come with no fixed meaning at all."
+     },
+     {
+      "id": "worse",
+      "text": "A worse fit, since gradient descent stops early",
+      "why": "Run long enough it reaches the closed form, as our 2,000 days showed. The issue is that it adds nothing."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the best linear map with $k$ codes?"
+    },
+    {
+     "rung": "step",
+     "text": "What does training fix, and what does it leave free?"
+    }
+   ],
+   "feedback": {
+    "correct": "Right. A linear autoencoder adds nothing until it is nonlinear.",
+    "generic": "Not quite. Recall what the best linear autoencoder spans.",
+    "byKey": {
+     "better": "You expected training to beat PCA. For a linear model and squared error nothing can.",
+     "named": "You expected meaningful codes. Only the subspace is fixed."
+    }
+   },
+   "explain": {
+    "text": "A linear autoencoder spans the top principal components, so it reproduces the PCA factor space and no more. A nonlinear one is where something new can happen, in the next lesson."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "For centred data and squared error, the best linear autoencoder with $k$ codes spans the top $k$ principal components.",
+   "Its error is the sum of the dropped eigenvalues: 1 for $\\boldsymbol{\\Sigma} = \\begin{pmatrix}5 & 2\\\\2 & 2\\end{pmatrix}$, keeping $6/7$ of the variance.",
+   "Only the subspace is fixed: any invertible mixing of the codes, undone by the decoder, fits as well, so trained weights need not be unit or orthogonal."
+  ],
+  "formula": {
+   "name": "Best linear error",
+   "tex": "\\min L = \\sum_{i > k}\\lambda_i",
+   "note": "Eigenvalues of the covariance with $1/n$, in decreasing order."
+  },
+  "trap": "Expecting the trained encoder to equal the unit eigenvector: only its span is fixed."
+ },
+ "quiz": [
+  {
+   "id": "q-eig",
+   "difficulty": 2,
+   "prose": "Four stocks have a covariance with eigenvalues 3, 1.5, 0.4 and 0.1.",
+   "question": "What is the error of the best linear autoencoder with 2 codes?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "Number",
+    "wrong": [
+     {
+      "id": "kept",
+      "value": 4.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 2.0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.4 + 0.1 = 0.5$.",
+    "generic": "Not quite. Add the eigenvalues the code drops.",
+    "byKey": {
+     "kept": "4.5 is what two codes keep.",
+     "one": "2.0 is the error with one code. Two codes also keep 1.5."
+    }
+   },
+   "explain": {
+    "text": "Two codes keep 3 and 1.5; the error is the sum of the dropped eigenvalues, $0.4 + 0.1 = 0.5$."
+   }
+  },
+  {
+   "id": "q-weights",
+   "difficulty": 2,
+   "prose": "A linear autoencoder with one code is trained to its best error on centred data.",
+   "question": "What must its encoder column be?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "dir",
+      "text": "Some multiple of PC1, of any non-zero length",
+      "correct": true
+     },
+     {
+      "id": "unit",
+      "text": "Exactly the unit eigenvector PC1",
+      "why": "The decoder can divide out any length, so the length is not fixed."
+     },
+     {
+      "id": "any",
+      "text": "Any direction, since every code fits equally well",
+      "why": "Only PC1's direction reaches the best error; other directions lose more."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. The direction is fixed, the length is not.",
+    "generic": "Not quite. What can the decoder undo?"
+   },
+   "explain": {
+    "text": "The best rebuild is the projection onto PC1. Any encoder along PC1 with a decoder that divides its length out achieves it."
+   }
+  },
+  {
+   "id": "q-share",
+   "difficulty": 3,
+   "prose": "A covariance has eigenvalues 8, 1.5 and 0.5. A linear autoencoder keeps one code.",
+   "question": "What share of the variance does it keep? Give a percentage.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Percentage",
+    "wrong": [
+     {
+      "id": "lost",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 4.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ],
+    "unit": "%",
+    "over100": true
+   },
+   "feedback": {
+    "correct": "$8/10 = 80\\%$.",
+    "generic": "Not quite. Kept over total.",
+    "byKey": {
+     "lost": "That is the share lost, $2/10$.",
+     "ratio": "You divided by the dropped variance. Divide by the total, 10."
+    }
+   },
+   "explain": {
+    "text": "The total is $8 + 1.5 + 0.5 = 10$, and the code keeps 8, so it keeps 80% and its error is 2."
+   }
+  }
+ ]
+}
