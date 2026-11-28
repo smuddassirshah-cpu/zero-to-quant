@@ -1,0 +1,432 @@
+{
+ "id": "homework-4",
+ "course": "ai-basics",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-row-chances",
+   "difficulty": 4,
+   "skills": [
+    "ab-language"
+   ],
+   "title": "A row as exact fractions",
+   "prose": "Chances as fractions stay exact: $\\tfrac16$ is the pair `(1, 6)`. Keep the next words in the order they first appear after the word. A word that starts no pair has an empty row.",
+   "question": "Write `row_chances(text, word)`: return a list of `(next_word, count, row_total)` for the row of `word`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def row_chances(text, word):\n    words = text.split()\n    return []\n",
+    "solution": "def row_chances(text, word):\n    words = text.split()\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        if words[i] == word:\n            b = words[i + 1]\n            if b in nexts:\n                counts[nexts.index(b)] += 1\n            else:\n                nexts.append(b)\n                counts.append(1)\n    total = 0\n    for c in counts:\n        total = total + c\n    result = []\n    for k in range(len(nexts)):\n        result.append((nexts[k], counts[k], total))\n    return result\n",
+    "examples": [
+     {
+      "call": "row_chances('up down up up', 'up')",
+      "expect": "[('down', 1, 2), ('up', 1, 2)]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "TEXT = 'the cat sat on the mat . the cat ate the jam . the dog sat on the cat .'",
+      "call": "row_chances(TEXT, 'the')",
+      "expect": "[('cat', 3, 6), ('mat', 1, 6), ('jam', 1, 6), ('dog', 1, 6)]",
+      "compare": "equal"
+     },
+     {
+      "setup": "TEXT = 'the cat sat on the mat . the cat ate the jam . the dog sat on the cat .'",
+      "call": "row_chances(TEXT, 'cat')",
+      "expect": "[('sat', 1, 3), ('ate', 1, 3), ('.', 1, 3)]",
+      "compare": "equal"
+     },
+     {
+      "setup": "TEXT = 'the cat sat on the mat . the cat ate the jam . the dog sat on the cat .'",
+      "call": "row_chances(TEXT, 'sat')",
+      "expect": "[('on', 2, 2)]",
+      "compare": "equal"
+     },
+     {
+      "call": "row_chances('buy low . sell high . buy the dip . sell the news . buy the rumour .', '.')",
+      "expect": "[('sell', 2, 4), ('buy', 2, 4)]",
+      "compare": "equal"
+     },
+     {
+      "call": "row_chances('the dog sat on the mat', 'mat')",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "row_chances('a b a b a', 'b')",
+      "expect": "[('a', 2, 2)]",
+      "compare": "equal"
+     },
+     {
+      "call": "row_chances('up up up', 'down')",
+      "expect": "[]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Each answer must equal the expected list exactly.",
+    "mutants": [
+     {
+      "source": "def row_chances(text, word):\n    words = text.split()\n    nexts = []\n    counts = []\n    for i in range(1, len(words)):\n        if words[i] == word:\n            b = words[i - 1]\n            if b in nexts:\n                counts[nexts.index(b)] += 1\n            else:\n                nexts.append(b)\n                counts.append(1)\n    total = 0\n    for c in counts:\n        total = total + c\n    result = []\n    for k in range(len(nexts)):\n        result.append((nexts[k], counts[k], total))\n    return result\n",
+      "test": 1,
+      "symptom": "Reads pairs the wrong way round, counting the word before instead of the word after."
+     },
+     {
+      "source": "def row_chances(text, word):\n    words = text.split()\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        if words[i] == word:\n            b = words[i + 1]\n            if b in nexts:\n                counts[nexts.index(b)] += 1\n            else:\n                nexts.append(b)\n                counts.append(1)\n    total = len(words)\n    result = []\n    for k in range(len(nexts)):\n        result.append((nexts[k], counts[k], total))\n    return result\n",
+      "test": 1,
+      "symptom": "Divides by the words in the text instead of the row total."
+     },
+     {
+      "source": "def row_chances(text, word):\n    words = text.split()\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        if words[i] == word:\n            b = words[i + 1]\n            if b in nexts:\n                counts[nexts.index(b)] += 1\n            else:\n                nexts.append(b)\n                counts.append(1)\n    total = len(nexts)\n    result = []\n    for k in range(len(nexts)):\n        result.append((nexts[k], counts[k], total))\n    return result\n",
+      "test": 1,
+      "symptom": "Uses the number of different next words as the total."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your function gives each row as exact counts over the row total.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "For “the” the row is cat 3, mat 1, jam 1, dog 1, each over 6.",
+     "test-5": "“mat” is the last word and starts no pair: return an empty list."
+    }
+   },
+   "explain": {
+    "text": "Walk the pairs, and when the first word is `word`, count the second in two lists kept in first-seen order. The row total is the sum of those counts, never the length of the text."
+   }
+  },
+  {
+   "id": "h-bigram-writer",
+   "difficulty": 5,
+   "skills": [
+    "ab-language"
+   ],
+   "title": "A writer from scratch",
+   "prose": "Put the level together in one function: count, turn to chances, apply the temperature and sample. `power` is 1, 2 (temperature $\\tfrac12$) or 0.5 (temperature 2). Use the rule from the lessons: the first word whose running total is above `u`, else the last word.",
+   "question": "Write `bigram_writer(text, start, us, power)`: return the words written from `start`, one per `u`, stopping early at a word that starts no pair.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def bigram_writer(text, start, us, power):\n    # 1. count the pairs of the text, keeping next words in order of first appearance\n    # 2. for each u: take the row of the word now, raise its counts to power,\n    #    rescale, and pick the first word whose running total is above u\n    # 3. stop early if the word now starts no pair\n    return [start]\n",
+    "solution": "def bigram_writer(text, start, us, power):\n    words = text.split()\n    heads = []\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        a = words[i]\n        b = words[i + 1]\n        if a not in heads:\n            heads.append(a)\n            nexts.append([])\n            counts.append([])\n        k = heads.index(a)\n        if b in nexts[k]:\n            counts[k][nexts[k].index(b)] += 1\n        else:\n            nexts[k].append(b)\n            counts[k].append(1)\n    out = [start]\n    word = start\n    for u in us:\n        if word not in heads:\n            break\n        k = heads.index(word)\n        raised = []\n        for c in counts[k]:\n            raised.append(c ** power)\n        total = 0\n        for r in raised:\n            total = total + r\n        chosen = nexts[k][-1]\n        running = 0\n        for j in range(len(raised)):\n            running = running + raised[j] / total\n            if u < running:\n                chosen = nexts[k][j]\n                break\n        word = chosen\n        out.append(word)\n    return out\n",
+    "examples": [
+     {
+      "call": "bigram_writer('a b a c', 'a', [0.6], 1)",
+      "expect": "['a', 'c']",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "bigram_writer('buy low . sell high . buy the dip . sell the news . buy the rumour .', 'buy', [0.25], 1)",
+      "expect": "['buy', 'low']",
+      "compare": "equal"
+     },
+     {
+      "call": "bigram_writer('buy low . sell high . buy the dip . sell the news . buy the rumour .', 'buy', [0.25], 2)",
+      "expect": "['buy', 'the']",
+      "compare": "equal"
+     },
+     {
+      "call": "bigram_writer('buy low . sell high . buy the dip . sell the news . buy the rumour .', '.', [0.5], 1)",
+      "expect": "['.', 'buy']",
+      "compare": "equal"
+     },
+     {
+      "call": "bigram_writer('buy low . sell high . buy the dip . sell the news . buy the rumour .', 'sell', [0.7, 0.1, 0.4, 0.6, 0.9], 1)",
+      "expect": "['sell', 'the', 'dip', '.', 'buy', 'the']",
+      "compare": "equal"
+     },
+     {
+      "call": "bigram_writer('buy low . sell high . buy the dip . sell the news . buy the rumour .', 'buy', [0.75, 0.3, 0.2, 0.3, 0.6], 0.5)",
+      "expect": "['buy', 'the', 'dip', '.', 'sell', 'the']",
+      "compare": "equal"
+     },
+     {
+      "call": "bigram_writer('buy low . sell high . buy the dip . sell the news . buy the rumour .', 'the', [0.5, 0.9, 0.2], 2)",
+      "expect": "['the', 'news', '.', 'sell']",
+      "compare": "equal"
+     },
+     {
+      "call": "bigram_writer('the dog sat', 'the', [0.5, 0.5, 0.5], 1)",
+      "expect": "['the', 'dog', 'sat']",
+      "compare": "equal"
+     },
+     {
+      "call": "bigram_writer('buy low . sell high . buy the dip . sell the news . buy the rumour .', 'buy', [], 2)",
+      "expect": "['buy']",
+      "compare": "equal"
+     },
+     {
+      "setup": "TEXT = 'the cat sat on the mat . the cat ate the jam . the dog sat on the cat .'",
+      "call": "bigram_writer(TEXT, 'the', [0.1, 0.5, 0.9], 1)",
+      "expect": "['the', 'cat', 'ate', 'the']",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. Each answer must equal the expected list of words exactly.",
+    "mutants": [
+     {
+      "source": "def bigram_writer(text, start, us, power):\n    words = text.split()\n    heads = []\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        a = words[i]\n        b = words[i + 1]\n        if a not in heads:\n            heads.append(a)\n            nexts.append([])\n            counts.append([])\n        k = heads.index(a)\n        if b in nexts[k]:\n            counts[k][nexts[k].index(b)] += 1\n        else:\n            nexts[k].append(b)\n            counts[k].append(1)\n    out = [start]\n    word = start\n    for u in us:\n        if word not in heads:\n            break\n        k = heads.index(word)\n        raised = []\n        for c in counts[k]:\n            raised.append(c)\n        total = 0\n        for r in raised:\n            total = total + r\n        chosen = nexts[k][-1]\n        running = 0\n        for j in range(len(raised)):\n            running = running + raised[j] / total\n            if u < running:\n                chosen = nexts[k][j]\n                break\n        word = chosen\n        out.append(word)\n    return out\n",
+      "test": 2,
+      "symptom": "Ignores the temperature: the counts are never raised to the power."
+     },
+     {
+      "source": "def bigram_writer(text, start, us, power):\n    words = text.split()\n    heads = []\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        a = words[i]\n        b = words[i + 1]\n        if a not in heads:\n            heads.append(a)\n            nexts.append([])\n            counts.append([])\n        k = heads.index(a)\n        if b in nexts[k]:\n            counts[k][nexts[k].index(b)] += 1\n        else:\n            nexts[k].append(b)\n            counts[k].append(1)\n    out = [start]\n    word = start\n    for u in us:\n        if word not in heads:\n            break\n        k = heads.index(word)\n        raised = []\n        for c in counts[k]:\n            raised.append(c ** power)\n        total = 0\n        for r in raised:\n            total = total + r\n        chosen = nexts[k][-1]\n        running = 0\n        for j in range(len(raised)):\n            running = running + raised[j] / total\n            if u <= running:\n                chosen = nexts[k][j]\n                break\n        word = chosen\n        out.append(word)\n    return out\n",
+      "test": 3,
+      "symptom": "Picks on a running total equal to u, so a draw on a boundary takes the earlier word."
+     },
+     {
+      "source": "def bigram_writer(text, start, us, power):\n    words = text.split()\n    heads = []\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        a = words[i]\n        b = words[i + 1]\n        if a not in heads:\n            heads.append(a)\n            nexts.append([])\n            counts.append([])\n        k = heads.index(a)\n        if b in nexts[k]:\n            counts[k][nexts[k].index(b)] += 1\n        else:\n            nexts[k].append(b)\n            counts[k].append(1)\n    out = [start]\n    word = start\n    for u in us:\n        if word not in heads:\n            break\n        k = heads.index(word)\n        raised = []\n        for c in counts[k]:\n            raised.append(c ** power)\n        total = 0\n        for r in raised:\n            total = total + r\n        chosen = nexts[k][0]\n        running = 0\n        for j in range(len(raised)):\n            running = running + raised[j] / (total + 0.5)\n            if u < running:\n                chosen = nexts[k][j]\n                break\n        word = chosen\n        out.append(word)\n    return out\n",
+      "test": 4,
+      "symptom": "Rescales by the wrong total, so the running totals end short of 1 and the last word is crowded out."
+     },
+     {
+      "source": "def bigram_writer(text, start, us, power):\n    words = text.split()\n    heads = []\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        a = words[i]\n        b = words[i + 1]\n        if a not in heads:\n            heads.append(a)\n            nexts.append([])\n            counts.append([])\n        k = heads.index(a)\n        if b in nexts[k]:\n            counts[k][nexts[k].index(b)] += 1\n        else:\n            nexts[k].append(b)\n            counts[k].append(1)\n    out = [start]\n    word = start\n    for u in us:\n        if word not in heads:\n            word = start\n        k = heads.index(word)\n        raised = []\n        for c in counts[k]:\n            raised.append(c ** power)\n        total = 0\n        for r in raised:\n            total = total + r\n        chosen = nexts[k][-1]\n        running = 0\n        for j in range(len(raised)):\n            running = running + raised[j] / total\n            if u < running:\n                chosen = nexts[k][j]\n                break\n        word = chosen\n        out.append(word)\n    return out\n",
+      "test": 7,
+      "symptom": "Jumps back to the start word at an empty row instead of stopping."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your writer counts, sharpens or flattens, and samples.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "At power 2 the row for “buy” (low 1, the 2) becomes $\\tfrac15$ and $\\tfrac45$, so 0.25 picks “the”.",
+     "test-7": "“sat” starts no pair in that text, so the run stops there."
+    }
+   },
+   "explain": {
+    "text": "Build the rows in first-seen order, raise each count to `power` and divide by their total, then walk the running totals. Raising counts or chances to the same power gives the same rescaled row, because the row total cancels."
+   }
+  },
+  {
+   "id": "h-order-steps",
+   "difficulty": 3,
+   "skills": [
+    "ab-language"
+   ],
+   "title": "From text to sentence",
+   "prose": "You want a script that writes a new sentence from a text.",
+   "question": "Put the steps in order and leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "split",
+      "text": "Split the text into words, counting each full stop as a word"
+     },
+     {
+      "id": "count",
+      "text": "Count every pair of neighbouring words into a next-word table"
+     },
+     {
+      "id": "chance",
+      "text": "Divide each count by its row total to get chances"
+     },
+     {
+      "id": "temp",
+      "text": "Apply the temperature: raise each chance to a power and rescale"
+     },
+     {
+      "id": "draw",
+      "text": "Start at a word and draw a random $u$ from 0 to 1"
+     },
+     {
+      "id": "walk",
+      "text": "Take the first next word whose running total is above $u$, then repeat from it"
+     },
+     {
+      "id": "bad",
+      "text": "Divide each count by the number of words in the text"
+     }
+    ],
+    "answer": [
+     "split",
+     "count",
+     "chance",
+     "temp",
+     "draw",
+     "walk"
+    ],
+    "distractors": [
+     "bad"
+    ]
+   },
+   "feedback": {
+    "correct": "Split, count, divide, temperature, draw, walk.",
+    "generic": "Not quite. Chances need counts, and sampling needs chances.",
+    "byKey": {
+     "bad": "Dividing by the words in the text gives a row that does not add to 1. Divide by the row total.",
+     "temp": "The temperature reshapes chances, so the chances must come first."
+    }
+   },
+   "explain": {
+    "text": "Counts come from the pairs, chances from the counts, and the temperature reshapes the chances. Only then does each random $u$ pick a word from the running totals."
+   }
+  },
+  {
+   "id": "h-temp-row",
+   "difficulty": 4,
+   "skills": [
+    "ab-language"
+   ],
+   "prose": "A row has counts 2, 1 and 1.",
+   "question": "What is the first word's chance at temperature $\\tfrac12$? Give a fraction.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6667,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "fraction",
+    "label": "Chance",
+    "accept": "Any form equal to 2/3, or 0.6667",
+    "wrong": [
+     {
+      "id": "no-rescale",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "same",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac23$.",
+    "generic": "Not quite. Turn counts into chances, square, then rescale.",
+    "byKey": {
+     "no-rescale": "$\\tfrac14$ is the square of $\\tfrac12$. Rescale by the total of the squares, $\\tfrac38$.",
+     "same": "$\\tfrac12$ is the chance at temperature 1. Square and rescale."
+    }
+   },
+   "explain": {
+    "text": "The chances are $\\tfrac12, \\tfrac14, \\tfrac14$, and their squares $\\tfrac14, \\tfrac1{16}, \\tfrac1{16}$ add to $\\tfrac38$. So the first word gets $\\tfrac14 \\div \\tfrac38 = \\tfrac23$."
+   }
+  },
+  {
+   "id": "h-at-or-above",
+   "difficulty": 4,
+   "skills": [
+    "ab-language"
+   ],
+   "prose": "A picker is written with `u <= total` instead of `u < total`. On the row for “the” (cat $\\tfrac12$, mat, jam and dog $\\tfrac16$ each) it gets $u = 0.5$ and writes cat.",
+   "question": "Which word should $u = 0.5$ give, and why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mat",
+      "text": "mat: 0.5 is not above $\\tfrac12$, so walk on",
+      "correct": true
+     },
+     {
+      "id": "cat",
+      "text": "cat: 0.5 equals $\\tfrac12$, so it fits",
+      "why": "The rule needs a running total above $u$. Equal is not above, so 0.5 goes to mat."
+     },
+     {
+      "id": "either",
+      "text": "Either: one draw of exactly 0.5 never matters",
+      "why": "Every boundary would then lean the same way, giving each word a little extra chance. Keep the rule exact."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "mat.",
+    "generic": "Not quite. Read the rule: above $u$."
+   },
+   "explain": {
+    "text": "cat's piece runs from 0 up to, but not including, $\\tfrac12$. With `u < total`, 0.5 walks on to mat, whose running total $\\tfrac23$ is above it."
+   }
+  },
+  {
+   "id": "h-emma",
+   "difficulty": 3,
+   "skills": [
+    "ab-language"
+   ],
+   "prose": "Letters can be tokens too. `makemore` builds a table over the letters of names, with a start mark before each name and an end mark after it: “.emma.”.",
+   "question": "How many pairs does the name “emma” give, counting the marks?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "label": "Pairs",
+    "accept": "5",
+    "wrong": [
+     {
+      "id": "no-marks",
+      "value": 3,
+      "tol": {
+       "abs": 0.0
+      }
+     },
+     {
+      "id": "letters",
+      "value": 4,
+      "tol": {
+       "abs": 0.0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "5 pairs.",
+    "generic": "Not quite. Count the tokens with both marks, then subtract 1.",
+    "byKey": {
+     "no-marks": "3 forgets the start and end marks.",
+     "letters": "4 counts the letters. Six tokens give five pairs."
+    }
+   },
+   "explain": {
+    "text": "“.emma.” has 6 tokens, so 5 pairs: start e, e m, m m, m a and a end. The marks let the table learn how names begin and end."
+   }
+  },
+  {
+   "id": "h-long-nonsense",
+   "difficulty": 5,
+   "skills": [
+    "ab-language"
+   ],
+   "title": "Fluent nonsense",
+   "kind": "longform",
+   "prompt": "A next-word table trained on news text writes: “the bank cut rates rose sharply on the bank cut rates”. Each pair of words reads well, but the sentence makes no sense.\n\n(a) Say what the table knows when it picks a word. (b) Explain why every pair reads well. (c) Explain why the whole sentence can still be nonsense, with one example from the course text. (d) Say what a model would need to do better, and what temperature can and cannot fix.",
+   "model": "**(a)** The table knows one thing when it picks: the word just written. It looks up that word's row and picks the next word by its chance. It keeps no memory of anything earlier.\n\n**(b)** Every pair it writes was counted in real text. “bank cut”, “cut rates” and “rates rose” each appeared in the news. So each neighbouring pair is a pair someone wrote.\n\n**(c)** Meaning needs more than pairs. “rates rose” is fine after “interest”, but after “the bank cut rates” it contradicts what came before, and the table cannot see that far back. In the course text, “the cat ate the cat sat on the mat” is built from real pairs, yet no one wrote it and it makes little sense.\n\n**(d)** A better model must look further back: at many earlier words, not one. Real chatbots use networks that read a long run of tokens before choosing. Temperature cannot fix it: it only sharpens or flattens the same row. A low temperature repeats the likeliest pairs, as in “the cat sat on the cat sat on”; a high one makes rarer pairs more likely. Neither adds memory.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States that the table conditions only on the last word"
+    },
+    {
+     "points": 2,
+     "text": "Explains that every written pair was seen in the training text"
+    },
+    {
+     "points": 2,
+     "text": "Explains why pairs can join into nonsense, with a concrete example"
+    },
+    {
+     "points": 2,
+     "text": "Says a better model must use more context (more earlier tokens)"
+    },
+    {
+     "points": 2,
+     "text": "Says temperature only reshapes one row's chances and cannot add memory"
+    }
+   ]
+  }
+ ]
+}
