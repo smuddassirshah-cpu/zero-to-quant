@@ -1,0 +1,585 @@
+{
+ "id": "problems-3",
+ "course": "sequence",
+ "level": 3,
+ "title": "Self-attention: chained problems",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-mask3",
+   "difficulty": 4,
+   "skills": [
+    "sqn-self"
+   ],
+   "prose": "A causal self-attention layer reads three tokens with embeddings $(1, 0)$, $(0, 1)$ and $(1, 1)$, with $\\mathbf W_Q = \\mathbf W_K = \\mathbf W_V = \\mathbf I$ and width $d = 2$.",
+   "parts": [
+    {
+     "question": "What weight does query 2 put on key 1? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.3302,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "nomask",
+        "value": 0.1978,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "half",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Scores $0$ and $1/\\sqrt 2$: $1/(1 + e^{0.7071}) = 0.3302$.",
+      "generic": "Not quite. Query 2 sees keys 1 and 2 only.",
+      "byKey": {
+       "nomask": "You let key 3 in. It is in the future of query 2.",
+       "half": "The two scores differ."
+      }
+     },
+     "explain": {
+      "text": "Query 2 scores 0 against key 1 and 0.7071 against itself; the mask removes key 3. Weights 0.3302 and 0.6698."
+     }
+    },
+    {
+     "question": "What weight does query 3 put on itself? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5035,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "noscale",
+        "value": 0.5761,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "third",
+        "value": 0.3333,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Scaled scores 0.7071, 0.7071, 1.4142: weight 0.5035.",
+      "generic": "Not quite. Scale the scores $(1, 1, 2)$ by $\\sqrt 2$, then softmax.",
+      "byKey": {
+       "noscale": "You left out the $\\sqrt 2$.",
+       "third": "The scores differ, so the weights do."
+      }
+     },
+     "explain": {
+      "text": "$e^{1.4142}/(2e^{0.7071} + e^{1.4142}) = 0.5035$; keys 1 and 2 get 0.2483 each."
+     }
+    },
+    {
+     "question": "With weights 0.2483, 0.2483 and 0.5035 on the three values, what is the first entry of output 3? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.7517,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "mean",
+        "value": 0.6667,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.2483 \\times 1 + 0.2483 \\times 0 + 0.5035 \\times 1 \\approx 0.7517$.",
+      "generic": "Not quite. Weight the first entries 1, 0, 1.",
+      "byKey": {
+       "mean": "That is the plain mean of 1, 0, 1. Use the weights."
+      }
+     },
+     "explain": {
+      "text": "The first entries of the values are 1, 0, 1, so output 3 starts 0.7517."
+     }
+    },
+    {
+     "question": "Token 3 is changed to $(0, 0)$. How many of the three outputs change?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "all",
+        "value": 3,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "two",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Only output 3: queries 1 and 2 never see token 3.",
+      "generic": "Not quite. Which queries attend to key 3?",
+      "byKey": {
+       "all": "The mask hides token 3 from queries 1 and 2.",
+       "two": "Query 2 sees keys 1 and 2 only."
+      }
+     },
+     "explain": {
+      "text": "1: only the last output moves. That is the leak test passing."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-cost",
+   "difficulty": 5,
+   "skills": [
+    "sqn-self"
+   ],
+   "prose": "A causal multi-head layer has width 64, 8 heads and a context of 32 tokens, with no biases.",
+   "parts": [
+    {
+     "question": "How wide is each head?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 8,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "times",
+        "value": 512,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$64/8 = 8$.",
+      "generic": "Not quite.",
+      "byKey": {
+       "times": "You multiplied."
+      }
+     },
+     "explain": {
+      "text": "$64/8 = 8$ features a head."
+     }
+    },
+    {
+     "question": "How many query and key pairs does each head keep after the mask?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 528,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "all",
+        "value": 1024,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "strict",
+        "value": 496,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$32 \\times 33/2 = 528$.",
+      "generic": "Not quite. $T(T + 1)/2$.",
+      "byKey": {
+       "all": "That is before the mask.",
+       "strict": "The diagonal is kept."
+      }
+     },
+     "explain": {
+      "text": "Each head keeps the 528 pairs on and below the diagonal."
+     }
+    },
+    {
+     "question": "Using 528 kept pairs in each of the 8 heads, how many attention weights does the layer use for one sequence?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4224,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "one",
+        "value": 528,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "full",
+        "value": 8192,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$8 \\times 528 = 4{,}224$.",
+      "generic": "Not quite. Multiply by the heads.",
+      "byKey": {
+       "one": "That is one head.",
+       "full": "That counts the masked pairs too."
+      }
+     },
+     "explain": {
+      "text": "Every head has its own matrix: $8 \\times 528 = 4{,}224$ weights that can be non-zero."
+     }
+    },
+    {
+     "question": "How many weights does the layer learn?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 16384,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "perhead",
+        "value": 131072,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "nowo",
+        "value": 12288,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$4 \\times 64^2 = 16{,}384$.",
+      "generic": "Not quite. Four 64 by 64 matrices.",
+      "byKey": {
+       "perhead": "The heads share the matrices: no factor of 8.",
+       "nowo": "Add $\\mathbf W_O$."
+      }
+     },
+     "explain": {
+      "text": "The heads slice $\\mathbf W_Q$, $\\mathbf W_K$, $\\mathbf W_V$; with $\\mathbf W_O$ that is 16,384 weights, whatever the number of heads."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-pe",
+   "difficulty": 3,
+   "skills": [
+    "sqn-self"
+   ],
+   "prose": "A small model of width 8 stamps every token with a code of sines and cosines; pair $i$ turns at the rate $1/10000^{2i/8}$ per step.",
+   "parts": [
+    {
+     "question": "What is $10000^{2/8}$, the divisor for $i = 1$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 10,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "sq",
+        "value": 100,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$10000^{0.25} = 10$.",
+      "generic": "Not quite. The fourth root of 10,000.",
+      "byKey": {
+       "sq": "That is $10000^{0.5}$, for $i = 2$."
+      }
+     },
+     "explain": {
+      "text": "$10000^{1/4} = 10$."
+     }
+    },
+    {
+     "question": "Using that divisor 10, what is $PE_{20, 2}$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.9093,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "cos",
+        "value": -0.4161,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "raw",
+        "value": 0.9129,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\sin(20/10) = \\sin 2 = 0.9093$.",
+      "generic": "Not quite. Angle $20/10 = 2$.",
+      "byKey": {
+       "cos": "That is $PE_{20,3}$.",
+       "raw": "You left out the divisor: $\\sin 20$."
+      }
+     },
+     "explain": {
+      "text": "$\\sin 2 = 0.9093$."
+     }
+    },
+    {
+     "question": "And $PE_{20, 3}$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.4161,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "sin",
+        "value": 0.9093,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.4161,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\cos 2 = -0.4161$.",
+      "generic": "Not quite. Entry 3 takes the cosine of the same angle.",
+      "byKey": {
+       "sin": "You took the even entry again; entry 3 is its cosine partner.",
+       "sign": "Check the sign: $\\cos 2$ is negative, since 2 radians is past a right angle."
+      }
+     },
+     "explain": {
+      "text": "$\\cos 2 = -0.4161$."
+     }
+    },
+    {
+     "question": "What is the dot product of $PE_{20}$ with itself?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "d",
+        "value": 8,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$d/2 = 4$: each pair gives $\\sin^2 + \\cos^2 = 1$.",
+      "generic": "Not quite. Count the pairs.",
+      "byKey": {
+       "d": "Each pair contributes 1: 4 pairs, not 8."
+      }
+     },
+     "explain": {
+      "text": "Four sine and cosine pairs, each summing to 1, give 4."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-dev",
+   "difficulty": 4,
+   "skills": [
+    "sqn-self"
+   ],
+   "prose": "On makemore's dev names the bigram scores 2.4514 nats a letter and the supplied one-head attention model 2.2737.",
+   "parts": [
+    {
+     "question": "By how many nats a letter does the model beat the bigram? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.1777,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "ratio",
+        "value": 0.9275,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2.4514 - 2.2737 = 0.1777$.",
+      "generic": "Not quite. Subtract.",
+      "byKey": {
+       "ratio": "That is the ratio of the losses, not the gap."
+      }
+     },
+     "explain": {
+      "text": "The gap is 0.1777 nats a letter."
+     }
+    },
+    {
+     "question": "Using the gap 0.1777 nats from part 1, what is it in bits? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.2564,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "mult",
+        "value": 0.1232,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.1777/\\ln 2 = 0.2564$ bits.",
+      "generic": "Not quite. Divide by $\\ln 2$.",
+      "byKey": {
+       "mult": "You multiplied by $\\ln 2$."
+      }
+     },
+     "explain": {
+      "text": "0.2564 bits a letter."
+     }
+    },
+    {
+     "question": "What is the model's perplexity, $e$ to its loss in nats? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 9.71,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "bits",
+        "value": 4.84,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "bigram",
+        "value": 11.6,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$e^{2.273664} = 9.71$.",
+      "generic": "Not quite. $e$ to the nats (info L2).",
+      "byKey": {
+       "bits": "You raised 2 to the nats. Use $e$ with nats.",
+       "bigram": "That is the bigram's."
+      }
+     },
+     "explain": {
+      "text": "The model is as unsure as a fair choice among 9.71 symbols, against 11.60 for the bigram."
+     }
+    },
+    {
+     "question": "A name and its end mark are 7 symbols. Using the gap 0.2564 bits a symbol, how many bits does the model save on such a name? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.79,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "six",
+        "value": 1.54,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$7 \\times 0.2564 = 1.79$ bits.",
+      "generic": "Not quite. Multiply by 7.",
+      "byKey": {
+       "six": "The end mark counts too: 7 symbols."
+      }
+     },
+     "explain": {
+      "text": "Every symbol, the end mark included, saves 0.2564 bits on average: 1.79 bits a name."
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1343 @@
+{
+ "id": "l10-causal-mask",
+ "course": "sequence",
+ "title": "No peeking ahead",
+ "minutes": 15,
+ "objectives": [
+  "Build a causal mask, and test that no position can see a later one."
+ ],
+ "skills": [
+  "sqn-self"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Too good to be true",
+   "prose": "The self-attention layer of lesson 1, given token and position embeddings and a readout over the 27 symbols of makemore, is trained to predict the next symbol of names at every position. The dashed line is the bigram's dev loss, 2.4514 nats a letter. Switch between the two training runs.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "run",
+       "label": "training loss",
+       "values": [
+        3.1859,
+        2.8613,
+        2.6211,
+        2.3114,
+        1.7394,
+        1.1186,
+        0.6965,
+        0.4648,
+        0.33,
+        0.224,
+        0.2122,
+        0.1946,
+        0.2129,
+        0.1879,
+        0.1725,
+        0.1497,
+        0.1712,
+        0.1702,
+        0.1495,
+        0.1869,
+        0.1853,
+        0.1956,
+        0.1983,
+        0.1774,
+        0.18,
+        0.1722,
+        0.1648,
+        0.1501,
+        0.1424,
+        0.1644
+       ]
+      }
+     ],
+     "y": [
+      0,
+      3.6
+     ],
+     "xLabel": "step (tens)",
+     "yLabel": "nats a letter",
+     "height": 230,
+     "hlines": [
+      {
+       "id": "bg",
+       "y": 2.4514,
+       "label": "bigram dev 2.4514"
+      }
+     ]
+    },
+    "state": {
+     "caption": "No mask: every position can see the whole window."
+    },
+    "controls": [
+     {
+      "bind": "run",
+      "label": "mask",
+      "frames": [
+       {
+        "series": {
+         "run": {
+          "values": [
+           3.1859,
+           2.8613,
+           2.6211,
+           2.3114,
+           1.7394,
+           1.1186,
+           0.6965,
+           0.4648,
+           0.33,
+           0.224,
+           0.2122,
+           0.1946,
+           0.2129,
+           0.1879,
+           0.1725,
+           0.1497,
+           0.1712,
+           0.1702,
+           0.1495,
+           0.1869,
+           0.1853,
+           0.1956,
+           0.1983,
+           0.1774,
+           0.18,
+           0.1722,
+           0.1648,
+           0.1501,
+           0.1424,
+           0.1644
+          ]
+         }
+        },
+        "caption": "No mask: every position can see the whole window."
+       },
+       {
+        "series": {
+         "run": {
+          "values": [
+           3.2104,
+           2.8964,
+           2.7003,
+           2.6241,
+           2.5494,
+           2.5399,
+           2.5071,
+           2.4665,
+           2.4521,
+           2.4462,
+           2.437,
+           2.3997,
+           2.406,
+           2.4284,
+           2.4104,
+           2.3643,
+           2.3938,
+           2.3821,
+           2.3852,
+           2.3647,
+           2.3426,
+           2.4026,
+           2.3816,
+           2.3391,
+           2.3595,
+           2.3736,
+           2.3289,
+           2.3604,
+           2.313,
+           2.3708
+          ]
+         }
+        },
+        "caption": "Causal mask: each position sees only itself and earlier ones."
+       }
+      ],
+      "frameLabels": [
+       "off",
+       "on"
+      ],
+      "start": 0
+     }
+    ]
+   },
+   "question": "The unmasked run's training loss falls far below the bigram's. Why is that too good to be true?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "peek",
+      "text": "Each position can read the next symbol itself, the very thing it must predict",
+      "correct": true
+     },
+     {
+      "id": "over",
+      "text": "It has memorised the training names",
+      "why": "Memorising would show on dev data. Here even the first few hundred steps fall far below any honest model."
+     },
+     {
+      "id": "better",
+      "text": "Attention is simply a much better model than counts",
+      "why": "The masked run, the same model, stays near 2.35. The gap comes from what the unmasked one can see."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two runs."
+    },
+    {
+     "rung": "point",
+     "text": "Self-attention reads every position of the window, later ones too."
+    },
+    {
+     "rung": "step",
+     "text": "Position $t$'s target is token $t + 1$, which sits in the window."
+    }
+   ],
+   "feedback": {
+    "correct": "It peeks: the next symbol is in the window, so it copies it.",
+    "generic": "Not quite. What can each position see?"
+   },
+   "explain": {
+    "text": "Without a mask, position $t$ attends to position $t + 1$, whose token is its target, so the loss falls to about 0.16. The same weights evaluated with the mask score 6.84 on dev: useless. The masked run is honest at about 2.35."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The causal mask",
+   "prose": "A **causal mask** adds $-\\infty$ to the score of every key after the query before the softmax, so $e^{-\\infty} = 0$ and position $t$ attends only to positions 1 to $t$. The mask for $T = 4$ is shown.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "M",
+       "rows": [
+        [
+         "0",
+         "−∞",
+         "−∞",
+         "−∞"
+        ],
+        [
+         "0",
+         "0",
+         "−∞",
+         "−∞"
+        ],
+        [
+         "0",
+         "0",
+         "0",
+         "−∞"
+        ],
+        [
+         "0",
+         "0",
+         "0",
+         "0"
+        ]
+       ],
+       "label": "mask",
+       "rowLabels": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+       ],
+       "colLabels": [
+        "k1",
+        "k2",
+        "k3",
+        "k4"
+       ]
+      }
+     ]
+    }
+   },
+   "question": "How many query and key pairs are still allowed for $T = 4$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 16,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "strict",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the zeros."
+    },
+    {
+     "rung": "point",
+     "text": "Row $t$ has $t$ zeros.",
+     "highlight": [
+      "M-r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 + 2 + 3 + 4$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 + 2 + 3 + 4 = 10 = 4 \\times 5/2$.",
+    "generic": "Not quite. Count the cells on and below the diagonal.",
+    "byKey": {
+     "all": "That is every pair. The mask removes the 6 above the diagonal.",
+     "strict": "That leaves out the diagonal: each position may attend to itself."
+    }
+   },
+   "explain": {
+    "text": "Row $t$ keeps keys 1 to $t$, so the count is $1 + 2 + \\dots + T = T(T + 1)/2$: 10 for $T = 4$. The diagonal stays: a position may read its own token."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A longer context",
+   "prose": "The same rule for a context of $T = 32$ tokens, the context of a small character model.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "M",
+       "rows": [
+        [
+         "0",
+         "−∞",
+         "−∞",
+         "−∞"
+        ],
+        [
+         "0",
+         "0",
+         "−∞",
+         "−∞"
+        ],
+        [
+         "0",
+         "0",
+         "0",
+         "−∞"
+        ],
+        [
+         "0",
+         "0",
+         "0",
+         "0"
+        ]
+       ],
+       "label": "$T = 4$",
+       "rowLabels": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+       ],
+       "colLabels": [
+        "k1",
+        "k2",
+        "k3",
+        "k4"
+       ]
+      }
+     ]
+    }
+   },
+   "question": "How many pairs are allowed?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 528,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 1024,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "strict",
+      "value": 496,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $T(T + 1)/2$."
+    },
+    {
+     "rung": "point",
+     "text": "$32 \\times 33/2$.",
+     "highlight": [
+      "M"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1056/2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$32 \\times 33/2 = 528$.",
+    "generic": "Not quite. $T(T + 1)/2$ with $T = 32$.",
+    "byKey": {
+     "all": "That is $32^2$, every pair.",
+     "strict": "That is $32 \\times 31/2$, without the diagonal."
+    }
+   },
+   "explain": {
+    "text": "528 of the 1,024 pairs survive, a little over half. A masked layer still pays for the full $T \\times T$ product unless the kernel skips the masked half."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A masked row by hand",
+   "prose": "Row 2 of a 4 by 4 score matrix is $(1, 2, 5, 3)$. The mask adds $(0, 0, -\\infty, -\\infty)$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "key",
+      "score",
+      "mask",
+      "after"
+     ],
+     "rows": [
+      [
+       "1",
+       "1",
+       "0",
+       "1"
+      ],
+      [
+       "2",
+       "2",
+       "0",
+       "2"
+      ],
+      [
+       "3",
+       "5",
+       "−∞",
+       "−∞"
+      ],
+      [
+       "4",
+       "3",
+       "−∞",
+       "−∞"
+      ]
+     ]
+    }
+   },
+   "question": "What weight does query 2 put on key 1? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2689,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "nomask",
+      "value": 0.0152,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Only keys 1 and 2 survive."
+    },
+    {
+     "rung": "point",
+     "text": "Their exponentials are $e^1$ and $e^2$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e/(e + e^2) = 1/(1 + e)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1/(1 + e) = 0.2689$; key 2 gets 0.7311, and keys 3 and 4 get 0.",
+    "generic": "Not quite. Softmax over the two allowed keys.",
+    "byKey": {
+     "nomask": "You took the softmax over all four. The masked keys get $e^{-\\infty} = 0$.",
+     "half": "The two allowed scores differ, so the weights do."
+    }
+   },
+   "explain": {
+    "text": "With the mask the row is $(1, 2, -\\infty, -\\infty)$, and the softmax gives 0.2689, 0.7311, 0, 0. The large score 5 of key 3 does not matter: it is in the future."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Test that nothing leaks",
+   "prose": "A mask is easy to get wrong, so test it: change a token after position $t$ and check that outputs 1 to $t$ do not move. In a window of 8 tokens, the token at position 6 is changed.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      ".",
+      "m",
+      "a",
+      "r",
+      "i",
+      "a",
+      "n",
+      "n"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         5,
+         7
+        ],
+        "label": "may change",
+        "colour": 3
+       }
+      ]
+     },
+     "pointers": [
+      {
+       "id": "p",
+       "at": 5,
+       "label": "changed"
+      }
+     ]
+    }
+   },
+   "question": "Which outputs may change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "later",
+      "text": "Outputs 6, 7 and 8 only",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "All eight outputs",
+      "why": "With the mask, positions 1 to 5 never see position 6."
+     },
+     {
+      "id": "one",
+      "text": "Output 6 only",
+      "why": "Positions 7 and 8 attend to position 6 too, so they may change."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which positions attend to position 6?"
+    },
+    {
+     "rung": "point",
+     "text": "Position $t$ attends to 1 to $t$.",
+     "highlight": [
+      "c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Positions 6, 7 and 8 include 6."
+    }
+   ],
+   "feedback": {
+    "correct": "Only positions at or after the change can see it.",
+    "generic": "Not quite. Who attends to position 6?"
+   },
+   "explain": {
+    "text": "Output $t$ depends on tokens 1 to $t$ only. A **leak test** changes a later token and asserts the earlier outputs are unchanged; a model that fails it will look brilliant in training and fail in use."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Scored against the bigram",
+   "prose": "The supplied model, trained here for 3,000 steps with the mask, is scored on makemore's dev names, every next symbol once with up to 8 symbols of context: 2.2737 nats a letter. The bigram of makemore L1 scored 2.4514 on the same names.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "model",
+      "nats a letter",
+      "bits a letter"
+     ],
+     "rows": [
+      [
+       "bigram (makemore)",
+       "2.4514",
+       "3.5366"
+      ],
+      [
+       "self-attention, 1 head",
+       "2.2737",
+       "?"
+      ],
+      [
+       "self-attention, 4 heads",
+       "2.1729",
+       "3.1349"
+      ]
+     ]
+    }
+   },
+   "question": "What is the model's dev loss in bits a letter? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.2802,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "nats",
+      "value": 2.2737,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "bigram",
+      "value": 3.5366,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "log10",
+      "value": 0.9874,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Bits are nats over $\\ln 2$ (info L2)."
+    },
+    {
+     "rung": "point",
+     "text": "$\\ln 2 = 0.6931$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2.2737/0.6931$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2.2737/\\ln 2 = 3.2802$ bits, against the bigram's 3.5366.",
+    "generic": "Not quite. Divide the nats by $\\ln 2$.",
+    "byKey": {
+     "nats": "That is the loss in nats. Divide by $\\ln 2$.",
+     "bigram": "That is the bigram in bits.",
+     "log10": "You divided by $\\ln 10$. Bits use base 2."
+    }
+   },
+   "explain": {
+    "text": "2.2737 nats is 3.2802 bits a letter, 0.2564 bits better than the bigram, because it reads up to 8 earlier symbols instead of one. Four heads do better still: 2.1729 nats."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Masking after the softmax",
+   "prose": "A colleague applies the softmax to the full row $(1, 2, 5, 3)$ first, then zeroes the weights of keys 3 and 4.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "key",
+      "softmax of the full row",
+      "zeroed"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.0152",
+       "0.0152"
+      ],
+      [
+       "2",
+       "0.0414",
+       "0.0414"
+      ],
+      [
+       "3",
+       "0.8310",
+       "0"
+      ],
+      [
+       "4",
+       "0.1125",
+       "0"
+      ]
+     ]
+    }
+   },
+   "question": "What do query 2's remaining weights sum to? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0566,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "first",
+      "value": 0.0152,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the first two weights of the full softmax."
+    },
+    {
+     "rung": "point",
+     "text": "Key 3's large score took most of the weight first.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.0152 + 0.0414."
+    }
+   ],
+   "feedback": {
+    "correct": "0.0566: the row no longer sums to 1.",
+    "generic": "Not quite. Add what is left after zeroing.",
+    "byKey": {
+     "one": "It would be 1 if the mask came first. After the softmax, keys 3 and 4 already took their share.",
+     "first": "Add key 2's weight too."
+    }
+   },
+   "explain": {
+    "text": "The full softmax gave keys 3 and 4 0.9434 of the weight; zeroing leaves 0.0566. Worse, the future scores already shaped the normaliser, so information leaked. Mask the scores, then take the softmax."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The first position",
+   "prose": "Edge case: query 1 in a masked layer. Every key but its own is masked.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "M",
+       "rows": [
+        [
+         "0",
+         "−∞",
+         "−∞",
+         "−∞"
+        ],
+        [
+         "0",
+         "0",
+         "−∞",
+         "−∞"
+        ],
+        [
+         "0",
+         "0",
+         "0",
+         "−∞"
+        ],
+        [
+         "0",
+         "0",
+         "0",
+         "0"
+        ]
+       ],
+       "label": "mask",
+       "rowLabels": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+       ],
+       "colLabels": [
+        "k1",
+        "k2",
+        "k3",
+        "k4"
+       ]
+      }
+     ]
+    },
+    "state": {
+     "highlight": {
+      "M": {
+       "rows": [
+        0
+       ]
+      }
+     }
+    }
+   },
+   "question": "What weight does query 1 put on itself?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "t",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many keys survive in row 1?"
+    },
+    {
+     "rung": "point",
+     "text": "Only key 1.",
+     "highlight": [
+      "M-0-0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The softmax of one score is 1."
+    }
+   ],
+   "feedback": {
+    "correct": "1: the first position can only read itself.",
+    "generic": "Not quite. One surviving key.",
+    "byKey": {
+     "t": "Equal weights over four keys ignore the mask.",
+     "zero": "Its own key is on the diagonal, which the mask keeps."
+    }
+   },
+   "explain": {
+    "text": "Row 1 keeps only the diagonal, so its weight is 1 and its output is its own value. That is why the first prediction of a name rests on the start mark alone."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The mask in code",
+   "prose": "Write `causal_mask(T)`, and `masked_attention(Q, K, V, mask)`, scaled, with the mask added before the softmax. Then write `leak_test(f, x, t)`: change each token after position $t$ (counting from 0) to another symbol, one at a time, and return `True` if any output from 0 to $t$ moves.",
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef causal_mask(T):\n    # T by T: 0 where key j <= query i, -inf where j > i\n    ...\n\n\ndef masked_attention(Q, K, V, mask):\n    # softmax(Q K^T / sqrt(d) + mask) V, the softmax along each row\n    ...\n\n\ndef leak_test(f, x, t):\n    # f maps a token list to one row of outputs per position. Change each token after position t\n    # (0-based) to another symbol, one at a time; return True if any of the outputs 0..t moves\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef masked_attention(Q, K, V, mask):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T / np.sqrt(Q.shape[-1]) + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef leak_test(f, x, t):\n    base = f(list(x))\n    for j in range(t + 1, len(x)):\n        y = list(x)\n        y[j] = (y[j] + 1) % 27\n        if not np.allclose(f(y)[:t + 1], base[:t + 1]):\n            return True\n    return False\n",
+    "prelude": "import json\nimport numpy as np\n\nwith open('sequence-attn-names.json') as f:\n    _W = json.load(f)\nMODEL = {k: np.array(v) for k, v in _W['h1'].items()}\nVOCAB = _W['vocab']\n\n\ndef logits_of(model, X, mask=True):\n    X = np.atleast_2d(np.asarray(X))\n    B, T = X.shape\n    x = model['E'][X] + model['P'][:T]\n    q, k, v = x @ model['Wq'], x @ model['Wk'], x @ model['Wv']\n    S = q @ np.swapaxes(k, -1, -2) / np.sqrt(q.shape[-1])\n    if mask:\n        S = S + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(-1, keepdims=True)\n    return (A @ v) @ model['Wo'] @ model['U'] + model['c']\n\n\ndef model_fn(tokens):\n    return logits_of(MODEL, [tokens])[0]\n\n\ndef leaky_fn(tokens):\n    return logits_of(MODEL, [tokens], mask=False)[0]\n\n\ng = np.random.default_rng(2)\nQr, Kr, Vr = g.standard_normal((5, 4)), g.standard_normal((5, 4)), g.standard_normal((5, 3))\nNAME = [0, 13, 1, 18, 9, 1, 14, 14]\n",
+    "data": {
+     "sequence-attn-names.json": "content/data/ai/sequence-attn-names.json"
+    },
+    "examples": [
+     {
+      "call": "causal_mask(3).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, float(\"-inf\"), float(\"-inf\")], [0.0, 0.0, float(\"-inf\")], [0.0, 0.0, 0.0]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "causal_mask(3).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, float(\"-inf\"), float(\"-inf\")], [0.0, 0.0, float(\"-inf\")], [0.0, 0.0, 0.0]]"
+     },
+     {
+      "call": "int((causal_mask(32) == 0).sum())",
+      "compare": "equal",
+      "expect": "528"
+     },
+     {
+      "call": "masked_attention(Qr, Kr, Vr, causal_mask(5)).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.2429388530987352, 1.8014208584493328, -0.7644641157203993], [0.13297068115444252, 1.60471680588418, -0.6202463301029904], [-0.5155003122885502, 0.5678909261246244, -0.3351042129587635], [-0.22995972374244614, 0.882180241821931, -0.9408307818643478], [-0.05799298606407934, 0.8315834084022642, -0.48701643236803827]]"
+     },
+     {
+      "call": "masked_attention(Qr, Kr, Vr, causal_mask(5))[0].tolist() == Vr[0].tolist()",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "masked_attention(Qr, Kr, Vr, np.zeros((5, 5))).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.40545987184052423, 0.39338535069464275, 0.08113732856165533], [0.6252282544839044, 1.2559191551214008, -0.9096317133705771], [-0.22820547677402317, 0.6808903448515828, -0.4652080230727884], [-0.19589278729256945, 0.9118092561364177, -0.8494551554818187], [-0.05799298606407934, 0.8315834084022642, -0.48701643236803827]]"
+     },
+     {
+      "call": "leak_test(model_fn, NAME, 3)",
+      "compare": "equal",
+      "expect": "False"
+     },
+     {
+      "call": "leak_test(leaky_fn, NAME, 3)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "leak_test(leaky_fn, NAME, 6)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "leak_test(model_fn, NAME, 7)",
+      "compare": "equal",
+      "expect": "False"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests, compared to $10^{-9}$. Test 4 checks that the first position returns its own value. Tests 6 to 9 run your leak test on the name `NAME`, with the supplied model (`model_fn`) and with the same weights unmasked (`leaky_fn`).",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.tril(np.full((T, T), -np.inf), -1)\n\n\ndef masked_attention(Q, K, V, mask):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T / np.sqrt(Q.shape[-1]) + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef leak_test(f, x, t):\n    base = f(list(x))\n    for j in range(t + 1, len(x)):\n        y = list(x)\n        y[j] = (y[j] + 1) % 27\n        if not np.allclose(f(y)[:t + 1], base[:t + 1]):\n            return True\n    return False\n",
+      "test": 1,
+      "symptom": "Masks the past instead of the future."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 0)\n\n\ndef masked_attention(Q, K, V, mask):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T / np.sqrt(Q.shape[-1]) + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef leak_test(f, x, t):\n    base = f(list(x))\n    for j in range(t + 1, len(x)):\n        y = list(x)\n        y[j] = (y[j] + 1) % 27\n        if not np.allclose(f(y)[:t + 1], base[:t + 1]):\n            return True\n    return False\n",
+      "test": 1,
+      "symptom": "Masks the diagonal too, so a position cannot read itself."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef masked_attention(Q, K, V, mask):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T / np.sqrt(Q.shape[-1])\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    A = A * (mask == 0)\n    return A @ V\n\n\ndef leak_test(f, x, t):\n    base = f(list(x))\n    for j in range(t + 1, len(x)):\n        y = list(x)\n        y[j] = (y[j] + 1) % 27\n        if not np.allclose(f(y)[:t + 1], base[:t + 1]):\n            return True\n    return False\n",
+      "test": 3,
+      "symptom": "Masks after the softmax, so rows no longer sum to 1."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef masked_attention(Q, K, V, mask):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T / np.sqrt(Q.shape[-1]) + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef leak_test(f, x, t):\n    base = f(list(x))\n    for j in range(t, len(x)):\n        y = list(x)\n        y[j] = (y[j] + 1) % 27\n        if not np.allclose(f(y)[:t + 1], base[:t + 1]):\n            return True\n    return False\n",
+      "test": 6,
+      "symptom": "Also changes token t itself, which its own output may see."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.triu(np.full((T, T), -np.inf), 1)` puts $-\\infty$ above the diagonal."
+    },
+    {
+     "rung": "point",
+     "text": "Add the mask to the scaled scores, then take the row-wise softmax."
+    },
+    {
+     "rung": "step",
+     "text": "In the leak test, compare `f(y)[:t + 1]` with the original rows using `np.allclose`."
+    }
+   ],
+   "feedback": {
+    "correct": "The supplied model passes your leak test and the unmasked one fails it.",
+    "generic": "Not yet. Check the diagonal, the order of mask and softmax, and the range you change.",
+    "byKey": {
+     "test-1": "Keep the diagonal: $-\\infty$ strictly above it, 0 on and below.",
+     "test-3": "Add the mask to the scores before the softmax.",
+     "test-6": "Change only tokens after position $t$; token $t$ is visible to output $t$."
+    }
+   },
+   "explain": {
+    "text": "$-\\infty$ before the softmax gives exact zeros and rows that sum to 1. The leak test is the proof that the zeros are where they should be."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Scoring and training the model",
+   "prose": "Write `dev_loss(model, X, Y)`, the mean loss over the scored positions ($Y \\ge 0$) using the supplied forward `logits_of`, and `train_steps(model, X, Y, steps, lr)`, plain gradient descent through `loss_tensor` (the same model on Tensors with `seq_ops_l3`). Train 10 steps from the supplied start.",
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\n\n\ndef dev_loss(model, X, Y):\n    # mean of -log softmax(logits)[target] over the scored positions (Y >= 0), with logits_of(model, X)\n    ...\n\n\ndef train_steps(model, X, Y, steps, lr):\n    # copy the arrays into Tensors; each step: zero every gradient, loss = loss_tensor(P, X, Y),\n    # record loss.item(), backward, and p.data -= lr * p.grad; return the list of recorded losses\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\n\n\ndef dev_loss(model, X, Y):\n    z = logits_of(model, X)\n    z = z - z.max(axis=-1, keepdims=True)\n    lse = np.log(np.exp(z).sum(axis=-1))\n    keep = Y >= 0\n    pick = np.take_along_axis(z, np.where(keep, Y, 0)[..., None], axis=-1)[..., 0]\n    return float(((lse - pick) * keep).sum() / keep.sum())\n\n\ndef train_steps(model, X, Y, steps, lr):\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in model.items()}\n    losses = []\n    for _ in range(steps):\n        for p in P.values():\n            p.zero_grad()\n        loss = loss_tensor(P, X, Y)\n        losses.append(loss.item())\n        loss.backward()\n        for p in P.values():\n            p.data -= lr * p.grad\n    return losses\n",
+    "prelude": "import json\nimport numpy as np\nfrom autograd import Tensor\nfrom seq_ops_l3 import attention, causal_mask\n\nwith open('sequence-attn-names.json') as f:\n    _W = json.load(f)\nMODEL = {k: np.array(v) for k, v in _W['h1'].items()}\nSYM = _W['vocab']\nIX = {ch: i for i, ch in enumerate(SYM)}\nwith open('names.txt') as f:\n    _names = f.read().splitlines()\n_perm = np.random.default_rng(42).permutation(len(_names))\nDEV = [_names[i] for i in _perm[25626:28829]]\nTRAIN = [_names[i] for i in _perm[:25626]]\n\n\ndef windows(names):\n    Xs, Ys = [], []\n    for w in names:\n        x = [0] + [IX[ch] for ch in w]\n        y = [IX[ch] for ch in w] + [0]\n        n = len(x)\n        Xs.append(x[:8] + [0] * (8 - min(n, 8)))\n        Ys.append(y[:8] + [-1] * (8 - min(n, 8)))\n        for j in range(8, n):\n            Xs.append(x[j - 7:j + 1])\n            Ys.append([-1] * 7 + [y[j]])\n    return np.array(Xs), np.array(Ys)\n\n\nXDV, YDV = windows(DEV)\nXTR, YTR = windows(TRAIN)\n\n\ndef logits_of(model, X):\n    X = np.atleast_2d(np.asarray(X))\n    T = X.shape[1]\n    x = model['E'][X] + model['P'][:T]\n    q, k, v = x @ model['Wq'], x @ model['Wk'], x @ model['Wv']\n    S = q @ np.swapaxes(k, -1, -2) / np.sqrt(q.shape[-1]) + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(-1, keepdims=True)\n    return (A @ v) @ model['Wo'] @ model['U'] + model['c']\n\n\ndef loss_tensor(P, X, Y):\n    T = X.shape[1]\n    x = P['E'][X] + P['P'][np.arange(T)]\n    h = attention(x @ P['Wq'], x @ P['Wk'], x @ P['Wv'], causal_mask(T)) @ P['Wo']\n    z = (h @ P['U'] + P['c']).reshape(-1, 27)\n    keep = (Y.reshape(-1) >= 0)\n    from autograd import cross_entropy\n    return cross_entropy(z[np.nonzero(keep)[0]], Y.reshape(-1)[keep])\n\n\ndef start_model(seed=0):\n    g = np.random.default_rng(seed)\n    s = 1 / np.sqrt(32)\n    return {'E': g.standard_normal((27, 32)) * 0.3, 'P': g.standard_normal((8, 32)) * 0.3,\n            'Wq': g.standard_normal((32, 32)) * s, 'Wk': g.standard_normal((32, 32)) * s, 'Wv': g.standard_normal((32, 32)) * s,\n            'Wo': g.standard_normal((32, 32)) * s, 'U': g.standard_normal((32, 27)) * s, 'c': np.zeros(27)}\n\n\nXB, YB = XTR[:256], YTR[:256]\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+     "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+     "sequence-attn-names.json": "content/data/ai/sequence-attn-names.json",
+     "names.txt": "content/data/ai/names.txt"
+    },
+    "examples": [
+     {
+      "call": "dev_loss(MODEL, XDV[:300], YDV[:300])",
+      "compare": "isclose",
+      "expect": "2.2522877925689677"
+     }
+    ],
+    "tests": [
+     {
+      "call": "dev_loss(MODEL, XDV[:300], YDV[:300])",
+      "compare": "isclose",
+      "expect": "2.2522877925689677"
+     },
+     {
+      "call": "dev_loss(MODEL, XDV, YDV)",
+      "expect": "2.273664",
+      "tol": {
+       "rel": 0,
+       "abs": 1e-06
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "dev_loss(MODEL, XDV, YDV) < 2.4514",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "train_steps(start_model(0), XB, YB, 3, 1.0)",
+      "compare": "isclose",
+      "expect": "[3.3802999311752644, 3.186885726069502, 3.0660322002722977]"
+     },
+     {
+      "call": "train_steps(start_model(0), XB, YB, 1, 0.0)",
+      "compare": "isclose",
+      "expect": "[3.3802999311752644]"
+     },
+     {
+      "call": "train_steps(start_model(0), XB, YB, 10, 1.0)[-1] < 2.75",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Tests 1 and 4 compare to $10^{-9}$; test 4 holds the losses of a 3-step run from the supplied start. Test 2 compares your dev loss with the stated figure within $10^{-6}$, and test 3 needs it below the bigram's 2.4514. Test 6 needs the tenth loss below 2.75 (the reference gets 2.6899).",
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef dev_loss(model, X, Y):\n    z = logits_of(model, X)\n    z = z - z.max(axis=-1, keepdims=True)\n    lse = np.log(np.exp(z).sum(axis=-1))\n    keep = Y >= 0\n    pick = np.take_along_axis(z, np.where(keep, Y, 0)[..., None], axis=-1)[..., 0]\n    return float(((lse - pick) * keep).sum() / keep.size)\n\n\ndef train_steps(model, X, Y, steps, lr):\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in model.items()}\n    losses = []\n    for _ in range(steps):\n        for p in P.values():\n            p.zero_grad()\n        loss = loss_tensor(P, X, Y)\n        losses.append(loss.item())\n        loss.backward()\n        for p in P.values():\n            p.data -= lr * p.grad\n    return losses\n",
+      "test": 1,
+      "symptom": "Divides by every position, scored or not."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef dev_loss(model, X, Y):\n    z = logits_of(model, X)\n    z = z - z.max(axis=-1, keepdims=True)\n    lse = np.log(np.exp(z).sum(axis=-1))\n    keep = Y >= 0\n    pick = np.take_along_axis(z, np.where(keep, Y, 0)[..., None], axis=-1)[..., 0]\n    return float(((lse - pick) * keep).sum() / keep.sum())\n\n\ndef train_steps(model, X, Y, steps, lr):\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in model.items()}\n    losses = []\n    for _ in range(steps):\n        loss = loss_tensor(P, X, Y)\n        losses.append(loss.item())\n        loss.backward()\n        for p in P.values():\n            p.data -= lr * p.grad\n    return losses\n",
+      "test": 4,
+      "symptom": "Never zeroes the gradients, so they pile up across steps."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef dev_loss(model, X, Y):\n    z = logits_of(model, X)\n    z = z - z.max(axis=-1, keepdims=True)\n    lse = np.log(np.exp(z).sum(axis=-1))\n    keep = Y >= 0\n    pick = np.take_along_axis(z, np.where(keep, Y, 0)[..., None], axis=-1)[..., 0]\n    return float(((lse - pick) * keep).sum() / keep.sum())\n\n\ndef train_steps(model, X, Y, steps, lr):\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in model.items()}\n    losses = []\n    for _ in range(steps):\n        for p in P.values():\n            p.zero_grad()\n        loss = loss_tensor(P, X, Y)\n        loss.backward()\n        for p in P.values():\n            p.data -= lr * p.grad\n        losses.append(loss_tensor(P, X, Y).item())\n        for p in P.values():\n            p.data -= lr * p.grad\n    return losses\n",
+      "test": 4,
+      "symptom": "Records the loss after the step (and takes each step twice)."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Log-sum-exp minus the target's logit, averaged over `Y >= 0` only."
+    },
+    {
+     "rung": "point",
+     "text": "In the loop: zero every gradient, compute and record the loss, `backward()`, then step."
+    },
+    {
+     "rung": "step",
+     "text": "`p.data -= lr * p.grad` for every Tensor."
+    }
+   ],
+   "feedback": {
+    "correct": "Your dev loss is 2.2737 nats, below the bigram's 2.4514, and ten steps lower the training loss from 3.38.",
+    "generic": "Not yet. Check the average and the order of the loop.",
+    "byKey": {
+     "test-1": "Average over scored positions only: divide by the number of $Y \\ge 0$.",
+     "test-4": "Zero the gradients each step, and record the loss before you step."
+    }
+   },
+   "explain": {
+    "text": "The dev loss averages every next symbol of the dev names once: 2.2737 nats. Tests 4 and 5 pin a short run exactly, so a loop that skips the zeroing is caught even when it still learns."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The look-ahead bias of a backtest",
+   "prose": "A researcher's daily signal uses each day's closing price to decide that same morning's trade. The backtest shows a Sharpe ratio of 4.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "open",
+      "trade",
+      "…",
+      "close"
+     ]
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "d",
+       "at": 1,
+       "label": "decide"
+      }
+     ],
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         3,
+         3
+        ],
+        "label": "not yet known",
+        "colour": 3
+       }
+      ]
+     }
+    }
+   },
+   "question": "What is the unmasked attention model's mistake that this backtest repeats?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ahead",
+      "text": "Using information from after the decision: here the close, there the next token",
+      "correct": true
+     },
+     {
+      "id": "over",
+      "text": "Overfitting to a small sample",
+      "why": "Overfitting is a different fault; this one uses data that would not have been known."
+     },
+     {
+      "id": "scale",
+      "text": "Not scaling the inputs",
+      "why": "Scaling cannot create a Sharpe ratio of 4; seeing the future can."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When is the close known?"
+    },
+    {
+     "rung": "point",
+     "text": "After the morning's decision.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A causal mask stops a position reading later tokens; a backtest needs the same rule in time."
+    }
+   ],
+   "feedback": {
+    "correct": "Both read the future. A forecast must use only what was known at the time (validation L2).",
+    "generic": "Not quite. What did each use that it could not have known?"
+   },
+   "explain": {
+    "text": "The close is known only at the end of the day, so a morning trade cannot depend on it. That is look-ahead bias, the backtest's version of attending to the next token. The cure is the same: mask the future, and test that it is masked."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A causal mask adds $-\\infty$ to the scores of later keys before the softmax, so position $t$ attends only to 1 to $t$: $T(T + 1)/2$ pairs, 10 for $T = 4$ and 528 for $T = 32$.",
+   "Without it a next-token model reads its own target and its training loss falls to about 0.16. With it, the supplied model scores 2.2737 nats (3.2802 bits) on the dev names against the bigram's 2.4514.",
+   "Mask before the softmax, never after; prove it with a leak test that changes later tokens and checks the earlier outputs."
+  ],
+  "formula": {
+   "name": "Causal attention",
+   "tex": "\\operatorname{softmax}\\!\\Big(\\frac{\\mathbf Q\\mathbf K^\\top}{\\sqrt d} + \\mathbf M\\Big)\\mathbf V, \\quad M_{ij} = \\begin{cases} 0 & j \\le i \\\\ -\\infty & j > i \\end{cases}",
+   "note": "The first position reads only itself."
+  },
+  "trap": "Masking after the softmax leaves rows that do not sum to 1 and lets the future into the normaliser."
+ },
+ "quiz": [
+  {
+   "id": "q-pairs",
+   "difficulty": 2,
+   "prose": "A causal self-attention layer has a context of $T = 6$.",
+   "question": "How many query and key pairs are allowed?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 21,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 36,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "strict",
+      "value": 15,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$6 \\times 7/2 = 21$.",
+    "generic": "Not quite. $T(T + 1)/2$.",
+    "byKey": {
+     "all": "That is all 36 pairs.",
+     "strict": "That leaves out the diagonal."
+    }
+   },
+   "explain": {
+    "text": "$1 + 2 + \\dots + 6 = 21$."
+   }
+  },
+  {
+   "id": "q-row",
+   "difficulty": 2,
+   "prose": "A masked row has scores $(0, 0, 9)$ with the third key in the future.",
+   "question": "What weight does the first key get?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "third",
+      "value": 0.0001,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The future key is masked; the two left tie at 0.5.",
+    "generic": "Not quite. Mask first, then softmax.",
+    "byKey": {
+     "third": "You let the future key into the softmax. It is masked."
+    }
+   },
+   "explain": {
+    "text": "After the mask the row is $(0, 0, -\\infty)$, so the weights are 0.5, 0.5 and 0."
+   }
+  },
+  {
+   "id": "q-order",
+   "difficulty": 3,
+   "prose": "A model is trained with the mask applied after the softmax.",
+   "question": "What goes wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "Rows stop summing to 1, and future scores have already shaped the weights",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "Nothing: zeroing the weights has the same effect",
+      "why": "The normaliser already included the future scores, so information leaked."
+     },
+     {
+      "id": "slow",
+      "text": "Only training speed suffers",
+      "why": "The fault is a leak, not speed."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Both: wrong totals and a leak through the normaliser.",
+    "generic": "Not quite. Where do the future scores go in a softmax?"
+   },
+   "explain": {
+    "text": "The softmax divides by a sum that includes future scores, so they influence every weight. Masking the scores first removes them entirely."
+   }
+  }
+ ]
+}

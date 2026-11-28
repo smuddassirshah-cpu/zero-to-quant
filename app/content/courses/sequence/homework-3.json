@@ -1,0 +1,469 @@
+{
+ "id": "homework-3",
+ "course": "sequence",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-pairs",
+   "difficulty": 3,
+   "skills": [
+    "sqn-self"
+   ],
+   "prose": "A character model has a context of 128.",
+   "question": "How many query and key pairs does its causal mask allow?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8256,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 16384,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "strict",
+      "value": 8128,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$128 \\times 129/2 = 8{,}256$.",
+    "generic": "Not quite. $T(T + 1)/2$.",
+    "byKey": {
+     "all": "That is before the mask.",
+     "strict": "The diagonal is kept."
+    }
+   },
+   "explain": {
+    "text": "A little over half of the 16,384 pairs: 8,256."
+   }
+  },
+  {
+   "id": "h-pe",
+   "difficulty": 3,
+   "skills": [
+    "sqn-self"
+   ],
+   "prose": "Sinusoidal positions.",
+   "question": "What is $PE_{7, 1}$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7539,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "sin",
+      "value": 0.657,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "deg",
+      "value": 0.9925,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\cos 7 = 0.7539$.",
+    "generic": "Not quite. Entry 1 is the cosine of $t/1$.",
+    "byKey": {
+     "sin": "That is entry 0, the sine.",
+     "deg": "Radians, not degrees."
+    }
+   },
+   "explain": {
+    "text": "With $i = 0$ the angle is 7 radians: $\\cos 7 = 0.7539$."
+   }
+  },
+  {
+   "id": "h-heads",
+   "difficulty": 3,
+   "skills": [
+    "sqn-self"
+   ],
+   "prose": "A model has 4 heads of width 16 and a colleague proposes 1 head of width 64 \"to save parameters\".",
+   "question": "What changes in the weight count?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "Nothing: both have $4 \\times 64^2$ weights",
+      "correct": true
+     },
+     {
+      "id": "quarter",
+      "text": "One head has a quarter of the weights",
+      "why": "The heads are slices of the same matrices, so the count is the same."
+     },
+     {
+      "id": "four",
+      "text": "One head has four times the weights",
+      "why": "Splitting never multiplies the matrices."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Same count; only the patterns change: one pattern instead of four.",
+    "generic": "Not quite. Are the matrices copied per head?"
+   },
+   "explain": {
+    "text": "For any $h$ dividing 64, $\\mathbf W_Q$, $\\mathbf W_K$, $\\mathbf W_V$ and $\\mathbf W_O$ are 64 by 64: 16,384 weights."
+   }
+  },
+  {
+   "id": "h-ppl",
+   "difficulty": 4,
+   "skills": [
+    "sqn-self"
+   ],
+   "prose": "The supplied 4-head attention model scores 2.172923 nats a letter on the dev names.",
+   "question": "What is its perplexity? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8.78,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "bits",
+      "value": 4.51,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^{2.172923} = 8.78$.",
+    "generic": "Not quite. Raise $e$ to the nats.",
+    "byKey": {
+     "bits": "You raised 2 to the nats; with nats use $e$."
+    }
+   },
+   "explain": {
+    "text": "Perplexity is $e^{2.172923} = 8.78$: as unsure as a fair pick among about 8.8 symbols."
+   }
+  },
+  {
+   "id": "h-patterns",
+   "difficulty": 4,
+   "skills": [
+    "sqn-self"
+   ],
+   "title": "Reading the heads",
+   "prose": "To see what each head looks at, write `head_patterns(X, params, h)`, returning the causal attention weights of every head as an array of shape $(h, T, T)$.",
+   "question": "Complete `head_patterns`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef head_patterns(X, params, h):\n    # the causal attention weights of every head: an array (h, T, T), rows summing to 1\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef head_patterns(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    Q = (X @ params['Wq']).reshape(T, h, w).transpose(1, 0, 2)\n    K = (X @ params['Wk']).reshape(T, h, w).transpose(1, 0, 2)\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(w) + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    return A / A.sum(axis=-1, keepdims=True)\n",
+    "prelude": "import numpy as np\n\ng = np.random.default_rng(3)\nX7 = g.standard_normal((7, 6))\nQ7 = {k: g.standard_normal((6, 6)) / np.sqrt(6) for k in ('Wq', 'Wk')}\n",
+    "examples": [
+     {
+      "call": "head_patterns(X7, Q7, 1).sum(axis=-1).tolist()",
+      "compare": "isclose",
+      "expect": "[[1.0, 0.9999999999999999, 1.0, 1.0, 1.0, 1.0, 1.0]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "head_patterns(X7, Q7, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.007272555936637337, 0.9927274440633627, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0834317358319503, 0.6438047938711227, 0.27276347029692694, 0.0, 0.0, 0.0, 0.0], [0.12491600167301262, 0.31341847771379955, 0.3443645733815186, 0.21730094723166932, 0.0, 0.0, 0.0], [0.52260101424472, 0.03152564406169762, 0.12260487579701417, 0.19855393337224958, 0.12471453252431874, 0.0, 0.0], [0.1989444233859235, 0.12378207093349897, 0.18969117391032916, 0.18231095022145846, 0.16313540537983576, 0.1421359761689541, 0.0], [0.0022531660202009733, 0.597995689583837, 0.02635515134001533, 0.012032488355187844, 0.02623523941243084, 0.08981071010842959, 0.24531755517989853]], [[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.745786574777502, 0.2542134252224981, 0.0, 0.0, 0.0, 0.0, 0.0], [0.5972432337926851, 0.20995158056136767, 0.19280518564594715, 0.0, 0.0, 0.0, 0.0], [0.39505227073952487, 0.2601876618972508, 0.15623409305421468, 0.1885259743090097, 0.0, 0.0, 0.0], [0.02295826234378917, 0.3303936079342561, 0.43671540543076404, 0.202955838388452, 0.006976885902738625, 0.0, 0.0], [0.05916758393563045, 0.23513765186887559, 0.1327634367868706, 0.1059119401507289, 0.24670901604774392, 0.2203103712101506, 0.0], [0.08503192869246322, 0.14718038317515775, 0.1339365741692447, 0.13018601698653953, 0.15614114508915544, 0.13649820544440078, 0.2110257464430385]]]"
+     },
+     {
+      "call": "head_patterns(X7, Q7, 3)[2].tolist()",
+      "compare": "isclose",
+      "expect": "[[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.15014664346859638, 0.8498533565314036, 0.0, 0.0, 0.0, 0.0, 0.0], [0.2793057042971471, 0.43817090337145836, 0.28252339233139456, 0.0, 0.0, 0.0, 0.0], [0.26702250763771906, 0.3833304900216711, 0.1733794861646197, 0.17626751617599018, 0.0, 0.0, 0.0], [0.19049420623952482, 0.11768248511403742, 0.34172242848907075, 0.33439037354081147, 0.01571050661655563, 0.0, 0.0], [0.08754399710449375, 0.1327008064178039, 0.08428907513748903, 0.08728459217387242, 0.3537241393860505, 0.25445738978029037, 0.0], [0.0929317424578289, 0.13305227413586496, 0.1259347719077651, 0.13131083730433118, 0.17939599416314853, 0.14519079927442996, 0.1921835807566314]]"
+     },
+     {
+      "call": "head_patterns(X7, Q7, 1).sum(axis=-1).tolist()",
+      "compare": "isclose",
+      "expect": "[[1.0, 0.9999999999999999, 1.0, 1.0, 1.0, 1.0, 1.0]]"
+     },
+     {
+      "call": "float(np.triu(head_patterns(X7, Q7, 2), 1).sum())",
+      "compare": "isclose",
+      "expect": "0.0"
+     },
+     {
+      "call": "head_patterns(X7, Q7, 6)[:, 0, 0].tolist()",
+      "compare": "isclose",
+      "expect": "[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests, compared to $10^{-9}$. Test 3 checks that rows sum to 1, test 4 that nothing above the diagonal gets weight, test 5 that every head's first row is $(1, 0, \\dots)$.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef head_patterns(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    Q = (X @ params['Wq']).reshape(T, h, w).transpose(1, 0, 2)\n    K = (X @ params['Wk']).reshape(T, h, w).transpose(1, 0, 2)\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(w)\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    return A / A.sum(axis=-1, keepdims=True)\n",
+      "test": 1,
+      "symptom": "Leaves out the mask."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef head_patterns(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    Q = (X @ params['Wq']).reshape(h, T, w)\n    K = (X @ params['Wk']).reshape(h, T, w)\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(w) + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    return A / A.sum(axis=-1, keepdims=True)\n",
+      "test": 1,
+      "symptom": "Splits along the sequence axis."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef head_patterns(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    Q = (X @ params['Wq']).reshape(T, h, w).transpose(1, 0, 2)\n    K = (X @ params['Wk']).reshape(T, h, w).transpose(1, 0, 2)\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(w) + np.triu(np.full((T, T), -np.inf), 1).T\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    return A / A.sum(axis=-1, keepdims=True)\n",
+      "test": 1,
+      "symptom": "Masks the past instead of the future."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Every head's matrix is lower triangular with rows summing to 1.",
+    "generic": "Not yet. Split the features, mask the future, normalise each row.",
+    "byKey": {
+     "test-1": "Split the feature axis, scale by $\\sqrt{d/h}$ and add the causal mask before the softmax."
+    }
+   },
+   "explain": {
+    "text": "These matrices are what an interpretability study reads first. Each is lower triangular because of the mask, and row 1 is always $(1, 0, \\dots, 0)$."
+   }
+  },
+  {
+   "id": "h-order",
+   "difficulty": 4,
+   "skills": [
+    "sqn-self"
+   ],
+   "title": "Why the mask comes first",
+   "prose": "Argue that the causal mask must be added to the scores before the softmax, not applied to the weights after it. Put the steps in order and leave out the two that do not belong.",
+   "question": "Order the argument.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "The softmax divides each $e^{s_{tj}}$ by $\\sum_j e^{s_{tj}}$, a sum over every key it is given."
+     },
+     {
+      "id": "s2",
+      "text": "If the future keys are in that sum, their scores change every weight of row $t$, even ones later set to 0."
+     },
+     {
+      "id": "s3",
+      "text": "So zeroing future weights after the softmax still lets future tokens shape the row, and the row no longer sums to 1."
+     },
+     {
+      "id": "s4",
+      "text": "Adding $-\\infty$ to the future scores first makes $e^{-\\infty} = 0$, so they leave the sum entirely."
+     },
+     {
+      "id": "s5",
+      "text": "Then the softmax spreads a weight of exactly 1 over keys 1 to $t$, and no future token affects output $t$."
+     },
+     {
+      "id": "d1",
+      "text": "Zeroing after the softmax is equivalent, since the zeroed weights multiply future values by 0 anyway.",
+      "why": "The values are zeroed, but the normaliser already contained the future scores, so every remaining weight depends on them."
+     },
+     {
+      "id": "d2",
+      "text": "Masking with $-1$ instead of $-\\infty$ removes the future keys just as well.",
+      "why": "$e^{-1} = 0.37$ is far from 0: the future keys would keep a large share."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "What the normaliser sums over, why that leaks, then why $-\\infty$ first fixes it.",
+    "generic": "Not quite. Start from what the softmax divides by.",
+    "byKey": {
+     "d1": "Zeroing the values does not undo the normaliser, which already saw the future scores.",
+     "d2": "Only $-\\infty$ gives an exact 0 after the exponential.",
+     "left-out": "Every line but the two distractors belongs."
+    }
+   },
+   "explain": {
+    "text": "The leak lives in the normaliser: any key in the sum shapes every weight of the row. Adding $-\\infty$ first removes future keys from the sum, so each row sums to 1 over the past alone."
+   }
+  },
+  {
+   "id": "h-long",
+   "difficulty": 4,
+   "skills": [
+    "sqn-self"
+   ],
+   "kind": "longform",
+   "title": "A model too good in training",
+   "prompt": "A junior's model of a day's ticks uses self-attention to predict the next price. Its training loss is far better than its out-of-sample loss. Find the likely leak and say how to test for it.",
+   "model": "**What is wrong.** A training score far better than the out-of-sample score, from attention over a day's ticks, points to a leak: positions are reading the future. Unmasked self-attention lets tick $t$ attend to ticks after it, so a model trained to predict the next price can read the price it is predicting. Training loss collapses; out of sample, with the future absent, it fails.\n\n**Where to look.** (1) A missing or wrong causal mask. It may be absent, added after the softmax (rows stop summing to 1 and the normaliser has seen the future), or have the diagonal or direction wrong. (2) Features built with future data: a day's volume-weighted price or close used at tick $t$, or normalising by the whole day's mean and standard deviation. (3) Targets misaligned by one step.\n\n**How to test.** A leak test: take a sequence, change the ticks after $t$, and assert that outputs 1 to $t$ do not change, for several $t$. Check the attention matrices are lower triangular with rows summing to 1. Rebuild the features with only data known at each tick, and compare training and validation loss on a walk-forward split; the gap should shrink to an honest size.\n\n**Fix.** Add the causal mask to the scores before the softmax, keep the diagonal, and make the leak test part of the build.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Names look-ahead (a leak of future ticks) as the likely cause of the train and test gap",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Explains how unmasked attention lets tick $t$ read later ticks, including its own target"
+    },
+    {
+     "points": 1,
+     "text": "Mentions masking after the softmax (or a wrong mask direction or diagonal) as a subtle variant"
+    },
+    {
+     "points": 1,
+     "text": "Mentions leaky features or normalisation using the whole day"
+    },
+    {
+     "points": 2,
+     "text": "Describes a leak test: change later ticks, check earlier outputs are unchanged",
+     "required": true
+    },
+    {
+     "points": 1,
+     "text": "Checks the attention matrix is lower triangular with rows summing to 1"
+    },
+    {
+     "points": 1,
+     "text": "Proposes the fix and a walk-forward check of training against validation loss"
+    }
+   ]
+  },
+  {
+   "id": "h-perf",
+   "difficulty": 5,
+   "skills": [
+    "sqn-self"
+   ],
+   "performance": "code",
+   "title": "Causal multi-head attention with positions",
+   "prose": "Write `causal_mha_forward(X, params, h)`. Add the learned positions `params[\"P\"][:T]` to the embeddings `X` ($T \\times d$) and project with `Wq`, `Wk`, `Wv`. Split into $h$ heads of width $d/h$, apply scaled attention with a causal mask in every head, join the heads and multiply by `Wo`. `planted(T, d, seed)` makes test data.",
+   "question": "Complete `causal_mha_forward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef causal_mha_forward(X, params, h):\n    # X: (T, d) token embeddings; add params['P'][:T]; heads of width d // h;\n    # scaled attention with a causal mask in every head; join the heads; multiply by params['Wo']\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef causal_mha_forward(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    x = X + params['P'][:T]\n    split = lambda a: a.reshape(T, h, w).transpose(1, 0, 2)\n    Q, K, V = split(x @ params['Wq']), split(x @ params['Wk']), split(x @ params['Wv'])\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(w) + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return (A @ V).transpose(1, 0, 2).reshape(T, d) @ params['Wo']\n",
+    "prelude": "import numpy as np\n\n\ndef planted(T, d, seed, Tmax=8):\n    g = np.random.default_rng(seed)\n    X = g.standard_normal((T, d))\n    params = {'P': 0.5 * g.standard_normal((Tmax, d))}\n    for k in ('Wq', 'Wk', 'Wv', 'Wo'):\n        params[k] = g.standard_normal((d, d)) / np.sqrt(d)\n    return X, params\n\n\nX6, P6 = planted(6, 8, 0)\nX5, P5 = planted(5, 12, 1)\n",
+    "examples": [
+     {
+      "call": "causal_mha_forward(X6, P6, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.6776045946145868, -1.0632247779832704, -0.2810170220827873, -0.6291948046259107, 0.3868154308661304, 0.5127029476502672, -0.19341913565235416, 0.40309723231658445], [1.0351634159857228, -1.5609380634746235, -0.34892443697452713, -0.11805718832772413, 0.4242968650454382, 0.4886131097575074, -0.3640426483969741, 0.6038125743065413], [0.12623177533281243, -1.101167142380181, 0.8688226987516917, -0.42395233982595126, 0.2855561130790451, 0.2924483517140867, -0.14998447672793086, 1.027412624759381], [1.1545511429038808, -1.8281438026645622, -0.29345745165087705, 0.576109638018863, 0.48424487686276874, 0.42363171388128035, -0.5254318142725273, 0.8105107591033323], [0.635240841089445, -1.6729604110998395, 0.42050136140505506, 0.05916057114724733, 0.3495786202229537, 0.4866923904769744, -0.33914744054159707, 1.1685603442699768], [0.7368183504794004, -1.8979714936895822, 1.1197039478618787, -0.43771061282674445, -0.19772441456707307, 0.6269220191784957, 0.16869765517733615, 1.4616570580517105]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "causal_mha_forward(X6, P6, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.6776045946145868, -1.0632247779832704, -0.2810170220827873, -0.6291948046259107, 0.3868154308661304, 0.5127029476502672, -0.19341913565235416, 0.40309723231658445], [1.0351634159857228, -1.5609380634746235, -0.34892443697452713, -0.11805718832772413, 0.4242968650454382, 0.4886131097575074, -0.3640426483969741, 0.6038125743065413], [0.12623177533281243, -1.101167142380181, 0.8688226987516917, -0.42395233982595126, 0.2855561130790451, 0.2924483517140867, -0.14998447672793086, 1.027412624759381], [1.1545511429038808, -1.8281438026645622, -0.29345745165087705, 0.576109638018863, 0.48424487686276874, 0.42363171388128035, -0.5254318142725273, 0.8105107591033323], [0.635240841089445, -1.6729604110998395, 0.42050136140505506, 0.05916057114724733, 0.3495786202229537, 0.4866923904769744, -0.33914744054159707, 1.1685603442699768], [0.7368183504794004, -1.8979714936895822, 1.1197039478618787, -0.43771061282674445, -0.19772441456707307, 0.6269220191784957, 0.16869765517733615, 1.4616570580517105]]"
+     },
+     {
+      "call": "causal_mha_forward(X6, P6, 4).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.6776045946145868, -1.0632247779832704, -0.2810170220827873, -0.6291948046259107, 0.3868154308661304, 0.5127029476502672, -0.19341913565235416, 0.40309723231658445], [0.5601623368850315, -1.6659826770859418, 0.45336069963597975, -0.17801851356707646, 0.121840855409217, 0.45049835856743736, 0.28367644591362035, 0.9359394447129373], [0.2784212343546884, -1.1169199763241842, 0.7761361195522839, -0.4873665062679787, 0.2973587232118005, 0.31981931972781313, -0.2686867836063363, 0.9168521633996638], [0.8714981430352594, -1.4874811243116113, -0.7263820209954723, 0.6444598728355851, 0.7419864707986853, 0.4553129541672459, -0.3163743665936329, 0.5893845830653132], [0.9769633989534398, -2.0127259712852488, -0.6931023106137398, 0.6141966740654851, 0.9755920645520733, 0.6863174088123606, -0.31204453812779576, 1.0341095719575328], [1.0656853311313348, -2.7841974395463436, 0.4474709116516765, 0.08999469426629345, 0.7199799812113216, 0.8499543487061635, -0.019642334348516675, 1.9162329916535108]]"
+     },
+     {
+      "call": "causal_mha_forward(X6, P6, 1).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.6776045946145868, -1.0632247779832704, -0.2810170220827873, -0.6291948046259107, 0.3868154308661304, 0.5127029476502672, -0.19341913565235416, 0.40309723231658445], [0.7311562884814208, -1.3605116979230338, -0.11444537358493734, -0.2886621633374042, 0.4041972398314565, 0.4903731795105091, -0.261872072910574, 0.6682101606590215], [0.42311037197194007, -0.5964513603387751, 0.24758600562153374, 0.14036197740657766, 0.2564815981382858, 0.13884757649149257, -0.28113973975019557, 0.3168558757139003], [0.8487179268812951, -2.0050384532397274, 0.2355411473381093, 0.4491649019561748, 0.45274437179678223, 0.44246663331855746, -0.4093832085588614, 1.2358343547195634], [0.9675885710364253, -2.1023561581987398, 0.16120201970593606, 0.2468652089600396, 0.48937817126456473, 0.5754084301193343, -0.392062632549295, 1.2414974332686608], [1.0700588674632476, -2.4334849868474295, 1.304149095026144, -0.5080217517386234, -0.4170075737045038, 0.8294514140210357, 0.6269391654846502, 1.5486610256239328]]"
+     },
+     {
+      "call": "causal_mha_forward(X5, P5, 3).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.6704765442192282, -0.8318829709042849, -1.2089923172272405, -0.055926241601187886, 0.3644602900213636, -0.19059522810215335, -1.2946922876130178, -0.8863601741806566, -0.4966322538077019, -0.2349595538333047, -0.6644714815552568, 0.48596033110976017], [-0.5137590572653279, -1.5061637031937645, -0.4399442622003915, 0.1148715182983945, 0.1152784327848631, 0.5279040542086161, -0.4144281149924169, -0.32435274986938767, -0.2736821899940642, -0.3750943749488572, -0.9165731945811957, 0.4060459286651618], [-0.06668465567679176, -1.3856107260182877, -0.048500177810438215, 0.11854273465560501, 0.12742698216812212, 0.6905698738213205, 0.24076445378956016, -0.06002056648269504, -0.01570276024111366, -0.3890128995214512, -0.6136362568497549, 0.5212989523384309], [0.18303698696026424, 0.9799133742446547, -0.3838516754641271, 0.8718400368039639, 0.7749785488845866, -0.46489424502108445, -0.2578616147932647, 0.20688317814356538, 0.0955598315433695, 0.4713439591729732, 0.523671566047459, 0.9033276338502892], [-0.16015864270083904, 0.3939240216412771, -0.5114037690738819, 0.291485974660648, 0.17871551311247072, -0.3509942411558431, -0.5435058329269745, -0.14234723712103367, -0.08238193035243291, 0.32961230595117, 0.2619743680331001, -0.04948976411543233]]"
+     },
+     {
+      "call": "causal_mha_forward(X6[:1], P6, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.6776045946145868, -1.0632247779832704, -0.2810170220827872, -0.6291948046259107, 0.3868154308661304, 0.5127029476502672, -0.19341913565235408, 0.4030972323165845]]"
+     },
+     {
+      "setup": "Y = X6.copy(); Y[5] = 0.0",
+      "call": "np.allclose(causal_mha_forward(Y, P6, 2)[:5], causal_mha_forward(X6, P6, 2)[:5])",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "Y = X6.copy(); Y[2] = 0.0",
+      "call": "bool(np.allclose(causal_mha_forward(Y, P6, 2)[:2], causal_mha_forward(X6, P6, 2)[:2]) and not np.allclose(causal_mha_forward(Y, P6, 2)[2:], causal_mha_forward(X6, P6, 2)[2:]))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "Pz = dict(P6, P=np.zeros((8, 8)))",
+      "call": "causal_mha_forward(X6[::-1], Pz, 2)[0].tolist()",
+      "compare": "isclose",
+      "expect": "[0.9681785633310673, -1.9143890703563564, 1.001915061645471, -0.4591739899656895, -0.36266026471779056, 0.6664179927748847, 0.4047327397348052, 1.2511548726637596]"
+     },
+     {
+      "call": "causal_mha_forward(X6, P6, 8).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.6776045946145868, -1.0632247779832704, -0.2810170220827873, -0.6291948046259107, 0.3868154308661304, 0.5127029476502672, -0.19341913565235416, 0.40309723231658445], [0.7086099771585869, -1.9871998034606615, 0.12592412012259543, -0.40341036173834227, 0.6881738616493056, 0.45893293004498614, 0.4488738908961862, 0.7891816081731636], [0.30959636069673363, -1.2401236702552485, 0.6718159296356135, -0.4511009992345265, 0.44500021959075814, 0.38770451964046565, -0.32692193237311334, 0.999577432846451], [0.9084367323039353, -1.549454192130216, -0.6603997310814709, 0.6311933359666683, 0.6919273186375627, 0.4615775624656696, -0.22158544924396567, 0.5875993338359483], [1.3178994584720345, -2.5112620765781988, -0.8832472712434408, 0.37329508299050645, 1.2652939405479258, 0.8659680418645338, -0.07362738845728214, 0.9818147647398008], [0.7370935290853604, -2.1484491978566336, 0.6417851235201062, 0.026252014220581345, 0.3782163334874224, 0.5991601602323808, 0.19636023974347735, 1.5154029105511626]]"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests, compared to $10^{-9}$ against a loop over heads and positions. Test 5 is one token; tests 6 and 7 are leak tests (changing a token moves only its own and later outputs); test 8 has no positions; test 9 has heads of width 1.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef causal_mha_forward(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    x = X + params['P'][:T]\n    split = lambda a: a.reshape(T, h, w).transpose(1, 0, 2)\n    Q, K, V = split(x @ params['Wq']), split(x @ params['Wk']), split(x @ params['Wv'])\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(w)\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return (A @ V).transpose(1, 0, 2).reshape(T, d) @ params['Wo']\n",
+      "test": 1,
+      "symptom": "No causal mask, so earlier positions read later ones."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef causal_mha_forward(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    x = X\n    split = lambda a: a.reshape(T, h, w).transpose(1, 0, 2)\n    Q, K, V = split(x @ params['Wq']), split(x @ params['Wk']), split(x @ params['Wv'])\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(w) + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return (A @ V).transpose(1, 0, 2).reshape(T, d) @ params['Wo']\n",
+      "test": 1,
+      "symptom": "Leaves out the positions."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef causal_mha_forward(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    x = X + params['P'][:T]\n    split = lambda a: a.reshape(T, h, w).transpose(1, 0, 2)\n    Q, K, V = split(x @ params['Wq']), split(x @ params['Wk']), split(x @ params['Wv'])\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(d) + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return (A @ V).transpose(1, 0, 2).reshape(T, d) @ params['Wo']\n",
+      "test": 1,
+      "symptom": "Scales by the full width instead of the head width."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef causal_mha_forward(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    x = X + params['P'][:T]\n    split = lambda a: a.reshape(h, T, w)\n    Q, K, V = split(x @ params['Wq']), split(x @ params['Wk']), split(x @ params['Wv'])\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(w) + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return (A @ V).transpose(1, 0, 2).reshape(T, d) @ params['Wo']\n",
+      "test": 1,
+      "symptom": "Splits without the transpose, mixing positions into heads."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef causal_mha_forward(X, params, h):\n    X = np.asarray(X, dtype=float)\n    T, d = X.shape\n    w = d // h\n    x = X + params['P'][:T]\n    split = lambda a: a.reshape(T, h, w).transpose(1, 0, 2)\n    Q, K, V = split(x @ params['Wq']), split(x @ params['Wk']), split(x @ params['Wv'])\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(w) + np.triu(np.full((T, T), -np.inf), 0)\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return (A @ V).transpose(1, 0, 2).reshape(T, d) @ params['Wo']\n",
+      "test": 1,
+      "symptom": "Masks the diagonal as well."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your layer matches the loop over heads and positions, passes the leak tests, and handles one token, one head and heads of width 1.",
+    "generic": "Not yet. Positions first, then split, mask, scale by $\\sqrt{d/h}$, join, $\\mathbf W_O$.",
+    "byKey": {
+     "test-1": "Check four things: positions added, the feature axis split (reshape then transpose), the mask before the softmax keeping the diagonal, and the scale $\\sqrt{d/h}$."
+    }
+   },
+   "explain": {
+    "text": "Positions go in before the projections; each head scores with its own slice and the causal mask; the heads are joined back to width $d$ and mixed by $\\mathbf W_O$. The leak tests confirm that output $t$ depends on tokens 1 to $t$ only."
+   }
+  }
+ ]
+}

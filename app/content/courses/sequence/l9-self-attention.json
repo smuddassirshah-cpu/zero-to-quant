@@ -1,0 +1,1027 @@
+{
+ "id": "l9-self-attention",
+ "course": "sequence",
+ "title": "A sequence attending to itself",
+ "minutes": 13,
+ "objectives": [
+  "Write self-attention over a sequence, and read its attention matrix."
+ ],
+ "skills": [
+  "sqn-self"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A sequence reads itself",
+   "prose": "Five tokens, $a\\,b\\,c\\,a\\,b$, each a 2-number embedding: $a = (1, 0)$, $b = (0, 1)$, $c = (0.6, 0.8)$. Every token is a query, a key and a value at once, here with $\\mathbf W_Q = \\mathbf W_K = \\mathbf W_V = \\mathbf I$. The matrix is the attention: row $i$ shows how token $i$ spreads its weight over all five.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         0.267,
+         0.132,
+         0.202,
+         0.267,
+         0.132
+        ],
+        [
+         0.128,
+         0.259,
+         0.225,
+         0.128,
+         0.259
+        ],
+        [
+         0.178,
+         0.205,
+         0.236,
+         0.178,
+         0.205
+        ],
+        [
+         0.267,
+         0.132,
+         0.202,
+         0.267,
+         0.132
+        ],
+        [
+         0.128,
+         0.259,
+         0.225,
+         0.128,
+         0.259
+        ]
+       ],
+       "label": "",
+       "rowLabels": [
+        "a1",
+        "b2",
+        "c3",
+        "a4",
+        "b5"
+       ],
+       "colLabels": [
+        "a1",
+        "b2",
+        "c3",
+        "a4",
+        "b5"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 2,
+        "label": "weight"
+       }
+      }
+     ]
+    }
+   },
+   "question": "Which tokens does the second $a$ (row a4) weight most?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "aa",
+      "text": "Both $a$s, itself and a1, equally",
+      "correct": true
+     },
+     {
+      "id": "self",
+      "text": "Itself alone",
+      "why": "Its score with a1 is the same as with itself, since a1 has the same embedding."
+     },
+     {
+      "id": "c",
+      "text": "The $c$, which sits between the others",
+      "why": "$c$ scores $0.6/\\sqrt2$ against $a$, less than an $a$'s $1/\\sqrt2$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read row a4."
+    },
+    {
+     "rung": "point",
+     "text": "Its two largest entries match.",
+     "highlight": [
+      "A-r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Tokens with the same embedding get the same score."
+    }
+   ],
+   "feedback": {
+    "correct": "a1 and a4 tie at 0.267; $c$ gets 0.202 and each $b$ 0.132.",
+    "generic": "Not quite. Read the largest entries of row a4."
+   },
+   "explain": {
+    "text": "Row a4 holds 0.267, 0.132, 0.202, 0.267, 0.132. Identical embeddings score identically, so the two $a$s tie. With learned matrices the pattern can be anything."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Self-attention",
+   "prose": "That is **self-attention**: the queries, keys and values all come from one sequence $\\mathbf X$ ($T \\times d$), $\\mathbf Q = \\mathbf X\\mathbf W_Q$, $\\mathbf K = \\mathbf X\\mathbf W_K$, $\\mathbf V = \\mathbf X\\mathbf W_V$. The output at each position is a weighted average of the values at every position. A phrase like \"the cat sat\" is 11 characters.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "array",
+      "shape"
+     ],
+     "rows": [
+      [
+       "$\\mathbf X$",
+       "$T$ by $d$"
+      ],
+      [
+       "$\\mathbf Q\\mathbf K^\\top$",
+       "$T$ by $T$"
+      ],
+      [
+       "output",
+       "$T$ by $d_v$"
+      ]
+     ]
+    }
+   },
+   "question": "How many scores does self-attention compute over those 11 characters?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 121,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "half",
+      "value": 66,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "t",
+      "value": 11,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every position queries every position."
+    },
+    {
+     "rung": "point",
+     "text": "The score matrix is $T$ by $T$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$11 \\times 11$."
+    }
+   ],
+   "feedback": {
+    "correct": "$11 \\times 11 = 121$: every position against every position, itself included.",
+    "generic": "Not quite. Count query and key pairs.",
+    "byKey": {
+     "half": "66 counts each position only against itself and earlier ones: that is the masked version of the next lesson.",
+     "t": "That is one score per position. Each scores all 11."
+    }
+   },
+   "explain": {
+    "text": "The score matrix is $T \\times T$: 121 entries for 11 characters, so the cost grows with the square of the length. Each row of weights sums to 1."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One row by hand",
+   "prose": "Take the last token, b5. Its scores against $a, b, c, a, b$ are $(0, 1, 0.8, 0, 1)/\\sqrt 2$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         0.267,
+         0.132,
+         0.202,
+         0.267,
+         0.132
+        ],
+        [
+         0.128,
+         0.259,
+         0.225,
+         0.128,
+         0.259
+        ],
+        [
+         0.178,
+         0.205,
+         0.236,
+         0.178,
+         0.205
+        ],
+        [
+         0.267,
+         0.132,
+         0.202,
+         0.267,
+         0.132
+        ],
+        [
+         0.128,
+         0.259,
+         0.225,
+         0.128,
+         0.259
+        ]
+       ],
+       "label": "",
+       "rowLabels": [
+        "a1",
+        "b2",
+        "c3",
+        "a4",
+        "b5"
+       ],
+       "colLabels": [
+        "a1",
+        "b2",
+        "c3",
+        "a4",
+        "b5"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 2,
+        "label": "weight"
+       }
+      }
+     ]
+    }
+   },
+   "question": "What weight does b5 put on b2? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2595,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "fifth",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "noscale",
+      "value": 0.2813,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Exponentiate each scaled score."
+    },
+    {
+     "rung": "point",
+     "text": "$e^{0.7071} = 2.028$, $e^{0.5657} = 1.7607$, $e^0 = 1$.",
+     "highlight": [
+      "A-r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide 2.028 by $1 + 2.028 + 1.7607 + 1 + 2.028 = 7.817$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2.028/7.817 \\approx 0.2595$, the same as on itself.",
+    "generic": "Not quite. Scale, exponentiate, divide by the row sum.",
+    "byKey": {
+     "fifth": "Equal weights would be 0.2; the scores differ.",
+     "noscale": "You left out the $\\sqrt 2$. Scaled attention divides the scores first."
+    }
+   },
+   "explain": {
+    "text": "The row is 0.1279, 0.2595, 0.2252, 0.1279, 0.2595, summing to 1. The output of b5 is that weighted average of the five values."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Shuffle the input",
+   "prose": "Reverse the sequence to $b\\,a\\,c\\,b\\,a$ and run self-attention again with the same weights. No position information goes in: each token is only its embedding.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         0.259,
+         0.128,
+         0.225,
+         0.259,
+         0.128
+        ],
+        [
+         0.132,
+         0.267,
+         0.202,
+         0.132,
+         0.267
+        ],
+        [
+         0.205,
+         0.178,
+         0.236,
+         0.205,
+         0.178
+        ],
+        [
+         0.259,
+         0.128,
+         0.225,
+         0.259,
+         0.128
+        ],
+        [
+         0.132,
+         0.267,
+         0.202,
+         0.132,
+         0.267
+        ]
+       ],
+       "label": "",
+       "rowLabels": [
+        "b5",
+        "a4",
+        "c3",
+        "b2",
+        "a1"
+       ],
+       "colLabels": [
+        "b5",
+        "a4",
+        "c3",
+        "b2",
+        "a1"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 2,
+        "label": "weight"
+       }
+      }
+     ]
+    }
+   },
+   "question": "What happens to the outputs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "perm",
+      "text": "They are the same outputs, reversed: row $i$ moves with its token",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "They stay in the same order as before",
+      "why": "Each output belongs to its token. Reverse the tokens and the outputs reverse with them."
+     },
+     {
+      "id": "new",
+      "text": "They change to new values",
+      "why": "Every score is between two embeddings, which have not changed: only their order has."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A score depends only on two embeddings."
+    },
+    {
+     "rung": "point",
+     "text": "Find a4's row in the new matrix.",
+     "highlight": [
+      "A-r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The same pair of tokens gives the same score wherever they sit."
+    }
+   ],
+   "feedback": {
+    "correct": "The outputs are permuted exactly as the inputs: self-attention is **permutation-equivariant**.",
+    "generic": "Not quite. Do the embeddings change when they move?"
+   },
+   "explain": {
+    "text": "Reordering the rows of $\\mathbf X$ reorders $\\mathbf Q$, $\\mathbf K$, $\\mathbf V$ and the score matrix the same way, so each token keeps its output. Self-attention cannot tell \"ab\" from \"ba\". Lesson 4 adds positions to fix that."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Reading the weights as reasons",
+   "prose": "A trained model forecasts a stock from a day's headlines. On one day its attention puts 0.6 of the weight on a headline about the chief executive. A colleague concludes: \"The model forecast a fall because of that headline.\"",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         0.267,
+         0.132,
+         0.202,
+         0.267,
+         0.132
+        ],
+        [
+         0.128,
+         0.259,
+         0.225,
+         0.128,
+         0.259
+        ],
+        [
+         0.178,
+         0.205,
+         0.236,
+         0.178,
+         0.205
+        ],
+        [
+         0.267,
+         0.132,
+         0.202,
+         0.267,
+         0.132
+        ],
+        [
+         0.128,
+         0.259,
+         0.225,
+         0.128,
+         0.259
+        ]
+       ],
+       "label": "",
+       "rowLabels": [
+        "a1",
+        "b2",
+        "c3",
+        "a4",
+        "b5"
+       ],
+       "colLabels": [
+        "a1",
+        "b2",
+        "c3",
+        "a4",
+        "b5"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 2,
+        "label": "weight"
+       }
+      }
+     ]
+    }
+   },
+   "question": "How far does the attention weight support that conclusion?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "where",
+      "text": "It shows where the layer looked, not why the forecast fell",
+      "correct": true
+     },
+     {
+      "id": "why",
+      "text": "Fully: the largest weight is the cause of the forecast",
+      "why": "A weight says how much of that value was mixed in; what the later layers did with it, and why, is not in the weight."
+     },
+     {
+      "id": "none",
+      "text": "Not at all: attention weights carry no information",
+      "why": "They are informative about what was mixed in. They are not an explanation of the decision."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a weight multiply?"
+    },
+    {
+     "rung": "point",
+     "text": "A value vector, which later layers then transform.",
+     "highlight": [
+      "A-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Large weight, small or ignored value, is possible."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the weight is evidence of where it looked, nothing more.",
+    "generic": "Not quite. What does the weight multiply?",
+    "byKey": {
+     "why": "That reads a weight as a reason. The value it mixes in may matter little to the forecast."
+    }
+   },
+   "explain": {
+    "text": "A weight scales a value vector; that value may be small, or later layers may discard it. Attention maps are a useful first look, but whether they explain a decision is debated and must be tested (interp, later). Treat them as where the model looked."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A sequence of one",
+   "prose": "Edge case: $T = 1$. A single token with embedding $(0.6, 0.8)$ attends only to itself, with $\\mathbf W_V = \\mathbf I$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         1.0
+        ]
+       ],
+       "label": "",
+       "rowLabels": [
+        "c"
+       ],
+       "colLabels": [
+        "c"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 2,
+        "label": "weight"
+       }
+      }
+     ]
+    }
+   },
+   "question": "What is the first entry of its output?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "score",
+      "value": 0.7071,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One key means weight 1."
+    },
+    {
+     "rung": "point",
+     "text": "The row is the single number 1.",
+     "highlight": [
+      "A-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The output is its own value."
+    }
+   ],
+   "feedback": {
+    "correct": "0.6: with one key the weight is 1 and the output is the value itself.",
+    "generic": "Not quite. One key, weight 1.",
+    "byKey": {
+     "score": "That is the scaled score. The softmax of one score is 1.",
+     "half": "The weight is 1, not one half."
+    }
+   },
+   "explain": {
+    "text": "The softmax of a single score is 1, so the output is $(0.6, 0.8)$, the token's own value. Self-attention only mixes when there is more than one position."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Self-attention in code",
+   "prose": "Write `attention_matrix(X, params)`, the $T \\times T$ weights $\\operatorname{softmax}(\\mathbf Q\\mathbf K^\\top/\\sqrt d)$; `self_attention(X, Wq, Wk, Wv)`; and `permutation_check(X, params, perm)`, true when attention of `X[perm]` equals the output rows reordered by `perm`.",
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef attention_matrix(X, params):\n    # softmax(Q K^T / sqrt(d)) with Q = X Wq, K = X Wk (params['Wq'], params['Wk']); softmax along each row\n    ...\n\n\ndef self_attention(X, Wq, Wk, Wv):\n    # the attention matrix times V = X Wv\n    ...\n\n\ndef permutation_check(X, params, perm):\n    # True when self-attention of X[perm] equals the output of X with its rows reordered by perm\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef _softmax(S):\n    S = S - S.max(axis=-1, keepdims=True)\n    E = np.exp(S)\n    return E / E.sum(axis=-1, keepdims=True)\n\n\ndef attention_matrix(X, params):\n    X = np.asarray(X, dtype=float)\n    Q, K = X @ params['Wq'], X @ params['Wk']\n    return _softmax(Q @ K.T / np.sqrt(Q.shape[-1]))\n\n\ndef self_attention(X, Wq, Wk, Wv):\n    X = np.asarray(X, dtype=float)\n    return attention_matrix(X, {'Wq': Wq, 'Wk': Wk}) @ (X @ Wv)\n\n\ndef permutation_check(X, params, perm):\n    X = np.asarray(X, dtype=float)\n    out = self_attention(X, params['Wq'], params['Wk'], params['Wv'])\n    out_p = self_attention(X[perm], params['Wq'], params['Wk'], params['Wv'])\n    return bool(np.allclose(out_p, out[perm]))\n",
+    "prelude": "import numpy as np\n\nX5 = np.array([[1.0, 0.0], [0.0, 1.0], [0.6, 0.8], [1.0, 0.0], [0.0, 1.0]])\nI2 = np.eye(2)\ng = np.random.default_rng(7)\nXr = g.standard_normal((6, 4))\nPr = {'Wq': g.standard_normal((4, 4)), 'Wk': g.standard_normal((4, 4)), 'Wv': g.standard_normal((4, 3))}\n",
+    "examples": [
+     {
+      "call": "attention_matrix(X5, {\"Wq\": I2, \"Wk\": I2})[3].tolist()",
+      "compare": "isclose",
+      "expect": "[0.2673957157924631, 0.13184445567048325, 0.2015196570741073, 0.2673957157924631, 0.13184445567048325]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "attention_matrix(X5, {\"Wq\": I2, \"Wk\": I2})[3].tolist()",
+      "compare": "isclose",
+      "expect": "[0.2673957157924631, 0.13184445567048325, 0.2015196570741073, 0.2673957157924631, 0.13184445567048325]"
+     },
+     {
+      "call": "self_attention(X5, I2, I2, I2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.6557032258293904, 0.4249046370002523], [0.3909988236932238, 0.6990961111431793], [0.4965865326608888, 0.5976747569886686], [0.6557032258293904, 0.4249046370002523], [0.3909988236932238, 0.6990961111431793]]"
+     },
+     {
+      "call": "self_attention(Xr, Pr[\"Wq\"], Pr[\"Wk\"], Pr[\"Wv\"]).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.25370277477663794, 0.11261947570181742, -1.1976303695835337], [0.38047906597884484, -0.026647348360750677, 0.14800263215423584], [0.21956577143183656, 0.07682425929681345, -0.9230777141224518], [0.3338036077788232, 0.09641390064582264, -0.02120290811094625], [0.11432794714164456, 0.3872094817115385, -1.3945236958776628], [0.2579447540074244, 0.17713611599382137, -0.4905781290512801]]"
+     },
+     {
+      "call": "attention_matrix(Xr, Pr).sum(axis=1).tolist()",
+      "compare": "isclose",
+      "expect": "[0.9999999999999999, 1.0, 1.0, 1.0000000000000002, 1.0, 1.0]"
+     },
+     {
+      "call": "self_attention([[0.6, 0.8]], I2, I2, I2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.6, 0.8]]"
+     },
+     {
+      "call": "permutation_check(Xr, Pr, [5, 3, 1, 0, 2, 4])",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "self_attention(Xr[[5, 3, 1, 0, 2, 4]], Pr[\"Wq\"], Pr[\"Wk\"], Pr[\"Wv\"])[3].tolist()",
+      "compare": "isclose",
+      "expect": "[0.253702774776638, 0.1126194757018174, -1.1976303695835337]"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests, compared to $10^{-9}$, on the five tokens (`X5`) and a seeded 6 by 4 sequence (`Xr`, `Pr`). Test 5 is a sequence of one; tests 6 and 7 permute the rows.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef _softmax(S):\n    S = S - S.max(axis=-1, keepdims=True)\n    E = np.exp(S)\n    return E / E.sum(axis=-1, keepdims=True)\n\n\ndef attention_matrix(X, params):\n    X = np.asarray(X, dtype=float)\n    Q, K = X @ params['Wq'], X @ params['Wk']\n    return _softmax(Q @ K.T)\n\n\ndef self_attention(X, Wq, Wk, Wv):\n    X = np.asarray(X, dtype=float)\n    return attention_matrix(X, {'Wq': Wq, 'Wk': Wk}) @ (X @ Wv)\n\n\ndef permutation_check(X, params, perm):\n    X = np.asarray(X, dtype=float)\n    out = self_attention(X, params['Wq'], params['Wk'], params['Wv'])\n    out_p = self_attention(X[perm], params['Wq'], params['Wk'], params['Wv'])\n    return bool(np.allclose(out_p, out[perm]))\n",
+      "test": 1,
+      "symptom": "Leaves out the square root of d."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _softmax(S):\n    S = S - S.max(axis=0, keepdims=True)\n    E = np.exp(S)\n    return E / E.sum(axis=0, keepdims=True)\n\n\ndef attention_matrix(X, params):\n    X = np.asarray(X, dtype=float)\n    Q, K = X @ params['Wq'], X @ params['Wk']\n    return _softmax(Q @ K.T / np.sqrt(Q.shape[-1]))\n\n\ndef self_attention(X, Wq, Wk, Wv):\n    X = np.asarray(X, dtype=float)\n    return attention_matrix(X, {'Wq': Wq, 'Wk': Wk}) @ (X @ Wv)\n\n\ndef permutation_check(X, params, perm):\n    X = np.asarray(X, dtype=float)\n    out = self_attention(X, params['Wq'], params['Wk'], params['Wv'])\n    out_p = self_attention(X[perm], params['Wq'], params['Wk'], params['Wv'])\n    return bool(np.allclose(out_p, out[perm]))\n",
+      "test": 1,
+      "symptom": "Softmax down the columns."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _softmax(S):\n    S = S - S.max(axis=-1, keepdims=True)\n    E = np.exp(S)\n    return E / E.sum(axis=-1, keepdims=True)\n\n\ndef attention_matrix(X, params):\n    X = np.asarray(X, dtype=float)\n    Q, K = X @ params['Wq'], X @ params['Wk']\n    return _softmax(Q @ K.T / np.sqrt(Q.shape[-1]))\n\n\ndef self_attention(X, Wq, Wk, Wv):\n    X = np.asarray(X, dtype=float)\n    return attention_matrix(X, {'Wq': Wq, 'Wk': Wk}) @ X @ Wq\n\n\ndef permutation_check(X, params, perm):\n    X = np.asarray(X, dtype=float)\n    out = self_attention(X, params['Wq'], params['Wk'], params['Wv'])\n    out_p = self_attention(X[perm], params['Wq'], params['Wk'], params['Wv'])\n    return bool(np.allclose(out_p, out[perm]))\n",
+      "test": 3,
+      "symptom": "Mixes values made with W_Q instead of W_V."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _softmax(S):\n    S = S - S.max(axis=-1, keepdims=True)\n    E = np.exp(S)\n    return E / E.sum(axis=-1, keepdims=True)\n\n\ndef attention_matrix(X, params):\n    X = np.asarray(X, dtype=float)\n    Q, K = X @ params['Wq'], X @ params['Wk']\n    return _softmax(Q @ K.T / np.sqrt(Q.shape[-1]))\n\n\ndef self_attention(X, Wq, Wk, Wv):\n    X = np.asarray(X, dtype=float)\n    return attention_matrix(X, {'Wq': Wq, 'Wk': Wk}) @ (X @ Wv)\n\n\ndef permutation_check(X, params, perm):\n    X = np.asarray(X, dtype=float)\n    out = self_attention(X, params['Wq'], params['Wk'], params['Wv'])\n    out_p = self_attention(X[perm], params['Wq'], params['Wk'], params['Wv'])\n    return bool(np.allclose(out_p, out))\n",
+      "test": 6,
+      "symptom": "Compares the permuted output with the unpermuted one."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Queries and keys come from the same `X`."
+    },
+    {
+     "rung": "point",
+     "text": "Divide by `np.sqrt(d)` and normalise each row."
+    },
+    {
+     "rung": "step",
+     "text": "Compare `self_attention(X[perm], ...)` with `out[perm]` using `np.allclose`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your attention reproduces the matrix of this lesson, and permuting the input permutes the output.",
+    "generic": "Not yet. Check the scaling and the axis.",
+    "byKey": {
+     "test-1": "Divide the scores by $\\sqrt d$ before the softmax, and normalise each row (over the keys).",
+     "test-3": "Values are $\\mathbf X\\mathbf W_V$, and each row of weights sums to 1.",
+     "test-6": "Reorder the original output by `perm` before comparing."
+    }
+   },
+   "explain": {
+    "text": "One matrix product gives every score, a row-wise softmax the weights, and one more product the outputs. The permutation check passes for any `perm`, which is why positions must be added."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "A sequence attending to itself",
+   "prose": "Self-attention is lesson 7's attention with one source:\n$$\\operatorname{SelfAttn}(\\mathbf X) = \\operatorname{softmax}\\!\\Big(\\frac{\\mathbf X\\mathbf W_Q(\\mathbf X\\mathbf W_K)^\\top}{\\sqrt d}\\Big)\\mathbf X\\mathbf W_V.$$\nFor any permutation matrix $\\mathbf P$, $\\operatorname{SelfAttn}(\\mathbf P\\mathbf X) = \\mathbf P\\,\\operatorname{SelfAttn}(\\mathbf X)$.",
+   "question": "What does the equivariance mean for \"dog bites man\" and \"man bites dog\"?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "Each word gets the same output in both, just in a different place",
+      "correct": true
+     },
+     {
+      "id": "diff",
+      "text": "The outputs differ because the meaning differs",
+      "why": "Without positions the layer cannot see the order, so each word's output is unchanged."
+     },
+     {
+      "id": "zero",
+      "text": "The outputs are zero",
+      "why": "Nothing makes them zero; they are simply the same for both orders."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Same multiset of words, same outputs: order is invisible without positions.",
+    "generic": "Not quite. Apply the equivariance."
+   },
+   "explain": {
+    "text": "Each output depends on the token and the set of all tokens, never their order. That is why every transformer adds position information, lesson 4 of this level."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A day of headlines",
+   "prose": "A model reads a day's 40 headlines about one stock, each embedded as a vector, and lets every headline attend to every other before a forecast. A busy day has 160.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "headlines",
+      "scores"
+     ],
+     "rows": [
+      [
+       "40",
+       "1,600"
+      ],
+      [
+       "160",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "How many times more scores does the busy day need than the 40-headline day?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "count",
+      "value": 24000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Scores grow with the square of the count."
+    },
+    {
+     "rung": "point",
+     "text": "$160^2 = 25{,}600$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$25{,}600 / 1{,}600$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(160/40)^2 = 16$ times: 25,600 scores against 1,600.",
+    "generic": "Not quite. Square the ratio.",
+    "byKey": {
+     "linear": "Four times the headlines, but every pair is scored: $4^2$.",
+     "count": "That is the difference in scores; the ratio is 16."
+    }
+   },
+   "explain": {
+    "text": "$25{,}600/1{,}600 = 16$: self-attention scores every pair, so four times the items costs sixteen times the scores. Each headline is weighted by its relevance to every other, which is the point, and the cost."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Self-attention takes queries, keys and values from one sequence: each output is a weighted average of the values at every position.",
+   "The weights form a $T \\times T$ matrix whose rows sum to 1: 121 scores for 11 characters, and the cost grows with $T^2$.",
+   "Without positions it is permutation-equivariant: reorder the input and the outputs reorder with it, so \"ab\" and \"ba\" look alike."
+  ],
+  "formula": {
+   "name": "Self-attention",
+   "tex": "\\operatorname{softmax}\\!\\Big(\\frac{\\mathbf X\\mathbf W_Q(\\mathbf X\\mathbf W_K)^\\top}{\\sqrt d}\\Big)\\mathbf X\\mathbf W_V",
+   "note": "Rows of the weights sum to 1."
+  },
+  "trap": "An attention weight shows where the layer looked, not why the model decided."
+ },
+ "quiz": [
+  {
+   "id": "q-t",
+   "difficulty": 2,
+   "prose": "A self-attention layer reads a sequence of 20 tokens.",
+   "question": "How many entries does its weight matrix have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 400,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "t",
+      "value": 20,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "half",
+      "value": 210,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$20 \\times 20 = 400$.",
+    "generic": "Not quite. $T$ by $T$.",
+    "byKey": {
+     "t": "One per token is too few: each scores all 20.",
+     "half": "That is the masked count; unmasked, all 400."
+    }
+   },
+   "explain": {
+    "text": "Every token against every token: 400."
+   }
+  },
+  {
+   "id": "q-one",
+   "difficulty": 2,
+   "prose": "A sequence of one token, value $(2, -1)$, goes through self-attention.",
+   "question": "What is its output?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "v",
+      "text": "$(2, -1)$, its own value",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "$(0, 0)$",
+      "why": "The single weight is 1, not 0."
+     },
+     {
+      "id": "half",
+      "text": "$(1, -0.5)$",
+      "why": "With one key the weight is 1, not one half."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One key, weight 1, output its own value.",
+    "generic": "Not quite. What is the softmax of one score?"
+   },
+   "explain": {
+    "text": "The softmax of one number is 1, so the output is the value $(2, -1)$."
+   }
+  },
+  {
+   "id": "q-perm",
+   "difficulty": 3,
+   "prose": "Self-attention without positions reads \"abc\" and then \"cab\".",
+   "question": "How do the outputs for the token b compare?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "They are identical",
+      "correct": true
+     },
+     {
+      "id": "diff",
+      "text": "They differ, since b has moved",
+      "why": "Moving b changes where its output sits, not what it is."
+     },
+     {
+      "id": "swap",
+      "text": "b's output becomes c's",
+      "why": "Each token keeps its own output; only the positions move."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Identical: each output depends on the token and the set of tokens.",
+    "generic": "Not quite. Apply permutation-equivariance."
+   },
+   "explain": {
+    "text": "Permuting the rows permutes the outputs, so b's output is unchanged, only moved."
+   }
+  }
+ ]
+}
