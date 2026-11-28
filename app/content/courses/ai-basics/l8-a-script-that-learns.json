@@ -118,9 +118,31 @@
       "call": "list(fit_by_nudging([0, 1, 2, 3], [2, 1, 0, -1], 1))",
       "expect": "[0.0, 0.0, 1.5, 1]",
       "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([0, 0], [1, 3], 1))",
+      "expect": "[0.0, 2.0, 1.0, 3]",
+      "compare": "isclose"
      }
     ],
-    "how": "Check runs 6 hidden tests. Each list is accepted when every number is math.isclose to the expected one."
+    "how": "Check runs 7 hidden tests. Each list is accepted when every number is equal to the expected one up to a tiny rounding difference. Rounding is checked later, when you print.",
+    "mutants": [
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+      "test": 7,
+      "symptom": "Stops when w settles, even if b is still moving."
+     },
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up <= best and up <= down:\n        w, best = w + step, up\n    elif down <= best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up <= best and up <= down:\n        b, best = b + step, up\n    elif down <= best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+      "test": 6,
+      "symptom": "A tie counts as an improvement, so the line moves when it should stay."
+     },
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            rounds = rounds - 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+      "test": 1,
+      "symptom": "Does not count the last round, the one that changes nothing."
+     }
+    ]
    },
    "hints": [
     {
@@ -431,7 +453,19 @@
       "expect": "w = 0.6, b = 1.8, error = 0.02\n"
      }
     ],
-    "how": "Check runs your program 4 times, each with five input lines, and compares what it prints."
+    "how": "Check runs your program 4 times, each with five input lines, and compares what it prints.",
+    "mutants": [
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n\nxs = []\nys = []\nfor i in range(5):\n    x, y = input().split()\n    xs.append(float(x))\n    ys.append(float(y))\nw, b, error, rounds = fit_by_nudging(xs, ys, 1)\nprint(f\"w = {w}, b = {b}, error = {error}\")\n",
+      "test": 1,
+      "symptom": "Fits with a step of 1 instead of 0.1."
+     },
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n\nxs = []\nys = []\nfor i in range(5):\n    x, y = input().split()\n    xs.append(float(x))\n    ys.append(float(y))\nw, b, error, rounds = fit_by_nudging(xs, ys, 0.1)\nprint(f\"w = {b}, b = {w}, error = {error}\")\n",
+      "test": 1,
+      "symptom": "Prints w and b in the wrong places."
+     }
+    ]
    },
    "hints": [
     {
@@ -459,7 +493,7 @@
    "type": "generalise",
    "difficulty": 2,
    "title": "How every network learns",
-   "prose": "Your script did this: $$\\text{change the numbers} \\;\\to\\; \\text{lower the error} \\;\\to\\; \\text{repeat until it cannot}$$ Every network in this strand learns that way, with millions of numbers instead of two. Later courses (`multivar` l8) find the downhill direction without trying both ways.",
+   "prose": "Your script did this: $$\\text{change the numbers} \\;\\to\\; \\text{lower the error} \\;\\to\\; \\text{repeat until it cannot}$$ Large networks learn the same way, often with millions of numbers instead of two. Later courses (`multivar` l8) find the downhill direction without trying both ways.",
    "question": "What do a two-number line and a large network have in common?",
    "widget": {
     "kind": "choice",
@@ -504,7 +538,7 @@
    "type": "transfer",
    "difficulty": 3,
    "title": "A line through prices",
-   "prose": "The same script fits a line to five days of a share's closing price against the day number. It prints `w = 0.22, b = 19.84`.",
+   "prose": "The same script fits a line to five days of a share's closing price against the day number. With step 0.1 it prints `w = 0.4, b = 19.3`.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -541,24 +575,24 @@
    "question": "What price does the line give for day 35, in pounds?",
    "widget": {
     "kind": "numeric",
-    "answer": 27.54,
+    "answer": 33.3,
     "tol": {
      "abs": 0.005
     },
     "placeholder": "Price",
     "label": "Line at day 35",
-    "accept": "£27.54",
+    "accept": "£33.30",
     "wrong": [
      {
       "id": "slope-only",
-      "value": 7.7,
+      "value": 14,
       "tol": {
        "abs": 0.005
       }
      },
      {
       "id": "day5",
-      "value": 20.94,
+      "value": 21.3,
       "tol": {
        "abs": 0.005
       }
@@ -568,23 +602,23 @@
    "hints": [
     {
      "rung": "nudge",
-     "text": "Put $x = 35$ into $y = 0.22x + 19.84$."
+     "text": "Put $x = 35$ into $y = 0.4x + 19.3$."
     },
     {
      "rung": "step",
-     "text": "$0.22 \\times 35 + 19.84 = 27.54$."
+     "text": "$0.4 \\times 35 + 19.3 = 33.3$."
     }
    ],
    "feedback": {
-    "correct": "£27.54: the line climbs £0.22 a day.",
-    "generic": "Not quite. Use $y = 0.22x + 19.84$ at $x = 35$.",
+    "correct": "£33.30: the line climbs £0.40 a day.",
+    "generic": "Not quite. Use $y = 0.4x + 19.3$ at $x = 35$.",
     "byKey": {
-     "slope-only": "£7.70 is $0.22 \\times 35$ alone. Add the bias, 19.84.",
-     "day5": "£20.94 is the line at day 5."
+     "slope-only": "£14.00 is $0.4 \\times 35$ alone. Add the bias, 19.3.",
+     "day5": "£21.30 is the line at day 5."
     }
    },
    "explain": {
-    "text": "The weight 0.22 means the line rises £0.22 a day, so day 35 gives $0.22 \\times 35 + 19.84 = 27.54$. Trusting it is the l4 mistake: five days chose the line, and none of day 6 to day 35 tested it."
+    "text": "The weight 0.4 means the line rises £0.40 a day, so day 35 gives $0.4 \\times 35 + 19.3 = 33.3$. Trusting it is the l4 mistake: five days chose the line, and none of day 6 to day 35 tested it."
    }
   }
  ],

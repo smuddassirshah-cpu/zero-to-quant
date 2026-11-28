@@ -56,7 +56,19 @@
       "compare": "isclose"
      }
     ],
-    "how": "Submit runs 6 hidden tests. Each answer is accepted when math.isclose(actual, expected)."
+    "how": "Submit runs 6 hidden tests. Each answer is accepted when it is equal up to a tiny rounding difference.",
+    "mutants": [
+     {
+      "source": "def accuracy(predictions, labels):\n    right = 0\n    for i in range(len(labels)):\n        if predictions[i] != labels[i]:\n            right = right + 1\n    return right / len(labels)\n",
+      "test": 2,
+      "symptom": "Counts the wrong answers, so a perfect run scores 0."
+     },
+     {
+      "source": "def accuracy(predictions, labels):\n    right = 0\n    for i in range(len(labels)):\n        if predictions[i] == labels[i]:\n            right = right + 1\n    return right\n",
+      "test": 1,
+      "symptom": "Returns the number right, not the fraction."
+     }
+    ]
    },
    "feedback": {
     "correct": "Right over total, as a decimal.",
@@ -122,7 +134,19 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 6 hidden tests. Each result must equal the expected list."
+    "how": "Submit runs 6 hidden tests. Each result must equal the expected list.",
+    "mutants": [
+     {
+      "source": "def split_train_test(rows, n_test):\n    cut = n_test\n    return (rows[:cut], rows[cut:])\n",
+      "test": 1,
+      "symptom": "Puts the first rows in training and keeps the wrong end for the test."
+     },
+     {
+      "source": "def split_train_test(rows, n_test):\n    cut = len(rows) - n_test\n    return (rows[:cut], rows[cut - 1:])\n",
+      "test": 2,
+      "symptom": "Lets the last training row leak into the test set."
+     }
+    ]
    },
    "feedback": {
     "correct": "Your cut point is `len(rows) - n_test`.",
@@ -182,9 +206,31 @@
       "call": "fit_and_score([0, 2, 4, 6, 8, 10], [0, 1, 0, 1, 1, 1], [], [])[1]",
       "expect": "0",
       "compare": "equal"
+     },
+     {
+      "call": "list(fit_and_score([3, 9], [0, 0], [10], [0]))",
+      "expect": "[10, 0]",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 5 hidden tests on data you have not seen. Each result must equal the expected list or number."
+    "how": "Submit runs 6 hidden tests on data you have not seen. Each result must equal the expected list or number.",
+    "mutants": [
+     {
+      "source": "def right_count(xs, ys, t):\n    right = 0\n    for i in range(len(xs)):\n        if (xs[i] >= t) == (ys[i] == 1):\n            right = right + 1\n    return right\n\ndef fit_and_score(train_x, train_y, test_x, test_y):\n    best_t = 0\n    best_right = -1\n    for t in range(11):\n        r = right_count(test_x, test_y, t)\n        if r > best_right:\n            best_t = t\n            best_right = r\n    return (best_t, right_count(test_x, test_y, best_t))\n",
+      "test": 1,
+      "symptom": "Picks the threshold on the test data instead of the training data."
+     },
+     {
+      "source": "def right_count(xs, ys, t):\n    right = 0\n    for i in range(len(xs)):\n        if (xs[i] >= t) == (ys[i] == 1):\n            right = right + 1\n    return right\n\ndef fit_and_score(train_x, train_y, test_x, test_y):\n    best_t = 0\n    best_right = -1\n    for t in range(11):\n        r = right_count(train_x, train_y, t)\n        if r >= best_right:\n            best_t = t\n            best_right = r\n    return (best_t, right_count(test_x, test_y, best_t))\n",
+      "test": 1,
+      "symptom": "On a tie it keeps the last threshold instead of the first."
+     },
+     {
+      "source": "def right_count(xs, ys, t):\n    right = 0\n    for i in range(len(xs)):\n        if (xs[i] >= t) == (ys[i] == 1):\n            right = right + 1\n    return right\n\ndef fit_and_score(train_x, train_y, test_x, test_y):\n    best_t = 0\n    best_right = -1\n    for t in range(10):\n        r = right_count(train_x, train_y, t)\n        if r > best_right:\n            best_t = t\n            best_right = r\n    return (best_t, right_count(test_x, test_y, best_t))\n",
+      "test": 6,
+      "symptom": "Never tries the threshold 10, so it cannot say every email is not spam."
+     }
+    ]
    },
    "feedback": {
     "correct": "You choose on training data and score once on test data.",

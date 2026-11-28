@@ -59,9 +59,32 @@
       "call": "list(fit_by_nudging([-2, -1, 0, 1], [7, 5, 3, 1], 1))",
       "expect": "[-2.0, 3.0, 0.0, 4]",
       "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([0, 0], [1, 3], 1))",
+      "expect": "[0.0, 2.0, 1.0, 3]",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 7 hidden tests. Each number is accepted when math.isclose to the expected one."
+    "how": "Submit runs 8 hidden tests. Each answer is accepted when it is equal up to a tiny rounding difference.",
+    "mutants": [
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+      "test": 7,
+      "symptom": "Stops when w settles, even if b is still moving."
+     },
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up <= best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up <= best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+      "test": 8,
+      "symptom": "A tie moves the line, so the loop never settles.",
+      "timeout": true
+     },
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    w0 = w\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    best = mse(w0, b, xs, ys)\n    up = mse(w0, b + step, xs, ys)\n    down = mse(w0, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+      "test": 5,
+      "symptom": "Judges the b nudge as if w had not moved this round."
+     }
+    ]
    },
    "feedback": {
     "correct": "All three work on new points.",
@@ -122,7 +145,19 @@
       "compare": "isclose"
      }
     ],
-    "how": "Submit runs 5 hidden tests. Each number is accepted when math.isclose to the expected one."
+    "how": "Submit runs 5 hidden tests. Each answer is accepted when it is equal up to a tiny rounding difference.",
+    "mutants": [
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef pairs_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    a = mse(w + step, b - step, xs, ys)\n    c = mse(w - step, b + step, xs, ys)\n    if a < best and a <= c:\n        w, b = w + step, b - step\n    elif c < best:\n        w, b = w - step, b + step\n    return (w, b)\n\ndef fit_with_pairs(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = pairs_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+      "test": 1,
+      "symptom": "Skips the one-number nudges and only tries the paired move."
+     },
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef pairs_once(w, b, xs, ys, step):\n    w, b = nudge_once(w, b, xs, ys, step)\n    best = mse(w, b, xs, ys)\n    a = mse(w + step, b + step, xs, ys)\n    c = mse(w - step, b - step, xs, ys)\n    if a < best and a <= c:\n        w, b = w + step, b - step\n    elif c < best:\n        w, b = w - step, b + step\n    return (w, b)\n\ndef fit_with_pairs(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = pairs_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+      "test": 1,
+      "symptom": "Pairs the nudges in the same direction instead of opposite ones."
+     }
+    ]
    },
    "feedback": {
     "correct": "Your rule adds the paired move and stops when nothing helps.",

@@ -56,3 +56,34 @@ Checked without finding: the eight umbrella sums and the firing set (0, 1, 0), (
 - Number scripts: all three exit 0 and recompute every figure two ways, using exact fractions or a second counting method and running each widget's solution and starter. They do not restate the content. The L3 script brute-forces the 9,261-neuron grid and 20,000 random neurons.
 - `grade-all.mjs --file` (21 files): 0 failures. With `--code` (18 widgets): every solution passes and every starter fails.
 - Voice: 0 sentences over 35 words, 0 explanations over three sentences, no "!", no em-dash, no American spelling in learner text ("center" appears only as table `align` values), money in £.
+
+## Fix pass
+
+Targeted edits to `app/content/courses/ai-basics/` levels 1 to 3. Recomputed before writing: the share-price script output (step 0.1: w = 0.4, b = 19.3, MSE 0.088, 194 rounds; step 0.01: w = 0.24, b = 19.78, 1,979 rounds), day 35 = 0.4 x 35 + 19.3 = 33.3, the p-script raw-error mean (1 - 1 - 3 - 5)/4 = -2, the l4 averages 84.5 and 83.5, and each added test against the solution and the review's wrong version. Checks added to `docs/reports/ai-basics-L1-numbers.py` and `-L2-numbers.py`.
+
+- l2 screens[0] prose "used the link counts and whether it says free": fixed, now "It could look at two columns ...".
+- l4 screens[5] option "A: its average is higher": fixed by changing A's test score from 61% to 71% (average 84.5 against B's 83.5, still below B's 82% on test); table, option why, hint, byKey and explain updated; the L1 script checks it.
+- l1 screens[8] "The 2,000 trades" why: fixed to the review's wording.
+- l1 screens[6] explain and review-1 items[9] option "yes" why (overstated "only close"): fixed.
+- l1 screens[7] option "Spam" why: fixed (the other office's bar of 3).
+- l1 screens[2] prose (program versus learner): fixed to the review's wording.
+- homework-1 items[2] `range(10)` slip: fixed, test 6 `fit_and_score([3, 9], [0, 0], [10], [0])` expects `[10, 0]`; the `range(10)` mutant fails it.
+- l8 screens[8] share-price error: fixed. The screen now says "With step 0.1 it prints w = 0.4, b = 19.3"; answer £33.30, wrong values 14 and 21.3, hints, feedback and explain updated. The L2 script now checks the script output at both steps in exact fractions, the answer and wrong values, and that the prose no longer quotes the least-squares line.
+- l7 screens[7] tests (`<=` on a tie, b judged at the old w): fixed with the review's two tests (7 and 8); the `<=` mutant first fails test 7 and the old-w mutant test 8.
+- l8 screens[1] tests (stop on w alone): fixed with `fit_by_nudging([0, 0], [1, 3], 1)` as test 7 expecting `[0.0, 2.0, 1.0, 3]`; the stop-on-w mutant fails it.
+- homework-2 items[0] tests (`<=`): fixed with the same case as test 8. The `<=` mutant never settles on it and is marked `timeout: true`.
+- l7 summary formula ("lowest and lower" twice): fixed, the three cases are spelt out with MSE(w + s), MSE(w - s) and MSE(w).
+- problems-2 items[2].parts[0] wrong value 2 "raw": fixed. 2 is renamed "ymean" with "2 is the mean of the y values"; a new wrong value -2 "raw" says the raw errors have mean -2 and the signs cancel.
+- l5 screens[8] option B why: fixed to the review's wording.
+- l6 screens[5] option "divide by 4" why: fixed.
+- l7 screens[0] question: fixed to "Which plan should the rule follow?".
+- l8 screens[7] prose "Every network in this strand": fixed to "Large networks learn the same way, often with millions of numbers instead of two".
+- l8 screens[1] rounding note: fixed, the `how` line ends "Rounding is checked later, when you print."
+- `math.isclose` in `how` lines (l6 screens[7] and [8], l7 [7], l8 [1], l10 [6], homework-1 items[0], homework-2 items[0] and [1]): fixed to "equal up to a tiny rounding difference"; test counts in the `how` lines of widgets that gained tests updated.
+- l6 screens[10] canvas table ASCII hyphens: fixed, now U+2212.
+- l10 screens[8] "A neuron is ...": fixed to "In this course a neuron is a weighted sum followed by a threshold. Larger networks swap the threshold for a smoother rule, met later." No function named. The summary says "fires when" rather than defining a neuron, so it is unchanged.
+- l12 screens[1] byKey.x1: fixed to say the product line is true but does not help. The distractor's text is unchanged.
+- l12 screens[8] prose crowded-trade claim: fixed to "The researcher believes both strong means a crowded trade."
+- Report slip in the L2 report ((1.48, 1.36) stops at (1.49, 1.33)): no content file states it, so nothing to change.
+
+Mutants (engine item 1263): the 18 Python code widgets in l3, l6, l7, l8, l10, l11, l12, homework-1, homework-2 and homework-3 each carry at least two `mutants`, 40 in all, including every wrong version the review found. The validator accepts the field. `grade-all --code` confirms the solution passes, the starter fails and each mutant first fails the named test (0 failures on every edited file).

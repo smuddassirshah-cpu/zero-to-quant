@@ -61,7 +61,7 @@
      "showSSE": true
     }
    },
-   "question": "Which change should you try first?",
+   "question": "Which plan should the rule follow?",
    "widget": {
     "kind": "choice",
     "layout": "stack",
@@ -726,9 +726,31 @@
       "call": "list(nudge_once(0.0, 0.0, [1, 2, 3, 4, 5], [3, 4, 6, 7, 9], 0.5))",
       "expect": "[0.5, 0.5]",
       "compare": "isclose"
+     },
+     {
+      "call": "list(nudge_once(0.0, 0.0, [0, 1, 2, 3], [2, 1, 0, -1], 1))",
+      "expect": "[0.0, 0.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(nudge_once(1.4, 1.4, [1, 2, 3, 4, 5], [3, 4, 6, 7, 9], 0.1))",
+      "expect": "[1.5, 1.3]",
+      "compare": "isclose"
      }
     ],
-    "how": "Check runs 6 hidden tests. Each pair is accepted when both numbers are math.isclose to the expected ones."
+    "how": "Check runs 8 hidden tests. Each pair is accepted when both numbers are equal to the expected ones up to a tiny rounding difference.",
+    "mutants": [
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up <= best and up <= down:\n        w, best = w + step, up\n    elif down <= best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up <= best and up <= down:\n        b, best = b + step, up\n    elif down <= best:\n        b, best = b - step, down\n    return (w, b)\n",
+      "test": 7,
+      "symptom": "A tie counts as an improvement, so the line moves when it should stay."
+     },
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    w0 = w\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    best = mse(w0, b, xs, ys)\n    up = mse(w0, b + step, xs, ys)\n    down = mse(w0, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n",
+      "test": 8,
+      "symptom": "Judges the b nudge as if w had not moved this round."
+     }
+    ]
    },
    "hints": [
     {
@@ -868,7 +890,7 @@
   ],
   "formula": {
    "name": "One nudge",
-   "tex": "w \\to \\begin{cases} w + s & \\text{if lowest and lower} \\\\ w - s & \\text{if lowest and lower} \\\\ w & \\text{otherwise} \\end{cases}",
+   "tex": "w \\to \\begin{cases} w + s & \\text{if } \\mathrm{MSE}(w + s) < \\mathrm{MSE}(w) \\text{ and } \\mathrm{MSE}(w + s) \\le \\mathrm{MSE}(w - s) \\\\ w - s & \\text{if } \\mathrm{MSE}(w - s) < \\mathrm{MSE}(w) \\text{ and } \\mathrm{MSE}(w - s) < \\mathrm{MSE}(w + s) \\\\ w & \\text{otherwise} \\end{cases}",
    "note": "Then the same for $b$."
   },
   "trap": "Keeping a nudge because it moved: a nudge is kept only if it lowers the error."

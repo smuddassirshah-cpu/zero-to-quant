@@ -198,12 +198,27 @@ for t in sw['tests']:
 lv.expect('l8', scr('l8', 'A coarser step') + '.widget.answer', fit_q(F(1, 2))[3])
 lv.expect('l8', scr('l8', 'Already perfect') + '.widget.answer', fit_q(F(1, 10), [1, 2, 3], [0, 0, 0])[3])
 PR = [F('20.10'), F('20.40'), F('20.20'), F('20.80'), F('21.00')]
-d = [1, 2, 3, 4, 5]; mxp = F(3); myp = sum(PR) / 5
+d = [1, 2, 3, 4, 5]
+# The share-price screen quotes the script's own output (fix pass, review-ai-basics): step 0.1 stops at
+# w = 0.4, b = 19.3 after 194 rounds; step 0.01 at w = 0.24, b = 19.78 after 1,979 rounds. The least-squares line
+# (0.22, 19.84) is NOT what the script prints and the screen must not say it is.
+pw, pb, pe, pr = fit_q(F(1, 10), d, PR)[:4]
+lv.claim((pw, pb, pr) == (F('0.4'), F('19.3'), 194) and round(float(pe), 6) == 0.088, 'price script, step 0.1: w 0.4, b 19.3, MSE 0.088, 194 rounds (exact)')
+pw2, pb2, pe2, pr2 = fit_q(F(1, 100), d, PR)[:4]
+lv.claim((pw2, pb2, pr2) == (F('0.24'), F('19.78'), 1979), 'price script, step 0.01: w 0.24, b 19.78, 1979 rounds (exact)')
+mxp = F(3); myp = sum(PR) / 5
 slope = sum((x - mxp) * (p - myp) for x, p in zip(d, PR)) / 10
-lv.claim((slope, myp - slope * mxp) == (F('0.22'), F('19.84')), 'price line 0.22x + 19.84 (least squares)')
-lv.expect('l8', scr('l8', 'A line through prices') + '.widget.answer', F('0.22') * 35 + F('19.84'))
-lv.expect('l8', scr('l8', 'A line through prices') + '.widget.wrong[0].value', F('0.22') * 35)
-lv.expect('l8', scr('l8', 'A line through prices') + '.widget.wrong[1].value', F('0.22') * 5 + F('19.84'))
+lv.claim((slope, myp - slope * mxp) == (F('0.22'), F('19.84')), 'least-squares line 0.22x + 19.84 differs from the script output (not quoted as the script)')
+lv.claim('0.22' not in node('l8', scr('l8', 'A line through prices') + '.prose'), 'price screen prose does not quote the least-squares line')
+lv.expect('l8', scr('l8', 'A line through prices') + '.widget.answer', pw * 35 + pb)
+lv.expect('l8', scr('l8', 'A line through prices') + '.widget.wrong[0].value', pw * 35)
+lv.expect('l8', scr('l8', 'A line through prices') + '.widget.wrong[1].value', pw * 5 + pb)
+# regression cases added in the fix pass (each wrong rule the review found must fail the hidden test it targets)
+fz = fit_q(F(1), [0, 0], [1, 3])
+lv.claim((fz[0], fz[1], fz[2], fz[3]) == (F(0), F(2), F(1), 3), 'fit_by_nudging([0,0],[1,3],1) = (0, 2, MSE 1, rounds 3) exact: w never moves, b takes two rounds, then one round changes nothing')
+lv.claim(round_q(F(0), F(0), F(1), [0, 1, 2, 3], [2, 1, 0, -1]) == (F(0), F(0)), 'nudge_once tie case stays at (0, 0)')
+lv.claim(round_q(F('1.4'), F('1.4'), F('0.1')) == (F('1.5'), F('1.3')), 'nudge_once(1.4, 1.4) -> (1.5, 1.3), b judged at the new w')
+lv.claim(sum([1, -1, -3, -5]) / 4 == -2 and sum([-1, 1, 3, 5]) / 4 == 2, 'p-script raw errors have mean -2, the y values mean 2')
 s15 = 0.0
 for _ in range(15):
     s15 += 0.1
