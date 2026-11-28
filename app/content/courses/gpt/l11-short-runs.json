@@ -1,0 +1,1715 @@
+{
+  "id": "l11-short-runs",
+  "course": "gpt",
+  "title": "What a short run tells you",
+  "minutes": 15,
+  "objectives": [
+    "Use short runs to debug training: overfit one batch and sweep the learning rate."
+  ],
+  "skills": [
+    "gpt-train"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Three runs",
+      "prose": "Three runs of 10 steps from the same small random weights. One has a bug that stops the gradients reaching the weights; one has too high a learning rate; one is healthy.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "a",
+              "label": "A",
+              "values": [
+                4.179,
+                4.179,
+                4.179,
+                4.179,
+                4.179,
+                4.179,
+                4.179,
+                4.179,
+                4.179,
+                4.179
+              ]
+            },
+            {
+              "id": "b",
+              "label": "B",
+              "values": [
+                4.179,
+                4.073,
+                3.92,
+                4.556,
+                3.998,
+                6.913,
+                3.842,
+                4.109,
+                3.735,
+                3.568
+              ]
+            },
+            {
+              "id": "c",
+              "label": "C",
+              "values": [
+                4.179,
+                4.019,
+                3.742,
+                3.69,
+                3.523,
+                3.38,
+                3.348,
+                3.355,
+                3.26,
+                3.236
+              ]
+            }
+          ],
+          "xValues": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "y": [
+            3,
+            7.2
+          ],
+          "xLabel": "step",
+          "yLabel": "nats"
+        }
+      },
+      "question": "Which run has the bug?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "A, flat at its first value",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "B, which jumps about",
+            "why": "B moves, so gradients reach the weights; its steps are too big."
+          },
+          {
+            "id": "c",
+            "text": "C, which falls steadily",
+            "why": "C is the healthy run."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A bug that blocks gradients leaves the weights unchanged."
+        },
+        {
+          "rung": "point",
+          "text": "Unchanged weights give the same loss every step... on the same batch.",
+          "highlight": [
+            "a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Look for a curve that never moves."
+        }
+      ],
+      "feedback": {
+        "correct": "A never moves: the weights did not change, so no gradient reached them.",
+        "generic": "Not quite. Which run shows no learning at all?"
+      },
+      "explain": {
+        "text": "A is flat, B jumps as high as 6.91 (rate 0.1) and C falls to 3.24 (rate 0.01). Ten steps already separate the three.",
+        "canvas": {
+          "highlight": [
+            "a"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A learning-rate sweep",
+      "prose": "The same 10 steps at seven learning rates, from small random weights, on the same batches. Slide through the rates.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "s",
+              "label": "loss",
+              "values": [
+                4.179,
+                4.177,
+                4.166,
+                4.172,
+                4.16,
+                4.148,
+                4.153,
+                4.145,
+                4.135,
+                4.136
+              ]
+            }
+          ],
+          "xValues": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "y": [
+            3,
+            7.2
+          ],
+          "xLabel": "step",
+          "yLabel": "nats"
+        },
+        "state": {
+          "caption": "Rate 0.0001: last loss 4.136."
+        },
+        "controls": [
+          {
+            "bind": "lr",
+            "label": "Learning rate",
+            "frames": [
+              {
+                "series": {
+                  "s": {
+                    "values": [
+                      4.179,
+                      4.177,
+                      4.166,
+                      4.172,
+                      4.16,
+                      4.148,
+                      4.153,
+                      4.145,
+                      4.135,
+                      4.136
+                    ]
+                  }
+                },
+                "caption": "Rate 0.0001: last loss 4.136."
+              },
+              {
+                "series": {
+                  "s": {
+                    "values": [
+                      4.179,
+                      4.166,
+                      4.144,
+                      4.145,
+                      4.125,
+                      4.098,
+                      4.093,
+                      4.084,
+                      4.062,
+                      4.051
+                    ]
+                  }
+                },
+                "caption": "Rate 0.0003: last loss 4.051."
+              },
+              {
+                "series": {
+                  "s": {
+                    "values": [
+                      4.179,
+                      4.13,
+                      4.077,
+                      4.069,
+                      4.03,
+                      3.974,
+                      3.957,
+                      3.95,
+                      3.902,
+                      3.863
+                    ]
+                  }
+                },
+                "caption": "Rate 0.001: last loss 3.863."
+              },
+              {
+                "series": {
+                  "s": {
+                    "values": [
+                      4.179,
+                      4.063,
+                      3.968,
+                      3.947,
+                      3.866,
+                      3.766,
+                      3.728,
+                      3.707,
+                      3.613,
+                      3.519
+                    ]
+                  }
+                },
+                "caption": "Rate 0.003: last loss 3.519."
+              },
+              {
+                "series": {
+                  "s": {
+                    "values": [
+                      4.179,
+                      4.019,
+                      3.742,
+                      3.69,
+                      3.523,
+                      3.38,
+                      3.348,
+                      3.355,
+                      3.26,
+                      3.236
+                    ]
+                  }
+                },
+                "caption": "Rate 0.01: last loss 3.236."
+              },
+              {
+                "series": {
+                  "s": {
+                    "values": [
+                      4.179,
+                      4.034,
+                      3.396,
+                      3.546,
+                      3.454,
+                      3.434,
+                      3.472,
+                      3.471,
+                      3.418,
+                      3.375
+                    ]
+                  }
+                },
+                "caption": "Rate 0.03: last loss 3.375."
+              },
+              {
+                "series": {
+                  "s": {
+                    "values": [
+                      4.179,
+                      4.073,
+                      3.92,
+                      4.556,
+                      3.998,
+                      6.913,
+                      3.842,
+                      4.109,
+                      3.735,
+                      3.568
+                    ]
+                  }
+                },
+                "caption": "Rate 0.1: last loss 3.568."
+              }
+            ],
+            "frameLabels": [
+              "0.0001",
+              "0.0003",
+              "0.001",
+              "0.003",
+              "0.01",
+              "0.03",
+              "0.1"
+            ]
+          }
+        ]
+      },
+      "question": "Which rate gives the lowest loss at step 10?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "e2",
+            "text": "0.01",
+            "correct": true
+          },
+          {
+            "id": "e1",
+            "text": "0.1",
+            "why": "At 0.1 the loss jumps about and ends at 3.568."
+          },
+          {
+            "id": "e4",
+            "text": "0.0001",
+            "why": "At 0.0001 the loss barely moves: 4.136."
+          },
+          {
+            "id": "3e2",
+            "text": "0.03",
+            "why": "At 0.03 the loss ends at 3.375, above 0.01's."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the last loss in each caption."
+        },
+        {
+          "rung": "point",
+          "text": "The smallest is the winner.",
+          "highlight": [
+            "s"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "0.01 ends lowest, at 3.236.",
+        "generic": "Not quite. Compare the last losses in the captions."
+      },
+      "explain": {
+        "text": "Too small a rate barely moves; too large overshoots. Over 10 steps 0.01 does best here, 3.236; the long run used 0.003 with warm-up and decay, safer over 5,000 steps."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The loss at step 0",
+      "prose": "Before any step, a model with small random weights should score about $\\ln 65 \\approx 4.1744$. A colleague's run starts at 5.9.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "ok",
+              "label": "small weights",
+              "values": [
+                4.179
+              ]
+            }
+          ],
+          "xValues": [
+            0
+          ],
+          "y": [
+            3,
+            7
+          ],
+          "xLabel": "step",
+          "yLabel": "nats",
+          "hlines": [
+            {
+              "id": "bad",
+              "y": 5.9,
+              "label": "colleague 5.9"
+            }
+          ]
+        }
+      },
+      "question": "What is the most likely cause?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "init",
+            "text": "Initial weights that are too large",
+            "correct": true
+          },
+          {
+            "id": "lr",
+            "text": "The learning rate is too high",
+            "why": "Step 0 comes before any update, so the rate cannot affect it."
+          },
+          {
+            "id": "data",
+            "text": "The validation text is unusual",
+            "why": "Any text scores about $\\ln 65$ under a uniform guess."
+          },
+          {
+            "id": "good",
+            "text": "Nothing: higher is better at the start",
+            "why": "Lower loss is always better; 5.9 is worse than guessing uniformly."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the loss at step 0 depend on?"
+        },
+        {
+          "rung": "point",
+          "text": "Only the starting weights.",
+          "highlight": [
+            "bad"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Large logits give confident guesses, often wrong."
+        }
+      ],
+      "feedback": {
+        "correct": "Above $\\ln 65$ at step 0 means confident wrong guesses: large initial weights.",
+        "generic": "Not quite. Step 0 depends only on the starting weights."
+      },
+      "explain": {
+        "text": "A loss above $\\ln V$ before training means the logits are large. Shrink the initial weights, as l6 did with 0.02, before tuning anything else."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Loss after 10 steps against the rate",
+      "prose": "Plotting the loss at step 10 against the learning rate on a log axis gives the sweep at a glance.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            5e-05,
+            0.2
+          ],
+          "y": [
+            3,
+            4.4
+          ],
+          "xScale": "log",
+          "xLabel": "learning rate",
+          "yLabel": "loss at step 10",
+          "functions": [
+            {
+              "id": "sw",
+              "points": [
+                [
+                  0.0001,
+                  4.136
+                ],
+                [
+                  0.0003,
+                  4.051
+                ],
+                [
+                  0.001,
+                  3.863
+                ],
+                [
+                  0.003,
+                  3.519
+                ],
+                [
+                  0.01,
+                  3.236
+                ],
+                [
+                  0.03,
+                  3.375
+                ],
+                [
+                  0.1,
+                  3.568
+                ]
+              ],
+              "label": "sweep"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 0.0001,
+              "y": 4.136
+            },
+            {
+              "id": "p1",
+              "x": 0.0003,
+              "y": 4.051
+            },
+            {
+              "id": "p2",
+              "x": 0.001,
+              "y": 3.863
+            },
+            {
+              "id": "p3",
+              "x": 0.003,
+              "y": 3.519
+            },
+            {
+              "id": "p4",
+              "x": 0.01,
+              "y": 3.236
+            },
+            {
+              "id": "p5",
+              "x": 0.03,
+              "y": 3.375
+            },
+            {
+              "id": "p6",
+              "x": 0.1,
+              "y": 3.568
+            }
+          ]
+        }
+      },
+      "question": "The rate 0.1 ends lower than 0.0001. Does that make 0.1 a good rate?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: its loss jumped above 6.9 on the way, so it is unstable",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: a lower final loss is all that matters",
+            "why": "One noisy batch at step 10 hides the spike to 6.91. An unstable run often blows up later."
+          },
+          {
+            "id": "both",
+            "text": "Yes, and higher still would be better",
+            "why": "Past the best rate the loss rises again; that is the shape of the sweep."
+          },
+          {
+            "id": "none",
+            "text": "No rate can be judged in 10 steps",
+            "why": "Ten steps cannot pick the final rate, but they do show which rates are unstable."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the whole run at 0.1, not only step 10."
+        },
+        {
+          "rung": "point",
+          "text": "It reached 6.91.",
+          "highlight": [
+            "p6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "An unstable rate is too high whatever its last value."
+        }
+      ],
+      "feedback": {
+        "correct": "Rate 0.1 spiked to 6.91: too high, even though its step 10 looks fine.",
+        "generic": "Not quite. Look at how the run got there."
+      },
+      "explain": {
+        "text": "A sweep picks the largest rate that still falls smoothly; here that is about 0.01. Beyond it the curve turns up and the runs grow erratic.",
+        "canvas": {
+          "highlight": [
+            "p4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Overfit one batch",
+      "prose": "A model that can learn should drive the loss on **one fixed batch** towards 0: it has 18,017 numbers to memorise 128 next characters. Here are 100 Adam steps on 4 windows at two rates.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "a",
+              "label": "rate 0.003",
+              "values": [
+                4.1759,
+                3.9693,
+                3.8489,
+                3.7388,
+                3.6289,
+                3.5222,
+                3.4188,
+                3.3184,
+                3.2198,
+                3.1211,
+                3.0222,
+                2.9248,
+                2.8295,
+                2.7352,
+                2.6409,
+                2.5461,
+                2.4522,
+                2.3592,
+                2.267,
+                2.1806,
+                2.0989,
+                2.0049,
+                1.9101,
+                1.8245,
+                1.7337,
+                1.6474,
+                1.5601,
+                1.479,
+                1.3943,
+                1.3176,
+                1.2394,
+                1.162,
+                1.094,
+                1.0185,
+                0.9573,
+                0.8894,
+                0.832,
+                0.7742,
+                0.7205,
+                0.6693,
+                0.626,
+                0.6002,
+                0.5995,
+                0.5064,
+                0.5028,
+                0.4444,
+                0.4091,
+                0.3928,
+                0.354,
+                0.3239,
+                0.3085,
+                0.2846,
+                0.2588,
+                0.2422,
+                0.2283,
+                0.211,
+                0.1949,
+                0.1826,
+                0.1717,
+                0.1604,
+                0.1495,
+                0.1402,
+                0.1325,
+                0.125,
+                0.1176,
+                0.1107,
+                0.1048,
+                0.0996,
+                0.0947,
+                0.09,
+                0.0856,
+                0.0816,
+                0.0779,
+                0.0746,
+                0.0715,
+                0.0686,
+                0.0659,
+                0.0633,
+                0.061,
+                0.0588,
+                0.0568,
+                0.0549,
+                0.0531,
+                0.0513,
+                0.0497,
+                0.0483,
+                0.0469,
+                0.0455,
+                0.0443,
+                0.0431,
+                0.0419,
+                0.0409,
+                0.0398,
+                0.0389,
+                0.038,
+                0.0371,
+                0.0362,
+                0.0354,
+                0.0346,
+                0.0339
+              ]
+            },
+            {
+              "id": "b",
+              "label": "rate 0.01",
+              "values": [
+                4.1759,
+                3.8899,
+                3.5547,
+                3.2997,
+                3.106,
+                2.8647,
+                2.6518,
+                2.4325,
+                2.2195,
+                2.0187,
+                1.8182,
+                1.6498,
+                1.4275,
+                1.2654,
+                1.1032,
+                0.9386,
+                0.7984,
+                0.6629,
+                0.5554,
+                0.4487,
+                0.3644,
+                0.2913,
+                0.2346,
+                0.1868,
+                0.1497,
+                0.1185,
+                0.0942,
+                0.0752,
+                0.0604,
+                0.0491,
+                0.0403,
+                0.0333,
+                0.0277,
+                0.0232,
+                0.0197,
+                0.0169,
+                0.0146,
+                0.0127,
+                0.0111,
+                0.0098,
+                0.0087,
+                0.0079,
+                0.0071,
+                0.0065,
+                0.006,
+                0.0055,
+                0.0051,
+                0.0048,
+                0.0045,
+                0.0042,
+                0.004,
+                0.0037,
+                0.0035,
+                0.0034,
+                0.0032,
+                0.0031,
+                0.003,
+                0.0029,
+                0.0028,
+                0.0027,
+                0.0026,
+                0.0025,
+                0.0024,
+                0.0024,
+                0.0023,
+                0.0023,
+                0.0022,
+                0.0022,
+                0.0021,
+                0.0021,
+                0.002,
+                0.002,
+                0.002,
+                0.0019,
+                0.0019,
+                0.0019,
+                0.0019,
+                0.0018,
+                0.0018,
+                0.0018,
+                0.0018,
+                0.0017,
+                0.0017,
+                0.0017,
+                0.0017,
+                0.0017,
+                0.0017,
+                0.0016,
+                0.0016,
+                0.0016,
+                0.0016,
+                0.0016,
+                0.0016,
+                0.0015,
+                0.0015,
+                0.0015,
+                0.0015,
+                0.0015,
+                0.0015,
+                0.0015
+              ]
+            }
+          ],
+          "y": [
+            0,
+            4.5
+          ],
+          "xLabel": "step",
+          "yLabel": "nats on the batch"
+        }
+      },
+      "question": "What does a run like this check?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bug",
+            "text": "That the whole loop can fit data at all",
+            "correct": true
+          },
+          {
+            "id": "gen",
+            "text": "That the model generalises to new text",
+            "why": "One batch says nothing about new text; it only shows the machinery works."
+          },
+          {
+            "id": "rate",
+            "text": "Which rate to use for the long run",
+            "why": "Memorising one batch favours large rates that may be unstable on fresh batches."
+          },
+          {
+            "id": "done",
+            "text": "That training is finished already",
+            "why": "It memorised 4 windows; the real run has 225,000 characters to learn."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What would stop a correct model memorising 128 characters?"
+        },
+        {
+          "rung": "point",
+          "text": "Nothing, given enough steps.",
+          "highlight": [
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Failing to do it points to a bug."
+        }
+      ],
+      "feedback": {
+        "correct": "At rate 0.01 the batch loss falls to 0.0015: the forward pass, backward pass and step all work.",
+        "generic": "Not quite. What can you learn from memorising one batch?"
+      },
+      "explain": {
+        "text": "Overfitting one batch is the cheapest end-to-end test: rate 0.01 reaches 0.0015 in 100 steps. A loss stuck well above 0 here means the gradients or the update are broken."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the overfit test",
+      "prose": "Write `overfit_one_batch(steps, lr, seed)`: start from `init_weights(seed)` and take `steps` Adam steps on the fixed batch `XO`, `YO` (4 windows of 32) with `loss_and_grads` and `adam_update`. Return the batch losses.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "b",
+              "label": "rate 0.01",
+              "values": [
+                4.1759,
+                3.8899,
+                3.5547,
+                3.2997,
+                3.106,
+                2.8647,
+                2.6518,
+                2.4325,
+                2.2195,
+                2.0187,
+                1.8182,
+                1.6498,
+                1.4275,
+                1.2654,
+                1.1032,
+                0.9386,
+                0.7984,
+                0.6629,
+                0.5554,
+                0.4487,
+                0.3644,
+                0.2913,
+                0.2346,
+                0.1868,
+                0.1497,
+                0.1185,
+                0.0942,
+                0.0752,
+                0.0604,
+                0.0491,
+                0.0403,
+                0.0333,
+                0.0277,
+                0.0232,
+                0.0197,
+                0.0169,
+                0.0146,
+                0.0127,
+                0.0111,
+                0.0098,
+                0.0087,
+                0.0079,
+                0.0071,
+                0.0065,
+                0.006,
+                0.0055,
+                0.0051,
+                0.0048,
+                0.0045,
+                0.0042,
+                0.004,
+                0.0037,
+                0.0035,
+                0.0034,
+                0.0032,
+                0.0031,
+                0.003,
+                0.0029,
+                0.0028,
+                0.0027,
+                0.0026,
+                0.0025,
+                0.0024,
+                0.0024,
+                0.0023,
+                0.0023,
+                0.0022,
+                0.0022,
+                0.0021,
+                0.0021,
+                0.002,
+                0.002,
+                0.002,
+                0.0019,
+                0.0019,
+                0.0019,
+                0.0019,
+                0.0018,
+                0.0018,
+                0.0018,
+                0.0018,
+                0.0017,
+                0.0017,
+                0.0017,
+                0.0017,
+                0.0017,
+                0.0017,
+                0.0016,
+                0.0016,
+                0.0016,
+                0.0016,
+                0.0016,
+                0.0016,
+                0.0015,
+                0.0015,
+                0.0015,
+                0.0015,
+                0.0015,
+                0.0015,
+                0.0015
+              ]
+            }
+          ],
+          "y": [
+            0,
+            4.5
+          ],
+          "xLabel": "step",
+          "yLabel": "nats on the batch"
+        }
+      },
+      "question": "Write `overfit_one_batch`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom gpt_ops_l3 import init_weights, loss_and_grads, adam_init, adam_update\n\n\ndef overfit_one_batch(steps, lr, seed):\n    # Start from init_weights(seed). Train on the one fixed batch XO, YO (defined for you) for `steps`\n    # Adam steps at rate lr, using loss_and_grads and adam_update. Return the list of batch losses.\n    ...\n",
+        "solution": "import numpy as np\nfrom gpt_ops_l3 import init_weights, loss_and_grads, adam_init, adam_update\n\n\ndef overfit_one_batch(steps, lr, seed):\n    w = init_weights(seed)\n    state = adam_init(w)\n    losses = []\n    for _ in range(steps):\n        loss, grads = loss_and_grads(w, XO, YO)\n        w = adam_update(w, grads, state, lr)\n        losses.append(loss)\n    return losses\n",
+        "prelude": "import numpy as np\nimport gpt_ops_l2 as _G\nfrom gpt_ops_l3 import get_batch as _gb\n\nXO, YO = _gb(np.array(_G.encode(open('tiny-shakespeare.txt').read()[:225000])), 4, 32, np.random.default_rng(5))\n",
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+          "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+          "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+          "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt",
+          "gpt_ops_l3.py": "content/data/ai/gpt_ops_l3.py"
+        },
+        "examples": [
+          {
+            "call": "len(overfit_one_batch(2, 0.01, 0))",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "overfit_one_batch(3, 0.01, 0)",
+            "expect": "[4.175865858003014, 3.8899091661298453, 3.5547155226759406]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "call": "overfit_one_batch(100, 0.01, 0)[-1] < 0.01",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 15000
+          },
+          {
+            "call": "overfit_one_batch(100, 0.01, 1)[-1] < 0.01",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 15000
+          },
+          {
+            "call": "len(overfit_one_batch(5, 0.0, 2))",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 4 hidden tests. Test 1 compares the first 3 losses at rate 0.01 to $10^{-6}$ (relative). Tests 2 and 3 run 100 steps for seeds 0 and 1 and need the last loss below 0.01, a few seconds each. Test 4 checks the length at rate 0.",
+        "mutants": [
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l3 import init_weights, loss_and_grads, adam_init, adam_update\n\n\ndef overfit_one_batch(steps, lr, seed):\n    w = init_weights(seed)\n    state = adam_init(w)\n    losses = []\n    for _ in range(steps):\n        X, Y = _gb(np.array(_G.encode(open('tiny-shakespeare.txt').read()[:225000])), 4, 32, np.random.default_rng(len(losses)))\n        loss, grads = loss_and_grads(w, X, Y)\n        w = adam_update(w, grads, state, lr)\n        losses.append(loss)\n    return losses\n",
+            "test": 1,
+            "symptom": "Draws a fresh batch every step, so it is not overfitting one batch."
+          },
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l3 import init_weights, loss_and_grads, adam_init, adam_update\n\n\ndef overfit_one_batch(steps, lr, seed):\n    w = init_weights(seed)\n    losses = []\n    for _ in range(steps):\n        loss, grads = loss_and_grads(w, XO, YO)\n        w = adam_update(w, grads, adam_init(w), lr)\n        losses.append(loss)\n    return losses\n",
+            "test": 1,
+            "symptom": "Restarts Adam every step, so its moments and step count never build up."
+          },
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l3 import init_weights, loss_and_grads, adam_init, adam_update\n\n\ndef overfit_one_batch(steps, lr, seed):\n    w = init_weights(seed)\n    state = adam_init(w)\n    losses = []\n    for _ in range(steps):\n        loss, grads = loss_and_grads(w, XO, YO)\n        adam_update(w, grads, state, lr)\n        losses.append(loss)\n    return losses\n",
+            "test": 1,
+            "symptom": "Throws away the updated weights, so the loss never moves."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Make the Adam state once, before the loop."
+        },
+        {
+          "rung": "point",
+          "text": "Each step: `loss, grads = loss_and_grads(w, XO, YO)`, then `w = adam_update(w, grads, state, lr)`.",
+          "highlight": [
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Append each loss."
+        }
+      ],
+      "feedback": {
+        "correct": "Your run memorises the batch: the reference ends at 0.0015.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 compares the first three losses: same batch every step, one Adam state, keep the new weights."
+        }
+      },
+      "explain": {
+        "text": "Same batch, one optimiser state, new weights each step. If this cannot reach near 0, nothing longer will work."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Judged by the training loss",
+      "prose": "A colleague reports a loss of 0.0015 nats a character after 100 steps, and calls the model the best they have trained. It is the overfit run.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Text",
+            "Loss (nats a character)"
+          ],
+          "rows": [
+            [
+              "the 4 training windows",
+              "0.0015"
+            ],
+            [
+              "the 25,000 validation characters",
+              "?"
+            ],
+            [
+              "uniform guess",
+              "4.1744"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What does that model score on the validation text?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "worse",
+            "text": "About 8.04, worse than a uniform guess",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "About 0.0015, the same as on its batch",
+            "why": "It memorised 128 characters; new text is not those characters."
+          },
+          {
+            "id": "bigram",
+            "text": "About 2.46, like the bigram",
+            "why": "It has seen too little text to learn even pair counts; its confident guesses are wrong."
+          },
+          {
+            "id": "good",
+            "text": "About 1.79, like the supplied model",
+            "why": "The supplied model trained on 5,000 batches, not one."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "It saw 4 windows, all memorised."
+        },
+        {
+          "rung": "point",
+          "text": "On new text it predicts those windows' characters with confidence.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Confident wrong guesses cost more than uniform ones."
+        }
+      ],
+      "feedback": {
+        "correct": "It scores 8.04 on validation: memorising one batch made it confidently wrong elsewhere.",
+        "generic": "Not quite. What did it learn beyond those 4 windows?",
+        "byKey": {
+          "same": "That is the trap: a training loss says nothing about new text. Always report the held-out loss."
+        }
+      },
+      "explain": {
+        "text": "Training loss 0.0015, validation 8.04, above $\\ln 65 \\approx 4.1744$. A training loss alone cannot rank models.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A perfectly flat loss",
+      "prose": "A run on one fixed batch prints the same loss, 4.175866, at every step, to every digit.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "f",
+              "label": "loss",
+              "values": [
+                4.1759,
+                4.1759,
+                4.1759,
+                4.1759,
+                4.1759,
+                4.1759,
+                4.1759,
+                4.1759,
+                4.1759,
+                4.1759
+              ]
+            }
+          ],
+          "xValues": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "y": [
+            3,
+            4.5
+          ],
+          "xLabel": "step",
+          "yLabel": "nats"
+        }
+      },
+      "question": "What does an exactly constant loss on a fixed batch tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "none",
+            "text": "No update ever reached the weights",
+            "correct": true
+          },
+          {
+            "id": "slow",
+            "text": "The rate is a little too small",
+            "why": "A small rate still moves the loss in the later digits."
+          },
+          {
+            "id": "done",
+            "text": "Training has fully converged",
+            "why": "From random weights at 4.18, nothing has been learned yet."
+          },
+          {
+            "id": "high",
+            "text": "The rate is much too high",
+            "why": "Too high a rate makes the loss jump, not freeze."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Same batch, same weights, same loss."
+        },
+        {
+          "rung": "point",
+          "text": "So the weights are the same.",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Look for a rate of 0, or new weights that are never kept."
+        }
+      ],
+      "feedback": {
+        "correct": "Identical losses on one batch mean identical weights: the update is lost somewhere.",
+        "generic": "Not quite. What must be true for every digit to repeat?"
+      },
+      "explain": {
+        "text": "Even a tiny rate changes the loss in some digit. An exact repeat means the step was never applied: a rate of 0, a dropped return value, or gradients that are all zero."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the diagnosis",
+      "prose": "Write `diagnose(losses)` for a short run. It is `diverging` if any loss is not finite or is more than 10% above the first. It is `stuck` if every loss equals the first, and `slow` if the last is above 0.98 times the first. Otherwise it is `healthy`. `SWEEP` holds the seven 10-step runs.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "c",
+              "label": "rate 0.01",
+              "values": [
+                4.179,
+                4.019,
+                3.742,
+                3.69,
+                3.523,
+                3.38,
+                3.348,
+                3.355,
+                3.26,
+                3.236
+              ]
+            },
+            {
+              "id": "b",
+              "label": "rate 0.1",
+              "values": [
+                4.179,
+                4.073,
+                3.92,
+                4.556,
+                3.998,
+                6.913,
+                3.842,
+                4.109,
+                3.735,
+                3.568
+              ]
+            }
+          ],
+          "xValues": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "y": [
+            3,
+            7.2
+          ],
+          "xLabel": "step",
+          "yLabel": "nats"
+        }
+      },
+      "question": "Write `diagnose`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\ndef diagnose(losses):\n    # 'diverging' if any loss is not finite or rises more than 10% above the first;\n    # 'stuck' if every loss equals the first (within 1e-12); 'slow' if the last is above 0.98 times the first;\n    # otherwise 'healthy'. Check in that order.\n    ...\n",
+        "solution": "import math\n\n\ndef diagnose(losses):\n    first = losses[0]\n    if any(not math.isfinite(x) for x in losses) or max(losses) > 1.1 * first:\n        return 'diverging'\n    if all(abs(x - first) < 1e-12 for x in losses):\n        return 'stuck'\n    if losses[-1] > 0.98 * first:\n        return 'slow'\n    return 'healthy'\n",
+        "prelude": "SWEEP = {0.0001: [4.179151157581199, 4.176718163032684, 4.165972025134042, 4.171512037210928, 4.160306312213761, 4.148188045182991, 4.152979593681235, 4.145299056414883, 4.135163575397302, 4.136083702976443], 0.0003: [4.179151157581199, 4.1659671922485515, 4.1440154802324765, 4.144892298084697, 4.12465866641671, 4.097834824181086, 4.093492437113715, 4.083930862213185, 4.061738742997234, 4.051440800233589], 0.001: [4.179151157581199, 4.130427316565443, 4.076759759187569, 4.0686992373100095, 4.029693713915613, 3.974331742620212, 3.9573182303318974, 3.9497668922094364, 3.9023889915946413, 3.8632820800775853], 0.003: [4.179151157581199, 4.06264874706151, 3.9683655818721992, 3.9469395084423295, 3.8664257048841457, 3.7662446292946243, 3.7284083661657483, 3.7073856786737625, 3.6130021357163247, 3.5189107208716237], 0.01: [4.179151157581199, 4.01927579808485, 3.742470153894161, 3.689610601252741, 3.5225748118316536, 3.3796076639051273, 3.347847780296503, 3.3550585233790926, 3.2601223376118105, 3.2357213070518234], 0.03: [4.179151157581199, 4.0337085038082305, 3.3958822307954017, 3.546120776798266, 3.4543248860866935, 3.433814799743976, 3.4722639052573694, 3.471070196271363, 3.4182721877858757, 3.3749579497658972], 0.1: [4.179151157581199, 4.072875956795487, 3.920178764990294, 4.556231945050582, 3.9976868570806823, 6.912669557791949, 3.8418533004898663, 4.10923368238829, 3.7351084557719085, 3.567939150439148]}\n",
+        "examples": [
+          {
+            "call": "diagnose([4.2, 3.9, 3.5])",
+            "expect": "'healthy'",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "diagnose(SWEEP[0.01])",
+            "expect": "'healthy'",
+            "compare": "equal"
+          },
+          {
+            "call": "diagnose(SWEEP[0.1])",
+            "expect": "'diverging'",
+            "compare": "equal"
+          },
+          {
+            "call": "diagnose(SWEEP[0.0001])",
+            "expect": "'slow'",
+            "compare": "equal"
+          },
+          {
+            "call": "diagnose([4.1744] * 10)",
+            "expect": "'stuck'",
+            "compare": "equal"
+          },
+          {
+            "call": "diagnose([4.18, 3.9, float('nan')])",
+            "expect": "'diverging'",
+            "compare": "equal"
+          },
+          {
+            "call": "diagnose([4.0, 4.3, 4.5])",
+            "expect": "'diverging'",
+            "compare": "equal"
+          },
+          {
+            "call": "diagnose(SWEEP[0.0003])",
+            "expect": "'healthy'",
+            "compare": "equal"
+          },
+          {
+            "call": "diagnose([4.0, 3.95, 3.93])",
+            "expect": "'slow'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 8 hidden tests: the sweep at rates 0.01, 0.1, 0.0001 and 0.0003, a flat run, a run that reaches nan, a rising run and one that falls only 2%.",
+        "mutants": [
+          {
+            "source": "import math\n\n\ndef diagnose(losses):\n    first = losses[0]\n    if any(not math.isfinite(x) for x in losses) or losses[-1] > first:\n        return 'diverging'\n    if all(abs(x - first) < 1e-12 for x in losses):\n        return 'stuck'\n    if losses[-1] > 0.98 * first:\n        return 'slow'\n    return 'healthy'\n",
+            "test": 2,
+            "symptom": "Looks only at the last loss, so a run that spiked and came back reads as healthy."
+          },
+          {
+            "source": "import math\n\n\ndef diagnose(losses):\n    first = losses[0]\n    if any(not math.isfinite(x) for x in losses) or max(losses) > 1.1 * first:\n        return 'diverging'\n    if all(abs(x - first) < 1e-12 for x in losses):\n        return 'stuck'\n    return 'healthy'\n",
+            "test": 3,
+            "symptom": "Never calls a run slow."
+          },
+          {
+            "source": "import math\n\n\ndef diagnose(losses):\n    first = losses[0]\n    if max(losses) > 1.1 * first:\n        return 'diverging'\n    if all(abs(x - first) < 1e-12 for x in losses):\n        return 'stuck'\n    if losses[-1] > 0.98 * first:\n        return 'slow'\n    return 'healthy'\n",
+            "test": 5,
+            "symptom": "Misses nan, which compares false with everything."
+          },
+          {
+            "source": "import math\n\n\ndef diagnose(losses):\n    first = losses[0]\n    if any(not math.isfinite(x) for x in losses) or max(losses) > 1.1 * first:\n        return 'diverging'\n    if losses[-1] > 0.98 * first:\n        return 'slow'\n    return 'healthy'\n",
+            "test": 4,
+            "symptom": "Never calls a flat run stuck."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check `math.isfinite` on every loss first."
+        },
+        {
+          "rung": "point",
+          "text": "Compare `max(losses)` with `1.1 * losses[0]`.",
+          "highlight": [
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then flat, then slow, else healthy."
+        }
+      ],
+      "feedback": {
+        "correct": "Your rules sort every planted run correctly.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is rate 0.1, which spikes above 6.9 and comes back. Look at the largest loss, not the last.",
+          "test-5": "Test 5 reaches nan; `nan > x` is False, so test it with `math.isfinite`."
+        }
+      },
+      "explain": {
+        "text": "The rules read the whole curve: a spike, a freeze, a crawl. Run them on every short run before trusting a long one."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "What a short run tells you",
+      "prose": "Before any long run:\n- step 0: the loss is near $\\ln V$;\n- one batch: the loss falls towards 0;\n- a sweep of 10 steps: pick the largest rate that falls smoothly;\n- then judge every run by its held-out loss.",
+      "question": "A run passes the step-0 and one-batch checks but its sweep is flat at every rate. What is the next suspect?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "data",
+            "text": "The batches the sweep draws",
+            "correct": true
+          },
+          {
+            "id": "model",
+            "text": "The backward pass again",
+            "why": "The one-batch check passed, so gradients and updates work."
+          },
+          {
+            "id": "init",
+            "text": "The initial weights again",
+            "why": "Step 0 was near $\\ln V$, so the start is fine."
+          },
+          {
+            "id": "rate",
+            "text": "The choice of the seven rates",
+            "why": "Seven rates over three orders of magnitude cover the useful range."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which part does the sweep use that the one-batch test does not?"
+        }
+      ],
+      "feedback": {
+        "correct": "Only the sweep draws new batches each step: check the sampler and the targets.",
+        "generic": "Not quite. Which piece differs between the two checks?"
+      },
+      "explain": {
+        "text": "Each check isolates a part: step 0 the start, one batch the gradients, the sweep the data and the rate. Failing only the sweep points at the batches."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A desk checklist",
+      "prose": "Karpathy's \"A Recipe for Training Neural Networks\" (2019) asks for these checks before any long run. A quant team adopts them for a new return-prediction net and wants one rule on the wall.",
+      "question": "Which order matches the recipe?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "order",
+            "text": "Step 0 loss, one batch, a rate sweep, then the long run",
+            "correct": true
+          },
+          {
+            "id": "long",
+            "text": "Train long first, then debug if the result is poor",
+            "why": "A poor long run has many possible causes; short checks isolate them first."
+          },
+          {
+            "id": "rate",
+            "text": "Sweep rates first, then check the loss at step 0",
+            "why": "Step 0 needs no training and catches a bad start before any sweep."
+          },
+          {
+            "id": "val",
+            "text": "Watch only the validation loss throughout",
+            "why": "Validation loss is the final judge, but it cannot tell a bug from a bad rate."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with the check that costs nothing."
+        },
+        {
+          "rung": "point",
+          "text": "Then the one that tests the gradients."
+        },
+        {
+          "rung": "step",
+          "text": "Then tune."
+        }
+      ],
+      "feedback": {
+        "correct": "Cheapest and most specific first: step 0, one batch, a sweep, then the long run on held-out loss.",
+        "generic": "Not quite. Order the checks from cheapest to most expensive."
+      },
+      "explain": {
+        "text": "Each step rules out one class of failure before paying for the next. The same order debugs a return model, a CNN or the tiny GPT."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Step 0 should score about $\\ln V$; one fixed batch should be memorised towards 0; a flat loss to every digit means no update reached the weights.",
+      "A 10-step sweep picks the largest rate that falls smoothly: 0.01 here (3.24 at step 10); 0.1 spiked to 6.91.",
+      "Judge runs by held-out loss: the memorised batch scored 0.0015 on itself and 8.04 on validation."
+    ],
+    "formula": {
+      "name": "The order of checks",
+      "tex": "\\text{step } 0 \\approx \\ln V \\;\\to\\; \\text{one batch} \\to 0 \\;\\to\\; \\text{sweep} \\;\\to\\; \\text{held-out loss}",
+      "note": "Cheapest first."
+    },
+    "trap": "Ranking runs by training loss: memorising one batch looks perfect and generalises worse than guessing."
+  },
+  "quiz": [
+    {
+      "id": "q-step0",
+      "difficulty": 2,
+      "question": "A character model with 96 symbols starts training at 4.57 nats. What does that say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "The start is fine: it is about $\\ln 96$",
+            "correct": true
+          },
+          {
+            "id": "bad",
+            "text": "The weights are too large",
+            "why": "$\\ln 96 \\approx 4.56$, so 4.57 is a near-uniform start."
+          },
+          {
+            "id": "lr",
+            "text": "The rate is much too high",
+            "why": "Step 0 comes before any update."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\ln 96 \\approx 4.56$, the loss of a uniform guess: a good start.",
+        "generic": "Not quite. Compare with $\\ln 96$."
+      },
+      "explain": {
+        "text": "Small weights give about $\\ln V$ at step 0; for $V = 96$ that is 4.56."
+      }
+    },
+    {
+      "id": "q-flat",
+      "difficulty": 2,
+      "question": "Every 10-step run in a sweep, at every rate, prints the same loss to every digit on the same batches. What is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "update",
+            "text": "The update never reaches the weights",
+            "correct": true
+          },
+          {
+            "id": "rates",
+            "text": "All the rates are too small",
+            "why": "A small rate still changes the later digits."
+          },
+          {
+            "id": "init",
+            "text": "The initial weights are too small",
+            "why": "Small weights still learn; the loss would move."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Identical losses mean identical weights: the step is lost.",
+        "generic": "Not quite. What makes every digit repeat?"
+      },
+      "explain": {
+        "text": "Look for a dropped return value, a rate of 0 or gradients that never reach the arrays."
+      }
+    },
+    {
+      "id": "q-memo",
+      "difficulty": 3,
+      "question": "A model memorises its training batch to 0.002 nats but scores 7.9 on validation. Which is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "over",
+            "text": "It overfits its batch",
+            "correct": true
+          },
+          {
+            "id": "bug",
+            "text": "Its backward pass is wrong",
+            "why": "A wrong backward pass could not memorise the batch."
+          },
+          {
+            "id": "val",
+            "text": "The validation text is corrupt",
+            "why": "A model trained on one batch is expected to do badly on new text."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Memorising a batch proves the machinery works, not that the model generalises.",
+        "generic": "Not quite. What does a low training loss alone show?"
+      },
+      "explain": {
+        "text": "Report the held-out loss. A training loss near 0 with a validation loss above $\\ln V$ is memorisation."
+      }
+    }
+  ]
+}

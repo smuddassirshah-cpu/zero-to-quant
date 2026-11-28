@@ -1,0 +1,1205 @@
+{
+  "id": "l9-the-training-loop",
+  "course": "gpt",
+  "title": "The training loop",
+  "minutes": 15,
+  "objectives": [
+    "Build the training loop: batches, loss, backward pass and an Adam step."
+  ],
+  "skills": [
+    "gpt-train"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where a window can start",
+      "prose": "Training reads random windows from the first 225,000 characters, the training part. A window is 32 input characters, and its targets run one character further.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "…",
+            "224,966",
+            "224,967",
+            "224,968",
+            "…",
+            "224,999"
+          ],
+          "indexFrom": 0
+        },
+        "state": {
+          "caption": "The last few start indices of the training part."
+        }
+      },
+      "question": "Numbering from 0, what is the largest start index whose targets stay inside the training part?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 224967,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "off",
+            "value": 224968,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "end",
+            "value": 224999,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Start index"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A window at start $s$ needs characters $s$ to $s + 32$."
+        },
+        {
+          "rung": "point",
+          "text": "The last index is 224,999.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$s + 32 \\le 224{,}999$."
+        }
+      ],
+      "feedback": {
+        "correct": "$224{,}999 - 32 = 224{,}967$: inputs $s$ to $s + 31$, targets $s + 1$ to $s + 32$.",
+        "generic": "Not quite. The last target is 32 places after the start.",
+        "byKey": {
+          "off": "At 224,968 the last target would be index 225,000, outside the training part.",
+          "end": "That is the last character. A window needs 32 more after its start."
+        }
+      },
+      "explain": {
+        "text": "Targets run to $s + 32$, so $s$ can be at most 224,967. Drawing starts with `rng.integers(0, 225000 - 32)` gives exactly 0 to 224,967."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Watch it learn",
+      "prose": "Press Run. The loop draws a batch, computes the loss and its gradients, and takes one Adam step, 40 times, from small random weights. Each point is one batch's loss.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "loss",
+              "label": "batch loss",
+              "values": []
+            }
+          ],
+          "y": [
+            2.5,
+            4.5
+          ],
+          "length": 40,
+          "xLabel": "step",
+          "yLabel": "nats",
+          "hlines": [
+            {
+              "id": "u",
+              "y": 4.1744,
+              "label": "ln 65"
+            }
+          ]
+        }
+      },
+      "widget": {
+        "kind": "trainer",
+        "starter": "import numpy as np\nimport gpt_ops_l2 as G\nfrom gpt_ops_l3 import init_weights, get_batch, loss_and_grads, adam_init, adam_update\n\ndata = np.array(G.encode(open('tiny-shakespeare.txt').read()[:225000]))\nw = init_weights(0)\nstate = adam_init(w)\nrng = np.random.default_rng(1)\nfor step in range(40):\n    X, Y = get_batch(data, 16, 32, rng)\n    loss, grads = loss_and_grads(w, X, Y)\n    w = adam_update(w, grads, state, 3e-3)\n    report(step, loss)\n",
+        "steps": 40,
+        "maxSeconds": 60,
+        "series": [
+          "loss"
+        ],
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+          "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+          "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+          "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt",
+          "gpt_ops_l3.py": "content/data/ai/gpt_ops_l3.py"
+        },
+        "how": "Never graded. 40 steps take a few seconds on a laptop; the same run in the number script falls from 4.18 to 2.83."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A batch by hand",
+      "prose": "The **batch sampler** draws $B$ start indices and cuts a window of $T$ ids at each; the targets are the same windows one place later. Here the data are 8 ids, $B = 2$, $T = 3$, and the draws are starts 1 and 4.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "5",
+            "1",
+            "4",
+            "1",
+            "5",
+            "9",
+            "2",
+            "6"
+          ],
+          "indexFrom": 0
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "s1",
+              "at": 1,
+              "label": "start 1"
+            },
+            {
+              "id": "s2",
+              "at": 4,
+              "label": "start 4"
+            }
+          ]
+        }
+      },
+      "question": "What is the second row of the targets $Y$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "9, 2, 6",
+            "correct": true
+          },
+          {
+            "id": "x",
+            "text": "5, 9, 2",
+            "why": "That is the second row of the inputs. Targets start one place later."
+          },
+          {
+            "id": "two",
+            "text": "2, 6 and nothing",
+            "why": "Start 4 plus 3 targets ends at index 7, which exists."
+          },
+          {
+            "id": "first",
+            "text": "4, 1, 5",
+            "why": "That is the first row of the targets, from start 1."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The second window starts at index 4."
+        },
+        {
+          "rung": "point",
+          "text": "Its inputs are indices 4, 5, 6.",
+          "highlight": [
+            "c5",
+            "c6",
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Its targets are indices 5, 6, 7."
+        }
+      ],
+      "feedback": {
+        "correct": "Inputs 5, 9, 2 (indices 4 to 6), targets 9, 2, 6 (indices 5 to 7).",
+        "generic": "Not quite. Shift the second window one place to the right."
+      },
+      "explain": {
+        "text": "Each row of $Y$ is its row of $X$ moved one place along the data. So $X = [[1, 4, 1], [5, 9, 2]]$ and $Y = [[4, 1, 5], [9, 2, 6]]$.",
+        "canvas": {
+          "highlight": [
+            "c5",
+            "c6",
+            "c7"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write the sampler",
+      "prose": "Write `get_batch(data, B, T, rng)`: starts from `rng.integers(0, len(data) - T, B)`, then $X$ of shape $(B, T)$ and $Y$ the same windows one place on. `TRAIN` holds the training part as ids.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "5",
+            "1",
+            "4",
+            "1",
+            "5",
+            "9",
+            "2",
+            "6"
+          ],
+          "indexFrom": 0
+        }
+      },
+      "question": "Write `get_batch`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef get_batch(data, B, T, rng):\n    # Starts: rng.integers(0, len(data) - T, B). X holds the B windows of T ids, Y the same windows one place later.\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef get_batch(data, B, T, rng):\n    data = np.asarray(data)\n    starts = rng.integers(0, len(data) - T, B)\n    X = np.stack([data[i:i + T] for i in starts])\n    Y = np.stack([data[i + 1:i + T + 1] for i in starts])\n    return X, Y\n",
+        "prelude": "import numpy as np\nimport gpt_ops_l2 as _G\nTRAIN = np.array(_G.encode(open(\"tiny-shakespeare.txt\").read()[:225000]))\nG3X = np.array([[1, 40, 39, 58, 58, 43, 52, 1, 53, 52, 1, 41, 53, 50, 42, 1, 40, 47, 58, 57, 8, 0, 0, 32, 46, 47, 56, 42, 1, 31, 43, 56], [58, 1, 31, 43, 56, 60, 47, 52, 45, 51, 39, 52, 10, 0, 24, 43, 58, 1, 51, 43, 1, 46, 39, 60, 43, 1, 61, 39, 56, 6, 1, 57], [57, 1, 57, 59, 41, 46, 1, 57, 41, 53, 56, 52, 6, 1, 44, 53, 56, 1, 58, 46, 43, 63, 1, 61, 43, 56, 43, 1, 51, 39, 42, 43], [58, 46, 43, 56, 10, 1, 19, 53, 42, 1, 47, 57, 1, 51, 59, 41, 46, 1, 42, 47, 57, 54, 50, 43, 39, 57, 43, 42, 0, 32, 46, 39], [52, 8, 1, 37, 53, 59, 56, 1, 60, 47, 56, 58, 59, 43, 1, 47, 57, 0, 32, 53, 1, 51, 39, 49, 43, 1, 46, 47, 51, 1, 61, 53], [43, 1, 47, 57, 1, 44, 39, 47, 56, 6, 1, 63, 53, 59, 1, 57, 46, 39, 50, 50, 1, 54, 43, 56, 41, 43, 47, 60, 43, 0, 35, 46], [43, 39, 58, 46, 43, 42, 1, 63, 53, 59, 56, 1, 41, 59, 56, 57, 43, 1, 39, 45, 39, 47, 52, 57, 58, 1, 63, 53, 59, 56, 57, 43], [1, 39, 1, 50, 53, 57, 57, 2, 0, 13, 50, 39, 57, 6, 1, 21, 1, 39, 51, 1, 58, 46, 43, 1, 51, 53, 58, 46, 43, 56, 1, 53], [42, 8, 0, 0, 31, 43, 41, 53, 52, 42, 1, 15, 47, 58, 47, 64, 43, 52, 10, 0, 35, 46, 63, 1, 58, 46, 39, 58, 1, 61, 39, 63], [52, 1, 57, 53, 53, 58, 46, 47, 52, 45, 1, 58, 46, 43, 51, 6, 1, 61, 43, 1, 52, 53, 59, 56, 47, 57, 46, 1, 5, 45, 39, 47], [1, 44, 56, 53, 51, 1, 61, 46, 47, 41, 46, 1, 52, 53, 1, 61, 39, 56, 56, 39, 52, 58, 1, 41, 39, 52, 1, 42, 43, 44, 43, 52], [57, 1, 52, 53, 1, 51, 53, 56, 43, 1, 58, 53, 1, 40, 43, 1, 57, 39, 47, 42, 6, 1, 40, 59, 58, 1, 46, 43, 1, 47, 57, 1], [30, 43, 54, 39, 47, 56, 1, 58, 53, 1, 58, 46, 43, 1, 57, 43, 52, 39, 58, 43, 7, 46, 53, 59, 57, 43, 8, 0, 0, 25, 17, 26], [19, 53, 53, 42, 1, 41, 53, 59, 52, 57, 43, 50, 6, 1, 51, 39, 56, 56, 63, 10, 1, 50, 43, 39, 56, 52, 1, 47, 58, 6, 1, 50], [43, 57, 43, 56, 58, 2, 0, 0, 15, 27, 30, 21, 27, 24, 13, 26, 33, 31, 10, 0, 13, 63, 6, 1, 40, 59, 58, 1, 52, 53, 58, 1], [1, 61, 39, 56, 50, 47, 49, 43, 1, 57, 43, 56, 60, 47, 41, 43, 1, 46, 43, 1, 46, 39, 57, 1, 42, 53, 52, 43, 6, 1, 41, 53]])\n",
+        "data": {
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "examples": [
+          {
+            "call": "get_batch(np.arange(10), 2, 3, np.random.default_rng(0))[0].shape",
+            "expect": "(2, 3)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "get_batch(np.arange(100), 3, 5, np.random.default_rng(0))[0].tolist()",
+            "expect": "[[80, 81, 82, 83, 84], [60, 61, 62, 63, 64], [48, 49, 50, 51, 52]]",
+            "compare": "equal"
+          },
+          {
+            "call": "get_batch(np.arange(100), 3, 5, np.random.default_rng(0))[1].tolist()",
+            "expect": "[[81, 82, 83, 84, 85], [61, 62, 63, 64, 65], [49, 50, 51, 52, 53]]",
+            "compare": "equal"
+          },
+          {
+            "call": "get_batch(np.arange(6), 4, 5, np.random.default_rng(3))[1].tolist()",
+            "expect": "[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]",
+            "compare": "equal"
+          },
+          {
+            "call": "get_batch(TRAIN, 16, 32, np.random.default_rng(1))[0].shape",
+            "expect": "(16, 32)",
+            "compare": "equal"
+          },
+          {
+            "call": "(get_batch(TRAIN, 16, 32, np.random.default_rng(1))[0] == G3X).all()",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 5 hidden tests: seeded batches of `np.arange(100)` (inputs and targets) and of a 6-id list with $T = 5$, then 16 windows of 32 from the training part, shape and values.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef get_batch(data, B, T, rng):\n    data = np.asarray(data)\n    starts = rng.integers(0, len(data) - T, B)\n    X = np.stack([data[i:i + T] for i in starts])\n    Y = np.stack([data[i:i + T] for i in starts])\n    return X, Y\n",
+            "test": 2,
+            "symptom": "Uses the inputs as targets, the off-by-one."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef get_batch(data, B, T, rng):\n    data = np.asarray(data)\n    starts = rng.integers(0, len(data) - T + 1, B)\n    X = np.stack([data[i:i + T] for i in starts])\n    Y = np.stack([data[i + 1:i + T + 1] for i in starts])\n    return X, Y\n",
+            "test": 1,
+            "symptom": "Lets a window start one place too late, so its last target runs off the end."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef get_batch(data, B, T, rng):\n    data = np.asarray(data)\n    starts = rng.integers(0, len(data) - T, B)\n    X = np.stack([data[i:i + T] for i in starts])\n    Y = np.stack([data[i + 2:i + T + 2] for i in starts])\n    return X, Y\n",
+            "test": 2,
+            "symptom": "Shifts the targets by two."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef get_batch(data, B, T, rng):\n    data = np.asarray(data)\n    starts = np.random.randint(0, len(data) - T, B)\n    X = np.stack([data[i:i + T] for i in starts])\n    Y = np.stack([data[i + 1:i + T + 1] for i in starts])\n    return X, Y\n",
+            "test": 1,
+            "symptom": "Draws from NumPy's global generator, so a seed does not repeat the batch."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Draw all $B$ starts with one call."
+        },
+        {
+          "rung": "point",
+          "text": "`np.stack` the slices `data[i:i + T]`.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Targets: `data[i + 1:i + T + 1]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your batches match the seeded reference.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 checks the targets: the inputs moved one place on.",
+          "test-1": "Test 1 checks the inputs: draw the starts with `rng.integers(0, len(data) - T, B)`."
+        }
+      },
+      "explain": {
+        "text": "One call to `rng.integers` gives the starts, so a seed repeats the batch exactly. With 6 ids and $T = 5$ every window must start at 0."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One Adam step by hand",
+      "prose": "Adam keeps a running mean $m$ of the gradient and $v$ of its square, corrected for starting at 0. On the first step the correction makes $\\hat m = g$ and $\\hat v = g^2$, so the step is $-\\eta\\, g / (|g| + \\epsilon)$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "weight",
+              "0.5"
+            ],
+            [
+              "gradient $g$",
+              "−0.2"
+            ],
+            [
+              "rate $\\eta$",
+              "0.003"
+            ],
+            [
+              "$\\epsilon$",
+              "$10^{-8}$"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the weight after one Adam step? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.503,
+        "tol": {
+          "abs": 5e-05
+        },
+        "wrong": [
+          {
+            "id": "sgd",
+            "value": 0.5006,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "sign",
+            "value": 0.497,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ],
+        "label": "Weight"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\hat m / \\sqrt{\\hat v} = g / |g|$."
+        },
+        {
+          "rung": "point",
+          "text": "That is $-1$ here.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.5 - 0.003 \\times (-1)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.5 + 0.003 = 0.5030$: the first Adam step moves every weight by about the rate.",
+        "generic": "Not quite. On step 1, Adam moves each weight by $\\eta$ against the sign of its gradient.",
+        "byKey": {
+          "sgd": "That is plain gradient descent, $0.5 - 0.003 \\times (-0.2)$. Adam divides by $\\sqrt{\\hat v} = 0.2$.",
+          "sign": "You moved with the gradient. Steps go against it."
+        }
+      },
+      "explain": {
+        "text": "$\\hat m = -0.2$ and $\\sqrt{\\hat v} = 0.2$, so the step is $+0.003$ and the weight becomes 0.5030. That is why Adam rates near $10^{-3}$ suit weights near 0.02.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write one training step",
+      "prose": "Write `train_step(params, opt_state, batch, lr)`. `params` maps each name to a `Tensor` kept between steps; zero every gradient, compute the batch loss with `lm_logits` and `cross_entropy`, call `backward`, then one `adam_step` on every array with `t` from 1. Return the batch loss as a float.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "r",
+              "label": "reference",
+              "values": [
+                4.179,
+                4.063,
+                3.968
+              ]
+            }
+          ],
+          "xValues": [
+            1,
+            2,
+            3
+          ],
+          "y": [
+            3.8,
+            4.3
+          ],
+          "xLabel": "step",
+          "yLabel": "nats"
+        }
+      },
+      "question": "Write `train_step`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import to_model\n\n\ndef train_step(params, opt_state, batch, lr):\n    # params: {name: Tensor}, kept from step to step. opt_state: {\"t\": 0, \"m\": {}, \"v\": {}}.\n    # Zero every gradient, compute the batch loss, backward, then one Adam step on every array\n    # (adam_step from nt_ops_l1, t counting from 1). Return the loss before the update, as a float.\n    ...\n",
+        "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import to_model\n\n\ndef train_step(params, opt_state, batch, lr):\n    X, Y = batch\n    names = list(params)\n    for k in names:\n        params[k].zero_grad()\n    logits = lm_logits(X, to_model(params), 4)\n    loss = cross_entropy(logits.reshape(-1, 65), Y.reshape(-1))\n    loss.backward()\n    opt_state['t'] += 1\n    m = [opt_state['m'].get(k, np.zeros_like(params[k].data)) for k in names]\n    v = [opt_state['v'].get(k, np.zeros_like(params[k].data)) for k in names]\n    new, m, v = adam_step([params[k].data for k in names], [params[k].grad for k in names], m, v, opt_state['t'], lr)\n    for k, a, mi, vi in zip(names, new, m, v):\n        params[k].data = a\n        opt_state['m'][k], opt_state['v'][k] = mi, vi\n    return loss.item()\n",
+        "prelude": "import numpy as np\nfrom autograd import Tensor\nimport gpt_ops_l2 as _G\nfrom gpt_ops_l3 import init_weights, get_batch\n\nW = _G.read_weights('gpt-w-embed.json', 'gpt-w-block0.json')\nTRAIN = np.array(_G.encode(open('tiny-shakespeare.txt').read()[:225000]))\nXB, YB = get_batch(TRAIN, 16, 32, np.random.default_rng(0))\n\n\ndef as_params(w):\n    return {k: Tensor(np.array(v)) for k, v in w.items()}\n\n\ndef new_state():\n    return {'t': 0, 'm': {}, 'v': {}}\n\n\ndef _one():\n    P, s = as_params(W), new_state()\n    first = train_step(P, s, (XB, YB), 1e-3)\n    return first, _G.mean_loss({k: t.data for k, t in P.items()}, XB, YB), s['t']\n\n\ndef _three():\n    P, s, rng = as_params(init_weights(0)), new_state(), np.random.default_rng(1)\n    return [train_step(P, s, get_batch(TRAIN, 16, 32, rng), 3e-3) for _ in range(3)]\n",
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+          "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+          "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+          "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt",
+          "gpt_ops_l3.py": "content/data/ai/gpt_ops_l3.py"
+        },
+        "examples": [
+          {
+            "call": "round(_one()[0], 2)",
+            "expect": "1.84",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "_one()[0]",
+            "expect": "1.839394406110614",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "call": "_one()[1]",
+            "expect": "1.7198686469426694",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "call": "_three()",
+            "expect": "[4.179151157581199, 4.06264874706151, 3.9683655818721992]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "call": "_one()[2]",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 4 hidden tests. Tests 1 and 2 take one step from the supplied weights on a fixed batch at rate 0.001 and compare the loss before and after it. Test 3 compares three steps from small random weights; test 4 checks the step count. Losses within $10^{-6}$ (relative).",
+        "mutants": [
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import to_model\n\n\ndef train_step(params, opt_state, batch, lr):\n    X, Y = batch\n    names = list(params)\n    logits = lm_logits(X, to_model(params), 4)\n    loss = cross_entropy(logits.reshape(-1, 65), Y.reshape(-1))\n    loss.backward()\n    opt_state['t'] += 1\n    m = [opt_state['m'].get(k, np.zeros_like(params[k].data)) for k in names]\n    v = [opt_state['v'].get(k, np.zeros_like(params[k].data)) for k in names]\n    new, m, v = adam_step([params[k].data for k in names], [params[k].grad for k in names], m, v, opt_state['t'], lr)\n    for k, a, mi, vi in zip(names, new, m, v):\n        params[k].data = a\n        opt_state['m'][k], opt_state['v'][k] = mi, vi\n    return loss.item()\n",
+            "test": 3,
+            "symptom": "Never zeroes the gradients, so each step adds to the last."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import to_model\n\n\ndef train_step(params, opt_state, batch, lr):\n    X, Y = batch\n    names = list(params)\n    for k in names:\n        params[k].zero_grad()\n    logits = lm_logits(X, to_model(params), 4)\n    loss = cross_entropy(logits.reshape(-1, 65), Y.reshape(-1))\n    loss.backward()\n    opt_state['t'] += 1\n    m = [opt_state['m'].get(k, np.zeros_like(params[k].data)) for k in names]\n    v = [opt_state['v'].get(k, np.zeros_like(params[k].data)) for k in names]\n    new = [params[k].data - lr * params[k].grad for k in names]\n    for k, a, mi, vi in zip(names, new, m, v):\n        params[k].data = a\n        opt_state['m'][k], opt_state['v'][k] = mi, vi\n    return loss.item()\n",
+            "test": 2,
+            "symptom": "Takes a plain gradient step instead of Adam."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import to_model\n\n\ndef train_step(params, opt_state, batch, lr):\n    X, Y = batch\n    names = list(params)\n    for k in names:\n        params[k].zero_grad()\n    logits = lm_logits(X, to_model(params), 4)\n    loss = cross_entropy(logits.reshape(-1, 65), Y.reshape(-1))\n    loss.backward()\n    opt_state['t'] += 1\n    m = [opt_state['m'].get(k, np.zeros_like(params[k].data)) for k in names]\n    v = [opt_state['v'].get(k, np.zeros_like(params[k].data)) for k in names]\n    new, m, v = adam_step([params[k].data for k in names], [params[k].grad for k in names], m, v, 1, lr)\n    for k, a, mi, vi in zip(names, new, m, v):\n        params[k].data = a\n        opt_state['m'][k], opt_state['v'][k] = mi, vi\n    return loss.item()\n",
+            "test": 3,
+            "symptom": "Keeps t at 1, so the bias correction never fades."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import to_model\n\n\ndef train_step(params, opt_state, batch, lr):\n    X, Y = batch\n    names = list(params)\n    for k in names:\n        params[k].zero_grad()\n    logits = lm_logits(X, to_model(params), 4)\n    loss = cross_entropy(logits.reshape(-1, 65), Y.reshape(-1))\n    loss.backward()\n    m = [opt_state['m'].get(k, np.zeros_like(params[k].data)) for k in names]\n    v = [opt_state['v'].get(k, np.zeros_like(params[k].data)) for k in names]\n    new, m, v = adam_step([params[k].data for k in names], [params[k].grad for k in names], m, v, opt_state['t'], lr)\n    for k, a, mi, vi in zip(names, new, m, v):\n        params[k].data = a\n        opt_state['m'][k], opt_state['v'][k] = mi, vi\n    return loss.item()\n",
+            "test": 2,
+            "symptom": "Never counts the steps, so Adam divides by a bias correction of 0."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import to_model\n\n\ndef train_step(params, opt_state, batch, lr):\n    X, Y = batch\n    names = list(params)\n    for k in names:\n        params[k].zero_grad()\n    logits = lm_logits(X, to_model(params), 4)\n    loss = cross_entropy(logits.reshape(-1, 65), Y.reshape(-1))\n    loss.backward()\n    opt_state['t'] += 1\n    m = [opt_state['m'].get(k, np.zeros_like(params[k].data)) for k in names]\n    v = [opt_state['v'].get(k, np.zeros_like(params[k].data)) for k in names]\n    new, m, v = adam_step([params[k].data for k in names], [params[k].grad for k in names], m, v, opt_state['t'], lr)\n    for k, a, mi, vi in zip(names, new, m, v):\n        params[k].data = a\n        opt_state['m'][k], opt_state['v'][k] = mi, vi\n    return float(cross_entropy(lm_logits(X, to_model(params), 4).reshape(-1, 65), Y.reshape(-1)).item())\n",
+            "test": 1,
+            "symptom": "Returns the loss after the update instead of the batch loss."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`for k in params: params[k].zero_grad()` first."
+        },
+        {
+          "rung": "point",
+          "text": "The loss is `cross_entropy(lm_logits(X, to_model(params), 4).reshape(-1, 65), Y.reshape(-1))`.",
+          "highlight": [
+            "r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep `m` and `v` per name in `opt_state`; add 1 to `opt_state[\"t\"]` before the step."
+        }
+      ],
+      "feedback": {
+        "correct": "One step takes the batch loss from 1.8394 to 1.7199, matching the reference.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 reads the loss after the step: check the Adam call and that you write the new arrays into `params`.",
+          "test-3": "Test 3 runs three steps: zero the gradients each step and let `t` count 1, 2, 3."
+        }
+      },
+      "explain": {
+        "text": "On the fixed batch one step lowers the loss from 1.8394 to 1.7199. Every model in the strand trains with this step; only the forward pass changes."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Gradients that pile up",
+      "prose": "Two runs keep the same `Tensor`s from step to step. One zeroes the gradients each step; the other never does, so `backward` adds each new gradient to the old ones (`backprop` L2's rule for a node used twice).",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "z",
+              "label": "zeroed",
+              "values": [
+                4.179,
+                4.063,
+                3.968,
+                3.947,
+                3.866,
+                3.766,
+                3.728,
+                3.707,
+                3.613,
+                3.519,
+                3.48,
+                3.425,
+                3.456,
+                3.394,
+                3.337,
+                3.305,
+                3.304,
+                3.259,
+                3.206,
+                3.163
+              ]
+            },
+            {
+              "id": "n",
+              "label": "never zeroed",
+              "values": [
+                4.179,
+                4.063,
+                3.982,
+                3.966,
+                3.887,
+                3.781,
+                3.748,
+                3.733,
+                3.634,
+                3.536,
+                3.504,
+                3.465,
+                3.502,
+                3.446,
+                3.415,
+                3.388,
+                3.461,
+                3.415,
+                3.347,
+                3.346
+              ],
+              "dashed": true
+            }
+          ],
+          "y": [
+            3,
+            4.3
+          ],
+          "xLabel": "step",
+          "yLabel": "nats"
+        }
+      },
+      "question": "Why does the run that never zeroes fall behind?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pile",
+            "text": "Each step follows a stale sum of gradients",
+            "correct": true
+          },
+          {
+            "id": "fresh",
+            "text": "Its new gradients are computed but ignored",
+            "why": "They are used, added to all the old ones, so the step points along a stale sum."
+          },
+          {
+            "id": "rate",
+            "text": "Its learning rate is lower than the other",
+            "why": "Both runs use 0.003; only the gradients differ."
+          },
+          {
+            "id": "same",
+            "text": "It does not: the two runs are the same",
+            "why": "They agree for two steps, then part: 3.16 against 3.35 at step 20."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two curves step by step."
+        },
+        {
+          "rung": "point",
+          "text": "They match at steps 1 and 2, then part.",
+          "highlight": [
+            "n"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Step 3 of the second run uses the gradients of steps 1, 2 and 3 added."
+        }
+      ],
+      "feedback": {
+        "correct": "Without zeroing, `.grad` holds the sum of all past gradients, so each step leans on old batches.",
+        "generic": "Not quite. What does `.grad` hold at step 3 if it is never zeroed?",
+        "byKey": {
+          "same": "They match only while the sum has one or two terms. By step 20 the stale sum has cost about 0.18 nats."
+        }
+      },
+      "explain": {
+        "text": "`backward` adds into `.grad`, so a loop that never zeroes steps along a growing sum of old gradients. After 20 steps it sits at 3.35 against 3.16.",
+        "canvas": {
+          "highlight": [
+            "n"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Training and held-out loss",
+      "prose": "The supplied weights came from 5,000 such steps. Every 250 steps the run recorded the mean batch loss and the loss on the 781 validation windows, which were never drawn for a batch.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "tr",
+              "label": "training batches",
+              "values": [
+                2.839,
+                2.277,
+                2.133,
+                2.03,
+                1.967,
+                1.919,
+                1.888,
+                1.859,
+                1.835,
+                1.806,
+                1.795,
+                1.777,
+                1.766,
+                1.747,
+                1.73,
+                1.715,
+                1.711,
+                1.706,
+                1.699,
+                1.693
+              ]
+            },
+            {
+              "id": "va",
+              "label": "validation",
+              "values": [
+                2.416,
+                2.232,
+                2.112,
+                2.065,
+                2.009,
+                1.951,
+                1.942,
+                1.903,
+                1.895,
+                1.884,
+                1.867,
+                1.849,
+                1.84,
+                1.825,
+                1.816,
+                1.809,
+                1.801,
+                1.796,
+                1.794,
+                1.793
+              ]
+            }
+          ],
+          "xValues": [
+            250,
+            500,
+            750,
+            1000,
+            1250,
+            1500,
+            1750,
+            2000,
+            2250,
+            2500,
+            2750,
+            3000,
+            3250,
+            3500,
+            3750,
+            4000,
+            4250,
+            4500,
+            4750,
+            5000
+          ],
+          "y": [
+            1.5,
+            3
+          ],
+          "xLabel": "step",
+          "yLabel": "nats",
+          "hlines": [
+            {
+              "id": "bg",
+              "y": 2.4554,
+              "label": "bigram"
+            }
+          ]
+        }
+      },
+      "question": "Why are validation windows never sampled for training?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "held",
+            "text": "So their loss measures text the model has not fitted",
+            "correct": true
+          },
+          {
+            "id": "slow",
+            "text": "They are too slow to sample",
+            "why": "Sampling costs the same anywhere in the text."
+          },
+          {
+            "id": "worse",
+            "text": "They would make the training loss worse",
+            "why": "Mixing them in would make the validation loss look better than it is, not the training loss worse."
+          },
+          {
+            "id": "size",
+            "text": "There are too few of them to matter",
+            "why": "25,000 characters is a tenth of the slice, plenty to fit."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What would a low validation loss mean if the model had trained on that text?"
+        },
+        {
+          "rung": "point",
+          "text": "It could have memorised it.",
+          "highlight": [
+            "va"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Held-out text is the honest test."
+        }
+      ],
+      "feedback": {
+        "correct": "Held-out windows keep the test honest: the run ends at 1.69 on training batches and 1.79 on validation.",
+        "generic": "Not quite. What does the validation loss have to measure?"
+      },
+      "explain": {
+        "text": "The validation loss falls with the training loss and ends a little above it, 1.79 against 1.69. A gap that widened would mean the model fits its own batches better than new text.",
+        "canvas": {
+          "highlight": [
+            "va"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A batch of one window",
+      "prose": "With $B = 1$ a step sees a single window. The loss is still a mean, over that window's positions, and the gradient comes from those positions alone.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "5",
+            "1",
+            "4",
+            "1",
+            "5",
+            "9",
+            "2",
+            "6"
+          ],
+          "indexFrom": 0
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "s1",
+              "at": 1,
+              "label": "the one start"
+            }
+          ]
+        }
+      },
+      "question": "With $B = 1$ and $T = 32$, how many next-character predictions does one step average over?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 32,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "batch",
+            "value": 512,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "t1",
+            "value": 33,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Predictions"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every position of the window predicts."
+        },
+        {
+          "rung": "point",
+          "text": "There are $T$ positions.",
+          "highlight": [
+            "s1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 \\times 32$."
+        }
+      ],
+      "feedback": {
+        "correct": "32: one prediction per position of the single window.",
+        "generic": "Not quite. Count the positions of one window.",
+        "byKey": {
+          "batch": "That is $B = 16$. Here $B = 1$.",
+          "one": "Every position predicts, not only the last.",
+          "t1": "The window has 32 inputs; the 33rd character is only a target."
+        }
+      },
+      "explain": {
+        "text": "A batch of one still averages 32 predictions, so the step is valid, only noisier. Sixteen windows average 512, which steadies each step."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The training loop",
+      "prose": "Every model in the strand trains with the same loop:\n```python\nfor step in range(steps):\n    X, Y = get_batch(train, B, T, rng)\n    for p in params: p.zero_grad()\n    loss = cross_entropy(model(X), Y)\n    loss.backward()\n    adam_step(...)\n```",
+      "question": "To train a different model, which line changes?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "model",
+            "text": "The forward pass, `model(X)`",
+            "correct": true
+          },
+          {
+            "id": "batch",
+            "text": "The batch sampler",
+            "why": "Any model of text reads the same batches."
+          },
+          {
+            "id": "zero",
+            "text": "The gradient zeroing",
+            "why": "Every model needs its gradients zeroed."
+          },
+          {
+            "id": "adam",
+            "text": "The Adam step",
+            "why": "Adam updates any arrays whatever model they belong to."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which line knows what the model is?"
+        }
+      ],
+      "feedback": {
+        "correct": "Only the forward pass knows the model; the loop around it is the same.",
+        "generic": "Not quite. Which line is specific to the GPT?"
+      },
+      "explain": {
+        "text": "Batch, zero, forward, loss, backward, step. Swap the forward pass and the same loop trains the bigram net of `makemore` or the GPT."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "One loop for every desk model",
+      "prose": "A desk trains a small model to predict the next tick direction from order-book features. A new hire writes the loop but draws batches from the whole data set, test period included, and reports a falling loss.",
+      "question": "What should change first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "split",
+            "text": "Sample only the training period; score the test period",
+            "correct": true
+          },
+          {
+            "id": "adam",
+            "text": "Use plain gradient descent instead of Adam here",
+            "why": "The optimiser is fine; the data split is not."
+          },
+          {
+            "id": "more",
+            "text": "Train for more steps until the loss stops falling",
+            "why": "More steps on leaked data only fit the test period better."
+          },
+          {
+            "id": "zero",
+            "text": "Zero the gradients twice in every step",
+            "why": "Zeroing once per step is enough."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which part of the loop sees the test period?"
+        },
+        {
+          "rung": "point",
+          "text": "The batch sampler does."
+        },
+        {
+          "rung": "step",
+          "text": "Training must never draw held-out data."
+        }
+      ],
+      "feedback": {
+        "correct": "The batches leak the test period, so the falling loss proves nothing out of sample.",
+        "generic": "Not quite. Look at where the batches come from."
+      },
+      "explain": {
+        "text": "The loop is right, the sampler is not: it must draw only from the training period. Then the held-out loss says how the model does on days it never saw."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A batch is $B$ random windows of $T$ ids from the training part, with targets one place on; starts run from 0 to $n - T - 1$.",
+      "A step zeroes the gradients, computes the loss, calls `backward` and takes an Adam step; on step 1 Adam moves each weight by about the rate.",
+      "5,000 steps took the tiny GPT from about 4.18 to 1.79 nats on validation windows it never trained on."
+    ],
+    "formula": {
+      "name": "Adam's first step",
+      "tex": "w \\leftarrow w - \\eta \\, \\frac{g}{|g| + \\epsilon}",
+      "note": "Bias correction makes $\\hat m = g$, $\\hat v = g^2$ at step 1."
+    },
+    "trap": "Keeping Tensors between steps without zeroing their gradients: every step follows the sum of all past gradients."
+  },
+  "quiz": [
+    {
+      "id": "q-targets",
+      "difficulty": 2,
+      "question": "Data `[3, 8, 1, 7, 2]`, $T = 3$, start 1. What are the inputs and targets?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "inputs 8, 1, 7; targets 1, 7, 2",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "inputs 8, 1, 7; targets 8, 1, 7",
+            "why": "Targets are the next characters, not the inputs."
+          },
+          {
+            "id": "zero",
+            "text": "inputs 3, 8, 1; targets 8, 1, 7",
+            "why": "That window starts at 0, not 1."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Inputs from index 1, targets from index 2.",
+        "generic": "Not quite. Start at index 1 and shift by one for the targets."
+      },
+      "explain": {
+        "text": "Indices 1 to 3 are the inputs and 2 to 4 the targets."
+      }
+    },
+    {
+      "id": "q-adam",
+      "difficulty": 3,
+      "question": "A weight is 0.1 with gradient 4.0. At rate 0.01, what is it after one Adam step? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.09,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "sgd",
+            "value": 0.06,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "up",
+            "value": 0.11,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Weight"
+      },
+      "feedback": {
+        "correct": "The first step moves it by the rate against its gradient: $0.1 - 0.01 = 0.09$.",
+        "generic": "Not quite. On step 1, $\\hat m / \\sqrt{\\hat v} = \\pm 1$.",
+        "byKey": {
+          "sgd": "That is plain gradient descent, $0.1 - 0.01 \\times 4$. Adam divides by $\\sqrt{\\hat v} = 4$.",
+          "up": "You moved with the gradient."
+        }
+      },
+      "explain": {
+        "text": "Adam's first step is $-\\eta\\,\\mathrm{sign}(g)$ to within $\\epsilon$, whatever the size of $g$: 0.09."
+      }
+    },
+    {
+      "id": "q-zero",
+      "difficulty": 2,
+      "question": "In a loop that keeps its `Tensor`s between steps, what does leaving out `zero_grad` do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sum",
+            "text": "Each `.grad` holds the sum of all gradients so far",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "Nothing: `backward` overwrites `.grad`",
+            "why": "`backward` adds into `.grad`; it never overwrites it."
+          },
+          {
+            "id": "zero",
+            "text": "Every gradient becomes 0",
+            "why": "They grow, not vanish."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`backward` adds, so without zeroing the gradients pile up.",
+        "generic": "Not quite. Does `backward` add or overwrite?"
+      },
+      "explain": {
+        "text": "Gradients accumulate by design, for nodes used twice. A loop must clear them each step."
+      }
+    }
+  ]
+}

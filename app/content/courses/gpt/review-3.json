@@ -1,0 +1,387 @@
+{
+  "id": "review-3",
+  "course": "gpt",
+  "level": 3,
+  "pass": 0.8,
+  "items": [
+    {
+      "id": "r-maxstart",
+      "difficulty": 2,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "A training text has 10,000 characters and windows are 64 inputs long. Numbering from 0, what is the largest start index whose targets stay in the text?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9935,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "off",
+            "value": 9936,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "end",
+            "value": 9999,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Start index"
+      },
+      "feedback": {
+        "correct": "$9{,}999 - 64 = 9{,}935$.",
+        "generic": "Not quite. The last target is 64 places after the start.",
+        "byKey": {
+          "off": "Then the last target would be index 10,000, outside the text.",
+          "end": "That is the last character, not the last start."
+        }
+      },
+      "explain": {
+        "text": "Targets run to $s + 64 \\le 9{,}999$, so $s \\le 9{,}935$."
+      }
+    },
+    {
+      "id": "r-batch",
+      "difficulty": 2,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "Data `[2, 7, 1, 8, 2, 8]`, $T = 2$, starts 0 and 3. What is $Y$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "[[7, 1], [2, 8]]",
+            "correct": true
+          },
+          {
+            "id": "x",
+            "text": "[[2, 7], [8, 2]]",
+            "why": "That is $X$."
+          },
+          {
+            "id": "two",
+            "text": "[[1, 8], [8, None]]",
+            "why": "Targets are one place on, not two."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Start 0 gives targets 7, 1; start 3 gives 2, 8.",
+        "generic": "Not quite. Shift each window one place."
+      },
+      "explain": {
+        "text": "Each row of $Y$ is its row of $X$ one place later."
+      }
+    },
+    {
+      "id": "r-adam",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "A weight is 0.2 with gradient 0.05 on Adam's first step at rate 0.01. What is the new weight? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.19,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "sgd",
+            "value": 0.1995,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "up",
+            "value": 0.21,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Weight"
+      },
+      "feedback": {
+        "correct": "The first Adam step moves by the rate: $0.2 - 0.01 = 0.19$.",
+        "generic": "Not quite. On step 1, $\\hat m / \\sqrt{\\hat v} = 1$ for a positive gradient.",
+        "byKey": {
+          "sgd": "That is plain gradient descent.",
+          "up": "Steps go against the gradient."
+        }
+      },
+      "explain": {
+        "text": "$\\hat m = 0.05$, $\\sqrt{\\hat v} = 0.05$, so the step is $-0.01$: 0.19."
+      }
+    },
+    {
+      "id": "r-zero",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "A loop keeps its Tensors between steps and forgets `zero_grad`. At step 3, what drives the update?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sum",
+            "text": "The sum of all three gradients",
+            "correct": true
+          },
+          {
+            "id": "three",
+            "text": "The gradient of step 3 only",
+            "why": "`backward` adds into `.grad`; nothing cleared steps 1 and 2."
+          },
+          {
+            "id": "zero",
+            "text": "Nothing: the gradients cancel",
+            "why": "They add; they do not cancel."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Gradients accumulate, so step 3 follows their sum.",
+        "generic": "Not quite. Does `backward` add or overwrite?"
+      },
+      "explain": {
+        "text": "Without zeroing, `.grad` keeps a running sum of every batch's gradient."
+      }
+    },
+    {
+      "id": "r-central",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "Central differences of $f(x) = e^x$ at $x = 0$ with $h = 0.1$. Give 6 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.001668,
+        "tol": {
+          "abs": 5e-07
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1.051709,
+            "tol": {
+              "abs": 5e-07
+            }
+          }
+        ],
+        "label": "Slope"
+      },
+      "feedback": {
+        "correct": "$(e^{0.1} - e^{-0.1}) / 0.2 \\approx 1.001668$, against the true 1.",
+        "generic": "Not quite. Use both nudges.",
+        "byKey": {
+          "one": "That is the one-sided slope."
+        }
+      },
+      "explain": {
+        "text": "The central difference gives 1.001668, off by about $h^2 / 6$; the one-sided gives 1.051709."
+      }
+    },
+    {
+      "id": "r-relerr",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "Backprop gives $(0.3, -0.4)$ and central differences give $(0.3, -0.4)$ to every digit shown, in float64. Then a bug doubles the second entry of backprop. What is the relative error now? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2953,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Error"
+      },
+      "feedback": {
+        "correct": "$\\lVert(0, -0.4)\\rVert / (\\lVert(0.3, -0.8)\\rVert + 0.5) \\approx 0.2953$.",
+        "generic": "Not quite. Use both norms in the denominator.",
+        "byKey": {
+          "one": "You divided by one norm only."
+        }
+      },
+      "explain": {
+        "text": "The difference has norm 0.4; the norms are 0.8544 and 0.5, so the error is 0.2953. Far above $10^{-6}$: the check catches it."
+      }
+    },
+    {
+      "id": "r-f32",
+      "difficulty": 2,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "A gradient check in float32 reports $5 \\times 10^{-3}$. The same code in float64 reports $2 \\times 10^{-9}$. What is the verdict?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "The gradients are right",
+            "correct": true
+          },
+          {
+            "id": "bug",
+            "text": "There is a bug that float64 hides",
+            "why": "float64 hides nothing: it keeps more of the difference."
+          },
+          {
+            "id": "both",
+            "text": "Both runs show a bug",
+            "why": "The float64 figure is far below $10^{-6}$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Judge in float64: $2 \\times 10^{-9}$ passes.",
+        "generic": "Not quite. Which precision does the check need?"
+      },
+      "explain": {
+        "text": "A central difference of two close losses needs float64's digits."
+      }
+    },
+    {
+      "id": "r-overfit",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "A model cannot push the loss on one fixed batch of 4 windows below 3.5 in 300 steps at a sensible rate. What do you suspect first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bug",
+            "text": "A bug in the training code",
+            "correct": true
+          },
+          {
+            "id": "data",
+            "text": "The batch is too hard to fit",
+            "why": "128 characters is easy to memorise for 18,017 numbers."
+          },
+          {
+            "id": "more",
+            "text": "It needs more data to learn",
+            "why": "More data cannot help it fit the one batch it already has."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A working model memorises one batch; failing means something in the machinery is broken.",
+        "generic": "Not quite. What should a correct model do with one batch?"
+      },
+      "explain": {
+        "text": "Overfitting one batch is the end-to-end test of the loop."
+      }
+    },
+    {
+      "id": "r-gap",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "On the same held-out text a model scores 1.90 nats a character and the bigram 2.46. What is the gap in bits per character? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8079,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "nats",
+            "value": 0.56,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "times",
+            "value": 0.3882,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Bits"
+      },
+      "feedback": {
+        "correct": "$0.56 / \\ln 2 \\approx 0.8079$ bits.",
+        "generic": "Not quite. Subtract, then divide by $\\ln 2$.",
+        "byKey": {
+          "nats": "That is the gap in nats.",
+          "times": "You multiplied by $\\ln 2$."
+        }
+      },
+      "explain": {
+        "text": "$2.46 - 1.90 = 0.56$ nats, which is 0.8079 bits."
+      }
+    },
+    {
+      "id": "r-smooth",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "question": "A bigram counted with no smoothing scores what on text holding one pair it never saw?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "inf",
+            "text": "An infinite loss",
+            "correct": true
+          },
+          {
+            "id": "large",
+            "text": "A large but finite loss",
+            "why": "The unseen pair gets chance 0, and $-\\ln 0$ is infinite."
+          },
+          {
+            "id": "same",
+            "text": "The same as with smoothing",
+            "why": "Smoothing exists for exactly this pair."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One pair with chance 0 makes the mean infinite.",
+        "generic": "Not quite. What is $-\\ln 0$?"
+      },
+      "explain": {
+        "text": "Our validation text holds 45 such pairs; add-one smoothing keeps every chance above 0."
+      }
+    }
+  ]
+}

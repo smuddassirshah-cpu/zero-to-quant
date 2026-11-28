@@ -1,0 +1,1714 @@
+{
+  "id": "l5-the-whole-model",
+  "course": "gpt",
+  "title": "The whole model on one page",
+  "minutes": 14,
+  "objectives": [
+    "Derive every array shape and the parameter count of a tiny GPT."
+  ],
+  "skills": [
+    "gpt-forward"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "One batch through the model",
+      "prose": "The tiny GPT reads 16 windows of 32 characters at once. Slide through the stages and watch the shape of the array at each one. Its vocabulary is the 65 characters of Tiny Shakespeare.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 380,
+          "nodes": [
+            {
+              "id": "ids",
+              "label": "ids\n(16, 32)",
+              "x": 0.27,
+              "y": 0.1,
+              "shape": "rect"
+            },
+            {
+              "id": "tok",
+              "label": "tok\n(16, 32, 32)",
+              "x": 0.73,
+              "y": 0.1,
+              "shape": "rect"
+            },
+            {
+              "id": "pos",
+              "label": "pos\n(32, 32)",
+              "x": 0.27,
+              "y": 0.37,
+              "shape": "rect"
+            },
+            {
+              "id": "x",
+              "label": "x\n(16, 32, 32)",
+              "x": 0.73,
+              "y": 0.37,
+              "shape": "rect"
+            },
+            {
+              "id": "blk",
+              "label": "block\n(16, 32, 32)",
+              "x": 0.73,
+              "y": 0.64,
+              "shape": "rect"
+            },
+            {
+              "id": "lnf",
+              "label": "lnf\n(16, 32, 32)",
+              "x": 0.27,
+              "y": 0.64,
+              "shape": "rect"
+            },
+            {
+              "id": "logits",
+              "label": "logits\n(16, 32, 65)",
+              "x": 0.27,
+              "y": 0.91,
+              "shape": "rect"
+            }
+          ],
+          "edges": [
+            {
+              "from": "ids",
+              "to": "tok",
+              "label": "wte"
+            },
+            {
+              "from": "tok",
+              "to": "x"
+            },
+            {
+              "from": "pos",
+              "to": "x",
+              "label": "wpe"
+            },
+            {
+              "from": "x",
+              "to": "blk"
+            },
+            {
+              "from": "blk",
+              "to": "lnf"
+            },
+            {
+              "from": "lnf",
+              "to": "logits",
+              "label": "head"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Slide through the stages."
+        },
+        "controls": [
+          {
+            "bind": "stage",
+            "label": "Stage",
+            "frames": [
+              {
+                "highlight": [
+                  "ids"
+                ],
+                "caption": "A batch: 16 windows of 32 character ids."
+              },
+              {
+                "highlight": [
+                  "tok"
+                ],
+                "caption": "Each id picks its row of `wte`, 32 numbers wide."
+              },
+              {
+                "highlight": [
+                  "pos",
+                  "x"
+                ],
+                "caption": "Row $t$ of `wpe` is added at position $t$."
+              },
+              {
+                "highlight": [
+                  "blk"
+                ],
+                "caption": "One transformer block keeps the shape (16, 32, 32)."
+              },
+              {
+                "highlight": [
+                  "lnf"
+                ],
+                "caption": "A final layer norm, still (16, 32, 32)."
+              },
+              {
+                "highlight": [
+                  "logits"
+                ],
+                "caption": "The head turns 32 numbers into 65 scores, one per character."
+              }
+            ],
+            "frameLabels": [
+              "ids",
+              "tok",
+              "x",
+              "block",
+              "lnf",
+              "logits"
+            ]
+          }
+        ]
+      },
+      "question": "How many logits does the model produce for the whole batch?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 33280,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "per-position",
+            "value": 512,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "width",
+            "value": 16384,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-window",
+            "value": 2080,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Logits"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The last array has shape (16, 32, 65)."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply the three sizes.",
+          "highlight": [
+            "logits"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$16 \\times 32 \\times 65$."
+        }
+      ],
+      "feedback": {
+        "correct": "$16 \\times 32 \\times 65 = 33{,}280$: a score for every character at every position of every window.",
+        "generic": "Not quite. Multiply the three sizes of the logits array.",
+        "byKey": {
+          "per-position": "That counts positions, $16 \\times 32$. Each position gets 65 scores, one per character.",
+          "width": "That is the size of the stream, width 32. The head widens it to 65 scores.",
+          "one-window": "That is one window, $32 \\times 65$. The batch holds 16 of them."
+        }
+      },
+      "explain": {
+        "text": "Every position predicts the next character, so it needs one score per character of the vocabulary. The logits are (16, 32, 65), which is 33,280 numbers.",
+        "canvas": {
+          "highlight": [
+            "logits"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The token table",
+      "prose": "`wte` holds one row for each of the 65 characters, and each row is 32 numbers wide. Looking up an id means taking its row.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Array",
+            "Shape",
+            "Numbers"
+          ],
+          "rows": [
+            [
+              "wte",
+              "(65, 32)",
+              "?"
+            ],
+            [
+              "wpe",
+              "(32, 32)",
+              "1,024"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many numbers does `wte` hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2080,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "added",
+            "value": 97,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "square",
+            "value": 1024,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Numbers in wte"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A table of shape (65, 32) has 65 rows of 32."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply rows by columns.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$65 \\times 32$."
+        }
+      ],
+      "feedback": {
+        "correct": "$65 \\times 32 = 2{,}080$ numbers.",
+        "generic": "Not quite. Multiply the two sizes of the shape.",
+        "byKey": {
+          "added": "You added the two sizes. A table of 65 rows of 32 holds their product.",
+          "square": "That is `wpe`, 32 rows of 32. `wte` has a row for each of the 65 characters."
+        }
+      },
+      "explain": {
+        "text": "A shape (65, 32) holds $65 \\times 32 = 2{,}080$ numbers, all of them learned. Every array the model learns counts towards its parameters in the same way.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Counting one block",
+      "prose": "The **parameter count** is the number of learned numbers. The block is the one from `sequence` L4: layer norms with a gain and a bias, attention with `qkv` and `proj`, an MLP with `fc` and `out`. Every linear layer has a bias.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 240,
+          "nodes": [
+            {
+              "id": "xin",
+              "label": "x",
+              "x": 0.06,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "ln1",
+              "label": "ln1",
+              "x": 0.28,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "qkv",
+              "label": "qkv",
+              "x": 0.5,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "proj",
+              "label": "proj",
+              "x": 0.72,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "add1",
+              "label": "+",
+              "x": 0.94,
+              "y": 0.35
+            },
+            {
+              "id": "ln2",
+              "label": "ln2",
+              "x": 0.72,
+              "y": 0.8,
+              "shape": "pill"
+            },
+            {
+              "id": "fc",
+              "label": "fc",
+              "x": 0.5,
+              "y": 0.8,
+              "shape": "pill"
+            },
+            {
+              "id": "out",
+              "label": "out",
+              "x": 0.28,
+              "y": 0.8,
+              "shape": "pill"
+            },
+            {
+              "id": "add2",
+              "label": "+",
+              "x": 0.06,
+              "y": 0.8
+            }
+          ],
+          "edges": [
+            {
+              "from": "xin",
+              "to": "ln1"
+            },
+            {
+              "from": "ln1",
+              "to": "qkv"
+            },
+            {
+              "from": "qkv",
+              "to": "proj"
+            },
+            {
+              "from": "proj",
+              "to": "add1"
+            },
+            {
+              "from": "xin",
+              "to": "add1",
+              "dashed": true,
+              "bend": -0.25
+            },
+            {
+              "from": "add1",
+              "to": "ln2"
+            },
+            {
+              "from": "ln2",
+              "to": "fc"
+            },
+            {
+              "from": "fc",
+              "to": "out"
+            },
+            {
+              "from": "out",
+              "to": "add2"
+            },
+            {
+              "from": "add1",
+              "to": "add2",
+              "dashed": true,
+              "bend": 0.15
+            }
+          ]
+        },
+        "state": {
+          "caption": "One pre-norm block: two layer norms, attention, an MLP."
+        }
+      },
+      "question": "Fill in the missing counts.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Array",
+          "Shape",
+          "Numbers"
+        ],
+        "rows": [
+          [
+            "ln1 gain, bias",
+            "(32), (32)",
+            "64"
+          ],
+          [
+            "qkv weight",
+            "(32, 96)",
+            {
+              "edit": true,
+              "answer": 3072,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "qkv-one",
+                  "value": 1024,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "qkv bias",
+            "(96)",
+            "96"
+          ],
+          [
+            "proj weight, bias",
+            "(32, 32), (32)",
+            "1,056"
+          ],
+          [
+            "ln2 gain, bias",
+            "(32), (32)",
+            "64"
+          ],
+          [
+            "fc weight",
+            "(32, 128)",
+            {
+              "edit": true,
+              "answer": 4096,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "fc-add",
+                  "value": 160,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "fc bias",
+            "(128)",
+            "128"
+          ],
+          [
+            "out weight, bias",
+            "(128, 32), (32)",
+            "4,128"
+          ],
+          [
+            "Block total",
+            "",
+            {
+              "edit": true,
+              "answer": 12704,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "no-bias",
+                  "value": 12416,
+                  "tol": {
+                    "abs": 0
+                  }
+                },
+                {
+                  "id": "no-ln",
+                  "value": 12576,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each weight holds rows times columns."
+        },
+        {
+          "rung": "point",
+          "text": "`qkv` is (32, 96): queries, keys and values side by side.",
+          "highlight": [
+            "qkv",
+            "fc"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add the nine rows: $64 + 3072 + 96 + 1056 + 64 + 4096 + 128 + 4128$."
+        }
+      ],
+      "feedback": {
+        "correct": "The block holds 12,704 numbers: 3,072 in `qkv`, 4,096 in `fc`, and the rest.",
+        "generic": "Not quite. Multiply each shape out, then add every row.",
+        "byKey": {
+          "qkv-one": "That is one of the three. `qkv` holds queries, keys and values: $32 \\times 96$.",
+          "fc-add": "You added 32 and 128. A weight holds their product.",
+          "no-bias": "You left out the biases of the four linear layers, $96 + 32 + 128 + 32 = 288$.",
+          "no-ln": "You left out the layer norms: two gains and two biases of 32."
+        }
+      },
+      "explain": {
+        "text": "Weights: $3{,}072 + 1{,}024 + 4{,}096 + 4{,}096 = 12{,}288$. Biases 288 and layer norms 128 bring the block to 12,704."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The whole count",
+      "prose": "Around the block sit the embeddings, the final layer norm `lnf` and the head. The head maps width 32 to 65 scores and has a bias.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "Arrays",
+            "Numbers"
+          ],
+          "rows": [
+            [
+              "Embeddings",
+              "wte (65, 32), wpe (32, 32)",
+              "3,104"
+            ],
+            [
+              "Block",
+              "12 arrays",
+              "12,704"
+            ],
+            [
+              "Final norm",
+              "lnf gain, bias (32 each)",
+              "64"
+            ],
+            [
+              "Head",
+              "head weight (32, 65), bias (65)",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many parameters does the tiny GPT have in all?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 18017,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "tied",
+            "value": 15937,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "pos-vocab",
+            "value": 19073,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-head-bias",
+            "value": 17952,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The head has $32 \\times 65$ weights and 65 biases."
+        },
+        {
+          "rung": "point",
+          "text": "The head holds 2,145.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3104 + 12704 + 64 + 2145$."
+        }
+      ],
+      "feedback": {
+        "correct": "$3{,}104 + 12{,}704 + 64 + 2{,}145 = 18{,}017$ parameters.",
+        "generic": "Not quite. Count the head, then add the four parts.",
+        "byKey": {
+          "tied": "That count shares the head with `wte`. Our head is its own array, untied, with 2,080 weights of its own.",
+          "pos-vocab": "You gave `wpe` a row per character. It has a row per position: 32, not 65.",
+          "no-head-bias": "You left out the head bias, one number per character: 65."
+        }
+      },
+      "explain": {
+        "text": "The head is $32 \\times 65 + 65 = 2{,}145$. With the embeddings, the block and the final norm the model holds 18,017 parameters.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two blocks",
+      "prose": "A second block is a second copy of the 12 arrays, with its own numbers. The embeddings, the final norm and the head are shared by the whole stack.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "Numbers"
+          ],
+          "rows": [
+            [
+              "Embeddings",
+              "3,104"
+            ],
+            [
+              "Each block",
+              "12,704"
+            ],
+            [
+              "Final norm",
+              "64"
+            ],
+            [
+              "Head",
+              "2,145"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many parameters does the same model have with two blocks?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 30721,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "doubled",
+            "value": 36034,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 18017,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Only the block is repeated."
+        },
+        {
+          "rung": "point",
+          "text": "Add one more 12,704.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$18017 + 12704$."
+        }
+      ],
+      "feedback": {
+        "correct": "$18{,}017 + 12{,}704 = 30{,}721$.",
+        "generic": "Not quite. Add one more block to the one-block count.",
+        "byKey": {
+          "doubled": "You doubled the whole model. The embeddings and head appear once however deep the stack.",
+          "one": "That is the one-block count. Add the second block."
+        }
+      },
+      "explain": {
+        "text": "Depth adds 12,704 a block and nothing else. Two blocks give 30,721 parameters.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Shapes inside attention",
+      "prose": "Inside the block, `qkv` makes (16, 32, 96). That splits into queries, keys and values, and each into 4 heads of width 8. Each head scores every position against every position of its window.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 240,
+          "nodes": [
+            {
+              "id": "xin",
+              "label": "x",
+              "x": 0.06,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "ln1",
+              "label": "ln1",
+              "x": 0.28,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "qkv",
+              "label": "qkv",
+              "x": 0.5,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "proj",
+              "label": "proj",
+              "x": 0.72,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "add1",
+              "label": "+",
+              "x": 0.94,
+              "y": 0.35
+            },
+            {
+              "id": "ln2",
+              "label": "ln2",
+              "x": 0.72,
+              "y": 0.8,
+              "shape": "pill"
+            },
+            {
+              "id": "fc",
+              "label": "fc",
+              "x": 0.5,
+              "y": 0.8,
+              "shape": "pill"
+            },
+            {
+              "id": "out",
+              "label": "out",
+              "x": 0.28,
+              "y": 0.8,
+              "shape": "pill"
+            },
+            {
+              "id": "add2",
+              "label": "+",
+              "x": 0.06,
+              "y": 0.8
+            }
+          ],
+          "edges": [
+            {
+              "from": "xin",
+              "to": "ln1"
+            },
+            {
+              "from": "ln1",
+              "to": "qkv"
+            },
+            {
+              "from": "qkv",
+              "to": "proj"
+            },
+            {
+              "from": "proj",
+              "to": "add1"
+            },
+            {
+              "from": "xin",
+              "to": "add1",
+              "dashed": true,
+              "bend": -0.25
+            },
+            {
+              "from": "add1",
+              "to": "ln2"
+            },
+            {
+              "from": "ln2",
+              "to": "fc"
+            },
+            {
+              "from": "fc",
+              "to": "out"
+            },
+            {
+              "from": "out",
+              "to": "add2"
+            },
+            {
+              "from": "add1",
+              "to": "add2",
+              "dashed": true,
+              "bend": 0.15
+            }
+          ]
+        },
+        "state": {
+          "highlight": [
+            "qkv"
+          ],
+          "caption": "qkv: (16, 32, 32) to (16, 32, 96)."
+        }
+      },
+      "question": "What is the shape of the attention weights in one block?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "w",
+            "text": "(16, 4, 32, 32)",
+            "correct": true
+          },
+          {
+            "id": "no-heads",
+            "text": "(16, 32, 32)",
+            "why": "You left out the heads. Each of the 4 heads has its own 32 by 32 weights."
+          },
+          {
+            "id": "q",
+            "text": "(16, 4, 32, 8)",
+            "why": "That is the shape of the queries, keys or values per head. The weights compare positions with positions."
+          },
+          {
+            "id": "no-batch",
+            "text": "(4, 32, 32)",
+            "why": "You left out the batch. Each of the 16 windows has its own weights."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One weight for each pair of positions, in each head, in each window."
+        },
+        {
+          "rung": "point",
+          "text": "Pairs of positions make a 32 by 32 grid.",
+          "highlight": [
+            "qkv"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Batch, heads, query position, key position."
+        }
+      ],
+      "feedback": {
+        "correct": "(16, 4, 32, 32): batch, head, query position, key position.",
+        "generic": "Not quite. Count the weights per head per window first."
+      },
+      "explain": {
+        "text": "A head gives each query position one weight per key position, a 32 by 32 grid. There are 4 heads in each of 16 windows, so (16, 4, 32, 32).",
+        "canvas": {
+          "highlight": [
+            "qkv",
+            "proj"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Where the stream adds",
+      "prose": "`sequence` L4 built this block on a **residual stream**: each sublayer reads a normed copy of the stream and adds its output back in.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 240,
+          "nodes": [
+            {
+              "id": "xin",
+              "label": "x",
+              "x": 0.06,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "ln1",
+              "label": "ln1",
+              "x": 0.28,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "qkv",
+              "label": "qkv",
+              "x": 0.5,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "proj",
+              "label": "proj",
+              "x": 0.72,
+              "y": 0.35,
+              "shape": "pill"
+            },
+            {
+              "id": "add1",
+              "label": "+",
+              "x": 0.94,
+              "y": 0.35
+            },
+            {
+              "id": "ln2",
+              "label": "ln2",
+              "x": 0.72,
+              "y": 0.8,
+              "shape": "pill"
+            },
+            {
+              "id": "fc",
+              "label": "fc",
+              "x": 0.5,
+              "y": 0.8,
+              "shape": "pill"
+            },
+            {
+              "id": "out",
+              "label": "out",
+              "x": 0.28,
+              "y": 0.8,
+              "shape": "pill"
+            },
+            {
+              "id": "add2",
+              "label": "+",
+              "x": 0.06,
+              "y": 0.8
+            }
+          ],
+          "edges": [
+            {
+              "from": "xin",
+              "to": "ln1"
+            },
+            {
+              "from": "ln1",
+              "to": "qkv"
+            },
+            {
+              "from": "qkv",
+              "to": "proj"
+            },
+            {
+              "from": "proj",
+              "to": "add1"
+            },
+            {
+              "from": "xin",
+              "to": "add1",
+              "dashed": true,
+              "bend": -0.25
+            },
+            {
+              "from": "add1",
+              "to": "ln2"
+            },
+            {
+              "from": "ln2",
+              "to": "fc"
+            },
+            {
+              "from": "fc",
+              "to": "out"
+            },
+            {
+              "from": "out",
+              "to": "add2"
+            },
+            {
+              "from": "add1",
+              "to": "add2",
+              "dashed": true,
+              "bend": 0.15
+            }
+          ]
+        },
+        "state": {
+          "highlight": [
+            "add1",
+            "add2"
+          ],
+          "caption": "The two additions of the block."
+        }
+      },
+      "question": "What does the final layer norm `lnf` read?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stream",
+            "text": "The stream: $x$ plus both writes",
+            "correct": true
+          },
+          {
+            "id": "mlp",
+            "text": "The MLP output alone, the last write",
+            "why": "The MLP output is added to the stream; `lnf` reads the sum, not the last write."
+          },
+          {
+            "id": "attn",
+            "text": "The attention output alone, after proj",
+            "why": "Attention writes into the stream, and the MLP adds after it. `lnf` reads everything added so far."
+          },
+          {
+            "id": "emb",
+            "text": "The embeddings alone, before the block",
+            "why": "The embeddings start the stream, but both sublayers add to it before `lnf`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the arrows into each plus sign."
+        },
+        {
+          "rung": "point",
+          "text": "Each plus sign keeps what came before.",
+          "highlight": [
+            "add1",
+            "add2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After the block, the stream holds $x$, the attention write and the MLP write."
+        }
+      ],
+      "feedback": {
+        "correct": "`lnf` reads the whole stream: the embeddings plus both writes.",
+        "generic": "Not quite. Follow what each addition keeps."
+      },
+      "explain": {
+        "text": "Nothing is overwritten: the block adds two writes to $x$. So `lnf` reads $x$ plus both writes, still (16, 32, 32).",
+        "canvas": {
+          "highlight": [
+            "add2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Two counts of one model",
+      "prose": "The timing spike timed a wider one-block model: $V = 65$, $T = 32$, $d = 64$, MLP 256. It reported **59,840** parameters. Our convention, every bias and every layer-norm number, gives **60,545** for the same shapes.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Array",
+            "Spike count",
+            "Our count"
+          ],
+          "rows": [
+            [
+              "Attention biases",
+              "no",
+              "192 + 64"
+            ],
+            [
+              "Layer norms",
+              "no",
+              "3 times 128"
+            ],
+            [
+              "MLP biases",
+              "yes",
+              "yes"
+            ],
+            [
+              "Head bias",
+              "no",
+              "65"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "What explains the gap of 705?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "convention",
+            "text": "The spike skipped attention biases, layer norms and the head bias",
+            "correct": true
+          },
+          {
+            "id": "wrong",
+            "text": "One of the two counts is an arithmetic mistake",
+            "why": "Both add up for their convention. A parameter count is only meaningful with its convention stated."
+          },
+          {
+            "id": "pos",
+            "text": "The spike counted `wpe` with 65 rows, one a character",
+            "why": "That would make its count larger, not smaller."
+          },
+          {
+            "id": "tied",
+            "text": "The spike tied the head to `wte` and counted it once",
+            "why": "Tying would remove $64 \\times 65 = 4{,}160$, far more than 705."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add up what our count has that the spike does not."
+        },
+        {
+          "rung": "point",
+          "text": "$192 + 64 + 384 + 65$.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The gap is exactly the arrays the spike did not count."
+        }
+      ],
+      "feedback": {
+        "correct": "$256 + 384 + 65 = 705$: the spike counted weights and MLP biases only.",
+        "generic": "Not quite. Add up the arrays in our column that the spike left out.",
+        "byKey": {
+          "wrong": "Both are right for what they count. That is the trap: a count without its convention cannot be compared."
+        }
+      },
+      "explain": {
+        "text": "Attention biases 256, three layer norms 384 and the head bias 65 make 705. A parameter count needs its convention: biases, norms and tied embeddings each change it.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Count it in code",
+      "prose": "Write `param_count(V, T, d, n_layer, mlp)` for our convention, and `shapes(config)`, a dict from each array name to its shape. Name block arrays `h0.ln1_g`, `h0.ln1_b`, `h0.qkv_w`, `h0.qkv_b`, `h0.proj_w`, `h0.proj_b`, `h0.ln2_g`, `h0.ln2_b`, `h0.fc_w`, `h0.fc_b`, `h0.out_w`, `h0.out_b`, then `h1.` for the next block.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Outside the blocks",
+            "Shape"
+          ],
+          "rows": [
+            [
+              "wte",
+              "(V, d)"
+            ],
+            [
+              "wpe",
+              "(T, d)"
+            ],
+            [
+              "lnf_g, lnf_b",
+              "(d,) each"
+            ],
+            [
+              "head_w, head_b",
+              "(d, V), (V,)"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Write `param_count` and `shapes`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def param_count(V, T, d, n_layer, mlp):\n    # Every array of the tiny GPT: embeddings, n_layer blocks, final norm, untied head with a bias.\n    ...\n\n\ndef shapes(config):\n    # config has V, T, d, n_head, n_layer, mlp. Return {name: shape tuple}, with block arrays\n    # named \"h0.ln1_g\", \"h0.qkv_w\", ... as in the table above.\n    ...\n",
+        "solution": "def param_count(V, T, d, n_layer, mlp):\n    block = 4 * d + (d * 3 * d + 3 * d) + (d * d + d) + (d * mlp + mlp) + (mlp * d + d)\n    return V * d + T * d + n_layer * block + 2 * d + d * V + V\n\n\ndef shapes(config):\n    V, T, d, m = config['V'], config['T'], config['d'], config['mlp']\n    out = {'wte': (V, d), 'wpe': (T, d)}\n    for i in range(config['n_layer']):\n        p = f'h{i}.'\n        out.update({p + 'ln1_g': (d,), p + 'ln1_b': (d,), p + 'qkv_w': (d, 3 * d), p + 'qkv_b': (3 * d,),\n                    p + 'proj_w': (d, d), p + 'proj_b': (d,), p + 'ln2_g': (d,), p + 'ln2_b': (d,),\n                    p + 'fc_w': (d, m), p + 'fc_b': (m,), p + 'out_w': (m, d), p + 'out_b': (d,)})\n    out.update({'lnf_g': (d,), 'lnf_b': (d,), 'head_w': (d, V), 'head_b': (V,)})\n    return out\n",
+        "examples": [
+          {
+            "call": "param_count(65, 32, 32, 1, 128)",
+            "expect": "18017",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(shapes({'V': 65, 'T': 32, 'd': 32, 'n_head': 4, 'n_layer': 1, 'mlp': 128})[\"wte\"])",
+            "expect": "(65, 32)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "param_count(65, 32, 32, 1, 128)",
+            "expect": "18017",
+            "compare": "equal"
+          },
+          {
+            "call": "param_count(65, 32, 32, 2, 128)",
+            "expect": "30721",
+            "compare": "equal"
+          },
+          {
+            "call": "param_count(65, 32, 64, 1, 256)",
+            "expect": "60545",
+            "compare": "equal"
+          },
+          {
+            "call": "param_count(50, 16, 16, 3, 64)",
+            "expect": "11778",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(shapes({'V': 65, 'T': 32, 'd': 32, 'n_head': 4, 'n_layer': 1, 'mlp': 128})[\"wpe\"])",
+            "expect": "(32, 32)",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(shapes({'V': 65, 'T': 32, 'd': 32, 'n_head': 4, 'n_layer': 1, 'mlp': 128})[\"h0.qkv_w\"])",
+            "expect": "(32, 96)",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(shapes({'V': 50, 'T': 16, 'd': 16, 'n_head': 2, 'n_layer': 3, 'mlp': 64}))[:4]",
+            "expect": "['h0.fc_b', 'h0.fc_w', 'h0.ln1_b', 'h0.ln1_g']",
+            "compare": "equal"
+          },
+          {
+            "call": "len(shapes({'V': 50, 'T': 16, 'd': 16, 'n_head': 2, 'n_layer': 3, 'mlp': 64}))",
+            "expect": "42",
+            "compare": "equal"
+          },
+          {
+            "call": "sum(int(__import__(\"math\").prod(s)) for s in shapes({'V': 50, 'T': 16, 'd': 16, 'n_head': 2, 'n_layer': 3, 'mlp': 64}).values())",
+            "expect": "11778",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(shapes({'V': 50, 'T': 16, 'd': 16, 'n_head': 2, 'n_layer': 3, 'mlp': 64})[\"head_w\"]), tuple(shapes({'V': 50, 'T': 16, 'd': 16, 'n_head': 2, 'n_layer': 3, 'mlp': 64})[\"h2.out_w\"])",
+            "expect": "((16, 50), (64, 16))",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 10 hidden tests: the tiny GPT with one and two blocks, the spike-sized model and a 3-block toy, then shapes by name, the number of arrays and their total against `param_count`.",
+        "mutants": [
+          {
+            "source": "def param_count(V, T, d, n_layer, mlp):\n    block = 4 * d + (d * 3 * d + 3 * d) + (d * d + d) + (d * mlp + mlp) + (mlp * d + d)\n    return V * d + V * d + n_layer * block + 2 * d + d * V + V\n\n\ndef shapes(config):\n    V, T, d, m = config['V'], config['T'], config['d'], config['mlp']\n    out = {'wte': (V, d), 'wpe': (T, d)}\n    for i in range(config['n_layer']):\n        p = f'h{i}.'\n        out.update({p + 'ln1_g': (d,), p + 'ln1_b': (d,), p + 'qkv_w': (d, 3 * d), p + 'qkv_b': (3 * d,),\n                    p + 'proj_w': (d, d), p + 'proj_b': (d,), p + 'ln2_g': (d,), p + 'ln2_b': (d,),\n                    p + 'fc_w': (d, m), p + 'fc_b': (m,), p + 'out_w': (m, d), p + 'out_b': (d,)})\n    out.update({'lnf_g': (d,), 'lnf_b': (d,), 'head_w': (d, V), 'head_b': (V,)})\n    return out\n",
+            "test": 1,
+            "symptom": "Gives the position table a row per character."
+          },
+          {
+            "source": "def param_count(V, T, d, n_layer, mlp):\n    block = 4 * d + (d * 3 * d) + (d * d) + (d * mlp) + (mlp * d)\n    return V * d + T * d + n_layer * block + 2 * d + d * V + V\n\n\ndef shapes(config):\n    V, T, d, m = config['V'], config['T'], config['d'], config['mlp']\n    out = {'wte': (V, d), 'wpe': (T, d)}\n    for i in range(config['n_layer']):\n        p = f'h{i}.'\n        out.update({p + 'ln1_g': (d,), p + 'ln1_b': (d,), p + 'qkv_w': (d, 3 * d), p + 'qkv_b': (3 * d,),\n                    p + 'proj_w': (d, d), p + 'proj_b': (d,), p + 'ln2_g': (d,), p + 'ln2_b': (d,),\n                    p + 'fc_w': (d, m), p + 'fc_b': (m,), p + 'out_w': (m, d), p + 'out_b': (d,)})\n    out.update({'lnf_g': (d,), 'lnf_b': (d,), 'head_w': (d, V), 'head_b': (V,)})\n    return out\n",
+            "test": 1,
+            "symptom": "Leaves out the biases of the linear layers."
+          },
+          {
+            "source": "def param_count(V, T, d, n_layer, mlp):\n    block = (d * 3 * d + 3 * d) + (d * d + d) + (d * mlp + mlp) + (mlp * d + d)\n    return V * d + T * d + n_layer * block + 2 * d + d * V + V\n\n\ndef shapes(config):\n    V, T, d, m = config['V'], config['T'], config['d'], config['mlp']\n    out = {'wte': (V, d), 'wpe': (T, d)}\n    for i in range(config['n_layer']):\n        p = f'h{i}.'\n        out.update({p + 'ln1_g': (d,), p + 'ln1_b': (d,), p + 'qkv_w': (d, 3 * d), p + 'qkv_b': (3 * d,),\n                    p + 'proj_w': (d, d), p + 'proj_b': (d,), p + 'ln2_g': (d,), p + 'ln2_b': (d,),\n                    p + 'fc_w': (d, m), p + 'fc_b': (m,), p + 'out_w': (m, d), p + 'out_b': (d,)})\n    out.update({'lnf_g': (d,), 'lnf_b': (d,), 'head_w': (d, V), 'head_b': (V,)})\n    return out\n",
+            "test": 1,
+            "symptom": "Forgets the layer-norm gains and biases in each block."
+          },
+          {
+            "source": "def param_count(V, T, d, n_layer, mlp):\n    block = 4 * d + (d * 3 * d + 3 * d) + (d * d + d) + (d * mlp + mlp) + (mlp * d + d)\n    return V * d + T * d + n_layer * block + 2 * d + V\n\n\ndef shapes(config):\n    V, T, d, m = config['V'], config['T'], config['d'], config['mlp']\n    out = {'wte': (V, d), 'wpe': (T, d)}\n    for i in range(config['n_layer']):\n        p = f'h{i}.'\n        out.update({p + 'ln1_g': (d,), p + 'ln1_b': (d,), p + 'qkv_w': (d, 3 * d), p + 'qkv_b': (3 * d,),\n                    p + 'proj_w': (d, d), p + 'proj_b': (d,), p + 'ln2_g': (d,), p + 'ln2_b': (d,),\n                    p + 'fc_w': (d, m), p + 'fc_b': (m,), p + 'out_w': (m, d), p + 'out_b': (d,)})\n    out.update({'lnf_g': (d,), 'lnf_b': (d,), 'head_w': (d, V), 'head_b': (V,)})\n    return out\n",
+            "test": 1,
+            "symptom": "Ties the head to the token table, so its weights are not counted."
+          },
+          {
+            "source": "def param_count(V, T, d, n_layer, mlp):\n    block = 4 * d + (d * 3 * d + 3 * d) + (d * d + d) + (d * mlp + mlp) + (mlp * d + d)\n    return V * d + T * d + n_layer * block + 2 * d + d * V + V\n\n\ndef shapes(config):\n    V, T, d, m = config['V'], config['T'], config['d'], config['mlp']\n    out = {'wte': (V, d), 'wpe': (V, d)}\n    for i in range(config['n_layer']):\n        p = f'h{i}.'\n        out.update({p + 'ln1_g': (d,), p + 'ln1_b': (d,), p + 'qkv_w': (d, 3 * d), p + 'qkv_b': (3 * d,),\n                    p + 'proj_w': (d, d), p + 'proj_b': (d,), p + 'ln2_g': (d,), p + 'ln2_b': (d,),\n                    p + 'fc_w': (d, m), p + 'fc_b': (m,), p + 'out_w': (m, d), p + 'out_b': (d,)})\n    out.update({'lnf_g': (d,), 'lnf_b': (d,), 'head_w': (d, V), 'head_b': (V,)})\n    return out\n",
+            "test": 5,
+            "symptom": "Shapes the position table by the vocabulary."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the block as a sum of its arrays first."
+        },
+        {
+          "rung": "point",
+          "text": "A block: $4d$ for the norms, then each linear layer's weight plus its bias.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then add $Vd + Td$, $n_\\text{layer}$ blocks, $2d$ and $dV + V$."
+        }
+      ],
+      "feedback": {
+        "correct": "Your count and shapes agree on every model.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is the tiny GPT, 18,017. Check `wpe` (T rows), the biases and the layer norms.",
+          "test-5": "Test 5 reads the shape of `wpe`: one row per position, (T, d)."
+        }
+      },
+      "explain": {
+        "text": "A block holds $4d^2 + 2dm + 9d + m$ numbers. The rest is $Vd + Td + 2d + dV + V$, so the count is exact for any width and depth."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The count as a formula",
+      "prose": "Adding what we counted, with width $d$, MLP width $m$, $L$ blocks, vocabulary $V$ and context $T$:\n$$N = Vd + Td + L\\,(4d^2 + 2dm + 9d + m) + 2d + dV + V$$\nAt $d = 32$, $m = 128$ the block term is 12,704.",
+      "question": "With $m = 4d$, which term of a block grows fastest as the width grows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sq",
+            "text": "The weights, $4d^2 + 2dm = 12d^2$",
+            "correct": true
+          },
+          {
+            "id": "bias",
+            "text": "The biases of the block, $5d + m$",
+            "why": "Biases grow in proportion to $d$; the weights grow with $d^2$."
+          },
+          {
+            "id": "ln",
+            "text": "The two layer norms, $4d$",
+            "why": "Four vectors of width $d$ grow only in proportion to $d$."
+          },
+          {
+            "id": "vocab",
+            "text": "The head outside it, $dV$",
+            "why": "The head sits outside the block and grows in proportion to $d$ for a fixed vocabulary."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $m = 4d$ into each term."
+        }
+      ],
+      "feedback": {
+        "correct": "With $m = 4d$ the weights are $4d^2 + 8d^2 = 12d^2$; everything else grows like $d$.",
+        "generic": "Not quite. Which terms have $d^2$ in them?"
+      },
+      "explain": {
+        "text": "With $m = 4d$ the weights are $12d^2$ per block, which is why large models are counted as about $12Ld^2$. Level 4 starts from there."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Checking a model card",
+      "prose": "A vendor's card describes a character model for parsing trade confirmations. It has vocabulary 96, context 128, width 64, 2 blocks and MLP 256. Layer norms have a gain and a bias, every linear layer has a bias, and the head is untied with a bias.",
+      "question": "How many parameters should the card state?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 120672,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "tied",
+            "value": 114528,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-block",
+            "value": 70688,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the formula with $V = 96$, $T = 128$, $d = 64$, $m = 256$, $L = 2$."
+        },
+        {
+          "rung": "point",
+          "text": "One block is $4 \\cdot 64^2 + 2 \\cdot 64 \\cdot 256 + 9 \\cdot 64 + 256 = 49{,}984$."
+        },
+        {
+          "rung": "step",
+          "text": "$6144 + 8192 + 2 \\times 49984 + 128 + 6240$."
+        }
+      ],
+      "feedback": {
+        "correct": "$6{,}144 + 8{,}192 + 99{,}968 + 128 + 6{,}240 = 120{,}672$.",
+        "generic": "Not quite. Count the embeddings, two blocks, the final norm and the head.",
+        "byKey": {
+          "tied": "You tied the head to the token table. The card says the head is untied, so its $64 \\times 96$ weights count.",
+          "one-block": "You counted one block. The card says 2."
+        }
+      },
+      "explain": {
+        "text": "Embeddings $6{,}144 + 8{,}192$, two blocks of 49,984, final norm 128 and head 6,240 give 120,672. A card that states another figure has used another convention, or another model."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The tiny GPT is token and position tables, one pre-norm block, a final layer norm and a head: (16, 32) ids become (16, 32, 65) logits.",
+      "Count every learned array: 18,017 with one block, 30,721 with two; a block adds $4d^2 + 2dm + 9d + m$.",
+      "A count needs its convention: biases, layer norms and a tied head each change it."
+    ],
+    "formula": {
+      "name": "Parameters of the tiny GPT",
+      "tex": "N = Vd + Td + L\\,(4d^2 + 2dm + 9d + m) + 2d + dV + V",
+      "note": "Untied head with a bias; every linear layer has a bias."
+    },
+    "trap": "Comparing two parameter counts made under different conventions."
+  },
+  "quiz": [
+    {
+      "id": "q-tied",
+      "difficulty": 2,
+      "question": "Tie the head to `wte`, so the head uses the token table's numbers and keeps only its own bias. How many parameters does the one-block tiny GPT then have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15937,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "no-bias",
+            "value": 15872,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "untied",
+            "value": 18017,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "feedback": {
+        "correct": "$18{,}017 - 2{,}080 = 15{,}937$: the shared table is counted once.",
+        "generic": "Not quite. Tying removes the head's own weights, $32 \\times 65$.",
+        "byKey": {
+          "no-bias": "You dropped the head bias too. Only the weights are shared; the 65 biases stay.",
+          "untied": "That is the untied count. Tying removes 2,080 weights."
+        }
+      },
+      "explain": {
+        "text": "Tying removes the head's $32 \\times 65 = 2{,}080$ weights and keeps its 65 biases: 15,937."
+      }
+    },
+    {
+      "id": "q-shape",
+      "difficulty": 2,
+      "question": "The model reads a batch of 8 windows of 20 characters. What is the shape of the logits?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "(8, 20, 65)",
+            "correct": true
+          },
+          {
+            "id": "wide",
+            "text": "(8, 20, 32)",
+            "why": "That is the stream, width 32. The head maps it to 65 scores."
+          },
+          {
+            "id": "ctx",
+            "text": "(8, 32, 65)",
+            "why": "A window of 20 gives 20 positions; the context of 32 is only the most it can read."
+          },
+          {
+            "id": "flat",
+            "text": "(8, 65)",
+            "why": "Every position predicts, not only the last."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "(8, 20, 65): one score per character at each of the 20 positions.",
+        "generic": "Not quite. Each position of each window gets 65 scores."
+      },
+      "explain": {
+        "text": "The batch and positions pass straight through; only the last axis changes, from 32 to 65."
+      }
+    },
+    {
+      "id": "q-wpe",
+      "difficulty": 3,
+      "question": "Why does `wpe` have 32 rows and not 65?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pos",
+            "text": "It has a row for each position of the context",
+            "correct": true
+          },
+          {
+            "id": "chars",
+            "text": "It has a row for each character, but 33 are unused",
+            "why": "Positions, not characters, index `wpe`: row $t$ is added at position $t$."
+          },
+          {
+            "id": "width",
+            "text": "Its rows match the width, which is 32",
+            "why": "The width is the number of columns. The rows count positions; the two are both 32 here by chance."
+          },
+          {
+            "id": "heads",
+            "text": "It holds 8 rows for each of the 4 heads",
+            "why": "Heads split the width, not the positions."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Row $t$ is added at position $t$, so there are as many rows as positions: 32.",
+        "generic": "Not quite. What indexes `wpe`?"
+      },
+      "explain": {
+        "text": "The context is 32, so positions run from 0 to 31. A longer context needs more rows."
+      }
+    },
+    {
+      "id": "q-share",
+      "difficulty": 3,
+      "question": "What share of the 18,017 parameters sits in the block? Give a percentage to one decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.7051,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "rest",
+            "value": 0.2949,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "weights",
+            "value": 0.682,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Share"
+      },
+      "feedback": {
+        "correct": "$12{,}704 / 18{,}017 \\approx 70.5\\%$.",
+        "generic": "Not quite. Divide the block count by the whole count.",
+        "byKey": {
+          "rest": "That is the share outside the block. The question asks for the block.",
+          "weights": "You used the block's weights alone, 12,288. Count its biases and norms too."
+        }
+      },
+      "explain": {
+        "text": "The block holds 12,704 of 18,017, about 70.5%. At this small width the embeddings and head are most of the rest."
+      }
+    }
+  ]
+}

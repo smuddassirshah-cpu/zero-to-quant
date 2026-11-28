@@ -1,0 +1,507 @@
+{
+  "id": "problems-2",
+  "course": "gpt",
+  "level": 2,
+  "title": "Sizing and scoring a character model",
+  "minutes": 40,
+  "items": [
+    {
+      "id": "p-desk-model",
+      "difficulty": 5,
+      "skills": [
+        "gpt-forward"
+      ],
+      "prose": "A trading desk sizes a character model for its broker chat: vocabulary 80, context 64, width 48, 2 blocks and MLP 192. It follows our full convention: biases on all four projections, scale and shift in each norm, and an output head separate from the token table.",
+      "parts": [
+        {
+          "question": "How many parameters does one block hold?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 28272,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "weights",
+                "value": 27648,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-ln",
+                "value": 28080,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Parameters"
+          },
+          "feedback": {
+            "correct": "$4 \\cdot 48^2 + 2 \\cdot 48 \\cdot 192 + 9 \\cdot 48 + 192 = 28{,}272$.",
+            "generic": "Not quite. Count the weights, the biases and the two layer norms.",
+            "byKey": {
+              "weights": "That is the weights alone. Add the biases and the layer norms.",
+              "no-ln": "You left out the two layer norms, $4 \\times 48$."
+            }
+          },
+          "explain": {
+            "text": "Weights $27{,}648$, biases $3 \\cdot 48 + 48 + 192 + 48 = 432$ and layer norms 192 make 28,272."
+          }
+        },
+        {
+          "question": "Using 28,272 a block, how many parameters does the whole model have?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 67472,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "one",
+                "value": 39200,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "tied",
+                "value": 63632,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Parameters"
+          },
+          "feedback": {
+            "correct": "$3{,}840 + 3{,}072 + 56{,}544 + 96 + 3{,}920 = 67{,}472$.",
+            "generic": "Not quite. Add the two tables, two blocks, the final norm and the head.",
+            "byKey": {
+              "one": "You counted one block. The model has two.",
+              "tied": "The head is untied, so its $48 \\times 80$ weights count."
+            }
+          },
+          "explain": {
+            "text": "Tables $80 \\times 48 + 64 \\times 48$, two blocks, `lnf` 96 and the head $48 \\times 80 + 80$: 67,472."
+          }
+        },
+        {
+          "question": "Taking the 67,472 parameters, how many bytes do they take as float32?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 269888,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "f64",
+                "value": 539776,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "params",
+                "value": 67472,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Bytes"
+          },
+          "feedback": {
+            "correct": "$67{,}472 \\times 4 = 269{,}888$ bytes.",
+            "generic": "Not quite. A float32 is 4 bytes.",
+            "byKey": {
+              "f64": "That is float64, 8 bytes a number.",
+              "params": "That is the count of numbers; each takes 4 bytes."
+            }
+          },
+          "explain": {
+            "text": "$67{,}472 \\times 4 = 269{,}888$ bytes."
+          }
+        },
+        {
+          "question": "Treating those 269,888 bytes as one run, how many base64 characters is that?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 359852,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "bytes",
+                "value": 269888,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "third",
+                "value": 89963,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Characters"
+          },
+          "feedback": {
+            "correct": "$\\lceil 269{,}888 / 3 \\rceil \\times 4 = 359{,}852$.",
+            "generic": "Not quite. Every 3 bytes take 4 characters.",
+            "byKey": {
+              "bytes": "That is the bytes before base64.",
+              "third": "That is the number of groups of 3. Each takes 4 characters."
+            }
+          },
+          "explain": {
+            "text": "359,852 characters, above the 262,144 bytes a data file may hold. Splitting one file a block keeps each file under the limit."
+          }
+        },
+        {
+          "question": "A data file may hold 262,144 bytes. Can these weights ship as one file?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "split",
+                "text": "No: one file per block, plus one for the tables and head",
+                "correct": true
+              },
+              {
+                "id": "yes",
+                "text": "Yes, since 269,888 bytes is close to the limit",
+                "why": "The text is the base64, not the raw bytes, and both are over 262,144."
+              },
+              {
+                "id": "f16",
+                "text": "Only after rounding every number to two decimal places",
+                "why": "Rounding does not shorten base64 of float32: its length is fixed by the count."
+              },
+              {
+                "id": "none",
+                "text": "No: the model is too large to ship at all",
+                "why": "Split into files it ships: each block is about 28,000 numbers."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Split it: each block's file is about 151,000 characters, under the limit.",
+            "generic": "Not quite. Compare the base64 length with the limit."
+          },
+          "explain": {
+            "text": "The base64 text is over the limit, so the weights go one file a block, as the tiny GPT's do."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-batch-shapes",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "prose": "The same desk model, width 48 with 4 heads and vocabulary 80, reads a batch of 4 windows of 64 characters.",
+      "parts": [
+        {
+          "question": "How many logits does one forward pass give?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 20480,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "one",
+                "value": 5120,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "width",
+                "value": 12288,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Logits"
+          },
+          "feedback": {
+            "correct": "$4 \\times 64 \\times 80 = 20{,}480$.",
+            "generic": "Not quite. Batch, positions and vocabulary.",
+            "byKey": {
+              "one": "That is one window.",
+              "width": "That is the stream, width 48."
+            }
+          },
+          "explain": {
+            "text": "The logits are (4, 64, 80): 20,480 numbers."
+          }
+        },
+        {
+          "question": "With 4 heads, what is the width of each head?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 12,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "d",
+                "value": 48,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "times",
+                "value": 192,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Head width"
+          },
+          "feedback": {
+            "correct": "$48 / 4 = 12$.",
+            "generic": "Not quite. The heads split the width.",
+            "byKey": {
+              "d": "That is the whole width; the heads share it.",
+              "times": "You multiplied by 4; the heads divide the width."
+            }
+          },
+          "explain": {
+            "text": "Each head works on 12 of the 48 features."
+          }
+        },
+        {
+          "question": "How many attention weights does one block compute for the batch?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 65536,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "noheads",
+                "value": 16384,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Weights"
+          },
+          "feedback": {
+            "correct": "$4 \\times 4 \\times 64 \\times 64 = 65{,}536$.",
+            "generic": "Not quite. Every window, every head, every pair of positions.",
+            "byKey": {
+              "noheads": "You left out the 4 heads, or the 4 windows."
+            }
+          },
+          "explain": {
+            "text": "Shape (4, 4, 64, 64): 65,536 weights."
+          }
+        },
+        {
+          "question": "Of those 65,536, how many can be nonzero under the causal mask?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 33280,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "all",
+                "value": 65536,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "strict",
+                "value": 32256,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Weights"
+          },
+          "feedback": {
+            "correct": "Each head of each window keeps $64 \\times 65 / 2 = 2{,}080$, and $16 \\times 2{,}080 = 33{,}280$.",
+            "generic": "Not quite. Count the entries on and below the diagonal of one 64 by 64 grid.",
+            "byKey": {
+              "all": "The mask zeroes everything above the diagonal.",
+              "strict": "You left out the diagonal; a position reads itself."
+            }
+          },
+          "explain": {
+            "text": "A 64 by 64 grid has 2,080 entries on or below its diagonal; 16 grids give 33,280."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-chances",
+      "difficulty": 4,
+      "skills": [
+        "gpt-forward"
+      ],
+      "prose": "The desk model reads a short chat line and, at four positions, gives the true next characters chances 0.5, 0.2, 0.05 and 0.8. Its vocabulary has 80 characters.",
+      "parts": [
+        {
+          "question": "What loss in nats would a uniform guess over the vocabulary give? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 4.382,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "bits",
+                "value": 6.3219,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "v65",
+                "value": 4.1744,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Loss"
+          },
+          "feedback": {
+            "correct": "$\\ln 80 \\approx 4.3820$.",
+            "generic": "Not quite. A uniform guess costs $\\ln V$.",
+            "byKey": {
+              "bits": "That is bits.",
+              "v65": "That is for 65 characters. This vocabulary has 80."
+            }
+          },
+          "explain": {
+            "text": "Each character gets $1/80$, so every position costs $\\ln 80 \\approx 4.3820$ nats."
+          }
+        },
+        {
+          "question": "What is the model's mean loss over the four positions, in nats? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.3804,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "avgp",
+                "value": 0.948,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "sum",
+                "value": 5.5215,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Loss"
+          },
+          "feedback": {
+            "correct": "$(0.6931 + 1.6094 + 2.9957 + 0.2231)/4 \\approx 1.3804$.",
+            "generic": "Not quite. Average $-\\ln p$ over the four positions.",
+            "byKey": {
+              "avgp": "You averaged the chances, then took the log. Average the losses.",
+              "sum": "That is the sum; divide by 4."
+            }
+          },
+          "explain": {
+            "text": "The four losses are 0.6931, 1.6094, 2.9957 and 0.2231; their mean is 1.3804."
+          }
+        },
+        {
+          "question": "Taking the mean loss from part 2 as 1.3804 nats, what is it in bits? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.9914,
+            "tol": {
+              "abs": 0.0002
+            },
+            "wrong": [
+              {
+                "id": "times",
+                "value": 0.9568,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Bits"
+          },
+          "feedback": {
+            "correct": "$1.3804 / \\ln 2 \\approx 1.9914$ bits.",
+            "generic": "Not quite. Divide nats by $\\ln 2$.",
+            "byKey": {
+              "times": "You multiplied by $\\ln 2$; divide."
+            }
+          },
+          "explain": {
+            "text": "$1.3804 / \\ln 2 \\approx 1.9914$ bits a character."
+          }
+        },
+        {
+          "question": "If the chance at the third position rose from 0.05 to 0.5, what would the mean loss become, in nats? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.8047,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "drop",
+                "value": 0.5756,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Loss"
+          },
+          "feedback": {
+            "correct": "The third loss falls from 2.9957 to 0.6931, so the mean is $0.8047$.",
+            "generic": "Not quite. Replace the third loss and average again.",
+            "byKey": {
+              "drop": "That is how much the mean falls. The question asks for the new mean."
+            }
+          },
+          "explain": {
+            "text": "One badly predicted character carried most of the loss: fixing it takes the mean from 1.3804 to 0.8047."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1240 @@
+{
+  "id": "l15-power-laws",
+  "course": "gpt",
+  "title": "Power laws in log space",
+  "minutes": 14,
+  "objectives": [
+    "Fit a power law by least squares in log space and read its exponent."
+  ],
+  "skills": [
+    "gpt-scale"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The same factor each time",
+      "prose": "A family of models gets ten times larger at each step, and the loss falls each time.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Parameters $N$",
+            "Loss $L$"
+          ],
+          "rows": [
+            [
+              "$10^6$",
+              "1.2559"
+            ],
+            [
+              "$10^7$",
+              "0.9976"
+            ],
+            [
+              "$10^8$",
+              "0.7924"
+            ],
+            [
+              "$10^9$",
+              "0.6295"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "By what factor does the loss shrink with each tenfold? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.7943,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "diff",
+            "value": 0.2583,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "inv",
+            "value": 1.2589,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Factor"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide one loss by the one before."
+        },
+        {
+          "rung": "point",
+          "text": "$0.9976 / 1.2559$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Check another pair: it is the same."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.9976 / 1.2559 \\approx 0.7943$, and every step gives the same factor.",
+        "generic": "Not quite. Divide each loss by the one before it.",
+        "byKey": {
+          "diff": "That is the drop, which shrinks each step. The ratio stays the same.",
+          "inv": "You divided the other way: the loss shrinks, so the factor is below 1."
+        }
+      },
+      "explain": {
+        "text": "A constant factor per tenfold is a **power law**: $L = aN^{-\\alpha}$ with $10^{-\\alpha} = 0.7943$, so $\\alpha = 0.1$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A line in log space",
+      "prose": "Plot $\\log_{10} L$ against $\\log_{10} N$ for the four models. Slide the exponent $k$ of the line $\\log_{10} L = \\log_{10} 5 - k \\log_{10} N$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            5.5,
+            9.5
+          ],
+          "y": [
+            -0.3,
+            0.2
+          ],
+          "xLabel": "log10 N",
+          "yLabel": "log10 L",
+          "params": {
+            "k": 0.05
+          },
+          "functions": [
+            {
+              "id": "f",
+              "expr": "0.69897 - k*x",
+              "label": "line"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 6.0,
+              "y": 0.099
+            },
+            {
+              "id": "p1",
+              "x": 7.0,
+              "y": -0.001
+            },
+            {
+              "id": "p2",
+              "x": 8.0,
+              "y": -0.101
+            },
+            {
+              "id": "p3",
+              "x": 9.0,
+              "y": -0.201
+            }
+          ],
+          "params": {
+            "k": 0.05
+          }
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "label": "k",
+            "min": 0.02,
+            "max": 0.2,
+            "step": 0.01,
+            "start": 0.05
+          }
+        ]
+      },
+      "question": "Which $k$ puts the line through all four points? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "k"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide until the line meets every point."
+        },
+        {
+          "rung": "point",
+          "text": "Each point falls 0.1 for each step right.",
+          "highlight": [
+            "p0",
+            "p3"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$k = 0.1$: the four points lie on one straight line.",
+        "generic": "Not quite. Keep sliding until every point sits on the line.",
+        "byKey": {
+          "one": "That is where the slider started."
+        }
+      },
+      "explain": {
+        "text": "At $k = 0.1$ the line passes through all four points. In log space a power law is a straight line whose slope is $-\\alpha$, so fitting it means fitting a line."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The slope is the exponent",
+      "prose": "Taking logs of $L = aN^{-\\alpha}$ gives $\\ln L = \\ln a - \\alpha \\ln N$: a straight line in $(\\ln N, \\ln L)$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$\\log_{10} N$",
+            "$\\log_{10} L$"
+          ],
+          "rows": [
+            [
+              "6",
+              "0.0990"
+            ],
+            [
+              "9",
+              "-0.2010"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the slope of the line through these two points? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.1,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "drop",
+            "value": -0.3,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "Slope"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Rise over run."
+        },
+        {
+          "rung": "point",
+          "text": "$(-0.2010 - 0.0990) / (9 - 6)$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The run is 3."
+        }
+      ],
+      "feedback": {
+        "correct": "$(-0.2010 - 0.0990) / 3 = -0.10$, so $\\alpha = 0.1$.",
+        "generic": "Not quite. Divide the change in $\\log L$ by the change in $\\log N$.",
+        "byKey": {
+          "sign": "The loss falls, so the slope is negative; the exponent is minus the slope.",
+          "drop": "That is the rise. Divide by the run, 3."
+        }
+      },
+      "explain": {
+        "text": "The slope is $-0.1$ in base 10 or base $e$ alike, since both axes change base together. The exponent $\\alpha$ is minus the slope.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Least squares on the logs",
+      "prose": "With more than two points, fit the line by least squares on $x = \\ln N$, $y = \\ln L$ (`regression` L1): slope $= \\mathrm{cov}(x, y) / \\mathrm{var}(x)$, intercept $= \\bar y - \\text{slope} \\cdot \\bar x$. For the four exact points the slope is $-0.1$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Parameters $N$",
+            "Loss $L$"
+          ],
+          "rows": [
+            [
+              "$10^6$",
+              "1.2559"
+            ],
+            [
+              "$10^7$",
+              "0.9976"
+            ],
+            [
+              "$10^8$",
+              "0.7924"
+            ],
+            [
+              "$10^9$",
+              "0.6295"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "The fit's intercept is $\\ln a$. What is $a$? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.0,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "ln",
+            "value": 1.61,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "a"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The intercept is $\\ln L$ at $\\ln N = 0$."
+        },
+        {
+          "rung": "point",
+          "text": "For exact points it is $\\ln 5$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$a = e^{\\ln 5}$."
+        }
+      ],
+      "feedback": {
+        "correct": "The intercept is $\\ln 5 \\approx 1.609$, so $a = 5.00$.",
+        "generic": "Not quite. Exponentiate the intercept.",
+        "byKey": {
+          "ln": "That is $\\ln a$. Exponentiate it."
+        }
+      },
+      "explain": {
+        "text": "Exponentiate the intercept to get $a = 5$. The fitted law $L = 5N^{-0.1}$ is the one that made the points.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Fitting noisy runs",
+      "prose": "Real runs scatter. The number script made 7 models from $10^6$ to $10^9$ parameters with losses $5N^{-0.1}$ times seeded noise of about 2%.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$\\log_{10} N$",
+            "Loss"
+          ],
+          "rows": [
+            [
+              "6.0",
+              "1.2591"
+            ],
+            [
+              "6.5",
+              "1.1164"
+            ],
+            [
+              "7.0",
+              "1.0105"
+            ],
+            [
+              "7.5",
+              "0.8910"
+            ],
+            [
+              "8.0",
+              "0.7840"
+            ],
+            [
+              "8.5",
+              "0.7114"
+            ],
+            [
+              "9.0",
+              "0.6461"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What exponent $\\alpha$ does least squares on the logs give? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0979,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "true",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "sign",
+            "value": -0.0979,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Exponent"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fit $\\ln L$ on $\\ln N$."
+        },
+        {
+          "rung": "point",
+          "text": "The exponent is minus the slope.",
+          "highlight": [
+            "r0",
+            "r6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It is close to, but not exactly, 0.1."
+        }
+      ],
+      "feedback": {
+        "correct": "The fit gives $\\alpha \\approx 0.0979$ and $a \\approx 4.85$, near the true 0.1 and 5.",
+        "generic": "Not quite. Fit the logs and take minus the slope.",
+        "byKey": {
+          "true": "That is the exponent that made the data; the noisy points give a slightly different fit.",
+          "sign": "That is the slope; the exponent is its negative."
+        }
+      },
+      "explain": {
+        "text": "Noise of 2% moves the fitted exponent to 0.0979. Seven points over three decades pin the exponent to within a few per cent."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the fit",
+      "prose": "Write `fit_power_law(N, L)`, returning $(a, \\alpha)$ for $L = aN^{-\\alpha}$ by least squares on natural logs, and `predict_loss(a, alpha, N)`. `NN`, `LN` hold the noisy runs.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$\\log_{10} N$",
+            "Loss"
+          ],
+          "rows": [
+            [
+              "6.0",
+              "1.2591"
+            ],
+            [
+              "6.5",
+              "1.1164"
+            ],
+            [
+              "7.0",
+              "1.0105"
+            ],
+            [
+              "7.5",
+              "0.8910"
+            ],
+            [
+              "8.0",
+              "0.7840"
+            ],
+            [
+              "8.5",
+              "0.7114"
+            ],
+            [
+              "9.0",
+              "0.6461"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "Write `fit_power_law` and `predict_loss`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef fit_power_law(N, L):\n    # Least squares of ln L on ln N. L = a * N ** (-alpha): return (a, alpha).\n    ...\n\n\ndef predict_loss(a, alpha, N):\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef fit_power_law(N, L):\n    x, y = np.log(np.asarray(N, dtype=float)), np.log(np.asarray(L, dtype=float))\n    slope = np.cov(x, y, bias=True)[0, 1] / np.var(x)\n    intercept = y.mean() - slope * x.mean()\n    return float(np.exp(intercept)), float(-slope)\n\n\ndef predict_loss(a, alpha, N):\n    return a * np.asarray(N, dtype=float) ** (-alpha)\n",
+        "prelude": "import numpy as np\n\nNN = np.array([1000000.0, 3162277.660168379, 10000000.0, 31622776.60168379, 100000000.0, 316227766.01683795, 1000000000.0])\nLN = np.array([1.2591053902614762, 1.1164070132938455, 1.0104914537178342, 0.8910070803979049, 0.7840021240214559, 0.7113949518915926, 0.646095036717681])\nKN = [100000000.0, 1000000000.0, 10000000000.0, 100000000000.0]\nKL = [2.8299625155267965, 2.3756402951345246, 1.9942549701285655, 1.6740972503403668]\n",
+        "examples": [
+          {
+            "call": "fit_power_law([10, 1000], [2.0, 0.2])",
+            "expect": "(6.324555320336759, 0.5)",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "fit_power_law([1e6, 1e7, 1e8, 1e9], [5 * n ** -0.1 for n in [1e6, 1e7, 1e8, 1e9]])",
+            "expect": "(5.0, 0.1)",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "fit_power_law(NN, LN)",
+            "expect": "(4.849745820288161, 0.09792399961051947)",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "fit_power_law(KN, KL)[1]",
+            "expect": "0.076",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "fit_power_law([1, 100], [3, 0.3])",
+            "expect": "(3.0000000000000004, 0.5)",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "predict_loss(5.0, 0.1, 1e12)",
+            "expect": "0.31547867224009657",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "float(predict_loss(*fit_power_law(NN, LN), 2e7))",
+            "expect": "0.9349167032473918",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          }
+        ],
+        "how": "Submit runs 6 hidden tests: the exact law $5N^{-0.1}$, the noisy runs, Kaplan's law, two points, and two predictions. Values within $10^{-9}$ (relative).",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef fit_power_law(N, L):\n    x, y = np.asarray(N, dtype=float), np.asarray(L, dtype=float)\n    slope = np.cov(x, y, bias=True)[0, 1] / np.var(x)\n    intercept = y.mean() - slope * x.mean()\n    return float(np.exp(intercept)), float(-slope)\n\n\ndef predict_loss(a, alpha, N):\n    return a * np.asarray(N, dtype=float) ** (-alpha)\n",
+            "test": 1,
+            "symptom": "Fits a straight line to L against N on linear axes."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef fit_power_law(N, L):\n    x, y = np.log(np.asarray(N, dtype=float)), np.log(np.asarray(L, dtype=float))\n    slope = np.cov(x, y, bias=True)[0, 1] / np.var(x)\n    intercept = y.mean() - slope * x.mean()\n    return float(np.exp(intercept)), float(slope)\n\n\ndef predict_loss(a, alpha, N):\n    return a * np.asarray(N, dtype=float) ** (-alpha)\n",
+            "test": 1,
+            "symptom": "Returns the slope, which is minus the exponent."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef fit_power_law(N, L):\n    x, y = np.log(np.asarray(N, dtype=float)), np.log(np.asarray(L, dtype=float))\n    slope = np.cov(x, y, bias=True)[0, 1] / np.var(x)\n    intercept = y.mean() - slope * x.mean()\n    return float(intercept), float(-slope)\n\n\ndef predict_loss(a, alpha, N):\n    return a * np.asarray(N, dtype=float) ** (-alpha)\n",
+            "test": 1,
+            "symptom": "Returns ln a instead of a."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef fit_power_law(N, L):\n    x, y = np.log10(np.asarray(N, dtype=float)), np.log(np.asarray(L, dtype=float))\n    slope = np.cov(x, y, bias=True)[0, 1] / np.var(x)\n    intercept = y.mean() - slope * x.mean()\n    return float(np.exp(intercept)), float(-slope)\n\n\ndef predict_loss(a, alpha, N):\n    return a * np.asarray(N, dtype=float) ** (-alpha)\n",
+            "test": 1,
+            "symptom": "Mixes base-10 and natural logs, so the slope is off by ln 10."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`x = np.log(N)`, `y = np.log(L)`."
+        },
+        {
+          "rung": "point",
+          "text": "Slope $= \\mathrm{cov}(x, y)/\\mathrm{var}(x)$; intercept $= \\bar y - $ slope $\\bar x$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `(np.exp(intercept), -slope)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your fit recovers every planted law.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is the exact law: $a = 5$, $\\alpha = 0.1$. Fit the logs, return $e^{\\text{intercept}}$ and minus the slope."
+        }
+      },
+      "explain": {
+        "text": "Two logs, a line, two conversions back. The same fit reads the exponent off any scaling plot."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A line on linear axes",
+      "prose": "A colleague fits a straight line to $L$ against $N$ for the four exact models, on ordinary axes, and reads its slope.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$N$",
+            "$L$"
+          ],
+          "rows": [
+            [
+              "1,000,000",
+              "1.2559"
+            ],
+            [
+              "10,000,000",
+              "0.9976"
+            ],
+            [
+              "100,000,000",
+              "0.7924"
+            ],
+            [
+              "1,000,000,000",
+              "0.6295"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fit",
+            "text": "The points are not on a line, and the largest model decides it",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: any line fit gives the exponent",
+            "why": "The exponent is the slope in log space; on linear axes the slope is a tiny number with no meaning."
+          },
+          {
+            "id": "small",
+            "text": "The slope is too small to read but correct",
+            "why": "It is not the exponent at all; the relation is curved on linear axes."
+          },
+          {
+            "id": "noise",
+            "text": "Only noise would make it wrong",
+            "why": "Even exact points give the wrong answer on linear axes."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On linear axes, three of the points sit near $N = 0$."
+        },
+        {
+          "rung": "point",
+          "text": "The curve bends sharply there.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Fit in log space instead."
+        }
+      ],
+      "feedback": {
+        "correct": "On linear axes the curve bends, the small models bunch near 0, and the largest point controls the line.",
+        "generic": "Not quite. What shape do the points make on linear axes?",
+        "byKey": {
+          "fine": "That is the trap. Only in log space is the law a line whose slope is $-\\alpha$."
+        }
+      },
+      "explain": {
+        "text": "A power law is curved on linear axes, so a line fit there answers no useful question. Take logs of both axes first.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Kaplan's law",
+      "prose": "Kaplan et al. (2020) fitted $L(N) = (8.8 \\times 10^{13} / N)^{0.076}$ to language models, with $N$ the non-embedding parameters.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$N$",
+            "$L(N)$"
+          ],
+          "rows": [
+            [
+              "$10^8$",
+              "2.8300"
+            ],
+            [
+              "$10^9$",
+              "?"
+            ],
+            [
+              "$10^{10}$",
+              "1.9943"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What does the law give at $N = 10^9$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.3756,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "exp1",
+            "value": 88000.0,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "neg",
+            "value": 0.4209,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Loss"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$8.8 \\times 10^{13} / 10^9 = 88{,}000$."
+        },
+        {
+          "rung": "point",
+          "text": "$88{,}000^{0.076}$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About 2.38."
+        }
+      ],
+      "feedback": {
+        "correct": "$88{,}000^{0.076} \\approx 2.3756$; each tenfold multiplies the loss by $10^{-0.076} \\approx 0.8395$.",
+        "generic": "Not quite. Divide, then raise to 0.076.",
+        "byKey": {
+          "exp1": "You forgot the exponent 0.076.",
+          "neg": "You inverted the ratio; the law divides $8.8 \\times 10^{13}$ by $N$."
+        }
+      },
+      "explain": {
+        "text": "2.8300, 2.3756, 1.9943: each tenfold multiplies the loss by 0.8395. A tenfold larger model buys about a 16% lower loss under this law.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A floor bends the line",
+      "prose": "Text has an irreducible loss $E$ no model can beat. A law with a floor, $L = E + aN^{-\\alpha}$, approaches $E$ instead of 0, so in log space it bends towards a flat line.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            7,
+            13
+          ],
+          "y": [
+            0.2,
+            0.5
+          ],
+          "xLabel": "log10 N",
+          "yLabel": "log10 L",
+          "functions": [
+            {
+              "id": "g",
+              "expr": "log10(1.69 + 406.4 * 10^(-0.34*x))",
+              "label": "floor 1.69"
+            }
+          ]
+        }
+      },
+      "question": "With the floor $E$ known, which fit recovers $\\alpha$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sub",
+            "text": "Fit $\\ln(L - E)$ against $\\ln N$",
+            "correct": true
+          },
+          {
+            "id": "raw",
+            "text": "Fit $\\ln L$ against $\\ln N$ as before",
+            "why": "The floor bends that line, so its slope changes along the range."
+          },
+          {
+            "id": "lin",
+            "text": "Fit $L$ against $\\ln N$",
+            "why": "That is still bent by the floor."
+          },
+          {
+            "id": "e",
+            "text": "Fit $E$ alone",
+            "why": "$E$ is the flat part; $\\alpha$ governs how fast the loss reaches it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which quantity follows a pure power law?"
+        },
+        {
+          "rung": "point",
+          "text": "$L - E = aN^{-\\alpha}$.",
+          "highlight": [
+            "g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Take logs of that."
+        }
+      ],
+      "feedback": {
+        "correct": "$L - E = aN^{-\\alpha}$ is a pure power law, a line in log space.",
+        "generic": "Not quite. Remove the floor first."
+      },
+      "explain": {
+        "text": "Subtract the floor, then fit the line. $E$ must come first, from the flattening of the largest runs, which is why fitted floors are uncertain."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two points",
+      "prose": "Two models: $10^7$ parameters at loss 3.0 and $10^9$ at loss 2.4.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$N$",
+            "Loss"
+          ],
+          "rows": [
+            [
+              "$10^7$",
+              "3.0"
+            ],
+            [
+              "$10^9$",
+              "2.4"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What do two points tell you about a power law?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fit",
+            "text": "They fix $a$ and $\\alpha$, and test nothing",
+            "correct": true
+          },
+          {
+            "id": "prove",
+            "text": "They show the losses follow a power law",
+            "why": "Any two points with falling loss fit some power law exactly."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: two points cannot fix a line",
+            "why": "Two points fix a line, here in log space."
+          },
+          {
+            "id": "floor",
+            "text": "They reveal the floor $E$",
+            "why": "A floor needs curvature, which two points cannot show."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many unknowns does $aN^{-\\alpha}$ have?"
+        },
+        {
+          "rung": "point",
+          "text": "Two.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two equations, two unknowns, no test."
+        }
+      ],
+      "feedback": {
+        "correct": "Two points always fit exactly; a third point is the first test of the law.",
+        "generic": "Not quite. Can two points ever fail to fit?"
+      },
+      "explain": {
+        "text": "Two unknowns, two points: a perfect fit is guaranteed and proves nothing. Scaling papers fit many runs over many decades for that reason."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Power laws in log space",
+      "prose": "For $L = aN^{-\\alpha}$:\n$$\\ln L = \\ln a - \\alpha \\ln N$$\nFit the line by least squares on the logs; $\\alpha$ is minus the slope and $a$ is $e^{\\text{intercept}}$. Each tenfold in $N$ multiplies $L$ by $10^{-\\alpha}$.",
+      "question": "A fit gives slope $-0.2$ in log space. By what factor does the loss shrink when $N$ grows 100 times?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "f",
+            "text": "$100^{-0.2} \\approx 0.398$",
+            "correct": true
+          },
+          {
+            "id": "lin",
+            "text": "$1 - 0.2 \\times 100$",
+            "why": "The law multiplies, it does not subtract."
+          },
+          {
+            "id": "ten",
+            "text": "$10^{-0.2} \\approx 0.631$",
+            "why": "That is one tenfold; 100 times is two."
+          },
+          {
+            "id": "half",
+            "text": "$0.2 / 100$",
+            "why": "The factor is $100^{-\\alpha}$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$L \\propto N^{-0.2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$100^{-0.2} = 10^{-0.4} \\approx 0.398$.",
+        "generic": "Not quite. Raise 100 to the power $-0.2$."
+      },
+      "explain": {
+        "text": "A hundredfold is two tenfolds: $(10^{-0.2})^2 \\approx 0.398$. The loss falls by 60%."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Market impact",
+      "prose": "A desk models the cost of a trade of size $Q$ as $\\text{cost} = cQ^{\\beta}$. Its fills show 2 basis points for a $10^4$-share order and 20 basis points for a $10^6$-share order.",
+      "question": "What exponent $\\beta$ do the two fills give? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "Exponent"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slope in log space."
+        },
+        {
+          "rung": "point",
+          "text": "$\\log_{10} 20 - \\log_{10} 2 = 1$ over $\\log_{10} 10^6 - \\log_{10} 10^4 = 2$."
+        },
+        {
+          "rung": "step",
+          "text": "$1 / 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(\\log 20 - \\log 2) / (\\log 10^6 - \\log 10^4) = 1/2$: the square-root law.",
+        "generic": "Not quite. Divide the change in log cost by the change in log size.",
+        "byKey": {
+          "one": "That would make cost proportional to size: 200 basis points at $10^6$.",
+          "ratio": "That is the ratio of costs over the ratio of sizes. Take logs first."
+        }
+      },
+      "explain": {
+        "text": "$\\beta = 0.5$, the square-root impact law, fitted exactly as a scaling law. With only two fills it is a fit, not a test: more order sizes check it."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$L = aN^{-\\alpha}$ is a straight line in $(\\ln N, \\ln L)$: fit it by least squares on the logs; $\\alpha$ is minus the slope.",
+      "Kaplan's $L = (8.8 \\times 10^{13}/N)^{0.076}$ falls by a factor 0.8395 per tenfold: 2.8300, 2.3756, 1.9943 at $10^8$, $10^9$, $10^{10}$.",
+      "A floor $E$ bends the line (fit $\\ln(L - E)$); two points always fit; extrapolation far past the data is a guess."
+    ],
+    "formula": {
+      "name": "A power law in log space",
+      "tex": "\\ln L = \\ln a - \\alpha \\ln N",
+      "note": "Each tenfold multiplies $L$ by $10^{-\\alpha}$."
+    },
+    "trap": "Fitting a straight line to $L$ against $N$ on linear axes."
+  },
+  "quiz": [
+    {
+      "id": "q-factor",
+      "difficulty": 2,
+      "question": "A law has $\\alpha = 0.05$. By what factor does the loss shrink per tenfold? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8913,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.95,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Factor"
+      },
+      "feedback": {
+        "correct": "$10^{-0.05} \\approx 0.8913$.",
+        "generic": "Not quite. The factor is $10^{-\\alpha}$.",
+        "byKey": {
+          "one": "That is $1 - \\alpha$; the factor is $10^{-\\alpha}$."
+        }
+      },
+      "explain": {
+        "text": "Each tenfold multiplies by $10^{-0.05} \\approx 0.8913$."
+      }
+    },
+    {
+      "id": "q-extrap",
+      "difficulty": 3,
+      "question": "A law fitted on models from $10^6$ to $10^9$ parameters predicts the loss at $10^{13}$. Why distrust it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "far",
+            "text": "It is four decades past the data",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: a power law holds at every size",
+            "why": "A floor makes the true curve flatten; the fit cannot know where."
+          },
+          {
+            "id": "noise",
+            "text": "Because of noise in the fit",
+            "why": "Noise matters, but the larger risk is the untested range."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Beyond the fitted range the law is a guess; floors bend real curves.",
+        "generic": "Not quite. What does the fit know about $10^{13}$?"
+      },
+      "explain": {
+        "text": "A fit says nothing about sizes it never saw. Kaplan's and Chinchilla's laws differ most where they extrapolate."
+      }
+    },
+    {
+      "id": "q-slope",
+      "difficulty": 2,
+      "question": "In log space a fit gives intercept 1.5 and slope $-0.3$. What are $a$ and $\\alpha$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "$a = e^{1.5} \\approx 4.48$, $\\alpha = 0.3$",
+            "correct": true
+          },
+          {
+            "id": "raw",
+            "text": "$a = 1.5$, $\\alpha = -0.3$",
+            "why": "The intercept is $\\ln a$, and $\\alpha$ is minus the slope."
+          },
+          {
+            "id": "swap",
+            "text": "$a = e^{-0.3}$, $\\alpha = 1.5$",
+            "why": "You swapped intercept and slope."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$a = e^{1.5}$ and $\\alpha = 0.3$.",
+        "generic": "Not quite. Exponentiate the intercept; negate the slope."
+      },
+      "explain": {
+        "text": "The intercept is $\\ln a$; the slope is $-\\alpha$."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1658 @@
+{
+  "id": "l7-next-character",
+  "course": "gpt",
+  "title": "Predicting the next character",
+  "minutes": 15,
+  "objectives": [
+    "Code the GPT forward pass in NumPy and match reference logits."
+  ],
+  "skills": [
+    "gpt-forward"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "How surprised was it?",
+      "prose": "The supplied tiny GPT has read the characters `⏎First Ci` (⏎ is a new line). Its chances for the next character are below. The true next character is `t`.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "t",
+            "z",
+            "r",
+            "u",
+            "e"
+          ],
+          "yLabel": "chance",
+          "showValues": true,
+          "decimals": 4,
+          "yMax": 1.15
+        },
+        "state": {
+          "values": {
+            "t": 0.985,
+            "z": 0.0031,
+            "r": 0.0024,
+            "u": 0.0019,
+            "e": 0.0019
+          }
+        }
+      },
+      "question": "What is the loss at this position, $-\\ln p$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0152,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "prob",
+            "value": 0.985,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "log10",
+            "value": 0.0066,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "bits",
+            "value": 0.0219,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Loss in nats"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the chance of `t`."
+        },
+        {
+          "rung": "point",
+          "text": "$p = 0.9850$.",
+          "highlight": [
+            "xt"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-\\ln 0.9850$."
+        }
+      ],
+      "feedback": {
+        "correct": "$-\\ln 0.9850 \\approx 0.0152$ nats: hardly surprised.",
+        "generic": "Not quite. Take minus the natural log of the chance of `t`.",
+        "byKey": {
+          "prob": "That is the chance. The loss is $-\\ln$ of it.",
+          "log10": "That is $-\\log_{10}$. Use the natural log.",
+          "bits": "That is bits. The question asks for nats."
+        }
+      },
+      "explain": {
+        "text": "The model gave `t` a chance of 0.9850, so its loss here is 0.0152 nats. A sure, right prediction costs almost nothing; a wrong one costs a lot.",
+        "canvas": {
+          "highlight": [
+            "xt"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Reading a speaker's name",
+      "prose": "Slide through the model reading `⏎First Citizen:` one character at a time. Each frame shows its five likeliest next characters; the caption gives the chance of the true one.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "k0",
+              "label": "i"
+            },
+            {
+              "id": "k1",
+              "label": "o"
+            },
+            {
+              "id": "k2",
+              "label": "r"
+            },
+            {
+              "id": "k3",
+              "label": "a"
+            },
+            {
+              "id": "k4",
+              "label": "e"
+            }
+          ],
+          "yLabel": "chance",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 1.15
+        },
+        "state": {
+          "values": {
+            "k0": 0.511,
+            "k1": 0.262,
+            "k2": 0.137,
+            "k3": 0.056,
+            "k4": 0.016
+          },
+          "caption": "After \"F\": the true next character is i, chance 0.511."
+        },
+        "controls": [
+          {
+            "bind": "prefix",
+            "label": "Read so far",
+            "frames": [
+              {
+                "categories": [
+                  {
+                    "id": "k0",
+                    "label": "i"
+                  },
+                  {
+                    "id": "k1",
+                    "label": "o"
+                  },
+                  {
+                    "id": "k2",
+                    "label": "r"
+                  },
+                  {
+                    "id": "k3",
+                    "label": "a"
+                  },
+                  {
+                    "id": "k4",
+                    "label": "e"
+                  }
+                ],
+                "values": {
+                  "k0": 0.511,
+                  "k1": 0.262,
+                  "k2": 0.137,
+                  "k3": 0.056,
+                  "k4": 0.016
+                },
+                "caption": "After \"F\": the true next character is i, chance 0.511."
+              },
+              {
+                "categories": [
+                  {
+                    "id": "k0",
+                    "label": "r"
+                  },
+                  {
+                    "id": "k1",
+                    "label": "t"
+                  },
+                  {
+                    "id": "k2",
+                    "label": "n"
+                  },
+                  {
+                    "id": "k3",
+                    "label": "x"
+                  },
+                  {
+                    "id": "k4",
+                    "label": "e"
+                  }
+                ],
+                "values": {
+                  "k0": 0.772,
+                  "k1": 0.075,
+                  "k2": 0.039,
+                  "k3": 0.022,
+                  "k4": 0.021
+                },
+                "caption": "After \"Fi\": the true next character is r, chance 0.772."
+              },
+              {
+                "categories": [
+                  {
+                    "id": "k0",
+                    "label": "s"
+                  },
+                  {
+                    "id": "k1",
+                    "label": "e"
+                  },
+                  {
+                    "id": "k2",
+                    "label": "t"
+                  },
+                  {
+                    "id": "k3",
+                    "label": "i"
+                  },
+                  {
+                    "id": "k4",
+                    "label": "o"
+                  }
+                ],
+                "values": {
+                  "k0": 0.912,
+                  "k1": 0.017,
+                  "k2": 0.014,
+                  "k3": 0.01,
+                  "k4": 0.009
+                },
+                "caption": "After \"Fir\": the true next character is s, chance 0.912."
+              },
+              {
+                "categories": [
+                  {
+                    "id": "k0",
+                    "label": "t"
+                  },
+                  {
+                    "id": "k1",
+                    "label": "c"
+                  },
+                  {
+                    "id": "k2",
+                    "label": "␣"
+                  },
+                  {
+                    "id": "k3",
+                    "label": "e"
+                  },
+                  {
+                    "id": "k4",
+                    "label": "s"
+                  }
+                ],
+                "values": {
+                  "k0": 0.878,
+                  "k1": 0.059,
+                  "k2": 0.011,
+                  "k3": 0.011,
+                  "k4": 0.008
+                },
+                "caption": "After \"Firs\": the true next character is t, chance 0.878."
+              },
+              {
+                "categories": [
+                  {
+                    "id": "k0",
+                    "label": "␣"
+                  },
+                  {
+                    "id": "k1",
+                    "label": ","
+                  },
+                  {
+                    "id": "k2",
+                    "label": "i"
+                  },
+                  {
+                    "id": "k3",
+                    "label": "e"
+                  },
+                  {
+                    "id": "k4",
+                    "label": "a"
+                  }
+                ],
+                "values": {
+                  "k0": 0.86,
+                  "k1": 0.027,
+                  "k2": 0.021,
+                  "k3": 0.013,
+                  "k4": 0.013
+                },
+                "caption": "After \"First\": the true next character is ␣, chance 0.860."
+              },
+              {
+                "categories": [
+                  {
+                    "id": "k0",
+                    "label": "t"
+                  },
+                  {
+                    "id": "k1",
+                    "label": "y"
+                  },
+                  {
+                    "id": "k2",
+                    "label": "a"
+                  },
+                  {
+                    "id": "k3",
+                    "label": "h"
+                  },
+                  {
+                    "id": "k4",
+                    "label": "o"
+                  }
+                ],
+                "values": {
+                  "k0": 0.152,
+                  "k1": 0.066,
+                  "k2": 0.058,
+                  "k3": 0.058,
+                  "k4": 0.054
+                },
+                "caption": "After \"First \": the true next character is C, chance 0.048."
+              },
+              {
+                "categories": [
+                  {
+                    "id": "k0",
+                    "label": "i"
+                  },
+                  {
+                    "id": "k1",
+                    "label": "o"
+                  },
+                  {
+                    "id": "k2",
+                    "label": "a"
+                  },
+                  {
+                    "id": "k3",
+                    "label": "h"
+                  },
+                  {
+                    "id": "k4",
+                    "label": "l"
+                  }
+                ],
+                "values": {
+                  "k0": 0.429,
+                  "k1": 0.251,
+                  "k2": 0.172,
+                  "k3": 0.049,
+                  "k4": 0.044
+                },
+                "caption": "After \"First C\": the true next character is i, chance 0.429."
+              }
+            ],
+            "frameLabels": [
+              "F",
+              "Fi",
+              "Fir",
+              "Firs",
+              "First",
+              "First␣",
+              "First␣C"
+            ]
+          }
+        ]
+      },
+      "question": "After which text does the model give the true next character its lowest chance?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "space",
+            "text": "`First␣`, before `C`",
+            "correct": true
+          },
+          {
+            "id": "f",
+            "text": "`F`, before `i`",
+            "why": "The true `i` gets 0.511 there. Slide on to the space."
+          },
+          {
+            "id": "fir",
+            "text": "`Fir`, before `s`",
+            "why": "After `Fir` the model is fairly sure of `s`: 0.912."
+          },
+          {
+            "id": "first",
+            "text": "`First`, before the space",
+            "why": "The space gets 0.860."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read each caption."
+        },
+        {
+          "rung": "point",
+          "text": "Look for the frame where the true character is not among the top five.",
+          "highlight": [
+            "k0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "After `First␣` many words could follow, and `C` gets only 0.048.",
+        "generic": "Not quite. Compare the chances in the captions."
+      },
+      "explain": {
+        "text": "Inside a name the model is nearly sure; at the start of a word it is not, and `C` gets 0.048. The loss is high where the text is hard to guess."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "One score per character",
+      "prose": "The **forward pass** runs ids through the whole model to the **logits**: at every position, one score per character of the vocabulary. The softmax of a position's logits gives its chances.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Stage",
+            "Shape for 15 characters"
+          ],
+          "rows": [
+            [
+              "ids",
+              "(15,)"
+            ],
+            [
+              "embed plus positions",
+              "(15, 32)"
+            ],
+            [
+              "block, then lnf",
+              "(15, 32)"
+            ],
+            [
+              "head: logits",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "How many logits does a forward pass of `⏎First Citizen:`, 15 characters, give?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 975,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 65,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ids",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "width",
+            "value": 480,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Logits"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The logits have shape (15, 65)."
+        },
+        {
+          "rung": "point",
+          "text": "15 positions, 65 scores each.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$15 \\times 65$."
+        }
+      ],
+      "feedback": {
+        "correct": "$15 \\times 65 = 975$ logits: a prediction after every prefix.",
+        "generic": "Not quite. Every position gets 65 scores.",
+        "byKey": {
+          "one": "That is one position. Every position predicts its next character.",
+          "ids": "That is one per position. Each position needs 65 scores.",
+          "width": "That is the stream, $15 \\times 32$. The head widens it to 65."
+        }
+      },
+      "explain": {
+        "text": "One pass gives a prediction after each of the 15 prefixes at once: 975 logits. That is why training uses every position of a window.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One head's attention",
+      "prose": "Inside the block, each head weighs earlier positions. Below are head 3's weights on `MENENIUS`, rounded: row $i$ is the query at position $i$, column $j$ the key.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.24,
+                  0.76,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.02,
+                  0.92,
+                  0.07,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.03,
+                  0.11,
+                  0.11,
+                  0.75,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.26,
+                  0.02,
+                  0.69,
+                  0.04,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.06,
+                  0.01,
+                  0.08,
+                  0.04,
+                  0.28,
+                  0.53,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.01,
+                  0.02,
+                  0.03,
+                  0.76,
+                  0.19,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.03,
+                  0.0,
+                  0.53,
+                  0.43,
+                  0.01
+                ]
+              ],
+              "heat": {
+                "mode": "seq",
+                "range": [
+                  0,
+                  1
+                ],
+                "decimals": 2,
+                "label": "weight"
+              },
+              "rowLabels": [
+                "M",
+                "E",
+                "N",
+                "E",
+                "N",
+                "I",
+                "U",
+                "S"
+              ],
+              "colLabels": [
+                "M",
+                "E",
+                "N",
+                "E",
+                "N",
+                "I",
+                "U",
+                "S"
+              ]
+            }
+          ]
+        }
+      },
+      "question": "Why is every weight above the diagonal 0?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mask",
+            "text": "A **causal mask** sets those scores to $-\\infty$",
+            "correct": true
+          },
+          {
+            "id": "learned",
+            "text": "Training taught this head to ignore them",
+            "why": "Nothing is learned here: the mask sets those scores to $-\\infty$ before the softmax, in every head."
+          },
+          {
+            "id": "round",
+            "text": "They are small and round to 0 here",
+            "why": "They are exactly 0, not rounded: $e^{-\\infty} = 0$."
+          },
+          {
+            "id": "zero",
+            "text": "The keys of later characters are zero",
+            "why": "Keys are not zero. The scores are masked before the softmax."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at row 0: it can only weigh itself."
+        },
+        {
+          "rung": "point",
+          "text": "Each row's weights sum to 1 over the columns up to the diagonal.",
+          "highlight": [
+            "A-r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The forward pass adds $-\\infty$ above the diagonal."
+        }
+      ],
+      "feedback": {
+        "correct": "The mask makes position $i$ blind to positions after $i$, exactly as at prediction time.",
+        "generic": "Not quite. What stops a position reading the future?"
+      },
+      "explain": {
+        "text": "Adding $-\\infty$ above the diagonal gives weight $e^{-\\infty} = 0$. Without it, a position could read the very character it must predict.",
+        "canvas": {
+          "highlight": {
+            "A": {
+              "rows": [
+                0
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the forward pass",
+      "prose": "Write `causal_mask(T)` and `forward(weights, idx)` in NumPy for the tiny GPT. Embed, add positions, one pre-norm block (`qkv` splits into queries, keys and values, each into 4 heads of 8), `lnf`, then the head. Layer norm divides the variance by $d$ and adds $10^{-5}$. `W` and `encode` are defined.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Step",
+            "Arrays"
+          ],
+          "rows": [
+            [
+              "$x$ = wte[idx] + wpe[:T]",
+              "wte, wpe"
+            ],
+            [
+              "$x$ += attention(ln1($x$)) @ proj",
+              "h0.ln1, h0.qkv, h0.proj"
+            ],
+            [
+              "$x$ += relu(ln2($x$) @ fc) @ out",
+              "h0.ln2, h0.fc, h0.out"
+            ],
+            [
+              "logits = lnf($x$) @ head",
+              "lnf, head"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Write `causal_mask` and `forward`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef causal_mask(T):\n    # T by T: 0 where key j <= query i, -inf above the diagonal.\n    ...\n\n\ndef forward(weights, idx):\n    # idx: integer ids of shape (T,) or (B, T). Embed, add positions, one pre-norm block\n    # (4 heads of 8), final layer norm, head. Return the logits, shape idx.shape + (65,).\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef layer_norm(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef softmax(s):\n    e = np.exp(s - s.max(-1, keepdims=True))\n    return e / e.sum(-1, keepdims=True)\n\n\ndef forward(weights, idx):\n    idx = np.asarray(idx)\n    T = idx.shape[-1]\n    x = weights['wte'][idx] + weights['wpe'][:T]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    heads = []\n    for j in range(3):\n        part = qkv[..., j * 32:(j + 1) * 32].reshape(*idx.shape, 4, 8)\n        heads.append(np.swapaxes(part, -2, -3))\n    q, k, v = heads\n    att = softmax(q @ np.swapaxes(k, -1, -2) / np.sqrt(8) + causal_mask(T))\n    z = np.swapaxes(att @ v, -2, -3).reshape(*idx.shape, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    a2 = layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b'])\n    x = x + np.maximum(a2 @ weights['h0.fc_w'] + weights['h0.fc_b'], 0) @ weights['h0.out_w'] + weights['h0.out_b']\n    return layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n",
+        "prelude": "import base64\nimport json\n\nimport numpy as np\n\nVOCAB = \"\\n !$&',-.3:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\"\n\n\ndef encode(text):\n    return [VOCAB.index(c) for c in text]\n\n\ndef decode(ids):\n    return ''.join(VOCAB[int(i)] for i in ids)\n\n\ndef _load(path):\n    out = {}\n    for k, v in json.load(open(path)).items():\n        out[k] = np.frombuffer(base64.b64decode(v['b64']), dtype='<f4').reshape(v['shape']).astype(np.float64)\n    return out\n\n\nW = {**_load('gpt-w-embed.json'), **_load('gpt-w-block0.json')}\nXB = np.array([encode(open('tiny-shakespeare.txt').read()[225000 + 32 * i:225032 + 32 * i]) for i in range(2)])\n",
+        "data": {
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "examples": [
+          {
+            "call": "causal_mask(2).tolist()",
+            "expect": "[[0.0, float('-inf')], [0.0, 0.0]]",
+            "compare": "equal"
+          },
+          {
+            "call": "forward(W, encode('\\nFirst Citizen:')).shape",
+            "expect": "(15, 65)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "causal_mask(3).tolist()",
+            "expect": "[[0.0, float('-inf'), float('-inf')], [0.0, 0.0, float('-inf')], [0.0, 0.0, 0.0]]",
+            "compare": "equal"
+          },
+          {
+            "call": "forward(W, encode('\\nFirst Citizen:'))[0]",
+            "expect": "[4.745104803418928, -1.1040820048528897, -2.8202868488594186, -3.7149226986257067, -2.690528233539743, 1.7847682974771797, -4.522906650189573, -0.283594187181145, -3.987710062426728, -3.687034636260117, -4.884514696004224, -3.9693010986795474, -4.112010235615408, 3.7992506135884208, 3.1098182912370618, 2.5302207748972645, 1.5165519540503096, -0.8402870484007073, 2.9025933675947013, 2.703946408425516, 3.0409330180578795, 3.3206249840431603, -1.8296244649819617, 1.0293554922348203, 2.5953371055396537, 3.7642139920593625, 1.8065744857184687, 2.7467507153614954, 1.888971861295269, 0.8856633459810148, 1.5808685184723674, 2.7308454855850504, 4.0960211780747455, 1.3237924213998322, 1.2271410865814103, 3.79185555570466, -3.67274210908651, 2.5467652962758813, -3.0918819457074385, 0.2953305793353419, 0.3629781004031606, -3.7303511657335378, 0.06303899105392849, -0.21987639405238396, 0.9255567211315391, -0.3590137944767765, 0.9627615259998872, -0.5071707888926406, -1.9516906161809309, -2.8053863891220248, -2.23852085127881, -0.3844580336612469, -0.8507373878794081, -0.29453004402231325, -0.7032406493162505, -2.628909411462362, -2.5261660430996566, 0.6690449628227678, 2.4876517564259197, -1.0357838018031158, -0.8246365351084034, 1.315535718137613, -1.5566017417112117, 0.6128402169703233, -0.04894419455670773]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "forward(W, encode('\\nFirst Citizen:'))[-1]",
+            "expect": "[11.208124348753454, 6.6648946379882, -0.22424448336033376, -3.9917752892189355, -3.9787934815718717, 3.1595340392884674, -0.05209066599783097, 3.0298414953894226, 1.1512071698478696, -3.9420163367380834, 0.5923967820848215, 0.37080739741331603, 0.14322249886784338, 0.2489190777107204, 0.9568038847339964, -2.5653075788240716, 0.6663590362226763, -7.399143460361678, 0.48156396203790286, -0.6561598919216989, -0.2872211595720627, 0.20737196965285884, -5.313329021178153, 1.399174353229013, 2.03580067302688, -1.6582947117175948, -0.1400956444865119, 1.2820070227536362, -1.2301718568556632, -0.8939599628373276, -1.1086367822186483, -1.8150651386987557, 2.2093099243838026, -1.969222628966784, -0.3951713868891466, 2.166626861627904, -4.081417866847346, -0.25341823619499193, -2.9674482562709117, -1.842791407225984, -5.524459514778176, -7.146891408938205, -0.027361342467973615, -0.4167863580577209, -0.2619366250111134, -0.5935134818334014, -3.2160817952486016, -1.8244665935781135, -3.8335032747238804, -4.008941372368383, 0.7195897831937432, -0.8326296495767477, -1.1088837684995496, 0.10846906158667363, -3.4468548387895104, -5.123902884533436, -1.5159359350961898, -0.2609564193326315, -1.7294782849732746, -0.7767866011326524, -2.7850088283945147, -0.8407804140830059, -1.1886737190952097, -3.2464518146305257, -1.2218584505373344]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "forward(W, encode('\\nFirst Citizen:'))[8]",
+            "expect": "[0.5872365632937191, -2.605421719278814, -2.841354455389664, -6.080546452947757, -5.429194493097572, 0.006932707294196538, -4.37893337205435, -5.519043530659359, -3.8503023162060517, -6.0510774721111105, -5.519965823793081, -4.055308718742611, -4.094104197492292, -4.320799057523255, -3.3149356567650603, -3.4608370807292976, -4.588984736894113, -4.920888139017423, -4.483302740119375, -4.739650897070055, -7.444620642406097, -3.6687618682464174, -4.534724940559215, -6.819522809693802, -7.293319440452888, 1.0220179473529005, -3.1063503874831095, -4.837133874499998, -2.9535604647738496, -4.1930245009803055, 1.3456470002276197, -2.217445692911975, -2.7486724482701086, -8.888349035697233, -7.551307469084687, -4.812401568398186, -5.838845229425139, -6.22294717214408, -7.791372566907968, 0.831982523901408, 0.5350156236064432, 3.0887023017016135, 1.691646086975802, 4.057837942260219, 1.8676673568975066, 2.956512343505481, -0.7981092494110709, 2.7807749413072598, 0.7182118165711703, 1.5968188185165584, 2.270660864068393, 0.797012200548167, 3.170385532686716, 1.938533037880123, 2.365428498213882, -1.6459608303134619, 4.30879267172679, 2.997645197383254, 10.326470171995842, 4.076450138912174, 2.4618194303421967, 0.02580720374635246, -0.005181028861619974, 0.9438228772178245, 4.550002129292347]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "forward(W, XB).shape",
+            "expect": "(2, 32, 65)",
+            "compare": "equal"
+          },
+          {
+            "call": "forward(W, XB)[1, 20]",
+            "expect": "[-4.586634803234807, -4.567724438599836, -5.345653973494216, -6.504285552924453, -4.338106727188264, 0.8661526072427985, -7.629760852181724, -3.637911146957334, -7.944012625785652, -6.418431189619995, -8.25244254700099, -7.555640991876058, -7.576874748687722, -0.62051659324941, -0.890363758229261, 1.377819357000185, -1.381117703231767, -0.40603104947309226, -1.0116800101841323, 0.11007698581384978, -0.7058190547544383, 2.5506877972499766, -1.604421873280268, -2.5569626931363465, -0.5252699717454731, 0.6690184302739538, -1.9062469747931132, -0.8879805506075491, -0.8468846491018521, -4.218303535147315, -0.04932365568229234, -0.01303630924424544, 0.07836151038828729, -2.8019135199029, -1.0427590293907016, -0.9856709855654914, -6.567612866036805, -1.0307692447955692, -6.535572763526831, 3.2036460286218245, 2.8494463041499767, 2.1457482857759143, 2.270528506613476, 1.248191150143969, 2.74011164421537, 1.7692933348947928, 2.848654545480302, 2.8011646889245774, -0.5647690953808442, 0.303076177254767, 2.1015483336818996, 3.0933334466833786, 2.5155128628689973, 2.7291613904753245, 1.9036632726463836, -0.7775861580903876, 1.1882418284905425, 2.9367799669452515, 4.039902270401445, 1.1865013998064864, 0.6968219713426351, 3.1753288698303432, -3.3942739040096455, 2.704249314817392, -3.6725013966138107]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "forward(W, encode('A')).shape",
+            "expect": "(1, 65)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 7 hidden tests. The mask for $T = 3$; the logits of `⏎First Citizen:` at positions 0, 8 and 14 within $10^{-6}$ of the reference. Then a batch of two validation windows (shape and one position) and a single character.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef layer_norm(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef softmax(s):\n    e = np.exp(s - s.max(-1, keepdims=True))\n    return e / e.sum(-1, keepdims=True)\n\n\ndef forward(weights, idx):\n    idx = np.asarray(idx)\n    T = idx.shape[-1]\n    x = weights['wte'][idx] + weights['wpe'][:T]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    heads = []\n    for j in range(3):\n        part = qkv[..., j * 32:(j + 1) * 32].reshape(*idx.shape, 4, 8)\n        heads.append(np.swapaxes(part, -2, -3))\n    q, k, v = heads\n    att = softmax(q @ np.swapaxes(k, -1, -2) / np.sqrt(8))\n    z = np.swapaxes(att @ v, -2, -3).reshape(*idx.shape, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    a2 = layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b'])\n    x = x + np.maximum(a2 @ weights['h0.fc_w'] + weights['h0.fc_b'], 0) @ weights['h0.out_w'] + weights['h0.out_b']\n    return layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n",
+            "test": 2,
+            "symptom": "Leaves out the causal mask, so early positions read later characters."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef layer_norm(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef softmax(s):\n    e = np.exp(s - s.max(-1, keepdims=True))\n    return e / e.sum(-1, keepdims=True)\n\n\ndef forward(weights, idx):\n    idx = np.asarray(idx)\n    T = idx.shape[-1]\n    x = weights['wte'][idx] + weights['wpe'][:T]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    heads = []\n    for j in range(3):\n        part = qkv[..., j * 32:(j + 1) * 32].reshape(*idx.shape, 4, 8)\n        heads.append(np.swapaxes(part, -2, -3))\n    q, k, v = heads\n    att = softmax(q @ np.swapaxes(k, -1, -2) / np.sqrt(32) + causal_mask(T))\n    z = np.swapaxes(att @ v, -2, -3).reshape(*idx.shape, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    a2 = layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b'])\n    x = x + np.maximum(a2 @ weights['h0.fc_w'] + weights['h0.fc_b'], 0) @ weights['h0.out_w'] + weights['h0.out_b']\n    return layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n",
+            "test": 3,
+            "symptom": "Scales the scores by the square root of the width, not of the head width."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef layer_norm(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef softmax(s):\n    e = np.exp(s - s.max(-1, keepdims=True))\n    return e / e.sum(-1, keepdims=True)\n\n\ndef forward(weights, idx):\n    idx = np.asarray(idx)\n    T = idx.shape[-1]\n    x = weights['wte'][idx] + weights['wpe'][:T]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    heads = []\n    for j in range(3):\n        part = qkv[..., j * 32:(j + 1) * 32].reshape(*idx.shape, 4, 8)\n        heads.append(np.swapaxes(part, -2, -3))\n    q, k, v = heads\n    att = softmax(q @ np.swapaxes(k, -1, -2) / np.sqrt(8) + causal_mask(T))\n    z = np.swapaxes(att @ v, -2, -3).reshape(*idx.shape, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    a2 = layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b'])\n    x = x + np.maximum(a2 @ weights['h0.fc_w'] + weights['h0.fc_b'], 0) @ weights['h0.out_w'] + weights['h0.out_b']\n    return x @ weights['head_w'] + weights['head_b']\n",
+            "test": 2,
+            "symptom": "Skips the final layer norm."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef layer_norm(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef softmax(s):\n    e = np.exp(s - s.max(-1, keepdims=True))\n    return e / e.sum(-1, keepdims=True)\n\n\ndef forward(weights, idx):\n    idx = np.asarray(idx)\n    T = idx.shape[-1]\n    x = weights['wte'][idx]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    heads = []\n    for j in range(3):\n        part = qkv[..., j * 32:(j + 1) * 32].reshape(*idx.shape, 4, 8)\n        heads.append(np.swapaxes(part, -2, -3))\n    q, k, v = heads\n    att = softmax(q @ np.swapaxes(k, -1, -2) / np.sqrt(8) + causal_mask(T))\n    z = np.swapaxes(att @ v, -2, -3).reshape(*idx.shape, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    a2 = layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b'])\n    x = x + np.maximum(a2 @ weights['h0.fc_w'] + weights['h0.fc_b'], 0) @ weights['h0.out_w'] + weights['h0.out_b']\n    return layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n",
+            "test": 2,
+            "symptom": "Never adds the positions."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef layer_norm(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef softmax(s):\n    e = np.exp(s - s.max(-1, keepdims=True))\n    return e / e.sum(-1, keepdims=True)\n\n\ndef forward(weights, idx):\n    idx = np.asarray(idx)\n    T = idx.shape[-1]\n    x = weights['wte'][idx] + weights['wpe'][:T]\n    a = x\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    heads = []\n    for j in range(3):\n        part = qkv[..., j * 32:(j + 1) * 32].reshape(*idx.shape, 4, 8)\n        heads.append(np.swapaxes(part, -2, -3))\n    q, k, v = heads\n    att = softmax(q @ np.swapaxes(k, -1, -2) / np.sqrt(8) + causal_mask(T))\n    z = np.swapaxes(att @ v, -2, -3).reshape(*idx.shape, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    a2 = layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b'])\n    x = x + np.maximum(a2 @ weights['h0.fc_w'] + weights['h0.fc_b'], 0) @ weights['h0.out_w'] + weights['h0.out_b']\n    return layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n",
+            "test": 2,
+            "symptom": "Feeds attention the raw stream instead of its normed copy."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Heads: cut the 96 columns into three of 32, reshape each to (T, 4, 8), then swap to (4, T, 8)."
+        },
+        {
+          "rung": "point",
+          "text": "Scores $q k^\\top / \\sqrt{8}$ plus the mask, softmax over the last axis, times $v$, then swap back and reshape to (T, 32).",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each sublayer adds to $x$: `x = x + ...`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your logits match the reference at every position tested.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is position 0, which sees only itself. A wrong value here points to the mask, the positions or a layer norm.",
+          "test-3": "Test 3 is the last position. Check the scale: $\\sqrt{8}$, the head width."
+        }
+      },
+      "explain": {
+        "text": "The pass is the `sequence` L4 block between an embedding and a head. Matching to $10^{-6}$ checks every step, since any slip moves the logits."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Inputs and targets",
+      "prose": "The first 33 characters of the validation text are `To those whose dealings have dese`. The first 32 are the input. At each position the target is the character that comes next.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "T",
+            "o",
+            "␣",
+            "t",
+            "h",
+            "o",
+            "s",
+            "e",
+            "␣",
+            "w"
+          ],
+          "indexFrom": 0
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "p0",
+              "at": 0,
+              "label": "position 0"
+            }
+          ]
+        }
+      },
+      "question": "What is the target at position 0?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "o",
+            "text": "`o`, the second character",
+            "correct": true
+          },
+          {
+            "id": "T",
+            "text": "`T`, the first character",
+            "why": "That is the input at position 0. The target is the next character: inputs shifted by one."
+          },
+          {
+            "id": "sp",
+            "text": "the space, the third character",
+            "why": "You shifted by two. Position 0's target is the very next character."
+          },
+          {
+            "id": "e",
+            "text": "`e`, the 33rd character",
+            "why": "That is the target of the last position, 31."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Position $t$ predicts the character after it."
+        },
+        {
+          "rung": "point",
+          "text": "Targets are the inputs moved one place left.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Position 0 reads `T` and must predict `o`."
+        }
+      ],
+      "feedback": {
+        "correct": "Targets are the inputs shifted by one: position 0 reads `T` and is scored on `o`.",
+        "generic": "Not quite. Which character follows position 0?"
+      },
+      "explain": {
+        "text": "A window of 33 characters gives 32 inputs and 32 targets, the same text one place apart. Scoring a position on its own input is the off-by-one bug.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the loss",
+      "prose": "Write `loss(weights, idx, targets)`: the mean over every position of $-\\ln p$ of the target, in nats, as a float. Use a stable log-softmax. `forward` is defined for you; `X1`, `Y1` are one validation window and its targets.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "T",
+            "o",
+            "␣",
+            "t",
+            "h",
+            "o",
+            "s",
+            "e",
+            "␣",
+            "w"
+          ],
+          "indexFrom": 0
+        }
+      },
+      "question": "Write `loss`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef loss(weights, idx, targets):\n    # Mean of -ln p(target) over every position, in nats. forward(weights, idx) is defined for you.\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef loss(weights, idx, targets):\n    z = forward(weights, idx)\n    z = z - z.max(-1, keepdims=True)\n    logp = z - np.log(np.exp(z).sum(-1, keepdims=True))\n    targets = np.asarray(targets)\n    return float(-np.take_along_axis(logp, targets[..., None], -1).mean())\n",
+        "prelude": "import base64\nimport json\n\nimport numpy as np\n\nVOCAB = \"\\n !$&',-.3:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\"\n\n\ndef encode(text):\n    return [VOCAB.index(c) for c in text]\n\n\ndef decode(ids):\n    return ''.join(VOCAB[int(i)] for i in ids)\n\n\ndef _load(path):\n    out = {}\n    for k, v in json.load(open(path)).items():\n        out[k] = np.frombuffer(base64.b64decode(v['b64']), dtype='<f4').reshape(v['shape']).astype(np.float64)\n    return out\n\n\nW = {**_load('gpt-w-embed.json'), **_load('gpt-w-block0.json')}\ndef _ln(x, g, b):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + 1e-5) + b\n\n\ndef forward(weights, idx):\n    idx = np.asarray(idx)\n    T = idx.shape[-1]\n    x = weights['wte'][idx] + weights['wpe'][:T]\n    a = _ln(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    q, k, v = (np.swapaxes(qkv[..., j * 32:(j + 1) * 32].reshape(*idx.shape, 4, 8), -2, -3) for j in range(3))\n    s = q @ np.swapaxes(k, -1, -2) / np.sqrt(8) + np.triu(np.full((T, T), -np.inf), 1)\n    e = np.exp(s - s.max(-1, keepdims=True))\n    z = np.swapaxes((e / e.sum(-1, keepdims=True)) @ v, -2, -3).reshape(*idx.shape, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    hid = np.maximum(_ln(x, weights['h0.ln2_g'], weights['h0.ln2_b']) @ weights['h0.fc_w'] + weights['h0.fc_b'], 0)\n    x = x + hid @ weights['h0.out_w'] + weights['h0.out_b']\n    return _ln(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n_v = np.array(encode(open('tiny-shakespeare.txt').read()[225000:]))\nX1, Y1 = _v[:32], _v[1:33]\nXB, YB = _v[:512].reshape(16, 32), _v[1:513].reshape(16, 32)\n",
+        "data": {
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "examples": [
+          {
+            "call": "round(loss(W, X1, Y1), 2)",
+            "expect": "1.75",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "loss(W, X1, Y1)",
+            "expect": "1.7486697545334282",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "loss(W, XB, YB)",
+            "expect": "1.7407962156710417",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "loss(W, encode('\\nFirst Ci'), encode('First Cit'))",
+            "expect": "0.9576368683579253",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "isinstance(loss(W, X1, Y1), float)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 4 hidden tests: one validation window, a batch of 16, a short window, and that the result is a float. Values are compared with the reference to $10^{-9}$ (relative).",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef loss(weights, idx, targets):\n    z = forward(weights, idx)\n    z = z - z.max(-1, keepdims=True)\n    logp = z - np.log(np.exp(z).sum(-1, keepdims=True))\n    targets = np.asarray(targets)\n    return float(-np.take_along_axis(logp, np.asarray(idx)[..., None], -1).mean())\n",
+            "test": 1,
+            "symptom": "Scores the inputs instead of the targets, an off-by-one."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef loss(weights, idx, targets):\n    z = forward(weights, idx)\n    z = z - z.max(-1, keepdims=True)\n    logp = z - np.log(np.exp(z).sum(-1, keepdims=True))\n    targets = np.asarray(targets)\n    return float(-np.take_along_axis(logp, targets[..., None], -1).sum())\n",
+            "test": 1,
+            "symptom": "Sums the losses instead of averaging them."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef loss(weights, idx, targets):\n    z = forward(weights, idx)\n    z = z - z.max(-1, keepdims=True)\n    logp = np.log(np.exp(z) / np.exp(z).sum(-1, keepdims=True)) / np.log(2)\n    targets = np.asarray(targets)\n    return float(-np.take_along_axis(logp, targets[..., None], -1).mean())\n",
+            "test": 1,
+            "symptom": "Measures in bits, not nats."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef loss(weights, idx, targets):\n    z = forward(weights, idx)\n    z = z - z.max(-1, keepdims=True)\n    logp = z - np.log(np.exp(z).sum(-1, keepdims=True))\n    targets = np.asarray(targets)\n    return np.array(-np.take_along_axis(logp, targets[..., None], -1).mean())\n",
+            "test": 4,
+            "symptom": "Returns an array instead of a float."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the largest logit at each position before the exponential."
+        },
+        {
+          "rung": "point",
+          "text": "log-softmax is $z - \\ln \\sum e^{z}$ along the last axis.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pick the target's entry with `np.take_along_axis` and average."
+        }
+      ],
+      "feedback": {
+        "correct": "Your loss is 1.7487 on the window, matching the reference.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 compares one window. Check that you score the targets, average and use natural logs."
+        }
+      },
+      "explain": {
+        "text": "One window scores 1.7487 nats a character and 16 windows 1.7408. The mean over positions is the number training lowers."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Loss by position",
+      "prose": "Average the loss over all 781 validation windows, separately at each of the 32 positions. Position $t$ has read $t + 1$ characters of its window.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "pos",
+              "label": "mean loss",
+              "values": [
+                2.566,
+                1.971,
+                1.831,
+                1.75,
+                1.613,
+                1.813,
+                1.791,
+                1.795,
+                1.757,
+                1.82,
+                1.7,
+                1.751,
+                1.713,
+                1.829,
+                1.735,
+                1.853,
+                1.879,
+                1.767,
+                1.854,
+                1.818,
+                1.765,
+                1.742,
+                1.751,
+                1.742,
+                1.774,
+                1.595,
+                1.74,
+                1.829,
+                1.653,
+                1.717,
+                1.724,
+                1.748
+              ]
+            }
+          ],
+          "y": [
+            1.4,
+            2.8
+          ],
+          "xLabel": "position",
+          "yLabel": "nats",
+          "indexFrom": 0,
+          "hlines": [
+            {
+              "id": "bg",
+              "y": 2.4554,
+              "label": "bigram 2.4554"
+            }
+          ]
+        }
+      },
+      "question": "Why is the loss at position 0 the highest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ctx",
+            "text": "It has read only one character",
+            "correct": true
+          },
+          {
+            "id": "trained",
+            "text": "Training updates position 0 less often than others",
+            "why": "Every position of every window is scored in every step, so all are trained equally."
+          },
+          {
+            "id": "newline",
+            "text": "Position 0 always holds a new line",
+            "why": "Windows start anywhere in the text, so position 0 holds any character."
+          },
+          {
+            "id": "mask",
+            "text": "The mask hides position 0 from itself there",
+            "why": "Position 0 always reads itself: its row of the mask is 0 on the diagonal."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How much has each position read?"
+        },
+        {
+          "rung": "point",
+          "text": "Position 0 sees one character, like a bigram.",
+          "highlight": [
+            "pos"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Later positions also see the characters before."
+        }
+      ],
+      "feedback": {
+        "correct": "With one character to go on, position 0 scores 2.566; by position 3 the loss is near 1.75.",
+        "generic": "Not quite. Compare what each position has read."
+      },
+      "explain": {
+        "text": "Position 0 scores 2.566, a little above the bigram's 2.4554: both read one character. More context lowers the loss quickly, then levels off."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A loss that looks wonderful",
+      "prose": "A colleague's forward pass leaves out the causal mask, so every position can read the whole window. Their training loss falls far below anything we have seen.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "T",
+            "o",
+            "␣",
+            "t",
+            "h",
+            "o",
+            "s",
+            "e",
+            "␣",
+            "w"
+          ],
+          "indexFrom": 0
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "p0",
+              "at": 0,
+              "label": "reads"
+            },
+            {
+              "id": "p1",
+              "at": 1,
+              "label": "target"
+            }
+          ]
+        }
+      },
+      "question": "In a window of 32 positions, how many targets can the unmasked model read straight from its own input?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 31,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "all",
+            "value": 32,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Targets"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Target $t$ is input $t + 1$."
+        },
+        {
+          "rung": "point",
+          "text": "Input $t + 1$ exists for $t = 0$ to 30.",
+          "highlight": [
+            "p1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only the last target lies outside the window."
+        }
+      ],
+      "feedback": {
+        "correct": "31 of 32: every target but the last is also an input, so the model copies it.",
+        "generic": "Not quite. For which positions is the target also in the input?",
+        "byKey": {
+          "all": "The last target, the 33rd character, is not in the input, so it cannot be copied.",
+          "none": "Without the mask, position $t$ reads input $t + 1$, which is its target.",
+          "half": "Each position $t$ below 31 can read input $t + 1$. Count them."
+        }
+      },
+      "explain": {
+        "text": "With no mask, position $t$ reads input $t + 1$, which is its own target, for 31 of 32 positions. The training loss looks wonderful and the model cannot generate, where the future is not there to read.",
+        "canvas": {
+          "highlight": [
+            "p1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Shorter than the context",
+      "prose": "The context is 32, but a prompt can be shorter. `forward` takes $T$ from the input and adds only the first $T$ rows of `wpe`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Input length",
+            "Rows of wpe used",
+            "Logits"
+          ],
+          "rows": [
+            [
+              "32",
+              "32",
+              "(32, 65)"
+            ],
+            [
+              "5",
+              "5",
+              "?"
+            ]
+          ],
+          "align": [
+            "right",
+            "right",
+            "left"
+          ]
+        }
+      },
+      "question": "What does `forward` give for a 5-character input?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "five",
+            "text": "Logits of shape (5, 65), one prediction per position",
+            "correct": true
+          },
+          {
+            "id": "pad",
+            "text": "Logits of shape (32, 65), padded",
+            "why": "Nothing is padded: the mask and positions are built for $T = 5$."
+          },
+          {
+            "id": "err",
+            "text": "An error, since the model needs 32 characters",
+            "why": "A shorter input works; only a longer one runs out of rows in `wpe`."
+          },
+          {
+            "id": "last",
+            "text": "One row of 65 logits, for the last position",
+            "why": "Every position predicts, however short the input."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`wpe[:T]` with $T = 5$."
+        },
+        {
+          "rung": "point",
+          "text": "The mask is $5 \\times 5$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each of the 5 positions gets 65 scores."
+        }
+      ],
+      "feedback": {
+        "correct": "(5, 65): the same pass on 5 positions. Only an input longer than 32 needs cutting, to its last 32.",
+        "generic": "Not quite. What does $T = 5$ change?"
+      },
+      "explain": {
+        "text": "A short input uses the first 5 positions and a 5 by 5 mask. An input of 40 would need row 32 of `wpe`, which does not exist: the next lesson keeps the last 32.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The loss of a language model",
+      "prose": "For a batch of $B$ windows of $T$ positions, with targets $y_{b,t}$ the next characters:\n$$L = -\\frac{1}{BT} \\sum_{b,t} \\ln p_\\theta(y_{b,t} \\mid x_{b,\\le t})$$\nThe mask is what makes $p$ depend only on $x_{b, \\le t}$.",
+      "question": "A model gives every target a chance of $e^{-2}$. What is $L$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "two",
+            "text": "2 nats",
+            "correct": true
+          },
+          {
+            "id": "e2",
+            "text": "$e^{-2} \\approx 0.1353$ nats",
+            "why": "That is the chance. $L$ is minus its log."
+          },
+          {
+            "id": "bt",
+            "text": "$2BT$ nats",
+            "why": "The sum is divided by $BT$: $L$ is a mean."
+          },
+          {
+            "id": "half",
+            "text": "0.5 nats",
+            "why": "Minus the log of $e^{-2}$ is 2, not its reciprocal."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$-\\ln e^{-2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Every term is $-\\ln e^{-2} = 2$, so the mean is 2 nats.",
+        "generic": "Not quite. Take $-\\ln$ of each chance, then average."
+      },
+      "explain": {
+        "text": "$L$ is the mean surprise per character. Equal chances of $e^{-2}$ make every term 2, so $L = 2$ nats."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Surprise in a filing",
+      "prose": "A desk scores company filings with a character model trained on past filings, and flags passages it finds surprising. In one annual report it gave the `g` of `going concern` a chance of 0.02.",
+      "question": "How many bits of surprise is that character? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.6439,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "nats",
+            "value": 3.912,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "prob",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Bits"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Surprise in bits is $-\\log_2 p$."
+        },
+        {
+          "rung": "point",
+          "text": "$-\\log_2 0.02$."
+        },
+        {
+          "rung": "step",
+          "text": "$\\ln 0.02 / \\ln 2$, sign changed."
+        }
+      ],
+      "feedback": {
+        "correct": "$-\\log_2 0.02 \\approx 5.6439$ bits, more than twice the tiny GPT's average of 2.5872.",
+        "generic": "Not quite. Take minus the base-2 log of the chance.",
+        "byKey": {
+          "nats": "That is nats. Divide by $\\ln 2$ for bits.",
+          "prob": "That is the chance itself."
+        }
+      },
+      "explain": {
+        "text": "$-\\log_2 0.02 \\approx 5.6439$ bits. Per-character loss is surprise, so a run of high values marks text the model did not expect, which is what the desk reads first."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The forward pass embeds, adds positions, runs the block, applies `lnf` and the head: logits of shape $(T, 65)$, a prediction after every prefix.",
+      "The loss is the mean of $-\\ln p$ of each target, the next character; targets are the inputs shifted by one.",
+      "The causal mask keeps each prediction honest; position 0 sees one character and scores about 2.57, later positions near 1.76."
+    ],
+    "formula": {
+      "name": "Next-character loss",
+      "tex": "L = -\\frac{1}{BT} \\sum_{b,t} \\ln p_\\theta(y_{b,t} \\mid x_{b,\\le t})",
+      "note": "$y_{b,t} = x_{b,t+1}$."
+    },
+    "trap": "Leaving out the mask, or scoring each position on its own input: the loss looks wonderful and the model has learned to copy."
+  },
+  "quiz": [
+    {
+      "id": "q-shift",
+      "difficulty": 2,
+      "question": "A window of text is `SELL 50`. With `SELL 5` as the input, what are the targets?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`ELL 50`",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "`SELL 5`",
+            "why": "That scores each position on its own input, the off-by-one."
+          },
+          {
+            "id": "two",
+            "text": "`LL 50`",
+            "why": "You shifted by two; the target is the very next character."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Each input position is scored on the character after it: `ELL 50`.",
+        "generic": "Not quite. Shift the window by one."
+      },
+      "explain": {
+        "text": "Inputs are the window minus its last character; targets are the window minus its first."
+      }
+    },
+    {
+      "id": "q-mean",
+      "difficulty": 2,
+      "question": "At two positions the model gives the true characters chances 0.5 and 0.25. What is the mean loss in nats? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.0397,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 2.0794,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "avgp",
+            "value": 0.9808,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Loss"
+      },
+      "feedback": {
+        "correct": "$(\\ln 2 + \\ln 4)/2 \\approx 1.0397$ nats.",
+        "generic": "Not quite. Take $-\\ln p$ at each position, then average.",
+        "byKey": {
+          "sum": "That is the sum. The loss is the mean over positions.",
+          "avgp": "You averaged the chances first. Average the losses."
+        }
+      },
+      "explain": {
+        "text": "$-\\ln 0.5 = 0.6931$ and $-\\ln 0.25 = 1.3863$; their mean is 1.0397 nats."
+      }
+    },
+    {
+      "id": "q-nomask",
+      "difficulty": 3,
+      "question": "Drop the causal mask from a forward pass and keep the same weights. At which positions do the logits change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "all-but",
+            "text": "Every position except the last",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "Every position",
+            "why": "The last position already reads every key, so masking changes nothing for it."
+          },
+          {
+            "id": "first",
+            "text": "Only the first",
+            "why": "Every position before the last gains keys it should not see."
+          },
+          {
+            "id": "none",
+            "text": "None, since the weights are the same",
+            "why": "The mask is not a weight: removing it changes which keys each query reads."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The last position reads the whole window anyway; every earlier one now reads later characters.",
+        "generic": "Not quite. Which positions gain new keys without the mask?"
+      },
+      "explain": {
+        "text": "Masking hides keys after the query. The last query has none after it, so only its logits stay the same."
+      }
+    }
+  ]
+}

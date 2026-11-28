@@ -1,0 +1,467 @@
+{
+  "id": "homework-2",
+  "course": "gpt",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-gpt-loss",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "gpt-forward"
+      ],
+      "pace": 1800,
+      "title": "The whole forward pass and its loss",
+      "prose": "From a blank start, write `gpt_loss(weights, text)` for the tiny GPT: the mean loss in nats of predicting `text[1:]` from `text[:-1]`. Texts have 2 to 33 characters. `weights` is the dict of the two files merged, `VOCAB` the 65 characters in order and `W` the supplied weights. Use NumPy only.",
+      "question": "Write `gpt_loss`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef gpt_loss(weights, text):\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef layer_norm(x, g, b):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + 1e-5) + b\n\n\ndef gpt_loss(weights, text):\n    ids = np.array([VOCAB.index(c) for c in text])\n    x_ids, y = ids[:-1], ids[1:]\n    T = len(x_ids)\n    x = weights['wte'][x_ids] + weights['wpe'][:T]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    q, k, v = [qkv[:, j * 32:(j + 1) * 32].reshape(T, 4, 8).transpose(1, 0, 2) for j in range(3)]\n    s = q @ k.transpose(0, 2, 1) / np.sqrt(8) + np.triu(np.full((T, T), -np.inf), 1)\n    att = np.exp(s - s.max(-1, keepdims=True))\n    att = att / att.sum(-1, keepdims=True)\n    z = (att @ v).transpose(1, 0, 2).reshape(T, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    h = np.maximum(layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b']) @ weights['h0.fc_w'] + weights['h0.fc_b'], 0)\n    x = x + h @ weights['h0.out_w'] + weights['h0.out_b']\n    logits = layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n    logits = logits - logits.max(-1, keepdims=True)\n    logp = logits - np.log(np.exp(logits).sum(-1, keepdims=True))\n    return float(-logp[np.arange(T), y].mean())\n",
+        "prelude": "import base64\nimport json\n\nimport numpy as np\n\nVOCAB = \"\\n !$&',-.3:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\"\n\n\ndef encode(text):\n    return [VOCAB.index(c) for c in text]\n\n\ndef decode(ids):\n    return ''.join(VOCAB[int(i)] for i in ids)\n\n\ndef _load(path):\n    out = {}\n    for k, v in json.load(open(path)).items():\n        out[k] = np.frombuffer(base64.b64decode(v['b64']), dtype='<f4').reshape(v['shape']).astype(np.float64)\n    return out\n\n\nW = {**_load('gpt-w-embed.json'), **_load('gpt-w-block0.json')}\n",
+        "data": {
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json"
+        },
+        "examples": [
+          {
+            "call": "round(gpt_loss(W, 'First Citizen:'), 2)",
+            "expect": "0.62",
+            "compare": "isclose"
+          },
+          {
+            "call": "gpt_loss(W, 'ab') > 0",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "gpt_loss(W, 'To those whose dealings have dese')",
+            "expect": "1.7486697545334282",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "gpt_loss(W, 's lord, begin that place;\\nWhich, ')",
+            "expect": "1.568058368332508",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "gpt_loss(W, 'esby.\\nThou art sworn as deeply to')",
+            "expect": "1.9371568266192591",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "gpt_loss(W, 'ind.\\nWhat, go you toward the Towe')",
+            "expect": "1.7476293266812075",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "gpt_loss(W, 'First Citizen:\\nBefore we procee')",
+            "expect": "1.2769019275087843",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "gpt_loss(W, 'ab')",
+            "expect": "4.3051001291323985",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "gpt_loss(W, 'aaaaaaaaaa')",
+            "expect": "9.648050412719623",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "gpt_loss(W, '$3 X')",
+            "expect": "9.84746222597804",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          }
+        ],
+        "how": "Submit runs 8 hidden tests: four 33-character windows of validation text, a speaker's line, a two-character text, a run of one letter and a text of characters the training text never held. Each loss is compared with the reference to $10^{-9}$ (relative).",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef layer_norm(x, g, b):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + 1e-5) + b\n\n\ndef gpt_loss(weights, text):\n    ids = np.array([VOCAB.index(c) for c in text])\n    x_ids, y = ids[:-1], ids[1:]\n    T = len(x_ids)\n    x = weights['wte'][x_ids] + weights['wpe'][:T]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    q, k, v = [qkv[:, j * 32:(j + 1) * 32].reshape(T, 4, 8).transpose(1, 0, 2) for j in range(3)]\n    s = q @ k.transpose(0, 2, 1) / np.sqrt(8)\n    att = np.exp(s - s.max(-1, keepdims=True))\n    att = att / att.sum(-1, keepdims=True)\n    z = (att @ v).transpose(1, 0, 2).reshape(T, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    h = np.maximum(layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b']) @ weights['h0.fc_w'] + weights['h0.fc_b'], 0)\n    x = x + h @ weights['h0.out_w'] + weights['h0.out_b']\n    logits = layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n    logits = logits - logits.max(-1, keepdims=True)\n    logp = logits - np.log(np.exp(logits).sum(-1, keepdims=True))\n    return float(-logp[np.arange(T), y].mean())\n",
+            "test": 1,
+            "symptom": "Leaves out the causal mask."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef layer_norm(x, g, b):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + 1e-5) + b\n\n\ndef gpt_loss(weights, text):\n    ids = np.array([VOCAB.index(c) for c in text])\n    x_ids, y = ids[:-1], ids[1:]\n    T = len(x_ids)\n    x = weights['wte'][x_ids] + weights['wpe'][:T]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    q, k, v = [qkv[:, j * 32:(j + 1) * 32].reshape(T, 4, 8).transpose(1, 0, 2) for j in range(3)]\n    s = q @ k.transpose(0, 2, 1) / np.sqrt(8) + np.triu(np.full((T, T), -np.inf), 1)\n    att = np.exp(s - s.max(-1, keepdims=True))\n    att = att / att.sum(-1, keepdims=True)\n    z = (att @ v).transpose(1, 0, 2).reshape(T, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    h = np.maximum(layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b']) @ weights['h0.fc_w'] + weights['h0.fc_b'], 0)\n    x = x + h @ weights['h0.out_w'] + weights['h0.out_b']\n    logits = layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n    logits = logits - logits.max(-1, keepdims=True)\n    logp = logits - np.log(np.exp(logits).sum(-1, keepdims=True))\n    return float(-logp[np.arange(T), x_ids].mean())\n",
+            "test": 1,
+            "symptom": "Scores each position on its own input."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef layer_norm(x, g, b):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + 1e-5) + b\n\n\ndef gpt_loss(weights, text):\n    ids = np.array([VOCAB.index(c) for c in text])\n    x_ids, y = ids[:-1], ids[1:]\n    T = len(x_ids)\n    x = weights['wte'][x_ids] + weights['wpe'][:T]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    q, k, v = [qkv[:, j * 32:(j + 1) * 32].reshape(T, 4, 8).transpose(1, 0, 2) for j in range(3)]\n    s = q @ k.transpose(0, 2, 1) / np.sqrt(32) + np.triu(np.full((T, T), -np.inf), 1)\n    att = np.exp(s - s.max(-1, keepdims=True))\n    att = att / att.sum(-1, keepdims=True)\n    z = (att @ v).transpose(1, 0, 2).reshape(T, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    h = np.maximum(layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b']) @ weights['h0.fc_w'] + weights['h0.fc_b'], 0)\n    x = x + h @ weights['h0.out_w'] + weights['h0.out_b']\n    logits = layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n    logits = logits - logits.max(-1, keepdims=True)\n    logp = logits - np.log(np.exp(logits).sum(-1, keepdims=True))\n    return float(-logp[np.arange(T), y].mean())\n",
+            "test": 1,
+            "symptom": "Scales by the width instead of the head width."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef layer_norm(x, g, b):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + 1e-5) + b\n\n\ndef gpt_loss(weights, text):\n    ids = np.array([VOCAB.index(c) for c in text])\n    x_ids, y = ids[:-1], ids[1:]\n    T = len(x_ids)\n    x = weights['wte'][x_ids]\n    a = layer_norm(x, weights['h0.ln1_g'], weights['h0.ln1_b'])\n    qkv = a @ weights['h0.qkv_w'] + weights['h0.qkv_b']\n    q, k, v = [qkv[:, j * 32:(j + 1) * 32].reshape(T, 4, 8).transpose(1, 0, 2) for j in range(3)]\n    s = q @ k.transpose(0, 2, 1) / np.sqrt(8) + np.triu(np.full((T, T), -np.inf), 1)\n    att = np.exp(s - s.max(-1, keepdims=True))\n    att = att / att.sum(-1, keepdims=True)\n    z = (att @ v).transpose(1, 0, 2).reshape(T, 32)\n    x = x + z @ weights['h0.proj_w'] + weights['h0.proj_b']\n    h = np.maximum(layer_norm(x, weights['h0.ln2_g'], weights['h0.ln2_b']) @ weights['h0.fc_w'] + weights['h0.fc_b'], 0)\n    x = x + h @ weights['h0.out_w'] + weights['h0.out_b']\n    logits = layer_norm(x, weights['lnf_g'], weights['lnf_b']) @ weights['head_w'] + weights['head_b']\n    logits = logits - logits.max(-1, keepdims=True)\n    logp = logits - np.log(np.exp(logits).sum(-1, keepdims=True))\n    return float(-logp[np.arange(T), y].mean())\n",
+            "test": 1,
+            "symptom": "Never adds the positions."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Your forward pass and loss match the reference on every text.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-6": "Test 6 is a two-character text: one input and one target. Check that your shapes work for $T = 1$."
+        }
+      },
+      "explain": {
+        "text": "Embed, add positions, one pre-norm block, `lnf`, the head, then the mean of $-\\ln p$ of the shifted targets. Every piece of the level in one function."
+      }
+    },
+    {
+      "id": "h-topk",
+      "difficulty": 4,
+      "skills": [
+        "gpt-forward"
+      ],
+      "title": "Top-k with temperature",
+      "prose": "A sampler draws from the chances `topk_probs(logits, temperature, k)` returns. At temperature 0 it is a one-hot vector at the largest logit. Otherwise divide by the temperature, keep the `k` largest when `k` is not `None` (the rest get chance 0), and take a stable softmax. `GT` holds the tiny GPT's logits after `Thou art a `.",
+      "question": "Write `topk_probs`, returning a NumPy array of chances.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef topk_probs(logits, temperature, k):\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef topk_probs(logits, temperature, k):\n    z = np.asarray(logits, dtype=float)\n    if temperature == 0:\n        p = np.zeros(len(z))\n        p[np.argmax(z)] = 1.0\n        return p\n    z = z / temperature\n    if k is not None:\n        z = np.where(z < np.sort(z)[-k], -np.inf, z)\n    e = np.exp(z - z.max())\n    return e / e.sum()\n",
+        "prelude": "import numpy as np\n\nGT = np.array([-5.355990577670635, -4.971856395368983, -5.23843635543372, -6.289771342506102, -4.355416563203494, 0.02273564520636874, -7.371106341557626, -4.140039772607533, -7.497957920601928, -6.270779969953417, -7.784764368497037, -7.186249060957999, -7.354480652481189, -1.814334478722351, -2.0220898566515055, 0.028687092388472016, -1.8167626624933648, -1.7816714372127815, -2.3917542950767126, -0.7808303559392696, -2.002169388849442, 1.2150450563038366, -1.5016413312646097, -2.1262742512927453, -0.7227877335455153, -0.439970665171759, -3.4747545047636126, -2.692400719649578, -2.0178705223989333, -4.610759984771845, 0.45421254068101113, -1.3143844276193652, -1.5842474447982289, -3.2072024816617883, -1.1289477705919073, -2.6967693903738814, -6.409327832602627, -2.296934681276187, -6.2597189847106645, 3.313357863132368, 3.2814604946273613, 3.0876948241025763, 3.0965791972391785, 1.819631033677567, 3.1175965966348005, 2.396725672787959, 3.4082481289839253, 2.9020349730822996, -0.189544050295461, 1.9614955506416818, 2.482356593434623, 3.1533425071435106, 2.827768905026845, 2.61265760648196, 3.0771551384384632, -0.039312040829333345, 2.271747662311301, 3.5446797075370857, 4.121215394012955, 1.8069315908987775, 0.9947010807685814, 3.2246321523359125, -3.4299547536903865, 2.5545170736470197, -3.6403238500057817])\n",
+        "examples": [
+          {
+            "call": "topk_probs([1.0, 1.0], 1.0, None).tolist()",
+            "expect": "[0.5, 0.5]",
+            "compare": "isclose"
+          },
+          {
+            "call": "topk_probs([1.0, 0.0], 0, None).tolist()",
+            "expect": "[1.0, 0.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "topk_probs([2.0, 1.0, 0.0], 1.0, None)",
+            "expect": "[0.6652409557748218, 0.24472847105479764, 0.09003057317038046]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "topk_probs([2.0, 1.0, 0.0], 0.5, None)",
+            "expect": "[0.8668133321973347, 0.11731042782619835, 0.015876239976466762]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "topk_probs([2.0, 1.0, 0.0], 1.0, 2)",
+            "expect": "[0.7310585786300049, 0.2689414213699951, 0.0]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "topk_probs([0.5, 3.0, -1.0, 2.0], 0, None)",
+            "expect": "[0.0, 1.0, 0.0, 0.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "topk_probs([0.5, 3.0, -1.0, 2.0], 2.0, 3)",
+            "expect": "[0.1513467673652992, 0.5282521236080877, 0.0, 0.320401109026613]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "float(topk_probs(GT, 0.8, 5).sum())",
+            "expect": "1.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "topk_probs(GT, 0.8, 5)",
+            "expect": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.13952345308390995, 0.13406985887142264, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1570941868810478, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.18630498126174017, 0.38300751990187953, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "topk_probs([1000.0, 999.0], 1.0, None)",
+            "expect": "[0.7310585786300049, 0.2689414213699951]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          }
+        ],
+        "how": "Submit runs 8 hidden tests. Three logits at temperatures 1 and 0.5 and with $k = 2$; temperature 0; temperature 2 with $k = 3$. Then the model's logits `GT` at 0.8 with $k = 5$ (sum and values), and two very large logits. Values within $10^{-12}$.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef topk_probs(logits, temperature, k):\n    z = np.asarray(logits, dtype=float)\n    z = z / temperature\n    if k is not None:\n        z = np.where(z < np.sort(z)[-k], -np.inf, z)\n    e = np.exp(z - z.max())\n    return e / e.sum()\n",
+            "test": 4,
+            "symptom": "Divides by a temperature of 0."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef topk_probs(logits, temperature, k):\n    z = np.asarray(logits, dtype=float)\n    if temperature == 0:\n        p = np.zeros(len(z))\n        p[np.argmax(z)] = 1.0\n        return p\n    z = z * temperature\n    if k is not None:\n        z = np.where(z < np.sort(z)[-k], -np.inf, z)\n    e = np.exp(z - z.max())\n    return e / e.sum()\n",
+            "test": 2,
+            "symptom": "Multiplies by the temperature."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef topk_probs(logits, temperature, k):\n    z = np.asarray(logits, dtype=float)\n    if temperature == 0:\n        p = np.zeros(len(z))\n        p[np.argmax(z)] = 1.0\n        return p\n    z = z / temperature\n    e = np.exp(z - z.max())\n    p = e / e.sum()\n    if k is not None:\n        p = np.where(z < np.sort(z)[-k], 0.0, p)\n    return p\n",
+            "test": 3,
+            "symptom": "Zeroes the dropped characters without taking the softmax again."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef topk_probs(logits, temperature, k):\n    z = np.asarray(logits, dtype=float)\n    if temperature == 0:\n        p = np.zeros(len(z))\n        p[np.argmax(z)] = 1.0\n        return p\n    z = z / temperature\n    if k is not None:\n        z = np.where(z < np.sort(z)[-k], -np.inf, z)\n    e = np.exp(z)\n    return e / e.sum()\n",
+            "test": 8,
+            "symptom": "Skips subtracting the largest logit, so large logits overflow."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Your chances match at every temperature and $k$.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-8": "Test 8 has logits near 1,000: subtract the largest before the exponential."
+        }
+      },
+      "explain": {
+        "text": "Divide, cut, then softmax over what is left. Temperature 0 and $k = 1$ both put chance 1 on the largest logit."
+      }
+    },
+    {
+      "id": "h-forward-order",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "title": "The forward pass in order",
+      "prose": "Put the steps of the tiny GPT's forward pass and loss in order. Leave out the line that does not belong.",
+      "question": "Order the steps.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Look up each id's row of `wte`"
+          },
+          {
+            "id": "s2",
+            "text": "Add row $t$ of `wpe` at position $t$"
+          },
+          {
+            "id": "s3",
+            "text": "Normalise the stream with `ln1` and run masked attention, then add its output back"
+          },
+          {
+            "id": "s4",
+            "text": "Normalise with `ln2`, run the MLP, then add its output back"
+          },
+          {
+            "id": "s5",
+            "text": "Normalise with `lnf`"
+          },
+          {
+            "id": "s6",
+            "text": "Multiply by the head and add its bias: the logits"
+          },
+          {
+            "id": "s7",
+            "text": "Average $-\\ln$ softmax of the logits at the next characters"
+          },
+          {
+            "id": "d1",
+            "text": "Take the softmax of the stream before the head",
+            "why": "The softmax turns logits into chances; it comes after the head, inside the loss."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6",
+          "s7"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Embed, position, attention, MLP, final norm, head, loss.",
+        "generic": "Not quite. Each step needs what the one before made.",
+        "byKey": {
+          "d1": "The softmax belongs in the loss, after the head.",
+          "left-out": "Every line but one belongs; put the left-out one back."
+        }
+      },
+      "explain": {
+        "text": "The stream starts as embedding plus position, each sublayer adds to it, and `lnf` and the head turn it into logits. The loss takes the softmax last."
+      }
+    },
+    {
+      "id": "h-too-good",
+      "difficulty": 4,
+      "skills": [
+        "gpt-forward"
+      ],
+      "title": "A loss too good to be true",
+      "question": "Write your answer as you would explain it to a colleague.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A colleague trains a character model like ours on Tiny Shakespeare. After a minute the training loss is 0.05 nats a character, and they want to publish. What most likely went wrong, how would you check, and what should they do?",
+        "model": "A loss of 0.05 nats a character after a minute is too good to be true. A well-trained small character model scores about 1.5 nats a character on Shakespeare, and a uniform guess over 65 characters scores $\\ln 65 \\approx 4.17$. A loss this low means the model is predicting characters it can already see.\n\n**The likely causes.** The first is a missing causal mask: every position can attend to later positions, and target $t$ is input $t + 1$, so for 31 of 32 positions the answer sits in the input. Attention learns to copy it in a few hundred steps. The second is an off-by-one in the targets: if the targets are the inputs themselves, each position only has to copy its own character, which a model learns at once. A third, rarer cause is scoring on the training batch with a learning rate that memorises it.\n\n**How to tell.** Look at the validation loss: a copying model scores well there too, so it is not enough. Instead:\n- check the attention weights of one head: entries above the diagonal must be exactly 0;\n- print the first few inputs and targets side by side: targets must be the inputs shifted by one;\n- generate text: a model that learned to copy cannot write, because when it generates there is no future character to copy. Its samples are noise or one repeated character.\n\n**What to do.** Add the mask (0 on and below the diagonal, $-\\infty$ above), build targets as `text[t + 1]`, retrain, and expect a loss that starts near 4.17 and falls slowly towards 1.5 to 2. Report the validation loss, not the training loss.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Says 0.05 is implausible, comparing with $\\ln 65 \\approx 4.17$ or a realistic loss near 1 to 2",
+            "required": true
+          },
+          {
+            "points": 2,
+            "text": "Names the missing causal mask: positions read later characters, which are their targets"
+          },
+          {
+            "points": 2,
+            "text": "Names the off-by-one: targets equal to the inputs, so each position copies itself"
+          },
+          {
+            "points": 2,
+            "text": "Gives a check: attention above the diagonal, inputs beside targets, or generating text"
+          },
+          {
+            "points": 2,
+            "text": "Says what to do: fix the mask or the shift, retrain, report the validation loss"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model answer and tick the rubric.",
+        "generic": "Compare your answer with the model answer."
+      }
+    },
+    {
+      "id": "h-tied-count",
+      "difficulty": 4,
+      "skills": [
+        "gpt-forward"
+      ],
+      "title": "A tied model's count",
+      "prose": "A research model has vocabulary 65, context 48, width 40, 2 blocks and MLP 160. Every linear layer has a bias and every layer norm a gain and a bias. The head is tied to `wte` and keeps a bias of its own.",
+      "question": "How many parameters does it have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 44105,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "untied",
+            "value": 46705,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 24385,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "feedback": {
+        "correct": "$2{,}600 + 1{,}920 + 2 \\times 19{,}720 + 80 + 65 = 44{,}105$.",
+        "generic": "Not quite. Count the tables, two blocks, the final norm and the head bias.",
+        "byKey": {
+          "untied": "That counts the head's weights; tied, they are `wte`'s own numbers.",
+          "one": "You counted one block. It has two."
+        }
+      },
+      "explain": {
+        "text": "A block is $4 \\cdot 40^2 + 2 \\cdot 40 \\cdot 160 + 9 \\cdot 40 + 160 = 19{,}720$. Two of them, the two tables, the final norm and the head bias give 44,105."
+      }
+    },
+    {
+      "id": "h-flat-positions",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "title": "A flat loss by position",
+      "prose": "A teammate plots their model's validation loss at each of the 32 positions. It is 2.46 at every position, the first included.",
+      "question": "What does the flat curve suggest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "noctx",
+            "text": "The model ignores earlier characters, so it predicts like a bigram",
+            "correct": true
+          },
+          {
+            "id": "good",
+            "text": "The model has used the whole context well everywhere",
+            "why": "Using context lowers the loss after position 0. A flat curve means later positions gain nothing."
+          },
+          {
+            "id": "mask",
+            "text": "The causal mask is missing",
+            "why": "Without the mask the loss would be far lower, not flat at the bigram's level."
+          },
+          {
+            "id": "data",
+            "text": "The validation text is too short",
+            "why": "A short text adds noise; it would not make every position equal."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every position scores like one with a single character of context: about the bigram's 2.4554.",
+        "generic": "Not quite. What should more context do to the loss?"
+      },
+      "explain": {
+        "text": "Our model falls from 2.57 at position 0 to about 1.75 by position 3. A curve flat at the bigram's level means attention adds nothing: check that its output reaches the stream."
+      }
+    }
+  ]
+}

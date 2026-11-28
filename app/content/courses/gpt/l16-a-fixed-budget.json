@@ -1,0 +1,1088 @@
+{
+  "id": "l16-a-fixed-budget",
+  "course": "gpt",
+  "title": "Spending a fixed budget",
+  "minutes": 15,
+  "objectives": [
+    "Choose a model size and token count for a fixed compute budget."
+  ],
+  "skills": [
+    "gpt-scale"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A budget fixes the trade",
+      "prose": "A lab has $C = 5.76 \\times 10^{23}$ FLOPs, the budget Chinchilla was sized for. With $C = 6ND$, choosing the model size fixes the number of tokens.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "$C$",
+              "$5.76 \\times 10^{23}$"
+            ],
+            [
+              "$N$",
+              "$7 \\times 10^{10}$"
+            ],
+            [
+              "$D$",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many tokens does a 70-billion-parameter model get, in units of $10^{12}$? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.371,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "two",
+            "value": 4.114,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Tokens",
+        "scale": 1000000000000.0
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$D = C / (6N)$."
+        },
+        {
+          "rung": "point",
+          "text": "$5.76 \\times 10^{23} / 4.2 \\times 10^{11}$.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.371 \\times 10^{12}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$5.76 \\times 10^{23} / (6 \\times 7 \\times 10^{10}) \\approx 1.371 \\times 10^{12}$ tokens.",
+        "generic": "Not quite. Divide the budget by $6N$.",
+        "byKey": {
+          "two": "You divided by $2N$, the inference cost."
+        }
+      },
+      "explain": {
+        "text": "1.371 trillion tokens, close to Chinchilla's 1.4 trillion. Twice the parameters would mean half the tokens.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Loss along the budget",
+      "prose": "Chinchilla's fitted law is $L = E + A/N^{\\alpha} + B/D^{\\beta}$ with $E = 1.69$, $A = 406.4$, $B = 410.7$, $\\alpha = 0.34$, $\\beta = 0.28$. Slide $N$ along the fixed budget, with $D = C/(6N)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            9.5,
+            12.5
+          ],
+          "y": [
+            1.92,
+            2.05
+          ],
+          "xLabel": "log10 N",
+          "yLabel": "predicted loss",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1.69 + 406.4*10^(-0.34*x) + 410.7*(5.76e23/(6*10^x))^(-0.28)",
+              "label": "fixed budget"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p",
+              "x": 10,
+              "y": 1.947,
+              "on": "f"
+            }
+          ]
+        },
+        "controls": [
+          {
+            "bind": "points.p.x",
+            "label": "log10 N",
+            "min": 9.5,
+            "max": 12.5,
+            "step": 0.05,
+            "start": 10
+          }
+        ]
+      },
+      "question": "Roughly where is the predicted loss lowest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "thirty",
+            "text": "Near 30 billion parameters",
+            "correct": true
+          },
+          {
+            "id": "seventy",
+            "text": "Near 70 billion, Chinchilla's size",
+            "why": "At 70 billion the curve is a little higher, 1.9376 against 1.9307."
+          },
+          {
+            "id": "big",
+            "text": "Near 1 trillion, as large as possible",
+            "why": "A huge model gets too few tokens; the data term grows."
+          },
+          {
+            "id": "small",
+            "text": "Near 3 billion",
+            "why": "A small model wastes data; the parameter term grows."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide from left to right and watch the point."
+        },
+        {
+          "rung": "point",
+          "text": "It falls, bottoms out, then rises.",
+          "highlight": [
+            "p"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The bottom is near $\\log_{10} N = 10.5$, about 32 billion parameters.",
+        "generic": "Not quite. Find where the point sits lowest."
+      },
+      "explain": {
+        "text": "Too small a model leaves loss in the $A/N^{\\alpha}$ term; too large a model starves the $B/D^{\\beta}$ term. The best split balances the two."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Chinchilla by its own law",
+      "prose": "Put Chinchilla's own size and data, 70 billion parameters and 1.4 trillion tokens, into the fitted law.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Term",
+            "Value"
+          ],
+          "rows": [
+            [
+              "$E$",
+              "1.69"
+            ],
+            [
+              "$406.4 / N^{0.34}$",
+              "0.0835"
+            ],
+            [
+              "$410.7 / D^{0.28}$",
+              "0.1632"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What loss does the law predict? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.9366,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "noE",
+            "value": 0.2466,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Loss"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the three terms."
+        },
+        {
+          "rung": "point",
+          "text": "$1.69 + 0.0835 + 0.1632$.",
+          "highlight": [
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About 1.94."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.69 + 0.0835 + 0.1632 \\approx 1.9366$.",
+        "generic": "Not quite. Add the floor and both terms.",
+        "byKey": {
+          "noE": "You left out the floor $E = 1.69$."
+        }
+      },
+      "explain": {
+        "text": "The law gives 1.9366. The parameter and data terms are of similar size, which is what a balanced split looks like.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "GPT-3's split by the same law",
+      "prose": "GPT-3: 175 billion parameters on 300 billion tokens, $3.15 \\times 10^{23}$ FLOPs, about half Chinchilla's budget, spent mostly on parameters.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "$N$",
+            "$D$",
+            "Predicted loss"
+          ],
+          "rows": [
+            [
+              "Chinchilla",
+              "70B",
+              "1.4T",
+              "1.9366"
+            ],
+            [
+              "GPT-3",
+              "175B",
+              "300B",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What loss does the law predict for GPT-3's split? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.0023,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "noE",
+            "value": 0.3123,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Loss"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$1.69 + 406.4/N^{0.34} + 410.7/D^{0.28}$."
+        },
+        {
+          "rung": "point",
+          "text": "The data term is 0.2511.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add the three."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.69 + 0.0611 + 0.2511 \\approx 2.0023$, above Chinchilla's 1.9366.",
+        "generic": "Not quite. Use $N = 1.75 \\times 10^{11}$, $D = 3 \\times 10^{11}$.",
+        "byKey": {
+          "noE": "You left out the floor."
+        }
+      },
+      "explain": {
+        "text": "GPT-3 gets 2.0023: its data term, 0.2511, is far larger than its parameter term, so it saw too few tokens for its size. With 2.5 times fewer parameters Chinchilla predicts lower.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The optimum in closed form",
+      "prose": "Setting the derivative along the budget to 0 gives $N_{\\text{opt}} = G (C/6)^{\\beta/(\\alpha+\\beta)}$ with $G = (\\alpha A / \\beta B)^{1/(\\alpha + \\beta)}$. At $C = 5.76 \\times 10^{23}$ this gives $N = 3.22 \\times 10^{10}$ and $D = 2.98 \\times 10^{12}$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "$N_\\text{opt}$",
+              "$3.22 \\times 10^{10}$"
+            ],
+            [
+              "$D_\\text{opt}$",
+              "$2.98 \\times 10^{12}$"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many tokens per parameter is that? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 92.6,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "twenty",
+            "value": 20,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "inv",
+            "value": 0.0108,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Tokens per parameter"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide $D$ by $N$."
+        },
+        {
+          "rung": "point",
+          "text": "$2.98 \\times 10^{12} / 3.22 \\times 10^{10}$.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About 93."
+        }
+      ],
+      "feedback": {
+        "correct": "$2.98 \\times 10^{12} / 3.22 \\times 10^{10} \\approx 92.6$ tokens per parameter.",
+        "generic": "Not quite. Divide the tokens by the parameters.",
+        "byKey": {
+          "twenty": "That is the paper's headline rule. This law, with these constants, gives far more.",
+          "inv": "You divided the other way."
+        }
+      },
+      "explain": {
+        "text": "About 93 tokens per parameter, not the headline 20. The paper's three methods disagree, and this fitted law is the one that gives the most tokens.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Spend the budget in code",
+      "prose": "Write `chinchilla_loss(N, D)` with the published constants, and `optimal_split(C)`: search $N$ on `np.logspace(6, 14, 200001)` with $D = C/(6N)$, and return the $(N, D)$ of lowest loss.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            9.5,
+            12.5
+          ],
+          "y": [
+            1.92,
+            2.05
+          ],
+          "xLabel": "log10 N",
+          "yLabel": "predicted loss",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1.69 + 406.4*10^(-0.34*x) + 410.7*(5.76e23/(6*10^x))^(-0.28)",
+              "label": "fixed budget"
+            }
+          ]
+        }
+      },
+      "question": "Write `chinchilla_loss` and `optimal_split`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef chinchilla_loss(N, D):\n    # E + A / N**alpha + B / D**beta with E = 1.69, A = 406.4, B = 410.7, alpha = 0.34, beta = 0.28.\n    ...\n\n\ndef optimal_split(C):\n    # Search N on np.logspace(6, 14, 200001); D = C / (6 N). Return (N, D) with the lowest loss.\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef chinchilla_loss(N, D):\n    return 1.69 + 406.4 / np.asarray(N, dtype=float) ** 0.34 + 410.7 / np.asarray(D, dtype=float) ** 0.28\n\n\ndef optimal_split(C):\n    Ns = np.logspace(6, 14, 200001)\n    losses = chinchilla_loss(Ns, C / (6 * Ns))\n    N = float(Ns[np.argmin(losses)])\n    return N, C / (6 * N)\n",
+        "examples": [
+          {
+            "call": "round(float(chinchilla_loss(1e9, 1e10)), 3)",
+            "expect": "2.695",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "float(chinchilla_loss(70e9, 1.4e12))",
+            "expect": "1.9366454705587173",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "float(chinchilla_loss(175e9, 300e9))",
+            "expect": "2.0022879365177095",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "optimal_split(5.76e23)[0]",
+            "expect": "32189859151.368168",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0.001
+            }
+          },
+          {
+            "call": "optimal_split(5.76e23)[1]",
+            "expect": "2982305686662.804",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0.001
+            }
+          },
+          {
+            "call": "optimal_split(1e21)[0]",
+            "expect": "1824217696.8955524",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0.001
+            }
+          },
+          {
+            "call": "6 * optimal_split(3e24)[0] * optimal_split(3e24)[1]",
+            "expect": "3e24",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          }
+        ],
+        "how": "Submit runs 6 hidden tests: the law at Chinchilla and GPT-3, the split at $5.76 \\times 10^{23}$ and $10^{21}$ within 0.1% of the closed form, and that the split spends the whole budget.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef chinchilla_loss(N, D):\n    return 1.69 + 406.4 / np.asarray(N, dtype=float) ** 0.34 + 410.7 / np.asarray(D, dtype=float) ** 0.28\n\n\ndef optimal_split(C):\n    Ns = np.logspace(6, 14, 200001)\n    losses = chinchilla_loss(Ns, C / (2 * Ns))\n    N = float(Ns[np.argmin(losses)])\n    return N, C / (6 * N)\n",
+            "test": 3,
+            "symptom": "Spends the budget at 2ND, the inference cost, so every model sees three times the tokens."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef chinchilla_loss(N, D):\n    return 1.69 + 406.4 / np.asarray(N, dtype=float) ** 0.28 + 410.7 / np.asarray(D, dtype=float) ** 0.34\n\n\ndef optimal_split(C):\n    Ns = np.logspace(6, 14, 200001)\n    losses = chinchilla_loss(Ns, C / (6 * Ns))\n    N = float(Ns[np.argmin(losses)])\n    return N, C / (6 * N)\n",
+            "test": 1,
+            "symptom": "Swaps the two exponents."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef chinchilla_loss(N, D):\n    return 1.69 + 406.4 / np.asarray(N, dtype=float) ** 0.34 + 410.7 / np.asarray(D, dtype=float) ** 0.28\n\n\ndef optimal_split(C):\n    Ns = np.logspace(6, 14, 200001)\n    losses = chinchilla_loss(Ns, C / (6 * Ns))\n    N = float(Ns[np.argmin(losses)])\n    return N, 20 * N\n",
+            "test": 4,
+            "symptom": "Sets 20 tokens per parameter instead of spending the budget."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef chinchilla_loss(N, D):\n    return 1.69 + 406.4 / np.asarray(N, dtype=float) ** 0.34 + 410.7 / np.asarray(D, dtype=float) ** 0.28\n\n\ndef optimal_split(C):\n    Ns = np.logspace(6, 14, 81)\n    losses = chinchilla_loss(Ns, C / (6 * Ns))\n    N = float(Ns[np.argmin(losses)])\n    return N, C / (6 * N)\n",
+            "test": 3,
+            "symptom": "Searches a grid too coarse to land within 0.1%."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`chinchilla_loss` works on arrays with `np.asarray`."
+        },
+        {
+          "rung": "point",
+          "text": "Evaluate the loss on the whole grid at once.",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`np.argmin` picks the best $N$; $D = C/(6N)$."
+        }
+      ],
+      "feedback": {
+        "correct": "Your split matches the closed form within 0.1%.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 is the optimum at $5.76 \\times 10^{23}$. Check $D = C/(6N)$ and a fine grid."
+        }
+      },
+      "explain": {
+        "text": "A grid of 200,001 sizes over 8 decades is fine enough to land within 0.01% of $N = 3.22 \\times 10^{10}$. No calculus needed."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Twenty tokens per parameter",
+      "prose": "A team plans a run with \"20 tokens per parameter, the Chinchilla law\". The fitted law with the published constants gives about 93 at this budget.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Source",
+            "Tokens per parameter"
+          ],
+          "rows": [
+            [
+              "Chinchilla headline",
+              "20"
+            ],
+            [
+              "fitted law, published constants",
+              "92.6"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the right reading of the 20?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fit",
+            "text": "A summary of fits that disagree",
+            "correct": true
+          },
+          {
+            "id": "law",
+            "text": "A law of nature for language models",
+            "why": "It is the summary of a fit to particular runs, data and choices; other fits give other ratios."
+          },
+          {
+            "id": "wrong",
+            "text": "A mistake in the paper itself",
+            "why": "It is the paper's main finding from two of its three methods; the third, this fitted law, gives more tokens."
+          },
+          {
+            "id": "same",
+            "text": "The same as 93, written differently",
+            "why": "They are different ratios, a factor of about 4.6 apart."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does each number come from?"
+        },
+        {
+          "rung": "point",
+          "text": "Both from fits to the same experiments.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Fits with different methods give different answers."
+        }
+      ],
+      "feedback": {
+        "correct": "The 20 is a fit's summary. The paper's three approaches disagree, and Besiroglu et al. (2024) re-fitted the third.",
+        "generic": "Not quite. What kind of claim is a scaling-law ratio?",
+        "byKey": {
+          "law": "That is the trap. It is a fit with data, ranges and choices behind it, and inference costs push real models far past it."
+        }
+      },
+      "explain": {
+        "text": "Scaling laws are fits, not laws. The 20 comes from two of the paper's methods, about 93 from the third with its published constants, and a 2024 re-fit of that one lands nearer 20.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Ten times the compute",
+      "prose": "Under the fitted law, $N_{\\text{opt}} \\propto C^{\\beta/(\\alpha + \\beta)}$ and $D_{\\text{opt}} \\propto C^{\\alpha/(\\alpha+\\beta)}$, with $\\alpha = 0.34$ and $\\beta = 0.28$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Exponent of $C$"
+          ],
+          "rows": [
+            [
+              "$N_\\text{opt}$",
+              "0.4516"
+            ],
+            [
+              "$D_\\text{opt}$",
+              "0.5484"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "With ten times the compute, by what factor should the model grow? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.83,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "data",
+            "value": 3.53,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "Factor"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$10^{0.28/0.62}$."
+        },
+        {
+          "rung": "point",
+          "text": "$0.28/0.62 \\approx 0.4516$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10^{0.4516}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$10^{0.4516} \\approx 2.83$; the data grows by $10^{0.5484} \\approx 3.53$.",
+        "generic": "Not quite. Raise 10 to the exponent of $C$ for $N$.",
+        "byKey": {
+          "data": "That is the data's factor.",
+          "ten": "Not all the extra compute goes into the model."
+        }
+      },
+      "explain": {
+        "text": "The model grows 2.83 times and the data 3.53 times: both grow, data a little faster. Kaplan's fits put most of a bigger budget into the model.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Trained for inference",
+      "prose": "A lab trains an 8-billion-parameter model on 15 trillion tokens, $7.2 \\times 10^{23}$ FLOPs, because it will serve the model billions of times and a smaller model is cheaper to run.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Choice",
+            "Parameters",
+            "Tokens"
+          ],
+          "rows": [
+            [
+              "inference-heavy",
+              "8B",
+              "15T"
+            ],
+            [
+              "compute-optimal (fitted law)",
+              "36B",
+              "3.4T"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "How many tokens per parameter is that?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1875,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "inv",
+            "value": 0.0005,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "twenty",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Tokens per parameter"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$15 \\times 10^{12} / 8 \\times 10^9$."
+        },
+        {
+          "rung": "point",
+          "text": "$15{,}000 / 8$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1,875."
+        }
+      ],
+      "feedback": {
+        "correct": "$15 \\times 10^{12} / 8 \\times 10^9 = 1{,}875$ tokens per parameter.",
+        "generic": "Not quite. Divide the tokens by the parameters.",
+        "byKey": {
+          "inv": "You divided the other way.",
+          "twenty": "That is the headline rule; this lab went far past it."
+        }
+      },
+      "explain": {
+        "text": "1,875 tokens per parameter: the law predicts 1.9485 against 1.9226 at the compute-optimal split, a small loss for a model about 4 times cheaper to serve.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Spending a fixed budget",
+      "prose": "With $C = 6ND$ fixed, minimise $L(N, D) = E + A/N^{\\alpha} + B/D^{\\beta}$:\n$$N_{\\text{opt}} = G\\left(\\frac{C}{6}\\right)^{\\beta/(\\alpha+\\beta)}, \\qquad D_{\\text{opt}} = \\frac{C}{6N_{\\text{opt}}}$$\nThe ratio $D/N$ depends on the fit and drifts with $C$.",
+      "question": "If $\\alpha$ and $\\beta$ were equal, how would the optimal $N$ and $D$ grow with $C$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sqrt",
+            "text": "Both like $\\sqrt C$",
+            "correct": true
+          },
+          {
+            "id": "n",
+            "text": "$N$ like $C$, $D$ fixed",
+            "why": "Equal exponents split the budget evenly in log terms."
+          },
+          {
+            "id": "d",
+            "text": "$D$ like $C$, $N$ fixed",
+            "why": "Neither stays fixed."
+          },
+          {
+            "id": "lin",
+            "text": "Both like $C$",
+            "why": "Their product is $C/6$, so both cannot grow like $C$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $\\alpha = \\beta$ into the exponents."
+        }
+      ],
+      "feedback": {
+        "correct": "Each exponent becomes 1/2: both grow like $\\sqrt C$, as Chinchilla's headline says.",
+        "generic": "Not quite. What is $\\beta/(\\alpha+\\beta)$ when they are equal?"
+      },
+      "explain": {
+        "text": "Equal exponents give $\\sqrt C$ each, a fixed ratio of tokens to parameters. Unequal fitted exponents make the ratio drift with the budget."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A research budget",
+      "prose": "A quant team has a fixed compute budget to build a return model. It can fit a larger model on its current data, or buy more history and fit a smaller one. A pilot shows both errors falling as power laws.",
+      "question": "What does the scaling view advise?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "balance",
+            "text": "Fit both curves; equalise the marginal gains",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "Always the larger model, whatever the data",
+            "why": "A larger model on too little data is the GPT-3 mistake: the data term dominates."
+          },
+          {
+            "id": "data",
+            "text": "Always buy more history first",
+            "why": "More data for a model too small to use it leaves the model term large."
+          },
+          {
+            "id": "none",
+            "text": "Scaling laws do not apply outside language models",
+            "why": "The method applies wherever error falls as a power law in size and data; the fitted numbers do not transfer."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What did the fixed-budget curve show?"
+        },
+        {
+          "rung": "point",
+          "text": "A minimum where the two terms balance."
+        },
+        {
+          "rung": "step",
+          "text": "Fit, then balance."
+        }
+      ],
+      "feedback": {
+        "correct": "Estimate how each kind of spending lowers the error, then split the budget where the two are equal at the margin.",
+        "generic": "Not quite. What sets the best split along a budget?"
+      },
+      "explain": {
+        "text": "The same trade, model size against data, appears in any fixed budget. Fit the two curves on pilots, then spend where the marginal return is equal."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "With $C = 6ND$ fixed, more parameters means fewer tokens; the loss is lowest where the model and data terms balance.",
+      "Chinchilla's headline is about 20 tokens per parameter; its fitted law with the published constants gives about 93 at $5.76 \\times 10^{23}$ FLOPs. Fits disagree.",
+      "Models served at scale train far past compute-optimal: 8B on 15T tokens is 1,875 tokens per parameter."
+    ],
+    "formula": {
+      "name": "Compute-optimal size",
+      "tex": "N_\\text{opt} = G\\left(\\tfrac{C}{6}\\right)^{\\beta/(\\alpha+\\beta)}",
+      "note": "$G = (\\alpha A / \\beta B)^{1/(\\alpha+\\beta)}$."
+    },
+    "trap": "Reading the 20-tokens rule as a law of nature: it is the summary of a fit."
+  },
+  "quiz": [
+    {
+      "id": "q-half",
+      "difficulty": 2,
+      "question": "With $C$ fixed, a lab doubles $N$. What happens to $D$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "half",
+            "text": "It halves",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "It stays the same",
+            "why": "Then $6ND$ would double."
+          },
+          {
+            "id": "double",
+            "text": "It doubles",
+            "why": "That quadruples the compute."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$D = C/(6N)$: double $N$, halve $D$.",
+        "generic": "Not quite. Keep $6ND$ fixed."
+      },
+      "explain": {
+        "text": "A fixed budget makes model size and data a straight trade."
+      }
+    },
+    {
+      "id": "q-floor",
+      "difficulty": 3,
+      "question": "What loss does the fitted law approach with unlimited parameters and data?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.69,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Loss"
+      },
+      "feedback": {
+        "correct": "Both power terms vanish, leaving $E = 1.69$.",
+        "generic": "Not quite. Let $N$ and $D$ grow without bound.",
+        "byKey": {
+          "zero": "The floor $E$ remains."
+        }
+      },
+      "explain": {
+        "text": "As $N, D \\to \\infty$ the law tends to $E = 1.69$, the irreducible loss of the text."
+      }
+    },
+    {
+      "id": "q-ten",
+      "difficulty": 3,
+      "question": "Under the fitted law, ten times the compute should grow the data by what factor? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.53,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "model",
+            "value": 2.83,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "Factor"
+      },
+      "feedback": {
+        "correct": "$10^{0.34/0.62} \\approx 3.53$.",
+        "generic": "Not quite. The data's exponent is $\\alpha/(\\alpha+\\beta)$.",
+        "byKey": {
+          "model": "That is the model's factor."
+        }
+      },
+      "explain": {
+        "text": "$10^{0.5484} \\approx 3.53$."
+      }
+    }
+  ]
+}

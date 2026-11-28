@@ -1,0 +1,1226 @@
+{
+  "id": "l14-counting-compute",
+  "course": "gpt",
+  "title": "Counting the compute",
+  "minutes": 14,
+  "objectives": [
+    "Derive the 6ND rule for training compute and apply it to real models."
+  ],
+  "skills": [
+    "gpt-scale"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One token through the tiny GPT",
+      "prose": "Multiplying a vector by a weight matrix costs one multiply and one add per weight. Almost every parameter of a GPT is a matrix weight that each token meets once in the forward pass.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "Parameters $N$"
+          ],
+          "rows": [
+            [
+              "tiny GPT",
+              "18,017"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "About how many floating-point operations does one token's forward pass take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 36034,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 18017,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "six",
+            "value": 108102,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "FLOPs"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each weight: one multiply, one add."
+        },
+        {
+          "rung": "point",
+          "text": "So 2 FLOPs per parameter.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2 \\times 18{,}017$."
+        }
+      ],
+      "feedback": {
+        "correct": "About $2N = 36{,}034$ FLOPs per token forward.",
+        "generic": "Not quite. Two operations per weight.",
+        "byKey": {
+          "one": "That counts one operation per weight. A multiply and an add make two.",
+          "six": "That is the training cost, forward and backward."
+        }
+      },
+      "explain": {
+        "text": "A forward pass costs about $2N$ FLOPs per token: 36,034 for the tiny GPT. Attention scores add a little more, which we count later.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Forward and backward",
+      "prose": "The backward pass needs two products per weight matrix: one for the input's gradient and one for the weight's. So it costs about twice the forward pass. Slide through four training runs.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "forward",
+            "backward"
+          ],
+          "yLabel": "share of training FLOPs",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 1
+        },
+        "state": {
+          "values": {
+            "forward": 0.333,
+            "backward": 0.667
+          },
+          "caption": "tiny GPT: $6ND = 2.77 \\times 10^{11}$ FLOPs."
+        },
+        "controls": [
+          {
+            "bind": "m",
+            "label": "Run",
+            "frames": [
+              {
+                "values": {
+                  "forward": 0.333,
+                  "backward": 0.667
+                },
+                "caption": "tiny GPT: $6ND = 2.77 \\times 10^{11}$ FLOPs."
+              },
+              {
+                "values": {
+                  "forward": 0.333,
+                  "backward": 0.667
+                },
+                "caption": "GPT-2 small, 10B tokens: $6ND = 7.47 \\times 10^{18}$ FLOPs."
+              },
+              {
+                "values": {
+                  "forward": 0.333,
+                  "backward": 0.667
+                },
+                "caption": "GPT-3: $6ND = 3.15 \\times 10^{23}$ FLOPs."
+              },
+              {
+                "values": {
+                  "forward": 0.333,
+                  "backward": 0.667
+                },
+                "caption": "Chinchilla: $6ND = 5.88 \\times 10^{23}$ FLOPs."
+              }
+            ],
+            "frameLabels": [
+              "tiny",
+              "GPT-2",
+              "GPT-3",
+              "Chinchilla"
+            ]
+          }
+        ]
+      },
+      "question": "What share of training compute is the backward pass?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "two3",
+            "text": "Two thirds",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "A half",
+            "why": "The backward pass does two products per weight to the forward pass's one."
+          },
+          {
+            "id": "third",
+            "text": "A third",
+            "why": "That is the forward share."
+          },
+          {
+            "id": "all",
+            "text": "Almost all of it",
+            "why": "It is twice the forward pass, not dozens of times."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Forward $2N$, backward $4N$ per token."
+        },
+        {
+          "rung": "point",
+          "text": "$4 / 6$.",
+          "highlight": [
+            "xbackward"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$4N$ of $6N$ per token: two thirds, in every run.",
+        "generic": "Not quite. Compare $4N$ with $6N$."
+      },
+      "explain": {
+        "text": "Forward $2N$, backward $4N$: training costs about $6N$ FLOPs per token, so $6ND$ for $D$ tokens. The split is the same at every size."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "GPT-3's compute",
+      "prose": "The rule **$C \\approx 6ND$**: $N$ parameters trained on $D$ tokens. GPT-3 has 175 billion parameters and was trained on 300 billion tokens.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "$N$",
+            "$D$"
+          ],
+          "rows": [
+            [
+              "GPT-3",
+              "$1.75 \\times 10^{11}$",
+              "$3 \\times 10^{11}$"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What is $C$, in units of $10^{23}$ FLOPs? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.15,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "fwd",
+            "value": 1.05,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "ten",
+            "value": 31.5,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "FLOPs",
+        "scale": 1e+23
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$6 \\times 1.75 \\times 3$."
+        },
+        {
+          "rung": "point",
+          "text": "Then the powers of ten: $10^{11} \\times 10^{11}$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$31.5 \\times 10^{22}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$6 \\times 1.75 \\times 10^{11} \\times 3 \\times 10^{11} = 3.15 \\times 10^{23}$.",
+        "generic": "Not quite. Multiply 6, $N$ and $D$.",
+        "byKey": {
+          "fwd": "That is $2ND$, the forward pass only.",
+          "ten": "Check the power of ten: $31.5 \\times 10^{22} = 3.15 \\times 10^{23}$."
+        }
+      },
+      "explain": {
+        "text": "$6ND = 3.15 \\times 10^{23}$ FLOPs. The GPT-3 paper's table gives $3.14 \\times 10^{23}$; the rule is an approximation, and we quote 3.15 from it.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Chinchilla's compute",
+      "prose": "Chinchilla has 70 billion parameters and was trained on 1.4 trillion tokens.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "$N$",
+            "$D$",
+            "$6ND$"
+          ],
+          "rows": [
+            [
+              "GPT-3",
+              "175B",
+              "300B",
+              "$3.15 \\times 10^{23}$"
+            ],
+            [
+              "Chinchilla",
+              "70B",
+              "1.4T",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "How many training tokens did Chinchilla see per parameter?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "inv",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "gpt3",
+            "value": 1.71,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "Tokens per parameter"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide $D$ by $N$."
+        },
+        {
+          "rung": "point",
+          "text": "$1.4 \\times 10^{12} / 7 \\times 10^{10}$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$14 / 0.7$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.4 \\times 10^{12} / 7 \\times 10^{10} = 20$ tokens per parameter; $6ND = 5.88 \\times 10^{23}$.",
+        "generic": "Not quite. Divide the tokens by the parameters.",
+        "byKey": {
+          "inv": "You divided the parameters by the tokens.",
+          "gpt3": "That is GPT-3's ratio, about 1.7."
+        }
+      },
+      "explain": {
+        "text": "Chinchilla: 20 tokens per parameter and $5.88 \\times 10^{23}$ FLOPs, against GPT-3's 1.7 tokens per parameter. Level 4 ends on why.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The tiny GPT's run",
+      "prose": "The supplied tiny GPT trained for 5,000 steps of 16 windows of 32 characters: 2,560,000 tokens, so $6ND = 2.77 \\times 10^{11}$ FLOPs. The browser's matrix products ran at about 2.1 GFLOP/s in the timing spike.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "$N$",
+              "18,017"
+            ],
+            [
+              "$D$",
+              "2,560,000"
+            ],
+            [
+              "$6ND$",
+              "$2.77 \\times 10^{11}$"
+            ],
+            [
+              "matmul speed",
+              "2.1 GFLOP/s"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many seconds would the run take if every FLOP ran at 2.1 GFLOP/s? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 131.8,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "fwd",
+            "value": 43.9,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "min",
+            "value": 2.2,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "Seconds"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide FLOPs by FLOPs per second."
+        },
+        {
+          "rung": "point",
+          "text": "$2.77 \\times 10^{11} / 2.1 \\times 10^9$.",
+          "highlight": [
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About 132."
+        }
+      ],
+      "feedback": {
+        "correct": "$2.77 \\times 10^{11} / 2.1 \\times 10^9 \\approx 131.8$ s. Measured, a step takes 56 ms in the browser, so the run would take 280 s.",
+        "generic": "Not quite. Divide the FLOPs by the speed.",
+        "byKey": {
+          "fwd": "That uses $2ND$. Training is $6ND$.",
+          "min": "That is minutes. The question asks for seconds."
+        }
+      },
+      "explain": {
+        "text": "131.8 s at matmul speed, but the measured 56 ms a step makes 280 s: an effective 0.99 GFLOP/s. Small matrices and Python overhead waste most of the peak.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The attention term",
+      "prose": "$2N$ counts the weights. Attention also compares each token with every earlier one: about $2LTd$ more FLOPs per token forward (Kaplan et al. 2020). For GPT-2 small, $L = 12$, $T = 1{,}024$, $d = 768$; its blocks hold 85,054,464 weights.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Term",
+            "FLOPs per token forward"
+          ],
+          "rows": [
+            [
+              "$2N$ (blocks)",
+              "170,108,928"
+            ],
+            [
+              "$2LTd$",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What is $2LTd$ as a share of $2N$ for the blocks? Give a percentage to one decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.111,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "inv",
+            "value": 9.0127,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "total",
+            "value": 0.0758,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Share",
+        "over100": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$2 \\times 12 \\times 1024 \\times 768$."
+        },
+        {
+          "rung": "point",
+          "text": "That is 18,874,368.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by 170,108,928."
+        }
+      ],
+      "feedback": {
+        "correct": "$18{,}874{,}368 / 170{,}108{,}928 \\approx 11.1\\%$.",
+        "generic": "Not quite. Divide $2LTd$ by twice the block weights.",
+        "byKey": {
+          "inv": "You divided the other way.",
+          "total": "You used the whole model, embeddings included. Compare with the blocks."
+        }
+      },
+      "explain": {
+        "text": "At a context of 1,024 the attention term adds 11.1%. It grows with $T$, so long contexts change the picture.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the cost functions",
+      "prose": "Write `train_flops(N, D)`, `attention_flops(L, T, d)` (the $2LTd$ forward term per token) and `days_to_train(flops, flops_per_s, utilisation)`, where utilisation is the fraction of the peak rate a run achieves.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Function",
+            "Formula"
+          ],
+          "rows": [
+            [
+              "train_flops",
+              "$6ND$"
+            ],
+            [
+              "attention_flops",
+              "$2LTd$"
+            ],
+            [
+              "days_to_train",
+              "$C / (\\text{rate} \\times u) / 86{,}400$"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Write the three functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def train_flops(N, D):\n    # About 6 FLOPs per parameter per token: 2 forward, 4 backward.\n    ...\n\n\ndef attention_flops(L, T, d):\n    # Forward FLOPs per token of the attention scores and the weighted sum, beyond 2N: 2 * L * T * d.\n    ...\n\n\ndef days_to_train(flops, flops_per_s, utilisation):\n    # Wall-clock days at that peak rate and that fraction of it actually achieved.\n    ...\n",
+        "solution": "def train_flops(N, D):\n    return 6 * N * D\n\n\ndef attention_flops(L, T, d):\n    return 2 * L * T * d\n\n\ndef days_to_train(flops, flops_per_s, utilisation):\n    return flops / (flops_per_s * utilisation) / 86400\n",
+        "examples": [
+          {
+            "call": "train_flops(1, 1)",
+            "expect": "6",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "train_flops(175e9, 300e9)",
+            "expect": "3.15e+23",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "train_flops(18017, 2560000)",
+            "expect": "276741120000.0",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "attention_flops(12, 1024, 768)",
+            "expect": "18874368",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "days_to_train(3.15e23, 1000 * 312e12, 0.4)",
+            "expect": "29.21340811965812",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "days_to_train(8.64e18, 1e14, 1.0)",
+            "expect": "1.0",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "attention_flops(1, 8, 2)",
+            "expect": "32",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Submit runs 6 hidden tests: GPT-3 and the tiny GPT's training FLOPs, GPT-2 small's attention term, GPT-3 on 1,000 GPUs at 40%, one day at full use, and a toy attention term. Values within $10^{-9}$ (relative).",
+        "mutants": [
+          {
+            "source": "def train_flops(N, D):\n    return 2 * N * D\n\n\ndef attention_flops(L, T, d):\n    return 2 * L * T * d\n\n\ndef days_to_train(flops, flops_per_s, utilisation):\n    return flops / (flops_per_s * utilisation) / 86400\n",
+            "test": 1,
+            "symptom": "Counts only the forward pass, 2ND, which is inference."
+          },
+          {
+            "source": "def train_flops(N, D):\n    return 6 * N * D\n\n\ndef attention_flops(L, T, d):\n    return 2 * L * T * d\n\n\ndef days_to_train(flops, flops_per_s, utilisation):\n    return flops / flops_per_s / 86400\n",
+            "test": 4,
+            "symptom": "Ignores utilisation, as if every FLOP ran at the peak rate."
+          },
+          {
+            "source": "def train_flops(N, D):\n    return 6 * N * D\n\n\ndef attention_flops(L, T, d):\n    return 2 * L * T * d\n\n\ndef days_to_train(flops, flops_per_s, utilisation):\n    return flops / (flops_per_s * utilisation) / 3600\n",
+            "test": 4,
+            "symptom": "Divides by the seconds in an hour, giving hours."
+          },
+          {
+            "source": "def train_flops(N, D):\n    return 6 * N * D\n\n\ndef attention_flops(L, T, d):\n    return 2 * L * T * T * d\n\n\ndef days_to_train(flops, flops_per_s, utilisation):\n    return flops / (flops_per_s * utilisation) / 86400\n",
+            "test": 3,
+            "symptom": "Squares the context, the cost of a whole sequence, not of one token."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each is one line."
+        },
+        {
+          "rung": "point",
+          "text": "A day has 86,400 seconds.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by the achieved rate, `flops_per_s * utilisation`."
+        }
+      ],
+      "feedback": {
+        "correct": "All three match.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is GPT-3: $6ND$, not $2ND$.",
+          "test-4": "Test 4 uses 40% utilisation and days, not hours."
+        }
+      },
+      "explain": {
+        "text": "Compute, then time at the rate actually achieved. Utilisation of 30% to 50% of peak is typical for large training runs."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Training is not inference",
+      "prose": "A colleague budgets GPT-3's training as $2ND$: \"two FLOPs per parameter per token\".",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Estimate",
+            "FLOPs"
+          ],
+          "rows": [
+            [
+              "$2ND$",
+              "$1.05 \\times 10^{23}$"
+            ],
+            [
+              "$6ND$",
+              "$3.15 \\times 10^{23}$"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What is wrong with the estimate?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "inf",
+            "text": "$2ND$ is the forward pass only; training adds the backward pass, $4ND$",
+            "correct": true
+          },
+          {
+            "id": "ok",
+            "text": "Nothing: two FLOPs per weight is right",
+            "why": "Right for a forward pass, which is what serving a model costs; training also runs backward."
+          },
+          {
+            "id": "more",
+            "text": "It should be $12ND$",
+            "why": "The backward pass costs twice the forward pass, so $6ND$ in all."
+          },
+          {
+            "id": "att",
+            "text": "It leaves out attention, which triples the cost",
+            "why": "Attention adds about 11% at GPT-3's context, not 200%."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does each FLOP count cover?"
+        },
+        {
+          "rung": "point",
+          "text": "Forward $2ND$; backward?",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Backward is about twice forward."
+        }
+      ],
+      "feedback": {
+        "correct": "$2ND$ is inference. Training is forward plus backward, $6ND$: three times as much.",
+        "generic": "Not quite. What does the backward pass cost?",
+        "byKey": {
+          "ok": "That is the trap: $2N$ per token is the cost of using the model. Training costs three times as much."
+        }
+      },
+      "explain": {
+        "text": "Generating a token costs about $2N$ FLOPs; training on it costs about $6N$. A budget built on $2ND$ is short by a factor of 3.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "When attention dominates",
+      "prose": "The weights cost about $24Ld^2$ FLOPs per token forward ($2N$ with $N \\approx 12Ld^2$), and attention $2LTd$. The two are equal when $T = 12d$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Width $d$",
+            "Context where attention equals the weights"
+          ],
+          "rows": [
+            [
+              "768",
+              "?"
+            ],
+            [
+              "12,288",
+              "147,456"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "For width 768, at what context length does the attention term equal the weight term?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9216,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "d",
+            "value": 768,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sq",
+            "value": 589824,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Context"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $2LTd = 24Ld^2$."
+        },
+        {
+          "rung": "point",
+          "text": "$T = 12d$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$12 \\times 768$."
+        }
+      ],
+      "feedback": {
+        "correct": "$T = 12d = 9{,}216$ tokens.",
+        "generic": "Not quite. Solve $2LTd = 24Ld^2$ for $T$.",
+        "byKey": {
+          "d": "That is $T = d$. Solve the equation for $T$.",
+          "sq": "That is $d^2$. Divide both sides by $2Ld$."
+        }
+      },
+      "explain": {
+        "text": "Below 9,216 tokens of context, GPT-2 small's weights dominate its compute; above it, attention does. Long-context models need the attention term in their budget.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Days on a cluster",
+      "prose": "Train GPT-3 ($3.15 \\times 10^{23}$ FLOPs) on 1,000 GPUs, each with a peak of 312 TFLOP/s in bf16, at 40% utilisation.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "compute",
+              "$3.15 \\times 10^{23}$"
+            ],
+            [
+              "GPUs",
+              "1,000"
+            ],
+            [
+              "peak per GPU",
+              "$3.12 \\times 10^{14}$ FLOP/s"
+            ],
+            [
+              "utilisation",
+              "40%"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many days does it take? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 29.2,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "peak",
+            "value": 11.7,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "hours",
+            "value": 701.1,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "Days"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Achieved rate: $1000 \\times 3.12 \\times 10^{14} \\times 0.4$."
+        },
+        {
+          "rung": "point",
+          "text": "That is $1.248 \\times 10^{17}$ FLOP/s.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide, then divide by 86,400."
+        }
+      ],
+      "feedback": {
+        "correct": "$3.15 \\times 10^{23} / 1.248 \\times 10^{17} / 86{,}400 \\approx 29.2$ days.",
+        "generic": "Not quite. Divide by the achieved rate, then by the seconds in a day.",
+        "byKey": {
+          "peak": "That assumes 100% utilisation.",
+          "hours": "That is hours."
+        }
+      },
+      "explain": {
+        "text": "About 29.2 days on 1,000 GPUs. At full utilisation it would be 11.7; real runs rarely pass half the peak.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The compute rule",
+      "prose": "Training compute:\n$$C \\approx 6ND \\quad (2N \\text{ forward} + 4N \\text{ backward per token})$$\nplus about $6LTd$ per token for attention when the context is long. Time is $C$ over the achieved rate.",
+      "question": "Double both $N$ and $D$. By how much does $C$ grow?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "four",
+            "text": "4 times",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "2 times",
+            "why": "$C$ is a product of both, so each doubling counts."
+          },
+          {
+            "id": "eight",
+            "text": "8 times",
+            "why": "Only two factors grow: $2 \\times 2$."
+          },
+          {
+            "id": "six",
+            "text": "6 times",
+            "why": "The 6 is a constant; it does not change."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$6(2N)(2D)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$6 \\cdot 2N \\cdot 2D = 4 \\cdot 6ND$.",
+        "generic": "Not quite. Multiply both factors by 2."
+      },
+      "explain": {
+        "text": "Compute is bilinear in model size and data. A model twice as large on twice the data costs 4 times as much."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Budgeting in pounds",
+      "prose": "The GPT-3 run above takes about 29.2 days on 1,000 GPUs. A cloud provider charges £1.50 per GPU-hour.",
+      "question": "What does the run cost in pounds, to the nearest thousand?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1052000.0,
+        "tol": {
+          "abs": 500
+        },
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "day",
+            "value": 44000.0,
+            "tol": {
+              "abs": 500
+            }
+          },
+          {
+            "id": "one",
+            "value": 1000.0,
+            "tol": {
+              "abs": 500
+            }
+          }
+        ],
+        "label": "Cost"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "GPU-hours: $1000 \\times$ days $\\times 24$."
+        },
+        {
+          "rung": "point",
+          "text": "About 701,122 GPU-hours."
+        },
+        {
+          "rung": "step",
+          "text": "Times £1.50."
+        }
+      ],
+      "feedback": {
+        "correct": "$1000 \\times 29.21 \\times 24 \\times 1.5 \\approx$ £1,052,000.",
+        "generic": "Not quite. Count GPU-hours, then multiply by the rate.",
+        "byKey": {
+          "day": "You charged per GPU-day. The rate is per hour.",
+          "one": "You counted one GPU. There are 1,000."
+        }
+      },
+      "explain": {
+        "text": "About 701,122 GPU-hours, so about £1,052,000, before failed runs, experiments and storage. The same arithmetic prices any research cluster."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A forward pass costs about $2N$ FLOPs per token and the backward pass $4N$, so training costs $C \\approx 6ND$; inference costs $2N$ per token.",
+      "GPT-3: $3.15 \\times 10^{23}$ FLOPs; Chinchilla: $5.88 \\times 10^{23}$ at 20 tokens per parameter; the tiny GPT: $2.77 \\times 10^{11}$.",
+      "Attention adds about $2LTd$ per token forward and dominates once $T > 12d$; days are $C$ over the achieved rate."
+    ],
+    "formula": {
+      "name": "Training compute",
+      "tex": "C \\approx 6ND",
+      "note": "$N$ parameters, $D$ training tokens."
+    },
+    "trap": "Budgeting training with $2ND$, the cost of inference."
+  },
+  "quiz": [
+    {
+      "id": "q-ratio",
+      "difficulty": 2,
+      "question": "A model of $10^9$ parameters is trained on $2 \\times 10^{10}$ tokens. What is its training compute, in units of $10^{20}$ FLOPs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.2,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "fwd",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "FLOPs",
+        "scale": 1e+20
+      },
+      "feedback": {
+        "correct": "$6 \\times 10^9 \\times 2 \\times 10^{10} = 1.2 \\times 10^{20}$.",
+        "generic": "Not quite. Use $6ND$.",
+        "byKey": {
+          "fwd": "That is $2ND$."
+        }
+      },
+      "explain": {
+        "text": "$6ND = 1.2 \\times 10^{20}$ FLOPs."
+      }
+    },
+    {
+      "id": "q-serve",
+      "difficulty": 3,
+      "question": "Generating one token with a 70-billion-parameter model costs about how many FLOPs?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two",
+            "text": "$1.4 \\times 10^{11}$, about $2N$",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "$4.2 \\times 10^{11}$, about $6N$",
+            "why": "That includes a backward pass, which generation does not run."
+          },
+          {
+            "id": "n",
+            "text": "$7 \\times 10^{10}$, about $N$",
+            "why": "Each weight costs a multiply and an add."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Inference is forward only: about $2N$.",
+        "generic": "Not quite. Which passes does generation run?"
+      },
+      "explain": {
+        "text": "Generation runs the forward pass only: $2 \\times 7 \\times 10^{10}$ FLOPs per token."
+      }
+    },
+    {
+      "id": "q-util",
+      "difficulty": 2,
+      "question": "A run needs 10 days at full utilisation. How long at 25% utilisation?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "quarter",
+            "value": 2.5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Days"
+      },
+      "feedback": {
+        "correct": "$10 / 0.25 = 40$ days.",
+        "generic": "Not quite. Divide by the utilisation.",
+        "byKey": {
+          "quarter": "You multiplied by 0.25."
+        }
+      },
+      "explain": {
+        "text": "Achieving a quarter of the peak makes the run 4 times longer: 40 days."
+      }
+    }
+  ]
+}
