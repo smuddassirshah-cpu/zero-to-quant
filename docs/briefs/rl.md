@@ -34,6 +34,7 @@ Every level: 4 lessons of 8 to 12 screens, a review of 10 items (other levels re
 ## Shared code files
 
 - `app/content/data/ai/rl_ops_l3.py` (fix pass, session AK): the L3 gridworld (both slip settings), `move`, `reward`, `transition`, `sample_next`, `q_update` with the terminal mask, `greedy_action`, `greedy_policy` with the course's ties rule, `Gridworld(slip)` with `step`, `run_episode(env, Q, start, alpha, gamma, eps, rng, max_steps, learn)` and `q_learning(episodes, alpha, eps, seed, gamma, slip, max_steps)`. Signatures and returns: the last section of `docs/reports/rl-3.md`. Shipped through a code widget's `data` map (a path; `files` takes inline text), as l11 does. Frozen: L4, L5 and `ai-safety` import it and never edit it; a level that needs more writes `rl_ops_l<n>.py`.
+- `app/content/data/ai/rl_ops_l4.py` (v1.0, rl L4): `softmax`, `log_softmax`, `grad_log_softmax`, `sample`, and the execution task and its policy network. Contract as shipped: `docs/reports/rl-4.md`. Frozen; `post-train` L2 imports it for REINFORCE with a baseline.
 
 ## Level 1
 
