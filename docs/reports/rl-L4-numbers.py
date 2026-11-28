@@ -165,10 +165,11 @@ def corr_own(episodes, lr, seed, beta=None):
         for t, a in enumerate(acts):
             G = -(len(acts) - t); s_ = a - p
             x += G * s_; y += (G - b) * s_
-            if beta is not None:
-                b += beta * (G - b)
         gp.append(x); gb.append(y)
         d += 2 * lr * (x if beta is None else y)
+        if beta is not None:   # b is fixed within the episode and learns after the dials step
+            for t in range(len(acts)):
+                b += beta * (-(len(acts) - t) - b)
     return 1 / (1 + math.exp(-d)), (st.pvariance(gb) / st.pvariance(gp) if beta is not None else None)
 cp = [corr_own(1000, 0.001, s)[0] for s in range(10)]
 C(0.55 < st.mean(cp) < 0.62, f'plain REINFORCE on the corridor: mean final p over seeds 0-9 is {st.mean(cp):.4f}, inside 0.53 to 0.64 with a margin')
@@ -210,9 +211,9 @@ rw = [rwb_own([10, 11], 1000, 0.1, s) for s in range(5)]
 C(min(x[0] for x in rw) > 0.97 and max(x[1] for x in rw) < 0.15, f'baselined venues, seeds 0-4: min p_B {min(x[0] for x in rw):.4f}, max ratio {max(x[1] for x in rw):.4f} (test lines 0.95, 0.25)')
 # ---------------- homework: train_corridor ----------------
 hc = [corr_own(1000, 0.001, s, beta=0.1) for s in range(20)]
-C(max(x[1] for x in hc[:5]) < 0.4 and 0.55 < st.mean(x[0] for x in hc[:10]) < 0.62, 'homework thresholds hold with margins (ratio < 0.5, mean p in 0.53 to 0.64)')
+C(max(x[1] for x in hc[:5]) < 0.68 and 0.55 < st.mean(x[0] for x in hc[:10]) < 0.62, 'homework thresholds hold with margins (ratio < 0.7, mean p in 0.53 to 0.64)')
 lo, hi = min(x[1] for x in hc), max(x[1] for x in hc)
-lv.stated('homework', 'items[h4-train-corridor].explain.text', 'between 0.17 and 0.33 on seeds 0 to 19', round(lo, 2) >= 0.17 and round(hi, 2) <= 0.33)
+lv.stated('homework', 'items[h4-train-corridor].explain.text', 'between 0.50 and 0.64 on seeds 0 to 19', round(lo, 2) >= 0.50 and round(hi, 2) <= 0.64)
 print('  homework ratio seeds 0-19', round(lo, 4), round(hi, 4))
 SC, GR = [0.4, -0.6, 0.4, 0.4, -0.6, -0.2, 0.8], [5.0, 15.0, 6.0, 4.0, 14.0, 9.0, 3.0]
 bs = np.linspace(0, 20, 200001)

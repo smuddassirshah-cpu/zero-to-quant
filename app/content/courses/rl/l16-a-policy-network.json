@@ -374,9 +374,14 @@
       "expect": "True",
       "compare": "equal",
       "budget": 10000
+     },
+     {
+      "call": "train_policy(64, 0)[3].data.tolist()",
+      "expect": "[-0.33355627478136485, 0.03646686415318586, 0.29708941062817906]",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 7 hidden tests. The loss and its gradient are compared with a NumPy reference, and with central differences below $10^{-6}$ through a network. Then 960 training episodes on seeds 0, 1 and 2 must each give a policy worth more than £32.50, against the optimum £33 (a few seconds).",
+    "how": "Submit runs 8 hidden tests. The loss and its gradient are compared with a NumPy reference, and with central differences below $10^{-6}$ through a network. Then 960 training episodes on seeds 0, 1 and 2 must each give a policy worth more than £32.50, against the optimum £33 (well under a second). The last test pins the last parameter after two batches, so each batch must start from zeroed gradients and use the reward-to-go.",
     "mutants": [
      {
       "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\ndef policy_loss(logits, actions, advantages):\n    \"\"\"-(1/n) sum_i A_i log pi(a_i | s_i): a Tensor of shape ().\"\"\"\n    n = len(actions)\n    lp = ops.log_softmax(logits)\n    picked = lp[(np.arange(n), np.asarray(actions))]\n    return (picked * np.asarray(advantages, dtype=float)).sum() / n\n\ndef train_policy(episodes, seed, batch=32, lr=0.5):\n    \"\"\"REINFORCE; baseline = the batch's mean reward-to-go\n    at the same step.\"\"\"\n    params = ops.init_policy(seed)\n    rng = np.random.default_rng(seed + 1000)\n    for _ in range(episodes // batch):\n        X, A, G, totals = ops.run_batch(params, batch, rng)\n        adv = (G - G.mean(axis=0)).reshape(-1)\n        for p in params:\n            p.zero_grad()\n        loss = policy_loss(ops.policy_logits(params, X), A, adv)\n        loss.backward()\n        sgd_step(params, lr)\n    return params\n",
@@ -392,6 +397,16 @@
       "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\ndef policy_loss(logits, actions, advantages):\n    \"\"\"-(1/n) sum_i A_i log pi(a_i | s_i): a Tensor of shape ().\"\"\"\n    n = len(actions)\n    lp = ops.log_softmax(logits)\n    picked = lp[(np.arange(n), np.asarray(actions))]\n    return -(picked * np.asarray(advantages, dtype=float)).sum()\n\ndef train_policy(episodes, seed, batch=32, lr=0.5):\n    \"\"\"REINFORCE; baseline = the batch's mean reward-to-go\n    at the same step.\"\"\"\n    params = ops.init_policy(seed)\n    rng = np.random.default_rng(seed + 1000)\n    for _ in range(episodes // batch):\n        X, A, G, totals = ops.run_batch(params, batch, rng)\n        adv = (G - G.mean(axis=0)).reshape(-1)\n        for p in params:\n            p.zero_grad()\n        loss = policy_loss(ops.policy_logits(params, X), A, adv)\n        loss.backward()\n        sgd_step(params, lr)\n    return params\n",
       "test": 1,
       "symptom": "A sum where the mean is asked for."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\ndef policy_loss(logits, actions, advantages):\n    \"\"\"-(1/n) sum_i A_i log pi(a_i | s_i): a Tensor of shape ().\"\"\"\n    n = len(actions)\n    lp = ops.log_softmax(logits)\n    picked = lp[(np.arange(n), np.asarray(actions))]\n    return -(picked * np.asarray(advantages, dtype=float)).sum() / n\n\ndef train_policy(episodes, seed, batch=32, lr=0.5):\n    \"\"\"REINFORCE; baseline = the batch's mean reward-to-go\n    at the same step.\"\"\"\n    params = ops.init_policy(seed)\n    rng = np.random.default_rng(seed + 1000)\n    for _ in range(episodes // batch):\n        X, A, G, totals = ops.run_batch(params, batch, rng)\n        adv = (G - G.mean(axis=0)).reshape(-1)\n        loss = policy_loss(ops.policy_logits(params, X), A, adv)\n        loss.backward()\n        sgd_step(params, lr)\n    return params\n",
+      "test": 8,
+      "symptom": "The gradients are never zeroed: each step adds to the last one, so the update after two batches is wrong."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\ndef policy_loss(logits, actions, advantages):\n    \"\"\"-(1/n) sum_i A_i log pi(a_i | s_i): a Tensor of shape ().\"\"\"\n    n = len(actions)\n    lp = ops.log_softmax(logits)\n    picked = lp[(np.arange(n), np.asarray(actions))]\n    return -(picked * np.asarray(advantages, dtype=float)).sum() / n\n\ndef train_policy(episodes, seed, batch=32, lr=0.5):\n    \"\"\"REINFORCE; baseline = the batch's mean reward-to-go\n    at the same step.\"\"\"\n    params = ops.init_policy(seed)\n    rng = np.random.default_rng(seed + 1000)\n    for _ in range(episodes // batch):\n        X, A, G, totals = ops.run_batch(params, batch, rng)\n        W = G[:, :1] - G[:, :1].mean()\n        adv = np.repeat(W, G.shape[1], axis=1).reshape(-1)\n        for p in params:\n            p.zero_grad()\n        loss = policy_loss(ops.policy_logits(params, X), A, adv)\n        loss.backward()\n        sgd_step(params, lr)\n    return params\n",
+      "test": 8,
+      "symptom": "Every step is weighted by the whole episode's advantage, not its own reward-to-go."
      }
     ],
     "data": {
@@ -574,8 +589,8 @@
   {
    "type": "ladder",
    "difficulty": 3,
-   "title": "A leash on each step",
-   "prose": "Large policy steps can wreck a policy that was fine. One fix adds a penalty on the KL divergence from a reference policy, $\\mathrm{KL}(\\pi \\| \\pi_{\\text{ref}}) = \\sum_a \\pi(a) \\ln \\frac{\\pi(a)}{\\pi_{\\text{ref}}(a)}$, which keeps the new policy close to the old one.",
+   "title": "A leash to a reference",
+   "prose": "Large policy changes can wreck a policy that was fine. One fix adds a penalty on the KL divergence from a fixed reference policy $\\pi_{\\text{ref}}$, such as the policy training started from: $\\mathrm{KL}(\\pi \\| \\pi_{\\text{ref}}) = \\sum_a \\pi(a) \\ln \\frac{\\pi(a)}{\\pi_{\\text{ref}}(a)}$. It keeps the trained policy close to $\\pi_{\\text{ref}}$.",
    "canvas": {
     "kind": "bars",
     "params": {
@@ -657,7 +672,7 @@
     }
    },
    "explain": {
-    "text": "Here it is 0.0201. It is 0 only when the policies agree, and it grows as they part. Subtracting a multiple of it from the objective keeps each update small; training language models from feedback uses exactly this leash."
+    "text": "Here it is 0.0201. Subtracting $\\beta$ times it from the objective stops the policy drifting far from $\\pi_{\\text{ref}}$, however many steps it takes. Training language models from feedback uses this fixed-reference penalty, with $\\pi_{\\text{ref}}$ the model before tuning; TRPO and PPO's clip instead limit each step from the previous policy."
    }
   },
   {
@@ -779,7 +794,7 @@
   "ideas": [
    "A policy network maps a state to logits; minimising $-\\frac1n \\sum A_i \\log \\pi(a_i \\mid s_i)$ with the autograd is a REINFORCE step.",
    "On the toy execution task, 960 seeded episodes took the network from £28.21 (seed 0, untrained) to above £32.88 on seeds 0 to 9. The dynamic-programming optimum is £33 (1, 1, 1, 1, 0).",
-   "One learning rate does not fit every reward scale: normalise the advantages; a KL penalty keeps each step close to a reference policy."
+   "One learning rate does not fit every reward scale: normalise the advantages. A KL penalty keeps the policy close to a fixed reference policy."
   ],
   "formula": {
    "name": "Policy loss",
@@ -879,7 +894,7 @@
     "options": [
      {
       "id": "leash",
-      "text": "It keeps each update close to the reference policy",
+      "text": "It keeps the policy close to the reference policy",
       "correct": true
      },
      {
@@ -904,7 +919,7 @@
     "generic": "Not quite. What does the KL divergence measure?"
    },
    "explain": {
-    "text": "The KL divergence is 0 only when the policies agree, so penalising it limits how far one update can move the policy."
+    "text": "The KL divergence is 0 only when the policies agree, so penalising it limits how far the policy can drift from the reference, however many updates it takes."
    }
   }
  ]

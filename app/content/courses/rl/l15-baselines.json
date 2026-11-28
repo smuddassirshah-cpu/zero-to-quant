@@ -87,7 +87,8 @@
     "generic": "Not quite. Weight the two estimates by their chances.",
     "byKey": {
      "zero": "You looked only at the pull of A. Weight both.",
-     "half": "That is the pull of B alone; it happens half the time."
+     "half": "That is the pull of B alone; it happens half the time.",
+     "sign": "The mean keeps the sign of the true gradient: the estimates 0 and $-0.5$ average to $-0.25$, not $+0.25$."
     }
    },
    "explain": {
@@ -483,7 +484,7 @@
     }
    },
    "explain": {
-    "text": "The advantage is 2.66. Without the baseline every return here is negative, so every move would be pushed down. Learning $V$ by TD, as in level 3, while the policy learns is **actor-critic**: the critic is the TD learner."
+    "text": "The advantage is 2.66. Without the baseline every return here is negative, so every move would be pushed down. When the TD error $r + V(s') - V(s)$ replaces $G_t - V(s)$, the critic stands in for the rest of the return: that is **actor-critic**."
    }
   },
   {
@@ -572,9 +573,14 @@
       "expect": "True",
       "compare": "equal",
       "budget": 3000
+     },
+     {
+      "call": "(lambda r: r[0] + [r[1]])(reinforce_with_baseline([10, 11], 3, 0.1, 0))",
+      "expect": "[0.13065221552923528, 0.8693477844707648, 1.2045235277646982]",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 9 hidden tests. Estimates and variances are compared with `math.isclose`. Over seeds 0 to 4, the better venue must end above 0.95 and the variance ratio below 0.25.",
+    "how": "Submit runs 10 hidden tests. Estimates and variances are compared with `math.isclose`. Over seeds 0 to 4, the better venue must end above 0.95 and the variance ratio below 0.25. The last pins a three-step run with seed 0, so the baseline must be updated after the step, not before.",
     "mutants": [
      {
       "source": "import math\nimport random\nimport statistics\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef score_estimates(pi, rewards, b, k=0):\n    \"\"\"Estimate for dial k after pulling each arm: (r_a - b) * score.\"\"\"\n    return [(r - r) * ((1.0 if a == k else 0.0) - pi[k]) for a, r in enumerate(rewards)]\n\ndef variance_of_estimate(pi, rewards, b, k=0):\n    \"\"\"Exact variance when arm a is pulled with chance pi[a].\"\"\"\n    est = score_estimates(pi, rewards, b, k)\n    mean = sum(p * x for p, x in zip(pi, est))\n    return sum(p * x * x for p, x in zip(pi, est)) - mean * mean\n\ndef reinforce_with_baseline(rewards, steps, lr, seed, beta=0.1):\n    \"\"\"Return (final chances, variance ratio for dial 0).\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    b = 0.0\n    plain, based = [], []\n    for _ in range(steps):\n        pi = softmax(theta)\n        a = pull(pi, rng)\n        r = rewards[a]\n        g = [(1.0 if j == a else 0.0) - pi[j] for j in range(len(theta))]\n        plain.append(r * g[0])\n        based.append((r - b) * g[0])\n        theta = [t + lr * (r - b) * x for t, x in zip(theta, g)]\n        b += beta * (r - b)   # after the step: b never sees this r first\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return softmax(theta), ratio\n",
@@ -590,6 +596,11 @@
       "source": "import math\nimport random\nimport statistics\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef score_estimates(pi, rewards, b, k=0):\n    \"\"\"Estimate for dial k after pulling each arm: (r_a - b) * score.\"\"\"\n    return [(r - b) * (1.0 if a == k else 0.0) for a, r in enumerate(rewards)]\n\ndef variance_of_estimate(pi, rewards, b, k=0):\n    \"\"\"Exact variance when arm a is pulled with chance pi[a].\"\"\"\n    est = score_estimates(pi, rewards, b, k)\n    mean = sum(p * x for p, x in zip(pi, est))\n    return sum(p * x * x for p, x in zip(pi, est)) - mean * mean\n\ndef reinforce_with_baseline(rewards, steps, lr, seed, beta=0.1):\n    \"\"\"Return (final chances, variance ratio for dial 0).\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    b = 0.0\n    plain, based = [], []\n    for _ in range(steps):\n        pi = softmax(theta)\n        a = pull(pi, rng)\n        r = rewards[a]\n        g = [(1.0 if j == a else 0.0) - pi[j] for j in range(len(theta))]\n        plain.append(r * g[0])\n        based.append((r - b) * g[0])\n        theta = [t + lr * (r - b) * x for t, x in zip(theta, g)]\n        b += beta * (r - b)   # after the step: b never sees this r first\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return softmax(theta), ratio\n",
       "test": 1,
       "symptom": "The score forgets to subtract pi."
+     },
+     {
+      "source": "import math\nimport random\nimport statistics\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef score_estimates(pi, rewards, b, k=0):\n    \"\"\"Estimate for dial k after pulling each arm: (r_a - b) * score.\"\"\"\n    return [(r - b) * ((1.0 if a == k else 0.0) - pi[k]) for a, r in enumerate(rewards)]\n\ndef variance_of_estimate(pi, rewards, b, k=0):\n    \"\"\"Exact variance when arm a is pulled with chance pi[a].\"\"\"\n    est = score_estimates(pi, rewards, b, k)\n    mean = sum(p * x for p, x in zip(pi, est))\n    return sum(p * x * x for p, x in zip(pi, est)) - mean * mean\n\ndef reinforce_with_baseline(rewards, steps, lr, seed, beta=0.1):\n    \"\"\"Return (final chances, variance ratio for dial 0).\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    b = 0.0\n    plain, based = [], []\n    for _ in range(steps):\n        pi = softmax(theta)\n        a = pull(pi, rng)\n        r = rewards[a]\n        g = [(1.0 if j == a else 0.0) - pi[j] for j in range(len(theta))]\n        b += beta * (r - b)\n        plain.append(r * g[0])\n        based.append((r - b) * g[0])\n        theta = [t + lr * (r - b) * x for t, x in zip(theta, g)]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return softmax(theta), ratio\n",
+      "test": 10,
+      "symptom": "The baseline is updated before it is used: it has already seen this step's reward, which shrinks every step."
      }
     ],
     "budget": 3000
@@ -809,7 +820,7 @@
   "ideas": [
    "The score has mean 0, so subtracting $b \\nabla \\log \\pi$ for any $b$ fixed before the action leaves the gradient unbiased: a control variate with known mean 0.",
    "On the venues paying £10 and £11 at $\\pi = (0.5, 0.5)$, the variance is 27.5625 with no baseline, 0.0625 with $b = 10$ and 0 with $b = 10.5$.",
-   "The best constant is $b^* = E[s^2 G]/E[s^2]$; a learned $V(s)$ gives the advantage $G - V(s)$, and learning $V$ by TD is actor-critic."
+   "The best constant is $b^* = E[s^2 G]/E[s^2]$; a learned $V(s)$ gives the advantage $G - V(s)$, and using $V$'s TD error in place of $G - V(s)$ is actor-critic."
   ],
   "formula": {
    "name": "Gradient with a baseline",

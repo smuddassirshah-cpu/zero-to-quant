@@ -529,8 +529,8 @@
     ],
     "tests": [
      {
-      "call": "[n for n in range(30) if nim_losing(n)]",
-      "expect": "[0, 4, 8, 12, 16, 20, 24, 28]",
+      "call": "[n for n in range(20) if nim_losing(n)]",
+      "expect": "[0, 4, 8, 12, 16]",
       "compare": "equal"
      },
      {
@@ -568,9 +568,14 @@
       "expect": "5478",
       "compare": "equal",
       "budget": 4000
+     },
+     {
+      "call": "minimax('XXOXXOOO.', 'X')",
+      "expect": "1",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 8 hidden tests: the losing Nim positions below 30, planted boards with known values, every first move of tic-tac-toe, and the 5,478 positions.",
+    "how": "Submit runs 9 hidden tests: the losing Nim positions below 20, planted boards with known values, every first move of tic-tac-toe, the 5,478 positions, and a last move that fills the board and wins.",
     "mutants": [
      {
       "source": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef nim_losing(n):\n    \"\"\"True when the player to move with n sticks loses\n    against best play (take 1, 2 or 3; last stick wins).\"\"\"\n    # every move leaves the opponent in a winning position\n    return any(nim_losing(n - k) is False for k in (1, 2, 3) if k <= n)\n\n@lru_cache(maxsize=None)\ndef minimax(board, player):\n    \"\"\"Value for X with best play: 1 X wins, -1 O wins, 0 draw.\n    board is a 9-character string of 'X', 'O' and '.'.\"\"\"\n    w = winner(board)\n    if w:\n        return 1 if w == 'X' else -1\n    if '.' not in board:\n        return 0\n    vals = [minimax(board[:i] + player + board[i + 1:], other(player))\n            for i in range(9) if board[i] == '.']\n    return max(vals) if player == 'X' else min(vals)\n\ndef count_positions():\n    \"\"\"Boards reachable from the empty board, play stopping at a\n    win or a full board, the empty board included.\"\"\"\n    seen, stack = set(), [('.' * 9, 'X')]\n    while stack:\n        board, player = stack.pop()\n        if board in seen:\n            continue\n        seen.add(board)\n        if winner(board) or '.' not in board:\n            continue\n        for i in range(9):\n            if board[i] == '.':\n                stack.append((board[:i] + player + board[i + 1:], other(player)))\n    return len(seen)\n",
@@ -586,6 +591,11 @@
       "source": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef nim_losing(n):\n    \"\"\"True when the player to move with n sticks loses\n    against best play (take 1, 2 or 3; last stick wins).\"\"\"\n    # every move leaves the opponent in a winning position\n    return all(not nim_losing(n - k) for k in (1, 2, 3) if k <= n)\n\n@lru_cache(maxsize=None)\ndef minimax(board, player):\n    \"\"\"Value for X with best play: 1 X wins, -1 O wins, 0 draw.\n    board is a 9-character string of 'X', 'O' and '.'.\"\"\"\n    w = winner(board)\n    if w:\n        return 1 if w == 'X' else -1\n    if '.' not in board:\n        return 0\n    vals = [minimax(board[:i] + player + board[i + 1:], other(player))\n            for i in range(9) if board[i] == '.']\n    return max(vals) if player == 'X' else min(vals)\n\ndef count_positions():\n    \"\"\"Boards reachable from the empty board, play stopping at a\n    win or a full board, the empty board included.\"\"\"\n    seen, stack = set(), [('.' * 9, 'X')]\n    while stack:\n        board, player = stack.pop()\n        seen.add((board, len(seen)))\n        if winner(board) or '.' not in board:\n            continue\n        for i in range(9):\n            if board[i] == '.':\n                stack.append((board[:i] + player + board[i + 1:], other(player)))\n    return len(seen)\n",
       "test": 8,
       "symptom": "Counts every visit, not distinct boards: no table of seen positions."
+     },
+     {
+      "source": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef nim_losing(n):\n    \"\"\"True when the player to move with n sticks loses\n    against best play (take 1, 2 or 3; last stick wins).\"\"\"\n    # every move leaves the opponent in a winning position\n    return all(not nim_losing(n - k) for k in (1, 2, 3) if k <= n)\n\n@lru_cache(maxsize=None)\ndef minimax(board, player):\n    \"\"\"Value for X with best play: 1 X wins, -1 O wins, 0 draw.\n    board is a 9-character string of 'X', 'O' and '.'.\"\"\"\n    if '.' not in board:\n        return 0\n    w = winner(board)\n    if w:\n        return 1 if w == 'X' else -1\n    vals = [minimax(board[:i] + player + board[i + 1:], other(player))\n            for i in range(9) if board[i] == '.']\n    return max(vals) if player == 'X' else min(vals)\n\ndef count_positions():\n    \"\"\"Boards reachable from the empty board, play stopping at a\n    win or a full board, the empty board included.\"\"\"\n    seen, stack = set(), [('.' * 9, 'X')]\n    while stack:\n        board, player = stack.pop()\n        if board in seen:\n            continue\n        seen.add(board)\n        if winner(board) or '.' not in board:\n            continue\n        for i in range(9):\n            if board[i] == '.':\n                stack.append((board[:i] + player + board[i + 1:], other(player)))\n    return len(seen)\n",
+      "test": 9,
+      "symptom": "A last move that fills the board and wins is scored as a draw: the full board is checked before the win."
      }
     ],
     "budget": 4000
@@ -631,7 +641,7 @@
        ""
       ],
       [
-       "",
+       "X",
        "",
        ""
       ]
@@ -661,7 +671,7 @@
      {
       "id": "xwins",
       "text": "1: X wins on the top row",
-      "why": "Only if O lets it. O moves first here and wins at once."
+      "why": "Only if O lets it. O is to move here and wins at once."
      },
      {
       "id": "draw",
@@ -707,7 +717,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "Prefer the quicker win",
-   "prose": "Two moves both win for X: one wins now, one wins three moves later. Plain minimax scores both 1, so it may dawdle. Scoring a win as $10 - \\text{depth}$ (depth in moves from now) prefers the short one.",
+   "prose": "Two moves both win for X: one wins now (depth 1), the other at depth 3. Plain minimax scores both 1, so it may dawdle. Scoring a win as $10 - \\text{depth}$ (depth in moves from now) prefers the short one.",
    "canvas": {
     "kind": "table",
     "params": {

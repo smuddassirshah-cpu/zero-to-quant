@@ -531,7 +531,8 @@
     "generic": "Not quite. Use $p = 0.95$, not 0.9.",
     "byKey": {
      "low": "That is $J(0.05)$, greedy-left. Greedy-right is $p = 0.95$.",
-     "best": "That is the best stochastic policy. Epsilon-greedy cannot reach it."
+     "best": "That is the best stochastic policy. Epsilon-greedy cannot reach it.",
+     "sign": "The sign is flipped: every step pays $-1$, so $J$ is negative, and a fair coin is already at $-12$."
     }
    },
    "explain": {
@@ -638,9 +639,14 @@
       "call": "best_p([0.1, 0.3, 0.9])",
       "expect": "0.3",
       "compare": "isclose"
+     },
+     {
+      "call": "softmax([0.0, 1000.0])",
+      "expect": "[0.0, 1.0]",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 9 hidden tests. Chances and values are compared with `math.isclose`; `best_p` on a grid of hundredths must land within 0.01 of 0.5858.",
+    "how": "Submit runs 10 hidden tests. Chances and values are compared with `math.isclose`; `best_p` on a grid of hundredths must land within 0.01 of 0.5858.",
     "mutants": [
      {
       "source": "import math\nimport numpy as np\n\ndef softmax(theta):\n    \"\"\"Chances from a list of dials; safe for large dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef corridor_value(p):\n    \"\"\"J(p): solve the Bellman equations of S, B and C.\"\"\"\n    # V = -1 + P V; rows S, B, C; reaching G ends the walk\n    P = np.array([[1 - p, p, 0.0],\n                  [p, 0.0, 1 - p],\n                  [0.0, 1 - p, 0.0]])\n    V = np.linalg.solve(np.eye(3) - P, -np.ones(3))\n    return float(V[0])\n\ndef best_p(grid):\n    \"\"\"The p in grid with the largest corridor_value.\"\"\"\n    return max(grid, key=corridor_value)\n",
@@ -656,6 +662,11 @@
       "source": "import math\nimport numpy as np\n\ndef softmax(theta):\n    \"\"\"Chances from a list of dials; safe for large dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef corridor_value(p):\n    \"\"\"J(p): solve the Bellman equations of S, B and C.\"\"\"\n    # V = -1 + P V; rows S, B, C; reaching G ends the walk\n    P = np.array([[1 - p, p, 0.0],\n                  [p, 0.0, 1 - p],\n                  [0.0, 1 - p, 0.0]])\n    V = np.linalg.solve(np.eye(3) - P, -np.ones(3))\n    return float(V[0])\n\ndef best_p(grid):\n    \"\"\"The p in grid with the largest corridor_value.\"\"\"\n    return min(grid, key=corridor_value)\n",
       "test": 8,
       "symptom": "best_p picks the lowest value."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\ndef softmax(theta):\n    \"\"\"Chances from a list of dials; safe for large dials.\"\"\"\n    m = min(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef corridor_value(p):\n    \"\"\"J(p): solve the Bellman equations of S, B and C.\"\"\"\n    # V = -1 + P V; rows S, B, C; reaching G ends the walk\n    P = np.array([[1 - p, p, 0.0],\n                  [p, 0.0, 1 - p],\n                  [0.0, 1 - p, 0.0]])\n    V = np.linalg.solve(np.eye(3) - P, -np.ones(3))\n    return float(V[0])\n\ndef best_p(grid):\n    \"\"\"The p in grid with the largest corridor_value.\"\"\"\n    return max(grid, key=corridor_value)\n",
+      "test": 10,
+      "symptom": "Subtracting the smallest dial, not the largest, leaves a large dial to overflow in the exponential."
      }
     ]
    },
@@ -767,7 +778,7 @@
     "options": [
      {
       "id": "full",
-      "text": "When the agent can tell every state apart",
+      "text": "When every state is visible and nothing reacts",
       "correct": true
      },
      {
@@ -1008,7 +1019,7 @@
     }
    },
    "explain": {
-    "text": "Any fixed rule costs £600, because the rival reads it. A fair coin halves that to £300. As in the corridor, a stochastic policy wins when a fixed one can be exploited."
+    "text": "Any fixed rule costs £600, because the rival reads it. A fair coin halves that to £300. Here the reason is a rival who reads the rule, not states that look alike; either way a stochastic policy wins when a fixed one can be exploited."
    }
   }
  ],
@@ -1128,7 +1139,7 @@
      {
       "id": "eps",
       "text": "Its $\\varepsilon$ is too small to explore enough",
-      "why": "A larger $\\varepsilon$ only moves the two reachable chances towards 0.5 together."
+      "why": "With $\\varepsilon = 0.83$ it would reach 0.5858, but only because you set $\\varepsilon$ by hand to the answer; learning values never moves it there."
      },
      {
       "id": "disc",

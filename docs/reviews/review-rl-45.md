@@ -2641,3 +2641,43 @@ def mcts_nim(n, iterations, seed, c=math.sqrt(2)):
     takes = [k for k in (1, 2, 3) if k <= n]
     return max(takes, key=lambda k: N.get((n, k), 0))
 ```
+
+## Fix pass
+
+Edits only to the L4 and L5 files in `app/content/courses/rl/` and the committed number script `docs/reports/rl-L4-numbers.py` (its own corridor learner and the stated ratio range follow the homework-4 order fix). Frozen modules untouched. Every corrected number recomputed before writing (own code, or the solution run in plain Python; the review's values matched to 1e-9 unless noted). Checks: validator 0 errors, no `[ai-mutants]` warning on rl; voice scan 0 and 0; `rl-L4-numbers.py` 253 of 253 and `rl-L5-numbers.py` 172 of 172, exit 0; `grade-all --file <f> --code --local-cdn` 0 failures on all 10 edited files, run alone; playthrough green desktop and mobile on l13 to l20, homework-4, homework-5.
+
+Level 4
+- l16 screens[7], quiz[2], summary.ideas[2] (KL leash) | fixed as proposed, with the true distinction stated: a fixed-reference penalty bounds total drift (RLHF, the form `post-train` L2 uses, with $\beta$ and $\pi_{\text{ref}}$ the model before tuning); TRPO and PPO's clip limit each step from the previous policy. Title now "A leash to a reference".
+- l14 screens[6] whole-return and off-by-one reward-to-go | fixed: test 8 `reinforce_corridor(3, 0.01, 0)` = 0.6208427163388979 (recomputed; the mutants give 0.7704728562063115 and 0.6019179723323418); two mutants added (test 8).
+- l16 screens[4] no zeroing and whole-episode advantage | fixed: test 8 `train_policy(64, 0)[3]` = [-0.33355627478136485, 0.03646686415318586, 0.29708941062817906]; the mutants give [-0.6422, 0.0511, 0.5911] and [-0.2715, 0.1599, 0.1116]; both added as mutants (test 8).
+- homework-4 items[0] within-episode baseline | fixed: b fixed through the episode, the dials step, then b learns over the episode's returns. Tests 1 to 3 and the example re-recorded (test 1 = (0.5016899025385794, 3.144907792241889), matching the review's variant). Consequence not in the review: the variance ratio is now 0.4987 to 0.6424 on seeds 0 to 19 (the old 0.17 to 0.33 came from the action-dependent baseline), so test 4's bound moved from 0.5 to 0.7 (it still rejects b = 0, ratio 1), the explain and feedback follow, and the number script's learner was updated. Mean final p over seeds 0 to 9 is 0.5734, inside 0.53 to 0.64. Old mutant 0 reworded; the old in-loop order added as a mutant (test 1).
+- homework-4 items[1] loose variance sentence | fixed with the review's first wording; `variance_with` kept (test 6 still passes).
+- l15 screens[5] explain, summary.ideas[2] (actor-critic) | fixed as proposed.
+- l13 screens[6] trap and screens[9] explain (two reasons) | fixed; the option text is kept short ("When every state is visible and nothing reacts") to stay under the key-length warning.
+- l13 quiz[2] 'eps' why | fixed as proposed.
+- l15 screens[6] update-before-use (note) | fixed: test 10 added with the review's values (recomputed), mutant added (test 10).
+- l13 screens[5] min-shift softmax (note) | fixed: test 10 `softmax([0.0, 1000.0])`, mutant added (test 10).
+- l16 screens[4] how "(a few seconds)" (note) | fixed to "(well under a second)". The optional leave-one-out sentence for screens[8] is declined: it adds a concept to a screen with no room for it; `post-train` can state it.
+- l13, l14 (two), l15 'sign' lines (note) | fixed, one `byKey` line each.
+
+Level 5
+- l17 screens[6] trap board | fixed: `XX.OO.X..`, canvas row 3 `["X","",""]`, 'xwins' why reworded (O is to move).
+- l20 screens[6] AlphaGo 2016 playouts | fixed: AlphaGo still mixed the value network with fast playouts; AlphaZero dropped them. Prose trimmed to 60 words.
+- l20 screens[6] and homework-5 items[5] "this level's policy idea" | fixed to "level 4's idea" and "level 4's policy idea".
+- l19 screens[2] 'noroot' and quiz[0] 'nosq' | fixed to 1.3202 and 1.7303 (recomputed: 0.666667 + 1.414214 x 0.462098; 0.75 + 1.414214 x 0.693147). Wrong distractors only; no correct answer changed.
+- l17 screens[5] test 1 timing | fixed: `range(30)` became `range(20)` (expect [0, 4, 8, 12, 16]); the solution stays unmemoised, so a correct unmemoised answer still passes. Measured with `tools/code-runner.mjs`, alone, three runs: test 1 now costs 57 to 58 ms against its 9,000 ms limit (margin 155x, was 1.4x); the whole 9-test suite takes 163 ms. A wrong answer cannot get through: test 1 checks the pattern up to 19 and `nim_losing(21)` checks beyond it.
+- l19 screens[5] best average, own-n parent count, draws as 0, c ignored | fixed: test 8 `[mcts('X...O....', 'X', 40, s) for s in range(4)]` = [2, 6, 6, 3] (mutants [2, 6, 7, 3], [2, 2, 3, 3], [2, 1, 1, 3]); test 9 the same with `c=0.3` = [2, 3, 6, 6] (c ignored gives [2, 6, 6, 3], which test 8 cannot see). Four mutants added.
+- homework-5 items[1] swapped UCT and best average | fixed: test 6 `[mcts_nim(9, 40, s) for s in range(4)]` = [1, 3, 1, 1] (both mutants [1, 1, 1, 1]); `how` says a short seeded search pins the rule and may still miss. Two mutants added.
+- l20 screens[4] greedy self-play and most-sticks ties | fixed: test 6 `self_play_nim(30, 0.5, 0.2, 0)[(5, 1)]` = 0.779296875 (mutants 0.828125 and 0.6943359375). Screens[7] 'none' why reworded as proposed. Two mutants added.
+- l17 screens[5] and homework-5 items[0] full board before win | fixed: l17 test 9 `minimax('XXOXXOOO.', 'X')` = 1; homework-5 test 10 `_after('OX......X', best_move('OX......X'))` = 0 (mutant 1). One mutant each.
+- l18 screens[4] how (note) | fixed: names the `alpha >= beta` cut.
+- l17 screens[7] depth wording (note) | fixed.
+- l18 screens[8] 'all' and screens[6] 'three' (note) | fixed: "Hedge B has 10 scenarios"; 'three' given a line (the number of branches).
+- l20 screens[1] 0.43 (note) | fixed: "0.43 of 200 games (0.39 in the long run)".
+- homework-5 items[5] and items[3] (note) | fixed: Fan Hui and Lee Sedol and AlphaZero's opponents; "about twice the square root of the work".
+
+Shared code and briefs
+- `rl_ops_l4.py` (no finding) | none needed.
+- `docs/briefs/rl.md` shared-files bullet (note) | deferred: it is the main session's file, not a content file.
+
+Counts: 28 findings (7 errors, 11 warnings, 10 notes): 27 fixed (one in part: the optional l16 leave-one-out sentence is declined), 1 deferred (the brief bullet), none disputed. Graded answers changed: no correct numeric or choice answer; l19 two wrong-value distractors; homework-4 `train_corridor` expected outputs (tests 1 to 3, the example, test 4's bound) and l17 test 1's expected list.
