@@ -14,7 +14,7 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..');
 const argv = process.argv.slice(2), ci = argv.indexOf('--local-cdn');
 const cdnDir = ci >= 0 ? argv[ci + 1] : process.env.ZQ_LOCAL_CDN;
-const indexDir = cdnDir && path.join(cdnDir, 'pyodide-0.27.7', 'package');
+const indexDir = cdnDir && [path.join(cdnDir, 'pyodide-0.27.7', 'package'), path.join(cdnDir, 'pyodide')].find((d) => fs.existsSync(path.join(d, 'pyodide.mjs')));
 if (!indexDir || !fs.existsSync(path.join(indexDir, 'pyodide.mjs'))) { console.log('test-trainer: no local Pyodide (give --local-cdn <pkgs>); skipped'); process.exit(0); }
 
 const g = { console, setTimeout, clearTimeout, document: {}, navigator: {} };
