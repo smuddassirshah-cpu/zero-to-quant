@@ -1,0 +1,1540 @@
+{
+ "id": "l9-learning-from-episodes",
+ "course": "rl",
+ "title": "Learning from whole episodes",
+ "minutes": 14,
+ "objectives": [
+  "Write Monte Carlo policy evaluation from sampled episodes."
+ ],
+ "skills": [
+  "rl-td"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Learning without a model",
+   "prose": "A three-cell corridor A, B, C. Each move costs 1; leaving C to the right also pays 10, and leaving A to the left ends with nothing. Nobody tells you the move chances: you only see three episodes, each starting in B. Take $\\gamma = 1$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Episode",
+      "States visited",
+      "Rewards"
+     ],
+     "rows": [
+      [
+       "1",
+       "B, C",
+       "−1, 9"
+      ],
+      [
+       "2",
+       "B, A, B, C",
+       "−1, −1, −1, 9"
+      ],
+      [
+       "3",
+       "B, A",
+       "−1, −1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Average, over the three episodes, the return that followed the first visit to B. What do you get?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "rewards",
+      "value": -1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "total-steps",
+      "value": 2.6667,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "last",
+      "value": -2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The return from B is the sum of every reward after it, to the end."
+    },
+    {
+     "rung": "point",
+     "text": "Episode 1 gives $-1 + 9 = 8$; episode 2 gives $-1 - 1 - 1 + 9 = 6$.",
+     "highlight": [
+      "r0",
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Episode 3 gives $-2$. Average 8, 6 and −2."
+    }
+   ],
+   "feedback": {
+    "correct": "$(8 + 6 - 2)/3 = 4$.",
+    "generic": "Not quite. Add up all rewards after B in each episode, then average.",
+    "byKey": {
+     "rewards": "You averaged only the first reward after B. The return counts everything to the end of the episode.",
+     "total-steps": "You averaged the episode lengths, not the returns.",
+     "last": "That is episode 3 alone. Average all three."
+    }
+   },
+   "explain": {
+    "text": "The returns after B are 8, 6 and −2, so the estimate is 4. No transition chances were needed, only whole episodes. This is **Monte Carlo** evaluation."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A random walk",
+   "prose": "Five states A to E. Each step goes left or right with chance ½; leaving E pays 1, leaving A pays 0, and every episode starts in C. Slide through 10 episodes. Each state shows the average return after its first visit, or a dash.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "L",
+       "label": "0",
+       "x": 0.04,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.18,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.33999999999999997,
+       "y": 0.5
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.6599999999999999,
+       "y": 0.5
+      },
+      {
+       "id": "E",
+       "label": "E",
+       "x": 0.8200000000000001,
+       "y": 0.5
+      },
+      {
+       "id": "R",
+       "label": "+1",
+       "x": 0.96,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "L",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "A",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "A",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "E",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "R",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      }
+     ],
+     "height": 200,
+     "show": "none"
+    },
+    "state": {
+     "values": {
+      "A": "–",
+      "B": "–",
+      "C": "–",
+      "D": "–",
+      "E": "–"
+     },
+     "caption": "No episodes yet."
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "values": {
+         "A": "–",
+         "B": "–",
+         "C": "–",
+         "D": "–",
+         "E": "–"
+        },
+        "caption": "No episodes yet."
+       },
+       {
+        "values": {
+         "A": "–",
+         "B": "–",
+         "C": "1.00",
+         "D": "1.00",
+         "E": "1.00"
+        },
+        "caption": "Episode 1: CDEDEDE, then +1."
+       },
+       {
+        "values": {
+         "A": "–",
+         "B": "1.00",
+         "C": "1.00",
+         "D": "1.00",
+         "E": "1.00"
+        },
+        "caption": "Episode 2: CBCDE, then +1."
+       },
+       {
+        "values": {
+         "A": "–",
+         "B": "1.00",
+         "C": "1.00",
+         "D": "1.00",
+         "E": "1.00"
+        },
+        "caption": "Episode 3: CDCDEDCBCBCBCDE, then +1."
+       },
+       {
+        "values": {
+         "A": "1.00",
+         "B": "1.00",
+         "C": "1.00",
+         "D": "1.00",
+         "E": "1.00"
+        },
+        "caption": "Episode 4: CBCBABABCDCDEDE, then +1."
+       },
+       {
+        "values": {
+         "A": "0.50",
+         "B": "0.75",
+         "C": "0.80",
+         "D": "1.00",
+         "E": "1.00"
+        },
+        "caption": "Episode 5: CBABA, then 0."
+       },
+       {
+        "values": {
+         "A": "0.33",
+         "B": "0.60",
+         "C": "0.67",
+         "D": "0.80",
+         "E": "0.80"
+        },
+        "caption": "Episode 6: CBABABCBCDEDCBABA, then 0."
+       },
+       {
+        "values": {
+         "A": "0.25",
+         "B": "0.50",
+         "C": "0.57",
+         "D": "0.80",
+         "E": "0.80"
+        },
+        "caption": "Episode 7: CBCBABABA, then 0."
+       },
+       {
+        "values": {
+         "A": "0.40",
+         "B": "0.57",
+         "C": "0.62",
+         "D": "0.83",
+         "E": "0.83"
+        },
+        "caption": "Episode 8: CBABCBCDE, then +1."
+       },
+       {
+        "values": {
+         "A": "0.40",
+         "B": "0.57",
+         "C": "0.67",
+         "D": "0.86",
+         "E": "0.86"
+        },
+        "caption": "Episode 9: CDCDE, then +1."
+       },
+       {
+        "values": {
+         "A": "0.33",
+         "B": "0.50",
+         "C": "0.60",
+         "D": "0.75",
+         "E": "0.86"
+        },
+        "caption": "Episode 10: CBCDCBA, then 0."
+       }
+      ],
+      "frameLabels": [
+       "0 episodes",
+       "1 episode",
+       "2 episodes",
+       "3 episodes",
+       "4 episodes",
+       "5 episodes",
+       "6 episodes",
+       "7 episodes",
+       "8 episodes",
+       "9 episodes",
+       "10 episodes"
+      ],
+      "label": "Episodes",
+      "start": 0
+     }
+    ]
+   },
+   "question": "After 3 episodes, which state still has no estimate?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "A",
+      "text": "A",
+      "correct": true
+     },
+     {
+      "id": "E",
+      "text": "E",
+      "why": "Episode 1 already reached E twice."
+     },
+     {
+      "id": "B",
+      "text": "B",
+      "why": "Episode 2 passed through B."
+     },
+     {
+      "id": "none",
+      "text": "None: every state has one",
+      "why": "Slide to 3 episodes: A shows a dash."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A has not been visited, so there is nothing to average.",
+    "generic": "Slide to 3 episodes and look for the dash."
+   },
+   "explain": {
+    "text": "Monte Carlo can only average returns it has seen. A state never visited has no estimate at all, however many episodes pass elsewhere. A appears first in episode 4.",
+    "canvas": {
+     "values": {
+      "A": "–",
+      "B": "1.00",
+      "C": "1.00",
+      "D": "1.00",
+      "E": "1.00"
+     },
+     "caption": "Episode 3: CDCDEDCBCBCBCDE, then +1."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The values to aim at",
+   "prose": "With $\\gamma = 1$ a state's value is its chance of leaving right. First-step analysis, as in `markov`, gives $v(s) = \\tfrac12 v(\\text{left}) + \\tfrac12 v(\\text{right})$, with 0 past A and 1 past E. The values climb in equal steps.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "L",
+       "label": "0",
+       "x": 0.04,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.18,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.33999999999999997,
+       "y": 0.5
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.6599999999999999,
+       "y": 0.5
+      },
+      {
+       "id": "E",
+       "label": "E",
+       "x": 0.8200000000000001,
+       "y": 0.5
+      },
+      {
+       "id": "R",
+       "label": "+1",
+       "x": 0.96,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "L",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "A",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "A",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "E",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "R",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      }
+     ],
+     "height": 200,
+     "show": "none"
+    },
+    "state": {
+     "values": {
+      "C": "½"
+     }
+    }
+   },
+   "question": "What is the true value of B? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3333,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "quarter",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sixth",
+      "value": 0.1667,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The five values are equally spaced from just above 0 to just below 1."
+    },
+    {
+     "rung": "point",
+     "text": "There are six gaps from 0 to 1: steps of $\\tfrac16$.",
+     "highlight": [
+      "B"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "B is two steps up: $\\tfrac26$."
+    }
+   ],
+   "feedback": {
+    "correct": "$v = \\tfrac16, \\tfrac26, \\tfrac36, \\tfrac46, \\tfrac56$ for A to E, so $v(B) = \\tfrac13$.",
+    "generic": "Not quite. Space six equal steps from 0 to 1.",
+    "byKey": {
+     "half": "That is C, the middle state.",
+     "quarter": "You divided into four steps. With five states there are six gaps.",
+     "sixth": "That is A."
+    }
+   },
+   "explain": {
+    "text": "A linear solution $v_k = k/6$ satisfies every first-step equation and both ends, so $v(B) = \\tfrac26 = 0.3333$. So the true values are $\\tfrac16$ to $\\tfrac56$, and Monte Carlo estimates should approach them.",
+    "canvas": {
+     "values": {
+      "A": "1/6",
+      "B": "2/6",
+      "C": "3/6",
+      "D": "4/6",
+      "E": "5/6"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Returns with a discount",
+   "prose": "Back to the corridor's episode 2, rewards −1, −1, −1, 9, now with $\\gamma = 0.9$. Returns are easiest backwards: $G_t = R_{t+1} + \\gamma G_{t+1}$, starting from 0 after the last reward.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$t$",
+      "$R_{t+1}$",
+      "$G_t$"
+     ],
+     "rows": [
+      [
+       "3",
+       "9",
+       "9"
+      ],
+      [
+       "2",
+       "−1",
+       "7.1"
+      ],
+      [
+       "1",
+       "−1",
+       "5.39"
+      ],
+      [
+       "0",
+       "−1",
+       "?"
+      ]
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       3
+      ]
+     }
+    }
+   },
+   "question": "What is $G_0$? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.851,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "no-disc",
+      "value": 6,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "fwd",
+      "value": 5.39,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "disc-first",
+      "value": 3.466,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$G_0 = R_1 + 0.9\\,G_1$."
+    },
+    {
+     "rung": "point",
+     "text": "$G_1 = 5.39$.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-1 + 0.9 \\times 5.39$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-1 + 0.9 \\times 5.39 = 3.851$.",
+    "generic": "Not quite. Use $G_0 = -1 + 0.9 G_1$.",
+    "byKey": {
+     "no-disc": "You added the rewards without discounting.",
+     "fwd": "That is $G_1$. One more step back.",
+     "disc-first": "You discounted the first reward as well."
+    }
+   },
+   "explain": {
+    "text": "Working back: 9, then $-1 + 0.9 \\times 9 = 7.1$, then 5.39, then 3.851. One backward pass gives every return of an episode at once.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code Monte Carlo",
+   "prose": "Write `returns_from_episode` by the backward pass. Then `mc_evaluate`, averaging the return after each state's **first** visit in each episode. Then `random_walk_episode(rng)`: from C, step right when `rng.random() < 0.5`; the last reward is 1 for leaving E, else every reward is 0.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Returns"
+     ],
+     "rows": [
+      [
+       "`returns_from_episode([-1, 9], 1.0)`",
+       "[8.0, 9.0]"
+      ],
+      [
+       "`mc_evaluate(three corridor episodes)`",
+       "{'B': 4.0, 'C': 9.0, 'A': 3.0}"
+      ],
+      [
+       "`random_walk_episode(random.Random(7))`",
+       "(['C', 'D', 'E', 'D', 'E', 'D', 'E'], [0, 0, 0, 0, 0, 0, 1])"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\ndef returns_from_episode(rewards, gamma):\n    \"\"\"[G_0, G_1, ...]: the return after each step of one episode.\"\"\"\n    ...\n\ndef mc_evaluate(episodes, gamma=1.0):\n    \"\"\"episodes: a list of (states, rewards). Average the return after each state's FIRST visit in an episode.\"\"\"\n    ...\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    ...\n",
+    "solution": "import random\n\ndef returns_from_episode(rewards, gamma):\n    \"\"\"[G_0, G_1, ...]: the return after each step of one episode.\"\"\"\n    G, out = 0.0, []\n    for r in reversed(rewards):\n        G = r + gamma * G\n        out.append(G)\n    return out[::-1]\n\ndef mc_evaluate(episodes, gamma=1.0):\n    \"\"\"episodes: a list of (states, rewards). Average the return after each state's FIRST visit in an episode.\"\"\"\n    total, count = {}, {}\n    for states, rewards in episodes:\n        seen = set()\n        for s, G in zip(states, returns_from_episode(rewards, gamma)):\n            if s not in seen:\n                seen.add(s)\n                total[s] = total.get(s, 0.0) + G\n                count[s] = count.get(s, 0) + 1\n    return {s: total[s] / count[s] for s in total}\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n",
+    "examples": [
+     {
+      "call": "returns_from_episode([-1, 9], 1.0)",
+      "expect": "[8.0, 9.0]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "returns_from_episode([-1, -1, -1, 9], 0.9)",
+      "expect": "[3.851, 5.39, 7.1, 9.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "returns_from_episode([], 0.9)",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "mc_evaluate([(['B', 'C'], [-1, 9]), (['B', 'A', 'B', 'C'], [-1, -1, -1, 9]), (['B', 'A'], [-1, -1])])",
+      "expect": "{'B': 4.0, 'C': 9.0, 'A': 3.0}",
+      "compare": "isclose"
+     },
+     {
+      "call": "mc_evaluate([(['X', 'X', 'Y'], [1, 2, 3])])",
+      "expect": "{'X': 6.0, 'Y': 3.0}",
+      "compare": "isclose"
+     },
+     {
+      "call": "mc_evaluate([(['X', 'Y'], [0, 10])], 0.5)",
+      "expect": "{'X': 5.0, 'Y': 10.0}",
+      "compare": "isclose"
+     },
+     {
+      "call": "random_walk_episode(random.Random(7))",
+      "expect": "(['C', 'D', 'E', 'D', 'E', 'D', 'E'], [0, 0, 0, 0, 0, 0, 1])",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = random.Random(2)\nv = mc_evaluate([random_walk_episode(r) for _ in range(3000)])",
+      "call": "max(abs(v[s] - t) for s, t in zip('ABCDE', [1/6, 2/6, 3/6, 4/6, 5/6])) < 0.04",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Values are compared with math.isclose; the seeded episode must equal ours; 3,000 seeded episodes must land within 0.04 of the true values."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over `reversed(rewards)` for the returns."
+    },
+    {
+     "rung": "point",
+     "text": "In `mc_evaluate`, keep a `seen` set per episode.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Draw one `rng.random()` per step; stop on leaving A or E."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. Over 3,000 seeded episodes the estimates land within 0.009 of the truth.",
+    "generic": "Some tests fail. Check the first-visit rule and the episode's final reward."
+   },
+   "explain": {
+    "text": "Each state's estimate is a plain average of returns, so its error shrinks like $1/\\sqrt n$ with the visits $n$. No model is needed, only complete episodes."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "How precise after 100 episodes?",
+   "prose": "Every episode visits C first, and its return from C is 1 or 0 with chance ½ each. After 100 episodes the estimate of $v(C)$ is the mean of 100 such returns, as in `estimation`.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "L",
+       "label": "0",
+       "x": 0.04,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.18,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.33999999999999997,
+       "y": 0.5
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.6599999999999999,
+       "y": 0.5
+      },
+      {
+       "id": "E",
+       "label": "E",
+       "x": 0.8200000000000001,
+       "y": 0.5
+      },
+      {
+       "id": "R",
+       "label": "+1",
+       "x": 0.96,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "L",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "A",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "A",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "E",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "R",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      }
+     ],
+     "height": 200,
+     "show": "none"
+    },
+    "state": {
+     "values": {
+      "C": "?"
+     }
+    }
+   },
+   "question": "What is the standard error of the 100-episode estimate of $v(C)$? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.05,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.0025,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sd",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "n10",
+      "value": 0.005,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A return of 1 or 0 with chance ½ has variance $\\tfrac14$."
+    },
+    {
+     "rung": "point",
+     "text": "The mean of $n$ has standard error $\\sigma/\\sqrt n$.",
+     "highlight": [
+      "C"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.5/\\sqrt{100}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{0.25/100} = 0.05$.",
+    "generic": "Not quite. Divide the standard deviation 0.5 by $\\sqrt{100}$.",
+    "byKey": {
+     "var": "That is the variance of the mean. Take its square root.",
+     "sd": "That is the spread of one return, not of the mean of 100.",
+     "n10": "You divided by 100, not by its square root."
+    }
+   },
+   "explain": {
+    "text": "One return has standard deviation 0.5, so 100 of them give $0.5/10 = 0.05$. Halving the error takes four times the episodes. Lesson 10 shows a way to do better with the same data."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Values of actions need tries",
+   "prose": "To improve a policy without a model we need values of actions, $q(s, a)$, not only of states. An agent that always starts in the same cell and acts greedily may never try some actions at all.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "+1"
+      ],
+      [
+       "",
+       "",
+       "wall",
+       "",
+       "−1"
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "highlight": [
+      "r4c1"
+     ]
+    }
+   },
+   "question": "What does \"exploring starts\" do about this?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "es",
+      "text": "Starts each episode from a random state and first action, so every pair is tried",
+      "correct": true
+     },
+     {
+      "id": "greedy",
+      "text": "Starts greedily and lets the returns sort it out",
+      "why": "Greedy starts never try the other actions, so their values are never estimated."
+     },
+     {
+      "id": "model",
+      "text": "Uses the transition chances to fill in the untried pairs",
+      "why": "Monte Carlo has no model: that is the point of it."
+     },
+     {
+      "id": "discount",
+      "text": "Raises $\\gamma$ so later rewards reach the start",
+      "why": "The discount does not make untried actions appear in any episode."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "An average needs at least one sample."
+    },
+    {
+     "rung": "point",
+     "text": "Which pairs never appear in a greedy run from one start?",
+     "highlight": [
+      "r4c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Random starts give every state and action a chance to begin an episode."
+    }
+   ],
+   "feedback": {
+    "correct": "Random starting pairs guarantee every $q(s, a)$ gets returns.",
+    "generic": "Not quite. Ask how an untried action could ever get a return."
+   },
+   "explain": {
+    "text": "Monte Carlo needs every state-action pair to start, or appear in, some episodes. Exploring starts are one fix; acting epsilon-greedily, as in level 1, is the usual other."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Rewards or returns?",
+   "prose": "Back to the three corridor episodes, $\\gamma = 1$. A is visited once in episode 2 and once in episode 3.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Episode",
+      "States visited",
+      "Rewards"
+     ],
+     "rows": [
+      [
+       "1",
+       "B, C",
+       "−1, 9"
+      ],
+      [
+       "2",
+       "B, A, B, C",
+       "−1, −1, −1, 9"
+      ],
+      [
+       "3",
+       "B, A",
+       "−1, −1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the Monte Carlo estimate of $v(A)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "rewards",
+      "value": -1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ep2",
+      "value": 7,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "all-eps",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the return after A in each episode that visits A."
+    },
+    {
+     "rung": "point",
+     "text": "Episode 2: after A come −1, −1, 9.",
+     "highlight": [
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Episode 3: after A comes −1. Average 7 and −1."
+    }
+   ],
+   "feedback": {
+    "correct": "Returns after A: 7 and −1, so the estimate is 3.",
+    "generic": "Not quite. Average the full returns after A.",
+    "byKey": {
+     "rewards": "You averaged the next rewards, −1 and −1. The value of A is the whole return that follows, which includes the 9.",
+     "ep2": "That is episode 2 alone.",
+     "all-eps": "You divided by three episodes. A appears in two."
+    }
+   },
+   "explain": {
+    "text": "After A the returns are $-1 - 1 + 9 = 7$ and $-1$, averaging 3. Averaging only the next rewards gives −1, which ignores where A leads. Only episodes that visit A count.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Monte Carlo evaluation",
+   "prose": "For a fixed policy, run episodes, compute each return $G_t$ backwards, and estimate $$v(s) \\approx \\frac{1}{N(s)}\\sum G_{\\text{first visit to } s}.$$ It needs no model and no Bellman equation, only complete episodes. Its estimate is unbiased; its error shrinks like $1/\\sqrt{N(s)}$.",
+   "question": "When can Monte Carlo not be used as it stands?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cont",
+      "text": "When episodes never end",
+      "correct": true
+     },
+     {
+      "id": "slip",
+      "text": "When moves are random",
+      "why": "Random moves are fine: they are what the averages average over."
+     },
+     {
+      "id": "model",
+      "text": "When the transition chances are unknown",
+      "why": "That is exactly when Monte Carlo is useful."
+     },
+     {
+      "id": "disc",
+      "text": "When $\\gamma = 1$",
+      "why": "The random walk used $\\gamma = 1$; episodes ended, so returns were finite."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A return is only known once the episode ends.",
+    "generic": "Ask when $G_t$ can be computed."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Replaying history",
+   "prose": "A desk wants the value of holding one lot after a sharp down day. It replays four historical years and, in each, takes the P&L from the **first** such day to the year end: £3.2k, −£1.4k, £0.6k and £2.0k. Later qualifying days in the same year are ignored.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "Year 1",
+      "Year 2",
+      "Year 3",
+      "Year 4"
+     ],
+     "yLabel": "P&L from first visit (£k)",
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "Year 1": 3.2,
+      "Year 2": -1.4,
+      "Year 3": 0.6,
+      "Year 4": 2.0
+     }
+    }
+   },
+   "question": "What is the first-visit Monte Carlo estimate, in thousands of pounds? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.1,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 4.4,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "pos",
+      "value": 1.95,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "three",
+      "value": 1.4667,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Average the four first-visit returns."
+    },
+    {
+     "rung": "point",
+     "text": "Their sum is $3.2 - 1.4 + 0.6 + 2.0$.",
+     "highlight": [
+      "xYear 1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$4.4/4$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(3.2 - 1.4 + 0.6 + 2.0)/4 = 1.10$ thousand.",
+    "generic": "Not quite. Average the four numbers, keeping the loss.",
+    "byKey": {
+     "sum": "That is the total. Divide by the four years.",
+     "pos": "You dropped the losing year. It is a return like the others.",
+     "three": "You divided by three; there are four years."
+    }
+   },
+   "explain": {
+    "text": "The estimate is £1.10k with only four returns behind it, so its standard error is large. History gives few episodes, and they overlap in market regime: treat such estimates with care."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Monte Carlo evaluation averages the returns that followed each state's first visit. It needs episodes, not transition chances.",
+   "Returns come out of one backward pass, $G_t = R_{t+1} + \\gamma G_{t+1}$. The estimate is unbiased, with error falling like $1/\\sqrt n$ in the visits.",
+   "A state never visited has no estimate; exploring starts or random actions make sure every state and action gets returns."
+  ],
+  "formula": {
+   "name": "First-visit Monte Carlo",
+   "tex": "V(s) = \\frac{1}{N(s)} \\sum_{\\text{episodes}} G_{t_s}",
+   "note": "$t_s$ is the first visit to $s$ in the episode; it needs episodes that end."
+  },
+  "trap": "Averaging the next rewards instead of the full returns: a state is worth where it leads, not what it pays at once."
+ },
+ "quiz": [
+  {
+   "id": "q-first-visit",
+   "difficulty": 2,
+   "prose": "One episode visits X, Y, X, Z with rewards 1, 2, 3, 4 after each step, $\\gamma = 1$.",
+   "question": "What is the first-visit return of X?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "every",
+      "value": 8.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "second",
+      "value": 7,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 + 2 + 3 + 4 = 10$.",
+    "generic": "Not quite. Sum every reward after the first visit.",
+    "byKey": {
+     "every": "You averaged both visits, 10 and 7: that is every-visit.",
+     "second": "That is the return after the second visit."
+    }
+   },
+   "explain": {
+    "text": "From X's first visit the rewards are 1, 2, 3 and 4, so the return is 10."
+   }
+  },
+  {
+   "id": "q-unvisited",
+   "difficulty": 2,
+   "prose": "After 50 episodes from the same start, state Q has never been visited.",
+   "question": "What is its Monte Carlo estimate?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "There is none: no return has been seen",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "Zero",
+      "why": "Zero would be a guess, not an average of returns."
+     },
+     {
+      "id": "mean",
+      "text": "The average of the other states",
+      "why": "Monte Carlo averages returns from that state only."
+     },
+     {
+      "id": "true",
+      "text": "Its true value",
+      "why": "Nothing about Q has been observed."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No visits, no estimate.",
+    "generic": "Ask what Monte Carlo averages."
+   },
+   "explain": {
+    "text": "Monte Carlo needs returns from a state. Exploring starts or random actions make sure every state is reached."
+   }
+  },
+  {
+   "id": "q-mc-se",
+   "difficulty": 3,
+   "prose": "A state's returns have standard deviation 2. You want a standard error of 0.1.",
+   "question": "How many first visits do you need?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 400,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "twenty",
+      "value": 20,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two-hundred",
+      "value": 200,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2/\\sqrt n = 0.1$ gives $n = 400$.",
+    "generic": "Not quite. Solve $2/\\sqrt n = 0.1$.",
+    "byKey": {
+     "twenty": "That is $\\sqrt n$. Square it.",
+     "two-hundred": "You doubled 100 instead of squaring 20."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt n = 20$, so $n = 400$ visits."
+   }
+  }
+ ]
+}

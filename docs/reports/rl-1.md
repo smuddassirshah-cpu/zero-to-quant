@@ -18,7 +18,7 @@ Traps: l1 judging an agent by its final estimates; l2 "more exploring is always 
 
 ## Gates
 
-1. Validator: `node tools/validate.mjs` 0 errors overall; my files carry only advisory warnings (eight `O2-long-sentence` of 20 to 24 words and three "ladder usually reuses the previous canvas kind" where a ladder moves between a chart and a code or score table).
+1. Validator: `node tools/validate.mjs` 0 errors overall; my files carry only advisory warnings (`O2-long-sentence` of 20 words or more, and "ladder usually reuses the previous canvas kind" where a ladder moves between a chart and a code or score table).
 2. Voice: `VOICE_BASE=app/content/courses/rl python3 docs/reviews/voice-scan.py 35`: over 35 words 0, lesson ids in code spans 0.
 3. Numbers: `docs/reports/rl-L1-numbers.py` with the venv: 359 of 359 checks, exit 0.
 4. Playthrough with `--local-cdn .../scratchpad/aitiming/pkgs`, desktop and `--mobile`: all four lessons (15, 14, 14, 14 checks; quizzes full), `review-1` 10 of 10, `homework-1` 7 of 7 with the performance starter failing, `problems-1` 3 problems, 12 parts: all passed. Files changed after a green run were replayed in both modes. Screenshots in the scratchpad `rl-1/shots` and `shotsm`; read, no layout faults.

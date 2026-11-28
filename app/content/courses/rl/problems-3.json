@@ -1,0 +1,412 @@
+{
+ "id": "problems-3",
+ "course": "rl",
+ "level": 3,
+ "title": "Learning from samples in steps",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-news-travels",
+   "difficulty": 5,
+   "skills": [
+    "rl-td"
+   ],
+   "prose": "A Q-learning agent on the deterministic grid has every $Q$ at 0, with $\\alpha = 0.5$ and $\\gamma = 0.9$. Each episode it walks r3c4, U to r2c4, U to r1c4, R into the +1.",
+   "parts": [
+    {
+     "question": "After the first episode, what is $Q(\\text{r1c4}, R)$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.48,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "full",
+        "value": 0.96,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "one",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.5 \\times 0.96 = 0.48$.",
+      "generic": "The step ends the episode: target 0.96, move half way.",
+      "byKey": {
+       "full": "Move half way.",
+       "one": "The reward is $1 - 0.04$."
+      }
+     },
+     "explain": {
+      "text": "The last step's target is 0.96, so $Q$ becomes 0.48."
+     }
+    },
+    {
+     "question": "After the first episode, what is $Q(\\text{r2c4}, U)$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.02,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "sign",
+        "value": 0.02,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "late",
+        "value": 0.196,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "When it was updated, r1c4's values were all 0: $0.5 \\times (-0.04) = -0.02$.",
+      "generic": "Use the values as they were at that step.",
+      "byKey": {
+       "sign": "The step cost makes it negative.",
+       "late": "You used r1c4's updated 0.48, which came later in the episode."
+      }
+     },
+     "explain": {
+      "text": "Updates happen in order: at that moment the best value at r1c4 was 0, so the target was −0.04 and $Q = 0.5 \\times (-0.04) = -0.02$."
+     }
+    },
+    {
+     "question": "Using $Q(\\text{r1c4}, R) = 0.48$ and $Q(\\text{r2c4}, U) = -0.02$ from parts 1 and 2, what is $Q(\\text{r2c4}, U)$ after the second episode? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.186,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "no-old",
+        "value": 0.196,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "target",
+        "value": 0.392,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "no-step",
+        "value": 0.206,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Target $-0.04 + 0.9 \\times 0.48 = 0.392$; $-0.02 + 0.5(0.392 + 0.02) = 0.186$.",
+      "generic": "Not quite. Start from −0.02 and move half way to the target.",
+      "byKey": {
+       "no-old": "You started from 0, not −0.02.",
+       "target": "That is the target.",
+       "no-step": "You left out the step cost in the target."
+      }
+     },
+     "explain": {
+      "text": "The goal's news reaches r2c4 on the second episode: $Q = 0.186$."
+     }
+    },
+    {
+     "question": "After two episodes, why is $Q(\\text{r3c4}, U)$ still negative?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "one-step",
+        "text": "News moves back one step per episode",
+        "correct": true
+       },
+       {
+        "id": "bug",
+        "text": "The update rule must have a bug",
+        "why": "It is working: the news has not reached r3c4 yet."
+       },
+       {
+        "id": "pit",
+        "text": "Row 3, column 4 is too near the pit",
+        "why": "The pit plays no part in this walk."
+       },
+       {
+        "id": "alpha",
+        "text": "The step size 0.5 is too small",
+        "why": "Any step gives the same one-step-per-episode spread."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "One step of propagation per episode: r3c4 hears on the third.",
+      "generic": "Count how far the news travels each episode."
+     },
+     "explain": {
+      "text": "One-step TD targets pass value back one cell per visit; Monte Carlo would pass the whole return at once, with more noise."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-two-targets",
+   "difficulty": 4,
+   "skills": [
+    "rl-td"
+   ],
+   "prose": "An exploring agent at a trading-limit state takes action \"hold\" with $Q = 2.0$, receives 1.0, and lands where its next action (chosen at random) has $Q = 0.5$ while the best has $Q = 3.0$. $\\gamma = 0.9$, $\\alpha = 0.2$.",
+   "parts": [
+    {
+     "question": "What is SARSA's target? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.45,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "q",
+        "value": 3.7,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "no-disc",
+        "value": 1.5,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1.0 + 0.9 \\times 0.5 = 1.45$.",
+      "generic": "Use the action actually taken.",
+      "byKey": {
+       "q": "That is Q-learning's target.",
+       "no-disc": "Discount the next value."
+      }
+     },
+     "explain": {
+      "text": "SARSA uses $Q(s', a') = 0.5$: $1 + 0.45 = 1.45$."
+     }
+    },
+    {
+     "question": "What is Q-learning's target? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.7,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "sarsa",
+        "value": 1.45,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "no-disc",
+        "value": 4.0,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1.0 + 0.9 \\times 3.0 = 3.7$.",
+      "generic": "Use the best next value.",
+      "byKey": {
+       "sarsa": "That is SARSA's target.",
+       "no-disc": "Discount the next value."
+      }
+     },
+     "explain": {
+      "text": "Q-learning uses the max, 3.0: $1 + 2.7 = 3.7$."
+     }
+    },
+    {
+     "question": "Using the targets 1.45 and 3.7 from parts 1 and 2, by how much do the two updated values of $Q$ differ? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.45,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "targets",
+        "value": 2.25,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "half",
+        "value": 0.225,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.2 \\times (3.7 - 1.45) = 0.45$.",
+      "generic": "Each moves a fifth of the way from 2.0.",
+      "byKey": {
+       "targets": "That is the gap between the targets; scale by $\\alpha$.",
+       "half": "The step is 0.2, not 0.1."
+      }
+     },
+     "explain": {
+      "text": "SARSA gives $2.0 + 0.2(1.45 - 2.0) = 1.89$; Q-learning $2.0 + 0.2(3.7 - 2.0) = 2.34$. They differ by 0.45: the price of the random next action."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-mc-or-td",
+   "difficulty": 3,
+   "skills": [
+    "rl-td"
+   ],
+   "prose": "A desk values the state \"position open, spread wide\" from three replayed days with $\\gamma = 1$. The P&L from that state to the close was £0.6k, £0.0k and £0.9k. Its current estimate is £0.4k.",
+   "parts": [
+    {
+     "question": "What is the Monte Carlo estimate, in thousands of pounds? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "sum",
+        "value": 1.5,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "no-zero",
+        "value": 0.75,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$(0.6 + 0 + 0.9)/3 = 0.5$.",
+      "generic": "Average all three days.",
+      "byKey": {
+       "sum": "Divide by three.",
+       "no-zero": "The flat day counts too."
+      }
+     },
+     "explain": {
+      "text": "The mean of 0.6, 0 and 0.9 is 0.5."
+     }
+    },
+    {
+     "question": "On a fourth day the state moves on to \"position open, spread tight\", estimated at £0.7k, with no P&L on the way. What is the TD(0) update of the £0.4k estimate with $\\alpha = 0.1$, in thousands? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.43,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "full",
+        "value": 0.7,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "delta",
+        "value": 0.3,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.4 + 0.1(0 + 0.7 - 0.4) = 0.43$.",
+      "generic": "Move a tenth of the TD error.",
+      "byKey": {
+       "full": "Move a tenth of the way.",
+       "delta": "That is the TD error."
+      }
+     },
+     "explain": {
+      "text": "The TD error is 0.3, and a tenth of it lifts the estimate to 0.43, mid-day, without waiting for the close."
+     }
+    },
+    {
+     "question": "Using the Monte Carlo estimate 0.5 from part 1, which estimate would change if the next day's close turned out badly?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "mc",
+        "text": "Monte Carlo's, at the close",
+        "correct": true
+       },
+       {
+        "id": "td",
+        "text": "TD's, straight away",
+        "why": "TD already updated from the next state; the close feeds it only through later steps."
+       },
+       {
+        "id": "neither",
+        "text": "Neither of them",
+        "why": "Monte Carlo averages in each completed day."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Monte Carlo waits for the close and averages it in.",
+      "generic": "Which method uses the final P&L?"
+     },
+     "explain": {
+      "text": "Monte Carlo uses whole-day P&L; TD uses each next state's estimate. A bad close moves MC's average; TD feels it only as the later states' estimates fall."
+     }
+    }
+   ]
+  }
+ ]
+}
