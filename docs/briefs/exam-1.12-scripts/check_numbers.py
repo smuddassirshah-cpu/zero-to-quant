@@ -371,22 +371,23 @@ class V:
 
 
 for flag in (False, True):
-    xv = V(2.0)
-    ev = xv * 3
+    xv = V(1.5)
+    ev = xv * 4
     yv = ev * ev
     yv.backward(seen_set=flag)
     if flag:
         true_g = xv.grad
     else:
         bug_g, bug_e = xv.grad, ev.grad
-given(iid, 'prose', 2.0, 3)
+given(iid, 'prose', 1.5, 4)
+ex._rec(bug_g == 96.0 and true_g == 48.0 and bug_e == 12.0, 'e-no-seen-set: 96 with the tuple _prev, 48 with a seen set, e.grad 12', str((bug_g, true_g, bug_e)))
 key(iid, bug_g)
 wrong(iid, 'true', true_g)
 wrong(iid, 'e-grad', bug_e)
 say(iid, 'feedback.correct', bug_e)
-say(iid, 'feedback.correct', bug_e * 3)
+say(iid, 'feedback.correct', bug_e * 4)
 say(iid, 'feedback.correct', bug_g)
-say(iid, 'explain.text', bug_e * 3)
+say(iid, 'explain.text', bug_e * 4)
 say(iid, 'explain.text', bug_g)
 say(iid, 'explain.text', true_g)
 
@@ -454,7 +455,7 @@ given(iid, 'prose', 50000, 3203, 22807)
 nats = F(50000, 22807)
 key(iid, float(nats) / LN2, nd=6)
 wrong(iid, 'nats', nats)
-wrong(iid, 'per-name', F(50000, 3203))
+wrong(iid, 'per-name', float(F(50000, 3203)) / LN2)
 wrong(iid, 'no-ends', float(F(50000, 22807 - 3203)) / LN2)
 wrong(iid, 'times-ln2', float(nats) * LN2)
 for path in ('feedback.correct', 'explain.text'):
@@ -704,11 +705,13 @@ for w in weeks:
 Nw = np.zeros((3, 3), dtype=int)
 np.add.at(Nw, (np.array(a_), np.array(b_)), 1)
 letters = sum(len(w) for w in weeks)
-key(iid, int(Nw.sum()), part=0)
-wrong(iid, 'letters', letters, part=0)
-wrong(iid, 'two-marks', letters + 2 * len(weeks), part=0)
-for v in (letters, len(weeks), int(Nw.sum())):
+key(iid, int(Nw[1].sum()), part=0)
+wrong(iid, 'no-end', int(Nw[1, 1:].sum()), part=0)
+wrong(iid, 'whole-table', int(Nw.sum()), part=0)
+ex._rec(int(Nw.sum()) == letters + len(weeks) == 15 and [int(Nw[1, 1]), int(Nw[1, 2]), int(Nw[1, 0])] == [2, 3, 1], 'e-bigram-of-weeks: 15 pairs in all; row u holds uu 2, ud 3, u. 1', str(Nw.tolist()))
+for v in (2, 3, 1, int(Nw[1].sum())):
     say(iid, 'feedback.correct', v, part=0)
+say(iid, 'feedback.byKey.whole-table', int(Nw.sum()), part=0)
 ex._rec(int(Nw[1].sum()) == 6 and int(Nw[1, 0]) == 1, 'e-bigram-of-weeks: row u holds 6 pairs, 1 to the end', str(Nw.tolist()))
 sm = F(int(Nw[1, 0]) + 1, int(Nw[1].sum()) + 3)
 key(iid, sm, part=1, nd=6)
@@ -739,7 +742,7 @@ wrong(iid, 'perplexity', math.exp(nll), part=3)
 say(iid, 'feedback.correct', round(nll, 4), part=3)
 say(iid, 'feedback.correct', round(nll / LN2, 4), part=3)
 say(iid, 'feedback.byKey.perplexity', round(nll, 4), part=3)
-for v in (int(Nw.sum()), 6, 1, 9, round(float(sm), 4), round(nll, 4), round(nll / LN2, 4)):
+for v in (6, 1, 9, round(float(sm), 4), round(nll, 4), round(nll / LN2, 4)):
     say(iid, 'explain.text', v)
 ex.literal('\\tfrac29', why='the smoothed chance of the end after u, checked exactly as Fraction(2, 9) in the key above')
 
@@ -977,7 +980,8 @@ ex._rec(math.isclose(worst / scale, float(eval(wg['tests'][6]['expect'])), rel_t
 say(iid, 'widget.how', '10^{-7}')
 say(iid, 'widget.how', 1000)
 say(iid, 'widget.how', '10^{-6}')
-say(iid, 'widget.how', 0.001)
+say(iid, 'widget.how', 0.5)
+say(iid, 'widget.how', 0.01)
 say(iid, 'feedback.correct', '10^{-6}')
 say(iid, 'feedback.byKey.test-5', 1000)
 say(iid, 'explain.text', '10^{-6}')

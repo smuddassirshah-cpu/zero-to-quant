@@ -40,3 +40,15 @@ items[29] e-beat-the-bigram (tests 1 to 6): bigram, MLP or both scored on `train
 - app/content/exams/topic-1.12.json | items[28] e-backward-by-hand feedback.byKey | note | Test 4 (`b2`, `b1` and `W1` on a second case) is the first failure for every bias slip other than summing along the wrong axis (a mean over rows, or one row kept, for either bias), and it has no `byKey` line, so those learners get only "Read the first failing test". | Add `test-4`: "Each bias was broadcast down the rows, so its gradient is the sum down them, `.sum(axis=0)`: not a mean, and not one row." and a `b2`-as-mean mutant naming test 4.
 - app/content/exams/topic-1.12.json | items[25] e-bigram-of-weeks part 1 | note | It repeats items[1]'s one computation ($n + 1$ pairs per wrapped word) with smaller data, and part 2 then needs a count the part does not ask for (row u's 6). | Ask instead "How many pairs does row u hold?" (key 6, wrongs 5 for no end mark and 11 letters), which part 2 uses.
 - app/content/exams/topic-1.12.json | items[29] e-beat-the-bigram widget.how | note | "Names and weights: Andrej Karpathy's makemore names list (MIT licence)" credits the weights to the names list; `makemore-mlp.json` says the course trained them. | "Names: Andrej Karpathy's makemore names list (MIT licence); the weights were trained on it for this course."
+
+## Fix pass
+
+- items[28] tests (warning): fixed. Recomputed 0.5000000000203726, 0.033368049057131616 and 0.07824320571406192 on case 11; added them as tests 12, 13 and a rewritten test 8 (h=0.5); `how` now says 13 tests; mutants added for the central-only scale (test 12), `b1` skipped (13) and a fixed `h` (8). Declined one detail: the |G|-only scale mutant now first fails test 8, not 11 (the h=0.5 case separates G from the differences), so test 11 has no mutant and its `byKey` line moved into test-8's.
+- items[14] prose (warning): fixed. The stem now says his `Value` is the course's, so `_prev` is a tuple and `e * e` lists `e` twice.
+- items[14] new data (note): fixed. `x = Value(1.5)`, `e = x * 4`: answer 96, true 48, `e.grad` 12 (key changed 72 to 96); script recomputes all three.
+- items[22], items[26] twins (note): declined as optional; the review accepts both as they stand, and the new-data moves in items[26] are already distinct.
+- items[18] per-name (note): fixed. Value 22.521 (one slip: shared over names, turned into bits; 50000/3203/ln 2 = 22.52100), feedback names it.
+- items[16] explain (note): fixed. Ends at "far above the course's $10^{-6}$ bar."
+- items[28] test-4 feedback (note): fixed. Added `test-4` line and a `b2`-as-mean mutant naming test 4.
+- items[25] part 1 (note): fixed. Asks for row u's pair count (key 6, wrongs 5 for no end mark and 15 for the whole table, chosen over the review's 11 letters as the likelier slip); explain reworded, script updated.
+- items[29] how (note): fixed. Names credited, weights said to be trained for the course.
