@@ -1,0 +1,454 @@
+{
+ "id": "homework-1",
+ "course": "nn-train",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h1-optimizer",
+   "difficulty": 5,
+   "skills": [
+    "nt-optim"
+   ],
+   "title": "Performance task: three optimisers behind one interface",
+   "performance": "code",
+   "prose": "From a blank start, write `make_optimizer(name, **settings)` for `\"sgd\"`, `\"momentum\"` and `\"adam\"`. It returns an object whose `step(params, grads)` takes lists of arrays and returns the new parameters as new arrays, keeping its own state between calls. Settings: `lr` always; `beta` (default 0.9) for momentum; `b1`, `b2`, `eps` (defaults 0.9, 0.999, $10^{-8}$) for Adam. An unknown name raises `ValueError`.",
+   "question": "Write `make_optimizer`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef make_optimizer(name, **settings):\n    ...\n",
+    "solution": "import numpy as np\n\n\nclass _Opt:\n    def __init__(self, name, lr, beta=0.9, b1=0.9, b2=0.999, eps=1e-8):\n        if name not in (\"sgd\", \"momentum\", \"adam\"):\n            raise ValueError(f\"unknown optimiser {name!r}\")\n        self.name, self.lr, self.beta = name, lr, beta\n        self.b1, self.b2, self.eps = b1, b2, eps\n        self.t, self.m, self.v = 0, None, None\n\n    def step(self, params, grads):\n        params = [np.asarray(p, dtype=float) for p in params]\n        grads = [np.asarray(g, dtype=float) for g in grads]\n        if self.m is None:\n            self.m = [np.zeros_like(p) for p in params]\n            self.v = [np.zeros_like(p) for p in params]\n        if self.name == \"sgd\":\n            return [p - self.lr * g for p, g in zip(params, grads)]\n        if self.name == \"momentum\":\n            self.m = [self.beta * m - self.lr * g for m, g in zip(self.m, grads)]\n            return [p + m for p, m in zip(params, self.m)]\n        self.t += 1\n        self.m = [self.b1 * m + (1 - self.b1) * g for m, g in zip(self.m, grads)]\n        self.v = [self.b2 * v + (1 - self.b2) * g * g for v, g in zip(self.v, grads)]\n        c1, c2 = 1 - self.b1 ** self.t, 1 - self.b2 ** self.t\n        return [p - self.lr * (m / c1) / (np.sqrt(v / c2) + self.eps) for p, m, v in zip(params, self.m, self.v)]\n\n\ndef make_optimizer(name, **settings):\n    return _Opt(name, **settings)\n",
+    "prelude": "import numpy as np\nHb = np.array([1.0, 10.0])\n",
+    "examples": [
+     {
+      "setup": "opt = make_optimizer('sgd', lr=0.1)\nx = [np.array([10.0, 1.0])]\nfor _ in range(1):\n    x = opt.step(x, [1.0 * Hb * x[0]])",
+      "call": "x[0].tolist()",
+      "compare": "isclose",
+      "expect": "[9.0, 0.0]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "opt = make_optimizer('sgd', lr=0.1)\nx = [np.array([10.0, 1.0])]\nfor _ in range(3):\n    x = opt.step(x, [1.0 * Hb * x[0]])",
+      "call": "x[0].tolist()",
+      "tol": {
+       "rel": 1e-12,
+       "abs": 1e-12
+      },
+      "compare": "isclose",
+      "expect": "[7.289999999999999, 0.0]"
+     },
+     {
+      "setup": "opt = make_optimizer('momentum', lr=0.1, beta=0.5)\nx = [np.array([10.0, 1.0])]\nfor _ in range(2):\n    x = opt.step(x, [1.0 * Hb * x[0]])",
+      "call": "x[0].tolist()",
+      "tol": {
+       "rel": 1e-12,
+       "abs": 1e-12
+      },
+      "compare": "isclose",
+      "expect": "[7.6, -0.5]"
+     },
+     {
+      "setup": "opt = make_optimizer('momentum', lr=0.05)\nx = [np.array([10.0, 1.0])]\nfor _ in range(6):\n    x = opt.step(x, [1.0 * Hb * x[0]])",
+      "call": "x[0].tolist()",
+      "tol": {
+       "rel": 1e-12,
+       "abs": 1e-12
+      },
+      "compare": "isclose",
+      "expect": "[2.4857410937499984, 0.02727999999999997]"
+     },
+     {
+      "setup": "opt = make_optimizer('adam', lr=0.1)\nx = [np.array([10.0, 1.0])]\nfor _ in range(5):\n    x = opt.step(x, [1.0 * Hb * x[0]])",
+      "call": "x[0].tolist()",
+      "tol": {
+       "rel": 1e-09,
+       "abs": 1e-12
+      },
+      "compare": "isclose",
+      "expect": "[9.500461600866302, 0.5079636571340391]"
+     },
+     {
+      "setup": "opt = make_optimizer('adam', lr=0.1)\nx = [np.array([10.0, 1.0])]\nfor _ in range(5):\n    x = opt.step(x, [1000.0 * Hb * x[0]])\nx_big = x[0]\nopt = make_optimizer('adam', lr=0.1)\nx = [np.array([10.0, 1.0])]\nfor _ in range(5):\n    x = opt.step(x, [1.0 * Hb * x[0]])",
+      "call": "float(np.max(np.abs(x_big - x[0])))",
+      "expect": "0.0",
+      "tol": {
+       "rel": 0,
+       "abs": 1e-06
+      },
+      "compare": "isclose"
+     },
+     {
+      "setup": "opt = make_optimizer('adam', lr=0.1)\nx = [np.array([1.0, 2.0])]\nfor _ in range(3):\n    x = opt.step(x, [np.array([0.5, 0.0])])",
+      "call": "x[0].tolist()",
+      "tol": {
+       "rel": 1e-09,
+       "abs": 1e-12
+      },
+      "compare": "isclose",
+      "expect": "[0.7000000060000006, 2.0]"
+     },
+     {
+      "setup": "a = make_optimizer('momentum', lr=0.1, beta=0.5)\nb = make_optimizer('momentum', lr=0.1, beta=0.5)\nxa = a.step([np.array([1.0])], [np.array([1.0])])\nxa = a.step(xa, [np.array([1.0])])\nxb = b.step([np.array([1.0])], [np.array([1.0])])",
+      "call": "xb[0].tolist()",
+      "tol": {
+       "rel": 1e-12,
+       "abs": 1e-12
+      },
+      "compare": "isclose",
+      "expect": "[0.9]"
+     },
+     {
+      "call": "make_optimizer('rmsprop', lr=0.1)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "setup": "p = [np.array([1.0, 1.0])]\nopt = make_optimizer('sgd', lr=0.1)\n_ = opt.step(p, [np.array([1.0, -1.0])])",
+      "call": "p[0].tolist()",
+      "compare": "equal",
+      "expect": "[1.0, 1.0]"
+     },
+     {
+      "setup": "opt = make_optimizer('adam', lr=0.01, b1=0.8, b2=0.99)\nx = [np.ones((2, 2)), np.zeros(3)]\nfor k in range(4):\n    x = opt.step(x, [x[0] * (k + 1), np.arange(3.0) - k])",
+      "call": "[a.tolist() for a in x]",
+      "tol": {
+       "rel": 1e-09,
+       "abs": 1e-12
+      },
+      "compare": "isclose",
+      "expect": "[[[0.960138834931835, 0.960138834931835], [0.960138834931835, 0.960138834931835]], [0.026127734456960178, -0.008192298819033541, -0.027623346791611946]]"
+     }
+    ],
+    "how": "Submit runs 10 hidden tests; `Hb = np.array([1.0, 10.0])` is loaded, so the bowl's gradient is `Hb * x`. Tests 1 to 4 run SGD, momentum ($\\beta$ given and the default 0.9) and Adam on the bowl, compared exactly or to $10^{-9}$. Test 5 runs Adam on the loss times 1,000, which must follow the same path to $10^{-6}$, and test 6 a coordinate whose gradient is always 0. Tests 7 to 9 check that two optimisers keep separate state, that an unknown name raises `ValueError` and that the inputs are unchanged. Test 10 runs Adam on two arrays of different shapes with its own $\\beta_1$ and $\\beta_2$.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\nclass _Opt:\n    def __init__(self, name, lr, beta=0.9, b1=0.9, b2=0.999, eps=1e-8):\n        if name not in (\"sgd\", \"momentum\", \"adam\"):\n            raise ValueError(f\"unknown optimiser {name!r}\")\n        self.name, self.lr, self.beta = name, lr, beta\n        self.b1, self.b2, self.eps = b1, b2, eps\n        self.t, self.m, self.v = 0, None, None\n\n    def step(self, params, grads):\n        params = [np.asarray(p, dtype=float) for p in params]\n        grads = [np.asarray(g, dtype=float) for g in grads]\n        if self.m is None:\n            self.m = [np.zeros_like(p) for p in params]\n            self.v = [np.zeros_like(p) for p in params]\n        if self.name == \"sgd\":\n            return [p - self.lr * g for p, g in zip(params, grads)]\n        if self.name == \"momentum\":\n            self.m = [self.beta * m - self.lr * g for m, g in zip(self.m, grads)]\n            return [p + m for p, m in zip(params, self.m)]\n        self.t += 1\n        self.m = [self.b1 * m + (1 - self.b1) * g for m, g in zip(self.m, grads)]\n        self.v = [self.b2 * v + (1 - self.b2) * g * g for v, g in zip(self.v, grads)]\n        c1, c2 = 1 - self.b1 ** self.t, 1 - self.b2 ** self.t\n        return [p - self.lr * m / (np.sqrt(v) + self.eps) for p, m, v in zip(params, self.m, self.v)]\n\n\ndef make_optimizer(name, **settings):\n    return _Opt(name, **settings)\n",
+      "test": 4,
+      "symptom": "Adam without the bias correction."
+     },
+     {
+      "source": "import numpy as np\n\n\nclass _Opt:\n    def __init__(self, name, lr, beta=0.9, b1=0.9, b2=0.999, eps=1e-8):\n        if name not in (\"sgd\", \"momentum\", \"adam\"):\n            raise ValueError(f\"unknown optimiser {name!r}\")\n        self.name, self.lr, self.beta = name, lr, beta\n        self.b1, self.b2, self.eps = b1, b2, eps\n        self.t, self.m, self.v = 0, None, None\n\n    def step(self, params, grads):\n        params = [np.asarray(p, dtype=float) for p in params]\n        grads = [np.asarray(g, dtype=float) for g in grads]\n        if self.m is None:\n            self.m = [np.zeros_like(p) for p in params]\n            self.v = [np.zeros_like(p) for p in params]\n        if self.name == \"sgd\":\n            return [p - self.lr * g for p, g in zip(params, grads)]\n        if self.name == \"momentum\":\n            return [p + self.beta * m - self.lr * g for p, m, g in zip(params, self.m, grads)]\n        self.t += 1\n        self.m = [self.b1 * m + (1 - self.b1) * g for m, g in zip(self.m, grads)]\n        self.v = [self.b2 * v + (1 - self.b2) * g * g for v, g in zip(self.v, grads)]\n        c1, c2 = 1 - self.b1 ** self.t, 1 - self.b2 ** self.t\n        return [p - self.lr * (m / c1) / (np.sqrt(v / c2) + self.eps) for p, m, v in zip(params, self.m, self.v)]\n\n\ndef make_optimizer(name, **settings):\n    return _Opt(name, **settings)\n",
+      "test": 2,
+      "symptom": "Never stores the velocity, so momentum is plain descent."
+     },
+     {
+      "source": "import numpy as np\n\n\nclass _Opt:\n    def __init__(self, name, lr, beta=0.9, b1=0.9, b2=0.999, eps=1e-8):\n        if name not in (\"sgd\", \"momentum\", \"adam\"):\n            raise ValueError(f\"unknown optimiser {name!r}\")\n        self.name, self.lr, self.beta = name, lr, beta\n        self.b1, self.b2, self.eps = b1, b2, eps\n        self.t, self.m, self.v = 0, None, None\n\n    def step(self, params, grads):\n        params = [np.asarray(p, dtype=float) for p in params]\n        grads = [np.asarray(g, dtype=float) for g in grads]\n        if self.m is None:\n            self.m = [np.zeros_like(p) for p in params]\n            self.v = [np.zeros_like(p) for p in params]\n        if self.name == \"sgd\":\n            return [p - self.lr * g for p, g in zip(params, grads)]\n        if self.name == \"momentum\":\n            self.m = [self.beta * m - self.lr * g for m, g in zip(self.m, grads)]\n            return [p + m for p, m in zip(params, self.m)]\n        self.m = [self.b1 * m + (1 - self.b1) * g for m, g in zip(self.m, grads)]\n        self.v = [self.b2 * v + (1 - self.b2) * g * g for v, g in zip(self.v, grads)]\n        c1, c2 = 1 - self.b1 ** self.t, 1 - self.b2 ** self.t\n        return [p - self.lr * (m / c1) / (np.sqrt(v / c2) + self.eps) for p, m, v in zip(params, self.m, self.v)]\n\n\ndef make_optimizer(name, **settings):\n    return _Opt(name, **settings)\n",
+      "test": 4,
+      "symptom": "Never advances the step count, so t is 0."
+     },
+     {
+      "source": "import numpy as np\n\n\nclass _Opt:\n    def __init__(self, name, lr, beta=0.9, b1=0.9, b2=0.999, eps=1e-8):\n        if name not in (\"sgd\", \"momentum\", \"adam\"):\n            raise ValueError(f\"unknown optimiser {name!r}\")\n        self.name, self.lr, self.beta = name, lr, beta\n        self.b1, self.b2, self.eps = b1, b2, eps\n        _Opt.t = 0\n\n    def step(self, params, grads):\n        params = [np.asarray(p, dtype=float) for p in params]\n        grads = [np.asarray(g, dtype=float) for g in grads]\n        if getattr(_Opt, \"m\", None) is None:\n            _Opt.m = [np.zeros_like(p) for p in params]\n            _Opt.v = [np.zeros_like(p) for p in params]\n        if self.name == \"sgd\":\n            return [p - self.lr * g for p, g in zip(params, grads)]\n        if self.name == \"momentum\":\n            self.m = [self.beta * m - self.lr * g for m, g in zip(self.m, grads)]\n            return [p + m for p, m in zip(params, self.m)]\n        self.t += 1\n        self.m = [self.b1 * m + (1 - self.b1) * g for m, g in zip(self.m, grads)]\n        self.v = [self.b2 * v + (1 - self.b2) * g * g for v, g in zip(self.v, grads)]\n        c1, c2 = 1 - self.b1 ** self.t, 1 - self.b2 ** self.t\n        return [p - self.lr * (m / c1) / (np.sqrt(v / c2) + self.eps) for p, m, v in zip(params, self.m, self.v)]\n\n\ndef make_optimizer(name, **settings):\n    return _Opt(name, **settings)\n",
+      "test": 7,
+      "symptom": "Keeps the state on the class, so two optimisers share it."
+     },
+     {
+      "source": "import numpy as np\n\n\nclass _Opt:\n    def __init__(self, name, lr, beta=0.9, b1=0.9, b2=0.999, eps=1e-8):\n        if name not in (\"sgd\", \"momentum\", \"adam\"):\n            raise ValueError(f\"unknown optimiser {name!r}\")\n        self.name, self.lr, self.beta = name, lr, beta\n        self.b1, self.b2, self.eps = b1, b2, eps\n        self.t, self.m, self.v = 0, None, None\n\n    def step(self, params, grads):\n        params = [np.asarray(p, dtype=float) for p in params]\n        grads = [np.asarray(g, dtype=float) for g in grads]\n        if self.m is None:\n            self.m = [np.zeros_like(p) for p in params]\n            self.v = [np.zeros_like(p) for p in params]\n        if self.name == \"sgd\":\n            for p, g in zip(params, grads):\n                p -= self.lr * g\n            return params\n        if self.name == \"momentum\":\n            self.m = [self.beta * m - self.lr * g for m, g in zip(self.m, grads)]\n            return [p + m for p, m in zip(params, self.m)]\n        self.t += 1\n        self.m = [self.b1 * m + (1 - self.b1) * g for m, g in zip(self.m, grads)]\n        self.v = [self.b2 * v + (1 - self.b2) * g * g for v, g in zip(self.v, grads)]\n        c1, c2 = 1 - self.b1 ** self.t, 1 - self.b2 ** self.t\n        return [p - self.lr * (m / c1) / (np.sqrt(v / c2) + self.eps) for p, m, v in zip(params, self.m, self.v)]\n\n\ndef make_optimizer(name, **settings):\n    return _Opt(name, **settings)\n",
+      "test": 9,
+      "symptom": "Updates SGD's arrays in place."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your optimisers pass every hidden test.",
+    "generic": "Not quite. Read the first failing test in the results."
+   },
+   "explain": {
+    "text": "Each optimiser keeps its own state on the object: a velocity for momentum, two moments and a step count for Adam. Adam's step count starts at 1 on the first call, so its corrections are 0.1 and 0.001 there."
+   }
+  },
+  {
+   "id": "h1-sweep",
+   "difficulty": 4,
+   "skills": [
+    "nt-optim"
+   ],
+   "title": "A sweep that survives a blow-up",
+   "prose": "On the least-squares rows of l1, write `final_loss(rate, steps, seed)`: SGD from $\\mathbf{w} = \\mathbf{0}$, each batch 8 rows by `rng.integers(0, 1000, 8)` from one `np.random.default_rng(seed)`, returning `full_loss_ls(w)`. Then `lr_sweep(rates, steps, seed)`: run every rate from the same seed and return the best rate and the list of final losses. A run that blows up must never win.",
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef final_loss(rate, steps, seed):\n    # SGD from w = 0, batches of 8 rows by rng.integers(0, 1000, 8), rng = default_rng(seed); return full_loss_ls(w)\n    ...\n\n\ndef lr_sweep(rates, steps, seed):\n    # (best rate, list of final losses); a run whose loss is not finite never wins\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef final_loss(rate, steps, seed):\n    rng = np.random.default_rng(seed)\n    w = np.zeros(3)\n    with np.errstate(all=\"ignore\"):\n        for _ in range(steps):\n            idx = rng.integers(0, len(Xr), 8)\n            g = Xr[idx].T @ (Xr[idx] @ w - yr[idx]) / 8\n            w = w - rate * g\n        return full_loss_ls(w)\n\n\ndef lr_sweep(rates, steps, seed):\n    losses = [final_loss(r, steps, seed) for r in rates]\n    ok = [(l, r) for l, r in zip(losses, rates) if np.isfinite(l)]\n    return min(ok)[1], losses\n",
+    "prelude": "import numpy as np\n_g = np.random.default_rng(7)\nXr = _g.standard_normal((1000, 3))\nyr = Xr @ np.array([1.5, -2.0, 0.5]) + 0.5 * _g.standard_normal(1000)\n\n\ndef full_loss_ls(w):\n    return 0.5 * float(np.mean((Xr @ w - yr) ** 2))\n",
+    "examples": [
+     {
+      "call": "final_loss(0.1, 0, 1)",
+      "compare": "isclose",
+      "expect": "3.280889931324208"
+     }
+    ],
+    "tests": [
+     {
+      "call": "final_loss(0.1, 5, 3)",
+      "tol": {
+       "rel": 1e-09,
+       "abs": 0
+      },
+      "compare": "isclose",
+      "expect": "0.8365343982370615"
+     },
+     {
+      "call": "final_loss(0.3, 50, 1)",
+      "tol": {
+       "rel": 1e-09,
+       "abs": 0
+      },
+      "compare": "isclose",
+      "expect": "0.12793060793181452"
+     },
+     {
+      "call": "lr_sweep([0.01, 0.1, 0.3], 100, 2)",
+      "tol": {
+       "rel": 1e-09,
+       "abs": 0
+      },
+      "compare": "isclose",
+      "expect": "(0.1, [0.5197677962348173, 0.1267676041082047, 0.15447807881623013])"
+     },
+     {
+      "call": "lr_sweep([4.0, 0.05], 1000, 1)[0]",
+      "compare": "equal",
+      "expect": "0.05"
+     },
+     {
+      "call": "bool(np.isfinite(lr_sweep([4.0, 0.05], 1000, 1)[1][0]))",
+      "compare": "equal",
+      "expect": "False"
+     },
+     {
+      "call": "lr_sweep([0.2, 0.02], 150, 5)[0]",
+      "compare": "equal",
+      "expect": "0.02"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests; `Xr`, `yr` and `full_loss_ls(w)` are loaded. Tests 1 to 3 compare short seeded runs and a sweep exactly. Tests 4 and 5 check that a rate that blows up (4) is reported but never chosen, and test 6 checks the choice on another seed.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef final_loss(rate, steps, seed):\n    rng = np.random.default_rng(seed)\n    w = np.zeros(3)\n    with np.errstate(all=\"ignore\"):\n        for _ in range(steps):\n            idx = rng.integers(0, len(Xr), 8)\n            g = Xr[idx].T @ (Xr[idx] @ w - yr[idx])\n            w = w - rate * g\n        return full_loss_ls(w)\n\n\ndef lr_sweep(rates, steps, seed):\n    losses = [final_loss(r, steps, seed) for r in rates]\n    ok = [(l, r) for l, r in zip(losses, rates) if np.isfinite(l)]\n    return min(ok)[1], losses\n",
+      "test": 1,
+      "symptom": "Sums the batch gradient instead of averaging it."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef final_loss(rate, steps, seed):\n    rng = np.random.default_rng(seed)\n    w = np.zeros(3)\n    with np.errstate(all=\"ignore\"):\n        for _ in range(steps):\n            idx = rng.integers(0, len(Xr), 8)\n            g = Xr[idx].T @ (Xr[idx] @ w - yr[idx]) / 8\n            w = w - rate * g\n        return full_loss_ls(w)\n\n\ndef lr_sweep(rates, steps, seed):\n    losses = [final_loss(r, steps, seed) for r in rates]\n    ok = [(l, r) for l, r in zip(losses, rates) if np.isfinite(l)]\n    return max(ok)[1], losses\n",
+      "test": 3,
+      "symptom": "Picks the highest loss."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef final_loss(rate, steps, seed):\n    rng = np.random.default_rng(seed)\n    w = np.zeros(3)\n    with np.errstate(all=\"ignore\"):\n        for _ in range(steps):\n            idx = rng.integers(0, len(Xr), 8)\n            g = Xr[idx].T @ (Xr[idx] @ w - yr[idx]) / 8\n            w = w - rate * g\n        return full_loss_ls(w)\n\n\ndef lr_sweep(rates, steps, seed):\n    losses = [final_loss(r, steps, seed) for r in rates]\n    return rates[int(np.argmin(losses))], losses\n",
+      "test": 4,
+      "symptom": "Lets a run that blew up win."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef final_loss(rate, steps, seed):\n    rng = np.random.default_rng(seed)\n    w = np.zeros(3)\n    with np.errstate(all=\"ignore\"):\n        for _ in range(steps):\n            idx = np.random.default_rng(seed).integers(0, len(Xr), 8)\n            g = Xr[idx].T @ (Xr[idx] @ w - yr[idx]) / 8\n            w = w - rate * g\n        return full_loss_ls(w)\n\n\ndef lr_sweep(rates, steps, seed):\n    losses = [final_loss(r, steps, seed) for r in rates]\n    ok = [(l, r) for l, r in zip(losses, rates) if np.isfinite(l)]\n    return min(ok)[1], losses\n",
+      "test": 1,
+      "symptom": "Makes a fresh generator every step, so every batch is the same rows."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Both pass, including a rate of 4 that blows up and is passed over.",
+    "generic": "Not quite. Read the first failing test in the results."
+   },
+   "explain": {
+    "text": "Each rate gets a fresh generator from the same seed, so the runs see the same batches and differ only in the rate. A loss that is `inf` or `nan` is filtered out before taking the minimum."
+   }
+  },
+  {
+   "id": "h1-bias-order",
+   "difficulty": 4,
+   "skills": [
+    "nt-optim"
+   ],
+   "title": "Why Adam corrects its mean",
+   "prose": "Adam's $m_t = \\beta_1 m_{t-1} + (1 - \\beta_1)g_t$ starts at $m_0 = 0$. Take the gradients $g_t$ as stationary: each has the same mean $E[g]$.",
+   "question": "Put the derivation of $E[m_t]$ in order. Leave out the two lines that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "b1",
+      "text": "$m_t = (1 - \\beta_1)\\sum_{i=1}^{t} \\beta_1^{t-i} g_i$, unrolling the recursion from $m_0 = 0$"
+     },
+     {
+      "id": "b2",
+      "text": "$E[m_t] = (1 - \\beta_1)\\sum_{i=1}^{t} \\beta_1^{t-i} E[g_i]$, since expectation is linear"
+     },
+     {
+      "id": "b3",
+      "text": "$E[m_t] = E[g]\\,(1 - \\beta_1)\\sum_{i=1}^{t} \\beta_1^{t-i}$, since every $E[g_i] = E[g]$"
+     },
+     {
+      "id": "b4",
+      "text": "$E[m_t] = (1 - \\beta_1^t)\\,E[g]$, since $(1 - \\beta_1)(1 + \\beta_1 + \\dots + \\beta_1^{t-1}) = 1 - \\beta_1^t$"
+     },
+     {
+      "id": "b5",
+      "text": "So $\\hat m_t = m_t/(1 - \\beta_1^t)$ has mean $E[g]$: the corrected mean is unbiased"
+     },
+     {
+      "id": "x1",
+      "text": "$E[m_t] = E[g]$, since $m_t$ is an average of gradients",
+      "why": "The weights $(1 - \\beta_1)\\beta_1^{t-i}$ sum to $1 - \\beta_1^t$, not 1, because $m_0 = 0$ took the rest."
+     },
+     {
+      "id": "x2",
+      "text": "$E[m_t] = \\beta_1^t\\,E[g]$, the old mean decayed $t$ times",
+      "why": "That forgets the fresh $(1 - \\beta_1)g_t$ added at every step."
+     }
+    ],
+    "answer": [
+     "b1",
+     "b2",
+     "b3",
+     "b4",
+     "b5"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "Unroll, take expectations, use stationarity, sum the geometric series, then divide.",
+    "generic": "Not quite. Each line follows from the one above it.",
+    "byKey": {
+     "x1": "The weights sum to $1 - \\beta_1^t$, not 1: the zero start holds the missing share.",
+     "x2": "Each step also adds $(1 - \\beta_1)g_t$."
+    }
+   },
+   "explain": {
+    "text": "The weights on the gradients sum to $1 - \\beta_1^t$, so $m_t$ is shrunk towards its zero start. Dividing by $1 - \\beta_1^t$ undoes that exactly when the gradients are stationary."
+   }
+  },
+  {
+   "id": "h1-factor5",
+   "difficulty": 3,
+   "skills": [
+    "nt-optim"
+   ],
+   "title": "An uncorrected Adam at step 5",
+   "prose": "Adam ($\\beta_1 = 0.9$, $\\beta_2 = 0.999$) runs without bias corrections under a gradient that stays the same.",
+   "question": "At step 5, how many times the corrected step is the uncorrected one? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.8,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 0.17,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "mOnly",
+      "value": 0.41,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(1 - 0.9^5)/\\sqrt{1 - 0.999^5} = 0.4095/0.0706 = 5.80$.",
+    "generic": "Not quite. Divide the first correction by the root of the second.",
+    "byKey": {
+     "inv": "That is the other way up.",
+     "mOnly": "That is the first correction alone."
+    }
+   },
+   "explain": {
+    "text": "$1 - 0.9^5 = 0.4095$ and $\\sqrt{1 - 0.999^5} = 0.0706$, so the early uncorrected steps are 5.80 times too big."
+   }
+  },
+  {
+   "id": "h1-scale",
+   "difficulty": 3,
+   "skills": [
+    "nt-optim"
+   ],
+   "title": "Scaling the batch",
+   "prose": "A run uses batch 64 at $\\eta = 0.02$ and trains well. The team moves to batch 512 to use a bigger machine.",
+   "question": "What step does the linear scaling rule suggest, and how should it be treated?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "lin",
+      "text": "0.16, as a starting point to confirm with a short sweep",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "0.02: the step does not depend on the batch",
+      "why": "A larger batch is less noisy, so it can usually take a larger step; the rule scales it with $B$."
+     },
+     {
+      "id": "sqrt",
+      "text": "0.0566, the square-root rule, which is guaranteed",
+      "why": "Some use $\\sqrt{8}$ scaling, but no rule is guaranteed; and the linear rule gives $0.02 \\times 8$."
+     },
+     {
+      "id": "law",
+      "text": "0.16, which is sure to train as well as before",
+      "why": "The rule holds only up to a limit, after a warm-up; it has to be checked."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$512/64 = 8$, so $0.02 \\times 8 = 0.16$, to be checked with a sweep around it.",
+    "generic": "Not quite. Scale the step by the batch ratio, and keep it a heuristic."
+   },
+   "explain": {
+    "text": "The rule multiplies the step by the batch ratio, 8, giving 0.16. It is a heuristic with limits, so a short sweep around it decides."
+   }
+  },
+  {
+   "id": "h1-diagnose",
+   "difficulty": 5,
+   "skills": [
+    "nt-optim"
+   ],
+   "title": "A rate that used to work",
+   "kind": "longform",
+   "prompt": "A colleague's return-prediction net trained well last year with SGD at a step of 0.05. This year someone rescaled the input features (prices now in pence instead of pounds, volumes in shares instead of thousands), and the same run diverges within ten steps. Diagnose what happened, say what you would change and in what order, and say how you would confirm each step worked.",
+   "model": "What happened: SGD moves each weight by $\\eta g$, and the gradient of a first-layer weight is proportional to the size of its input. Prices in pence are 100 times larger and volumes in shares 1,000 times larger, so those weights now see gradients 100 to 1,000 times larger. In curvature terms (`convex` l14) the loss is far steeper along those weights: $\\lambda_{\\max}$ grows by up to $10^6$. A step of 0.05 is now far above $2/\\lambda_{\\max}$, so each step overshoots and the loss blows up.\n\nWhat I would change, in order:\n1. **Fix the inputs first.** Standardise every feature on the training rows (`stat-learning` l9), so the scale of the raw units no longer matters. This removes the cause, not just the symptom.\n2. **Re-run the learning-rate sweep** by powers of ten (l1), comparing final full losses on fixed rows, and take the best steady rate. Check it on more than one seed: near the edge of stability, results turn to luck.\n3. **Only then consider Adam**, which divides by each weight's own gradient size and so copes with badly scaled features (l3). Its rate still needs its own sweep; it is not a substitute for scaling.\n4. **Add a schedule last** (l4), once a stable rate is known.\n\nHow I would confirm: after step 1, the first-layer gradients should have similar sizes across features, and the original 0.05 may train again. After step 2, the sweep should show a clear minimum with the diverging rates marked. Each change goes in the training log, one at a time, so we know which one mattered.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Links the divergence to the rescaling: gradients grow with the input scale, so the old step is far too large"
+    },
+    {
+     "points": 1,
+     "text": "Names the curvature limit ($s < 2/\\lambda_{\\max}$) or an equivalent stability argument"
+    },
+    {
+     "points": 2,
+     "text": "Puts standardising the features first, as the fix for the cause"
+    },
+    {
+     "points": 2,
+     "text": "Re-sweeps the rate on full losses and checks the winner on more than one seed"
+    },
+    {
+     "points": 1,
+     "text": "Places Adam correctly: copes with scale, but still needs its own rate and does not replace scaling"
+    },
+    {
+     "points": 1,
+     "text": "Changes one thing at a time and logs each change"
+    },
+    {
+     "points": 1,
+     "text": "Says how each step is confirmed (gradient sizes, a clear sweep minimum)"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,436 @@
+{
+ "id": "review-1",
+ "course": "nn-train",
+ "level": 1,
+ "pass": 0.8,
+ "items": [
+  {
+   "id": "r1-sd",
+   "difficulty": 2,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "A minibatch gradient has sd 0.03 at batch 16; rows are independent draws.",
+   "question": "What is its sd at batch 64?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.015,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 0.0075,
+      "tol": {
+       "abs": 0.0003
+      }
+     },
+     {
+      "id": "up",
+      "value": 0.06,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Four times the rows halves the sd: $0.03/2 = 0.015$.",
+    "generic": "Not quite. The sd falls with $\\sqrt{B}$.",
+    "byKey": {
+     "linear": "You divided by 4; the sd falls by $\\sqrt 4 = 2$.",
+     "up": "More rows means less spread."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{64/16} = 2$, so the sd halves from 0.03 to 0.015."
+   }
+  },
+  {
+   "id": "r1-step",
+   "difficulty": 3,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "A one-weight model $\\hat y = wx$ has loss $\\tfrac12(wx - y)^2$ a row. A batch holds the rows $(x, y) = (2, 1)$ and $(1, 3)$; $w = 0.5$.",
+   "question": "Take one SGD step with $\\eta = 0.2$. What is the new $w$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.75,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The row gradients are $(1 - 1) \\times 2 = 0$ and $(0.5 - 3) \\times 1 = -2.5$; their mean is $-1.25$, so $w = 0.5 + 0.25 = 0.75$.",
+    "generic": "Not quite. Average the row gradients, then step against the mean.",
+    "byKey": {
+     "sum": "You used the sum, $-2.5$, not the mean.",
+     "sign": "You stepped with the gradient, not against it."
+    }
+   },
+   "explain": {
+    "text": "Mean gradient $-1.25$; $w - \\eta g = 0.5 - 0.2(-1.25) = 0.75$."
+   }
+  },
+  {
+   "id": "r1-eff",
+   "difficulty": 2,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "A run uses heavy-ball momentum with $\\beta = 0.95$ on a long straight slope, where the gradient never changes.",
+   "question": "Once the velocity settles, each step is worth how many plain steps $s\\mathbf{g}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 20,
+    "tol": {
+     "abs": 0.01
+    },
+    "wrong": [
+     {
+      "id": "beta",
+      "value": 0.95,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "plus",
+      "value": 1.95,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/(1 - 0.95) = 20$.",
+    "generic": "Not quite. Use $1/(1 - \\beta)$.",
+    "byKey": {
+     "beta": "That is $\\beta$ itself.",
+     "plus": "You added $\\beta$ once; it compounds every step."
+    }
+   },
+   "explain": {
+    "text": "The velocity settles at $s\\mathbf{g}/(1 - \\beta)$: 20 plain steps at $\\beta = 0.95$."
+   }
+  },
+  {
+   "id": "r1-hb",
+   "difficulty": 3,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "A quadratic's Hessian has eigenvalues 1 and 4.",
+   "question": "What is the best heavy-ball $\\beta$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.111,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "root",
+      "value": 0.333,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "gd",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt\\kappa = 2$, so $\\beta = (1/3)^2 = 0.111$; the rate is $1/3$.",
+    "generic": "Not quite. Square $(\\sqrt\\kappa - 1)/(\\sqrt\\kappa + 1)$.",
+    "byKey": {
+     "root": "That is the rate $\\sqrt\\beta$.",
+     "gd": "That is plain descent's rate, $(4 - 1)/(4 + 1)$."
+    }
+   },
+   "explain": {
+    "text": "$\\kappa = 4$, $\\sqrt\\kappa = 2$, ratio $1/3$, squared $0.111$. The error then shrinks by a third a step against 0.6 for plain descent."
+   }
+  },
+  {
+   "id": "r1-adam1",
+   "difficulty": 2,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "Adam with $\\eta = 0.01$ meets a gradient of $-250$ in one coordinate at step 1.",
+   "question": "By how much does that weight change? Give a signed number.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.01,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -0.01,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sgd",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The first step is $-\\eta\\,g/|g| = +0.01$: up, against the negative gradient.",
+    "generic": "Not quite. Correct both moments at step 1.",
+    "byKey": {
+     "sign": "The gradient is negative, so the weight goes up.",
+     "sgd": "That is SGD's step, $\\eta|g|$."
+    }
+   },
+   "explain": {
+    "text": "At step 1, $\\hat m/\\sqrt{\\hat v} = g/|g| = -1$, so the change is $-0.01 \\times (-1) = +0.01$, whatever the gradient's size."
+   }
+  },
+  {
+   "id": "r1-corr",
+   "difficulty": 3,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "Suppose Adam ($\\beta_1 = 0.9$, $\\beta_2 = 0.999$) skipped both of its corrections, and its gradient never changed.",
+   "question": "By what factor would its second step exceed the corrected one? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.25,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 0.24,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "mOnly",
+      "value": 0.19,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.19/\\sqrt{0.001999} = 4.25$.",
+    "generic": "Not quite. Divide $1 - \\beta_1^2$ by $\\sqrt{1 - \\beta_2^2}$.",
+    "byKey": {
+     "inv": "That is the other way up; the uncorrected step is the larger.",
+     "mOnly": "That is the first correction alone."
+    }
+   },
+   "explain": {
+    "text": "$1 - 0.81 = 0.19$ and $\\sqrt{1 - 0.998001} = 0.0447$, so the uncorrected step is 4.25 times too big."
+   }
+  },
+  {
+   "id": "r1-cos",
+   "difficulty": 2,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "A rate starts at 0.05 and falls along half a cosine to 0 over 400 steps, with no warm-up.",
+   "question": "Which rate does step 300 use? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0073,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 0.0125,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "plus",
+      "value": 0.0427,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.025(1 + \\cos(3\\pi/4)) = 0.025 \\times 0.2929 = 0.0073$.",
+    "generic": "Not quite. Use $t/T = 3/4$.",
+    "byKey": {
+     "linear": "That is a straight-line decay.",
+     "plus": "You used $1 - \\cos$; the schedule adds the cosine."
+    }
+   },
+   "explain": {
+    "text": "$\\cos(3\\pi/4) = -0.7071$, so the rate is $0.025 \\times 0.2929 = 0.0073$."
+   }
+  },
+  {
+   "id": "r1-warm",
+   "difficulty": 3,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "Warm-up of 50 steps to $\\eta_{\\max} = 0.01$, then cosine decay to 0 at step 550.",
+   "question": "What is the rate at step 300?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.005,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "nowarm",
+      "value": 0.00429,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "max",
+      "value": 0.01,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(300 - 50)/500 = 0.5$: halfway down the cosine, 0.005.",
+    "generic": "Not quite. Measure the cosine from the end of warm-up.",
+    "byKey": {
+     "nowarm": "You ran the cosine from step 0.",
+     "max": "That is the peak at step 50."
+    }
+   },
+   "explain": {
+    "text": "The cosine part runs over $550 - 50 = 500$ steps; step 300 is 250 into it, halfway, so the rate is $0.01/2 = 0.005$."
+   }
+  },
+  {
+   "id": "r1-compare",
+   "difficulty": 4,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "Two optimisers train the same net. Fay compares them by the last minibatch loss of each run: 0.31 and 0.27.",
+   "question": "What should she do instead?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "full",
+      "text": "Compare full losses at the end, over several seeds",
+      "correct": true
+     },
+     {
+      "id": "trust",
+      "text": "Nothing: 0.27 is lower, so that optimiser wins",
+      "why": "One minibatch loss is a noisy sample; the band can be wider than the gap."
+     },
+     {
+      "id": "bigger",
+      "text": "Rerun both with batch 8, so the losses are noisier",
+      "why": "Noisier losses make the comparison worse, not better."
+     },
+     {
+      "id": "best",
+      "text": "Compare the lowest minibatch loss each reached",
+      "why": "The lowest of many noisy values is a lucky draw."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The full loss on fixed rows removes the batch noise, and several seeds show the spread from run to run.",
+    "generic": "Not quite. Is one minibatch loss a good measure?"
+   },
+   "explain": {
+    "text": "A minibatch loss varies from batch to batch by more than 0.04 here, so it cannot rank the runs. Use the full loss at the end of equal runs, and repeat over seeds."
+   }
+  },
+  {
+   "id": "r1-match",
+   "difficulty": 4,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "A run uses momentum with $\\beta = 0.9$ at $s = 0.05$. A colleague turns momentum off.",
+   "question": "What plain step gives the same settled step size?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "same",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "beta",
+      "value": 0.045,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.05/(1 - 0.9) = 0.5$.",
+    "generic": "Not quite. Momentum settles at $s/(1 - \\beta)$.",
+    "byKey": {
+     "same": "Without momentum the step is ten times smaller at the same $s$.",
+     "beta": "You multiplied by $\\beta$."
+    }
+   },
+   "explain": {
+    "text": "Momentum at $\\beta = 0.9$ settles at ten plain steps, so plain SGD needs $s = 0.5$, though plain descent at that step may be unstable where momentum is not."
+   }
+  }
+ ]
+}
