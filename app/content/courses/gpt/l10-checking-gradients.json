@@ -1,0 +1,1258 @@
+{
+  "id": "l10-checking-gradients",
+  "course": "gpt",
+  "title": "Checking the gradients",
+  "minutes": 15,
+  "objectives": [
+    "Check the GPT's gradients against central differences."
+  ],
+  "skills": [
+    "gpt-train"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A slope from two nudges",
+      "prose": "Take $f(x) = x^3$ at $x = 2$, where the true slope is $3x^2 = 12$. Nudge $x$ by $h = 0.01$ each way and divide the change in $f$ by the distance between the two points.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$x$",
+            "$f(x)$"
+          ],
+          "rows": [
+            [
+              "1.99",
+              "7.880599"
+            ],
+            [
+              "2",
+              "8"
+            ],
+            [
+              "2.01",
+              "8.120601"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What is $(f(2.01) - f(1.99)) / 0.02$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.0001,
+        "tol": {
+          "abs": 5e-05
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 12.0601,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "noh",
+            "value": 0.24,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ],
+        "label": "Slope"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the two values of $f$."
+        },
+        {
+          "rung": "point",
+          "text": "$8.120601 - 7.880599 = 0.240002$.",
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by 0.02."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.240002 / 0.02 = 12.0001$, within $h^2 = 0.0001$ of 12.",
+        "generic": "Not quite. Divide the change in $f$ by 0.02.",
+        "byKey": {
+          "one": "That is the one-sided slope from $x = 2$ to 2.01. Use both nudges.",
+          "noh": "That is the change in $f$; divide it by 0.02."
+        }
+      },
+      "explain": {
+        "text": "The two-sided slope is 12.0001; the one-sided slope from 2 to 2.01 is 12.0601. Nudging both ways cancels the first error term.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "How small a nudge",
+      "prose": "The **central difference** $\\frac{f(x+h) - f(x-h)}{2h}$ has an error of order $h^2$, until rounding takes over. Slide $h$ and read the error at $x^3$, $x = 2$, in float64 and float32.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            1e-09,
+            0.1
+          ],
+          "y": [
+            -10.5,
+            0.5
+          ],
+          "xScale": "log",
+          "xLabel": "h",
+          "yLabel": "log10 of the error",
+          "functions": [
+            {
+              "id": "f64",
+              "points": [
+                [
+                  0.1,
+                  -2.0
+                ],
+                [
+                  0.01,
+                  -4.0
+                ],
+                [
+                  0.001,
+                  -6.0
+                ],
+                [
+                  0.0001,
+                  -7.9996
+                ],
+                [
+                  1e-05,
+                  -9.674
+                ],
+                [
+                  1e-06,
+                  -9.1028
+                ],
+                [
+                  1e-07,
+                  -8.1995
+                ],
+                [
+                  1e-08,
+                  -6.9306
+                ],
+                [
+                  1e-09,
+                  -6.0031
+                ]
+              ],
+              "label": "float64"
+            },
+            {
+              "id": "f32",
+              "points": [
+                [
+                  0.1,
+                  -2.0002
+                ],
+                [
+                  0.01,
+                  -4.0761
+                ],
+                [
+                  0.001,
+                  -3.4046
+                ],
+                [
+                  0.0001,
+                  -2.2872
+                ],
+                [
+                  1e-05,
+                  -1.7879
+                ],
+                [
+                  1e-06,
+                  -0.255
+                ]
+              ],
+              "label": "float32",
+              "dashed": true
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p",
+              "x": 0.1,
+              "y": -2.0
+            }
+          ],
+          "caption": "$h = 10^{-1}$: error $1.0 \\times 10^{-2}$ in float64, $1.0 \\times 10^{-2}$ in float32."
+        },
+        "controls": [
+          {
+            "bind": "h",
+            "label": "h",
+            "frames": [
+              {
+                "points": {
+                  "p": {
+                    "x": 0.1,
+                    "y": -2.0
+                  }
+                },
+                "caption": "$h = 10^{-1}$: error $1.0 \\times 10^{-2}$ in float64, $1.0 \\times 10^{-2}$ in float32."
+              },
+              {
+                "points": {
+                  "p": {
+                    "x": 0.001,
+                    "y": -6.0
+                  }
+                },
+                "caption": "$h = 10^{-3}$: error $1.0 \\times 10^{-6}$ in float64, $3.9 \\times 10^{-4}$ in float32."
+              },
+              {
+                "points": {
+                  "p": {
+                    "x": 1e-05,
+                    "y": -9.674
+                  }
+                },
+                "caption": "$h = 10^{-5}$: error $2.1 \\times 10^{-10}$ in float64, $1.6 \\times 10^{-2}$ in float32."
+              },
+              {
+                "points": {
+                  "p": {
+                    "x": 1e-07,
+                    "y": -8.1995
+                  }
+                },
+                "caption": "$h = 10^{-7}$: error $6.3 \\times 10^{-9}$ in float64."
+              }
+            ],
+            "frameLabels": [
+              "0.1",
+              "0.001",
+              "1e-5",
+              "1e-7"
+            ]
+          }
+        ]
+      },
+      "question": "Which $h$ gives the smallest error in float64?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "e5",
+            "text": "$10^{-5}$",
+            "correct": true
+          },
+          {
+            "id": "e1",
+            "text": "$10^{-1}$",
+            "why": "The $h^2$ error is large there, about 0.01."
+          },
+          {
+            "id": "e7",
+            "text": "$10^{-7}$",
+            "why": "Rounding has taken over: dividing a tiny difference by a tiny $h$ magnifies it."
+          },
+          {
+            "id": "e9",
+            "text": "$10^{-9}$, the smallest",
+            "why": "Smaller is not better: rounding error grows like $\\epsilon / h$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide through all four frames."
+        },
+        {
+          "rung": "point",
+          "text": "Read the float64 error in each caption.",
+          "highlight": [
+            "f64"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "At $h = 10^{-5}$ the error is $2.1 \\times 10^{-10}$; both smaller and larger $h$ do worse.",
+        "generic": "Not quite. Compare the four captions."
+      },
+      "explain": {
+        "text": "The error falls like $h^2$, then rises like $\\epsilon/h$ as rounding takes over: a V. In float64 the bottom is near $h = 10^{-5}$; float32 bottoms out far higher."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Comparing two gradients",
+      "prose": "Backprop gives one gradient array and central differences another. We compare them with the **relative error** $\\frac{\\lVert g_a - g_n \\rVert}{\\lVert g_a \\rVert + \\lVert g_n \\rVert}$, which does not care how large the gradient is.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Entry 1",
+            "Entry 2"
+          ],
+          "rows": [
+            [
+              "$g_a$",
+              "1.0",
+              "2.0"
+            ],
+            [
+              "$g_n$",
+              "1.0",
+              "2.0001"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the relative error, in units of $10^{-5}$? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.236,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 4.472,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "abs",
+            "value": 10.0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Relative error",
+        "scale": 1e-05
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The difference has norm 0.0001."
+        },
+        {
+          "rung": "point",
+          "text": "$\\lVert g_a \\rVert = \\sqrt 5$ and $\\lVert g_n \\rVert \\approx 2.23616$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.0001 / (2.23607 + 2.23616)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.0001 / 4.47223 \\approx 2.236 \\times 10^{-5}$.",
+        "generic": "Not quite. Divide the norm of the difference by the sum of the two norms.",
+        "byKey": {
+          "one": "You divided by one norm only. Add both norms.",
+          "abs": "That is the difference itself, $10^{-4}$. Divide by the norms."
+        }
+      },
+      "explain": {
+        "text": "The difference is $10^{-4}$ against gradients of size about 2.24, so the relative error is about $2.236 \\times 10^{-5}$. The bar for float64 is $10^{-6}$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write the two tools",
+      "prose": "Write `numeric_grad(f, x, h)`: nudge each entry of the array `x` by $\\pm h$ in place, call `f()` each time, put the entry back, and return the central differences. Then `rel_error(a, b)`, 0.0 when both are all zeros.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Entry 1",
+            "Entry 2"
+          ],
+          "rows": [
+            [
+              "$g_a$",
+              "1.0",
+              "2.0"
+            ],
+            [
+              "$g_n$",
+              "1.0",
+              "2.0001"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "Write `numeric_grad` and `rel_error`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef numeric_grad(f, x, h):\n    # f() reads the array x. For each entry: set x[i] = x[i] + h, call f, set x[i] - h, call f,\n    # put x[i] back. Return the array of central differences (f(+h) - f(-h)) / (2h).\n    ...\n\n\ndef rel_error(a, b):\n    # ||a - b|| / (||a|| + ||b||), and 0.0 when both are all zeros.\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef numeric_grad(f, x, h):\n    g = np.zeros_like(x, dtype=float)\n    for i in np.ndindex(x.shape):\n        keep = x[i]\n        x[i] = keep + h\n        up = f()\n        x[i] = keep - h\n        down = f()\n        x[i] = keep\n        g[i] = (up - down) / (2 * h)\n    return g\n\n\ndef rel_error(a, b):\n    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)\n    scale = np.linalg.norm(a) + np.linalg.norm(b)\n    if scale == 0:\n        return 0.0\n    return float(np.linalg.norm(a - b) / scale)\n",
+        "prelude": "import numpy as np\n\nX0 = np.array([1.0, 2.0, -0.5])\nX1 = np.array([[0.3, -1.2], [2.0, 0.7]])\n",
+        "examples": [
+          {
+            "call": "numeric_grad(lambda: float((X0 ** 2).sum()), X0, 1e-3).round(6).tolist()",
+            "expect": "[2.0, 4.0, -1.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "numeric_grad(lambda: float((X0 ** 3).sum()), X0, 1e-3).tolist()",
+            "expect": "[3.0000010000001964, 12.000000999997873, 0.7500010000001112]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "(numeric_grad(lambda: float((X0 ** 3).sum()), X0, 1e-3), X0.tolist())[1]",
+            "expect": "[1.0, 2.0, -0.5]",
+            "compare": "equal"
+          },
+          {
+            "call": "numeric_grad(lambda: float(np.sin(X1).sum() + X1[0, 0] * X1[1, 1]), X1, 1e-4).ravel().tolist()",
+            "expect": "[1.6553364875326881, 0.36235775387361, -0.4161468358543363, 1.0648421860093293]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "rel_error([1.0, 2.0], [1.0, 2.0001])",
+            "expect": "2.2360232568157786e-05",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "rel_error(np.zeros(3), np.zeros(3))",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "rel_error([3.0, 4.0], [6.0, 8.0])",
+            "expect": "0.3333333333333333",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          }
+        ],
+        "how": "Submit runs 6 hidden tests. Central differences of $\\sum x^3$ and of a 2 by 2 function within $10^{-9}$ (relative), and that `x` is left unchanged. Then `rel_error` on the screen's pair, two zero arrays and parallel vectors.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef numeric_grad(f, x, h):\n    g = np.zeros_like(x, dtype=float)\n    for i in np.ndindex(x.shape):\n        keep = x[i]\n        x[i] = keep + h\n        up = f()\n        x[i] = keep\n        down = f()\n        g[i] = (up - down) / h\n    return g\n\n\ndef rel_error(a, b):\n    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)\n    scale = np.linalg.norm(a) + np.linalg.norm(b)\n    if scale == 0:\n        return 0.0\n    return float(np.linalg.norm(a - b) / scale)\n",
+            "test": 1,
+            "symptom": "Takes a one-sided difference, whose error is of order h, not h squared."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef numeric_grad(f, x, h):\n    g = np.zeros_like(x, dtype=float)\n    for i in np.ndindex(x.shape):\n        keep = x[i]\n        x[i] = keep + h\n        up = f()\n        x[i] = keep - h\n        down = f()\n        g[i] = (up - down) / (2 * h)\n    return g\n\n\ndef rel_error(a, b):\n    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)\n    scale = np.linalg.norm(a) + np.linalg.norm(b)\n    if scale == 0:\n        return 0.0\n    return float(np.linalg.norm(a - b) / scale)\n",
+            "test": 2,
+            "symptom": "Never puts the entry back, so x is left nudged."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef numeric_grad(f, x, h):\n    g = np.zeros_like(x, dtype=float)\n    for i in np.ndindex(x.shape):\n        keep = x[i]\n        x[i] = keep + h\n        up = f()\n        x[i] = keep - h\n        down = f()\n        x[i] = keep\n        g[i] = (up - down) / (2 * h)\n    return g\n\n\ndef rel_error(a, b):\n    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)\n    scale = np.linalg.norm(a) + np.linalg.norm(b)\n    if scale == 0:\n        return 0.0\n    return float(np.linalg.norm(a - b) / np.linalg.norm(a))\n",
+            "test": 4,
+            "symptom": "Divides by one norm only."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef numeric_grad(f, x, h):\n    g = np.zeros_like(x, dtype=float)\n    for i in np.ndindex(x.shape):\n        keep = x[i]\n        x[i] = keep + h\n        up = f()\n        x[i] = keep - h\n        down = f()\n        x[i] = keep\n        g[i] = (up - down) / (2 * h)\n    return g\n\n\ndef rel_error(a, b):\n    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)\n    scale = np.linalg.norm(a) + np.linalg.norm(b)\n    return float(np.linalg.norm(a - b) / scale)\n",
+            "test": 5,
+            "symptom": "Divides 0 by 0 when both gradients are zero."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop with `for i in np.ndindex(x.shape)`."
+        },
+        {
+          "rung": "point",
+          "text": "Keep `x[i]`, nudge up, call, nudge down, call, restore.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`np.linalg.norm` gives each norm."
+        }
+      ],
+      "feedback": {
+        "correct": "Both tools match the reference.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: use both nudges, $(f(x+h) - f(x-h)) / 2h$.",
+          "test-2": "Test 2: put each entry back after nudging it.",
+          "test-5": "Test 5: two zero arrays give 0.0, not a division by zero."
+        }
+      },
+      "explain": {
+        "text": "Each entry costs two calls of `f`, so a model of $N$ numbers costs $2N$ forward passes. That is why we check a tiny configuration."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The new piece: an embedding row used twice",
+      "prose": "Backprop L4 checked matrix products, ReLU and cross-entropy. The GPT adds three pieces: the embedding lookup, layer norm and the masked softmax. In a batch, id 7 appears at two positions; at one coordinate the gradients there are 0.2 and −0.5.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "3",
+            "7",
+            "1",
+            "7"
+          ],
+          "indexFrom": 0
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "a",
+              "at": 1,
+              "label": "0.2"
+            },
+            {
+              "id": "b",
+              "at": 3,
+              "label": "−0.5"
+            }
+          ]
+        }
+      },
+      "question": "What is the gradient of row 7 of `wte` at that coordinate?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.3,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "last",
+            "value": -0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "mean",
+            "value": -0.15,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Gradient"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both positions copied row 7."
+        },
+        {
+          "rung": "point",
+          "text": "A row used twice collects both gradients.",
+          "highlight": [
+            "c1",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.2 + (-0.5)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.2 - 0.5 = -0.3$: the lookup's backward adds into the row once per use.",
+        "generic": "Not quite. Add the gradients of every position that used row 7.",
+        "byKey": {
+          "last": "You kept the last one. `np.add.at` adds every use.",
+          "mean": "You averaged. A row used twice gets the sum.",
+          "sign": "Check the sign: $0.2 - 0.5$."
+        }
+      },
+      "explain": {
+        "text": "The lookup's backward is a scatter-add: each position adds its gradient into its id's row, so row 7 gets $-0.3$. Plain `grad[idx] += g` would keep only one of the two, which the check would catch.",
+        "canvas": {
+          "highlight": [
+            "c1",
+            "c3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Check the whole model",
+      "prose": "Write `check_model(config, seed)` for a tiny configuration: vocabulary 5, context 4, width 8, 2 heads, MLP 32, so 1,005 numbers. Compare `loss_and_grads` with central differences of `mean_loss` at $h = 10^{-5}$ for every array, and return the worst relative error. `numeric_grad`, `rel_error`, `TINY`, `XT`, `YT` are defined.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "3",
+            "2",
+            "1",
+            "0"
+          ],
+          "indexFrom": 0,
+          "wrap": 4
+        },
+        "state": {
+          "caption": "XT: two windows of 4 ids. Id 4 is never an input."
+        }
+      },
+      "question": "Write `check_model`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    # Weights init_weights(seed, config, sd=0.3); batch XT, YT (defined for you).\n    # Backprop gradients from loss_and_grads(w, XT, YT, config['n_head']); for every array, central\n    # differences of mean_loss(w, XT, YT, config['n_head']) with h = 1e-5. Return the largest rel_error.\n    ...\n",
+        "solution": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    w = init_weights(seed, config, sd=0.3)\n    nh = config['n_head']\n    _, grads = loss_and_grads(w, XT, YT, nh)\n    worst = 0.0\n    for name in w:\n        num = numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-5)\n        worst = max(worst, rel_error(grads[name], num))\n    return worst\n",
+        "prelude": "import numpy as np\n\n\ndef numeric_grad(f, x, h):\n    g = np.zeros_like(x, dtype=float)\n    for i in np.ndindex(x.shape):\n        keep = x[i]\n        x[i] = keep + h\n        up = f()\n        x[i] = keep - h\n        down = f()\n        x[i] = keep\n        g[i] = (up - down) / (2 * h)\n    return g\n\n\ndef rel_error(a, b):\n    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)\n    scale = np.linalg.norm(a) + np.linalg.norm(b)\n    if scale == 0:\n        return 0.0\n    return float(np.linalg.norm(a - b) / scale)\n\nTINY = {'V': 5, 'T': 4, 'd': 8, 'n_head': 2, 'n_layer': 1, 'mlp': 32}\nXT = np.array([[0, 1, 2, 3], [3, 2, 1, 0]])\nYT = np.array([[1, 2, 3, 4], [2, 1, 0, 4]])\n",
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+          "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+          "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+          "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt",
+          "gpt_ops_l3.py": "content/data/ai/gpt_ops_l3.py"
+        },
+        "examples": [
+          {
+            "call": "check_model(TINY, 0) < 1e-4",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          }
+        ],
+        "tests": [
+          {
+            "call": "check_model(TINY, 0) < 1e-6",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          },
+          {
+            "call": "check_model(TINY, 1) < 1e-6",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          },
+          {
+            "call": "check_model(TINY, 0) > 1e-13",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          },
+          {
+            "call": "check_model(dict(TINY, n_head=4), 2) < 1e-6",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          }
+        ],
+        "how": "Submit runs 4 hidden tests on the tiny configuration: the worst error is below $10^{-6}$ for seeds 0 and 1 and for 4 heads, and above $10^{-13}$, so a check that compares nothing fails. Each case may take a few seconds.",
+        "mutants": [
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    w = {k: v.astype(np.float32) for k, v in init_weights(seed, config, sd=0.3).items()}\n    nh = config['n_head']\n    _, grads = loss_and_grads(w, XT, YT, nh)\n    worst = 0.0\n    for name in w:\n        num = numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-5)\n        worst = max(worst, rel_error(grads[name], num))\n    return worst\n",
+            "test": 1,
+            "symptom": "Runs the differences in float32, where rounding swamps them."
+          },
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    w = init_weights(seed, config, sd=0.3)\n    nh = config['n_head']\n    _, grads = loss_and_grads(w, XT, YT, nh)\n    worst = 0.0\n    for name in w:\n        num = numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-12)\n        worst = max(worst, rel_error(grads[name], num))\n    return worst\n",
+            "test": 1,
+            "symptom": "Uses a step of 1e-12, far below the rounding floor."
+          },
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    w = init_weights(seed, config, sd=0.3)\n    nh = config['n_head']\n    _, grads = loss_and_grads(w, XT, YT, nh)\n    worst = 0.0\n    for name in w:\n        num = numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-5)\n        worst = max(worst, rel_error(grads[name], 2 * num))\n    return worst\n",
+            "test": 1,
+            "symptom": "Compares with twice the numerical gradient."
+          },
+          {
+            "source": "import numpy as np\nfrom gpt_ops_l2 import mean_loss\nfrom gpt_ops_l3 import init_weights, loss_and_grads\n\n\ndef check_model(config, seed):\n    w = init_weights(seed, config, sd=0.3)\n    nh = config['n_head']\n    _, grads = loss_and_grads(w, XT, YT, 4)\n    worst = 0.0\n    for name in w:\n        num = numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-5)\n        worst = max(worst, rel_error(grads[name], num))\n    return worst\n",
+            "test": 1,
+            "symptom": "Builds the gradients with 4 heads whatever the config says."
+          }
+        ],
+        "budget": 8000
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Get every backprop gradient with one call to `loss_and_grads`."
+        },
+        {
+          "rung": "point",
+          "text": "For each name, `numeric_grad(lambda: mean_loss(w, XT, YT, nh), w[name], 1e-5)`.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep the largest `rel_error` over the names."
+        }
+      ],
+      "feedback": {
+        "correct": "Every array of the tiny GPT agrees with central differences to better than $10^{-6}$.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 needs the worst error below $10^{-6}$. Check float64, $h = 10^{-5}$ and the head count.",
+          "test-3": "Test 3 makes sure the check compares real numbers: an error of exactly 0 means nothing was compared."
+        }
+      },
+      "explain": {
+        "text": "On the tiny model the worst error is near $10^{-9}$, far below the bar. A broken backward, a wrong head count or a missed scatter-add would show up as $10^{-2}$ or worse."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Checking in float32",
+      "prose": "The number script ran the same check on the tiny model in four ways. The bar for float64 is $10^{-6}$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Check",
+            "Worst relative error"
+          ],
+          "rows": [
+            [
+              "float64, $h = 10^{-5}$",
+              "below $10^{-8}$"
+            ],
+            [
+              "float64, $h = 10^{-11}$",
+              "between $10^{-5}$ and $10^{-3}$"
+            ],
+            [
+              "float32, $h = 10^{-3}$",
+              "between $10^{-3}$ and $10^{-1}$"
+            ],
+            [
+              "float64, one-sided, $h = 10^{-5}$",
+              "between $10^{-5}$ and $10^{-4}$"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "A colleague checks in float32 and sees errors near $10^{-2}$. What should they conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "prec",
+            "text": "Nothing yet: rerun the check in float64",
+            "correct": true
+          },
+          {
+            "id": "bug",
+            "text": "The backward pass has a bug somewhere",
+            "why": "float32 keeps about 7 digits, and a central difference loses most of them. The same code passes in float64."
+          },
+          {
+            "id": "h",
+            "text": "Use a smaller $h$ in float32",
+            "why": "A smaller $h$ makes float32 worse: the rounding error grows like $\\epsilon / h$."
+          },
+          {
+            "id": "fine",
+            "text": "The gradients are fine, since $10^{-2}$ is small",
+            "why": "In float64 a correct backward gives about $10^{-9}$; $10^{-2}$ there would be a bug."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the float32 row with the first row."
+        },
+        {
+          "rung": "point",
+          "text": "Same code, same model, only the precision differs.",
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "float32 has $\\epsilon \\approx 10^{-7}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Gradient checks are run in float64; float32 rounding alone gives errors near $10^{-3}$ to $10^{-2}$.",
+        "generic": "Not quite. Look at what changes between the rows.",
+        "byKey": {
+          "bug": "That is the trap. The same backward passes at about $10^{-9}$ in float64; the float32 error is rounding, not a bug."
+        }
+      },
+      "explain": {
+        "text": "A central difference subtracts two nearly equal losses, so float32 keeps only a few digits of it. Check in float64, where a correct backward lands near $10^{-9}$ and a bug near $10^{-2}$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A row no window uses",
+      "prose": "In `XT` the id 4 never appears as an input, so row 4 of `wte` never enters the forward pass.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "3",
+            "2",
+            "1",
+            "0"
+          ],
+          "indexFrom": 0,
+          "wrap": 4
+        }
+      },
+      "question": "What is the backprop gradient of row 4 of `wte`, at any coordinate?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Gradient"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which positions copied row 4?"
+        },
+        {
+          "rung": "point",
+          "text": "None did.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Nothing adds into it."
+        }
+      ],
+      "feedback": {
+        "correct": "Exactly 0: no position used row 4, so the scatter-add puts nothing there, and the central difference agrees.",
+        "generic": "Not quite. Which positions read row 4?"
+      },
+      "explain": {
+        "text": "A row no input uses has gradient exactly 0, and nudging it changes no loss, so both methods give 0. That is why `rel_error` must return 0 for two zero arrays."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Too small a step",
+      "prose": "The table on the trap screen also ran float64 with $h = 10^{-11}$, a million times smaller than $10^{-5}$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Check",
+            "Worst relative error"
+          ],
+          "rows": [
+            [
+              "float64, $h = 10^{-5}$",
+              "below $10^{-8}$"
+            ],
+            [
+              "float64, $h = 10^{-11}$",
+              "between $10^{-5}$ and $10^{-3}$"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Why is the error larger at $h = 10^{-11}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "round",
+            "text": "Rounding swamps the tiny difference of two losses",
+            "correct": true
+          },
+          {
+            "id": "trunc",
+            "text": "The $h^2$ error grows as $h$ shrinks",
+            "why": "The $h^2$ term shrinks as $h$ shrinks; it is rounding that grows."
+          },
+          {
+            "id": "bug",
+            "text": "The backward pass is wrong at small $h$",
+            "why": "The backward pass does not use $h$ at all."
+          },
+          {
+            "id": "steps",
+            "text": "There are more steps to compute",
+            "why": "The number of calls is the same, two per entry."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How much does the loss change for a nudge of $10^{-11}$?"
+        },
+        {
+          "rung": "point",
+          "text": "About $10^{-11}$ times the gradient.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "float64 keeps about 16 digits of a loss near 1.4."
+        }
+      ],
+      "feedback": {
+        "correct": "A change of about $10^{-11}$ in a loss near 1.4 keeps only about 5 digits, so the error rises.",
+        "generic": "Not quite. Think about the digits left in $f(x+h) - f(x-h)$."
+      },
+      "explain": {
+        "text": "Rounding error in the difference is about $\\epsilon / h$: tiny $h$ magnifies it. The sweet spot balances it against the $h^2$ term."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The gradient check",
+      "prose": "For each entry $\\theta_i$ of each array:\n$$g_{n,i} = \\frac{L(\\theta + h e_i) - L(\\theta - h e_i)}{2h}, \\qquad \\text{error} = \\frac{\\lVert g_a - g_n \\rVert}{\\lVert g_a \\rVert + \\lVert g_n \\rVert}$$\nIn float64 with $h$ near $10^{-5}$, a correct backward pass gives an error far below $10^{-6}$.",
+      "question": "How many forward passes does checking all 18,017 numbers of the tiny GPT take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 36034,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 18017,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "plus",
+            "value": 18018,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Forward passes"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two per entry."
+        }
+      ],
+      "feedback": {
+        "correct": "$2 \\times 18{,}017 = 36{,}034$, which is why we check a tiny configuration.",
+        "generic": "Not quite. Each entry needs two passes.",
+        "byKey": {
+          "one": "Each entry needs two passes, $+h$ and $-h$.",
+          "plus": "The central difference needs no base pass: two per entry."
+        }
+      },
+      "explain": {
+        "text": "Two passes per entry makes 36,034 for the tiny GPT and billions for a large model. Checking a tiny configuration of the same code tests every piece cheaply."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Before a long run",
+      "prose": "A research team is about to spend a week of GPU time training a new attention variant written by hand, backward pass included. Nobody has run it end to end yet.",
+      "question": "What should they run first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "gc",
+            "text": "A float64 gradient check of a tiny copy",
+            "correct": true
+          },
+          {
+            "id": "long",
+            "text": "The full run, watching the loss fall",
+            "why": "A wrong gradient can still lower the loss, slowly; a week is a costly way to find it."
+          },
+          {
+            "id": "f32",
+            "text": "A float32 gradient check of the full model",
+            "why": "float32 rounding hides bugs and the full model is too large to check."
+          },
+          {
+            "id": "lr",
+            "text": "A learning-rate sweep",
+            "why": "A sweep tunes a correct model; it does not show the gradients are right."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which test isolates the backward pass?"
+        },
+        {
+          "rung": "point",
+          "text": "Small and float64."
+        },
+        {
+          "rung": "step",
+          "text": "Then a short run."
+        }
+      ],
+      "feedback": {
+        "correct": "A tiny float64 check tests every gradient in seconds, before any long run.",
+        "generic": "Not quite. Which check tells you the gradients are right?"
+      },
+      "explain": {
+        "text": "A tiny configuration exercises every operation of the real code. If it passes in float64, the long run starts from a correct backward pass."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Central differences $(L(\\theta + h) - L(\\theta - h)) / 2h$ have error of order $h^2$ until rounding takes over near $h = 10^{-5}$ in float64.",
+      "The relative error $\\lVert g_a - g_n \\rVert / (\\lVert g_a \\rVert + \\lVert g_n \\rVert)$ below $10^{-6}$ in float64 passes; check a tiny configuration of the same code.",
+      "New pieces: the scatter-add of the lookup (a row used twice sums both gradients, an unused row gets 0), layer norm and the masked softmax."
+    ],
+    "formula": {
+      "name": "Relative error",
+      "tex": "\\frac{\\lVert g_a - g_n \\rVert}{\\lVert g_a \\rVert + \\lVert g_n \\rVert}",
+      "note": "Below $10^{-6}$ in float64."
+    },
+    "trap": "Checking in float32, where rounding alone gives errors near $10^{-3}$ to $10^{-2}$."
+  },
+  "quiz": [
+    {
+      "id": "q-quad",
+      "difficulty": 2,
+      "question": "Central differences of $f(x) = x^2$ at $x = 3$ with $h = 0.1$: what do you get?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 1e-09
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 6.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "f",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Slope"
+      },
+      "feedback": {
+        "correct": "$(3.1^2 - 2.9^2) / 0.2 = 6$ exactly: for a quadratic the central difference has no error.",
+        "generic": "Not quite. Compute $(3.1^2 - 2.9^2)/0.2$.",
+        "byKey": {
+          "one": "That is the one-sided slope.",
+          "f": "That is $f(3)$, not its slope."
+        }
+      },
+      "explain": {
+        "text": "The error term is $f'''(x) h^2 / 6$, and a quadratic has $f''' = 0$, so the answer is exactly 6."
+      }
+    },
+    {
+      "id": "q-double",
+      "difficulty": 3,
+      "question": "Backprop returns a gradient exactly twice the true one. What relative error does the check report? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3333,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Error"
+      },
+      "feedback": {
+        "correct": "$\\lVert 2g - g \\rVert / (\\lVert 2g \\rVert + \\lVert g \\rVert) = 1/3$.",
+        "generic": "Not quite. Put $g_a = 2g$ and $g_n = g$ in the formula.",
+        "byKey": {
+          "half": "You divided by $\\lVert 2g \\rVert$ alone.",
+          "one": "You divided by $\\lVert g \\rVert$ alone."
+        }
+      },
+      "explain": {
+        "text": "The difference is $\\lVert g \\rVert$ and the norms add to $3\\lVert g \\rVert$: a third, 0.3333, far above $10^{-6}$."
+      }
+    },
+    {
+      "id": "q-f64",
+      "difficulty": 2,
+      "question": "Why run a gradient check in float64?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "digits",
+            "text": "Subtracting two close losses needs the digits",
+            "correct": true
+          },
+          {
+            "id": "speed",
+            "text": "It is faster than float32 is",
+            "why": "It is slower, and the check is not about speed."
+          },
+          {
+            "id": "gpu",
+            "text": "The long training run uses float64",
+            "why": "Training often uses less precision; the check is about the difference of two losses."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Subtracting two close losses cancels most digits; float64 has about 16 to spare.",
+        "generic": "Not quite. What happens when two close numbers are subtracted?"
+      },
+      "explain": {
+        "text": "The central difference keeps only the digits where the two losses differ. float64 leaves enough to see a $10^{-6}$ error."
+      }
+    }
+  ]
+}

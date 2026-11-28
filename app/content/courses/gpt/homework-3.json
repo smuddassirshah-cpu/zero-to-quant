@@ -1,0 +1,425 @@
+{
+  "id": "homework-3",
+  "course": "gpt",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-train-small",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "gpt-train"
+      ],
+      "pace": 1800,
+      "title": "Train a small GPT and check its gradients",
+      "prose": "From a blank start, write two functions. `train(steps, lr, seed)` trains the small GPT `SMALL` (width 16, context 16, 2 heads, MLP 64) on `TRAIN` and returns `(weights, losses)`. `grad_check(seed)` returns the worst relative error of backprop against central differences ($h = 10^{-5}$) on the tiny model `TINY` with the batch `XT`, `YT`.",
+      "question": "Write `train` and `grad_check`. Rules: initial weights in `gpt_ops_l2.shapes` order from `default_rng(seed)`, matrices $N(0, 0.02^2)$, gains 1, other vectors 0; batches of 8 windows from `default_rng(seed + 1)`, starts by `integers(0, len(TRAIN) - 16, 8)`; Adam from `nt_ops_l1` at a fixed rate. For `grad_check`, scale those initial weights by 15 first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef train(steps, lr, seed):\n    ...\n\n\ndef grad_check(seed):\n    ...\n",
+        "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import shapes, to_model, mean_loss\n\n\ndef init(config, seed):\n    rng = np.random.default_rng(seed)\n    w = {}\n    for name, shape in shapes(config):\n        if name.endswith('_g'):\n            w[name] = np.ones(shape)\n        elif len(shape) == 1:\n            w[name] = np.zeros(shape)\n        else:\n            w[name] = rng.standard_normal(shape) * 0.02\n    return w\n\n\ndef loss_grads(w, X, Y, heads):\n    P = {k: Tensor(v) for k, v in w.items()}\n    V = w['head_w'].shape[1]\n    loss = cross_entropy(lm_logits(X, to_model(P), heads).reshape(-1, V), Y.reshape(-1))\n    loss.backward()\n    return loss.item(), {k: P[k].grad for k in w}\n\n\ndef train(steps, lr, seed):\n    w = init(SMALL, seed)\n    names = list(w)\n    m = [np.zeros_like(w[k]) for k in names]\n    v = [np.zeros_like(w[k]) for k in names]\n    rng = np.random.default_rng(seed + 1)\n    losses = []\n    for t in range(1, steps + 1):\n        starts = rng.integers(0, len(TRAIN) - 16, 8)\n        X = np.stack([TRAIN[i:i + 16] for i in starts])\n        Y = np.stack([TRAIN[i + 1:i + 17] for i in starts])\n        loss, g = loss_grads(w, X, Y, 2)\n        new, m, v = adam_step([w[k] for k in names], [g[k] for k in names], m, v, t, lr)\n        w = dict(zip(names, new))\n        losses.append(loss)\n    return w, losses\n\n\ndef grad_check(seed):\n    w = init(TINY, seed)\n    for k in w:\n        w[k] = w[k] * 15\n    _, g = loss_grads(w, XT, YT, 2)\n    worst = 0.0\n    for k in w:\n        num = np.zeros_like(w[k])\n        for i in np.ndindex(w[k].shape):\n            keep = w[k][i]\n            w[k][i] = keep + 1e-5\n            up = mean_loss(w, XT, YT, 2)\n            w[k][i] = keep - 1e-5\n            down = mean_loss(w, XT, YT, 2)\n            w[k][i] = keep\n            num[i] = (up - down) / 2e-5\n        d = np.linalg.norm(g[k]) + np.linalg.norm(num)\n        worst = max(worst, 0.0 if d == 0 else float(np.linalg.norm(g[k] - num) / d))\n    return worst\n",
+        "prelude": "import numpy as np\nimport gpt_ops_l2 as _G\n\n_ids = np.array(_G.encode(open('tiny-shakespeare.txt').read()))\nTRAIN, VAL = _ids[:225000], _ids[225000:227001]\nSMALL = {'V': 65, 'T': 16, 'd': 16, 'n_head': 2, 'n_layer': 1, 'mlp': 64}\nTINY = {'V': 5, 'T': 4, 'd': 8, 'n_head': 2, 'n_layer': 1, 'mlp': 32}\nXT = np.array([[0, 1, 2, 3], [3, 2, 1, 0]])\nYT = np.array([[1, 2, 3, 4], [2, 1, 0, 4]])\n\n\ndef val_loss(w):\n    n = (len(VAL) - 1) // 16\n    return _G.mean_loss(w, VAL[:n * 16].reshape(n, 16), VAL[1:n * 16 + 1].reshape(n, 16), 2)\n",
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+          "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+          "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+          "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "examples": [
+          {
+            "call": "len(train(2, 0.01, 0)[1])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "grad_check(0) < 1e-3",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          }
+        ],
+        "tests": [
+          {
+            "call": "train(3, 0.01, 0)[1]",
+            "expect": "[4.17502626365493, 4.0838620086010025, 3.923005601603332]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "call": "val_loss(train(60, 0.01, 0)[0]) < 3.2",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          },
+          {
+            "call": "val_loss(train(60, 0.01, 1)[0]) < 3.2",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          },
+          {
+            "call": "sorted(train(1, 0.01, 2)[0]) == sorted(k for k, _ in _G.shapes(SMALL))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "grad_check(0) < 1e-6",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          },
+          {
+            "call": "grad_check(0) > 1e-13",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 8000
+          },
+          {
+            "call": "len(train(4, 0.0, 3)[1])",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 7 hidden tests. Test 1 compares the first 3 losses to $10^{-6}$ (relative). Tests 2 and 3 train 60 steps at 0.01 for seeds 0 and 1 and need the loss on 2,000 validation characters below 3.2. Then the arrays' names, the gradient check below $10^{-6}$ and above $10^{-13}$, and a run at rate 0. Cases may take a few seconds.",
+        "mutants": [
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import shapes, to_model, mean_loss\n\n\ndef init(config, seed):\n    rng = np.random.default_rng(seed)\n    w = {}\n    for name, shape in shapes(config):\n        if name.endswith('_g'):\n            w[name] = np.ones(shape)\n        elif len(shape) == 1:\n            w[name] = np.zeros(shape)\n        else:\n            w[name] = rng.standard_normal(shape) * 0.02\n    return w\n\n\ndef loss_grads(w, X, Y, heads):\n    P = {k: Tensor(v) for k, v in w.items()}\n    V = w['head_w'].shape[1]\n    loss = cross_entropy(lm_logits(X, to_model(P), heads).reshape(-1, V), Y.reshape(-1))\n    loss.backward()\n    return loss.item(), {k: P[k].grad for k in w}\n\n\ndef train(steps, lr, seed):\n    w = init(SMALL, seed)\n    names = list(w)\n    m = [np.zeros_like(w[k]) for k in names]\n    v = [np.zeros_like(w[k]) for k in names]\n    rng = np.random.default_rng(seed + 1)\n    losses = []\n    for t in range(1, steps + 1):\n        starts = rng.integers(0, len(TRAIN) - 16, 8)\n        X = np.stack([TRAIN[i:i + 16] for i in starts])\n        Y = np.stack([TRAIN[i + 1:i + 17] for i in starts])\n        loss, g = loss_grads(w, X, Y, 2)\n        new, m, v = adam_step([w[k] for k in names], [g[k] for k in names], m, v, t, lr)\n        w = dict(zip(names, [p - lr * gg for p, gg in zip([w[k] for k in names], [g[k] for k in names])]))\n        losses.append(loss)\n    return w, losses\n\n\ndef grad_check(seed):\n    w = init(TINY, seed)\n    for k in w:\n        w[k] = w[k] * 15\n    _, g = loss_grads(w, XT, YT, 2)\n    worst = 0.0\n    for k in w:\n        num = np.zeros_like(w[k])\n        for i in np.ndindex(w[k].shape):\n            keep = w[k][i]\n            w[k][i] = keep + 1e-5\n            up = mean_loss(w, XT, YT, 2)\n            w[k][i] = keep - 1e-5\n            down = mean_loss(w, XT, YT, 2)\n            w[k][i] = keep\n            num[i] = (up - down) / 2e-5\n        d = np.linalg.norm(g[k]) + np.linalg.norm(num)\n        worst = max(worst, 0.0 if d == 0 else float(np.linalg.norm(g[k] - num) / d))\n    return worst\n",
+            "test": 1,
+            "symptom": "Takes plain gradient steps instead of Adam."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import shapes, to_model, mean_loss\n\n\ndef init(config, seed):\n    rng = np.random.default_rng(seed)\n    w = {}\n    for name, shape in shapes(config):\n        if name.endswith('_g'):\n            w[name] = np.ones(shape)\n        elif len(shape) == 1:\n            w[name] = np.zeros(shape)\n        else:\n            w[name] = rng.standard_normal(shape) * 0.02\n    return w\n\n\ndef loss_grads(w, X, Y, heads):\n    P = {k: Tensor(v) for k, v in w.items()}\n    V = w['head_w'].shape[1]\n    loss = cross_entropy(lm_logits(X, to_model(P), heads).reshape(-1, V), Y.reshape(-1))\n    loss.backward()\n    return loss.item(), {k: P[k].grad for k in w}\n\n\ndef train(steps, lr, seed):\n    w = init(SMALL, seed)\n    names = list(w)\n    m = [np.zeros_like(w[k]) for k in names]\n    v = [np.zeros_like(w[k]) for k in names]\n    rng = np.random.default_rng(seed + 1)\n    losses = []\n    for t in range(1, steps + 1):\n        starts = rng.integers(0, len(TRAIN) - 16, 8)\n        X = np.stack([TRAIN[i:i + 16] for i in starts])\n        Y = np.stack([TRAIN[i:i + 16] for i in starts])\n        loss, g = loss_grads(w, X, Y, 2)\n        new, m, v = adam_step([w[k] for k in names], [g[k] for k in names], m, v, t, lr)\n        w = dict(zip(names, new))\n        losses.append(loss)\n    return w, losses\n\n\ndef grad_check(seed):\n    w = init(TINY, seed)\n    for k in w:\n        w[k] = w[k] * 15\n    _, g = loss_grads(w, XT, YT, 2)\n    worst = 0.0\n    for k in w:\n        num = np.zeros_like(w[k])\n        for i in np.ndindex(w[k].shape):\n            keep = w[k][i]\n            w[k][i] = keep + 1e-5\n            up = mean_loss(w, XT, YT, 2)\n            w[k][i] = keep - 1e-5\n            down = mean_loss(w, XT, YT, 2)\n            w[k][i] = keep\n            num[i] = (up - down) / 2e-5\n        d = np.linalg.norm(g[k]) + np.linalg.norm(num)\n        worst = max(worst, 0.0 if d == 0 else float(np.linalg.norm(g[k] - num) / d))\n    return worst\n",
+            "test": 1,
+            "symptom": "Trains on targets equal to the inputs."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import shapes, to_model, mean_loss\n\n\ndef init(config, seed):\n    rng = np.random.default_rng(seed)\n    w = {}\n    for name, shape in shapes(config):\n        if name.endswith('_g'):\n            w[name] = np.ones(shape)\n        elif len(shape) == 1:\n            w[name] = np.zeros(shape)\n        else:\n            w[name] = rng.standard_normal(shape) * 0.02\n    return w\n\n\ndef loss_grads(w, X, Y, heads):\n    P = {k: Tensor(v) for k, v in w.items()}\n    V = w['head_w'].shape[1]\n    loss = cross_entropy(lm_logits(X, to_model(P), heads).reshape(-1, V), Y.reshape(-1))\n    loss.backward()\n    return loss.item(), {k: P[k].grad for k in w}\n\n\ndef train(steps, lr, seed):\n    w = init(SMALL, seed)\n    names = list(w)\n    m = [np.zeros_like(w[k]) for k in names]\n    v = [np.zeros_like(w[k]) for k in names]\n    rng = np.random.default_rng(seed + 1)\n    losses = []\n    for t in range(1, steps + 1):\n        starts = rng.integers(0, len(TRAIN) - 16, 8)\n        X = np.stack([TRAIN[i:i + 16] for i in starts])\n        Y = np.stack([TRAIN[i + 1:i + 17] for i in starts])\n        loss, g = loss_grads(w, X, Y, 2)\n        new, m, v = adam_step([w[k] for k in names], [g[k] for k in names], m, v, t, lr)\n        w = dict(zip(names, new))\n        losses.append(loss)\n    return w, losses\n\n\ndef grad_check(seed):\n    w = init(TINY, seed)\n    for k in w:\n        w[k] = w[k] * 15\n    _, g = loss_grads(w, XT, YT, 2)\n    worst = 0.0\n    for k in w:\n        num = np.zeros_like(w[k])\n        for i in np.ndindex(w[k].shape):\n            keep = w[k][i]\n            w[k][i] = keep + 1e-5\n            up = mean_loss(w, XT, YT, 2)\n            w[k][i] = keep\n            down = mean_loss(w, XT, YT, 2)\n            num[i] = (up - down) / 1e-5\n        d = np.linalg.norm(g[k]) + np.linalg.norm(num)\n        worst = max(worst, 0.0 if d == 0 else float(np.linalg.norm(g[k] - num) / d))\n    return worst\n",
+            "test": 5,
+            "symptom": "Checks with a one-sided difference, too coarse for the bar."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import lm_logits\nfrom gpt_ops_l2 import shapes, to_model, mean_loss\n\n\ndef init(config, seed):\n    rng = np.random.default_rng(seed)\n    w = {}\n    for name, shape in shapes(config):\n        if name.endswith('_g'):\n            w[name] = np.ones(shape)\n        elif len(shape) == 1:\n            w[name] = np.zeros(shape)\n        else:\n            w[name] = rng.standard_normal(shape) * 0.02\n    return w\n\n\ndef loss_grads(w, X, Y, heads):\n    P = {k: Tensor(v) for k, v in w.items()}\n    V = w['head_w'].shape[1]\n    loss = cross_entropy(lm_logits(X, to_model(P), heads).reshape(-1, V), Y.reshape(-1))\n    loss.backward()\n    return loss.item(), {k: P[k].grad for k in w}\n\n\ndef train(steps, lr, seed):\n    w = init(SMALL, seed)\n    names = list(w)\n    m = [np.zeros_like(w[k]) for k in names]\n    v = [np.zeros_like(w[k]) for k in names]\n    rng = np.random.default_rng(seed + 1)\n    rng.integers(0, 2)\n    losses = []\n    for t in range(1, steps + 1):\n        starts = rng.integers(0, len(TRAIN) - 16, 8)\n        X = np.stack([TRAIN[i:i + 16] for i in starts])\n        Y = np.stack([TRAIN[i + 1:i + 17] for i in starts])\n        loss, g = loss_grads(w, X, Y, 2)\n        new, m, v = adam_step([w[k] for k in names], [g[k] for k in names], m, v, t, lr)\n        w = dict(zip(names, new))\n        losses.append(loss)\n    return w, losses\n\n\ndef grad_check(seed):\n    w = init(TINY, seed)\n    for k in w:\n        w[k] = w[k] * 15\n    _, g = loss_grads(w, XT, YT, 2)\n    worst = 0.0\n    for k in w:\n        num = np.zeros_like(w[k])\n        for i in np.ndindex(w[k].shape):\n            keep = w[k][i]\n            w[k][i] = keep + 1e-5\n            up = mean_loss(w, XT, YT, 2)\n            w[k][i] = keep - 1e-5\n            down = mean_loss(w, XT, YT, 2)\n            w[k][i] = keep\n            num[i] = (up - down) / 2e-5\n        d = np.linalg.norm(g[k]) + np.linalg.norm(num)\n        worst = max(worst, 0.0 if d == 0 else float(np.linalg.norm(g[k] - num) / d))\n    return worst\n",
+            "test": 1,
+            "symptom": "Draws one extra random number before the batches, so the run is not the seeded one."
+          }
+        ],
+        "budget": 8000
+      },
+      "feedback": {
+        "correct": "Your small GPT trains as specified and its gradients pass the check.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 replays the seeded run: check the init order, the batch generator `default_rng(seed + 1)` and Adam's step count.",
+          "test-5": "Test 5 needs central differences, both nudges, $h = 10^{-5}$, in float64."
+        }
+      },
+      "explain": {
+        "text": "Sixty steps take the small GPT from about 4.17 to 2.87 on held-out text. The gradient check on a tiny copy of the same code is what makes that number trustworthy."
+      }
+    },
+    {
+      "id": "h-find-lr",
+      "difficulty": 4,
+      "skills": [
+        "gpt-train"
+      ],
+      "title": "A learning-rate finder",
+      "prose": "`short_run(lr)` returns the 10 losses of a seeded run of the small GPT at that rate; 0.5 is a planted run. A run is unstable when any loss is not finite or rises more than 10% above its first.",
+      "question": "Write `find_lr(rates)`: the rate whose last loss is lowest among the stable runs, or `None` when every run is unstable.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def find_lr(rates):\n    ...\n",
+        "solution": "import math\n\n\ndef find_lr(rates):\n    best, best_loss = None, math.inf\n    for lr in rates:\n        losses = short_run(lr)\n        first = losses[0]\n        if any(not math.isfinite(x) for x in losses) or max(losses) > 1.1 * first:\n            continue\n        if losses[-1] < best_loss:\n            best, best_loss = lr, losses[-1]\n    return best\n",
+        "prelude": "import math\n\n_RUNS = {0.0001: [4.17502626365493, 4.1744756561853915, 4.1672562347452144, 4.173782526038403, 4.163470500121681, 4.168946949523767, 4.159805426482013, 4.173058054376468, 4.159461105339773, 4.155343887422587], 0.001: [4.17502626365493, 4.1589218271945345, 4.134683905866258, 4.130870212722323, 4.103489154011193, 4.103816684845411, 4.089921891998429, 4.074934029532992, 4.067809549228603, 4.041451254878233], 0.01: [4.17502626365493, 4.0838620086010025, 3.923005601603332, 3.8624126303282527, 3.712759333653998, 3.682385074941207, 3.67774123957693, 3.535208399471788, 3.537018105828343, 3.329951017172765], 0.03: [4.17502626365493, 4.029925204633359, 3.576738619804156, 3.5300726309133905, 3.2851126956823844, 3.349126648173537, 3.527899472300838, 3.4857507683519513, 3.3641809667718245, 3.155134650046781], 0.1: [4.17502626365493, 3.929500501436448, 3.4088894000229484, 3.8040037846816768, 3.5620406960787174, 3.4226711383290693, 3.5867177547327613, 3.5261749071386896, 3.4873357448282247, 3.157491179119601], 0.3: [4.17502626365493, 4.883805569352929, 4.236428087730209, 4.238321366873596, 3.841661010192181, 4.402972989451316, 4.115207585608403, 3.619827868029225, 3.615642978923809, 3.3494738886404614], 1.0: [4.17502626365493, 19.985395014626953, 13.275278402729091, 22.723005273379776, 27.423025427299724, 16.92767269196857, 29.91156740019651, 40.06278919103433, 37.86470680162556, 31.130070991283986], 0.5: [4.175, 4.0, 5.2, 4.4, 3.9, 3.6, 3.4, 3.2, 3.1, 3.0]}\n\n\ndef short_run(lr):\n    \"\"\"The 10 losses of a seeded run of the small GPT at this rate (recorded by the number script); 0.5 is a planted spiky run.\"\"\"\n    return list(_RUNS[lr])\n",
+        "examples": [
+          {
+            "call": "find_lr([0.001, 0.01])",
+            "expect": "0.01",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "find_lr([1e-4, 1e-3, 1e-2])",
+            "expect": "0.01",
+            "compare": "equal"
+          },
+          {
+            "call": "find_lr([1e-4, 1e-3, 1e-2, 3e-2, 1e-1, 3e-1, 1.0])",
+            "expect": "0.03",
+            "compare": "equal"
+          },
+          {
+            "call": "find_lr([0.01, 0.5])",
+            "expect": "0.01",
+            "compare": "equal"
+          },
+          {
+            "call": "find_lr([1.0, 3e-1])",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "find_lr([1e-4])",
+            "expect": "0.0001",
+            "compare": "equal"
+          },
+          {
+            "call": "short_run(0.01)[-1]",
+            "expect": "3.329951017172765",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          }
+        ],
+        "how": "Submit runs 6 hidden tests: three rates, all seven recorded rates, a stable rate beside a planted run that spikes and ends lower, the two largest, a single small rate, and one recorded run.",
+        "mutants": [
+          {
+            "source": "import math\n\n\ndef find_lr(rates):\n    best, best_loss = None, math.inf\n    for lr in rates:\n        losses = short_run(lr)\n        first = losses[0]\n        if losses[-1] < best_loss:\n            best, best_loss = lr, losses[-1]\n    return best\n",
+            "test": 3,
+            "symptom": "Keeps unstable runs, so a rate that spiked can win."
+          },
+          {
+            "source": "import math\n\n\ndef find_lr(rates):\n    best, best_loss = None, math.inf\n    for lr in rates:\n        losses = short_run(lr)\n        first = losses[0]\n        if any(not math.isfinite(x) for x in losses) or max(losses) > 1.1 * first:\n            continue\n        if best is None or lr > best:\n            best, best_loss = lr, losses[-1]\n    return best\n",
+            "test": 2,
+            "symptom": "Takes the largest stable rate instead of the lowest final loss."
+          },
+          {
+            "source": "import math\n\n\ndef find_lr(rates):\n    best, best_loss = None, math.inf\n    for lr in rates:\n        losses = short_run(lr)\n        first = losses[0]\n        if any(not math.isfinite(x) for x in losses) or max(losses) > 1.1 * first:\n            continue\n        if losses[-1] < best_loss:\n            best, best_loss = lr, losses[-1]\n    return best if best is not None else rates[0]\n",
+            "test": 4,
+            "symptom": "Returns a rate even when every run was unstable."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Your finder picks the largest stable improvement.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 pairs 0.01 with a run that spikes, then ends lower. Skip any run that rises more than 10% above its first loss.",
+          "test-4": "Test 4 has only unstable runs: return `None`."
+        }
+      },
+      "explain": {
+        "text": "Stable first, then lowest last loss. A finder that trusts a spiky run picks a rate that blows up over a long run."
+      }
+    },
+    {
+      "id": "h-iteration-order",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "title": "One training iteration",
+      "prose": "Put the steps of one training iteration in order. Leave out the line that does not belong.",
+      "question": "Order the steps.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Draw $B$ start indices and cut the input and target windows"
+          },
+          {
+            "id": "s2",
+            "text": "Set every gradient to zero"
+          },
+          {
+            "id": "s3",
+            "text": "Run the forward pass and compute the mean cross-entropy"
+          },
+          {
+            "id": "s4",
+            "text": "Call `backward` on the loss"
+          },
+          {
+            "id": "s5",
+            "text": "Add 1 to Adam's step count and update its two running means"
+          },
+          {
+            "id": "s6",
+            "text": "Move every weight by the bias-corrected Adam step"
+          },
+          {
+            "id": "d1",
+            "text": "Draw a few validation windows into the batch",
+            "why": "Validation text is never trained on; it exists to measure held-out loss."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "distractors": [
+          "d1"
+        ],
+        "after": {
+          "s3": [
+            "s1",
+            "s2"
+          ],
+          "s4": [
+            "s3"
+          ],
+          "s5": [
+            "s4"
+          ],
+          "s6": [
+            "s5"
+          ]
+        }
+      },
+      "feedback": {
+        "correct": "Batch, zero, forward, backward, update the moments, step.",
+        "generic": "Not quite. Each step needs what the one before made.",
+        "byKey": {
+          "d1": "Validation text is never sampled for training.",
+          "left-out": "Every line but one belongs; put the left-out one back."
+        }
+      },
+      "explain": {
+        "text": "Zeroing can come before or after drawing the batch, but before `backward`. Adam updates its moments from the gradients, then moves the weights."
+      }
+    },
+    {
+      "id": "h-colab-plan",
+      "difficulty": 4,
+      "skills": [
+        "gpt-train"
+      ],
+      "title": "Plan the run outside the app",
+      "question": "Write your plan as you would send it to a supervisor.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Plan the strand exit's outside part: training nanoGPT's character-level Shakespeare model on a free Colab GPU. Say what you will run, the checks you will make before and during the run, the baseline you will compare with, and what the results note will contain.",
+        "model": "The app's run is a check of the method, not the result: one block, width 32, 5,000 steps. The outside part is nanoGPT's character-level Shakespeare on a free Colab GPU, larger and longer, written up so another person could repeat it.\n\n**Set-up.** Clone nanoGPT and run its `shakespeare_char` preparation, which splits the 1,115,394 characters 90/10 into training and validation. Use the small character config (for example 6 layers, width 384, context 256), note its parameter count from the start-up log, and fix the seed.\n\n**Checks before the long run.**\n- The loss at step 0 should be near $\\ln 65 \\approx 4.17$.\n- Overfit one batch for a few hundred steps: the loss must fall towards 0.\n- A short sweep of the learning rate around the config's value: keep the largest that falls smoothly.\n- Watch both curves during the run; stop if validation turns up while training keeps falling.\n\n**Baseline.** Count the add-one bigram on the same split: about 2.48 nats a character on validation. Every figure is compared with it on the same validation text.\n\n**The results note.** One page. It gives the commit and config, the seed, the hardware and wall time. It gives the final training and validation losses with the bigram's beside them, the gap in bits per character, a short sample at temperature 0.8, and anything that went wrong. Report validation loss, not training loss, and say how much of the gap a second seed changes.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Names the data split (nanoGPT's 90/10 on the full text) and a config with its parameter count and seed",
+            "required": true
+          },
+          {
+            "points": 3,
+            "text": "Lists the checks: loss at step 0 near $\\ln 65$, overfit one batch, a short rate sweep, watching both curves"
+          },
+          {
+            "points": 2,
+            "text": "Compares with the add-one bigram on the same validation text"
+          },
+          {
+            "points": 3,
+            "text": "Describes a results note: config, seed, hardware and time, training and validation loss, gap in bits, a sample, a second seed"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your plan with the model answer and tick the rubric.",
+        "generic": "Compare your plan with the model answer."
+      }
+    },
+    {
+      "id": "h-bits-gap",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "title": "The gap on 300 characters",
+      "prose": "On a 300-character stretch of held-out text, a model scores 1.62 nats a character and the bigram 2.38. Per-character losses have a standard deviation of about 1.5 nats.",
+      "question": "What is the standard error of the model's mean on those 300 characters? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.087,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "sd",
+            "value": 1.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "n",
+            "value": 0.005,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Standard error"
+      },
+      "feedback": {
+        "correct": "$1.5 / \\sqrt{300} \\approx 0.087$ nats.",
+        "generic": "Not quite. Divide by the square root of 300.",
+        "byKey": {
+          "sd": "That is one character's spread.",
+          "n": "You divided by 300, not its square root."
+        }
+      },
+      "explain": {
+        "text": "$1.5 / \\sqrt{300} \\approx 0.087$, small beside the gap of 0.76 nats. On 300 characters the gap is real but its size is uncertain to about a tenth of a nat."
+      }
+    },
+    {
+      "id": "h-sweep-read",
+      "difficulty": 4,
+      "skills": [
+        "gpt-train"
+      ],
+      "title": "Reading a sweep",
+      "prose": "A 10-step sweep of a new model gives final losses 4.10 at rate 0.0001, 3.80 at 0.001, 3.20 at 0.01 and 3.05 at 0.1; the 0.1 run touched 5.9 at step 4. Every run started at 4.15.",
+      "question": "Which rate should the long run start from?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "e2",
+            "text": "0.01, the largest stable rate",
+            "correct": true
+          },
+          {
+            "id": "e1",
+            "text": "0.1, the lowest final loss",
+            "why": "It rose from 4.15 to 5.9, more than 10% above its start: unstable. Over thousands of steps it may blow up."
+          },
+          {
+            "id": "e4",
+            "text": "0.0001, the safest",
+            "why": "It barely moved; a long run at that rate wastes compute."
+          },
+          {
+            "id": "e3",
+            "text": "0.001, in the middle",
+            "why": "It is stable but slower than 0.01, which is also stable."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Take the largest rate whose run falls smoothly: 0.01.",
+        "generic": "Not quite. Rule out the unstable run first, then take the best of the rest."
+      },
+      "explain": {
+        "text": "The 0.1 run spiked to 5.9, so it is out; 0.01 is the best stable rate. Warm-up and decay can then let the long run go a little higher."
+      }
+    }
+  ]
+}

@@ -1,0 +1,491 @@
+{
+  "id": "problems-3",
+  "course": "gpt",
+  "level": 3,
+  "title": "Training a desk chat model",
+  "minutes": 40,
+  "items": [
+    {
+      "id": "p-desk-train",
+      "difficulty": 5,
+      "skills": [
+        "gpt-train"
+      ],
+      "prose": "A desk trains a character model on two years of its own broker chat, vocabulary 80, starting from small random weights with Adam at rate 0.002.",
+      "parts": [
+        {
+          "question": "What loss should the first batch score, in nats? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 4.382,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "bits",
+                "value": 6.3219,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "v65",
+                "value": 4.1744,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Loss"
+          },
+          "feedback": {
+            "correct": "$\\ln 80 \\approx 4.3820$.",
+            "generic": "Not quite. Small weights give a uniform guess.",
+            "byKey": {
+              "bits": "That is bits.",
+              "v65": "That is for 65 symbols; this vocabulary has 80."
+            }
+          },
+          "explain": {
+            "text": "Near-zero logits give each of 80 symbols the same chance: $\\ln 80 \\approx 4.3820$."
+          }
+        },
+        {
+          "question": "Training starts from the uniform loss of part 1. One weight starts at 0.05 with gradient $-0.3$ on step 1. Where does Adam at rate 0.002 put it? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.052,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "sgd",
+                "value": 0.050600000000000006,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "sign",
+                "value": 0.048,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ],
+            "label": "Weight"
+          },
+          "feedback": {
+            "correct": "Step 1 moves by the rate against the gradient: $0.05 + 0.002 = 0.052$.",
+            "generic": "Not quite. On step 1, $\\hat m / \\sqrt{\\hat v} = -1$ here.",
+            "byKey": {
+              "sgd": "That is plain gradient descent.",
+              "sign": "You moved with the gradient."
+            }
+          },
+          "explain": {
+            "text": "$\\hat m = -0.3$ and $\\sqrt{\\hat v} = 0.3$, so the weight moves up by 0.002 to 0.052."
+          }
+        },
+        {
+          "question": "After training, the held-out loss is 1.95 nats a character. What is that in bits? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.8133,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "times",
+                "value": 1.3516,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Bits"
+          },
+          "feedback": {
+            "correct": "$1.95 / \\ln 2 \\approx 2.8133$ bits.",
+            "generic": "Not quite. Divide by $\\ln 2$.",
+            "byKey": {
+              "times": "You multiplied by $\\ln 2$."
+            }
+          },
+          "explain": {
+            "text": "$1.95 / \\ln 2 \\approx 2.8133$ bits a character."
+          }
+        },
+        {
+          "question": "Using the held-out 1.95 nats of part 3, the add-one bigram scores 2.52 nats on the same chat. By how many bits per character does the model beat it? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.8223,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "nats",
+                "value": 0.57,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "bits-only",
+                "value": 1.6856,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Bits"
+          },
+          "feedback": {
+            "correct": "$(2.52 - 1.95)/\\ln 2 \\approx 0.8223$ bits.",
+            "generic": "Not quite. Take the gap in nats, then convert.",
+            "byKey": {
+              "nats": "That is the gap in nats.",
+              "bits-only": "You converted only the bigram. Convert both, or the gap."
+            }
+          },
+          "explain": {
+            "text": "$0.57$ nats is 0.8223 bits a character, on the same held-out text."
+          }
+        },
+        {
+          "question": "For the gap of part 4 to be fair, which held-out text should both models be scored on?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "later",
+                "text": "The most recent months, never used for counting or training",
+                "correct": true
+              },
+              {
+                "id": "random",
+                "text": "Random lines drawn from the whole two years",
+                "why": "Lines from the training months leak into the test; take a later period."
+              },
+              {
+                "id": "train",
+                "text": "The training chat, which both models know",
+                "why": "Training text flatters both models; the bigram less than the GPT."
+              },
+              {
+                "id": "mixed",
+                "text": "Training chat for the bigram, held-out for the model",
+                "why": "Score both on the same text."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A later period that neither model saw.",
+            "generic": "Not quite. Which text did neither model fit?"
+          },
+          "explain": {
+            "text": "Hold out the latest months for both models, as a backtest holds out later dates."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-grad-check",
+      "difficulty": 4,
+      "skills": [
+        "gpt-train"
+      ],
+      "prose": "A colleague hand-writes the backward pass of a new attention layer and checks one weight, $w = 0.4$, where the loss is $L(w) = w^3 - w$.",
+      "parts": [
+        {
+          "question": "What is the true slope $L'(0.4)$? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.52,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "sign",
+                "value": 0.52,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "noderiv",
+                "value": -0.34,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ],
+            "label": "Slope"
+          },
+          "feedback": {
+            "correct": "$3(0.4)^2 - 1 = -0.52$.",
+            "generic": "Not quite. Differentiate $w^3 - w$.",
+            "byKey": {
+              "sign": "Check the sign: $0.48 - 1$.",
+              "noderiv": "That is $L(0.4)$, not its slope."
+            }
+          },
+          "explain": {
+            "text": "$L'(w) = 3w^2 - 1$, so $L'(0.4) = 0.48 - 1 = -0.52$."
+          }
+        },
+        {
+          "question": "Taking the true slope $-0.52$, what does the central difference with $h = 0.1$ give? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.51,
+            "tol": {
+              "abs": 5e-05
+            },
+            "wrong": [
+              {
+                "id": "one",
+                "value": -0.39,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "sign",
+                "value": 0.51,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ],
+            "label": "Slope"
+          },
+          "feedback": {
+            "correct": "$(L(0.5) - L(0.3)) / 0.2 = -0.5100$, off by $h^2 = 0.01$.",
+            "generic": "Not quite. Use $L(0.5)$ and $L(0.3)$.",
+            "byKey": {
+              "one": "That is the one-sided slope."
+            }
+          },
+          "explain": {
+            "text": "$L(0.5) = -0.375$, $L(0.3) = -0.273$, so the difference gives -0.5100; for a cubic the error is exactly $h^2 = 0.01$."
+          }
+        },
+        {
+          "question": "Their backprop returns $-0.26$ for this weight. Using the true slope $-0.52$, what is the relative error? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3333,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "one",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Error"
+          },
+          "feedback": {
+            "correct": "$0.26 / (0.26 + 0.52) \\approx 0.3333$.",
+            "generic": "Not quite. Divide the gap by the sum of the two sizes.",
+            "byKey": {
+              "one": "You divided by one size only."
+            }
+          },
+          "explain": {
+            "text": "The gap is 0.26 and the sizes add to 0.78: a third, 0.3333, far above $10^{-6}$. Their backward is off by a factor of 2."
+          }
+        },
+        {
+          "question": "What is the likeliest bug?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "half",
+                "text": "A lost branch: a factor of 2 dropped",
+                "correct": true
+              },
+              {
+                "id": "sign",
+                "text": "A flipped sign in the layer",
+                "why": "The sign is right; the size is half."
+              },
+              {
+                "id": "f32",
+                "text": "float32 rounding in the check",
+                "why": "Rounding cannot halve a gradient."
+              },
+              {
+                "id": "none",
+                "text": "No bug: errors near $10^{-1}$ are normal",
+                "why": "In float64 a correct gradient gives about $10^{-9}$."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Half the true slope suggests a lost term, like one branch of a node used twice.",
+            "generic": "Not quite. Compare $-0.26$ with $-0.52$."
+          },
+          "explain": {
+            "text": "Exactly half points to a branch whose gradient was overwritten instead of added, `backprop` L2's rule."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-short-run",
+      "difficulty": 3,
+      "skills": [
+        "gpt-train"
+      ],
+      "prose": "A first 10-step run of the desk model at rate 0.002 prints losses that start at 6.1 and end at 5.9.",
+      "parts": [
+        {
+          "question": "What first loss, in nats, should small random weights give over 80 symbols? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 4.38,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "given",
+                "value": 6.1,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "bits",
+                "value": 6.32,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ],
+            "label": "Loss"
+          },
+          "feedback": {
+            "correct": "About $\\ln 80 \\approx 4.38$.",
+            "generic": "Not quite. A uniform guess over 80 symbols.",
+            "byKey": {
+              "given": "That is what the run printed, not what it should be.",
+              "bits": "That is $\\log_2 80$, in bits."
+            }
+          },
+          "explain": {
+            "text": "Small random weights give about $\\ln 80 \\approx 4.38$."
+          }
+        },
+        {
+          "question": "What does a first loss of 6.1 point to?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "init",
+                "text": "Initial weights too large",
+                "correct": true
+              },
+              {
+                "id": "lr",
+                "text": "A learning rate too high",
+                "why": "The first loss comes before any update."
+              },
+              {
+                "id": "data",
+                "text": "Unusual text",
+                "why": "Any text scores about $\\ln 80$ under a uniform guess."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Large weights give confident wrong guesses before any training.",
+            "generic": "Not quite. What can affect the loss before step 1?"
+          },
+          "explain": {
+            "text": "Shrink the initial weights; then rerun the step-0 check."
+          }
+        },
+        {
+          "question": "After fixing it, the run starts at 4.38 and ends at 4.33 after 10 steps. What share of the first loss did it lose? Give a percentage to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0114,
+            "tol": {
+              "abs": 0.0005
+            },
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "abs",
+                "value": 0.05,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ],
+            "label": "Share"
+          },
+          "feedback": {
+            "correct": "$0.05 / 4.38 \\approx 1.1\\%$, under the 2% that marks a run as slow.",
+            "generic": "Not quite. Divide the fall by the first loss.",
+            "byKey": {
+              "abs": "That is the fall in nats; divide by 4.38."
+            }
+          },
+          "explain": {
+            "text": "$4.38 - 4.33 = 0.05$ and $0.05 / 4.38 \\approx 1.1\\%$: a slow run, so try a larger rate."
+          }
+        },
+        {
+          "question": "What should the desk try next?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "sweep",
+                "text": "A 10-step sweep of rates from 0.0001 to 0.1",
+                "correct": true
+              },
+              {
+                "id": "long",
+                "text": "A long run at 0.002",
+                "why": "A slow start wastes the long run; find a better rate first."
+              },
+              {
+                "id": "init",
+                "text": "Smaller initial weights again",
+                "why": "The start is now right at $\\ln 80$."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Sweep the rate and take the largest that falls smoothly.",
+            "generic": "Not quite. Which setting makes a run slow?"
+          },
+          "explain": {
+            "text": "A sweep over three orders of magnitude finds the useful rate in a few minutes."
+          }
+        }
+      ]
+    }
+  ]
+}

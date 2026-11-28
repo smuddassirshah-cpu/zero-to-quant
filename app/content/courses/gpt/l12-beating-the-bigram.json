@@ -1,0 +1,1341 @@
+{
+  "id": "l12-beating-the-bigram",
+  "course": "gpt",
+  "title": "Beating the bigram",
+  "minutes": 15,
+  "objectives": [
+    "Compute held-out loss per character and show the GPT beats the bigram."
+  ],
+  "skills": [
+    "gpt-train"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "What follows q",
+      "prose": "In the 225,000 training characters, `q` appears 102 times, and it is followed by `u` every time. The bigram adds 1 to every count before dividing, so no pair gets chance 0.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "After q",
+            "Count",
+            "Count + 1"
+          ],
+          "rows": [
+            [
+              "u",
+              "102",
+              "103"
+            ],
+            [
+              "each of the other 64",
+              "0",
+              "1"
+            ],
+            [
+              "total",
+              "102",
+              "167"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What chance does the add-one bigram give `u` after `q`? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6168,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "no-num",
+            "value": 0.6108,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Chance"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add 1 to all 65 counts after `q`."
+        },
+        {
+          "rung": "point",
+          "text": "The total becomes $102 + 65$.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$103 / 167$."
+        }
+      ],
+      "feedback": {
+        "correct": "$103 / 167 \\approx 0.6168$.",
+        "generic": "Not quite. Add 1 to every one of the 65 counts, then divide.",
+        "byKey": {
+          "raw": "That is the count with no smoothing. Adding 1 to the 64 empty counts takes chance away from `u`.",
+          "no-num": "You added 65 to the total but not 1 to the count of `u`."
+        }
+      },
+      "explain": {
+        "text": "Smoothing gives each of the 64 unseen letters $1/167$, so `u` keeps only 0.6168. A smaller smoothing constant takes less.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "How much smoothing",
+      "prose": "Add $\\alpha$ to every count instead of 1. Slide $\\alpha$ and watch the chance of `u` after `q`.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "u",
+            "each other"
+          ],
+          "yLabel": "chance",
+          "showValues": true,
+          "decimals": 4,
+          "yMax": 1.1
+        },
+        "state": {
+          "values": {
+            "u": 0.6168,
+            "each other": 0.006
+          },
+          "caption": "$\\alpha = 1$."
+        },
+        "controls": [
+          {
+            "bind": "alpha",
+            "label": "alpha",
+            "frames": [
+              {
+                "values": {
+                  "u": 0.9938,
+                  "each other": 0.0001
+                },
+                "caption": "$\\alpha = 0.01$."
+              },
+              {
+                "values": {
+                  "u": 0.941,
+                  "each other": 0.0009
+                },
+                "caption": "$\\alpha = 0.1$."
+              },
+              {
+                "values": {
+                  "u": 0.6168,
+                  "each other": 0.006
+                },
+                "caption": "$\\alpha = 1$."
+              },
+              {
+                "values": {
+                  "u": 0.1489,
+                  "each other": 0.0133
+                },
+                "caption": "$\\alpha = 10$."
+              }
+            ],
+            "frameLabels": [
+              "0.01",
+              "0.1",
+              "1",
+              "10"
+            ]
+          }
+        ]
+      },
+      "question": "What is the chance of `u` after `q` at $\\alpha = 0.1$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.941,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.6168,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "ten",
+            "value": 0.1489,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Chance"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide to $\\alpha = 0.1$."
+        },
+        {
+          "rung": "point",
+          "text": "Read the `u` bar.",
+          "highlight": [
+            "xu"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$102 + 0.1$ over $102 + 6.5$: 0.9410.",
+        "generic": "Not quite. Read the `u` bar at 0.1.",
+        "byKey": {
+          "one": "That is $\\alpha = 1$.",
+          "ten": "That is $\\alpha = 10$."
+        }
+      },
+      "explain": {
+        "text": "Less smoothing trusts the counts more: 0.9410 at 0.1, 0.1489 at 10. On the validation text $\\alpha = 0.1$ scores 2.4494 against 2.4554 for add-one."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The baseline in bits",
+      "prose": "The add-one bigram, counted on the training part, scores **2.4554** nats a character on the 25,000 validation characters. This is the **baseline** the tiny GPT must beat.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "Validation loss (nats)"
+          ],
+          "rows": [
+            [
+              "uniform",
+              "4.1744"
+            ],
+            [
+              "add-one bigram",
+              "2.4554"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the bigram's loss in bits per character? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.5424,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "times",
+            "value": 1.7019,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Bits"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide by $\\ln 2$."
+        },
+        {
+          "rung": "point",
+          "text": "$2.4554 / 0.6931$.",
+          "highlight": [
+            "r1"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$2.4554 / \\ln 2 \\approx 3.5424$ bits.",
+        "generic": "Not quite. Divide nats by $\\ln 2$.",
+        "byKey": {
+          "times": "You multiplied by $\\ln 2$."
+        }
+      },
+      "explain": {
+        "text": "2.4554 nats is 3.5424 bits a character, against $\\log_2 65 \\approx 6.0224$ for a uniform guess. One character of context already saves over 2 bits.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Count the baseline",
+      "prose": "Write `bigram_val_loss(train, val, alpha)`: count every pair in `train` (use `np.add.at`, so repeated pairs add), add `alpha` to all 65 by 65 counts, normalise each row, and return the mean $-\\ln P$ over the pairs of `val`. `TRAIN` and `VAL` hold the two parts as ids.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "After q",
+            "Count",
+            "Count + 1"
+          ],
+          "rows": [
+            [
+              "u",
+              "102",
+              "103"
+            ],
+            [
+              "each of the other 64",
+              "0",
+              "1"
+            ],
+            [
+              "total",
+              "102",
+              "167"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "Write `bigram_val_loss`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef bigram_val_loss(train, val, alpha):\n    # train, val: arrays of ids from 0 to 64. Count each pair (a, b) in train, add alpha to every one of the\n    # 65 by 65 counts, turn each row into probabilities, and return the mean -ln P[a, b] over the pairs of val.\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef bigram_val_loss(train, val, alpha):\n    train, val = np.asarray(train), np.asarray(val)\n    counts = np.zeros((65, 65))\n    np.add.at(counts, (train[:-1], train[1:]), 1)\n    probs = (counts + alpha) / (counts + alpha).sum(axis=1, keepdims=True)\n    return float(-np.log(probs[val[:-1], val[1:]]).mean())\n",
+        "prelude": "import numpy as np\nimport gpt_ops_l2 as _G\n\n_ids = np.array(_G.encode(open('tiny-shakespeare.txt').read()))\nTRAIN, VAL = _ids[:225000], _ids[225000:]\n",
+        "data": {
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "examples": [
+          {
+            "call": "round(bigram_val_loss(TRAIN, VAL, 1.0), 2)",
+            "expect": "2.46",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "bigram_val_loss(TRAIN, VAL, 1.0)",
+            "expect": "2.4553844026859295",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "bigram_val_loss(TRAIN, VAL, 0.1)",
+            "expect": "2.4493997210556206",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "bigram_val_loss(TRAIN, TRAIN, 1.0)",
+            "expect": "2.4236717059867394",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "bigram_val_loss([0, 1, 0, 1, 2], [0, 1, 2], 1.0)",
+            "expect": "3.3088128847769385",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "bigram_val_loss([5, 5, 5], [5, 5], 0.5)",
+            "expect": "2.624668592163159",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          }
+        ],
+        "how": "Submit runs 5 hidden tests: the slice at $\\alpha = 1$ and 0.1, the training part scored on itself, and two short lists. Values within $10^{-9}$ (relative).",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef bigram_val_loss(train, val, alpha):\n    train, val = np.asarray(train), np.asarray(val)\n    counts = np.zeros((65, 65))\n    np.add.at(counts, (train[:-1], train[1:]), 1)\n    probs = (counts + alpha) / (counts + alpha).sum(axis=0, keepdims=True)\n    return float(-np.log(probs[val[:-1], val[1:]]).mean())\n",
+            "test": 1,
+            "symptom": "Normalises the columns instead of the rows."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef bigram_val_loss(train, val, alpha):\n    train, val = np.asarray(train), np.asarray(val)\n    counts = np.zeros((65, 65))\n    np.add.at(counts, (train[:-1], train[1:]), 1)\n    probs = (counts + 1) / (counts + 1).sum(axis=1, keepdims=True)\n    return float(-np.log(probs[val[:-1], val[1:]]).mean())\n",
+            "test": 2,
+            "symptom": "Always adds 1, whatever alpha is."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef bigram_val_loss(train, val, alpha):\n    train, val = np.asarray(train), np.asarray(val)\n    counts = np.zeros((65, 65))\n    counts[train[:-1], train[1:]] += 1\n    probs = (counts + alpha) / (counts + alpha).sum(axis=1, keepdims=True)\n    return float(-np.log(probs[val[:-1], val[1:]]).mean())\n",
+            "test": 1,
+            "symptom": "Adds 1 once per distinct pair, since repeated index pairs overwrite each other."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef bigram_val_loss(train, val, alpha):\n    train, val = np.asarray(train), np.asarray(val)\n    counts = np.zeros((65, 65))\n    np.add.at(counts, (train[:-1], train[1:]), 1)\n    probs = (counts + alpha) / (counts + alpha).sum(axis=1, keepdims=True)\n    return float(-np.log2(probs[val[:-1], val[1:]]).mean())\n",
+            "test": 1,
+            "symptom": "Reports bits instead of nats."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`np.add.at(counts, (train[:-1], train[1:]), 1)`."
+        },
+        {
+          "rung": "point",
+          "text": "Row sums: `.sum(axis=1, keepdims=True)`.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pick `probs[val[:-1], val[1:]]` and average $-\\ln$."
+        }
+      ],
+      "feedback": {
+        "correct": "Your bigram scores 2.4554 on validation, the baseline.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is the slice at $\\alpha = 1$: count with `np.add.at` and normalise rows.",
+          "test-2": "Test 2 changes $\\alpha$ to 0.1."
+        }
+      },
+      "explain": {
+        "text": "2.4554 on validation and 2.4237 on the training part itself: even a bigram does better on text it was counted from."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The gap",
+      "prose": "The supplied tiny GPT scores **1.7933** nats a character on the same validation text, in 781 windows of 32.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "Validation loss (nats)"
+          ],
+          "rows": [
+            [
+              "uniform",
+              "4.1744"
+            ],
+            [
+              "add-one bigram",
+              "2.4554"
+            ],
+            [
+              "tiny GPT",
+              "1.7933"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "By how many bits per character does the GPT beat the bigram? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9552,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "nats",
+            "value": 0.6621,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 1.3692,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Bits"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the losses first."
+        },
+        {
+          "rung": "point",
+          "text": "$2.4554 - 1.7933$ nats.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by $\\ln 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(2.4554 - 1.7933) / \\ln 2 \\approx 0.9552$ bits a character.",
+        "generic": "Not quite. Take the difference, then convert to bits.",
+        "byKey": {
+          "nats": "That is the gap in nats. Divide by $\\ln 2$.",
+          "ratio": "That is the ratio of the losses. The question asks for the difference in bits."
+        }
+      },
+      "explain": {
+        "text": "Almost a whole bit a character: 0.9552. Over 25,000 characters that is about 24,000 bits the GPT saves.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The GPT on held-out text",
+      "prose": "Write `gpt_val_loss(weights, val)`: cut `val` into $n = \\lfloor (len - 1)/32 \\rfloor$ side-by-side windows of 32 inputs with targets one place on, and return `mean_loss(weights, X, Y)`. Then `beats_bigram(weights, train, val)`. `W`, `TRAIN`, `VAL`, `mean_loss` and `bigram_val_loss` are defined.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "Validation loss (nats)"
+          ],
+          "rows": [
+            [
+              "add-one bigram",
+              "2.4554"
+            ],
+            [
+              "tiny GPT",
+              "1.7933"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "Write `gpt_val_loss` and `beats_bigram`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef gpt_val_loss(weights, val):\n    # Cut val into n = (len(val) - 1) // 32 windows of 32 inputs, each with its 32 targets one place on,\n    # side by side and not overlapping. Return the mean loss over all of them: mean_loss(weights, X, Y).\n    ...\n\n\ndef beats_bigram(weights, train, val):\n    # True when gpt_val_loss is below the add-one bigram's loss on the same val. bigram_val_loss is defined for you.\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef gpt_val_loss(weights, val):\n    val = np.asarray(val)\n    n = (len(val) - 1) // 32\n    X = val[:n * 32].reshape(n, 32)\n    Y = val[1:n * 32 + 1].reshape(n, 32)\n    return mean_loss(weights, X, Y)\n\n\ndef beats_bigram(weights, train, val):\n    return bool(gpt_val_loss(weights, val) < bigram_val_loss(train, val, 1.0))\n",
+        "prelude": "import numpy as np\nimport gpt_ops_l2 as _G\n\n_ids = np.array(_G.encode(open('tiny-shakespeare.txt').read()))\nTRAIN, VAL = _ids[:225000], _ids[225000:]\nfrom gpt_ops_l2 import mean_loss, read_weights\n\nW = read_weights('gpt-w-embed.json', 'gpt-w-block0.json')\ndef bigram_val_loss(train, val, alpha):\n    train, val = np.asarray(train), np.asarray(val)\n    counts = np.zeros((65, 65))\n    np.add.at(counts, (train[:-1], train[1:]), 1)\n    probs = (counts + alpha) / (counts + alpha).sum(axis=1, keepdims=True)\n    return float(-np.log(probs[val[:-1], val[1:]]).mean())\n\n\ndef _scramble():\n    rng = np.random.default_rng(0)\n    return {k: rng.permutation(v.ravel()).reshape(v.shape) for k, v in W.items()}\n",
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+          "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+          "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+          "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "examples": [
+          {
+            "call": "round(gpt_val_loss(W, VAL), 2)",
+            "expect": "1.79",
+            "compare": "isclose",
+            "budget": 5000
+          }
+        ],
+        "tests": [
+          {
+            "call": "gpt_val_loss(W, VAL)",
+            "expect": "1.7932918522602919",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            },
+            "budget": 5000
+          },
+          {
+            "call": "gpt_val_loss(W, VAL[:65])",
+            "expect": "1.570311485405837",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "gpt_val_loss(W, VAL[:64])",
+            "expect": "1.7486697545334282",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "beats_bigram(W, TRAIN, VAL)",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 5000
+          },
+          {
+            "call": "beats_bigram(W, TRAIN, VAL[10693:10758])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "beats_bigram(_scramble(), TRAIN, VAL)",
+            "expect": "False",
+            "compare": "equal",
+            "budget": 5000
+          }
+        ],
+        "how": "Submit runs 6 hidden tests: the whole validation part and two short cuts (65 and 64 characters). Then `beats_bigram` for the supplied weights on all of it and on a hard 65-character stretch, and for scrambled weights. Losses within $10^{-9}$ (relative).",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef gpt_val_loss(weights, val):\n    val = np.asarray(val)\n    n = (len(val) - 1) // 32\n    X = val[:n * 32].reshape(n, 32)\n    Y = val[:n * 32].reshape(n, 32)\n    return mean_loss(weights, X, Y)\n\n\ndef beats_bigram(weights, train, val):\n    return bool(gpt_val_loss(weights, val) < bigram_val_loss(train, val, 1.0))\n",
+            "test": 1,
+            "symptom": "Uses the inputs as targets."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef gpt_val_loss(weights, val):\n    val = np.asarray(val)\n    n = len(val) // 32\n    X = val[:n * 32].reshape(n, 32)\n    Y = val[1:n * 32 + 1].reshape(n, 32)\n    return mean_loss(weights, X, Y)\n\n\ndef beats_bigram(weights, train, val):\n    return bool(gpt_val_loss(weights, val) < bigram_val_loss(train, val, 1.0))\n",
+            "test": 3,
+            "symptom": "Takes one window too many when the length is a multiple of 32, so the last targets run off the end."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef gpt_val_loss(weights, val):\n    val = np.asarray(val)\n    n = (len(val) - 1) // 32\n    X = val[:n * 32].reshape(n, 32)\n    Y = val[1:n * 32 + 1].reshape(n, 32)\n    return mean_loss(weights, X, Y)\n\n\ndef beats_bigram(weights, train, val):\n    return bool(gpt_val_loss(weights, val) < bigram_val_loss(train, train, 1.0))\n",
+            "test": 5,
+            "symptom": "Compares with the bigram's training loss."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef gpt_val_loss(weights, val):\n    val = np.asarray(val)\n    n = (len(val) - 1) // 32\n    X = val[:32]\n    Y = val[1:33]\n    return mean_loss(weights, X, Y)\n\n\ndef beats_bigram(weights, train, val):\n    return bool(gpt_val_loss(weights, val) < bigram_val_loss(train, val, 1.0))\n",
+            "test": 1,
+            "symptom": "Scores only the first window."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$n$ windows of 32 need $32n + 1$ characters."
+        },
+        {
+          "rung": "point",
+          "text": "Inputs `val[:32 * n]`, targets `val[1:32 * n + 1]`, both reshaped to $(n, 32)$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Compare with `bigram_val_loss(train, val, 1.0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your figures match: the GPT beats the bigram on held-out text.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 has 64 characters: only one window fits, since its targets need one character more.",
+          "test-5": "Test 5 scores a hard stretch of validation text. Compare with the bigram on that same text, not on the training part."
+        }
+      },
+      "explain": {
+        "text": "1.7933 against 2.4554, both on the 25,000 validation characters: the strand's exit. The GPT scores 24,992 predictions and the bigram 24,999 pairs, a difference too small to matter."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Training against validation",
+      "prose": "A report says: \"The bigram scores 2.4237; our GPT's last training batches scored 1.69, so the GPT is better by 0.73 nats.\" Both figures are real.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Figure",
+            "Text",
+            "Loss"
+          ],
+          "rows": [
+            [
+              "bigram",
+              "training part, scored on itself",
+              "2.4237"
+            ],
+            [
+              "GPT",
+              "its last training batches",
+              "1.69"
+            ],
+            [
+              "bigram",
+              "validation",
+              "2.4554"
+            ],
+            [
+              "GPT",
+              "validation",
+              "1.7933"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What is wrong with the comparison?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "text",
+            "text": "Both are training losses, not held-out ones",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "Nothing: the GPT is better either way",
+            "why": "It is better, but the margin and the method are wrong. Training losses flatter a model."
+          },
+          {
+            "id": "units",
+            "text": "One figure is in bits, the other in nats",
+            "why": "Both are in nats."
+          },
+          {
+            "id": "bigger",
+            "text": "The GPT has more parameters, so it is not fair",
+            "why": "More parameters are allowed; the test is held-out loss."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows were scored on text the model fitted?"
+        },
+        {
+          "rung": "point",
+          "text": "Rows 1 and 2.",
+          "highlight": [
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rows 3 and 4 are the fair comparison."
+        }
+      ],
+      "feedback": {
+        "correct": "Compare on held-out text: 1.7933 against 2.4554, a gap of 0.6621 nats.",
+        "generic": "Not quite. Where was each figure measured?",
+        "byKey": {
+          "none": "The conclusion holds here, but the method would not catch a model that only memorises. The fair gap is 0.6621."
+        }
+      },
+      "explain": {
+        "text": "Training losses measure fit, not prediction. On validation the gap is 0.6621 nats, not 0.73.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A pair never seen",
+      "prose": "Without smoothing ($\\alpha = 0$), a pair that never occurs in the training part gets chance 0, and $-\\ln 0$ is infinite.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Validation pairs",
+            "Count"
+          ],
+          "rows": [
+            [
+              "all",
+              "24,999"
+            ],
+            [
+              "never seen in training",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many of the 24,999 validation pairs never occur in the training part?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 45,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "distinct",
+            "value": 19,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Pairs"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count pairs whose training count is 0."
+        },
+        {
+          "rung": "point",
+          "text": "The number script counted them.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "There are 45, of 19 distinct kinds."
+        }
+      ],
+      "feedback": {
+        "correct": "45 pairs, so an unsmoothed bigram scores an infinite loss on validation.",
+        "generic": "Not quite. Count every occurrence, not each kind once.",
+        "byKey": {
+          "distinct": "That counts each kind once. Count every occurrence in the text."
+        }
+      },
+      "explain": {
+        "text": "45 of 24,999 pairs is under 0.2%, yet each would cost $-\\ln 0 = \\infty$. Smoothing, even $\\alpha = 0.1$, keeps the loss finite."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Why context helps",
+      "prose": "The GPT's validation loss by position, from l7, against the bigram's overall loss. Position $t$ has read $t + 1$ characters; the bigram always reads one.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "g",
+              "label": "GPT by position",
+              "values": [
+                2.566,
+                1.971,
+                1.831,
+                1.75,
+                1.613,
+                1.813,
+                1.791,
+                1.795,
+                1.757,
+                1.82,
+                1.7,
+                1.751,
+                1.713,
+                1.829,
+                1.735,
+                1.853,
+                1.879,
+                1.767,
+                1.854,
+                1.818,
+                1.765,
+                1.742,
+                1.751,
+                1.742,
+                1.774,
+                1.595,
+                1.74,
+                1.829,
+                1.653,
+                1.717,
+                1.724,
+                1.748
+              ]
+            }
+          ],
+          "y": [
+            1.4,
+            2.8
+          ],
+          "xLabel": "position",
+          "yLabel": "nats",
+          "indexFrom": 0,
+          "hlines": [
+            {
+              "id": "bg",
+              "y": 2.4554,
+              "label": "bigram"
+            }
+          ]
+        }
+      },
+      "question": "Where does the GPT gain over the bigram?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "later",
+            "text": "Where several characters are read",
+            "correct": true
+          },
+          {
+            "id": "first",
+            "text": "Mostly at the very first position",
+            "why": "At position 0 both read one character; the GPT scores 2.566 there, slightly worse."
+          },
+          {
+            "id": "none",
+            "text": "Equally at every position",
+            "why": "The curve falls steeply over the first few positions."
+          },
+          {
+            "id": "end",
+            "text": "Only at the last position",
+            "why": "The gain appears by position 2 and holds."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare position 0 with position 5."
+        },
+        {
+          "rung": "point",
+          "text": "Context grows with position.",
+          "highlight": [
+            "g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bigram never gets more than one character."
+        }
+      ],
+      "feedback": {
+        "correct": "With one character the GPT is no better (2.566); with several it falls near 1.76.",
+        "generic": "Not quite. Follow the curve from position 0."
+      },
+      "explain": {
+        "text": "Attention lets later positions read earlier characters, which the bigram cannot. That context is the whole of the gap."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Noise in a short test",
+      "prose": "Per-character losses vary: on validation their standard deviation is 1.553 nats. The mean of $n$ of them has a standard error of about $\\sigma / \\sqrt n$ (`estimation` L3).",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Characters scored",
+            "Standard error (nats)"
+          ],
+          "rows": [
+            [
+              "24,992",
+              "0.0098"
+            ],
+            [
+              "200",
+              "?"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the standard error of the GPT's mean loss on just 200 characters? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.11,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "sd",
+            "value": 1.553,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "n",
+            "value": 0.0078,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Standard error"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\sigma / \\sqrt{200}$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sqrt{200} \\approx 14.14$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.553 / 14.14$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.553 / \\sqrt{200} \\approx 0.110$ nats.",
+        "generic": "Not quite. Divide the standard deviation by the square root of 200.",
+        "byKey": {
+          "sd": "That is the spread of one character. The mean of 200 varies less.",
+          "n": "You divided by 200, not its square root."
+        }
+      },
+      "explain": {
+        "text": "On 200 characters the mean moves by about 0.110, a sixth of the whole gap; on all 24,992 by 0.0098. Compare models on long held-out text.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Samples side by side",
+      "prose": "120 characters after `F`, seed 0, from each model at temperature 1.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "bigram:",
+            "Fim Clseorto t s than ashe:twisin se lpteine, uck tilo g it MI ar; cte ps: melyonooronkit stu twr youn. wares se s",
+            "Thr t ",
+            "",
+            "tiny GPT:",
+            "Fircapter, taw this if the yought the trike her pats ume lord,",
+            "And by antesemive, is it weprt",
+            "Woultith to mesbin tenes th"
+          ],
+          "wrap": true
+        }
+      },
+      "question": "What does the GPT's extra context buy, judging by the samples?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "words",
+            "text": "Word-like strings and line breaks",
+            "correct": true
+          },
+          {
+            "id": "meaning",
+            "text": "Sentences that make sense",
+            "why": "Neither sample makes sense; the GPT's words are only more word-like."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing visible in the text",
+            "why": "The GPT writes `the`, `this`, `lord`; the bigram rarely holds two good letters together. The loss gap of 0.96 bits shows in the text."
+          },
+          {
+            "id": "copy",
+            "text": "Copied lines of the play",
+            "why": "Neither sample is in the training text."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read each sample for real words."
+        },
+        {
+          "rung": "point",
+          "text": "Count how many look English.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then look at the lines."
+        }
+      ],
+      "feedback": {
+        "correct": "The GPT spells more real words and keeps some line structure; the bigram knows only pairs.",
+        "generic": "Not quite. Compare how word-like the two samples are."
+      },
+      "explain": {
+        "text": "A bit a character is the difference between letter soup and word shapes. Meaning would need far more model and data, which level 4 counts."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Beat the naive signal first",
+      "prose": "A researcher shows a neural model that predicts tomorrow's volatility with a mean squared error of 0.80 on held-out days. The desk asks for one more number before reading further.",
+      "question": "Which number should come with the model's 0.80?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "naive",
+            "text": "A naive forecast's error on the same days",
+            "correct": true
+          },
+          {
+            "id": "train",
+            "text": "The model's error on its training days",
+            "why": "A training error flatters the model; the question is whether it beats something simple out of sample."
+          },
+          {
+            "id": "params",
+            "text": "The model's parameter count",
+            "why": "Size matters for cost, but it says nothing about whether the model adds value."
+          },
+          {
+            "id": "r2",
+            "text": "The error on a different held-out period",
+            "why": "That checks stability, but first the model must beat a baseline on the same days."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What did the GPT have to beat?"
+        },
+        {
+          "rung": "point",
+          "text": "The simplest model, on the same held-out text."
+        },
+        {
+          "rung": "step",
+          "text": "Here: the simplest forecast, on the same held-out days."
+        }
+      ],
+      "feedback": {
+        "correct": "A model is judged against the simplest baseline on the same held-out data, as the GPT was against the bigram.",
+        "generic": "Not quite. What makes 0.80 good or bad?"
+      },
+      "explain": {
+        "text": "0.80 means nothing alone. If yesterday's volatility scores 0.78 on those days, the model adds nothing; every new signal is compared with a naive one."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The add-one bigram, counted on the training part, scores 2.4554 nats on the 25,000 validation characters; without smoothing 45 unseen pairs make the loss infinite.",
+      "The tiny GPT scores 1.7933 on the same text: 0.9552 bits a character better, all of it from context beyond one character.",
+      "Compare models on the same held-out text, and long enough: the standard error of a mean of $n$ losses is $\\sigma/\\sqrt n$."
+    ],
+    "formula": {
+      "name": "The gap in bits",
+      "tex": "\\frac{L_\\text{bigram} - L_\\text{GPT}}{\\ln 2}",
+      "note": "Both on the same held-out text."
+    },
+    "trap": "Comparing a training loss with a validation loss, or two training losses."
+  },
+  "quiz": [
+    {
+      "id": "q-addone",
+      "difficulty": 2,
+      "question": "In the training part `j` appears 30 times, followed by `o` 12 times. What chance does the add-one bigram give `o` after `j`? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1368,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.4194,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Chance"
+      },
+      "feedback": {
+        "correct": "$(12 + 1) / (30 + 65) = 13/95 \\approx 0.1368$.",
+        "generic": "Not quite. Add 1 to all 65 counts.",
+        "byKey": {
+          "raw": "That is the raw share, $12/30$.",
+          "one": "You added 1 to the total once; all 65 counts gain 1."
+        }
+      },
+      "explain": {
+        "text": "Add-one smoothing adds 65 to the total: $13/95 \\approx 0.1368$."
+      }
+    },
+    {
+      "id": "q-fair",
+      "difficulty": 2,
+      "question": "Which comparison shows the GPT beats the bigram?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "val",
+            "text": "Both scored on the same held-out validation text",
+            "correct": true
+          },
+          {
+            "id": "train",
+            "text": "Both scored on their own training text",
+            "why": "Training losses reward memorising."
+          },
+          {
+            "id": "mixed",
+            "text": "The GPT on validation, the bigram on training",
+            "why": "That mixes texts; the bigram looks better than it is."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Same held-out text for both.",
+        "generic": "Not quite. Which text is fair to both?"
+      },
+      "explain": {
+        "text": "A fair comparison scores both models on text neither fitted."
+      }
+    },
+    {
+      "id": "q-se",
+      "difficulty": 3,
+      "question": "Per-character losses have standard deviation 1.5 nats. About how many characters give a standard error of 0.01 nats?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 22500,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "sd",
+            "value": 150,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sq",
+            "value": 2250,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Characters"
+      },
+      "feedback": {
+        "correct": "$(1.5 / 0.01)^2 = 22{,}500$.",
+        "generic": "Not quite. Solve $1.5 / \\sqrt n = 0.01$.",
+        "byKey": {
+          "sd": "That is $1.5 / 0.01$; square it.",
+          "sq": "Check the square: $150^2 = 22{,}500$."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt n = 150$, so $n = 22{,}500$, about the size of our validation text."
+      }
+    }
+  ]
+}
