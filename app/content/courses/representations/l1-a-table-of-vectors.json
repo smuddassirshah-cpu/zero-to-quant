@@ -477,7 +477,7 @@
     ]
    },
    "feedback": {
-    "correct": "a and e: about 1 apart in each run, while t is about 3 away.",
+    "correct": "a and e: 0.95 and 1.38 apart, while t is more than 3 away in both runs.",
     "generic": "Not quite. Find a in each run and look for the letter that stays next to it.",
     "byKey": {
      "ab": "You went by the alphabet. Training never sees the alphabet, only how letters are used in names."
@@ -951,7 +951,7 @@
     "options": [
      {
       "id": "none",
-      "text": "Nothing on its own: only distances between rows mean anything",
+      "text": "Nothing on its own: training could have picked other axes",
       "correct": true
      },
      {
@@ -967,14 +967,14 @@
     ]
    },
    "feedback": {
-    "correct": "Nothing fixed. Training cares how rows sit relative to each other, so any turn or flip of the picture works as well.",
+    "correct": "Nothing fixed. Any turn or flip of the picture works as well, once the next layer turns back with it.",
     "generic": "Not quite. Compare where the vowels sit in each run.",
     "byKey": {
      "vowel": "You read the axis as a vowel score. In run 2 the vowels moved to another part of the picture, so the axis meant nothing on its own."
     }
    },
    "explain": {
-    "text": "Dimension 1 means one thing in run 1 and another in run 2. What both runs share is the pattern of distances: the vowels together, the start mark apart.",
+    "text": "Dimension 1 means one thing in run 1 and another in run 2. What these two runs share is the pattern of distances: the vowels together, the start mark apart.",
     "canvas": {
      "run": 1
     }
@@ -1516,7 +1516,7 @@
     ]
    },
    "feedback": {
-    "correct": "Unchanged. The table's columns have no fixed meaning: a spun table with a spun first layer is the same model.",
+    "correct": "Unchanged. A table is fixed only up to a change the next layer can undo: a spun table with a spun first layer is the same model.",
     "generic": "Not quite. Follow one context into the first layer.",
     "byKey": {
      "higher": "You treated each column of the table as a fixed property that the spin destroyed. The layer undoes the spin, so nothing the model computes moves."
@@ -1533,7 +1533,7 @@
     }
    ],
    "explain": {
-    "text": "Each looked-up row meets the first layer as $(\\mathbf{e}\\mathbf{R})(\\mathbf{R}^\\top\\mathbf{W}) = \\mathbf{e}\\mathbf{W}$, so the dev loss stays 2.1609. Column 3 of the spun table is a new mix of the old columns, so a vowel score read from it means nothing. The table is learned with the model, and only its geometry is fixed."
+    "text": "Each looked-up row meets the first layer as $(\\mathbf{e}\\mathbf{R})(\\mathbf{R}^\\top\\mathbf{W}) = \\mathbf{e}\\mathbf{W}$, so the dev loss stays 2.1609. Column 3 of the spun table is a new mix of the old columns, so a vowel score read from it means nothing. A stretch of column 0 by 5, undone in the first layer, also keeps 2.1609 but moves a's nearest rows from e, z, t, k, o to k, z, t, o, p."
    }
   },
   {
@@ -1694,12 +1694,13 @@
       "expect": "[[0.748746, 1.634783], [-0.218532, -1.999433], [0.0, 0.0], [0.0, 0.0], [-0.248362, 0.420445], [0.0, 0.0]]"
      },
      {
-      "call": "'@' in __learner_source__ or 'matmul' in __learner_source__ or 'dot(' in __learner_source__",
-      "expect": "True",
-      "compare": "equal"
+      "setup": "E = np.array([[0.2, -1.0, 0.5], [1.5, 0.3, -0.4], [-0.7, 0.8, 2.0], [0.0, 1.1, -0.3]])\n_oh = one_hot\none_hot = lambda idx, n: 2 * _oh(idx, n)\n_r = one_hot_lookup(E, [1])\none_hot = _oh",
+      "call": "bool(np.allclose(_r, 2 * E[[1]]))",
+      "compare": "equal",
+      "expect": "True"
      }
     ],
-    "how": "Submit runs 7 hidden tests: a one-hot matrix, two lookups compared with `E[idx]` exactly, three gradient tables rounded to 6 places (one index used three times), and a check that `one_hot_lookup` multiplies.",
+    "how": "Submit runs 7 hidden tests: a one-hot matrix, two lookups compared with `E[idx]` exactly, and three gradient tables rounded to 6 places (one index used three times). The last checks that `one_hot_lookup` multiplies the matrix your `one_hot` builds. Any correct gradient passes, by the autograd or by hand.",
     "mutants": [
      {
       "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef one_hot(idx, n):\n    H = np.zeros((len(idx), n))\n    H[np.arange(len(idx)), idx] = 1.0\n    return H\n\n\ndef one_hot_lookup(E, idx):\n    E = np.asarray(E, dtype=float)\n    return one_hot(idx, len(E)) @ E\n\n\ndef embedding_grad(E, idx, dout):\n    g = np.zeros(np.shape(E))\n    g[np.asarray(idx)] += np.asarray(dout, dtype=float)\n    return g\n",
@@ -1720,6 +1721,11 @@
       "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef one_hot(idx, n):\n    H = np.zeros((len(idx), n))\n    H[np.arange(len(idx)), idx] = 1.0\n    return H\n\n\ndef one_hot_lookup(E, idx):\n    E = np.asarray(E, dtype=float)\n    return E[np.asarray(idx)] * 1.0\n    one_hot\n\n\ndef embedding_grad(E, idx, dout):\n    T = Tensor(E)\n    out = T[np.asarray(idx)]\n    (out * np.asarray(dout, dtype=float)).sum().backward()\n    return T.grad\n",
       "test": 7,
       "symptom": "Returns E[idx] directly, never forming the one-hot product."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef one_hot(idx, n):\n    H = np.zeros((len(idx), n))\n    H[np.arange(len(idx)), idx] = 1.0\n    return H\n\n\ndef one_hot_lookup(E, idx):\n    return np.asarray(E, dtype=float)[np.asarray(idx)]\n\n\ndef embedding_grad(E, idx, dout):\n    return one_hot(idx, len(E)).T @ np.asarray(dout, dtype=float)\n",
+      "test": 7,
+      "symptom": "Indexes E directly in the lookup and writes the gradient by hand, so no lookup ever multiplies the one-hot matrix."
      }
     ],
     "data": {
@@ -1732,7 +1738,7 @@
     "byKey": {
      "test-4": "Row 2 is looked up twice and must get both shares: $(-0.3, 0.4, 0.5)$. Let the autograd do the adding.",
      "test-1": "Each row of the one-hot matrix belongs to one index, with its 1 in that index's column.",
-     "test-7": "`one_hot_lookup` should form the product with `@`, not index `E` directly."
+     "test-7": "`one_hot_lookup` should multiply the matrix that `one_hot` builds by `E`, not index `E` directly."
     }
    },
    "hints": [
@@ -1799,9 +1805,21 @@
       "call": "nearest_rows(E, 17, 4)",
       "compare": "equal",
       "expect": "[4, 25, 22, 3]"
+     },
+     {
+      "setup": "E = [[1, 1], [0, 0], [1, 1]]",
+      "call": "nearest_rows(E, 2, 1)",
+      "compare": "equal",
+      "expect": "[0]"
+     },
+     {
+      "setup": "E = [[1, 1]] * 20",
+      "call": "nearest_rows(E, 3, 6)",
+      "compare": "equal",
+      "expect": "[0, 1, 2, 4, 5, 6]"
      }
     ],
-    "how": "Submit runs 5 hidden tests: small tables with a three-way tie and a duplicate row, the letter $a$ in makemore's table, and a seeded table of 40 rows.",
+    "how": "Submit runs 7 hidden tests: small tables with a three-way tie and a duplicate row, the letter $a$ in makemore's table, and a seeded table of 40 rows. Then come a duplicate of the query that comes earlier, and a table of 20 equal rows.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef nearest_rows(E, i, k):\n    E = np.asarray(E, dtype=float)\n    d = np.sqrt(((E - E[i]) ** 2).sum(axis=1))\n    order = np.argsort(d, kind=\"stable\")\n    return [int(j) for j in order[:k]]\n",
@@ -1817,6 +1835,16 @@
       "source": "import numpy as np\n\n\ndef nearest_rows(E, i, k):\n    E = np.asarray(E, dtype=float)\n    d = -(E @ E[i])\n    d[i] = np.inf\n    order = np.argsort(d, kind=\"stable\")\n    return [int(j) for j in order[:k]]\n",
       "test": 3,
       "symptom": "Ranks by the dot product, which favours long rows, instead of the distance."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef nearest_rows(E, i, k):\n    E = np.asarray(E, dtype=float)\n    d = np.sqrt(((E - E[i]) ** 2).sum(axis=1))\n    order = np.argsort(d, kind=\"stable\")\n    return [int(j) for j in order[1:k + 1]]\n",
+      "test": 6,
+      "symptom": "Sorts, then drops the first entry as if it were row i, so an identical row that comes earlier is dropped and the query itself is returned."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef nearest_rows(E, i, k):\n    E = np.asarray(E, dtype=float)\n    d = np.sqrt(((E - E[i]) ** 2).sum(axis=1))\n    d[i] = np.inf\n    return [int(j) for j in np.argsort(d)[:k]]\n",
+      "test": 7,
+      "symptom": "Uses NumPy's default sort, which does not keep index order among equal distances once the table is longer than 16 rows."
      }
     ],
     "data": {
@@ -1824,12 +1852,14 @@
     }
    },
    "feedback": {
-    "correct": "Your search matches. In makemore's table the five rows nearest a are e, z, t, k, o.",
+    "correct": "Your search matches. In makemore's trained table the five rows nearest a by distance are e, z, t, k, o.",
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-1": "Row $i$ is at distance 0 from itself: leave it out before sorting.",
      "test-2": "Rows 1, 2 and 3 tie at distance 1. A stable sort keeps them in index order.",
-     "test-3": "Rows 0 and 2 are identical; row 2 is at distance 0 and must come first."
+     "test-3": "Rows 0 and 2 are identical, so row 2 is at distance 0 and comes first; rank by distance, not by dot product.",
+     "test-6": "Row $i$ need not come first: an identical row earlier in the table ties with it. Set row $i$'s distance to infinity instead of dropping an entry.",
+     "test-7": "Twenty equal rows tie at every distance. Use `kind=\"stable\"` so the ties stay in index order."
     }
    },
    "hints": [
@@ -1843,7 +1873,7 @@
     }
    ],
    "explain": {
-    "text": "A stable sort of the distances gives the order, with ties in index order, once row $i$ is pushed to infinity. Level 2's next lesson asks whether distance is the right measure for rows of different lengths."
+    "text": "A stable sort of the distances gives the order, with ties in index order, once row $i$ is pushed to infinity. The next lesson asks whether distance is the right measure for rows of different lengths."
    }
   },
   {
@@ -1902,7 +1932,7 @@
  ],
  "summary": {
   "ideas": [
-   "An embedding is a learned table $\\mathbf{E}$ with one row per item; only distances and angles between rows carry meaning, so a spun table with a spun first layer is the same model.",
+   "An embedding is a learned table $\\mathbf{E}$ with one row per item, fixed only up to a change of axes that the next layer can undo. A spin keeps distances and angles, but a stretch the next layer undoes would not, so neighbours describe one trained table and need checking.",
    "A one-hot row times $\\mathbf{E}$ picks out a row; `E[i]` gives the same row with no multiplications.",
    "The gradient for $\\mathbf{E}$ is $\\mathbf{H}^\\top\\mathbf{G}$: rows looked up get their shares added, and every other row gets zero that step."
   ],
@@ -2020,7 +2050,7 @@
     "generic": "Not quite. Write the difference of the two spun rows."
    },
    "explain": {
-    "text": "$\\mathbf{a}\\mathbf{R} - \\mathbf{b}\\mathbf{R} = (\\mathbf{a} - \\mathbf{b})\\mathbf{R}$, and a rotation keeps length. Distances, angles and neighbours survive the spin; single columns do not."
+    "text": "$\\mathbf{a}\\mathbf{R} - \\mathbf{b}\\mathbf{R} = (\\mathbf{a} - \\mathbf{b})\\mathbf{R}$, and a rotation keeps length. Distances, angles and neighbours survive a rotation; single columns do not. A stretch undone by the next layer would move the neighbours too."
    }
   }
  ]

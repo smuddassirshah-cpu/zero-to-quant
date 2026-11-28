@@ -7,7 +7,7 @@ factor_returns(seed=7, days=500, lone=False, twin=False) -> (R, sectors)
     the market and sector moves have a daily spread of 1%. Stock 9 moves from sector 0 to
     sector 2 halfway through (a business that changed); its label stays 0.
     twin=True adds stock 30, an exact copy of stock 0 (label 0).
-    lone=True adds a last stock with noise only, spread 1.5% (label -1).
+    lone=True adds a last stock with noise only, spread 1.5% (label -1), after the twin when both are set.
 NumPy only; no state is kept between calls.
 """
 import numpy as np

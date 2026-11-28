@@ -14,7 +14,7 @@
    "type": "problem",
    "difficulty": 1,
    "title": "Same way, different length",
-   "prose": "Three rows of a trained table. $\\mathbf{u} = (0.6, 0.8)$ and $\\mathbf{v} = (3, 4)$ point the same way; $\\mathbf{v}$ is longer because its item came up far more often in training. $\\mathbf{w} = (0.8, -0.6)$ points elsewhere.",
+   "prose": "Three rows of a trained table. $\\mathbf{u} = (0.6, 0.8)$ and $\\mathbf{v} = (3, 4)$ point the same way; $\\mathbf{v}$ is longer, as rows of some items grow in training. $\\mathbf{w} = (0.8, -0.6)$ points elsewhere.",
    "canvas": {
     "kind": "vectors",
     "params": {
@@ -784,7 +784,7 @@
    "difficulty": 3,
    "title": "The rule",
    "prose": "For a table $\\mathbf{E}$ whose rows are not zero,\n\n$$\\hat{\\mathbf{e}}_i = \\frac{\\mathbf{e}_i}{|\\mathbf{e}_i|}, \\qquad \\mathbf{S} = \\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top, \\qquad S_{ij} = \\cos(\\mathbf{e}_i, \\mathbf{e}_j)$$\n\nso one product of the row-normalised table with its transpose gives every cosine.",
-   "question": "For an item that appears 100 times as often as another, and so has a row 10 times as long, how does its cosine with any other row change?",
+   "question": "An item's row is 10 times as long as another's and points the same way. How does its cosine with any other row change?",
    "widget": {
     "kind": "choice",
     "layout": "stack",
@@ -801,8 +801,8 @@
      },
      {
       "id": "hundred",
-      "text": "It becomes 100 times larger, like the count",
-      "why": "Neither frequency nor length enters $\\hat{\\mathbf{e}}$; only direction does."
+      "text": "It becomes 100 times larger, like the square of the length",
+      "why": "Neither the length nor its square enters $\\hat{\\mathbf{e}}$; only direction does."
      }
     ]
    },
@@ -821,7 +821,7 @@
     }
    ],
    "explain": {
-    "text": "$10\\mathbf{e}/|10\\mathbf{e}| = \\mathbf{e}/|\\mathbf{e}|$, so a longer row with the same direction has the same cosines. That is why cosine, not distance, compares items seen very different numbers of times."
+    "text": "$10\\mathbf{e}/|10\\mathbf{e}| = \\mathbf{e}/|\\mathbf{e}|$, so a longer row with the same direction has the same cosines. That is why cosine, not distance, compares rows of different lengths."
    }
   },
   {
@@ -888,9 +888,17 @@
        "rel": 1e-09
       },
       "expect": "0.10720415790507207"
+     },
+     {
+      "call": "cosine([1, 2, 3], [0, 0, 0])",
+      "compare": "isclose",
+      "expect": "0.0",
+      "tol": {
+       "abs": 1e-12
+      }
      }
     ],
-    "how": "Submit runs 7 hidden tests, each compared within relative $10^{-9}$: the pair from this lesson, a stretched copy, a right angle, a zero vector (must give 0), opposite rows, and two seeded rows of 300.",
+    "how": "Submit runs 8 hidden tests, each compared within relative $10^{-9}$ (absolute $10^{-12}$ where the answer is 0). They cover the pair from this lesson, a stretched copy, a right angle, a zero vector first and a zero vector second. The rest are opposite rows, the pair $(2, 0)$ and $(1, 3)$, and two seeded rows of 300.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef cosine(u, v):\n    u = np.asarray(u, dtype=float)\n    v = np.asarray(v, dtype=float)\n    nu, nv = np.sqrt(u @ u), np.sqrt(v @ v)\n    return float(u @ v / (nu * nv))\n",
@@ -906,6 +914,11 @@
       "source": "import numpy as np\n\n\ndef cosine(u, v):\n    u = np.asarray(u, dtype=float)\n    v = np.asarray(v, dtype=float)\n    nu, nv = np.sqrt(u @ u), np.sqrt(v @ v)\n    if nu == 0 or nv == 0:\n        return 0.0\n    return float(u @ v)\n",
       "test": 1,
       "symptom": "Returns the dot product with no division at all."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef cosine(u, v):\n    u = np.asarray(u, dtype=float)\n    v = np.asarray(v, dtype=float)\n    nu, nv = np.sqrt(u @ u), np.sqrt(v @ v)\n    if nu == 0:\n        return 0.0\n    return float(u @ v / (nu * nv))\n",
+      "test": 8,
+      "symptom": "Guards only the first vector, so a zero second vector gives NaN."
      }
     ]
    },
@@ -914,7 +927,8 @@
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-2": "$(6, 8)$ is $(3, 4)$ stretched: the cosine must be 1. Divide by both lengths.",
-     "test-4": "A zero vector has no direction: return 0.0 before dividing."
+     "test-4": "A zero vector has no direction: return 0.0 before dividing.",
+     "test-8": "The zero vector can come second too: test `nv == 0` as well as `nu == 0` before dividing."
     }
    },
    "hints": [
@@ -1017,7 +1031,7 @@
     "byKey": {
      "test-1": "Each row of the result should have length 1. Sum the squares along each row, `axis=1`.",
      "test-4": "Row 1 is zero. With the guard it stays zero and its cosines read 0, not NaN.",
-     "test-3": "The diagonal must be 1. Dividing columns leaves rows of other lengths."
+     "test-2": "The diagonal must be 1. Dividing columns leaves rows of other lengths."
     }
    },
    "hints": [
@@ -1120,7 +1134,7 @@
  ],
  "summary": {
   "ideas": [
-   "Distance mixes a row's length with its direction, so a long, often-seen row looks far from a short one pointing the same way.",
+   "Distance mixes a row's length with its direction, so a long row looks far from a short one pointing the same way.",
    "Cosine similarity divides out both lengths; with rows normalised, $\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$ gives every pair at once, with 1 on the diagonal.",
    "For demeaned vectors the cosine is the correlation; a zero row has no direction, so guard the division and read its cosines as 0."
   ],

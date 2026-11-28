@@ -76,9 +76,21 @@
       "call": "similar_stocks(R + d, 3, 3, 0) == similar_stocks(R, 3, 3, 0)",
       "compare": "equal",
       "expect": "True"
+     },
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(7); R = np.column_stack([R, R[:, 0] + 0.03 * np.random.default_rng(4).standard_normal(len(R))]); out = similar_stocks(R, 9, 3, 0)",
+      "call": "[len(out[30]), sum(30 in row for row in out[:10]) >= 7]",
+      "compare": "equal",
+      "expect": "[9, True]"
+     },
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(7); w = np.linspace(0.5, 3, 30)",
+      "call": "similar_stocks(R * w, 3, 3, 0) == similar_stocks(R, 3, 3, 0)",
+      "compare": "equal",
+      "expect": "True"
      }
     ],
-    "how": "Submit runs 8 hidden tests on `factor_returns` data. They check the shape, that no stock lists itself, and a same-sector share of at least 0.85 on two seeds. Then come a duplicated stock, a stock with no factor, both together, and returns shifted by a constant.",
+    "how": "Submit runs 10 hidden tests on `factor_returns` data. They check the shape, that no stock lists itself, and a same-sector share of at least 0.85 on two seeds. Then come a duplicated stock, a stock with no factor, both together, and returns shifted by a constant. The last two add a stock with weak but real loadings, whose row is about 0.4 long, and scale each stock's returns by its own positive factor.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.0\n    U = np.where(ok[:, None], E / np.where(ok, length, 1.0)[:, None], 0.0)\n    S = U @ U.T\n    S[:, ~ok] = -np.inf\n    np.fill_diagonal(S, -np.inf)\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        order = np.argsort(-S[i], kind=\"stable\")\n        out.append([int(j) for j in order[:k] if S[i, j] > -np.inf])\n    return out\n",
@@ -104,6 +116,21 @@
       "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.25\n    U = np.where(ok[:, None], E / np.where(ok, length, 1.0)[:, None], 0.0)\n    S = U @ U.T\n    np.fill_diagonal(S, -np.inf)\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        order = np.argsort(-S[i], kind=\"stable\")\n        out.append([int(j) for j in order[:k] if S[i, j] > -np.inf])\n    return out\n",
       "test": 6,
       "symptom": "Guards the short row's own list but still lets it appear in others' lists."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.25\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        s = [(-(E[i] @ E[j]), j) for j in range(n) if j != i and ok[j]]\n        out.append([j for _, j in sorted(s)[:k]])\n    return out\n",
+      "test": 9,
+      "symptom": "Ranks by the fitted correlation, the dot product, so a short row ranks last and never reaches another stock's list."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length ** 2 >= 0.25\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        s = [(-(E[i] @ E[j]) / (length[i] * length[j]), j) for j in range(n) if j != i and ok[j]]\n        out.append([j for _, j in sorted(s)[:k]])\n    return out\n",
+      "test": 9,
+      "symptom": "Compares the squared length with 0.25, a guard at length 0.5, so a stock with a row 0.4 long is wrongly left out."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = 100 * np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    C = X.T @ X / len(X)\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 0.5 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.25\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        s = [(-(E[i] @ E[j]) / (length[i] * length[j]), j) for j in range(n) if j != i and ok[j]]\n        out.append([j for _, j in sorted(s)[:k]])\n    return out\n",
+      "test": 10,
+      "symptom": "Fits the covariance in percent, not the correlation, so each stock's own scale changes its row and the lists."
      }
     ],
     "data": {
@@ -118,7 +145,9 @@
      "test-6": "The noise-only stock (index 30) has a very short row: give it `[]` and keep it out of every list.",
      "test-5": "Stock 30 copies stock 0 exactly, so each must be the other's nearest.",
      "test-1": "Return one list per stock, each of length `k` (or empty for a guarded stock).",
-     "test-3": "Fewer than 85% of neighbours share a sector. Check that you demean the returns and rank by cosine."
+     "test-3": "Fewer than 85% of neighbours share a sector. Check that you demean the returns and rank by cosine.",
+     "test-9": "A stock with weak but real loadings has a row about 0.4 long. That clears the 0.25 guard, so it gets a list. Cosine then puts it in most lists of its sector.",
+     "test-10": "Scaling each stock's returns by its own positive factor must not change any list: fit the correlations, not the covariances."
     }
    },
    "explain": {
@@ -159,9 +188,9 @@
       "expect": "[[], [1]]"
      },
      {
-      "call": "nearest_for_queries([[1, 0], [10, 1], [0, 1], [2, 0]], [[1, 0.05]], 3)",
+      "call": "nearest_for_queries([[1, 0], [10, 1], [0, 1], [2, 0]], [[1, 0]], 3)",
       "compare": "equal",
-      "expect": "[[1, 0, 3]]"
+      "expect": "[[0, 3, 1]]"
      },
      {
       "call": "nearest_for_queries([[1, 0], [0, 0], [-1, 0]], [[1, 0]], 3)",
@@ -199,7 +228,7 @@
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-2": "A zero query has no direction: return `[]` for it.",
-     "test-3": "Row 1 is long; rank by cosine, so normalise the rows of `E`.",
+     "test-3": "Row 1, $(10, 1)$, is long but not as close in direction as rows 0 and 3. Rank by cosine, so normalise the rows of `E`.",
      "test-4": "Rows 0 and 2 tie in size, but the zero row has cosine 0: order is 0, 1, 2."
     }
    },
@@ -283,7 +312,7 @@
    "title": "Buying stock embeddings",
    "kind": "longform",
    "prompt": "A data vendor sells \"AI stock embeddings\": a 64-number row for each of 3,000 stocks, updated monthly, and says similar companies sit close together. Your risk team wants to use the nearest neighbours as peer groups in its risk model. Say what you would test before using them, and how.",
-   "model": "First I would ask what the rows were built from and over which dates: returns, text, or both. If they come from returns, a peer group is a co-movement claim in that window, not a business link, and a shared factor can break.\n\nI would test the neighbours out of sample. Take the vendor's rows as of a past month, find each stock's nearest neighbours, and check whether those pairs still have high return correlation in the following months. I would compare that with two baselines: official sector peers and peers from a correlation matrix I compute myself. The vendor should beat or at least match them.\n\nI would check stability month to month. In this level, exact partners changed often while the sector around them did not. So I would score groups, for example the share of top-5 neighbours that stay in the top 20, rather than the single nearest name.\n\nI would look at row lengths and at stocks with little history. A short row has no reliable direction, so its cosines can look confident and mean nothing; a new listing may still have its starting row. Such stocks need a guard and a default peer group.\n\nI would check that the vendor's similarity is cosine on rows normalised the right way. I would also make sure nobody reads the axes as named factors, since a rotation of the table changes every axis and nothing else.\n\nFinally I would check for look-ahead: rows updated monthly must be used only after their publication date, or the backtest of the risk model borrows the future.",
+   "model": "First I would ask what the rows were built from and over which dates: returns, text, or both. If they come from returns, a peer group is a co-movement claim in that window, not a business link, and a shared factor can break.\n\nI would test the neighbours out of sample. Take the vendor's rows as of a past month, find each stock's nearest neighbours, and check whether those pairs still have high return correlation in the following months. I would compare that with two baselines: official sector peers and peers from a correlation matrix I compute myself. The vendor should beat or at least match them.\n\nI would check stability month to month. In this level, exact partners changed often while the sector around them did not. So I would score groups, for example the share of top-5 neighbours that stay in the top 20, rather than the single nearest name.\n\nI would look at row lengths and at stocks with little history. A short row has no reliable direction, so its cosines can look confident and mean nothing; a new listing may still have its starting row. Such stocks need a guard and a default peer group.\n\nI would check that the vendor's similarity is cosine on rows normalised the right way. I would also make sure nobody reads the axes as named factors, since a rotation of the table changes every axis and nothing the model computes.\n\nFinally I would check for look-ahead: rows updated monthly must be used only after their publication date, or the backtest of the risk model borrows the future.",
    "rubric": [
     {
      "points": 2,
@@ -486,7 +515,7 @@
     ]
    },
    "feedback": {
-    "correct": "$0.35 / 0.1 = 3.5$ standard deviations: unusual for a random pair, worth checking.",
+    "correct": "$0.35 / 0.1 = 3.5$ standard deviations from random directions. Stock rows share the market, so compare it with other pairs in the same table.",
     "generic": "Not quite. Divide by the spread of random pairs.",
     "byKey": {
      "raw": "0.35 is the cosine itself. Divide by the background spread, 0.1.",
@@ -494,7 +523,7 @@
     }
    },
    "explain": {
-    "text": "Random pairs spread about 0.1 in 100 dimensions, so 0.35 is $0.35/0.1 = 3.5$ standard deviations out: a real signal in this table, though still only co-movement."
+    "text": "Random pairs spread about 0.1 in 100 dimensions, so 0.35 is $0.35/0.1 = 3.5$ standard deviations out. Stock rows share the market, though. Compare it with other pairs in the same table before calling it a signal."
    }
   }
  ]

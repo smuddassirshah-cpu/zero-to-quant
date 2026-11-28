@@ -1400,7 +1400,7 @@
     }
    ],
    "explain": {
-    "text": "The errors are $-0.04$, $0.04$ and $-0.09$, so the loss is $0.0113/3 \\approx 0.0038$. A table of width 3 for 30 stocks has 90 numbers to fit 435 pairs, which is why it is called a low-rank fit."
+    "text": "The errors are $-0.04$, $0.04$ and $-0.09$, so the loss is $0.0113/3 \\approx 0.0038$. For 30 stocks, $\\mathbf{E}\\mathbf{E}^\\top$ has rank at most 3, far below 30, so this is a low-rank fit: 90 numbers stand in for 435 pairs."
    }
   },
   {
@@ -1528,7 +1528,7 @@
     }
    ],
    "explain": {
-    "text": "The root of 0.00035 is about 0.019, small next to correlations of 0.2 to 0.6. Three numbers a stock are enough to reproduce how 30 stocks move together, because three sectors drive them."
+    "text": "The root of 0.00035 is about 0.019, small next to correlations of 0.2 to 0.6. Three numbers a stock are enough to reproduce how 30 stocks move together, because a market move and three sectors drive them, and three directions hold both."
    }
   },
   {
@@ -1636,7 +1636,7 @@
     }
    ],
    "explain": {
-    "text": "9 of the 10 agree; over all 30 stocks the share is 0.967, with stock 9 the only miss. On seeds 7 to 16 the share never fell below 0.97.",
+    "text": "9 of the 10 agree; over all 30 stocks the share is 0.967, with stock 9 the only miss. On seeds 7 to 16 the share never fell below 0.967.",
     "canvas": {
      "highlight": {
       "rows": [
@@ -1787,7 +1787,7 @@
      {
       "id": "s1",
       "text": "Sector 1",
-      "why": "Sector 1 is the lowest bar in both halves."
+      "why": "Sector 1's bar falls in the second half; sector 2's is the one that rises."
      }
     ]
    },
@@ -1892,7 +1892,7 @@
     "options": [
      {
       "id": "len",
-      "text": "Fitting 1 there would force every row to length 1",
+      "text": "It is 1 for every stock, so it says nothing about co-movement",
       "correct": true
      },
      {
@@ -1903,26 +1903,26 @@
      {
       "id": "speed",
       "text": "Only to save time; the result is the same",
-      "why": "Keeping it changes the answer: rows would be pushed to length 1."
+      "why": "Keeping it changes the fit a little (the noise-only stock's row grows from 0.074 to 0.088 long), but time is not the reason: the diagonal holds nothing to learn."
      }
     ]
    },
    "feedback": {
-    "correct": "Left in, the diagonal would demand $|\\mathbf{e}_i|^2 = 1$ and give the lone stock a long, meaningless row.",
-    "generic": "Not quite. What is $\\mathbf{e}_i \\cdot \\mathbf{e}_i$?"
+    "correct": "The diagonal is 1 for every stock whatever the data, so fitting it spends the table on a number that says nothing about co-movement.",
+    "generic": "Not quite. What is a stock's correlation with itself?"
    },
    "hints": [
     {
      "rung": "nudge",
-     "text": "$\\mathbf{e}_i \\cdot \\mathbf{e}_i = |\\mathbf{e}_i|^2$."
+     "text": "What is a stock's correlation with itself?"
     },
     {
      "rung": "step",
-     "text": "Fitting it to 1 would fix every row's length."
+     "text": "It is 1 for every stock and every data set, so it holds no information about co-movement."
     }
    ],
    "explain": {
-    "text": "The diagonal entry is the row's squared length. Leaving it out lets a stock's row be as long as its shared moves, which is what made the lone stock's short row a warning sign."
+    "text": "The diagonal of $\\mathbf{C}$ is 1 for every stock whatever the data, so it carries nothing about how stocks move together. Keeping it changes the fit only a little here: the noise-only stock's row grows from 0.074 to 0.088 long."
    }
   },
   {
@@ -1991,12 +1991,13 @@
       "expect": "0.9666666666666667"
      },
      {
-      "call": "'corrcoef' not in __learner_source__",
-      "expect": "True",
-      "compare": "equal"
+      "setup": "import ast\ndef _names(src):\n    tree = ast.parse(src)\n    return {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)} | {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}",
+      "call": "'corrcoef' in _names(__learner_source__)",
+      "compare": "equal",
+      "expect": "False"
      }
     ],
-    "how": "Submit runs 8 hidden tests. They check a small return table to 6 places, the 30 stocks against `np.corrcoef` to $10^{-12}$, and the shape. Then come three small tables of rows, the share for an eigenvector table, and a check that `np.corrcoef` is not used.",
+    "how": "Submit runs 8 hidden tests. They check a small return table to 6 places, the 30 stocks against `np.corrcoef` to $10^{-12}$, and the shape. Then come three small tables of rows, the share for an eigenvector table, and a check on the syntax tree of your code that `corrcoef` is not called (comments and strings do not count).",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef corr_from_returns(R):\n    X = np.asarray(R, dtype=float)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    return X.T @ X\n\n\ndef sector_recovery(E, sectors):\n    E = np.asarray(E, dtype=float)\n    U = E / np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    S = U @ U.T\n    np.fill_diagonal(S, -np.inf)\n    nearest = S.argmax(axis=1)\n    sectors = np.asarray(sectors)\n    return float(np.mean(sectors[nearest] == sectors))\n",
@@ -2017,6 +2018,11 @@
       "source": "import numpy as np\n\n\ndef corr_from_returns(R):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    return X.T @ X\n\n\ndef sector_recovery(E, sectors):\n    E = np.asarray(E, dtype=float)\n    S = -np.sqrt(((E[:, None] - E[None]) ** 2).sum(-1))\n    np.fill_diagonal(S, -np.inf)\n    nearest = S.argmax(axis=1)\n    sectors = np.asarray(sectors)\n    return float(np.mean(sectors[nearest] == sectors))\n",
       "test": 4,
       "symptom": "Finds neighbours by distance, where a long row such as the last one misleads."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef corr_from_returns(R):\n    return np.corrcoef(np.asarray(R, dtype=float).T)\n\n\ndef sector_recovery(E, sectors):\n    E = np.asarray(E, dtype=float)\n    U = E / np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    S = U @ U.T\n    np.fill_diagonal(S, -np.inf)\n    nearest = S.argmax(axis=1)\n    sectors = np.asarray(sectors)\n    return float(np.mean(sectors[nearest] == sectors))\n",
+      "test": 8,
+      "symptom": "Calls np.corrcoef instead of building the matrix from demeaned columns."
      }
     ],
     "data": {
@@ -2028,8 +2034,8 @@
     "correct": "Your matrix matches `np.corrcoef` and your share matches.",
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
-     "test-1": "Subtract each column's mean before dividing by its length.",
-     "test-3": "The result should be 30 by 30: stocks by stocks. Transpose the other way.",
+     "test-1": "Subtract each column's mean before dividing by its length, and form `X.T @ X` for stocks by stocks, not days by days.",
+     "test-3": "The result should be a NumPy array, 30 by 30: return the matrix itself, not a list.",
      "test-4": "Leave out each stock's cosine with itself before taking the largest.",
      "test-8": "Build the matrix from demeaned columns yourself; the check is that you can."
     }
@@ -2069,9 +2075,9 @@
     ],
     "tests": [
      {
-      "call": "np.round(fit_embeddings([[1, 0.6, 0.2, 0.1], [0.6, 1, 0.3, 0.2], [0.2, 0.3, 1, 0.5], [0.1, 0.2, 0.5, 1]], 2, 5, 10.0, 0), 6).tolist()",
+      "call": "np.round(fit_embeddings([[1, 0.6, 0.2, 0.1], [0.6, 1, 0.3, 0.2], [0.2, 0.3, 1, 0.5], [0.1, 0.2, 0.5, 1]], 2, 5, 1.0, 0), 6).tolist()",
       "compare": "equal",
-      "expect": "[[-338.322498, -309.433233], [-324.211067, -284.407772], [-347.137809, -260.431415], [-394.088389, -241.235822]]"
+      "expect": "[[0.120528, 0.060151], [0.153738, 0.089345], [0.11237, 0.147601], [0.168682, 0.164995]]"
      },
      {
       "call": "np.round(fit_embeddings([[1, 0.6, 0.2, 0.1], [0.6, 1, 0.3, 0.2], [0.2, 0.3, 1, 0.5], [0.1, 0.2, 0.5, 1]], 1, 3, 5.0, 4), 6).tolist()",
@@ -2098,7 +2104,7 @@
       "expect": "[6, 3]"
      }
     ],
-    "how": "Submit runs 5 hidden tests. Two short seeded runs on a 4-stock matrix are compared to 6 places (5 steps and 3 steps). Then the fit's typical error must be below 0.03 on `factor_returns(7)` after 300 steps, and its sector recovery at least 0.9 on `factor_returns(11)`. The last test checks the shape.",
+    "how": "Submit runs 5 hidden tests. Two short seeded runs on a 4-stock matrix are compared to 6 places (5 steps at step size 1 and 3 steps at 5). Then the fit's typical error must be below 0.03 on `factor_returns(7)` after 300 steps, and its sector recovery at least 0.9 on `factor_returns(11)`. The last test checks the shape.",
     "mutants": [
      {
       "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\n\n\ndef fit_embeddings(C, dim, steps, lr, seed):\n    # start: 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    # loss: mean over pairs i != j of (E E^T - C)^2; plain gradient descent\n    n = len(C)\n    E = Tensor(0.1 * np.random.default_rng(seed).standard_normal((n, dim)))\n    C = np.asarray(C, dtype=float)\n    M = 1.0 - np.eye(n)\n    for _ in range(steps):\n        D = (E @ E.T - C) * M\n        loss = (D ** 2).sum() / (n * (n - 1))\n        loss.backward()\n        sgd_step([E], lr)\n    return E.data\n",
@@ -2108,7 +2114,7 @@
      {
       "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\n\n\ndef fit_embeddings(C, dim, steps, lr, seed):\n    # start: 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    # loss: mean over pairs i != j of (E E^T - C)^2; plain gradient descent\n    n = len(C)\n    E = Tensor(0.1 * np.random.default_rng(seed).standard_normal((n, dim)))\n    C = np.asarray(C, dtype=float)\n    M = 1.0 - np.eye(n)\n    for _ in range(steps):\n        E.zero_grad()\n        D = E @ E.T - C\n        loss = (D ** 2).sum() / (n * (n - 1))\n        loss.backward()\n        sgd_step([E], lr)\n    return E.data\n",
       "test": 1,
-      "symptom": "Keeps the diagonal in the loss, pulling every row towards length 1."
+      "symptom": "Keeps the diagonal in the loss, fitting a 1 for every stock that says nothing about co-movement."
      },
      {
       "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\n\n\ndef fit_embeddings(C, dim, steps, lr, seed):\n    # start: 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    # loss: mean over pairs i != j of (E E^T - C)^2; plain gradient descent\n    n = len(C)\n    E = Tensor(0.1 * np.random.default_rng(seed).standard_normal((n, dim)))\n    C = np.asarray(C, dtype=float)\n    M = 1.0 - np.eye(n)\n    for _ in range(steps):\n        E.zero_grad()\n        D = (E @ E.T - C) * M\n        loss = (D ** 2).sum() / (n * n)\n        loss.backward()\n        sgd_step([E], lr)\n    return E.data\n",
@@ -2131,8 +2137,8 @@
     "correct": "Your fit matches the seeded runs exactly and reproduces the correlations to within 0.03.",
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
-     "test-1": "Five steps from the given start must match to 6 places: zero the gradient each step, mask the diagonal, divide by $n(n-1)$.",
-     "test-3": "After 300 steps at step size 10 the typical error should be about 0.019. Check the sign of your step."
+     "test-1": "Five steps of size 1 from the given start must match to 6 places: zero the gradient each step, mask the diagonal, divide by $n(n-1)$.",
+     "test-3": "300 steps at step size 10 should bring the typical error to about 0.019."
     }
    },
    "hints": [
@@ -2208,7 +2214,7 @@
   "formula": {
    "name": "Off-diagonal fit",
    "tex": "L(\\mathbf{E}) = \\dfrac{1}{n(n-1)} \\sum_{i \\ne j} (\\mathbf{e}_i \\cdot \\mathbf{e}_j - C_{ij})^2",
-   "note": "Leave out the diagonal, so a row's length can show how much a stock shares."
+   "note": "Leave out the diagonal: it is 1 for every stock and says nothing about co-movement."
   },
   "trap": "Fitting on one sample and reading its neighbours as next year's structure: stock 9 changed sector halfway through."
  },
