@@ -1,0 +1,1140 @@
+{
+ "id": "l9-weighted-vote",
+ "course": "ai-basics",
+ "title": "A weighted vote",
+ "minutes": 13,
+ "objectives": [
+  "Compute a neuron's weighted sum of its inputs plus a bias."
+ ],
+ "skills": [
+  "ab-neuron"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Three friends",
+   "prose": "Three friends advise you on taking an umbrella. Ana looks at the clouds and is right 7 times in 10. Ben reads the forecast and is right 9 times in 10. Cal says “you have a bag with a hood, so leave it”.",
+   "question": "Whose advice should count most?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ben",
+      "text": "Ben's: he is right most often",
+      "correct": true
+     },
+     {
+      "id": "ana",
+      "text": "Ana's: clouds are what you can see",
+      "why": "Ana is right 7 times in 10, Ben 9. The better adviser should count more."
+     },
+     {
+      "id": "equal",
+      "text": "All three equally",
+      "why": "Equal votes ignore that Ben is right more often than Ana."
+     },
+     {
+      "id": "cal",
+      "text": "Cal's: he speaks last",
+      "why": "Order does not matter. And Cal's advice points the other way: it argues against the umbrella."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Who is right most often?"
+    },
+    {
+     "rung": "step",
+     "text": "Ben, 9 times in 10."
+    }
+   ],
+   "feedback": {
+    "correct": "Ben's advice should count most.",
+    "generic": "Not quite. Compare how often each friend is right."
+   },
+   "explain": {
+    "text": "A fair vote gives more say to the better adviser. Ben should count most, Ana less, and Cal's advice should count against taking the umbrella."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A vote with weights",
+   "prose": "Here the vote is a neuron. Each input is 1 (yes) or 0 (no) and has a **weight**, how much it counts. The neuron also has a **bias**, a starting lean, here −2.5. Tap inputs to switch them on and watch the sum.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 250,
+     "nodes": [
+      {
+       "id": "c",
+       "label": "Cloudy",
+       "x": 0.14,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "r",
+       "label": "Rain due",
+       "x": 0.14,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "Bag",
+       "x": 0.14,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "n",
+       "label": "Σ, b = −2.5",
+       "x": 0.62,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "o",
+       "label": "Take it?",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "c",
+       "to": "n",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "r",
+       "to": "n",
+       "w": 3,
+       "label": "3"
+      },
+      {
+       "from": "g",
+       "to": "n",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "n",
+       "to": "o"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 5,
+      "norm": 3
+     }
+    },
+    "state": {},
+    "derive": {
+     "values.n": "'sum ' + fixed(2*(selected.includes('c')?1:0)+3*(selected.includes('r')?1:0)-1*(selected.includes('g')?1:0)-2.5, 1)",
+     "caption": "Inputs on: {{selected.length}}. Weighted sum plus bias = {{fixed(2*(selected.includes('c')?1:0)+3*(selected.includes('r')?1:0)-1*(selected.includes('g')?1:0)-2.5, 1)}}"
+    }
+   },
+   "question": "Which inputs, switched on, give the largest sum?",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "c",
+     "r"
+    ],
+    "only": [
+     "c",
+     "r",
+     "g"
+    ],
+    "countWord": "inputs on",
+    "wrong": [
+     {
+      "id": "all",
+      "set": [
+       "c",
+       "r",
+       "g"
+      ]
+     },
+     {
+      "id": "rain",
+      "set": [
+       "r"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which weights are positive?"
+    },
+    {
+     "rung": "point",
+     "text": "The bag's weight is −1: switching it on lowers the sum.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Cloudy and rain due: $2 + 3 - 2.5 = 2.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "Cloudy and rain due give 2.5, the largest.",
+    "generic": "Not quite. Switch on only the inputs with positive weights.",
+    "byKey": {
+     "all": "With the bag on too the sum is 1.5. The bag's weight is −1, so it pulls the sum down.",
+     "rain": "Rain alone gives 0.5. Cloudy adds 2 more."
+    }
+   },
+   "explain": {
+    "text": "The positive weights, 2 and 3, raise the sum; the bag's −1 lowers it. Cloudy and rain due give $2 + 3 - 2.5 = 2.5$, the most.",
+    "canvas": {
+     "selected": [
+      "c",
+      "r"
+     ],
+     "values": {
+      "n": "sum 2.5"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The weighted sum",
+   "prose": "The neuron adds each input times its weight, then the bias: $$w_1 x_1 + w_2 x_2 + w_3 x_3 + b = 2x_1 + 3x_2 - x_3 - 2.5$$ This is the **weighted sum**.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 250,
+     "nodes": [
+      {
+       "id": "c",
+       "label": "Cloudy",
+       "x": 0.14,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "r",
+       "label": "Rain due",
+       "x": 0.14,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "Bag",
+       "x": 0.14,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "n",
+       "label": "Σ, b = −2.5",
+       "x": 0.62,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "o",
+       "label": "Take it?",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "c",
+       "to": "n",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "r",
+       "to": "n",
+       "w": 3,
+       "label": "3"
+      },
+      {
+       "from": "g",
+       "to": "n",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "n",
+       "to": "o"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 5,
+      "norm": 3
+     }
+    },
+    "state": {}
+   },
+   "question": "Only the rain forecast is on: $(x_1, x_2, x_3) = (0, 1, 0)$. What is the weighted sum?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A number",
+    "label": "Weighted sum",
+    "accept": "0.5",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all-weights",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Only $x_2$ is 1, so only its weight counts."
+    },
+    {
+     "rung": "step",
+     "text": "$3 - 2.5 = 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$3 \\times 1 - 2.5 = 0.5$.",
+    "generic": "Not quite. Add the weights of the inputs that are 1, then the bias.",
+    "byKey": {
+     "no-bias": "You left out the bias. Add −2.5: $3 - 2.5 = 0.5$.",
+     "all-weights": "You added every weight, $2 + 3 - 1$. Only inputs that are 1 count."
+    }
+   },
+   "explain": {
+    "text": "Inputs that are 0 add nothing. The rain weight gives 3 and the bias −2.5, so the sum is 0.5.",
+    "canvas": {
+     "highlight": [
+      "r",
+      "n"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Cloudy and rain",
+   "prose": "Now cloudy and rain are both on, and the bag is off: $(1, 1, 0)$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 250,
+     "nodes": [
+      {
+       "id": "c",
+       "label": "Cloudy",
+       "x": 0.14,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "r",
+       "label": "Rain due",
+       "x": 0.14,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "Bag",
+       "x": 0.14,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "n",
+       "label": "Σ, b = −2.5",
+       "x": 0.62,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "o",
+       "label": "Take it?",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "c",
+       "to": "n",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "r",
+       "to": "n",
+       "w": 3,
+       "label": "3"
+      },
+      {
+       "from": "g",
+       "to": "n",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "n",
+       "to": "o"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 5,
+      "norm": 3
+     }
+    },
+    "state": {}
+   },
+   "question": "What is the weighted sum?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A number",
+    "label": "Weighted sum",
+    "accept": "2.5",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "with-bag",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the two weights that are switched on."
+    },
+    {
+     "rung": "step",
+     "text": "$2 + 3 - 2.5 = 2.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2 + 3 - 2.5 = 2.5$.",
+    "generic": "Not quite. Weights of the inputs that are on, then the bias.",
+    "byKey": {
+     "no-bias": "5 leaves out the bias.",
+     "with-bag": "1.5 includes the bag, which is off here."
+    }
+   },
+   "explain": {
+    "text": "$2 \\times 1 + 3 \\times 1 - 1 \\times 0 - 2.5 = 2.5$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Cloudy alone, bag alone",
+   "prose": "Two more by hand. Cloudy alone is $(1, 0, 0)$. The bag alone is $(0, 0, 1)$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 250,
+     "nodes": [
+      {
+       "id": "c",
+       "label": "Cloudy",
+       "x": 0.14,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "r",
+       "label": "Rain due",
+       "x": 0.14,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "Bag",
+       "x": 0.14,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "n",
+       "label": "Σ, b = −2.5",
+       "x": 0.62,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "o",
+       "label": "Take it?",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "c",
+       "to": "n",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "r",
+       "to": "n",
+       "w": 3,
+       "label": "3"
+      },
+      {
+       "from": "g",
+       "to": "n",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "n",
+       "to": "o"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 5,
+      "norm": 3
+     }
+    },
+    "state": {}
+   },
+   "question": "What is the weighted sum for the bag alone?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A number",
+    "label": "Weighted sum",
+    "accept": "−3.5",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "plus",
+      "value": -1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "cloudy",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The bag's weight is −1."
+    },
+    {
+     "rung": "step",
+     "text": "$-1 - 2.5 = -3.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-1 - 2.5 = -3.5$; cloudy alone gives $2 - 2.5 = -0.5$.",
+    "generic": "Not quite. Add the bag's weight, −1, to the bias, −2.5.",
+    "byKey": {
+     "sign": "Both numbers are negative, so the sum is negative: −3.5.",
+     "plus": "You added +1 for the bag. Its weight is −1.",
+     "cloudy": "−0.5 is cloudy alone. The bag alone uses the weight −1."
+    }
+   },
+   "explain": {
+    "text": "Cloudy alone gives $2 - 2.5 = -0.5$. The bag alone gives $-1 - 2.5 = -3.5$, the lowest of all: two negatives add."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The other four",
+   "prose": "Here are all eight input patterns. Four sums are missing.",
+   "question": "Fill in the four missing sums.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Cloudy",
+     "Rain due",
+     "Bag",
+     "Sum"
+    ],
+    "rows": [
+     [
+      "0",
+      "0",
+      "0",
+      {
+       "edit": true,
+       "answer": -2.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "0",
+      "0",
+      "1",
+      "−3.5"
+     ],
+     [
+      "0",
+      "1",
+      "0",
+      "0.5"
+     ],
+     [
+      "0",
+      "1",
+      "1",
+      {
+       "edit": true,
+       "answer": -0.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "1",
+      "0",
+      "0",
+      "−0.5"
+     ],
+     [
+      "1",
+      "0",
+      "1",
+      {
+       "edit": true,
+       "answer": -1.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "1",
+      "1",
+      "0",
+      "2.5"
+     ],
+     [
+      "1",
+      "1",
+      "1",
+      {
+       "edit": true,
+       "answer": 1.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start each sum at −2.5 and add the weight of each input that is 1."
+    },
+    {
+     "rung": "step",
+     "text": "$(0,0,0)$: −2.5; $(0,1,1)$: −0.5; $(1,0,1)$: −1.5; $(1,1,1)$: 1.5."
+    }
+   ],
+   "feedback": {
+    "correct": "−2.5, −0.5, −1.5 and 1.5.",
+    "generic": "Not quite. Add the weights of the inputs that are 1, then −2.5."
+   },
+   "explain": {
+    "text": "With nothing on, only the bias is left: −2.5. Each 1 adds its weight: $3 - 1 - 2.5 = -0.5$, $2 - 1 - 2.5 = -1.5$ and $2 + 3 - 1 - 2.5 = 1.5$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Count only what is on",
+   "prose": "Cloudy and the bag are on, the rain forecast is off: $(1, 0, 1)$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 250,
+     "nodes": [
+      {
+       "id": "c",
+       "label": "Cloudy",
+       "x": 0.14,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "r",
+       "label": "Rain due",
+       "x": 0.14,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "Bag",
+       "x": 0.14,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "n",
+       "label": "Σ, b = −2.5",
+       "x": 0.62,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "o",
+       "label": "Take it?",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "c",
+       "to": "n",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "r",
+       "to": "n",
+       "w": 3,
+       "label": "3"
+      },
+      {
+       "from": "g",
+       "to": "n",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "n",
+       "to": "o"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 5,
+      "norm": 3
+     }
+    },
+    "state": {}
+   },
+   "question": "What is the weighted sum?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "$-1.5$",
+      "correct": true
+     },
+     {
+      "id": "no-bias",
+      "text": "$1$",
+      "why": "You left out the bias. $2 - 1 = 1$, then add −2.5."
+     },
+     {
+      "id": "all",
+      "text": "$1.5$",
+      "why": "You added the rain weight too. Rain is 0 here, so its 3 does not count."
+     },
+     {
+      "id": "sign",
+      "text": "$0.5$",
+      "why": "You added the bag as +1. Its weight is −1."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which inputs are 1?"
+    },
+    {
+     "rung": "step",
+     "text": "$2 - 1 - 2.5 = -1.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2 - 1 - 2.5 = -1.5$.",
+    "generic": "Not quite. Only inputs that are 1 add their weight, and the bias always counts.",
+    "byKey": {
+     "all": "You added the weight of an input that is 0. Rain is off, so $3 \\times 0 = 0$."
+    }
+   },
+   "explain": {
+    "text": "Rain is 0, so its weight adds nothing. Cloudy adds 2, the bag adds −1, and the bias −2.5 always counts: −1.5."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A weight against",
+   "prose": "The bag's weight is negative.",
+   "question": "What does a negative weight mean for this neuron?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "against",
+      "text": "Carrying a bag counts against taking the umbrella",
+      "correct": true
+     },
+     {
+      "id": "ignore",
+      "text": "The bag is ignored",
+      "why": "A weight of 0 would ignore it. −1 pulls the sum down."
+     },
+     {
+      "id": "error",
+      "text": "The weight is a mistake: weights must be positive",
+      "why": "Weights can be negative. A hood in your bag is a reason not to take an umbrella."
+     },
+     {
+      "id": "strong",
+      "text": "The bag counts most",
+      "why": "The size of −1 is the smallest of the three. It counts least, and against."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does −1 do to the sum when the bag is 1?"
+    },
+    {
+     "rung": "step",
+     "text": "It lowers the sum by 1."
+    }
+   ],
+   "feedback": {
+    "correct": "A negative weight votes against.",
+    "generic": "Not quite. Look at what the weight does to the sum."
+   },
+   "explain": {
+    "text": "When the bag is on, the sum drops by 1. A negative weight is an input voting against: you already have a hood."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Any weighted sum",
+   "prose": "For any inputs and weights: $$\\text{sum} = w_1 x_1 + w_2 x_2 + \\dots + b$$ Inputs that are 0 add nothing, and the bias is always added.",
+   "question": "Weights 1.5 and −2, bias 0.5, inputs (1, 1). What is the sum?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A number",
+    "label": "Sum",
+    "accept": "0",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add 1.5 and −2, then 0.5."
+    },
+    {
+     "rung": "step",
+     "text": "$1.5 - 2 + 0.5 = 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1.5 - 2 + 0.5 = 0$.",
+    "generic": "Not quite. Both inputs are 1, so add both weights and the bias.",
+    "byKey": {
+     "no-bias": "−0.5 leaves out the bias, 0.5.",
+     "sign": "You added +2. The second weight is −2."
+    }
+   },
+   "explain": {
+    "text": "Both inputs are 1, so both weights count: $1.5 - 2 = -0.5$. The bias adds 0.5, giving 0."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A credit score",
+   "prose": "A lender scores applicants: 20 points to start, plus 4 for each £10,000 of income, minus 15 for each missed payment last year. An applicant earns £45,000 and missed one payment.",
+   "question": "What is the applicant's score?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 23,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "label": "Score",
+    "accept": "23",
+    "wrong": [
+     {
+      "id": "no-base",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "plus",
+      "value": 53,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Income in units of £10,000 is 4.5."
+    },
+    {
+     "rung": "step",
+     "text": "$4 \\times 4.5 - 15 \\times 1 + 20 = 23$."
+    }
+   ],
+   "feedback": {
+    "correct": "$18 - 15 + 20 = 23$.",
+    "generic": "Not quite. Treat it as a weighted sum: weights 4 and −15, bias 20.",
+    "byKey": {
+     "no-base": "3 leaves out the 20 starting points, the bias.",
+     "plus": "You added the 15 for the missed payment. Its weight is −15."
+    }
+   },
+   "explain": {
+    "text": "The score is a weighted sum: income 4.5 with weight 4, missed payments 1 with weight −15, and a bias of 20. That gives $18 - 15 + 20 = 23$."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Each input is multiplied by its weight: how much it counts, and a negative weight counts against.",
+   "The bias is a starting lean, added whatever the inputs.",
+   "Inputs that are 0 add nothing; the umbrella neuron's sums run from −3.5 to 2.5."
+  ],
+  "formula": {
+   "name": "Weighted sum",
+   "tex": "w_1 x_1 + w_2 x_2 + w_3 x_3 + b",
+   "note": "Umbrella: $2x_1 + 3x_2 - x_3 - 2.5$."
+  },
+  "trap": "Forgetting the bias, or adding the weight of an input that is 0."
+ },
+ "quiz": [
+  {
+   "id": "q-sum-two",
+   "difficulty": 2,
+   "prose": "A neuron has weights 4 and −3 and bias −0.5.",
+   "question": "What is its weighted sum for inputs (1, 1)?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A number",
+    "label": "Sum",
+    "accept": "0.5",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 6.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4 - 3 - 0.5 = 0.5$.",
+    "generic": "Not quite. Add both weights, then the bias.",
+    "byKey": {
+     "no-bias": "1 leaves out the bias.",
+     "sign": "You added +3. The second weight is −3."
+    }
+   },
+   "explain": {
+    "text": "Both inputs are 1: $4 - 3 = 1$, then the bias: $1 - 0.5 = 0.5$."
+   }
+  },
+  {
+   "id": "q-sum-zero-input",
+   "difficulty": 2,
+   "prose": "Same neuron: weights 4 and −3, bias −0.5.",
+   "question": "What is the sum for inputs (0, 1)?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A number",
+    "label": "Sum",
+    "accept": "−3.5",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-3 - 0.5 = -3.5$.",
+    "generic": "Not quite. The first input is 0, so its weight adds nothing.",
+    "byKey": {
+     "all": "You counted the first weight, but $x_1 = 0$.",
+     "sign": "Two negatives add to a negative: −3.5."
+    }
+   },
+   "explain": {
+    "text": "Only the second input is on: $-3 - 0.5 = -3.5$."
+   }
+  },
+  {
+   "id": "q-bias-role",
+   "difficulty": 3,
+   "prose": "A neuron's inputs are all 0.",
+   "question": "What is its weighted sum?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bias",
+      "text": "The bias",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "Always 0",
+      "why": "The bias is added even when every input is 0."
+     },
+     {
+      "id": "weights",
+      "text": "The sum of the weights",
+      "why": "Each weight is multiplied by its input, 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Only the bias is left.",
+    "generic": "Not quite. What survives when every input is 0?"
+   },
+   "explain": {
+    "text": "Every input times its weight is 0, so the sum is just the bias: the neuron's starting lean."
+   }
+  }
+ ]
+}

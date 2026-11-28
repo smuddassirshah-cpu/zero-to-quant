@@ -1,0 +1,361 @@
+{
+ "id": "homework-2",
+ "course": "ai-basics",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-fit-fresh",
+   "difficulty": 4,
+   "skills": [
+    "ab-nudge"
+   ],
+   "prose": "Write the whole learner yourself this time: `mse`, `nudge_once` (the exact rule of l7) and `fit_by_nudging`. The last starts at (0, 0), counts every round, and rounds $w$, $b$ and the error to 6 places.",
+   "question": "Write all three functions. They are tested on a fresh table of points.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def mse(w, b, xs, ys):\n    return 0\n\ndef nudge_once(w, b, xs, ys, step):\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    return (0.0, 0.0, 0.0, 0)\n",
+    "solution": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+    "examples": [
+     {
+      "call": "mse(1, 0, [1, 2, 3, 4, 5], [2, 2, 4, 5, 6])",
+      "expect": "0.8",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "mse(1, 0, [1, 2, 3, 4, 5], [2, 2, 4, 5, 6])",
+      "expect": "0.8",
+      "compare": "isclose"
+     },
+     {
+      "call": "mse(1.1, 0.5, [1, 2, 3, 4, 5], [2, 2, 4, 5, 6])",
+      "expect": "0.13999999999999999",
+      "compare": "isclose"
+     },
+     {
+      "call": "mse(0, 0, [1, 2], [3, 4])",
+      "expect": "12.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "mse(2, -1, [0, 1, 2], [-1, 1, 3])",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([1, 2, 3, 4, 5], [2, 2, 4, 5, 6], 0.1))",
+      "expect": "[1.0, 0.8, 0.16, 11]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([1, 2, 3, 4, 5], [2, 2, 4, 5, 6], 0.5))",
+      "expect": "[1.0, 1.0, 0.2, 3]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([-2, -1, 0, 1], [7, 5, 3, 1], 1))",
+      "expect": "[-2.0, 3.0, 0.0, 4]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Each number is accepted when math.isclose to the expected one."
+   },
+   "feedback": {
+    "correct": "All three work on new points.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-5": "On the fresh table with step 0.1 the script stops at (1.0, 0.8) after 11 rounds, MSE 0.16. Check the round count includes the last round."
+    }
+   },
+   "explain": {
+    "text": "The same three pieces as in l6 to l8: the error, one round, and the loop that stops when a round changes nothing. On the fresh table step 0.1 stops at MSE 0.16, while the line $y = 1.1x + 0.5$ scores 0.14."
+   },
+   "title": "The learner from scratch"
+  },
+  {
+   "id": "h-pairs",
+   "difficulty": 5,
+   "skills": [
+    "ab-nudge"
+   ],
+   "prose": "Step 0.01 stopped at (1.48, 1.36) because only a move of both numbers would help. Add that move. One round: do `nudge_once`, then try $(w + s, b - s)$ and $(w - s, b + s)$; keep the lower if it lowers the error ($(w + s, b - s)$ on a tie). Stop on a round that changes nothing.",
+   "question": "Write `fit_with_pairs(xs, ys, step)` returning `(w, b, error, rounds)`, rounded as before.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_with_pairs(xs, ys, step):\n    # rounds of: nudge_once, then try (w + step, b - step) and (w - step, b + step)\n    return (0.0, 0.0, 0.0, 0)\n",
+    "solution": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef pairs_once(w, b, xs, ys, step):\n    w, b = nudge_once(w, b, xs, ys, step)\n    best = mse(w, b, xs, ys)\n    a = mse(w + step, b - step, xs, ys)\n    c = mse(w - step, b + step, xs, ys)\n    if a < best and a <= c:\n        w, b = w + step, b - step\n    elif c < best:\n        w, b = w - step, b + step\n    return (w, b)\n\ndef fit_with_pairs(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = pairs_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+    "examples": [
+     {
+      "call": "list(fit_with_pairs([1, 2, 3, 4, 5], [3, 4, 6, 7, 9], 0.01))",
+      "expect": "[1.51, 1.27, 0.0602, 158]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(fit_with_pairs([1, 2, 3, 4, 5], [3, 4, 6, 7, 9], 0.01))",
+      "expect": "[1.51, 1.27, 0.0602, 158]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_with_pairs([1, 2, 3, 4, 5], [3, 4, 6, 7, 9], 0.1))",
+      "expect": "[1.6, 1.0, 0.08, 17]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_with_pairs([1, 2, 3, 4, 5], [2, 2, 4, 5, 6], 0.1))",
+      "expect": "[1.2, 0.2, 0.16, 9]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_with_pairs([1, 2, 3], [2, 1, 0], 0.5))",
+      "expect": "[-0.5, 2.0, 0.166667, 4]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_with_pairs([0, 1, 2, 3], [1, 3, 5, 7], 0.5))",
+      "expect": "[2.0, 1.0, 0.0, 5]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. Each number is accepted when math.isclose to the expected one."
+   },
+   "feedback": {
+    "correct": "Your rule adds the paired move and stops when nothing helps.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "With step 0.01 it should stop at (1.51, 1.27), MSE 0.0602, after 158 rounds. Do the single nudges first, then the pair.",
+     "test-2": "With step 0.1 the paired rule stops at (1.6, 1.0), MSE 0.08: worse than plain nudging. That is right; check your order of moves."
+    }
+   },
+   "explain": {
+    "text": "The paired move beats 0.0608 at step 0.01, reaching 0.0602, but still not 0.06. At step 0.1 it stops at 0.08, worse than plain nudging. Each rule only promises that none of its own moves helps."
+   },
+   "title": "Moving both together"
+  },
+  {
+   "id": "h-order-round",
+   "difficulty": 3,
+   "skills": [
+    "ab-nudge"
+   ],
+   "prose": "One round of the nudge rule, from $w$, $b$ with error $E$.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "wtry",
+      "text": "Work out the error at $w + s$ and at $w - s$"
+     },
+     {
+      "id": "wkeep",
+      "text": "If the lower of the two is below $E$, move $w$ there and update $E$"
+     },
+     {
+      "id": "btry",
+      "text": "Work out the error at $b + s$ and at $b - s$, using the new $w$"
+     },
+     {
+      "id": "bkeep",
+      "text": "If the lower of the two is below $E$, move $b$ there"
+     },
+     {
+      "id": "both",
+      "text": "Move $w$ and $b$ the same way at once"
+     }
+    ],
+    "answer": [
+     "wtry",
+     "wkeep",
+     "btry",
+     "bkeep"
+    ],
+    "distractors": [
+     "both"
+    ]
+   },
+   "feedback": {
+    "correct": "Try $w$, keep or not, then try $b$ from the new $w$, keep or not.",
+    "generic": "Not quite. $b$'s trials use the $w$ that the first half settled.",
+    "byKey": {
+     "both": "The rule nudges one number at a time. Moving both the same way at once is a different rule.",
+     "btry": "Try $b$ after $w$ is settled, so it uses the new $w$."
+    }
+   },
+   "explain": {
+    "text": "A round settles $w$ first, then tries $b$ from there. A trial is kept only when it lowers the error."
+   },
+   "title": "One round, in order"
+  },
+  {
+   "id": "h-mse-fresh",
+   "difficulty": 3,
+   "skills": [
+    "ab-nudge"
+   ],
+   "prose": "Points (0, 2), (1, 3), (2, 5), (3, 6) and the line $y = 1.5x + 2$.",
+   "question": "What is the MSE? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.125,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "label": "MSE",
+    "accept": "0.125",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "five",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Errors 0, 0.5, 0, 0.5; squares add to 0.5; $0.5 \\div 4 = 0.125$.",
+    "generic": "Not quite. Square each error, add, divide by 4.",
+    "byKey": {
+     "sum": "0.5 is the sum of squares. Divide by 4.",
+     "five": "You divided by 5. There are 4 points."
+    }
+   },
+   "explain": {
+    "text": "The line predicts 2, 3.5, 5 and 6.5, so the errors are 0, 0.5, 0 and 0.5. Squared they add to 0.5, and $0.5 \\div 4 = 0.125$."
+   },
+   "title": "An MSE by hand"
+  },
+  {
+   "id": "h-round-fresh",
+   "difficulty": 4,
+   "skills": [
+    "ab-nudge"
+   ],
+   "prose": "Same four points. Start at $w$ = 1, $b$ = 2 and do one round of nudging with step 0.5.",
+   "question": "What is $b$ after the round?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "A number",
+    "label": "b after the round",
+    "accept": "2",
+    "wrong": [
+     {
+      "id": "down",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "up",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$b$ stays at 2: from $w$ = 1.5 neither $b$ trial is below 0.125.",
+    "generic": "Not quite. Settle $w$ first, then try $b$ from the new $w$.",
+    "byKey": {
+     "down": "$b$ = 1.5 gives 0.125, which only ties with the 0.125 reached after moving $w$. The rule needs a lower error.",
+     "up": "$b$ = 2.5 gives 0.625, above 0.125."
+    }
+   },
+   "explain": {
+    "text": "At (1, 2) the MSE is 0.5. $w$ = 1.5 gives 0.125 and $w$ = 0.5 gives 2.625, so $w$ moves to 1.5. From there $b$ = 2.5 gives 0.625 and $b$ = 1.5 gives 0.125, a tie, so $b$ stays at 2."
+   },
+   "title": "One round by hand"
+  },
+  {
+   "id": "h-step-choice",
+   "difficulty": 4,
+   "skills": [
+    "ab-nudge"
+   ],
+   "prose": "On our five points, nudging stopped at MSE 0.1 with step 0.5. It stopped at 0.06 with step 0.1, and at 0.0608 with step 0.01.",
+   "question": "Which statement does this show?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "not-mono",
+      "text": "A smaller step does not always stop at a lower error",
+      "correct": true
+     },
+     {
+      "id": "mono",
+      "text": "The smaller the step, the lower the error where it stops",
+      "why": "0.01 stopped above 0.1's 0.06."
+     },
+     {
+      "id": "best",
+      "text": "Step 0.1 is the best step for every dataset",
+      "why": "It happened to land on the best line here; on other data another step may do better."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Smaller is not always better: 0.0608 is above 0.06.",
+    "generic": "Not quite. Compare 0.1 and 0.01."
+   },
+   "explain": {
+    "text": "Step 0.1 reached 0.06 and step 0.01 stopped at 0.0608. So a finer step is no guarantee; where the rule stops depends on which single nudges are open to it."
+   },
+   "title": "Step sizes"
+  },
+  {
+   "id": "h-long-stopped",
+   "difficulty": 5,
+   "skills": [
+    "ab-nudge"
+   ],
+   "title": "Did it find the best line?",
+   "kind": "longform",
+   "prompt": "A colleague runs a nudging script on five points with step 0.01. It stops at $w = 1.48$, $b = 1.36$ with MSE 0.0608, and they write: “The error stopped falling, so I have the best line.”\n\n(a) What does the script's stop really tell us? (b) Use the numbers from l7 to show that their claim is false here. (c) Suggest two things they could try, and say what each one can and cannot promise. (d) Even with the best line on these five points, what would you still need before trusting it on new data?",
+   "model": "**(a)** The script stops when a whole round changes nothing. That means none of the four single nudges, $w \\pm 0.01$ or $b \\pm 0.01$, lowers the MSE. It says nothing about moves it never tries.\n\n**(b)** From (1.48, 1.36): $w + 0.01$ gives 0.0611, $w - 0.01$ gives 0.0627, and $b \\pm 0.01$ both give 0.0609. All are above 0.0608, so the script stops. But moving both at once, to (1.49, 1.35), gives 0.0606, lower. And the line $y = 1.5x + 1.3$ has MSE 0.06, which step 0.1 reached. So 0.0608 is not the best.\n\n**(c)** First, try a different step, such as 0.1: here it reaches 0.06, but in general a different step can also stop early, and smaller is not always better (step 0.5 stopped at 0.1). Second, add moves of both numbers together, as in the homework: it reached 0.0602 here, better than 0.0608 but still not 0.06. Each rule can only promise that none of its own moves helps.\n\n**(d)** Fitting five points well is a training score. I would want points kept back, scored once, before trusting the line on new data (l4).",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the stop means no single nudge of that step lowers the error, not that the line is best"
+    },
+    {
+     "points": 2,
+     "text": "Quotes the single-nudge errors (0.0611, 0.0627, 0.0609) against 0.0608"
+    },
+    {
+     "points": 2,
+     "text": "Shows a better line exists: the paired move (0.0606) or $y = 1.5x + 1.3$ (0.06)"
+    },
+    {
+     "points": 2,
+     "text": "Suggests two remedies (another step, paired moves) and says neither guarantees the best line"
+    },
+    {
+     "points": 2,
+     "text": "Notes that even the best fit is a training score and needs kept-back data"
+    }
+   ]
+  }
+ ]
+}

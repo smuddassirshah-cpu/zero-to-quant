@@ -1,0 +1,390 @@
+{
+ "id": "homework-1",
+ "course": "ai-basics",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-accuracy",
+   "difficulty": 4,
+   "skills": [
+    "ab-models"
+   ],
+   "prose": "A model's answers and the true labels are two lists of 0s and 1s of the same length.",
+   "question": "Write `accuracy(predictions, labels)`: the share of positions where they agree, as a decimal from 0 to 1.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def accuracy(predictions, labels):\n    return 0\n",
+    "solution": "def accuracy(predictions, labels):\n    right = 0\n    for i in range(len(labels)):\n        if predictions[i] == labels[i]:\n            right = right + 1\n    return right / len(labels)\n",
+    "examples": [
+     {
+      "call": "accuracy([1, 0, 1, 1], [1, 1, 1, 0])",
+      "expect": "0.5",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "accuracy([1, 0, 1, 1], [1, 1, 1, 0])",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "accuracy([0, 0], [0, 0])",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "accuracy([1], [0])",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "accuracy([1, 1, 0, 0, 1, 0, 1, 0], [1, 0, 0, 1, 1, 0, 0, 0])",
+      "expect": "0.625",
+      "compare": "isclose"
+     },
+     {
+      "call": "accuracy([0, 1, 1], [0, 1, 1])",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "accuracy([1, 0, 1], [0, 1, 0])",
+      "expect": "0.0",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Each answer is accepted when math.isclose(actual, expected)."
+   },
+   "feedback": {
+    "correct": "Right over total, as a decimal.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-4": "5 of the 8 positions agree, so 0.625. If you got 5, divide by the length."
+    }
+   },
+   "explain": {
+    "text": "Count the positions where the two lists agree, then divide by the length.\n\n```python\nreturn right / len(labels)\n```"
+   },
+   "title": "Accuracy in code"
+  },
+  {
+   "id": "h-split",
+   "difficulty": 4,
+   "skills": [
+    "ab-models"
+   ],
+   "prose": "To keep test data back, take the **last** `n_test` rows as the test set. The rest, in order, is training data.",
+   "question": "Write `split_train_test(rows, n_test)` returning `(train, test)`. It must work when `n_test` is 0.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def split_train_test(rows, n_test):\n    return (rows, [])\n",
+    "solution": "def split_train_test(rows, n_test):\n    cut = len(rows) - n_test\n    return (rows[:cut], rows[cut:])\n",
+    "examples": [
+     {
+      "call": "split_train_test([1, 2, 3, 4, 5], 2)[1]",
+      "expect": "[4, 5]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "split_train_test([1, 2, 3, 4, 5], 2)[0]",
+      "expect": "[1, 2, 3]",
+      "compare": "equal"
+     },
+     {
+      "call": "split_train_test([1, 2, 3, 4, 5], 2)[1]",
+      "expect": "[4, 5]",
+      "compare": "equal"
+     },
+     {
+      "call": "split_train_test([7, 8, 9], 0)[0]",
+      "expect": "[7, 8, 9]",
+      "compare": "equal"
+     },
+     {
+      "call": "split_train_test([7, 8, 9], 0)[1]",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "split_train_test([7, 8, 9], 3)[0]",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "split_train_test(['a', 'b', 'c', 'd'], 1)[1]",
+      "expect": "['d']",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Each result must equal the expected list."
+   },
+   "feedback": {
+    "correct": "Your cut point is `len(rows) - n_test`.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-3": "With `n_test = 0`, `rows[:-0]` is `rows[:0]`, an empty list. Cut at `len(rows) - n_test` instead.",
+     "test-1": "The training part is everything before the last `n_test` rows: `[1, 2, 3]` here."
+    }
+   },
+   "explain": {
+    "text": "The test rows are the last `n_test`, so cut at `len(rows) - n_test`. Writing `rows[:-n_test]` fails when `n_test` is 0, because `-0` is 0.\n\n```python\ncut = len(rows) - n_test\nreturn (rows[:cut], rows[cut:])\n```"
+   },
+   "title": "Keeping rows back"
+  },
+  {
+   "id": "h-fit-score",
+   "difficulty": 5,
+   "skills": [
+    "ab-models"
+   ],
+   "prose": "Put choosing and testing together. The rule is **say 1 when x is at least t**. Try every whole number t from 0 to 10 on the training lists. Keep the one with the most right, the smallest on a tie. Then score it on the test lists.",
+   "question": "Write `fit_and_score(train_x, train_y, test_x, test_y)` returning `(t, number right on the test lists)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def fit_and_score(train_x, train_y, test_x, test_y):\n    # choose t from 0 to 10 on the training lists (smallest on a tie),\n    # then count how many test examples that t gets right\n    return (0, 0)\n",
+    "solution": "def right_count(xs, ys, t):\n    right = 0\n    for i in range(len(xs)):\n        if (xs[i] >= t) == (ys[i] == 1):\n            right = right + 1\n    return right\n\ndef fit_and_score(train_x, train_y, test_x, test_y):\n    best_t = 0\n    best_right = -1\n    for t in range(11):\n        r = right_count(train_x, train_y, t)\n        if r > best_right:\n            best_t = t\n            best_right = r\n    return (best_t, right_count(test_x, test_y, best_t))\n",
+    "examples": [
+     {
+      "call": "list(fit_and_score([1, 3, 5, 7, 9], [0, 0, 1, 1, 1], [2, 4, 6], [0, 1, 1]))",
+      "expect": "[4, 3]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(fit_and_score([1, 3, 5, 7, 9], [0, 0, 1, 1, 1], [2, 4, 6], [0, 1, 1]))",
+      "expect": "[4, 3]",
+      "compare": "equal"
+     },
+     {
+      "call": "list(fit_and_score([0, 2, 4, 6, 8, 10], [0, 1, 0, 1, 1, 1], [1, 3, 5, 9], [0, 1, 1, 0]))",
+      "expect": "[1, 2]",
+      "compare": "equal"
+     },
+     {
+      "call": "list(fit_and_score([2, 2, 8], [1, 0, 1], [0, 9], [0, 1]))",
+      "expect": "[0, 1]",
+      "compare": "equal"
+     },
+     {
+      "call": "list(fit_and_score([5], [0], [3, 7], [0, 0]))",
+      "expect": "[6, 1]",
+      "compare": "equal"
+     },
+     {
+      "call": "fit_and_score([0, 2, 4, 6, 8, 10], [0, 1, 0, 1, 1, 1], [], [])[1]",
+      "expect": "0",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on data you have not seen. Each result must equal the expected list or number."
+   },
+   "feedback": {
+    "correct": "You choose on training data and score once on test data.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Thresholds 4 and 5 both get all five training examples right; keep the smaller, 4.",
+     "test-3": "Two training examples share x = 2 with different labels. Count both; no threshold gets all three."
+    }
+   },
+   "explain": {
+    "text": "Choose with a loop over t that keeps the best count, using `>` so ties keep the smaller t. Then count the test examples that the chosen t gets right, once."
+   },
+   "title": "Choose, then test"
+  },
+  {
+   "id": "h-order",
+   "difficulty": 3,
+   "skills": [
+    "ab-models"
+   ],
+   "prose": "A firm wants an honest score for a threshold model of customer churn.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "collect",
+      "text": "Collect past customers, each marked as left or stayed"
+     },
+     {
+      "id": "keep",
+      "text": "Keep some customers back, unseen"
+     },
+     {
+      "id": "choose",
+      "text": "Choose the threshold on the rest"
+     },
+     {
+      "id": "score",
+      "text": "Score that threshold once on the kept-back customers"
+     },
+     {
+      "id": "rechoose",
+      "text": "Choose the threshold again on the kept-back customers"
+     }
+    ],
+    "answer": [
+     "collect",
+     "keep",
+     "choose",
+     "score"
+    ],
+    "distractors": [
+     "rechoose"
+    ]
+   },
+   "feedback": {
+    "correct": "Collect, keep back, choose on the rest, score once.",
+    "generic": "Not quite. The kept-back customers must play no part in choosing.",
+    "byKey": {
+     "rechoose": "Choosing again on the kept-back customers turns them into training data. Leave that line out.",
+     "keep": "Keep customers back before choosing, so the choice cannot touch them.",
+     "score": "Scoring comes last, after the threshold is fixed."
+    }
+   },
+   "explain": {
+    "text": "Labelled examples first, then a kept-back set, then the choice on the rest, then one score. Choosing again on the kept-back set would make its score meaningless."
+   },
+   "title": "Fit, then judge"
+  },
+  {
+   "id": "h-tie-count",
+   "difficulty": 3,
+   "skills": [
+    "ab-models"
+   ],
+   "prose": "Training data: x = 0, 2, 4, 6 with labels 0, 1, 0, 1. The rule says 1 when x is at least t.",
+   "question": "How many whole-number thresholds from 0 to 7 get the most right?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "label": "Tied thresholds",
+    "accept": "4",
+    "wrong": [
+     {
+      "id": "first-pair",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "eight",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Thresholds 1 and 2 and 5 and 6 tie on 3 of 4.",
+    "generic": "Not quite. Score each threshold from 0 to 7.",
+    "byKey": {
+     "one": "More than one threshold reaches 3: 1 and 2 and 5 and 6.",
+     "eight": "You counted every threshold. Only those with the top score tie.",
+     "first-pair": "You found 1 and 2. Thresholds 5 and 6 also get 3 of 4."
+    }
+   },
+   "explain": {
+    "text": "The counts are $t$ = 0: 2, $t$ = 1: 3, $t$ = 2: 3, $t$ = 3: 2, $t$ = 4: 2, $t$ = 5: 3, $t$ = 6: 3, $t$ = 7: 2. The top score is 3, reached by 1 and 2 and 5 and 6. That is 4 thresholds."
+   },
+   "title": "How many ties?"
+  },
+  {
+   "id": "h-leak-quant",
+   "difficulty": 4,
+   "skills": [
+    "ab-models"
+   ],
+   "prose": "A researcher predicts, each evening, whether a share will beat the market over the next week. Columns: today's return, 20-day volatility, analyst rating at today's close, next week's earnings surprise.",
+   "question": "Which column must be removed?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "surprise",
+      "text": "Next week's earnings surprise",
+      "correct": true
+     },
+     {
+      "id": "rating",
+      "text": "Analyst rating at today's close",
+      "why": "The rating is public by the evening, so it is known in time."
+     },
+     {
+      "id": "vol",
+      "text": "20-day volatility",
+      "why": "It uses the last 20 days, all known by the evening."
+     },
+     {
+      "id": "ret",
+      "text": "Today's return",
+      "why": "Today's return is known at the close."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Next week's surprise is not known this evening: a leak.",
+    "generic": "Not quite. Which number arrives after the prediction?"
+   },
+   "explain": {
+    "text": "Every feature must exist when the model runs, this evening. The earnings surprise comes next week, with the outcome. A backtest using it cannot be traded."
+   },
+   "title": "Spot the leak"
+  },
+  {
+   "id": "h-long-league",
+   "difficulty": 5,
+   "skills": [
+    "ab-models"
+   ],
+   "title": "The 100% app",
+   "kind": "longform",
+   "prompt": "A friend's app “predicts the Premier League with 100% accuracy”. They built it by trying thousands of rules on last season's 380 matches and keeping the one that got every result right. They want you to put £200 on its picks this season.\n\n(a) What does the 100% tell you, and what does it not? (b) What would you ask them? (c) Describe a fair test, step by step. (d) What score on a fair test would you need before you risked money, and why can you not answer that from last season alone?",
+   "model": "**(a)** The 100% is a training score. The rule was chosen on the same 380 matches it is scored on, from thousands of tries. Like the memoriser, a rule picked that way can fit last season perfectly and still know nothing about new matches. It tells us the rule fits its own examples; it says nothing about this season.\n\n**(b)** I would ask: which matches chose the rule, and were any matches kept back? How many rules were tried? What is its score on matches it never saw? Do its features use anything known only after kick-off, such as the half-time score? That would be a leak.\n\n**(c)** A fair test:\n\n1. Before choosing anything, put some matches aside, for example the last 80 of last season.\n2. Choose the rule using the other 300 only.\n3. Score it once on the 80. Do not change the rule after seeing that score.\n4. Better still, score it on this season's first matches, written down before kick-off.\n\n**(d)** The score must beat simple guesses, such as always picking the home team, on matches it never saw. Even then, 80 matches is a small test: a lucky run is possible. Last season alone cannot answer this, because every one of its matches helped choose the rule. Only kept-back or future matches can.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the 100% is a training score: the rule was chosen and scored on the same matches"
+    },
+    {
+     "points": 2,
+     "text": "Links this to the memoriser or to trying many rules: a perfect fit proves little about new matches"
+    },
+    {
+     "points": 2,
+     "text": "Asks a fair question: which matches were kept back, how many rules were tried, or whether any feature is a leak"
+    },
+    {
+     "points": 2,
+     "text": "Describes a fair test: keep matches back before choosing, choose on the rest, score once"
+    },
+    {
+     "points": 2,
+     "text": "Says a fair score must beat a simple guess on unseen matches, and that last season cannot supply it"
+    }
+   ]
+  }
+ ]
+}
