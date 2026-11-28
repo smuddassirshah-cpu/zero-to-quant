@@ -126,7 +126,7 @@
        "arrow": true
       }
      ],
-     "caption": "Blue: along the edge. Green: the higher route."
+     "caption": "Blue: along the edge. Green: the route SARSA learns, 13 moves."
     }
    },
    "question": "An agent that never makes a random move takes the edge route. What is its return, with no discount?",
@@ -732,7 +732,7 @@
     }
    },
    "explain": {
-    "text": "About one walk in seven (0.1409) falls at least once, costing 100 and a restart. SARSA's values include those falls, so it prefers the higher route; Q-learning's max ignores them and keeps to the edge.",
+    "text": "About one walk in seven (0.1409) falls from those six cliff-edge cells at least once, costing 100 and a restart. SARSA's values include those falls, so it prefers the higher route; Q-learning's max ignores them and keeps to the edge.",
     "canvas": {
      "highlight": [
       "r3c2",
@@ -826,8 +826,25 @@
       "compare": "isclose"
      }
     ],
-    "how": "Submit runs 7 hidden tests. Updates are compared with math.isclose; over seeds 0 to 4, SARSA must beat Q-learning by more than 4 a episode.",
-    "budget": 8000
+    "how": "Submit runs 7 hidden tests. Updates are compared with `math.isclose`; over seeds 0 to 4, SARSA must beat Q-learning by more than 4 an episode.",
+    "budget": 8000,
+    "mutants": [
+     {
+      "source": "import random\n\nSTART, GOAL = (4, 1), (4, 8)\nCLIFF = {(4, c) for c in range(2, 8)}\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\ndef cliff_step(s, a):\n    \"\"\"Move on the 4 by 8 grid; off the edge stays put; the cliff costs 100 and sends you to START.\"\"\"\n    r = min(max(s[0] + MOVES[a][0], 1), 4)\n    c = min(max(s[1] + MOVES[a][1], 1), 8)\n    if (r, c) in CLIFF:\n        return START, -100\n    return (r, c), -1\n\ndef sarsa_update(Q, s, a, r, s2, a2, alpha, gamma, terminal):\n    \"\"\"One SARSA update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + gamma * max(Q[(s2, b)] for b in 'URDL')\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef cliff_run(agent, episodes, seed, alpha=0.5, eps=0.1):\n    \"\"\"agent 'sarsa' or 'q'. Mean reward of the last 100 episodes.\"\"\"\n    rng = random.Random(seed)\n    Q = {((r, c), a): 0.0 for r in range(1, 5) for c in range(1, 9) for a in 'URDL'}\n\n    def choose(s):\n        if rng.random() < eps:\n            return rng.choice('URDL')\n        return max('URDL', key=lambda b: Q[(s, b)])\n\n    totals = []\n    for _ in range(episodes):\n        s, a, total = START, choose(START), 0\n        while s != GOAL:\n            s2, r = cliff_step(s, a)\n            total += r\n            if s2 == GOAL:\n                Q[(s, a)] += alpha * (r - Q[(s, a)])\n                break\n            a2 = choose(s2)\n            if agent == 'sarsa':\n                sarsa_update(Q, s, a, r, s2, a2, alpha, 1.0, False)\n            else:\n                best = max(Q[(s2, b)] for b in 'URDL')\n                Q[(s, a)] += alpha * (r + best - Q[(s, a)])\n            s, a = s2, a2\n        totals.append(total)\n    return sum(totals[-100:]) / len(totals[-100:])\n",
+      "test": 1,
+      "symptom": "sarsa_update bootstraps with the max (Q-learning)."
+     },
+     {
+      "source": "import random\n\nSTART, GOAL = (4, 1), (4, 8)\nCLIFF = {(4, c) for c in range(2, 8)}\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\ndef cliff_step(s, a):\n    \"\"\"Move on the 4 by 8 grid; off the edge stays put; the cliff costs 100 and sends you to START.\"\"\"\n    r = min(max(s[0] + MOVES[a][0], 1), 4)\n    c = min(max(s[1] + MOVES[a][1], 1), 8)\n    if (r, c) in CLIFF:\n        return START, -100\n    return (r, c), -1\n\ndef sarsa_update(Q, s, a, r, s2, a2, alpha, gamma, terminal):\n    \"\"\"One SARSA update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r + gamma * Q[(s2, a2)]\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef cliff_run(agent, episodes, seed, alpha=0.5, eps=0.1):\n    \"\"\"agent 'sarsa' or 'q'. Mean reward of the last 100 episodes.\"\"\"\n    rng = random.Random(seed)\n    Q = {((r, c), a): 0.0 for r in range(1, 5) for c in range(1, 9) for a in 'URDL'}\n\n    def choose(s):\n        if rng.random() < eps:\n            return rng.choice('URDL')\n        return max('URDL', key=lambda b: Q[(s, b)])\n\n    totals = []\n    for _ in range(episodes):\n        s, a, total = START, choose(START), 0\n        while s != GOAL:\n            s2, r = cliff_step(s, a)\n            total += r\n            if s2 == GOAL:\n                Q[(s, a)] += alpha * (r - Q[(s, a)])\n                break\n            a2 = choose(s2)\n            if agent == 'sarsa':\n                sarsa_update(Q, s, a, r, s2, a2, alpha, 1.0, False)\n            else:\n                best = max(Q[(s2, b)] for b in 'URDL')\n                Q[(s, a)] += alpha * (r + best - Q[(s, a)])\n            s, a = s2, a2\n        totals.append(total)\n    return sum(totals[-100:]) / len(totals[-100:])\n",
+      "test": 2,
+      "symptom": "Ignores `terminal` (s2 is None at the goal)."
+     },
+     {
+      "source": "import random\n\nSTART, GOAL = (4, 1), (4, 8)\nCLIFF = {(4, c) for c in range(2, 8)}\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\ndef cliff_step(s, a):\n    \"\"\"Move on the 4 by 8 grid; off the edge stays put; the cliff costs 100 and sends you to START.\"\"\"\n    r = min(max(s[0] + MOVES[a][0], 1), 4)\n    c = min(max(s[1] + MOVES[a][1], 1), 8)\n    if (r, c) in CLIFF:\n        return START, -100\n    return (r, c), -1\n\ndef sarsa_update(Q, s, a, r, s2, a2, alpha, gamma, terminal):\n    \"\"\"One SARSA update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + gamma * Q[(s2, a2)]\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef cliff_run(agent, episodes, seed, alpha=0.5, eps=0.1):\n    \"\"\"agent 'sarsa' or 'q'. Mean reward of the last 100 episodes.\"\"\"\n    rng = random.Random(seed)\n    Q = {((r, c), a): 0.0 for r in range(1, 5) for c in range(1, 9) for a in 'URDL'}\n\n    def choose(s):\n        if rng.random() < eps:\n            return rng.choice('URDL')\n        return max('URDL', key=lambda b: Q[(s, b)])\n\n    totals = []\n    for _ in range(episodes):\n        s, a, total = START, choose(START), 0\n        while s != GOAL:\n            s2, r = cliff_step(s, a)\n            total += r\n            if s2 == GOAL:\n                Q[(s, a)] += alpha * (r - Q[(s, a)])\n                break\n            a2 = choose(s2)\n            if agent == 'sarsa':\n                sarsa_update(Q, s, a, r, s2, a2, alpha, 1.0, False)\n            else:\n                best = Q[(s2, a2)]\n                Q[(s, a)] += alpha * (r + best - Q[(s, a)])\n            s, a = s2, a2\n        totals.append(total)\n    return sum(totals[-100:]) / len(totals[-100:])\n",
+      "test": 4,
+      "symptom": "Both agents become SARSA."
+     }
+    ]
    },
    "hints": [
     {
@@ -1025,14 +1042,14 @@
     }
    },
    "explain": {
-    "text": "Q-learning learns the values of a policy it never follows while exploring, so it walks the edge and falls about one walk in seven. SARSA builds the falls into its values and takes the higher route."
+    "text": "Q-learning learns the values of a policy it never follows while exploring, so it walks the edge and, from its six edge cells, falls on about one walk in seven. SARSA builds the falls into its values and takes the higher route."
    }
   },
   {
    "type": "ladder",
    "difficulty": 2,
    "title": "When exploring stops",
-   "prose": "Run both agents with $\\varepsilon = 0$: no random moves at all. Zero starting values still make untried moves look best, so they find the goal. On seeds 0 to 4, after 500 episodes, both agents walked the same route every episode.",
+   "prose": "Run both agents with $\\varepsilon = 0$: no random moves at all. Zero starting values still make untried moves look best, so they find the goal. With $\\varepsilon = 0$ the run is the same for every seed: after 500 episodes both agents walk the same route.",
    "canvas": {
     "kind": "grid",
     "params": {
@@ -1257,7 +1274,7 @@
    "question": "What is version E's expected daily P&L as it is actually traded, in pounds? Give 2 decimal places.",
    "widget": {
     "kind": "numeric",
-    "answer": 0.5999999999999996,
+    "answer": 0.6,
     "tol": {
      "abs": 0.005
     },

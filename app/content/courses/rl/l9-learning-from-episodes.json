@@ -390,7 +390,7 @@
      {
       "id": "E",
       "text": "E",
-      "why": "Episode 1 already reached E twice."
+      "why": "Episode 1 already reached E."
      },
      {
       "id": "B",
@@ -819,7 +819,24 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 7 hidden tests. Values are compared with math.isclose; the seeded episode must equal ours; 3,000 seeded episodes must land within 0.04 of the true values."
+    "how": "Submit runs 7 hidden tests. Values are compared with `math.isclose`; the seeded episode must equal ours; 3,000 seeded episodes must land within 0.04 of the true values.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef returns_from_episode(rewards, gamma):\n    \"\"\"[G_0, G_1, ...]: the return after each step of one episode.\"\"\"\n    G, out = 0.0, []\n    for r in reversed(rewards):\n        G = r + gamma * G\n        out.append(G)\n    return out[::-1]\n\ndef mc_evaluate(episodes, gamma=1.0):\n    \"\"\"episodes: a list of (states, rewards). Average the return after each state's FIRST visit in an episode.\"\"\"\n    total, count = {}, {}\n    for states, rewards in episodes:\n        seen = set()\n        for s, G in zip(states, returns_from_episode(rewards, gamma)):\n            if True:\n                total[s] = total.get(s, 0.0) + G\n                count[s] = count.get(s, 0) + 1\n    return {s: total[s] / count[s] for s in total}\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n",
+      "test": 3,
+      "symptom": "Averages the return after every visit."
+     },
+     {
+      "source": "import random\n\ndef returns_from_episode(rewards, gamma):\n    \"\"\"[G_0, G_1, ...]: the return after each step of one episode.\"\"\"\n    G, out = 0.0, []\n    for r in reversed(rewards):\n        G = r + gamma * G\n        out.append(G)\n    return out[::-1]\n\ndef mc_evaluate(episodes, gamma=1.0):\n    \"\"\"episodes: a list of (states, rewards). Average the return after each state's FIRST visit in an episode.\"\"\"\n    total, count = {}, {}\n    for states, rewards in episodes:\n        seen = set()\n        for s, G in zip(states, rewards):\n            if s not in seen:\n                seen.add(s)\n                total[s] = total.get(s, 0.0) + G\n                count[s] = count.get(s, 0) + 1\n    return {s: total[s] / count[s] for s in total}\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n",
+      "test": 3,
+      "symptom": "Averages the next reward (the lesson trap)."
+     },
+     {
+      "source": "import random\n\ndef returns_from_episode(rewards, gamma):\n    \"\"\"[G_0, G_1, ...]: the return after each step of one episode.\"\"\"\n    G, out = 0.0, []\n    for r in reversed(rewards):\n        G = gamma * r + G\n        out.append(G)\n    return out[::-1]\n\ndef mc_evaluate(episodes, gamma=1.0):\n    \"\"\"episodes: a list of (states, rewards). Average the return after each state's FIRST visit in an episode.\"\"\"\n    total, count = {}, {}\n    for states, rewards in episodes:\n        seen = set()\n        for s, G in zip(states, returns_from_episode(rewards, gamma)):\n            if s not in seen:\n                seen.add(s)\n                total[s] = total.get(s, 0.0) + G\n                count[s] = count.get(s, 0) + 1\n    return {s: total[s] / count[s] for s in total}\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n",
+      "test": 1,
+      "symptom": "G = gamma r + G."
+     }
+    ]
    },
    "hints": [
     {
@@ -1358,7 +1375,7 @@
      },
      {
       "id": "pos",
-      "value": 1.95,
+      "value": 1.9333,
       "tol": {
        "abs": 0.005
       }

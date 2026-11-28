@@ -94,7 +94,7 @@
     "byKey": {
      "no-c": "You left C out of the random pick. A uniform pick lands on C a third of the time, and that costs nothing.",
      "all-random": "That is the regret if every order were random. Only 1 in 10 is.",
-     "all-lost": "You counted each random order as a lost fill. It only loses the gap to C on average."
+     "all-lost": "You charged each random order C's whole fill chance, 0.60. It loses only the gap to C on average."
     }
    },
    "explain": {
@@ -453,7 +453,7 @@
     "generic": "Slide to the end and read where each line stops."
    },
    "explain": {
-    "text": "The recorded means at 1,000 orders are 56.0, 40.6, 24.0 and 30.0 for $\\varepsilon$ = 0, 0.01, 0.1 and 0.3. The 0.3 line is nearly straight: it keeps paying for its random orders.",
+    "text": "The recorded means at 1,000 orders are 56.0, 40.6, 24.0 and 30.0 for $\\varepsilon$ = 0, 0.01, 0.1 and 0.3. The 0.3 line is nearly straight: it keeps paying for its random orders. The $\\varepsilon$ = 0 line is plain greedy with a different random stream: its 56.0 and the 61.8 quoted for greedy later differ only by noise.",
     "canvas": {
      "reveal": 1
     }
@@ -798,7 +798,24 @@
       "compare": "isclose"
      }
     ],
-    "how": "Submit runs 8 hidden tests. Totals must equal ours exactly, so draw `rng.random()` first every step; floors are compared with math.isclose."
+    "how": "Submit runs 8 hidden tests. Totals must equal ours exactly, so draw `rng.random()` first every step; floors are compared with `math.isclose`.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef argmax_random(values, rng):\n    best = [i for i, v in enumerate(values) if v == max(values)]\n    return rng.choice(best)\n\ndef epsilon_greedy(ps, T, eps, seed):\n    \"\"\"Run epsilon-greedy for T pulls and return the total reward.\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for _ in range(T):\n        if rng.random() < eps:\n            a = rng.choice([i for i in range(k) if i != Q.index(max(Q))])\n        else:\n            a = argmax_random(Q, rng)       # exploit\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += (r - Q[a]) / n[a]\n        total += r\n    return total\n\ndef regret_floor(ps, eps):\n    \"\"\"The least regret per pull that exploring at rate eps can cost.\"\"\"\n    return eps * (max(ps) - sum(ps) / len(ps))\n",
+      "test": 4,
+      "symptom": "Random pulls skip the current best arm, so the stream and the floor change."
+     },
+     {
+      "source": "import random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef argmax_random(values, rng):\n    best = [i for i, v in enumerate(values) if v == max(values)]\n    return rng.choice(best)\n\ndef epsilon_greedy(ps, T, eps, seed):\n    \"\"\"Run epsilon-greedy for T pulls and return the total reward.\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for _ in range(T):\n        if rng.random() < eps:\n            a = rng.randrange(k)            # explore\n        else:\n            a = argmax_random(Q, rng)       # exploit\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += (r - Q[a]) / n[a]\n        total += r\n    return total\n\ndef regret_floor(ps, eps):\n    \"\"\"The least regret per pull that exploring at rate eps can cost.\"\"\"\n    return eps * (max(ps) - min(ps))\n",
+      "test": 6,
+      "symptom": "Floor taken as eps times the gap to the worst arm."
+     },
+     {
+      "source": "import random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef argmax_random(values, rng):\n    best = [i for i, v in enumerate(values) if v == max(values)]\n    return rng.choice(best)\n\ndef epsilon_greedy(ps, T, eps, seed):\n    \"\"\"Run epsilon-greedy for T pulls and return the total reward.\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for _ in range(T):\n        if eps > 0 and rng.random() < eps:\n            a = rng.randrange(k)            # explore\n        else:\n            a = argmax_random(Q, rng)       # exploit\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += (r - Q[a]) / n[a]\n        total += r\n    return total\n\ndef regret_floor(ps, eps):\n    \"\"\"The least regret per pull that exploring at rate eps can cost.\"\"\"\n    return eps * (max(ps) - sum(ps) / len(ps))\n",
+      "test": 3,
+      "symptom": "No draw when eps is 0, so the seeded stream shifts."
+     }
+    ]
    },
    "hints": [
     {
@@ -1622,7 +1639,19 @@
       "compare": "isclose"
      }
     ],
-    "how": "Submit runs 6 hidden tests. Each result is compared with math.isclose."
+    "how": "Submit runs 6 hidden tests. Each result is compared with `math.isclose`.",
+    "mutants": [
+     {
+      "source": "def ewma_update(q, r, alpha):\n    \"\"\"Move estimate q a fraction alpha of the way towards reward r.\"\"\"\n    return r\n",
+      "test": 1,
+      "symptom": "Replaces the estimate by the reward."
+     },
+     {
+      "source": "def ewma_update(q, r, alpha):\n    \"\"\"Move estimate q a fraction alpha of the way towards reward r.\"\"\"\n    return q + alpha * (q - r)\n",
+      "test": 1,
+      "symptom": "Sign of the error reversed."
+     }
+    ]
    },
    "hints": [
     {

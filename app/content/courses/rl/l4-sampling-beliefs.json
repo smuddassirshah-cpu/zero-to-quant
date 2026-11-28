@@ -524,7 +524,19 @@
       }
      }
     ],
-    "how": "Submit runs 8 hidden tests. Posteriors must match exactly; each share must lie within the stated distance of the exact chance."
+    "how": "Submit runs 8 hidden tests. Posteriors must match exactly; each share must lie within the stated distance of the exact chance.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef posterior(wins, losses, a=1, b=1):\n    \"\"\"Beta parameters after wins and losses, from a Beta(a, b) prior.\"\"\"\n    return (a + losses, b + wins)\n\ndef prob_a_beats_b(a1, b1, a2, b2, draws, seed):\n    \"\"\"Share of seeded draws in which Beta(a1, b1) exceeds Beta(a2, b2).\"\"\"\n    rng = random.Random(seed)\n    wins = 0\n    for _ in range(draws):\n        if rng.betavariate(a1, b1) > rng.betavariate(a2, b2):\n            wins += 1\n    return wins / draws\n",
+      "test": 1,
+      "symptom": "Wins added to the second parameter."
+     },
+     {
+      "source": "import random\n\ndef posterior(wins, losses, a=1, b=1):\n    \"\"\"Beta parameters after wins and losses, from a Beta(a, b) prior.\"\"\"\n    return (a + wins, b + losses)\n\ndef prob_a_beats_b(a1, b1, a2, b2, draws, seed):\n    \"\"\"Share of seeded draws in which Beta(a1, b1) exceeds Beta(a2, b2).\"\"\"\n    rng = random.Random(seed)\n    wins = 0\n    for _ in range(draws):\n        if rng.betavariate(a1, b1) > rng.betavariate(a2, b2):\n            wins += 1\n    return wins\n",
+      "test": 5,
+      "symptom": "prob_a_beats_b returns the count of wins, not the share."
+     }
+    ]
    },
    "hints": [
     {
@@ -624,7 +636,19 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 6 hidden tests. Each result must equal ours exactly, so draw the Beta values in arm order before each pull."
+    "how": "Submit runs 6 hidden tests. Each result must equal ours exactly, so draw the Beta values in arm order before each pull.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef run_thompson(ps, T, seed):\n    \"\"\"Thompson sampling with Beta(1, 1) priors. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    wins = [0] * k\n    losses = [0] * k\n    total = 0\n    for _ in range(T):\n        draws = [(1 + wins[i]) / (2 + wins[i] + losses[i]) for i in range(k)]\n        a = draws.index(max(draws))\n        r = pull(ps[a], rng)\n        if r:\n            wins[a] += 1\n        else:\n            losses[a] += 1\n        total += r\n    return total, [w + l for w, l in zip(wins, losses)]\n",
+      "test": 1,
+      "symptom": "Picks the largest posterior mean, no draws: greedy, not Thompson."
+     },
+     {
+      "source": "import random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef run_thompson(ps, T, seed):\n    \"\"\"Thompson sampling with Beta(1, 1) priors. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    wins = [0] * k\n    losses = [0] * k\n    total = 0\n    for _ in range(T):\n        draws = [rng.betavariate(1 + losses[i], 1 + wins[i]) for i in range(k)]\n        a = draws.index(max(draws))\n        r = pull(ps[a], rng)\n        if r:\n            wins[a] += 1\n        else:\n            losses[a] += 1\n        total += r\n    return total, [w + l for w, l in zip(wins, losses)]\n",
+      "test": 1,
+      "symptom": "Draws from Beta(1 + losses, 1 + wins)."
+     }
+    ]
    },
    "hints": [
     {
@@ -1055,7 +1079,7 @@
      {
       "id": "luck",
       "text": "Thompson only did well because the seeds were lucky",
-      "why": "All four agents ran on the same 200 seeds. The gap is not luck."
+      "why": "Over 200 seeds greedy's 61.8 against Thompson's 20.8 is about nine standard errors apart. The gap is not luck."
      },
      {
       "id": "equal",

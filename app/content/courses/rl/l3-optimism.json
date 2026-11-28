@@ -636,7 +636,7 @@
    "type": "trap",
    "difficulty": 3,
    "title": "The best estimate?",
-   "prose": "At pull $t = 1000$, three strategies stand as below. $2\\ln 1000 = 13.8155$.",
+   "prose": "At pull $t = 1000$, the three arms stand as below. $2\\ln 1000 = 13.8155$.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -816,7 +816,29 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 9 hidden tests. Runs must equal ours exactly (pick the lowest index on a tie); scores and bounds are compared with math.isclose."
+    "how": "Submit runs 9 hidden tests. Runs must equal ours exactly (pick the lowest index on a tie); scores and bounds are compared with `math.isclose`.",
+    "mutants": [
+     {
+      "source": "import math\nimport random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef hoeffding_bound(n, eps):\n    \"\"\"One-sided bound on P(mean of n rewards in [0, 1] exceeds its value by eps).\"\"\"\n    return math.exp(-2 * n * eps ** 2)\n\ndef ucb_scores(means, counts, t):\n    \"\"\"UCB1 scores at pull t; an arm never pulled scores infinity.\"\"\"\n    return [math.inf if c == 0 else m\n            for m, c in zip(means, counts)]\n\ndef run_ucb(ps, T, seed):\n    \"\"\"Run UCB1 for T pulls. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for t in range(1, T + 1):\n        s = ucb_scores(Q, n, t)\n        a = s.index(max(s))          # ties: the lowest index\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += (r - Q[a]) / n[a]\n        total += r\n    return total, n\n",
+      "test": 1,
+      "symptom": "Scores are the means alone: greedy with first-index ties."
+     },
+     {
+      "source": "import math\nimport random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef hoeffding_bound(n, eps):\n    \"\"\"One-sided bound on P(mean of n rewards in [0, 1] exceeds its value by eps).\"\"\"\n    return math.exp(-2 * n * eps ** 2)\n\ndef ucb_scores(means, counts, t):\n    \"\"\"UCB1 scores at pull t; an arm never pulled scores infinity.\"\"\"\n    return [math.inf if c == 0 else m + math.sqrt(math.log(t) / c)\n            for m, c in zip(means, counts)]\n\ndef run_ucb(ps, T, seed):\n    \"\"\"Run UCB1 for T pulls. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for t in range(1, T + 1):\n        s = ucb_scores(Q, n, t)\n        a = s.index(max(s))          # ties: the lowest index\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += (r - Q[a]) / n[a]\n        total += r\n    return total, n\n",
+      "test": 1,
+      "symptom": "Bonus sqrt(ln t / n)."
+     },
+     {
+      "source": "import math\nimport random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef hoeffding_bound(n, eps):\n    \"\"\"One-sided bound on P(mean of n rewards in [0, 1] exceeds its value by eps).\"\"\"\n    return 2 * math.exp(-2 * n * eps ** 2)\n\ndef ucb_scores(means, counts, t):\n    \"\"\"UCB1 scores at pull t; an arm never pulled scores infinity.\"\"\"\n    return [math.inf if c == 0 else m + math.sqrt(2 * math.log(t) / c)\n            for m, c in zip(means, counts)]\n\ndef run_ucb(ps, T, seed):\n    \"\"\"Run UCB1 for T pulls. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for t in range(1, T + 1):\n        s = ucb_scores(Q, n, t)\n        a = s.index(max(s))          # ties: the lowest index\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += (r - Q[a]) / n[a]\n        total += r\n    return total, n\n",
+      "test": 4,
+      "symptom": "hoeffding_bound returns the two-sided 2 e^{-2 n eps^2}."
+     },
+     {
+      "source": "import math\nimport random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef hoeffding_bound(n, eps):\n    \"\"\"One-sided bound on P(mean of n rewards in [0, 1] exceeds its value by eps).\"\"\"\n    return math.exp(-2 * n * eps ** 2)\n\ndef ucb_scores(means, counts, t):\n    \"\"\"UCB1 scores at pull t; an arm never pulled scores infinity.\"\"\"\n    return [math.inf if c == 0 else m + math.sqrt(2 * math.log(t) / c)\n            for m, c in zip(means, counts)]\n\ndef run_ucb(ps, T, seed):\n    \"\"\"Run UCB1 for T pulls. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for t in range(1, T + 1):\n        s = ucb_scores(Q, n, t)\n        a = len(s) - 1 - s[::-1].index(max(s))          # ties: the lowest index\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += (r - Q[a]) / n[a]\n        total += r\n    return total, n\n",
+      "test": 7,
+      "symptom": "Ties go to the highest index."
+     }
+    ]
    },
    "hints": [
     {
@@ -1292,7 +1314,7 @@
   "ideas": [
    "For rewards in $[0, 1]$, Hoeffding bounds a one-sided miss by $e^{-2n\\varepsilon^2}$, far tighter than Chebyshev's $\\tfrac{1}{4n\\varepsilon^2}$ once $n$ is large.",
    "Setting that bound to $t^{-4}$ gives the bonus $\\sqrt{2\\ln t / n_a}$. UCB1 pulls the largest $Q_a$ plus bonus, and an untried arm scores infinity.",
-   "The bound guards against every bandit, so UCB1 can over-explore close arms. Its regret grows like $\\ln T$, but on venues 0.05 apart it beat epsilon-greedy only after about 40,000 pulls."
+   "The bound guards against every bandit, so UCB1 can over-explore close arms. Its regret grows like $\\ln T$, but on these venues, in 20 seeded runs, it overtook epsilon-greedy only between 40,000 and 50,000 pulls."
   ],
   "formula": {
    "name": "UCB1 score",

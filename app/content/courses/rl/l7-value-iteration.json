@@ -1048,7 +1048,7 @@
         1,
         26
        ],
-       "label": "bound $0.96 \\times 0.9^{k-1}$",
+       "label": "bound $0.96 \\times 0.9^{k-1}$ (deterministic changes follow it exactly)",
        "dashed": true
       },
       {
@@ -1203,7 +1203,7 @@
      },
      {
       "id": "bound",
-      "value": 131,
+      "value": 132,
       "tol": {
        "abs": 0
       }
@@ -1240,7 +1240,7 @@
     "generic": "Not quite. Read where the slippery curve crosses $10^{-6}$.",
     "byKey": {
      "det": "The deterministic grid settles after 8 sweeps. Slips make values depend on loops, which take longer.",
-     "bound": "That is the guarantee from $0.9^k$. The real changes fall faster than the bound.",
+     "bound": "That is the guarantee from $0.9^k \\le 10^{-6}$, which needs 132 sweeps. The real changes fall faster than the bound.",
      "ten": "That is the count to $10^{-10}$."
     }
    },
@@ -1318,7 +1318,7 @@
      },
      {
       "id": "keep-all",
-      "value": 3.65,
+      "value": 3.45,
       "tol": {
        "abs": 0.0005
       }
@@ -1552,9 +1552,42 @@
       "call": "sum(len(x) for x in greedy_policy(value_iteration(0.0, 0.9, 1e-10)[0], 0.0, 0.9).values())",
       "expect": "24",
       "compare": "equal"
+     },
+     {
+      "setup": "V = {c: 0.0 for c in CELLS}\nV['r3c1'] = 0.1\nV['r4c2'] = 0.1 + 1e-12",
+      "call": "sorted(greedy_policy(V, 0.0, 0.9)['r4c1'])",
+      "expect": "['R', 'U']",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 10 hidden tests. Sweep counts and action sets must equal ours; values must match within 1e-6."
+    "how": "Submit runs 11 hidden tests. Sweep counts and action sets must equal ours; values must match within 1e-6.",
+    "mutants": [
+     {
+      "source": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef q_value(V, s, a, slip, gamma):\n    return sum(p * (reward(t) + gamma * V[t]) for t, p in transition(s, a, slip).items())\n\ndef value_iteration(slip, gamma, tol):\n    \"\"\"Sweep from all zeros, each new value from the previous table.\n    Stop after the first sweep whose largest change is below tol. Return (values, sweeps).\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    sweeps = 0\n    while True:\n        sweeps += 1\n        change = 0.0\n        for s in CELLS:\n            nv = 0.0 if s in TERMINAL else max(q_value(V, s, a, slip, gamma) for a in 'URDL')\n            change = max(change, abs(nv - V[s]))\n            V[s] = nv\n        if change < tol:\n            return V, sweeps\n\ndef greedy_policy(values, slip, gamma):\n    \"\"\"{cell: set of actions whose q_value is within 1e-9 of the best} for every non-end cell.\"\"\"\n    out = {}\n    for s in CELLS:\n        if s in TERMINAL:\n            continue\n        q = {a: q_value(values, s, a, slip, gamma) for a in 'URDL'}\n        best = max(q.values())\n        out[s] = {a for a in q if q[a] > best - 1e-9}\n    return out\n",
+      "test": 1,
+      "symptom": "Writes each new value straight into V: 17 sweeps, not 25."
+     },
+     {
+      "source": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef q_value(V, s, a, slip, gamma):\n    return sum(p * (reward(t) + gamma * V[t]) for t, p in transition(s, a, slip).items())\n\ndef value_iteration(slip, gamma, tol):\n    \"\"\"Sweep from all zeros, each new value from the previous table.\n    Stop after the first sweep whose largest change is below tol. Return (values, sweeps).\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    sweeps = 0\n    while True:\n        sweeps += 1\n        new = {s: max(q_value(V, s, a, slip, gamma) for a in 'URDL')\n               for s in CELLS}\n        change = max(abs(new[s] - V[s]) for s in CELLS)\n        V = new\n        if change < tol:\n            return V, sweeps\n\ndef greedy_policy(values, slip, gamma):\n    \"\"\"{cell: set of actions whose q_value is within 1e-9 of the best} for every non-end cell.\"\"\"\n    out = {}\n    for s in CELLS:\n        if s in TERMINAL:\n            continue\n        q = {a: q_value(values, s, a, slip, gamma) for a in 'URDL'}\n        best = max(q.values())\n        out[s] = {a for a in q if q[a] > best - 1e-9}\n    return out\n",
+      "test": 1,
+      "symptom": "End cells are not held at 0."
+     },
+     {
+      "source": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef q_value(V, s, a, slip, gamma):\n    return sum(p * (reward(t) + gamma * V[t]) for t, p in transition(s, a, slip).items())\n\ndef value_iteration(slip, gamma, tol):\n    \"\"\"Sweep from all zeros, each new value from the previous table.\n    Stop after the first sweep whose largest change is below tol. Return (values, sweeps).\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    sweeps = 0\n    while True:\n        sweeps += 1\n        new = {s: 0.0 if s in TERMINAL else max(q_value(V, s, a, slip, gamma) for a in 'URDL')\n               for s in CELLS}\n        change = max(abs(new[s] - V[s]) for s in CELLS)\n        V = new\n        if change < tol:\n            return V, sweeps\n\ndef greedy_policy(values, slip, gamma):\n    \"\"\"{cell: set of actions whose q_value is within 1e-9 of the best} for every non-end cell.\"\"\"\n    out = {}\n    for s in CELLS:\n        if s in TERMINAL:\n            continue\n        q = {a: q_value(values, s, a, slip, gamma) for a in 'URDL'}\n        best = max(q.values())\n        out[s] = {max(q, key=q.get)}\n    return out\n",
+      "test": 7,
+      "symptom": "greedy_policy keeps one best action, dropping ties."
+     },
+     {
+      "source": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef q_value(V, s, a, slip, gamma):\n    return sum(p * (reward(t) + gamma * V[t]) for t, p in transition(s, a, slip).items())\n\ndef value_iteration(slip, gamma, tol):\n    \"\"\"Sweep from all zeros, each new value from the previous table.\n    Stop after the first sweep whose largest change is below tol. Return (values, sweeps).\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    sweeps = 0\n    while True:\n        sweeps += 1\n        new = {s: 0.0 if s in TERMINAL else max(q_value(V, s, a, slip, gamma) for a in 'URDL')\n               for s in CELLS}\n        change = max(abs(new[s] - V[s]) for s in CELLS)\n        V = new\n        if change < tol:\n            return V, sweeps - 1\n\ndef greedy_policy(values, slip, gamma):\n    \"\"\"{cell: set of actions whose q_value is within 1e-9 of the best} for every non-end cell.\"\"\"\n    out = {}\n    for s in CELLS:\n        if s in TERMINAL:\n            continue\n        q = {a: q_value(values, s, a, slip, gamma) for a in 'URDL'}\n        best = max(q.values())\n        out[s] = {a for a in q if q[a] > best - 1e-9}\n    return out\n",
+      "test": 1,
+      "symptom": "Returns sweeps - 1."
+     },
+     {
+      "source": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef q_value(V, s, a, slip, gamma):\n    return sum(p * (reward(t) + gamma * V[t]) for t, p in transition(s, a, slip).items())\n\ndef value_iteration(slip, gamma, tol):\n    \"\"\"Sweep from all zeros, each new value from the previous table.\n    Stop after the first sweep whose largest change is below tol. Return (values, sweeps).\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    sweeps = 0\n    while True:\n        sweeps += 1\n        new = {s: 0.0 if s in TERMINAL else max(q_value(V, s, a, slip, gamma) for a in 'URDL')\n               for s in CELLS}\n        change = max(abs(new[s] - V[s]) for s in CELLS)\n        V = new\n        if change < tol:\n            return V, sweeps\n\ndef greedy_policy(values, slip, gamma):\n    \"\"\"{cell: set of actions whose q_value is within 1e-9 of the best} for every non-end cell.\"\"\"\n    out = {}\n    for s in CELLS:\n        if s in TERMINAL:\n            continue\n        q = {a: q_value(values, s, a, slip, gamma) for a in 'URDL'}\n        best = max(q.values())\n        out[s] = {a for a in q if q[a] == best}\n    return out\n",
+      "test": 11,
+      "symptom": "Ties by q == best; passes because tied floats happen to be equal here."
+     }
+    ]
    },
    "hints": [
     {

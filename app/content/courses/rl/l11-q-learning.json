@@ -1010,9 +1010,67 @@
       "call": "q_learning(0, 0.1, 0.2, 0)[('r1c1', 'U')]",
       "expect": "0",
       "compare": "isclose"
+     },
+     {
+      "setup": "Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\nQ[('r1c5', 'U')] = 0.5",
+      "call": "q_update(Q, 'r1c4', 'R', 0.96, 'r1c5', 0.1, 0.9, True)",
+      "expect": "0.096",
+      "compare": "isclose"
+     },
+     {
+      "call": "max(q_learning(500, 0.1, 0.2, 0)[('r4c1', a)] for a in ACTIONS)",
+      "expect": "0.24894561528839818",
+      "compare": "isclose"
+     },
+     {
+      "setup": "import rl_ops_l3 as ops",
+      "call": "ops.q_learning(500, 0.1, 0.2, 1) == q_learning(500, 0.1, 0.2, 1)",
+      "expect": "True",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 7 hidden tests. Updates are compared with math.isclose; after 500 episodes the greedy policy must be optimal for seeds 0 to 4."
+    "how": "Submit runs 10 hidden tests. Updates are compared with `math.isclose`; after 500 episodes the greedy policy must be optimal for seeds 0 to 4. One seeded value must match ours, so break greedy ties by the first best action in the order U, R, D, L. The last test compares your Q table with the course helper `rl_ops_l3.py`, which the AI strand reuses.",
+    "mutants": [
+     {
+      "source": "import random\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef reward(t):\n    return TERMINAL.get(t, 0.0) + STEP\n\nACTIONS = 'URDL'\nOPEN = [s for s in CELLS if s not in TERMINAL]\n\ndef q_update(Q, s, a, r, s2, alpha, gamma, terminal):\n    \"\"\"One Q-learning update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + gamma * Q[(s2, a)]\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef q_learning(episodes, alpha, eps, seed, gamma=0.9):\n    \"\"\"Deterministic grid. Each episode starts at rng.choice(OPEN). Each step: if rng.random() < eps,\n    a = rng.choice(ACTIONS), else the first best action in the order U, R, D, L. Return Q.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in TERMINAL:\n            if rng.random() < eps:\n                a = rng.choice(ACTIONS)\n            else:\n                a = max(ACTIONS, key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            q_update(Q, s, a, reward(t), t, alpha, gamma, t in TERMINAL)\n            s = t\n    return Q\n\ndef greedy_matches(Q, optimal_sets):\n    \"\"\"True if every open cell's first-best action lies in its optimal set.\"\"\"\n    return all(max(ACTIONS, key=lambda b: Q[(s, b)]) in optimal_sets[s] for s in OPEN)\n",
+      "test": 2,
+      "symptom": "Target uses Q(s2, a), not the max."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef reward(t):\n    return TERMINAL.get(t, 0.0) + STEP\n\nACTIONS = 'URDL'\nOPEN = [s for s in CELLS if s not in TERMINAL]\n\ndef q_update(Q, s, a, r, s2, alpha, gamma, terminal):\n    \"\"\"One Q-learning update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + gamma * sum(Q[(s2, b)] for b in ACTIONS) / 4\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef q_learning(episodes, alpha, eps, seed, gamma=0.9):\n    \"\"\"Deterministic grid. Each episode starts at rng.choice(OPEN). Each step: if rng.random() < eps,\n    a = rng.choice(ACTIONS), else the first best action in the order U, R, D, L. Return Q.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in TERMINAL:\n            if rng.random() < eps:\n                a = rng.choice(ACTIONS)\n            else:\n                a = max(ACTIONS, key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            q_update(Q, s, a, reward(t), t, alpha, gamma, t in TERMINAL)\n            s = t\n    return Q\n\ndef greedy_matches(Q, optimal_sets):\n    \"\"\"True if every open cell's first-best action lies in its optimal set.\"\"\"\n    return all(max(ACTIONS, key=lambda b: Q[(s, b)]) in optimal_sets[s] for s in OPEN)\n",
+      "test": 2,
+      "symptom": "Target averages the next Q values."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef reward(t):\n    return TERMINAL.get(t, 0.0) + STEP\n\nACTIONS = 'URDL'\nOPEN = [s for s in CELLS if s not in TERMINAL]\n\ndef q_update(Q, s, a, r, s2, alpha, gamma, terminal):\n    \"\"\"One Q-learning update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + max(Q[(s2, b)] for b in ACTIONS)\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef q_learning(episodes, alpha, eps, seed, gamma=0.9):\n    \"\"\"Deterministic grid. Each episode starts at rng.choice(OPEN). Each step: if rng.random() < eps,\n    a = rng.choice(ACTIONS), else the first best action in the order U, R, D, L. Return Q.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in TERMINAL:\n            if rng.random() < eps:\n                a = rng.choice(ACTIONS)\n            else:\n                a = max(ACTIONS, key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            q_update(Q, s, a, reward(t), t, alpha, gamma, t in TERMINAL)\n            s = t\n    return Q\n\ndef greedy_matches(Q, optimal_sets):\n    \"\"\"True if every open cell's first-best action lies in its optimal set.\"\"\"\n    return all(max(ACTIONS, key=lambda b: Q[(s, b)]) in optimal_sets[s] for s in OPEN)\n",
+      "test": 2,
+      "symptom": "Target r + max Q, undiscounted."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef reward(t):\n    return TERMINAL.get(t, 0.0) + STEP\n\nACTIONS = 'URDL'\nOPEN = [s for s in CELLS if s not in TERMINAL]\n\ndef q_update(Q, s, a, r, s2, alpha, gamma, terminal):\n    \"\"\"One Q-learning update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + gamma * max(Q[(s2, b)] for b in ACTIONS)\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef q_learning(episodes, alpha, eps, seed, gamma=0.9):\n    \"\"\"Deterministic grid. Each episode starts at rng.choice(OPEN). Each step: if rng.random() < eps,\n    a = rng.choice(ACTIONS), else the first best action in the order U, R, D, L. Return Q.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in TERMINAL:\n            if rng.random() < eps:\n                a = rng.choice(ACTIONS)\n            else:\n                a = max(ACTIONS, key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            q_update(Q, s, a, reward(s), t, alpha, gamma, t in TERMINAL)\n            s = t\n    return Q\n\ndef greedy_matches(Q, optimal_sets):\n    \"\"\"True if every open cell's first-best action lies in its optimal set.\"\"\"\n    return all(max(ACTIONS, key=lambda b: Q[(s, b)]) in optimal_sets[s] for s in OPEN)\n",
+      "test": 3,
+      "symptom": "Passes reward(s) for the step."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef reward(t):\n    return TERMINAL.get(t, 0.0) + STEP\n\nACTIONS = 'URDL'\nOPEN = [s for s in CELLS if s not in TERMINAL]\n\ndef q_update(Q, s, a, r, s2, alpha, gamma, terminal):\n    \"\"\"One Q-learning update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r + gamma * max(Q[(s2, b)] for b in ACTIONS)\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef q_learning(episodes, alpha, eps, seed, gamma=0.9):\n    \"\"\"Deterministic grid. Each episode starts at rng.choice(OPEN). Each step: if rng.random() < eps,\n    a = rng.choice(ACTIONS), else the first best action in the order U, R, D, L. Return Q.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in TERMINAL:\n            if rng.random() < eps:\n                a = rng.choice(ACTIONS)\n            else:\n                a = max(ACTIONS, key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            q_update(Q, s, a, reward(t), t, alpha, gamma, t in TERMINAL)\n            s = t\n    return Q\n\ndef greedy_matches(Q, optimal_sets):\n    \"\"\"True if every open cell's first-best action lies in its optimal set.\"\"\"\n    return all(max(ACTIONS, key=lambda b: Q[(s, b)]) in optimal_sets[s] for s in OPEN)\n",
+      "test": 8,
+      "symptom": "Ignores `terminal`; end-cell Q stays 0 so no test sees it."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef reward(t):\n    return TERMINAL.get(t, 0.0) + STEP\n\nACTIONS = 'URDL'\nOPEN = [s for s in CELLS if s not in TERMINAL]\n\ndef q_update(Q, s, a, r, s2, alpha, gamma, terminal):\n    \"\"\"One Q-learning update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + gamma * max(Q[(s2, b)] for b in ACTIONS)\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef q_learning(episodes, alpha, eps, seed, gamma=0.9):\n    \"\"\"Deterministic grid. Each episode starts at rng.choice(OPEN). Each step: if rng.random() < eps,\n    a = rng.choice(ACTIONS), else the first best action in the order U, R, D, L. Return Q.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in TERMINAL:\n            if rng.random() < eps:\n                a = rng.choice(ACTIONS)\n            else:\n                m = max(Q[(s, b)] for b in ACTIONS)\n                a = rng.choice([b for b in ACTIONS if Q[(s, b)] == m])\n            t = move(s, a)\n            q_update(Q, s, a, reward(t), t, alpha, gamma, t in TERMINAL)\n            s = t\n    return Q\n\ndef greedy_matches(Q, optimal_sets):\n    \"\"\"True if every open cell's first-best action lies in its optimal set.\"\"\"\n    return all(max(ACTIONS, key=lambda b: Q[(s, b)]) in optimal_sets[s] for s in OPEN)\n",
+      "test": 9,
+      "symptom": "Greedy ties broken at random, not U, R, D, L."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef reward(t):\n    return TERMINAL.get(t, 0.0) + STEP\n\nACTIONS = 'URDL'\nOPEN = [s for s in CELLS if s not in TERMINAL]\n\ndef q_update(Q, s, a, r, s2, alpha, gamma, terminal):\n    \"\"\"One Q-learning update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + gamma * max(Q[(s2, b)] for b in ACTIONS)\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef q_learning(episodes, alpha, eps, seed, gamma=0.9):\n    \"\"\"Deterministic grid. Each episode starts at rng.choice(OPEN). Each step: if rng.random() < eps,\n    a = rng.choice(ACTIONS), else the first best action in the order U, R, D, L. Return Q.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in TERMINAL:\n            if rng.random() < eps:\n                a = rng.choice(ACTIONS)\n            else:\n                a = max(ACTIONS[::-1], key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            q_update(Q, s, a, reward(t), t, alpha, gamma, t in TERMINAL)\n            s = t\n    return Q\n\ndef greedy_matches(Q, optimal_sets):\n    \"\"\"True if every open cell's first-best action lies in its optimal set.\"\"\"\n    return all(max(ACTIONS, key=lambda b: Q[(s, b)]) in optimal_sets[s] for s in OPEN)\n",
+      "test": 9,
+      "symptom": "Greedy ties broken in the order L, D, R, U."
+     }
+    ],
+    "data": {
+     "rl_ops_l3.py": "content/data/ai/rl_ops_l3.py"
+    },
+    "dataPeek": false
    },
    "hints": [
     {
@@ -1186,7 +1244,7 @@
    "type": "ladder",
    "difficulty": 3,
    "title": "Why start at zero?",
-   "prose": "Every $Q$ starts at 0, yet every real move costs 0.04 and most true values below row 1 are under 0.6. Early on, a move the agent has never tried still shows 0, while tried moves have dropped below 0.",
+   "prose": "Every $Q$ starts at 0, and every real move costs 0.04. The true values are all above 0 (at least 0.25), except for the two moves into the pit. Early on, a move the agent has never tried still shows 0, while tried moves have dropped below 0.",
    "canvas": {
     "kind": "grid",
     "params": {
@@ -1303,18 +1361,18 @@
     }
    ],
    "feedback": {
-    "correct": "Zero is optimistic here, as in level 1: it pushes the agent to try each move.",
+    "correct": "Untried moves win early, so greedy choices try each move, even though zero is below the true values here.",
     "generic": "Not quite. Compare 0 with values that have taken a step cost."
    },
    "explain": {
-    "text": "With a step cost, zero is an optimistic start, like level 1's optimistic estimates. Greedy steps alone then try new moves; the 20% random moves add the rest."
+    "text": "Zero is not optimistic here: every true value except the two moves into the pit is at least 0.25. Untried moves still win early, because tried ones drop below 0 before news of the goal arrives. Greedy steps alone then try new moves; the 20% random moves add the rest."
    }
   },
   {
    "type": "ladder",
    "difficulty": 3,
    "title": "Why not the slippery grid?",
-   "prose": "On the slippery grid, Q-learning with $\\alpha = 0.1$ and $\\varepsilon = 0.1$ needed 4,400 to 15,250 episodes to match value iteration on 8 of 10 seeds, and failed within 20,000 on the other 2. At row 4, column 3, the best move beats the next by only 0.0073.",
+   "prose": "On the slippery grid, Q-learning with $\\alpha = 0.1$ and $\\varepsilon = 0.1$ first matched value iteration after 4,400 to 15,250 episodes on 8 of 10 seeds, then lost the match again; the other 2 never matched within 20,000. At row 4, column 3, the best move beats the next by only 0.0073.",
    "canvas": {
     "kind": "grid",
     "params": {
@@ -1458,7 +1516,7 @@
     "generic": "Compare the noise with the gap."
    },
    "explain": {
-    "text": "Convergence needs steps that shrink, with $\\sum \\alpha_t = \\infty$ and $\\sum \\alpha_t^2 < \\infty$ (Sutton and Barto, section 2.7). With a constant 0.1 the estimates keep jiggling, and two moves 0.007 apart keep swapping. So the exit uses the deterministic grid.",
+    "text": "Convergence needs steps that shrink, with $\\sum \\alpha_t = \\infty$ and $\\sum \\alpha_t^2 < \\infty$ (Sutton and Barto, equation 2.7). With a constant 0.1 the estimates keep jiggling, and two moves 0.007 apart keep swapping. So the exit uses the deterministic grid.",
     "canvas": {
      "highlight": [
       "r4c3",
@@ -1725,7 +1783,7 @@
     "generic": "Look at the max in the target."
    },
    "explain": {
-    "text": "Q-learning's target always uses the best next action, so it converges to $Q^*$ whatever exploring rule supplies the data."
+    "text": "Q-learning's target always uses the best next action, so it converges to $Q^*$ whatever exploring rule supplies the data, as long as it keeps trying every move."
    }
   }
  ]

@@ -2565,3 +2565,50 @@ def random_walk_episode(rng):
             return states, rewards
 ```
 
+
+## Fix pass
+
+I recomputed every corrected number before writing it: 0.15 (3/20), 132 (smallest k with 0.9^k <= 1e-6, by loop and by logarithm), 3.45 ((21 + 3.15)/7), 1.9333 (5.8/3), 156.25 ((0.25/0.02)^2), the new l5 return 0.7016 (also the l5 screens[4] value three moves from the goal), the gamma 0.5 value in l6 (by a second, iterative solve), and the minimum true Q on the deterministic grid (0.2505, bar the two moves into the pit at -1.04). For the flicker finding I reran the lesson's own slippery agents (seeds 0 to 9, checked every 50 episodes to 20,000): all 8 that matched lost the match again, and none matches at 20,000. After the edits: validator 0 errors and no `[ai-mutants]` warning on rl files, `voice-scan.py 35` 0 and 0, the three number scripts exit 0 (359, 256 and 223 checks), `grade-all.mjs --code` 0 failures on every rl file, playthrough green with and without `--mobile` on every edited file.
+
+Status: fixed 32, disputed 0, deferred 0 (7 errors, 13 warnings, 12 notes). Where a fix differs from the proposal, the line says why. Mutants: 61 added across the 21 Python code widgets (the 62 in the appendix less one that no test can catch, see line 22); every widget carries two or more, and `grade-all` confirms each fails the stated test first. New hidden tests are appended, so no existing test number moved.
+
+### Level 1 (7 fixed)
+
+1. review-1 items[7] 'swap': fixed, value 0.15 with the current why (Beta(3, 17), mean 3/20).
+2. l2 screens[0] 'all-lost': fixed, the why now says each random order was charged C's whole fill chance, 0.60.
+3. l2 screens[1] / quoted greedy figures: fixed, an added sentence says the 56.0 and 61.8 differ only by noise (explain stays at three sentences).
+4. l1 screens[5] `run_greedy`: fixed with a different test from the proposal. Both proposals fail on arithmetic: the greedy agent starts at Q = 0, so the first arm to win holds Q > 0 and the rest hold 0, and `ps = [0.9, 0.9]` or any seed gives identical choices under a constant step (I searched 480 runs, none differ). Changing the return would break every example. Instead test 8 replaces `argmax_random` in `setup` with a recorder and checks the estimates passed on the last step: `[0.3061224489795918, 0.0, 0.0]` (15/49) against 0.266 for the constant step. The constant-step mutant is now a mutant (test 8); `how` says to call `argmax_random` for every choice.
+5. l3 screens[6] prose: fixed, "the three arms stand as below".
+6. l3 summary.ideas[2]: fixed, "on these venues, in 20 seeded runs, it overtook epsilon-greedy only between 40,000 and 50,000 pulls".
+7. l4 screens[7] 'luck': fixed with one change. My run over seeds 0 to 199 gives greedy 61.76 (SE 4.35) and Thompson 20.77 (SE 1.07), a gap of 9.2 combined standard errors, so the line says "about nine", not ten.
+
+### Level 2 (9 fixed)
+
+8. l8 screens[0] prose: fixed, "all negative except row 1, column 4".
+9. l7 screens[4] 'bound': fixed, value 132; the why now says 0.9^k <= 10^-6 needs 132 sweeps.
+10. l7 screens[5] 'keep-all': fixed, value 3.45.
+11. l6 screens[9] explain: fixed in one combined sentence (a longer text would break the three-sentence limit): starting at the limit costs about £4 against flat, and never hitting it is worth £80, so the limit costs £18.69 from flat (80 - 61.31).
+12. l8 screens[5] prose and explain: fixed, the keep rule "guarantees the loop stops whatever the tie rule" and here saves one evaluation, 5 against 6.
+13. l5 screens[6] trap: fixed by a new trap, a bump into the wall then U then R (return 0.7016). Distractors: 0.824 (skips the bump), 0.7416 (bump pays nothing), 0.81 (no step costs). `rl-L2-numbers.py` now checks them, with V(3) as the second method.
+14. l7 screens[4] canvas label: fixed, "(deterministic changes follow it exactly)".
+15. l6 screens[7] gamma: fixed, test 10 `evaluate_policy(opt, 0.1, 0.5)['r4c1']` = -0.07233115507108162; the hard-coded-gamma mutant now fails it.
+16. l7 screens[7] exact-equality ties: fixed, test 11 sets two values 1e-12 apart (so U and R tie within 1e-9 but not exactly); the exact-equality mutant now fails it.
+
+### Level 3 (16 fixed)
+
+17. l11 screens[7]: fixed. Prose, feedback.correct and explain now say zero is not optimistic here: every true Q except the two moves into the pit is at least 0.25 (minimum 0.2505), so zero is below the truth. Untried moves still win early because tried ones drop below 0 before news of the goal arrives. "As in level 1" is gone.
+18. l9 screens[1] 'E': fixed, "Episode 1 already reached E."
+19. l9 screens[9] 'pos': fixed, value 1.9333.
+20. l11 screens[8] explain: fixed, "equation 2.7".
+21. l11 screens[8] prose, homework-3 items[5]: fixed as proposed, "first matched ... then lost the match again; the other 2 never matched within 20,000". Verified on the lesson's own seeds (see above).
+22. Terminal mask, l11: fixed, test 8 (`Q[('r1c5', 'U')] = 0.5`, update 'r1c4' R with terminal True, expect 0.096; the unmasked target gives 0.141). homework-3: no test can see the mask there (end cells are never updated in `learn_gridworld`), as the review says; the mutant is listed only in l11, and the l11 test is the fix.
+23. Tie rule, l11 and homework-3: fixed, one exact seeded value in each, `max(Q[('r4c1', a)] ...)` after 500 episodes on seed 0 = 0.24894561528839818, as proposed. Random and last-best tie mutants now fail test 9 in both widgets. `how` states the U, R, D, L rule.
+24. l11 quiz[2] explain: fixed, "as long as it keeps trying every move".
+25. review-3 items[5] 'var': fixed, value 156.25 with tolerance 1.
+26. ai-safety shared code: fixed on the content side by `app/content/data/ai/rl_ops_l3.py` (documented in `docs/reports/rl-3.md`), shipped through the `data` of the l11 code widget and exercised by its test 10; `rl-L3-numbers.py` checks it reproduces the course's numbers bit for bit. Not done here, outside rl: adding "Shared code files" to `docs/briefs/rl.md`, naming `rl_ops_l3.py` in `docs/briefs/ai-safety.md`, and noting that `state.arrows` (engine 1229) exists.
+27. l12 screens[3] and [5] explain: fixed, the 0.1409 now reads as falling "from those six cliff-edge cells"; screens[5] says "from its six edge cells".
+28. l12 screens[6] prose: fixed, "With ε = 0 the run is the same for every seed".
+29. l12 screens[0] caption: fixed, "Green: the route SARSA learns, 13 moves."
+30. l12 screens[8] answer: fixed, 0.6.
+31. l12 screens[4] how and problems-1 items[2] parts[1]: fixed, "an episode", "an order".
+32. `math.isclose` formatting: fixed in 10 `how` strings by edit and in the eleventh (l11) by its rewrite.

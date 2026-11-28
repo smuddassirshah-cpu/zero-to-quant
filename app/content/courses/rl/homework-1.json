@@ -67,8 +67,20 @@
       "budget": 10000
      }
     ],
-    "how": "Submit runs 7 hidden tests. Seeded means must match ours within math.isclose; the last two check the ordering of the agents with a margin.",
-    "budget": 10000
+    "how": "Submit runs 7 hidden tests. Seeded means must match ours within `math.isclose`; the last two check the ordering of the agents with a margin.",
+    "budget": 10000,
+    "mutants": [
+     {
+      "source": "import math\nimport random\n\ndef bandit_league(ps, T, seeds):\n    \"\"\"Mean regret of epsilon-greedy (0.1), UCB1 and Thompson sampling over the same seeds.\"\"\"\n    k = len(ps)\n    best = max(ps)\n\n    def pull(p, rng):\n        return 1 if rng.random() < p else 0\n\n    def league_regret(n):\n        return sum(c * (best - p) for c, p in zip(n, ps))\n\n    def eps_greedy(seed):\n        rng = random.Random(seed)\n        Q, n = [0.0] * k, [0] * k\n        for _ in range(T):\n            if rng.random() < 0.1:\n                a = rng.randrange(k)\n            else:\n                m = max(Q)\n                a = rng.choice([i for i in range(k) if Q[i] == m])\n            r = pull(ps[a], rng)\n            n[a] += 1\n            Q[a] += (r - Q[a]) / n[a]\n        return n\n\n    def ucb(seed):\n        rng = random.Random(seed)\n        Q, n = [0.0] * k, [0] * k\n        for t in range(1, T + 1):\n            s = [math.inf if n[i] == 0 else Q[i] for i in range(k)]\n            a = s.index(max(s))\n            r = pull(ps[a], rng)\n            n[a] += 1\n            Q[a] += (r - Q[a]) / n[a]\n        return n\n\n    def thompson(seed):\n        rng = random.Random(seed)\n        w, l = [0] * k, [0] * k\n        for _ in range(T):\n            d = [rng.betavariate(1 + w[i], 1 + l[i]) for i in range(k)]\n            a = d.index(max(d))\n            if pull(ps[a], rng):\n                w[a] += 1\n            else:\n                l[a] += 1\n        return [w[i] + l[i] for i in range(k)]\n\n    out = {}\n    for name, agent in [('eps', eps_greedy), ('ucb', ucb), ('thompson', thompson)]:\n        out[name] = sum(league_regret(agent(s)) for s in seeds) / len(seeds)\n    return out\n",
+      "test": 1,
+      "symptom": "The ucb agent ranks by mean alone."
+     },
+     {
+      "source": "import math\nimport random\n\ndef bandit_league(ps, T, seeds):\n    \"\"\"Mean regret of epsilon-greedy (0.1), UCB1 and Thompson sampling over the same seeds.\"\"\"\n    k = len(ps)\n    best = max(ps)\n\n    def pull(p, rng):\n        return 1 if rng.random() < p else 0\n\n    def league_regret(n):\n        return sum(c * (best - p) for c, p in zip(n, ps))\n\n    def eps_greedy(seed):\n        rng = random.Random(seed)\n        Q, n = [0.0] * k, [0] * k\n        for _ in range(T):\n            if rng.random() < 0.1:\n                a = rng.randrange(k)\n            else:\n                m = max(Q)\n                a = rng.choice([i for i in range(k) if Q[i] == m])\n            r = pull(ps[a], rng)\n            n[a] += 1\n            Q[a] += (r - Q[a]) / n[a]\n        return n\n\n    def ucb(seed):\n        rng = random.Random(seed)\n        Q, n = [0.0] * k, [0] * k\n        for t in range(1, T + 1):\n            s = [math.inf if n[i] == 0 else Q[i] + math.sqrt(2 * math.log(t) / n[i]) for i in range(k)]\n            a = s.index(max(s))\n            r = pull(ps[a], rng)\n            n[a] += 1\n            Q[a] += (r - Q[a]) / n[a]\n        return n\n\n    def thompson(seed):\n        rng = random.Random(seed)\n        w, l = [0] * k, [0] * k\n        for _ in range(T):\n            d = [rng.betavariate(1 + w[i], 1 + l[i]) for i in range(k)]\n            a = d.index(max(d))\n            if pull(ps[a], rng):\n                w[a] += 1\n            else:\n                l[a] += 1\n        return [w[i] for i in range(k)]\n\n    out = {}\n    for name, agent in [('eps', eps_greedy), ('ucb', ucb), ('thompson', thompson)]:\n        out[name] = sum(league_regret(agent(s)) for s in seeds) / len(seeds)\n    return out\n",
+      "test": 1,
+      "symptom": "Thompson regret uses wins (rewards), not pull counts."
+     }
+    ]
    },
    "feedback": {
     "correct": "All pass. On close venues UCB1 trails; on wide gaps it beats epsilon-greedy, and Thompson leads both times.",
@@ -126,7 +138,19 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 5 hidden tests. Rewards must equal ours exactly; the last test checks that a constant step earns at least 100 more after the swap, averaged over 10 seeds."
+    "how": "Submit runs 5 hidden tests. Rewards must equal ours exactly; the last test checks that a constant step earns at least 100 more after the swap, averaged over 10 seeds.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef run_drift(before, after, switch, T, alpha, seed):\n    \"\"\"Epsilon-greedy (0.1) on arms whose win chances are `before` for pulls 1 to switch and `after` from then on.\n    alpha=None uses sample means; otherwise a constant step. Returns the reward collected after the switch.\"\"\"\n    rng = random.Random(seed)\n    k = len(before)\n    Q, n = [0.0] * k, [0] * k\n    late = 0\n    for t in range(1, T + 1):\n        ps = before if t <= switch else after\n        if rng.random() < 0.1:\n            a = rng.randrange(k)\n        else:\n            m = max(Q)\n            a = rng.choice([i for i in range(k) if Q[i] == m])\n        r = 1 if rng.random() < ps[a] else 0\n        n[a] += 1\n        step = 1 / n[a] if alpha is None else alpha\n        Q[a] += step * (r - Q[a])\n        late += r\n    return late\n",
+      "test": 1,
+      "symptom": "Returns the total reward, not the reward after the switch."
+     },
+     {
+      "source": "import random\n\ndef run_drift(before, after, switch, T, alpha, seed):\n    \"\"\"Epsilon-greedy (0.1) on arms whose win chances are `before` for pulls 1 to switch and `after` from then on.\n    alpha=None uses sample means; otherwise a constant step. Returns the reward collected after the switch.\"\"\"\n    rng = random.Random(seed)\n    k = len(before)\n    Q, n = [0.0] * k, [0] * k\n    late = 0\n    for t in range(1, T + 1):\n        ps = before if t <= switch else after\n        if rng.random() < 0.1:\n            a = rng.randrange(k)\n        else:\n            m = max(Q)\n            a = rng.choice([i for i in range(k) if Q[i] == m])\n        r = 1 if rng.random() < ps[a] else 0\n        n[a] += 1\n        step = 1 / n[a]\n        Q[a] += step * (r - Q[a])\n        if t > switch:\n            late += r\n    return late\n",
+      "test": 1,
+      "symptom": "Always uses the sample mean."
+     }
+    ]
    },
    "feedback": {
     "correct": "All pass. Over seeds 0 to 9 the constant step earns 205.5 more fills after the swap.",
