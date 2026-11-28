@@ -1,0 +1,408 @@
+{
+ "id": "problems-2",
+ "course": "makemore",
+ "level": 2,
+ "title": "Embedding and MLP problems",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-cab",
+   "difficulty": 5,
+   "skills": [
+    "mk-mlp"
+   ],
+   "prose": "A toy alphabet has four symbols: `.` (0), a (1), b (2) and c (3). A model with a block of 2 reads the name cab, padded as `..cab.`.",
+   "parts": [
+    {
+     "question": "How many rows does cab give?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "Whole number",
+      "wrong": [
+       {
+        "id": "no-end",
+        "value": 3,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "4: c, a, b and the end mark.",
+      "generic": "Not quite. The toy names stop with `.` too, and that is predicted.",
+      "byKey": {
+       "no-end": "Three letters, but the `.` after b is a target as well: 4 rows."
+      }
+     },
+     "explain": {
+      "text": "cab has 3 letters, so 4 rows: `..` then c, `.c` then a, `ca` then b, `ab` then end."
+     }
+    },
+    {
+     "question": "The 4 rows of part 1 make $X$ of shape (4, 2). With an embedding of 2 numbers a symbol and 3 hidden units, how many weights does the model have over the 4 symbols?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 39,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "Whole number",
+      "wrong": [
+       {
+        "id": "block",
+        "value": 33,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "nobias",
+        "value": 32,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$8 + 12 + 3 + 12 + 4 = 39$.",
+      "generic": "Not quite. $W_1$ takes $2 \\times 2 = 4$ joined numbers.",
+      "byKey": {
+       "block": "You gave $W_1$ only 2 inputs; the block of 2 joins two embeddings of 2.",
+       "nobias": "You left out the biases, 3 and 4."
+      }
+     },
+     "explain": {
+      "text": "$C$ is 4 by 2 (8), $W_1$ 4 by 3 (12), $b_1$ 3, $W_2$ 3 by 4 (12), $b_2$ 4: 39 weights."
+     }
+    },
+    {
+     "question": "The embeddings are c = $(-1, 0.5)$ and a = $(1, -1)$. The first hidden unit has weights $(0.4, -0.3, 1.0, 0.2)$ on the 4 joined numbers and bias 0.1. What is its value for the context `ca`? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.3364,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "pre",
+        "value": 0.35,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "swap",
+        "value": -0.0997,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tanh(0.35) = 0.3364$.",
+      "generic": "Not quite. Join c then a, take the weighted sum, add the bias, then tanh.",
+      "byKey": {
+       "pre": "That is the sum before tanh.",
+       "swap": "You joined a before c. The context `ca` is c first."
+      }
+     },
+     "explain": {
+      "text": "Joined: $(-1, 0.5, 1, -1)$. The weighted sum is $-0.4 - 0.15 + 1.0 - 0.2 = 0.25$, plus 0.1 gives 0.35, and $\\tanh(0.35) = 0.3364$."
+     }
+    },
+    {
+     "question": "For the row `ca` of part 1, the logits come out as $(0.3, -0.2, 1.1, 0)$ over `.`, a, b, c. What is that row’s loss in nats? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.7201,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "bits",
+        "value": 1.039,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "wrong-target",
+        "value": 2.0201,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-\\ln \\operatorname{softmax}(z)_b = 0.7201$.",
+      "generic": "Not quite. The target is b, index 2.",
+      "byKey": {
+       "bits": "That is in bits; the loss is in nats.",
+       "wrong-target": "You scored a, index 1. The row `ca` predicts b."
+      }
+     },
+     "explain": {
+      "text": "Softmax gives b a chance of 0.4867, so the loss is $-\\ln 0.4867 = 0.7201$ nats."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-schedule",
+   "difficulty": 4,
+   "skills": [
+    "mk-train"
+   ],
+   "prose": "A model of company names trains on 12,000 rows with minibatches of 40.",
+   "parts": [
+    {
+     "question": "How many steps make one epoch?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 300,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "Whole number",
+      "wrong": [
+       {
+        "id": "rows",
+        "value": 12000,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$12{,}000 / 40 = 300$.",
+      "generic": "Not quite. Divide the rows by the batch size.",
+      "byKey": {
+       "rows": "That is the rows, not the steps."
+      }
+     },
+     "explain": {
+      "text": "One epoch sees each row once on average: $12{,}000 / 40 = 300$ steps."
+     }
+    },
+    {
+     "question": "Using 300 steps an epoch from part 1, how many epochs are 4,500 steps?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 15,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "Whole number",
+      "wrong": [
+       {
+        "id": "inverse",
+        "value": 0.0667,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$4{,}500 / 300 = 15$.",
+      "generic": "Not quite. Divide the steps by the steps per epoch.",
+      "byKey": {
+       "inverse": "You divided the wrong way round."
+      }
+     },
+     "explain": {
+      "text": "$4{,}500 / 300 = 15$ epochs."
+     }
+    },
+    {
+     "question": "A sweep of 300 steps gives dev losses 3.02 at 0.003, 2.71 at 0.03, 2.55 at 0.3 and 2.94 at 3. Using these, which step size do you train with?",
+     "widget": {
+      "kind": "choice",
+      "layout": "grid",
+      "options": [
+       {
+        "id": "a",
+        "text": "0.3",
+        "correct": true
+       },
+       {
+        "id": "b",
+        "text": "3",
+        "why": "It overshoots: 2.94."
+       },
+       {
+        "id": "c",
+        "text": "0.003",
+        "why": "Too slow: 3.02 after 300 steps."
+       },
+       {
+        "id": "d",
+        "text": "0.03",
+        "why": "Better than the ends, but 0.3 is lower still."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "0.3: the least dev loss, 2.55.",
+      "generic": "Not quite. Pick the least dev loss."
+     },
+     "explain": {
+      "text": "0.3 gives the least dev loss, 2.55; the ends are too slow or overshoot."
+     }
+    },
+    {
+     "question": "Training at the 0.3 of part 3, the dev loss is 2.31 when the step drops to 0.03, and 2.24 at the end. How much did the last stretch gain, in nats? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.07,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "sum",
+        "value": 4.55,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2.31 - 2.24 = 0.07$ nats.",
+      "generic": "Not quite. Subtract the two dev losses.",
+      "byKey": {
+       "sum": "You added the losses; the gain is their difference."
+      }
+     },
+     "explain": {
+      "text": "Smaller steps let the noisy updates settle: $2.31 - 2.24 = 0.07$ nats."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-lookup-step",
+   "difficulty": 3,
+   "skills": [
+    "mk-mlp",
+    "mk-train"
+   ],
+   "prose": "An embedding table holds one number a symbol: row 3 is 0.8 and row 6 is $-0.4$. A batch of one context, (3, 6, 3), sends back the gradient $(0.5, 0.2, -0.1)$ for its joined lookups.",
+   "parts": [
+    {
+     "question": "What gradient does row 3 get? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.4,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "first",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "last",
+        "value": -0.1,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.5 - 0.1 = 0.4$.",
+      "generic": "Not quite. Row 3 is looked up twice.",
+      "byKey": {
+       "first": "You kept the first use only.",
+       "last": "You kept the last use, as fancy-index `+=` would."
+      }
+     },
+     "explain": {
+      "text": "Row 3 is used in places one and three: $0.5 + (-0.1) = 0.4$."
+     }
+    },
+    {
+     "question": "Using the gradient of 0.4 from part 1, what is row 3 after one step of size 0.5? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "sign",
+        "value": 1.0,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.8 - 0.5 \\times 0.4 = 0.6$.",
+      "generic": "Not quite. Subtract the step times the gradient.",
+      "byKey": {
+       "sign": "You added the step; descent subtracts it."
+      }
+     },
+     "explain": {
+      "text": "$0.8 - 0.5 \\times 0.4 = 0.6$."
+     }
+    },
+    {
+     "question": "Row 9 was not looked up in this batch. By how much does the same step change it?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "Number",
+      "wrong": [
+       {
+        "id": "avg",
+        "value": 0.2,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "0: a row not used gets no gradient.",
+      "generic": "Not quite. Which rows does the backward pass touch?",
+      "byKey": {
+       "avg": "Only looked-up rows get gradient; row 9 gets none."
+      }
+     },
+     "explain": {
+      "text": "The backward pass adds gradient only to rows that were looked up, so row 9 is unchanged by this step."
+     }
+    }
+   ]
+  }
+ ]
+}

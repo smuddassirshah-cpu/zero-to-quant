@@ -1,0 +1,1288 @@
+{
+ "id": "l7-the-mlp-model",
+ "course": "makemore",
+ "title": "The MLP language model",
+ "minutes": 15,
+ "objectives": [
+  "Build the forward pass of an embedding, a tanh hidden layer and a softmax output, and count its parameters."
+ ],
+ "skills": [
+  "mk-mlp"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "How big is the model?",
+   "prose": "A count table over three-symbol contexts would need 531,441 cells. Bengio and colleagues’ network (2003) instead embeds each symbol in 10 numbers, joins the three embeddings, and passes them through one hidden layer of 100 tanh units to 27 outputs.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "X",
+       "x": 0.08,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "e1",
+       "label": "C[x₁]",
+       "x": 0.3,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "e2",
+       "label": "C[x₂]",
+       "x": 0.3,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "e3",
+       "label": "C[x₃]",
+       "x": 0.3,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "cat",
+       "label": "join",
+       "x": 0.5,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "h",
+       "label": "tanh",
+       "x": 0.7,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "p",
+       "label": "out",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "e1"
+      },
+      {
+       "from": "x",
+       "to": "e2"
+      },
+      {
+       "from": "x",
+       "to": "e3"
+      },
+      {
+       "from": "e1",
+       "to": "cat"
+      },
+      {
+       "from": "e2",
+       "to": "cat"
+      },
+      {
+       "from": "e3",
+       "to": "cat"
+      },
+      {
+       "from": "cat",
+       "to": "h"
+      },
+      {
+       "from": "h",
+       "to": "p"
+      }
+     ],
+     "height": 260
+    },
+    "state": {
+     "caption": "Bengio et al. (2003): embed, join, a tanh layer, then softmax at the output."
+    }
+   },
+   "question": "Roughly how many weights does that network learn?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "k6",
+      "text": "About 6 thousand",
+      "correct": true
+     },
+     {
+      "id": "k500",
+      "text": "About half a million, like the table",
+      "why": "The network shares its weights across contexts; it never stores a row per context."
+     },
+     {
+      "id": "k27",
+      "text": "About 27 thousand",
+      "why": "Count each layer: the largest, $W_1$, is 30 by 100."
+     },
+     {
+      "id": "h3",
+      "text": "About 300",
+      "why": "The embedding alone is 270; the layers add thousands more."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the largest matrix first: 30 inputs to 100 hidden units."
+    },
+    {
+     "rung": "step",
+     "text": "270 + 3,000 + 100 + 2,700 + 27."
+    }
+   ],
+   "feedback": {
+    "correct": "About 6 thousand: 6,097, about one for every 87 cells of the count table.",
+    "generic": "Not quite. Add up each layer’s matrix and bias.",
+    "byKey": {
+     "k500": "You pictured a row per context. The network’s weights are shared by every context."
+    }
+   },
+   "explain": {
+    "text": "$C$ has 270 numbers, $W_1$ 3,000, $b_1$ 100, $W_2$ 2,700 and $b_2$ 27: 6,097 in all. The count table would need 531,441 cells and could not share anything between contexts."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Shapes all the way through",
+   "prose": "Step through the network for a batch of 32 contexts and watch the shape at each stage.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "X",
+       "x": 0.08,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "e1",
+       "label": "C[x₁]",
+       "x": 0.3,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "e2",
+       "label": "C[x₂]",
+       "x": 0.3,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "e3",
+       "label": "C[x₃]",
+       "x": 0.3,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "cat",
+       "label": "join",
+       "x": 0.5,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "h",
+       "label": "tanh",
+       "x": 0.7,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "p",
+       "label": "out",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "e1"
+      },
+      {
+       "from": "x",
+       "to": "e2"
+      },
+      {
+       "from": "x",
+       "to": "e3"
+      },
+      {
+       "from": "e1",
+       "to": "cat"
+      },
+      {
+       "from": "e2",
+       "to": "cat"
+      },
+      {
+       "from": "e3",
+       "to": "cat"
+      },
+      {
+       "from": "cat",
+       "to": "h"
+      },
+      {
+       "from": "h",
+       "to": "p"
+      }
+     ],
+     "height": 260
+    },
+    "state": {
+     "current": "x",
+     "values": {
+      "x": "(32, 3) indices"
+     },
+     "caption": "The batch: 32 contexts of 3 symbol indices."
+    },
+    "controls": [
+     {
+      "bind": "layer",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "label": "Layer",
+      "frames": [
+       {
+        "current": "x",
+        "values": {
+         "x": "(32, 3) indices"
+        },
+        "caption": "The batch: 32 contexts of 3 symbol indices."
+       },
+       {
+        "current": "e2",
+        "values": {
+         "e2": "(32, 10) each"
+        },
+        "caption": "Each position looks up a row of $C$ (27 by 10)."
+       },
+       {
+        "current": "cat",
+        "values": {
+         "cat": "(32, 30)"
+        },
+        "caption": "The three lookups are joined: 30 numbers a context."
+       },
+       {
+        "current": "h",
+        "values": {
+         "h": "(32, 100)"
+        },
+        "caption": "Hidden layer: $\\tanh(EW_1 + b_1)$, $W_1$ 30 by 100."
+       },
+       {
+        "current": "p",
+        "values": {
+         "p": "(32, 27)"
+        },
+        "caption": "Logits $hW_2 + b_2$, $W_2$ 100 by 27, then softmax."
+       }
+      ],
+      "frameLabels": [
+       "input",
+       "embed",
+       "join",
+       "hidden",
+       "output"
+      ],
+      "start": 0
+     }
+    ]
+   },
+   "question": "What is the shape of the hidden layer’s output for the batch?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "r",
+      "text": "(32, 100)",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "(32, 30)",
+      "why": "That is the joined input to the hidden layer."
+     },
+     {
+      "id": "o",
+      "text": "(32, 27)",
+      "why": "That is the logits, after $W_2$."
+     },
+     {
+      "id": "t",
+      "text": "(100, 32)",
+      "why": "Rows stay examples: (32, 100)."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Step to “hidden”."
+    },
+    {
+     "rung": "step",
+     "text": "Each of the 32 contexts gets 100 hidden values."
+    }
+   ],
+   "feedback": {
+    "correct": "(32, 100): 100 tanh units for each context.",
+    "generic": "Not quite. Step the slider to the hidden layer."
+   },
+   "explain": {
+    "text": "The joined (32, 30) input times $W_1$ (30 by 100) gives (32, 100), and tanh keeps the shape. $W_2$ (100 by 27) then makes the (32, 27) logits.",
+    "canvas": {
+     "layer": 3
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Count the weights",
+   "prose": "Name it: the **MLP language model** of Bengio, Ducharme, Vincent and Jauvin (2003): logits $= \\tanh(EW_1 + b_1)W_2 + b_2$, where $E$ joins the context’s embeddings. Count each part.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "X",
+       "x": 0.08,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "e1",
+       "label": "C[x₁]",
+       "x": 0.3,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "e2",
+       "label": "C[x₂]",
+       "x": 0.3,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "e3",
+       "label": "C[x₃]",
+       "x": 0.3,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "cat",
+       "label": "join",
+       "x": 0.5,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "h",
+       "label": "tanh",
+       "x": 0.7,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "p",
+       "label": "out",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "e1"
+      },
+      {
+       "from": "x",
+       "to": "e2"
+      },
+      {
+       "from": "x",
+       "to": "e3"
+      },
+      {
+       "from": "e1",
+       "to": "cat"
+      },
+      {
+       "from": "e2",
+       "to": "cat"
+      },
+      {
+       "from": "e3",
+       "to": "cat"
+      },
+      {
+       "from": "cat",
+       "to": "h"
+      },
+      {
+       "from": "h",
+       "to": "p"
+      }
+     ],
+     "height": 260
+    },
+    "state": {
+     "caption": "Bengio et al. (2003): embed, join, a tanh layer, then softmax at the output."
+    }
+   },
+   "question": "Fill in the number of weights in each part and the total.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Part",
+     "Shape",
+     "Weights"
+    ],
+    "rows": [
+     [
+      "$C$",
+      "27 by 10",
+      {
+       "edit": true,
+       "answer": 270,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "$W_1$",
+      "30 by 100",
+      {
+       "edit": true,
+       "answer": 3000,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "ten",
+         "value": 1000,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$b_1$",
+      "100",
+      "100"
+     ],
+     [
+      "$W_2$",
+      "100 by 27",
+      {
+       "edit": true,
+       "answer": 2700,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "$b_2$",
+      "27",
+      "27"
+     ],
+     [
+      "total",
+      "",
+      {
+       "edit": true,
+       "answer": 6097,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "no-bias",
+         "value": 5970,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$W_1$ takes the 30 joined numbers, not 10."
+    },
+    {
+     "rung": "step",
+     "text": "$270 + 3{,}000 + 100 + 2{,}700 + 27$."
+    }
+   ],
+   "feedback": {
+    "correct": "270, 3,000, 2,700, and 6,097 in all.",
+    "generic": "Not quite. Multiply each shape out, then add the biases too.",
+    "byKey": {
+     "ten": "You gave $W_1$ 10 inputs. It takes the three joined embeddings, 30 numbers.",
+     "no-bias": "You left out the biases, 100 and 27."
+    }
+   },
+   "explain": {
+    "text": "$C$ is $27 \\times 10 = 270$; $W_1$ is $30 \\times 100 = 3{,}000$; $W_2$ is $100 \\times 27 = 2{,}700$; with the biases, 6,097 weights."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A forward pass by hand",
+   "prose": "A planted model: block 2, one number a symbol, 2 hidden units, 3 symbols. Run the context (1, 2): the joined embedding is $(1, -1)$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Weight",
+      "Value"
+     ],
+     "rows": [
+      [
+       "$C$ rows 0, 1, 2",
+       "0, 1, −1"
+      ],
+      [
+       "$W_1$",
+       "[[0.5, −1], [1, 0.5]]"
+      ],
+      [
+       "$b_1$",
+       "(0, 0.1)"
+      ],
+      [
+       "$W_2$",
+       "[[1, −1, 0], [0.5, 0, 2]]"
+      ],
+      [
+       "$b_2$",
+       "(0, 0, 0.2)"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "A planted model: block 2, one number a symbol, 2 hidden units, 3 symbols."
+    }
+   },
+   "question": "What is the first hidden unit, $\\tanh$ of $(1, -1)W_1 + b_1$ in its first place? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.4621,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "$h_1$",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.4621,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "pre",
+      "value": -0.5,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "col",
+      "value": 0.9051,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First column of $W_1$: $(0.5, 1)$."
+    },
+    {
+     "rung": "step",
+     "text": "$1 \\times 0.5 + (-1) \\times 1 + 0 = -0.5$, then $\\tanh(-0.5)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tanh(-0.5) = -0.4621$.",
+    "generic": "Not quite. Multiply by the first column of $W_1$, add $b_1$, then apply tanh.",
+    "byKey": {
+     "sign": "Check the sign: the input to tanh is $-0.5$, so $h_1$ is negative.",
+     "pre": "That is before tanh. Apply $\\tanh(-0.5)$.",
+     "col": "You used the first row of $W_1$; the first unit uses its first column."
+    }
+   },
+   "explain": {
+    "text": "$(1, -1)$ times the first column $(0.5, 1)$ is $-0.5$, and $b_1$ adds 0. So $h_1 = \\tanh(-0.5) = -0.4621$; likewise $h_2 = \\tanh(-1.4) = -0.8854$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The logits",
+   "prose": "Carry on with the hidden values $h = (-0.4621, -0.8854)$ from the last screen.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Weight",
+      "Value"
+     ],
+     "rows": [
+      [
+       "$C$ rows 0, 1, 2",
+       "0, 1, −1"
+      ],
+      [
+       "$W_1$",
+       "[[0.5, −1], [1, 0.5]]"
+      ],
+      [
+       "$b_1$",
+       "(0, 0.1)"
+      ],
+      [
+       "$W_2$",
+       "[[1, −1, 0], [0.5, 0, 2]]"
+      ],
+      [
+       "$b_2$",
+       "(0, 0, 0.2)"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "A planted model: block 2, one number a symbol, 2 hidden units, 3 symbols."
+    }
+   },
+   "question": "What is the logit for symbol 1, $h W_2 + b_2$ in place 1? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4621,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Logit",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -0.4621,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Column 1 of $W_2$ is $(-1, 0)$."
+    },
+    {
+     "rung": "step",
+     "text": "$-1 \\times (-0.4621) + 0 + 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.4621$: only the first hidden unit feeds symbol 1.",
+    "generic": "Not quite. Take column 1 of $W_2$ and add $b_2$’s entry.",
+    "byKey": {
+     "sign": "Check the sign: $-1$ times a negative $h_1$ is positive."
+    }
+   },
+   "explain": {
+    "text": "Column 1 of $W_2$ is $(-1, 0)$, so the logit is $-h_1 = 0.4621$, plus $b_2$’s 0. The three logits are $(-0.9048, 0.4621, -1.5707)$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Starting near equal chances",
+   "prose": "The course model starts from `np.random.default_rng(0)`: $C$ standard normal, $W_1$ standard normal times $(5/3)/\\sqrt{30}$, $b_1 = 0$, $W_2$ standard normal times 0.01, $b_2 = 0$. Its dev loss at the start is 3.3010, against $\\ln 27 = 3.2958$.",
+   "question": "Why is $W_2$ scaled by 0.01?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "flat",
+      "text": "So the first chances are near equal",
+      "correct": true
+     },
+     {
+      "id": "fast",
+      "text": "So the network trains faster later on",
+      "why": "Small output weights help at the start; they do not set the later speed."
+     },
+     {
+      "id": "tanh",
+      "text": "So the tanh units do not saturate",
+      "why": "That is the job of the $(5/3)/\\sqrt{30}$ factor on $W_1$, a standard choice for tanh that `nn-train` studies."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the start with level 1’s 3.7441."
+    },
+    {
+     "rung": "step",
+     "text": "Tiny output weights give tiny logits: chances near $\\tfrac{1}{27}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Small logits give near-equal chances: 3.3010, just above $\\ln 27$.",
+    "generic": "Not quite. Ask what tiny output weights do to the first logits.",
+    "byKey": {
+     "tanh": "That is the role of the scale on $W_1$, a standard choice for tanh. $W_2$’s 0.01 is about the logits."
+    }
+   },
+   "explain": {
+    "text": "With $W_2$ tiny, every logit starts near 0, so the first chances are near $\\tfrac{1}{27}$ and the loss 3.3010, close to $\\ln 27$. Level 1’s random 27 by 27 start was confidently wrong at 3.7441."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Why the tanh?",
+   "prose": "A learner drops the tanh to save time: logits $= (EW_1 + b_1)W_2 + b_2$.",
+   "question": "What has the model become?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "linear",
+      "text": "A single linear layer",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "The same model, only faster",
+      "why": "Without a nonlinearity the two matrices multiply into one; the hidden layer adds nothing."
+     },
+     {
+      "id": "deeper",
+      "text": "A deeper model with more power",
+      "why": "More matrices in a row are no deeper: a product of linear maps is linear."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply out the brackets."
+    },
+    {
+     "rung": "step",
+     "text": "$(EW_1 + b_1)W_2 = E(W_1W_2) + b_1W_2$."
+    }
+   ],
+   "feedback": {
+    "correct": "One linear layer: $W_1W_2$ is a single 30 by 27 matrix.",
+    "generic": "Not quite. Expand the product.",
+    "byKey": {
+     "same": "You treated the tanh as decoration. Without it, $W_1W_2$ is one matrix and the 100 units add nothing."
+    }
+   },
+   "explain": {
+    "text": "$(EW_1 + b_1)W_2 + b_2 = E(W_1W_2) + (b_1W_2 + b_2)$: one 30 by 27 matrix and one bias. The tanh is what lets the hidden layer combine letters, for example to treat em differently from m."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Three marks of context",
+   "prose": "Give the trained model the context `...`, three start marks: its output is its chance of each first letter. The bars show its five largest.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "a",
+      "k",
+      "m",
+      "s",
+      "j"
+     ],
+     "yLabel": "Chance",
+     "xLabel": "First letter, context `...`",
+     "showValues": true,
+     "decimals": 4,
+     "yMax": 0.2
+    },
+    "state": {
+     "values": {
+      "a": 0.1502,
+      "k": 0.0992,
+      "m": 0.0811,
+      "s": 0.0722,
+      "j": 0.0702
+     }
+    }
+   },
+   "question": "In the training names, a share of 0.1358 start with a. Why is the model’s chance for a close to it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mle",
+      "text": "The `...` rows are first letters, so it fits their shares",
+      "correct": true
+     },
+     {
+      "id": "copy",
+      "text": "The model stores the first-letter table separately",
+      "why": "There is no separate table: `...` is just one more context through the same weights."
+     },
+     {
+      "id": "chance",
+      "text": "By chance",
+      "why": "It is close for every first letter, not just a: it is what minimising the loss on those rows does."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which training rows have the context `...`?"
+    },
+    {
+     "rung": "step",
+     "text": "Exactly the first letters of the 25,626 names."
+    }
+   ],
+   "feedback": {
+    "correct": "The `...` rows are the first letters, so the loss pulls the output toward their shares.",
+    "generic": "Not quite. Ask which rows of the dataset have this context."
+   },
+   "explain": {
+    "text": "Every row with context `...` predicts a first letter, so minimising the loss pushes that output toward the first-letter shares: a 0.1502 against 0.1358. It is not exact, since the same weights also serve every other context."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Better than the bigram",
+   "prose": "The supplied trained weights (40,000 steps, level 2’s last lesson) score 2.1609 nats a letter on the dev names. The bigram scored 2.4514.",
+   "question": "How many bits a letter does the MLP save over the bigram? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4191,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "label": "Bits saved",
+    "wrong": [
+     {
+      "id": "nats",
+      "value": 0.2905,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract in nats first."
+    },
+    {
+     "rung": "step",
+     "text": "$(2.4514 - 2.1609)/\\ln 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.4191$ bits a letter; the perplexity falls from 11.60 to 8.68.",
+    "generic": "Not quite. Take the difference in nats and divide by $\\ln 2$.",
+    "byKey": {
+     "nats": "That is the saving in nats. Divide by $\\ln 2$ for bits."
+    }
+   },
+   "explain": {
+    "text": "$2.4514 - 2.1609 = 0.2905$ nats, which is 0.4191 bits a letter. Three letters of context and shared embeddings buy that."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "mlp_forward() in code",
+   "prose": "Write `mlp_forward(params, X)`: look up and join the embeddings, apply the tanh layer, and return the logits. `params` holds `C`, `W1`, `b1`, `W2` and `b2`; any block size, embedding size and hidden size must work.",
+   "question": "Write `mlp_forward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    # params: C (V, d), W1 (block*d, H), b1 (H,), W2 (H, V), b2 (V,)\n    # X: (n, block) indices; return the logits, shape (n, V)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n",
+    "examples": [
+     {
+      "call": "mlp_forward(P0, np.array([[0, 0]])).shape",
+      "expect": "(1, 3)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(mlp_forward(P0, np.array([[1, 2]])), 6).tolist()",
+      "expect": "[[-0.904793, 0.462117, -1.570703]]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(mlp_forward(P0, np.array([[0, 0], [2, 1], [1, 1]])), 6).tolist()",
+      "expect": "[[0.049834, 0.0, 0.399336], [0.922951, -0.462117, 2.043337], [0.715174, -0.905148, -0.559898]]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(mlp_forward(P9, X9), 6).tolist()",
+      "expect": "[[0.850783, -0.222329, 0.601852, 0.934718, 0.028789, -0.403884, -0.676691, 0.134065, -1.262539, -0.381736, 0.346261, 0.365926, 0.717681, -1.357749, 0.363858, -0.537405, -0.687539, 2.105826, -0.572491, 0.853909, 0.30037, -0.726904, -0.52186, -0.251906, 0.199433, 0.274364, 0.183697], [0.444268, -1.320508, 0.267999, 0.575576, -0.885944, 0.060071, -0.001926, 0.63441, 0.026581, -0.374006, 0.401455, -0.378268, 0.967794, -0.918138, 0.479876, -0.33274, 1.081379, -0.114091, -1.451985, 0.568208, -0.125135, -0.615821, -0.524026, 0.783422, 0.745175, 0.729939, 0.816538], [0.388348, 0.246405, -0.237704, 1.570821, 0.74196, -0.493521, -0.040383, 0.398527, 0.177293, -0.344788, 0.997004, -1.702113, 1.401324, -0.37721, 0.19924, -1.207443, 0.187489, 0.579538, -0.079431, 0.446731, 0.234385, -0.582891, -0.137044, -0.473601, -0.216245, -0.307847, 1.049369], [-0.394665, -1.565658, -0.910903, -0.534065, 0.966215, 0.174587, -0.941956, 1.257352, 0.420699, -0.304676, 1.638741, -0.051818, 1.169683, -0.258357, -0.790364, -0.296291, 0.537257, 0.215369, 0.401651, 0.394685, -0.484415, 0.324562, 0.684182, -0.17638, 0.533225, -0.473088, 1.46461]]",
+      "compare": "equal"
+     },
+     {
+      "call": "mlp_forward(P9, np.zeros((32, 3), dtype=int)).shape",
+      "expect": "(32, 27)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests: the planted model on one context and on three, and a seeded model of the course’s sizes on four contexts (logits rounded to 6 places). The last checks the output shape for a batch of 32.",
+    "prelude": "import numpy as np\n\nP0 = {\"C\": np.array([[0.0], [1.0], [-1.0]]), \"W1\": np.array([[0.5, -1.0], [1.0, 0.5]]), \"b1\": np.array([0.0, 0.1]), \"W2\": np.array([[1.0, -1.0, 0.0], [0.5, 0.0, 2.0]]), \"b2\": np.array([0.0, 0.0, 0.2])}\ng = np.random.default_rng(9)\nP9 = {\"C\": g.standard_normal((27, 10)), \"W1\": g.standard_normal((30, 100)) * 0.3, \"b1\": g.standard_normal(100) * 0.1, \"W2\": g.standard_normal((100, 27)) * 0.1, \"b2\": g.standard_normal(27) * 0.1}\nX9 = np.array([[0, 0, 0], [0, 5, 13], [13, 13, 1], [26, 26, 26]])\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = E @ params[\"W1\"] + params[\"b1\"]\n    return h @ params[\"W2\"] + params[\"b2\"]\n",
+      "test": 1,
+      "symptom": "No tanh: two linear layers that collapse into one."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].transpose(0, 2, 1).reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n",
+      "test": 3,
+      "symptom": "Joins the lookups in the wrong order, embedding number first."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n",
+      "test": 1,
+      "symptom": "Forgets the hidden bias."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`params[\"C\"][X]` has shape `(n, block, d)`: reshape to `(n, block * d)`."
+    },
+    {
+     "rung": "step",
+     "text": "`h = np.tanh(E @ W1 + b1)`, then `h @ W2 + b2`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your forward pass matches on the planted and seeded models.",
+    "generic": "Not quite. Read the first failing test."
+   },
+   "explain": {
+    "text": "Three lines: join the lookups with a reshape, apply the tanh layer, then the output layer. Nothing in them fixes the block, embedding or hidden size."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "mlp_dev_loss() in code",
+   "prose": "Write `mlp_dev_loss(params, X, Y)`: the mean cross-entropy in nats of `mlp_forward(params, X)` against `Y`, by log-sum-exp. Then score the supplied weights on the dev rows.",
+   "question": "Write `mlp_dev_loss`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef mlp_dev_loss(params, X, Y):\n    # mean cross-entropy in nats of the logits from mlp_forward(params, X)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef mlp_dev_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0]\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n",
+    "examples": [
+     {
+      "call": "round(mlp_dev_loss(P0, np.array([[0, 0]]), np.array([0])), 6)",
+      "expect": "1.214838",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(mlp_dev_loss(P0, np.array([[1, 2], [0, 0]]), np.array([1, 2])), 6)",
+      "expect": "0.595828",
+      "compare": "equal"
+     },
+     {
+      "call": "round(mlp_dev_loss(trained, Xdev, Ydev), 4)",
+      "expect": "2.1609",
+      "compare": "equal"
+     },
+     {
+      "call": "round(mlp_dev_loss(trained, Xtest, Ytest), 4)",
+      "expect": "2.1742",
+      "compare": "equal"
+     },
+     {
+      "call": "mlp_dev_loss(trained, Xdev, Ydev) < 2.4514",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests: the planted model on two rows (to 6 places), then the supplied trained weights on the dev and test rows to 4 places. The last checks the dev loss is below the bigram’s 2.4514. The weights, `trained`, are read from `makemore-mlp.json`. `mlp_forward`, `Xdev`, `Ydev`, `Xtest` and `Ytest` are ready.",
+    "prelude": "import json\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ndev = [words[i] for i in perm[25626:28829]]\ntest = [words[i] for i in perm[28829:]]\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef build_dataset(ws, block=3):\n    X, Y = [], []\n    for w in ws:\n        context = [0] * block\n        for ch in w + \".\":\n            X.append(context)\n            Y.append(INDEX[ch])\n            context = context[1:] + [INDEX[ch]]\n    return np.array(X), np.array(Y)\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n\n\ntrained = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\nXdev, Ydev = build_dataset(dev)\nXtest, Ytest = build_dataset(test)\nP0 = {\"C\": np.array([[0.0], [1.0], [-1.0]]), \"W1\": np.array([[0.5, -1.0], [1.0, 0.5]]), \"b1\": np.array([0.0, 0.1]), \"W2\": np.array([[1.0, -1.0, 0.0], [0.5, 0.0, 2.0]]), \"b2\": np.array([0.0, 0.0, 0.2])}\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt",
+     "makemore-mlp.json": "content/data/ai/makemore-mlp.json"
+    },
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef mlp_dev_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0]\n    return float((lse - Z[np.arange(len(Y)), Y]).sum())\n",
+      "test": 1,
+      "symptom": "Sums instead of averaging."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_dev_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0]\n    return float((lse - Z[np.arange(len(Y)), Y]).mean() / np.log(2))\n",
+      "test": 1,
+      "symptom": "Reports bits instead of nats."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_dev_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1))\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n",
+      "test": 1,
+      "symptom": "Drops the row maximum back out of the log-sum-exp."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract each row’s maximum logit before `exp`."
+    },
+    {
+     "rung": "step",
+     "text": "Loss per row: $\\text{lse}(z) - z_y$; then the mean."
+    }
+   ],
+   "feedback": {
+    "correct": "The supplied weights score 2.1609 on dev and 2.1742 on test.",
+    "generic": "Not quite. Read the first failing test."
+   },
+   "explain": {
+    "text": "Per row the loss is $\\ln \\sum_j e^{z_j} - z_y$, computed with the largest logit taken out; the mean over the 22,807 dev rows is 2.1609."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Sectors as embeddings",
+   "prose": "A signal model takes a share’s sector (11 of them) and its exchange (3) as inputs. Each sector gets an embedding of 4 numbers and each exchange one of 2, learned with the rest of the model.",
+   "question": "How many numbers do the two embedding tables hold together?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 50,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "label": "Numbers",
+    "wrong": [
+     {
+      "id": "onehot",
+      "value": 14,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "product",
+      "value": 132,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each table is categories by embedding size."
+    },
+    {
+     "rung": "step",
+     "text": "$11 \\times 4 + 3 \\times 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$44 + 6 = 50$ numbers.",
+    "generic": "Not quite. Size each table, then add.",
+    "byKey": {
+     "onehot": "That counts the categories. Each gets a row of 4 or 2 numbers.",
+     "product": "You multiplied the tables together; they are separate and add."
+    }
+   },
+   "explain": {
+    "text": "The sector table is 11 by 4 and the exchange table 3 by 2: 50 numbers. Sectors that behave alike can drift together, as the vowels did."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The MLP of Bengio et al. (2003): embed three symbols in 10 numbers each, join to 30, a tanh layer of 100, then 27 logits and softmax.",
+   "It has 6,097 weights; with $W_2$ scaled by 0.01 it starts at 3.3010, near $\\ln 27$. Trained, it scores 2.1609 on dev against the bigram’s 2.4514.",
+   "Without the tanh the two layers collapse into one linear map; the nonlinearity is what lets it combine letters."
+  ],
+  "formula": {
+   "name": "MLP forward pass",
+   "tex": "\\mathbf{z} = \\tanh\\big(E W_1 + \\mathbf{b}_1\\big) W_2 + \\mathbf{b}_2",
+   "note": "$E$ joins the context’s rows of $C$; softmax of $\\mathbf{z}$ gives the chances."
+  },
+  "trap": "Dropping the tanh, or joining the embeddings along the wrong axis."
+ },
+ "quiz": [
+  {
+   "id": "q-count",
+   "difficulty": 2,
+   "prose": "A model has context 4, embedding 8, 64 hidden units and 27 outputs.",
+   "question": "How many weights does it have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4083,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 3992,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$216 + 2{,}048 + 64 + 1{,}728 + 27 = 4{,}083$.",
+    "generic": "Not quite. The joined input is $4 \\times 8 = 32$ numbers.",
+    "byKey": {
+     "no-bias": "You left out the biases, 64 and 27."
+    }
+   },
+   "explain": {
+    "text": "$C$ is 27 by 8, $W_1$ 32 by 64, $W_2$ 64 by 27, plus biases of 64 and 27: 4,083 weights."
+   }
+  },
+  {
+   "id": "q-axis",
+   "difficulty": 2,
+   "prose": "A batch of 32 contexts of 3 gives `C[X]` of shape (32, 3, 10).",
+   "question": "Which reshape gives each context its 30 joined numbers?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "r",
+      "text": "`C[X].reshape(32, 30)`",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "`C[X].reshape(30, 32)`",
+      "why": "That mixes numbers from different contexts into each row."
+     },
+     {
+      "id": "s",
+      "text": "`C[X].sum(axis=1)`",
+      "why": "That adds the three embeddings, losing their order: em and me would look the same."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`reshape(32, 30)` keeps one row per context.",
+    "generic": "Not quite. Keep the batch axis first."
+   },
+   "explain": {
+    "text": "Reshaping to (32, 30) lays each context’s three rows of 10 side by side. Summing would throw away which letter came where."
+   }
+  },
+  {
+   "id": "q-init",
+   "difficulty": 3,
+   "question": "Without the 0.01 on $W_2$, the course model starts with logits of size about 10. What happens to the first loss?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "high",
+      "text": "It is far above $\\ln 27$: confident, mostly wrong chances",
+      "correct": true
+     },
+     {
+      "id": "low",
+      "text": "It is below $\\ln 27$: confident chances help",
+      "why": "Confident chances help only when they are right; at random they are mostly wrong."
+     },
+     {
+      "id": "same",
+      "text": "It is still about $\\ln 27$",
+      "why": "Large logits make softmax far from equal chances."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Far above $\\ln 27$, as level 1’s random start was.",
+    "generic": "Not quite. Recall level 1’s random start at 3.7441."
+   },
+   "explain": {
+    "text": "Large random logits give a few symbols most of the chance, and usually the wrong ones, so the loss starts well above $\\ln 27$. The 0.01 avoids wasting the first steps undoing that."
+   }
+  }
+ ]
+}
