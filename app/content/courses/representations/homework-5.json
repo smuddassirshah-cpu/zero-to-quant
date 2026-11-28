@@ -1,0 +1,544 @@
+{
+ "id": "homework-5",
+ "course": "representations",
+ "level": 5,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-classifier",
+   "difficulty": 5,
+   "skills": [
+    "rp-graph"
+   ],
+   "title": "A node classifier from scratch",
+   "prose": "Write `gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed)` from scratch. Build $\\hat{\\mathbf A}$ from the undirected `edges` with self-loops ($n$ = the rows of `X`). Use `layers` graph layers of sizes $d \\to 16 \\to \\cdots \\to 16 \\to K$, $K = \\max(y) + 1$, with ReLU between layers and none after the last. Draw the weights in order from `np.random.default_rng(seed)`, each `standard_normal((a, b)) / sqrt(a)`, with no biases. Each step: cross-entropy over `train_idx` only, `backward` on fresh tensors, then `adam_step(W, grads, m, v, t, lr)` from `nt_ops_l1` with $t$ from 1. Return the predicted class of every node and the list of losses.",
+   "question": "Write `gcn_node_classifier`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed):\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    n = len(X)\n    A = np.zeros((n, n))\n    for i, j in edges:\n        A[i, j] = A[j, i] = 1.0\n    At = A + np.eye(n)\n    s = 1.0 / np.sqrt(At.sum(axis=1))\n    Ah = s[:, None] * At * s[None, :]\n    sizes = [X.shape[1]] + [16] * (layers - 1) + [int(y.max()) + 1]\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((a, b)) / np.sqrt(a) for a, b in zip(sizes[:-1], sizes[1:])]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    for t in range(1, steps + 1):\n        P = [Tensor(w) for w in W]\n        h = Tensor(X)\n        for k, p in enumerate(P):\n            h = Ah @ h @ p\n            if k < len(P) - 1:\n                h = h.relu()\n        loss = cross_entropy(h[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [p.grad for p in P], m, v, t, lr)\n    h = X\n    for k, w in enumerate(W):\n        h = Ah @ h @ w\n        if k < len(W) - 1:\n            h = np.maximum(h, 0.0)\n    return h.argmax(axis=1), losses\n",
+    "prelude": "import numpy as np\n\ndef _pp(n, p_in, p_out, seed):\n    U = np.random.default_rng(seed).random((n, n))\n    y = (np.arange(n) >= n // 2).astype(int)\n    P = np.where(y[:, None] == y[None, :], p_in, p_out)\n    A = np.triu((U < P).astype(float), 1)\n    return A + A.T, y\n\ndef _feat(y, shift, seed):\n    X = np.random.default_rng(seed).standard_normal((len(y), 2))\n    X[:, 0] += shift * (2 * np.asarray(y) - 1)\n    return X\n\ndef _edges(A):\n    return [(int(i), int(j)) for i, j in zip(*np.nonzero(np.triu(A, 1)))]\n\ndef _acc(pred, y, tr):\n    other = np.setdiff1d(np.arange(len(y)), tr)\n    return float(np.mean(np.asarray(pred)[other] == np.asarray(y)[other]))\n",
+    "examples": [
+     {
+      "setup": "E0 = [(0, 1), (1, 2), (2, 0), (3, 4), (4, 5), (5, 3), (2, 3)]\nX0 = np.array([[1.0, 0.2], [0.8, -0.1], [0.3, 0.5], [-0.4, 0.1], [-1.0, 0.3], [-0.7, -0.6]])\ny0 = np.array([0, 0, 0, 1, 1, 1])",
+      "call": "np.round(gcn_node_classifier(E0, X0, y0, [0, 5], 2, 3, 0.1, 0)[1], 6).tolist()",
+      "compare": "equal",
+      "expect": "[0.757123, 0.474507, 0.290315]"
+     },
+     {
+      "setup": "E0 = [(0, 1), (1, 2), (2, 0), (3, 4), (4, 5), (5, 3), (2, 3)]\nX0 = np.array([[1.0, 0.2], [0.8, -0.1], [0.3, 0.5], [-0.4, 0.1], [-1.0, 0.3], [-0.7, -0.6]])\ny0 = np.array([0, 0, 0, 1, 1, 1])",
+      "call": "[len(gcn_node_classifier(E0, X0, y0, [0, 5], 2, 5, 0.1, 0)[0]), len(gcn_node_classifier(E0, X0, y0, [0, 5], 2, 5, 0.1, 0)[1])]",
+      "compare": "equal",
+      "expect": "[6, 5]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "E0 = [(0, 1), (1, 2), (2, 0), (3, 4), (4, 5), (5, 3), (2, 3)]\nX0 = np.array([[1.0, 0.2], [0.8, -0.1], [0.3, 0.5], [-0.4, 0.1], [-1.0, 0.3], [-0.7, -0.6]])\ny0 = np.array([0, 0, 0, 1, 1, 1])",
+      "call": "np.round(gcn_node_classifier(E0, X0, y0, [0, 5], 2, 3, 0.1, 0)[1], 6).tolist()",
+      "compare": "equal",
+      "expect": "[0.757123, 0.474507, 0.290315]"
+     },
+     {
+      "setup": "E0 = [(0, 1), (1, 2), (2, 0), (3, 4), (4, 5), (5, 3), (2, 3)]\nX0 = np.array([[1.0, 0.2], [0.8, -0.1], [0.3, 0.5], [-0.4, 0.1], [-1.0, 0.3], [-0.7, -0.6]])\ny0 = np.array([0, 0, 0, 1, 1, 1])",
+      "call": "np.round(gcn_node_classifier(E0, X0, y0, [0, 5], 3, 3, 0.1, 1)[1], 6).tolist()",
+      "compare": "equal",
+      "expect": "[0.710972, 0.578762, 0.421997]"
+     },
+     {
+      "setup": "E0 = [(0, 1), (1, 2), (2, 0), (3, 4), (4, 5), (5, 3), (2, 3)]\nX0 = np.array([[1.0, 0.2], [0.8, -0.1], [0.3, 0.5], [-0.4, 0.1], [-1.0, 0.3], [-0.7, -0.6]])\ny0 = np.array([0, 0, 0, 1, 1, 1])",
+      "call": "np.round(gcn_node_classifier(E0, X0, y0, [1, 4], 1, 3, 0.2, 2)[1], 6).tolist()",
+      "compare": "equal",
+      "expect": "[0.4662, 0.357991, 0.272536]"
+     },
+     {
+      "setup": "y3 = np.repeat([0, 1, 2], 4)\nU3 = np.random.default_rng(8).random((12, 12))\nA3 = np.triu((U3 < np.where(y3[:, None] == y3[None, :], 0.8, 0.1)).astype(float), 1)\nE3 = _edges(A3 + A3.T)\nX3 = np.random.default_rng(9).standard_normal((12, 2)) + np.array([[1.0, 0.0], [0.0, 1.0], [-1.0, -1.0]])[y3]",
+      "call": "np.round(gcn_node_classifier(E3, X3, y3, [0, 4, 8], 2, 3, 0.05, 5)[1], 6).tolist()",
+      "compare": "equal",
+      "expect": "[1.072378, 0.865509, 0.698256]"
+     },
+     {
+      "setup": "A, y = _pp(40, 0.3, 0.03, 13)\nX = _feat(y, 0.6, 113)\nE = _edges(A)",
+      "call": "_acc(gcn_node_classifier(E, X, y, [0, 1, 20, 21], 2, 200, 0.05, 0)[0], y, [0, 1, 20, 21]) >= 0.85",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "A7, y7 = _pp(40, 0.3, 0.03, 7)\nX7 = _feat(y7, 0.6, 107)\nE7 = _edges(A7)",
+      "call": "_acc(gcn_node_classifier(E7, X7, y7, [0, 1, 20, 21], 2, 200, 0.05, 3)[0], y7, [0, 1, 20, 21]) >= 0.85",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "A, y = _pp(40, 0.3, 0.03, 13)\nX = _feat(y, 0.6, 113)\nE = _edges(A)\nEi = [e for e in E if 30 not in e]\n_p, _l = gcn_node_classifier(Ei, X, y, [0, 1, 20, 21], 2, 200, 0.05, 0)",
+      "call": "[len(_p), bool(np.all(np.isfinite(_l))), _acc(_p, y, [0, 1, 20, 21]) >= 0.8]",
+      "compare": "equal",
+      "expect": "[40, True, True]"
+     },
+     {
+      "setup": "A, y = _pp(40, 0.3, 0.03, 13)\nX = _feat(y, 0.6, 113)\nE = _edges(A)\ny2 = y.copy(); y2[2:20] = 1 - y2[2:20]; y2[22:] = 1 - y2[22:]\n_a = gcn_node_classifier(E, X, y, [0, 1, 20, 21], 2, 60, 0.05, 0)[0]\n_b = gcn_node_classifier(E, X, y2, [0, 1, 20, 21], 2, 60, 0.05, 0)[0]",
+      "call": "bool(np.array_equal(_a, _b))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "An, yn = _pp(40, 0.165, 0.165, 4)\nXn = _feat(yn, 0.0, 204)\nEn = _edges(An)",
+      "call": "_acc(gcn_node_classifier(En, Xn, yn, [0, 1, 20, 21], 2, 200, 0.05, 0)[0], yn, [0, 1, 20, 21]) <= 0.75",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "E0 = [(0, 1), (1, 2), (2, 0), (3, 4), (4, 5), (5, 3), (2, 3)]\nX0 = np.array([[1.0, 0.2], [0.8, -0.1], [0.3, 0.5], [-0.4, 0.1], [-1.0, 0.3], [-0.7, -0.6]])\ny0 = np.array([0, 0, 0, 1, 1, 1])",
+      "call": "[len(gcn_node_classifier(E0, X0, y0, [0, 5], 2, 5, 0.1, 0)[0]), len(gcn_node_classifier(E0, X0, y0, [0, 5], 2, 5, 0.1, 0)[1])]",
+      "compare": "equal",
+      "expect": "[6, 5]"
+     }
+    ],
+    "how": "Submit runs 10 hidden tests. Four compare the losses of 3-step runs to 6 places: 1, 2 and 3 layers, and three classes. Two need accuracy of at least 0.85 on the unlabelled nodes of planted graphs after 200 steps. One has an isolated node (finite losses, accuracy at least 0.8). One flips the unlabelled nodes' labels, which must not change the predictions. One allows at most 0.75 on a graph whose links and numbers carry no signal, and one checks the lengths returned.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    n = len(X)\n    A = np.zeros((n, n))\n    for i, j in edges:\n        A[i, j] = A[j, i] = 1.0\n    At = A\n    s = 1.0 / np.sqrt(At.sum(axis=1))\n    Ah = s[:, None] * At * s[None, :]\n    sizes = [X.shape[1]] + [16] * (layers - 1) + [int(y.max()) + 1]\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((a, b)) / np.sqrt(a) for a, b in zip(sizes[:-1], sizes[1:])]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    for t in range(1, steps + 1):\n        P = [Tensor(w) for w in W]\n        h = Tensor(X)\n        for k, p in enumerate(P):\n            h = Ah @ h @ p\n            if k < len(P) - 1:\n                h = h.relu()\n        loss = cross_entropy(h[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [p.grad for p in P], m, v, t, lr)\n    h = X\n    for k, w in enumerate(W):\n        h = Ah @ h @ w\n        if k < len(W) - 1:\n            h = np.maximum(h, 0.0)\n    return h.argmax(axis=1), losses\n",
+      "test": 1,
+      "symptom": "Normalises without the self-loops, so an isolated node divides by 0."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    n = len(X)\n    A = np.zeros((n, n))\n    for i, j in edges:\n        A[i, j] = A[j, i] = 1.0\n    At = A + np.eye(n)\n    s = 1.0 / np.sqrt(At.sum(axis=1))\n    Ah = s[:, None] * At * s[None, :]\n    sizes = [X.shape[1]] + [16] * (layers - 1) + [int(y.max()) + 1]\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((a, b)) / np.sqrt(a) for a, b in zip(sizes[:-1], sizes[1:])]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    for t in range(1, steps + 1):\n        P = [Tensor(w) for w in W]\n        h = Tensor(X)\n        for k, p in enumerate(P):\n            h = Ah @ h @ p\n            if k < len(P) - 1:\n                h = h.relu()\n        loss = cross_entropy(h, y)\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [p.grad for p in P], m, v, t, lr)\n    h = X\n    for k, w in enumerate(W):\n        h = Ah @ h @ w\n        if k < len(W) - 1:\n            h = np.maximum(h, 0.0)\n    return h.argmax(axis=1), losses\n",
+      "test": 1,
+      "symptom": "Trains on every node's label, which a real task does not have."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    n = len(X)\n    A = np.zeros((n, n))\n    for i, j in edges:\n        A[i, j] = 1.0\n    At = A + np.eye(n)\n    s = 1.0 / np.sqrt(At.sum(axis=1))\n    Ah = s[:, None] * At * s[None, :]\n    sizes = [X.shape[1]] + [16] * (layers - 1) + [int(y.max()) + 1]\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((a, b)) / np.sqrt(a) for a, b in zip(sizes[:-1], sizes[1:])]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    for t in range(1, steps + 1):\n        P = [Tensor(w) for w in W]\n        h = Tensor(X)\n        for k, p in enumerate(P):\n            h = Ah @ h @ p\n            if k < len(P) - 1:\n                h = h.relu()\n        loss = cross_entropy(h[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [p.grad for p in P], m, v, t, lr)\n    h = X\n    for k, w in enumerate(W):\n        h = Ah @ h @ w\n        if k < len(W) - 1:\n            h = np.maximum(h, 0.0)\n    return h.argmax(axis=1), losses\n",
+      "test": 1,
+      "symptom": "Sets one direction of each link only."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    n = len(X)\n    A = np.zeros((n, n))\n    for i, j in edges:\n        A[i, j] = A[j, i] = 1.0\n    At = A + np.eye(n)\n    s = 1.0 / np.sqrt(At.sum(axis=1))\n    Ah = s[:, None] * At * s[None, :]\n    sizes = [X.shape[1]] + [16] * (layers - 1) + [int(y.max()) + 1]\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((a, b)) / np.sqrt(a) for a, b in zip(sizes[:-1], sizes[1:])]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    for t in range(1, steps + 1):\n        P = [Tensor(w) for w in W]\n        h = Tensor(X)\n        for k, p in enumerate(P):\n            h = Ah @ h @ p\n            h = h.relu()\n        loss = cross_entropy(h[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [p.grad for p in P], m, v, t, lr)\n    h = X\n    for k, w in enumerate(W):\n        h = Ah @ h @ w\n        h = np.maximum(h, 0.0)\n    return h.argmax(axis=1), losses\n",
+      "test": 1,
+      "symptom": "Applies ReLU after the last layer too."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    n = len(X)\n    A = np.zeros((n, n))\n    for i, j in edges:\n        A[i, j] = A[j, i] = 1.0\n    At = A + np.eye(n)\n    s = 1.0 / np.sqrt(At.sum(axis=1))\n    Ah = s[:, None] * At * s[None, :]\n    sizes = [X.shape[1]] + [16] * (layers - 1) + [2]\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((a, b)) / np.sqrt(a) for a, b in zip(sizes[:-1], sizes[1:])]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    for t in range(1, steps + 1):\n        P = [Tensor(w) for w in W]\n        h = Tensor(X)\n        for k, p in enumerate(P):\n            h = Ah @ h @ p\n            if k < len(P) - 1:\n                h = h.relu()\n        loss = cross_entropy(h[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [p.grad for p in P], m, v, t, lr)\n    h = X\n    for k, w in enumerate(W):\n        h = Ah @ h @ w\n        if k < len(W) - 1:\n            h = np.maximum(h, 0.0)\n    return h.argmax(axis=1), losses\n",
+      "test": 4,
+      "symptom": "Assumes two classes."
+     }
+    ],
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py"
+    }
+   },
+   "feedback": {
+    "correct": "Your classifier matches the seeded runs, labels the planted graphs well, survives an isolated node and uses no label it was not given.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Check each piece against the 3-step run: links in both directions, self-loops in $\\hat{\\mathbf A}$, the loss over `train_idx` only, ReLU between layers but not after the last.",
+     "test-4": "Take $K$ from the labels: three classes need three scores.",
+     "test-8": "Only the labels in `train_idx` may enter the loss: flipping the others must change nothing."
+    }
+   },
+   "explain": {
+    "text": "The whole pipeline is $\\hat{\\mathbf A}$ from the links, a stack of $\\operatorname{ReLU}(\\hat{\\mathbf A}\\mathbf H\\mathbf W)$, and a loss on the labelled nodes only. The no-signal test shows the method cannot find structure the links do not carry."
+   },
+   "performance": "code"
+  },
+  {
+   "id": "h-receptive",
+   "difficulty": 4,
+   "skills": [
+    "rp-graph"
+   ],
+   "title": "How far a deep network sees",
+   "prose": "Write `nodes_within(A, i, k)`: the sorted list of nodes within $k$ links of node $i$, node $i$ included. These are exactly the nodes whose features can change node $i$'s output in a $k$-layer graph network.",
+   "question": "Write `nodes_within`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef nodes_within(A, i, k):\n    # the sorted list of nodes within k links of node i, node i included\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef nodes_within(A, i, k):\n    A = np.asarray(A)\n    seen = {i}\n    frontier = {i}\n    for _ in range(k):\n        frontier = {int(j) for u in frontier for j in np.nonzero(A[u])[0] if int(j) not in seen and A[u, j]}\n        seen.update(frontier)\n    return sorted(seen)\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "nodes_within(np.array([[0, 1, 1, 1], [1, 0, 1, 0], [1, 1, 0, 0], [1, 0, 0, 0]]), 3, 1)",
+      "compare": "equal",
+      "expect": "[0, 3]"
+     },
+     {
+      "call": "nodes_within(np.diag(np.ones(5), 1) + np.diag(np.ones(5), -1), 0, 2)",
+      "compare": "equal",
+      "expect": "[0, 1, 2]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "nodes_within(np.array([[0, 1, 1, 1], [1, 0, 1, 0], [1, 1, 0, 0], [1, 0, 0, 0]]), 3, 1)",
+      "compare": "equal",
+      "expect": "[0, 3]"
+     },
+     {
+      "call": "nodes_within(np.array([[0, 1, 1, 1], [1, 0, 1, 0], [1, 1, 0, 0], [1, 0, 0, 0]]), 3, 2)",
+      "compare": "equal",
+      "expect": "[0, 1, 2, 3]"
+     },
+     {
+      "call": "nodes_within(np.diag(np.ones(5), 1) + np.diag(np.ones(5), -1), 0, 2)",
+      "compare": "equal",
+      "expect": "[0, 1, 2]"
+     },
+     {
+      "call": "nodes_within(np.diag(np.ones(5), 1) + np.diag(np.ones(5), -1), 2, 0)",
+      "compare": "equal",
+      "expect": "[2]"
+     },
+     {
+      "call": "nodes_within(np.diag(np.ones(5), 1) + np.diag(np.ones(5), -1), 2, 1)",
+      "compare": "equal",
+      "expect": "[1, 2, 3]"
+     },
+     {
+      "setup": "B = np.zeros((6, 6)); B[0, 1] = B[1, 0] = 1; B[3, 4] = B[4, 3] = B[4, 5] = B[5, 4] = 1",
+      "call": "nodes_within(B, 3, 5)",
+      "compare": "equal",
+      "expect": "[3, 4, 5]"
+     },
+     {
+      "setup": "Lp = np.diag(np.ones(299), 1) + np.diag(np.ones(299), -1)",
+      "call": "len(nodes_within(Lp, 150, 40))",
+      "compare": "equal",
+      "expect": "81"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests, each compared exactly: the venues from D at 1 and 2 links, and a path of 6 at 0, 1 and 2 links. Then a graph in two pieces, and a path of 300 at 40 links.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef nodes_within(A, i, k):\n    M = np.linalg.matrix_power(np.asarray(A, dtype=float), k)\n    return sorted(int(j) for j in np.nonzero(M[i])[0])\n",
+      "test": 1,
+      "symptom": "Uses $\\mathbf A^k$, the walks of exactly $k$ steps, so nodes at a shorter odd or even distance drop out."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef nodes_within(A, i, k):\n    A = np.asarray(A)\n    seen = {i}\n    frontier = {i}\n    for _ in range(k):\n        frontier = {int(j) for u in frontier for j in np.nonzero(A[u])[0] if int(j) not in seen and A[u, j]}\n        seen.update(frontier)\n    return sorted(seen - {i})\n",
+      "test": 1,
+      "symptom": "Leaves node $i$ out, though its own row always enters through the self-loop."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef nodes_within(A, i, k):\n    A = np.asarray(A)\n    seen = {i}\n    frontier = {i}\n    for _ in range(k - 1):\n        frontier = {int(j) for u in frontier for j in np.nonzero(A[u])[0] if int(j) not in seen and A[u, j]}\n        seen.update(frontier)\n    return sorted(seen)\n",
+      "test": 1,
+      "symptom": "Stops one link short."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your field grows one link a step and keeps node $i$.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Keep node $i$, which enters through its self-loop, and collect every node reached in up to $k$ rounds, not only walks of exactly $k$ steps.",
+     "test-2": "Collect every node reached so far, not only those at exactly $k$ steps.",
+     "test-3": "Run all $k$ rounds: from node 0 of the path, 2 links reach nodes 1 and 2."
+    }
+   },
+   "explain": {
+    "text": "Each round adds the neighbours of the newest nodes, so after $k$ rounds the set is every node within $k$ links, as the non-zero pattern of $(\\mathbf A + \\mathbf I)^k$."
+   }
+  },
+  {
+   "id": "h-eigvec",
+   "difficulty": 4,
+   "skills": [
+    "rp-graph"
+   ],
+   "title": "Why the limit scales with the square root of degree",
+   "prose": "Show that, on a connected graph, the top eigenvector of $\\hat{\\mathbf A} = \\tilde{\\mathbf D}^{-1/2}\\tilde{\\mathbf A}\\tilde{\\mathbf D}^{-1/2}$ has entries proportional to $\\sqrt{\\tilde d_i}$, with eigenvalue 1.",
+   "question": "Put the steps in order. Leave out the two steps that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Let $\\mathbf u = \\tilde{\\mathbf D}^{1/2}\\mathbf 1$, the vector with entries $\\sqrt{\\tilde d_i}$."
+     },
+     {
+      "id": "b",
+      "text": "Then $\\hat{\\mathbf A}\\mathbf u = \\tilde{\\mathbf D}^{-1/2}\\tilde{\\mathbf A}\\tilde{\\mathbf D}^{-1/2}\\tilde{\\mathbf D}^{1/2}\\mathbf 1 = \\tilde{\\mathbf D}^{-1/2}\\tilde{\\mathbf A}\\mathbf 1$, since the middle factors cancel."
+     },
+     {
+      "id": "c",
+      "text": "Each row of $\\tilde{\\mathbf A}$ sums to its degree, so $\\tilde{\\mathbf A}\\mathbf 1 = \\tilde{\\mathbf D}\\mathbf 1$."
+     },
+     {
+      "id": "d",
+      "text": "So $\\hat{\\mathbf A}\\mathbf u = \\tilde{\\mathbf D}^{-1/2}\\tilde{\\mathbf D}\\mathbf 1 = \\tilde{\\mathbf D}^{1/2}\\mathbf 1 = \\mathbf u$: an eigenvector with eigenvalue 1."
+     },
+     {
+      "id": "e",
+      "text": "$\\hat{\\mathbf A}$ is similar to $\\tilde{\\mathbf D}^{-1}\\tilde{\\mathbf A}$, whose rows are non-negative and sum to 1, so no eigenvalue exceeds 1 in size."
+     },
+     {
+      "id": "f",
+      "text": "On a connected graph the eigenvalue 1 of this non-negative matrix is simple, so $\\mathbf u$ is the top eigenvector, up to scale."
+     },
+     {
+      "id": "x1",
+      "text": "Each row of $\\hat{\\mathbf A}$ sums to 1, so $\\hat{\\mathbf A}\\mathbf 1 = \\mathbf 1$ and the top eigenvector is constant.",
+      "why": "Rows of $\\hat{\\mathbf A}$ do not sum to 1: on the venues row A sums to about 1.18. That is $\\tilde{\\mathbf D}^{-1}\\tilde{\\mathbf A}$."
+     },
+     {
+      "id": "x2",
+      "text": "$\\hat{\\mathbf A}$ is symmetric, so its eigenvalues are its degrees.",
+      "why": "Symmetry makes the eigenvalues real, not equal to the degrees; the largest here is 1."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e",
+     "f"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathbf u = \\tilde{\\mathbf D}^{1/2}\\mathbf 1$ is fixed by $\\hat{\\mathbf A}$, and no eigenvalue is larger.",
+    "generic": "Not quite. Start from the candidate vector, show it is fixed, then show nothing is larger.",
+    "byKey": {
+     "x1": "Rows of $\\hat{\\mathbf A}$ do not sum to 1; only $\\tilde{\\mathbf D}^{-1}\\tilde{\\mathbf A}$'s do.",
+     "x2": "Symmetry gives real eigenvalues, not the degrees."
+    }
+   },
+   "explain": {
+    "text": "The degree scaling cancels against $\\tilde{\\mathbf D}^{1/2}\\mathbf 1$, leaving $\\tilde{\\mathbf D}^{1/2}\\mathbf 1$ again. The similar row-stochastic matrix caps every eigenvalue at 1 in size, and connectedness makes the top one unique."
+   }
+  },
+  {
+   "id": "h-lending",
+   "difficulty": 5,
+   "skills": [
+    "rp-graph"
+   ],
+   "title": "A graph network for defaults",
+   "kind": "longform",
+   "prompt": "A credit team proposes a graph network over its lending network, with firms linked when one lends to or borrows from another. It would predict which firms default next year, trained on the few firms with a known outcome. Say what the links must carry for this to work, how you would test it before use, and the risk of making the network deep.",
+   "model": "**What the links must carry.** A graph network passes information along links, so it helps only if linked firms tend to share the outcome: a lender's distress raising its borrowers' default risk, or firms in one supply chain failing together. If defaults are unrelated to who lends to whom, averaging over neighbours mixes good and bad firms and can do worse than using each firm's own numbers. Direction matters too: risk may flow from borrower to lender, so the matrix should follow that direction or be symmetrised on purpose.\n\n**How to test it.** Hold out firms with known outcomes and never use their labels in training. Compare on them: the graph network, a per-node network on the same features, and the graph network on links shuffled at random with the same degrees. The graph earns its place only if it beats both baselines by more than seed-to-seed noise, across several seeds and time splits. Report accuracy or a ranking score on the held-out firms, never on the training firms, and split by time so next year's defaults are not leaked into the features.\n\n**Depth.** Each layer averages one more link out. Two or three layers capture a firm's counterparties and theirs. Many layers over-smooth: repeated multiplication by $\\hat{\\mathbf A}$ keeps only its top eigenvector, which carries a firm's degree and nothing else, so every firm's prediction drifts towards the same value. Large hubs (big banks) dominate after a few steps. Choose the depth by the held-out score and check the spread of node features as layers are added.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States that linked firms must tend to share the outcome, or averaging mixes good and bad firms.",
+     "required": true
+    },
+    {
+     "points": 1,
+     "text": "Notes that the direction of lending matters, or that the matrix must be symmetrised on purpose."
+    },
+    {
+     "points": 2,
+     "text": "Requires evaluation on held-out firms whose labels were never used, not on training firms.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Compares with a per-node network and with shuffled links."
+    },
+    {
+     "points": 1,
+     "text": "Uses several seeds or time splits, and avoids leaking future information."
+    },
+    {
+     "points": 2,
+     "text": "Explains over-smoothing: many layers keep only the top eigenvector, so firms' predictions converge."
+    }
+   ]
+  },
+  {
+   "id": "h-ring",
+   "difficulty": 3,
+   "skills": [
+    "rp-graph"
+   ],
+   "title": "A ring of banks",
+   "prose": "Five banks form a ring, each linked to the two beside it. Their stress scores are 3, 1, 4, 1 and 5. Plain averaging, $\\mathbf x \\to \\mathbf D^{-1}\\mathbf A\\mathbf x$, runs for many steps.",
+   "question": "What does every bank settle on? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.8,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "Number",
+    "wrong": [
+     {
+      "id": "max",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "middle",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "2.8: every degree is 2, so each bank counts equally.",
+    "generic": "Not quite. Weight each score by its bank's share of the total degree.",
+    "byKey": {
+     "max": "Averaging never leaves the range of the start values, and it does not pick the largest.",
+     "middle": "You took the median. Equal degrees give the plain mean."
+    }
+   },
+   "explain": {
+    "text": "A ring of 5 has an odd cycle, so averaging settles, and with equal degrees $\\pi_i = \\tfrac15$: the limit is the mean, $14/5 = 2.8$."
+   }
+  },
+  {
+   "id": "h-tree",
+   "difficulty": 4,
+   "skills": [
+    "rp-graph"
+   ],
+   "title": "Two links out",
+   "prose": "In a funding network, firm F has 3 counterparties, and each of those has 2 more counterparties of its own; no two of these firms are linked otherwise.",
+   "question": "How many firms, F included, can change F's output in a two-layer graph network?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "wrong": [
+     {
+      "id": "no-self",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "double",
+      "value": 13,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 + 3 + 6 = 10$.",
+    "generic": "Not quite. Count F, its counterparties, and theirs.",
+    "byKey": {
+     "no-self": "You left out F itself; its own row enters through the self-loop.",
+     "one": "That is one layer. The second adds the 6 firms two links away.",
+     "double": "You counted the counterparties twice. Each firm is counted once."
+    }
+   },
+   "explain": {
+    "text": "Two layers reach two links: F, its 3 counterparties and their 6, so 10 firms in all."
+   }
+  },
+  {
+   "id": "h-similar",
+   "difficulty": 3,
+   "skills": [
+    "rp-graph"
+   ],
+   "title": "Two normalisations",
+   "prose": "Two matrices come from the same graph with self-loops: $\\hat{\\mathbf A} = \\tilde{\\mathbf D}^{-1/2}\\tilde{\\mathbf A}\\tilde{\\mathbf D}^{-1/2}$ and $\\mathbf P = \\tilde{\\mathbf D}^{-1}\\tilde{\\mathbf A}$.",
+   "question": "Which statement is true?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "eig",
+      "text": "They share their eigenvalues, but only $\\hat{\\mathbf A}$ is symmetric",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "They are the same matrix written two ways",
+      "why": "They differ entry by entry: $\\hat A_{ij}$ divides by $\\sqrt{\\tilde d_i\\tilde d_j}$, $P_{ij}$ by $\\tilde d_i$."
+     },
+     {
+      "id": "vec",
+      "text": "They share their eigenvectors, but not their eigenvalues",
+      "why": "It is the other way round: similar matrices share eigenvalues, and their eigenvectors differ by $\\tilde{\\mathbf D}^{1/2}$."
+     },
+     {
+      "id": "rows",
+      "text": "Both have rows that sum to 1",
+      "why": "Only $\\mathbf P$'s rows sum to 1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Similar matrices: same eigenvalues, different eigenvectors.",
+    "generic": "Not quite. Write $\\hat{\\mathbf A}$ in terms of $\\mathbf P$."
+   },
+   "explain": {
+    "text": "$\\hat{\\mathbf A} = \\tilde{\\mathbf D}^{1/2}\\mathbf P\\tilde{\\mathbf D}^{-1/2}$, so the two are similar: equal eigenvalues, eigenvectors scaled by $\\tilde{\\mathbf D}^{1/2}$. Only $\\hat{\\mathbf A}$ is symmetric."
+   }
+  },
+  {
+   "id": "h-signal",
+   "difficulty": 4,
+   "skills": [
+    "rp-graph"
+   ],
+   "title": "Do the links carry signal?",
+   "prose": "A team trains a graph network to flag fraudulent accounts from a few known cases, using a network of shared devices.",
+   "question": "Which results would show that the links carry label information? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "beats-mlp",
+      "text": "It beats a per-node network on held-out accounts by more than seed noise",
+      "correct": true
+     },
+     {
+      "id": "beats-shuf",
+      "text": "It beats the same network on links shuffled at random, on held-out accounts",
+      "correct": true
+     },
+     {
+      "id": "train",
+      "text": "It scores 1.0 on the known fraud cases it was trained on",
+      "why": "Training accuracy says nothing: any network fits its training labels."
+     },
+     {
+      "id": "deep",
+      "text": "A 20-layer version scores higher on the training cases than a 2-layer one",
+      "why": "Deeper stacks over-smooth; training scores do not test the links."
+     },
+     {
+      "id": "homoph",
+      "text": "Known fraudulent accounts are linked to each other far more often than chance",
+      "correct": true
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Held-out gains over both baselines, and labels that cluster on the links.",
+    "generic": "Not quite. Which results use accounts whose labels the loss never saw, or measure the links directly?"
+   },
+   "explain": {
+    "text": "The graph helps only when linked accounts share labels. Held-out comparisons with a per-node network and with shuffled links test that, and so does counting links between known cases."
+   }
+  }
+ ]
+}
