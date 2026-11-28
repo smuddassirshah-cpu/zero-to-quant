@@ -252,3 +252,5 @@ Raised later (sequence level 2):
 - (sequence-2, `derive` and a nearest-key lookup) A caption that shows the nearest of ten draggable-query keys needs ten `let` distances, a `min(...)` and a ten-way ternary chain to pick the value (`sequence/l5-lookup-table` screen 3, built by a generator). Ask: an `argmin(list)` that returns an index, and indexing into a `params` list by it (`vals[argmin(dists)]`), in the derive function set.
 Raised later (sequence level 3):
 - (sequence-3, `matrix` heat for hard attention patterns) Two 7 by 7 matrices of 0s and 1s with `heat` print a "0" or "1" in every cell, which at 440 px is small and adds nothing to the colour (`sequence/l11-many-heads` screen 0; `decimals: 0` and `legend: false` were the best available). Ask: `heat.values: false` to draw colour only, with the value in a tap or hover label.
+
+- (session AK, from review-nn-train-4 fix pass) `nt_ops_l4.py` `t_quantile` brackets its root search too narrowly for very small or very large n; harden it in a new module version before `ml-int` L3 or `ai-papers` L3 reuse it (the module itself is frozen).
