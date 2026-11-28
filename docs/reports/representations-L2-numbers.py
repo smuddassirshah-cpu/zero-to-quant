@@ -389,6 +389,9 @@ lv.expect('l8', 'screens[3].explain.text', round(100 * fp / 141, 1))
 lv.claim(tp == 8 and fp == 3 and int((kt == 0).sum()) == 141, '8 planted caught, 3 false alarms among 141 normal days', covers=[8, 3, 141, 150, 100, 0.99, 11])
 sl = l8['screens'][0]['widget']
 lv.claim(sl['answer'] - sl['tol'] > norm_max and sl['answer'] + sl['tol'] < odd_min, 'slider band lies inside the gap', covers=[sl['answer'], 8])
+steps8 = [round(i * sl['step'], 1) for i in range(int(round((sl['max'] - sl['min']) / sl['step'])) + 1)]
+lv.claim(all((abs(v - sl['answer']) <= sl['tol'] + 1e-9) == (norm_max < v < odd_min) for v in steps8), 'the accepted slider positions are exactly the step-0.1 positions inside the gap (2.4 to 5.4)')
+lv.claim(all(w_['to'] < norm_max for w_ in sl['wrong'] if w_['id'] == 'low') and all(w_['from'] > odd_min for w_ in sl['wrong'] if w_['id'] == 'high'), 'the low and high bands hold no position inside the gap')
 fall = float(et[kt == 2][0]); fall_ret = float(Rte[kt == 2][0].mean())
 lv.expect('l8', 'screens[4].prose', round(fall, 2), fmt='{:.2f}')
 lv.expect('l8', 'screens[4].prose', round(abs(fall_ret), 1), fmt='{:.1f}')
@@ -651,7 +654,7 @@ lv.expect('problems', 'items[2].parts[2].question', round(aq, 4))
 lv.expect('problems', 'items[2].parts[2].explain.text', round(abs(cq), 4))
 lv.claim(abs(quad(lambda t: math.cos(t) ** 2 * 2 / math.pi, 0, math.pi / 2)[0] - 0.5) < 1e-12, 'quarter circle: E[cos^2] = 1/2 by quadrature', covers=[0.5])
 hw = F['homework-2']
-lv.expect('homework', 'items[4].widget.answer', round(Fr(3, 10) / Fr(36, 10), 4) if False else round(0.3 / 3.6, 4))
+lv.expect('homework', 'items[4].widget.answer', round(0.3 / 3.6, 4))
 lv.expect('homework', 'items[4].feedback.correct', round(30 / 3.6, 1))
 given([2.4, 0.9, 0.2, 0.1], 'homework eigenvalues given in the prompt')
 lv.claim(Fr('2.4') + Fr('0.9') + Fr('0.2') + Fr('0.1') == Fr('3.6') and Fr('0.2') + Fr('0.1') == Fr('0.3'), 'homework: total 3.6, dropped 0.3', covers=[0.3, 3.6, round(3.3 / 3.6, 4), round(0.1 / 3.6, 4)])
