@@ -1,0 +1,1354 @@
+{
+ "id": "l5-where-paths-meet",
+ "course": "backprop",
+ "title": "Where paths meet, gradients add",
+ "minutes": 13,
+ "objectives": [
+  "Add the contributions of every path when a value is used more than once."
+ ],
+ "skills": [
+  "bp-backward"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two answers, both half right",
+   "prose": "Take $g = (x + y)x$ at $x = 2$, $y = 3$, so $g = 10$. One learner says $\\partial g/\\partial x = 5$, another says 2. Settle it by nudging: move $x$ to 2.01 and recompute.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.08,
+       "y": 0.3
+      },
+      {
+       "id": "y",
+       "label": "y",
+       "x": 0.08,
+       "y": 0.85
+      },
+      {
+       "id": "s",
+       "label": "s = x + y",
+       "x": 0.45,
+       "y": 0.65,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "g = sx",
+       "x": 0.88,
+       "y": 0.35,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "s"
+      },
+      {
+       "from": "y",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "g"
+      },
+      {
+       "from": "x",
+       "to": "g"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x": "2",
+      "y": "3",
+      "s": "5",
+      "g": "10"
+     }
+    }
+   },
+   "question": "By how much does $g$ move? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0701,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "one-path-s",
+      "value": 0.05,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "one-path-x",
+      "value": 0.02,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Recompute $s$ and then $g$ with $x = 2.01$."
+    },
+    {
+     "rung": "point",
+     "text": "$s = 5.01$ and $g = 5.01 \\times 2.01$.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$g = 10.0701$, so it moved by 0.0701."
+    }
+   ],
+   "feedback": {
+    "correct": "$g = 5.01 \\times 2.01 = 10.0701$: a move of 0.0701, so the rate is about 7.",
+    "generic": "Not quite. Recompute both boxes with $x = 2.01$.",
+    "byKey": {
+     "one-path-s": "You held $s$ at 5 and moved only the $x$ that goes straight into $g$. The $x$ inside $s$ moves too.",
+     "one-path-x": "You moved only the $x$ inside the sum. The $x$ that goes straight into $g$ moves too."
+    }
+   },
+   "explain": {
+    "text": "Both copies of $x$ move: $g = 5.01 \\times 2.01 = 10.0701$. So $g$ moved by 0.0701, a rate of about 7, which is neither 5 nor 2."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two paths into x",
+   "prose": "Walk back with the slider. The product box sends $x$ the other input, $s = 5$, along the direct arrow. The sum box then sends $x$ its share, $\\partial g/\\partial s \\times 1 = 2$, along the other arrow.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.08,
+       "y": 0.3
+      },
+      {
+       "id": "y",
+       "label": "y",
+       "x": 0.08,
+       "y": 0.85
+      },
+      {
+       "id": "s",
+       "label": "s = x + y",
+       "x": 0.45,
+       "y": 0.65,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "g = sx",
+       "x": 0.88,
+       "y": 0.35,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "s"
+      },
+      {
+       "from": "y",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "g"
+      },
+      {
+       "from": "x",
+       "to": "g"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x": "2",
+      "y": "3",
+      "s": "5",
+      "g": "10"
+     },
+     "values2": {}
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "values2": {
+         "g": "1"
+        },
+        "current": "g"
+       },
+       {
+        "values2": {
+         "g": "1",
+         "s": "2",
+         "x": "5"
+        },
+        "current": "g",
+        "highlight": [
+         "e-x-g"
+        ]
+       },
+       {
+        "values2": {
+         "g": "1",
+         "s": "2",
+         "x": "5 + 2 = 7",
+         "y": "2"
+        },
+        "current": "s",
+        "highlight": [
+         "e-x-s"
+        ]
+       }
+      ],
+      "frameLabels": [
+       "g",
+       "product",
+       "sum"
+      ],
+      "label": "Step back",
+      "start": 0
+     }
+    ]
+   },
+   "question": "What is $\\partial g/\\partial x$ once both boxes are done?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "direct",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "via-sum",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "product",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to the last frame."
+    },
+    {
+     "rung": "point",
+     "text": "One path gives 5, the other gives 2.",
+     "highlight": [
+      "x"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$5 + 2 = 7$."
+    }
+   ],
+   "feedback": {
+    "correct": "$5 + 2 = 7$, the rate the nudge showed.",
+    "generic": "Not quite. Count what arrives at $x$ along both arrows.",
+    "byKey": {
+     "direct": "That is the direct path only. The path through $s$ adds 2.",
+     "via-sum": "That is the path through $s$ only. The direct arrow adds 5.",
+     "product": "You multiplied the two contributions. Paths that meet add."
+    }
+   },
+   "explain": {
+    "text": "The direct arrow brings $s = 5$ and the path through the sum brings $2 \\times 1 = 2$. Together $\\partial g/\\partial x = 7$, matching the nudge.",
+    "canvas": {
+     "values2": {
+      "g": "1",
+      "s": "2",
+      "x": "7",
+      "y": "2"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Gradients add where paths meet",
+   "prose": "When a value feeds two boxes, its gradient is the **sum of the contributions along each path**: $5 + 2 = 7$. The multivar course added two paths the same way. A value used once has one path, so nothing changes for it.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.08,
+       "y": 0.3
+      },
+      {
+       "id": "y",
+       "label": "y",
+       "x": 0.08,
+       "y": 0.85
+      },
+      {
+       "id": "s",
+       "label": "s = x + y",
+       "x": 0.45,
+       "y": 0.65,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "g = sx",
+       "x": 0.88,
+       "y": 0.35,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "s"
+      },
+      {
+       "from": "y",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "g"
+      },
+      {
+       "from": "x",
+       "to": "g"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x": "2",
+      "y": "3",
+      "s": "5",
+      "g": "10"
+     },
+     "values2": {
+      "g": "1",
+      "s": "2",
+      "x": "7"
+     }
+    }
+   },
+   "question": "What is $\\partial g/\\partial y$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "value",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "x-grad",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$y$ has one path: $y \\to s \\to g$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\partial g/\\partial s = x = 2$, and the sum passes it on.",
+     "highlight": [
+      "y"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2 \\times 1 = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$y$ has one path, so $\\partial g/\\partial y = x \\times 1 = 2$.",
+    "generic": "Not quite. Follow the one path from $y$.",
+    "byKey": {
+     "value": "You gave $y$ itself. The gradient comes back along $y \\to s \\to g$.",
+     "x-grad": "That is $x$'s gradient. $y$ has only the path through the sum."
+    }
+   },
+   "explain": {
+    "text": "$y$ reaches $g$ only through $s$. The product passes $s$ the other input, $x = 2$, and the sum passes it on, so $\\partial g/\\partial y = 2$.",
+    "canvas": {
+     "values2": {
+      "g": "1",
+      "s": "2",
+      "x": "7",
+      "y": "2"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A value used three times",
+   "prose": "Now $h = xy + x^2 + 3x$ at $x = 2$, $y = 3$. Three boxes use $x$, so three arrows leave it. The final sum passes 1 to each of $p$, $q$ and $r$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 280,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.06,
+       "y": 0.45
+      },
+      {
+       "id": "y",
+       "label": "y",
+       "x": 0.06,
+       "y": 0.92
+      },
+      {
+       "id": "p",
+       "label": "p = xy",
+       "x": 0.38,
+       "y": 0.72,
+       "shape": "rect"
+      },
+      {
+       "id": "q",
+       "label": "q = x²",
+       "x": 0.38,
+       "y": 0.4,
+       "shape": "rect"
+      },
+      {
+       "id": "r",
+       "label": "r = 3x",
+       "x": 0.38,
+       "y": 0.08,
+       "shape": "rect"
+      },
+      {
+       "id": "h",
+       "label": "h = p + q + r",
+       "x": 0.86,
+       "y": 0.4,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "p"
+      },
+      {
+       "from": "y",
+       "to": "p"
+      },
+      {
+       "from": "x",
+       "to": "q"
+      },
+      {
+       "from": "x",
+       "to": "r"
+      },
+      {
+       "from": "p",
+       "to": "h"
+      },
+      {
+       "from": "q",
+       "to": "h"
+      },
+      {
+       "from": "r",
+       "to": "h"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x": "2",
+      "y": "3",
+      "p": "6",
+      "q": "4",
+      "r": "6",
+      "h": "16"
+     },
+     "values2": {
+      "h": "1",
+      "p": "1",
+      "q": "1",
+      "r": "1"
+     }
+    }
+   },
+   "question": "What is $\\partial h/\\partial x$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "one-path",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two-paths",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "value",
+      "value": 16,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the contribution along each of the three arrows out of $x$."
+    },
+    {
+     "rung": "point",
+     "text": "Through $p$: $y = 3$. Through $q$: $2x = 4$. Through $r$: 3.",
+     "highlight": [
+      "p",
+      "q",
+      "r"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$3 + 4 + 3 = 10$."
+    }
+   ],
+   "feedback": {
+    "correct": "$3 + 4 + 3 = 10$.",
+    "generic": "Not quite. Add one contribution per arrow out of $x$.",
+    "byKey": {
+     "one-path": "You took one path. All three arrows out of $x$ contribute.",
+     "two-paths": "You added two of the three paths. Count every arrow out of $x$.",
+     "value": "You gave $h$ itself. The gradient is a rate."
+    }
+   },
+   "explain": {
+    "text": "Through $p$ the product passes $y = 3$; through $q$ the square passes $2x = 4$; through $r$ the scaling passes 3. The three add: $\\partial h/\\partial x = 10$.",
+    "canvas": {
+     "values2": {
+      "h": "1",
+      "p": "1",
+      "q": "1",
+      "r": "1",
+      "x": "10",
+      "y": "2"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The gradient accumulates",
+   "prose": "In code each box adds its contribution into `x.grad` when its turn comes. Back to $g = (x + y)x$. `x.grad` starts at 0, and the product box runs before the sum box.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Step of the backward pass",
+      "x.grad after it"
+     ],
+     "rows": [
+      [
+       "start",
+       "0"
+      ],
+      [
+       "the product box sends 5",
+       "?"
+      ],
+      [
+       "the sum box sends 2",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in `x.grad` after each box.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Step",
+     "x.grad"
+    ],
+    "rows": [
+     [
+      "after the product box",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "sum-first",
+         "value": 2,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "after the sum box",
+      {
+       "edit": true,
+       "answer": 7,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "overwrote",
+         "value": 2,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each box adds to what is already there."
+    },
+    {
+     "rung": "point",
+     "text": "After the product box: $0 + 5$.",
+     "highlight": [
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then $5 + 2 = 7$."
+    }
+   ],
+   "feedback": {
+    "correct": "5, then 7: each box adds its share with `+=`.",
+    "generic": "Not quite. Add each contribution to what `x.grad` already holds.",
+    "byKey": {
+     "overwrote": "You replaced 5 with 2. The sum box adds its 2 to the 5 already there.",
+     "sum-first": "The product box runs first and sends 5."
+    }
+   },
+   "explain": {
+    "text": "`x.grad` goes $0 \\to 5 \\to 7$. Each box adds with `+=`, so the order of the two boxes does not change the total."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Overwriting the gradient",
+   "prose": "Priya's sum box writes `x.grad = out.grad` instead of `x.grad += out.grad`. Her product box runs first and sets `x.grad` to 5. Then her sum box runs.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "x.grad = 0",
+      "# product box runs: x.grad = 5",
+      "# sum box runs:     x.grad = out.grad",
+      "print(x.grad)"
+     ],
+     "title": "Priya's backward pass"
+    },
+    "state": {}
+   },
+   "question": "What does her code print for `x.grad`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "right-answer",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "first",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "An `=` replaces what was there."
+    },
+    {
+     "rung": "point",
+     "text": "The sum box writes $\\partial g/\\partial s = 2$ over the 5.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "She prints 2, though the gradient is 7."
+    }
+   ],
+   "feedback": {
+    "correct": "Her code prints 2: the `=` threw away the 5. The true gradient is 7.",
+    "generic": "Not quite. Trace what `=` does to the 5.",
+    "byKey": {
+     "right-answer": "That is the true gradient. Her `=` threw away the 5, so she prints 2.",
+     "first": "That is the value before the sum box ran. Its `=` replaces it."
+    }
+   },
+   "explain": {
+    "text": "The product box leaves 5, then the sum box's `=` replaces it with 2. Every autograd writer makes this slip once: the fix is `+=` in every box.",
+    "canvas": {
+     "tone": {
+      "l3": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The same value twice in one box",
+   "prose": "An edge case: $y = x \\cdot x$ at $x = 3$. Both inputs of one product box are the same value. The box passes each input the other one, and both land on $x$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 170,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.15,
+       "y": 0.5
+      },
+      {
+       "id": "y",
+       "label": "y = x·x",
+       "x": 0.8,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "y",
+       "label": "both slots"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x": "3",
+      "y": "9"
+     },
+     "values2": {
+      "y": "1"
+     }
+    }
+   },
+   "question": "What is $\\partial y/\\partial x$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "one-slot",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "value",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The product box passes each input the other input."
+    },
+    {
+     "rung": "point",
+     "text": "Each slot gets 3, and both slots are $x$.",
+     "highlight": [
+      "x"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$3 + 3 = 6$, which is $2x$."
+    }
+   ],
+   "feedback": {
+    "correct": "$3 + 3 = 6$, the $2x$ of the power rule.",
+    "generic": "Not quite. Both slots of the box are $x$.",
+    "byKey": {
+     "one-slot": "You counted one slot. Both inputs are $x$, so both contributions land on it.",
+     "value": "You gave $y$ itself. The gradient is a rate."
+    }
+   },
+   "explain": {
+    "text": "The box sends 3 to its first input and 3 to its second, and both are $x$. With `+=` they add to 6, which is $(x^2)' = 2x$ at $x = 3$.",
+    "canvas": {
+     "values2": {
+      "y": "1",
+      "x": "6"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Sum over paths",
+   "prose": "A gradient is the sum, over every path from the value to the output, of the product of local derivatives along that path: $$\\frac{\\partial g}{\\partial x} = \\underbrace{s}_{\\text{direct}} + \\underbrace{x \\cdot 1}_{\\text{through } s} = 5 + 2.$$ In code, each box adds its share with `+=`.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.08,
+       "y": 0.3
+      },
+      {
+       "id": "y",
+       "label": "y",
+       "x": 0.08,
+       "y": 0.85
+      },
+      {
+       "id": "s",
+       "label": "s = x + y",
+       "x": 0.45,
+       "y": 0.65,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "g = sx",
+       "x": 0.88,
+       "y": 0.35,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "s"
+      },
+      {
+       "from": "y",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "g"
+      },
+      {
+       "from": "x",
+       "to": "g"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x": "2",
+      "y": "3",
+      "s": "5",
+      "g": "10"
+     },
+     "values2": {
+      "g": "1",
+      "s": "2",
+      "x": "7",
+      "y": "2"
+     }
+    }
+   },
+   "question": "A value feeds four boxes. How is its gradient found?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sum",
+      "text": "Add the four contributions, one per path",
+      "correct": true
+     },
+     {
+      "id": "last",
+      "text": "Keep the contribution of the last box to run",
+      "why": "That is what `=` does. Every path moves the output, so every contribution counts."
+     },
+     {
+      "id": "product",
+      "text": "Multiply the four contributions",
+      "why": "You multiplied across paths. Rates multiply along a path, and paths add."
+     },
+     {
+      "id": "largest",
+      "text": "Keep the largest contribution",
+      "why": "Every path moves the output, so none can be dropped."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did $x$ get in $g = (x + y)x$?"
+    },
+    {
+     "rung": "point",
+     "text": "It got 5 along one path and 2 along the other.",
+     "highlight": [
+      "x"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Paths add."
+    }
+   ],
+   "feedback": {
+    "correct": "One contribution per path, all added.",
+    "generic": "Not quite. Think of the 5 and the 2."
+   },
+   "explain": {
+    "text": "Each path is a separate way the value moves the output. So the contributions add, as the 5 and the 2 did."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "One gilt in two books",
+   "prose": "A desk holds the same 10-year gilt in two books. The market-making book loses £3,200 per basis point rise in the yield; the client book gains £1,100 per basis point. The desk P&L is the sum of the two books.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 220,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "y",
+       "label": "y",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "A",
+       "label": "market book",
+       "x": 0.55,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "B",
+       "label": "client book",
+       "x": 0.55,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "T",
+       "label": "desk P&L",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "y",
+       "to": "A"
+      },
+      {
+       "from": "y",
+       "to": "B"
+      },
+      {
+       "from": "A",
+       "to": "T"
+      },
+      {
+       "from": "B",
+       "to": "T"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "y": "yield",
+      "A": "−3,200 / bp",
+      "B": "+1,100 / bp"
+     }
+    }
+   },
+   "question": "What is the desk's sensitivity to the yield, in pounds per basis point?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -2100,
+    "tol": {
+     "abs": 0.5
+    },
+    "placeholder": "pounds per bp",
+    "wrong": [
+     {
+      "id": "one-book",
+      "value": -3200,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "sign",
+      "value": 2100,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "subtracted",
+      "value": -4300,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The yield reaches the desk P&L by two paths."
+    },
+    {
+     "rung": "point",
+     "text": "Each book's sensitivity is one path's contribution.",
+     "highlight": [
+      "A",
+      "B"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-3{,}200 + 1{,}100 = -2{,}100$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-3{,}200 + 1{,}100 = -2{,}100$ pounds per basis point.",
+    "generic": "Not quite. Add the two paths.",
+    "byKey": {
+     "one-book": "You took one book. The yield reaches the desk through both.",
+     "sign": "The bigger book loses as yields rise, so the total is negative.",
+     "subtracted": "You subtracted the client book's gain. Contributions add with their signs."
+    }
+   },
+   "explain": {
+    "text": "The yield feeds both books, and both feed the desk P&L. The two contributions add: $-3{,}200 + 1{,}100 = -2{,}100$ pounds per basis point."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A value used in several boxes gets one contribution per path to the output.",
+   "The contributions add: $\\partial g/\\partial x = 5 + 2 = 7$ for $g = (x + y)x$ at $(2, 3)$.",
+   "In code every box adds its share with `+=`; an `=` keeps only the last one."
+  ],
+  "formula": {
+   "name": "Paths that meet",
+   "tex": "\\frac{\\partial g}{\\partial x} = \\sum_{\\text{paths } x \\to g} \\prod_{\\text{arrows}} (\\text{local derivative})",
+   "note": "Multiply along a path, add across paths."
+  },
+  "trap": "Writing `x.grad = ...` keeps only the last box's contribution: Priya printed 2 where the gradient is 7."
+ },
+ "quiz": [
+  {
+   "id": "q-branch-fresh",
+   "difficulty": 2,
+   "prose": "Take $f = (a + 2)a$ at $a = 3$.",
+   "question": "What is $\\partial f/\\partial a$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "direct",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "via-sum",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(a + 2) + a = 5 + 3 = 8$.",
+    "generic": "Not quite. Add the two paths.",
+    "byKey": {
+     "direct": "That is the direct path only. The path through the sum adds 3.",
+     "via-sum": "That is the path through the sum only. The direct path adds 5."
+    }
+   },
+   "explain": {
+    "text": "Directly, the product passes $a + 2 = 5$. Through the sum it passes $a = 3$, times 1. The two add to 8."
+   }
+  },
+  {
+   "id": "q-why-plus-equals",
+   "difficulty": 2,
+   "prose": "A `_backward` closure updates a parent's gradient.",
+   "question": "Why must it use `+=` and not `=`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "paths",
+      "text": "Another box may already have sent that parent a contribution, and both count",
+      "correct": true
+     },
+     {
+      "id": "speed",
+      "text": "`+=` runs faster than `=` in Python, so long graphs finish sooner",
+      "why": "Speed is not the point. `=` throws away a contribution from another path."
+     },
+     {
+      "id": "sign",
+      "text": "`=` loses the sign of the gradient it writes",
+      "why": "The sign survives. What is lost is the earlier contribution."
+     },
+     {
+      "id": "style",
+      "text": "Either works; the choice is only a matter of coding style",
+      "why": "With a value used twice, `=` gives a wrong gradient, as Priya's code did."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A value used in two boxes gets a contribution from each, and `+=` keeps both.",
+    "generic": "Not quite. Think of a value used twice."
+   },
+   "explain": {
+    "text": "A value used twice gets two contributions. `+=` adds the second to the first; `=` would replace it."
+   }
+  },
+  {
+   "id": "q-xx-fresh",
+   "difficulty": 3,
+   "prose": "A product box computes $y = v \\cdot v$ at $v = -1.5$.",
+   "question": "What does backpropagation give for $\\partial y/\\partial v$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "one-slot",
+      "value": -1.5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-1.5 + (-1.5) = -3$, which is $2v$.",
+    "generic": "Not quite. Both slots are $v$.",
+    "byKey": {
+     "one-slot": "You counted one slot. Both inputs are $v$.",
+     "sign": "Both contributions are $-1.5$."
+    }
+   },
+   "explain": {
+    "text": "Each slot receives the other input, $-1.5$, and both slots are $v$. So the gradient is $-3$, which is $2v$."
+   }
+  }
+ ]
+}

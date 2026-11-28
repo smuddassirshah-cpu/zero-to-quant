@@ -9,7 +9,7 @@ All in `app/content/courses/backprop/`, skill `bp-chain` throughout, £ for mone
 | `l1-expression-as-graph.json` | 9 screens, 3 quiz items | `forward_pass(a, b, c, f)` |
 | `l2-local-derivatives.json` | 9 screens, 3 quiz items | none |
 | `l3-multiplying-along-a-path.json` | 9 screens, 3 quiz items | none |
-| `l4-every-gradient-by-hand.json` | 9 screens, 3 quiz items | `backward(a, b, c, f)` |
+| `l4-every-gradient-by-hand.json` | 9 screens, 3 quiz items | `all_gradients(a, b, c, f)` |
 | `review-1.json` | 10 items, difficulty 2 to 4, `pass: 0.8` | none (one `order`, one `expression`) |
 | `homework-1.json` | 6 items, difficulty 3 to 5 (two at 5) | `grads_square_log` (4), `grad_of` (5); `order` item; performance task (derivation, longform, 10-point rubric) |
 | `problems-1.json` | 3 problems, 12 parts, difficulty 3, 4, 5 | none |
@@ -24,7 +24,7 @@ Generators: `/tmp/claude-0/-home-user-zero-to-quant/b2245dfe-6f55-570e-8d22-d938
 
 1. Validator: `node tools/validate.mjs` 0 errors (whole app); no backprop error. Remaining backprop warnings are advisory (`O2-long-sentence` on a few lines under 25 words, `O2-explain-answer` where the key is 0, the course map's unwritten later levels).
 2. Voice: `VOICE_BASE=app/content/courses/backprop python3 docs/reviews/voice-scan.py 35`: 0 over 35 words, 0 explanations over three sentences, 0 lesson ids in code spans, 0 doubled words.
-3. Numbers: `docs/reports/backprop-L1-numbers.py` with the venv: 257 of 257 checks, exit 0. Route 1 is the rule (local derivatives along a path); route 2 is a central difference of the whole expression ($h = 10^{-6}$) or a direct recomputation. It runs `forward_pass`, `backward`, `grads_square_log` and `grad_of` and checks every hidden-test expectation against central differences.
+3. Numbers: `docs/reports/backprop-L1-numbers.py` with the venv: 257 of 257 checks, exit 0. Route 1 is the rule (local derivatives along a path); route 2 is a central difference of the whole expression ($h = 10^{-6}$) or a direct recomputation. It runs `forward_pass`, `all_gradients`, `grads_square_log` and `grad_of` and checks every hidden-test expectation against central differences.
 4. Playthrough: `node tools/playthrough.mjs --lesson backprop/l1..l4 --set backprop/review-1 --set backprop/homework-1 --problems backprop/problems-1 --local-cdn <pkgs> --mobile`: all passed at 1280 and 440 (each lesson 12 checks, quiz 3/3; review 10 of 10; homework 6 of 6, 29 of 29 marks, the longform marked by the button; problems 3 problems, 12 parts). Screenshots read; fixes made: derive parameter names (see backlog), node radius and layouts so value lines do not collide, short P&L node labels with the formulas in the caption.
 5. Freshness: `fresh-check.mjs --file` on review-1, homework-1 and problems-1: 0 hits (two retold sentences in problems-1 reworded). `rubric-passes.mjs` on the performance item: rows 1 to 4 "can be left out: no", row 5 (optional) yes.
 

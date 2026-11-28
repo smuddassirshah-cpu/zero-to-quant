@@ -1,0 +1,1584 @@
+{
+ "id": "l8-backward-in-code",
+ "course": "backprop",
+ "title": "Backward in code",
+ "minutes": 15,
+ "objectives": [
+  "Implement `backward()` for the `Value` class and match the gradients worked by hand."
+ ],
+ "skills": [
+  "bp-autograd"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One call",
+   "prose": "Level 1's hand-worked gradients should now come from one call, `L.backward()`. It finds the order, then runs each node's closure. The very first closure to run is $L$'s own, and it multiplies by `L.grad`.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "L"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "What must `L.grad` be set to before any closure runs?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "value",
+      "value": -3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is $\\partial L/\\partial L$?"
+    },
+    {
+     "rung": "point",
+     "text": "$L$ moves exactly as fast as itself.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "1."
+    }
+   ],
+   "feedback": {
+    "correct": "`L.grad = 1`, since $\\partial L/\\partial L = 1$.",
+    "generic": "Not quite. How fast does $L$ move with itself?",
+    "byKey": {
+     "zero": "Starting from 0, every closure multiplies by 0 and every gradient stays 0.",
+     "value": "That is $L$'s value. The start is the rate of $L$ with itself."
+    }
+   },
+   "explain": {
+    "text": "$\\partial L/\\partial L = 1$. If `L.grad` stayed 0, every closure would multiply by 0, as Sam's early sum box did."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Watch backward() run",
+   "prose": "The badges show the order the search built: $a, b, e, c, d, f, L$. `backward()` sets `L.grad = 1`, then runs the closures in reverse: $L, f, d, c, e, b, a$. Step through and watch each gradient arrive.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "visited": [
+      "a",
+      "b",
+      "e",
+      "c",
+      "d",
+      "f",
+      "L"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {}
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3",
+         "f": "1"
+        },
+        "current": "L"
+       },
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3",
+         "f": "1"
+        },
+        "current": "f"
+       },
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3",
+         "f": "1",
+         "e": "−3",
+         "c": "−3"
+        },
+        "current": "d"
+       },
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3",
+         "f": "1",
+         "e": "−3",
+         "c": "−3"
+        },
+        "current": "c"
+       },
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3",
+         "f": "1",
+         "e": "−3",
+         "c": "−3",
+         "a": "6",
+         "b": "−4.5"
+        },
+        "current": "e"
+       },
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3",
+         "f": "1",
+         "e": "−3",
+         "c": "−3",
+         "a": "6",
+         "b": "−4.5"
+        },
+        "current": "b"
+       },
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3",
+         "f": "1",
+         "e": "−3",
+         "c": "−3",
+         "a": "6",
+         "b": "−4.5"
+        },
+        "current": "a"
+       }
+      ],
+      "frameLabels": [
+       "L",
+       "f",
+       "d",
+       "c",
+       "e",
+       "b",
+       "a"
+      ],
+      "label": "Running",
+      "start": 0
+     }
+    ]
+   },
+   "question": "In which position of the reversed loop does $e$'s closure run?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "forward",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count along $L, f, d, c, e, \\ldots$"
+    },
+    {
+     "rung": "point",
+     "text": "$e$ comes after $c$.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Fifth."
+    }
+   ],
+   "feedback": {
+    "correct": "Fifth: by then $d$ has sent $e$ its full gradient, $-3$.",
+    "generic": "Not quite. Count along the reversed list.",
+    "byKey": {
+     "forward": "That is $e$'s place in the forward order. Reversed, it is fifth."
+    }
+   },
+   "explain": {
+    "text": "Reversed, the order is $L, f, d, c, e, b, a$, so $e$ runs in position 5. By then $d$ has run and $e$'s gradient, $-3$, is complete.",
+    "canvas": {
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "f": "1",
+      "e": "−3",
+      "c": "−3",
+      "a": "6",
+      "b": "−4.5"
+     },
+     "current": "e"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The three steps of backward()",
+   "prose": "`backward()` is the l6 order plus the l7 closures. Put its steps in order.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "f": "1",
+      "e": "−3",
+      "c": "−3",
+      "a": "6",
+      "b": "−4.5"
+     }
+    }
+   },
+   "question": "Put the steps in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "w1",
+      "text": "Build `topo` by the search from `self`, each node after its parents"
+     },
+     {
+      "id": "w2",
+      "text": "Set `self.grad = 1.0`"
+     },
+     {
+      "id": "w3",
+      "text": "For each `v` in `reversed(topo)`, call `v._backward()`"
+     },
+     {
+      "id": "wx",
+      "text": "For each `v` in `topo`, call `v._backward()`",
+      "why": "That runs the leaves first, before any gradient has reached them."
+     }
+    ],
+    "answer": [
+     "w1",
+     "w2",
+     "w3"
+    ],
+    "distractors": [
+     "wx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The order must exist before the loop."
+    },
+    {
+     "rung": "point",
+     "text": "The output's gradient must be 1 before the first closure.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Build, set to 1, then the reversed loop."
+    }
+   ],
+   "feedback": {
+    "correct": "Build the order, set the output to 1, run the closures in reverse.",
+    "generic": "Not quite. The loop needs both the order and the starting 1.",
+    "byKey": {
+     "wx": "That loop runs forwards: the leaves first, before anything has reached them."
+    }
+   },
+   "explain": {
+    "text": "The search builds the order, `self.grad = 1.0` starts the walk, and the reversed loop runs each closure once every box after it is done."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Write backward()",
+   "prose": "Your class from l7 is in the editor. Add `backward(self)`: build the topological order from `self` with a recursive search and a `seen` set, set `self.grad = 1.0`, then call `_backward()` on each node in reverse.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "f": "1",
+      "e": "−3",
+      "c": "−3",
+      "a": "6",
+      "b": "−4.5"
+     }
+    }
+   },
+   "question": "Write `backward()`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        ...\n",
+    "solution": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n",
+    "examples": [
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f; L.backward()",
+      "call": "(a.grad, b.grad, c.grad, f.grad)",
+      "expect": "(6.0, -4.5, -3.0, 1.0)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f; L.backward()",
+      "call": "(a.grad, b.grad, c.grad, f.grad)",
+      "expect": "(6.0, -4.5, -3.0, 1.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(2.0); y = Value(3.0); g = (x + y) * x; g.backward()",
+      "call": "(x.grad, y.grad)",
+      "expect": "(7.0, 2.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(3.0); y = x * x; y.backward()",
+      "call": "x.grad",
+      "expect": "6.0",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(1.0)\ny = x\nfor _ in range(5):\n    y = y * 2 + 1\ny.backward()",
+      "call": "(y.data, x.grad)",
+      "expect": "(63.0, 32.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(2.0); y = 3 * x + 1; y.backward()",
+      "call": "x.grad",
+      "expect": "3.0",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(2.0); t = x * 5; y = x * x; y.backward()",
+      "call": "(x.grad, t.grad)",
+      "expect": "(4.0, 0.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f; L.backward()",
+      "call": "(L.grad, L._prev[0].grad)",
+      "expect": "(1.0, -3.0)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: the course expression, the branch, $x \\cdot x$, a ten-box chain, a constant, an unused node, and the gradients of $L$ and $d$. Each result must equal the expected one exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write a nested `build(v)` as in l6, using `v._prev`."
+    },
+    {
+     "rung": "point",
+     "text": "After `build(self)`, set `self.grad = 1.0`.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then `for v in reversed(topo): v._backward()`."
+    }
+   ],
+   "feedback": {
+    "correct": "Level 1's gradients, 6, $-4.5$, $-3$ and 1, now come from one call.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is the course expression: it expects `(6.0, -4.5, -3.0, 1.0)`.",
+     "test-4": "Test 4 is a chain of ten boxes: each `y * 2 + 1` doubles the gradient, so `x.grad` is 32.0.",
+     "test-6": "Test 6 has a node `t` that does not lead to `y`: its gradient must stay 0.0."
+    }
+   },
+   "explain": {
+    "text": "The search gives the order, the output starts at 1, and the reversed loop runs each closure once its node's gradient is complete. Ten boxes or ten thousand, the method is the same."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Running it twice",
+   "prose": "Build $L$ from the leaves $a, b, c, f$ and call `L.backward()`: `a.grad` is 6. Then build $L$ again from the same leaves, a fresh forward pass, and call `backward()` on the new $L$ without touching `a.grad`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> L = (a * b + c) * f; L.backward(); a.grad",
+      "6.0",
+      ">>> L = (a * b + c) * f; L.backward(); a.grad",
+      "???"
+     ],
+     "title": "Two passes, no reset"
+    },
+    "state": {}
+   },
+   "question": "What does `a.grad` show after the second call?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "reset",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "same-graph",
+      "value": 24,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every closure adds with `+=`."
+    },
+    {
+     "rung": "point",
+     "text": "The new pass adds another 6 to the 6 already in `a.grad`.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$6 + 6 = 12$."
+    }
+   ],
+   "feedback": {
+    "correct": "12: the second pass adds its 6 to the first. Training must zero the gradients before each pass.",
+    "generic": "Not quite. What does `+=` do to the 6 already there?",
+    "byKey": {
+     "reset": "Nothing reset `a.grad`. The closures add the new 6 to the old 6.",
+     "same-graph": "That is what calling `backward()` twice on the same $L$ gives, because its inner nodes keep their old gradients too. Here $L$ was rebuilt."
+    }
+   },
+   "explain": {
+    "text": "Leaves are shared between passes, and every closure adds. So the second pass adds 6 to 6 and `a.grad` shows 12. Level 3's training loop zeroes every gradient before each backward pass."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Forgetting to reset",
+   "prose": "Ali changes `a.data` to 2, rebuilds $L$ from the same leaves and calls `backward()`, without resetting any gradient. He reads `b.grad` as the new $\\partial L/\\partial b$. Before the change it was $-4.5$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "2",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−4",
+      "d": "0",
+      "L": "0"
+     }
+    }
+   },
+   "question": "What is the true $\\partial L/\\partial b$ at $a = 2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -6,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "not-reset",
+      "value": -10.5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "old",
+      "value": -4.5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\partial L/\\partial b = af$."
+    },
+    {
+     "rung": "point",
+     "text": "At $a = 2$, $f = -3$.",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2 \\times (-3) = -6$."
+    }
+   ],
+   "feedback": {
+    "correct": "$af = 2 \\times (-3) = -6$. Ali reads $-4.5 - 6 = -10.5$, because the old gradient was never cleared.",
+    "generic": "Not quite. Use the new $a$.",
+    "byKey": {
+     "not-reset": "That is what Ali reads: the old $-4.5$ plus the new $-6$. Zero the gradients first.",
+     "old": "That is the gradient at $a = 1.5$. The new one uses $a = 2$.",
+     "sign": "With $f = -3$ the gradient is negative."
+    }
+   },
+   "explain": {
+    "text": "At $a = 2$ the gradient is $af = -6$. Without a reset, `b.grad` holds $-4.5 + (-6) = -10.5$, which is no gradient at all. Set every `grad` to 0 before each backward pass."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Shared values and constants",
+   "prose": "An edge case for your class: `y = x * x + 3 * x + 1` at `x = Value(2.0)`. $x$ appears three times, and the 3 and the 1 are plain numbers that the class wraps in Values.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 220,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.08,
+       "y": 0.5
+      },
+      {
+       "id": "q",
+       "label": "q = x·x",
+       "x": 0.4,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "r",
+       "label": "r = 3x",
+       "x": 0.4,
+       "y": 0.85,
+       "shape": "rect"
+      },
+      {
+       "id": "y",
+       "label": "y = q + r + 1",
+       "x": 0.88,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "q",
+       "label": "both slots"
+      },
+      {
+       "from": "x",
+       "to": "r"
+      },
+      {
+       "from": "q",
+       "to": "y"
+      },
+      {
+       "from": "r",
+       "to": "y"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x": "2",
+      "q": "4",
+      "r": "6",
+      "y": "11"
+     },
+     "values2": {
+      "y": "1"
+     }
+    }
+   },
+   "question": "What does `x.grad` hold after `y.backward()`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "square-only",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "scale-only",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one-slot",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add every contribution that reaches $x$."
+    },
+    {
+     "rung": "point",
+     "text": "$x \\cdot x$ gives $2 + 2$; $3x$ gives 3.",
+     "highlight": [
+      "x"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$4 + 3 = 7$, which is $2x + 3$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2 + 2 + 3 = 7$, which is $2x + 3$ at $x = 2$. The constants need no gradient.",
+    "generic": "Not quite. Add every share that reaches $x$.",
+    "byKey": {
+     "square-only": "You kept the square's share. $3x$ adds 3.",
+     "scale-only": "You kept the $3x$ share. The square adds 4.",
+     "one-slot": "You counted one slot of $x \\cdot x$. Both slots are $x$."
+    }
+   },
+   "explain": {
+    "text": "$x \\cdot x$ sends 2 to each slot, both $x$, and $3x$ sends 3. With `+=` they make $2x + 3 = 7$. The wrapped 3 and 1 get gradients too, which nothing reads."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The whole method",
+   "prose": "That is a working automatic differentiation:\n```python\ndef backward(self):\n    topo, seen = [], set()\n    def build(v):\n        if v not in seen:\n            seen.add(v)\n            for p in v._prev:\n                build(p)\n            topo.append(v)\n    build(self)\n    self.grad = 1.0\n    for v in reversed(topo):\n        v._backward()\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "f": "1",
+      "e": "−3",
+      "c": "−3",
+      "a": "6",
+      "b": "−4.5"
+     }
+    }
+   },
+   "question": "Which part of the class makes a reset needed before each new backward pass?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "plus",
+      "text": "The `+=` in every closure",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "Setting `self.grad = 1.0`",
+      "why": "That sets the output only, and a rebuilt output starts at 0 anyway."
+     },
+     {
+      "id": "seen",
+      "text": "The `seen` set in the search",
+      "why": "It stops a node being listed twice; it does not touch gradients."
+     },
+     {
+      "id": "reversed",
+      "text": "The reversed loop",
+      "why": "The order makes each gradient complete; it does not keep old ones."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which line adds to what is already stored?"
+    },
+    {
+     "rung": "point",
+     "text": "The closures add with `+=`.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So old gradients stay unless reset."
+    }
+   ],
+   "feedback": {
+    "correct": "`+=` keeps whatever was there, which is right within a pass and wrong across passes.",
+    "generic": "Not quite. Which line adds to what is already stored?"
+   },
+   "explain": {
+    "text": "Within one pass `+=` is what makes shared values right. Across passes it keeps old gradients, so training sets every `grad` to 0 first."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Every sensitivity of a P&L",
+   "prose": "A UK desk's dollar P&L is $\\sum_i q_i(p_i - c_i)$ over three US positions, converted at $r = 0.8$ pounds per dollar. Built from Values, one `pnl.backward()` gives the sensitivity to every price at once. Position 2 is short $q_2 = -400$ shares.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Position",
+      "Shares $q_i$",
+      "Cost $c_i$, dollars",
+      "Price $p_i$, dollars"
+     ],
+     "rows": [
+      [
+       "1",
+       "300",
+       "50.00",
+       "52.40"
+      ],
+      [
+       "2",
+       "−400",
+       "120.00",
+       "118.50"
+      ],
+      [
+       "3",
+       "150",
+       "80.00",
+       "79.20"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is `p2.grad`, in pounds per dollar of $p_2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -320,
+    "tol": {
+     "abs": 0.5
+    },
+    "placeholder": "pounds per dollar",
+    "wrong": [
+     {
+      "id": "no-fx",
+      "value": -400,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "sign",
+      "value": 320,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Walk back from the P&L in pounds to $p_2$."
+    },
+    {
+     "rung": "point",
+     "text": "The conversion passes $r = 0.8$; the sum passes it on; position 2 passes $q_2$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.8 \\times (-400) = -320$."
+    }
+   ],
+   "feedback": {
+    "correct": "$r \\times q_2 = 0.8 \\times (-400) = -320$ pounds per dollar.",
+    "generic": "Not quite. Multiply back: the conversion, then the position.",
+    "byKey": {
+     "no-fx": "You stopped in dollars. The conversion to pounds multiplies by 0.8.",
+     "sign": "Position 2 is short, so a rising price loses money."
+    }
+   },
+   "explain": {
+    "text": "The conversion box passes 0.8, the sum passes it to each position, and position 2 passes $q_2 = -400$. So `p2.grad` is $-320$ pounds per dollar, and the other two prices get theirs in the same call."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`backward()` builds the topological order from the output, sets the output's gradient to 1 and runs every closure in reverse.",
+   "It reproduces every hand-worked gradient: 6, $-4.5$, $-3$, 1 for the course expression, 7 and 2 for the branch.",
+   "Gradients add across passes too, so each new backward pass needs every `grad` set to 0 first."
+  ],
+  "formula": {
+   "name": "backward()",
+   "tex": "\\text{build(self)};\\ \\ \\text{self.grad} = 1;\\ \\ \\text{for } v \\text{ in reversed(topo): } v.\\text{\\_backward()}",
+   "note": "One call gives the gradient of the output with respect to every node."
+  },
+  "trap": "Without a reset, a second pass adds to the first: $-4.5 - 6 = -10.5$ is no gradient at all."
+ },
+ "quiz": [
+  {
+   "id": "q-backward-first",
+   "difficulty": 2,
+   "prose": "A Value `out` has just been built, and `out.backward()` is called.",
+   "question": "What is the first thing the loop needs before any closure runs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "order",
+      "text": "The topological order and `out.grad = 1.0`",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "Every gradient in the graph set to 1",
+      "why": "Only the output starts at 1; the rest start at 0."
+     },
+     {
+      "id": "fwd",
+      "text": "A second forward pass over the graph",
+      "why": "The values are already there from building `out`."
+     },
+     {
+      "id": "leaves",
+      "text": "A list of the leaves of the graph only",
+      "why": "The loop runs every node, boxes included."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The order and the starting 1.",
+    "generic": "Not quite. What did the three steps need first?"
+   },
+   "explain": {
+    "text": "`backward()` builds the order and sets the output's gradient to 1. Only then does the reversed loop run the closures."
+   }
+  },
+  {
+   "id": "q-twice",
+   "difficulty": 2,
+   "prose": "A leaf `w` has gradient $-2$ after one forward and backward pass. The same forward pass is rebuilt and `backward()` called again with no reset.",
+   "question": "What is `w.grad` now?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "reset",
+      "value": -2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-2 + (-2) = -4$.",
+    "generic": "Not quite. The closures add to what is there.",
+    "byKey": {
+     "reset": "Nothing reset it, so the new $-2$ is added.",
+     "sign": "Both passes add $-2$."
+    }
+   },
+   "explain": {
+    "text": "The second pass adds another $-2$ to the $-2$ already stored. So `w.grad` reads $-4$ until it is reset."
+   }
+  },
+  {
+   "id": "q-cube-value",
+   "difficulty": 3,
+   "prose": "`x = Value(1.5)` and `y = x * x * x`, then `y.backward()`.",
+   "question": "What is `x.grad`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.75,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "one-slot",
+      "value": 2.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "two-slots",
+      "value": 4.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$3x^2 = 6.75$.",
+    "generic": "Not quite. $x$ fills three slots.",
+    "byKey": {
+     "one-slot": "You counted one slot. $x$ fills three.",
+     "two-slots": "You counted two of the three slots."
+    }
+   },
+   "explain": {
+    "text": "Each of the three slots of $x$ receives the product of the other two, $x^2 = 2.25$. They add to $3x^2 = 6.75$."
+   }
+  }
+ ]
+}

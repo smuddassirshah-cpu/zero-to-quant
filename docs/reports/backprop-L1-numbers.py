@@ -124,12 +124,12 @@ two('l4 s4 2e^{2s} at s = -0.5', 2 * math.exp(-1), cd(lambda s: math.exp(s) ** 2
 two('l4 s5 2w e^{2(wx+b)}', 2 * 2 * math.exp(-1), cd(Lchain, CH, 1))
 ns = {}; exec(lv.text('l4', 'screens[7].widget.solution'), ns)
 for t in D('l4')['screens'][7]['widget']['tests']:
-    args = eval(t['call'][len('backward'):])
+    args = eval(t['call'][len('all_gradients'):])
     got = eval(t['call'], ns); exp = eval(t['expect'])
     num = {k: cd(Lc, args, i) for i, k in enumerate('abcf')}
     ee = args[0] * args[1]
     num['e'] = cd(lambda x: (x + args[2]) * args[3], (ee,), 0); num['d'] = cd(lambda x: x * args[3], (ee + args[2],), 0)
-    lv.claim(got == exp and all(math.isclose(got[k], num[k], abs_tol=1e-6) for k in got), f'backward test {t["call"]} against central differences')
+    lv.claim(got == exp and all(math.isclose(got[k], num[k], abs_tol=1e-6) for k in got), f'all_gradients test {t["call"]} against central differences')
 E('l4', 'screens[8].widget.answer', 10001)
 two('l4 quiz 1: e * 2', math.exp(1) * 2, cd(lambda v: math.exp(v * 2), (0.5,), 0)); E('l4', 'quiz[0].widget.answer', round(2 * math.e, 4))
 E('l4', 'quiz[0].widget.wrong[1].value', round(math.e, 4)); E('l4', 'quiz[0].widget.wrong[0].value', round(math.e * 0.5, 4))
