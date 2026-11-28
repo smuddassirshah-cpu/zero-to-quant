@@ -1,0 +1,1236 @@
+{
+ "id": "l13-the-block",
+ "course": "sequence",
+ "title": "The transformer block",
+ "minutes": 14,
+ "objectives": [
+  "Build a pre-norm transformer block from attention, a feed-forward net and layer normalisation."
+ ],
+ "skills": [
+  "sqn-block"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Wiring the parts",
+   "prose": "You have built causal multi-head attention, layer norm and a one-hidden-layer MLP. A **transformer block** chains them. Each of its two parts reads a layer-normalised copy of the vector. Its output is then added back to the vector it read.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 220,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.06,
+       "y": 0.78,
+       "shape": "rect"
+      },
+      {
+       "id": "ln1",
+       "label": "LN 1",
+       "x": 0.62,
+       "y": 0.2,
+       "shape": "rect"
+      },
+      {
+       "id": "attn",
+       "label": "Attn",
+       "x": 0.3,
+       "y": 0.75,
+       "shape": "rect"
+      },
+      {
+       "id": "add1",
+       "label": "+",
+       "x": 0.85,
+       "y": 0.75,
+       "shape": "rect"
+      },
+      {
+       "id": "ln2",
+       "label": "LN 2",
+       "x": 0.28,
+       "y": 0.22,
+       "shape": "rect"
+      },
+      {
+       "id": "mlp",
+       "label": "MLP",
+       "x": 0.85,
+       "y": 0.22,
+       "shape": "rect"
+      },
+      {
+       "id": "add2",
+       "label": "+",
+       "x": 0.55,
+       "y": 0.78,
+       "shape": "rect"
+      }
+     ],
+     "edges": []
+    },
+    "state": {
+     "caption": "The parts, not yet wired."
+    }
+   },
+   "question": "Put the steps in the order a vector meets them.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Layer-normalise $\\mathbf x$ (LN 1)"
+     },
+     {
+      "id": "s2",
+      "text": "Causal multi-head attention on the normalised copy"
+     },
+     {
+      "id": "s3",
+      "text": "Add the attention output to $\\mathbf x$"
+     },
+     {
+      "id": "s4",
+      "text": "Layer-normalise the new $\\mathbf x$ (LN 2)"
+     },
+     {
+      "id": "s5",
+      "text": "The MLP on that copy, one position at a time"
+     },
+     {
+      "id": "s6",
+      "text": "Add the MLP output to $\\mathbf x$"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each part reads a normalised copy, so the norm comes just before it."
+    },
+    {
+     "rung": "point",
+     "text": "Attention comes first: LN 1, attention, then the addition.",
+     "highlight": [
+      "ln1",
+      "attn",
+      "add1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "LN 1, attention, add; then LN 2, MLP, add."
+    }
+   ],
+   "feedback": {
+    "correct": "That is the block: normalise, attend, add; normalise, MLP, add.",
+    "generic": "Not quite. Each part comes straight after its own layer norm, and its output is added before the next part reads.",
+    "byKey": {
+     "s3": "Add the attention output after the attention has run, before the second layer norm reads the vector.",
+     "s5": "The MLP reads the second normalised copy, so LN 2 comes just before it."
+    }
+   },
+   "explain": {
+    "text": "Wired up, the vector runs along the bottom and each part adds a correction to it. Attention goes first, so the MLP reads a vector that already holds the other positions' information.",
+    "canvas": {
+     "nodes": {
+      "x": {
+       "x": 0.06,
+       "y": 0.78
+      },
+      "ln1": {
+       "x": 0.17,
+       "y": 0.25
+      },
+      "attn": {
+       "x": 0.36,
+       "y": 0.25
+      },
+      "add1": {
+       "x": 0.47,
+       "y": 0.78
+      },
+      "ln2": {
+       "x": 0.6,
+       "y": 0.25
+      },
+      "mlp": {
+       "x": 0.79,
+       "y": 0.25
+      },
+      "add2": {
+       "x": 0.9,
+       "y": 0.78
+      }
+     },
+     "edges": [
+      {
+       "from": "x",
+       "to": "ln1"
+      },
+      {
+       "from": "ln1",
+       "to": "attn"
+      },
+      {
+       "from": "attn",
+       "to": "add1"
+      },
+      {
+       "from": "x",
+       "to": "add1"
+      },
+      {
+       "from": "add1",
+       "to": "ln2"
+      },
+      {
+       "from": "ln2",
+       "to": "mlp"
+      },
+      {
+       "from": "mlp",
+       "to": "add2"
+      },
+      {
+       "from": "add1",
+       "to": "add2"
+      }
+     ],
+     "caption": "The straight line along the bottom is the residual path: $\\mathbf x$ reaches the output with the two updates added."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A pre-norm block",
+   "prose": "The block is $\\mathbf x \\leftarrow \\mathbf x + \\operatorname{Attn}(\\operatorname{LN}_1(\\mathbf x))$, then $\\mathbf x \\leftarrow \\mathbf x + \\operatorname{MLP}(\\operatorname{LN}_2(\\mathbf x))$. Normalising before each part makes it **pre-norm**. The MLP widens each position from $d$ to $4d$, applies ReLU, and narrows back to $d$. Take $T = 8$ and $d = 64$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "step",
+      "shape"
+     ],
+     "rows": [
+      [
+       "$\\mathbf x$",
+       "8 by 64"
+      ],
+      [
+       "$\\operatorname{LN}_1(\\mathbf x)$",
+       "8 by 64"
+      ],
+      [
+       "attention output",
+       "8 by 64"
+      ],
+      [
+       "MLP hidden layer",
+       "8 by ?"
+      ],
+      [
+       "MLP output",
+       "8 by 64"
+      ],
+      [
+       "block output",
+       "8 by 64"
+      ]
+     ]
+    }
+   },
+   "question": "How many numbers does the MLP's hidden layer hold for the whole sequence?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2048,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 256,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "d",
+      "value": 512,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The hidden layer is $4d$ wide at every position."
+    },
+    {
+     "rung": "point",
+     "text": "$4 \\times 64 = 256$ at each of 8 positions.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$8 \\times 256$."
+    }
+   ],
+   "feedback": {
+    "correct": "$8 \\times 256 = 2{,}048$: 256 hidden units at each of the 8 positions.",
+    "generic": "Not quite. Find the hidden width, then count it at every position.",
+    "byKey": {
+     "one": "That is one position. The MLP runs at all 8.",
+     "d": "You kept the width at $d$. The hidden layer is $4d$ wide."
+    }
+   },
+   "explain": {
+    "text": "The hidden layer holds $8 \\times 256 = 2{,}048$ numbers; every other step keeps the shape $(T, d)$, which lets the additions work. The width changes back before the addition."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One position by hand",
+   "prose": "One position, $d = 2$, $\\mathbf x = (1, 3)$. Layer norms have gain 1 and shift 0; ignore $\\epsilon$. With one position the attention weight is 1, so attention returns $\\operatorname{LN}_1(\\mathbf x)\\mathbf W_V\\mathbf W_O$, here $\\mathbf W_V = \\mathbf I$, $\\mathbf W_O = 0.5\\mathbf I$. The MLP has $\\mathbf W_1 = \\mathbf I$, $\\mathbf W_2 = 2\\mathbf I$ and no biases.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "step",
+      "vector"
+     ],
+     "rows": [
+      [
+       "$\\mathbf x$",
+       "(1, 3)"
+      ],
+      [
+       "$\\operatorname{LN}_1(\\mathbf x)$",
+       "(−1, 1)"
+      ],
+      [
+       "$\\mathbf x$ + attention",
+       "?"
+      ],
+      [
+       "$\\operatorname{LN}_2$ of that",
+       "?"
+      ],
+      [
+       "+ MLP",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "What is the first coordinate of the block's output?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "norelu",
+      "value": -1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "replace",
+      "value": 0.0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "first-add",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Attention adds $0.5 \\times (-1, 1)$ to $(1, 3)$."
+    },
+    {
+     "rung": "point",
+     "text": "After attention, $\\mathbf x = (0.5, 3.5)$, whose layer norm is again $(-1, 1)$.",
+     "highlight": [
+      "r2",
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "ReLU of $(-1, 1)$ is $(0, 1)$; times 2 is $(0, 2)$; add it to $(0.5, 3.5)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(0.5, 3.5) + (0, 2) = (0.5, 5.5)$: the first coordinate is 0.5.",
+    "generic": "Not quite. Work down the table: each addition keeps what was there.",
+    "byKey": {
+     "norelu": "You skipped the ReLU, so $-1$ passed through and took 2 off the first coordinate.",
+     "replace": "You replaced $\\mathbf x$ by the MLP output. The block adds it to $\\mathbf x$.",
+     "first-add": "You dropped $\\mathbf x$ at the first addition, so the stream lost the input."
+    }
+   },
+   "explain": {
+    "text": "The stream goes $(1, 3) \\to (0.5, 3.5) \\to (0.5, 5.5)$. Each part sees a normalised copy. Its output lands on the raw vector, so the input survives into the output."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The MLP in code",
+   "prose": "Write `mlp_block(x, params)`: $\\operatorname{ReLU}(\\mathbf x\\mathbf W_1 + \\mathbf b_1)\\mathbf W_2 + \\mathbf b_2$, applied to each row of $\\mathbf x$. Rows are positions, so one matrix product handles them all. GPT-2 uses GELU, a smooth ReLU; we keep ReLU.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "array",
+      "shape"
+     ],
+     "rows": [
+      [
+       "`x`",
+       "(5, 8)"
+      ],
+      [
+       "`W1`, `b1`",
+       "(8, 32), (32,)"
+      ],
+      [
+       "hidden layer",
+       "(5, 32)"
+      ],
+      [
+       "`W2`, `b2`",
+       "(32, 8), (8,)"
+      ],
+      [
+       "output",
+       "(5, 8)"
+      ]
+     ]
+    }
+   },
+   "question": "Complete `mlp_block`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef mlp_block(x, params):\n    # x: (..., T, d). Widen with W1 (d by 4d) and b1, ReLU, narrow with W2 (4d by d) and b2.\n    # Each position on its own: never mix the rows.\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef mlp_block(x, params):\n    h = np.maximum(0, np.asarray(x, dtype=float) @ params['W1'] + params['b1'])\n    return h @ params['W2'] + params['b2']\n",
+    "prelude": "import numpy as np\n\ng = np.random.default_rng(4)\nX5 = g.standard_normal((5, 8))\nPM = {'W1': g.standard_normal((8, 32)) / np.sqrt(8), 'b1': 0.1 * g.standard_normal(32),\n      'W2': g.standard_normal((32, 8)) / np.sqrt(32), 'b2': 0.1 * g.standard_normal(8)}\nXB = g.standard_normal((2, 3, 8))\n",
+    "examples": [
+     {
+      "call": "mlp_block(X5, PM).shape",
+      "compare": "equal",
+      "expect": "(5, 8)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "mlp_block(X5, PM).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.5416178474115433, -0.9300241097911307, 0.4740195797221465, -0.5792517744940218, 0.3745088452550715, -0.2925027064617151, -0.49563993460087413, 0.25633818984881085], [-0.606970486001895, -0.8275441922177603, 1.2228353254617126, 0.4455026350568919, 0.37875447060261064, -2.153369610320476, 1.1824276147477235, 0.4036017252190107], [-0.4422042897729755, 0.3048889495903148, 0.3971499859293961, 0.13864798494369887, -0.2725921615242785, -0.13138892024487142, -0.6514549224545789, 0.12625888002890007], [1.4999297593008056, -1.6035356669325433, -1.6542602918460327, 0.49054850383477955, -0.4171042814677635, -0.6947471640632301, -0.49333671319569566, -1.0720083426219775], [-1.1740792896524908, 0.685137309020047, -0.926002243969347, 0.42978044917588365, 0.15446446877001835, -1.5470773946288057, 0.23845580705004354, -0.8454920016822075]]"
+     },
+     {
+      "call": "np.allclose(mlp_block(X5, PM)[2], mlp_block(X5[2:3], PM)[0])",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "mlp_block(XB, PM).tolist()",
+      "compare": "isclose",
+      "expect": "[[[0.006735564614877478, -0.6637354088510519, 1.139957448216962, -0.02588928599682211, 0.5712168232310472, -0.8253144599250168, 0.649579322744201, 0.3606578154993419], [-0.8034786130340971, 0.21528556742419397, 0.2746194881874674, 1.0533329504716393, 0.015243940904734868, 0.29855964955507625, -0.011229474180561971, 1.1047712903796414], [0.030341758621261657, 0.24603585980045906, -0.17963665825344385, 0.11301062612330924, -0.11591493545006366, -0.14280889695701338, -0.2825795498727858, -0.204913997676057]], [[0.4835464512897978, 0.5971727722476643, -0.473748823524753, -0.15282747063465663, -1.0603174524837597, -0.47865340356524516, -0.6373158958835596, -0.14645653366386843], [1.9657325662681258, -1.6069485518541455, -0.978169945996128, 0.09877724385652085, -0.8159467218526824, -0.8660037005702499, -0.1650576533546462, -0.1747532216724245], [-0.5043405645017529, 0.3936341450614086, -0.8768547025865286, -0.6050325403303969, -0.2990910906044917, -1.2297800633428624, -0.11496925480892427, -0.4659631678423654]]]"
+     },
+     {
+      "call": "mlp_block(np.zeros((3, 8)), PM).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.04442142465799718, 0.18651981522127778, 0.07549969496285615, 0.04182023084212719, 0.003974377611879215, 0.08681376258981972, -0.07787301089037421, -0.043188180185839996], [0.04442142465799718, 0.18651981522127778, 0.07549969496285615, 0.04182023084212719, 0.003974377611879215, 0.08681376258981972, -0.07787301089037421, -0.043188180185839996], [0.04442142465799718, 0.18651981522127778, 0.07549969496285615, 0.04182023084212719, 0.003974377611879215, 0.08681376258981972, -0.07787301089037421, -0.043188180185839996]]"
+     },
+     {
+      "call": "mlp_block(X5, dict(PM, W2=np.zeros((32, 8)))).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.011706233203787492, 0.21399563713483183, 0.06320170160200486, 0.08352309085313067, 0.08617412709618895, 0.13768413782285088, -0.10956621853412679, -0.08127559402785799], [0.011706233203787492, 0.21399563713483183, 0.06320170160200486, 0.08352309085313067, 0.08617412709618895, 0.13768413782285088, -0.10956621853412679, -0.08127559402785799], [0.011706233203787492, 0.21399563713483183, 0.06320170160200486, 0.08352309085313067, 0.08617412709618895, 0.13768413782285088, -0.10956621853412679, -0.08127559402785799], [0.011706233203787492, 0.21399563713483183, 0.06320170160200486, 0.08352309085313067, 0.08617412709618895, 0.13768413782285088, -0.10956621853412679, -0.08127559402785799], [0.011706233203787492, 0.21399563713483183, 0.06320170160200486, 0.08352309085313067, 0.08617412709618895, 0.13768413782285088, -0.10956621853412679, -0.08127559402785799]]"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests, compared to $10^{-9}$. Test 2 checks that row 2 alone gives the same output as row 2 in the sequence; test 3 is a batch of shape (2, 3, 8).",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef mlp_block(x, params):\n    h = np.maximum(0, np.asarray(x, dtype=float) @ params['W1'] + params['b1'])\n    return h.mean(axis=-2) @ params['W2'] + params['b2']\n",
+      "test": 1,
+      "symptom": "Averages the hidden layer over the positions, mixing time."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_block(x, params):\n    h = np.asarray(x, dtype=float) @ params['W1'] + params['b1']\n    return h @ params['W2'] + params['b2']\n",
+      "test": 1,
+      "symptom": "No ReLU, so the MLP is one linear map."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_block(x, params):\n    h = np.maximum(0, np.asarray(x, dtype=float) @ params['W1']) + params['b1']\n    return h @ params['W2'] + params['b2']\n",
+      "test": 1,
+      "symptom": "Adds b1 after the ReLU."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`x @ W1` multiplies every row by $\\mathbf W_1$ at once."
+    },
+    {
+     "rung": "point",
+     "text": "`np.maximum(0, ...)` is ReLU; the hidden layer is (5, 32).",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`np.maximum(0, x @ W1 + b1) @ W2 + b2`."
+    }
+   ],
+   "feedback": {
+    "correct": "Each row goes through the same two layers, and no row reads another.",
+    "generic": "Not quite. Check the order: widen, add $\\mathbf b_1$, ReLU, narrow, add $\\mathbf b_2$."
+   },
+   "explain": {
+    "text": "The products act on the last axis, so rows never meet: position 2 alone gives the same output as position 2 in the sequence. That is why the MLP can run on any number of positions."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Mixing the positions",
+   "prose": "A colleague writes the MLP as $\\operatorname{ReLU}(\\mathbf A\\mathbf X)\\mathbf W$, with $\\mathbf A$ an 8 by 8 matrix. It acts along the position axis of $\\mathbf X$ ($T = 8$). It trains, and the training loss falls fast.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "label": "$\\mathbf A$: which positions row 0 reads",
+       "rows": [
+        [
+         "•",
+         "•",
+         "•",
+         "•",
+         "•",
+         "•",
+         "•",
+         "•"
+        ]
+       ],
+       "rowLabels": [
+        "row 0"
+       ],
+       "colLabels": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+       ]
+      }
+     ]
+    }
+   },
+   "question": "What has gone wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "leak",
+      "text": "Every output row now mixes all 8 positions, later ones too, so the model reads ahead and fits only length 8",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: attention mixes positions too, so a second mixing step is harmless",
+      "why": "Attention mixes positions under the causal mask. $\\mathbf A$ has no mask, so position 0 reads position 7."
+     },
+     {
+      "id": "cost",
+      "text": "Only the cost: it is the same layer with more weights",
+      "why": "It is a different layer. Rows that were independent now depend on each other."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which positions does output row 0 depend on?"
+    },
+    {
+     "rung": "point",
+     "text": "Row 0 of $\\mathbf A\\mathbf X$ is a mix of all 8 rows of $\\mathbf X$.",
+     "highlight": [
+      "A-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Position 0 sees position 7: the mask is broken."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the falling loss is the model reading the answer from later positions.",
+    "generic": "Not quite. Ask what row 0 of $\\mathbf A\\mathbf X$ depends on.",
+    "byKey": {
+     "fine": "You trusted the mask to cover it. Only attention is masked; this matrix reaches every position.",
+     "cost": "You counted weights only. The layer's outputs now depend on other positions."
+    }
+   },
+   "explain": {
+    "text": "In a block, attention mixes positions (under the mask) and the MLP mixes features of one position. Mixing positions inside the MLP leaks the future and ties the model to one length."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The block in code",
+   "prose": "Write `transformer_block(x, params, h)` for $\\mathbf x$ of shape $(T, d)$, with `layernorm` from `nt_ops_l2` and `attention`, `causal_mask`, `split_heads`, `merge_heads` from `seq_ops_l3`. Every projection has a bias. `PB` holds planted weights; `X6` is 6 positions of width 8.",
+   "question": "Complete `transformer_block`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l3 import attention, causal_mask, merge_heads, split_heads\n\n\ndef transformer_block(x, params, h):\n    # x: (T, d). Pre-norm: x + Attn(LN1(x)), then x + MLP(LN2(x)).\n    # Attention: project with Wq, bq, Wk, bk, Wv, bv; split into h heads; causal attention; merge; Wo, bo.\n    # The ops take and return Tensors: use .data for the array.\n    ...\n",
+    "solution": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l3 import attention, causal_mask, merge_heads, split_heads\n\n\ndef transformer_block(x, params, h):\n    p = params\n    x = np.asarray(x, dtype=float)\n    T = x.shape[-2]\n    a = layernorm(x, p['ln1_g'], p['ln1_b'])\n    q, k, v = (split_heads(a @ p[w] + p[b], h) for w, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n    att = merge_heads(attention(q, k, v, causal_mask(T))) @ p['Wo'] + p['bo']\n    x = x + att.data\n    m = layernorm(x, p['ln2_g'], p['ln2_b'])\n    return x + ((m @ p['W1'] + p['b1']).relu() @ p['W2'] + p['b2']).data\n",
+    "prelude": "import numpy as np\n\n\ndef planted(d, dm, seed):\n    g = np.random.default_rng(seed)\n    p = {}\n    for k in ('Wq', 'Wk', 'Wv', 'Wo'):\n        p[k] = g.standard_normal((d, d)) / np.sqrt(d)\n    p['W1'] = g.standard_normal((d, dm)) / np.sqrt(d)\n    p['W2'] = g.standard_normal((dm, d)) / np.sqrt(dm)\n    for k, n in (('bq', d), ('bk', d), ('bv', d), ('bo', d), ('b1', dm), ('b2', d), ('ln1_b', d), ('ln2_b', d)):\n        p[k] = 0.1 * g.standard_normal(n)\n    p['ln1_g'] = 1 + 0.2 * g.standard_normal(d)\n    p['ln2_g'] = 1 + 0.2 * g.standard_normal(d)\n    return p\n\n\nPB = planted(8, 32, 3)\nX6 = np.random.default_rng(5).standard_normal((6, 8)) * 2 + 1\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+     "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py"
+    },
+    "examples": [
+     {
+      "call": "transformer_block(X6, PB, 2).shape",
+      "compare": "equal",
+      "expect": "(6, 8)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "transformer_block(X6, PB, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.2858498809342409, -1.6294526698581109, -1.8035790206012157, 1.1365143217568034, 2.852954199789849, 1.8905142289746373, -1.052051124256574, -3.3972817238897353], [2.9282554547950217, 4.035473545730765, 1.1571075059089906, -2.203627380375299, -2.599609492650555, 5.011857534725959, 0.5975553185490816, -2.678935363357159], [2.1885180304817244, -2.5817427629082164, -0.1339896500707004, 0.2388024917905161, -2.286800471660672, 2.6068736794796736, 0.41319006571980677, 0.06819947302371779], [2.187501937614988, 3.4021330959346057, -2.572104228766642, -0.9632818168614875, -2.0244136750198467, 0.7292651508280984, -2.1550839067594554, 1.4995727452422312], [0.38302388032128426, 0.22620785809646282, 0.1986800503311148, 1.3961393590595896, -1.8209587304904016, -0.9905293053928932, 0.6458601137640932, 0.1388035675101668], [3.250221074657679, 3.131137873707101, -2.6548815580563834, 0.8219540956263418, -2.725803080501324, 0.8158205151973588, 0.6461891933387662, -1.4334184329685034]]"
+     },
+     {
+      "call": "transformer_block(X6, PB, 4).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.2858498809342409, -1.6294526698581109, -1.8035790206012157, 1.1365143217568034, 2.852954199789849, 1.8905142289746373, -1.052051124256574, -3.3972817238897353], [2.8139294813917237, 3.6775750251372283, 2.162688088572647, -2.024341174324372, -2.877747904079044, 4.805861950484971, 0.6982916391931893, -1.7780199904289713], [2.0693456168759394, -2.721536805469995, 0.3289552964749356, 0.2153977551182069, -2.7204269956108, 2.563396514594249, 0.4063197234950794, 0.7522716976669142], [2.106924710842489, 3.8881573087480947, -3.393650943074808, -0.7969630259852629, -1.8772403132754656, 0.8954349046083161, -2.135349580188218, 1.1550381850611022], [0.2156790279308256, 0.5999741204035063, 0.19049267976967688, 1.4745510259784227, -1.5853458139823786, -1.0765549792465026, 0.6804613119568033, 0.09567803527050783], [3.0967864406797854, 3.696324429582788, -2.719396873873832, 0.8322712695455805, -2.183698333292935, 0.8036431319115037, 0.8935438794026179, -1.631140429997334]]"
+     },
+     {
+      "call": "transformer_block(X6[:1], PB, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.2858498809342409, -1.6294526698581102, -1.803579020601216, 1.1365143217568034, 2.852954199789849, 1.8905142289746373, -1.0520511242565742, -3.3972817238897353]]"
+     },
+     {
+      "setup": "Y6 = X6.copy(); Y6[5] = 0",
+      "call": "np.allclose(transformer_block(X6, PB, 2)[:5], transformer_block(Y6, PB, 2)[:5])",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "transformer_block(X6, dict(PB, Wo=np.zeros((8, 8)), bo=np.zeros(8), W2=np.zeros((32, 8)), b2=np.zeros(8)), 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.6038628505068948, -1.64871799125629, 0.5032767558095029, 1.840890476131043, 3.2720930649792854, 1.2194127986436163, -0.10529464107246489, -0.5695607106885567], [2.4974915414691825, 4.269566085917155, 1.5455375516894434, -1.4666573280615434, -0.9165304108721775, 4.200038177998223, 1.4057648810172167, -2.4642696848791696], [0.8326076143659484, -1.326451946889497, -0.258576188123109, 0.023988353446285138, -0.42662674326448724, 2.106756940706579, 0.8738280561494217, -0.17886251606520953], [1.819275653114234, 2.659710614122648, -2.286046742811354, 0.48653974726901195, -0.9614947120880251, 0.6536895502759359, -1.5788374935077174, 1.0413807880751824], [0.9242285179118636, 0.39132449808302205, -1.0958530102404924, 0.20761933905381458, -1.1826578033914181, -1.710417492409479, 1.4495714649197864, -1.218699875782732], [3.3405922023565866, 2.4331753117476724, -2.9956333848994423, 1.5442577388249759, -1.2034332551620897, 1.0661144403165383, 1.0872639851388433, -2.9768595764622416]]"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests, compared to $10^{-9}$ against the reference block. Test 3 is one token; test 4 is a leak test (changing the last token moves no earlier output); test 5 zeroes both output layers.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l3 import attention, causal_mask, merge_heads, split_heads\n\n\ndef transformer_block(x, params, h):\n    p = params\n    x = np.asarray(x, dtype=float)\n    T = x.shape[-2]\n    a = x\n    q, k, v = (split_heads(a @ p[w] + p[b], h) for w, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n    att = merge_heads(attention(q, k, v, causal_mask(T))) @ p['Wo'] + p['bo']\n    x = layernorm(x + att.data, p['ln1_g'], p['ln1_b']).data\n    m = x\n    return layernorm(x + ((m @ p['W1'] + p['b1']).relu() @ p['W2'] + p['b2']).data, p['ln2_g'], p['ln2_b']).data\n",
+      "test": 1,
+      "symptom": "Post-norm: normalises after each addition."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l3 import attention, causal_mask, merge_heads, split_heads\n\n\ndef transformer_block(x, params, h):\n    p = params\n    x = np.asarray(x, dtype=float)\n    T = x.shape[-2]\n    a = layernorm(x, p['ln1_g'], p['ln1_b'])\n    q, k, v = (split_heads(a @ p[w] + p[b], h) for w, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n    att = merge_heads(attention(q, k, v, causal_mask(T))) @ p['Wo'] + p['bo']\n    x = x + att.data\n    m = layernorm(x, p['ln2_g'], p['ln2_b'])\n    return ((m @ p['W1'] + p['b1']).relu() @ p['W2'] + p['b2']).data\n",
+      "test": 1,
+      "symptom": "No residual around the MLP: the block replaces x."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l3 import attention, causal_mask, merge_heads, split_heads\n\n\ndef transformer_block(x, params, h):\n    p = params\n    x = np.asarray(x, dtype=float)\n    T = x.shape[-2]\n    a = layernorm(x, p['ln1_g'], p['ln1_b'])\n    q, k, v = (split_heads(a @ p[w] + p[b], h) for w, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n    att = merge_heads(attention(q, k, v, causal_mask(T))) @ p['Wo'] + p['bo']\n    m = layernorm(x, p['ln2_g'], p['ln2_b'])\n    return x + att.data + ((m @ p['W1'] + p['b1']).relu() @ p['W2'] + p['b2']).data\n",
+      "test": 1,
+      "symptom": "LN 2 reads x from before the attention update."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l3 import attention, causal_mask, merge_heads, split_heads\n\n\ndef transformer_block(x, params, h):\n    p = params\n    x = np.asarray(x, dtype=float)\n    T = x.shape[-2]\n    a = layernorm(x, p['ln1_g'], p['ln1_b'])\n    q, k, v = (split_heads(a @ p[w] + p[b], h) for w, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n    att = merge_heads(attention(q, k, v, None)) @ p['Wo'] + p['bo']\n    x = x + att.data\n    m = layernorm(x, p['ln2_g'], p['ln2_b'])\n    return x + ((m @ p['W1'] + p['b1']).relu() @ p['W2'] + p['b2']).data\n",
+      "test": 1,
+      "symptom": "No causal mask."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Keep the unnormalised $\\mathbf x$ for the additions; only the parts read the normalised copies."
+    },
+    {
+     "rung": "point",
+     "text": "The ops return Tensors: add `.data` before adding to the array `x`."
+    },
+    {
+     "rung": "step",
+     "text": "`x = x + Attn(LN1(x)).data`, then `x + MLP(LN2(x)).data`."
+    }
+   ],
+   "feedback": {
+    "correct": "That matches the reference block, and the last token moves no earlier output.",
+    "generic": "Not quite. Check which vector each layer norm reads and that both outputs are added to $\\mathbf x$."
+   },
+   "explain": {
+    "text": "Two lines carry the block: each adds a part's output to the vector the part read through its norm. The leak test passes because only attention mixes positions, and it is masked."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Before or after the addition",
+   "prose": "Vaswani et al. (2017) normalised after each addition: $\\mathbf x \\leftarrow \\operatorname{LN}(\\mathbf x + \\operatorname{Attn}(\\mathbf x))$, called **post-norm**. GPT-2 and most models since normalise before each part, as we do.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "one block"
+     ],
+     "rows": [
+      [
+       "pre-norm",
+       "$\\mathbf x + \\operatorname{Attn}(\\operatorname{LN}(\\mathbf x))$, then $+\\operatorname{MLP}(\\operatorname{LN}(\\cdot))$"
+      ],
+      [
+       "post-norm",
+       "$\\operatorname{LN}(\\mathbf x + \\operatorname{Attn}(\\mathbf x))$, then $\\operatorname{LN}(\\cdot + \\operatorname{MLP}(\\cdot))$"
+      ]
+     ]
+    }
+   },
+   "question": "Follow the path from a block's output back to its input. What does post-norm put on it that pre-norm leaves off?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ln",
+      "text": "A layer norm after each addition, so no plain identity path",
+      "correct": true
+     },
+     {
+      "id": "mask",
+      "text": "The causal mask on the attention scores",
+      "why": "Both forms mask attention in the same way."
+     },
+     {
+      "id": "same",
+      "text": "Nothing: the two compute the same function",
+      "why": "They differ: where the norm sits changes what each block outputs."
+     },
+     {
+      "id": "mlp",
+      "text": "A second MLP after the first one",
+      "why": "Both have one MLP per block."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Trace $\\mathbf x$ along the addition only."
+    },
+    {
+     "rung": "point",
+     "text": "In post-norm the sum goes through LN before it leaves the block.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Pre-norm's main path is additions only."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: pre-norm keeps a clean identity path from the last block to the first.",
+    "generic": "Not quite. Compare what sits on the main path in each row.",
+    "byKey": {
+     "same": "Move a norm and you change the function: post-norm rescales the sum itself."
+    }
+   },
+   "explain": {
+    "text": "With pre-norm, $\\mathbf x$ passes every block through additions only, so its gradient reaches early blocks directly. That is a likely reason deep pre-norm stacks need less care over warm-up (Xiong et al., 2020). Post-norm can still train well with tuning."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A block with no attention",
+   "prose": "Edge case: delete the attention part, leaving $\\mathbf x \\leftarrow \\mathbf x + \\operatorname{MLP}(\\operatorname{LN}_2(\\mathbf x))$. Feed it 8 positions, then change only the token at position 3 (counting from 0).",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "x0",
+      "x1",
+      "x2",
+      "x3",
+      "x4",
+      "x5",
+      "x6",
+      "x7"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       3,
+       3
+      ],
+      "label": "changed"
+     }
+    }
+   },
+   "question": "How many of the 8 output rows change?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "causal",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which part of the block could carry position 3's change to another row?"
+    },
+    {
+     "rung": "point",
+     "text": "Layer norm and the MLP act on one row at a time.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Only row 3 changes."
+    }
+   ],
+   "feedback": {
+    "correct": "One: without attention every position is processed alone.",
+    "generic": "Not quite. Ask which step reads more than one row.",
+    "byKey": {
+     "causal": "That is the full block: attention would carry the change to positions 3 to 7. With attention removed, nothing does.",
+     "all": "No step here reads other rows, and even attention would not reach back to rows 0 to 2."
+    }
+   },
+   "explain": {
+    "text": "Without attention the block is a per-position MLP with a skip, so 1 row changes: row 3. Attention is the only part that moves information between positions."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Checking the gradient",
+   "prose": "The autograd builds the block's backward pass from its ops. Check it: write `block_grad_check(fn, x, params, M)` returning `grad_check` for the loss $\\sum \\operatorname{fn}(\\mathbf x) \\odot \\mathbf M$, over $\\mathbf x$ and every parameter. `good` is `seq_ops_l4.block` with 2 heads; `no_bo_grad` hides a bug.",
+   "question": "Complete `block_grad_check`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    # Wrap x and every array of params in a Tensor. The loss is (fn(X, P) * M).sum().\n    # Return grad_check over X and every parameter Tensor.\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    X = Tensor(np.array(x, dtype=float))\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    return grad_check(lambda: (fn(X, P) * M).sum(), [X] + list(P.values()))\n",
+    "prelude": "import numpy as np\nfrom autograd import Tensor\nfrom seq_ops_l4 import block, init_block\n\n_g = np.random.default_rng(8)\nP4 = init_block(4, 8, seed=2)\nfor _k in P4:\n    P4[_k] = P4[_k] + 0.1 * _g.standard_normal(P4[_k].shape)\nX3 = _g.standard_normal((3, 4))\nM3 = _g.standard_normal((3, 4))\n\n\ndef good(x, P):\n    return block(x, P, 2)\n\n\ndef no_bo_grad(x, P):\n    # a planted bug: the attention output bias is used as a constant, so it never gets a gradient\n    Q = dict(P)\n    Q['bo'] = P['bo'].data\n    return block(x, Q, 2)\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+     "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+     "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py"
+    },
+    "examples": [
+     {
+      "call": "block_grad_check(good, X3, P4, M3) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "tests": [
+     {
+      "call": "block_grad_check(good, X3, P4, M3) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "block_grad_check(no_bo_grad, X3, P4, M3) > 1e-3",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "X0 = X3.copy(); block_grad_check(good, X3, P4, M3)",
+      "call": "np.array_equal(X0, X3)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "isinstance(block_grad_check(good, X3[:1], P4, M3[:1]), float)",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. Test 1 needs the reference block below $10^{-6}$; test 2 needs your check to catch a planted block whose output bias gets no gradient; test 3 checks that `X3` is unchanged.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    X = Tensor(np.array(x, dtype=float))\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    return grad_check(lambda: (fn(X, P) * M).sum(), [X])\n",
+      "test": 2,
+      "symptom": "Checks the input only, so a parameter with no gradient slips through."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    X = Tensor(np.array(x, dtype=float))\n    P = params\n    return grad_check(lambda: (fn(X, P) * M).sum(), [X] + list(P.values()))\n",
+      "test": 1,
+      "symptom": "Leaves the parameters as arrays."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    X = Tensor(np.array(x, dtype=float))\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    return grad_check(lambda: (fn(X, P) * M).sum(), [X] + list(params.values()))\n",
+      "test": 1,
+      "symptom": "Hands grad_check the plain arrays instead of the Tensors the loss uses."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`grad_check(f, params)` wants a function of no arguments and a list of Tensors."
+    },
+    {
+     "rung": "point",
+     "text": "Build `X` and a dict `P` of Tensors, then `lambda: (fn(X, P) * M).sum()`."
+    },
+    {
+     "rung": "step",
+     "text": "Pass `[X] + list(P.values())` so every parameter is checked."
+    }
+   ],
+   "feedback": {
+    "correct": "The reference block agrees with central differences, and the planted bug shows up.",
+    "generic": "Not quite. Wrap every array in a Tensor, and pass all of them to `grad_check`."
+   },
+   "explain": {
+    "text": "A check over the input alone would miss the bug: $\\mathbf b_O$ gets no gradient, but nothing upstream depends on that. Checking every parameter is what catches a wire left out of the backward pass."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The transformer block",
+   "prose": "A pre-norm block of width $d$ computes $$\\mathbf x \\leftarrow \\mathbf x + \\operatorname{Attn}(\\operatorname{LN}_1(\\mathbf x)), \\qquad \\mathbf x \\leftarrow \\mathbf x + \\operatorname{MLP}(\\operatorname{LN}_2(\\mathbf x)),$$ with the MLP $d \\to 4d \\to d$ on each position. Both parts keep the shape $(T, d)$, so blocks stack.",
+   "question": "Which part of the block moves information from one position to another?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "attn",
+      "text": "Causal attention",
+      "correct": true
+     },
+     {
+      "id": "mlp",
+      "text": "The MLP",
+      "why": "The MLP acts on each row alone: it mixes features of one position."
+     },
+     {
+      "id": "ln",
+      "text": "Layer norm",
+      "why": "Layer norm rescales each position by its own mean and spread."
+     },
+     {
+      "id": "add",
+      "text": "The additions",
+      "why": "An addition adds a part's output at the same position."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: attention mixes positions; the MLP mixes features.",
+    "generic": "Not quite. Which step reads more than one row?"
+   },
+   "explain": {
+    "text": "Attention is the one step that reads other rows, and the mask limits it to earlier ones. Everything else acts row by row, so a block's leaks can only come from attention."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Every language model",
+   "prose": "A vendor's news model reads headlines and scores each stock. Its card says: 12 blocks like ours, width 768, 12 heads, a vocabulary of 50,257 tokens.",
+   "question": "What turns this lesson's block into that model?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "stack",
+      "text": "Stack copies, put a tokeniser in front, and scale up",
+      "correct": true
+     },
+     {
+      "id": "rnn",
+      "text": "Swap attention for a recurrent layer at scale",
+      "why": "The card says blocks like ours: attention stays."
+     },
+     {
+      "id": "mix",
+      "text": "Use a different kind of block at each depth",
+      "why": "Every block has the same form; only the weights differ."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is anything in the card a new kind of part?"
+    },
+    {
+     "rung": "point",
+     "text": "Blocks, width, heads and a vocabulary: the same parts, more of them."
+    },
+    {
+     "rung": "step",
+     "text": "Stack, tokenise, scale."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The next course, gpt, does exactly that: stacking, a tokeniser and scale.",
+    "generic": "Not quite. Read the card again: it lists sizes, not new parts."
+   },
+   "explain": {
+    "text": "Each block keeps the shape $(T, d)$, so copies stack, each with its own weights. A tokeniser turns text into ids and embeddings make them vectors."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A pre-norm block computes $\\mathbf x + \\operatorname{Attn}(\\operatorname{LN}_1(\\mathbf x))$, then adds $\\operatorname{MLP}(\\operatorname{LN}_2(\\mathbf x))$; every step keeps the shape $(T, d)$.",
+   "Attention mixes positions under the causal mask; the MLP ($d \\to 4d \\to d$, ReLU here, GELU in GPT-2) mixes the features of each position alone.",
+   "Post-norm (Vaswani et al., 2017) normalises after each addition; pre-norm keeps a plain identity path through every block."
+  ],
+  "formula": {
+   "name": "Pre-norm block",
+   "tex": "\\mathbf x \\leftarrow \\mathbf x + \\operatorname{Attn}(\\operatorname{LN}_1(\\mathbf x)),\\quad \\mathbf x \\leftarrow \\mathbf x + \\operatorname{MLP}(\\operatorname{LN}_2(\\mathbf x))",
+   "note": "Each part reads a normalised copy and writes back by addition."
+  },
+  "trap": "An MLP that mixes positions leaks later tokens and ties the model to one length; only attention, masked, may mix positions."
+ },
+ "quiz": [
+  {
+   "id": "q-hidden",
+   "difficulty": 2,
+   "prose": "A block has width $d = 48$.",
+   "question": "How wide is the MLP's hidden layer at one position?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 192,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "d",
+      "value": 48,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sq",
+      "value": 2304,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4 \\times 48 = 192$.",
+    "generic": "Not quite. The MLP widens by 4.",
+    "byKey": {
+     "d": "That is the width it narrows back to.",
+     "sq": "You squared $d$. The hidden layer is $4d$."
+    }
+   },
+   "explain": {
+    "text": "The MLP goes $d \\to 4d \\to d$: 48, 192, 48."
+   }
+  },
+  {
+   "id": "q-prenorm",
+   "difficulty": 2,
+   "prose": "Four ways to write one sublayer.",
+   "question": "Which is pre-norm?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$\\mathbf x + \\operatorname{Attn}(\\operatorname{LN}(\\mathbf x))$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$\\operatorname{LN}(\\mathbf x + \\operatorname{Attn}(\\mathbf x))$",
+      "why": "That normalises after the addition: post-norm."
+     },
+     {
+      "id": "c",
+      "text": "$\\operatorname{Attn}(\\operatorname{LN}(\\mathbf x))$",
+      "why": "That drops $\\mathbf x$: there is no residual."
+     },
+     {
+      "id": "d",
+      "text": "$\\operatorname{LN}(\\operatorname{Attn}(\\mathbf x))$",
+      "why": "No addition, and the norm comes after."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: normalise, run the part, add to $\\mathbf x$.",
+    "generic": "Not quite. Pre-norm normalises the part's input and adds to the raw $\\mathbf x$."
+   },
+   "explain": {
+    "text": "Pre-norm: the norm sits inside the branch, and the addition keeps $\\mathbf x$ as it was."
+   }
+  },
+  {
+   "id": "q-reach",
+   "difficulty": 3,
+   "prose": "A full block (with causal attention) reads 6 positions, numbered 0 to 5. Only the token at position 2 changes.",
+   "question": "How many output rows can change?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "before",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Rows 2, 3, 4 and 5: four.",
+    "generic": "Not quite. Which rows may attend to position 2?",
+    "byKey": {
+     "one": "That is a block without attention. Attention carries the change forward.",
+     "all": "Rows 0 and 1 cannot see position 2: the mask hides it.",
+     "before": "You counted rows 0 to 2. The change moves forward, not back."
+    }
+   },
+   "explain": {
+    "text": "Under the mask, position 2 is seen by itself and every later position: rows 2 to 5, so 4 rows."
+   }
+  },
+  {
+   "id": "q-axis",
+   "difficulty": 2,
+   "prose": "Inside a block, $\\mathbf x$ has shape $(T, d)$.",
+   "question": "What does each layer norm average over?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "feat",
+      "text": "The $d$ features of one position",
+      "correct": true
+     },
+     {
+      "id": "pos",
+      "text": "The $T$ positions of one feature",
+      "why": "That is batch norm along the sequence, and it would mix positions."
+     },
+     {
+      "id": "all",
+      "text": "Every entry of $\\mathbf x$",
+      "why": "That would let one position's values rescale another's."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: each position is normalised over its own features.",
+    "generic": "Not quite. Layer norm acts on one row at a time."
+   },
+   "explain": {
+    "text": "Layer norm uses each position's own mean and spread, so it never mixes positions."
+   }
+  }
+ ]
+}

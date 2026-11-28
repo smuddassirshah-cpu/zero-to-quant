@@ -1,0 +1,364 @@
+{
+ "id": "review-4",
+ "course": "sequence",
+ "level": 4,
+ "pass": 0.8,
+ "items": [
+  {
+   "id": "r-order",
+   "difficulty": 2,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "One pre-norm transformer block, from its input to its output.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Layer-normalise the stream"
+     },
+     {
+      "id": "b",
+      "text": "Masked multi-head attention on that copy"
+     },
+     {
+      "id": "c",
+      "text": "Add the attention output to the stream"
+     },
+     {
+      "id": "d",
+      "text": "Layer-normalise the stream again"
+     },
+     {
+      "id": "e",
+      "text": "The MLP on that copy, position by position"
+     },
+     {
+      "id": "f",
+      "text": "Add the MLP output to the stream"
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e",
+     "f"
+    ]
+   },
+   "feedback": {
+    "correct": "Normalise, attend, add; normalise, MLP, add.",
+    "generic": "Not quite. Each part follows its own layer norm, and its output is added before the next part reads.",
+    "byKey": {
+     "c": "The attention output is added straight after attention runs.",
+     "e": "The MLP reads the second normalised copy."
+    }
+   },
+   "explain": {
+    "text": "Each sublayer is \"normalise a copy, run the part, add its output to the stream\". Attention comes first."
+   }
+  },
+  {
+   "id": "r-count32",
+   "difficulty": 3,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A block has width $d = 32$, an MLP of width 128, biases everywhere and two layer norms with gain and shift.",
+   "question": "How many parameters does it hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12704,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "nob",
+      "value": 12352,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "heads",
+      "value": 25376,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "noln",
+      "value": 12576,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4{,}224 + 8{,}352 + 128 = 12{,}704$.",
+    "generic": "Not quite. Attention $4(d^2 + d)$, the MLP $2 \\cdot 32 \\cdot 128 + 128 + 32$, the norms $4d$.",
+    "byKey": {
+     "nob": "You dropped the biases and the shifts.",
+     "heads": "You multiplied attention by 4 heads.",
+     "noln": "You left out the layer norms."
+    }
+   },
+   "explain": {
+    "text": "Attention $4(1{,}024 + 32) = 4{,}224$, MLP $8{,}192 + 160 = 8{,}352$, norms 128: 12{,}704."
+   }
+  },
+  {
+   "id": "r-stream",
+   "difficulty": 2,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "At one position the stream starts at $\\mathbf x_0 = (0.5, -1)$. Attention writes $(1, 0.25)$, then the MLP writes $(-2, 1.5)$.",
+   "question": "What is the first coordinate of the stream at the end?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "nox0",
+      "value": -1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "last",
+      "value": -2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.5 + 1 - 2 = -0.5$.",
+    "generic": "Not quite. Add both writes to $\\mathbf x_0$.",
+    "byKey": {
+     "nox0": "You left out $\\mathbf x_0$: the stream keeps it.",
+     "last": "That is the MLP's write alone; nothing is replaced.",
+     "sign": "Check the sign: $0.5 + 1 - 2$."
+    }
+   },
+   "explain": {
+    "text": "The stream is the sum: $(0.5, -1) + (1, 0.25) + (-2, 1.5) = (-0.5, 0.75)$."
+   }
+  },
+  {
+   "id": "r-mix",
+   "difficulty": 2,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A block reads 10 positions. Its output at position 4 changes when the token at position 2 changes.",
+   "question": "Which part carried the change from position 2 to position 4?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "attn",
+      "text": "Attention",
+      "correct": true
+     },
+     {
+      "id": "mlp",
+      "text": "The MLP",
+      "why": "The MLP acts on each position alone."
+     },
+     {
+      "id": "ln",
+      "text": "A layer norm",
+      "why": "Each layer norm uses one position's own features."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: attention is the only part that reads other positions.",
+    "generic": "Not quite. Which part reads more than one position?"
+   },
+   "explain": {
+    "text": "Only attention mixes positions, and the mask lets position 4 read positions 0 to 4."
+   }
+  },
+  {
+   "id": "r-post",
+   "difficulty": 3,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A colleague's block reads:\n\n```python\nx = layer_norm(x + attn(x))\nx = layer_norm(x + mlp(x))\n```",
+   "question": "What is it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "post",
+      "text": "A post-norm block, as in the 2017 paper",
+      "correct": true
+     },
+     {
+      "id": "pre",
+      "text": "A pre-norm block",
+      "why": "In pre-norm the norm sits inside the branch: `x + attn(layer_norm(x))`."
+     },
+     {
+      "id": "none",
+      "text": "A block with no residual path",
+      "why": "There is a residual: `x +` inside each line."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: the norm comes after each addition.",
+    "generic": "Not quite. Where does `layer_norm` sit relative to the addition?"
+   },
+   "explain": {
+    "text": "Normalising the sum is post-norm. Pre-norm normalises only the copy a part reads, so the stream itself runs through additions alone."
+   }
+  },
+  {
+   "id": "r-heads",
+   "difficulty": 3,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A block of width 48 has 6 heads of width 8, with biases on every projection.",
+   "question": "How many parameters does its attention hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9408,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "times",
+      "value": 56448,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nob",
+      "value": 9216,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4(48^2 + 48) = 9{,}408$, whatever the number of heads.",
+    "generic": "Not quite. Four $48 \\times 48$ matrices and four biases.",
+    "byKey": {
+     "times": "You multiplied by the 6 heads.",
+     "nob": "You left out the biases."
+    }
+   },
+   "explain": {
+    "text": "Heads are slices of the same matrices: $4(2{,}304 + 48) = 9{,}408$."
+   }
+  },
+  {
+   "id": "r-held",
+   "difficulty": 3,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A sorting model gets 100% on the 5,000 sequences it trained on. The task has $10^8$ possible inputs.",
+   "question": "What should you report?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "held",
+      "text": "Its accuracy on sequences held out from training",
+      "correct": true
+     },
+     {
+      "id": "train",
+      "text": "The 100% accuracy on its training set",
+      "why": "It may have memorised the 5,000; that score cannot tell."
+     },
+     {
+      "id": "loss",
+      "text": "Its final training loss, to 3 places",
+      "why": "A training loss has the same blind spot as training accuracy."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: only unseen inputs measure the skill.",
+    "generic": "Not quite. Which score could memorising inflate?"
+   },
+   "explain": {
+    "text": "Training scores reward memory. A held-out score is the evidence that the model learned the task."
+   }
+  },
+  {
+   "id": "r-model",
+   "difficulty": 4,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A one-block model over makemore's 27 symbols: context 8, $d = 32$, MLP 128, an untied unembedding with bias, a final layer norm. The block alone holds 12,704.",
+   "question": "How many parameters does the model hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 14779,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "tied",
+      "value": 13915,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nopos",
+      "value": 14523,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$864 + 256 + 12{,}704 + 64 + 891 = 14{,}779$.",
+    "generic": "Not quite. Embeddings, positions, the block, the final norm, the unembedding.",
+    "byKey": {
+     "tied": "You left out the unembedding matrix; it is untied here.",
+     "nopos": "You left out the 8 position vectors."
+    }
+   },
+   "explain": {
+    "text": "$27 \\times 32 + 8 \\times 32 + 12{,}704 + 2 \\times 32 + (32 \\times 27 + 27) = 14{,}779$."
+   }
+  }
+ ]
+}

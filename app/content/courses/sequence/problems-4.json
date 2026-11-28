@@ -1,0 +1,602 @@
+{
+ "id": "problems-4",
+ "course": "sequence",
+ "level": 4,
+ "title": "Sizing and reading a transformer",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-block96",
+   "difficulty": 3,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A research team sizes one block of width $d = 96$: 4 heads, a hidden layer of 384 units, a bias vector on every projection, and two normalisation layers with gain and shift.",
+   "parts": [
+    {
+     "question": "What does its attention cost in parameters, the four biases included?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 37248,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "heads",
+        "value": 148992,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "nob",
+        "value": 36864,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$4(96^2 + 96) = 37{,}248$.",
+      "generic": "Not quite. Size the four square projections, then add their bias vectors.",
+      "byKey": {
+       "heads": "The heads share the matrices: do not multiply by 4.",
+       "nob": "Add the four biases of 96."
+      }
+     },
+     "explain": {
+      "text": "$4(96^2 + 96) = 37{,}248$. Attention holds $4(d^2 + d)$ for any number of heads."
+     }
+    },
+    {
+     "question": "And the feed-forward part, with its two bias vectors?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 74208,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "nob",
+        "value": 73728,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$36{,}864 + 384 + 36{,}864 + 96 = 74{,}208$.",
+      "generic": "Not quite. Two matrices of $96 \\times 384$ and two biases.",
+      "byKey": {
+       "nob": "Add the biases, 384 and 96."
+      }
+     },
+     "explain": {
+      "text": "$36{,}864 + 384 + 36{,}864 + 96 = 74{,}208$. The MLP is $d \\cdot 4d + 4d + 4d \\cdot d + d$."
+     }
+    },
+    {
+     "question": "Using attention 37{,}248 and the MLP 74{,}208, how many does the whole block hold?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 111840,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "noln",
+        "value": 111456,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Add the two norms' $4 \\times 96 = 384$: 111{,}840.",
+      "generic": "Not quite. Add the layer norms.",
+      "byKey": {
+       "noln": "The two layer norms hold 384 more."
+      }
+     },
+     "explain": {
+      "text": "Add the two norms' $4 \\times 96 = 384$: 111{,}840. Two layer norms, each a gain and a shift of 96."
+     }
+    },
+    {
+     "question": "What share of the block is the MLP? Give a percentage to 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.664,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "attn",
+        "value": 0.333,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ],
+      "unit": "%"
+     },
+     "feedback": {
+      "correct": "74{,}208 of 111{,}840: 66.4%.",
+      "generic": "Not quite. Divide the MLP by the block.",
+      "byKey": {
+       "attn": "That is attention's share."
+      }
+     },
+     "explain": {
+      "text": "74{,}208 of 111{,}840: 66.4%. The MLP holds about two thirds: 66.4%."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-twoblock",
+   "difficulty": 4,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "The team builds a model from two such blocks of 111,840 each. It reads 500 tokens and at most 64 positions, and ends with a closing normalisation and a separate output matrix plus its bias.",
+   "parts": [
+    {
+     "question": "How many parameters does the model hold?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 326516,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "one",
+        "value": 214676,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "nou",
+        "value": 278016,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$48{,}000 + 6{,}144 + 223{,}680 + 192 + 48{,}500 = 326{,}516$.",
+      "generic": "Not quite. Sum the token table, the position table, both blocks, the closing norm and the output layer.",
+      "byKey": {
+       "one": "There are two blocks.",
+       "nou": "You left out the unembedding."
+      }
+     },
+     "explain": {
+      "text": "$48{,}000 + 6{,}144 + 223{,}680 + 192 + 48{,}500 = 326{,}516$. Every part adds; nothing is shared while the model is untied."
+     }
+    },
+    {
+     "question": "Of the 326{,}516, what share is the token embeddings plus the unembedding and its bias? Give a percentage to 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.296,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "emb",
+        "value": 0.147,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ],
+      "unit": "%"
+     },
+     "feedback": {
+      "correct": "$(48{,}000 + 48{,}500) / 326{,}516$ is 29.6%.",
+      "generic": "Not quite. Add the two vocabulary-sized parts and divide.",
+      "byKey": {
+       "emb": "That counts the embeddings only."
+      }
+     },
+     "explain": {
+      "text": "$(48{,}000 + 48{,}500) / 326{,}516$ is 29.6%. About 30% of the model sits in the vocabulary tables."
+     }
+    },
+    {
+     "question": "Now tie the embeddings: the unembedding reuses the embedding matrix and keeps its bias. How many parameters remain?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 278516,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "nobias",
+        "value": 278016,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "326{,}516 less one $500 \\times 96$ matrix: 278{,}516.",
+      "generic": "Not quite. One copy of the matrix goes.",
+      "byKey": {
+       "nobias": "The bias of 500 stays."
+      }
+     },
+     "explain": {
+      "text": "326{,}516 less one $500 \\times 96$ matrix: 278{,}516. Tying removes the $V \\times d$ unembedding matrix; the bias of 500 stays."
+     }
+    },
+    {
+     "question": "In the tied model of 278{,}516, what share do the embedding matrix and the bias take? Give a percentage to 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.174,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "old",
+        "value": 0.296,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ],
+      "unit": "%"
+     },
+     "feedback": {
+      "correct": "$(48{,}000 + 500) / 278{,}516$ is 17.4%.",
+      "generic": "Not quite. One matrix and the bias, over the tied total.",
+      "byKey": {
+       "old": "That is the untied share."
+      }
+     },
+     "explain": {
+      "text": "$(48{,}000 + 500) / 278{,}516$ is 17.4%. Tying cuts the vocabulary's share from about 30% to about 17%."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-stream3",
+   "difficulty": 4,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A toy stream of width 3 at one position: the embedding is $\\mathbf x_0 = (1, 0, 2)$, attention writes $\\Delta_1 = (0.5, -1, 0)$ and the MLP writes $\\Delta_2 = (-0.5, 0.5, 1)$.",
+   "parts": [
+    {
+     "question": "What is the second coordinate of the stream after both writes? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.5,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "last",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "first",
+        "value": -1,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0 - 1 + 0.5 = -0.5$.",
+      "generic": "Not quite. Add both writes to $\\mathbf x_0$.",
+      "byKey": {
+       "last": "That is the MLP's write; the stream keeps every term.",
+       "first": "That stops after attention. Add the MLP's write too."
+      }
+     },
+     "explain": {
+      "text": "$0 - 1 + 0.5 = -0.5$. The stream is $(1, -0.5, 3)$."
+     }
+    },
+    {
+     "question": "Using $\\mathbf x_2 = (1, -0.5, 3)$, what is its length $\\lVert \\mathbf x_2 \\rVert$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.2016,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "sq",
+        "value": 10.25,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\sqrt{1 + 0.25 + 9} = \\sqrt{10.25} \\approx 3.2016$.",
+      "generic": "Not quite. Square, add, take the root.",
+      "byKey": {
+       "sq": "That is the squared length. Take the root."
+      }
+     },
+     "explain": {
+      "text": "$\\sqrt{1 + 0.25 + 9} = \\sqrt{10.25} \\approx 3.2016$. The length of a vector is the root of the sum of its squared coordinates."
+     }
+    },
+    {
+     "question": "What is the dot product $\\Delta_1 \\cdot \\Delta_2$? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.75,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "pos",
+        "value": 0.75,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-0.25 - 0.5 + 0 = -0.75$.",
+      "generic": "Not quite. Multiply coordinate by coordinate and add.",
+      "byKey": {
+       "pos": "Check the signs: $0.5 \\times (-0.5)$ and $-1 \\times 0.5$ are both negative."
+      }
+     },
+     "explain": {
+      "text": "$-0.25 - 0.5 + 0 = -0.75$. A negative dot product means the two writes point partly against each other."
+     }
+    },
+    {
+     "question": "What is $\\lVert \\Delta_1 + \\Delta_2 \\rVert$, the length of the two writes together? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.118,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "sum",
+        "value": 2.3428,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\Delta_1 + \\Delta_2 = (0, -0.5, 1)$, of length 1.1180.",
+      "generic": "Not quite. Add the vectors first, then take the length.",
+      "byKey": {
+       "sum": "You added the lengths. Vectors that point apart add to less."
+      }
+     },
+     "explain": {
+      "text": "$\\Delta_1 + \\Delta_2 = (0, -0.5, 1)$, of length 1.1180. Each write is longer than 1.1, yet together they reach only 1.1180: they partly cancel."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-reverser",
+   "difficulty": 5,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "The reversal model of l16 knows 11 tokens (ten digits and a separator) and reads at most 12. It stacks two blocks of width 32, each with a hidden layer of 128 units, and ends in a separate output matrix with a bias. Each sequence scores its six written digits.",
+   "parts": [
+    {
+     "question": "A batch of 64 sequences of 12 tokens goes in. How many logits come out?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 8448,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "nov",
+        "value": 768,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "d",
+        "value": 24576,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$64 \\times 12 \\times 11 = 8{,}448$.",
+      "generic": "Not quite. One logit per token of the vocabulary, at every position of every sequence.",
+      "byKey": {
+       "nov": "Each position gives 11 logits, one per token.",
+       "d": "32 is the width of the stream; the logits are vocabulary-sized."
+      }
+     },
+     "explain": {
+      "text": "$64 \\times 12 \\times 11 = 8{,}448$. The logits have shape $(64, 12, 11)$."
+     }
+    },
+    {
+     "question": "How many parameters does the model hold?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 26571,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "one",
+        "value": 13867,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "tied",
+        "value": 26219,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$352 + 384 + 2 \\times 12{,}704 + 64 + 363 = 26{,}571$.",
+      "generic": "Not quite. Add the token and position tables, both 12,704-parameter blocks, the closing norm and the output layer.",
+      "byKey": {
+       "one": "There are two blocks.",
+       "tied": "The unembedding is untied here."
+      }
+     },
+     "explain": {
+      "text": "$352 + 384 + 2 \\times 12{,}704 + 64 + 363 = 26{,}571$. The blocks hold nearly all of it."
+     }
+    },
+    {
+     "question": "What share of the 26{,}571 sits in the two blocks? Give a percentage to 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.956,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "one",
+        "value": 0.478,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ],
+      "unit": "%"
+     },
+     "feedback": {
+      "correct": "$25{,}408 / 26{,}571$ is 95.6%.",
+      "generic": "Not quite. Two blocks over the total.",
+      "byKey": {
+       "one": "That is one block."
+      }
+     },
+     "explain": {
+      "text": "$25{,}408 / 26{,}571$ is 95.6%. With a vocabulary of 11, the tables are tiny next to the blocks."
+     }
+    },
+    {
+     "question": "A model that gives every token chance $1/11$ is scored on the six digits of one sequence. What is its summed loss in nats? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 14.387,
+      "tol": {
+       "abs": 0.002
+      },
+      "wrong": [
+       {
+        "id": "one",
+        "value": 2.398,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "ten",
+        "value": 13.816,
+        "tol": {
+         "abs": 0.002
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$6 \\ln 11 = 14.387$.",
+      "generic": "Not quite. Each digit costs $\\ln 11$; there are six.",
+      "byKey": {
+       "one": "That is one digit; six are scored.",
+       "ten": "There are 11 tokens, the separator included."
+      }
+     },
+     "explain": {
+      "text": "$6 \\ln 11 = 14.387$. Six scored digits at $\\ln 11$ each."
+     }
+    },
+    {
+     "question": "The trained model gives the right digit chance 0.99 at each of the six steps, independently. What is the chance it writes the whole sequence right? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.9415,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "one",
+        "value": 0.99,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "lin",
+        "value": 0.94,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.99^6 \\approx 0.9415$.",
+      "generic": "Not quite. All six must be right.",
+      "byKey": {
+       "one": "That is one digit.",
+       "lin": "You subtracted $6 \\times 0.01$. The chances multiply."
+      }
+     },
+     "explain": {
+      "text": "$0.99^6 \\approx 0.9415$. Whole-sequence accuracy is the product of the six chances, which is why it is the stricter score."
+     }
+    }
+   ]
+  }
+ ]
+}

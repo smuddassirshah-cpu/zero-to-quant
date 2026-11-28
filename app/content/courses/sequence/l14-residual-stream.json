@@ -1,0 +1,1178 @@
+{
+ "id": "l14-residual-stream",
+ "course": "sequence",
+ "title": "The residual stream",
+ "minutes": 14,
+ "objectives": [
+  "Explain the residual stream as a sum that every layer reads from and writes to."
+ ],
+ "skills": [
+  "sqn-block"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Reading the stream",
+   "prose": "A supplied 2-block model reverses six digits written after a separator. Here it reads 3 1 4 1 5 9 and the separator. Slide through the stages to see the vector at the separator's position (6) after the embedding and after each part.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "c0",
+      "c1",
+      "c2",
+      "c3",
+      "c4",
+      "c5"
+     ],
+     "showValues": true,
+     "decimals": 2,
+     "yMin": -3,
+     "yMax": 3,
+     "xLabel": "coordinate (first 6 of 32)",
+     "yLabel": "value"
+    },
+    "state": {
+     "values": {
+      "c0": 0.58,
+      "c1": -0.94,
+      "c2": -0.56,
+      "c3": 0.22,
+      "c4": 1.0,
+      "c5": -0.09
+     },
+     "caption": "Stream at position 6 after: embedding"
+    },
+    "controls": [
+     {
+      "bind": "frame",
+      "label": "stage",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "frames": [
+       {
+        "values": {
+         "c0": 0.58,
+         "c1": -0.94,
+         "c2": -0.56,
+         "c3": 0.22,
+         "c4": 1.0,
+         "c5": -0.09
+        },
+        "caption": "Stream at position 6 after: embedding"
+       },
+       {
+        "values": {
+         "c0": 0.19,
+         "c1": -0.63,
+         "c2": -0.91,
+         "c3": 0.3,
+         "c4": 0.57,
+         "c5": 0.09
+        },
+        "caption": "Stream at position 6 after: + attention 1"
+       },
+       {
+        "values": {
+         "c0": -0.27,
+         "c1": 0.28,
+         "c2": -1.26,
+         "c3": -0.21,
+         "c4": 0.69,
+         "c5": 1.08
+        },
+        "caption": "Stream at position 6 after: + MLP 1"
+       },
+       {
+        "values": {
+         "c0": -0.66,
+         "c1": 0.54,
+         "c2": -0.8,
+         "c3": -0.87,
+         "c4": -0.2,
+         "c5": 0.04
+        },
+        "caption": "Stream at position 6 after: + attention 2"
+       },
+       {
+        "values": {
+         "c0": -1.25,
+         "c1": 1.05,
+         "c2": -2.33,
+         "c3": -1.96,
+         "c4": 0.73,
+         "c5": 0.19
+        },
+        "caption": "Stream at position 6 after: + MLP 2"
+       }
+      ],
+      "frameLabels": [
+       "embedding",
+       "+ attention 1",
+       "+ MLP 1",
+       "+ attention 2",
+       "+ MLP 2"
+      ]
+     }
+    ]
+   },
+   "question": "By how much does coordinate c0 change in all, from the embedding to the end? Read the bars.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1.83,
+    "tol": {
+     "abs": 0.02
+    },
+    "wrong": [
+     {
+      "id": "end",
+      "value": -1.25,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "last",
+      "value": -0.59,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 1.83,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "From 0.58 to −1.25: a change of −1.83.",
+    "generic": "Not quite. Take the value at the last stage minus the value at the first.",
+    "byKey": {
+     "end": "That is where c0 ends up. Subtract where it started.",
+     "sign": "Check the sign: c0 ends lower than it starts.",
+     "last": "That is only the last step. Add up every stage's change, or take end minus start."
+    }
+   },
+   "explain": {
+    "text": "c0 moves at every stage, and the moves add up to −1.83. No stage resets the vector: each one adds to what is there."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The residual stream",
+   "prose": "Name it: the **residual stream** is the running sum $\\mathbf x_L = \\mathbf x_0 + \\sum_\\ell \\Delta_\\ell$. Each part reads the current sum through its own layer norm and writes its output $\\Delta_\\ell$ back by addition. The table gives coordinate c2 at position 6.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "term",
+      "c2 at position 6"
+     ],
+     "rows": [
+      [
+       "$\\mathbf x_0$ (embedding)",
+       "−0.558"
+      ],
+      [
+       "$\\Delta_1$ (attention 1)",
+       "−0.348"
+      ],
+      [
+       "$\\Delta_2$ (MLP 1)",
+       "−0.359"
+      ],
+      [
+       "$\\Delta_3$ (attention 2)",
+       "0.463"
+      ],
+      [
+       "$\\Delta_4$ (MLP 2)",
+       "−1.533"
+      ]
+     ]
+    }
+   },
+   "question": "What is c2 at the end of the model? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -2.335,
+    "tol": {
+     "abs": 0.002
+    },
+    "wrong": [
+     {
+      "id": "no-x0",
+      "value": -1.777,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "last",
+      "value": -2.091,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "sign",
+      "value": 2.335,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the embedding and all four updates."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathbf x_4 = \\mathbf x_0 + \\Delta_1 + \\Delta_2 + \\Delta_3 + \\Delta_4$.",
+     "highlight": [
+      "r0",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Sum the five numbers in the table."
+    }
+   ],
+   "feedback": {
+    "correct": "The five terms add to −2.335, the value at the end of the model.",
+    "generic": "Not quite. The final value is the embedding plus every update.",
+    "byKey": {
+     "no-x0": "You left out the embedding. It stays in the sum.",
+     "sign": "Check the sign: the terms add to a negative number.",
+     "last": "You added only the last update. Every part's write is still there."
+    }
+   },
+   "explain": {
+    "text": "−0.558 + (−0.348) + (−0.359) + (0.463) + (−1.533) = −2.335. The stream never forgets a write; later parts can only add more."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What each part reads",
+   "prose": "Two blocks give four parts, in order: attention 1, MLP 1, attention 2, MLP 2. Each reads the stream as it stands when its turn comes.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "part",
+      "reads",
+      "writes"
+     ],
+     "rows": [
+      [
+       "attention 1",
+       "$\\operatorname{LN}(\\mathbf x_0)$",
+       "$\\Delta_1$"
+      ],
+      [
+       "MLP 1",
+       "$\\operatorname{LN}(\\mathbf x_0 + \\Delta_1)$",
+       "$\\Delta_2$"
+      ],
+      [
+       "attention 2",
+       "?",
+       "$\\Delta_3$"
+      ],
+      [
+       "MLP 2",
+       "$\\operatorname{LN}(\\mathbf x_0 + \\cdots + \\Delta_3)$",
+       "$\\Delta_4$"
+      ]
+     ]
+    }
+   },
+   "question": "What does attention 2 read?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sum",
+      "text": "$\\operatorname{LN}(\\mathbf x_0 + \\Delta_1 + \\Delta_2)$",
+      "correct": true
+     },
+     {
+      "id": "mlp",
+      "text": "$\\operatorname{LN}(\\Delta_2)$, the MLP 1 output alone",
+      "why": "You treated block 1's output as a replacement. It is added to the stream, and attention 2 reads the sum."
+     },
+     {
+      "id": "x0",
+      "text": "$\\operatorname{LN}(\\mathbf x_0)$, the embedding",
+      "why": "The embedding is in the stream, but so are the first two updates."
+     },
+     {
+      "id": "all",
+      "text": "$\\operatorname{LN}(\\mathbf x_0 + \\Delta_1 + \\Delta_2 + \\Delta_3)$",
+      "why": "Attention 2 writes $\\Delta_3$; it cannot read its own output."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What has been added before attention 2 runs?"
+    },
+    {
+     "rung": "point",
+     "text": "Attention 1 and MLP 1 have written.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The embedding plus $\\Delta_1$ and $\\Delta_2$, normalised."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the sum so far, through its layer norm.",
+    "generic": "Not quite. Count the writes made before attention 2."
+   },
+   "explain": {
+    "text": "Every part reads everything written before it, so attention 2 can use the embedding and both of block 1's writes. That is why the stream is a shared workspace rather than a pipe."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "How big each write is",
+   "prose": "The bars give the length (norm) of the embedding, of each update and of the final stream at position 6. The five terms have lengths that add to 25.27, yet the final stream is only 12.20 long.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "x0",
+      "Δ1",
+      "Δ2",
+      "Δ3",
+      "Δ4",
+      "x4"
+     ],
+     "showValues": true,
+     "decimals": 2,
+     "yLabel": "length",
+     "xLabel": "position 6"
+    },
+    "state": {
+     "values": {
+      "x0": 4.06,
+      "Δ1": 3.76,
+      "Δ2": 3.76,
+      "Δ3": 5.8,
+      "Δ4": 7.9,
+      "x4": 12.2
+     }
+    }
+   },
+   "question": "Why is the final stream shorter than the sum of the lengths?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "angle",
+      "text": "The updates point in different directions, so they partly cancel",
+      "correct": true
+     },
+     {
+      "id": "norm",
+      "text": "Layer norm shrinks the stream after each addition",
+      "why": "In a pre-norm block the norm acts on the copy a part reads, never on the stream."
+     },
+     {
+      "id": "lost",
+      "text": "Some of the updates are lost along the way",
+      "why": "Nothing is lost: the stream is exactly the sum. A sum of vectors is shorter than the sum of their lengths unless they line up."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When is the length of a sum the sum of the lengths?"
+    },
+    {
+     "rung": "point",
+     "text": "Only when every vector points the same way.",
+     "highlight": [
+      "xx4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "These updates do not line up."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: vectors add with their directions, so lengths add only if they line up.",
+    "generic": "Not quite. Compare adding lengths with adding vectors."
+   },
+   "explain": {
+    "text": "By the triangle inequality, $\\lVert \\mathbf x_4 \\rVert \\le$ the sum of the lengths, with equality only when all terms line up. Here 12.20 against 25.27: the writes are big, and they partly cancel."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The stream in code",
+   "prose": "Write `stream_trace(tokens, model, h)`, returning the stream after the embedding and after each part, with `attn_update` and `mlp_update` from `seq_ops_l4` (each returns a part's write $\\Delta$ as a Tensor). Then `update_norms(trace)`: the length of every update at every position.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "entry",
+      "is"
+     ],
+     "rows": [
+      [
+       "`trace[0]`",
+       "$\\mathbf x_0 = \\mathbf E[\\text{tokens}] + \\mathbf P[{:}T]$"
+      ],
+      [
+       "`trace[k]`",
+       "`trace[k - 1]` + the k-th write"
+      ],
+      [
+       "`update_norms(trace)[k - 1]`",
+       "lengths of `trace[k] - trace[k - 1]`"
+      ]
+     ]
+    }
+   },
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef stream_trace(tokens, model, h):\n    # x0 = E[tokens] + P[:T]; then for each block add attn_update, then mlp_update.\n    # Return [x0, x1, ..., x4]: the stream after the embedding and after each part, each (T, d).\n    ...\n\n\ndef update_norms(trace):\n    # an array (parts, T): the length of each update, trace[k] - trace[k - 1], at every position\n    ...\n",
+    "solution": "import numpy as np\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef stream_trace(tokens, model, h):\n    tokens = np.asarray(tokens)\n    x = model['E'][tokens] + model['P'][:len(tokens)]\n    trace = [x]\n    for p in model['blocks']:\n        x = x + attn_update(x, p, h).data\n        trace.append(x)\n        x = x + mlp_update(x, p).data\n        trace.append(x)\n    return trace\n\n\ndef update_norms(trace):\n    return np.array([np.linalg.norm(trace[k] - trace[k - 1], axis=-1) for k in range(1, len(trace))])\n",
+    "prelude": "import numpy as np\nfrom seq_ops_l4 import read_model\n\nMODEL = read_model('sequence-reverse.json')\nTOK = np.array([3, 1, 4, 1, 5, 9, 10, 9, 5, 1, 4, 1])\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+     "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+     "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+     "sequence-reverse.json": "content/data/ai/sequence-reverse.json"
+    },
+    "examples": [
+     {
+      "call": "[a.shape for a in stream_trace(TOK, MODEL, 4)]",
+      "compare": "equal",
+      "expect": "[(12, 32), (12, 32), (12, 32), (12, 32), (12, 32)]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "stream_trace(TOK, MODEL, 4)[-1][6].tolist()",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[-1.2451315651555874, 1.051347397976539, -2.333956279008874, -1.9593183359141833, 0.7285665838190136, 0.18961274802443787, 0.7539320645053873, -1.7858488504024996, 1.8037947992702072, -3.713619887142693, 0.347659986477422, 2.3700398623486603, 0.8451499632790613, 2.4468141986905625, 1.3981475727288233, 2.197224140633496, -2.9631536956353894, 0.6619228265333699, 3.156687828296097, 0.5407877489086346, 2.1230835940363573, -0.17664907748275915, -1.0771206695757796, -0.6702075546177162, -0.08628111616198106, -3.37351806464899, -1.1193679903779115, -3.028994973552303, -3.0246879420711528, 5.17106443462285, 2.533928762564218, 2.5621354491706465]"
+     },
+     {
+      "call": "len(stream_trace(TOK, MODEL, 4))",
+      "compare": "equal",
+      "expect": "5"
+     },
+     {
+      "call": "stream_trace(TOK, MODEL, 4)[2][[0, 6, 11]].tolist()",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[[2.2638919449574146, 0.8908505325300092, 0.16603659072818722, 0.4618875793708947, -0.4936413886544337, -0.47303911223255457, 1.760363218522218, -0.5438330272950123, -0.788351285769511, -0.4527225971584546, -1.6784948108166906, -1.7501477739517313, 0.02235966916770843, -2.540740189853273, -1.2405679097402924, 0.16176475667191337, 0.544235377120645, 1.5404882521705738, 0.0049709985104196, 0.01599248075332771, 1.2607823058121475, 0.37026129569289057, 0.8792126907865843, -0.27024674688042133, 2.505467834965266, 1.4199282812426328, 0.0026702949026299744, -0.12550516094747988, -1.2619868894840705, 0.5534108001180191, 0.030175543619888168, 1.5271562819855027], [-0.2741642437298429, 0.27809306544679335, -1.264637222102857, -0.21488433230227666, 0.6854101220943758, 1.0814292454019248, 1.5365694088481692, -2.3011659037544603, 0.37019922627156754, -0.965743985916483, 0.7852485528852753, -0.7852695359617575, 0.4742465459767367, 0.04489692271713014, 2.7068691145410657, 0.36549671567450376, -0.16064062902171306, 0.6274681368960018, 1.0562426465716461, 0.5467867535422132, -0.445996459877552, -0.8794688423244689, 1.3929838916743662, 0.5648860893388679, -0.11892373554984537, -2.1162073318306653, -0.24861368748617785, -1.771006337126094, -0.19894128615714224, 1.5610570924456204, -0.911433627948693, 2.4451224310434823], [0.8050341343528914, 0.09913948080123203, -0.30771409904907676, -1.2677021196242229, -0.3205391996773703, 0.1649287381583716, -0.7917899738014011, 1.1142060395580908, -1.0459814231402935, 1.4210492025027808, 0.06804135596620205, -1.8261973831010223, 1.0200525928167463, 1.0155552228106954, 0.5383572657940988, 1.4482038125517258, 0.2480611355483031, 1.3028138523080464, -0.7295712248697646, 0.4785586160574036, -0.015322473233291278, -1.3910160006057777, -2.1979061689025428, 1.8712711997606464, 0.014993744658804986, 1.1037191149047785, 0.735119945021329, -1.102536321214334, 0.03530091713938144, -0.06336799673985594, 0.9590534686776515, 1.0829738082719031]]"
+     },
+     {
+      "call": "update_norms(stream_trace(TOK, MODEL, 4)).tolist()",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[[6.306206142282363, 4.145289826901306, 3.7745253373130025, 4.119906338001548, 3.5012325748149236, 2.60154664828194, 3.755001818985958, 3.3599055786971, 3.255565465299554, 3.161261515225194, 3.473282510200713, 2.4342610248520984], [4.07729029481223, 3.973405980614522, 3.681328292980798, 4.238617501172806, 4.548589709640615, 4.454045561669731, 3.7595519698232533, 4.198635268804751, 3.9875379772158133, 5.178846680593511, 4.026853776214832, 5.23872969774114], [9.523639165376114, 7.431659411875056, 7.059449335760787, 6.79219299174259, 4.70579919978792, 4.9813303055646205, 5.798862118830016, 6.6693808458941275, 7.685087993350042, 9.967685302901197, 5.536574786419157, 8.670806658738329], [8.494174532011229, 7.142420895913324, 7.991341866308074, 7.8780611586660605, 7.8337817337267746, 9.303760556978496, 7.897774138036717, 10.35926328622707, 9.119730788619206, 8.54325462803493, 9.176151812262965, 7.010127265004728]]"
+     },
+     {
+      "call": "update_norms([np.zeros((2, 3)), np.ones((2, 3)), np.ones((2, 3))]).tolist()",
+      "compare": "isclose",
+      "expect": "[[1.7320508075688772, 1.7320508075688772], [0.0, 0.0]]"
+     },
+     {
+      "call": "zq_no('stream', 'block', 'lm_logits')",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, compared to $10^{-6}$ (relative) on the supplied model. Test 5 is a planted trace; test 6 checks that you build the trace from the two updates, not with `seq_ops_l4.stream` or `block`.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef stream_trace(tokens, model, h):\n    tokens = np.asarray(tokens)\n    x = model['E'][tokens] + model['P'][:len(tokens)]\n    trace = [x]\n    for p in model['blocks']:\n        x = attn_update(x, p, h).data\n        trace.append(x)\n        x = x + mlp_update(x, p).data\n        trace.append(x)\n    return trace\n\n\ndef update_norms(trace):\n    return np.array([np.linalg.norm(trace[k] - trace[k - 1], axis=-1) for k in range(1, len(trace))])\n",
+      "test": 1,
+      "symptom": "Replaces the stream with the attention output."
+     },
+     {
+      "source": "import numpy as np\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef stream_trace(tokens, model, h):\n    tokens = np.asarray(tokens)\n    x = model['E'][tokens] + model['P'][:len(tokens)]\n    trace = [x]\n    for p in model['blocks']:\n        x = x + attn_update(x, p, h).data\n        trace.append(x)\n        x = x + mlp_update(x, p).data\n        trace.append(x)\n    return trace\n\n\ndef update_norms(trace):\n    return np.array([np.linalg.norm(trace[k], axis=-1) for k in range(1, len(trace))])\n",
+      "test": 4,
+      "symptom": "Measures the stream, not the update."
+     },
+     {
+      "source": "import numpy as np\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef stream_trace(tokens, model, h):\n    tokens = np.asarray(tokens)\n    x = model['E'][tokens] + model['P'][:len(tokens)]\n    trace = [x]\n    from seq_ops_l4 import stream\n    return stream(tokens, model, h)\n\n\ndef update_norms(trace):\n    return np.array([np.linalg.norm(trace[k] - trace[k - 1], axis=-1) for k in range(1, len(trace))])\n",
+      "test": 6,
+      "symptom": "Calls the shipped stream function instead of building the sum."
+     },
+     {
+      "source": "import numpy as np\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef stream_trace(tokens, model, h):\n    tokens = np.asarray(tokens)\n    x = model['E'][tokens] + model['P'][:len(tokens)]\n    trace = [x]\n    for p in model['blocks']:\n        x = x + attn_update(x, p, h).data\n        trace.append(x)\n        x = x + mlp_update(x, p).data\n        trace.append(x)\n    return trace\n\n\ndef update_norms(trace):\n    return np.array([np.linalg.norm(trace[k] - trace[k - 1], axis=0) for k in range(1, len(trace))])\n",
+      "test": 4,
+      "symptom": "Takes the norm over positions instead of features."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the embedding plus the positions."
+    },
+    {
+     "rung": "point",
+     "text": "In each block: `x = x + attn_update(x, p, h).data`, append; the same for `mlp_update`.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For the norms: `np.linalg.norm(trace[k] - trace[k - 1], axis=-1)` for each k."
+    }
+   ],
+   "feedback": {
+    "correct": "Five snapshots of one running sum, and four lengths per position.",
+    "generic": "Not quite. Each entry must be the previous one plus a write."
+   },
+   "explain": {
+    "text": "Each entry is the previous one plus a write, so the last entry minus the first is the sum of the writes. The norms are taken over the 32 features, one per position."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Replaced or added to?",
+   "prose": "A colleague says: \"Block 2 recomputes the representation, so by the end the embedding of the separator is gone.\" The table holds c2 at position 6 again.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "term",
+      "c2 at position 6"
+     ],
+     "rows": [
+      [
+       "$\\mathbf x_0$",
+       "−0.558"
+      ],
+      [
+       "$\\Delta_1$ to $\\Delta_4$",
+       "−1.777"
+      ],
+      [
+       "final $\\mathbf x_4$",
+       "−2.335"
+      ]
+     ]
+    }
+   },
+   "question": "Which is true of the final stream at position 6?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sum",
+      "text": "It is $\\mathbf x_0$ plus the four writes: the embedding is still part of it",
+      "correct": true
+     },
+     {
+      "id": "gone",
+      "text": "It is block 2's output; earlier vectors were overwritten",
+      "why": "That is the replace picture. Each block adds its output to the stream, so $\\mathbf x_0$ stays in the sum."
+     },
+     {
+      "id": "mean",
+      "text": "It is the average of the four writes",
+      "why": "The stream adds the writes to $\\mathbf x_0$; it never averages them."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is the final value equal to the writes alone?"
+    },
+    {
+     "rung": "point",
+     "text": "Without $\\mathbf x_0$ the writes give a different number.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The embedding is one term of the sum."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: a residual block adds to the stream; it does not replace it.",
+    "generic": "Not quite. Compare the final value with the writes alone.",
+    "byKey": {
+     "gone": "You took \"recomputes\" literally. The block computes an update and adds it; the input is still in the sum."
+    }
+   },
+   "explain": {
+    "text": "Take the embedding away and c2 would be −1.777, not −2.335. Every layer adds to the representation; none replaces it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Taking one write out",
+   "prose": "Remove one part's write, run the model again, and score it on 1,000 held-out inputs (the share it reverses exactly). With every part in place it scores 100%. Later parts read a different sum once a write is gone.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "part removed",
+      "reversed exactly"
+     ],
+     "rows": [
+      [
+       "1: attention 1",
+       "18.4%"
+      ],
+      [
+       "2: MLP 1",
+       "23.0%"
+      ],
+      [
+       "3: attention 2",
+       "0.6%"
+      ],
+      [
+       "4: MLP 2",
+       "99.8%"
+      ]
+     ]
+    }
+   },
+   "question": "Which part, numbered 1 to 4, can the model best do without?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look for the score closest to 100%."
+    },
+    {
+     "rung": "point",
+     "text": "Part 4 is MLP 2.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Without MLP 2 the model still scores 99.8%."
+    }
+   ],
+   "feedback": {
+    "correct": "Part 4, MLP 2: without it the model still reverses 99.8%.",
+    "generic": "Not quite. Find the highest score in the table.",
+    "byKey": {
+     "three": "That is the part it can least do without: 0.6%. Attention 2 does the copying.",
+     "one": "Without attention 1 it scores 18.4%: that part matters."
+    }
+   },
+   "explain": {
+    "text": "Removing attention 2 drops the score to 0.6%, so that part does the reversing; MLP 2 adds little. This is ablation, which `nn-train` l14 met for whole design choices and `interp` L4 uses on single parts."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Ablation in code",
+   "prose": "Write `ablate_sublayer(tokens, model, k)`: run the supplied model with part $k$'s write left out (parts 1 to 4 in order), and return its logits. Every later part must read the stream without that write.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "x0",
+      "+Δ1",
+      "+Δ2",
+      "+Δ3",
+      "+Δ4",
+      "LN, U"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       3,
+       3
+      ],
+      "label": "k = 3: skipped"
+     }
+    }
+   },
+   "question": "Complete `ablate_sublayer`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef ablate_sublayer(tokens, model, k, h=4):\n    # Run the model, but skip the write of part k (1 = attention 1, 2 = MLP 1, 3 = attention 2, 4 = MLP 2).\n    # Return the logits (T, vocab): the final layernorm with lnf_g, lnf_b, then @ U + c.\n    ...\n",
+    "solution": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef ablate_sublayer(tokens, model, k, h=4):\n    tokens = np.asarray(tokens)\n    x = model['E'][tokens] + model['P'][:len(tokens)]\n    j = 0\n    for p in model['blocks']:\n        for part in (lambda x: attn_update(x, p, h), lambda x: mlp_update(x, p)):\n            j += 1\n            if j != k:\n                x = x + part(x).data\n    return layernorm(x, model['lnf_g'], model['lnf_b']).data @ model['U'] + model['c']\n",
+    "prelude": "import numpy as np\nfrom seq_ops_l4 import read_model\n\nMODEL = read_model('sequence-reverse.json')\nTOK = np.array([3, 1, 4, 1, 5, 9, 10, 9, 5, 1, 4, 1])\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+     "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+     "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+     "sequence-reverse.json": "content/data/ai/sequence-reverse.json"
+    },
+    "examples": [
+     {
+      "call": "ablate_sublayer(TOK, MODEL, 4).shape",
+      "compare": "equal",
+      "expect": "(12, 11)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "ablate_sublayer(TOK, MODEL, 1)[6:].tolist()",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[[1.0069175955572296, -1.050519446882515, 2.177788002011105, -1.3548993576851098, -2.5746856682182018, -1.2459880142062012, 0.2770750667404957, -3.4201607373479996, -3.573248337473494, 5.465627248674225, -0.40277602757745257], [-4.9075073628341634, 1.264277273236939, 3.8398723032880486, -2.253122319172526, 0.17364645341212523, 4.8682654481456655, -1.7577003961252646, -0.7632367374743008, -0.15276917735819162, 0.8763553757428029, -0.9726372133161603], [-1.276113411030889, 7.354630830277951, -2.2168263031564686, -1.239803989631033, -3.42935285873355, 0.6334844003098018, 1.7537985119814568, -0.6688399230266409, 1.5824656723121906, 0.5531890910307082, -1.5548747715780542], [-0.6700634939931353, -1.833638537030207, -0.40926983205986145, 0.45113988002920064, 7.741057661589049, 0.8964276212593262, -3.4578543307227756, 3.6787363870231626, -1.2194857893792244, -1.7671489958215565, 0.22514490331327608], [2.0467458071551876, 2.506011203457537, -0.9559206323239646, -0.824502496199762, -4.975981978841172, 1.8684460264197533, -1.0499069483596981, -0.7005598179461394, -0.9351637128957008, 3.1544359335075955, -2.924237200161912], [-1.1473040289271166, 0.7324731791098288, -1.3745691891788443, -1.2490753032396529, -2.797969133528807, -0.22405042794896507, 3.482657842656966, -5.2201635681091405, 3.0795056229232047, 2.465210886742179, -0.13608202540514303]]"
+     },
+     {
+      "call": "ablate_sublayer(TOK, MODEL, 3)[6:].argmax(-1).tolist()",
+      "compare": "equal",
+      "expect": "[9, 5, 0, 1, 1, 8]"
+     },
+     {
+      "call": "ablate_sublayer(TOK, MODEL, 4)[6:].argmax(-1).tolist()",
+      "compare": "equal",
+      "expect": "[9, 5, 1, 4, 1, 3]"
+     },
+     {
+      "call": "ablate_sublayer(TOK, MODEL, 2)[0].tolist()",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[1.343754298323151, -0.45694501319895725, 0.5474005624245154, 5.2851031461475975, 0.8958674873695828, -2.23160273842717, -2.186456778910447, 1.1313878723263666, -2.3946177377881623, -1.6616609121232222, -1.527731031454353]"
+     },
+     {
+      "call": "ablate_sublayer(TOK, MODEL, 0)[6:].argmax(-1).tolist()",
+      "compare": "equal",
+      "expect": "[9, 5, 1, 4, 1, 3]"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on the supplied model, compared to $10^{-6}$ (relative). Tests 2, 3 and 5 compare the predicted digits; part 0 does not exist, so test 5 is the full model.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef ablate_sublayer(tokens, model, k, h=4):\n    tokens = np.asarray(tokens)\n    x = model['E'][tokens] + model['P'][:len(tokens)]\n    j, removed = 0, 0\n    for p in model['blocks']:\n        for part in (lambda x: attn_update(x, p, h), lambda x: mlp_update(x, p)):\n            j += 1\n            w = part(x).data\n            x = x + w\n            if j == k:\n                removed = w\n    x = x - removed\n    return layernorm(x, model['lnf_g'], model['lnf_b']).data @ model['U'] + model['c']\n",
+      "test": 1,
+      "symptom": "Subtracts the write from the final stream, as if later parts had not read it."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef ablate_sublayer(tokens, model, k, h=4):\n    tokens = np.asarray(tokens)\n    x = model['E'][tokens] + model['P'][:len(tokens)]\n    j = 0\n    for p in model['blocks']:\n        for part in (lambda x: attn_update(x, p, h), lambda x: mlp_update(x, p)):\n            if j != k:\n                x = x + part(x).data\n            j += 1\n    return layernorm(x, model['lnf_g'], model['lnf_b']).data @ model['U'] + model['c']\n",
+      "test": 1,
+      "symptom": "Counts parts from 0, so it removes the wrong one."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import attn_update, mlp_update\n\n\ndef ablate_sublayer(tokens, model, k, h=4):\n    tokens = np.asarray(tokens)\n    x = model['E'][tokens] + model['P'][:len(tokens)]\n    j = 0\n    for p in model['blocks']:\n        for part in (lambda x: attn_update(x, p, h), lambda x: mlp_update(x, p)):\n            j += 1\n            if j != k:\n                x = x + part(x).data\n    return x @ model['U'] + model['c']\n",
+      "test": 1,
+      "symptom": "Leaves out the final layer norm."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the parts as you go: attention, then MLP, in each block."
+    },
+    {
+     "rung": "point",
+     "text": "Skip the addition when the count equals `k`; later parts then read the changed stream.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "End with `layernorm(x, lnf_g, lnf_b).data @ U + c`."
+    }
+   ],
+   "feedback": {
+    "correct": "Without part 3 the model writes the wrong digits; without part 4 it barely notices.",
+    "generic": "Not quite. Leave the write out while the model runs, so later parts see the change."
+   },
+   "explain": {
+    "text": "Subtracting the write at the end would give a different answer: part 4 read a stream that held part 3's write. Ablation removes a part and lets everything downstream react."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A part that writes nothing",
+   "prose": "Edge case: set $\\mathbf W_O$, $\\mathbf b_O$, $\\mathbf W_2$ and $\\mathbf b_2$ of block 2 to zero. Both its writes are then zero vectors.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "x2",
+      "+ 0",
+      "+ 0",
+      "= x2"
+     ]
+    }
+   },
+   "question": "What does block 2 now output?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "Its input, unchanged: the identity",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "A vector of zeros of the same shape",
+      "why": "You thought of the block as replacing its input. Its writes are zero, so it adds nothing."
+     },
+     {
+      "id": "norm",
+      "text": "The layer-normalised copy of its input",
+      "why": "The norms shape only what the parts read. The stream itself is never normalised inside a block."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is $\\mathbf x + \\mathbf 0$?"
+    },
+    {
+     "rung": "point",
+     "text": "Both writes are zero.",
+     "highlight": [
+      "c1",
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The block passes its input through."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: $\\mathbf x + \\mathbf 0 + \\mathbf 0 = \\mathbf x$.",
+    "generic": "Not quite. A block outputs its input plus its writes."
+   },
+   "explain": {
+    "text": "A residual block whose parts write zero is the identity. That is why a deep stack can start near the identity and learn each correction, as the residual block in `cnn` l11 did."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Every layer reads and writes",
+   "prose": "With $L$ parts the stream is $$\\mathbf x_L = \\mathbf x_0 + \\sum_{\\ell=1}^{L} \\Delta_\\ell, \\qquad \\Delta_\\ell = F_\\ell(\\mathbf x_{\\ell-1}).$$ So $\\partial \\mathbf x_L / \\partial \\mathbf x_\\ell = \\mathbf I + {}$ terms through the later parts.",
+   "question": "Why does a gradient from the loss reach part 1 even when the later parts' own gradients are tiny?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "id",
+      "text": "Each addition passes it on through the identity term",
+      "correct": true
+     },
+     {
+      "id": "ln",
+      "text": "Layer norm rescales the gradient back up",
+      "why": "The identity path holds without any norm; layer norm only shapes what each part reads."
+     },
+     {
+      "id": "mask",
+      "text": "The causal mask keeps it from leaking away",
+      "why": "The mask decides which positions mix. It plays no part in passing gradients back through depth."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: the $\\mathbf I$ in every Jacobian is a direct line to every layer.",
+    "generic": "Not quite. Look at the $\\mathbf I$ in the derivative."
+   },
+   "explain": {
+    "text": "Every part sits on its own branch beside the identity path, as `cnn` l11's identity path did for one block. So the loss reaches each part directly, and each part reads every earlier write."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Reading a model as a sum",
+   "prose": "A desk's headline model scores a profit warning as good news. The model is 12 blocks, and its final stream at the headline's last token is $\\mathbf x_0$ plus 24 writes.",
+   "question": "What is a sensible first thing to print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "norms",
+      "text": "The length of each of the 24 writes at that token",
+      "correct": true
+     },
+     {
+      "id": "last",
+      "text": "The output of the last block only",
+      "why": "The last block's write is one of 24 terms; the others are still in the sum."
+     },
+     {
+      "id": "loss",
+      "text": "The training loss curve",
+      "why": "The curve says how training went on average, not what went wrong on this headline."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which writes made the final vector what it is?"
+    },
+    {
+     "rung": "point",
+     "text": "Each part's write is one term of the sum."
+    },
+    {
+     "rung": "step",
+     "text": "Measure each term at that position."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the big writes are where to look first.",
+    "generic": "Not quite. The final vector is a sum; start by sizing its terms."
+   },
+   "explain": {
+    "text": "Because the stream is a sum, each part's contribution can be measured on its own. Reading a model this way is where interpretability begins: `interp` L1 does it with the logit lens."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The residual stream is a running sum, $\\mathbf x_L = \\mathbf x_0 + \\sum_\\ell \\Delta_\\ell$: each part reads it through its layer norm and writes back by addition.",
+   "Nothing is overwritten: the embedding is still a term of the final stream. Writes that point different ways partly cancel.",
+   "Each addition passes the gradient straight to every part. Removing one write and rerunning (ablation) shows what that part does."
+  ],
+  "formula": {
+   "name": "Residual stream",
+   "tex": "\\mathbf x_L = \\mathbf x_0 + \\sum_{\\ell=1}^{L} F_\\ell(\\mathbf x_{\\ell-1})",
+   "note": "Two parts a block: attention, then the MLP."
+  },
+  "trap": "A layer does not replace the representation; it adds to it."
+ },
+ "quiz": [
+  {
+   "id": "q-sum",
+   "difficulty": 2,
+   "prose": "A stream starts at $\\mathbf x_0 = (2, -1)$. Two parts write $\\Delta_1 = (0.5, 0.5)$ and $\\Delta_2 = (-1, 2)$.",
+   "question": "What is the second coordinate of the stream after both?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "last",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "no-x0",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-1 + 0.5 + 2 = 1.5$.",
+    "generic": "Not quite. Add both writes to $\\mathbf x_0$.",
+    "byKey": {
+     "last": "That is $\\Delta_2$ alone: the stream keeps $\\mathbf x_0$ and $\\Delta_1$ too.",
+     "no-x0": "You left out $\\mathbf x_0$."
+    }
+   },
+   "explain": {
+    "text": "The stream is $(2, -1) + (0.5, 0.5) + (-1, 2) = (1.5, 1.5)$: second coordinate 1.5."
+   }
+  },
+  {
+   "id": "q-count",
+   "difficulty": 2,
+   "prose": "A model has 6 blocks, each with attention and an MLP.",
+   "question": "How many writes does the final stream hold, beside $\\mathbf x_0$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "blocks",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "plus",
+      "value": 13,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two parts a block: 12 writes.",
+    "generic": "Not quite. Count the parts.",
+    "byKey": {
+     "blocks": "Each block has two parts, and each writes once.",
+     "plus": "13 counts $\\mathbf x_0$ too; the question asks for the writes beside it."
+    }
+   },
+   "explain": {
+    "text": "Each block holds two parts and each writes once: $6 \\times 2 = 12$ writes."
+   }
+  },
+  {
+   "id": "q-read",
+   "difficulty": 3,
+   "prose": "In a 4-block model, take the MLP of block 3.",
+   "question": "Which writes are in the stream it reads?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "five",
+      "text": "Attention 1 to 3, and MLP 1 and 2",
+      "correct": true
+     },
+     {
+      "id": "own",
+      "text": "Only the write of attention 3",
+      "why": "Attention 3 writes into a stream that already holds four writes from blocks 1 and 2."
+     },
+     {
+      "id": "all",
+      "text": "All eight writes of the model",
+      "why": "Parts after it have not run yet."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: five writes, all made before it.",
+    "generic": "Not quite. List the parts that run before MLP 3."
+   },
+   "explain": {
+    "text": "Before MLP 3 come attention 1, MLP 1, attention 2, MLP 2 and attention 3: five writes."
+   }
+  },
+  {
+   "id": "q-ablate",
+   "difficulty": 3,
+   "prose": "You zero part 2's write and rerun the model.",
+   "question": "How does the result differ from subtracting $\\Delta_2$ from the final stream?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "later",
+      "text": "Later parts read a new stream, so their writes change",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "None: the stream is only a sum of writes",
+      "why": "The sum is fixed only if later writes stay the same, and they read the stream."
+     },
+     {
+      "id": "none",
+      "text": "Rerunning the model undoes the change",
+      "why": "The write stays zero on the rerun."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: removal ripples forward through every later read.",
+    "generic": "Not quite. Which parts read $\\Delta_2$?"
+   },
+   "explain": {
+    "text": "Each later part reads the stream, so removing $\\Delta_2$ changes their writes as well as the sum."
+   }
+  }
+ ]
+}
