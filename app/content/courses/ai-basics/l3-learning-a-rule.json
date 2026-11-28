@@ -1013,7 +1013,19 @@
       "compare": "equal"
      }
     ],
-    "how": "Check runs 6 hidden tests. Each result must equal the expected whole number."
+    "how": "Check runs 6 hidden tests. Each result must equal the expected whole number.",
+    "mutants": [
+     {
+      "source": "def count_correct(links, labels, t):\n    right = 0\n    for i in range(len(links)):\n        says_spam = links[i] > t\n        if says_spam == (labels[i] == 1):\n            right = right + 1\n    return right\n",
+      "test": 1,
+      "symptom": "Uses \"more than\" where the rule says \"at least\", so ties are misjudged."
+     },
+     {
+      "source": "def count_correct(links, labels, t):\n    right = 0\n    for i in range(len(links)):\n        says_spam = links[i] >= t\n        if says_spam and labels[i] == 1:\n            right = right + 1\n    return right\n",
+      "test": 2,
+      "symptom": "Counts only the spam it catches and ignores the right \"not spam\" answers."
+     }
+    ]
    },
    "hints": [
     {
@@ -1091,7 +1103,19 @@
       "compare": "equal"
      }
     ],
-    "how": "Check runs 6 hidden tests. Each result must equal the expected whole number."
+    "how": "Check runs 6 hidden tests. Each result must equal the expected whole number.",
+    "mutants": [
+     {
+      "source": "def count_correct(links, labels, t):\n    right = 0\n    for i in range(len(links)):\n        if (links[i] >= t) == (labels[i] == 1):\n            right = right + 1\n    return right\n\ndef best_threshold(links, labels, ts):\n    best = None\n    best_right = -1\n    for t in sorted(ts):\n        right = count_correct(links, labels, t)\n        if right >= best_right:\n            best = t\n            best_right = right\n    return best\n",
+      "test": 2,
+      "symptom": "On a tie it keeps the last threshold instead of the first."
+     },
+     {
+      "source": "def count_correct(links, labels, t):\n    right = 0\n    for i in range(len(links)):\n        if (links[i] >= t) == (labels[i] == 1):\n            right = right + 1\n    return right\n\ndef best_threshold(links, labels, ts):\n    best = None\n    best_right = -1\n    for t in ts:\n        right = count_correct(links, labels, t)\n        if right > best_right:\n            best = t\n            best_right = right\n    return best\n",
+      "test": 3,
+      "symptom": "Does not sort the thresholds, so a tie goes to the first one listed."
+     }
+    ]
    },
    "hints": [
     {

@@ -247,5 +247,13 @@ lv.expect('problems', 'items[2].parts[3].widget.answer', float(F(max(te.values()
 lv.expect('problems', 'items[2].parts[2].widget.wrong[0].value', float(F(tr[0.5], 10)))
 lv.expect('problems', 'items[2].parts[3].widget.wrong[1].value', float(F(te[0.8], 5)))
 
+scr_index_l4 = int(scr('l4', 'Pick a model')[len('screens['):-1])
+# fix pass (review-ai-basics): l4 'Pick a model' table, A scores 98% / 71% against B 85% / 82%
+lv.claim((F(98 + 71, 2), F(85 + 82, 2)) == (F('84.5'), F('83.5')) and 71 < 82, 'l4 pick-a-model: A averages 84.5 > B 83.5 (the averaging slip is live) yet A tests below B (71 < 82)')
+l4 = lv.files[[k for k in lv.files if k.startswith('l4')][0]]['screens'][scr_index_l4]
+lv.claim(l4['canvas']['params']['rows'][0] == ['A', '98%', '71%'] and l4['widget']['options'][2]['why'].startswith('Averaging'), 'l4 table row A shows 98% and 71%')
+# homework-1 items[2]: a loop over range(10) misses the best threshold 10 on this case
+lv.claim(fit_b([3, 9], [0, 0], [10], [0]) == [10, 0], 'fit_and_score([3, 9], [0, 0], [10], [0]) = (10, 0): only t = 10 gets both training emails right')
+
 lv.check_wrongs()
 lv.report()
