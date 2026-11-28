@@ -1376,7 +1376,19 @@
      }
     ],
     "how": "Submit runs 6 hidden tests on four graphs: the course graph, a diamond, the seven-node graph and the course graph with an unused node. A checker accepts any valid order; it must hold exactly the nodes that lead to the root.",
-    "prelude": "def is_topo(order, parents, root):\n    if not isinstance(order, list) or len(order) != len(set(order)):\n        return False\n    need, stack = set(), [root]\n    while stack:\n        v = stack.pop()\n        if v not in need:\n            need.add(v)\n            stack.extend(parents[v])\n    if set(order) != need:\n        return False\n    pos = {v: i for i, v in enumerate(order)}\n    return all(pos[p] < pos[v] for v in order for p in parents[v])\n\nCOURSE = {\"L\": [\"d\", \"f\"], \"d\": [\"e\", \"c\"], \"e\": [\"a\", \"b\"], \"a\": [], \"b\": [], \"c\": [], \"f\": []}\nDIAMOND = {\"top\": [\"left\", \"right\"], \"left\": [\"x\"], \"right\": [\"x\"], \"x\": []}\nSEVEN = {\"o\": [\"n\", \"v\"], \"n\": [\"m\", \"u\"], \"m\": [\"k\", \"w\"], \"k\": [\"u\", \"v\"], \"u\": [], \"v\": [], \"w\": []}\nEXTRA = dict(COURSE, t=[\"z\"], z=[])\n"
+    "prelude": "def is_topo(order, parents, root):\n    if not isinstance(order, list) or len(order) != len(set(order)):\n        return False\n    need, stack = set(), [root]\n    while stack:\n        v = stack.pop()\n        if v not in need:\n            need.add(v)\n            stack.extend(parents[v])\n    if set(order) != need:\n        return False\n    pos = {v: i for i, v in enumerate(order)}\n    return all(pos[p] < pos[v] for v in order for p in parents[v])\n\nCOURSE = {\"L\": [\"d\", \"f\"], \"d\": [\"e\", \"c\"], \"e\": [\"a\", \"b\"], \"a\": [], \"b\": [], \"c\": [], \"f\": []}\nDIAMOND = {\"top\": [\"left\", \"right\"], \"left\": [\"x\"], \"right\": [\"x\"], \"x\": []}\nSEVEN = {\"o\": [\"n\", \"v\"], \"n\": [\"m\", \"u\"], \"m\": [\"k\", \"w\"], \"k\": [\"u\", \"v\"], \"u\": [], \"v\": [], \"w\": []}\nEXTRA = dict(COURSE, t=[\"z\"], z=[])\n",
+    "mutants": [
+     {
+      "source": "def topo_order(node, parents):\n    order, seen = [], set()\n\n    def build(v):\n        if True:\n            for p in parents[v]:\n                build(p)\n            order.append(v)\n    build(node)\n    return order\n",
+      "test": 2,
+      "symptom": "no `seen` set: a node reached twice is listed twice"
+     },
+     {
+      "source": "def topo_order(node, parents):\n    order, seen = [], set()\n\n    def build(v):\n        if v not in seen:\n            seen.add(v)\n            order.append(v)\n            for p in parents[v]:\n                build(p)\n    build(node)\n    return order\n",
+      "test": 1,
+      "symptom": "appends before visiting the parents: a node comes before its inputs"
+     }
+    ]
    },
    "hints": [
     {

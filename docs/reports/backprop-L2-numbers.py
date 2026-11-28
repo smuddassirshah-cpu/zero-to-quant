@@ -200,5 +200,35 @@ E('problems', 'items[2].parts[0].widget.answer', gg(2.0)); two('problems 3 total
 x, y = VB(2.0), VB(0.5); Gb = (x * y + x) * x; Gb.backward(); lv.claim(x.grad == 1, "problems 3 part 5: '=' closures leave 1")
 x, y = V(2.0), V(0.5); Gv = (x * y + x) * x; Gv.backward(); lv.claim(x.grad == 6, 'problems 3: the Value class gives 6')
 
+
+# ---------- fix pass: the reused-interior-node tests catch a backward() without a seen set ----------
+for label, w_, idx, setup, call, want, bad in (
+        ('l8', D('l8')['screens'][3]['widget'], 8, 'x = Value(2.0); e = x * 3; y = e * e; y.backward()', 'x.grad', 36.0, 72.0),
+        ('homework-2', D('homework')['items'][5]['widget'], 9, 'x = Value(2.0); e = x * 3; z = (e + 1) * e; z.backward()', '(z.data, x.grad)', (42.0, 39.0), (42.0, 60.0))):
+    t = w_['tests'][idx - 1]
+    lv.claim(t['setup'] == setup and t['call'] == call and eval(t['expect']) == want, f'{label} new test {idx} is the shared-interior-node case')
+    mu = w_['mutants'][0]; lv.claim(mu['test'] == idx, f'{label} mutant targets test {idx}')
+    n3 = {}; exec(w_['solution'], n3); exec(setup, n3); lv.claim(eval(call, n3) == want, f'{label} solution passes the new test')
+    n3 = {}; exec(w_['starter'], n3)
+    try:
+        exec(setup, n3); starter_ok = eval(call, n3) == want
+    except Exception:
+        starter_ok = False
+    lv.claim(not starter_ok, f'{label} starter fails the new test')
+    n3 = {}; exec(mu['source'], n3); exec(setup, n3); got = eval(call, n3)
+    lv.claim(got == bad and got != want, f'{label} no-seen backward() gives {got}, not {want}')
+    for i_, t_ in enumerate(w_['tests'][:idx - 1], 1):
+        n4 = {}; exec(mu['source'], n4); exec(t_.get('setup', ''), n4)
+        lv.claim(repr(eval(t_['call'], n4)) == t_['expect'], f'{label} no-seen version passes old test {i_} (so only the new test catches it)')
+two('l8 e*e with e = 3x at 2', cd(lambda x_: (3 * x_) * (3 * x_), (2.0,), 0), 36.0, 1e-6)
+two('homework-2 (e + 1) * e with e = 3x at 2', cd(lambda x_: (3 * x_ + 1) * (3 * x_), (2.0,), 0), 39.0, 1e-6)
+# review-2 items[9]: y = (2x) * x + x at x = -1; outer product's own share, the share through 2*x, the final sum's 1
+xx = -1.0
+two('review-2 item 9: outer product sends x the value 2x', 2 * xx, -2, 1e-12)
+two('review-2 item 9: 2*x box receives x = -1 and passes 2 * x', 2 * xx, -2, 1e-12)
+two('review-2 item 9: total 4x + 1', 2 * xx + 2 * xx + 1, -3, 1e-12)
+two('review-2 item 9: one-slot wrong -1 is one share plus the final 1', 2 * xx + 1, -1, 1e-12)
+two('review-2 item 9: square-only wrong -4', 2 * xx + 2 * xx, -4, 1e-12)
+
 lv.check_wrongs()
 lv.report()

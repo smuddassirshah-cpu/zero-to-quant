@@ -163,7 +163,24 @@
       "compare": "isclose"
      }
     ],
-    "how": "Submit runs 4 hidden tests. Each value is accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+    "how": "Submit runs 4 hidden tests. Each value is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef grads_square_log(x, y, z):\n    p = x * y\n    q = math.log(z)\n    s = p + q\n    gs = s\n    return {\"x\": gs * y, \"y\": gs * x, \"z\": gs / z}\n",
+      "test": 1,
+      "symptom": "the square's local derivative $2s$ is written as $s$"
+     },
+     {
+      "source": "import math\n\ndef grads_square_log(x, y, z):\n    p = x * y\n    q = math.log(z)\n    s = p + q\n    gs = 2 * s\n    return {\"x\": gs * y, \"y\": gs * x, \"z\": gs * z}\n",
+      "test": 2,
+      "symptom": "the log's local derivative $1/z$ is written as $z$"
+     },
+     {
+      "source": "import math\n\ndef grads_square_log(x, y, z):\n    p = x * y\n    q = math.log(z)\n    s = p + q\n    gs = 2 * s\n    return {\"x\": gs * x, \"y\": gs * x, \"z\": gs / z}\n",
+      "test": 1,
+      "symptom": "the product passes $x$ back to $x$ instead of $y$"
+     }
+    ]
    },
    "feedback": {
     "correct": "Forward to $s$, then $2s$, then one product per input.",
@@ -221,9 +238,31 @@
       "call": "grad_of(('mul', ('pow', ('add', 'm', -1), 2), ('exp', 'n')), {'m': 3.0, 'n': 0.0})",
       "expect": "{'m': 4.0, 'n': 4.0}",
       "compare": "isclose"
+     },
+     {
+      "call": "grad_of(('add', ('mul', 'x', 'x'), 'x'), {'x': 2.0})",
+      "expect": "{'x': 5.0}",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 5 hidden tests on five expression shapes. Each gradient is accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+    "how": "Submit runs 6 hidden tests on five expression shapes and a leaf used three times, $x \\cdot x + x$. Each gradient is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef grad_of(spec, values):\n    grads = {k: 0.0 for k in values}\n\n    def fwd(node):\n        if isinstance(node, str):\n            return values[node]\n        if isinstance(node, (int, float)):\n            return float(node)\n        op = node[0]\n        if op == \"add\":\n            return fwd(node[1]) + fwd(node[2])\n        if op == \"mul\":\n            return fwd(node[1]) * fwd(node[2])\n        if op == \"exp\":\n            return math.exp(fwd(node[1]))\n        if op == \"pow\":\n            return fwd(node[1]) ** node[2]\n        raise ValueError(op)\n\n    def back(node, g):\n        if isinstance(node, str):\n            grads[node] = g\n            return\n        if isinstance(node, (int, float)):\n            return\n        op = node[0]\n        if op == \"add\":\n            back(node[1], g)\n            back(node[2], g)\n        elif op == \"mul\":\n            back(node[1], g * fwd(node[2]))\n            back(node[2], g * fwd(node[1]))\n        elif op == \"exp\":\n            back(node[1], g * math.exp(fwd(node[1])))\n        elif op == \"pow\":\n            k = node[2]\n            back(node[1], g * k * fwd(node[1]) ** (k - 1))\n\n    back(spec, 1.0)\n    return grads\n",
+      "test": 6,
+      "symptom": "a leaf used twice keeps only its last share"
+     },
+     {
+      "source": "import math\n\ndef grad_of(spec, values):\n    grads = {k: 0.0 for k in values}\n\n    def fwd(node):\n        if isinstance(node, str):\n            return values[node]\n        if isinstance(node, (int, float)):\n            return float(node)\n        op = node[0]\n        if op == \"add\":\n            return fwd(node[1]) + fwd(node[2])\n        if op == \"mul\":\n            return fwd(node[1]) * fwd(node[2])\n        if op == \"exp\":\n            return math.exp(fwd(node[1]))\n        if op == \"pow\":\n            return fwd(node[1]) ** node[2]\n        raise ValueError(op)\n\n    def back(node, g):\n        if isinstance(node, str):\n            grads[node] += g\n            return\n        if isinstance(node, (int, float)):\n            return\n        op = node[0]\n        if op == \"add\":\n            back(node[1], g)\n            back(node[2], g)\n        elif op == \"mul\":\n            back(node[1], g * fwd(node[1]))\n            back(node[2], g * fwd(node[2]))\n        elif op == \"exp\":\n            back(node[1], g * math.exp(fwd(node[1])))\n        elif op == \"pow\":\n            k = node[2]\n            back(node[1], g * k * fwd(node[1]) ** (k - 1))\n\n    back(spec, 1.0)\n    return grads\n",
+      "test": 1,
+      "symptom": "the product passes each input its own value instead of the other's"
+     },
+     {
+      "source": "import math\n\ndef grad_of(spec, values):\n    grads = {k: 0.0 for k in values}\n\n    def fwd(node):\n        if isinstance(node, str):\n            return values[node]\n        if isinstance(node, (int, float)):\n            return float(node)\n        op = node[0]\n        if op == \"add\":\n            return fwd(node[1]) + fwd(node[2])\n        if op == \"mul\":\n            return fwd(node[1]) * fwd(node[2])\n        if op == \"exp\":\n            return math.exp(fwd(node[1]))\n        if op == \"pow\":\n            return fwd(node[1]) ** node[2]\n        raise ValueError(op)\n\n    def back(node, g):\n        if isinstance(node, str):\n            grads[node] += g\n            return\n        if isinstance(node, (int, float)):\n            return\n        op = node[0]\n        if op == \"add\":\n            back(node[1], g)\n            back(node[2], g)\n        elif op == \"mul\":\n            back(node[1], g * fwd(node[2]))\n            back(node[2], g * fwd(node[1]))\n        elif op == \"exp\":\n            back(node[1], g * math.exp(fwd(node[1])))\n        elif op == \"pow\":\n            k = node[2]\n            back(node[1], g * fwd(node[1]) ** (k - 1))\n\n    back(spec, 1.0)\n    return grads\n",
+      "test": 2,
+      "symptom": "the power rule drops the factor $k$"
+     }
+    ]
    },
    "feedback": {
     "correct": "A forward helper for values and a backward helper that passes each box its gradient: that is backpropagation on any tree.",

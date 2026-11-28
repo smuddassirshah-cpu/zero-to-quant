@@ -197,5 +197,11 @@ Vfx = lambda X: 200 * 50 / X
 two('problems 3 dV/dX', cd(Vfx, (1.25,), 0), -6400, 1e-6); E('problems', 'items[2].parts[0].widget.answer', Vfx(1.25))
 E('problems', 'items[2].parts[3].feedback.correct', round(Vfx(1.26) - Vfx(1.25), 2)); E('problems', 'items[2].parts[1].widget.answer', -1 / 1.25 ** 2)
 
+
+# ---------- fix pass: l3 quiz[0] wrong 'added' ----------
+two('l3 quiz[0] sum of the path derivatives 5 + 1 + 0.5', 5 + 1 + 0.5, 6.5, 1e-12)
+two('l3 quiz[0] true gradient 0.5 * 1 * 5', cd(lambda a_: (a_ * 5 - 1) * 0.5, (2.0,), 0), 2.5)
+E('l3', 'quiz[0].widget.wrong[0].value', 5 + 1 + 0.5)
+
 lv.check_wrongs()
 lv.report()

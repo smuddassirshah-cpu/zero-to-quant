@@ -247,7 +247,7 @@
    "type": "problem",
    "difficulty": 2,
    "title": "A Value that records its parents",
-   "prose": "Write the class in the style of the py-found course: an initialiser that stores the attributes, and one method per operation. Store `data`, `grad = 0.0`, the parents as a tuple `_prev` and the operation's label `_op`. `__add__` and `__mul__` return a new Value whose parents are `(self, other)`.",
+   "prose": "Write the class in the style of the Python Foundations course: an initialiser that stores the attributes, and one method per operation. Store `data`, `grad = 0.0`, the parents as a tuple `_prev` and the operation's label `_op`. `__add__` and `__mul__` return a new Value whose parents are `(self, other)`.",
    "canvas": {
     "kind": "graph",
     "params": {
@@ -392,7 +392,24 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 6 hidden tests that build the course expression and read `data`, `_op`, `_prev` and `grad`. Each result must equal the expected one exactly."
+    "how": "Submit runs 6 hidden tests that build the course expression and read `data`, `_op`, `_prev` and `grad`. Each result must equal the expected one exactly.",
+    "mutants": [
+     {
+      "source": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n\n    def __add__(self, other):\n        return Value(self.data + other.data, (other, self), \"+\")\n\n    def __mul__(self, other):\n        return Value(self.data * other.data, (other, self), \"*\")\n",
+      "test": 3,
+      "symptom": "stores the inputs in reverse order in `_prev`"
+     },
+     {
+      "source": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = \"\"\n\n    def __add__(self, other):\n        return Value(self.data + other.data, (self, other), \"+\")\n\n    def __mul__(self, other):\n        return Value(self.data * other.data, (self, other), \"*\")\n",
+      "test": 2,
+      "symptom": "forgets the operation label"
+     },
+     {
+      "source": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 1.0\n        self._prev = tuple(_prev)\n        self._op = _op\n\n    def __add__(self, other):\n        return Value(self.data + other.data, (self, other), \"+\")\n\n    def __mul__(self, other):\n        return Value(self.data * other.data, (self, other), \"*\")\n",
+      "test": 5,
+      "symptom": "starts every gradient at 1 instead of 0"
+     }
+    ]
    },
    "hints": [
     {
@@ -700,7 +717,7 @@
      }
     }
    },
-   "question": "What should `v.grad` be, since $\\partial y/\\partial v$ for $y = v + v$ is the true answer?",
+   "question": "What should `v.grad` be? Give the true $\\partial y/\\partial v$ for $y = v + v$.",
    "widget": {
     "kind": "numeric",
     "answer": 2,
@@ -981,7 +998,24 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 7 hidden tests: each closure called by hand, a value used twice, both right-hand methods and a plain number on each side. Each result must equal the expected one exactly."
+    "how": "Submit runs 7 hidden tests: each closure called by hand, a value used twice, both right-hand methods and a plain number on each side. Each result must equal the expected one exactly.",
+    "mutants": [
+     {
+      "source": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad = out.grad\n            other.grad = out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad = other.data * out.grad\n            other.grad = self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n",
+      "test": 3,
+      "symptom": "the closures use `=` instead of `+=`, so a value used twice keeps only one share"
+     },
+     {
+      "source": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += self.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n",
+      "test": 1,
+      "symptom": "the product passes a box its own value instead of the other input's"
+     },
+     {
+      "source": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n",
+      "test": 2,
+      "symptom": "the sum box passes the gradient to its first input only"
+     }
+    ]
    },
    "hints": [
     {
@@ -1173,7 +1207,7 @@
     }
    },
    "explain": {
-    "text": "The P&L box multiplies $nm$ by $F - F_0$, so it passes the difference $nm = 2{,}500$; the difference box passes it on to $F$. One backward call gives that and every other sensitivity together."
+    "text": "The P&L box multiplies $nm$ by $F - F_0$, so it passes the difference box $nm = 2{,}500$; the difference box passes it on to $F$. One backward call gives that and every other sensitivity together."
    }
   }
  ],
