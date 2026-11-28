@@ -13,6 +13,7 @@ compared exactly (1e-9) on 20-step runs of every configuration. Every figure the
 """
 import copy
 import hashlib
+import re
 import json
 import math
 import os
@@ -295,6 +296,11 @@ gA1 = agree('Adam gain with layer norm', MM['sgd+ln'] - MM['adam+ln'], st.fmean(
 E(L14, 'screens[4].widget.rows[0][1].answer', round(gA0, 3))
 E(L14, 'screens[4].widget.rows[1][1].answer', round(gA1, 3))
 agree('interaction Adam x layer norm', gA0 - gA1, (MM['adam+ln'] - MM['sgd+ln']) - (MM['adam'] - MM['sgd']))
+I4 = (MM['adam+ln'] - MM['sgd+ln']) - (MM['adam'] - MM['sgd'])
+txt4 = lv.text(L14, 'screens[4].explain')
+lv.claim(round(I4, 3) == 0.057 and I4 > 0 and '= 0.057' in txt4 and not re.search(r'(?<![\d.])[-\u2212]\s*0\.057', txt4),
+         'screens[4]: the interaction is +0.057 (L11 - L01) - (L10 - L00), stated positive on the screen', covers=[0.057, 0.058, 0.121, 0.064])
+lv.claim(round(DM['adam'], 3) == 0.058 and round(DM['ln'], 3) == 0.111 and DM['ln'] > DM['adam'], 'screens[4] and [6]: removal effects 0.058 (Adam) and 0.111 (layer norm)', covers=[0.058, 0.111])
 E(L14, 'screens[5].widget.answer', (3 + 1) * 10)
 used('both directions with three changes are all 8 mixes', len({'sgd', 'sgd+ln+do', 'adam+do', 'adam+ln', 'adam+ln+do', 'adam', 'sgd+ln', 'sgd+do'}) == 2 ** 3 and 8 * 10 == 80, 80)
 s6 = {c: VV[r][6] - VV['adam+ln+do'][6] for c, r in REM.items()}
@@ -434,6 +440,9 @@ agree('five differences sum', sum(five), st.fsum(five))
 E(L16, 'screens[3].widget.rows[0][1].answer', round(m5, 4))
 E(L16, 'screens[3].widget.rows[1][1].answer', round(s5, 4))
 E(L16, 'screens[3].widget.rows[2][1].answer', round(t5, 2))
+p5 = 2 * M4.t_cdf(-abs(t5), 4)
+agree('five pairs: p on 4 df', p5, float(stats.ttest_1samp(five, 0).pvalue))
+lv.claim(round(p5, 3) == 0.053 and p5 > 0.05, 'five pairs fall just short of 5% (p = 0.053)', covers=[0.053])
 agree('five differences sd over n', float(np.std(five)), st.pstdev(five))
 E(L16, 'screens[4].widget.answer', round(tw, 2))
 agree('Welch standard error', math.sqrt((sA ** 2 + sB ** 2) / 10), math.hypot(st.stdev(A), st.stdev(B)) / 10 ** 0.5)
@@ -470,11 +479,44 @@ def power_n(sdv, delta):  # route B: smallest n with normal-approximation power 
 
 
 lv.claim(math.ceil(need) == power_n(sdd, 0.02) == 7 and math.ceil(needu) == power_n(sdu, 0.02) == 24, 'seeds needed: 7 and 24, by the formula and by a search', covers=[7, 24])
+
+
+def nct_power(n, sdv, delta, alpha=0.05):  # exact power of the two-sided one-sample (paired) t test, noncentral t (SciPy)
+    df, nc, c = n - 1, delta / sdv * math.sqrt(n), float(stats.t.ppf(1 - alpha / 2, n - 1))
+    return float(1 - stats.nct.cdf(c, df, nc) + stats.nct.cdf(-c, df, nc))
+
+
+def t_need(sdv, delta):
+    n = 2
+    while nct_power(n, sdv, delta) < 0.8:
+        n += 1
+    return n
+
+
+lv.claim(0.68 < nct_power(7, sdd, 0.02) < 0.70 and round(nct_power(7, sdd, 0.02), 2) == 0.69 and nct_power(9, sdd, 0.02) > 0.8 > nct_power(8, sdd, 0.02),
+         'at 7 seeds the paired t test has power 0.69, short of 0.8; it needs 9 (exact noncentral t)', covers=[9])
+lv.claim(t_need(sdd, 0.02) == 9 and t_need(sdu, 0.02) == 26 and nct_power(24, sdu, 0.02) < 0.8, 'the t test needs 9 seeds for our pairs and 26 with batches not fixed (24 give power 0.77)', covers=[9, 26])
 tq7 = agree('t quantile, 7 df', M4.t_quantile(0.975, 7), float(stats.t.ppf(0.975, 7)))
 lo8 = agree('transfer: lower end', 0.12 - tq7 * 0.10 / math.sqrt(8), 0.12 - float(stats.t.ppf(0.975, 7)) * 0.1 / 8 ** 0.5, extra=[0.12 + tq7 * 0.1 / math.sqrt(8), 0.1 / math.sqrt(8), 0.12, 0.10, round(tq7, 3)])
 E(L16, 'screens[11].widget.answer', round(lo8, 3))
 agree('transfer: lower end with 1.96', 0.12 - 1.96 * 0.1 / math.sqrt(8), 0.12 - 0.196 / 8 ** 0.5)
 agree('transfer: lower end without sqrt 8', 0.12 - tq7 * 0.1, 0.12 - float(stats.t.ppf(0.975, 7)) / 10)
+# slips worked from the numbers the screen prints (rounded) and from the unrounded runs: each must land in its band, outside the key's
+sq10 = math.sqrt(10)
+pd, ps = -0.0206, 0.0180
+lv.slip(L16, 'screens[2]', 'sign', ('printed', -pd / (ps / sq10)), ('unrounded', -db / (sdd / sq10)))
+lv.slip(L16, 'screens[2]', 'nosqrt', ('printed', pd / ps), ('unrounded', db / sdd))
+lv.slip(L16, 'screens[2]', 'se', ('printed', pd / (ps / 3)), ('unrounded', db / (sdd / 3)))
+hwp = 2.262 * ps / sq10
+used('printed half-width 0.0129 and upper end -0.0077 on screens[5]; standard error 0.00569 and t -3.62 on screens[2]',
+     round(hwp, 4) == 0.0129 and round(pd + hwp, 4) == -0.0077 and round(ps / sq10, 5) == 0.00569 and round(pd / (ps / sq10), 2) == -3.62,
+     0.0129, 0.0077, 0.00569, 3.62, 3.6)
+lv.slip(L16, 'screens[5]', 'lower', ('printed', pd - hwp), ('unrounded', db - hw))
+lv.slip(L16, 'screens[5]', 'z', ('printed', pd + 1.96 * ps / sq10), ('unrounded', db + 1.96 * sdd / sq10))
+lv.slip(L16, 'screens[5]', 'nosqrt', ('printed', pd + 2.262 * ps), ('unrounded', db + tq9 * sdd))
+lv.slip(L16, 'screens[5]', 'sign', ('printed', -(pd + hwp)), ('unrounded', -(db + hw)))
+lv.slip(L16, 'screens[8]', 'sign', ('printed', 0.0244 / (0.0346 / sq10)), ('unrounded', -tu))
+used('screens[8] standard error 0.0109', round(0.0346 / sq10, 4) == 0.0109, 0.0109)
 E(L16, 'quiz[0].widget.answer', -0.012 / (0.020 / 4))
 used('quiz t inputs', abs(0.020 / math.sqrt(16) - 0.005) < 1e-15 and abs(-0.012 / 0.020 + 0.6) < 1e-12, 0.012, 0.020, 0.005, 0.6, 2.4)
 f10 = agree('FWER of 10 tests', 1 - 0.95 ** 10, 1 - math.prod([0.95] * 10), extra=[0.95 ** 10, 0.5])
@@ -524,6 +566,15 @@ lv.claim(round(float(stats.t.ppf(0.975, 5)), 3) == 2.571, 't quantile 2.571 for 
 for i, v in enumerate((round(dm, 4), round(ds, 4), round(dt, 2), round(dm + dh, 4))):
     E('problems', f'items[0].parts[{i}].widget.answer', v)
 agree('problem 1 sd over n', float(np.std(dq)), st.pstdev(dq), extra=[dm + 1.96 * ds / math.sqrt(6)])
+sq6 = math.sqrt(6)
+lv.slip('problems', 'items[0].parts[2]', 'sign', ('printed', 0.0122 / (0.0068 / sq6)), ('unrounded', -dt))
+lv.slip('problems', 'items[0].parts[2]', 'nosqrt', ('printed', -0.0122 / 0.0068), ('unrounded', dm / ds))
+lv.slip('problems', 'items[0].parts[3]', 'z', ('printed', -0.0122 + 1.96 * 0.0068 / sq6), ('unrounded', dm + 1.96 * ds / sq6))
+lv.slip('problems', 'items[0].parts[3]', 'sign', ('printed', 0.0122 - 2.571 * 0.0068 / sq6), ('unrounded', -(dm + dh)))
+used('problem 1 printed figures: standard error 0.00278, t -4.39, upper end -0.0051; unrounded t -4.37, upper end -0.0050, half-width 0.0072',
+     round(0.0068 / sq6, 5) == 0.00278 and round(-0.0122 / (0.0068 / sq6), 2) == -4.39 and round(-0.0122 + 2.571 * 0.0068 / sq6, 4) == -0.0051
+     and round(dt, 2) == -4.37 and round(dm + dh, 4) == -0.0050 and round(dh, 4) == 0.0072,
+     0.00278, 4.39, 0.0051, 4.37, 0.0050, 0.0072, 0.0193)
 used('problem 1 inputs', all(abs(b - a - c) < 1e-9 for a, b, c in zip(P, Q, dq)), *P, *Q, *dq)
 fx, nx = [0.25, 0.27, 0.24, 0.26, 0.28], [0.29, 0.30, 0.28, 0.31, 0.32]
 dx = [round(b - a, 2) for a, b in zip(fx, nx)]

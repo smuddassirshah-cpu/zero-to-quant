@@ -1064,3 +1064,35 @@ def log_diff(log_a, log_b):
             out.append(k)
     return out
 ```
+
+## Fix pass
+
+Counts: 23 fixed, 2 declined, 0 deferred (25 findings: 1 error, 9 warnings, 15 notes; the survivor list and the script notes are counted with the findings they belong to). Validator 0 errors with no `[ai-mutants]` or `[source-ban]` warning on nn-train files; voice scan 0 and 0; number script 505 of 505 (CI runner and direct strict), 0 uncovered; `grade-all.mjs --file <f> --code` 0 failures on all six edited files; playthrough green with and without `--mobile` on l14, l15, l16, homework-4, review-4 and problems-4. Graded answers changed: none (hidden-test expectations are unchanged, two tests added; `wrong[]` bands moved only as listed).
+
+1. nt_ops_l4.py `t_quantile` bracket (note): declined. Not an error in the module as the level uses it (seeds 2 to 12, Bonferroni levels to 0.99999 at most are within $\pm 10^4$ except $n = 2$ at a very deep level), and the module is hashed by the number script and shared by later levels. Raised for the engine owner: widen the bracket or raise when the bound is hit before `ml-int` reuses it.
+2. nn-train-seeds.json rewrite reproducibility (note): no change by the finding's own wording. The script compares at $10^{-6}$ and every stated figure is to 4 places or fewer.
+3. Script `check_wrongs` and the slips (note): fixed. `lv.slip(...)` now works each of the ten slips from the printed inputs and from the unrounded runs; both routes must land in the slip band and outside the key band.
+4. Script `power_n` (note): fixed. Added the exact noncentral-$t$ power (`nct_power`) and a search for the seeds the $t$ test needs: power 0.69 at 7, 9 needed for our pairs, 26 for other batches (24 give 0.77), each recomputed before it is written.
+5. l13 quiz[0] margin (note): declined. The finding itself says it is a margin and not a fault ("if the item is edited"); the item is not edited, and 0.0365 is accepted.
+6. l14 screens[4] interaction sign (error): fixed. The explain now reads "$I = -0.064 - (-0.121) = 0.057$: positive". I recomputed $(0.022 - 0.086) - (0.084 - 0.205) = +0.0567$. The script checks the screen's text: it must say `= 0.057` and must contain no negative 0.057.
+7. l14 screens[7] two sign conventions (warning): fixed. The question asks what adding the wider layer changes, with its sign; byKey `sign` says that is the removal effect, without minus with.
+8. l14 screens[4] and [6] ranking on point estimates (warning): fixed. screens[4] ends with "0.121 added to the baseline and 0.058 removed from the full set-up"; screens[6] says layer norm's removal costs more on average, 0.111 against 0.058. Both figures are recomputed in the script.
+9. l14 screens[7] means without a spread (note): fixed, "an sd of about 0.01 across the ten seeds". Also screens[8] now defines $L_{ab}$, as the first finding proposed.
+10. l15 screens[8] `keep_losses=0` (note): fixed in the prelude (`losses[len(losses) - keep_losses:]`, so 0 keeps none) and test 8 no longer passes `keep_losses=0`, so its expected list and the model solution are unchanged and no mutant's first failing test moves.
+11. l15 screens[4] "four steps" (note): fixed, "in four of its steps".
+12. l15 screens[3] "as much as" (note): fixed, "nearly as much as a different seed (sd 0.029 against 0.046)".
+13. l15 screens[6] first test score chose a change (note): fixed in the prose.
+14. l16 ten slip bands (warning): fixed. The five bands of screens[2] and [5] and the rest now use the centres and widths proposed, rechecked against both routes by `lv.slip` (screens[2] sign 3.625 +- 0.012, nosqrt -1.145 +- 0.008, se -3.437 +- 0.008; screens[5] lower -0.03345, z -0.00945, sign 0.00775 each +- 0.0001, nosqrt 0.02006 +- 0.00012; screens[8] sign 2.225 +- 0.012; problems-4 parts[2] sign 4.38 +- 0.025, nosqrt -1.788 +- 0.01, parts[3] z -0.00675 and sign 0.00505 each +- 0.0001). None meets its key band.
+15. l16 and problems-4 worked figures that do not follow from the printed inputs (warning): fixed by stating what the printed inputs give and what the unrounded runs give: 0.00569, $-3.62$ and $-3.63$; 0.0129, $-0.0077$ and $-0.0078$; 0.0109 for the screens[8] hint; problems-4 0.00278, $-4.39$ and $-4.37$, upper end $-0.0051$ and $-0.0050$. The keys stay as they were and still accept both.
+16. l16 screens[10] "needs 7 seeds" (warning): fixed. The text says the formula asks for 7 and 24, "at so few seeds it runs low: the $t$ test needs about 9 and 26". Recomputed with SciPy `nct`: power 0.691 at 7, 0.830 at 9; 0.774 at 24, 0.809 at 26.
+17. l16 screens[11] committee interval (warning): fixed. "on 8 shared seeds and one test period", and "It covers seed noise only: both versions saw one test period, whose own noise (`testing` l11) it leaves out."
+18. l16 "on these seeds" readings of an interval (warning): fixed in l16 screens[5] and [7], homework-4 items[7] and problems-4 items[0] parts[4] (option, feedback and explain): the claims are now about new seeds on this split.
+19. l16 screens[3] five pairs (note): fixed, "$p = 0.053$: five pairs fall just short where ten were clear" (recomputed 0.0532 on 4 df).
+20. l16 screens[6] independence (note): fixed. The explain says tests against one shared baseline are not quite independent, so the true chance is a little lower, and cites `testing` l10 for Bonferroni.
+21. review-4 items[7] "four runs" (note): fixed, "Four set-ups of a net, each averaged over the same seeds".
+22. homework-4 items[0] Bonferroni count from the configs in the results (warning, surviving wrong solution W1): fixed. New hidden test 9 hands `experiment_report` unasked configs beside the borderline effect (expects `True`, Bonferroni over one change); the slip gives `False`. Added as a `mutant` (test 9). `how` says 9 tests.
+23. homework-4 items[0] tests 4 and 8 companions (note): fixed. `nulls(names)` builds four genuine null configs on EDGE's own base, so the "borderline effect among nulls" is one; x's verdict is unchanged.
+24. homework-4 items[1] absent versus None (note, surviving wrong solution W3): fixed. Test 7 compares a log with `code` set to `None` against one without it, expecting `['code']`; added as a `mutant` (test 7). `how` says 7 tests.
+25. problems-4 items[2] parts[3] (warning): fixed. The question now says the test set was scored after each of the five runs and the run with the best test score was reported.
+
+Surviving wrong solution W1 of `runs_needed` (`int(n) + 1`): declined as the review concluded. It differs from the ceiling only when $n$ is an exact whole number, which needs the two quantiles to give an exact square in floating point. A test built on that would also reject correct variants (`-z(alpha / 2)`) by one unit in the last place.

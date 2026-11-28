@@ -383,7 +383,7 @@
     }
    },
    "explain": {
-    "text": "The log has the training seed but not the split seed. As the two logs above showed, a different split moves the loss as much as a different seed.",
+    "text": "The log has the training seed but not the split seed. As the two logs above showed, a different split moves the loss nearly as much as a different seed (sd 0.029 against 0.046).",
     "canvas": {
      "highlight": [
       "l2"
@@ -395,7 +395,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "Karpathy's recipe",
-   "prose": "Karpathy's *A Recipe for Training Neural Networks*, in four steps. First get the data pipeline right: look at real batches and labels, which catches bad loaders and wrong labels. Then overfit one small batch, which catches a broken model or loss. Then regularise, to close the gap to validation. Then tune.",
+   "prose": "Karpathy's *A Recipe for Training Neural Networks*, in four of its steps. First get the data pipeline right: look at real batches and labels, which catches bad loaders and wrong labels. Then overfit one small batch, which catches a broken model or loss. Then regularise, to close the gap to validation. Then tune.",
    "question": "Put the four steps in order. Leave out the one that does not belong.",
    "widget": {
     "kind": "order",
@@ -707,7 +707,7 @@
    "type": "trap",
    "difficulty": 2,
    "title": "The test set, twice",
-   "prose": "A log shows the test set scored at step 150. The rate was then lowered from 0.01 to 0.005, the run went on, and the test set was scored again at step 300. The report quotes the second test loss.",
+   "prose": "A log shows the test set scored at step 150. After reading the step-150 test loss, the team lowered the rate from 0.01 to 0.005, the run went on, and the test set was scored again at step 300. The report quotes the second test loss.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -872,7 +872,7 @@
     "language": "python",
     "starter": "REQUIRED = [\"code\", \"data\", \"split_seed\", \"seed\", \"config\"]\n\n\ndef audit_log(log):\n    # return the list of problems, in this order:\n    #   \"missing <field>\" for each REQUIRED field absent or None, in REQUIRED order\n    #   \"no loss curve\" when fewer than 2 loss events\n    #   \"test scored <k> times\" when k > 1 test events\n    #   then, event by event: \"changed <key> at step <step>\" for a set event,\n    #   \"resume at step <step> without a checkpoint\" for a resume event with no \"from\"\n    ...\n",
     "solution": "REQUIRED = [\"code\", \"data\", \"split_seed\", \"seed\", \"config\"]\n\n\ndef audit_log(log):\n    problems = []\n    for field in REQUIRED:\n        if log.get(field) is None:\n            problems.append(\"missing \" + field)\n    events = log.get(\"events\", [])\n    if sum(e[\"kind\"] == \"loss\" for e in events) < 2:\n        problems.append(\"no loss curve\")\n    tests = sum(e[\"kind\"] == \"test\" for e in events)\n    if tests > 1:\n        problems.append(f\"test scored {tests} times\")\n    for e in events:\n        if e[\"kind\"] == \"set\":\n            problems.append(f\"changed {e['key']} at step {e['step']}\")\n        if e[\"kind\"] == \"resume\" and \"from\" not in e:\n            problems.append(f\"resume at step {e['step']} without a checkpoint\")\n    return problems\n",
-    "prelude": "import copy\nBASE = {\"run\": \"A-0\", \"code\": \"a41c9e2\", \"data\": \"spirals-600 v1\", \"split_seed\": 0, \"seed\": 0,\n        \"config\": {\"opt\": \"adam\", \"lr\": 0.01, \"hidden\": 16, \"batch\": 32, \"steps\": 300},\n        \"events\": [{\"step\": s, \"kind\": \"loss\", \"train\": 0.5, \"val\": 0.5} for s in range(6, 301, 6)]\n                  + [{\"step\": 300, \"kind\": \"test\", \"loss\": 0.05}]}\n\n\ndef variant(drop=(), none=(), add=(), keep_losses=None):\n    log = copy.deepcopy(BASE)\n    for k in drop:\n        del log[k]\n    for k in none:\n        log[k] = None\n    if keep_losses is not None:\n        log[\"events\"] = [e for e in log[\"events\"] if e[\"kind\"] != \"loss\"][:0] + [e for e in log[\"events\"] if e[\"kind\"] == \"loss\"][-keep_losses:] + [e for e in log[\"events\"] if e[\"kind\"] != \"loss\"]\n    log[\"events\"] = sorted(log[\"events\"] + list(add), key=lambda e: e[\"step\"])\n    return log\n",
+    "prelude": "import copy\nBASE = {\"run\": \"A-0\", \"code\": \"a41c9e2\", \"data\": \"spirals-600 v1\", \"split_seed\": 0, \"seed\": 0,\n        \"config\": {\"opt\": \"adam\", \"lr\": 0.01, \"hidden\": 16, \"batch\": 32, \"steps\": 300},\n        \"events\": [{\"step\": s, \"kind\": \"loss\", \"train\": 0.5, \"val\": 0.5} for s in range(6, 301, 6)]\n                  + [{\"step\": 300, \"kind\": \"test\", \"loss\": 0.05}]}\n\n\ndef variant(drop=(), none=(), add=(), keep_losses=None):\n    log = copy.deepcopy(BASE)\n    for k in drop:\n        del log[k]\n    for k in none:\n        log[k] = None\n    if keep_losses is not None:\n        losses = [e for e in log[\"events\"] if e[\"kind\"] == \"loss\"]\n        log[\"events\"] = losses[len(losses) - keep_losses:] + [e for e in log[\"events\"] if e[\"kind\"] != \"loss\"]\n    log[\"events\"] = sorted(log[\"events\"] + list(add), key=lambda e: e[\"step\"])\n    return log\n",
     "examples": [
      {
       "call": "audit_log(variant(drop=[\"code\"]))",
@@ -917,7 +917,7 @@
       "expect": "['missing seed', 'test scored 3 times', 'changed p at step 100']"
      },
      {
-      "call": "audit_log(variant(none=[\"data\"], drop=[\"config\"], keep_losses=0))",
+      "call": "audit_log(variant(none=[\"data\"], drop=[\"config\"]))",
       "compare": "equal",
       "expect": "['missing data', 'missing config']"
      }
