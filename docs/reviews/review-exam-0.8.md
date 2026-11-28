@@ -37,3 +37,16 @@ Counts: **1 error, 3 warnings, 6 notes.**
 ## Numbers recomputed by hand (no finding)
 
 MSE 2 (sum 6, raw $-2/3$, $n - 1$ gives 3); neuron sum 1 (no bias 2.5, zero input 0.5); running totals 0.45, 0.75, 1 give buy; accuracy 1,940/2,000 = 97%; the nudge round 0.6667, 0.0833, 2.0833, 0.1667, 0.5; both MSEs 4 (sums 8 and 10 unsquared); the alarm's 8 patterns (only 0.5 and 1.5 fire, (0, 0, 1) sums to 0); the NOR, NAND, OR and never sums; sell row 2/3 (2/4, 2/7, 2/8); temperature $\tfrac12$ 0.25/0.38 = 0.658 (roots 0.415); 11 + 29 = 40 (42, 41); $15000 \times 1.045^3$ = £17,117.49 (simple £17,025, four years £17,887.78); 3 unique survey rows (5 distinct pairs); $t$ = 4 gets 6 of 8 and no other $t$ beats 5, test 3 of 5, best $t$ on the test days 80% ($t$ = 3), average 67.5%; XNOR network sums; the desk log's 11 pairs, "the" row 3, rip 2/3, sample "sell the rip . buy", the run's chance 1/6; £9,000, £13,322.20 (simple £12,600, £7,500 = 30 months); 117/180 = 65%, so 121 (120 sits exactly 5 points away, 130 matches, 117 is 58.5%); bot A $-5.5$, bot B 8 (9.5, 12, 11.5); bias $-5 < b \le -4$. Every tolerance separates the key from its wrongs.
+
+## Fix pass
+
+- items[24] e-pension-reply prose: fixed. Sentence replaced with "The pension, the figures and the review are made up for this question." so the review exists within the scenario and `fake` is not defensible.
+- items[28] e-fit-halving tests: fixed. Test 8 `fit_halving([0, 1, 2], [-2, 5, 0])` expecting `[1.0, 0.0, 8.0]` added (solution passes; check_numbers recomputes it), `how` says 8 tests, `test-8` byKey line added, and both survivors added as `mutants` failing test 8 first (old-error b trials; b before w).
+- items[13] e-examples-two-docs: fixed. Prose now says "An example needs at least one token as its input, and there is no start token." Key 40 unchanged.
+- items[15] e-wrong-more-likely: fixed. `premise` replaced by `language` ("A question asked in a language rarely written online", taught in ai-use l1 and l10); feedback and explain updated. Correct set is still three options.
+- items[29] e-sample-name tests: fixed. Test 9 `sample_name(['anan', 'na'], [0.1, 0.4, 0.4])` expecting `'ana'` added with a mutant (pair counted once per name), `how` says 9 tests, `test-9` byKey line added.
+- items[10] e-neither-neuron explain: fixed. Now states $w + b \le 0$.
+- items[27] e-two-of-three part 4 `below` why: fixed. "At $-5$ or below, (1, 1, 0) no longer fires."
+- items[26] e-profit-days: declined (optional note). The part 1 sum matching the lesson is acceptable since bot B and the comparison test transfer; changing bot A would need renumbering with no error to fix.
+- items[17] e-quote-the-line: declined (optional note). Same skill as the lesson by design; the item is a check of that skill.
+- items[3] e-pick-buy question: fixed. Question states the rule in full.
