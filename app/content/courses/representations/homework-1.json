@@ -1,0 +1,501 @@
+{
+ "id": "homework-1",
+ "course": "representations",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-similar-stocks",
+   "difficulty": 5,
+   "skills": [
+    "rp-embed"
+   ],
+   "title": "Stocks like each other",
+   "performance": "code",
+   "prose": "Write `similar_stocks(R, k, dim, seed)` from nothing. `R` is a days-by-stocks array of returns. Build the correlation matrix and fit an embedding of width `dim`; any method will do, and the fit of this level, started from `seed`, works. Return one list per stock: its `k` most similar other stocks by cosine, most alike first, ties to the earlier stock. A stock whose row is shorter than 0.25 has no direction: give it an empty list and never list it. `factor_returns(seed, lone=..., twin=...)` from `representations_ops_l1` makes test data.",
+   "question": "Write `similar_stocks`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.25\n    U = np.where(ok[:, None], E / np.where(ok, length, 1.0)[:, None], 0.0)\n    S = U @ U.T\n    S[:, ~ok] = -np.inf\n    np.fill_diagonal(S, -np.inf)\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        order = np.argsort(-S[i], kind=\"stable\")\n        out.append([int(j) for j in order[:k] if S[i, j] > -np.inf])\n    return out\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(7); out = similar_stocks(R, 3, 3, 0)",
+      "call": "[len(out)] + sorted(set(len(row) for row in out))",
+      "compare": "equal",
+      "expect": "[30, 3]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(7); out = similar_stocks(R, 3, 3, 0)",
+      "call": "[len(out)] + sorted(set(len(row) for row in out))",
+      "compare": "equal",
+      "expect": "[30, 3]"
+     },
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(8); out = similar_stocks(R, 4, 3, 0)",
+      "call": "all(i not in row and len(set(row)) == len(row) for i, row in enumerate(out))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(7)\ndef share(out, sec):\n    hits = [sec[j] == sec[i] for i, row in enumerate(out) for j in row]\n    return sum(hits) / len(hits)\n",
+      "call": "share(similar_stocks(R, 3, 3, 0), sec) >= 0.85",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(12)\ndef share(out, sec):\n    hits = [sec[j] == sec[i] for i, row in enumerate(out) for j in row]\n    return sum(hits) / len(hits)\n",
+      "call": "share(similar_stocks(R, 3, 3, 2), sec) >= 0.85",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(7, twin=True); out = similar_stocks(R, 2, 3, 0)",
+      "call": "[out[30][0], out[0][0]]",
+      "compare": "equal",
+      "expect": "[0, 30]"
+     },
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(7, lone=True); out = similar_stocks(R, 30, 3, 0)",
+      "call": "[out[30], any(30 in row for row in out), len(out[0])]",
+      "compare": "equal",
+      "expect": "[[], False, 29]"
+     },
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(9, lone=True, twin=True); out = similar_stocks(R, 1, 3, 1)",
+      "call": "[out[31], out[30], any(31 in row for row in out)]",
+      "compare": "equal",
+      "expect": "[[], [0], False]"
+     },
+     {
+      "setup": "import representations_ops_l1 as ops; R, sec = ops.factor_returns(10); d = np.linspace(0.0, 0.03, 30)",
+      "call": "similar_stocks(R + d, 3, 3, 0) == similar_stocks(R, 3, 3, 0)",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests on `factor_returns` data. They check the shape, that no stock lists itself, and a same-sector share of at least 0.85 on two seeds. Then come a duplicated stock, a stock with no factor, both together, and returns shifted by a constant.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.0\n    U = np.where(ok[:, None], E / np.where(ok, length, 1.0)[:, None], 0.0)\n    S = U @ U.T\n    S[:, ~ok] = -np.inf\n    np.fill_diagonal(S, -np.inf)\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        order = np.argsort(-S[i], kind=\"stable\")\n        out.append([int(j) for j in order[:k] if S[i, j] > -np.inf])\n    return out\n",
+      "test": 6,
+      "symptom": "No length guard: the lone stock gets neighbours and appears in other lists."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.25\n    U = np.where(ok[:, None], E / np.where(ok, length, 1.0)[:, None], 0.0)\n    S = U @ U.T\n    S[:, ~ok] = -np.inf\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        order = np.argsort(-S[i], kind=\"stable\")\n        out.append([int(j) for j in order[:k] if S[i, j] > -np.inf])\n    return out\n",
+      "test": 2,
+      "symptom": "Leaves each stock's cosine with itself in, so every stock lists itself first."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.25\n    U = np.where(ok[:, None], E / np.where(ok, length, 1.0)[:, None], 0.0)\n    S = U @ U.T\n    S[:, ~ok] = -np.inf\n    np.fill_diagonal(S, -np.inf)\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        order = np.argsort(-S[i], kind=\"stable\")\n        out.append([int(j) for j in order[:k] if S[i, j] > -np.inf])\n    return out\n",
+      "test": 8,
+      "symptom": "Skips demeaning, so the matrix is a raw cosine of returns, not a correlation."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt(len(X))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.25\n    U = np.where(ok[:, None], E / np.where(ok, length, 1.0)[:, None], 0.0)\n    S = U @ U.T\n    S[:, ~ok] = -np.inf\n    np.fill_diagonal(S, -np.inf)\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        order = np.argsort(-S[i], kind=\"stable\")\n        out.append([int(j) for j in order[:k] if S[i, j] > -np.inf])\n    return out\n",
+      "test": 1,
+      "symptom": "Fits the covariance matrix instead of the correlations, so every row is tiny and the guard empties every list."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef similar_stocks(R, k, dim, seed):\n    X = np.asarray(R, dtype=float)\n    X = X - X.mean(axis=0)\n    X = X / np.sqrt((X ** 2).sum(axis=0))\n    C = X.T @ X\n    n = len(C)\n    M = 1.0 - np.eye(n)\n    E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))\n    for _ in range(300):\n        D = (E @ E.T - C) * M\n        E = E - 10.0 * 4 * D @ E / (n * (n - 1))\n    length = np.sqrt((E ** 2).sum(axis=1))\n    ok = length >= 0.25\n    U = np.where(ok[:, None], E / np.where(ok, length, 1.0)[:, None], 0.0)\n    S = U @ U.T\n    np.fill_diagonal(S, -np.inf)\n    out = []\n    for i in range(n):\n        if not ok[i]:\n            out.append([])\n            continue\n        order = np.argsort(-S[i], kind=\"stable\")\n        out.append([int(j) for j in order[:k] if S[i, j] > -np.inf])\n    return out\n",
+      "test": 6,
+      "symptom": "Guards the short row's own list but still lets it appear in others' lists."
+     }
+    ],
+    "data": {
+     "representations_ops_l1.py": "content/data/ai/representations_ops_l1.py"
+    },
+    "budget": 4000
+   },
+   "feedback": {
+    "correct": "Your neighbours find the sectors, pair the duplicate with its twin and leave the lone stock alone.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-6": "The noise-only stock (index 30) has a very short row: give it `[]` and keep it out of every list.",
+     "test-5": "Stock 30 copies stock 0 exactly, so each must be the other's nearest.",
+     "test-1": "Return one list per stock, each of length `k` (or empty for a guarded stock).",
+     "test-3": "Fewer than 85% of neighbours share a sector. Check that you demean the returns and rank by cosine."
+    }
+   },
+   "explain": {
+    "text": "Correlations from demeaned columns, a width-3 off-diagonal fit, a length guard, then a stable cosine sort: each step is one lesson of the level. The guard is what keeps a confident cosine built on noise out of the report."
+   }
+  },
+  {
+   "id": "h-queries",
+   "difficulty": 4,
+   "skills": [
+    "rp-embed"
+   ],
+   "title": "Searching with new vectors",
+   "prose": "A search engine compares new vectors, not rows already in the table. Write `nearest_for_queries(E, Q, k)`: for each row of `Q`, the indices of the `k` rows of `E` most alike by cosine, ties to the earlier row. A zero query has no direction and gets an empty list.",
+   "question": "Write `nearest_for_queries`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef nearest_for_queries(E, Q, k):\n    # for each query vector in Q, the k rows of E most alike by cosine;\n    # a zero query gets []; zero rows of E count as cosine 0; ties to the earlier row\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef nearest_for_queries(E, Q, k):\n    E = np.asarray(E, dtype=float)\n    ne = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    U = np.where(ne > 0, E / np.where(ne > 0, ne, 1.0), 0.0)\n    out = []\n    for q in np.asarray(Q, dtype=float):\n        nq = np.sqrt(q @ q)\n        if nq == 0:\n            out.append([])\n            continue\n        s = U @ (q / nq)\n        out.append([int(j) for j in np.argsort(-s, kind=\"stable\")[:k]])\n    return out\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "nearest_for_queries([[1, 0], [0, 1], [1, 1]], [[2, 1]], 2)",
+      "compare": "equal",
+      "expect": "[[2, 0]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "nearest_for_queries([[1, 0], [0, 1], [1, 1]], [[2, 1]], 2)",
+      "compare": "equal",
+      "expect": "[[2, 0]]"
+     },
+     {
+      "call": "nearest_for_queries([[1, 0], [0, 1], [1, 1]], [[0, 0], [0, 3]], 1)",
+      "compare": "equal",
+      "expect": "[[], [1]]"
+     },
+     {
+      "call": "nearest_for_queries([[1, 0], [10, 1], [0, 1], [2, 0]], [[1, 0.05]], 3)",
+      "compare": "equal",
+      "expect": "[[1, 0, 3]]"
+     },
+     {
+      "call": "nearest_for_queries([[1, 0], [0, 0], [-1, 0]], [[1, 0]], 3)",
+      "compare": "equal",
+      "expect": "[[0, 1, 2]]"
+     },
+     {
+      "setup": "E = np.random.default_rng(15).standard_normal((20, 4)); Q = np.random.default_rng(16).standard_normal((3, 4))",
+      "call": "nearest_for_queries(E, Q, 3)",
+      "compare": "equal",
+      "expect": "[[13, 16, 15], [6, 9, 12], [0, 17, 10]]"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: small tables with a zero query, a long row, a tie and a zero row, and a seeded table of 20 rows with 3 queries.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef nearest_for_queries(E, Q, k):\n    E = np.asarray(E, dtype=float)\n    ne = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    U = np.where(ne > 0, E / np.where(ne > 0, ne, 1.0), 0.0)\n    out = []\n    for q in np.asarray(Q, dtype=float):\n        nq = np.sqrt(q @ q)\n        s = U @ (q / nq)\n        out.append([int(j) for j in np.argsort(-s, kind=\"stable\")[:k]])\n    return out\n",
+      "test": 2,
+      "symptom": "No guard for a zero query, so it gets a list built from NaN."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef nearest_for_queries(E, Q, k):\n    E = np.asarray(E, dtype=float)\n    ne = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    U = np.where(ne > 0, E / np.where(ne > 0, ne, 1.0), 0.0)\n    out = []\n    for q in np.asarray(Q, dtype=float):\n        nq = np.sqrt(q @ q)\n        if nq == 0:\n            out.append([])\n            continue\n        s = E @ q\n        out.append([int(j) for j in np.argsort(-s, kind=\"stable\")[:k]])\n    return out\n",
+      "test": 3,
+      "symptom": "Ranks by the raw dot product, so the long row 1 wins."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef nearest_for_queries(E, Q, k):\n    E = np.asarray(E, dtype=float)\n    ne = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    U = np.where(ne > 0, E / np.where(ne > 0, ne, 1.0), 0.0)\n    out = []\n    for q in np.asarray(Q, dtype=float):\n        nq = np.sqrt(q @ q)\n        if nq == 0:\n            out.append([])\n            continue\n        s = U @ (q / nq)\n        out.append([int(j) for j in np.argsort(s, kind=\"stable\")[::-1][:k]])\n    return out\n",
+      "test": 3,
+      "symptom": "Reverses a stable sort, which sends ties to the later row."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your search matches, zero query included.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "A zero query has no direction: return `[]` for it.",
+     "test-3": "Row 1 is long; rank by cosine, so normalise the rows of `E`.",
+     "test-4": "Rows 0 and 2 tie in size, but the zero row has cosine 0: order is 0, 1, 2."
+    }
+   },
+   "explain": {
+    "text": "Normalising the table once and each query once makes every comparison a dot product. The query is not in the table, so nothing needs leaving out, but a zero query must be caught."
+   }
+  },
+  {
+   "id": "h-why-correlation",
+   "difficulty": 4,
+   "skills": [
+    "rp-embed"
+   ],
+   "title": "Why a cosine is a correlation",
+   "prose": "Take two return series $x_1, \\ldots, x_n$ and $y_1, \\ldots, y_n$ with means $\\bar x$ and $\\bar y$.",
+   "question": "Put the steps in order and leave out the two that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Demean: $\\mathbf{a} = (x_t - \\bar x)_t$ and $\\mathbf{b} = (y_t - \\bar y)_t$."
+     },
+     {
+      "id": "o2",
+      "text": "$\\mathbf{a} \\cdot \\mathbf{b} = \\sum_t (x_t - \\bar x)(y_t - \\bar y) = n\\,\\mathrm{Cov}(x, y)$, with the covariance taken over $n$."
+     },
+     {
+      "id": "o3",
+      "text": "$|\\mathbf{a}|^2 = \\sum_t (x_t - \\bar x)^2 = n\\,\\mathrm{Var}(x)$, and likewise $|\\mathbf{b}|^2 = n\\,\\mathrm{Var}(y)$."
+     },
+     {
+      "id": "o4",
+      "text": "$\\cos(\\mathbf{a}, \\mathbf{b}) = \\dfrac{n\\,\\mathrm{Cov}(x, y)}{\\sqrt{n\\,\\mathrm{Var}(x)}\\sqrt{n\\,\\mathrm{Var}(y)}}$, and the $n$s cancel."
+     },
+     {
+      "id": "o5",
+      "text": "That is $\\mathrm{Cov}(x, y)/(\\sigma_x \\sigma_y)$, the correlation."
+     },
+     {
+      "id": "x1",
+      "text": "$|\\mathbf{a}| = \\sum_t |x_t - \\bar x|$.",
+      "why": "Length is the root of the sum of squares, not the sum of absolute values."
+     },
+     {
+      "id": "x2",
+      "text": "Divide $\\mathbf{a} \\cdot \\mathbf{b}$ by $|\\mathbf{a}|^2$ to finish.",
+      "why": "That gives the beta of $y$ on $x$, the projection coefficient, not the correlation."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "Demean, write the dot product and lengths as $n$ times covariance and variances, divide, cancel.",
+    "generic": "Not quite. Build the numerator and the lengths before dividing.",
+    "byKey": {
+     "x1": "Length uses squares: $|\\mathbf{a}| = \\sqrt{\\sum (x_t - \\bar x)^2}$.",
+     "x2": "Dividing by $|\\mathbf{a}|^2$ gives a beta, the projection of the vectors course."
+    }
+   },
+   "explain": {
+    "text": "The dot product of the demeaned vectors is $n$ times the covariance and each squared length $n$ times a variance. Dividing, the $n$s cancel and the correlation is left, which is why the cosine of demeaned returns is a correlation."
+   }
+  },
+  {
+   "id": "h-vendor",
+   "difficulty": 5,
+   "skills": [
+    "rp-embed"
+   ],
+   "title": "Buying stock embeddings",
+   "kind": "longform",
+   "prompt": "A data vendor sells \"AI stock embeddings\": a 64-number row for each of 3,000 stocks, updated monthly, and says similar companies sit close together. Your risk team wants to use the nearest neighbours as peer groups in its risk model. Say what you would test before using them, and how.",
+   "model": "First I would ask what the rows were built from and over which dates: returns, text, or both. If they come from returns, a peer group is a co-movement claim in that window, not a business link, and a shared factor can break.\n\nI would test the neighbours out of sample. Take the vendor's rows as of a past month, find each stock's nearest neighbours, and check whether those pairs still have high return correlation in the following months. I would compare that with two baselines: official sector peers and peers from a correlation matrix I compute myself. The vendor should beat or at least match them.\n\nI would check stability month to month. In this level, exact partners changed often while the sector around them did not. So I would score groups, for example the share of top-5 neighbours that stay in the top 20, rather than the single nearest name.\n\nI would look at row lengths and at stocks with little history. A short row has no reliable direction, so its cosines can look confident and mean nothing; a new listing may still have its starting row. Such stocks need a guard and a default peer group.\n\nI would check that the vendor's similarity is cosine on rows normalised the right way. I would also make sure nobody reads the axes as named factors, since a rotation of the table changes every axis and nothing else.\n\nFinally I would check for look-ahead: rows updated monthly must be used only after their publication date, or the backtest of the risk model borrows the future.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Asks what data and dates built the rows, and reads closeness as co-movement in that window, not a business link.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Tests neighbours out of sample: rows from a past date, co-movement checked in later months.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Compares with baselines: official sectors and an in-house correlation or embedding."
+    },
+    {
+     "points": 1,
+     "text": "Checks stability over time and scores groups rather than single partners."
+    },
+    {
+     "points": 1,
+     "text": "Guards short rows and new listings, which have unreliable directions."
+    },
+    {
+     "points": 1,
+     "text": "Confirms cosine on row-normalised vectors and does not read single axes as factors."
+    },
+    {
+     "points": 1,
+     "text": "Checks for look-ahead from the monthly update dates."
+    }
+   ]
+  },
+  {
+   "id": "h-sizes",
+   "difficulty": 3,
+   "skills": [
+    "rp-embed"
+   ],
+   "title": "Counting weights",
+   "prose": "A model takes a stock identifier among 5,000 stocks. It looks up an embedding of width 32 and feeds it to a first layer of 128 units.",
+   "question": "How many weights do the table and that layer hold together, leaving out biases?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 164096,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "wrong": [
+     {
+      "id": "table",
+      "value": 160000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "onehot",
+      "value": 640000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$5{,}000 \\times 32 + 32 \\times 128 = 160{,}000 + 4{,}096 = 164{,}096$.",
+    "generic": "Not quite. Table plus layer.",
+    "byKey": {
+     "table": "That is the table alone; add the $32 \\times 128$ layer.",
+     "onehot": "That is a one-hot input straight into 128 units."
+    }
+   },
+   "explain": {
+    "text": "The table holds $5{,}000 \\times 32 = 160{,}000$ numbers and the layer $32 \\times 128 = 4{,}096$, so 164,096 in all, against 640,000 for a one-hot input into 128 units."
+   }
+  },
+  {
+   "id": "h-guarded",
+   "difficulty": 4,
+   "skills": [
+    "rp-embed"
+   ],
+   "title": "A guarded matrix",
+   "prose": "A table has rows $(3, 4)$, $(0, 0)$, $(4, 3)$ and $(-4, -3)$. Normalise rows with the zero-length guard and form $\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$.",
+   "question": "What is the sum of all 16 entries of the matrix? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.0,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "diag-only",
+      "value": 3.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "zero-one",
+      "value": 2.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Diagonal $1 + 0 + 1 + 1 = 3$; off it, $2(0.96 - 0.96 - 1) = -2$; total 1.",
+    "generic": "Not quite. Write each cosine; the zero row's are all 0.",
+    "byKey": {
+     "zero-one": "You gave the zero row a 1 on the diagonal. With the guard it stays zero, so its diagonal entry is 0.",
+     "diag-only": "3 is the diagonal alone. Add the off-diagonal cosines, which come in pairs."
+    }
+   },
+   "explain": {
+    "text": "Rows 0 and 2 have cosine 0.96, rows 0 and 3 have $-0.96$, rows 2 and 3 have $-1$, and the zero row gives 0 everywhere. Each off-diagonal pair counts twice: $3 + 2(0.96 - 0.96 - 1) = 1$."
+   }
+  },
+  {
+   "id": "h-analogy",
+   "difficulty": 4,
+   "skills": [
+    "rp-embed"
+   ],
+   "title": "One analogy by hand",
+   "prose": "Rows: $\\mathbf{e}_a = (1, 1, 0)$, $\\mathbf{e}_b = (1, 0, 2)$, $\\mathbf{e}_c = (0, 2, 1)$ and a candidate $\\mathbf{e}_d = (0, 1, 3)$.",
+   "question": "What is the cosine of $\\mathbf{e}_b - \\mathbf{e}_a + \\mathbf{e}_c$ with $\\mathbf{e}_d$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.0,
+    "tol": {
+     "abs": 6e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "dot",
+      "value": 10,
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "id": "swap",
+      "value": 0.0,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathbf{q} = (0, 1, 3)$, the same direction as $\\mathbf{e}_d$: cosine 1.0000.",
+    "generic": "Not quite. Form $\\mathbf{q}$ entry by entry, then the cosine.",
+    "byKey": {
+     "dot": "10 is the dot product. Divide by both lengths, $\\sqrt{10}$ each.",
+     "swap": "You formed $\\mathbf{e}_a - \\mathbf{e}_b + \\mathbf{e}_c$. The analogy is $b$ minus $a$, plus $c$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{q} = (1 - 1 + 0, 0 - 1 + 2, 2 - 0 + 1) = (0, 1, 3)$, exactly $\\mathbf{e}_d$, so the cosine is 1.0000. Real tables are rarely this tidy."
+   }
+  },
+  {
+   "id": "h-background",
+   "difficulty": 3,
+   "skills": [
+    "rp-embed"
+   ],
+   "title": "Against the background",
+   "prose": "In a table of width 100, random directions have cosines with standard deviation about $1/\\sqrt{100} = 0.1$. Two stocks' rows have cosine 0.35.",
+   "question": "About how many standard deviations above random pairs is 0.35?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.5,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.35,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "sq",
+      "value": 35,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.35 / 0.1 = 3.5$ standard deviations: unusual for a random pair, worth checking.",
+    "generic": "Not quite. Divide by the spread of random pairs.",
+    "byKey": {
+     "raw": "0.35 is the cosine itself. Divide by the background spread, 0.1.",
+     "sq": "You divided by 0.01, the variance. Divide by the standard deviation, 0.1."
+    }
+   },
+   "explain": {
+    "text": "Random pairs spread about 0.1 in 100 dimensions, so 0.35 is $0.35/0.1 = 3.5$ standard deviations out: a real signal in this table, though still only co-movement."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1235 @@
+{
+ "id": "l2-cosine-similarity",
+ "course": "representations",
+ "title": "Cosine similarity",
+ "minutes": 15,
+ "objectives": [
+  "Write cosine similarity for a whole table at once, and say why length is divided out."
+ ],
+ "skills": [
+  "rp-embed"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Same way, different length",
+   "prose": "Three rows of a trained table. $\\mathbf{u} = (0.6, 0.8)$ and $\\mathbf{v} = (3, 4)$ point the same way; $\\mathbf{v}$ is longer because its item came up far more often in training. $\\mathbf{w} = (0.8, -0.6)$ points elsewhere.",
+   "canvas": {
+    "kind": "vectors",
+    "params": {
+     "x": [
+      -1,
+      4.5
+     ],
+     "y": [
+      -1,
+      4.5
+     ],
+     "grid": true,
+     "vectors": [
+      {
+       "id": "u",
+       "v": [
+        0.6,
+        0.8
+       ],
+       "label": "$\\mathbf{u}$"
+      },
+      {
+       "id": "v",
+       "v": [
+        3.0,
+        4.0
+       ],
+       "label": "$\\mathbf{v}$",
+       "colour": 2
+      },
+      {
+       "id": "w",
+       "v": [
+        0.8,
+        -0.6
+       ],
+       "label": "$\\mathbf{w}$",
+       "colour": 3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "By Euclidean distance, which row is nearer to $\\mathbf{u}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "w",
+      "text": "$\\mathbf{w}$",
+      "correct": true
+     },
+     {
+      "id": "v",
+      "text": "$\\mathbf{v}$",
+      "why": "Work it out: $|\\mathbf{u} - \\mathbf{v}| = |(-2.4, -3.2)| = 4$, while $|\\mathbf{u} - \\mathbf{w}| = 1.41$."
+     },
+     {
+      "id": "tie",
+      "text": "They are equally near",
+      "why": "The distances are 4 and 1.41; the long row is far away."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathbf{w}$, at 1.41 against 4. Distance calls the row pointing the same way far away, just for being long.",
+    "generic": "Not quite. Subtract, then take the length.",
+    "byKey": {
+     "v": "You judged by direction, which is the right instinct, but distance does not. It sees $\\mathbf{v}$ 4 away because it is long."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\mathbf{u} - \\mathbf{v} = (-2.4, -3.2)$ and $\\mathbf{u} - \\mathbf{w} = (-0.2, 1.4)$."
+    },
+    {
+     "rung": "step",
+     "text": "Lengths 4 and $\\sqrt{2} \\approx 1.41$."
+    }
+   ],
+   "explain": {
+    "text": "$|\\mathbf{u} - \\mathbf{v}| = 4$ and $|\\mathbf{u} - \\mathbf{w}| = \\sqrt{2} \\approx 1.41$. Distance mixes how long a row is with which way it points, and here length wins.",
+    "canvas": {
+     "highlight": [
+      "u",
+      "w"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Stretch it",
+   "prose": "Drag the head of $\\mathbf{v}$. The caption shows its distance from $\\mathbf{u}$ and the ratio $\\dfrac{\\mathbf{u}\\cdot\\mathbf{v}}{|\\mathbf{u}|\\,|\\mathbf{v}|}$ from the vectors course.",
+   "canvas": {
+    "kind": "vectors",
+    "params": {
+     "x": [
+      -1,
+      4.5
+     ],
+     "y": [
+      -1,
+      4.5
+     ],
+     "grid": true,
+     "snap": 0.1,
+     "vectors": [
+      {
+       "id": "u",
+       "v": [
+        0.6,
+        0.8
+       ],
+       "label": "$\\mathbf{u}$"
+      },
+      {
+       "id": "v",
+       "v": [
+        3.0,
+        4.0
+       ],
+       "label": "$\\mathbf{v}$",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "drag": [
+      "v"
+     ]
+    },
+    "derive": {
+     "caption": "distance {{fixed(hypot(v.v[0] - 0.6, v.v[1] - 0.8), 2)}},  ratio {{fixed((0.6 * v.v[0] + 0.8 * v.v[1]) / hypot(v.v[0], v.v[1]), 2)}}"
+    }
+   },
+   "question": "Slide $\\mathbf{v}$ to $(1.5, 2)$, then to $(3.6, 4.8)$, keeping its direction. Which number stays put?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ratio",
+      "text": "The ratio, at 1",
+      "correct": true
+     },
+     {
+      "id": "dist",
+      "text": "The distance",
+      "why": "The distance grows as $\\mathbf{v}$ stretches: it is 1.5 at $(1.5, 2)$ and 4 at $(3, 4)$."
+     },
+     {
+      "id": "both",
+      "text": "Both of them",
+      "why": "Watch the distance as you stretch: it changes with the length."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The ratio stays at 1 for any stretch of $\\mathbf{v}$ that keeps its direction.",
+    "generic": "Not quite. Keep the direction and change only the length."
+   },
+   "explain": {
+    "text": "The ratio is the cosine of the angle, so it depends only on direction. Stretching $\\mathbf{v}$ moves the distance and leaves the cosine at 1."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Cosine similarity",
+   "prose": "Name it: the **cosine similarity** of two rows is $\\cos(\\mathbf{u}, \\mathbf{v}) = \\dfrac{\\mathbf{u} \\cdot \\mathbf{v}}{|\\mathbf{u}|\\,|\\mathbf{v}|}$, the cosine of the angle between them. Dividing by both lengths removes how long each row is.",
+   "canvas": {
+    "kind": "vectors",
+    "params": {
+     "x": [
+      -0.5,
+      2.5
+     ],
+     "y": [
+      -0.5,
+      2.5
+     ],
+     "grid": true,
+     "vectors": [
+      {
+       "id": "a",
+       "v": [
+        1,
+        2
+       ],
+       "label": "$(1, 2)$"
+      },
+      {
+       "id": "b",
+       "v": [
+        2,
+        1
+       ],
+       "label": "$(2, 1)$",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "angles": [
+      {
+       "id": "th",
+       "a": "b",
+       "b": "a",
+       "label": "$\\theta$"
+      }
+     ]
+    }
+   },
+   "question": "What is the cosine similarity of $(1, 2)$ and $(2, 1)$? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7999999999999998,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "label": "Cosine",
+    "wrong": [
+     {
+      "id": "dot",
+      "value": 4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one-len",
+      "value": 1.7888543819998317,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\dfrac{2 + 2}{\\sqrt{5}\\sqrt{5}} = \\dfrac{4}{5} = 0.8$.",
+    "generic": "Not quite. Dot product on top, product of the two lengths below.",
+    "byKey": {
+     "dot": "4 is the dot product. Divide by both lengths, $\\sqrt 5$ each.",
+     "one-len": "You divided by one length only. Each row is $\\sqrt 5$ long, so divide by 5."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\mathbf{u}\\cdot\\mathbf{v} = 1 \\times 2 + 2 \\times 1$."
+    },
+    {
+     "rung": "step",
+     "text": "$4 / (\\sqrt 5 \\times \\sqrt 5)$."
+    }
+   ],
+   "explain": {
+    "text": "$\\mathbf{u}\\cdot\\mathbf{v} = 4$ and each length is $\\sqrt 5$, so the cosine is $4/5 = 0.8$. Doubling either row would leave it at 0.8."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Every pair at once",
+   "prose": "For a whole table, divide each row by its length to get $\\hat{\\mathbf{E}}$. Entry $(i, j)$ of $\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$ is then row $i$ dotted with row $j$, both of length 1: their cosine.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "E",
+       "rows": [
+        [
+         1,
+         2
+        ],
+        [
+         2,
+         1
+        ],
+        [
+         -1,
+         1
+        ]
+       ],
+       "label": "$\\mathbf{E}$",
+       "rowLabels": [
+        "0",
+        "1",
+        "2"
+       ]
+      },
+      {
+       "id": "S",
+       "rows": [
+        [
+         "1",
+         "0.8",
+         "0.3162"
+        ],
+        [
+         "0.8",
+         "1",
+         "?"
+        ],
+        [
+         "0.3162",
+         "?",
+         "1"
+        ]
+       ],
+       "label": "$\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$"
+      }
+     ],
+     "ops": [
+      "→"
+     ]
+    },
+    "state": {
+     "caption": "Rows 0 and 1 are the pair you just worked; the diagonal is 1."
+    }
+   },
+   "question": "What is entry $(1, 2)$ of $\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.3162,
+    "tol": {
+     "abs": 6e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Cosine",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.3162,
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "id": "dot",
+      "value": -1,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\dfrac{-2 + 1}{\\sqrt 5\\sqrt 2} = -\\dfrac{1}{\\sqrt{10}} \\approx -0.3162$.",
+    "generic": "Not quite. Dot row 1 with row 2, then divide by both lengths.",
+    "byKey": {
+     "sign": "You dropped the sign: $2 \\times (-1) + 1 \\times 1 = -1$.",
+     "dot": "$-1$ is the dot product of the raw rows. Divide by $\\sqrt 5 \\times \\sqrt 2$."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Row 1 is $(2, 1)$ and row 2 is $(-1, 1)$."
+    },
+    {
+     "rung": "step",
+     "text": "$-1 / \\sqrt{10}$."
+    }
+   ],
+   "explain": {
+    "text": "Row 1 dotted with row 2 is $-1$ and their lengths multiply to $\\sqrt{10}$, so the entry is -0.3162. One matrix product gives every pair, and the matrix is symmetric.",
+    "canvas": {
+     "rows": {
+      "S": [
+       [
+        "1",
+        "0.8",
+        "0.3162"
+       ],
+       [
+        "0.8",
+        "1",
+        "-0.3162"
+       ],
+       [
+        "0.3162",
+        "-0.3162",
+        "1"
+       ]
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Back to the letters",
+   "prose": "In makemore's $27 \\times 10$ table the five rows nearest a by distance are e, z, t, k, o. By cosine they are o, e, u, t, k. The bars show each row's length.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "a",
+      "e",
+      "z",
+      "t",
+      "o",
+      "u"
+     ],
+     "yLabel": "Length of the row",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "a": 3.08,
+      "e": 2.81,
+      "z": 1.93,
+      "t": 2.9,
+      "o": 4.09,
+      "u": 4.74
+     },
+     "highlight": [
+      "xz"
+     ],
+     "caption": "z has the shortest row of all 27, length 1.93."
+    }
+   },
+   "question": "Why does z come second by distance and drop out by cosine?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "short",
+      "text": "Its row is short, so it sits near the origin and near everything",
+      "correct": true
+     },
+     {
+      "id": "alike",
+      "text": "z is used much like a in names, in a way cosine misses",
+      "why": "Cosine sees direction, and z's direction is not a's. Distance ranks it high for sitting near the origin."
+     },
+     {
+      "id": "noise",
+      "text": "Rounding in the table moved z by chance",
+      "why": "The rows are stored to 6 places. The cause is z's length, the shortest in the table."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Its row is the shortest, so distance finds it close to almost every letter.",
+    "generic": "Not quite. Look at the length of z's row.",
+    "byKey": {
+     "alike": "You trusted the distance ranking. A short row is near everything, whatever its direction."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A row near the origin is close to every other row."
+    },
+    {
+     "rung": "step",
+     "text": "z's row has length 1.93, the shortest of the 27."
+    }
+   ],
+   "explain": {
+    "text": "z's row is 1.93 long, so it sits near the middle of the cloud and close to everything. Cosine ignores length and ranks the vowels o, e and u first, as it ranked $\\mathbf{v}$ beside $\\mathbf{u}$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Cosine of demeaned returns",
+   "prose": "Two stocks' daily returns, in %, over five days: A is $(1, 3, -1, 2, 0)$ and B is $(2, 1, 0, 4, 3)$. The vectors course showed that the correlation is the cosine of the **demeaned** vectors.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Day",
+      "A (%)",
+      "B (%)",
+      "A demeaned",
+      "B demeaned"
+     ],
+     "rows": [
+      [
+       "1",
+       1.0,
+       2.0,
+       0.0,
+       0.0
+      ],
+      [
+       "2",
+       3.0,
+       1.0,
+       2.0,
+       -1.0
+      ],
+      [
+       "3",
+       -1.0,
+       0.0,
+       -2.0,
+       -2.0
+      ],
+      [
+       "4",
+       2.0,
+       4.0,
+       1.0,
+       2.0
+      ],
+      [
+       "5",
+       0.0,
+       3.0,
+       -1.0,
+       1.0
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the cosine of the demeaned vectors? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "label": "Cosine",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.6128,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "dot",
+      "value": 3,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\dfrac{3}{\\sqrt{10}\\sqrt{10}} = 0.3$, the correlation of A and B.",
+    "generic": "Not quite. Subtract each stock's mean first, then take the cosine.",
+    "byKey": {
+     "raw": "0.6128 is the cosine of the raw returns. Without demeaning, both stocks' positive average pulls the cosine up.",
+     "dot": "3 is the dot product of the demeaned vectors. Divide by both lengths."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The means are 1 and 2; the demeaned vectors are in the table."
+    },
+    {
+     "rung": "step",
+     "text": "Dot product 3, squared lengths 10 and 10."
+    }
+   ],
+   "explain": {
+    "text": "Demeaned, the dot product is 3 and both squared lengths are 10, so the cosine is 0.3, the correlation. The raw cosine, 0.6128, is inflated by the shared positive drift."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Normalise which way",
+   "prose": "A learner builds $\\hat{\\mathbf{E}}$ by dividing each **column** of $\\mathbf{E}$ by its length, then forms $\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$. The table has rows $(3, 4)$, $(1, 0)$ and $(0, 2)$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "E",
+       "rows": [
+        [
+         3,
+         4
+        ],
+        [
+         1,
+         0
+        ],
+        [
+         0,
+         2
+        ]
+       ],
+       "label": "$\\mathbf{E}$",
+       "rowLabels": [
+        "0",
+        "1",
+        "2"
+       ],
+       "colLabels": [
+        "col 0",
+        "col 1"
+       ]
+      }
+     ]
+    },
+    "state": {
+     "caption": "Column lengths $\\sqrt{10}$ and $\\sqrt{20}$; row lengths 5, 1 and 2."
+    }
+   },
+   "question": "What does the learner's matrix hold at entry $(0, 0)$? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.7,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "label": "Entry",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "twentyfive",
+      "value": 25,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\dfrac{9}{10} + \\dfrac{16}{20} = 1.7$. A cosine of a row with itself is 1, so the columns were the wrong way to divide.",
+    "generic": "Not quite. Divide each column by its length, then square and add row 0.",
+    "byKey": {
+     "one": "You expected the diagonal of 1 that a cosine matrix has. Dividing the columns does not give it: row 0 becomes $(3/\\sqrt{10}, 4/\\sqrt{20})$.",
+     "twentyfive": "25 is row 0 dotted with itself before any division."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Row 0 becomes $(3/\\sqrt{10}, 4/\\sqrt{20})$."
+    },
+    {
+     "rung": "step",
+     "text": "$9/10 + 16/20$."
+    }
+   ],
+   "explain": {
+    "text": "Dividing columns scales each feature, not each item, so rows keep different lengths and the diagonal is 1.7, not 1. Cosine similarity of items needs each row divided by its own length.",
+    "canvas": {
+     "highlight": {
+      "E": {
+       "rows": [
+        0
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A row of zeros",
+   "prose": "A row that is all zeros, such as a stock with no data yet, has length 0. Its cosine with anything is $0/0$. `safe_normalise(E, eps)` divides only rows longer than `eps` and leaves shorter ones as they are.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "E",
+       "rows": [
+        [
+         1,
+         2
+        ],
+        [
+         0,
+         0
+        ],
+        [
+         2,
+         1
+        ]
+       ],
+       "label": "$\\mathbf{E}$",
+       "rowLabels": [
+        "0",
+        "1",
+        "2"
+       ]
+      }
+     ]
+    },
+    "state": {
+     "highlight": {
+      "E": {
+       "rows": [
+        1
+       ]
+      }
+     },
+     "caption": "Row 1 has no direction."
+    }
+   },
+   "question": "With the guard, what is the cosine of row 1 with row 0 in $\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "zero",
+      "text": "0",
+      "correct": true
+     },
+     {
+      "id": "nan",
+      "text": "Not a number",
+      "why": "That is what dividing by length 0 gives without the guard. The guard leaves the row at zero, so its dot products are 0."
+     },
+     {
+      "id": "one",
+      "text": "1",
+      "why": "Only a row compared with itself, at length 1, gives 1. Row 1 stays the zero vector."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0: the zero row stays zero, so every dot product with it is 0.",
+    "generic": "Not quite. Follow what the guard does to row 1, then take the dot product.",
+    "byKey": {
+     "nan": "You divided by the zero length. Without the guard the NaN would spread to row 1's whole row and column."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Row 1 is shorter than `eps`, so it is left as $(0, 0)$."
+    },
+    {
+     "rung": "step",
+     "text": "$(0, 0) \\cdot \\hat{\\mathbf{e}}_0 = 0$."
+    }
+   ],
+   "explain": {
+    "text": "The guard keeps the zero row at zero, so its cosine with every row reads 0, including itself. A search should then report no neighbours for it rather than a list of ties."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 3,
+   "title": "The rule",
+   "prose": "For a table $\\mathbf{E}$ whose rows are not zero,\n\n$$\\hat{\\mathbf{e}}_i = \\frac{\\mathbf{e}_i}{|\\mathbf{e}_i|}, \\qquad \\mathbf{S} = \\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top, \\qquad S_{ij} = \\cos(\\mathbf{e}_i, \\mathbf{e}_j)$$\n\nso one product of the row-normalised table with its transpose gives every cosine.",
+   "question": "For an item that appears 100 times as often as another, and so has a row 10 times as long, how does its cosine with any other row change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "Not at all, if the direction is the same",
+      "correct": true
+     },
+     {
+      "id": "ten",
+      "text": "It becomes 10 times larger, like the row",
+      "why": "The length is divided out: $\\hat{\\mathbf{e}}$ is the same for any positive multiple of the row."
+     },
+     {
+      "id": "hundred",
+      "text": "It becomes 100 times larger, like the count",
+      "why": "Neither frequency nor length enters $\\hat{\\mathbf{e}}$; only direction does."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Not at all: dividing by the length leaves only the direction.",
+    "generic": "Not quite. What is $\\hat{\\mathbf{e}}$ for $10\\mathbf{e}$?"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$10\\mathbf{e}/|10\\mathbf{e}| = \\mathbf{e}/|\\mathbf{e}|$."
+    },
+    {
+     "rung": "step",
+     "text": "So the normalised row, and every cosine, is unchanged."
+    }
+   ],
+   "explain": {
+    "text": "$10\\mathbf{e}/|10\\mathbf{e}| = \\mathbf{e}/|\\mathbf{e}|$, so a longer row with the same direction has the same cosines. That is why cosine, not distance, compares items seen very different numbers of times."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "cosine in code",
+   "prose": "Write `cosine(u, v)` for two vectors of any length. Return 0.0 when either has length 0, the guard from the zero row.",
+   "question": "Write `cosine`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef cosine(u, v):\n    # cosine similarity of two vectors; 0.0 if either has length 0\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef cosine(u, v):\n    u = np.asarray(u, dtype=float)\n    v = np.asarray(v, dtype=float)\n    nu, nv = np.sqrt(u @ u), np.sqrt(v @ v)\n    if nu == 0 or nv == 0:\n        return 0.0\n    return float(u @ v / (nu * nv))\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "cosine([1, 2], [2, 1])",
+      "compare": "isclose",
+      "expect": "0.7999999999999998"
+     }
+    ],
+    "tests": [
+     {
+      "call": "cosine([1, 2], [2, 1])",
+      "compare": "isclose",
+      "expect": "0.7999999999999998"
+     },
+     {
+      "call": "cosine([3, 4], [6, 8])",
+      "compare": "isclose",
+      "expect": "1.0"
+     },
+     {
+      "call": "cosine([1, 0], [0, 1])",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      },
+      "expect": "0.0"
+     },
+     {
+      "call": "cosine([0, 0, 0], [1, 2, 3])",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      },
+      "expect": "0.0"
+     },
+     {
+      "call": "cosine([1, 1, 1], [-2, -2, -2])",
+      "compare": "isclose",
+      "expect": "-1.0000000000000002"
+     },
+     {
+      "call": "cosine([2, 0], [1, 3])",
+      "compare": "isclose",
+      "expect": "0.31622776601683794"
+     },
+     {
+      "setup": "g = np.random.default_rng(11); a = g.standard_normal(300); b = g.standard_normal(300)",
+      "call": "cosine(a, b)",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      },
+      "expect": "0.10720415790507207"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests, each compared within relative $10^{-9}$: the pair from this lesson, a stretched copy, a right angle, a zero vector (must give 0), opposite rows, and two seeded rows of 300.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef cosine(u, v):\n    u = np.asarray(u, dtype=float)\n    v = np.asarray(v, dtype=float)\n    nu, nv = np.sqrt(u @ u), np.sqrt(v @ v)\n    return float(u @ v / (nu * nv))\n",
+      "test": 4,
+      "symptom": "No guard: a zero vector gives 0/0, not 0."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef cosine(u, v):\n    u = np.asarray(u, dtype=float)\n    v = np.asarray(v, dtype=float)\n    nu, nv = np.sqrt(u @ u), np.sqrt(v @ v)\n    if nu == 0 or nv == 0:\n        return 0.0\n    return float(u @ v / (nu * nu))\n",
+      "test": 2,
+      "symptom": "Divides by the first length twice, so a longer second row changes the answer."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef cosine(u, v):\n    u = np.asarray(u, dtype=float)\n    v = np.asarray(v, dtype=float)\n    nu, nv = np.sqrt(u @ u), np.sqrt(v @ v)\n    if nu == 0 or nv == 0:\n        return 0.0\n    return float(u @ v)\n",
+      "test": 1,
+      "symptom": "Returns the dot product with no division at all."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your cosine matches, guard included.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "$(6, 8)$ is $(3, 4)$ stretched: the cosine must be 1. Divide by both lengths.",
+     "test-4": "A zero vector has no direction: return 0.0 before dividing."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Lengths are `np.sqrt(u @ u)` and `np.sqrt(v @ v)`."
+    },
+    {
+     "rung": "step",
+     "text": "Check for a zero length first, then return `u @ v / (nu * nv)`."
+    }
+   ],
+   "explain": {
+    "text": "The guard comes before the division, so a zero vector returns 0.0 instead of a NaN that would spread through every later sum."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The whole matrix in code",
+   "prose": "Write `safe_normalise(E, eps)` and `cosine_matrix(E)`, which normalises with the guard and returns one product. A hidden test checks your matrix against a double loop over every pair.",
+   "question": "Write `safe_normalise` and `cosine_matrix`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef safe_normalise(E, eps=1e-12):\n    # divide each row by its length; leave rows shorter than eps unchanged\n    ...\n\n\ndef cosine_matrix(E):\n    # every pairwise cosine of the rows of E in one product\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef safe_normalise(E, eps=1e-12):\n    E = np.asarray(E, dtype=float)\n    n = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    return np.where(n > eps, E / np.where(n > eps, n, 1.0), E)\n\n\ndef cosine_matrix(E):\n    N = safe_normalise(E)\n    return N @ N.T\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "np.round(cosine_matrix([[1, 2], [2, 1], [-1, 1]]), 6).tolist()",
+      "compare": "equal",
+      "expect": "[[1.0, 0.8, 0.316228], [0.8, 1.0, -0.316228], [0.316228, -0.316228, 1.0]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(safe_normalise([[3, 4], [0, 2]]), 6).tolist()",
+      "compare": "equal",
+      "expect": "[[0.6, 0.8], [0.0, 1.0]]"
+     },
+     {
+      "call": "np.round(cosine_matrix([[1, 2], [2, 1], [-1, 1]]), 6).tolist()",
+      "compare": "equal",
+      "expect": "[[1.0, 0.8, 0.316228], [0.8, 1.0, -0.316228], [0.316228, -0.316228, 1.0]]"
+     },
+     {
+      "call": "np.round(cosine_matrix([[3, 4], [1, 0], [0, 2]]), 6).tolist()",
+      "compare": "equal",
+      "expect": "[[1.0, 0.6, 0.8], [0.6, 1.0, 0.0], [0.8, 0.0, 1.0]]"
+     },
+     {
+      "call": "np.round(cosine_matrix([[1, 2], [0, 0], [2, 1]]), 6).tolist()",
+      "compare": "equal",
+      "expect": "[[1.0, 0.0, 0.8], [0.0, 0.0, 0.0], [0.8, 0.0, 1.0]]"
+     },
+     {
+      "setup": "E = np.random.default_rng(12).standard_normal((15, 4))\ndef loop(E):\n    E = np.asarray(E, float); m = len(E); S = np.zeros((m, m))\n    for i in range(m):\n        for j in range(m):\n            a, b = E[i], E[j]; S[i, j] = a @ b / np.sqrt((a @ a) * (b @ b))\n    return S\n",
+      "call": "bool(np.allclose(cosine_matrix(E), loop(E), rtol=1e-12, atol=1e-12))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "import json; E = np.array(json.load(open('makemore-mlp.json'))['C'])",
+      "call": "round(float(cosine_matrix(E)[1, 15]), 6)",
+      "compare": "equal",
+      "expect": "0.459375"
+     },
+     {
+      "call": "cosine_matrix(np.zeros((4, 3))).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]]"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. They cover a normalised table, three small tables rounded to 6 places (one with a zero row) and a seeded $15 \\times 4$ table against a double loop. Then come a and o in makemore's table and an all-zero table.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef safe_normalise(E, eps=1e-12):\n    E = np.asarray(E, dtype=float)\n    n = np.sqrt((E ** 2).sum(axis=0, keepdims=True))\n    return np.where(n > eps, E / np.where(n > eps, n, 1.0), E)\n\n\ndef cosine_matrix(E):\n    N = safe_normalise(E)\n    return N @ N.T\n",
+      "test": 1,
+      "symptom": "Normalises columns instead of rows, the trap of this lesson."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef safe_normalise(E, eps=1e-12):\n    E = np.asarray(E, dtype=float)\n    n = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    return E / n\n\n\ndef cosine_matrix(E):\n    N = safe_normalise(E)\n    return N @ N.T\n",
+      "test": 4,
+      "symptom": "No guard: a zero row turns its row and column into NaN."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef safe_normalise(E, eps=1e-12):\n    E = np.asarray(E, dtype=float)\n    n = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    return np.where(n > eps, E / np.where(n > eps, n, 1.0), E)\n\n\ndef cosine_matrix(E):\n    N = safe_normalise(E)\n    return N.T @ N\n",
+      "test": 2,
+      "symptom": "Multiplies the transpose first, giving a features-by-features matrix."
+     }
+    ],
+    "data": {
+     "makemore-mlp.json": "content/data/ai/makemore-mlp.json"
+    }
+   },
+   "feedback": {
+    "correct": "Your matrix matches the double loop; a and o come out at 0.4594.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Each row of the result should have length 1. Sum the squares along each row, `axis=1`.",
+     "test-4": "Row 1 is zero. With the guard it stays zero and its cosines read 0, not NaN.",
+     "test-3": "The diagonal must be 1. Dividing columns leaves rows of other lengths."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.sqrt((E ** 2).sum(axis=1, keepdims=True))` gives one length per row."
+    },
+    {
+     "rung": "step",
+     "text": "Divide only where the length exceeds `eps` (`np.where`), then `N @ N.T`."
+    }
+   ],
+   "explain": {
+    "text": "Normalising rows makes each row length 1, and $\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$ dots every pair at once. The guard keeps zero rows from turning the matrix into NaN."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Two funds' holdings",
+   "prose": "Fund X holds £40m, £30m, £30m and £0m in four stocks. Fund Y, five times larger, holds £100m, £100m, £150m and £150m. A risk team asks how alike the two books are.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+     ],
+     "groups": [
+      {
+       "id": "x",
+       "label": "Fund X (£m)"
+      },
+      {
+       "id": "y",
+       "label": "Fund Y (£m)"
+      }
+     ],
+     "yLabel": "£m held"
+    },
+    "state": {
+     "values": {
+      "x": {
+       "S1": 40,
+       "S2": 30,
+       "S3": 30,
+       "S4": 0
+      },
+      "y": {
+       "S1": 100,
+       "S2": 100,
+       "S3": 150,
+       "S4": 150
+      }
+     }
+    }
+   },
+   "question": "What is the cosine similarity of the two holdings vectors? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.774,
+    "tol": {
+     "abs": 0.0006
+    },
+    "placeholder": "Decimal",
+    "label": "Cosine",
+    "wrong": [
+     {
+      "id": "dot",
+      "value": 11500,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\dfrac{11{,}500}{\\sqrt{3{,}400}\\sqrt{65{,}000}} \\approx 0.774$. Fund Y's size drops out.",
+    "generic": "Not quite. Dot product over the product of the lengths, in £m.",
+    "byKey": {
+     "dot": "11,500 is the dot product in £m squared. Divide by both lengths."
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\mathbf{x}\\cdot\\mathbf{y} = 4{,}000 + 3{,}000 + 4{,}500 + 0$."
+    },
+    {
+     "rung": "step",
+     "text": "$|\\mathbf{x}|^2 = 3{,}400$ and $|\\mathbf{y}|^2 = 65{,}000$."
+    }
+   ],
+   "explain": {
+    "text": "The cosine is 0.774, whatever the funds' sizes, because each vector's length is divided out. Cosine of holdings or of demeaned returns is the standard first check of whether this is like that."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Distance mixes a row's length with its direction, so a long, often-seen row looks far from a short one pointing the same way.",
+   "Cosine similarity divides out both lengths; with rows normalised, $\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$ gives every pair at once, with 1 on the diagonal.",
+   "For demeaned vectors the cosine is the correlation; a zero row has no direction, so guard the division and read its cosines as 0."
+  ],
+  "formula": {
+   "name": "Cosine matrix",
+   "tex": "\\mathbf{S} = \\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top, \\quad \\hat{\\mathbf{e}}_i = \\dfrac{\\mathbf{e}_i}{|\\mathbf{e}_i|}",
+   "note": "Divide rows, not columns; leave a zero row as zero."
+  },
+  "trap": "Normalising the columns instead of the rows: the diagonal stops being 1 and the entries are not cosines."
+ },
+ "quiz": [
+  {
+   "id": "q-cos",
+   "difficulty": 2,
+   "prose": "Two rows: $(3, 4)$ and $(4, 3)$.",
+   "question": "What is their cosine similarity? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.96,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "dot",
+      "value": 24,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$24 / (5 \\times 5) = 0.96$.",
+    "generic": "Not quite. Divide the dot product by both lengths.",
+    "byKey": {
+     "dot": "24 is the dot product. Each row is 5 long, so divide by 25."
+    }
+   },
+   "explain": {
+    "text": "The dot product is 24 and both lengths are 5, so the cosine is $24/25 = 0.96$."
+   }
+  },
+  {
+   "id": "q-minus",
+   "difficulty": 2,
+   "question": "Two stocks' demeaned daily returns have cosine $-1$. What does that say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "opp",
+      "text": "Their demeaned moves are exact opposites, up to scale",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "The two stocks are unrelated to each other",
+      "why": "Unrelated, in the linear sense, is a cosine near 0. $-1$ is the strongest link there is, the wrong way round."
+     },
+     {
+      "id": "small",
+      "text": "One of the two stocks barely moves at all",
+      "why": "Cosine divides out size: a quiet stock can still have cosine $-1$ with a loud one."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Perfectly opposite: the demeaned vectors point in opposite directions.",
+    "generic": "Not quite. What angle has cosine $-1$?"
+   },
+   "explain": {
+    "text": "Cosine $-1$ means an angle of 180 degrees: the demeaned moves are exact opposites up to a positive scale, a correlation of $-1$."
+   }
+  },
+  {
+   "id": "q-col",
+   "difficulty": 3,
+   "question": "Someone normalises the columns of $\\mathbf{E}$ before forming $\\hat{\\mathbf{E}}\\hat{\\mathbf{E}}^\\top$. Which sign gives the mistake away?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "diag",
+      "text": "The diagonal entries are not all 1",
+      "correct": true
+     },
+     {
+      "id": "sym",
+      "text": "The matrix is no longer symmetric",
+      "why": "Any $\\mathbf{A}\\mathbf{A}^\\top$ is symmetric, whichever way it was scaled."
+     },
+     {
+      "id": "neg",
+      "text": "Some entries are negative",
+      "why": "Correct cosines can be negative too; that is no sign of the mistake."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The diagonal: a row's cosine with itself is 1 only if rows were divided.",
+    "generic": "Not quite. What must a row's cosine with itself be?"
+   },
+   "explain": {
+    "text": "A true cosine matrix has 1 on its diagonal. Column scaling leaves rows of other lengths, so the diagonal drifts from 1, as the 1.7 showed."
+   }
+  }
+ ]
+}
