@@ -1,0 +1,652 @@
+{
+ "id": "problems-1",
+ "course": "info",
+ "level": 1,
+ "title": "Codes for real streams",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-router",
+   "difficulty": 4,
+   "skills": [
+    "if-surprise",
+    "if-codes"
+   ],
+   "prose": "An order router logs one of five outcomes for each order: filled with chance 0.5, partly filled 0.2, rejected 0.15, cancelled 0.1 and timed out 0.05.",
+   "parts": [
+    {
+     "question": "How many bits does one logged outcome carry on average? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.923,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Entropy",
+      "wrong": [
+       {
+        "id": "equal",
+        "value": 2.322,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "nats",
+        "value": 1.333,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The five terms come to $0.5 + 0.464 + 0.411 + 0.332 + 0.216 = 1.923$ bits.",
+      "generic": "Not yet. A filled order is half the log, so its 1 bit counts with weight one half.",
+      "byKey": {
+       "equal": "Five equal outcomes would give 2.322. The router fills half its orders, so its log is more predictable.",
+       "nats": "Natural logs gave 1.333 nats here. Convert to bits with a division by 0.6931."
+      }
+     },
+     "explain": {
+      "text": "The router's five outcomes carry 1, 2.322, 2.737, 3.322 and 4.322 bits. With their chances as weights the sum is 1.923."
+     }
+    },
+    {
+     "question": "The router's Huffman merges are 0.05 with 0.1, 0.15 with 0.15, 0.2 with 0.3, and 0.5 with 0.5. How long is a logged word on average, in bits? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.95,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Average length",
+      "wrong": [
+       {
+        "id": "fixed",
+        "value": 3,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "unweighted",
+        "value": 2.8,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The merged weights $0.15 + 0.3 + 0.5 + 1$ come to 1.95.",
+      "generic": "Not yet. Total the four merged weights: they equal the average word length.",
+      "byKey": {
+       "fixed": "Three bits is what any five-word fixed code spends. Huffman gives the filled orders a one-bit word.",
+       "unweighted": "A plain mean of 1, 2, 3, 4 and 4 treats a timed-out order like a filled one. Filled orders are ten times as common."
+      }
+     },
+     "explain": {
+      "text": "Filled gets 1 bit, partly filled 2, rejected 3, and the last two 4 each. So $0.5 + 0.4 + 0.45 + 0.4 + 0.2 = 1.95$."
+     }
+    },
+    {
+     "question": "Take the entropy from part 1 and the average from part 2. How many bits per order above the entropy does the code spend? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.027,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Gap",
+      "wrong": [
+       {
+        "id": "vs-fixed",
+        "value": 1.05,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "reversed",
+        "value": -0.027,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The router's code sits $1.95 - 1.923 = 0.027$ bits above the floor.",
+      "generic": "Not yet. The floor is part 1; the code is part 2.",
+      "byKey": {
+       "vs-fixed": "That is the distance to the three-bit fixed code. The floor here is the entropy.",
+       "reversed": "A negative gap would beat the floor, which no prefix code does. Take part 1 from part 2."
+      }
+     },
+     "explain": {
+      "text": "Huffman's 1.95 minus the entropy 1.923 leaves 0.027 bits per order."
+     }
+    },
+    {
+     "question": "A fixed-length code spends 3 bits on every order. Using part 2, how many bits does Huffman's code save on 1,000 orders?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1050,
+      "tol": {
+       "abs": 0
+      },
+      "unit": "bits",
+      "label": "Bits saved",
+      "wrong": [
+       {
+        "id": "vs-entropy",
+        "value": 1077
+       },
+       {
+        "id": "total",
+        "value": 1950
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Each order saves 1.05 bits, so 1,000 orders save 1,050.",
+      "generic": "Not yet. Find what one order saves against 3 bits, then scale to 1,000 orders.",
+      "byKey": {
+       "vs-entropy": "The entropy is a floor no real code reaches. Use the 1.95 of part 2.",
+       "total": "Huffman spends 1,950 bits on 1,000 orders. The fixed code spends 3,000."
+      }
+     },
+     "explain": {
+      "text": "Against the fixed code each order saves $3 - 1.95 = 1.05$ bits. Over 1,000 orders that is 1,050 bits."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-tomorrow",
+   "difficulty": 3,
+   "skills": [
+    "if-surprise"
+   ],
+   "prose": "A model gives a share's move tomorrow: up with chance 0.45, flat 0.15 and down 0.4. Days are independent.",
+   "parts": [
+    {
+     "question": "How surprising is a flat day, in bits? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.737,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Surprise",
+      "wrong": [
+       {
+        "id": "nats",
+        "value": 1.897,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "chance",
+        "value": 0.15,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "A flat day carries $-\\log_2 0.15 \\approx 2.737$ bits.",
+      "generic": "Not yet. Flat days are rare under this model; their bits are minus the base 2 log of 0.15.",
+      "byKey": {
+       "nats": "The ln key gave 1.897 nats for the flat day. Bits need a division by 0.6931.",
+       "chance": "The model's 0.15 is how often flat comes, not how many bits it carries."
+      }
+     },
+     "explain": {
+      "text": "Change base: $-\\ln 0.15 / \\ln 2 = 1.8971 / 0.6931 \\approx 2.737$ bits."
+     }
+    },
+    {
+     "question": "Using part 1, what is the surprise of a flat day then an up day, in bits? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.889,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Surprise",
+      "wrong": [
+       {
+        "id": "multiplied",
+        "value": 3.153,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "one-day",
+        "value": 2.737,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The two days give $2.737 + 1.152 = 3.889$ bits.",
+      "generic": "Not yet. The up day brings its own 1.152 bits on top of the flat day.",
+      "byKey": {
+       "multiplied": "Bits for separate days are summed, since the days' chances multiply. The product 3.153 has no meaning here.",
+       "one-day": "Only the flat day is counted there. The up day that follows carries bits too."
+      }
+     },
+     "explain": {
+      "text": "An up day carries $-\\log_2 0.45 \\approx 1.152$ bits, so the pair carries $2.737 + 1.152 = 3.889$ bits."
+     }
+    },
+    {
+     "question": "How many bits does one day's move carry on average? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.458,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Entropy",
+      "wrong": [
+       {
+        "id": "equal",
+        "value": 1.585,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "nats",
+        "value": 1.01,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Up, flat and down give $0.518 + 0.411 + 0.529 = 1.458$ bits.",
+      "generic": "Not yet. Average the three moves' bits, using the model's chances as weights.",
+      "byKey": {
+       "equal": "Three equally likely moves would give 1.585. Flat is much rarer than up or down here.",
+       "nats": "That figure is in nats: part 4 asks for it."
+      }
+     },
+     "explain": {
+      "text": "Surprises 1.152, 2.737 and 1.322 bits, weighted by 0.45, 0.15 and 0.4, add to 1.458 bits."
+     }
+    },
+    {
+     "question": "Using part 3, what is it in nats? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.01,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "nats",
+      "label": "Entropy in nats",
+      "wrong": [
+       {
+        "id": "divided",
+        "value": 2.103,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "same",
+        "value": 1.458,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "In nats the day carries $1.4577 \\times 0.6931 \\approx 1.010$.",
+      "generic": "Not yet. One nat is worth 1.4427 bits, so the nat count is smaller than the bit count.",
+      "byKey": {
+       "divided": "Dividing by 0.6931 turns nats into bits. Going from bits to nats multiplies.",
+       "same": "Part 3 gave bits. The nat figure is smaller."
+      }
+     },
+     "explain": {
+      "text": "Nats are bits times $\\ln 2$: $1.4577 \\times 0.6931 \\approx 1.010$ nats."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-six-types",
+   "difficulty": 5,
+   "skills": [
+    "if-codes",
+    "if-surprise"
+   ],
+   "prose": "A desk's feed codes six message types with words of lengths 2, 2, 2, 3, 4 and 4. The types come with chances 0.3, 0.25, 0.2, 0.1, 0.1 and 0.05, in the same order.",
+   "parts": [
+    {
+     "question": "What is the Kraft sum $\\sum 2^{-\\ell}$ of the six lengths? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1,
+      "tol": {
+       "abs": 0.001
+      },
+      "label": "Kraft sum",
+      "wrong": [
+       {
+        "id": "lengths",
+        "value": 17,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "short",
+        "value": 0.75,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac34 + \\tfrac18 + \\tfrac2{16} = 1$: the feed's code uses its whole budget.",
+      "generic": "Not yet. Each of the six words takes $2^{-\\ell}$ of the tree.",
+      "byKey": {
+       "lengths": "Seventeen is the total of the lengths themselves. The budget works on $2^{-\\ell}$.",
+       "short": "The three two-bit words give 0.75. The words of lengths 3 and 4 also take a share."
+      }
+     },
+     "explain": {
+      "text": "Three words of length 2 use $\\tfrac34$, one of length 3 uses $\\tfrac18$, and two of length 4 use $\\tfrac18$: 1 in all."
+     }
+    },
+    {
+     "question": "How many bits does the feed spend per message on average? Give a decimal to 1 place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.4,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Average length",
+      "wrong": [
+       {
+        "id": "unweighted",
+        "value": 2.833,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "fixed",
+        "value": 3,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The six products come to $0.6 + 0.5 + 0.4 + 0.3 + 0.4 + 0.2 = 2.4$ bits.",
+      "generic": "Not yet. A message type spends its word length as often as it arrives.",
+      "byKey": {
+       "unweighted": "A plain mean of the six lengths ignores the chances. The 0.3 type is six times as common as the 0.05 type.",
+       "fixed": "A fixed code for six types needs 3 bits. The feed's code mixes lengths."
+      }
+     },
+     "explain": {
+      "text": "Each length times its chance: $0.6 + 0.5 + 0.4 + 0.3 + 0.4 + 0.2 = 2.4$ bits."
+     }
+    },
+    {
+     "question": "What is the entropy of the message type, in bits? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.366,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Entropy",
+      "wrong": [
+       {
+        "id": "equal",
+        "value": 2.585,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "nats",
+        "value": 1.64,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "About 2.366 bits, below the code's average from part 2.",
+      "generic": "Not yet. Sum the six terms $p(-\\log_2 p)$.",
+      "byKey": {
+       "equal": "Six equally likely types would give 2.585 bits. These six are uneven.",
+       "nats": "The natural-log version is 1.640 nats. The question asks for bits."
+      }
+     },
+     "explain": {
+      "text": "The six terms $p(-\\log_2 p)$ are 0.521, 0.5, 0.464, 0.332, 0.332 and 0.216, which add to 2.366 bits."
+     }
+    },
+    {
+     "question": "Huffman's merges are 0.05 with 0.1, 0.1 with 0.15, 0.2 with 0.25, 0.25 with 0.3, then the last two. Using part 2, how many bits per message would Huffman's code save? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Bits saved",
+      "wrong": [
+       {
+        "id": "vs-entropy",
+        "value": 0.034,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "huffman",
+        "value": 2.4,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The merges add to $0.15 + 0.25 + 0.45 + 0.55 + 1 = 2.4$: no saving at all.",
+      "generic": "Not yet. The merged weights total Huffman's average; set it against part 2.",
+      "byKey": {
+       "vs-entropy": "The 0.034 bits is the distance to the entropy, which no code can close here. Set Huffman against the feed's code.",
+       "huffman": "Huffman's own average is 2.4. The saving is the feed's 2.4 minus that."
+      }
+     },
+     "explain": {
+      "text": "Huffman's average is the sum of the merged weights, 2.4, the same as this code. The code is already optimal, 0.034 bits above the entropy."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-log-file",
+   "difficulty": 4,
+   "skills": [
+    "if-codes"
+   ],
+   "prose": "A server log has 400,000 characters drawn from 16 symbols. Its symbol counts give an entropy of 3.1 bits per symbol.",
+   "parts": [
+    {
+     "question": "Suppose the 16 symbols were equally common. How many bits would each character carry?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Bits per symbol",
+      "wrong": [
+       {
+        "id": "count",
+        "value": 16,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "nats",
+        "value": 2.773,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\log_2 16 = 4$ bits per character.",
+      "generic": "Not yet. Sixteen equal symbols take four halvings to pin down.",
+      "byKey": {
+       "count": "Sixteen is how many symbols there are. Bits are its base 2 log.",
+       "nats": "The ln of 16 is 2.773 nats. Bits use base 2."
+      }
+     },
+     "explain": {
+      "text": "$16 = 2^4$, so equal chances give 4 bits per symbol."
+     }
+    },
+    {
+     "question": "What is the fewest thousand bytes a code built on the counts can use? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 155,
+      "tol": {
+       "abs": 0.5
+      },
+      "unit": "thousand bytes",
+      "label": "Thousand bytes",
+      "wrong": [
+       {
+        "id": "bits",
+        "value": 1240,
+        "tol": {
+         "abs": 1
+        }
+       },
+       {
+        "id": "equal",
+        "value": 200,
+        "tol": {
+         "abs": 0.5
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The log needs at least $400{,}000 \\times 3.1 / 8 = 155{,}000$ bytes.",
+      "generic": "Not yet. Total bits are characters times 3.1; a byte holds 8 of them.",
+      "byKey": {
+       "bits": "That counts thousands of bits. Eight bits make a byte.",
+       "equal": "Two hundred thousand bytes is the four-bit equal-chances cost. The counts allow 3.1."
+      }
+     },
+     "explain": {
+      "text": "The floor is $400{,}000 \\times 3.1 = 1{,}240{,}000$ bits, or 155 thousand bytes."
+     }
+    },
+    {
+     "question": "zlib packs the log into 160,000 bytes. How many bits per character is that? Give a decimal to 1 place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.2,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Bits per character",
+      "wrong": [
+       {
+        "id": "bytes",
+        "value": 0.4,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$160{,}000 \\times 8 / 400{,}000 = 3.2$ bits per character.",
+      "generic": "Not yet. The packed file has $160{,}000 \\times 8$ bits to share among 400,000 characters.",
+      "byKey": {
+       "bytes": "Each character gets 0.4 of a byte. In bits that is eight times as much."
+      }
+     },
+     "explain": {
+      "text": "$1{,}280{,}000$ bits over 400,000 characters is 3.2 bits each."
+     }
+    },
+    {
+     "question": "Using parts 2 and 3, how many thousand bytes above the counts' floor is zlib? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 5,
+      "tol": {
+       "abs": 0.5
+      },
+      "unit": "thousand bytes",
+      "label": "Thousand bytes",
+      "wrong": [
+       {
+        "id": "bits",
+        "value": 40,
+        "tol": {
+         "abs": 0.5
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$160 - 155 = 5$ thousand bytes.",
+      "generic": "Not yet. Take the floor of part 2 from zlib's packed size.",
+      "byKey": {
+       "bits": "Forty is in thousands of bits. Divide by 8 for bytes."
+      }
+     },
+     "explain": {
+      "text": "zlib uses 160 thousand bytes and the floor is 155, so 5 thousand bytes above it. Here zlib comes close to a code built on the counts."
+     }
+    }
+   ]
+  }
+ ]
+}

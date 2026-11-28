@@ -131,3 +131,7 @@ Raised later (audit trig):
 Raised later (session AK, strand ai):
 - (engine-pass-ak, open) Learn and Review list AI topics as ordinary rows; group them under the strand badge or a strand heading.
 - (engine-pass-ak, open) A stage exam's `draw` sources are not checked for ai origin; add a validator error if a stage exam draws from an `ai` course.
+
+Raised later (info level 1):
+- `bars` with 27 categories (the names symbol shares, `info/l4-how-far-text-compresses` screens 0 to 2): at 440 px the category labels thin to every other one, so a named bar can lose its label. Needed: a way to keep chosen labels (`keepLabels: ["a", "end"]`) or to rotate labels. Workaround: letters ordered so the bars the question names fall on kept labels.
+- `tree` as a code tree (`info/l3-codes-that-save-space` screens 1, 4 to 5, 8): branch labels for bits ride on the probability field `p` ("0", "1"), and a Huffman tree cannot grow bottom-up in a `demonstrate`, since every node exists from the first step. Needed: a `state.hidden: [paths]` (or `collapse` that hides upward) so merges can appear one at a time. Workaround: the full tree from the start, with merged weights written onto inner nodes step by step through `state.values`.
