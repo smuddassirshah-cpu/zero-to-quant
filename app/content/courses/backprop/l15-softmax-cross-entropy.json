@@ -1,0 +1,1205 @@
+{
+ "id": "l15-softmax-cross-entropy",
+ "course": "backprop",
+ "title": "Softmax with cross-entropy",
+ "minutes": 15,
+ "objectives": [
+  "Derive the gradient of softmax with cross-entropy as the probabilities minus the one-hot target."
+ ],
+ "skills": [
+  "bp-arrays"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Scores into chances",
+   "prose": "A classifier scores three classes with logits $\\mathbf{z} = (2, 1, 0.1)$; the true class is 0. To turn scores into chances, exponentiate each and divide by the total: $$p_i = \\frac{e^{z_i}}{\\sum_j e^{z_j}}.$$ This is the softmax.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "0",
+      "1",
+      "2"
+     ],
+     "xLabel": "Class",
+     "yLabel": "Logit",
+     "showValues": true,
+     "decimals": 1,
+     "yMax": 2.5,
+     "yMin": 0
+    },
+    "state": {
+     "values": {
+      "0": 2.0,
+      "1": 1.0,
+      "2": 0.1
+     }
+    }
+   },
+   "question": "What is $p_0$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.659,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "scores",
+      "value": 0.645,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "equal",
+      "value": 0.333,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out $e^2$, $e^1$ and $e^{0.1}$."
+    },
+    {
+     "rung": "point",
+     "text": "Add them for the denominator.",
+     "highlight": [
+      "x0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$7.389 / 11.212$."
+    }
+   ],
+   "feedback": {
+    "correct": "$e^2 = 7.389$, and the total is $7.389 + 2.718 + 1.105 = 11.212$, so $p_0 = 0.659$.",
+    "generic": "Not quite. Exponentiate each logit first, then divide.",
+    "byKey": {
+     "scores": "You divided the scores themselves, $2/3.1$. Exponentiate first, so the chances are positive and sum to 1.",
+     "equal": "Equal chances ignore the scores. The largest logit should get the most."
+    }
+   },
+   "explain": {
+    "text": "The softmax gives $(0.659, 0.2424, 0.0986)$: all positive, summing to 1, and in the logits’ order.",
+    "canvas": {
+     "values": {
+      "0": 0.659,
+      "1": 0.2424,
+      "2": 0.0986
+     },
+     "caption": "Softmax probabilities"
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "What moves the chances",
+   "prose": "Raise the logit of class 0 and watch its chance and the loss. Then put it back at 2 and shift every logit up by the same amount.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "0",
+      "1",
+      "2"
+     ],
+     "xLabel": "Class",
+     "yLabel": "Probability",
+     "showValues": true,
+     "decimals": 4,
+     "yMax": 1,
+     "yMin": 0
+    },
+    "state": {
+     "values": {
+      "0": 0.659,
+      "1": 0.2424,
+      "2": 0.0986
+     },
+     "params": {
+      "z0": 2,
+      "c": 0
+     }
+    },
+    "derive": {
+     "let": {
+      "t": "exp(z0 + c) + exp(1 + c) + exp(0.1 + c)"
+     },
+     "values.0": "exp(z0 + c) / t",
+     "values.1": "exp(1 + c) / t",
+     "values.2": "exp(0.1 + c) / t",
+     "caption": "Logits ({{fixed(z0 + c, 1)}}, {{fixed(1 + c, 1)}}, {{fixed(0.1 + c, 1)}}): loss −ln p₀ = {{fixed(-log(exp(z0 + c) / t), 3)}} nats"
+    },
+    "controls": [
+     {
+      "bind": "z0",
+      "min": -2,
+      "max": 6,
+      "step": 0.1,
+      "start": 2,
+      "label": "Logit of class 0"
+     },
+     {
+      "bind": "c",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "start": 0,
+      "label": "Shift every logit by"
+     }
+    ]
+   },
+   "question": "With $z_0 = 2$, what happens to $p_0$ as the shift goes from 0 to 10?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "It stays at 0.659",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "It rises towards 1",
+      "why": "Every logit rose by the same amount, so no class gained on the others."
+     },
+     {
+      "id": "c",
+      "text": "It falls towards 1/3",
+      "why": "The gaps between logits did not change, so neither do the chances."
+     },
+     {
+      "id": "d",
+      "text": "It overflows",
+      "why": "On the canvas the numbers are small. Overflow is a computer’s problem, met on a later screen."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Adding $c$ to every logit multiplies top and bottom by $e^c$, which cancels: only differences of logits matter.",
+    "generic": "Not quite. Move the shift slider and read the bars."
+   },
+   "explain": {
+    "text": "$\\tfrac{e^{z_i + c}}{\\sum_j e^{z_j + c}} = \\tfrac{e^c e^{z_i}}{e^c \\sum_j e^{z_j}}$, so a shared shift changes nothing. We will use that to keep the numbers small."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The loss",
+   "prose": "Cross-entropy with a one-hot target, from the information theory course, charges $L = -\\ln p_y$: the surprise of the true class under the model, in nats because we use $\\ln$. Here $y = 0$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "0",
+      "1",
+      "2"
+     ],
+     "xLabel": "Class",
+     "yLabel": "Probability",
+     "showValues": true,
+     "decimals": 4,
+     "yMax": 1,
+     "yMin": 0
+    },
+    "state": {
+     "values": {
+      "0": 0.659,
+      "1": 0.2424,
+      "2": 0.0986
+     }
+    }
+   },
+   "question": "What is $L$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.417,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "bits",
+      "value": 0.602,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "log10",
+      "value": 0.181,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "prob",
+      "value": 0.659,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $\\ln$, the natural log."
+    },
+    {
+     "rung": "point",
+     "text": "Only the true class’s chance enters.",
+     "highlight": [
+      "x0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-\\ln 0.659$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-\\ln 0.659 = 0.417$ nats.",
+    "generic": "Not quite. Take the natural log of $p_0$ and change the sign.",
+    "byKey": {
+     "bits": "You used $\\log_2$: 0.602 is the same loss in bits. The code uses `np.log`, so nats.",
+     "log10": "You used $\\log_{10}$. Cross-entropy here is in nats, so use $\\ln$.",
+     "prob": "That is $p_0$ itself. The loss is $-\\ln p_0$."
+    }
+   },
+   "explain": {
+    "text": "$L = -\\ln 0.659 = 0.417$ nats. A model sure of the right class, $p_0 \\to 1$, pays $L \\to 0$.",
+    "canvas": {
+     "highlight": [
+      "x0"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The gradient of the loss",
+   "prose": "We want $\\partial L/\\partial z_i$ for every class $i$, with $L = -\\ln p_y$ and $p$ the softmax of $\\mathbf{z}$.",
+   "question": "Put the derivation in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$L = -\\ln \\frac{e^{z_y}}{\\sum_j e^{z_j}} = -z_y + \\ln \\sum_j e^{z_j}$, since the log of a quotient is a difference."
+     },
+     {
+      "id": "d2",
+      "text": "$\\frac{\\partial}{\\partial z_i}(-z_y) = -[i = y]$: only $z_y$ appears, so this is $-1$ for the true class and 0 otherwise."
+     },
+     {
+      "id": "d3",
+      "text": "$\\frac{\\partial}{\\partial z_i} \\ln \\sum_j e^{z_j} = \\frac{e^{z_i}}{\\sum_j e^{z_j}}$, by the chain rule: $(\\ln u)^\\prime = u^\\prime/u$."
+     },
+     {
+      "id": "d4",
+      "text": "That fraction is $p_i$, by the definition of the softmax."
+     },
+     {
+      "id": "d5",
+      "text": "So $\\frac{\\partial L}{\\partial z_i} = p_i - [i = y]$: the chances minus the one-hot target."
+     },
+     {
+      "id": "x1",
+      "text": "$\\frac{\\partial L}{\\partial z_i} = -\\frac{1}{p_y}$ for every $i$, from $(\\ln p)^\\prime = 1/p$.",
+      "why": "That differentiates in $p_y$, not in $z_i$. Each $z_i$ reaches $L$ through the softmax."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4",
+     "d5"
+    ],
+    "distractors": [
+     "x1"
+    ],
+    "same": [
+     [
+      "d2",
+      "d3"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $\\ln(a/b) = \\ln a - \\ln b$ first."
+    },
+    {
+     "rung": "point",
+     "text": "Differentiate $-z_y$ and the log-sum separately."
+    },
+    {
+     "rung": "step",
+     "text": "The log-sum’s derivative is a softmax entry."
+    }
+   ],
+   "feedback": {
+    "correct": "Split the log, differentiate each piece, and recognise $p_i$: $\\partial L/\\partial z_i = p_i - [i = y]$.",
+    "generic": "Not quite. Start by writing $L$ as $-z_y$ plus a log-sum.",
+    "byKey": {
+     "x1": "You stopped at $p_y$. The chain rule must carry on through the softmax to each $z_i$.",
+     "left-out": "Every line but the $1/p_y$ one belongs."
+    }
+   },
+   "explain": {
+    "text": "Written as $-z_y + \\ln \\sum_j e^{z_j}$, the loss has two easy pieces. The log-sum gives $p_i$ and the first piece gives $-1$ at the true class: $\\mathbf{p} - \\mathbf{y}$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The course logits’ gradient",
+   "prose": "For $\\mathbf{z} = (2, 1, 0.1)$ with true class 0, the rule $\\mathbf{p} - \\mathbf{y}$ subtracts 1 at class 0 and leaves the others as their chances.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "0",
+      "1",
+      "2"
+     ],
+     "xLabel": "Class",
+     "yLabel": "Probability",
+     "showValues": true,
+     "decimals": 4,
+     "yMax": 1,
+     "yMin": -0.5
+    },
+    "state": {
+     "values": {
+      "0": 0.659,
+      "1": 0.2424,
+      "2": 0.0986
+     }
+    }
+   },
+   "question": "What is $\\partial L/\\partial z_0$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.341,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "no-minus-one",
+      "value": 0.659,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.341,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\mathbf{y} = (1, 0, 0)$."
+    },
+    {
+     "rung": "point",
+     "text": "Class 0: $p_0 - 1$.",
+     "highlight": [
+      "x0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.659 - 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.659 - 1 = -0.341$; the full gradient is $(-0.341, 0.2424, 0.0986)$, and central differences agree.",
+    "generic": "Not quite. Subtract the one-hot target from $\\mathbf{p}$.",
+    "byKey": {
+     "no-minus-one": "You left out the target. The true class gets $p_0 - 1$.",
+     "sign": "Check the sign: $p_0 - 1$ is negative."
+    }
+   },
+   "explain": {
+    "text": "The gradient is $(-0.341, 0.2424, 0.0986)$, summing to 0. A step against it raises $z_0$ and lowers the others, each by its own chance.",
+    "canvas": {
+     "values": {
+      "0": -0.341,
+      "1": 0.2424,
+      "2": 0.0986
+     },
+     "caption": "$\\partial L/\\partial \\mathbf{z} = \\mathbf{p} - \\mathbf{y}$"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Logits near 1000",
+   "prose": "In float64, `np.exp(1000)` is `inf`, so a softmax of $(1000, 999, 998.1)$ computed directly is `inf/inf`, which is `nan`. The explore screen showed a fix: subtract the largest logit first, which leaves the chances unchanged.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "float64",
+     "lines": [
+      ">>> z = np.array([1000.0, 999.0, 998.1])",
+      ">>> np.exp(z) / np.exp(z).sum()",
+      "array([nan, nan, nan])",
+      ">>> e = np.exp(z - z.max())",
+      ">>> e / e.sum()",
+      "array([0.659, 0.2424, 0.0986])"
+     ]
+    },
+    "state": {
+     "tone": {
+      "l3": "err"
+     }
+    }
+   },
+   "question": "What does the softmax of $(1000, 999, 998.1)$ give after subtracting 1000?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$(0.659, 0.2424, 0.0986)$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`nan` in every entry",
+      "why": "That is the direct route. After subtracting, the largest exponent is $e^0 = 1$, which is safe."
+     },
+     {
+      "id": "c",
+      "text": "$(1, 0, 0)$",
+      "why": "The largest does not take everything: the gaps of 1 and 1.9 still matter."
+     },
+     {
+      "id": "d",
+      "text": "$(1/3, 1/3, 1/3)$",
+      "why": "The logits are not equal: their gaps are those of $(2, 1, 0.1)$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the largest logit."
+    },
+    {
+     "rung": "point",
+     "text": "Compare $(0, -1, -1.9)$ with $(2, 1, 0.1)$.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Same gaps, same chances."
+    }
+   ],
+   "feedback": {
+    "correct": "$(1000, 999, 998.1) - 1000 = (0, -1, -1.9)$, which is $(2, 1, 0.1) - 2$: the same chances, 0.659, 0.2424 and 0.0986.",
+    "generic": "Not quite. Subtract 1000 and compare with the course logits."
+   },
+   "explain": {
+    "text": "After the shift the exponents are at most $e^0 = 1$, so nothing overflows and the chances equal the course ones. The loss uses the same trick: $\\ln \\sum_j e^{z_j} = m + \\ln \\sum_j e^{z_j - m}$, the log-sum-exp form.",
+    "canvas": {
+     "tone": {
+      "l6": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A batch of rows",
+   "prose": "Training uses a batch: logits $\\mathbf{Z}$ of shape $(n, K)$ and one true class per row. The loss is the average over rows, $L = \\tfrac1n \\sum_r -\\ln p_{r, y_r}$, so each row’s gradient is divided by $n$. Take $n = 2$, with row 1 the course logits.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Row",
+      "Logits",
+      "True class",
+      "$\\mathbf{p} - \\mathbf{y}$"
+     ],
+     "rows": [
+      [
+       "1",
+       "(2, 1, 0.1)",
+       "0",
+       "(−0.341, 0.2424, 0.0986)"
+      ],
+      [
+       "2",
+       "(0.5, 0.5, 1.5)",
+       "2",
+       "(0.2119, 0.2119, −0.4239)"
+      ]
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   },
+   "question": "What is $\\partial L/\\partial Z_{1,0}$, row 1, class 0? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.1705,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "no-n",
+      "value": -0.341,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.1705,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The loss is a mean over the 2 rows."
+    },
+    {
+     "rung": "point",
+     "text": "Take row 1’s entry for class 0.",
+     "highlight": [
+      "r0c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.341 / 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "Row 1’s $p - y$ entry is $-0.341$, divided by $n = 2$: $-0.1705$.",
+    "generic": "Not quite. The average over 2 rows divides each row’s gradient by 2.",
+    "byKey": {
+     "no-n": "You forgot to divide by the batch size. The loss is a mean over 2 rows.",
+     "sign": "Check the sign: the true class gets $p - 1$, negative."
+    }
+   },
+   "explain": {
+    "text": "Each row contributes $\\tfrac1n(\\mathbf{p}_r - \\mathbf{y}_r)$, so the batch gradient is $(\\mathbf{P} - \\mathbf{Y})/n$: $-0.341/2 = -0.1705$ here."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "tanh and ReLU backwards",
+   "prose": "Between layers sit elementwise functions. ReLU is $\\max(0, z)$: slope 1 where $z > 0$ and 0 where $z < 0$; we take 0 at exactly 0. Backward multiplies the incoming gradient by the slope, entry by entry, as tanh multiplies by $1 - \\tanh^2 z$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      -1.5,
+      3
+     ],
+     "functions": [
+      {
+       "id": "relu",
+       "expr": "max(0, x)",
+       "label": "ReLU"
+      },
+      {
+       "id": "tanh",
+       "expr": "tanh(x)",
+       "label": "tanh",
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the gradient that leaves ReLU.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "",
+     "Entry 1",
+     "Entry 2",
+     "Entry 3"
+    ],
+    "rows": [
+     [
+      "$z$",
+      "−1.5",
+      "0",
+      "2"
+     ],
+     [
+      "Incoming $g$",
+      "0.4",
+      "0.3",
+      "−0.2"
+     ],
+     [
+      "Out of ReLU",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "no-mask",
+         "value": 0.4,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      },
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "at-zero",
+         "value": 0.3,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      },
+      {
+       "edit": true,
+       "answer": -0.2,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "sign",
+         "value": 0.2,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the slope of ReLU at each $z$."
+    },
+    {
+     "rung": "point",
+     "text": "Slopes are 0, 0 and 1.",
+     "highlight": [
+      "relu"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Multiply each slope by its $g$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(0.4 \\times 0, 0.3 \\times 0, -0.2 \\times 1) = (0, 0, -0.2)$.",
+    "generic": "Not quite. Multiply each incoming entry by the slope at its $z$.",
+    "byKey": {
+     "no-mask": "At $z = -1.5$ ReLU is flat, so nothing passes back.",
+     "at-zero": "At exactly $z = 0$ we take slope 0, so nothing passes.",
+     "sign": "The slope at $z = 2$ is 1, so the $-0.2$ passes unchanged."
+    }
+   },
+   "explain": {
+    "text": "ReLU passes $g$ where $z > 0$ and blocks it elsewhere: $(0, 0, -0.2)$. tanh would scale each entry instead, giving $(0.0723, 0.3, -0.0141)$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Softmax, then log",
+   "prose": "Priya computes the loss in two steps, `-np.log(softmax(z)[y])`, for $\\mathbf{z} = (0, -800)$ and $y = 1$. In float64, $e^{-800}$ is below the smallest positive number, so it becomes 0.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Two routes",
+     "lines": [
+      ">>> -np.log(softmax(z)[1])",
+      "inf",
+      ">>> logsumexp(z) - z[1]",
+      "800.0"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does she get, and what is the true loss?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`inf`, though the true loss is 800",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "800 both ways",
+      "why": "The two-step route takes the log of a chance that has already underflowed to 0."
+     },
+     {
+      "id": "c",
+      "text": "`nan` both ways",
+      "why": "The fused form never takes the log of 0, and gives a finite 800."
+     },
+     {
+      "id": "d",
+      "text": "0, since class 1 is so unlikely",
+      "why": "An unlikely true class costs a lot, not nothing: $-\\ln p$ is large when $p$ is small."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$e^{-800}$ underflows to 0."
+    },
+    {
+     "rung": "point",
+     "text": "What is $-\\ln 0$?",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The fused form gives $0 + 800$."
+    }
+   ],
+   "feedback": {
+    "correct": "$p_1$ rounds to 0 and $-\\ln 0 = \\infty$. Fused, $L = \\ln \\sum_j e^{z_j} - z_1 = 0 - (-800) = 800$, with no small number ever formed.",
+    "generic": "Not quite. What is $e^{-800}$ in float64?",
+    "byKey": {
+     "b": "You assumed the two routes agree. They do on paper; in float64 the chance underflows before the log."
+    }
+   },
+   "explain": {
+    "text": "Computing the chance first loses it to underflow, and the log of 0 is infinite. The log-sum-exp form works with $z_y$ directly, so $L = 800$; `cross_entropy` must use it.",
+    "canvas": {
+     "tone": {
+      "l2": "err",
+      "l4": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "softmax_ce() in code",
+   "prose": "Write `softmax_ce(logits, targets)` for a batch: `logits` is an $(n, K)$ array and `targets` holds $n$ class indices. Return the mean loss in nats, by log-sum-exp, and the gradient `dlogits`, which is $(\\mathbf{P} - \\mathbf{Y})/n$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Test logits",
+      "Target",
+      "Loss"
+     ],
+     "rows": [
+      [
+       "(2, 1, 0.1)",
+       "0",
+       "0.417030"
+      ],
+      [
+       "(1000, 999, 998.1)",
+       "0",
+       "0.417030"
+      ],
+      [
+       "(0, −800)",
+       "1",
+       "800"
+      ],
+      [
+       "27 equal logits",
+       "any",
+       "$\\ln 27 = 3.295837$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `softmax_ce`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef softmax_ce(logits, targets):\n    # logits (n, K); targets: n classes\n    # return (mean loss, dlogits)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef softmax_ce(logits, targets):\n    n = logits.shape[0]\n    rows = np.arange(n)\n    m = logits.max(axis=1, keepdims=True)\n    e = np.exp(logits - m)\n    s = e.sum(axis=1, keepdims=True)\n    loss = np.mean(m[:, 0] + np.log(s[:, 0]) - logits[rows, targets])\n    d = e / s\n    d[rows, targets] -= 1\n    return loss, d / n\n",
+    "examples": [
+     {
+      "call": "show(softmax_ce(np.array([[2.0, 1.0, 0.1]]), [0]))",
+      "expect": "(0.41703, [[-0.340999, 0.242433, 0.098566]])",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "show(softmax_ce(np.array([[2.0, 1.0, 0.1]]), [0]))",
+      "expect": "(0.41703, [[-0.340999, 0.242433, 0.098566]])",
+      "compare": "equal"
+     },
+     {
+      "setup": "Z = np.random.default_rng(15).standard_normal((3, 4)) * 2",
+      "call": "show(softmax_ce(Z, [1, 3, 0]))",
+      "expect": "(3.017505, [[0.006904, -0.314778, 0.265535, 0.042338], [0.061181, 0.107474, 0.001192, -0.169847], [-0.331904, 0.310094, 0.020208, 0.001601]])",
+      "compare": "equal"
+     },
+     {
+      "call": "show(softmax_ce(np.array([[1000.0, 999.0, 998.1]]), [0]))",
+      "expect": "(0.41703, [[-0.340999, 0.242433, 0.098566]])",
+      "compare": "equal"
+     },
+     {
+      "call": "show(softmax_ce(np.array([[0.0, -800.0]]), [1]))",
+      "expect": "(800.0, [[1.0, -1.0]])",
+      "compare": "equal"
+     },
+     {
+      "call": "matches_differences()",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "show(softmax_ce(np.zeros((2, 27)), [5, 11]))",
+      "expect": "(3.295837, [[0.018519, 0.018519, 0.018519, 0.018519, 0.018519, -0.481481, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519], [0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, -0.481481, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519]])",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Each compares the loss and the gradient rounded to 6 places. The cases: the course logits, three seeded rows, logits near 1000, logits $(0, -800)$, and equal logits over 27 classes. One more checks against central differences.",
+    "prelude": "import numpy as np\n\n\ndef show(r):\n    return (round(float(r[0]), 6), np.round(r[1], 6).tolist())\n",
+    "postlude": "\n\ndef matches_differences():\n    r = np.random.default_rng(8)\n    Z, y = r.standard_normal((4, 5)) * 3, [4, 0, 2, 2]\n    _, d = softmax_ce(Z.copy(), y)\n    worst, top = 0.0, 1e-12\n    for i in np.ndindex(Z.shape):\n        up, dn = Z.copy(), Z.copy()\n        up[i] += 1e-5\n        dn[i] -= 1e-5\n        num = (softmax_ce(up, y)[0] - softmax_ce(dn, y)[0]) / 2e-5\n        worst = max(worst, abs(d[i] - num))\n        top = max(top, abs(d[i]), abs(num))\n    return bool(worst / top < 1e-6)\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef softmax_ce(logits, targets):\n    n = logits.shape[0]\n    rows = np.arange(n)\n    m = logits.max(axis=1, keepdims=True)\n    e = np.exp(logits - m)\n    s = e.sum(axis=1, keepdims=True)\n    loss = np.mean(m[:, 0] + np.log(s[:, 0]) - logits[rows, targets])\n    d = e / s\n    d[rows, targets] -= 1\n    return loss, d\n",
+      "test": 2,
+      "symptom": "The batch gradient is not divided by the number of rows."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef softmax_ce(logits, targets):\n    n = logits.shape[0]\n    rows = np.arange(n)\n    m = logits.max(axis=1, keepdims=True)\n    e = np.exp(logits - m)\n    s = e.sum(axis=1, keepdims=True)\n    loss = np.mean(-np.log((e / s)[rows, targets]))\n    d = e / s\n    d[rows, targets] -= 1\n    return loss, d / n\n",
+      "test": 4,
+      "symptom": "Softmax then log: a chance that underflows to 0 gives an infinite loss."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef softmax_ce(logits, targets):\n    n = logits.shape[0]\n    rows = np.arange(n)\n    m = np.zeros((n, 1))\n    e = np.exp(logits - m)\n    s = e.sum(axis=1, keepdims=True)\n    loss = np.mean(m[:, 0] + np.log(s[:, 0]) - logits[rows, targets])\n    d = e / s\n    d[rows, targets] -= 1\n    return loss, d / n\n",
+      "test": 3,
+      "symptom": "Without the largest logit taken out, exp(1000) overflows to inf."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract each row’s maximum before `exp`."
+    },
+    {
+     "rung": "point",
+     "text": "Pick the target entries with `logits[np.arange(n), targets]`.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Gradient: softmax, minus 1 at the targets, over $n$."
+    }
+   ],
+   "feedback": {
+    "correct": "The loss is stable at both extremes and the gradient matches central differences.",
+    "generic": "Not quite. Check the first failing test."
+   },
+   "explain": {
+    "text": "Subtracting each row’s largest logit keeps `exp` safe; the loss is $m + \\ln \\sum_j e^{z_j - m} - z_y$, averaged. The gradient is the softmax with 1 taken off at each target, divided by $n$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Next-day return buckets",
+   "prose": "A desk trains a classifier of tomorrow’s return bucket (down, flat, up) with this loss. For one day it gives chances $(0.2, 0.5, 0.3)$, and the stock went up.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "0",
+      "1",
+      "2"
+     ],
+     "xLabel": "Bucket: down, flat, up",
+     "yLabel": "Chance",
+     "showValues": true,
+     "decimals": 1,
+     "yMax": 1,
+     "yMin": -0.8
+    },
+    "state": {
+     "values": {
+      "0": 0.2,
+      "1": 0.5,
+      "2": 0.3
+     }
+    }
+   },
+   "question": "What is $\\partial L/\\partial z_{\\text{up}}$ for that day? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.7,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "no-minus-one",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.7,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The realised bucket is up."
+    },
+    {
+     "rung": "point",
+     "text": "Up gets $p - 1$.",
+     "highlight": [
+      "x2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.3 - 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.3 - 1 = -0.7$. The full gradient is $(0.2, 0.5, -0.7)$.",
+    "generic": "Not quite. Use $\\mathbf{p} - \\mathbf{y}$ with $\\mathbf{y}$ one-hot at up.",
+    "byKey": {
+     "no-minus-one": "You left out the target: the realised bucket gets $p - 1$.",
+     "sign": "Check the sign: $0.3 - 1$ is negative."
+    }
+   },
+   "explain": {
+    "text": "The step raises the up logit (gradient $-0.7$) and lowers the others in proportion to their chances: flat, at 0.5, is pushed down hardest.",
+    "canvas": {
+     "values": {
+      "0": 0.2,
+      "1": 0.5,
+      "2": -0.7
+     },
+     "caption": "Gradient for (down, flat, up)"
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Softmax turns logits into chances, $p_i = e^{z_i}/\\sum_j e^{z_j}$; adding one number to every logit changes nothing, so subtract the largest first.",
+   "With cross-entropy $L = -\\ln p_y$ (nats), the gradient is $\\mathbf{p} - \\mathbf{y}$: raise the true logit, lower the others by their chances. Over a batch, divide by $n$.",
+   "Compute the loss fused, as $\\ln \\sum_j e^{z_j} - z_y$ with the largest logit taken out: softmax then log underflows to $\\ln 0$."
+  ],
+  "formula": {
+   "name": "Softmax with cross-entropy",
+   "tex": "\\frac{\\partial L}{\\partial z_i} = p_i - [i = y]",
+   "note": "For $L = -\\ln p_y$ on one row; over a batch of $n$ rows, divide by $n$."
+  },
+  "trap": "Softmax then log turns a tiny chance into $\\ln 0$; the fused log-sum-exp form gives the true, finite loss."
+ },
+ "quiz": [
+  {
+   "id": "q-equal-logits",
+   "difficulty": 2,
+   "prose": "A character model starts with all 27 logits equal: every letter and the end mark alike.",
+   "question": "What is its loss on any character, in nats? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.2958,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "bits",
+      "value": 4.7549,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "prob",
+      "value": 0.037,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Equal logits give $p = \\tfrac{1}{27}$ each, so $L = \\ln 27 = 3.2958$ nats.",
+    "generic": "Not quite. With equal logits each chance is $1/27$.",
+    "byKey": {
+     "bits": "That is $\\log_2 27$, the same loss in bits.",
+     "prob": "That is the chance $1/27$. The loss is $-\\ln$ of it."
+    }
+   },
+   "explain": {
+    "text": "All chances are $\\tfrac{1}{27}$, so $L = -\\ln \\tfrac{1}{27} = \\ln 27 = 3.2958$: the loss of knowing nothing, the bar the makemore course starts from."
+   }
+  },
+  {
+   "id": "q-grad-sum",
+   "difficulty": 3,
+   "prose": "For one row, $\\partial L/\\partial \\mathbf{z} = \\mathbf{p} - \\mathbf{y}$.",
+   "question": "What do its entries add up to?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "probs",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "neg",
+      "value": -1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sum_i p_i - \\sum_i y_i = 1 - 1 = 0$.",
+    "generic": "Not quite. Add the chances and the target separately.",
+    "byKey": {
+     "probs": "That is the sum of the chances alone. The target subtracts 1.",
+     "neg": "That is the target alone. The chances add 1 back."
+    }
+   },
+   "explain": {
+    "text": "The chances sum to 1 and so does the one-hot target, so the gradient sums to 0: raising the true logit is paid for by the others."
+   }
+  },
+  {
+   "id": "q-batch-div",
+   "difficulty": 3,
+   "prose": "`softmax_ce` on 4 rows returns a gradient equal to $\\mathbf{P} - \\mathbf{Y}$, with no division.",
+   "question": "What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The loss is a mean, so divide the gradient by 4",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Nothing: $\\mathbf{P} - \\mathbf{Y}$ is the rule",
+      "why": "That is the rule for one row. The mean adds a factor $\\tfrac1n$."
+     },
+     {
+      "id": "c",
+      "text": "It should be divided by the 27 classes",
+      "why": "The mean runs over rows, not classes."
+     },
+     {
+      "id": "d",
+      "text": "It should be multiplied by 4",
+      "why": "Averaging shrinks each row’s share; it does not grow it."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$L = \\tfrac14 \\sum_r L_r$, so each row’s gradient carries $\\tfrac14$.",
+    "generic": "Not quite. How was the loss combined over rows?"
+   },
+   "explain": {
+    "text": "The batch loss averages 4 rows, so the gradient is $(\\mathbf{P} - \\mathbf{Y})/4$. Left undivided, the step is 4 times too large."
+   }
+  }
+ ]
+}

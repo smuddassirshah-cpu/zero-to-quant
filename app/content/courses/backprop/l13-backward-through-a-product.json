@@ -1,0 +1,1394 @@
+{
+ "id": "l13-backward-through-a-product",
+ "course": "backprop",
+ "title": "Backward through a matrix product",
+ "minutes": 15,
+ "objectives": [
+  "Derive the gradients of a matrix product from the scalar case, and check their shapes."
+ ],
+ "skills": [
+  "bp-arrays"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Where does W reach?",
+   "prose": "A layer computes $\\mathbf{Y} = \\mathbf{X}\\mathbf{W}$: four rows of data $\\mathbf{X}$ (4 by 3) times weights $\\mathbf{W}$ (3 by 2). The loss $L$ is computed from $\\mathbf{Y}$, and every entry of $\\mathbf{Y}$ used some weights. The backward pass needs $\\partial L/\\partial \\mathbf{W}$: one number for each weight.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "X",
+       "rows": [
+        [
+         1,
+         0,
+         2
+        ],
+        [
+         -1,
+         3,
+         1
+        ],
+        [
+         0,
+         2,
+         -1
+        ],
+        [
+         2,
+         1,
+         0
+        ]
+       ],
+       "label": "$\\mathbf{X}$, 4 by 3"
+      },
+      {
+       "id": "W",
+       "rows": [
+        [
+         0.5,
+         -1
+        ],
+        [
+         1,
+         0
+        ],
+        [
+         -0.5,
+         2
+        ]
+       ],
+       "label": "$\\mathbf{W}$, 3 by 2"
+      },
+      {
+       "id": "Y",
+       "rows": [
+        [
+         -0.5,
+         3
+        ],
+        [
+         2,
+         3
+        ],
+        [
+         2.5,
+         -2
+        ],
+        [
+         2,
+         -2
+        ]
+       ],
+       "label": "$\\mathbf{Y}$, 4 by 2"
+      }
+     ],
+     "ops": [
+      "×",
+      "="
+     ]
+    },
+    "state": {}
+   },
+   "question": "What shape is $\\partial L/\\partial \\mathbf{W}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "3 by 2",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "4 by 2",
+      "why": "You gave the shape of $\\mathbf{Y}$. There is one gradient for each weight, not one for each output."
+     },
+     {
+      "id": "c",
+      "text": "4 by 3",
+      "why": "You gave the shape of $\\mathbf{X}$. The weights are the parameters here."
+     },
+     {
+      "id": "d",
+      "text": "2 by 3",
+      "why": "That is $\\mathbf{W}^T$. A gradient has the shape of the thing it belongs to, entry for entry."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A gradient has one entry for each number it differentiates with respect to."
+    },
+    {
+     "rung": "point",
+     "text": "Count the entries of $\\mathbf{W}$.",
+     "highlight": [
+      "W"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\mathbf{W}$ is 3 by 2, so its gradient is too."
+    }
+   ],
+   "feedback": {
+    "correct": "One gradient per weight, laid out like $\\mathbf{W}$: 3 by 2.",
+    "generic": "Not quite. Count the numbers in $\\mathbf{W}$.",
+    "byKey": {
+     "b": "You gave the shape of $\\mathbf{Y}$. Count the weights instead.",
+     "d": "That is the transposed shape. Entry $(k, j)$ of the gradient belongs to $W_{kj}$."
+    }
+   },
+   "explain": {
+    "text": "A gradient is the sensitivity of $L$ to each parameter, so it has one entry per weight: the shape of $\\mathbf{W}$, 3 by 2.",
+    "canvas": {
+     "highlight": {
+      "W": {
+       "rows": [
+        0,
+        1,
+        2
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "One weight, many paths",
+   "prose": "Step through the weights. Each frame lights one weight, the column of $\\mathbf{X}$ it multiplies, and the entries of $\\mathbf{Y}$ it reaches.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "X",
+       "rows": [
+        [
+         1,
+         0,
+         2
+        ],
+        [
+         -1,
+         3,
+         1
+        ],
+        [
+         0,
+         2,
+         -1
+        ],
+        [
+         2,
+         1,
+         0
+        ]
+       ],
+       "label": "$\\mathbf{X}$, 4 by 3"
+      },
+      {
+       "id": "W",
+       "rows": [
+        [
+         0.5,
+         -1
+        ],
+        [
+         1,
+         0
+        ],
+        [
+         -0.5,
+         2
+        ]
+       ],
+       "label": "$\\mathbf{W}$, 3 by 2"
+      },
+      {
+       "id": "Y",
+       "rows": [
+        [
+         -0.5,
+         3
+        ],
+        [
+         2,
+         3
+        ],
+        [
+         2.5,
+         -2
+        ],
+        [
+         2,
+         -2
+        ]
+       ],
+       "label": "$\\mathbf{Y}$, 4 by 2"
+      }
+     ],
+     "ops": [
+      "×",
+      "="
+     ]
+    },
+    "state": {
+     "highlight": {
+      "W": {
+       "cells": [
+        [
+         0,
+         0
+        ]
+       ]
+      },
+      "Y": {
+       "cols": [
+        0
+       ]
+      },
+      "X": {
+       "cols": [
+        0
+       ]
+      }
+     },
+     "caption": "$W_{11}$ meets column 1 of $\\mathbf{X}$ in every entry of column 1 of $\\mathbf{Y}$."
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "highlight": {
+         "W": {
+          "cells": [
+           [
+            0,
+            0
+           ]
+          ]
+         },
+         "Y": {
+          "cols": [
+           0
+          ]
+         },
+         "X": {
+          "cols": [
+           0
+          ]
+         }
+        },
+        "caption": "$W_{11}$ meets column 1 of $\\mathbf{X}$ in every entry of column 1 of $\\mathbf{Y}$."
+       },
+       {
+        "highlight": {
+         "W": {
+          "cells": [
+           [
+            0,
+            1
+           ]
+          ]
+         },
+         "Y": {
+          "cols": [
+           1
+          ]
+         },
+         "X": {
+          "cols": [
+           0
+          ]
+         }
+        },
+        "caption": "$W_{12}$ meets column 1 of $\\mathbf{X}$ in every entry of column 2 of $\\mathbf{Y}$."
+       },
+       {
+        "highlight": {
+         "W": {
+          "cells": [
+           [
+            1,
+            0
+           ]
+          ]
+         },
+         "Y": {
+          "cols": [
+           0
+          ]
+         },
+         "X": {
+          "cols": [
+           1
+          ]
+         }
+        },
+        "caption": "$W_{21}$ meets column 2 of $\\mathbf{X}$ in every entry of column 1 of $\\mathbf{Y}$."
+       },
+       {
+        "highlight": {
+         "W": {
+          "cells": [
+           [
+            1,
+            1
+           ]
+          ]
+         },
+         "Y": {
+          "cols": [
+           1
+          ]
+         },
+         "X": {
+          "cols": [
+           1
+          ]
+         }
+        },
+        "caption": "$W_{22}$ meets column 2 of $\\mathbf{X}$ in every entry of column 2 of $\\mathbf{Y}$."
+       },
+       {
+        "highlight": {
+         "W": {
+          "cells": [
+           [
+            2,
+            0
+           ]
+          ]
+         },
+         "Y": {
+          "cols": [
+           0
+          ]
+         },
+         "X": {
+          "cols": [
+           2
+          ]
+         }
+        },
+        "caption": "$W_{31}$ meets column 3 of $\\mathbf{X}$ in every entry of column 1 of $\\mathbf{Y}$."
+       },
+       {
+        "highlight": {
+         "W": {
+          "cells": [
+           [
+            2,
+            1
+           ]
+          ]
+         },
+         "Y": {
+          "cols": [
+           1
+          ]
+         },
+         "X": {
+          "cols": [
+           2
+          ]
+         }
+        },
+        "caption": "$W_{32}$ meets column 3 of $\\mathbf{X}$ in every entry of column 2 of $\\mathbf{Y}$."
+       }
+      ],
+      "frameLabels": [
+       "W11",
+       "W12",
+       "W21",
+       "W22",
+       "W31",
+       "W32"
+      ],
+      "label": "Weight",
+      "start": 0
+     }
+    ]
+   },
+   "question": "How many entries of $\\mathbf{Y}$ does $W_{21}$ reach?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Step to W21."
+    },
+    {
+     "rung": "point",
+     "text": "Count the lit cells of $\\mathbf{Y}$.",
+     "highlight": [
+      "Y-c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "One per row of $\\mathbf{X}$: 4."
+    }
+   ],
+   "feedback": {
+    "correct": "$W_{21}$ sits in $Y_{i1} = \\sum_k X_{ik} W_{k1}$ for every row $i$: four entries, so four paths add.",
+    "generic": "Not quite. Step to W21 and count the lit entries of $\\mathbf{Y}$.",
+    "byKey": {
+     "one": "You counted $Y_{21}$ only. Every row of $\\mathbf{X}$ multiplies $W_{21}$.",
+     "all": "Column 2 of $\\mathbf{Y}$ never uses $W_{21}$: it is built from column 2 of $\\mathbf{W}$."
+    }
+   },
+   "explain": {
+    "text": "$W_{21}$ multiplies $X_{i2}$ in $Y_{i1}$ for each of the four rows, so the loss reaches it along 4 paths. As in level 2, their contributions add.",
+    "canvas": {
+     "highlight": {
+      "W": {
+       "cells": [
+        [
+         1,
+         0
+        ]
+       ]
+      },
+      "Y": {
+       "cols": [
+        0
+       ]
+      },
+      "X": {
+       "cols": [
+        1
+       ]
+      }
+     },
+     "caption": "$W_{21}$ meets column 2 of $\\mathbf{X}$ in every entry of column 1 of $\\mathbf{Y}$."
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The rule from the scalar case",
+   "prose": "Write $\\mathbf{G} = \\partial L/\\partial \\mathbf{Y}$ (4 by 2): level 3 handed us one gradient per output. We want $\\partial L/\\partial W_{kj}$.",
+   "question": "Put the derivation in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$Y_{ij} = \\sum_k X_{ik} W_{kj}$, by the definition of the product."
+     },
+     {
+      "id": "d2",
+      "text": "$W_{kj}$ appears only in column $j$, with $\\partial Y_{ij}/\\partial W_{kj} = X_{ik}$: one term of each sum holds it."
+     },
+     {
+      "id": "d3",
+      "text": "$\\partial L/\\partial W_{kj} = \\sum_i G_{ij} X_{ik}$, by the chain rule, adding over the paths."
+     },
+     {
+      "id": "d4",
+      "text": "$\\sum_i X_{ik} G_{ij} = (\\mathbf{X}^T\\mathbf{G})_{kj}$, because row $k$ of $\\mathbf{X}^T$ is column $k$ of $\\mathbf{X}$."
+     },
+     {
+      "id": "d5",
+      "text": "So $\\partial L/\\partial \\mathbf{W} = \\mathbf{X}^T\\mathbf{G}$, of shape 3 by 4 times 4 by 2, which is 3 by 2."
+     },
+     {
+      "id": "x1",
+      "text": "$\\partial L/\\partial W_{kj} = G_{kj} X_{kj}$, entry by entry.",
+      "why": "That treats the product as elementwise. $W_{kj}$ meets $X_{ik}$ in every row, and $\\mathbf{G}$ has no entry $(k, j)$ for $k = 3$."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4",
+     "d5"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The first line is the definition of an entry of $\\mathbf{Y}$."
+    },
+    {
+     "rung": "point",
+     "text": "Which entries of $\\mathbf{Y}$ contain $W_{kj}$?"
+    },
+    {
+     "rung": "step",
+     "text": "Then the chain rule adds a term for each row $i$."
+    }
+   ],
+   "feedback": {
+    "correct": "Definition, the one term that holds $W_{kj}$, the chain rule over the rows, then the sum read as a product: $\\partial L/\\partial \\mathbf{W} = \\mathbf{X}^T\\mathbf{G}$.",
+    "generic": "Not quite. Start from the definition of $Y_{ij}$ and end with the shape check.",
+    "byKey": {
+     "x1": "You multiplied entry by entry. The product sums over $k$, so $W_{kj}$ meets a whole column of $\\mathbf{X}$.",
+     "left-out": "Every line but the elementwise one belongs."
+    }
+   },
+   "explain": {
+    "text": "Each weight collects $G_{ij} X_{ik}$ from every row $i$ it reaches, and that sum is an entry of $\\mathbf{X}^T\\mathbf{G}$. The same route for $X_{ik}$ gives $\\partial L/\\partial \\mathbf{X} = \\mathbf{G}\\mathbf{W}^T$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two by two by hand",
+   "prose": "Take this data and incoming gradient: $$\\mathbf{X} = \\begin{pmatrix} 2 & -1 \\\\ 1 & 3 \\end{pmatrix}, \\qquad \\mathbf{G} = \\begin{pmatrix} 1 & 2 \\\\ -1 & 0.5 \\end{pmatrix}.$$ The weights do not matter: $\\partial L/\\partial \\mathbf{W} = \\mathbf{X}^T\\mathbf{G}$ needs only $\\mathbf{X}$ and $\\mathbf{G}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "XT",
+       "rows": [
+        [
+         2,
+         1
+        ],
+        [
+         -1,
+         3
+        ]
+       ],
+       "label": "$\\mathbf{X}^T$"
+      },
+      {
+       "id": "G",
+       "rows": [
+        [
+         1,
+         2
+        ],
+        [
+         -1,
+         0.5
+        ]
+       ],
+       "label": "$\\mathbf{G}$"
+      },
+      {
+       "id": "D",
+       "rows": [
+        [
+         1,
+         4.5
+        ],
+        [
+         -4,
+         -0.5
+        ]
+       ],
+       "label": "$\\partial L/\\partial \\mathbf{W}$"
+      }
+     ],
+     "ops": [
+      "×",
+      "="
+     ]
+    },
+    "state": {
+     "hidden": [
+      "D"
+     ]
+    }
+   },
+   "question": "What is $\\partial L/\\partial W_{12}$, the entry in row 1, column 2?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "xg",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "gtx",
+      "value": -4,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write down $\\mathbf{X}^T$ first."
+    },
+    {
+     "rung": "point",
+     "text": "Row 1 of $\\mathbf{X}^T$ times column 2 of $\\mathbf{G}$.",
+     "highlight": [
+      "XT-r0",
+      "G-c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2 \\times 2 + 1 \\times 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "Column 1 of $\\mathbf{X}$ against column 2 of $\\mathbf{G}$: $2 \\times 2 + 1 \\times 0.5 = 4.5$.",
+    "generic": "Not quite. Row 1 of $\\mathbf{X}^T$ is column 1 of $\\mathbf{X}$.",
+    "byKey": {
+     "xg": "You multiplied $\\mathbf{X}\\mathbf{G}$ without the transpose: row 1 of $\\mathbf{X}$ against column 2 of $\\mathbf{G}$.",
+     "gtx": "That is entry $(1, 2)$ of $\\mathbf{G}^T\\mathbf{X}$, the transpose of the answer: $-1 \\times 1 + 3 \\times (-1) = -4$."
+    }
+   },
+   "explain": {
+    "text": "$(\\mathbf{X}^T\\mathbf{G})_{12}$ pairs column 1 of $\\mathbf{X}$, $(2, 1)$, with column 2 of $\\mathbf{G}$, $(2, 0.5)$: $4 + 0.5 = 4.5$. The whole gradient is $\\begin{pmatrix} 1 & 4.5 \\\\ -4 & -0.5 \\end{pmatrix}$.",
+    "canvas": {
+     "product": {
+      "a": "XT",
+      "b": "G",
+      "c": "D",
+      "i": 0,
+      "j": 1
+     },
+     "cell": "D-0-1"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The shape check",
+   "prose": "The same route gives $\\partial L/\\partial \\mathbf{X}$, shape 4 by 3, for the hook layer. There $\\mathbf{G}$ is 4 by 2 and $\\mathbf{W}$ is 3 by 2. A product only exists when the inner sizes agree, so shapes alone rule out most wrong formulas.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Array",
+      "Shape",
+      "Its gradient"
+     ],
+     "rows": [
+      [
+       "$\\mathbf{X}$",
+       "4 by 3",
+       "4 by 3"
+      ],
+      [
+       "$\\mathbf{W}$",
+       "3 by 2",
+       "3 by 2"
+      ],
+      [
+       "$\\mathbf{Y}$",
+       "4 by 2",
+       "$\\mathbf{G}$, 4 by 2"
+      ]
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   },
+   "question": "Which formula gives a 4 by 3 result?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$\\mathbf{G}\\mathbf{W}^T$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$\\mathbf{W}^T\\mathbf{G}$",
+      "why": "You put $\\mathbf{W}^T$ first: 2 by 3 times 4 by 2 has inner sizes 3 and 4, so it does not exist."
+     },
+     {
+      "id": "c",
+      "text": "$\\mathbf{W}\\mathbf{G}^T$",
+      "why": "That is 3 by 2 times 2 by 4, a 3 by 4 result: the transpose of the answer."
+     },
+     {
+      "id": "d",
+      "text": "$\\mathbf{X}^T\\mathbf{G}$",
+      "why": "That is the gradient for $\\mathbf{W}$, 3 by 2. The question asks for $\\mathbf{X}$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A product $\\mathbf{A}\\mathbf{B}$ needs the columns of $\\mathbf{A}$ to match the rows of $\\mathbf{B}$."
+    },
+    {
+     "rung": "point",
+     "text": "The answer must be 4 by 3, and $\\mathbf{G}$ has the 4.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\mathbf{G}$ (4 by 2) times something 2 by 3: that is $\\mathbf{W}^T$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{G}\\mathbf{W}^T$ is 4 by 2 times 2 by 3: 4 by 3, the shape of $\\mathbf{X}$.",
+    "generic": "Not quite. Write each shape and check the inner sizes.",
+    "byKey": {
+     "c": "You found $(\\partial L/\\partial \\mathbf{X})^T$. By $(\\mathbf{A}\\mathbf{B})^T = \\mathbf{B}^T\\mathbf{A}^T$, $(\\mathbf{W}\\mathbf{G}^T)^T = \\mathbf{G}\\mathbf{W}^T$."
+    }
+   },
+   "explain": {
+    "text": "Transposing $\\mathbf{Y} = \\mathbf{X}\\mathbf{W}$ gives $\\mathbf{Y}^T = \\mathbf{W}^T\\mathbf{X}^T$, where $\\mathbf{X}^T$ now plays the weights; the rule gives $\\partial L/\\partial \\mathbf{X}^T = \\mathbf{W}\\mathbf{G}^T$. Transposing back, $\\partial L/\\partial \\mathbf{X} = \\mathbf{G}\\mathbf{W}^T$, 4 by 3."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A check in float64",
+   "prose": "Take $L = \\tfrac12 \\lVert \\mathbf{A}\\mathbf{B} \\rVert^2$, half the sum of the squared entries, with $\\mathbf{A}$ (3 by 4) and $\\mathbf{B}$ (4 by 2) drawn by `np.random.default_rng(0).standard_normal`. To use the rule we need $\\mathbf{G} = \\partial L/\\partial (\\mathbf{A}\\mathbf{B})$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Gradient check",
+     "lines": [
+      ">>> rng = np.random.default_rng(0)",
+      ">>> A = rng.standard_normal((3, 4))",
+      ">>> B = rng.standard_normal((4, 2))",
+      ">>> numeric = central(A, B, h=1e-5)",
+      ">>> rel_error(A @ B @ B.T, numeric)",
+      "9.5e-12"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\mathbf{G}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$\\mathbf{A}\\mathbf{B}$ itself",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$2\\mathbf{A}\\mathbf{B}$",
+      "why": "You kept the 2 from the square. The half in front cancels it."
+     },
+     {
+      "id": "c",
+      "text": "$\\tfrac12 \\mathbf{A}\\mathbf{B}$",
+      "why": "You kept the half. The derivative of $\\tfrac12 y^2$ is $y$."
+     },
+     {
+      "id": "d",
+      "text": "A matrix of ones",
+      "why": "Ones is the gradient of a plain sum. Each entry here is squared first."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work with one entry $y$ of $\\mathbf{A}\\mathbf{B}$."
+    },
+    {
+     "rung": "point",
+     "text": "What is the derivative of $\\tfrac12 y^2$?",
+     "highlight": [
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It is $y$, so $\\mathbf{G}$ is the product itself."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\partial(\\tfrac12 y^2)/\\partial y = y$ for each entry, so $\\mathbf{G} = \\mathbf{A}\\mathbf{B}$ and $\\partial L/\\partial \\mathbf{A} = (\\mathbf{A}\\mathbf{B})\\mathbf{B}^T$.",
+    "generic": "Not quite. Differentiate $\\tfrac12 y^2$ for one entry."
+   },
+   "explain": {
+    "text": "With $\\mathbf{G} = \\mathbf{A}\\mathbf{B}$ the rule gives $\\partial L/\\partial \\mathbf{A} = (\\mathbf{A}\\mathbf{B})\\mathbf{B}^T$. Against central differences with $h = 10^{-5}$ it agrees to a relative error of $9.5 \\times 10^{-12}$, the rounding of float64.",
+    "canvas": {
+     "tone": {
+      "l6": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Right shape, wrong gradient",
+   "prose": "Priya writes `dW = G.T @ X` and tests it on 2 by 2 matrices. The shapes match, so her shape test passes. The gradient check, on the matrices from the 2 by 2 screen, does not.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Priya’s tests",
+     "lines": [
+      ">>> dW.shape == W.shape",
+      "True",
+      ">>> rel_error(dW, central_dW)",
+      "1.89"
+     ]
+    },
+    "state": {
+     "tone": {
+      "l2": "ok"
+     }
+    }
+   },
+   "question": "What went wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$\\mathbf{G}^T\\mathbf{X}$ is the transpose of $\\mathbf{X}^T\\mathbf{G}$; with square matrices the shapes cannot tell them apart",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The check fails by rounding: 2 by 2 matrices are too small for central differences",
+      "why": "The check printed a relative error of 1.89, not $10^{-11}$. Rounding is twelve orders of magnitude smaller."
+     },
+     {
+      "id": "c",
+      "text": "Nothing: the two products are equal for square matrices",
+      "why": "Entry $(1, 2)$ is 4.5 in one and $-4$ in the other. Square matrices do not commute or equal their transposes."
+     },
+     {
+      "id": "d",
+      "text": "She should have written $\\mathbf{X}\\mathbf{G}$",
+      "why": "That drops the transpose: entry $(1, 2)$ becomes 3.5, still wrong."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write out entry $(1, 2)$ of both products."
+    },
+    {
+     "rung": "point",
+     "text": "One is 4.5. What is the other?",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "They are transposes, so the off-diagonal entries swap."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{G}^T\\mathbf{X} = (\\mathbf{X}^T\\mathbf{G})^T$: 4.5 and $-4$ swap places. Shapes catch most bugs, and a gradient check catches the rest.",
+    "generic": "Not quite. Compare entry $(1, 2)$ of the two products.",
+    "byKey": {
+     "c": "You assumed the products are equal. They are transposes of each other, and this one is not symmetric."
+    }
+   },
+   "explain": {
+    "text": "For square matrices every product has the same shape, so a shape test cannot see a transpose. Here $\\mathbf{X}^T\\mathbf{G}$ and $\\mathbf{G}^T\\mathbf{X}$ differ by up to 8.5 against entries of size 4.5: a relative error of $8.5/4.5 = 1.89$.",
+    "canvas": {
+     "tone": {
+      "l4": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A vector times a matrix",
+   "prose": "One trade’s features `x` have shape `(3,)`, a 1-D array, and `y = x @ W` has shape `(2,)`. The incoming gradient `g` has shape `(2,)`. For a 1-D array `x.T` is `x` itself, so the rule $\\mathbf{X}^T\\mathbf{G}$ needs a reshape.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Expression",
+      "Shape"
+     ],
+     "rows": [
+      [
+       "`x`",
+       "`(3,)`"
+      ],
+      [
+       "`x.T`",
+       "`(3,)`"
+      ],
+      [
+       "`x.reshape(3, 1)`",
+       "`(3, 1)`"
+      ],
+      [
+       "`g.reshape(1, 2)`",
+       "`(1, 2)`"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which lines give the 3 by 2 gradient for `W`? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`np.outer(x, g)`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`x.reshape(3, 1) @ g.reshape(1, 2)`",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "`x.T @ g`",
+      "why": "`x.T` is still shape `(3,)`, so this asks for a dot product of lengths 3 and 2, and NumPy raises an error."
+     },
+     {
+      "id": "d",
+      "text": "`x * g`",
+      "why": "That broadcasts shapes `(3,)` and `(2,)`, which do not fit, so NumPy raises an error."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`x.T` on a 1-D array changes nothing."
+    },
+    {
+     "rung": "point",
+     "text": "You need a column of 3 times a row of 2.",
+     "highlight": [
+      "r2",
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`np.outer` does that, and so does reshaping both."
+    }
+   ],
+   "feedback": {
+    "correct": "Both make the outer product: entry $(k, j)$ is $x_k g_j$, the one-row case of $\\mathbf{X}^T\\mathbf{G}$.",
+    "generic": "Not quite. The answer must be 3 by 2."
+   },
+   "explain": {
+    "text": "With one row, $\\mathbf{X}^T\\mathbf{G}$ is a column times a row: $x_k g_j$ in entry $(k, j)$. `np.outer` builds it, and so does reshaping `x` to a column and `g` to a row."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "matmul_backward() in code",
+   "prose": "Write `matmul_backward(X, W, G)` for $\\mathbf{Y} = \\mathbf{X}\\mathbf{W}$: given the incoming gradient `G` (the shape of `Y`), return the pair `(dX, dW)`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Array",
+      "Shape"
+     ],
+     "rows": [
+      [
+       "`X`",
+       "`(n, k)`"
+      ],
+      [
+       "`W`",
+       "`(k, m)`"
+      ],
+      [
+       "`G`",
+       "`(n, m)`"
+      ],
+      [
+       "`dX`",
+       "`(n, k)`"
+      ],
+      [
+       "`dW`",
+       "`(k, m)`"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `matmul_backward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef matmul_backward(X, W, G):\n    # Y = X @ W and G = dL/dY.\n    # Return the pair (dX, dW).\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef matmul_backward(X, W, G):\n    dX = G @ W.T\n    dW = X.T @ G\n    return dX, dW\n",
+    "examples": [
+     {
+      "call": "[a.shape for a in matmul_backward(np.ones((5, 4)), np.ones((4, 3)), np.ones((5, 3)))]",
+      "expect": "[(5, 4), (4, 3)]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rng = np.random.default_rng(13); X = rng.standard_normal((4, 3)); W = rng.standard_normal((3, 2)); G = rng.standard_normal((4, 2))",
+      "call": "[np.round(a, 6).tolist() for a in matmul_backward(X, W, G)]",
+      "expect": "[[[-0.576638, 1.293478, -0.212221], [-0.030372, 0.735665, -1.246008], [0.62511, 0.609933, -3.492057], [0.986605, -0.507217, -2.792472]], [[6.897518, 3.287605], [-3.207044, 1.929407], [1.007369, -1.375794]]]",
+      "compare": "equal"
+     },
+     {
+      "call": "[a.shape for a in matmul_backward(np.ones((5, 4)), np.ones((4, 3)), np.ones((5, 3)))]",
+      "expect": "[(5, 4), (4, 3)]",
+      "compare": "equal"
+     },
+     {
+      "call": "[a.tolist() for a in matmul_backward(np.array([[2.0, -1.0], [1.0, 3.0]]), np.eye(2), np.array([[1.0, 2.0], [-1.0, 0.5]]))]",
+      "expect": "[[[1.0, 2.0], [-1.0, 0.5]], [[1.0, 4.5], [-4.0, -0.5]]]",
+      "compare": "equal"
+     },
+     {
+      "call": "matches_differences()",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(7); X = rng.standard_normal((6, 5)); W = rng.standard_normal((5, 1)); G = rng.standard_normal((6, 1))",
+      "call": "[np.round(a, 6).tolist() for a in matmul_backward(X, W, G)]",
+      "expect": "[[[1.235638, 0.385802, 0.790188, 0.653164, -0.856712], [0.049763, 0.015537, 0.031823, 0.026305, -0.034502], [-1.353237, -0.42252, -0.865392, -0.715327, 0.938248], [0.892988, 0.278817, 0.571064, 0.472038, -0.619141], [0.170919, 0.053366, 0.109302, 0.090349, -0.118504], [-0.169025, -0.052775, -0.108091, -0.089348, 0.117191]], [[0.243765], [0.605157], [0.620152], [0.986191], [1.109053]]]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: two seeded cases rounded to 6 places, the shapes, the 2 by 2 case from this lesson, and a check against central differences. The first run loads NumPy, which takes a few seconds.",
+    "postlude": "\n\ndef matches_differences():\n    r = np.random.default_rng(5)\n    X, W, C = r.standard_normal((3, 4)), r.standard_normal((4, 2)), r.standard_normal((3, 2))\n    dX, dW = matmul_backward(X, W, C)\n    worst, top = 0.0, 1e-12\n    for A, dA in ((X, dX), (W, dW)):\n        for i in np.ndindex(A.shape):\n            keep = A[i]\n            A[i] = keep + 1e-5\n            up = ((X @ W) * C).sum()\n            A[i] = keep - 1e-5\n            down = ((X @ W) * C).sum()\n            A[i] = keep\n            num = (up - down) / 2e-5\n            worst = max(worst, abs(dA[i] - num))\n            top = max(top, abs(dA[i]), abs(num))\n    return bool(worst / top < 1e-6)\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef matmul_backward(X, W, G):\n    dX = G @ W.T\n    dW = G.T @ X\n    return dX, dW\n",
+      "test": 1,
+      "symptom": "The transpose the lesson warns about: G.T @ X has the right shape only for square matrices."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef matmul_backward(X, W, G):\n    dX = G @ W.T\n    dW = X.T @ G\n    return dW, dX\n",
+      "test": 1,
+      "symptom": "The pair comes back in the wrong order."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef matmul_backward(X, W, G):\n    dX = G @ W\n    dW = X.T @ G\n    return dX, dW\n",
+      "test": 1,
+      "symptom": "The transpose of W is missing, so the product does not fit."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One line per gradient."
+    },
+    {
+     "rung": "point",
+     "text": "`dW` uses `X` and `G`; `dX` uses `G` and `W`.",
+     "highlight": [
+      "r3",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`G @ W.T` and `X.T @ G`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both gradients pass, the square case included.",
+    "generic": "Not quite. Check the first failing test: a shape, or a transpose."
+   },
+   "explain": {
+    "text": "`dX = G @ W.T` and `dW = X.T @ G`: each has the shape of its input, and the 2 by 2 test catches a transpose that the shape test cannot."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A factor model’s exposures",
+   "prose": "A fund models one stock’s daily return as exposures $\\mathbf{b} = (1.2, 0.5)$ to two factors, market and value, times the factor returns $\\mathbf{F}$ (2 factors by 3 days, in per cent). The fit is $L = \\tfrac12 \\sum_t (\\hat r_t - r_t)^2$ with $\\hat{\\mathbf{r}} = \\mathbf{b}\\mathbf{F}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Day",
+      "Market",
+      "Value",
+      "Model $\\hat r$",
+      "Actual $r$"
+     ],
+     "rows": [
+      [
+       "1",
+       "1.0",
+       "0.2",
+       "1.30",
+       "1.5"
+      ],
+      [
+       "2",
+       "-0.5",
+       "0.4",
+       "-0.40",
+       "-0.4"
+      ],
+      [
+       "3",
+       "0.8",
+       "-0.3",
+       "0.81",
+       "0.9"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\partial L/\\partial b_{\\text{market}}$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.272,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.272,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "value",
+      "value": -0.013,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\mathbf{G}$ is the residual row $\\hat{\\mathbf{r}} - \\mathbf{r}$."
+    },
+    {
+     "rung": "point",
+     "text": "Pair the residuals with the market returns.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.2 \\times 1.0 + 0 \\times (-0.5) + (-0.09) \\times 0.8$."
+    }
+   ],
+   "feedback": {
+    "correct": "The residuals are $(-0.2, 0, -0.09)$, and $\\mathbf{e}\\mathbf{F}^T$ pairs them with the market row: $-0.2 \\times 1 + 0 - 0.09 \\times 0.8 = -0.272$.",
+    "generic": "Not quite. Here $\\mathbf{G}$ is the residual row $\\hat{\\mathbf{r}} - \\mathbf{r}$.",
+    "byKey": {
+     "sign": "You used $\\mathbf{r} - \\hat{\\mathbf{r}}$. The derivative of $\\tfrac12(\\hat r - r)^2$ in $\\hat r$ is $\\hat r - r$.",
+     "value": "That is the value factor, the second entry of $\\mathbf{e}\\mathbf{F}^T$. The market factor is the first row of $\\mathbf{F}$."
+    }
+   },
+   "explain": {
+    "text": "Here $\\mathbf{b}$ plays $\\mathbf{X}$ and $\\mathbf{F}$ plays $\\mathbf{W}$, so $\\partial L/\\partial \\mathbf{b} = \\mathbf{G}\\mathbf{F}^T = (-0.272, -0.013)$. The negative market entry says more market exposure would shrink the tracking error."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "For $\\mathbf{Y} = \\mathbf{X}\\mathbf{W}$ with incoming $\\mathbf{G} = \\partial L/\\partial \\mathbf{Y}$: $\\partial L/\\partial \\mathbf{W} = \\mathbf{X}^T\\mathbf{G}$ and $\\partial L/\\partial \\mathbf{X} = \\mathbf{G}\\mathbf{W}^T$, each a sum over the paths a weight or input reaches.",
+   "Each gradient has the shape of its input; writing the shapes rules out most wrong formulas, and $(\\mathbf{A}\\mathbf{B})^T = \\mathbf{B}^T\\mathbf{A}^T$ turns one rule into the other.",
+   "With square matrices a transpose passes the shape test, so a central-difference check is still needed; in float64 the right rule agrees to about $10^{-11}$."
+  ],
+  "formula": {
+   "name": "Backward through a product",
+   "tex": "\\frac{\\partial L}{\\partial \\mathbf{W}} = \\mathbf{X}^T\\mathbf{G}, \\qquad \\frac{\\partial L}{\\partial \\mathbf{X}} = \\mathbf{G}\\mathbf{W}^T",
+   "note": "$\\mathbf{G}$ is the gradient arriving at $\\mathbf{Y}$, with the shape of $\\mathbf{Y}$."
+  },
+  "trap": "$\\mathbf{G}^T\\mathbf{X}$ has the right shape when the matrices are square, and is the transpose of the gradient."
+ },
+ "quiz": [
+  {
+   "id": "q-shape-dx",
+   "difficulty": 2,
+   "prose": "A layer takes $\\mathbf{X}$ (5 by 4) to $\\mathbf{Y} = \\mathbf{X}\\mathbf{W}$ with $\\mathbf{W}$ 4 by 3.",
+   "question": "What shape is $\\partial L/\\partial \\mathbf{X}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "5 by 4",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "5 by 3",
+      "why": "That is the shape of $\\mathbf{Y}$ and $\\mathbf{G}$."
+     },
+     {
+      "id": "c",
+      "text": "4 by 3",
+      "why": "That is the shape of $\\mathbf{W}$ and its gradient."
+     },
+     {
+      "id": "d",
+      "text": "4 by 5",
+      "why": "That is $\\mathbf{X}^T$. A gradient has its input’s own shape."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathbf{G}\\mathbf{W}^T$ is 5 by 3 times 3 by 4: 5 by 4, the shape of $\\mathbf{X}$.",
+    "generic": "Not quite. A gradient has the shape of its input."
+   },
+   "explain": {
+    "text": "$\\partial L/\\partial \\mathbf{X} = \\mathbf{G}\\mathbf{W}^T$, which is 5 by 4, like $\\mathbf{X}$."
+   }
+  },
+  {
+   "id": "q-entry-xtg",
+   "difficulty": 3,
+   "prose": "$\\mathbf{X} = \\begin{pmatrix} 1 & 2 \\\\ 0 & -1 \\\\ 3 & 1 \\end{pmatrix}$ and $\\mathbf{G} = \\begin{pmatrix} 0.5 \\\\ -1 \\\\ 2 \\end{pmatrix}$.",
+   "question": "What is $\\partial L/\\partial W_{21}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "other",
+      "value": 6.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Column 2 of $\\mathbf{X}$ against $\\mathbf{G}$: $2 \\times 0.5 + (-1) \\times (-1) + 1 \\times 2 = 4$.",
+    "generic": "Not quite. Row 2 of $\\mathbf{X}^T$ is column 2 of $\\mathbf{X}$.",
+    "byKey": {
+     "sign": "You took $(-1) \\times (-1)$ as $-1$. Two negatives give $+1$.",
+     "other": "That is $\\partial L/\\partial W_{11}$, from column 1 of $\\mathbf{X}$."
+    }
+   },
+   "explain": {
+    "text": "$(\\mathbf{X}^T\\mathbf{G})_{21} = 1 + 1 + 2 = 4$."
+   }
+  },
+  {
+   "id": "q-square-pass",
+   "difficulty": 3,
+   "prose": "`dW = G.T @ X` passes a shape test on 3 by 3 matrices.",
+   "question": "What does that show?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Little: square matrices let a transpose slip through",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "That the gradient is right, since shapes catch every bug",
+      "why": "Shapes catch products that cannot exist, not a transpose of the right size."
+     },
+     {
+      "id": "c",
+      "text": "That the gradient is right up to rounding",
+      "why": "Rounding is about $10^{-11}$ in float64. A transpose is wrong by order 1."
+     },
+     {
+      "id": "d",
+      "text": "That the matrices must be symmetric",
+      "why": "Nothing forces symmetry. The test simply cannot see a transpose."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathbf{G}^T\\mathbf{X} = (\\mathbf{X}^T\\mathbf{G})^T$ has the same shape when both are square. Only a gradient check tells them apart.",
+    "generic": "Not quite. Ask what a shape test can see."
+   },
+   "explain": {
+    "text": "A shape test rules out products whose sizes do not fit. For square matrices it cannot tell $\\mathbf{X}^T\\mathbf{G}$ from its transpose, so run a gradient check too."
+   }
+  }
+ ]
+}
