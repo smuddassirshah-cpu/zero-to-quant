@@ -1,0 +1,1018 @@
+{
+ "id": "l11-gaussian-kl",
+ "course": "representations",
+ "title": "KL between two normals",
+ "minutes": 15,
+ "objectives": [
+  "Derive the KL divergence between a normal and the standard normal, and check it numerically."
+ ],
+ "skills": [
+  "rp-vae"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "title": "Match the prior",
+   "difficulty": 1,
+   "prose": "The filled curve is $\\mathcal{N}(\\mu, \\sigma^2)$, a guess $q$; the dashed curve is the prior $\\mathcal{N}(0, 1)$. The caption shows $\\operatorname{KL}(q\\,\\|\\,\\mathcal{N}(0, 1))$ in nats, `info` L2's divergence with natural logs.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4,
+      5
+     ],
+     "y": [
+      0,
+      1.3
+     ],
+     "xLabel": "$z$",
+     "yLabel": "density",
+     "params": {
+      "mu": 1.5,
+      "sig": 0.5
+     },
+     "functions": [
+      {
+       "id": "q",
+       "expr": "exp(-(x-mu)^2/(2*sig^2))/(sig*sqrt(2*pi))",
+       "label": "$q$"
+      },
+      {
+       "id": "p",
+       "expr": "exp(-x^2/2)/sqrt(2*pi)",
+       "label": "prior",
+       "dashed": true
+      }
+     ]
+    },
+    "derive": {
+     "caption": "KL = {{fixed(0.5*(mu*mu + sig*sig - 1 - ln(sig*sig)), 3)}} nats"
+    }
+   },
+   "question": "Set $\\mu$ and $\\sigma$ so that the KL is as small as possible.",
+   "widget": {
+    "kind": "sliders",
+    "sliders": [
+     {
+      "id": "mu",
+      "bind": "mu",
+      "min": -2,
+      "max": 3,
+      "step": 0.05,
+      "label": "$\\mu$",
+      "start": 1.5
+     },
+     {
+      "id": "sig",
+      "bind": "sig",
+      "min": 0.1,
+      "max": 2.5,
+      "step": 0.05,
+      "label": "$\\sigma$",
+      "start": 0.5
+     }
+    ],
+    "answer": {
+     "mu": 0,
+     "sig": 1
+    },
+    "tol": {
+     "mu": 0.06,
+     "sig": 0.06
+    },
+    "wrong": [
+     {
+      "id": "narrow",
+      "check": "abs(mu) < 0.1 && sig < 0.9"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide $\\mu$ first and watch the caption."
+    },
+    {
+     "rung": "point",
+     "text": "Then widen or narrow $\\sigma$.",
+     "highlight": [
+      "q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The KL is 0 only when the two curves coincide."
+    }
+   ],
+   "feedback": {
+    "correct": "At $\\mu = 0$, $\\sigma = 1$ the KL is 0: the guess is the prior.",
+    "generic": "Not yet. Make the filled curve sit exactly on the dashed one.",
+    "byKey": {
+     "narrow": "The centre is right, but a narrow guess still costs: the KL rises as $\\sigma$ shrinks."
+    }
+   },
+   "explain": {
+    "text": "The KL is 0 only when $q$ equals the prior. Moving the centre costs, and so does making the guess narrower or wider than the prior.",
+    "canvas": {
+     "params": {
+      "mu": 0,
+      "sig": 1
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "title": "A formula for it",
+   "difficulty": 2,
+   "prose": "For one coordinate, $$\\operatorname{KL}\\big(\\mathcal{N}(\\mu, \\sigma^2)\\,\\|\\,\\mathcal{N}(0, 1)\\big) = \\tfrac12\\left(\\mu^2 + \\sigma^2 - 1 - \\ln\\sigma^2\\right).$$ It is 0 only at $\\mu = 0$, $\\sigma = 1$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4,
+      4
+     ],
+     "y": [
+      0,
+      0.9
+     ],
+     "xLabel": "$z$",
+     "yLabel": "density",
+     "functions": [
+      {
+       "id": "q",
+       "expr": "exp(-(x-1)^2/(2*0.25))/sqrt(2*pi*0.25)",
+       "label": "$\\mathcal{N}(1, 0.5^2)$"
+      },
+      {
+       "id": "p",
+       "expr": "exp(-(x-0)^2/(2*1))/sqrt(2*pi*1)",
+       "label": "prior",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "What is the KL for $\\mathcal{N}(1, 0.5^2)$? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.818,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "nolog",
+      "value": 0.125,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sd",
+      "value": 0.597,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sigma^2 = 0.25$ and $-\\ln 0.25 \\approx 1.3863$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12(1 + 0.25 - 1 + 1.3863)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac12(1 + 0.25 - 1 - \\ln 0.25) \\approx 0.818$ nats.",
+    "generic": "Not quite. Use $\\sigma^2$, not $\\sigma$, and keep $-\\ln\\sigma^2$.",
+    "byKey": {
+     "nolog": "You dropped $-\\ln\\sigma^2$, which is $+1.386$ here.",
+     "sd": "You used $\\sigma = 0.5$ where the formula has $\\sigma^2 = 0.25$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac12(1 + 0.25 - 1 + 1.386) \\approx 0.818$ nats. Half of it comes from the shift, $\\tfrac12\\mu^2 = 0.5$; the rest from the narrower spread."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "Three guesses by hand",
+   "difficulty": 2,
+   "prose": "Use the formula for three more guesses.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -5,
+      5
+     ],
+     "y": [
+      0,
+      0.6
+     ],
+     "xLabel": "$z$",
+     "yLabel": "density",
+     "functions": [
+      {
+       "id": "a",
+       "expr": "exp(-(x-2)^2/(2*1))/sqrt(2*pi*1)",
+       "label": "$\\mathcal{N}(2, 1)$"
+      },
+      {
+       "id": "b",
+       "expr": "exp(-(x-0)^2/(2*4))/sqrt(2*pi*4)",
+       "label": "$\\mathcal{N}(0, 2^2)$"
+      },
+      {
+       "id": "c",
+       "expr": "exp(-(x-0.5)^2/(2*0.64))/sqrt(2*pi*0.64)",
+       "label": "$\\mathcal{N}(0.5, 0.8^2)$"
+      },
+      {
+       "id": "p",
+       "expr": "exp(-(x-0)^2/(2*1))/sqrt(2*pi*1)",
+       "label": "prior",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "Fill in each KL, in nats.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "$\\mu$",
+     "$\\sigma$",
+     "KL"
+    ],
+    "rows": [
+     [
+      "2",
+      "1",
+      {
+       "edit": true,
+       "answer": 2.0,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ],
+     [
+      "0",
+      "2",
+      {
+       "edit": true,
+       "answer": 0.8069,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ],
+     [
+      "0.5",
+      "0.8",
+      {
+       "edit": true,
+       "answer": 0.1681,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For $\\mathcal{N}(2, 1)$ only the shift counts."
+    },
+    {
+     "rung": "step",
+     "text": "$\\mathcal{N}(0, 2^2)$: $\\tfrac12(4 - 1 - \\ln 4)$."
+    }
+   ],
+   "feedback": {
+    "correct": "2, 0.807 and 0.168.",
+    "generic": "Not quite. Put each pair into $\\tfrac12(\\mu^2 + \\sigma^2 - 1 - \\ln\\sigma^2)$."
+   },
+   "explain": {
+    "text": "$\\mathcal{N}(2, 1)$ costs $\\tfrac12 \\times 4 = 2$: the KL grows with the square of the shift. A wider guess costs too (0.807), and a guess close to the prior costs little (0.168)."
+   }
+  },
+  {
+   "type": "derive",
+   "title": "Deriving it",
+   "difficulty": 3,
+   "prose": "Let $q = \\mathcal{N}(\\mu, \\sigma^2)$ and $p = \\mathcal{N}(0, 1)$, and $\\operatorname{KL}(q\\,\\|\\,p) = \\mathbb{E}_q[\\ln q(z) - \\ln p(z)]$.",
+   "question": "Put the steps in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$\\ln q(z) - \\ln p(z) = -\\ln\\sigma - \\dfrac{(z - \\mu)^2}{2\\sigma^2} + \\dfrac{z^2}{2}$, the $\\tfrac12\\ln 2\\pi$ terms cancelling."
+     },
+     {
+      "id": "b",
+      "text": "Under $q$, $\\mathbb{E}_q[(z - \\mu)^2] = \\sigma^2$, so the middle term averages $-\\tfrac12$."
+     },
+     {
+      "id": "c",
+      "text": "Under $q$, $\\mathbb{E}_q[z^2] = \\mu^2 + \\sigma^2$, the variance plus the squared mean."
+     },
+     {
+      "id": "d",
+      "text": "So $\\operatorname{KL} = -\\ln\\sigma - \\tfrac12 + \\tfrac12(\\mu^2 + \\sigma^2) = \\tfrac12(\\mu^2 + \\sigma^2 - 1 - \\ln\\sigma^2)$."
+     },
+     {
+      "id": "x",
+      "text": "Under $q$, $\\mathbb{E}_q[z^2] = \\mu^2$, since $z$ averages $\\mu$.",
+      "why": "The mean of $z^2$ is not the square of the mean: it adds the variance, $\\sigma^2$."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the log ratio first."
+    },
+    {
+     "rung": "step",
+     "text": "Then take expectations term by term."
+    }
+   ],
+   "feedback": {
+    "correct": "Log ratio, two expectations, collect.",
+    "generic": "Not quite. Write the log ratio before averaging.",
+    "byKey": {
+     "x": "You squared the mean. $\\mathbb{E}[z^2] = \\mu^2 + \\sigma^2$."
+    }
+   },
+   "explain": {
+    "text": "The log ratio has a constant, a term averaging $-\\tfrac12$, and $z^2/2$, which averages $\\tfrac12(\\mu^2 + \\sigma^2)$. Collecting gives the formula; $-\\ln\\sigma = -\\tfrac12\\ln\\sigma^2$."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "Check it by sampling",
+   "difficulty": 2,
+   "prose": "A Monte Carlo check of the 0.818 for $\\mathcal{N}(1, 0.5^2)$: draw $z$ from $q$ with `default_rng(7)` and average $\\ln q(z) - \\ln p(z)$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Draws",
+      "Average"
+     ],
+     "rows": [
+      [
+       "100",
+       "0.8082"
+      ],
+      [
+       "10,000",
+       "0.8162"
+      ],
+      [
+       "1,000,000",
+       "0.8183"
+      ]
+     ]
+    }
+   },
+   "question": "How far is the million-draw average from the formula? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0001,
+    "tol": {
+     "abs": 0.00015
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "small",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.00015
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the formula's value from the last row."
+    },
+    {
+     "rung": "step",
+     "text": "The formula gives 0.8181."
+    }
+   ],
+   "feedback": {
+    "correct": "$|0.8183 - 0.8181| \\approx 0.0001$.",
+    "generic": "Not quite. Use the million-draw row.",
+    "byKey": {
+     "small": "That is the 100-draw row's error. The million-draw row is far closer."
+    }
+   },
+   "explain": {
+    "text": "The error shrinks like $1/\\sqrt{n}$: about 0.010 with 100 draws, about 0.0001 with a million. A sampled check like this catches a sign or a factor of 2 in a formula."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "Not symmetric",
+   "difficulty": 3,
+   "prose": "Swap the roles: measure the prior against the guess. For two normals, $$\\operatorname{KL}\\big(\\mathcal{N}(\\mu_1, \\sigma_1^2)\\,\\|\\,\\mathcal{N}(\\mu_2, \\sigma_2^2)\\big) = \\ln\\frac{\\sigma_2}{\\sigma_1} + \\frac{\\sigma_1^2 + (\\mu_1 - \\mu_2)^2}{2\\sigma_2^2} - \\frac12.$$",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4,
+      4
+     ],
+     "y": [
+      0,
+      0.9
+     ],
+     "xLabel": "$z$",
+     "yLabel": "density",
+     "functions": [
+      {
+       "id": "q",
+       "expr": "exp(-(x-1)^2/(2*0.25))/sqrt(2*pi*0.25)",
+       "label": "$\\mathcal{N}(1, 0.5^2)$"
+      },
+      {
+       "id": "p",
+       "expr": "exp(-(x-0)^2/(2*1))/sqrt(2*pi*1)",
+       "label": "$\\mathcal{N}(0, 1)$",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "What is $\\operatorname{KL}(\\mathcal{N}(0, 1)\\,\\|\\,\\mathcal{N}(1, 0.5^2))$? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.807,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "other",
+      "value": 0.818,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sigma_1 = 1$, $\\sigma_2 = 0.5$, $\\mu_1 - \\mu_2 = -1$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln 0.5 + (1 + 1)/0.5 - 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln 0.5 + 4 - 0.5 \\approx 2.807$ nats, against 0.818 the other way.",
+    "generic": "Not quite. $\\sigma_2 = 0.5$ is the second argument's spread.",
+    "byKey": {
+     "other": "0.818 is the other direction. KL is not symmetric."
+    }
+   },
+   "explain": {
+    "text": "One way gives 0.818, the other 2.807: the prior spills far past the narrow guess, which the second direction punishes. VAEs use $\\operatorname{KL}(q\\,\\|\\,p)$, the guess against the prior."
+   }
+  },
+  {
+   "type": "trap",
+   "title": "The term that goes missing",
+   "difficulty": 3,
+   "prose": "A colleague's VAE code computes the KL as $\\tfrac12(\\mu^2 + \\sigma^2 - 1)$, without $-\\ln\\sigma^2$. Their codes keep shrinking to $\\sigma = 0.1$ and below.",
+   "question": "What does their formula give at $\\mu = 0$, $\\sigma = 0.1$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "neg",
+      "text": "-0.495, a negative KL: sharp codes look free",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "1.808, the true value",
+      "why": "That is the true KL, with the $-\\ln\\sigma^2 = 4.605$ term. Their formula leaves it out."
+     },
+     {
+      "id": "zero",
+      "text": "0, since the centre matches the prior's",
+      "why": "The centre matches, but the spread does not. Their formula still gives a number below 0."
+     },
+     {
+      "id": "pos",
+      "text": "0.495, a small cost",
+      "why": "Check the sign: $0.01 - 1$ is negative."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute $\\tfrac12(0 + 0.01 - 1)$."
+    },
+    {
+     "rung": "step",
+     "text": "A KL can never be below 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Their formula gives -0.495, impossible for a KL; the true value is 1.808.",
+    "generic": "Not quite. Evaluate their formula as written.",
+    "byKey": {
+     "right": "You used the correct formula. Theirs drops the log term."
+    }
+   },
+   "explain": {
+    "text": "Without $-\\ln\\sigma^2$, shrinking $\\sigma$ lowers the penalty, so training is rewarded for making codes deterministic. The true KL at $\\sigma = 0.1$ is 1.808 nats and grows as $\\sigma$ falls."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "A code with no spread",
+   "difficulty": 3,
+   "prose": "Push $\\sigma$ towards 0 with $\\mu = 0$. The term $-\\ln\\sigma^2$ grows without bound.",
+   "question": "What is the KL at $\\sigma = 0.001$? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.41,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 12.82,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "lnsig",
+      "value": 6.91,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$-\\ln(10^{-6}) \\approx 13.82$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12(10^{-6} - 1 + 13.82)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac12(13.82 - 1) \\approx 6.41$ nats.",
+    "generic": "Not quite. $\\sigma^2 = 10^{-6}$; take $-\\ln$ of that.",
+    "byKey": {
+     "half": "You forgot the factor $\\tfrac12$.",
+     "lnsig": "You used $-\\ln\\sigma$, not $-\\ln\\sigma^2$, and dropped the rest."
+    }
+   },
+   "explain": {
+    "text": "About 6.41 nats, and it keeps rising as $\\sigma$ shrinks: a code with no spread is infinitely far from the prior. This is what stops a VAE from collapsing to a plain autoencoder."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "Many coordinates",
+   "difficulty": 2,
+   "prose": "An encoder usually outputs $\\boldsymbol{\\mu}$ and $\\ln\\boldsymbol{\\sigma}^2$, the log-variance, so any output is a valid variance. With independent coordinates against $\\mathcal{N}(\\mathbf{0}, \\mathbf{I})$ the KLs add: $$\\operatorname{KL} = \\tfrac12\\sum_j\\left(\\mu_j^2 + e^{\\ell_j} - 1 - \\ell_j\\right),\\quad \\ell_j = \\ln\\sigma_j^2.$$",
+   "question": "With $\\boldsymbol{\\mu} = (1, 0)$ and $\\boldsymbol{\\ell} = (0, \\ln 0.25)$, what is the KL? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.818,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "first",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "second",
+      "value": 0.318,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.5 + 0.318 \\approx 0.818$ nats.",
+    "generic": "Not quite. Add the two coordinates' KLs.",
+    "byKey": {
+     "first": "That is the first coordinate only.",
+     "second": "That is the second coordinate only."
+    }
+   },
+   "explain": {
+    "text": "The first coordinate costs $\\tfrac12$ for its shift, the second 0.318 for its narrow spread, 0.818 in all. It equals l11's 0.818 for $\\mathcal{N}(1, 0.5^2)$, as it should."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "The KL in code",
+   "difficulty": 3,
+   "prose": "Write the KL from the encoder's outputs. Work from the log-variance directly: $e^{\\ell}$ for the variance and $-\\ell$ for $-\\ln\\sigma^2$. Taking the log of an underflowed variance gives $-\\infty$.",
+   "question": "Write `kl_normal_std` and `kl_vector`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef kl_normal_std(mu, logvar):\n    # KL( N(mu, e^logvar) || N(0, 1) ) for one coordinate, in nats.\n    ...\n\n\ndef kl_vector(mu, logvar):\n    # Sum of the coordinates' KLs; mu and logvar are lists or arrays.\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef kl_normal_std(mu, logvar):\n    return float(0.5 * (mu * mu + np.exp(logvar) - 1.0 - logvar))\n\n\ndef kl_vector(mu, logvar):\n    mu = np.asarray(mu, dtype=float)\n    logvar = np.asarray(logvar, dtype=float)\n    return float(0.5 * np.sum(mu ** 2 + np.exp(logvar) - 1.0 - logvar))\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "kl_normal_std(1.0, float(np.log(0.25)))",
+      "compare": "isclose",
+      "expect": "0.8181471805599453"
+     },
+     {
+      "call": "kl_vector([1.0, 0.0], [0.0, float(np.log(0.25))])",
+      "compare": "isclose",
+      "expect": "0.8181471805599453"
+     }
+    ],
+    "tests": [
+     {
+      "call": "kl_normal_std(1.0, float(np.log(0.25)))",
+      "compare": "isclose",
+      "expect": "0.8181471805599453"
+     },
+     {
+      "call": "kl_normal_std(2.0, 0.0)",
+      "compare": "isclose",
+      "expect": "2.0"
+     },
+     {
+      "call": "kl_normal_std(0.0, 0.0)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      },
+      "expect": "0.0"
+     },
+     {
+      "call": "kl_normal_std(0.0, -800.0)",
+      "compare": "isclose",
+      "expect": "399.5"
+     },
+     {
+      "call": "kl_vector([1.0, 0.0], [0.0, float(np.log(0.25))])",
+      "compare": "isclose",
+      "expect": "0.8181471805599453"
+     },
+     {
+      "call": "kl_vector([0.5, -0.5, 2.0], [0.1, -0.2, 0.3])",
+      "compare": "isclose",
+      "expect": "2.286880239364817"
+     },
+     {
+      "call": "kl_vector([[1.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]])",
+      "compare": "isclose",
+      "expect": "0.5"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests, each within relative $10^{-9}$ (absolute $10^{-12}$ where the answer is 0), including a log-variance of $-800$.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef kl_normal_std(mu, logvar):\n    return float(0.5 * (mu * mu + np.exp(logvar) - 1.0))\n\n\ndef kl_vector(mu, logvar):\n    mu = np.asarray(mu, dtype=float)\n    logvar = np.asarray(logvar, dtype=float)\n    return float(0.5 * np.sum(mu ** 2 + np.exp(logvar) - 1.0 - logvar))\n",
+      "test": 1,
+      "symptom": "Drops the minus ln sigma squared term, so narrow codes look free."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef kl_normal_std(mu, logvar):\n    var = np.exp(logvar)\n    return float(0.5 * (mu * mu + var - 1.0 - np.log(var)))\n\n\ndef kl_vector(mu, logvar):\n    mu = np.asarray(mu, dtype=float)\n    logvar = np.asarray(logvar, dtype=float)\n    return float(0.5 * np.sum(mu ** 2 + np.exp(logvar) - 1.0 - logvar))\n",
+      "test": 4,
+      "symptom": "Recovers the variance and takes its log, which fails when the variance underflows to 0."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef kl_normal_std(mu, logvar):\n    return float(0.5 * (mu * mu + np.exp(logvar) - 1.0 - logvar))\n\n\ndef kl_vector(mu, logvar):\n    mu = np.asarray(mu, dtype=float)\n    logvar = np.asarray(logvar, dtype=float)\n    return float(0.5 * np.mean(mu ** 2 + np.exp(logvar) - 1.0 - logvar))\n",
+      "test": 5,
+      "symptom": "Averages the coordinates instead of adding them."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef kl_normal_std(mu, logvar):\n    return float(0.5 * (mu * mu + np.exp(0.5 * logvar) - 1.0 - logvar))\n\n\ndef kl_vector(mu, logvar):\n    mu = np.asarray(mu, dtype=float)\n    logvar = np.asarray(logvar, dtype=float)\n    return float(0.5 * np.sum(mu ** 2 + np.exp(logvar) - 1.0 - logvar))\n",
+      "test": 1,
+      "symptom": "Uses the standard deviation where the formula needs the variance."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`0.5 * (mu * mu + np.exp(logvar) - 1 - logvar)`."
+    },
+    {
+     "rung": "step",
+     "text": "For many coordinates, sum the same expression over all entries."
+    }
+   ],
+   "feedback": {
+    "correct": "Both match: 0.818 for $\\mathcal{N}(1, 0.5^2)$ and 2 for $\\mathcal{N}(2, 1)$.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "$\\mathcal{N}(1, 0.5^2)$ should give 0.818: keep the $-\\ell$ term and use $e^{\\ell}$, the variance.",
+     "test-4": "With $\\ell = -800$ the variance underflows to 0; use $-\\ell$ directly instead of $\\ln$ of the variance.",
+     "test-5": "Add the coordinates' KLs; do not average them."
+    }
+   },
+   "explain": {
+    "text": "Using the log-variance keeps the KL finite for any encoder output. Summing over coordinates is what independence allows."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "Check the formula by sampling",
+   "difficulty": 3,
+   "prose": "Write the Monte Carlo check. Draw from $q$, not from the prior, because the KL averages under $q$. The hidden tests compare long runs with the closed form, which is how you catch a slip in a formula before training on it.",
+   "question": "Write `kl_numeric`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef kl_numeric(mu, sigma, n, seed):\n    # Monte Carlo KL( N(mu, sigma^2) || N(0, 1) ): draw n values of z from\n    # N(mu, sigma^2) as mu + sigma * eps (default_rng(seed)) and average\n    # ln q(z) - ln p(z).\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef kl_numeric(mu, sigma, n, seed):\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = mu + sigma * eps\n    log_q = -np.log(sigma) - 0.5 * np.log(2 * np.pi) - (z - mu) ** 2 / (2 * sigma ** 2)\n    log_p = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    return float(np.mean(log_q - log_p))\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "round(kl_numeric(1.0, 0.5, 5, 0), 9)",
+      "compare": "equal",
+      "expect": "1.157874056"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(kl_numeric(1.0, 0.5, 5, 0), 9)",
+      "compare": "equal",
+      "expect": "1.157874056"
+     },
+     {
+      "call": "round(kl_numeric(-0.3, 2.0, 4, 3), 9)",
+      "compare": "equal",
+      "expect": "3.649244164"
+     },
+     {
+      "setup": "def closed(m, s):\n    return 0.5 * (m * m + s * s - 1 - np.log(s * s))\n",
+      "call": "abs(kl_numeric(1.0, 0.5, 200000, 1) - closed(1.0, 0.5)) < 0.01",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "def closed(m, s):\n    return 0.5 * (m * m + s * s - 1 - np.log(s * s))\n",
+      "call": "abs(kl_numeric(2.0, 1.0, 200000, 2) - 2.0) < 0.02",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "def closed(m, s):\n    return 0.5 * (m * m + s * s - 1 - np.log(s * s))\n",
+      "call": "abs(kl_numeric(0.0, 0.2, 200000, 4) - closed(0.0, 0.2)) < 0.01",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: two short seeded runs to 9 places and three 200,000-draw averages within 0.01 or 0.02 nats of the closed form.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef kl_numeric(mu, sigma, n, seed):\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = eps\n    log_q = -np.log(sigma) - 0.5 * np.log(2 * np.pi) - (z - mu) ** 2 / (2 * sigma ** 2)\n    log_p = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    return float(np.mean(log_q - log_p))\n",
+      "test": 1,
+      "symptom": "Draws z from the prior instead of from q."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef kl_numeric(mu, sigma, n, seed):\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = mu + sigma * eps\n    log_q = -np.log(sigma) - 0.5 * np.log(2 * np.pi) - (z - mu) ** 2 / (2 * sigma ** 2)\n    log_p = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    return float(np.mean(log_p - log_q))\n",
+      "test": 1,
+      "symptom": "Averages the log ratio the wrong way round."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef kl_numeric(mu, sigma, n, seed):\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = mu + sigma * eps\n    log_q = -0.5 * np.log(2 * np.pi) - (z - mu) ** 2 / (2 * sigma ** 2)\n    log_p = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    return float(np.mean(log_q - log_p))\n",
+      "test": 1,
+      "symptom": "Leaves out the normalising minus ln sigma of q."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`z = mu + sigma * eps`."
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln q(z) = -\\ln\\sigma - \\tfrac12\\ln 2\\pi - (z - \\mu)^2/(2\\sigma^2)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Your sampler agrees with the formula within the stated tolerances.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Draw $z$ from $q$ as `mu + sigma * eps` and average $\\ln q - \\ln p$, including $-\\ln\\sigma$."
+    }
+   },
+   "explain": {
+    "text": "Agreement within a few thousandths at 200,000 draws is what the $1/\\sqrt{n}$ rate predicts. A sign error or a dropped term shows up at once."
+   }
+  },
+  {
+   "type": "transfer",
+   "title": "How far apart are two forecasts?",
+   "difficulty": 3,
+   "prose": "A desk forecasts tomorrow's return on an index as $\\mathcal{N}(0.5\\%, (1.2\\%)^2)$; the benchmark model says $\\mathcal{N}(0, (1\\%)^2)$. The KL from the desk's model to the benchmark measures how surprised the benchmark would be by the desk's view.",
+   "question": "What is $\\operatorname{KL}(\\text{desk}\\,\\|\\,\\text{benchmark})$, in nats? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.163,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "rev",
+      "value": 0.116,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sigma_1 = 1.2$, $\\sigma_2 = 1$, $\\mu_1 - \\mu_2 = 0.5$, all in per cent."
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln(1/1.2) + (1.44 + 0.25)/2 - 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-0.182 + 0.845 - 0.5 \\approx 0.163$ nats.",
+    "generic": "Not quite. Use the two-normal formula with the desk first.",
+    "byKey": {
+     "rev": "That is the benchmark measured against the desk. The question puts the desk first."
+    }
+   },
+   "explain": {
+    "text": "About 0.163 nats, a modest disagreement. Because KL is not symmetric, state which model is measured against which when reporting it."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "$\\operatorname{KL}(\\mathcal{N}(\\mu, \\sigma^2)\\,\\|\\,\\mathcal{N}(0, 1)) = \\tfrac12(\\mu^2 + \\sigma^2 - 1 - \\ln\\sigma^2)$, 0 only at $\\mu = 0$, $\\sigma = 1$; $\\mathcal{N}(2, 1)$ gives 2.",
+   "It is derived from the log ratio with $\\mathbb{E}_q[z^2] = \\mu^2 + \\sigma^2$, and a Monte Carlo average under $q$ checks it.",
+   "KL is not symmetric; independent coordinates add; as $\\sigma \\to 0$ the KL grows without bound, so a deterministic code is infinitely far from the prior."
+  ],
+  "formula": {
+   "name": "Gaussian KL",
+   "tex": "\\operatorname{KL} = \\tfrac12\\sum_j\\left(\\mu_j^2 + e^{\\ell_j} - 1 - \\ell_j\\right)",
+   "note": "$\\ell_j = \\ln\\sigma_j^2$, the encoder's log-variance."
+  },
+  "trap": "Dropping $-\\ln\\sigma^2$: the KL can then go negative, and narrow codes look free."
+ },
+ "quiz": [
+  {
+   "id": "q-kl",
+   "difficulty": 2,
+   "prose": "An encoder outputs $\\mu = 0$ and $\\sigma = 2$ for one coordinate.",
+   "question": "What is the KL to $\\mathcal{N}(0, 1)$? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.807,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "nolog",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac12(4 - 1 - \\ln 4) \\approx 0.807$.",
+    "generic": "Not quite. $\\tfrac12(\\mu^2 + \\sigma^2 - 1 - \\ln\\sigma^2)$.",
+    "byKey": {
+     "nolog": "You dropped $-\\ln 4$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac12(0 + 4 - 1 - 1.386) \\approx 0.807$ nats: a guess wider than the prior also costs."
+   }
+  },
+  {
+   "id": "q-zero",
+   "difficulty": 2,
+   "prose": "One coordinate of a guess has $\\mu = 0.3$.",
+   "question": "Can its KL to $\\mathcal{N}(0, 1)$ be 0?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: it is 0 only at $\\mu = 0$ and $\\sigma = 1$",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes, with $\\sigma$ chosen to cancel the shift",
+      "why": "Each part of the KL is at least 0 on its own, so nothing cancels the shift."
+     },
+     {
+      "id": "neg",
+      "text": "Yes, and it could even be negative",
+      "why": "A KL is never negative."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right.",
+    "generic": "Not quite. Can anything offset the shift?"
+   },
+   "explain": {
+    "text": "$\\tfrac12\\mu^2 > 0$ and $\\tfrac12(\\sigma^2 - 1 - \\ln\\sigma^2) \\ge 0$, so the KL is at least 0.045 here."
+   }
+  },
+  {
+   "id": "q-vec",
+   "difficulty": 3,
+   "prose": "A latent has three independent coordinates with KLs 0.2, 0.05 and 1.1 nats.",
+   "question": "What is the KL of the whole latent?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.35,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "Number",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 0.45,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.2 + 0.05 + 1.1 = 1.35$.",
+    "generic": "Not quite. Independent coordinates' KLs add.",
+    "byKey": {
+     "mean": "You averaged them. They add."
+    }
+   },
+   "explain": {
+    "text": "For independent coordinates the KL is the sum, $1.35$ nats."
+   }
+  }
+ ]
+}
