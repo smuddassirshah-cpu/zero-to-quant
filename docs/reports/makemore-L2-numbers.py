@@ -232,8 +232,8 @@ for lr in (0.001, 0.01, 0.1, 0.3, 1.0, 5.0):
 lv.claim([round(sweep[k][0], 4) for k in (0.001, 0.01, 0.1, 0.3, 1.0)] == [3.0666, 2.6407, 2.4249, 2.419, 2.4529], 'sweep 3.0666, 2.6407, 2.4249, 2.4190, 2.4529')
 _, b5 = autograd_run(init(0), Xtr, Ytr, 3, 5.0, 1)
 lv.claim(np.allclose(b5, sweep[5.0][1][:3], atol=1e-6) and [round(x, 2) for x in b5] == [3.28, 7.93, 7.93], 'step 5: first losses 3.28, 7.93, 7.93, two ways')
-lv.claim(round(sweep[5.0][0]) == 44, f'step 5: dev after 1,000 steps {sweep[5.0][0]:.2f}')
-E(L8, 'screens[4].explain.text', round(sweep[5.0][0], 2))
+# the step-5 run diverges, so its exact value depends on BLAS summation order (31.89 single-thread, 44.33 multi-thread): check a threshold only
+lv.claim(sweep[5.0][0] > 30 and sweep[5.0][0] > 10 * sweep[0.1][0], f'step 5 diverges: dev after 1,000 steps above 30 and far above the step-0.1 run ({sweep[5.0][0]:.1f} here, order-sensitive)')
 E(L8, 'screens[5].widget.answer', round(2.2198 - 2.1609, 4))
 lv.claim([round(x, 4) for x in batch[-5:]] == [2.6831, 2.5913, 2.3616, 2.5334, 2.2918], 'batch losses at steps 196 to 200')
 Pa, la = autograd_run(init(0), Xtr, Ytr, 200, 0.1, 1)
@@ -254,7 +254,6 @@ lv.claim(build(['olivia'])[0].tolist()[3] == [15, 12, 9] and build(['olivia'])[1
 E('review', 'items[3].widget.answer', 27 * 5 + 10 * 50 + 50 + 50 * 27 + 27)
 dr = np.zeros(8); np.add.at(dr, [4, 7, 4], [0.6, 0.1, -0.25]); E('review', 'items[5].widget.answer', round(dr[4], 4))
 E('review', 'items[6].widget.answer', round(182531 / 128))
-E('review', 'items[9].explain.text', round(sweep[5.0][0], 2))
 
 # ---------------- homework-2 ----------------
 X4, Y4 = build(tr, 4); X4B, Y4B = build_B(tr, 4); lv.claim(np.array_equal(X4, X4B) and X4.shape == (182531, 4), 'block 4 dataset, two ways')
