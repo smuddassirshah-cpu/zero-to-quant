@@ -241,7 +241,8 @@
     "generic": "Not quite. Use $[b = a] - \\pi_b$ with $b$ = arm 1.",
     "byKey": {
      "own": "That is $1 - \\pi_1$, the entry if arm 1 had been pulled.",
-     "pulled": "You used the pulled arm's chance. Each entry uses its own dial's chance."
+     "pulled": "You used the pulled arm's chance. Each entry uses its own dial's chance.",
+     "sign": "The sign is reversed: arm 1 was not pulled, so its dial goes down, and its entry is negative."
     }
    },
    "explain": {
@@ -518,7 +519,8 @@
     "generic": "Not quite. Add the rewards from step 2 to the end.",
     "byKey": {
      "whole": "That is the whole return. The two earlier rewards cannot depend on this move.",
-     "after": "Include the reward of step 2 itself."
+     "after": "Include the reward of step 2 itself.",
+     "sign": "Each step pays $-1$, so the return is negative: three steps left is $-3$."
     }
    },
    "explain": {
@@ -609,9 +611,14 @@
       "call": "reinforce_corridor(50, 0.0, 3)",
       "expect": "0.5",
       "compare": "isclose"
+     },
+     {
+      "call": "reinforce_corridor(3, 0.01, 0)",
+      "expect": "0.6208427163388979",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 7 hidden tests. The score is checked exactly and against central differences below $10^{-6}$. Over seeds 0 to 9 the better arm must end above 0.8 on average, and the corridor's mean final $p$ must lie between 0.53 and 0.64.",
+    "how": "Submit runs 8 hidden tests. The score is checked exactly and against central differences below $10^{-6}$. Over seeds 0 to 9 the better arm must end above 0.8 on average, and the corridor's mean final $p$ must lie between 0.53 and 0.64. The last pins the final $p$ of a three-episode run with seed 0, which fixes the reward-to-go exactly.",
     "mutants": [
      {
       "source": "import math\nimport random\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef corridor_move(s, right):\n    \"\"\"S = 0, B = 1 (moves swapped), C = 2, G = 3.\"\"\"\n    if s == 0:\n        return 1 if right else 0\n    if s == 1:\n        return 0 if right else 2\n    return 3 if right else 1\n\ndef grad_log_softmax(theta, a):\n    \"\"\"d log pi(a) / d theta: one entry per dial.\"\"\"\n    pi = softmax(theta)\n    return [(1.0 if b == a else 0.0) for b in range(len(theta))]\n\ndef reinforce_bandit(rewards, steps, lr, seed):\n    \"\"\"Dials from 0; each step pull a, then theta += lr * r * score.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    for _ in range(steps):\n        a = pull(softmax(theta), rng)\n        g = grad_log_softmax(theta, a)\n        theta = [t + lr * rewards[a] * x for t, x in zip(theta, g)]\n    return softmax(theta)\n\ndef reinforce_corridor(episodes, lr, seed):\n    \"\"\"Dials [left, right] from 0; after each episode add\n    lr * sum over steps of G_t * score_t. Return the final p.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]\n    for _ in range(episodes):\n        p = softmax(theta)[1]\n        s, acts = 0, []\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            s = corridor_move(s, a == 1)\n        step = [0.0, 0.0]\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)   # reward-to-go: -1 a step left\n            g = grad_log_softmax(theta, a)\n            step = [x + G * y for x, y in zip(step, g)]\n        theta = [x + lr * y for x, y in zip(theta, step)]\n    return softmax(theta)[1]\n",
@@ -628,6 +635,16 @@
       "test": 6,
       "symptom": "Reward-to-go with the wrong sign: steps count as gains, and the walks grow very long.",
       "timeout": true
+     },
+     {
+      "source": "import math\nimport random\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef corridor_move(s, right):\n    \"\"\"S = 0, B = 1 (moves swapped), C = 2, G = 3.\"\"\"\n    if s == 0:\n        return 1 if right else 0\n    if s == 1:\n        return 0 if right else 2\n    return 3 if right else 1\n\ndef grad_log_softmax(theta, a):\n    \"\"\"d log pi(a) / d theta: one entry per dial.\"\"\"\n    pi = softmax(theta)\n    return [(1.0 if b == a else 0.0) - pi[b] for b in range(len(theta))]\n\ndef reinforce_bandit(rewards, steps, lr, seed):\n    \"\"\"Dials from 0; each step pull a, then theta += lr * r * score.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    for _ in range(steps):\n        a = pull(softmax(theta), rng)\n        g = grad_log_softmax(theta, a)\n        theta = [t + lr * rewards[a] * x for t, x in zip(theta, g)]\n    return softmax(theta)\n\ndef reinforce_corridor(episodes, lr, seed):\n    \"\"\"Dials [left, right] from 0; after each episode add\n    lr * sum over steps of G_t * score_t. Return the final p.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]\n    for _ in range(episodes):\n        p = softmax(theta)[1]\n        s, acts = 0, []\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            s = corridor_move(s, a == 1)\n        step = [0.0, 0.0]\n        for t, a in enumerate(acts):\n            G = -len(acts)           # whole return\n            g = grad_log_softmax(theta, a)\n            step = [x + G * y for x, y in zip(step, g)]\n        theta = [x + lr * y for x, y in zip(theta, step)]\n    return softmax(theta)[1]\n",
+      "test": 8,
+      "symptom": "The whole return weights every move, so the earlier rewards (which this move cannot change) add noise and shift the update."
+     },
+     {
+      "source": "import math\nimport random\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef corridor_move(s, right):\n    \"\"\"S = 0, B = 1 (moves swapped), C = 2, G = 3.\"\"\"\n    if s == 0:\n        return 1 if right else 0\n    if s == 1:\n        return 0 if right else 2\n    return 3 if right else 1\n\ndef grad_log_softmax(theta, a):\n    \"\"\"d log pi(a) / d theta: one entry per dial.\"\"\"\n    pi = softmax(theta)\n    return [(1.0 if b == a else 0.0) - pi[b] for b in range(len(theta))]\n\ndef reinforce_bandit(rewards, steps, lr, seed):\n    \"\"\"Dials from 0; each step pull a, then theta += lr * r * score.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    for _ in range(steps):\n        a = pull(softmax(theta), rng)\n        g = grad_log_softmax(theta, a)\n        theta = [t + lr * rewards[a] * x for t, x in zip(theta, g)]\n    return softmax(theta)\n\ndef reinforce_corridor(episodes, lr, seed):\n    \"\"\"Dials [left, right] from 0; after each episode add\n    lr * sum over steps of G_t * score_t. Return the final p.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]\n    for _ in range(episodes):\n        p = softmax(theta)[1]\n        s, acts = 0, []\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            s = corridor_move(s, a == 1)\n        step = [0.0, 0.0]\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t - 1)   # leaves out this move's own reward\n            g = grad_log_softmax(theta, a)\n            step = [x + G * y for x, y in zip(step, g)]\n        theta = [x + lr * y for x, y in zip(theta, step)]\n    return softmax(theta)[1]\n",
+      "test": 8,
+      "symptom": "The reward-to-go leaves out the move's own reward: the update is off by one step."
      }
     ],
     "budget": 4000

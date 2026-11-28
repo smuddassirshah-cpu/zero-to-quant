@@ -528,7 +528,7 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 7 hidden tests: values on planted boards (they must equal minimax's), and node counts below ceilings: under 20,000 from the empty board, where the full tree has 549,946.",
+    "how": "Submit runs 7 hidden tests: values on planted boards (they must equal minimax's), and node counts below ceilings, with the cut at `alpha >= beta`: under 20,000 from the empty board, where the full tree has 549,946.",
     "mutants": [
      {
       "source": "LINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef alphabeta(board, player, alpha, beta):\n    \"\"\"Minimax value for X with pruning, moves tried in cell order\n    0 to 8. Return (value, nodes), counting every call.\"\"\"\n    w = winner(board)\n    if w:\n        return (1 if w == 'X' else -1), 1\n    if '.' not in board:\n        return 0, 1\n    nodes = 1\n    best = -2 if player == 'X' else 2\n    for i in range(9):\n        if board[i] != '.':\n            continue\n        child = board[:i] + player + board[i + 1:]\n        v, n = alphabeta(child, other(player), alpha, beta)\n        nodes += n\n        if player == 'X':\n            best = max(best, v)\n            alpha = max(alpha, best)\n        else:\n            best = min(best, v)\n            beta = min(beta, best)\n    return best, nodes\n",
@@ -791,7 +791,8 @@
     "correct": "All 9: with the worst order nothing is pruned.",
     "generic": "Not quite. Check when each min node first drops to the best value so far.",
     "byKey": {
-     "six": "That was the good order's count. Here every leaf beats the bound until the last."
+     "six": "That was the good order's count. Here every leaf beats the bound until the last.",
+     "three": "Three is the number of branches. Alpha-beta still reads leaves inside each one."
     }
    },
    "explain": {
@@ -839,7 +840,7 @@
    "type": "transfer",
    "difficulty": 3,
    "title": "Pruning scenarios",
-   "prose": "A risk desk compares two hedges by their worst scenario loss. Hedge A's worst case is a £2m loss. The first scenario checked for hedge B already loses £3m.",
+   "prose": "A risk desk compares two hedges by their worst scenario loss. Hedge A's worst case is a £2m loss. Hedge B has 10 scenarios, and the first one checked already loses £3m.",
    "canvas": {
     "kind": "table",
     "params": {

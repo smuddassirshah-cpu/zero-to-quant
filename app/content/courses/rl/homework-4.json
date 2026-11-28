@@ -12,38 +12,38 @@
    ],
    "performance": "code",
    "title": "REINFORCE with a learned baseline",
-   "prose": "The short corridor: S = 0, B = 1, C = 2, G = 3. Right moves S to B, B to S, C to G; left keeps S at S, moves B to C and C to B. Reward $-1$ a move. Dials $\\theta = (\\theta_L, \\theta_R)$ start at 0; $p$ is the softmax chance of right. Per episode: fix $p$; from S, each move draws one `rng.random()` and goes right when it is below $p$. Then for each step $t$ in order, with $G_t = -(T - t)$ and score $s_t = [\\text{right}] - p$: add $G_t s_t$ to the plain estimate and $(G_t - b)s_t$ to the baselined one, then set $b \\leftarrow b + 0.1(G_t - b)$ ($b$ starts at 0 and carries over). Finally $\\theta_R$ += $0.001 \\times$ baselined, $\\theta_L$ −= the same.",
+   "prose": "The short corridor: S = 0, B = 1, C = 2, G = 3. Right moves S to B, B to S, C to G; left keeps S at S, moves B to C and C to B. Reward $-1$ a move. Dials $\\theta = (\\theta_L, \\theta_R)$ start at 0; $p$ is the softmax chance of right. Per episode: fix $p$; from S, each move draws one `rng.random()` and goes right when it is below $p$. Then for each step $t$ in order, with $G_t = -(T - t)$ and score $s_t = [\\text{right}] - p$: add $G_t s_t$ to the plain estimate and $(G_t - b)s_t$ to the baselined one, with $b$ fixed for the whole episode. Then $\\theta_R$ += $0.001 \\times$ baselined and $\\theta_L$ −= the same. Last, for each step $t$ in order, set $b \\leftarrow b + 0.1(G_t - b)$ ($b$ starts at 0 and carries over).",
    "question": "Write `train_corridor(episodes, seed)` with `rng = random.Random(seed)`, returning the final $p$ and the population variance of the baselined estimates divided by that of the plain ones.",
    "widget": {
     "kind": "code",
     "language": "python",
     "starter": "def train_corridor(episodes, seed):\n    ...\n",
-    "solution": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            gb += (G - b) * score\n            b += 0.1 * (G - b)\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gb, theta[1] + 0.001 * gb]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
+    "solution": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            gb += (G - b) * score                  # b is fixed all episode\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gb, theta[1] + 0.001 * gb]\n        for t in range(len(acts)):                 # b learns after the step\n            b += 0.1 * (-(len(acts) - t) - b)\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
     "examples": [
      {
       "call": "train_corridor(2, 0)",
-      "expect": "[0.5021564438419619, 8.675143755027447]",
+      "expect": "[0.5016899025385794, 3.144907792241889]",
       "compare": "isclose"
      }
     ],
     "tests": [
      {
       "call": "train_corridor(2, 0)",
-      "expect": "[0.5021564438419619, 8.675143755027447]",
+      "expect": "[0.5016899025385794, 3.144907792241889]",
       "compare": "isclose"
      },
      {
       "call": "train_corridor(2, 1)",
-      "expect": "[0.49950837166377204, 0.35470478456780624]",
+      "expect": "[0.4973896501492653, 2.0148158999157584]",
       "compare": "isclose"
      },
      {
       "call": "train_corridor(5, 3)",
-      "expect": "[0.5126644382148203, 0.02108817289432163]",
+      "expect": "[0.5535220298389075, 0.5268705921389378]",
       "compare": "isclose"
      },
      {
-      "call": "all(train_corridor(1000, s)[1] < 0.5 for s in range(5))",
+      "call": "all(train_corridor(1000, s)[1] < 0.7 for s in range(5))",
       "expect": "True",
       "compare": "equal",
       "budget": 5000
@@ -60,12 +60,12 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 6 hidden tests. Three short seeded runs are compared exactly (`math.isclose`), so follow the order of draws and updates in the prompt. Over seeds 0 to 4 the variance ratio after 1,000 episodes must be below 0.5. The mean final $p$ over seeds 0 to 9 must lie between 0.53 and 0.64.",
+    "how": "Submit runs 6 hidden tests. Three short seeded runs are compared exactly (`math.isclose`), so follow the order of draws and updates in the prompt. Over seeds 0 to 4 the variance ratio after 1,000 episodes must be below 0.7. The mean final $p$ over seeds 0 to 9 must lie between 0.53 and 0.64.",
     "mutants": [
      {
       "source": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            b += 0.1 * (G - b)\n            gb += (G - b) * score\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gb, theta[1] + 0.001 * gb]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
       "test": 1,
-      "symptom": "The baseline is updated before it is used, so it has seen this step's return."
+      "symptom": "The baseline is updated inside the episode, before it is used: it has already seen this step's return."
      },
      {
       "source": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            gb += (G - b) * score\n            b += 0.1 * (G - b)\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gp, theta[1] + 0.001 * gp]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
@@ -81,16 +81,21 @@
       "source": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -len(acts)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            gb += (G - b) * score\n            b += 0.1 * (G - b)\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gb, theta[1] + 0.001 * gb]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
       "test": 1,
       "symptom": "The whole return weights every move instead of the reward-to-go."
+     },
+     {
+      "source": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            gb += (G - b) * score\n            b += 0.1 * (G - b)\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gb, theta[1] + 0.001 * gb]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
+      "test": 1,
+      "symptom": "The baseline is updated after each step inside the episode: later steps use a baseline that has seen this move's own return, so it depends on the action."
      }
     ],
     "budget": 5000
    },
    "explain": {
-    "text": "Each episode gives two estimates from the same moves; only the baselined one steps the dials. The running mean $b$ tracks the typical reward-to-go, so $G_t - b$ is small and the ratio falls to between 0.17 and 0.33 on seeds 0 to 19 after 1,000 episodes."
+    "text": "Each episode gives two estimates from the same moves; only the baselined one steps the dials. The running mean $b$ tracks the typical reward-to-go, and it is held fixed within an episode so that it cannot depend on that episode's moves. The ratio falls to between 0.50 and 0.64 on seeds 0 to 19 after 1,000 episodes."
    },
    "feedback": {
-    "correct": "Your agent learns the corridor and its baseline removes most of the gradient's variance.",
-    "generic": "Some tests fail. Check the order: estimate first, then the baseline update."
+    "correct": "Your agent learns the corridor and its baseline removes a good share of the gradient's variance.",
+    "generic": "Some tests fail. Check the order: estimates with $b$ fixed, then the dials step, then $b$ learns."
    }
   },
   {
@@ -100,7 +105,7 @@
     "rl-pg"
    ],
    "title": "The best baseline from samples",
-   "prose": "From sampled pairs of a score entry $s_i$ and a return $G_i$, the constant baseline that minimises the mean square of $(G - b)s$ is $b^* = \\sum s_i^2 G_i / \\sum s_i^2$. Since the score has mean 0 in expectation, that is also the variance there.",
+   "prose": "From sampled pairs of a score entry $s_i$ and a return $G_i$, the constant baseline that minimises the mean square of $(G - b)s$ is $b^* = \\sum s_i^2 G_i / \\sum s_i^2$. Its mean, the gradient, does not depend on $b$, so in expectation $b^*$ also minimises the variance; on a finite sample the centred variance has a slightly different minimiser.",
    "question": "Write `best_baseline(scores, returns)` and `variance_with(scores, returns, b)`.",
    "widget": {
     "kind": "code",

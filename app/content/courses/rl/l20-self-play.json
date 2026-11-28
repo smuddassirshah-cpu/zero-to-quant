@@ -228,7 +228,7 @@
     "generic": "Slide to the end and read the line."
    },
    "explain": {
-    "text": "The untrained table wins 0.43 of games; once it has learned to leave multiples of 4, it wins every game. This run is seed 0.",
+    "text": "The untrained table wins 0.43 of 200 games (0.39 in the long run); once it has learned to leave multiples of 4, it wins every game. This run is seed 0.",
     "canvas": {
      "reveal": 1
     }
@@ -478,9 +478,17 @@
        "abs": 1e-06
       },
       "setup": "Q = self_play_nim(500, 0.5, 0.2, 0)"
+     },
+     {
+      "call": "self_play_nim(30, 0.5, 0.2, 0)[(5, 1)]",
+      "expect": "0.779296875",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
      }
     ],
-    "how": "Submit runs 5 hidden tests on 500 self-play episodes. For seeds 0 to 4, the greedy move from every pile that is not a multiple of 4 must take the remainder. Every move from a multiple of 4 must be valued below 0, and taking the last stick must be worth 1.",
+    "how": "Submit runs 6 hidden tests, five of them on 500 self-play episodes. For seeds 0 to 4, the greedy move from every pile that is not a multiple of 4 must take the remainder. Every move from a multiple of 4 must be valued below 0, and taking the last stick must be worth 1. A sixth test pins one value from a 30-episode run with seed 0, so the exploration chance and the tie rule must be as described.",
     "mutants": [
      {
       "source": "import random\n\ndef self_play_nim(episodes, alpha, eps, seed, top=21):\n    \"\"\"Q[(n, k)]: value of taking k from n for the player to move.\n    Both sides use the same table.\"\"\"\n    rng = random.Random(seed)\n    Q = {(n, k): 0.0 for n in range(1, top + 1) for k in (1, 2, 3) if k <= n}\n\n    def takes(n):\n        return [k for k in (1, 2, 3) if k <= n]\n\n    for _ in range(episodes):\n        n = rng.randint(1, top)\n        while n > 0:\n            if rng.random() < eps:\n                k = rng.choice(takes(n))\n            else:\n                k = max(takes(n), key=lambda j: Q[(n, j)])   # ties: fewest sticks\n            n2 = n - k\n            if n2 == 0:\n                target = 1.0                                   # took the last stick\n            else:\n                target = max(Q[(n2, j)] for j in takes(n2))   # the opponent's best, negated\n            Q[(n, k)] += alpha * (target - Q[(n, k)])\n            n = n2\n    return Q\n",
@@ -491,6 +499,16 @@
       "source": "import random\n\ndef self_play_nim(episodes, alpha, eps, seed, top=21):\n    \"\"\"Q[(n, k)]: value of taking k from n for the player to move.\n    Both sides use the same table.\"\"\"\n    rng = random.Random(seed)\n    Q = {(n, k): 0.0 for n in range(1, top + 1) for k in (1, 2, 3) if k <= n}\n\n    def takes(n):\n        return [k for k in (1, 2, 3) if k <= n]\n\n    for _ in range(episodes):\n        n = rng.randint(1, top)\n        while n > 0:\n            if rng.random() < eps:\n                k = rng.choice(takes(n))\n            else:\n                k = max(takes(n), key=lambda j: Q[(n, j)])   # ties: fewest sticks\n            n2 = n - k\n            if n2 == 0:\n                target = 0.0\n            else:\n                target = -max(Q[(n2, j)] for j in takes(n2))   # the opponent's best, negated\n            Q[(n, k)] += alpha * (target - Q[(n, k)])\n            n = n2\n    return Q\n",
       "test": 2,
       "symptom": "Taking the last stick is worth 0, so nothing is ever learned."
+     },
+     {
+      "source": "import random\n\ndef self_play_nim(episodes, alpha, eps, seed, top=21):\n    \"\"\"Q[(n, k)]: value of taking k from n for the player to move.\n    Both sides use the same table.\"\"\"\n    rng = random.Random(seed)\n    Q = {(n, k): 0.0 for n in range(1, top + 1) for k in (1, 2, 3) if k <= n}\n\n    def takes(n):\n        return [k for k in (1, 2, 3) if k <= n]\n\n    for _ in range(episodes):\n        n = rng.randint(1, top)\n        while n > 0:\n            if rng.random() < 0 * eps:\n                k = rng.choice(takes(n))\n            else:\n                k = max(takes(n), key=lambda j: Q[(n, j)])   # ties: fewest sticks\n            n2 = n - k\n            if n2 == 0:\n                target = 1.0                                   # took the last stick\n            else:\n                target = -max(Q[(n2, j)] for j in takes(n2))   # the opponent's best, negated\n            Q[(n, k)] += alpha * (target - Q[(n, k)])\n            n = n2\n    return Q\n",
+      "test": 6,
+      "symptom": "The exploration chance is ignored: the run never takes a random move, so one value from the seeded run differs."
+     },
+     {
+      "source": "import random\n\ndef self_play_nim(episodes, alpha, eps, seed, top=21):\n    \"\"\"Q[(n, k)]: value of taking k from n for the player to move.\n    Both sides use the same table.\"\"\"\n    rng = random.Random(seed)\n    Q = {(n, k): 0.0 for n in range(1, top + 1) for k in (1, 2, 3) if k <= n}\n\n    def takes(n):\n        return [k for k in (1, 2, 3) if k <= n]\n\n    for _ in range(episodes):\n        n = rng.randint(1, top)\n        while n > 0:\n            if rng.random() < eps:\n                k = rng.choice(takes(n))\n            else:\n                k = max(takes(n), key=lambda j: (Q[(n, j)], j))   # ties: most sticks\n            n2 = n - k\n            if n2 == 0:\n                target = 1.0                                   # took the last stick\n            else:\n                target = -max(Q[(n2, j)] for j in takes(n2))   # the opponent's best, negated\n            Q[(n, k)] += alpha * (target - Q[(n, k)])\n            n = n2\n    return Q\n",
+      "test": 6,
+      "symptom": "Ties go to the most sticks, not the fewest: the seeded run's values differ."
      }
     ],
     "budget": 3000
@@ -599,7 +617,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "AlphaGo and AlphaZero (reading)",
-   "prose": "Reading, not rebuilt: Silver et al. (2016) put two networks inside MCTS for Go. A **policy network** (this level's idea) gives prior chances for each move, steering selection; a **value network** (level 3's idea) scores positions instead of random playouts. AlphaGo beat Lee Sedol 4 games to 1 in 2016. AlphaZero (2018) learned Go, chess and shogi from self-play alone.",
+   "prose": "Reading only: Silver et al. (2016) put two networks inside MCTS. A **policy network** (level 4's idea) gives prior chances for each move. A **value network** (level 3's idea) scores positions; AlphaGo still mixed that with fast playouts. It beat Lee Sedol 4 games to 1. AlphaZero (2018) dropped the playouts and learned Go, chess and shogi from self-play alone.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -704,7 +722,7 @@
      {
       "id": "none",
       "text": "It does not: greedy self-play is enough",
-      "why": "Greedy play repeats the same lines and leaves other values untouched."
+      "why": "Without exploring, nothing makes sure every move is tried; here random starting piles happen to cover the table."
      }
     ]
    },
