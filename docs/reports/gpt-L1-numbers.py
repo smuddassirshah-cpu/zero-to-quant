@@ -13,7 +13,7 @@ the 1,115,394-character text, which is not in the repository (data files stop at
 recompute them both ways; without it they are checked against the planner's recorded values in docs/briefs/gpt.md only.
 Run from the repository root: <venv>/bin/python docs/reports/gpt-L1-numbers.py   (exits 0 when every check passes)
 """
-import os, sys, math, collections
+import os, sys, math, collections, hashlib
 from fractions import Fraction as Fr
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', '..', 'app', 'tools'))
@@ -228,10 +228,23 @@ lv.claim(nval == 13809 and round(25000 / nval, 4) == 1.8104, 'held out: 13,809 t
 lv.expect('l3', 'screens[4].widget.answer', 1.8104)
 THE = [(101, 114), (116, 104), (257, 101)]
 lv.claim(enc('the there', THE, 'the there') == [258, 32, 257, 256, 101], 'the there: there splits th er e')
-x = bpb(4.20, 2.0121); y = bpb(2.4554, 1)
-lv.claim(round(x, 4) == 3.0114 and round(y, 4) == 3.5424, f'4.20 nats/token at 2.0121 is {x:.4f}; bigram {y:.4f}')
-lv.expect('l3', 'screens[6].widget.answer', 3.0114)
+# the bigram's loss is recomputed: add-one smoothing over the 65-character vocabulary, trained on the slice's first 225,000
+# characters, scored on its last 25,000 (the same held-out text the token model is scored on)
+_V = len(set(SLICE) | set('$3X'))
+_tr, _va = SLICE[:225000], SLICE[-25000:]
+_c, _r = collections.Counter(zip(_tr, _tr[1:])), collections.Counter(_tr[:-1])
+bg_val = sum(-math.log((_c[(a, b)] + 1) / (_r[a] + _V)) for a, b in zip(_va, _va[1:])) / (len(_va) - 1)
+bg_tr = sum(-math.log((_c[(a, b)] + 1) / (_r[a] + _V)) for a, b in zip(_tr, _tr[1:])) / (len(_tr) - 1)
+lv.claim(_V == 65 and round(bg_val, 4) == 2.4554 and round(bg_tr, 4) == 2.4237, f'bigram: validation {bg_val:.5f}, training {bg_tr:.5f}')
+# the token model is scored on the held-out text, where the tokeniser gives 25000 / 13809 = 1.8104 bytes per token; the
+# training text's 2.0121 would compare two different texts
+x = bpb(4.20, 25000 / nval); y = bpb(bg_val, 1)
+lv.claim(round(bpb(4.20, 1.8104), 4) == 3.3470 and round(x, 4) == 3.3469 and abs(x - 3.3470) <= 0.0002 and round(y, 4) == 3.5424 and x < y, f'4.20 nats/token held out: {x:.5f} exact, 3.3470 from the shown 1.8104 (key tolerance 0.0002); bigram {y:.4f}')
+lv.claim(round(4.20 / (25000 / nval), 4) == 2.3199 and round(4.20 / LN2, 4) == 6.0593 and round(4.20 * (25000 / nval) / LN2, 3) == 10.970, 'slips: 2.3199 no ln2, 6.0593 per token, 10.970 times')
+lv.expect('l3', 'screens[6].widget.answer', 3.3470)
 lv.expect('l3', 'screens[6].canvas.params.rows', 3.5424)
+lv.expect('l3', 'screens[6].canvas.params.rows', 1.8104)
+lv.expect('l3', 'screens[9].canvas.params.rows', 3.3470)
 lv.claim(round(math.log2(65), 4) == 6.0224 == round(bpb(math.log(65), 1), 4), 'log2 65 = 6.0224')
 a, b = bpb(3.10, 3.8), bpb(2.60, 3.0)
 lv.claim(round(a, 2) == 1.18 and round(b, 2) == 1.25 and a < b, 'vendors: A 1.18 < B 1.25')
@@ -253,6 +266,7 @@ lv.claim(len(L) == 7606 and len(seen) == len(cnt) == 5920 and rep_a == rep_b == 
 lv.expect('l4', 'quiz[0].widget.answer', 1686)
 lv.claim([(k, v) for k, v in cnt.most_common(5)] == [('MENENIUS:', 162), ('CORIOLANUS:', 149), ('GLOUCESTER:', 149), ('SICINIUS:', 117), ('BRUTUS:', 91)], 'slice top five lines')
 lv.claim(SLICE.split('\n')[6] == 'First Citizen:' == SLICE.split('\n')[0] and SLICE.split('\n')[9] == 'All:' == SLICE.split('\n')[3], 'hook: lines 7 and 10 repeat 1 and 4')
+FULL_MD5 = '6fb458f1232090904fb40fe944165e91'  # the 1,115,394-character Tiny Shakespeare (65 distinct characters) the full-text block needs
 FULL = {'lines': 32777, 'distinct': 25721, 'repeats': 7056, 'tags': 6913, 'top': [('GLOUCESTER:', 229), ('DUKE VINCENTIO:', 193), ('ROMEO:', 163), ('MENENIUS:', 162), ('PETRUCHIO:', 158)]}
 fp = os.environ.get('GPT_FULL_TEXT')
 if fp and os.path.exists(fp):
@@ -275,6 +289,13 @@ if fp and os.path.exists(fp):
         seen2.add(l)
     lv.claim((len(FL), len(fs), fr, sum(v - 1 for v in fc.values())) == (32777, 25721, 7056, 7056), 'full text lines, distinct, repeats both ways')
     lv.claim(trep == 6913 and fc.most_common(5) == FULL['top'], 'full text: 6,913 speaker-tag repeats; top five')
+    lv.claim(hashlib.md5(full.encode('utf-8')).hexdigest() == FULL_MD5 and len(set(full)) == 65, 'full text: digest and 65 distinct characters')
+    seen3, others = set(), collections.Counter()
+    for l in FL:
+        if l in seen3 and l not in tags:
+            others[l] += 1
+        seen3.add(l)
+    lv.claim(sum(others.values()) == 143 and others['3 KING HENRY VI'] == 26 and others['My lord?'] == 6, 'the other 143 repeats: 26 are the heading 3 KING HENRY VI, 6 are My lord?')
 else:
     lv.claim(FULL['lines'] - FULL['distinct'] == FULL['repeats'], 'recorded full-text figures (docs/briefs/gpt.md): 32,777 - 25,721 = 7,056 (GPT_FULL_TEXT not set)')
 lv.expect('l4', 'screens[2].widget.answer', 7056)
@@ -299,7 +320,11 @@ pj = {}
 for p, q in [('A', 'B'), ('A', 'C'), ('B', 'C'), ('A', 'D'), ('B', 'D'), ('C', 'D')]:
     s_, u_, _, _ = jac(D[p], D[q], 5, f'notes {p} and {q}')
     pj[p + q] = round(s_ / u_, 2)
-lv.claim(pj == {'AB': 0.91, 'AC': 0.83, 'BC': 0.8, 'AD': 0.22, 'BD': 0.19, 'CD': 0.18} and min(jac_a(D[p], D[q], 5)[0] / jac_a(D[p], D[q], 5)[1] for p, q in ['AB', 'AC', 'BC']) >= 0.8, f'distributor table {pj}; B and C at 0.801, above 0.8')
+lv.claim(pj == {'AB': 0.91, 'AC': 0.83, 'BC': 0.8, 'AD': 0.22, 'BD': 0.19, 'CD': 0.18} and min(jac_a(D[p], D[q], 5)[0] / jac_a(D[p], D[q], 5)[1] for p, q in ['AB', 'AC', 'BC']) >= 0.8, f'distributor table {pj}; B and C at 0.801, at least 0.8')
+_bc = jac_a(D['B'], D['C'], 5)
+lv.claim(round(_bc[0] / _bc[1], 3) == 0.801, 'B and C are 0.801 to three places')
+for _v in ('0.91', '0.83', '0.801', '0.22', '0.19', '0.18'):
+    lv.expect('l4', 'screens[11].canvas.params.rows', _v)
 lv.claim(len({'aaaa'[i:i + 3] for i in range(2)}) == 1, 'quiz: aaaa has 1 distinct 3-shingle')
 
 # ================= review =================
@@ -347,6 +372,16 @@ lv.claim(Fr(36, 400) == Fr(9, 100), '36 of 400 is 9%')
 x = bpb(2.2, 4.0); lv.claim(round(x, 4) == 0.7935, f'2.2 at 4.0: {x:.4f}')
 lv.expect('problems', 'items[2].parts[4].widget.answer', 0.7935)
 
+# keys computed above in claims, now tied to the files
+lv.expect('problems', 'items[0].parts[2].widget.answer', 2.1429)
+lv.expect('problems', 'items[0].parts[1].widget.wrong', 9)
+lv.expect('problems', 'items[2].parts[0].widget.answer', 2550)
+lv.expect('problems', 'items[2].parts[1].widget.answer', 0.88)
+lv.expect('problems', 'items[2].parts[3].widget.answer', 0.09)
+lv.claim(len(enc(T, M[:3], 'bonds fund bond, 3 merges')) == 9 and round(36 / 9850, 4) == 0.0037 and round(36 / 12400, 4) == 0.0029, 'problems slips: 9 tokens after merge 258; 36/9,850 and 36/12,400')
+lv.expect('problems', 'items[2].parts[3].widget.wrong', 0.0029)
+lv.claim(round(bpb(1.30, 1), 4) == 1.8755 and round(float(Fr(5, 6)), 4) == 0.8333, 'homework tests: 5/6 for the repeated run')
+lv.expect('homework', 'items[0].explain.text', '1.44')
 lv.check_wrongs()
 lv.check_slips()
 lv.report()
