@@ -2984,11 +2984,17 @@ Status block (engine pass AK canvas):
 1260. [Must] AI strand readiness exemption: no row needed for an `ai` course; a row must be `optional`; never counted.
 1261. [Must] Validator: a stage exam or paper may not draw from an `ai` course or skill; a non-ai course may not require an ai course or level.
 1262. [Should] Learn and Review show AI topics with the topic-level strand badge, hidden by the AI switch and "Quant path only".
+1263. [Must] Validator: shape check of `mutants` on code widgets (error: non-empty `source`, integer `test` within the widget's hidden tests); warning `[ai-mutants]` for a Python code widget in a `strand: "ai"` course with fewer than two mutants.
+1264. [Should] `grade-all.mjs`: `--strand ai` filter; `--local-cdn` also takes the `fetch-vendor.sh` layout (`<dir>/pyodide`, `<dir>/compute-engine`); time the strand run.
+1265. [Should] CI: the `tests-browser` python leg runs `grade-all.mjs --code --strand ai --local-cdn vendor` after `fetch-vendor.sh`.
 
 Status block (engine pass AK follow-up):
 - 1260: done. `validate.mjs`, `readiness-sums.mjs`, AUTHORING section 9; `test-strand-ai.mjs` (no row, optional, required rejected).
 - 1261: done. `validate.mjs` (`verifyDraws`, `checkRefs`); `test-strand-ai.mjs` (bank and drill draws, quant-requires-ai, ai-requires-quant, 3 to 5 levels).
 - 1262: done, already in place from 1218 (`learn.js`, `review.js` badge by `topicStrand`; `content.js` hiding); asserted in `test-strand-ai.mjs`. Badge, not a separate heading, as for Pure maths.
+- 1263: done. `validate.mjs` (code widget case; error on shape, warning `[ai-mutants]`), AUTHORING section 9; `test-validate-mutants.mjs`, listed in `acceptance.yml` validate-tests.
+- 1264: done. `grade-all.mjs` (`byStrand`, `ceSource`), `code-runner.mjs` (`makeRunner` layout); `test-grade-code.mjs` (strand filter, vendor layout). `--code --strand ai` on current content: 78 widgets, about 8 s with `--jobs 4`.
+- 1265: done. `acceptance.yml` tests-browser python leg; `ci-coverage.mjs` 0 problems.
 
 
 ### Engine pass AK (trainer and data): `docs/reports/engine-pass-ak-trainer.md`

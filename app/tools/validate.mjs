@@ -1381,6 +1381,19 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         // a raises case with no call checks the whole program, which needs script mode (it is on whenever such a case exists)
         if (!script && !all.some(t => typeof t.call === 'string' && /printed\s*:=/.test(t.call)) && all.some(t => typeof t.call === 'string' && /\bprinted\b/.test(t.call) && !/_getframe/.test(t.call))) err(file, `${where}.tests`, 'printed is only defined when a case uses compare: "stdout" or stdin (script mode)');
       }
+      /* ENGINE-BACKLOG 1263: mutants are wrong solutions that must each fail a named hidden test (grade-all.mjs --code runs them) */
+      if (w.mutants != null && !Array.isArray(w.mutants)) err(file, `${where}.mutants`, 'mutants is a list of { "source", "test" } wrong solutions');
+      else {
+        const nTests = Array.isArray(w.tests) ? w.tests.length : 0;
+        (w.mutants || []).forEach((m, i) => {
+          const at = `${where}.mutants[${i}]`;
+          if (!isObj(m)) { err(file, at, 'a mutant is { "source": "<wrong Python>", "test": N }'); return; }
+          if (typeof m.source !== 'string' || !m.source.trim()) err(file, `${at}.source`, 'source is the wrong solution, a non-empty string of Python');
+          if (!Number.isInteger(m.test) || m.test < 1 || m.test > nTests) err(file, `${at}.test`, `test is the 1-based number of the hidden test the mutant first fails (1 to ${nTests})`);
+        });
+        const cm = /(?:^|[\\/])courses[\\/]([^\\/]+)[\\/]/.exec(String(file));
+        if (cm && aiCourse(cm[1]) && (Array.isArray(w.mutants) ? w.mutants.length : 0) < 2) warn(file, `${where}.mutants`, '[ai-mutants] an AI-strand Python code widget carries at least two mutants (wrong solutions, the lesson\'s own bug among them), each failing a named hidden test; check with grade-all.mjs --code --file <path>');
+      }
       ['prelude', 'postlude'].forEach(k => { if (w[k] != null && typeof w[k] !== 'string') err(file, `${where}.${k}`, `${k} is Python source, a string`); });
       dataFiles(file, where, w);
       if (w.allocCheck != null) err(file, `${where}.allocCheck`, 'allocCheck is for C++ code items (language: "cpp")');

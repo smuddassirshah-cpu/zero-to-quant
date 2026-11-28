@@ -63,5 +63,27 @@ say(/grade-all: 0 failures/.test(o), 'zq_no_sort in script mode', o);
 o = run('fraction', { tests: [{ call: 'f()', expect: 'Fraction(1, 3)', compare: 'fraction' }], solution: 'from fractions import Fraction as Fr\ndef f():\n    return Fr(1, 3)\n', starter: 'def f():\n    return 0\n' });
 say(/grade-all: 0 failures/.test(o), 'a fraction expect evaluates without the learner importing Fraction', o);
 
+/* ENGINE-BACKLOG 1264: --strand ai keeps only ai courses; --local-cdn also takes fetch-vendor.sh's layout */
+{
+  const root = path.join(tmp, 'app'); fs.mkdirSync(path.join(root, 'content', 'courses'), { recursive: true });
+  for (const d of fs.readdirSync(path.join(HERE, '..'))) if (d !== 'content') fs.symlinkSync(path.join(HERE, '..', d), path.join(root, d));
+  const bad = { screens: [{ widget: { kind: 'code', ...base, solution: 'def f(x):\n    return 3 * x' } }] };
+  for (const [id, strand] of [['ca', 'ai'], ['cb', 'quant']]) {
+    fs.mkdirSync(path.join(root, 'content', 'courses', id));
+    fs.writeFileSync(path.join(root, 'content', 'courses', id, 'course.json'), JSON.stringify({ id, strand }));
+    fs.writeFileSync(path.join(root, 'content', 'courses', id, 'l1-x.json'), JSON.stringify(bad));
+  }
+  const vend = path.join(tmp, 'vend'); fs.mkdirSync(path.join(vend, 'compute-engine'), { recursive: true });
+  fs.symlinkSync(path.join(cdnDir, 'pyodide-0.27.7', 'package'), path.join(vend, 'pyodide'));
+  const ce = path.join(cdnDir, 'cortex-js-compute-engine-0.30.2', 'package', 'dist', 'compute-engine.min.umd.js');
+  if (fs.existsSync(ce)) fs.symlinkSync(ce, path.join(vend, 'compute-engine', 'compute-engine.min.umd.js'));
+  const go = (cdn, extra) => { const r = spawnSync('node', [path.join(HERE, 'grade-all.mjs'), '--local-cdn', cdn, '--root', root, '--jobs', '1', '--code', ...extra], { encoding: 'utf8', timeout: 170000 }); return (r.stdout || '') + (r.stderr || ''); };
+  o = go(cdnDir, ['--strand', 'ai']);
+  say(/ca\/l1-x\.json#.*solution-fails/.test(o) && !/cb\/l1-x/.test(o) && /1 Python code widgets run/.test(o), '--strand ai runs only the ai course', o);
+  o = go(cdnDir, []);
+  say(/cb\/l1-x/.test(o) && /2 Python code widgets run/.test(o), 'without --strand both courses run', o);
+  if (fs.existsSync(ce)) { o = go(vend, ['--strand', 'ai']); say(/ca\/l1-x\.json#.*solution-fails/.test(o) && /1 Python code widgets run/.test(o), '--local-cdn takes the fetch-vendor.sh layout', o); }
+}
+
 console.log(`test-grade-code: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
