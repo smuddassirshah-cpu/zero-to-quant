@@ -1,0 +1,1264 @@
+{
+ "id": "l6-attention-from-scratch",
+ "course": "ml-int",
+ "title": "Attention from scratch",
+ "minutes": 15,
+ "objectives": [
+  "Write causal multi-head attention in NumPy inside fifteen minutes, with the shapes checked."
+ ],
+ "skills": [
+  "mi-code"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Shapes first",
+   "tags": [
+    "attention"
+   ],
+   "pace": 900,
+   "prose": "This lesson takes about fifteen minutes; the drill after it has a pace of twenty minutes. You built masked multi-head attention in `sequence` level 3. In an interview, fix the shapes before any code: $\\mathbf{x}$ is $T \\times d$ with $T = 5$ tokens and $d = 8$, one head.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Step",
+      "Formula"
+     ],
+     "rows": [
+      [
+       "queries",
+       "Q = x Wq"
+      ],
+      [
+       "scores",
+       "Q Kᵀ / √d"
+      ],
+      [
+       "weights",
+       "softmax of masked scores"
+      ],
+      [
+       "output",
+       "weights · V"
+      ]
+     ]
+    }
+   },
+   "question": "Fill in the shapes, rows by columns.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Array",
+     "Rows",
+     "Columns"
+    ],
+    "rows": [
+     [
+      "$\\mathbf{Q}$",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 8,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "scores",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "d-cols",
+         "value": 8,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "output",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 8,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "T-cols",
+         "value": 5,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\mathbf{Q}$ has a row per token and a column per feature."
+    },
+    {
+     "rung": "point",
+     "text": "Scores compare every query with every key: token by token.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Weights times $\\mathbf{V}$ give a $d$-wide row per token again."
+    }
+   ],
+   "feedback": {
+    "correct": "$5 \\times 8$, $5 \\times 5$, $5 \\times 8$.",
+    "generic": "Not quite. Follow the shapes through each product.",
+    "byKey": {
+     "d-cols": "Scores are query against key, so they are $T \\times T$, not $T \\times d$.",
+     "T-cols": "The output mixes value rows, which are $d$ wide."
+    }
+   },
+   "explain": {
+    "text": "Scores are $T \\times T$: one row per query, one column per key. The output is $T \\times d$ like the input, which is why blocks stack."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "The order to write it",
+   "tags": [
+    "attention"
+   ],
+   "prose": "Two tokens, $d = 2$, one head: $\\mathbf{x} = \\mathbf{I}$, $\\mathbf{W}_q = \\mathbf{W}_v = \\mathbf{W}_o = \\mathbf{I}$, $\\mathbf{W}_k = [[1, 1], [0, 2]]$. Step through the middle of the computation.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         0.7071,
+         0
+        ],
+        [
+         0.7071,
+         1.4142
+        ]
+       ],
+       "label": "$\\mathbf{S}$"
+      }
+     ]
+    },
+    "state": {
+     "caption": "scaled scores Q Kᵀ / √2"
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "rows": {
+         "A": [
+          [
+           0.7071,
+           0
+          ],
+          [
+           0.7071,
+           1.4142
+          ]
+         ]
+        },
+        "caption": "scaled scores Q Kᵀ / √2"
+       },
+       {
+        "rows": {
+         "A": [
+          [
+           0.7071,
+           "$-\\infty$"
+          ],
+          [
+           0.7071,
+           1.4142
+          ]
+         ]
+        },
+        "caption": "masked: a query never sees a later key"
+       },
+       {
+        "rows": {
+         "A": [
+          [
+           1,
+           0
+          ],
+          [
+           0.3302,
+           0.6698
+          ]
+         ]
+        },
+        "caption": "softmax of each row"
+       }
+      ],
+      "frameLabels": [
+       "scores",
+       "mask",
+       "softmax"
+      ],
+      "label": "Step",
+      "start": 0
+     }
+    ]
+   },
+   "question": "Order the lines as you would write them. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a1",
+      "text": "Project: $\\mathbf{Q}, \\mathbf{K}, \\mathbf{V} = \\mathbf{x}\\mathbf{W}_q, \\mathbf{x}\\mathbf{W}_k, \\mathbf{x}\\mathbf{W}_v$."
+     },
+     {
+      "id": "a2",
+      "text": "Split the columns into heads."
+     },
+     {
+      "id": "a3",
+      "text": "Scores $\\mathbf{Q}\\mathbf{K}^\\top$ divided by $\\sqrt{d_h}$."
+     },
+     {
+      "id": "a4",
+      "text": "Set scores above the diagonal to $-\\infty$."
+     },
+     {
+      "id": "a5",
+      "text": "Softmax each row."
+     },
+     {
+      "id": "a6",
+      "text": "Weights times $\\mathbf{V}$, then merge the heads."
+     },
+     {
+      "id": "a7",
+      "text": "Output projection $\\mathbf{W}_o$."
+     },
+     {
+      "id": "ax",
+      "text": "Softmax each row, then zero the entries above the diagonal.",
+      "why": "Zeroing after the softmax leaves rows that no longer sum to 1, and the future already shaped the normaliser."
+     }
+    ],
+    "answer": [
+     "a1",
+     "a2",
+     "a3",
+     "a4",
+     "a5",
+     "a6",
+     "a7"
+    ],
+    "distractors": [
+     "ax"
+    ]
+   },
+   "feedback": {
+    "correct": "Project, split, score and scale, mask, softmax, mix and merge, project.",
+    "generic": "Not quite. The mask must come before the softmax.",
+    "byKey": {
+     "ax": "Masking after the softmax lets future tokens into the normaliser."
+    }
+   },
+   "explain": {
+    "text": "Say each line as you write it, with its shape. The mask goes in before the softmax, so a masked score becomes an exact 0 weight.",
+    "canvas": {
+     "rows": {
+      "A": [
+       [
+        1,
+        0
+       ],
+       [
+        0.3302,
+        0.6698
+       ]
+      ]
+     },
+     "caption": "softmax of each row"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One row by hand",
+   "tags": [
+    "attention"
+   ],
+   "prose": "The second query sees both keys, with scaled scores $1/\\sqrt{2}$ and $2/\\sqrt{2}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         0.7071,
+         "$-\\infty$"
+        ],
+        [
+         0.7071,
+         1.4142
+        ]
+       ],
+       "label": "$\\mathbf{S}$"
+      }
+     ]
+    },
+    "state": {
+     "highlight": {
+      "A": {
+       "rows": [
+        1
+       ]
+      }
+     }
+    }
+   },
+   "question": "What weight does the second query give the first token? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3302,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "uniform",
+      "value": 0.5,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "swapped",
+      "value": 0.6698,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Softmax of two numbers $a < b$ gives $1/(1 + e^{b - a})$ to the smaller."
+    },
+    {
+     "rung": "point",
+     "text": "Here $b - a = 1/\\sqrt{2}$.",
+     "highlight": [
+      "A-r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1/(1 + e^{0.7071}) = 0.3302$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.3302$, and $0.6698$ to itself.",
+    "generic": "Not quite. Apply the softmax to the second row.",
+    "byKey": {
+     "swapped": "That is the weight on the second token, the larger score.",
+     "uniform": "The two scores differ, so the weights do too."
+    }
+   },
+   "explain": {
+    "text": "The row softmax gives $(0.3302, 0.6698)$. With $\\mathbf{W}_v = \\mathbf{W}_o = \\mathbf{I}$ the output rows equal the weight rows.",
+    "canvas": {
+     "rows": {
+      "A": [
+       [
+        1,
+        0
+       ],
+       [
+        0.3302,
+        0.6698
+       ]
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Which entries to mask",
+   "tags": [
+    "attention"
+   ],
+   "prose": "Four tokens. Row $i$ is query $i$, column $j$ is key $j$. A token may look at itself and earlier tokens.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         "s",
+         "s",
+         "s",
+         "s"
+        ],
+        [
+         "s",
+         "s",
+         "s",
+         "s"
+        ],
+        [
+         "s",
+         "s",
+         "s",
+         "s"
+        ],
+        [
+         "s",
+         "s",
+         "s",
+         "s"
+        ]
+       ],
+       "label": "scores"
+      }
+     ]
+    }
+   },
+   "question": "Tap every score that must be set to $-\\infty$.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "A-0-1",
+     "A-0-2",
+     "A-0-3",
+     "A-1-2",
+     "A-1-3",
+     "A-2-3"
+    ],
+    "wrong": [
+     {
+      "id": "lower",
+      "set": [
+       "A-1-0",
+       "A-2-0",
+       "A-2-1",
+       "A-3-0",
+       "A-3-1",
+       "A-3-2"
+      ]
+     },
+     {
+      "id": "diag",
+      "set": [
+       "A-0-0",
+       "A-0-1",
+       "A-0-2",
+       "A-0-3",
+       "A-1-1",
+       "A-1-2",
+       "A-1-3",
+       "A-2-2",
+       "A-2-3",
+       "A-3-3"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Query 1 may see key 1 only."
+    },
+    {
+     "rung": "point",
+     "text": "Mask where the key comes after the query: $j > i$.",
+     "highlight": [
+      "A-0-1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is the upper triangle, without the diagonal."
+    }
+   ],
+   "feedback": {
+    "correct": "The strict upper triangle: six entries.",
+    "generic": "Not quite. Mask keys later than the query.",
+    "byKey": {
+     "lower": "You masked the past. A token must not see the future: keys with $j > i$.",
+     "diag": "A token may attend to itself; leave the diagonal."
+    }
+   },
+   "explain": {
+    "text": "Six of the sixteen scores are masked, $j > i$. The diagonal stays, so every row has at least one key and no row is fully masked."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Several heads",
+   "tags": [
+    "attention"
+   ],
+   "prose": "With $h$ heads, each head works on $d_h = d/h$ columns, and its scores are divided by $\\sqrt{d_h}$. Take $d = 64$ and 8 heads.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "value"
+     ],
+     "rows": [
+      [
+       "d",
+       "64"
+      ],
+      [
+       "heads",
+       "8"
+      ],
+      [
+       "d per head",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "By what number is each head's score divided? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.8284,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "full-d",
+      "value": 8,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each head has $64/8$ columns."
+    },
+    {
+     "rung": "point",
+     "text": "$d_h = 8$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{8} = 2.8284$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{8} = 2.8284$.",
+    "generic": "Not quite. Use the head's width, $d/h$.",
+    "byKey": {
+     "full-d": "That is $\\sqrt{64}$, the full width. Each head's dot product runs over $d_h = 8$ columns."
+    }
+   },
+   "explain": {
+    "text": "Each head's dot product sums $d_h = 8$ terms, so its sd is $\\sqrt{8} = 2.8284$. Dividing by $\\sqrt{64}$ would shrink the scores too far and flatten the weights."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Mask after the softmax?",
+   "tags": [
+    "attention"
+   ],
+   "prose": "A candidate softmaxes the full score row, then multiplies by a 0/1 mask to drop future keys.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         0.6698,
+         0.3302
+        ],
+        [
+         0.3302,
+         0.6698
+        ]
+       ],
+       "label": "softmax of the unmasked scores",
+       "heat": {
+        "legend": false,
+        "decimals": 4
+       }
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What goes wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "leak",
+      "text": "Rows stop summing to 1; the future sets the normaliser.",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the masked weights are 0 either way.",
+      "why": "They are 0, but the kept weights were divided by a sum that included the future."
+     },
+     {
+      "id": "slow",
+      "text": "Only speed: it does an extra multiplication.",
+      "why": "The result itself is wrong: the first row would keep about $0.67$, not 1."
+     },
+     {
+      "id": "nan",
+      "text": "It gives nan for the first row.",
+      "why": "There is no $-\\infty$ here, so nothing becomes nan."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute the first row both ways."
+    },
+    {
+     "rung": "point",
+     "text": "Softmax first: $(0.67, 0.33)$; masking leaves $(0.67, 0)$.",
+     "highlight": [
+      "A-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Masking first gives $(1, 0)$."
+    }
+   ],
+   "feedback": {
+    "correct": "The future leaks through the normaliser.",
+    "generic": "Not quite. Compare the first row masked before and after.",
+    "byKey": {
+     "fine": "The kept weight is $0.67$ instead of 1: the future key took a third of the mass."
+    }
+   },
+   "explain": {
+    "text": "Softmax first gives the first row $(0.6698, 0.3302)$, and the mask leaves $(0.6698, 0)$. The row no longer sums to 1, and its size depends on a key the token must not see."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One token",
+   "tags": [
+    "attention"
+   ],
+   "prose": "Edge case: $T = 1$. The single query sees only its own key.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         "s"
+        ]
+       ],
+       "label": "scores"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is its attention weight, whatever the score?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A softmax over one entry."
+    },
+    {
+     "rung": "point",
+     "text": "$e^s / e^s$.",
+     "highlight": [
+      "A-0-0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It is 1."
+    }
+   ],
+   "feedback": {
+    "correct": "Always 1: the output is the token's own value, projected.",
+    "generic": "Not quite. A softmax over one entry is always the same."
+   },
+   "explain": {
+    "text": "A softmax over one entry is $e^s/e^s = 1$. Say it in the interview: with $T = 1$ the code must still run, and the output is $\\mathbf{v}\\mathbf{W}_o$."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The cost, aloud",
+   "tags": [
+    "attention"
+   ],
+   "prose": "The scores take $T^2 d$ multiply-adds and the weighted sum the same. So attention costs $$O(T^2 d)$$ time, and $O(T^2)$ memory per head for the weights.",
+   "question": "Doubling the context length $T$ multiplies the score cost by what?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2^2 = 4$.",
+    "generic": "Not quite. The cost grows with $T^2$.",
+    "byKey": {
+     "linear": "Linear in $T$ would be 2; the scores grow with $T^2$."
+    }
+   },
+   "explain": {
+    "text": "Every query meets every key, so the work grows with $T^2$: twice the context, 4 times the cost. That is the number behind long-context research."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Next: a KV cache",
+   "tags": [
+    "attention"
+   ],
+   "prose": "A lab interviewer says: \"Your model now generates one token at a time. Make step $t$ cheap.\"",
+   "question": "What changes at step $t$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cache",
+      "text": "Project only the new token; append its key and value to a cache and attend over all $t$.",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "Recompute $\\mathbf{Q}$, $\\mathbf{K}$, $\\mathbf{V}$ for all tokens.",
+      "why": "That repeats work done on earlier steps. Past keys and values do not change."
+     },
+     {
+      "id": "mask",
+      "text": "Drop the mask, since there is no future during generation.",
+      "why": "Without future tokens the mask has nothing to hide, but that is not what saves time."
+     },
+     {
+      "id": "last",
+      "text": "Attend to the last token only.",
+      "why": "That changes the model. The new query still attends over every earlier key."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which keys and values change when one token is added?"
+    },
+    {
+     "rung": "point",
+     "text": "None of the earlier ones."
+    },
+    {
+     "rung": "step",
+     "text": "Store them and compute only the new row: $O(t\\,d)$ a step."
+    }
+   ],
+   "feedback": {
+    "correct": "Cache past keys and values; one new query row per step.",
+    "generic": "Not quite. Ask what is unchanged from the last step.",
+    "byKey": {
+     "all": "Earlier keys and values are fixed; recomputing them is the waste."
+    }
+   },
+   "explain": {
+    "text": "With a cache, step $t$ needs one query, one new key and value, and a row of $t$ scores. The cost per step is $O(t\\,d)$ instead of $O(t^2 d)$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Split the heads",
+   "tags": [
+    "attention"
+   ],
+   "prose": "Write `mi_split_heads(x, n_heads)`: from $\\mathbf{x}$ of shape $(T, d)$ return $(h, T, d/h)$, where head $k$ takes columns $k\\,d_h$ to $(k + 1)\\,d_h - 1$.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef mi_split_heads(x, n_heads):\n    # x: (T, d); return (n_heads, T, d // n_heads), head h taking columns h*dh to (h+1)*dh - 1\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef mi_split_heads(x, n_heads):\n    x = np.asarray(x, dtype=float)\n    T, d = x.shape\n    return x.reshape(T, n_heads, d // n_heads).transpose(1, 0, 2)\n",
+    "examples": [
+     {
+      "call": "list(mi_split_heads(np.arange(12.0).reshape(3, 4), 2).shape)",
+      "compare": "equal",
+      "expect": "[2, 3, 2]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(mi_split_heads(np.arange(12.0).reshape(3, 4), 2).shape)",
+      "compare": "equal",
+      "expect": "[2, 3, 2]"
+     },
+     {
+      "call": "mi_split_heads(np.arange(12.0).reshape(3, 4), 2)[0].tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, 1.0], [4.0, 5.0], [8.0, 9.0]]"
+     },
+     {
+      "call": "mi_split_heads(np.arange(12.0).reshape(3, 4), 2)[1].tolist()",
+      "compare": "equal",
+      "expect": "[[2.0, 3.0], [6.0, 7.0], [10.0, 11.0]]"
+     },
+     {
+      "call": "mi_split_heads(np.arange(12.0).reshape(3, 4), 1)[0].tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, 1.0, 2.0, 3.0], [4.0, 5.0, 6.0, 7.0], [8.0, 9.0, 10.0, 11.0]]"
+     },
+     {
+      "call": "mi_split_heads(np.arange(8.0).reshape(1, 8), 4).tolist()",
+      "compare": "equal",
+      "expect": "[[[0.0, 1.0]], [[2.0, 3.0]], [[4.0, 5.0]], [[6.0, 7.0]]]"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on a 3 by 4 input split into two heads (the shape, then each head), one head, and a single token split into four. Values are compared exactly.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef mi_split_heads(x, n_heads):\n    x = np.asarray(x, dtype=float)\n    T, d = x.shape\n    return x.reshape(n_heads, T, d // n_heads)\n",
+      "test": 2,
+      "symptom": "Reshapes straight to (heads, T, d_h), which mixes tokens across heads."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mi_split_heads(x, n_heads):\n    x = np.asarray(x, dtype=float)\n    T, d = x.shape\n    return x.reshape(T, d // n_heads, n_heads).transpose(2, 0, 1)\n",
+      "test": 2,
+      "symptom": "Splits the columns by striding, so head 0 takes every other column."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mi_split_heads(x, n_heads):\n    x = np.asarray(x, dtype=float)\n    T, d = x.shape\n    return x.reshape(T, n_heads, d // n_heads)\n",
+      "test": 1,
+      "symptom": "Forgets the transpose and returns (T, heads, d_h)."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Reshape to $(T, h, d_h)$ first: that cuts each row into consecutive blocks."
+    },
+    {
+     "rung": "point",
+     "text": "Then move the head axis to the front."
+    },
+    {
+     "rung": "step",
+     "text": "`x.reshape(T, h, d // h).transpose(1, 0, 2)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Each head holds a consecutive block of columns for every token.",
+    "generic": "Not yet. Cut each row into blocks, then move the head axis first.",
+    "byKey": {
+     "test-1": "The shape is off. Move the head axis to the front: `(h, T, d_h)`.",
+     "test-2": "Head 0 holds the wrong numbers. Reshape to `(T, h, d_h)` before the transpose; a straight reshape or a stride mixes tokens or columns."
+    }
+   },
+   "explain": {
+    "text": "Reshape keeps memory order, so `(T, h, d_h)` cuts each token's row into consecutive blocks. The transpose only reorders axes; merging heads later is the reverse."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The mask",
+   "tags": [
+    "attention"
+   ],
+   "prose": "Write `mi_causal_mask(T)`: a $T \\times T$ array to add to the scores, 0 where key $j \\le$ query $i$ and $-\\infty$ where $j > i$.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef mi_causal_mask(T):\n    # (T, T): 0 where key j <= query i, -inf where j > i; add it to the scores\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef mi_causal_mask(T):\n    m = np.zeros((T, T))\n    m[np.triu_indices(T, k=1)] = -np.inf\n    return m\n",
+    "examples": [
+     {
+      "call": "mi_causal_mask(2).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, float('-inf')], [0.0, 0.0]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "mi_causal_mask(3).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, float('-inf'), float('-inf')], [0.0, 0.0, float('-inf')], [0.0, 0.0, 0.0]]"
+     },
+     {
+      "call": "mi_causal_mask(1).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0]]"
+     },
+     {
+      "call": "int(np.isinf(mi_causal_mask(6)).sum())",
+      "compare": "equal",
+      "expect": "15"
+     },
+     {
+      "call": "bool((np.diag(mi_causal_mask(5)) == 0).all())",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "bool((mi_causal_mask(4)[np.tril_indices(4)] == 0).all())",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: the full 3 by 3 mask, $T = 1$, the count of masked entries for $T = 6$, the diagonal for $T = 5$, and the lower triangle for $T = 4$. Values are compared exactly.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef mi_causal_mask(T):\n    m = np.zeros((T, T))\n    m[np.tril_indices(T, k=-1)] = -np.inf\n    return m\n",
+      "test": 1,
+      "symptom": "Masks the past instead of the future."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mi_causal_mask(T):\n    m = np.zeros((T, T))\n    m[np.triu_indices(T, k=0)] = -np.inf\n    return m\n",
+      "test": 1,
+      "symptom": "Masks the diagonal too, so a token cannot see itself."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mi_causal_mask(T):\n    m = np.zeros((T, T))\n    m[np.triu_indices(T, k=1)] = 1.0\n    return m\n",
+      "test": 1,
+      "symptom": "Writes 1 instead of minus infinity, a multiplicative mask added to the scores."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from zeros."
+    },
+    {
+     "rung": "point",
+     "text": "`np.triu_indices(T, k=1)` gives the strict upper triangle."
+    },
+    {
+     "rung": "step",
+     "text": "Set those entries to `-np.inf`."
+    }
+   ],
+   "feedback": {
+    "correct": "The strict upper triangle is $-\\infty$, the rest 0.",
+    "generic": "Not yet. Mask keys later than the query, and nothing else.",
+    "byKey": {
+     "test-1": "The 3 by 3 mask is off. Put $-\\infty$ strictly above the diagonal ($j > i$), keep the diagonal at 0, and add it to the scores."
+    }
+   },
+   "explain": {
+    "text": "Added to the scores, $-\\infty$ becomes $e^{-\\infty} = 0$ in the softmax. The diagonal stays 0, so no row is ever fully masked."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "attention"
+   ],
+   "pace": 120,
+   "prose": "The interviewer goes on: \"Make it batched.\" Then sit the drill `#drill/mi-causal-attention` (pace 20 minutes): your attention, whole, with heads and the mask.",
+   "question": "What do the scores look like for a batch of $B$ sequences?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Shape $(B, h, T, T)$, with one $(T, T)$ mask broadcast over both.",
+      "correct": true
+     },
+     {
+      "id": "loop",
+      "text": "A Python loop over the batch, calling the unbatched code each time.",
+      "why": "It works, but the interviewer asked you to vectorise."
+     },
+     {
+      "id": "flat",
+      "text": "Shape $(BT, BT)$, stacking all sequences into one.",
+      "why": "That lets tokens of one sequence attend to another; it needs a block mask and wastes $B^2$ work."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add a batch axis in front of every array."
+    },
+    {
+     "rung": "point",
+     "text": "Each sequence and head gets its own $T \\times T$ scores."
+    },
+    {
+     "rung": "step",
+     "text": "One mask of shape $(T, T)$ broadcasts over the first two axes."
+    }
+   ],
+   "feedback": {
+    "correct": "Four axes, one broadcast mask.",
+    "generic": "Not quite. Keep sequences separate and vectorise.",
+    "byKey": {
+     "flat": "One big matrix lets sequences see each other."
+    }
+   },
+   "explain": {
+    "text": "Batching adds a leading axis: `np.einsum('bhtd,bhsd->bhts', Q, K)` gives $(B, h, T, T)$ and the mask broadcasts. Say the memory cost, $B h T^2$ numbers for the weights."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Fix the shapes aloud first: $\\mathbf{x}$ is $T \\times d$, scores are $T \\times T$ per head, the output is $T \\times d$.",
+   "Write it in order: project, split heads, score over $\\sqrt{d_h}$, mask, softmax, mix, merge, project.",
+   "Mask before the softmax with $-\\infty$; masking after it lets the future set the normaliser. Cost: $O(T^2 d)$."
+  ],
+  "formula": {
+   "name": "Causal attention, one head",
+   "tex": "\\mathrm{softmax}\\Big(\\frac{\\mathbf{Q}\\mathbf{K}^\\top}{\\sqrt{d_h}} + \\mathbf{M}\\Big)\\mathbf{V}, \\quad M_{ij} = -\\infty \\text{ for } j > i",
+   "note": "With $h$ heads, $d_h = d/h$."
+  },
+  "trap": "Masking after the softmax leaves rows that do not sum to 1 and lets later tokens shape them."
+ },
+ "quiz": [
+  {
+   "id": "q1-row3",
+   "difficulty": 3,
+   "tags": [
+    "attention"
+   ],
+   "prose": "One head, causal. Query 3 has scaled scores $(0, 0, \\ln 2)$ against keys 1 to 3.",
+   "question": "What weight does it give key 3?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "uniform",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "raw",
+      "value": 0.6931,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2/(1 + 1 + 2) = 0.5$.",
+    "generic": "Not quite. Exponentiate and normalise the row.",
+    "byKey": {
+     "uniform": "The third score is larger, so its weight is too.",
+     "raw": "That is the score, not the weight."
+    }
+   },
+   "explain": {
+    "text": "The exponentials are $1, 1, 2$, which sum to 4, so key 3 gets $2/4 = 0.5$."
+   }
+  },
+  {
+   "id": "q2-masked-count",
+   "difficulty": 2,
+   "tags": [
+    "attention"
+   ],
+   "question": "A causal mask for $T = 10$: how many entries are $-\\infty$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 45,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "with-diag",
+      "value": 55,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 100,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$10 \\times 9/2 = 45$.",
+    "generic": "Not quite. Count the strict upper triangle.",
+    "byKey": {
+     "with-diag": "You masked the diagonal too.",
+     "all": "Only keys after the query are masked."
+    }
+   },
+   "explain": {
+    "text": "The strict upper triangle of a $10 \\times 10$ matrix holds $10 \\times 9/2 = 45$ entries."
+   }
+  },
+  {
+   "id": "q3-scale",
+   "difficulty": 2,
+   "tags": [
+    "attention"
+   ],
+   "question": "A model has $d = 512$ and 8 heads. By what is each head's score divided?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "full",
+      "value": 22.6274,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "dh",
+      "value": 64,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{512/8} = \\sqrt{64} = 8$.",
+    "generic": "Not quite. Use $\\sqrt{d/h}$.",
+    "byKey": {
+     "full": "That is $\\sqrt{512}$, the full width.",
+     "dh": "That is $d_h$ itself; take its root."
+    }
+   },
+   "explain": {
+    "text": "Each head has $d_h = 64$ columns, so its scores are divided by $\\sqrt{64} = 8$."
+   }
+  }
+ ]
+}

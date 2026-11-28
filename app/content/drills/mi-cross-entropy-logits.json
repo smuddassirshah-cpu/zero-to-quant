@@ -1,0 +1,158 @@
+{
+  "course": "ml-int",
+  "pack": "mi",
+  "skills": [
+    "mi-code"
+  ],
+  "id": "mi-cross-entropy-logits",
+  "name": "Cross-entropy from logits",
+  "difficulty": 3,
+  "pace": 900,
+  "tags": [
+    "cross-entropy"
+  ],
+  "fn": "mean_cross_entropy",
+  "returns": "a float",
+  "brief": "Write `mean_cross_entropy(logits, targets)`: the mean softmax cross-entropy over a batch, from raw logits (a 2-D list or array, one row per example) and integer class targets (a list or array).\n\nIt must stay finite for any finite logits, so compute it with log-sum-exp, never as the log of a softmax.",
+  "definition": "For one row, the loss is $\\log\\sum_j e^{z_j} - z_t$ for target $t$; return the mean over the rows. Log-sum-exp: $\\log\\sum_j e^{z_j} = m + \\log\\sum_j e^{z_j - m}$ with $m$ the row maximum.",
+  "constraints": [
+    "Between 1 and 64 rows and between 2 and 100 classes. Logits are finite; each target is a valid class index.",
+    "NumPy is available.",
+    "Each test has a 5-second limit in the browser.",
+    {
+      "arg": "logits",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          2,
+          100
+        ],
+        "of": "number"
+      }
+    },
+    {
+      "arg": "targets",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": "int",
+      "range": [
+        0,
+        99
+      ]
+    }
+  ],
+  "hint": "Per row: the maximum plus the log of the sum of shifted exponentials, minus the target's logit.",
+  "starter": "import numpy as np\n\n\ndef mean_cross_entropy(logits, targets):\n    ...\n",
+  "solution": "import numpy as np\n\n\ndef mean_cross_entropy(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets, dtype=int)\n    m = z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z - m).sum(axis=1))\n    return float(np.mean(lse - z[np.arange(len(t)), t]))\n",
+  "examples": [
+    {
+      "call": "mean_cross_entropy([[0.0, 0.0]], [1])",
+      "compare": "isclose",
+      "note": "Two equal logits: ln 2.",
+      "expect": "0.6931471805599453"
+    },
+    {
+      "call": "mean_cross_entropy([[2.0, 1.0, 0.0]], [0])",
+      "compare": "isclose",
+      "note": "The right class has the largest logit, so the loss is small.",
+      "expect": "0.4076059644443806"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Large logits, first class",
+      "call": "mean_cross_entropy([[1000.0, 1001.0, 1002.0]], [0])",
+      "compare": "isclose",
+      "why": "Log-sum-exp is 1002.4076, minus 1000: 2.4076.",
+      "expect": "2.4076059644444285"
+    },
+    {
+      "name": "Large logits, last class",
+      "call": "mean_cross_entropy([[1000.0, 1001.0, 1002.0]], [2])",
+      "compare": "isclose",
+      "why": "1002.4076 minus 1002: 0.4076.",
+      "expect": "0.40760596444442854"
+    },
+    {
+      "name": "Uniform over 65",
+      "call": "mean_cross_entropy([[0.0] * 65], [7])",
+      "compare": "isclose",
+      "why": "Equal logits over 65 classes give ln 65 = 4.1744.",
+      "expect": "4.174387269895637"
+    },
+    {
+      "name": "A batch mean",
+      "call": "mean_cross_entropy([[1000.0, 1001.0, 1002.0], [1000.0, 1001.0, 1002.0]], [0, 2])",
+      "compare": "isclose",
+      "why": "The mean of 2.4076 and 0.4076.",
+      "expect": "1.4076059644444285"
+    },
+    {
+      "name": "Targets as an array",
+      "call": "mean_cross_entropy(np.array([[2.0, 1.0, 0.0]]), np.array([1]))",
+      "compare": "isclose",
+      "why": "NumPy inputs work as well as lists.",
+      "expect": "1.4076059644443806"
+    },
+    {
+      "name": "A gap of 800, low class",
+      "call": "mean_cross_entropy([[0.0, 800.0]], [0])",
+      "compare": "isclose",
+      "why": "The loss is 800; the log of a softmax gives inf here.",
+      "expect": "800.0"
+    },
+    {
+      "name": "A gap of 800, high class",
+      "call": "mean_cross_entropy([[0.0, 800.0]], [1])",
+      "compare": "isclose",
+      "tol": {
+        "rel": 0,
+        "abs": 1e-12
+      },
+      "why": "The right class is certain: a loss of 0.",
+      "expect": "0.0"
+    },
+    {
+      "name": "Large negative logits",
+      "call": "mean_cross_entropy([[-1000.0, -1000.0]], [0])",
+      "compare": "isclose",
+      "why": "ln 2, with no 0 over 0.",
+      "expect": "0.6931471805598903"
+    },
+    {
+      "name": "Three rows",
+      "call": "mean_cross_entropy([[1.0, 2.0], [3.0, 0.0], [0.5, 0.5]], [1, 1, 0])",
+      "compare": "isclose",
+      "why": "The mean over three rows of different targets.",
+      "expect": "1.3516654065506366"
+    }
+  ],
+  "how": "Submit runs 9 hidden tests: large logits for two targets, uniform logits over 65 classes, a batch mean, NumPy inputs, a gap of 800 for both targets, large negative logits and three mixed rows. Numbers are compared to $10^{-9}$ relative.",
+  "notes": [
+    "Cross-entropy is log-sum-exp minus the target logit; it never needs a probability.",
+    "Taking the log of a softmax fails when a probability underflows to 0."
+  ],
+  "planted": [
+    {
+      "code": "import numpy as np\n\n\ndef mean_cross_entropy(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets, dtype=int)\n    e = np.exp(z - z.max(axis=1, keepdims=True))\n    p = e / e.sum(axis=1, keepdims=True)\n    return float(np.mean(-np.log(p[np.arange(len(t)), t])))\n",
+      "slip": "Softmax then log: a probability of e to the minus 800 underflows to 0 and the loss becomes inf.",
+      "nearMiss": true
+    },
+    {
+      "code": "import numpy as np\n\n\ndef mean_cross_entropy(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets, dtype=int)\n    m = z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z - m).sum(axis=1))\n    return float(np.sum(lse - z[np.arange(len(t)), t]))\n",
+      "slip": "Sums the batch instead of averaging it."
+    },
+    {
+      "code": "import numpy as np\n\n\ndef mean_cross_entropy(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets, dtype=int)\n    lse = np.log(np.exp(z).sum(axis=1))\n    return float(np.mean(lse - z[np.arange(len(t)), t]))\n",
+      "slip": "Exponentiates the raw logits, which overflow at 1000."
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "course": "ml-int",
+  "pack": "mi",
+  "skills": [
+    "mi-code"
+  ],
+  "id": "mi-linear-relu-backward",
+  "name": "Backward through a linear layer and a ReLU",
+  "difficulty": 4,
+  "pace": 1200,
+  "tags": [
+    "backward-pass"
+  ],
+  "fn": "linear_relu_backward",
+  "returns": "a tuple (dx, dW, db) of NumPy arrays",
+  "brief": "A layer computes $\\text{out} = \\mathrm{ReLU}(\\mathbf{x}\\mathbf{W} + \\mathbf{b})$ for a batch $\\mathbf{x}$ of shape $(B, d_{in})$, with $\\mathbf{W}$ of shape $(d_{in}, d_{out})$. Given `dout`, the gradient of the loss with respect to `out`, write `linear_relu_backward(x, W, b, dout)` returning $(d\\mathbf{x}, d\\mathbf{W}, d\\mathbf{b})$.\n\nWhere a pre-activation is exactly 0, use gradient 0.",
+  "definition": "With $\\mathbf{Z} = \\mathbf{x}\\mathbf{W} + \\mathbf{b}$ and $d\\mathbf{Z} = d\\text{out} \\odot \\mathbf{1}[\\mathbf{Z} > 0]$: $d\\mathbf{x} = d\\mathbf{Z}\\,\\mathbf{W}^\\top$, $d\\mathbf{W} = \\mathbf{x}^\\top d\\mathbf{Z}$, $d\\mathbf{b}$ the column sums of $d\\mathbf{Z}$.",
+  "constraints": [
+    "$1 \\le B, d_{in}, d_{out} \\le 32$.",
+    "The ReLU's gradient is 0 where the pre-activation is exactly 0.",
+    "NumPy is available.",
+    "Each test has a 5-second limit in the browser.",
+    {
+      "arg": "x",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          64
+        ],
+        "of": "number"
+      }
+    },
+    {
+      "arg": "W",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          64
+        ],
+        "of": "number"
+      }
+    },
+    {
+      "arg": "b",
+      "type": "list",
+      "len": [
+        1,
+        32
+      ],
+      "of": "number"
+    },
+    {
+      "arg": "dout",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          64
+        ],
+        "of": "number"
+      }
+    }
+  ],
+  "hint": "Gate `dout` with `Z > 0` first, then the three products. Check each result has its array's shape.",
+  "starter": "import numpy as np\n\n\ndef linear_relu_backward(x, W, b, dout):\n    ...\n",
+  "solution": "import numpy as np\n\n\ndef linear_relu_backward(x, W, b, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    b = np.asarray(b, dtype=float)\n    dz = np.asarray(dout, dtype=float) * (x @ W + b > 0)\n    return dz @ W.T, x.T @ dz, dz.sum(axis=0)\n",
+  "prelude": "import numpy as np\n\n\ndef _case(seed, B, i, o):\n    r = np.random.default_rng(seed)\n    return r.normal(size=(B, i)), r.normal(size=(i, o)), r.normal(size=o), r.normal(size=(B, o))\n\n\ndef _cd_ok():\n    x, W, b, d = _case(11, 3, 4, 5)\n    if np.abs(x @ W + b).min() < 1e-3:\n        return False\n    f = lambda x, W, b: float((d * np.maximum(x @ W + b, 0)).sum())\n    got = linear_relu_backward(x, W, b, d)\n    worst = 0.0\n    for k, A in enumerate((x, W, b)):\n        for i in np.ndindex(A.shape):\n            P = [x.copy(), W.copy(), b.copy()]; M = [x.copy(), W.copy(), b.copy()]\n            P[k][i] += 1e-6; M[k][i] -= 1e-6\n            num = (f(*P) - f(*M)) / 2e-6\n            worst = max(worst, abs(num - got[k][i]))\n    return worst < 1e-6\n",
+  "examples": [
+    {
+      "call": "linear_relu_backward([[1, 1]], [[1, -1], [1, 1]], [0.5, 0.5], [[2, 3]])[0].tolist()",
+      "compare": "isclose",
+      "note": "Both units are open: dx = dout Wᵀ = (−1, 5).",
+      "expect": "[[-1.0, 5.0]]"
+    },
+    {
+      "call": "linear_relu_backward([[1, 1]], [[1, -1], [1, 1]], [0.5, 0.5], [[2, 3]])[2].tolist()",
+      "compare": "isclose",
+      "note": "db is dout itself for a batch of one.",
+      "expect": "[2.0, 3.0]"
+    }
+  ],
+  "tests": [
+    {
+      "name": "The kink",
+      "call": "linear_relu_backward([[1, 2], [3, -1]], [[1, 0, -1], [2, 1, 0]], [0, 1, 0], [[1, 0, 2], [-1, 1, 0]])[0].tolist()",
+      "compare": "isclose",
+      "why": "Pre-activations [[5, 3, −1], [1, 0, −3]]: the 0 gets gradient 0, so dx = [[1, 2], [−1, −2]].",
+      "expect": "[[1.0, 2.0], [-1.0, -2.0]]"
+    },
+    {
+      "name": "dW",
+      "call": "linear_relu_backward([[1, 2], [3, -1]], [[1, 0, -1], [2, 1, 0]], [0, 1, 0], [[1, 0, 2], [-1, 1, 0]])[1].tolist()",
+      "compare": "isclose",
+      "why": "dW = xᵀ dZ = [[−2, 0, 0], [3, 0, 0]].",
+      "expect": "[[-2.0, 0.0, 0.0], [3.0, 0.0, 0.0]]"
+    },
+    {
+      "name": "db",
+      "call": "linear_relu_backward([[1, 2], [3, -1]], [[1, 0, -1], [2, 1, 0]], [0, 1, 0], [[1, 0, 2], [-1, 1, 0]])[2].tolist()",
+      "compare": "isclose",
+      "why": "The gated columns sum to 0, 0, 0.",
+      "expect": "[0.0, 0.0, 0.0]"
+    },
+    {
+      "name": "A batch of one",
+      "call": "[g.tolist() for g in linear_relu_backward([[1, 1]], [[1, -1], [1, 1]], [0.5, 0.5], [[2, 3]])]",
+      "compare": "isclose",
+      "why": "dx (−1, 5), dW [[2, 3], [2, 3]], db (2, 3).",
+      "expect": "[[[-1.0, 5.0]], [[2.0, 3.0], [2.0, 3.0]], [2.0, 3.0]]"
+    },
+    {
+      "name": "Shapes",
+      "call": "[list(g.shape) for g in linear_relu_backward(*_case(7, 4, 3, 5))]",
+      "compare": "equal",
+      "why": "Each gradient has its array's shape: (4, 3), (3, 5), (5,).",
+      "expect": "[[4, 3], [3, 5], [5]]"
+    },
+    {
+      "name": "Central differences",
+      "call": "_cd_ok()",
+      "compare": "equal",
+      "why": "Every entry agrees with central differences to 1e-6, away from kinks.",
+      "expect": "np.True_"
+    },
+    {
+      "name": "All units shut",
+      "call": "[g.tolist() for g in linear_relu_backward([[1, 1]], [[-1, -2], [-1, -2]], [0, 0], [[5, 5]])]",
+      "compare": "isclose",
+      "why": "Every pre-activation is negative, so every gradient is 0.",
+      "expect": "[[[0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]], [0.0, 0.0]]"
+    },
+    {
+      "name": "A wide layer",
+      "call": "linear_relu_backward(*_case(3, 2, 2, 6))[1].tolist()",
+      "compare": "isclose",
+      "why": "dW for a 2 by 6 weight matrix.",
+      "expect": "[[-0.1018316028330277, -1.0311309871879084, -0.37062787990404095, 0.9812001842379374, 4.318346694840127, -0.30762960911954135], [0.13828521528978205, 1.2911954124238239, 0.5033050127764735, -1.215771296300309, -5.446515623206261, 0.35955414221016674]]"
+    }
+  ],
+  "how": "Submit runs 8 hidden tests. They cover dx at a kink, dW and db for the same layer, a batch of one and the shapes. Then central differences on a random layer, a layer with every unit shut, and a wide layer. Numbers are compared to $10^{-9}$ relative.",
+  "notes": [
+    "A gradient has the shape of its array; check shapes before values.",
+    "At a pre-activation of exactly 0 state the convention; central differences average there."
+  ],
+  "planted": [
+    {
+      "code": "import numpy as np\n\n\ndef linear_relu_backward(x, W, b, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    b = np.asarray(b, dtype=float)\n    dz = np.asarray(dout, dtype=float) * (x @ W + b >= 0)\n    return dz @ W.T, x.T @ dz, dz.sum(axis=0)\n",
+      "slip": "Writes the mask as pre-activation >= 0, which differs only at the kink.",
+      "nearMiss": true
+    },
+    {
+      "code": "import numpy as np\n\n\ndef linear_relu_backward(x, W, b, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    b = np.asarray(b, dtype=float)\n    dz = np.asarray(dout, dtype=float) * (x @ W + b > 0)\n    return dz @ W.T, dz.T @ x, dz.sum(axis=0)\n",
+      "slip": "Builds dW as dout xᵀ, the transposed shape."
+    },
+    {
+      "code": "import numpy as np\n\n\ndef linear_relu_backward(x, W, b, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    b = np.asarray(b, dtype=float)\n    dz = np.asarray(dout, dtype=float)\n    return dz @ W.T, x.T @ dz, dz.sum(axis=0)\n",
+      "slip": "Forgets the ReLU gate."
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "course": "ml-int",
+  "pack": "mi",
+  "skills": [
+    "mi-code"
+  ],
+  "id": "mi-row-softmax",
+  "name": "A softmax for each row",
+  "difficulty": 2,
+  "pace": 600,
+  "tags": [
+    "softmax"
+  ],
+  "fn": "row_softmax",
+  "returns": "a 2-D NumPy array",
+  "brief": "Write `row_softmax(z)` for a 2-D list or array of logits: return an array of the same shape whose rows are softmax distributions, each summing to 1.\n\nIt must never overflow or return `nan` for finite logits, however large. A masked entry, $-\\infty$, gets a probability of exactly 0.",
+  "definition": "For a row $\\mathbf{z}$, $\\mathrm{softmax}(\\mathbf{z})_i = e^{z_i} / \\sum_j e^{z_j}$. The result is unchanged if a constant is subtracted from every entry of the row.",
+  "constraints": [
+    "Between 1 and 64 rows and columns. Entries are finite, or $-\\infty$ for a masked entry; every row has at least one finite entry.",
+    "NumPy is available.",
+    "Each test has a 5-second limit in the browser.",
+    {
+      "arg": "z",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          64
+        ],
+        "of": "number"
+      }
+    }
+  ],
+  "hint": "Subtract each row's own maximum before exponentiating: `z.max(axis=1, keepdims=True)`.",
+  "starter": "import numpy as np\n\n\ndef row_softmax(z):\n    ...\n",
+  "solution": "import numpy as np\n\n\ndef row_softmax(z):\n    z = np.asarray(z, dtype=float)\n    e = np.exp(z - z.max(axis=1, keepdims=True))\n    return e / e.sum(axis=1, keepdims=True)\n",
+  "examples": [
+    {
+      "call": "row_softmax([[1.0, 2.0, 3.0]]).tolist()",
+      "compare": "isclose",
+      "note": "The same row as (1000, 1001, 1002): a shift changes nothing.",
+      "expect": "[[0.09003057317038046, 0.24472847105479764, 0.6652409557748218]]"
+    },
+    {
+      "call": "row_softmax([[2.0, 2.0]]).tolist()",
+      "compare": "isclose",
+      "note": "Equal entries give a uniform row.",
+      "expect": "[[0.5, 0.5]]"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Large logits",
+      "call": "row_softmax([[1000.0, 1001.0, 1002.0]]).tolist()",
+      "compare": "isclose",
+      "why": "Shifted by 1002, the row is e^-2, e^-1 and 1 over their sum: 0.0900, 0.2447, 0.6652.",
+      "expect": "[[0.09003057317038046, 0.24472847105479764, 0.6652409557748218]]"
+    },
+    {
+      "name": "Rows 1,000 apart",
+      "call": "row_softmax([[0.0, 1.0], [1000.0, 1001.0]]).tolist()",
+      "compare": "isclose",
+      "why": "Each row is shifted by its own maximum, so both rows give 0.2689 and 0.7311.",
+      "expect": "[[0.2689414213699951, 0.7310585786300049], [0.2689414213699951, 0.7310585786300049]]"
+    },
+    {
+      "name": "A masked entry",
+      "call": "row_softmax([[0.0, float('-inf'), 1.0]]).tolist()",
+      "compare": "isclose",
+      "why": "e to the minus infinity is exactly 0.",
+      "expect": "[[0.2689414213699951, 0.0, 0.7310585786300049]]"
+    },
+    {
+      "name": "Equal entries",
+      "call": "row_softmax([[3.0, 3.0, 3.0, 3.0]]).tolist()",
+      "compare": "isclose",
+      "why": "Four equal logits give 0.25 each.",
+      "expect": "[[0.25, 0.25, 0.25, 0.25]]"
+    },
+    {
+      "name": "One column",
+      "call": "row_softmax([[5.0], [-2.0]]).tolist()",
+      "compare": "isclose",
+      "why": "A single entry always has probability 1.",
+      "expect": "[[1.0], [1.0]]"
+    },
+    {
+      "name": "Shape",
+      "call": "list(row_softmax(np.zeros((3, 4))).shape)",
+      "compare": "equal",
+      "why": "The output has the input's shape.",
+      "expect": "[3, 4]"
+    },
+    {
+      "name": "Rows sum to 1",
+      "call": "bool(np.allclose(row_softmax([[0.5, -1.2, 3.3], [2.0, 2.0, -7.0]]).sum(axis=1), 1.0))",
+      "compare": "equal",
+      "why": "Each row is a distribution.",
+      "expect": "True"
+    },
+    {
+      "name": "Large negative logits",
+      "call": "row_softmax([[-1000.0, -1001.0]]).tolist()",
+      "compare": "isclose",
+      "why": "A naive version gives 0 over 0.",
+      "expect": "[[0.7310585786300049, 0.2689414213699951]]"
+    },
+    {
+      "name": "A gap of 800",
+      "call": "row_softmax([[0.0, 800.0]]).tolist()",
+      "compare": "isclose",
+      "why": "The small entry underflows to 0 and the large one is 1, with no overflow.",
+      "expect": "[[0.0, 1.0]]"
+    }
+  ],
+  "how": "Submit runs 9 hidden tests: large logits, two rows 1,000 apart, a masked entry, equal entries, one column, the shape, row sums, large negative logits and a gap of 800. Numbers are compared to $10^{-9}$ relative.",
+  "notes": [
+    "Softmax is unchanged by a constant shift, so each row's maximum is free to subtract.",
+    "After the shift the largest exponential is 1, so the sum is at least 1: no overflow, no division by 0."
+  ],
+  "planted": [
+    {
+      "code": "import numpy as np\n\n\ndef row_softmax(z):\n    z = np.asarray(z, dtype=float)\n    e = np.exp(z - z.max())\n    return e / e.sum(axis=1, keepdims=True)\n",
+      "slip": "Subtracts the largest logit of the whole array, so a row 1,000 below it underflows to 0 over 0.",
+      "nearMiss": true
+    },
+    {
+      "code": "import numpy as np\n\n\ndef row_softmax(z):\n    z = np.asarray(z, dtype=float)\n    e = np.exp(z)\n    return e / e.sum(axis=1, keepdims=True)\n",
+      "slip": "No shift at all: e to the 1000 overflows to inf and the row becomes nan."
+    },
+    {
+      "code": "import numpy as np\n\n\ndef row_softmax(z):\n    z = np.asarray(z, dtype=float)\n    e = np.exp(z - z.min(axis=1, keepdims=True))\n    return e / e.sum(axis=1, keepdims=True)\n",
+      "slip": "Shifts by each row's minimum, which still overflows on a gap of 800."
+    }
+  ]
+}

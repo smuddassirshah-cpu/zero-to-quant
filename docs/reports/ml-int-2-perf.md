@@ -1,0 +1,13 @@
+# ml-int level 2: performance task
+
+- `homework-2.json` item 1 of 6, `h1-mlp-train-step`. Kind `code` (Python), difficulty 5.
+- Objective (l5 to l8): "Write a softmax and a cross-entropy from logits that never overflow, and say why aloud.", "Write causal multi-head attention in NumPy inside fifteen minutes, with the shapes checked.", "Write k-means with a fixed start, an empty-cluster rule and a stopping test inside fifteen minutes." and "Write the backward pass of a linear layer and a ReLU, checked by central differences." The level matches the verb rule on all four ("Write"); the kind is `code`.
+- Product: from a stub, `mlp_train_step(params, x, y, lr)`, a two-layer ReLU network written from scratch: the forward pass, a stable mean softmax cross-entropy, the backward pass and one SGD step, returning new parameters and the loss before the step. 7 hidden tests, 1 example: the loss on a seeded batch, one step against central differences for the output and hidden parameters (relative $10^{-5}$), an exact 3-step seeded run (the learning-loop rule), 20 steps halving the loss, inputs unchanged, and a finite loss with weights 100 times larger. No hints, no parts.
+- Mutants (ENGINE-BACKLOG 1263): six, each first failing the test it names: the summed loss (test 1), no division by the batch size (test 2), the gradient added instead of subtracted (test 2), no ReLU gate in the hidden gradient (test 3), parameters updated in place (test 6), the loss without the max shift (test 7).
+- Overlapping screens: l5 screens 9 and 10 (`max_shift`, `log_sum_exp_rows`) and l8 screens 7 and 8 (`relu_gate`, `grad_check`) practise the pieces; homework-1 item 1 (`mlp_backward`, tanh) returns gradients only. The task joins the stable loss, both layers' backward passes and the step, from a blank start, with the exact short-run test.
+
+Gates:
+1. `cd app && node tools/validate.mjs 2>&1 | tail -5`: 0 errors; no `[ai-mutants]` or `[source-ban]` warning on the level's files.
+2. `VOICE_BASE=app/content/courses/ml-int python3 docs/reviews/voice-scan.py 35`: 0 over 35 words, 0 explanations over three sentences, 0 lesson ids in code spans.
+3. Numbers script: `node tools/run-number-scripts.mjs --python <venv>/bin/python --only ml-int-L2`: passes under strict coverage; it runs the solution, the starter and every mutant through ZQ_LIB and recomputes the 3-step run by central-difference steps.
+4. Playthrough: `node tools/playthrough.mjs --set ml-int/homework-2 --local-cdn <pkgs>`, with and without `--mobile`: all passed, the performance starter fails as required. `grade-all.mjs --code --strict-feedback` on the file: 0 failures.

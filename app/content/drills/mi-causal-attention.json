@@ -1,0 +1,214 @@
+{
+  "course": "ml-int",
+  "pack": "mi",
+  "skills": [
+    "mi-code"
+  ],
+  "id": "mi-causal-attention",
+  "name": "Causal self-attention with heads",
+  "difficulty": 4,
+  "pace": 1200,
+  "tags": [
+    "attention"
+  ],
+  "fn": "causal_self_attention",
+  "returns": "a 2-D NumPy array",
+  "brief": "Write `causal_self_attention(x, Wq, Wk, Wv, Wo, n_heads)` for one sequence `x` of shape $(T, d)$ and four $d \\times d$ weight matrices. Split the $d$ columns evenly into `n_heads` heads, consecutive blocks of $d_h = d / h$ columns each.\n\nEach head scores queries against keys, divides by $\\sqrt{d_h}$, masks every key later than its query, and mixes the values by the softmax weights. Merge the heads back in order and apply `Wo`. Return the $(T, d)$ output.",
+  "definition": "For head $k$: $\\mathbf{Q}_k, \\mathbf{K}_k, \\mathbf{V}_k$ are columns $k d_h$ to $(k+1) d_h - 1$ of $\\mathbf{x}\\mathbf{W}_q$, $\\mathbf{x}\\mathbf{W}_k$, $\\mathbf{x}\\mathbf{W}_v$. Its output is $\\mathrm{softmax}(\\mathbf{Q}_k\\mathbf{K}_k^\\top / \\sqrt{d_h} + \\mathbf{M})\\mathbf{V}_k$ with $M_{ij} = -\\infty$ for $j > i$ and 0 otherwise. The heads are joined side by side, then multiplied by $\\mathbf{W}_o$.",
+  "constraints": [
+    "$1 \\le T \\le 32$, $1 \\le d \\le 32$, and `n_heads` divides $d$.",
+    "NumPy is available.",
+    "Each test has a 5-second limit in the browser.",
+    {
+      "arg": "x",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          64
+        ],
+        "of": "number"
+      }
+    },
+    {
+      "arg": "Wq",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          64
+        ],
+        "of": "number"
+      }
+    },
+    {
+      "arg": "Wk",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          64
+        ],
+        "of": "number"
+      }
+    },
+    {
+      "arg": "Wv",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          64
+        ],
+        "of": "number"
+      }
+    },
+    {
+      "arg": "Wo",
+      "type": "list",
+      "len": [
+        1,
+        64
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          64
+        ],
+        "of": "number"
+      }
+    },
+    {
+      "arg": "n_heads",
+      "type": "int",
+      "range": [
+        1,
+        32
+      ]
+    }
+  ],
+  "hint": "Reshape $(T, d)$ to $(T, h, d_h)$ and move the head axis first. Add the mask before the softmax, and scale by the head width.",
+  "starter": "import numpy as np\n\n\ndef causal_self_attention(x, Wq, Wk, Wv, Wo, n_heads):\n    ...\n",
+  "solution": "import numpy as np\n\n\ndef causal_self_attention(x, Wq, Wk, Wv, Wo, n_heads):\n    x = np.asarray(x, dtype=float)\n    T, d = x.shape\n    dh = d // n_heads\n    split = lambda A: (x @ np.asarray(A, dtype=float)).reshape(T, n_heads, dh).transpose(1, 0, 2)\n    Q, K, V = split(Wq), split(Wk), split(Wv)\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(dh)\n    S = S + np.triu(np.full((T, T), -np.inf), k=1)\n    S = S - S.max(axis=2, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=2, keepdims=True)\n    out = (A @ V).transpose(1, 0, 2).reshape(T, d)\n    return out @ np.asarray(Wo, dtype=float)\n",
+  "prelude": "import numpy as np\n\n\ndef _w(seed, d):\n    r = np.random.default_rng(seed)\n    return [r.normal(size=(d, d)) * 0.5 for _ in range(4)]\n\n\ndef _x(seed, T, d):\n    return np.random.default_rng(seed + 100).normal(size=(T, d))\n\n\ndef _prefix_unchanged():\n    Wq, Wk, Wv, Wo = _w(3, 4)\n    x = _x(3, 5, 4)\n    y = x.copy()\n    y[-1] = [9.0, -9.0, 9.0, -9.0]\n    a = causal_self_attention(x, Wq, Wk, Wv, Wo, 2)\n    b = causal_self_attention(y, Wq, Wk, Wv, Wo, 2)\n    return bool(np.allclose(a[:-1], b[:-1], atol=1e-12)) and not bool(np.allclose(a[-1], b[-1]))\n",
+  "examples": [
+    {
+      "call": "causal_self_attention([[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], [[1.0, 1.0], [0.0, 2.0]], [[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], 1).tolist()",
+      "compare": "isclose",
+      "note": "Query 1 sees only itself; query 2 weights the tokens 0.3302 and 0.6698.",
+      "expect": "[[1.0, 0.0], [0.3302384506733431, 0.6697615493266569]]"
+    },
+    {
+      "call": "causal_self_attention([[3.0, -1.0]], [[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], 1).tolist()",
+      "compare": "isclose",
+      "note": "With one token the output is its own value.",
+      "expect": "[[3.0, -1.0]]"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Two tokens by hand",
+      "call": "causal_self_attention([[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], [[1.0, 1.0], [0.0, 2.0]], [[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], 1).tolist()",
+      "compare": "isclose",
+      "why": "Scores [[0.7071, 0], [0.7071, 1.4142]]; weights [[1, 0], [0.3302, 0.6698]], which is the output.",
+      "expect": "[[1.0, 0.0], [0.3302384506733431, 0.6697615493266569]]"
+    },
+    {
+      "name": "The future stays hidden",
+      "call": "_prefix_unchanged()",
+      "compare": "equal",
+      "why": "Changing the last token changes only the last output row.",
+      "expect": "True"
+    },
+    {
+      "name": "Two heads",
+      "call": "causal_self_attention(_x(1, 4, 4), *_w(1, 4), 2).tolist()",
+      "compare": "isclose",
+      "why": "Two heads of width 2, each scaled by the square root of 2.",
+      "expect": "[[0.1129753627879981, -0.16811455636457526, 1.0366138944774674, 0.053615739702247485], [-0.31758816088996455, -0.26689437091293655, 0.5317467862857702, 0.8419250272195579], [-0.10657558945940343, -0.18165783807953712, 0.38561650207275416, 0.3867210198687794], [-0.3110063084497776, -0.020267831424162816, 0.00502471550388183, 0.5228345353850733]]"
+    },
+    {
+      "name": "Two heads, another case",
+      "call": "causal_self_attention(_x(2, 3, 6), *_w(2, 6), 2).tolist()",
+      "compare": "isclose",
+      "why": "Width 3 per head.",
+      "expect": "[[1.2371199075783739, -0.6814775565655893, -0.921005580990916, 0.7983557101959843, 2.32036859700291, 1.0024540644987159], [0.22217892678826917, 1.296370187123354, 0.8630328041740174, 2.1835648603725564, -1.6035276725139644, -0.5694769128674222], [0.8233749305361371, 0.056565265842691406, 0.2544159288436299, 0.8186613096854078, 0.40660885366775457, -0.08583284027692592]]"
+    },
+    {
+      "name": "Three heads",
+      "call": "causal_self_attention(_x(4, 5, 6), *_w(4, 6), 3).tolist()",
+      "compare": "isclose",
+      "why": "Width 2 per head.",
+      "expect": "[[0.2425732616904937, 0.6127368602768885, -0.21671686000624063, 0.3089308530274083, 0.0005640404334266055, -0.13461093283420497], [0.5139597282799669, 1.6740588525121087, 0.5623036016557041, -0.6435957570908382, 0.5881845921697402, -1.16682145954879], [0.22601980465428928, 1.2788568486018772, 0.24267666345010389, -0.7156057060419275, 0.6341298468397131, -0.9195300431908986], [0.07213679791776552, -0.05425530079842857, 0.3857608257998248, -0.44319441583130065, -0.11846210289683026, 1.1234179850019121], [0.09187901907552261, -0.4303431914692209, 0.40357039829435104, -0.4624991422506241, -0.47493293778701967, 1.4783955213071471]]"
+    },
+    {
+      "name": "One token",
+      "call": "causal_self_attention([[1.0, 2.0]], [[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], [[0.0, 1.0], [1.0, 0.0]], [[2.0, 0.0], [0.0, 2.0]], 2).tolist()",
+      "compare": "isclose",
+      "why": "A weight of 1 on itself: the output is x Wv Wo.",
+      "expect": "[[4.0, 2.0]]"
+    },
+    {
+      "name": "Shape",
+      "call": "list(causal_self_attention(_x(5, 7, 6), *_w(5, 6), 3).shape)",
+      "compare": "equal",
+      "why": "The output is (T, d).",
+      "expect": "[7, 6]"
+    },
+    {
+      "name": "Equal scores",
+      "call": "[[round(v, 9) for v in r] for r in causal_self_attention([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], np.zeros((2, 2)), np.zeros((2, 2)), [[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], 1).tolist()]",
+      "compare": "isclose",
+      "why": "With zero queries every allowed key gets an equal weight: running means of the values.",
+      "expect": "[[1.0, 0.0], [0.5, 0.5], [0.666666667, 0.666666667]]"
+    },
+    {
+      "name": "Output projection",
+      "call": "causal_self_attention([[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], [[1.0, 1.0], [0.0, 2.0]], [[1.0, 0.0], [0.0, 1.0]], [[0.0, 2.0], [2.0, 0.0]], 1).tolist()",
+      "compare": "isclose",
+      "why": "Wo swaps the columns and doubles them.",
+      "expect": "[[0.0, 2.0], [1.3395230986533138, 0.6604769013466862]]"
+    }
+  ],
+  "how": "Submit runs 9 hidden tests. They cover the two-token case by hand, a check that the last token changes only the last row, two heads twice and three heads. Then one token, the shape, equal scores and an output projection. Numbers are compared to $10^{-9}$ relative.",
+  "notes": [
+    "Scale by the head width: each head's dot products have $d_h$ terms.",
+    "Mask with $-\\infty$ before the softmax; the diagonal is never masked, so no row is empty."
+  ],
+  "planted": [
+    {
+      "code": "import numpy as np\n\n\ndef causal_self_attention(x, Wq, Wk, Wv, Wo, n_heads):\n    x = np.asarray(x, dtype=float)\n    T, d = x.shape\n    dh = d // n_heads\n    split = lambda A: (x @ np.asarray(A, dtype=float)).reshape(T, n_heads, dh).transpose(1, 0, 2)\n    Q, K, V = split(Wq), split(Wk), split(Wv)\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(d)\n    S = S + np.triu(np.full((T, T), -np.inf), k=1)\n    S = S - S.max(axis=2, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=2, keepdims=True)\n    out = (A @ V).transpose(1, 0, 2).reshape(T, d)\n    return out @ np.asarray(Wo, dtype=float)\n",
+      "slip": "Divides by the square root of the full width d instead of the head width, which differs only with two or more heads.",
+      "nearMiss": true
+    },
+    {
+      "code": "import numpy as np\n\n\ndef causal_self_attention(x, Wq, Wk, Wv, Wo, n_heads):\n    x = np.asarray(x, dtype=float)\n    T, d = x.shape\n    dh = d // n_heads\n    split = lambda A: (x @ np.asarray(A, dtype=float)).reshape(T, n_heads, dh).transpose(1, 0, 2)\n    Q, K, V = split(Wq), split(Wk), split(Wv)\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(dh)\n    S = S - S.max(axis=2, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=2, keepdims=True)\n    A = A * np.tril(np.ones((T, T)))\n    out = (A @ V).transpose(1, 0, 2).reshape(T, d)\n    return out @ np.asarray(Wo, dtype=float)\n",
+      "slip": "Applies the mask after the softmax, so the future still sets each row's normaliser."
+    },
+    {
+      "code": "import numpy as np\n\n\ndef causal_self_attention(x, Wq, Wk, Wv, Wo, n_heads):\n    x = np.asarray(x, dtype=float)\n    T, d = x.shape\n    dh = d // n_heads\n    split = lambda A: (x @ np.asarray(A, dtype=float)).reshape(n_heads, T, dh)\n    Q, K, V = split(Wq), split(Wk), split(Wv)\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(dh)\n    S = S + np.triu(np.full((T, T), -np.inf), k=1)\n    S = S - S.max(axis=2, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=2, keepdims=True)\n    out = (A @ V).transpose(1, 0, 2).reshape(T, d)\n    return out @ np.asarray(Wo, dtype=float)\n",
+      "slip": "Splits heads with a plain reshape, which mixes tokens across heads."
+    }
+  ]
+}
