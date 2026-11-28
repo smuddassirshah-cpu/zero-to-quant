@@ -1,0 +1,459 @@
+{
+ "id": "problems-3",
+ "course": "info",
+ "level": 3,
+ "title": "Signals, tables and relays",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-order-flow",
+   "difficulty": 4,
+   "skills": [
+    "if-mutual",
+    "if-cross"
+   ],
+   "prose": "A broker tags each trading hour with an order-flow flag, A or B, and records whether the next hour fell, held flat or rose. Over 200 hours: under A, 30 fell, 40 were flat and 30 rose; under B, 10, 40 and 50.",
+   "parts": [
+    {
+     "question": "What share of all 200 hours rose? Give a decimal to 1 place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.4,
+      "tol": {
+       "abs": 0.001
+      },
+      "label": "Share that rose",
+      "wrong": [
+       {
+        "id": "b-row",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$(30 + 50) / 200 = 0.4$.",
+      "generic": "Not yet. Add the rises under both flags, then divide by all 200 hours.",
+      "byKey": {
+       "b-row": "Half is the share within B's 100 hours. The question covers both flags."
+      }
+     },
+     "explain": {
+      "text": "The column of rises holds $30 + 50 = 80$ hours, a share of 0.4. The other columns hold 0.2 and 0.4."
+     }
+    },
+    {
+     "question": "The outcome's shares are 0.2, 0.4 and 0.4. How many bits of doubt does the next hour's outcome hold? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.522,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Entropy of the outcome",
+      "wrong": [
+       {
+        "id": "equal",
+        "value": 1.585,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "nats",
+        "value": 1.055,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.2 \\times 2.322 + 2 \\times 0.4 \\times 1.322 \\approx 1.522$ bits.",
+      "generic": "Not yet. The outcome is a three-way split, 0.2, 0.4, 0.4; take its entropy.",
+      "byKey": {
+       "equal": "Three equal shares would hold 1.585. Falls are only half as common as the others.",
+       "nats": "That figure, 1.055, is in nats."
+      }
+     },
+     "explain": {
+      "text": "Flat and rise each give $0.4 \\times 1.322 = 0.529$, and fall gives $0.2 \\times 2.322 = 0.464$: 1.522 bits."
+     }
+    },
+    {
+     "question": "Treat the six counts over 200 as one distribution. What is its entropy, in bits? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.466,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Joint entropy",
+      "wrong": [
+       {
+        "id": "six",
+        "value": 2.585,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "sum",
+        "value": 2.522,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The six shares 0.15, 0.2, 0.15, 0.05, 0.2, 0.25 have entropy about 2.466 bits.",
+      "generic": "Not yet. Turn each of the six counts into a share of 200 and take the entropy of all six.",
+      "byKey": {
+       "six": "Six equal cells would give 2.585; these are uneven.",
+       "sum": "Adding the flag's 1 bit to the outcome's 1.522 assumes independence. Use the six cells."
+      }
+     },
+     "explain": {
+      "text": "The terms are 0.411, 0.464, 0.411, 0.216, 0.464 and 0.5, which total 2.466 bits."
+     }
+    },
+    {
+     "question": "The flag splits the hours 100 and 100, so it holds 1 bit. Using parts 2 and 3, how many bits does the flag carry about the next hour? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.056,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Mutual information",
+      "wrong": [
+       {
+        "id": "joint",
+        "value": 2.466,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "neg",
+        "value": -0.056,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1 + 1.522 - 2.466 = 0.056$ bits.",
+      "generic": "Not yet. Add the flag's 1 bit to part 2, then take away part 3.",
+      "byKey": {
+       "joint": "That repeats part 3. The information is what the two separate entropies have in common.",
+       "neg": "A negative answer means the subtraction ran the wrong way."
+      }
+     },
+     "explain": {
+      "text": "The flag and the outcome overlap by $1 + 1.522 - 2.466 \\approx 0.056$ bits: the KL divergence of the six cells from the products of their margins."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-merge-and-bias",
+   "difficulty": 5,
+   "skills": [
+    "if-mutual"
+   ],
+   "prose": "The same broker's 200 hours: under flag A, 30 fell, 40 were flat and 30 rose; under B, 10, 40 and 50. Their plug-in mutual information is 0.056 bits. A colleague keeps only \"rose\" or \"did not rise\".",
+   "parts": [
+    {
+     "question": "With flat and fall merged, the counts are A: 70 and 30, B: 50 and 50. What is the plug-in mutual information now, in bits? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.03,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Mutual information",
+      "wrong": [
+       {
+        "id": "same",
+        "value": 0.056,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "nats",
+        "value": 0.021,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "About 0.030 bits: the merge threw away the fall against flat contrast.",
+      "generic": "Not yet. Work out $H(\\text{flag}) + H(\\text{rose}) - H(\\text{cells})$ for the 2 by 2 counts.",
+      "byKey": {
+       "same": "Merging changed the table, and fall against flat differed between A and B. Some information went.",
+       "nats": "Natural logs give 0.021 nats; the question asks for bits."
+      }
+     },
+     "explain": {
+      "text": "Rose has share 0.4, so $H(\\text{rose}) \\approx 0.971$; the four cells have entropy about 1.941; with the flag's 1 bit, $I \\approx 0.030$."
+     }
+    },
+    {
+     "question": "What plug-in bias does the three-outcome table carry on 200 hours? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0072,
+      "tol": {
+       "abs": 5e-05
+      },
+      "unit": "bits",
+      "label": "Bias",
+      "wrong": [
+       {
+        "id": "merged",
+        "value": 0.0036,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "no-ln",
+        "value": 0.005,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$(2 - 1)(3 - 1) / (400 \\ln 2) \\approx 0.0072$ bits.",
+      "generic": "Not yet. Two flag states and three outcomes give $(1)(2) = 2$ in the numerator.",
+      "byKey": {
+       "merged": "That is the bias of the two-outcome table. Three outcomes double it.",
+       "no-ln": "Without $\\ln 2$ the bias is in nats."
+      }
+     },
+     "explain": {
+      "text": "The numerator is $(2 - 1)(3 - 1) = 2$ and the denominator $2 \\times 200 \\times 0.6931 \\approx 277.2$, so the bias is about 0.0072."
+     }
+    },
+    {
+     "question": "Using part 2, what is the corrected estimate for the three-outcome table? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.049,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Corrected estimate",
+      "wrong": [
+       {
+        "id": "plug-in",
+        "value": 0.056,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "added",
+        "value": 0.063,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.056 - 0.0072 \\approx 0.049$ bits.",
+      "generic": "Not yet. Take the bias of part 2 from the plug-in 0.056.",
+      "byKey": {
+       "plug-in": "That is still the plug-in figure. Remove the bias.",
+       "added": "Adding the bias moves the wrong way: the plug-in figure is already too high."
+      }
+     },
+     "explain": {
+      "text": "The corrected three-outcome figure is $0.0560 - 0.0072 \\approx 0.049$ bits."
+     }
+    },
+    {
+     "question": "Correct the two-outcome table of part 1 the same way. What is its corrected estimate, in bits? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.027,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Corrected estimate",
+      "wrong": [
+       {
+        "id": "uncorrected",
+        "value": 0.03,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "three-bias",
+        "value": 0.023,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Its bias is $1 / (400 \\ln 2) \\approx 0.0036$, so $0.030 - 0.0036 \\approx 0.027$ bits.",
+      "generic": "Not yet. The two-outcome table has $(2 - 1)(2 - 1) = 1$ in the numerator.",
+      "byKey": {
+       "uncorrected": "Part 1's figure still holds its bias.",
+       "three-bias": "That removes the three-outcome bias. The merged table has half of it."
+      }
+     },
+     "explain": {
+      "text": "Even after both corrections, the three-outcome table keeps more: 0.049 bits against 0.027. The merge lost real information, not just bias."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-relay",
+   "difficulty": 3,
+   "skills": [
+    "if-mutual"
+   ],
+   "prose": "A trading venue sends a fair yes or no status bit $X$ to a relay, which passes it on as $Y$; the relay misreads it with chance 0.05. A second relay passes $Y$ on as $Z$ and misreads with chance 0.2.",
+   "parts": [
+    {
+     "question": "How many bits does $Y$ carry about $X$? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.714,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Mutual information",
+      "wrong": [
+       {
+        "id": "left",
+        "value": 0.286,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "rate",
+        "value": 0.95,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1 - H(0.05, 0.95) \\approx 1 - 0.286 = 0.714$ bits.",
+      "generic": "Not yet. Given $X$, the relay leaves $H(0.05, 0.95)$ of doubt about $Y$.",
+      "byKey": {
+       "left": "That is the doubt the first relay leaves, not what $Y$ tells.",
+       "rate": "The relay is right 95% of the time; bits come from the entropy."
+      }
+     },
+     "explain": {
+      "text": "The first relay's misreads leave 0.286 bits of doubt, so $Y$ carries 0.714 of $X$'s 1 bit."
+     }
+    },
+    {
+     "question": "What is the chance that $Z$ differs from $X$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.23,
+      "tol": {
+       "abs": 0.001
+      },
+      "label": "Chance of a difference",
+      "wrong": [
+       {
+        "id": "sum",
+        "value": 0.25,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "both",
+        "value": 0.01,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.05 \\times 0.8 + 0.95 \\times 0.2 = 0.23$.",
+      "generic": "Not yet. $Z$ differs when exactly one relay misreads.",
+      "byKey": {
+       "sum": "Adding 0.05 and 0.2 counts the case where both misread, which puts $Z$ back to $X$.",
+       "both": "That is the chance both misread."
+      }
+     },
+     "explain": {
+      "text": "Exactly one misread happens with chance $0.04 + 0.19 = 0.23$; two misreads cancel."
+     }
+    },
+    {
+     "question": "Using part 2, how many bits does $Z$ carry about $X$? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.222,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Mutual information",
+      "wrong": [
+       {
+        "id": "first",
+        "value": 0.714,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "second-only",
+        "value": 0.278,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1 - H(0.23, 0.77) \\approx 1 - 0.778 = 0.222$ bits, below part 1.",
+      "generic": "Not yet. With a 0.23 chance of a difference, find $1 - H(0.23, 0.77)$.",
+      "byKey": {
+       "first": "That is what $Y$ carries. The second relay loses more.",
+       "second-only": "That ignores the first relay: 0.2 alone gives 0.278."
+      }
+     },
+     "explain": {
+      "text": "From 0.714 bits at the first relay to 0.222 at the second: each step computed from the last can only lose information."
+     }
+    }
+   ]
+  }
+ ]
+}
