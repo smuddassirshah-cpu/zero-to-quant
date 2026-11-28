@@ -1,0 +1,464 @@
+{
+ "id": "homework-1",
+ "course": "makemore",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-best-alpha",
+   "difficulty": 5,
+   "skills": [
+    "mk-bigram",
+    "mk-loss"
+   ],
+   "prose": "Choose the smoothing on names the counts never saw. Use the course’s symbol order (`.` is 0, a to z are 1 to 26) and add-one style smoothing: add `alpha` to every count, then normalise each row. Pick the alpha with the least average dev loss in nats.",
+   "question": "Write `best_alpha(train_words, dev_words, alphas)`: return `(alpha, loss)` for the alpha with the least dev loss, the loss rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef best_alpha(train_words, dev_words, alphas):\n    # count the training names, smooth with each alpha, score the dev names;\n    # return (best alpha, its dev loss rounded to 4 places)\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\nINDEX = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\nINDEX[\".\"] = 0\n\n\ndef pairs(ws):\n    for w in ws:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            yield INDEX[a], INDEX[b]\n\n\ndef best_alpha(train_words, dev_words, alphas):\n    N = np.zeros((27, 27))\n    for a, b in pairs(train_words):\n        N[a, b] += 1\n    best = None\n    for alpha in alphas:\n        M = N + alpha\n        rows = M.sum(axis=1, keepdims=True)\n        P = np.divide(M, rows, out=np.zeros_like(M), where=rows > 0)\n        total, n = 0.0, 0\n        for a, b in pairs(dev_words):\n            if P[a, b] == 0:\n                total = math.inf\n                break\n            total -= math.log(P[a, b])\n            n += 1\n        loss = total / n if n and total < math.inf else math.inf\n        if best is None or loss < best[1]:\n            best = (alpha, loss)\n    return (best[0], round(best[1], 4))\n",
+    "examples": [
+     {
+      "call": "best_alpha(['ab'], ['ab'], [0, 1])",
+      "expect": "(0, 0.0)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "best_alpha(['ab', 'ab'], ['ab'], [0, 1])",
+      "expect": "(0, 0.0)",
+      "compare": "equal"
+     },
+     {
+      "call": "best_alpha(['ab', 'ba'], ['bb'], [0, 0.5, 2])",
+      "expect": "(0.5, 2.7016)",
+      "compare": "equal"
+     },
+     {
+      "call": "best_alpha(tr7, dv7, [0.01, 0.1, 0.3, 1, 3, 10])",
+      "expect": "(0.3, 2.4629)",
+      "compare": "equal"
+     },
+     {
+      "call": "best_alpha(tr7, dv7, [1, 3, 10])",
+      "expect": "(1, 2.463)",
+      "compare": "equal"
+     },
+     {
+      "call": "best_alpha(tr7, tr7, [0, 1])",
+      "expect": "(0, 2.4527)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. Two use planted lists, one with an unseen dev pair. Three use the fresh split from `np.random.default_rng(7)`: `tr7` and `dv7`, 25,626 and 3,203 names, with two lists of alphas and once scored on its own training names. Each answer must equal the expected `(alpha, loss)`; an unseen pair makes that alpha’s loss `math.inf`.",
+    "prelude": "import math\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm7 = np.random.default_rng(7).permutation(len(words))\ntr7 = [words[i] for i in perm7[:25626]]\ndv7 = [words[i] for i in perm7[25626:28829]]\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt"
+    },
+    "budget": 8000,
+    "mutants": [
+     {
+      "source": "import math\nimport numpy as np\n\nINDEX = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\nINDEX[\".\"] = 0\n\n\ndef pairs(ws):\n    for w in ws:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            yield INDEX[a], INDEX[b]\n\n\ndef best_alpha(train_words, dev_words, alphas):\n    N = np.zeros((27, 27))\n    for a, b in pairs(train_words):\n        N[a, b] += 1\n    best = None\n    for alpha in alphas:\n        M = N + alpha\n        rows = M.sum(axis=1, keepdims=True)\n        P = np.divide(M, rows, out=np.zeros_like(M), where=rows > 0)\n        total, n = 0.0, 0\n        for a, b in pairs(dev_words):\n            if P[a, b] == 0:\n                total = math.inf\n                break\n            total -= math.log(P[a, b])\n            n += 1\n        loss = total / n if n and total < math.inf else math.inf\n        if best is None or loss > best[1]:\n            best = (alpha, loss)\n    return (best[0], round(best[1], 4))\n",
+      "test": 1,
+      "symptom": "Keeps the alpha with the largest dev loss."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nINDEX = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\nINDEX[\".\"] = 0\n\n\ndef pairs(ws):\n    for w in ws:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            yield INDEX[a], INDEX[b]\n\n\ndef best_alpha(train_words, dev_words, alphas):\n    N = np.zeros((27, 27))\n    for a, b in pairs(train_words):\n        N[a, b] += 1\n    best = None\n    for alpha in alphas:\n        M = N + alpha\n        rows = M.sum(axis=1, keepdims=True)\n        P = np.divide(M, rows, out=np.zeros_like(M), where=rows > 0)\n        total, n = 0.0, 0\n        for a, b in pairs(train_words):\n            if P[a, b] == 0:\n                total = math.inf\n                break\n            total -= math.log(P[a, b])\n            n += 1\n        loss = total / n if n and total < math.inf else math.inf\n        if best is None or loss < best[1]:\n            best = (alpha, loss)\n    return (best[0], round(best[1], 4))\n",
+      "test": 2,
+      "symptom": "Scores the training names instead of the dev names."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nINDEX = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\nINDEX[\".\"] = 0\n\n\ndef pairs(ws):\n    for w in ws:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            yield INDEX[a], INDEX[b]\n\n\ndef best_alpha(train_words, dev_words, alphas):\n    N = np.zeros((27, 27))\n    for a, b in pairs(train_words):\n        N[a, b] += 1\n    best = None\n    for alpha in alphas:\n        M = N + alpha\n        rows = M.sum()\n        P = np.divide(M, rows, out=np.zeros_like(M), where=rows > 0)\n        total, n = 0.0, 0\n        for a, b in pairs(dev_words):\n            if P[a, b] == 0:\n                total = math.inf\n                break\n            total -= math.log(P[a, b])\n            n += 1\n        loss = total / n if n and total < math.inf else math.inf\n        if best is None or loss < best[1]:\n            best = (alpha, loss)\n    return (best[0], round(best[1], 4))\n",
+      "test": 1,
+      "symptom": "Normalises by the whole table, so rows are not chances."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nINDEX = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\nINDEX[\".\"] = 0\n\n\ndef pairs(ws):\n    for w in ws:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            yield INDEX[a], INDEX[b]\n\n\ndef best_alpha(train_words, dev_words, alphas):\n    N = np.zeros((27, 27))\n    for a, b in pairs(train_words):\n        N[a, b] += 1\n    best = None\n    for alpha in alphas:\n        M = N + alpha\n        rows = M.sum(axis=1, keepdims=True)\n        P = np.divide(M, rows, out=np.zeros_like(M), where=rows > 0)\n        total, n = 0.0, 0\n        for a, b in pairs(dev_words):\n            if P[a, b] == 0:\n                total = math.inf\n                break\n            total -= math.log(P[a, b])\n            n += 1\n        loss = total / n if n and total < math.inf else math.inf\n        if best is None or loss < best[1]:\n            best = (alpha, loss)\n    return (best[0], round(best[1] / math.log(2), 4))\n",
+      "test": 2,
+      "symptom": "Reports the loss in bits."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your choice matches: on the seed-7 split, alpha 0.3 with 2.4629.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "The dev name bb holds b then b, never seen in training: alpha 0 makes its loss infinite."
+    }
+   },
+   "explain": {
+    "text": "Count once, then for each alpha smooth, normalise rows and average $-\\ln q$ over the dev pairs; keep the least. On the seed-7 split 0.3 wins with 2.4629, just ahead of 1 at 2.4630."
+   },
+   "title": "Choosing the smoothing"
+  },
+  {
+   "id": "h-top-start",
+   "difficulty": 4,
+   "skills": [
+    "mk-bigram"
+   ],
+   "prose": "A trigram model would condition on two symbols. Its first row of interest is how names begin: the first two letters together.",
+   "question": "Write `top_start(words)`: return the most common first two letters of the names and how many names start with them.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def top_start(words):\n    # the most common first two letters, and how many names start with them;\n    # break a tie by the alphabetically first pair\n    ...\n",
+    "solution": "def top_start(words):\n    counts = {}\n    for w in words:\n        if len(w) >= 2:\n            counts[w[:2]] = counts.get(w[:2], 0) + 1\n    best = min(counts, key=lambda s: (-counts[s], s))\n    return (best, counts[best])\n",
+    "examples": [
+     {
+      "call": "top_start(['anna', 'ann', 'bo'])",
+      "expect": "('an', 2)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "top_start(['emma', 'emily', 'ava', 'eva'])",
+      "expect": "('em', 2)",
+      "compare": "equal"
+     },
+     {
+      "call": "top_start(['bo', 'al', 'bob', 'alf'])",
+      "expect": "('al', 2)",
+      "compare": "equal"
+     },
+     {
+      "call": "top_start(words)",
+      "expect": "('ma', 1453)",
+      "compare": "equal"
+     },
+     {
+      "call": "top_start(['j', 'j', 'j', 'jo'])",
+      "expect": "('jo', 1)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests: three planted lists (one with a tie, one with a one-letter name, which has no first two letters) and the whole names file. Each answer must equal the expected `(letters, count)`.",
+    "prelude": "import math\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt"
+    },
+    "mutants": [
+     {
+      "source": "def top_start(words):\n    counts = {}\n    for w in words:\n        if len(w) >= 2:\n            counts[w[-2:]] = counts.get(w[-2:], 0) + 1\n    best = min(counts, key=lambda s: (-counts[s], s))\n    return (best, counts[best])\n",
+      "test": 1,
+      "symptom": "Counts the last two letters instead of the first two."
+     },
+     {
+      "source": "def top_start(words):\n    counts = {}\n    for w in words:\n        if len(w) >= 2:\n            counts[w[:2]] = counts.get(w[:2], 0) + 1\n    best = max(counts, key=lambda s: (counts[s], s))\n    return (best, counts[best])\n",
+      "test": 2,
+      "symptom": "Breaks a tie toward the alphabetically last pair."
+     },
+     {
+      "source": "def top_start(words):\n    counts = {}\n    for w in words:\n        if len(w) >= 1:\n            counts[w[:2]] = counts.get(w[:2], 0) + 1\n    best = min(counts, key=lambda s: (-counts[s], s))\n    return (best, counts[best])\n",
+      "test": 4,
+      "symptom": "Counts a one-letter name as if it had two first letters."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your count matches: ma starts 1,453 names.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-4": "A one-letter name has no first two letters: leave it out."
+    }
+   },
+   "explain": {
+    "text": "Count `w[:2]` over the names with at least two letters and take the largest count, breaking ties alphabetically. In the file ma leads with 1,453, ahead of ja (1,255) and ka (1,254)."
+   },
+   "title": "How names begin"
+  },
+  {
+   "id": "h-mle-proof",
+   "difficulty": 4,
+   "skills": [
+    "mk-bigram"
+   ],
+   "prose": "Prove that normalised counts are the maximum likelihood estimate for one row of $K$ outcomes.",
+   "question": "Put the steps in order and leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "h1",
+      "text": "A row of counts $n_1, \\dots, n_K$ with total $n$ has log-likelihood $\\sum_k n_k \\ln q_k$ under chances $q$."
+     },
+     {
+      "id": "h2",
+      "text": "Divide by $n$: it is $n \\sum_k \\hat p_k \\ln q_k$ with $\\hat p_k = n_k / n$."
+     },
+     {
+      "id": "h3",
+      "text": "So it equals $-n\\,\\big(H(\\hat p) + D(\\hat p \\,\\|\\, q)\\big)$, since $-\\sum_k \\hat p_k \\ln q_k$ is the cross-entropy $H(\\hat p, q)$."
+     },
+     {
+      "id": "h4",
+      "text": "$H(\\hat p)$ is fixed by the data, so only $D(\\hat p \\,\\|\\, q)$ changes with $q$."
+     },
+     {
+      "id": "h5",
+      "text": "Gibbs: $D \\ge 0$, and $D = 0$ only at $q = \\hat p$; so $q = \\hat p$ is the unique maximum."
+     },
+     {
+      "id": "hx",
+      "text": "Since $\\ln$ is increasing, the best $q$ puts all its chance on the largest count.",
+      "why": "Putting all chance on one outcome gives every other observed outcome $\\ln 0 = -\\infty$; the log of a product is a sum over all the counts."
+     }
+    ],
+    "answer": [
+     "h1",
+     "h2",
+     "h3",
+     "h4",
+     "h5"
+    ],
+    "distractors": [
+     "hx"
+    ]
+   },
+   "feedback": {
+    "correct": "The log-likelihood is $-n$ times a cross-entropy, maximised only where the KL term vanishes.",
+    "generic": "Not quite. Each step needs the one before it.",
+    "byKey": {
+     "hx": "That step ignores the other counts: any outcome given chance 0 costs $-\\infty$."
+    }
+   },
+   "explain": {
+    "text": "The log-likelihood is $-n(H(\\hat p) + D(\\hat p \\| q))$. Only the KL term depends on $q$, and it is 0 only at $q = \\hat p$."
+   },
+   "title": "The row MLE"
+  },
+  {
+   "id": "h-half-alpha",
+   "difficulty": 3,
+   "skills": [
+    "mk-bigram"
+   ],
+   "prose": "After q the names show u 206 times in 272 pairs.",
+   "question": "With $\\alpha = 0.5$ added to all 27 counts, what is the chance of u after q? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7233,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "mle",
+      "value": 0.7574,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "one-cell",
+      "value": 0.7578,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(206 + 0.5)/(272 + 13.5) = 0.7233$.",
+    "generic": "Not quite. The row total grows by $27 \\times 0.5$.",
+    "byKey": {
+     "mle": "That is the unsmoothed share. Add 0.5 to every count first.",
+     "one-cell": "You added 0.5 to the total once; all 27 cells gain 0.5."
+    }
+   },
+   "explain": {
+    "text": "Every cell gains 0.5, so the total gains 13.5: $206.5 / 285.5 = 0.7233$. Smoothing moves a large count only a little."
+   },
+   "title": "Half a count"
+  },
+  {
+   "id": "h-log-ratio",
+   "difficulty": 4,
+   "skills": [
+    "mk-train"
+   ],
+   "prose": "In the first 500 training names, a is followed by the end 105 times and by n 81 times. A one-layer network is trained on those names until its loss reaches the counts’.",
+   "question": "What does $W_{a,\\text{end}} - W_{a,n}$ approach? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2595,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 1.2963,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "diff",
+      "value": 24,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln(105/81) = 0.2595$.",
+    "generic": "Not quite. The ratio of two chances is $e$ to the difference of their logits.",
+    "byKey": {
+     "ratio": "That is the ratio of chances; the logits differ by its log.",
+     "diff": "You subtracted the counts; logits are logs of chances up to a constant."
+    }
+   },
+   "explain": {
+    "text": "At the optimum the chances after a are the count shares, and $p_{\\text{end}}/p_n = e^{W_{a,\\text{end}} - W_{a,n}}$. So the difference approaches $\\ln(105/81) = 0.2595$."
+   },
+   "title": "Logits as log counts"
+  },
+  {
+   "id": "h-why-floor",
+   "difficulty": 5,
+   "skills": [
+    "mk-bigram",
+    "mk-train"
+   ],
+   "title": "Why the network cannot win",
+   "kind": "longform",
+   "prompt": "A one-layer network on one-hot letters is trained on some names. Explain why it can never score a lower average loss on those same names than the normalised count table, and say what would have to change for a network to beat it. Use the language of likelihood and cross-entropy.",
+   "model": "With a one-hot input, the network's output for input $a$ depends only on row $a$ of $W$: $\\operatorname{softmax}(W_a)$. So whatever the weights, the network is a table of 27 rows of chances, one row per current symbol.\n\nThe average loss on the training names splits by row: $L = \\frac{1}{n}\\sum_a N_a\\, H(\\hat p_a, q_a)$, where $\\hat p_a$ is row $a$ of the normalised counts and $q_a$ the model's row. Each term is $N_a\\big(H(\\hat p_a) + D(\\hat p_a \\| q_a)\\big)$, and $D \\ge 0$ with equality only at $q_a = \\hat p_a$. So the least possible loss is $\\frac{1}{n}\\sum_a N_a H(\\hat p_a)$, reached by the counts: 2.3820 on the 500-name subset.\n\nThe network can approach that floor (2.4122 after 100 steps, 2.3830 after 3,000) but never pass it. It cannot even reach it exactly where a count is 0, since softmax never gives a chance of 0. To beat the counts it needs more input: a context of several letters, so that it is no longer a 27-row table. That is the MLP of level 2. A network can also do better on new names than an unsmoothed table, but that is a held-out question, not one about the training names.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the output depends only on one row of $W$, so the network is a 27-row table of chances"
+    },
+    {
+     "points": 2,
+     "text": "Writes the training loss as a sum over rows of $N_a H(\\hat p_a, q_a)$ (or as average negative log-likelihood)"
+    },
+    {
+     "points": 2,
+     "text": "Uses $H = H(\\hat p) + D(\\hat p \\| q)$ with $D \\ge 0$, equal to 0 only at $q = \\hat p$"
+    },
+    {
+     "points": 1,
+     "text": "Concludes the counts are the floor; quotes 2.3820 or the curve approaching it"
+    },
+    {
+     "points": 1,
+     "text": "Notes zero counts: softmax never reaches chance 0, so the floor is approached, not reached"
+    },
+    {
+     "points": 2,
+     "text": "Says what would change it: more context in the input (or another question, held-out loss)"
+    }
+   ]
+  },
+  {
+   "id": "h-perf",
+   "difficulty": 4,
+   "skills": [
+    "mk-bigram",
+    "mk-loss"
+   ],
+   "prose": "From a blank start, build the bigram model and its loss. `.` is index 0 and a to z are 1 to 26; the course split gives `train` and `dev`.",
+   "question": "Write `bigram_model(words, alpha)`, returning the 27 by 27 table of next-symbol chances with `alpha` added to every count, and `avg_nll(P, words)`, the average loss in nats a pair (`math.inf` if any pair has chance 0).",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef bigram_model(words, alpha):\n    ...\n\n\ndef avg_nll(P, words):\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef bigram_model(words, alpha):\n    N = np.zeros((27, 27))\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            N[SYMBOLS.index(a), SYMBOLS.index(b)] += 1\n    M = N + alpha\n    return M / M.sum(axis=1, keepdims=True)\n\n\ndef avg_nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[SYMBOLS.index(a), SYMBOLS.index(b)]\n            if p == 0:\n                return math.inf\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+    "examples": [
+     {
+      "call": "round(float(bigram_model(['ab'], 0)[0, 1]), 6)",
+      "expect": "1.0",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(float(bigram_model(['ab', 'ab', 'b'], 0)[2, 0]), 6)",
+      "expect": "1.0",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(bigram_model(['ab', 'b'], 1)[:3, :3], 6).tolist()",
+      "expect": "[[0.034483, 0.068966, 0.068966], [0.035714, 0.035714, 0.071429], [0.103448, 0.034483, 0.034483]]",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(bigram_model(train, 0)[14, 0]), 6)",
+      "expect": "0.36988",
+      "compare": "equal"
+     },
+     {
+      "call": "round(avg_nll(bigram_model(train, 1), dev), 4)",
+      "expect": "2.4514",
+      "compare": "equal"
+     },
+     {
+      "call": "avg_nll(bigram_model(train, 0), ['tzvi']) == math.inf",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(avg_nll(bigram_model(['ab'], 0), ['ab']), 6)",
+      "expect": "0.0",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(np.allclose(bigram_model(train, 0.5).sum(axis=1), 1, rtol=0, atol=1e-12))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: planted lists with alpha 0 and 1, a count from the training names, and rows that add to 1. Others check the dev loss with add-one counts to 4 places and an unseen pair (`math.inf`). `train` (25,626 names) and `dev` (3,203) come from the course split. `.` is index 0 and a to z are 1 to 26.",
+    "prelude": "import math\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain = [words[i] for i in perm[:25626]]\ndev = [words[i] for i in perm[25626:28829]]\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt"
+    },
+    "budget": 8000,
+    "mutants": [
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef bigram_model(words, alpha):\n    N = np.zeros((27, 27))\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            N[SYMBOLS.index(a), SYMBOLS.index(b)] += 1\n    M = N + alpha\n    return M / M.sum()\n\n\ndef avg_nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[SYMBOLS.index(a), SYMBOLS.index(b)]\n            if p == 0:\n                return math.inf\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+      "test": 1,
+      "symptom": "Normalises by the whole table."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef bigram_model(words, alpha):\n    N = np.zeros((27, 27))\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            N[SYMBOLS.index(a), SYMBOLS.index(b)] += 1\n    M = N + alpha\n    return M / N.sum(axis=1, keepdims=True)\n\n\ndef avg_nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[SYMBOLS.index(a), SYMBOLS.index(b)]\n            if p == 0:\n                return math.inf\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+      "test": 2,
+      "symptom": "Leaves alpha out of the row total."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef bigram_model(words, alpha):\n    N = np.zeros((27, 27))\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            N[SYMBOLS.index(a), SYMBOLS.index(b)] += 1\n    M = N + alpha\n    return M / M.sum(axis=1, keepdims=True)\n\n\ndef avg_nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[SYMBOLS.index(a), SYMBOLS.index(b)]\n            if p == 0:\n                return math.inf\n            total -= math.log2(p)\n            n += 1\n    return total / n\n",
+      "test": 4,
+      "symptom": "Logs in base 2: bits, not nats."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef bigram_model(words, alpha):\n    N = np.zeros((27, 27))\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            N[SYMBOLS.index(a), SYMBOLS.index(b)] += 1\n    M = N + alpha\n    return M / M.sum(axis=1, keepdims=True)\n\n\ndef avg_nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[SYMBOLS.index(a), SYMBOLS.index(b)]\n            if p == 0:\n                continue\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+      "test": 5,
+      "symptom": "Skips an unseen pair instead of returning infinity."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef bigram_model(words, alpha):\n    N = np.zeros((27, 27))\n    for w in words:\n        cs = \".\" + w\n        for a, b in zip(cs, cs[1:]):\n            N[SYMBOLS.index(a), SYMBOLS.index(b)] += 1\n    M = N + alpha\n    return M / M.sum(axis=1, keepdims=True)\n\n\ndef avg_nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[SYMBOLS.index(a), SYMBOLS.index(b)]\n            if p == 0:\n                return math.inf\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+      "test": 1,
+      "symptom": "Builds the table with no end mark."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your model and loss pass every hidden test.",
+    "generic": "Not quite. Read the first failing test."
+   },
+   "explain": {
+    "text": "Count the pairs with both marks, add `alpha`, divide each row by its own total; then average $-\\ln P_{ab}$ over every pair. With add-one counts from the training names the dev loss is 2.4514."
+   },
+   "title": "Performance task: a bigram model",
+   "performance": "code"
+  }
+ ]
+}

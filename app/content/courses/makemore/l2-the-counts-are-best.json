@@ -1,0 +1,1211 @@
+{
+ "id": "l2-the-counts-are-best",
+ "course": "makemore",
+ "title": "The counts are the best table",
+ "minutes": 15,
+ "objectives": [
+  "Derive that normalised counts maximise the likelihood of a bigram model, and smooth the zero counts."
+ ],
+ "skills": [
+  "mk-bigram"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two rows for q",
+   "prose": "After q the names give 272 pairs: u 206 times, the end 28, a 13, i 13 and other letters 12. Two models offer a row of chances for what follows q.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "u",
+      "end",
+      "a",
+      "i",
+      "other"
+     ],
+     "yLabel": "Chance",
+     "xLabel": "After q",
+     "groups": [
+      {
+       "id": "A",
+       "label": "Row A"
+      },
+      {
+       "id": "B",
+       "label": "Row B"
+      }
+     ],
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": {
+       "u": 0.9,
+       "end": 0.04,
+       "a": 0.02,
+       "i": 0.02,
+       "other": 0.02
+      },
+      "B": {
+       "u": 0.7574,
+       "end": 0.1029,
+       "a": 0.0478,
+       "i": 0.0478,
+       "other": 0.0441
+      }
+     }
+    }
+   },
+   "question": "Which row gives these 272 pairs the higher likelihood?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "B",
+      "text": "Row B, the shares of the counts",
+      "correct": true
+     },
+     {
+      "id": "A",
+      "text": "Row A, surer of u",
+      "why": "You rewarded the row for being sure of u. It pays $-\\ln 0.04$ on each of the 28 endings."
+     },
+     {
+      "id": "tie",
+      "text": "They tie, since both favour u",
+      "why": "Both favour u, but the likelihood weighs every pair; the 66 that are not u decide it."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The likelihood multiplies the chance of every one of the 272 pairs."
+    },
+    {
+     "rung": "step",
+     "text": "Compare $\\sum_b N_b \\ln q_b$: Row B gives $-237.43$, Row A $-260.49$."
+    }
+   ],
+   "feedback": {
+    "correct": "Row B: its log-likelihood is $-237.43$ against $-260.49$ for Row A.",
+    "generic": "Not quite. Weigh each chance by how often its pair occurs.",
+    "byKey": {
+     "A": "You picked the surer row. Its 0.04 for the end costs $28 \\times 3.22$ nats on the endings alone."
+    }
+   },
+   "explain": {
+    "text": "The log-likelihood is $\\sum_b N_b \\ln q_b$: $-237.43$ for Row B and $-260.49$ for Row A. Row A gains on the 206 u’s but loses more on the 66 others. Row B is the counts divided by 272."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Slide the chance of u",
+   "prose": "Move the chance of u. The other four share what is left in proportion to their counts. The caption gives the log-likelihood of the 272 pairs.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "u",
+      "end",
+      "a",
+      "i",
+      "other"
+     ],
+     "yLabel": "Chance",
+     "xLabel": "After q",
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 3
+    },
+    "state": {
+     "params": {
+      "pu": 0.9
+     },
+     "values": {
+      "u": 0.9,
+      "end": 0.0424,
+      "a": 0.0197,
+      "i": 0.0197,
+      "other": 0.0182
+     }
+    },
+    "derive": {
+     "values.u": "pu",
+     "values.end": "(1-pu)*28/66",
+     "values.a": "(1-pu)*13/66",
+     "values.i": "(1-pu)*13/66",
+     "values.other": "(1-pu)*12/66",
+     "caption": "Log-likelihood of the 272 pairs: {{fixed(206*ln(pu) + 28*ln((1-pu)*28/66) + 26*ln((1-pu)*13/66) + 12*ln((1-pu)*12/66), 2)}}"
+    },
+    "controls": [
+     {
+      "bind": "pu",
+      "min": 0.5,
+      "max": 0.99,
+      "step": 0.01,
+      "start": 0.9,
+      "label": "Chance of u",
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "At what chance of u is the log-likelihood largest? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.76,
+    "tol": {
+     "abs": 0.0101
+    },
+    "placeholder": "Decimal",
+    "label": "Chance of u",
+    "wrong": [
+     {
+      "id": "all-u",
+      "value": 0.99,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the caption rise and then fall."
+    },
+    {
+     "rung": "step",
+     "text": "It peaks near $206/272$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 0.76: the peak is at $206/272 = 0.757$, the share of u.",
+    "generic": "Not quite. Slide slowly and find where the caption is least negative.",
+    "byKey": {
+     "all-u": "Near 1 the 66 other pairs get almost no chance, and each costs many nats."
+    }
+   },
+   "explain": {
+    "text": "The log-likelihood peaks at $206/272 = 0.757$, about 0.76: the share of u among the pairs after q. Push higher and the 66 other pairs cost more than u gains.",
+    "canvas": {
+     "params": {
+      "pu": 0.76
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The maximum likelihood row",
+   "prose": "The best chance for u was its share of the row. Name it: the **maximum likelihood estimate** of a row is its normalised counts, $\\hat p_{ab} = N_{ab} / N_a$, where $N_a$ is the row’s total. A bigram row is a 27-sided coin.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "u",
+      "end",
+      "a",
+      "i",
+      "other"
+     ],
+     "yLabel": "Chance",
+     "xLabel": "After q",
+     "groups": [
+      {
+       "id": "A",
+       "label": "Row A"
+      },
+      {
+       "id": "B",
+       "label": "Row B"
+      }
+     ],
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": {
+       "u": 0.9,
+       "end": 0.04,
+       "a": 0.02,
+       "i": 0.02,
+       "other": 0.02
+      },
+      "B": {
+       "u": 0.7574,
+       "end": 0.1029,
+       "a": 0.0478,
+       "i": 0.0478,
+       "other": 0.0441
+      }
+     }
+    }
+   },
+   "question": "What is $\\hat p$ for q then end? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1029,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "whole-table",
+      "value": 0.0001,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide by the row total, 272."
+    },
+    {
+     "rung": "step",
+     "text": "$28 / 272$."
+    }
+   ],
+   "feedback": {
+    "correct": "$28 / 272 = 0.1029$: about one q in ten ends a name.",
+    "generic": "Not quite. Divide the count by its row’s total.",
+    "byKey": {
+     "whole-table": "You divided by all 228,146 pairs. The chance after q divides by the 272 pairs after q."
+    }
+   },
+   "explain": {
+    "text": "The row after q has 272 pairs, 28 of them into the end mark, so $\\hat p = 28/272 = 0.1029$. Every cell of a row is its count over that row’s total."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "Why the shares win",
+   "prose": "Prove it for any row $a$ with $N_a > 0$, using the cross-entropy and KL facts from info level 2. Put the lines in order and leave out the one that does not belong.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "Each of the $N_{ab}$ pairs $a \\to b$ has chance $q_b$, so the row’s log-likelihood is $\\ell(q) = \\sum_b N_{ab} \\ln q_b$ (logs of a product add)."
+     },
+     {
+      "id": "d2",
+      "text": "Write $\\hat p_b = N_{ab}/N_a$, the row’s shares: $\\ell(q) = N_a \\sum_b \\hat p_b \\ln q_b$."
+     },
+     {
+      "id": "d3",
+      "text": "That sum is minus a cross-entropy (info l5): $\\ell(q) = -N_a\\, H(\\hat p, q)$, in nats."
+     },
+     {
+      "id": "d4",
+      "text": "Split it (info l8): $H(\\hat p, q) = H(\\hat p) + D(\\hat p \\,\\|\\, q)$, and $H(\\hat p)$ does not depend on $q$."
+     },
+     {
+      "id": "d5",
+      "text": "By Jensen (info l6), $D(\\hat p \\,\\|\\, q) \\ge 0$, with equality only when $q = \\hat p$."
+     },
+     {
+      "id": "d6",
+      "text": "Since $N_a > 0$, $\\ell(q)$ is largest exactly when $q = \\hat p$: the normalised counts."
+     },
+     {
+      "id": "x1",
+      "text": "Set $\\partial \\ell / \\partial q_b = N_{ab}/q_b = 0$ for each $b$ on its own.",
+      "why": "The chances must add to 1, so they cannot move one at a time; and $N_{ab}/q_b$ is never 0 for a seen pair. The KL route needs no such step."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4",
+     "d5",
+     "d6"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the likelihood of the row’s pairs."
+    },
+    {
+     "rung": "step",
+     "text": "Likelihood, shares, cross-entropy, split, KL at least 0, conclusion."
+    }
+   ],
+   "feedback": {
+    "correct": "The row’s log-likelihood is $-N_a H(\\hat p, q)$, so it peaks where the KL term is 0.",
+    "generic": "Not quite. Each line uses the one before it.",
+    "byKey": {
+     "x1": "Setting each derivative to 0 alone ignores that the chances add to 1. The KL route needs no constraint at all."
+    }
+   },
+   "explain": {
+    "text": "The row’s log-likelihood is $-N_a$ times $H(\\hat p, q) = H(\\hat p) + D(\\hat p \\| q)$. Only the KL term depends on $q$, and it is 0 only at $q = \\hat p$. So the counts over their row total are the maximum likelihood estimate."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Normalise one row",
+   "prose": "Row a holds 33,885 pairs, one for every a in the file.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "end",
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z"
+     ],
+     "yLabel": "Count",
+     "xLabel": "After a"
+    },
+    "state": {
+     "values": {
+      "end": 6640,
+      "a": 556,
+      "b": 541,
+      "c": 470,
+      "d": 1042,
+      "e": 692,
+      "f": 134,
+      "g": 168,
+      "h": 2332,
+      "i": 1650,
+      "j": 175,
+      "k": 568,
+      "l": 2528,
+      "m": 1634,
+      "n": 5438,
+      "o": 63,
+      "p": 82,
+      "q": 60,
+      "r": 3264,
+      "s": 1118,
+      "t": 687,
+      "u": 381,
+      "v": 834,
+      "w": 161,
+      "x": 182,
+      "y": 2050,
+      "z": 435
+     },
+     "caption": "Row a of $N$: 33,885 pairs in all."
+    }
+   },
+   "question": "What is the chance of a then n? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1605,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "whole-table",
+      "value": 0.0238,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "n follows a 5,438 times."
+    },
+    {
+     "rung": "step",
+     "text": "$5{,}438 / 33{,}885$."
+    }
+   ],
+   "feedback": {
+    "correct": "$5{,}438 / 33{,}885 = 0.1605$.",
+    "generic": "Not quite. Divide by row a’s total, 33,885.",
+    "byKey": {
+     "whole-table": "You divided by the whole table. Divide by the 33,885 pairs that start with a."
+    }
+   },
+   "explain": {
+    "text": "n follows a in 5,438 of the 33,885 pairs that start with a, so $\\hat p = 0.1605$. After a, the end mark is likelier still.",
+    "canvas": {
+     "highlight": [
+      "xn"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The coin inside the row",
+   "prose": "In estimation you found that a coin’s maximum likelihood chance of heads is the share of heads. Lump row a into two outcomes: the name ends, or a letter follows.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "end",
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z"
+     ],
+     "yLabel": "Count",
+     "xLabel": "After a"
+    },
+    "state": {
+     "values": {
+      "end": 6640,
+      "a": 556,
+      "b": 541,
+      "c": 470,
+      "d": 1042,
+      "e": 692,
+      "f": 134,
+      "g": 168,
+      "h": 2332,
+      "i": 1650,
+      "j": 175,
+      "k": 568,
+      "l": 2528,
+      "m": 1634,
+      "n": 5438,
+      "o": 63,
+      "p": 82,
+      "q": 60,
+      "r": 3264,
+      "s": 1118,
+      "t": 687,
+      "u": 381,
+      "v": 834,
+      "w": 161,
+      "x": 182,
+      "y": 2050,
+      "z": 435
+     },
+     "caption": "Row a of $N$: 33,885 pairs in all."
+    }
+   },
+   "question": "What is the maximum likelihood chance that a name ends straight after an a? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.196,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "per-name",
+      "value": 0.2073,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ends after a: 6,640 of 33,885."
+    },
+    {
+     "rung": "step",
+     "text": "$6{,}640 / 33{,}885$."
+    }
+   ],
+   "feedback": {
+    "correct": "$6{,}640 / 33{,}885 = 0.1960$: the coin’s share of heads.",
+    "generic": "Not quite. Treat the 33,885 a’s as 33,885 tosses.",
+    "byKey": {
+     "per-name": "You divided by the 32,033 names. Each a is one toss, so divide by the 33,885 a’s."
+    }
+   },
+   "explain": {
+    "text": "With two outcomes the row is a coin tossed 33,885 times, landing “end” 6,640 times. Its MLE is the share, $0.1960$, the same as normalising the row.",
+    "canvas": {
+     "highlight": [
+      "xend"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Smoothing",
+   "prose": "A zero count gives chance 0, and one unseen pair then makes a name impossible. **Smoothing** adds $\\alpha$ to every count before normalising: $q_{ab} = (N_{ab} + \\alpha)/(N_a + 27\\alpha)$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "u",
+      "end",
+      "a",
+      "i",
+      "other"
+     ],
+     "yLabel": "Chance",
+     "xLabel": "After q",
+     "groups": [
+      {
+       "id": "A",
+       "label": "Row A"
+      },
+      {
+       "id": "B",
+       "label": "Row B"
+      }
+     ],
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": {
+       "u": 0.9,
+       "end": 0.04,
+       "a": 0.02,
+       "i": 0.02,
+       "other": 0.02
+      },
+      "B": {
+       "u": 0.7574,
+       "end": 0.1029,
+       "a": 0.0478,
+       "i": 0.0478,
+       "other": 0.0441
+      }
+     }
+    }
+   },
+   "question": "With $\\alpha = 1$, what is the chance of q then b, a pair the names never show? Give a decimal to 5 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.00334,
+    "tol": {
+     "abs": 5e-06
+    },
+    "placeholder": "Decimal",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "one-cell",
+      "value": 0.00366,
+      "tol": {
+       "abs": 5e-06
+      }
+     },
+     {
+      "id": "no-denominator",
+      "value": 0.00368,
+      "tol": {
+       "abs": 5e-06
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every one of the 27 cells in the row gains 1."
+    },
+    {
+     "rung": "step",
+     "text": "$(0 + 1)/(272 + 27) = 1/299$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1/299 = 0.00334$: small, but no longer 0.",
+    "generic": "Not quite. The row total grows by 27, one for each cell.",
+    "byKey": {
+     "one-cell": "You added 1 to the row total once. All 27 cells gain 1, so the total grows by 27.",
+     "no-denominator": "You left the row total at 272. The added counts belong in the total too."
+    }
+   },
+   "explain": {
+    "text": "Adding 1 to all 27 cells makes the row total $272 + 27 = 299$, so the unseen pair gets $1/299 = 0.00334$. The rows still add to 1."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "How much to add",
+   "prose": "We shuffle the names with a fixed seed, count from 25,626 of them (the **training names**) and measure the loss on 3,203 others (the **dev names**). l3 explains the loss; lower is better.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "0.01",
+      "0.1",
+      "1",
+      "10",
+      "100"
+     ],
+     "xLabel": "Smoothing $\\alpha$",
+     "yLabel": "Dev loss (nats)",
+     "yMin": 2.4,
+     "yMax": 2.6,
+     "truncate": true,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "0.01": 2.452,
+      "0.1": 2.4514,
+      "1": 2.4514,
+      "10": 2.4606,
+      "100": 2.5507
+     }
+    }
+   },
+   "question": "Which $\\alpha$ would you keep?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "small",
+      "text": "0.1 or 1: they tie at 2.4514",
+      "correct": true
+     },
+     {
+      "id": "tiny",
+      "text": "0.01: it changes the counts least",
+      "why": "Too little smoothing leaves unseen pairs nearly impossible: the dev loss is 2.4520."
+     },
+     {
+      "id": "big",
+      "text": "100: it protects every unseen pair most",
+      "why": "So much smoothing flattens every row toward equal chances: the dev loss is 2.5507."
+     },
+     {
+      "id": "none",
+      "text": "0: the counts are the MLE",
+      "why": "With no smoothing the dev loss is infinite: 7 dev pairs never occur in the training names."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Lower dev loss is better."
+    },
+    {
+     "rung": "step",
+     "text": "0.1 and 1 both give 2.4514."
+    }
+   ],
+   "feedback": {
+    "correct": "0.1 or 1: both give 2.4514 on the dev names.",
+    "generic": "Not quite. Pick the bar with the least dev loss.",
+    "byKey": {
+     "none": "The MLE is best on the names it was counted from. On new names a zero count is fatal."
+    }
+   },
+   "explain": {
+    "text": "0.1 and 1 tie at 2.4514 to four places, the least dev loss. Less smoothing leaves rare pairs too costly; more flattens the rows. The choice is made on dev names, never on the names counted.",
+    "canvas": {
+     "highlight": [
+      "x0.1",
+      "x1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Divide by what?",
+   "prose": "To turn row n into chances, a learner divides each of its counts by 228,146, the table’s total. Row n holds 18,327 pairs.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "end",
+      "a",
+      "e",
+      "i",
+      "n",
+      "o",
+      "y",
+      "other"
+     ],
+     "xLabel": "After n",
+     "yLabel": "Count"
+    },
+    "state": {
+     "values": {
+      "end": 6763,
+      "a": 2977,
+      "e": 1359,
+      "i": 1725,
+      "n": 1906,
+      "o": 496,
+      "y": 465,
+      "other": 2636
+     }
+    }
+   },
+   "question": "What do that learner’s chances in row n add up to? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0803,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Sum",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The row’s counts add to 18,327."
+    },
+    {
+     "rung": "step",
+     "text": "$18{,}327 / 228{,}146$."
+    }
+   ],
+   "feedback": {
+    "correct": "$18{,}327 / 228{,}146 = 0.0803$, not 1.",
+    "generic": "Not quite. Add the counts first, then divide by 228,146.",
+    "byKey": {
+     "one": "You assumed any division gives chances that add to 1. Only the row’s own total does that."
+    }
+   },
+   "explain": {
+    "text": "Dividing by the table total gives $P(a, b)$, the chance of the pair, not $P(b \\mid a)$. Row n then adds to $0.0803$, the share of pairs that start with n. Divide by the row’s own total, 18,327."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Unseen on the dev names",
+   "prose": "With no smoothing, counts from the training names give 7 pairs of the dev names chance 0. They are z then v twice (tzvi and zvi), and g f, m f, x m, h h and m k (siegfried, comfort, maxmilian, noahh, omkar).",
+   "question": "What is the average loss on the dev names with no smoothing?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "inf",
+      "text": "Infinite: each unseen pair costs $-\\ln 0$",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "2.4514, as with add-one",
+      "why": "Add-one gave 2.4514 because no chance was 0. Without it, 7 chances are 0."
+     },
+     {
+      "id": "skip",
+      "text": "A little above 2.4514, from 7 pairs in 22,807",
+      "why": "You let the 7 pairs cost a lot but not everything. A chance of 0 costs $-\\ln 0 = \\infty$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is $-\\ln 0$?"
+    },
+    {
+     "rung": "step",
+     "text": "One infinite term makes the average infinite."
+    }
+   ],
+   "feedback": {
+    "correct": "Infinite: the 7 names are impossible under the unsmoothed table.",
+    "generic": "Not quite. Work out the cost of one pair with chance 0.",
+    "byKey": {
+     "skip": "However rare, a pair with chance 0 costs $-\\ln 0$, which is infinite, and so is the average."
+    }
+   },
+   "explain": {
+    "text": "A pair with chance 0 costs $-\\ln 0 = \\infty$, so the dev average is infinite. Add-one gives each unseen pair a small chance, and the dev loss becomes 2.4514."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "bigram_probs() and nll() in code",
+   "prose": "Write `bigram_probs(N, alpha)`: add `alpha` to every count, then divide each row by its own total. Write `nll(P, words)`: the average of $-\\ln P_{ab}$ over every pair of the words, marks included, using `index`. If a pair has chance 0, return `math.inf` (`math.log(0)` raises an error).",
+   "question": "Write `bigram_probs` and `nll`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef bigram_probs(N, alpha):\n    # add alpha to every count, then divide each row by its total\n    ...\n\n\ndef nll(P, words):\n    # average of -ln P[a, b] over every pair, marks included;\n    # math.inf if any pair has chance 0\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\n\ndef bigram_probs(N, alpha):\n    M = N + alpha\n    return M / M.sum(axis=1, keepdims=True)\n\n\ndef nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[index[a], index[b]]\n            if p == 0:\n                return math.inf\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+    "examples": [
+     {
+      "call": "np.round(bigram_probs(np.array([[1, 3], [2, 2]]), 0), 6).tolist()",
+      "expect": "[[0.25, 0.75], [0.5, 0.5]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(bigram_probs(np.array([[0, 2, 2], [1, 0, 3], [4, 4, 0]]), 0), 6).tolist()",
+      "expect": "[[0.0, 0.5, 0.5], [0.25, 0.0, 0.75], [0.5, 0.5, 0.0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(bigram_probs(np.array([[0, 2, 2], [1, 0, 3], [4, 4, 0]]), 1), 6).tolist()",
+      "expect": "[[0.142857, 0.428571, 0.428571], [0.285714, 0.142857, 0.571429], [0.454545, 0.454545, 0.090909]]",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(np.allclose(bigram_probs(N_train, 1).sum(axis=1), 1, rtol=0, atol=1e-12))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(nll(bigram_probs(N_train, 1), dev), 4)",
+      "expect": "2.4514",
+      "compare": "equal"
+     },
+     {
+      "call": "nll(bigram_probs(N_train, 0), ['tzvi']) == math.inf",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(nll(np.full((27, 27), 1 / 27), ['ab']), 6)",
+      "expect": "3.295837",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: a planted 3 by 3 table with alpha 0 and 1, and the rows of the training table summing to 1 within 1e-12. Then come the dev loss with add-one counts from the training names (to 4 places), an unseen pair (`nll` must return `math.inf`), and equal chances on a short list. `train`, `dev`, `index`, `counts` and `N_train` are ready.",
+    "prelude": "import math\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain = [words[i] for i in perm[:25626]]\ndev = [words[i] for i in perm[25626:28829]]\nindex = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\nindex[\".\"] = 0\n\n\ndef counts(ws):\n    N = np.zeros((27, 27), dtype=int)\n    for w in ws:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            N[index[a], index[b]] += 1\n    return N\n\n\nN_train = counts(train)\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt"
+    },
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef bigram_probs(N, alpha):\n    M = N + alpha\n    return M / M.sum()\n\n\ndef nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[index[a], index[b]]\n            if p == 0:\n                return math.inf\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+      "test": 1,
+      "symptom": "Divides by the whole table total, so no row adds to 1."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef bigram_probs(N, alpha):\n    M = N + alpha\n    return M / N.sum(axis=1, keepdims=True)\n\n\ndef nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[index[a], index[b]]\n            if p == 0:\n                return math.inf\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+      "test": 2,
+      "symptom": "Adds alpha on top but not to the row total."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef bigram_probs(N, alpha):\n    M = N + alpha\n    return M / M.sum(axis=0, keepdims=True)\n\n\ndef nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[index[a], index[b]]\n            if p == 0:\n                return math.inf\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+      "test": 1,
+      "symptom": "Normalises columns instead of rows."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef bigram_probs(N, alpha):\n    M = N + alpha\n    return M / M.sum(axis=1, keepdims=True)\n\n\ndef nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[index[a], index[b]]\n            if p == 0:\n                return math.inf\n            total -= math.log(p)\n            n += 1\n    return total\n",
+      "test": 4,
+      "symptom": "Sums the losses instead of averaging them."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef bigram_probs(N, alpha):\n    M = N + alpha\n    return M / M.sum(axis=1, keepdims=True)\n\n\ndef nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[index[a], index[b]]\n            if p == 0:\n                return math.inf\n            total -= math.log2(p)\n            n += 1\n    return total / n\n",
+      "test": 4,
+      "symptom": "Logs in base 2: bits where nats are asked."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef bigram_probs(N, alpha):\n    M = N + alpha\n    return M / M.sum(axis=1, keepdims=True)\n\n\ndef nll(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            p = P[index[a], index[b]]\n            if p == 0:\n                continue\n            total -= math.log(p)\n            n += 1\n    return total / n\n",
+      "test": 5,
+      "symptom": "Skips unseen pairs, hiding that the name is impossible."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`M.sum(axis=1, keepdims=True)` gives each row’s total as a column."
+    },
+    {
+     "rung": "step",
+     "text": "In `nll`, return `math.inf` as soon as a pair has chance 0; otherwise divide the total by the number of pairs."
+    }
+   ],
+   "feedback": {
+    "correct": "Your table and loss match: 2.4514 nats a pair on the dev names.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Each row must add to 1: divide by the row’s total, not the table’s.",
+     "test-5": "tzvi holds z then v, unseen in the training names. Return `math.inf` for it."
+    }
+   },
+   "explain": {
+    "text": "`bigram_probs` adds `alpha` and divides each row by its own total, so every row adds to 1. `nll` averages $-\\ln P_{ab}$ over the pairs and is infinite if any chance is 0."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Down after two down days",
+   "prose": "A desk wants the chance of a down day after two down days in a row. In 250 days of one share the pattern occurred 9 times: down followed 6 times and up 3.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "down",
+      "up"
+     ],
+     "xLabel": "Day after two down days",
+     "yLabel": "Count",
+     "showValues": true
+    },
+    "state": {
+     "values": {
+      "down": 6,
+      "up": 3
+     }
+    }
+   },
+   "question": "With add-one smoothing over the two outcomes, what is the chance of down? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6364,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "mle",
+      "value": 0.6667,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "one-cell",
+      "value": 0.7,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add 1 to each of the two counts."
+    },
+    {
+     "rung": "step",
+     "text": "$(6 + 1)/(9 + 2)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$7/11 = 0.6364$, pulled a little toward one half.",
+    "generic": "Not quite. Add 1 to both counts, then normalise.",
+    "byKey": {
+     "mle": "That is the unsmoothed share, $6/9$. With 9 cases the share is shaky; smoothing pulls it toward one half.",
+     "one-cell": "You added 1 to the total once. Each of the two outcomes gains 1, so the total gains 2."
+    }
+   },
+   "explain": {
+    "text": "Add-one gives $(6 + 1)/(9 + 2) = 7/11 = 0.6364$. With 9 cases, a pattern never seen would get chance 0 without it. With 900 cases the smoothing would barely move the share."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A row’s log-likelihood is $\\sum_b N_{ab} \\ln q_b = -N_a H(\\hat p_a, q)$, largest exactly when $q = \\hat p_a$: the counts over the row total are the MLE.",
+   "Divide each row by its own total. Dividing by the table’s total gives pair chances, and no row then adds to 1.",
+   "A zero count makes a new name impossible. Add $\\alpha$ to every count; choose it on dev names: 0.1 and 1 tie at 2.4514."
+  ],
+  "formula": {
+   "name": "Smoothed bigram row",
+   "tex": "q_{ab} = \\dfrac{N_{ab} + \\alpha}{N_a + 27\\alpha}",
+   "note": "$\\alpha = 0$ is the maximum likelihood estimate; 27 symbols in a row."
+  },
+  "trap": "Normalising by the whole table instead of the row; and trusting the unsmoothed counts on names they never saw."
+ },
+ "quiz": [
+  {
+   "id": "q-mle-row",
+   "difficulty": 2,
+   "prose": "After the letter v the names show end 88 times and a 642 times, out of 2,573 pairs.",
+   "question": "What is the maximum likelihood chance of v then a? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2495,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "whole",
+      "value": 0.0028,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$642 / 2{,}573 = 0.2495$.",
+    "generic": "Not quite. Divide by the row’s total.",
+    "byKey": {
+     "whole": "You divided by the whole table. Divide by the 2,573 pairs after v."
+    }
+   },
+   "explain": {
+    "text": "The MLE of a row is its counts over the row total: $642 / 2{,}573 = 0.2495$."
+   }
+  },
+  {
+   "id": "q-add-one",
+   "difficulty": 3,
+   "prose": "A letter starts 10 pairs, 4 of them followed by e.",
+   "question": "With add-one smoothing over 27 symbols, what is the chance of e next? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1351,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "mle",
+      "value": 0.4,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.4545,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(4 + 1)/(10 + 27) = 5/37 = 0.1351$.",
+    "generic": "Not quite. All 27 cells gain 1.",
+    "byKey": {
+     "mle": "That is the unsmoothed share. Add 1 to all 27 counts first.",
+     "one": "You added 1 to the total once. All 27 cells gain 1."
+    }
+   },
+   "explain": {
+    "text": "Add-one gives $(4 + 1)/(10 + 27) = 5/37 = 0.1351$. With only 10 pairs, smoothing moves the chance a long way from $0.4$."
+   }
+  },
+  {
+   "id": "q-big-alpha",
+   "difficulty": 3,
+   "question": "What happens to a row as $\\alpha$ grows very large?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "flat",
+      "text": "Every chance tends to $1/27$",
+      "correct": true
+     },
+     {
+      "id": "mle",
+      "text": "It tends to the counts’ shares",
+      "why": "That is $\\alpha \\to 0$. A huge $\\alpha$ swamps the counts."
+     },
+     {
+      "id": "zero",
+      "text": "Every chance tends to 0",
+      "why": "Each row still adds to 1, since it is divided by its total."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each chance tends to $1/27$.",
+    "generic": "Not quite. Compare $N_{ab} + \\alpha$ across a row when $\\alpha$ is huge."
+   },
+   "explain": {
+    "text": "With $\\alpha$ far above every count, $(N_{ab} + \\alpha)/(N_a + 27\\alpha) \\to 1/27$. That is why $\\alpha = 100$ raised the dev loss to 2.5507."
+   }
+  }
+ ]
+}
