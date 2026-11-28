@@ -1,0 +1,492 @@
+{
+ "id": "homework-4",
+ "course": "representations",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-sampler",
+   "difficulty": 5,
+   "skills": [
+    "rp-diffuse"
+   ],
+   "title": "A sampler for any predictor",
+   "performance": "code",
+   "prose": "Write `ddpm_sampler(eps_model, betas, n, seed)` from nothing. `eps_model(x, t)` is any noise predictor: it takes an $n \\times 2$ array and a whole-number step $t$ and returns the predicted noise. With `rng = np.random.default_rng(seed)`, draw `x = rng.standard_normal((n, 2))`, then for $t = T$ down to 1 take the reverse step with $\\sigma_t^2 = \\beta_t$, drawing `rng.standard_normal((n, 2))` for the fresh noise only when $t > 1$. Return the samples.",
+   "question": "Write `ddpm_sampler`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef ddpm_sampler(eps_model, betas, n, seed):\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef ddpm_sampler(eps_model, betas, n, seed):\n    betas = np.asarray(betas, dtype=float)\n    T = len(betas)\n    alphas = 1.0 - betas\n    abar = np.cumprod(alphas)\n    rng = np.random.default_rng(seed)\n    x = rng.standard_normal((n, 2))\n    for t in range(T, 0, -1):\n        eps = np.asarray(eps_model(x, t), dtype=float)\n        x = (x - betas[t - 1] / np.sqrt(1.0 - abar[t - 1]) * eps) / np.sqrt(alphas[t - 1])\n        if t > 1:\n            x = x + np.sqrt(betas[t - 1]) * rng.standard_normal((n, 2))\n    return x\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "np.round(ddpm_sampler(lambda x, t: 0.1 * x, [0.1, 0.2, 0.3], 2, 0), 6).tolist()",
+      "compare": "equal",
+      "expect": "[[-0.485446, -0.526178], [1.304523, 0.720311]]"
+     },
+     {
+      "call": "np.shape(ddpm_sampler(lambda x, t: np.zeros_like(x), [0.1, 0.2], 5, 1))",
+      "compare": "equal",
+      "expect": "[5, 2]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(ddpm_sampler(lambda x, t: 0.1 * x, [0.1, 0.2, 0.3], 2, 0), 6).tolist()",
+      "compare": "equal",
+      "expect": "[[-0.485446, -0.526178], [1.304523, 0.720311]]"
+     },
+     {
+      "call": "np.shape(ddpm_sampler(lambda x, t: np.zeros_like(x), [0.1, 0.2], 5, 1))",
+      "compare": "equal",
+      "expect": "[5, 2]"
+     },
+     {
+      "call": "np.round(ddpm_sampler(lambda x, t: 0.5 * x, [0.5], 3, 2), 9).tolist()",
+      "compare": "equal",
+      "expect": "[[0.172835166, -0.477903715], [-0.377628293, -2.232022593], [1.645316898, 1.046011958]]"
+     },
+     {
+      "call": "np.round(ddpm_sampler(lambda x, t: np.zeros_like(x), [0.19, 0.36], 2, 3), 9).tolist()",
+      "compare": "equal",
+      "expect": "[[2.532843696, -3.693266208], [-0.765964577, -0.943190482]]"
+     },
+     {
+      "setup": "def gauss_model(mu, s, betas):\n    ab = np.cumprod(1 - np.asarray(betas, float)); mu = np.asarray(mu, float)\n    def f(x, t):\n        a = ab[t - 1]\n        return np.sqrt(1 - a) * (x - np.sqrt(a) * mu) / (a * s * s + 1 - a)\n    return f\nB = np.linspace(1e-3, 0.1, 100)\nS = ddpm_sampler(gauss_model([1.0, -1.0], 0.5, B), B, 20000, 4)",
+      "call": "bool(np.all(np.abs(S.mean(0) - [1.0, -1.0]) < 0.05))",
+      "budget": 3000,
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "def gauss_model(mu, s, betas):\n    ab = np.cumprod(1 - np.asarray(betas, float)); mu = np.asarray(mu, float)\n    def f(x, t):\n        a = ab[t - 1]\n        return np.sqrt(1 - a) * (x - np.sqrt(a) * mu) / (a * s * s + 1 - a)\n    return f\nB = np.linspace(1e-3, 0.1, 100)\nS = ddpm_sampler(gauss_model([1.0, -1.0], 0.5, B), B, 20000, 4)",
+      "call": "bool(np.all(np.abs(S.std(0) - 0.5) < 0.05))",
+      "budget": 3000,
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "def gauss_model(mu, s, betas):\n    ab = np.cumprod(1 - np.asarray(betas, float)); mu = np.asarray(mu, float)\n    def f(x, t):\n        a = ab[t - 1]\n        return np.sqrt(1 - a) * (x - np.sqrt(a) * mu) / (a * s * s + 1 - a)\n    return f\nB = np.linspace(1e-3, 0.1, 100)\nB2 = np.linspace(1e-3, 0.06, 150)\nS = ddpm_sampler(gauss_model([0.0, 2.0], 0.8, B2), B2, 20000, 5)",
+      "call": "bool(np.all(np.abs(S.mean(0) - [0.0, 2.0]) < 0.08) and np.all(np.abs(S.std(0) - 0.8) < 0.08))",
+      "budget": 3000,
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "calls = []\ndef rec(x, t):\n    calls.append(int(t))\n    return np.zeros_like(x)\n_ = ddpm_sampler(rec, [0.1, 0.2, 0.3, 0.4], 2, 6)",
+      "call": "calls",
+      "compare": "equal",
+      "expect": "[4, 3, 2, 1]"
+     },
+     {
+      "call": "bool(np.array_equal(ddpm_sampler(lambda x, t: 0.2 * x, [0.1, 0.3], 4, 7), ddpm_sampler(lambda x, t: 0.2 * x, [0.1, 0.3], 4, 7)))",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. Exact runs are compared to 6 or 9 places, including $T = 1$ and a last step with no noise. With the exact noise predictor for normal data, 20,000 samples must match the data's mean and sd within 0.05 (0.08 for a second case). The net must be called at $t = T$ down to 1, and a seed must reproduce its samples.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef ddpm_sampler(eps_model, betas, n, seed):\n    betas = np.asarray(betas, dtype=float)\n    T = len(betas)\n    alphas = 1.0 - betas\n    abar = np.cumprod(alphas)\n    rng = np.random.default_rng(seed)\n    x = rng.standard_normal((n, 2))\n    for t in range(T, 0, -1):\n        eps = np.asarray(eps_model(x, t), dtype=float)\n        x = (x - betas[t - 1] / np.sqrt(1.0 - abar[t - 1]) * eps) / np.sqrt(alphas[t - 1])\n        x = x + np.sqrt(betas[t - 1]) * rng.standard_normal((n, 2))\n    return x\n",
+      "test": 1,
+      "symptom": "Adds noise at the last step as well."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef ddpm_sampler(eps_model, betas, n, seed):\n    betas = np.asarray(betas, dtype=float)\n    T = len(betas)\n    alphas = 1.0 - betas\n    abar = np.cumprod(alphas)\n    rng = np.random.default_rng(seed)\n    x = rng.standard_normal((n, 2))\n    for t in range(1, T + 1):\n        eps = np.asarray(eps_model(x, t), dtype=float)\n        x = (x - betas[t - 1] / np.sqrt(1.0 - abar[t - 1]) * eps) / np.sqrt(alphas[t - 1])\n        if t > 1:\n            x = x + np.sqrt(betas[t - 1]) * rng.standard_normal((n, 2))\n    return x\n",
+      "test": 1,
+      "symptom": "Runs the steps forwards."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef ddpm_sampler(eps_model, betas, n, seed):\n    betas = np.asarray(betas, dtype=float)\n    T = len(betas)\n    alphas = 1.0 - betas\n    abar = np.cumprod(alphas)\n    rng = np.random.default_rng(seed)\n    x = rng.standard_normal((n, 2))\n    for t in range(T, 0, -1):\n        eps = np.asarray(eps_model(x, t), dtype=float)\n        x = (x - betas[t - 1] / np.sqrt(1.0 - abar[t - 1]) * eps) / np.sqrt(alphas[t - 1])\n    return x\n",
+      "test": 1,
+      "symptom": "Never adds the fresh noise, so the samples' spread shrinks."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef ddpm_sampler(eps_model, betas, n, seed):\n    betas = np.asarray(betas, dtype=float)\n    T = len(betas)\n    alphas = 1.0 - betas\n    abar = np.cumprod(alphas)\n    rng = np.random.default_rng(seed)\n    x = rng.standard_normal((n, 2))\n    for t in range(T, 0, -1):\n        eps = np.asarray(eps_model(x, t), dtype=float)\n        x = (x - np.sqrt(1.0 - abar[t - 1]) * eps) / np.sqrt(abar[t - 1])\n        if t > 1:\n            x = x + np.sqrt(betas[t - 1]) * rng.standard_normal((n, 2))\n    return x\n",
+      "test": 1,
+      "symptom": "Jumps to an estimate of x_0 at every step instead of stepping back once."
+     }
+    ],
+    "budget": 3000
+   },
+   "feedback": {
+    "correct": "Your sampler reproduces normal data with the exact predictor and follows the seeded runs.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Start from `rng.standard_normal((n, 2))`, step from $t = T$ down to 1, and draw fresh noise only for $t > 1$.",
+     "test-6": "With the exact predictor the samples' sd should be the data's, 0.5: keep the fresh noise at every step but the last.",
+     "test-8": "Call the predictor at $t = T, T - 1, \\ldots, 1$, in that order."
+    }
+   },
+   "explain": {
+    "text": "For normal data the best noise predictor has a closed form, so a correct sampler must give back the data's mean and spread. This planted check separates sampler bugs from a poorly trained net."
+   }
+  },
+  {
+   "id": "h-steps",
+   "difficulty": 4,
+   "skills": [
+    "rp-diffuse"
+   ],
+   "title": "How many steps to noise?",
+   "prose": "Write `steps_to_noise(betas, thresh)`: the first step $t$, counted from 1, at which $\\bar\\alpha_t$ falls strictly below `thresh`, or `None` if it never does. It is the check that a schedule really ends near pure noise.",
+   "question": "Write `steps_to_noise`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef steps_to_noise(betas, thresh):\n    # The smallest step t (from 1) with abar_t < thresh, or None.\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef steps_to_noise(betas, thresh):\n    abar = np.cumprod(1.0 - np.asarray(betas, dtype=float))\n    below = np.where(abar < thresh)[0]\n    return int(below[0]) + 1 if len(below) else None\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "steps_to_noise(np.full(200, 0.05), 0.01)",
+      "compare": "equal",
+      "expect": "90"
+     }
+    ],
+    "tests": [
+     {
+      "call": "steps_to_noise(np.full(200, 0.05), 0.01)",
+      "compare": "equal",
+      "expect": "90"
+     },
+     {
+      "call": "steps_to_noise(np.linspace(1e-3, 0.2, 50), 0.1)",
+      "compare": "equal",
+      "expect": "34"
+     },
+     {
+      "call": "steps_to_noise([0.1, 0.2, 0.3], 0.01)",
+      "compare": "equal",
+      "expect": "None"
+     },
+     {
+      "call": "steps_to_noise([0.5, 0.5, 0.5], 0.25)",
+      "compare": "equal",
+      "expect": "3"
+     },
+     {
+      "call": "steps_to_noise(np.linspace(1e-4, 0.02, 1000), 0.0786)",
+      "compare": "equal",
+      "expect": "500"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests; each must equal the expected whole number, or None.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef steps_to_noise(betas, thresh):\n    abar = np.cumprod(1.0 - np.asarray(betas, dtype=float))\n    below = np.where(abar < thresh)[0]\n    return int(below[0]) if len(below) else None\n",
+      "test": 1,
+      "symptom": "Counts steps from 0 instead of 1."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef steps_to_noise(betas, thresh):\n    abar = np.cumprod(1.0 - np.asarray(betas, dtype=float))\n    below = np.where(abar <= thresh)[0]\n    return int(below[0]) + 1 if len(below) else None\n",
+      "test": 4,
+      "symptom": "Stops at a step exactly equal to the threshold."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef steps_to_noise(betas, thresh):\n    abar = 1.0 - np.cumsum(np.asarray(betas, dtype=float))\n    below = np.where(abar < thresh)[0]\n    return int(below[0]) + 1 if len(below) else None\n",
+      "test": 1,
+      "symptom": "Subtracts the summed betas instead of multiplying the alphas."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "With $\\beta = 0.05$ throughout, $\\bar\\alpha_t$ first drops below 0.01 at step 90: count from 1.",
+     "test-4": "$0.5^2 = 0.25$ is not strictly below 0.25; the answer is step 3."
+    }
+   },
+   "explain": {
+    "text": "`np.cumprod` gives every $\\bar\\alpha_t$; the first index below the threshold, plus 1, is the step."
+   }
+  },
+  {
+   "id": "h-induction",
+   "difficulty": 4,
+   "skills": [
+    "rp-diffuse"
+   ],
+   "title": "The closed form for every step",
+   "prose": "Show by induction that $\\mathbf{x}_t = \\sqrt{\\bar\\alpha_t}\\,\\mathbf{x}_0 + \\sqrt{1 - \\bar\\alpha_t}\\,\\boldsymbol{\\epsilon}$ in distribution, with $\\boldsymbol{\\epsilon}$ standard normal and independent of $\\mathbf{x}_0$.",
+   "question": "Put the steps in order. Leave out the two steps that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Base case: $\\mathbf{x}_1 = \\sqrt{\\alpha_1}\\,\\mathbf{x}_0 + \\sqrt{1 - \\alpha_1}\\,\\boldsymbol{\\epsilon}_1$, and $\\bar\\alpha_1 = \\alpha_1$."
+     },
+     {
+      "id": "b",
+      "text": "Assume $\\mathbf{x}_{t-1} = \\sqrt{\\bar\\alpha_{t-1}}\\,\\mathbf{x}_0 + \\sqrt{1 - \\bar\\alpha_{t-1}}\\,\\boldsymbol{\\epsilon}'$ with $\\boldsymbol{\\epsilon}'$ standard normal."
+     },
+     {
+      "id": "c",
+      "text": "Then $\\mathbf{x}_t = \\sqrt{\\alpha_t\\bar\\alpha_{t-1}}\\,\\mathbf{x}_0 + \\sqrt{\\alpha_t(1 - \\bar\\alpha_{t-1})}\\,\\boldsymbol{\\epsilon}' + \\sqrt{1 - \\alpha_t}\\,\\boldsymbol{\\epsilon}_t$."
+     },
+     {
+      "id": "d",
+      "text": "The two noise terms are independent normals, so their sum is normal with variance $\\alpha_t(1 - \\bar\\alpha_{t-1}) + 1 - \\alpha_t = 1 - \\bar\\alpha_t$."
+     },
+     {
+      "id": "e",
+      "text": "With $\\alpha_t\\bar\\alpha_{t-1} = \\bar\\alpha_t$, this is the claim at step $t$, which completes the induction."
+     },
+     {
+      "id": "x1",
+      "text": "The two noise terms add their standard deviations: $\\sqrt{\\alpha_t(1 - \\bar\\alpha_{t-1})} + \\sqrt{1 - \\alpha_t}$.",
+      "why": "Standard deviations of independent normals do not add; variances do."
+     },
+     {
+      "id": "x2",
+      "text": "The two noise terms are the same draw, so they combine into one term with coefficient $\\sqrt{\\alpha_t(1 - \\bar\\alpha_{t-1})} + \\sqrt{1 - \\alpha_t}$.",
+      "why": "$\\boldsymbol{\\epsilon}_t$ is fresh at step $t$, independent of the earlier noise."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "Base case, hypothesis, substitute, add variances, conclude.",
+    "generic": "Not quite. Substitute the hypothesis before combining the noise.",
+    "byKey": {
+     "x1": "Add variances, not standard deviations.",
+     "x2": "The new noise is independent of the old."
+    }
+   },
+   "explain": {
+    "text": "The only fact needed is that independent normal noises add in variance. The coefficient of $\\mathbf{x}_0$ multiplies, which is why $\\bar\\alpha_t$ is a product."
+   }
+  },
+  {
+   "id": "h-synthetic",
+   "difficulty": 5,
+   "skills": [
+    "rp-diffuse"
+   ],
+   "title": "Synthetic data for backtests",
+   "kind": "longform",
+   "prompt": "A team proposes training a diffusion model on 15 years of daily returns for 100 stocks and using its samples as extra market history to backtest trading strategies. Say what such samples can and cannot add, and the checks you would require before trusting a backtest on them.",
+   "model": "**What it can add.** More days that share the training data's joint behaviour: volatilities, correlations and some nonlinear structure, without copying any one day. That can stabilise estimates that are noisy on 15 years alone, and it gives many paths for stress-style questions about the strategy's spread of outcomes.\n\n**What it cannot add.** Information the 15 years do not contain. Regimes, crashes or correlation breaks absent from the window will be rare or missing; the samples inherit the window's biases, survivorship included if only today's 100 stocks were used. Daily samples drawn independently also lose time structure (volatility clustering, momentum) unless the model generates whole sequences. A strategy fitted to the samples can still overfit the generator.\n\n**Checks.** (1) Compare the samples with held-out years the model never saw: return distributions, tails, correlations and their changes in stress periods. (2) Check memorisation: the distance from each sample to its nearest training day, against the distances between training days. (3) Check time structure if the backtest needs it: autocorrelations of returns and of squared returns. (4) Backtest the strategy on real held-out history as well; the synthetic result is a complement, never a replacement. (5) Record the model, schedule, seeds and training window, and repeat with a second seed to see how much results move.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States what samples can add: more draws with the window's joint behaviour, useful for spreads of outcomes.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "States what they cannot add: events and regimes absent from the window, and inherited biases such as survivorship.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Requires comparison with held-out data, including tails and correlations under stress."
+    },
+    {
+     "points": 2,
+     "text": "Requires a memorisation check, such as nearest-training-day distances."
+    },
+    {
+     "points": 1,
+     "text": "Notes lost time structure for independent daily samples, and checks autocorrelations."
+    },
+    {
+     "points": 1,
+     "text": "Keeps a real held-out backtest as the reference, and records seeds and settings."
+    }
+   ]
+  },
+  {
+   "id": "h-snr",
+   "difficulty": 3,
+   "skills": [
+    "rp-diffuse"
+   ],
+   "title": "A late step",
+   "prose": "Near the end of a schedule, $\\bar\\alpha_t = 0.1$.",
+   "question": "What is the signal-to-noise ratio? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1111,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 9.0,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "abar",
+      "value": 0.1,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.1/0.9 \\approx 0.1111$.",
+    "generic": "Not quite. $\\bar\\alpha_t/(1 - \\bar\\alpha_t)$.",
+    "byKey": {
+     "inv": "You divided noise by signal.",
+     "abar": "That is $\\bar\\alpha_t$ itself."
+    }
+   },
+   "explain": {
+    "text": "$0.1/0.9 \\approx 0.1111$: the signal is a ninth of the noise."
+   }
+  },
+  {
+   "id": "h-mean",
+   "difficulty": 4,
+   "skills": [
+    "rp-diffuse"
+   ],
+   "title": "A reverse mean",
+   "prose": "One reverse step with $\\beta_t = 0.36$ and $\\bar\\alpha_t = 0.64$, in one coordinate: $x_t = 1.2$ and the net's guess is $0.5$.",
+   "question": "What is the mean of $x_{t-1}$? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.125,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "noscale",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "abar",
+      "value": 1.219,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(1.2 - 0.36/0.6 \\times 0.5)/0.8 = 1.125$.",
+    "generic": "Not quite. $\\sqrt{1 - \\bar\\alpha_t} = 0.6$ and $\\sqrt{\\alpha_t} = 0.8$.",
+    "byKey": {
+     "noscale": "You forgot to divide by $\\sqrt{\\alpha_t} = 0.8$.",
+     "abar": "You used $\\sqrt{\\bar\\alpha_t} = 0.8$ where the formula has $\\sqrt{1 - \\bar\\alpha_t} = 0.6$."
+    }
+   },
+   "explain": {
+    "text": "$0.36/0.6 \\times 0.5 = 0.3$, so the mean is $(1.2 - 0.3)/0.8 = 1.125$."
+   }
+  },
+  {
+   "id": "h-last",
+   "difficulty": 3,
+   "skills": [
+    "rp-diffuse"
+   ],
+   "title": "The last step",
+   "prose": "A DDPM sampler adds $\\sqrt{\\beta_t}\\,\\mathbf{z}$ at every reverse step except the one from $t = 1$ to $t = 0$.",
+   "question": "Why is that last step different?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "output",
+      "text": "Its result is the sample, and noise would blur it",
+      "correct": true
+     },
+     {
+      "id": "diverge",
+      "text": "Adding noise there makes the loop diverge",
+      "why": "One more small draw cannot make the loop diverge."
+     },
+     {
+      "id": "zero",
+      "text": "$\\beta_1$ is always exactly 0",
+      "why": "$\\beta_1$ is small but usually not 0; the choice is about the output."
+     },
+     {
+      "id": "train",
+      "text": "The net was never trained at $t = 1$",
+      "why": "Step 1 is trained like every other step."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right.",
+    "generic": "Not quite. What is $\\mathbf{x}_0$?"
+   },
+   "explain": {
+    "text": "Earlier noise keeps samples spread; at the output it would only add blur of size $\\sqrt{\\beta_1}$."
+   }
+  },
+  {
+   "id": "h-cost",
+   "difficulty": 3,
+   "skills": [
+    "rp-diffuse"
+   ],
+   "title": "The price of steps",
+   "prose": "A desk draws 5,000 synthetic days a night with a 200-step sampler. A colleague proposes switching to 50 steps.",
+   "question": "How many net evaluations a night would the switch save?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 750000,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "wrong": [
+     {
+      "id": "fifty",
+      "value": 250000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two",
+      "value": 1000000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$5{,}000 \\times (200 - 50) = 750{,}000$.",
+    "generic": "Not quite. One evaluation per step per sample.",
+    "byKey": {
+     "fifty": "That is the cost of the 50-step sampler, not the saving.",
+     "two": "That is the cost of the 200-step sampler."
+    }
+   },
+   "explain": {
+    "text": "200 steps cost 1,000,000 evaluations and 50 steps 250,000, so the switch saves 750,000, at some loss of quality to be measured."
+   }
+  }
+ ]
+}

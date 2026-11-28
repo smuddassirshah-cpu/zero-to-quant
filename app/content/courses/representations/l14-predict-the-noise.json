@@ -1,0 +1,1257 @@
+{
+ "id": "l14-predict-the-noise",
+ "course": "representations",
+ "title": "Predicting the noise",
+ "minutes": 15,
+ "objectives": [
+  "Train a small network to predict the noise added to two-dimensional points."
+ ],
+ "skills": [
+  "rp-diffuse"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "title": "Which start?",
+   "difficulty": 1,
+   "prose": "A point was noised to step 20, where $\\bar\\alpha_{20} \\approx 0.443$, and landed at $\\mathbf{x}_{20} = (0.55, 0.35)$. It started at one of two points: $A = (0.8, 0)$ on the inner ring or $B = (0, 1.6)$ on the outer.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      2
+     ],
+     "y": [
+      -0.5,
+      2
+     ],
+     "equal": true,
+     "grid": 0.5,
+     "xLabel": "first coordinate",
+     "yLabel": "second coordinate",
+     "functions": [
+      {
+       "id": "r1",
+       "x": "0.8*cos(t)",
+       "y": "0.8*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "dashed": true,
+       "colour": 6
+      },
+      {
+       "id": "r2",
+       "x": "1.6*cos(t)",
+       "y": "1.6*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "dashed": true,
+       "colour": 6
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "xt",
+       "x": 0.55,
+       "y": 0.35,
+       "label": "$\\mathbf{x}_{20}$"
+      },
+      {
+       "id": "A",
+       "x": 0.8,
+       "y": 0,
+       "label": "A",
+       "colour": 2
+      },
+      {
+       "id": "B",
+       "x": 0,
+       "y": 1.6,
+       "label": "B",
+       "colour": 3
+      }
+     ]
+    }
+   },
+   "question": "Which start is more likely?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "A",
+      "text": "A: shrunk by $\\sqrt{\\bar\\alpha_{20}}$ it sits closer to $\\mathbf{x}_{20}$",
+      "correct": true
+     },
+     {
+      "id": "B",
+      "text": "B: the outer ring holds as many points as the inner",
+      "why": "Both rings hold as many points, so the priors are equal. Compare how far each shrunk start is from $\\mathbf{x}_{20}$."
+     },
+     {
+      "id": "same",
+      "text": "Neither: at step 20 the start cannot be told at all",
+      "why": "The noise sd is 0.75, not huge: one start is about 2 times as likely."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Shrink each start by $\\sqrt{\\bar\\alpha_{20}}$ first."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sqrt{0.443} \\approx 0.666$: A shrinks to about $(0.53, 0)$, B to $(0, 1.07)$.",
+     "highlight": [
+      "A",
+      "B"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "A: its shrunk start is far closer, about 2 times as likely as B.",
+    "generic": "Not quite. Compare $\\mathbf{x}_{20}$ with each shrunk start."
+   },
+   "explain": {
+    "text": "Shrunk, A sits at about $(0.53, 0)$ and B at $(0, 1.07)$; $\\mathbf{x}_{20}$ is much nearer A. Guessing the start is the same as guessing the noise that was added, and a network can learn to make that guess."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "Predict the noise",
+   "difficulty": 2,
+   "prose": "Training a **noise predictor** $\\boldsymbol{\\epsilon}_\\theta(\\mathbf{x}_t, t)$: draw $\\mathbf{x}_0$ from the data, $t$ uniformly from 1 to $T$, $\\boldsymbol{\\epsilon}$ standard normal, form $\\mathbf{x}_t$ by the closed form, and lower $\\lVert \\boldsymbol{\\epsilon} - \\boldsymbol{\\epsilon}_\\theta(\\mathbf{x}_t, t)\\rVert^2$. For one example, $\\boldsymbol{\\epsilon} = (0.3, -1.2)$ and the net says $(0.5, -0.9)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      1
+     ],
+     "y": [
+      -1.5,
+      0.5
+     ],
+     "equal": true,
+     "grid": 0.5,
+     "xLabel": "first coordinate",
+     "yLabel": "second coordinate"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "e",
+       "x": 0.3,
+       "y": -1.2,
+       "label": "$\\boldsymbol{\\epsilon}$"
+      },
+      {
+       "id": "h",
+       "x": 0.5,
+       "y": -0.9,
+       "label": "guess",
+       "colour": 2
+      }
+     ],
+     "segments": [
+      {
+       "id": "d",
+       "from": "e",
+       "to": "h",
+       "dashed": true,
+       "colour": 6
+      }
+     ]
+    }
+   },
+   "question": "What is this example's loss? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.13,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "abs",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": 0.065,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract coordinate by coordinate."
+    },
+    {
+     "rung": "step",
+     "text": "$(-0.2)^2 + (-0.3)^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.04 + 0.09 = 0.13$.",
+    "generic": "Not quite. Square each difference and add.",
+    "byKey": {
+     "abs": "You added the sizes of the differences; square them.",
+     "mean": "You averaged over the two coordinates; the loss sums them."
+    }
+   },
+   "explain": {
+    "text": "The differences are $-0.2$ and $-0.3$, so the loss is $0.04 + 0.09 = 0.13$. Averaged over many examples and steps, this is all the training needs."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "Making one example",
+   "difficulty": 2,
+   "prose": "One training example: $\\mathbf{x}_0 = (1.6, 0)$, $t = 20$ with $\\bar\\alpha_{20} \\approx 0.4432$, and $\\boldsymbol{\\epsilon} = (0.5, -1)$. The net sees $\\mathbf{x}_t$ and $t$, and must output $\\boldsymbol{\\epsilon}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      2
+     ],
+     "y": [
+      -1.2,
+      0.5
+     ],
+     "equal": true,
+     "grid": 0.5,
+     "xLabel": "first coordinate",
+     "yLabel": "second coordinate"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "x0",
+       "x": 1.6,
+       "y": 0,
+       "label": "$\\mathbf{x}_0$"
+      }
+     ]
+    }
+   },
+   "question": "Fill in $\\mathbf{x}_{20}$, to 3 decimal places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Coordinate",
+     "Value"
+    ],
+    "rows": [
+     [
+      "first",
+      {
+       "edit": true,
+       "answer": 1.4383,
+       "tol": {
+        "abs": 0.002
+       },
+       "wrong": [
+        {
+         "id": "noroot",
+         "value": 0.9875,
+         "tol": {
+          "abs": 0.002
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "second",
+      {
+       "edit": true,
+       "answer": -0.7462,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sqrt{0.4432} \\approx 0.6658$ and $\\sqrt{0.5568} \\approx 0.7462$."
+    },
+    {
+     "rung": "step",
+     "text": "First: $0.666 \\times 1.6 + 0.746 \\times 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{x}_{20} \\approx (1.438, -0.746)$.",
+    "generic": "Not quite. Use the square roots of $\\bar\\alpha_{20}$ and $1 - \\bar\\alpha_{20}$.",
+    "byKey": {
+     "noroot": "You used $\\bar\\alpha_{20}$ itself as the coefficient; take its square root."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{x}_{20} \\approx (1.438, -0.746)$. The example is the pair: input $(\\mathbf{x}_{20}, 20)$, target $(0.5, -1)$."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "Training the predictor",
+   "difficulty": 2,
+   "prose": "Our noise predictor takes $\\mathbf{x}_t$ and the time feature $t/T$ through two ReLU layers of 64. It trained with Adam at 0.002 on batches of 256 for 12,000 steps. The curve is the loss, averaged over each 100 steps.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "loss",
+       "label": "loss",
+       "values": [
+        0.8692,
+        0.7381,
+        0.7076,
+        0.7041,
+        0.7018,
+        0.7026,
+        0.7038,
+        0.713,
+        0.6979,
+        0.7039,
+        0.696,
+        0.7007,
+        0.6956,
+        0.6943,
+        0.6983,
+        0.6985,
+        0.6927,
+        0.7104,
+        0.6929,
+        0.7016,
+        0.6947,
+        0.6945,
+        0.6931,
+        0.6873,
+        0.6943,
+        0.6879,
+        0.7008,
+        0.7089,
+        0.6876,
+        0.6907,
+        0.6953,
+        0.6752,
+        0.6916,
+        0.6969,
+        0.6904,
+        0.6793,
+        0.6862,
+        0.6928,
+        0.6915,
+        0.6761,
+        0.678,
+        0.6818,
+        0.6893,
+        0.6829,
+        0.6939,
+        0.6683,
+        0.6807,
+        0.6764,
+        0.6664,
+        0.6884,
+        0.6664,
+        0.6777,
+        0.6591,
+        0.6736,
+        0.6774,
+        0.6644,
+        0.6716,
+        0.6658,
+        0.6576,
+        0.6664,
+        0.6621,
+        0.6642,
+        0.6587,
+        0.677,
+        0.6577,
+        0.6524,
+        0.6562,
+        0.6569,
+        0.6549,
+        0.6606,
+        0.6614,
+        0.6638,
+        0.6413,
+        0.6491,
+        0.6473,
+        0.6566,
+        0.6405,
+        0.6448,
+        0.6571,
+        0.6601,
+        0.6544,
+        0.6533,
+        0.6388,
+        0.6426,
+        0.6531,
+        0.636,
+        0.6522,
+        0.6492,
+        0.6438,
+        0.6524,
+        0.6469,
+        0.6445,
+        0.6457,
+        0.6412,
+        0.6421,
+        0.6472,
+        0.6467,
+        0.6524,
+        0.6438,
+        0.6436,
+        0.6562,
+        0.6329,
+        0.6337,
+        0.6346,
+        0.6517,
+        0.6553,
+        0.642,
+        0.6252,
+        0.6439,
+        0.6489,
+        0.6386,
+        0.6384,
+        0.6302,
+        0.6443,
+        0.6516,
+        0.6302,
+        0.6339,
+        0.6433,
+        0.647,
+        0.6321
+       ]
+      }
+     ],
+     "xValues": [
+      0,
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900,
+      1000,
+      1100,
+      1200,
+      1300,
+      1400,
+      1500,
+      1600,
+      1700,
+      1800,
+      1900,
+      2000,
+      2100,
+      2200,
+      2300,
+      2400,
+      2500,
+      2600,
+      2700,
+      2800,
+      2900,
+      3000,
+      3100,
+      3200,
+      3300,
+      3400,
+      3500,
+      3600,
+      3700,
+      3800,
+      3900,
+      4000,
+      4100,
+      4200,
+      4300,
+      4400,
+      4500,
+      4600,
+      4700,
+      4800,
+      4900,
+      5000,
+      5100,
+      5200,
+      5300,
+      5400,
+      5500,
+      5600,
+      5700,
+      5800,
+      5900,
+      6000,
+      6100,
+      6200,
+      6300,
+      6400,
+      6500,
+      6600,
+      6700,
+      6800,
+      6900,
+      7000,
+      7100,
+      7200,
+      7300,
+      7400,
+      7500,
+      7600,
+      7700,
+      7800,
+      7900,
+      8000,
+      8100,
+      8200,
+      8300,
+      8400,
+      8500,
+      8600,
+      8700,
+      8800,
+      8900,
+      9000,
+      9100,
+      9200,
+      9300,
+      9400,
+      9500,
+      9600,
+      9700,
+      9800,
+      9900,
+      10000,
+      10100,
+      10200,
+      10300,
+      10400,
+      10500,
+      10600,
+      10700,
+      10800,
+      10900,
+      11000,
+      11100,
+      11200,
+      11300,
+      11400,
+      11500,
+      11600,
+      11700,
+      11800,
+      11900
+     ],
+     "xLabel": "Step",
+     "yLabel": "loss",
+     "y": [
+      0,
+      2.2
+     ]
+    }
+   },
+   "question": "Roughly where does the loss settle? Give a decimal to 1 place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0.0,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "start",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the right-hand end."
+    },
+    {
+     "rung": "step",
+     "text": "It levels off well above 0."
+    }
+   ],
+   "feedback": {
+    "correct": "About 0.6, far from 0.",
+    "generic": "Not quite. Read where the curve flattens.",
+    "byKey": {
+     "zero": "The loss cannot reach 0: at small $t$ the noise is a tiny wiggle the net cannot see.",
+     "start": "That is where it starts."
+    }
+   },
+   "explain": {
+    "text": "It settles near 0.6. A perfect predictor would still have a loss above 0, because the same $\\mathbf{x}_t$ can come from many starts."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "Loss by step",
+   "difficulty": 3,
+   "prose": "The trained net's loss at seven steps, each on 4,000 fresh examples.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "5",
+      "10",
+      "20",
+      "30",
+      "40",
+      "50"
+     ],
+     "xLabel": "step $t$",
+     "yLabel": "loss",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "1": 1.718,
+      "5": 1.428,
+      "10": 1.526,
+      "20": 0.793,
+      "30": 0.267,
+      "40": 0.06,
+      "50": 0.013
+     }
+    }
+   },
+   "question": "Why is the loss highest at the smallest steps?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tiny",
+      "text": "There the noise is a tiny nudge, lost in the data's spread",
+      "correct": true
+     },
+     {
+      "id": "rare",
+      "text": "Small steps are drawn less often in training",
+      "why": "Every step from 1 to 50 is drawn equally often."
+     },
+     {
+      "id": "bad",
+      "text": "The net is broken for small $t$ and must be retrained",
+      "why": "Even a perfect predictor finds small-$t$ noise hard to see; and it matters little for samples."
+     },
+     {
+      "id": "big",
+      "text": "The noise is largest at small steps",
+      "why": "The noise coefficient $\\sqrt{1 - \\bar\\alpha_t}$ is smallest at small steps."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How big is $\\sqrt{1 - \\bar\\alpha_1}$?"
+    },
+    {
+     "rung": "step",
+     "text": "About 0.032: a nudge of about 0.03."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. At step 1 the loss is 1.72; at step 50 it is 0.01.",
+    "generic": "Not quite. Compare the size of the noise at step 1 with the rings' own noise."
+   },
+   "explain": {
+    "text": "At step 1 the added noise has sd about 0.032, the same size as the rings' own thickness, so it cannot be told apart. Errors there barely move a sample, because each reverse step at small $t$ is tiny."
+   }
+  },
+  {
+   "type": "trap",
+   "title": "Leave out the clock",
+   "difficulty": 3,
+   "prose": "A colleague trains the same net with the time input always 0, so it sees $\\mathbf{x}_t$ alone. After 12,000 steps its loss, averaged over the last 1,000, is 0.81, against 0.64 with the time feature.",
+   "question": "Why does it plateau higher?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "t",
+      "text": "Without $t$ it cannot tell how much of $\\mathbf{x}_t$ is noise",
+      "correct": true
+     },
+     {
+      "id": "size",
+      "text": "The net is too small to learn without $t$",
+      "why": "The net is the same size; it lacks information, not capacity."
+     },
+     {
+      "id": "steps",
+      "text": "It needs more training to catch up",
+      "why": "The gap is the missing input: the same $\\mathbf{x}_t$ means different things at different steps."
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the two losses are equal within noise",
+      "why": "The gap, 0.17, is far larger than the batch-to-batch wobble of about 0.01."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Could the same $\\mathbf{x}_t$ arise at step 2 and at step 45?"
+    },
+    {
+     "rung": "step",
+     "text": "At step 2 it is mostly data; at step 45, mostly noise."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The noise level is part of the question.",
+    "generic": "Not quite. What does $t$ tell the net?",
+    "byKey": {
+     "size": "You blamed capacity. The same net with $t$ does better, so the missing input is the cause."
+    }
+   },
+   "explain": {
+    "text": "A point near a ring could be clean data at step 2 or a lucky draw at step 45; the right noise guess differs. Without $t$ the net must hedge, and its loss stays at 0.81."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "The training objective",
+   "difficulty": 2,
+   "prose": "The noise-prediction loss is $$L = \\mathbb{E}_{\\mathbf{x}_0,\\,t,\\,\\boldsymbol{\\epsilon}}\\Big\\lVert \\boldsymbol{\\epsilon} - \\boldsymbol{\\epsilon}_\\theta\\big(\\sqrt{\\bar\\alpha_t}\\,\\mathbf{x}_0 + \\sqrt{1 - \\bar\\alpha_t}\\,\\boldsymbol{\\epsilon},\\; t\\big)\\Big\\rVert^2.$$ Ho et al. show it is a weighted form of the ELBO of level 3, with some weights dropped; treat that link as a heuristic.",
+   "question": "Which steps does one training batch use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rand",
+      "text": "A random step for each example, drawn uniformly",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "All 50 steps in order for each example, like the forward chain",
+      "why": "The closed form lets each example jump to its own random step; no chain is run."
+     },
+     {
+      "id": "last",
+      "text": "Only the last step, where the noise is largest",
+      "why": "Every step is trained, so the net can undo each one."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right.",
+    "generic": "Not quite. How is $t$ drawn?"
+   },
+   "explain": {
+    "text": "Each example gets its own $t$, so one batch trains many noise levels at once. The closed form is what makes this cheap."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "A batch in code",
+   "difficulty": 3,
+   "prose": "Write the batch maker. Steps run from 1 to $T$, and $\\bar\\alpha_t$ is `abar[t - 1]`. The target is the standard normal draw $\\boldsymbol{\\epsilon}$ itself, not the noise after scaling.",
+   "question": "Write `make_batch`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef make_batch(X0, abar, n, seed):\n    # rng = default_rng(seed); draw row indices (integers 0 to len(X0) - 1),\n    # then steps t (integers 1 to T, T = len(abar)), then eps (n by 2), in\n    # that order. Return (x_t, t, eps).\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef make_batch(X0, abar, n, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    rng = np.random.default_rng(seed)\n    idx = rng.integers(0, len(X0), n)\n    t = rng.integers(1, len(abar) + 1, n)\n    eps = rng.standard_normal((n, 2))\n    a = abar[t - 1][:, None]\n    return np.sqrt(a) * X0[idx] + np.sqrt(1.0 - a) * eps, t, eps\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\n",
+      "call": "[np.round(a, 6).tolist() for a in make_batch(X, ab, 3, 0)]",
+      "compare": "equal",
+      "expect": "[[[1.252176, 0.185108], [-0.015411, -0.417472], [0.543378, -1.66316]], [14, 16, 3], [[0.1049, -0.535669], [0.361595, 1.304], [0.947081, -0.703735]]]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\n",
+      "call": "[np.round(a, 6).tolist() for a in make_batch(X, ab, 3, 0)]",
+      "compare": "equal",
+      "expect": "[[[1.252176, 0.185108], [-0.015411, -0.417472], [0.543378, -1.66316]], [14, 16, 3], [[0.1049, -0.535669], [0.361595, 1.304], [0.947081, -0.703735]]]"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\n",
+      "call": "[np.round(a, 6).tolist() for a in make_batch([[1.0, 0.0], [0.0, 2.0]], [0.9, 0.5], 4, 5)]",
+      "compare": "equal",
+      "expect": "[[[0.359249, 1.932059], [-0.390781, 0.85929], [1.23655, 1.155966], [0.086257, 1.507354]], [1, 2, 2, 1], [[1.136047, 0.109706], [-0.552647, -0.78478], [0.748746, 1.634783], [0.272769, -1.233329]]]"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\n",
+      "call": "sorted(set(make_batch(X, ab, 2000, 1)[1].tolist())) == list(range(1, 51))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\n",
+      "call": "[np.shape(a) for a in make_batch(X, ab, 7, 2)]",
+      "compare": "equal",
+      "expect": "[[7, 2], [7], [7, 2]]"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\n",
+      "call": "bool(abs(make_batch(X, [1e-9] * 3, 500, 3)[0].std() - 1) < 0.1)",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: two seeded batches to 6 places, every step from 1 to 50 drawn over 2,000 examples, the shapes, and a near-zero schedule whose $\\mathbf{x}_t$ is pure noise.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef make_batch(X0, abar, n, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    rng = np.random.default_rng(seed)\n    idx = rng.integers(0, len(X0), n)\n    t = rng.integers(0, len(abar), n)\n    eps = rng.standard_normal((n, 2))\n    a = abar[t - 1][:, None]\n    return np.sqrt(a) * X0[idx] + np.sqrt(1.0 - a) * eps, t, eps\n",
+      "test": 1,
+      "symptom": "Draws steps from 0 to T - 1, so step 0 reads abar[-1] and step T never occurs."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef make_batch(X0, abar, n, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    rng = np.random.default_rng(seed)\n    t = rng.integers(1, len(abar) + 1, n)\n    idx = rng.integers(0, len(X0), n)\n    eps = rng.standard_normal((n, 2))\n    a = abar[t - 1][:, None]\n    return np.sqrt(a) * X0[idx] + np.sqrt(1.0 - a) * eps, t, eps\n",
+      "test": 1,
+      "symptom": "Draws the steps before the rows, so the seeded batch differs."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef make_batch(X0, abar, n, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    rng = np.random.default_rng(seed)\n    idx = rng.integers(0, len(X0), n)\n    t = rng.integers(1, len(abar) + 1, n)\n    eps = rng.standard_normal((n, 2))\n    a = abar[t - 1][:, None]\n    return np.sqrt(a) * X0[idx] + np.sqrt(1.0 - a) * eps, t, np.sqrt(1.0 - a) * eps\n",
+      "test": 1,
+      "symptom": "Returns the scaled noise as the target instead of the standard normal draw."
+     }
+    ],
+    "data": {
+     "representations_ops_l4.py": "content/data/ai/representations_ops_l4.py"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`t = rng.integers(1, len(abar) + 1, n)`."
+    },
+    {
+     "rung": "step",
+     "text": "`a = abar[t - 1][:, None]`, then the closed form."
+    }
+   ],
+   "feedback": {
+    "correct": "Your batches match the seeded ones and cover every step.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Draw rows, then steps from 1 to $T$, then noise, in that order, from one generator.",
+     "test-3": "Steps must run from 1 to 50: `integers(1, T + 1, n)`."
+    }
+   },
+   "explain": {
+    "text": "Drawing rows, steps and noise from one seeded generator makes a batch reproducible, which the exact tests rely on."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "The loss in code",
+   "difficulty": 3,
+   "prose": "Write the loss with the module's `eps_model`. The shipped weights in `representations-l15-denoiser.json` hold an early checkpoint (`start`) and the trained net (`trained`).",
+   "question": "Write `noise_loss`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nimport representations_ops_l4 as ops\n\n\ndef noise_loss(params, xt, t, eps, T=50):\n    # Mean over rows of the squared distance between eps and\n    # ops.eps_model(params, xt, t, T).\n    ...\n",
+    "solution": "import numpy as np\nimport representations_ops_l4 as ops\n\n\ndef noise_loss(params, xt, t, eps, T=50):\n    pred = ops.eps_model(params, xt, t, T)\n    return float(((np.asarray(eps, dtype=float) - pred) ** 2).sum(axis=1).mean())\n",
+    "prelude": "import numpy as np\n\n\ndef make_batch_ref(X0, abar, n, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    rng = np.random.default_rng(seed)\n    idx = rng.integers(0, len(X0), n)\n    t = rng.integers(1, len(abar) + 1, n)\n    eps = rng.standard_normal((n, 2))\n    a = abar[t - 1][:, None]\n    return np.sqrt(a) * X0[idx] + np.sqrt(1.0 - a) * eps, t, eps\n",
+    "examples": [
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "round(noise_loss(PT, xt, t, e), 9)",
+      "compare": "equal",
+      "expect": "0.887690767"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "round(noise_loss(PT, xt, t, e), 9)",
+      "compare": "equal",
+      "expect": "0.887690767"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "round(noise_loss(PS, xt, t, e), 9)",
+      "compare": "equal",
+      "expect": "0.930786695"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "round(noise_loss(PT, [[0.55, 0.35]], [20], [[0.5, -1.0]]), 9)",
+      "compare": "equal",
+      "expect": "1.532258015"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "round(noise_loss(PT, xt, t, e, T=10), 9)",
+      "compare": "equal",
+      "expect": "1.20175046"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "noise_loss(PT, xt, t, e) < noise_loss(PS, xt, t, e)",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on the shipped weights, each rounded to 9 places, and checks that the trained weights beat the starting ones.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nimport representations_ops_l4 as ops\n\n\ndef noise_loss(params, xt, t, eps, T=50):\n    pred = ops.eps_model(params, xt, t, T)\n    return float(((np.asarray(eps, dtype=float) - pred) ** 2).mean())\n",
+      "test": 1,
+      "symptom": "Averages over coordinates too, halving the loss."
+     },
+     {
+      "source": "import numpy as np\nimport representations_ops_l4 as ops\n\n\ndef noise_loss(params, xt, t, eps, T=50):\n    pred = ops.eps_model(params, xt, np.zeros(len(xt)), T)\n    return float(((np.asarray(eps, dtype=float) - pred) ** 2).sum(axis=1).mean())\n",
+      "test": 1,
+      "symptom": "Feeds the net no step information, the trap of this lesson."
+     },
+     {
+      "source": "import numpy as np\nimport representations_ops_l4 as ops\n\n\ndef noise_loss(params, xt, t, eps, T=50):\n    pred = ops.eps_model(params, xt, t, 50)\n    return float(((np.asarray(eps, dtype=float) - pred) ** 2).sum(axis=1).mean())\n",
+      "test": 4,
+      "symptom": "Ignores the T argument."
+     }
+    ],
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+     "representations_ops_l4.py": "content/data/ai/representations_ops_l4.py",
+     "representations-l15-denoiser.json": "content/data/ai/representations-l15-denoiser.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`pred = ops.eps_model(params, xt, t, T)`."
+    },
+    {
+     "rung": "step",
+     "text": "Sum the squares along each row, then average the rows."
+    }
+   ],
+   "feedback": {
+    "correct": "It matches the reference on both sets of weights.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Pass the steps `t` and `T` to the net, sum the squared differences along each row, then average over rows."
+    }
+   },
+   "explain": {
+    "text": "The loss compares the net's guess with the true draw, row by row; the step goes in as an input so the net knows the noise level."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "Train it in code",
+   "difficulty": 3,
+   "prose": "Write the training step from the shipped starting weights. The loop already draws rows, steps and noise; build $\\mathbf{x}_t$ by the closed form, then the familiar zero, loss, backward, Adam.",
+   "question": "Finish `train_denoiser`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\nimport representations_ops_l4 as ops\n\n\ndef train_denoiser(X0, params, abar, steps, lr, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    T = len(abar)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    m = [np.zeros_like(p.data) for p in P]\n    v = [np.zeros_like(p.data) for p in P]\n    rng = np.random.default_rng(seed)\n    for step in range(1, steps + 1):\n        idx = rng.integers(0, len(X0), 256)\n        t = rng.integers(1, T + 1, 256)\n        eps = rng.standard_normal((256, 2))\n        # build x_t; zero the gradients; loss = sum of squared errors / 256;\n        # backward; one Adam step.\n        pass\n    return [p.data for p in P]\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\nimport representations_ops_l4 as ops\n\n\ndef train_denoiser(X0, params, abar, steps, lr, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    T = len(abar)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    m = [np.zeros_like(p.data) for p in P]\n    v = [np.zeros_like(p.data) for p in P]\n    rng = np.random.default_rng(seed)\n    for step in range(1, steps + 1):\n        idx = rng.integers(0, len(X0), 256)\n        t = rng.integers(1, T + 1, 256)\n        eps = rng.standard_normal((256, 2))\n        a = abar[t - 1][:, None]\n        xt = np.sqrt(a) * X0[idx] + np.sqrt(1.0 - a) * eps\n        for p in P:\n            p.zero_grad()\n        loss = ((ops.eps_model(P, xt, t, T) - eps) ** 2).sum() / 256\n        loss.backward()\n        new, m, v = adam_step([p.data for p in P], [p.grad for p in P], m, v, step, lr)\n        for p, q in zip(P, new):\n            p.data = q\n    return [p.data for p in P]\n",
+    "prelude": "import numpy as np\n\n\ndef make_batch_ref(X0, abar, n, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    rng = np.random.default_rng(seed)\n    idx = rng.integers(0, len(X0), n)\n    t = rng.integers(1, len(abar) + 1, n)\n    eps = rng.standard_normal((n, 2))\n    a = abar[t - 1][:, None]\n    return np.sqrt(a) * X0[idx] + np.sqrt(1.0 - a) * eps, t, eps\n\nimport representations_ops_l4 as ops\n\n\ndef noise_loss_ref(params, xt, t, eps, T=50):\n    pred = ops.eps_model(params, xt, t, T)\n    return float(((np.asarray(eps, dtype=float) - pred) ** 2).sum(axis=1).mean())\n",
+    "examples": [
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "round(noise_loss_ref(train_denoiser(ops.two_rings(2000, 0), PS, ab, 3, 0.002, 7), xt, t, e), 6)",
+      "compare": "equal",
+      "expect": "0.944855"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "round(noise_loss_ref(train_denoiser(ops.two_rings(2000, 0), PS, ab, 3, 0.002, 7), xt, t, e), 6)",
+      "compare": "equal",
+      "expect": "0.944855"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "np.round(train_denoiser(X, PS, ab, 2, 0.002, 8)[6], 6).tolist()",
+      "compare": "equal",
+      "expect": "[0.014174, -0.00764]"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\nXB = ops.two_rings(4000, 11)\nxb, tb, eb = make_batch_ref(XB, ab, 4000, 12)\nP2 = train_denoiser(ops.two_rings(2000, 0), ops.init_denoiser(64, 0), ab, 120, 0.002, 0)",
+      "call": "noise_loss_ref(P2, xb, tb, eb) < 0.8",
+      "budget": 6000,
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "import representations_ops_l4 as ops\nab = np.cumprod(1 - ops.linear_schedule(50))\nX = ops.two_rings(100, 1)\nimport json\nFD = json.load(open('representations-l15-denoiser.json'))\nPT = [np.array(a) for a in FD['trained']]\nPS = [np.array(a) for a in FD['start']]\nxt, t, e = make_batch_ref(X, ab, 64, 9)\n",
+      "call": "[np.shape(p) for p in train_denoiser(X, PS, ab, 1, 0.002, 0)]",
+      "compare": "equal",
+      "expect": "[[2, 64], [1, 64], [64], [64, 64], [64], [64, 2], [2]]"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. Two short seeded runs (3 and 2 steps from the shipped start) are compared to 6 places. From `ops.init_denoiser(64, 0)`, 120 steps must bring the loss on 4,000 fresh examples below 0.8 (the untrained net scores about 2.3). The last test checks the shapes.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\nimport representations_ops_l4 as ops\n\n\ndef train_denoiser(X0, params, abar, steps, lr, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    T = len(abar)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    m = [np.zeros_like(p.data) for p in P]\n    v = [np.zeros_like(p.data) for p in P]\n    rng = np.random.default_rng(seed)\n    for step in range(1, steps + 1):\n        idx = rng.integers(0, len(X0), 256)\n        t = rng.integers(1, T + 1, 256)\n        eps = rng.standard_normal((256, 2))\n        a = abar[t - 1][:, None]\n        xt = np.sqrt(a) * X0[idx] + np.sqrt(1.0 - a) * eps\n        loss = ((ops.eps_model(P, xt, t, T) - eps) ** 2).sum() / 256\n        loss.backward()\n        new, m, v = adam_step([p.data for p in P], [p.grad for p in P], m, v, step, lr)\n        for p, q in zip(P, new):\n            p.data = q\n    return [p.data for p in P]\n",
+      "test": 1,
+      "symptom": "Never zeroes the gradients."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\nimport representations_ops_l4 as ops\n\n\ndef train_denoiser(X0, params, abar, steps, lr, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    T = len(abar)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    m = [np.zeros_like(p.data) for p in P]\n    v = [np.zeros_like(p.data) for p in P]\n    rng = np.random.default_rng(seed)\n    for step in range(1, steps + 1):\n        idx = rng.integers(0, len(X0), 256)\n        t = rng.integers(1, T + 1, 256)\n        eps = rng.standard_normal((256, 2))\n        a = abar[t - 1][:, None]\n        xt = np.sqrt(a) * X0[idx] + np.sqrt(1.0 - a) * eps\n        for p in P:\n            p.zero_grad()\n        loss = ((ops.eps_model(P, xt, np.zeros(256), T) - eps) ** 2).sum() / 256\n        loss.backward()\n        new, m, v = adam_step([p.data for p in P], [p.grad for p in P], m, v, step, lr)\n        for p, q in zip(P, new):\n            p.data = q\n    return [p.data for p in P]\n",
+      "test": 1,
+      "symptom": "Trains without the step input."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l1 import adam_step\nimport representations_ops_l4 as ops\n\n\ndef train_denoiser(X0, params, abar, steps, lr, seed):\n    X0 = np.asarray(X0, dtype=float)\n    abar = np.asarray(abar, dtype=float)\n    T = len(abar)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    m = [np.zeros_like(p.data) for p in P]\n    v = [np.zeros_like(p.data) for p in P]\n    rng = np.random.default_rng(seed)\n    for step in range(1, steps + 1):\n        idx = rng.integers(0, len(X0), 256)\n        t = rng.integers(1, T + 1, 256)\n        eps = rng.standard_normal((256, 2))\n        a = abar[t - 1][:, None]\n        xt = a * X0[idx] + (1.0 - a) * eps\n        for p in P:\n            p.zero_grad()\n        loss = ((ops.eps_model(P, xt, t, T) - eps) ** 2).sum() / 256\n        loss.backward()\n        new, m, v = adam_step([p.data for p in P], [p.grad for p in P], m, v, step, lr)\n        for p, q in zip(P, new):\n            p.data = q\n    return [p.data for p in P]\n",
+      "test": 1,
+      "symptom": "Forms x_t without square roots."
+     }
+    ],
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+     "representations_ops_l4.py": "content/data/ai/representations_ops_l4.py",
+     "representations-l15-denoiser.json": "content/data/ai/representations-l15-denoiser.json"
+    },
+    "budget": 6000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`a = abar[t - 1][:, None]`; `xt = np.sqrt(a) * X0[idx] + np.sqrt(1 - a) * eps`."
+    },
+    {
+     "rung": "step",
+     "text": "`loss = ((ops.eps_model(P, xt, t, T) - eps) ** 2).sum() / 256`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your loop matches the seeded runs and lowers the loss below 0.8.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Three steps must match to 6 places: zero the gradients, feed the steps `t` to the net, and use square roots in the closed form."
+    }
+   },
+   "explain": {
+    "text": "The training loop of a diffusion model is an ordinary regression loop: inputs $(\\mathbf{x}_t, t)$, target $\\boldsymbol{\\epsilon}$."
+   }
+  },
+  {
+   "type": "transfer",
+   "title": "Denoising a price signal",
+   "difficulty": 3,
+   "prose": "An analyst cleans a noisy intraday signal with a 20-period moving average. A colleague instead trains a net to predict the noise in windows of the signal, learning what noise looks like from data.",
+   "question": "What is the difference in assumptions?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "learn",
+      "text": "The average assumes a smooth signal; the net learns the noise, given data",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "None, since both of them simply remove the high frequencies",
+      "why": "The net can learn any regular structure in the noise, not only high frequencies."
+     },
+     {
+      "id": "free",
+      "text": "The net needs no assumptions and no training data at all",
+      "why": "It needs plenty of clean examples or a noise model to learn from."
+     },
+     {
+      "id": "avg",
+      "text": "The moving average also learns its weights from the data",
+      "why": "Its weights are fixed by the window, whatever the data."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a moving average assume?"
+    },
+    {
+     "rung": "step",
+     "text": "What does the net need?"
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Fixed assumption against learned model.",
+    "generic": "Not quite. Compare what each method assumes about the noise."
+   },
+   "explain": {
+    "text": "A moving average bakes in a guess about the noise; a learned predictor estimates it from data, which helps only when there is enough data and the noise in use resembles the noise in training."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A noise predictor $\\boldsymbol{\\epsilon}_\\theta(\\mathbf{x}_t, t)$ is trained on examples made by the closed form: a data point, a uniform step, a standard normal draw.",
+   "The loss is the squared error between the draw and the guess; it settles well above 0, highest at small $t$, where the noise is a tiny nudge.",
+   "The step $t$ is an input: without it the net cannot tell how much of $\\mathbf{x}_t$ is noise, and its loss plateaus higher."
+  ],
+  "formula": {
+   "name": "Noise prediction",
+   "tex": "L = \\mathbb{E}\\,\\big\\lVert \\boldsymbol{\\epsilon} - \\boldsymbol{\\epsilon}_\\theta(\\sqrt{\\bar\\alpha_t}\\,\\mathbf{x}_0 + \\sqrt{1 - \\bar\\alpha_t}\\,\\boldsymbol{\\epsilon},\\; t)\\big\\rVert^2",
+   "note": "$t$ uniform on $1, \\ldots, T$."
+  },
+  "trap": "Feeding the net $\\mathbf{x}_t$ without $t$."
+ },
+ "quiz": [
+  {
+   "id": "q-loss",
+   "difficulty": 2,
+   "prose": "The true noise is $(1.0, 0.0)$ and the net predicts $(0.6, 0.3)$.",
+   "question": "What is the loss for this example? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.25,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "abs",
+      "value": 0.7,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": 0.125,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.16 + 0.09 = 0.25$.",
+    "generic": "Not quite. Square each difference and add.",
+    "byKey": {
+     "abs": "You added sizes; square them.",
+     "mean": "You averaged the coordinates; sum them."
+    }
+   },
+   "explain": {
+    "text": "Differences 0.4 and $-0.3$ give $0.16 + 0.09 = 0.25$."
+   }
+  },
+  {
+   "id": "q-input",
+   "difficulty": 2,
+   "prose": "A noise predictor is trained for a diffusion model.",
+   "question": "What are its inputs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "xt",
+      "text": "The noised point $\\mathbf{x}_t$ and the step $t$",
+      "correct": true
+     },
+     {
+      "id": "x0",
+      "text": "The clean point $\\mathbf{x}_0$ and the step $t$",
+      "why": "The clean point is what we do not have when sampling."
+     },
+     {
+      "id": "only",
+      "text": "The noised point alone",
+      "why": "Without $t$ it cannot tell how much noise to expect."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right.",
+    "generic": "Not quite. What is known at sampling time?"
+   },
+   "explain": {
+    "text": "At sampling time only $\\mathbf{x}_t$ and $t$ are known, so those are the inputs; the target is the noise."
+   }
+  },
+  {
+   "id": "q-steps",
+   "difficulty": 3,
+   "prose": "A batch of 256 examples trains a 50-step model.",
+   "question": "How are the steps of the batch chosen?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "unif",
+      "text": "Each example draws its own step uniformly from 1 to 50",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "All examples share one step per batch",
+      "why": "That would work but trains one level at a time; the usual recipe mixes them."
+     },
+     {
+      "id": "seq",
+      "text": "Each example runs the whole forward chain",
+      "why": "The closed form makes the chain unnecessary."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right.",
+    "generic": "Not quite. How did make_batch draw t?"
+   },
+   "explain": {
+    "text": "Each example jumps straight to its own random step by the closed form."
+   }
+  }
+ ]
+}

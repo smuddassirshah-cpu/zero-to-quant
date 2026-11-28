@@ -1,0 +1,475 @@
+{
+ "id": "problems-3",
+ "course": "representations",
+ "level": 3,
+ "items": [
+  {
+   "id": "p-one-point",
+   "difficulty": 4,
+   "skills": [
+    "rp-vae"
+   ],
+   "prose": "A VAE for l9's circle data, with decoder $g(z) = (\\sin z, \\cos z)$ and noise $s = 0.1$, encodes the point $\\mathbf{x} = (0.3, 0.9)$ as $\\mu = 0.2$ and $\\ln\\sigma^2 = \\ln 0.09$.",
+   "parts": [
+    {
+     "question": "What is the KL term for this point, in nats? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.769,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "nolog",
+        "value": -0.435,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "sd",
+        "value": 0.272,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac12(0.04 + 0.09 - 1 + 2.408) \\approx 0.769$.",
+      "generic": "Not quite. $\\tfrac12(\\mu^2 + \\sigma^2 - 1 - \\ln\\sigma^2)$ with $\\sigma^2 = 0.09$.",
+      "byKey": {
+       "nolog": "You dropped $-\\ln 0.09 \\approx 2.408$.",
+       "sd": "You used $\\sigma = 0.3$ where the formula has $\\sigma^2$."
+      }
+     },
+     "explain": {
+      "text": "$-\\ln 0.09 \\approx 2.408$, so the KL is $\\tfrac12(0.04 + 0.09 - 1 + 2.408) \\approx 0.769$ nats."
+     }
+    },
+    {
+     "question": "The draw is $\\epsilon = 1.5$. What is the sampled $z$? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.65,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "var",
+        "value": 0.335,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "noeps",
+        "value": 0.2,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.2 + 0.3 \\times 1.5 = 0.65$.",
+      "generic": "Not quite. $z = \\mu + \\sigma\\epsilon$ with $\\sigma = 0.3$.",
+      "byKey": {
+       "var": "You scaled by the variance, 0.09. Use the standard deviation, 0.3.",
+       "noeps": "That is $\\mu$ alone; add $\\sigma\\epsilon$."
+      }
+     },
+     "explain": {
+      "text": "$\\sigma = \\sqrt{0.09} = 0.3$, so $z = 0.2 + 0.45 = 0.65$."
+     }
+    },
+    {
+     "question": "Using $z = 0.65$ from part 2, the decoder gives $(0.6052, 0.7961)$. What is $\\ln p(\\mathbf{x} \\mid z)$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -2.43,
+      "tol": {
+       "abs": 0.01
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "const",
+        "value": 2.77,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "sign",
+        "value": 2.43,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2.767 - 0.1039/0.02 \\approx -2.43$.",
+      "generic": "Not quite. $-\\ln(2\\pi s^2) - d^2/(2s^2)$ with $s = 0.1$.",
+      "byKey": {
+       "const": "That is the constant alone. Subtract the squared distance over 0.02.",
+       "sign": "Check the sign: this point rebuilds poorly, so the log density is negative."
+      }
+     },
+     "explain": {
+      "text": "The squared distance is 0.1039, so $\\ln p \\approx 2.767 - 5.197 = -2.43$."
+     }
+    },
+    {
+     "question": "Using a KL of 0.769 and $\\ln p(\\mathbf{x} \\mid z) = -2.43$, what is this point's one-sample loss, minus the ELBO? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.2,
+      "tol": {
+       "abs": 0.01
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "elbo",
+        "value": -3.2,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "add",
+        "value": -1.66,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.769 + 2.43 \\approx 3.20$.",
+      "generic": "Not quite. Loss = KL minus the log likelihood.",
+      "byKey": {
+       "elbo": "That is the ELBO. The loss is its negative.",
+       "add": "You added the log likelihood; subtract it."
+      }
+     },
+     "explain": {
+      "text": "Loss $= 0.769 - (-2.43) \\approx 3.20$. Most of it comes from the poor rebuild: this draw of $z$ landed too far round the circle."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-straight",
+   "difficulty": 5,
+   "skills": [
+    "rp-vae"
+   ],
+   "prose": "A straight decoder $g(z) = z\\mathbf{w}$ with $\\mathbf{w} = (2, 1)$ and noise $s = 1$ meets the point $\\mathbf{x} = (2, 1)$. With the prior $\\mathcal{N}(0, 1)$ the posterior of $z$ is normal with variance $1/(1 + \\lVert\\mathbf{w}\\rVert^2/s^2)$ and mean equal to that variance times $\\mathbf{w}^\\top\\mathbf{x}/s^2$.",
+   "parts": [
+    {
+     "question": "What is the posterior variance? Give it as a fraction.",
+     "widget": {
+      "kind": "expression",
+      "answer": "\\frac{1}{6}",
+      "accept": [
+       "1/6"
+      ],
+      "form": "fraction",
+      "wrong": [
+       {
+        "id": "five",
+        "tex": "\\frac{1}{5}"
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1/(1 + 5) = \\tfrac16$.",
+      "generic": "Not quite. $\\lVert\\mathbf{w}\\rVert^2 = 5$.",
+      "byKey": {
+       "five": "You left out the 1 from the prior."
+      }
+     },
+     "explain": {
+      "text": "$\\lVert\\mathbf{w}\\rVert^2 = 4 + 1 = 5$, so the variance is $1/6$."
+     }
+    },
+    {
+     "question": "Using the variance $\\tfrac16$, what is the posterior mean? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8333,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "noprior",
+        "value": 1.0,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "wx",
+        "value": 5.0,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac16 \\times 5 \\approx 0.8333$.",
+      "generic": "Not quite. Multiply the variance by $\\mathbf{w}^\\top\\mathbf{x}/s^2 = 5$.",
+      "byKey": {
+       "noprior": "That is $\\mathbf{w}^\\top\\mathbf{x}/\\lVert\\mathbf{w}\\rVert^2$, with no prior.",
+       "wx": "That is $\\mathbf{w}^\\top\\mathbf{x}$; multiply by the variance."
+      }
+     },
+     "explain": {
+      "text": "$\\mathbf{w}^\\top\\mathbf{x} = 5$, so the mean is $5/6 \\approx 0.8333$."
+     }
+    },
+    {
+     "question": "Take the guess $q$ equal to the prior. Using the posterior $\\mathcal{N}(0.8333, \\tfrac16)$, what is the gap $\\operatorname{KL}(q\\,\\|\\,p(z \\mid \\mathbf{x}))$? Use $\\operatorname{KL}(\\mathcal{N}(m_1, v_1)\\,\\|\\,\\mathcal{N}(m_2, v_2)) = \\tfrac12\\left(\\tfrac{v_1}{v_2} + \\tfrac{(m_1 - m_2)^2}{v_2} - 1 + \\ln\\tfrac{v_2}{v_1}\\right)$. Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.687,
+      "tol": {
+       "abs": 0.002
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "rev",
+        "value": 0.826,
+        "tol": {
+         "abs": 0.002
+        }
+       },
+       {
+        "id": "nolog",
+        "value": 4.583,
+        "tol": {
+         "abs": 0.002
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac12(6 + 4.167 - 1 - 1.792) \\approx 3.687$.",
+      "generic": "Not quite. $v_1 = 1$, $m_1 = 0$; $v_2 = \\tfrac16$, $m_2 = 0.8333$.",
+      "byKey": {
+       "rev": "That is the KL the other way, posterior against prior.",
+       "nolog": "You dropped $\\ln(v_2/v_1) = \\ln\\tfrac16$."
+      }
+     },
+     "explain": {
+      "text": "$\\tfrac12(6 + 0.6944 \\times 6 - 1 + \\ln\\tfrac16) \\approx 3.687$ nats: the price of a guess that ignores the point."
+     }
+    },
+    {
+     "question": "Here $p(\\mathbf{x})$ is normal with covariance $\\mathbf{w}\\mathbf{w}^\\top + \\mathbf{I}$, so $\\ln p(\\mathbf{x}) \\approx -3.1504$. Using the gap of 3.687 from part 3, what is the ELBO of the prior guess? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -6.84,
+      "tol": {
+       "abs": 0.01
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "add",
+        "value": 0.54,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "gap",
+        "value": -3.69,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "sign",
+        "value": 6.84,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-3.1504 - 3.687 \\approx -6.84$.",
+      "generic": "Not quite. ELBO $= \\ln p(\\mathbf{x}) - $ gap.",
+      "byKey": {
+       "add": "You added the gap. The ELBO lies below $\\ln p(\\mathbf{x})$.",
+       "gap": "That is minus the gap alone.",
+       "sign": "Keep the sign: both terms are below 0."
+      }
+     },
+     "explain": {
+      "text": "By the identity, ELBO $= \\ln p(\\mathbf{x}) - \\operatorname{KL} \\approx -6.84$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-wide",
+   "difficulty": 4,
+   "skills": [
+    "rp-vae"
+   ],
+   "prose": "Compare the prior $\\mathcal{N}(0, 1)$ with a wide guess $\\mathcal{N}(0, 3^2)$, using $\\operatorname{KL}(\\mathcal{N}(\\mu_1, \\sigma_1^2)\\,\\|\\,\\mathcal{N}(\\mu_2, \\sigma_2^2)) = \\ln\\tfrac{\\sigma_2}{\\sigma_1} + \\tfrac{\\sigma_1^2 + (\\mu_1 - \\mu_2)^2}{2\\sigma_2^2} - \\tfrac12$.",
+   "parts": [
+    {
+     "question": "What is $\\operatorname{KL}(\\mathcal{N}(0, 3^2)\\,\\|\\,\\mathcal{N}(0, 1))$, the direction a VAE uses? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.901,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "other",
+        "value": 0.654,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "nolog",
+        "value": 4.0,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac12(9 - 1 - \\ln 9) \\approx 2.901$.",
+      "generic": "Not quite. The guess comes first: $\\sigma_1 = 3$, $\\sigma_2 = 1$.",
+      "byKey": {
+       "other": "That is the other direction.",
+       "nolog": "You dropped $-\\ln 9$."
+      }
+     },
+     "explain": {
+      "text": "$\\ln\\tfrac13 + \\tfrac92 - \\tfrac12 \\approx 2.901$, the same as $\\tfrac12(9 - 1 - \\ln 9)$."
+     }
+    },
+    {
+     "question": "Reverse the roles of part 1, which gave 2.901. What is $\\operatorname{KL}(\\mathcal{N}(0, 1)\\,\\|\\,\\mathcal{N}(0, 3^2))$? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.654,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "same",
+        "value": 2.901,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\ln 3 + \\tfrac{1}{18} - \\tfrac12 \\approx 0.654$.",
+      "generic": "Not quite. Now $\\sigma_1 = 1$, $\\sigma_2 = 3$.",
+      "byKey": {
+       "same": "That is the first direction again; KL is not symmetric."
+      }
+     },
+     "explain": {
+      "text": "$1.099 + 0.056 - 0.5 \\approx 0.654$, far below 2.901: the wide guess is penalised more when it is measured against the narrow prior."
+     }
+    },
+    {
+     "question": "Using the 2.901 of part 1 per coordinate, a code has three independent coordinates, each with the guess $\\mathcal{N}(0, 3^2)$. What is its KL to $\\mathcal{N}(\\mathbf{0}, \\mathbf{I})$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 8.7,
+      "tol": {
+       "abs": 0.01
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "one",
+        "value": 2.9,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "rev",
+        "value": 1.96,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$3 \\times 2.901 \\approx 8.70$.",
+      "generic": "Not quite. Independent coordinates add.",
+      "byKey": {
+       "one": "That is one coordinate. There are three.",
+       "rev": "You used the reverse direction."
+      }
+     },
+     "explain": {
+      "text": "Three equal coordinates give three times the KL, about 8.70 nats."
+     }
+    },
+    {
+     "question": "As the guess widens further, what happens to $\\operatorname{KL}(\\mathcal{N}(0, \\sigma^2)\\,\\|\\,\\mathcal{N}(0, 1))$?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "grow",
+        "text": "It grows without bound, like $\\sigma^2/2$",
+        "correct": true
+       },
+       {
+        "id": "flat",
+        "text": "It levels off near 4 nats",
+        "why": "The $\\sigma^2/2$ term keeps growing; nothing caps it."
+       },
+       {
+        "id": "fall",
+        "text": "It falls back towards 0 again",
+        "why": "It is 0 only at $\\sigma = 1$ and rises on both sides."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right. Wide and narrow guesses both cost.",
+      "generic": "Not quite. Look at $\\tfrac12(\\sigma^2 - 1 - \\ln\\sigma^2)$ for large $\\sigma$."
+     },
+     "explain": {
+      "text": "For large $\\sigma$ the $\\sigma^2/2$ term dominates the $-\\ln\\sigma^2$ term, so the KL grows without bound, as it does when $\\sigma \\to 0$."
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,988 @@
+{
+ "id": "l10-the-elbo",
+ "course": "representations",
+ "title": "The evidence lower bound",
+ "minutes": 15,
+ "objectives": [
+  "Derive the evidence lower bound with Jensen's inequality, and name its two terms."
+ ],
+ "skills": [
+  "rp-vae"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "title": "A bound you cannot cross",
+   "difficulty": 1,
+   "prose": "Take l9's straight decoder, $g(z) = z(1, 0.5)$ with $s = 0.5$, and one point $\\mathbf{x} = (1.0, 0.8)$. Its log likelihood is the flat line, $\\ln p(\\mathbf{x}) \\approx -2.014$. The curve is a quantity called the ELBO for a guess $q(z) = \\mathcal{N}(m, v)$ about $z$; move the guess.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1,
+      2.5
+     ],
+     "y": [
+      -9,
+      -1
+     ],
+     "xLabel": "guess mean $m$",
+     "yLabel": "value",
+     "params": {
+      "v": 1.0,
+      "m": 0.0
+     },
+     "functions": [
+      {
+       "id": "E",
+       "expr": "-ln(2*pi*0.25) - ((1-x)^2 + (0.8-0.5*x)^2 + 1.25*v)/0.5 - 0.5*(x^2 + v - 1 - ln(v))",
+       "label": "ELBO",
+       "domain": [
+        -1,
+        2.5
+       ]
+      }
+     ],
+     "hlines": [
+      {
+       "id": "lp",
+       "y": -2.0141,
+       "label": "$\\ln p(\\mathbf{x})$",
+       "dashed": false
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0.0,
+       "y": -6.2316,
+       "label": "your guess"
+      }
+     ]
+    },
+    "derive": {
+     "P.x": "m",
+     "P.y": "-ln(2*pi*0.25) - ((1-m)**2 + (0.8-0.5*m)**2 + 1.25*v)/0.5 - 0.5*(m*m + v - 1 - ln(v))",
+     "caption": "Gap to the line: {{fixed(-2.0141 - (-ln(2*pi*0.25) - ((1-m)**2 + (0.8-0.5*m)**2 + 1.25*v)/0.5 - 0.5*(m*m + v - 1 - ln(v))), 3)}}"
+    }
+   },
+   "question": "Move $m$ and $v$ to make the gap as small as you can.",
+   "widget": {
+    "kind": "sliders",
+    "sliders": [
+     {
+      "id": "m",
+      "bind": "m",
+      "min": -1,
+      "max": 2.5,
+      "step": 0.01,
+      "label": "$m$",
+      "start": 0.0
+     },
+     {
+      "id": "v",
+      "bind": "v",
+      "min": 0.02,
+      "max": 1.5,
+      "step": 0.01,
+      "label": "$v$",
+      "start": 1.0
+     }
+    ],
+    "answer": {
+     "m": 0.93,
+     "v": 0.17
+    },
+    "tol": {
+     "m": 0.08,
+     "v": 0.04
+    },
+    "wrong": [
+     {
+      "id": "prior",
+      "check": "abs(m) < 0.1 && abs(v - 1) < 0.1"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with $m$: slide it until the curve's peak sits under the line."
+    },
+    {
+     "rung": "point",
+     "text": "Then narrow $v$; the curve rises.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The best guess is near $m = 0.93$, $v = 0.17$."
+    }
+   ],
+   "feedback": {
+    "correct": "At $m \\approx 0.93$, $v \\approx 0.17$ the gap closes to 0, and it never goes below 0.",
+    "generic": "Not yet. Keep moving both until the gap is near 0.",
+    "byKey": {
+     "prior": "That guess is the prior itself. The bound is valid but loose: the gap is over 4."
+    }
+   },
+   "explain": {
+    "text": "The ELBO touches $\\ln p(\\mathbf{x})$ only at $m = 0.9333$, $v = 1/6$, and lies below it everywhere else. That guess is the exact posterior; this lesson shows why.",
+    "canvas": {
+     "params": {
+      "m": 0.9333,
+      "v": 0.1667
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "title": "Two terms",
+   "difficulty": 2,
+   "prose": "The **evidence lower bound** is $$\\operatorname{ELBO}(q) = \\mathbb{E}_q[\\ln p(\\mathbf{x} \\mid z)] - \\operatorname{KL}(q(z)\\,\\|\\,p(z)).$$ For $q = \\mathcal{N}(m, v)$ against the prior $\\mathcal{N}(0, 1)$ the second term is $\\tfrac12(m^2 + v - 1 - \\ln v)$, in nats; the next lesson derives it.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1,
+      2.5
+     ],
+     "y": [
+      -9,
+      -1
+     ],
+     "xLabel": "guess mean $m$",
+     "yLabel": "value",
+     "params": {
+      "v": 0.1667
+     },
+     "functions": [
+      {
+       "id": "E",
+       "expr": "-ln(2*pi*0.25) - ((1-x)^2 + (0.8-0.5*x)^2 + 1.25*v)/0.5 - 0.5*(x^2 + v - 1 - ln(v))",
+       "label": "ELBO at $v = 1/6$"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "lp",
+       "y": -2.0141,
+       "label": "$\\ln p(\\mathbf{x})$",
+       "dashed": false
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0.9333,
+       "y": -2.0141,
+       "label": "best guess"
+      }
+     ]
+    }
+   },
+   "question": "What is the KL term at the best guess, $m = 0.9333$ and $v = 1/6$? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.915,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "nolog",
+      "value": 0.019,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 1.83,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$m^2 = 0.8711$ and $-\\ln(1/6) = \\ln 6 \\approx 1.7918$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12(0.8711 + 0.1667 - 1 + 1.7918)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac12(0.8711 + 0.1667 - 1 + 1.7918) \\approx 0.915$ nats.",
+    "generic": "Not quite. Put $m$ and $v$ into $\\tfrac12(m^2 + v - 1 - \\ln v)$.",
+    "byKey": {
+     "nolog": "You left out $-\\ln v$, which is $+\\ln 6$ here.",
+     "half": "You forgot the factor $\\tfrac12$."
+    }
+   },
+   "explain": {
+    "text": "The KL term is about 0.915 nats: the price of a guess narrower than the prior and away from 0. The first term rewards a $q$ whose $z$ values rebuild $\\mathbf{x}$ well."
+   }
+  },
+  {
+   "type": "derive",
+   "title": "The bound by Jensen",
+   "difficulty": 3,
+   "prose": "Show that the ELBO is below $\\ln p(\\mathbf{x})$ for any $q$ with $q(z) > 0$ wherever $p(\\mathbf{x}, z) > 0$. Jensen's inequality (`random-vars` l19) applies to the concave $\\ln$.",
+   "question": "Put the steps in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$\\ln p(\\mathbf{x}) = \\ln \\int p(\\mathbf{x}, z)\\,dz$, the marginal."
+     },
+     {
+      "id": "b",
+      "text": "$= \\ln \\mathbb{E}_q\\!\\left[\\dfrac{p(\\mathbf{x}, z)}{q(z)}\\right]$, multiplying and dividing by $q(z)$."
+     },
+     {
+      "id": "c",
+      "text": "$\\ge \\mathbb{E}_q\\!\\left[\\ln \\dfrac{p(\\mathbf{x}, z)}{q(z)}\\right]$, by Jensen, since $\\ln$ is concave."
+     },
+     {
+      "id": "d",
+      "text": "$= \\mathbb{E}_q[\\ln p(\\mathbf{x} \\mid z)] + \\mathbb{E}_q\\!\\left[\\ln \\dfrac{p(z)}{q(z)}\\right]$, writing $p(\\mathbf{x}, z) = p(\\mathbf{x} \\mid z)p(z)$."
+     },
+     {
+      "id": "e",
+      "text": "$= \\mathbb{E}_q[\\ln p(\\mathbf{x} \\mid z)] - \\operatorname{KL}(q\\,\\|\\,p(z))$, the ELBO."
+     },
+     {
+      "id": "x",
+      "text": "$\\le \\mathbb{E}_q\\!\\left[\\ln \\dfrac{p(\\mathbf{x}, z)}{q(z)}\\right]$, by Jensen, since $\\ln$ is convex.",
+      "why": "$\\ln$ is concave, so the log of an average is at least the average of the logs: the inequality runs $\\ge$."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Introduce $q$ before using Jensen."
+    },
+    {
+     "rung": "step",
+     "text": "For a concave function, $g(\\mathbb{E}[X]) \\ge \\mathbb{E}[g(X)]$."
+    }
+   ],
+   "feedback": {
+    "correct": "Marginal, introduce $q$, Jensen, split the joint, name the KL.",
+    "generic": "Not quite. Introduce $q$, then apply Jensen once.",
+    "byKey": {
+     "x": "You applied Jensen the convex way. $\\ln$ is concave, so the inequality is $\\ge$."
+    }
+   },
+   "explain": {
+    "text": "Writing $\\ln p(\\mathbf{x})$ as the log of an average under $q$ lets Jensen move the log inside, giving a lower bound. Splitting the joint names the two terms."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "A guess equal to the prior",
+   "difficulty": 2,
+   "prose": "Take $q$ to be the prior itself, $m = 0$, $v = 1$. Then the KL term is 0 and the ELBO is just $\\mathbb{E}_q[\\ln p(\\mathbf{x} \\mid z)]$, which here is -6.232. Recall $\\ln p(\\mathbf{x}) \\approx -2.014$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "prior",
+       "label": "q = prior"
+      },
+      {
+       "id": "best",
+       "label": "q = posterior"
+      }
+     ],
+     "yLabel": "Gap (nats)",
+     "showValues": true,
+     "decimals": 3
+    },
+    "state": {
+     "values": {
+      "prior": 4.2175,
+      "best": 0
+     }
+    }
+   },
+   "question": "How large is the gap between $\\ln p(\\mathbf{x})$ and the ELBO for this guess? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.22,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "elbo",
+      "value": 6.23,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "lp",
+      "value": 2.01,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Gap $= \\ln p(\\mathbf{x}) - \\operatorname{ELBO}$."
+    },
+    {
+     "rung": "step",
+     "text": "$-2.014 - (-6.232)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-2.014 + 6.232 \\approx 4.22$ nats.",
+    "generic": "Not quite. Subtract the ELBO from the log likelihood.",
+    "byKey": {
+     "elbo": "That is the ELBO's size. The gap is the difference from $\\ln p(\\mathbf{x})$.",
+     "lp": "That is $\\ln p(\\mathbf{x})$'s size alone."
+    }
+   },
+   "explain": {
+    "text": "The gap is 4.22 nats: a valid bound, but loose. A guess that ignores the point keeps its codes near the prior and rebuilds badly.",
+    "canvas": {
+     "highlight": [
+      "prior"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "Rebuild well, stay near the prior",
+   "difficulty": 2,
+   "prose": "The bars split the ELBO into its two terms for three guesses: the prior, the posterior, and a guess with the posterior's mean but $v = 0.01$, far sharper.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "prior",
+      "posterior",
+      "too sharp"
+     ],
+     "groups": [
+      {
+       "id": "rec",
+       "label": "rebuild term"
+      },
+      {
+       "id": "kl",
+       "label": "minus KL"
+      }
+     ],
+     "yLabel": "nats",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "rec": {
+       "prior": -6.232,
+       "posterior": -1.099,
+       "too sharp": -0.708
+      },
+      "kl": {
+       "prior": -0.0,
+       "posterior": -0.915,
+       "too sharp": -2.243
+      }
+     }
+    }
+   },
+   "question": "Why is the sharpest guess not the best?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "kl",
+      "text": "Its KL term grows faster than its rebuild term gains",
+      "correct": true
+     },
+     {
+      "id": "rec",
+      "text": "Its rebuild term is worse than the posterior's rebuild term",
+      "why": "Its rebuild term is a little better: less spread in $z$ means less spread in the rebuild. The KL is what costs."
+     },
+     {
+      "id": "same",
+      "text": "It has the same ELBO; the bars only look different",
+      "why": "Its ELBO is lower: -2.95 against -2.01."
+     },
+     {
+      "id": "prior",
+      "text": "It ignores the point, just as the prior does",
+      "why": "Its mean is the posterior's, so it uses the point. Its fault is being too sure."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the orange bars."
+    },
+    {
+     "rung": "step",
+     "text": "A tiny $v$ makes $-\\ln v$ large."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The two terms pull against each other.",
+    "generic": "Not quite. Compare both bars for the sharp guess."
+   },
+   "explain": {
+    "text": "The rebuild term wants $q$ to sit where $\\mathbf{x}$ is explained well; the KL term wants it close to the prior. The ELBO balances the two, and its best is the posterior."
+   }
+  },
+  {
+   "type": "trap",
+   "title": "Only the rebuild term",
+   "difficulty": 3,
+   "prose": "A colleague drops the KL term to get sharper rebuilds: they train the encoder and decoder to maximise $\\mathbb{E}_q[\\ln p(\\mathbf{x} \\mid z)]$ alone, then make new points by drawing $z \\sim \\mathcal{N}(0, 1)$ and decoding.",
+   "question": "What goes wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "drift",
+      "text": "No term keeps codes near the prior, so prior draws miss them",
+      "correct": true
+     },
+     {
+      "id": "blur",
+      "text": "The rebuilds become blurred and lose their detail",
+      "why": "Without the KL term rebuilds get sharper. The trouble is in sampling, not rebuilding."
+     },
+     {
+      "id": "fine",
+      "text": "Nothing, since the rebuild term is the important one",
+      "why": "Rebuilding is fine; generating fails, because codes drift away from the prior that sampling uses."
+     },
+     {
+      "id": "slow",
+      "text": "Training becomes much slower to converge",
+      "why": "Speed is not the issue. The codes can wander anywhere, so prior draws miss them."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where do the codes go with no term pulling them towards $\\mathcal{N}(0, 1)$?"
+    },
+    {
+     "rung": "step",
+     "text": "Sampling draws $z$ from $\\mathcal{N}(0, 1)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The KL term is what makes prior samples meaningful.",
+    "generic": "Not quite. Think about where new $z$ values come from.",
+    "byKey": {
+     "fine": "You kept only the rebuild term. Then nothing ties the codes to the prior used for sampling."
+    }
+   },
+   "explain": {
+    "text": "The rebuild term alone is an autoencoder: codes can sit anywhere, with gaps between them. Drawing $z$ from the prior then lands in regions the decoder never saw, and the samples are nonsense."
+   }
+  },
+  {
+   "type": "ladder",
+   "title": "One encoder for every point",
+   "difficulty": 2,
+   "prose": "Here we moved $m$ and $v$ by hand for one point. A **variational autoencoder** trains an encoder network that outputs $(m, \\ln v)$ for every point, and a decoder network for $g$, together, to raise the average ELBO over the data.",
+   "question": "What does the encoder replace?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "guess",
+      "text": "The hand search for each point's guess $q(z \\mid \\mathbf{x})$",
+      "correct": true
+     },
+     {
+      "id": "dec",
+      "text": "The decoder $p(\\mathbf{x} \\mid z)$ and its network",
+      "why": "The decoder is still there, a network of its own. The encoder outputs the guess."
+     },
+     {
+      "id": "prior",
+      "text": "The prior $p(z)$ over the code",
+      "why": "The prior stays fixed at $\\mathcal{N}(0, 1)$."
+     },
+     {
+      "id": "lik",
+      "text": "The exact $\\ln p(\\mathbf{x})$ of each point",
+      "why": "Nobody computes $\\ln p(\\mathbf{x})$; the encoder outputs a guess that makes the bound tight."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did the sliders set?"
+    },
+    {
+     "rung": "step",
+     "text": "One guess per point."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. One network gives every point's guess at once.",
+    "generic": "Not quite. What did you set by hand on the first screen?"
+   },
+   "explain": {
+    "text": "The sliders found one point's guess. The encoder learns a function from points to guesses, so the ELBO of every point can be raised with one set of weights."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "The identity behind the bound",
+   "difficulty": 3,
+   "prose": "For any $q$, $$\\ln p(\\mathbf{x}) = \\operatorname{ELBO}(q) + \\operatorname{KL}\\big(q(z)\\,\\|\\,p(z \\mid \\mathbf{x})\\big).$$ The KL is at least 0 (`info` L2), so the ELBO is a lower bound, equal to $\\ln p(\\mathbf{x})$ exactly when $q$ is the true posterior.",
+   "question": "On the first screen, what was the gap at the prior guess?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "klpost",
+      "text": "The KL from the prior to the true posterior",
+      "correct": true
+     },
+     {
+      "id": "klprior",
+      "text": "The KL from the prior to itself, 0",
+      "why": "That is the ELBO's own KL term. The gap is the KL to the posterior."
+     },
+     {
+      "id": "lp",
+      "text": "$\\ln p(\\mathbf{x})$ itself",
+      "why": "The gap is the difference, which the identity names as a KL to the posterior."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. The gap is always the KL from $q$ to the posterior.",
+    "generic": "Not quite. Read the identity."
+   },
+   "explain": {
+    "text": "The gap of 4.22 nats is $\\operatorname{KL}(\\mathcal{N}(0, 1)\\,\\|\\,p(z \\mid \\mathbf{x}))$. Raising the ELBO over $q$ pushes $q$ towards the posterior."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "The ELBO by sampling",
+   "difficulty": 3,
+   "prose": "Write a Monte Carlo ELBO for one point. Draw $\\epsilon$, set $z = m + \\sqrt{v}\\,\\epsilon$, and average the three log densities. With $q$ equal to the posterior the average should land on $\\ln p(\\mathbf{x})$; with $q$ equal to the prior, on the ELBO of the bars.",
+   "question": "Write `elbo_mc` and `two_terms`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef elbo_mc(x, enc, dec, s, n, seed):\n    # enc(x) -> (m, logvar) for a 1-number code; dec(z) maps n codes to\n    # n rebuilt points. Draw eps (default_rng(seed)), z = m + sd * eps,\n    # and average ln p(x|z) + ln p(z) - ln q(z) over the n draws.\n    ...\n\n\ndef two_terms(x, enc, dec, s, n, seed):\n    # The same draws: return (mean ln p(x|z), mean of ln q(z) - ln p(z)).\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef _parts(x, enc, dec, s, n, seed):\n    m, logvar = enc(x)\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = m + np.exp(0.5 * logvar) * eps\n    d2 = ((np.asarray(x, dtype=float) - dec(z)) ** 2).sum(axis=1)\n    log_px_z = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s)\n    log_pz = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    log_q = -0.5 * np.log(2 * np.pi) - logvar / 2 - eps ** 2 / 2\n    return log_px_z, log_pz, log_q\n\n\ndef elbo_mc(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a + b - c))\n\n\ndef two_terms(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a)), float(np.mean(c - b))\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "setup": "enc = lambda x: (0.9333, np.log(1 / 6))\nenc0 = lambda x: (0.0, 0.0)\ndec = lambda z: np.stack([z, 0.5 * z], axis=-1)\nimport representations_ops_l3 as ops\ndecc = ops.g_circle\nencc = lambda x: (float(np.arctan2(x[0], x[1])), np.log(0.05 ** 2))\n",
+      "call": "round(elbo_mc([1.0, 0.8], enc, dec, 0.5, 4, 0), 9)",
+      "compare": "equal",
+      "expect": "-2.014114026"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "enc = lambda x: (0.9333, np.log(1 / 6))\nenc0 = lambda x: (0.0, 0.0)\ndec = lambda z: np.stack([z, 0.5 * z], axis=-1)\nimport representations_ops_l3 as ops\ndecc = ops.g_circle\nencc = lambda x: (float(np.arctan2(x[0], x[1])), np.log(0.05 ** 2))\n",
+      "call": "round(elbo_mc([1.0, 0.8], enc, dec, 0.5, 4, 0), 9)",
+      "compare": "equal",
+      "expect": "-2.014114026"
+     },
+     {
+      "setup": "enc = lambda x: (0.9333, np.log(1 / 6))\nenc0 = lambda x: (0.0, 0.0)\ndec = lambda z: np.stack([z, 0.5 * z], axis=-1)\nimport representations_ops_l3 as ops\ndecc = ops.g_circle\nencc = lambda x: (float(np.arctan2(x[0], x[1])), np.log(0.05 ** 2))\n",
+      "call": "[round(t, 9) for t in two_terms([1.0, 0.8], enc0, dec, 0.5, 3, 1)]",
+      "compare": "equal",
+      "expect": "[-1.689050361, 0.0]"
+     },
+     {
+      "setup": "enc = lambda x: (0.9333, np.log(1 / 6))\nenc0 = lambda x: (0.0, 0.0)\ndec = lambda z: np.stack([z, 0.5 * z], axis=-1)\nimport representations_ops_l3 as ops\ndecc = ops.g_circle\nencc = lambda x: (float(np.arctan2(x[0], x[1])), np.log(0.05 ** 2))\n",
+      "call": "round(elbo_mc([0.5, 0.9], encc, decc, 0.05, 5, 2), 9)",
+      "compare": "equal",
+      "expect": "0.831481621"
+     },
+     {
+      "setup": "enc = lambda x: (0.9333, np.log(1 / 6))\nenc0 = lambda x: (0.0, 0.0)\ndec = lambda z: np.stack([z, 0.5 * z], axis=-1)\nimport representations_ops_l3 as ops\ndecc = ops.g_circle\nencc = lambda x: (float(np.arctan2(x[0], x[1])), np.log(0.05 ** 2))\n",
+      "call": "abs(elbo_mc([1.0, 0.8], enc0, dec, 0.5, 100000, 3) - (-6.231583)) < 0.03",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "enc = lambda x: (0.9333, np.log(1 / 6))\nenc0 = lambda x: (0.0, 0.0)\ndec = lambda z: np.stack([z, 0.5 * z], axis=-1)\nimport representations_ops_l3 as ops\ndecc = ops.g_circle\nencc = lambda x: (float(np.arctan2(x[0], x[1])), np.log(0.05 ** 2))\n",
+      "call": "abs(sum(t * c for t, c in zip(two_terms([1.0, 0.8], enc0, dec, 0.5, 100000, 4), (0, 1)))) < 0.01",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "enc = lambda x: (0.9333, np.log(1 / 6))\nenc0 = lambda x: (0.0, 0.0)\ndec = lambda z: np.stack([z, 0.5 * z], axis=-1)\nimport representations_ops_l3 as ops\ndecc = ops.g_circle\nencc = lambda x: (float(np.arctan2(x[0], x[1])), np.log(0.05 ** 2))\n",
+      "call": "abs(elbo_mc([1.0, 0.8], enc, dec, 0.5, 100000, 5) - (-2.014129)) < 0.01",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: three short seeded runs to 9 places, then 100,000-draw averages against the closed forms of this lesson (within 0.03, 0.01 and 0.01 nats).",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef _parts(x, enc, dec, s, n, seed):\n    m, logvar = enc(x)\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = m + np.exp(0.5 * logvar) * eps\n    d2 = ((np.asarray(x, dtype=float) - dec(z)) ** 2).sum(axis=1)\n    log_px_z = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s)\n    log_pz = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    log_q = -0.5 * np.log(2 * np.pi) - eps ** 2 / 2\n    return log_px_z, log_pz, log_q\n\n\ndef elbo_mc(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a + b - c))\n\n\ndef two_terms(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a)), float(np.mean(c - b))\n",
+      "test": 1,
+      "symptom": "Leaves the variance out of ln q, so a narrow guess looks free."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _parts(x, enc, dec, s, n, seed):\n    m, logvar = enc(x)\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = m + np.exp(logvar) * eps\n    d2 = ((np.asarray(x, dtype=float) - dec(z)) ** 2).sum(axis=1)\n    log_px_z = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s)\n    log_pz = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    log_q = -0.5 * np.log(2 * np.pi) - logvar / 2 - eps ** 2 / 2\n    return log_px_z, log_pz, log_q\n\n\ndef elbo_mc(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a + b - c))\n\n\ndef two_terms(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a)), float(np.mean(c - b))\n",
+      "test": 1,
+      "symptom": "Scales the noise by the variance instead of the standard deviation."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _parts(x, enc, dec, s, n, seed):\n    m, logvar = enc(x)\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = m + np.exp(0.5 * logvar) * eps\n    d2 = ((np.asarray(x, dtype=float) - dec(z)) ** 2).sum(axis=1)\n    log_px_z = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s)\n    log_pz = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    log_q = -0.5 * np.log(2 * np.pi) - logvar / 2 - eps ** 2 / 2\n    return log_px_z, log_pz, log_q\n\n\ndef elbo_mc(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a))\n\n\ndef two_terms(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a)), float(np.mean(c - b))\n",
+      "test": 1,
+      "symptom": "Returns the rebuild term alone, the trap of this lesson."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _parts(x, enc, dec, s, n, seed):\n    m, logvar = enc(x)\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = m + np.exp(0.5 * logvar) * eps\n    d2 = ((np.asarray(x, dtype=float) - dec(z)) ** 2).sum(axis=1)\n    log_px_z = -np.log(2 * np.pi * s * s) - d2 / (2 * s)\n    log_pz = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    log_q = -0.5 * np.log(2 * np.pi) - logvar / 2 - eps ** 2 / 2\n    return log_px_z, log_pz, log_q\n\n\ndef elbo_mc(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a + b - c))\n\n\ndef two_terms(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a)), float(np.mean(c - b))\n",
+      "test": 1,
+      "symptom": "Divides the squared distance by 2s instead of 2s squared."
+     }
+    ],
+    "data": {
+     "representations_ops_l3.py": "content/data/ai/representations_ops_l3.py"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\ln q(z) = -\\tfrac12\\ln 2\\pi - \\tfrac12\\ln v - \\epsilon^2/2$ when $z = m + \\sqrt v\\,\\epsilon$."
+    },
+    {
+     "rung": "step",
+     "text": "Average `log_px_z + log_pz - log_q`; the KL estimate is the mean of `log_q - log_pz`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your sampler reproduces the closed forms: about -2.014 at the posterior guess.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Use the standard deviation $e^{\\ln v/2}$ for the noise, and include $-\\tfrac12\\ln v$ in $\\ln q$.",
+     "test-6": "At the posterior guess the ELBO should be $\\ln p(\\mathbf{x}) \\approx -2.014$: subtract $\\ln q$ as well as adding $\\ln p(z)$."
+    }
+   },
+   "explain": {
+    "text": "At the true posterior every draw gives exactly $\\ln p(\\mathbf{x})$, so the estimate has no spread at all. Away from it, the draws vary and the average sits below."
+   }
+  },
+  {
+   "type": "problem",
+   "title": "The gap on a grid",
+   "difficulty": 3,
+   "prose": "Check the identity numerically. On a grid of $z$, sum $p(\\mathbf{x} \\mid z)p(z)$ for $\\ln p(\\mathbf{x})$ and sum $q(\\ln p(\\mathbf{x}, z) - \\ln q)$ for the ELBO. For the straight decoder the hidden tests compare your gap with the closed-form KL from $q$ to the posterior $\\mathcal{N}(0.9333, 1/6)$.",
+   "question": "Write `elbo_gap`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef elbo_gap(x, m, v, g, s, zs):\n    # On the evenly spaced grid zs: ln p(x) by summing p(x|z) p(z) dz,\n    # the ELBO of q = N(m, v) by summing q (ln p(x, z) - ln q) dz.\n    # Return ln p(x) - ELBO.\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef elbo_gap(x, m, v, g, s, zs):\n    zs = np.asarray(zs, dtype=float)\n    dz = zs[1] - zs[0]\n    d2 = ((np.asarray(x, dtype=float) - g(zs)) ** 2).sum(axis=1)\n    log_joint = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s) - 0.5 * np.log(2 * np.pi) - zs ** 2 / 2\n    log_px = np.log(np.sum(np.exp(log_joint)) * dz)\n    log_q = -0.5 * np.log(2 * np.pi * v) - (zs - m) ** 2 / (2 * v)\n    elbo = np.sum(np.exp(log_q) * (log_joint - log_q)) * dz\n    return float(log_px - elbo)\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "setup": "glin = lambda z: np.stack([z, 0.5 * z], axis=-1)\nZ = np.linspace(-8, 8, 16001)\ndef klpost(m, v):\n    vs = 1 / 6; ms = 0.9333333333333333\n    return 0.5 * (v / vs + (m - ms) ** 2 / vs - 1 + np.log(vs / v))\n",
+      "call": "abs(elbo_gap([1.0, 0.8], 0.0, 1.0, glin, 0.5, Z) - klpost(0.0, 1.0)) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "glin = lambda z: np.stack([z, 0.5 * z], axis=-1)\nZ = np.linspace(-8, 8, 16001)\ndef klpost(m, v):\n    vs = 1 / 6; ms = 0.9333333333333333\n    return 0.5 * (v / vs + (m - ms) ** 2 / vs - 1 + np.log(vs / v))\n",
+      "call": "abs(elbo_gap([1.0, 0.8], 0.0, 1.0, glin, 0.5, Z) - klpost(0.0, 1.0)) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "glin = lambda z: np.stack([z, 0.5 * z], axis=-1)\nZ = np.linspace(-8, 8, 16001)\ndef klpost(m, v):\n    vs = 1 / 6; ms = 0.9333333333333333\n    return 0.5 * (v / vs + (m - ms) ** 2 / vs - 1 + np.log(vs / v))\n",
+      "call": "abs(elbo_gap([1.0, 0.8], 0.9333333333333333, 1 / 6, glin, 0.5, Z)) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "glin = lambda z: np.stack([z, 0.5 * z], axis=-1)\nZ = np.linspace(-8, 8, 16001)\ndef klpost(m, v):\n    vs = 1 / 6; ms = 0.9333333333333333\n    return 0.5 * (v / vs + (m - ms) ** 2 / vs - 1 + np.log(vs / v))\n",
+      "call": "abs(elbo_gap([1.0, 0.8], 1.5, 0.05, glin, 0.5, Z) - klpost(1.5, 0.05)) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "glin = lambda z: np.stack([z, 0.5 * z], axis=-1)\nZ = np.linspace(-8, 8, 16001)\ndef klpost(m, v):\n    vs = 1 / 6; ms = 0.9333333333333333\n    return 0.5 * (v / vs + (m - ms) ** 2 / vs - 1 + np.log(vs / v))\n",
+      "call": "round(elbo_gap([1.0, 0.8], 0.5, 0.3, glin, 0.5, np.linspace(-3, 3, 7)), 6)",
+      "compare": "equal",
+      "expect": "0.746311"
+     },
+     {
+      "setup": "glin = lambda z: np.stack([z, 0.5 * z], axis=-1)\nZ = np.linspace(-8, 8, 16001)\ndef klpost(m, v):\n    vs = 1 / 6; ms = 0.9333333333333333\n    return 0.5 * (v / vs + (m - ms) ** 2 / vs - 1 + np.log(vs / v))\nimport representations_ops_l3 as ops\n",
+      "call": "elbo_gap([0.5, 0.9], 0.52, 0.002, ops.g_circle, 0.05, Z) >= 0",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. Three gaps must lie within $10^{-6}$ of the closed-form KL to the posterior on a fine grid. One coarse grid is compared to 6 places, and a sharp guess on the circle must give a gap of at least 0.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef elbo_gap(x, m, v, g, s, zs):\n    zs = np.asarray(zs, dtype=float)\n    dz = zs[1] - zs[0]\n    d2 = ((np.asarray(x, dtype=float) - g(zs)) ** 2).sum(axis=1)\n    log_joint = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s) - 0.5 * np.log(2 * np.pi) - zs ** 2 / 2\n    log_px = np.log(np.sum(np.exp(log_joint)) * dz)\n    log_q = -0.5 * np.log(2 * np.pi * v) - (zs - m) ** 2 / (2 * v)\n    elbo = np.sum(np.exp(log_q) * log_joint) * dz\n    return float(log_px - elbo)\n",
+      "test": 1,
+      "symptom": "Forgets the entropy of q, the minus ln q inside the ELBO."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef elbo_gap(x, m, v, g, s, zs):\n    zs = np.asarray(zs, dtype=float)\n    dz = zs[1] - zs[0]\n    d2 = ((np.asarray(x, dtype=float) - g(zs)) ** 2).sum(axis=1)\n    log_joint = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s) - 0.5 * np.log(2 * np.pi) - zs ** 2 / 2\n    log_px = np.log(np.sum(np.exp(log_joint)))\n    log_q = -0.5 * np.log(2 * np.pi * v) - (zs - m) ** 2 / (2 * v)\n    elbo = np.sum(np.exp(log_q) * (log_joint - log_q)) * dz\n    return float(log_px - elbo)\n",
+      "test": 1,
+      "symptom": "Sums the grid without the spacing dz, so ln p(x) is off by ln dz."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef elbo_gap(x, m, v, g, s, zs):\n    zs = np.asarray(zs, dtype=float)\n    dz = zs[1] - zs[0]\n    d2 = ((np.asarray(x, dtype=float) - g(zs)) ** 2).sum(axis=1)\n    log_joint = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s) - 0.5 * np.log(2 * np.pi) - zs ** 2 / 2\n    log_px = np.log(np.sum(np.exp(log_joint)) * dz)\n    log_q = -0.5 * np.log(2 * np.pi * v) - (zs - m) ** 2 / 2\n    elbo = np.sum(np.exp(log_q) * (log_joint - log_q)) * dz\n    return float(log_px - elbo)\n",
+      "test": 2,
+      "symptom": "Treats q as having variance 1 in the exponent."
+     }
+    ],
+    "data": {
+     "representations_ops_l3.py": "content/data/ai/representations_ops_l3.py"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`dz = zs[1] - zs[0]` and `log_joint = ln p(x|z) + ln p(z)`."
+    },
+    {
+     "rung": "step",
+     "text": "`elbo = np.sum(np.exp(log_q) * (log_joint - log_q)) * dz`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your gap matches the KL to the posterior to $10^{-6}$.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "The gap at the prior should equal the KL to the posterior: include $-\\ln q$ inside the ELBO and multiply both sums by $dz$."
+    }
+   },
+   "explain": {
+    "text": "Both the gap and the KL to the posterior vanish at the posterior guess and grow away from it, as the identity says. A grid works for one latent number; for many it is hopeless, which is why VAEs sample."
+   }
+  },
+  {
+   "type": "transfer",
+   "title": "Fitting hidden-factor models",
+   "difficulty": 3,
+   "prose": "A team fits a regime-switching model to daily returns, with a hidden regime each day. The exact likelihood sums over every sequence of regimes, so they maximise an ELBO with a simple guess $q$ over the regimes instead.",
+   "question": "What should they keep in mind?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bound",
+      "text": "They maximise a lower bound, so compare models on held-out likelihood where they can",
+      "correct": true
+     },
+     {
+      "id": "exact",
+      "text": "The ELBO equals the likelihood, so nothing changes at all",
+      "why": "It equals the likelihood only when $q$ is the exact posterior, which a simple guess rarely is."
+     },
+     {
+      "id": "upper",
+      "text": "The ELBO is an upper bound, so fits will look too good",
+      "why": "It is a lower bound, by Jensen with the concave log."
+     },
+     {
+      "id": "kl",
+      "text": "The KL term makes the hidden regimes meaningless",
+      "why": "The KL keeps $q$ near the prior over regimes; it does not remove their meaning."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which way does the bound go?"
+    },
+    {
+     "rung": "step",
+     "text": "When is it tight?"
+    }
+   ],
+   "feedback": {
+    "correct": "Right. A bound is a bound: check it against held-out data.",
+    "generic": "Not quite. Recall when the ELBO equals the likelihood."
+   },
+   "explain": {
+    "text": "The same identity holds for any hidden-variable model, hedged by how good $q$ is. A loose $q$ biases the fit towards models whose posterior is easy to guess."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "For any guess $q$, $\\ln p(\\mathbf{x}) = \\operatorname{ELBO}(q) + \\operatorname{KL}(q\\,\\|\\,p(z \\mid \\mathbf{x}))$, so the ELBO is a lower bound, tight exactly at the posterior.",
+   "$\\operatorname{ELBO} = \\mathbb{E}_q[\\ln p(\\mathbf{x} \\mid z)] - \\operatorname{KL}(q\\,\\|\\,p(z))$: rebuild well, and stay near the prior.",
+   "A VAE trains an encoder giving $q(z \\mid \\mathbf{x})$ for every point and a decoder together, raising the average ELBO."
+  ],
+  "formula": {
+   "name": "Evidence lower bound",
+   "tex": "\\ln p(\\mathbf{x}) \\ge \\mathbb{E}_q[\\ln p(\\mathbf{x} \\mid z)] - \\operatorname{KL}\\big(q(z)\\,\\|\\,p(z)\\big)",
+   "note": "By Jensen, since $\\ln$ is concave."
+  },
+  "trap": "Maximising the rebuild term alone: that is an autoencoder, and its codes drift away from the prior that sampling uses."
+ },
+ "quiz": [
+  {
+   "id": "q-dir",
+   "difficulty": 2,
+   "prose": "For a point $\\mathbf{x}$ and any guess $q$ about $z$:",
+   "question": "Which is always true?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "le",
+      "text": "$\\operatorname{ELBO}(q) \\le \\ln p(\\mathbf{x})$",
+      "correct": true
+     },
+     {
+      "id": "ge",
+      "text": "$\\operatorname{ELBO}(q) \\ge \\ln p(\\mathbf{x})$",
+      "why": "Jensen with the concave log gives a lower bound."
+     },
+     {
+      "id": "eq",
+      "text": "$\\operatorname{ELBO}(q) = \\ln p(\\mathbf{x})$",
+      "why": "Only when $q$ is the exact posterior."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. It is a lower bound.",
+    "generic": "Not quite. Which way does Jensen go for the log?"
+   },
+   "explain": {
+    "text": "The gap is a KL divergence, which is at least 0, so the ELBO is never above $\\ln p(\\mathbf{x})$."
+   }
+  },
+  {
+   "id": "q-terms",
+   "difficulty": 2,
+   "prose": "The ELBO has two terms.",
+   "question": "Which term rewards rebuilding the point well?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rec",
+      "text": "$\\mathbb{E}_q[\\ln p(\\mathbf{x} \\mid z)]$",
+      "correct": true
+     },
+     {
+      "id": "kl",
+      "text": "$-\\operatorname{KL}(q\\,\\|\\,p(z))$",
+      "why": "That term keeps the guess near the prior."
+     },
+     {
+      "id": "lp",
+      "text": "$\\ln p(\\mathbf{x})$",
+      "why": "That is the quantity being bounded, not a term."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right.",
+    "generic": "Not quite. Which term contains the decoder?"
+   },
+   "explain": {
+    "text": "The first term is large when $z$ drawn from $q$ decodes to points near $\\mathbf{x}$; the second keeps $q$ close to the prior."
+   }
+  },
+  {
+   "id": "q-gap",
+   "difficulty": 3,
+   "prose": "For a point, $\\ln p(\\mathbf{x}) = -3.2$ and a guess $q$ has ELBO $-3.9$.",
+   "question": "What is the KL from $q$ to the true posterior?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "Number",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 7.1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "neg",
+      "value": -0.7,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-3.2 - (-3.9) = 0.7$.",
+    "generic": "Not quite. The gap is the KL to the posterior.",
+    "byKey": {
+     "sum": "You added the two. Subtract the ELBO.",
+     "neg": "A KL is never negative: subtract the ELBO from $\\ln p(\\mathbf{x})$."
+    }
+   },
+   "explain": {
+    "text": "By the identity the gap, $-3.2 + 3.9 = 0.7$ nats, is the KL from $q$ to the posterior."
+   }
+  }
+ ]
+}

@@ -1,0 +1,493 @@
+{
+ "id": "homework-3",
+ "course": "representations",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-vae-step",
+   "difficulty": 5,
+   "skills": [
+    "rp-vae"
+   ],
+   "title": "One training step",
+   "performance": "code",
+   "prose": "Write `vae_step(x_batch, params, eps, lr)` from nothing, with the autograd. `params` is the list of 10 arrays used by `representations_ops_l3` (`vae_encode`, `vae_decode`, `S_DEC`); `eps` holds one draw per point and code coordinate. Return the minibatch loss, minus the ELBO with one sample per point averaged over the batch (closed-form KL minus $\\ln p(\\mathbf{x} \\mid z)$, constant included), and the parameters after one plain gradient step of size `lr`.",
+   "question": "Write `vae_step`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef vae_step(x_batch, params, eps, lr):\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\nimport representations_ops_l3 as ops\n\n\ndef vae_step(x_batch, params, eps, lr):\n    X = np.asarray(x_batch, dtype=float)\n    eps = np.asarray(eps, dtype=float)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    n, d, s = X.shape[0], X.shape[1], ops.S_DEC\n    mu, logvar = ops.vae_encode(P, X)\n    z = mu + (logvar * 0.5).exp() * eps\n    x_hat = ops.vae_decode(P, z)\n    log_px = -((x_hat - X) ** 2).sum() / (2 * s * s) / n - 0.5 * d * np.log(2 * np.pi * s * s)\n    kl = (mu * mu + logvar.exp() - 1 - logvar).sum() * 0.5 / n\n    loss = kl - log_px\n    loss.backward()\n    return loss.item(), [p.data - lr * p.grad for p in P]\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "round(vae_step(X, PT, E, 0.01)[0], 9)",
+      "compare": "equal",
+      "expect": "0.863221256"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "np.round(vae_step(X, PT, E, 0.01)[1][9], 6).tolist()",
+      "compare": "equal",
+      "expect": "[-0.061504, -0.435916]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "round(vae_step(X, PT, E, 0.01)[0], 9)",
+      "compare": "equal",
+      "expect": "0.863221256"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "np.round(vae_step(X, PT, E, 0.01)[1][9], 6).tolist()",
+      "compare": "equal",
+      "expect": "[-0.061504, -0.435916]"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "round(vae_step(X, PS, E, 0.01)[0], 9)",
+      "compare": "equal",
+      "expect": "3.942967859"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "np.round(vae_step(X, PS, E, 0.05)[1][4], 6).tolist()",
+      "compare": "equal",
+      "expect": "[[0.738654], [-0.418848], [-0.540649], [-0.547173], [0.307305], [0.356892], [-0.269912], [-0.341251], [0.318166], [-0.314134], [-0.245556], [0.132253], [-0.302161], [0.281866], [-0.22254], [-0.072745], [-0.146039], [0.059713], [0.075555], [-0.096651], [0.831378], [-0.044495], [0.331276], [0.109768], [-0.027507], [0.017566], [0.193992], [-0.117132], [0.254771], [-0.065892], [-0.371975], [0.18484]]"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "round(vae_step(X[:1], PT, E[:1], 0.01)[0], 9)",
+      "compare": "equal",
+      "expect": "1.131228202"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "np.round(vae_step(X[:1], PT, E[:1], 0.01)[1][2], 6).tolist()",
+      "compare": "equal",
+      "expect": "[[-0.566472], [0.084095], [0.475225], [0.413491], [0.224381], [-0.418865], [-0.414976], [0.258147], [0.300516], [0.040353], [0.728747], [-0.555496], [0.203236], [0.132679], [0.51184], [0.802691], [0.570318], [-0.314237], [-0.062728], [-0.433954], [-0.467736], [-0.08873], [0.290195], [0.632469], [-0.286849], [0.502976], [-0.025028], [0.234684], [-0.142293], [-0.322787], [0.531759], [0.151794]]"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "round(vae_step(X, PZ, E, 0.01)[0], 6)",
+      "compare": "equal",
+      "expect": "399.818693"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "bool(np.all(np.isfinite(vae_step(X, PZ, E, 0.01)[1][4])))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(40, 0.05, 6)\nE = np.random.default_rng(8).standard_normal((40, 1))\nPZ = [p.copy() for p in PT]\nPZ[5] = PZ[5] - 800.0\n",
+      "call": "[np.shape(p) for p in vae_step(X, PT, E, 0.0)[1]] == [np.shape(p) for p in PT] and np.allclose(vae_step(X, PT, E, 0.0)[1][0], PT[0])",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests on the shipped weights with fixed noise: losses to 9 places and updated weights to 6. They include a one-point batch, a log-variance pushed to $-800$ (the variance underflows to 0), and a step of size 0 that must change nothing.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nimport representations_ops_l3 as ops\n\n\ndef vae_step(x_batch, params, eps, lr):\n    X = np.asarray(x_batch, dtype=float)\n    eps = np.asarray(eps, dtype=float)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    n, d, s = X.shape[0], X.shape[1], ops.S_DEC\n    mu, logvar = ops.vae_encode(P, X)\n    z = mu + (logvar * 0.5).exp() * eps\n    x_hat = ops.vae_decode(P, z)\n    log_px = -((x_hat - X) ** 2).sum() / (2 * s * s) / n - 0.5 * d * np.log(2 * np.pi * s * s)\n    var = logvar.exp()\n    kl = (mu * mu + var - 1 - var.log()).sum() * 0.5 / n\n    loss = kl - log_px\n    loss.backward()\n    return loss.item(), [p.data - lr * p.grad for p in P]\n",
+      "test": 7,
+      "symptom": "Takes the log of the variance, which is minus infinity once the variance underflows."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nimport representations_ops_l3 as ops\n\n\ndef vae_step(x_batch, params, eps, lr):\n    X = np.asarray(x_batch, dtype=float)\n    eps = np.asarray(eps, dtype=float)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    n, d, s = X.shape[0], X.shape[1], ops.S_DEC\n    mu, logvar = ops.vae_encode(P, X)\n    z = mu + logvar.exp() * eps\n    x_hat = ops.vae_decode(P, z)\n    log_px = -((x_hat - X) ** 2).sum() / (2 * s * s) / n - 0.5 * d * np.log(2 * np.pi * s * s)\n    kl = (mu * mu + logvar.exp() - 1 - logvar).sum() * 0.5 / n\n    loss = kl - log_px\n    loss.backward()\n    return loss.item(), [p.data - lr * p.grad for p in P]\n",
+      "test": 1,
+      "symptom": "Scales the noise by the variance instead of the standard deviation."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nimport representations_ops_l3 as ops\n\n\ndef vae_step(x_batch, params, eps, lr):\n    X = np.asarray(x_batch, dtype=float)\n    eps = np.asarray(eps, dtype=float)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    n, d, s = X.shape[0], X.shape[1], ops.S_DEC\n    mu, logvar = ops.vae_encode(P, X)\n    z = mu + (logvar * 0.5).exp() * eps\n    x_hat = ops.vae_decode(P, z)\n    log_px = -((x_hat - X) ** 2).sum() / (2 * s * s) - 0.5 * d * np.log(2 * np.pi * s * s)\n    kl = (mu * mu + logvar.exp() - 1 - logvar).sum() * 0.5 / n\n    loss = kl - log_px\n    loss.backward()\n    return loss.item(), [p.data - lr * p.grad for p in P]\n",
+      "test": 1,
+      "symptom": "Sums the rebuild term over the batch but averages the KL, so the two terms are weighted differently."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nimport representations_ops_l3 as ops\n\n\ndef vae_step(x_batch, params, eps, lr):\n    X = np.asarray(x_batch, dtype=float)\n    eps = np.asarray(eps, dtype=float)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    n, d, s = X.shape[0], X.shape[1], ops.S_DEC\n    mu, logvar = ops.vae_encode(P, X)\n    z = mu + (logvar * 0.5).exp() * eps\n    x_hat = ops.vae_decode(P, z)\n    log_px = -((x_hat - X) ** 2).sum() / (2 * s * s) / n - 0.5 * d * np.log(2 * np.pi * s * s)\n    kl = (mu * mu + logvar.exp() - 1 - logvar).sum() * 0.5 / n\n    loss = kl - log_px\n    loss.backward()\n    return loss.item(), [p.data + lr * p.grad for p in P]\n",
+      "test": 2,
+      "symptom": "Steps up the gradient, raising the loss."
+     }
+    ],
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+     "representations_ops_l3.py": "content/data/ai/representations_ops_l3.py",
+     "representations-l12-vae.json": "content/data/ai/representations-l12-vae.json"
+    }
+   },
+   "feedback": {
+    "correct": "Your step matches the reference, survives a variance of 0, and works on a single point.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "The loss averages KL minus $\\ln p(\\mathbf{x} \\mid z)$ over the batch, with $z = \\mu + e^{\\ell/2}\\epsilon$ and the constant $-\\tfrac{d}{2}\\ln(2\\pi s^2)$.",
+     "test-7": "With $\\ell = -800$ the variance is 0: write the KL with $-\\ell$, never $\\ln$ of the variance."
+    }
+   },
+   "explain": {
+    "text": "Average both terms over the batch so their balance does not depend on the batch size. Keep everything in `Tensor` operations so one `backward` gives every gradient."
+   }
+  },
+  {
+   "id": "h-kl-two",
+   "difficulty": 4,
+   "skills": [
+    "rp-vae"
+   ],
+   "title": "Any two normals",
+   "prose": "Write `kl_two_normals(m1, s1, m2, s2)`, the KL from $\\mathcal{N}(m_1, s_1^2)$ to $\\mathcal{N}(m_2, s_2^2)$: $\\ln\\frac{s_2}{s_1} + \\frac{s_1^2 + (m_1 - m_2)^2}{2s_2^2} - \\frac12$. With $m_2 = 0$, $s_2 = 1$ it must agree with l11's formula.",
+   "question": "Write `kl_two_normals`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\ndef kl_two_normals(m1, s1, m2, s2):\n    # KL( N(m1, s1^2) || N(m2, s2^2) ) in nats; s1, s2 are standard deviations.\n    ...\n",
+    "solution": "import math\n\n\ndef kl_two_normals(m1, s1, m2, s2):\n    return math.log(s2 / s1) + (s1 ** 2 + (m1 - m2) ** 2) / (2 * s2 ** 2) - 0.5\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "kl_two_normals(1.0, 0.5, 0.0, 1.0)",
+      "compare": "isclose",
+      "expect": "0.8181471805599454"
+     }
+    ],
+    "tests": [
+     {
+      "call": "kl_two_normals(1.0, 0.5, 0.0, 1.0)",
+      "compare": "isclose",
+      "expect": "0.8181471805599454"
+     },
+     {
+      "call": "kl_two_normals(0.0, 1.0, 1.0, 0.5)",
+      "compare": "isclose",
+      "expect": "2.8068528194400546"
+     },
+     {
+      "call": "kl_two_normals(0.3, 2.0, 0.3, 2.0)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      },
+      "expect": "0.0"
+     },
+     {
+      "call": "kl_two_normals(0.5, 1.2, 0.0, 1.0)",
+      "compare": "isclose",
+      "expect": "0.1626784432060454"
+     },
+     {
+      "call": "kl_two_normals(-2.0, 0.1, 1.0, 3.0)",
+      "compare": "isclose",
+      "expect": "3.401752937217711"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests, each within relative $10^{-9}$ (absolute $10^{-12}$ where the answer is 0).",
+    "mutants": [
+     {
+      "source": "import math\n\n\ndef kl_two_normals(m1, s1, m2, s2):\n    return math.log(s1 / s2) + (s1 ** 2 + (m1 - m2) ** 2) / (2 * s2 ** 2) - 0.5\n",
+      "test": 1,
+      "symptom": "Inverts the ratio of standard deviations."
+     },
+     {
+      "source": "import math\n\n\ndef kl_two_normals(m1, s1, m2, s2):\n    return math.log(s2 / s1) + (s1 ** 2 + (m1 - m2) ** 2) / (2 * s1 ** 2) - 0.5\n",
+      "test": 1,
+      "symptom": "Divides by the first variance instead of the second."
+     },
+     {
+      "source": "import math\n\n\ndef kl_two_normals(m1, s1, m2, s2):\n    return 2 * math.log(s2 / s1) + (s1 ** 2 + (m1 - m2) ** 2) / (2 * s2 ** 2) - 0.5\n",
+      "test": 1,
+      "symptom": "Uses the log of the variance ratio where the formula has the log of the sd ratio."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right, and it is not symmetric: swapping the arguments changes the answer.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "$\\mathcal{N}(1, 0.5^2)$ against $\\mathcal{N}(0, 1)$ should give 0.818: $\\ln(s_2/s_1)$, and divide by $2s_2^2$."
+    }
+   },
+   "explain": {
+    "text": "With $m_2 = 0$ and $s_2 = 1$ this reduces to $\\tfrac12(m_1^2 + s_1^2 - 1 - \\ln s_1^2)$, l11's closed form."
+   }
+  },
+  {
+   "id": "h-identity",
+   "difficulty": 4,
+   "skills": [
+    "rp-vae"
+   ],
+   "title": "The identity without Jensen",
+   "prose": "Show that $\\ln p(\\mathbf{x}) = \\operatorname{ELBO}(q) + \\operatorname{KL}\\big(q(z)\\,\\|\\,p(z \\mid \\mathbf{x})\\big)$ for any density $q$, with no inequality.",
+   "question": "Put the steps in order. Leave out the two steps that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$\\ln p(\\mathbf{x}) = \\mathbb{E}_q[\\ln p(\\mathbf{x})]$, since $\\ln p(\\mathbf{x})$ does not depend on $z$."
+     },
+     {
+      "id": "b",
+      "text": "$= \\mathbb{E}_q[\\ln p(\\mathbf{x}, z) - \\ln p(z \\mid \\mathbf{x})]$, by Bayes' rule, $p(\\mathbf{x}) = p(\\mathbf{x}, z)/p(z \\mid \\mathbf{x})$."
+     },
+     {
+      "id": "c",
+      "text": "$= \\mathbb{E}_q[\\ln p(\\mathbf{x}, z) - \\ln q(z)] + \\mathbb{E}_q[\\ln q(z) - \\ln p(z \\mid \\mathbf{x})]$, adding and subtracting $\\ln q(z)$."
+     },
+     {
+      "id": "d",
+      "text": "$= \\operatorname{ELBO}(q) + \\operatorname{KL}(q\\,\\|\\,p(z \\mid \\mathbf{x}))$, naming the two expectations."
+     },
+     {
+      "id": "x1",
+      "text": "$= \\mathbb{E}_q[\\ln p(\\mathbf{x} \\mid z) - \\ln p(z \\mid \\mathbf{x})]$, by Bayes' rule.",
+      "why": "Bayes' rule gives $p(\\mathbf{x}) = p(\\mathbf{x}, z)/p(z \\mid \\mathbf{x})$, the joint, not $p(\\mathbf{x} \\mid z)$."
+     },
+     {
+      "id": "x2",
+      "text": "$\\ge \\mathbb{E}_q[\\ln p(\\mathbf{x}, z) - \\ln q(z)]$, by Jensen.",
+      "why": "This route needs no inequality: the identity is exact, and the bound follows from KL $\\ge 0$."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "Constant inside the expectation, Bayes' rule, add and subtract $\\ln q$, name the terms.",
+    "generic": "Not quite. Start from a quantity that does not depend on $z$.",
+    "byKey": {
+     "x1": "Bayes' rule involves the joint $p(\\mathbf{x}, z)$.",
+     "x2": "No Jensen here: the identity is exact."
+    }
+   },
+   "explain": {
+    "text": "The identity is exact for any $q$; since the second term is a KL, at least 0, the first is a lower bound. This is the cleaner route to l10's result."
+   }
+  },
+  {
+   "id": "h-nonsense",
+   "difficulty": 5,
+   "skills": [
+    "rp-vae"
+   ],
+   "title": "Good rebuilds, bad samples",
+   "kind": "longform",
+   "prompt": "A colleague's VAE on daily returns of 30 stocks rebuilds held-out days almost perfectly, but days generated by decoding prior draws look nothing like real days. Their final training log shows a rebuild term of 41.2 nats and a KL term of 96.8 nats per day. Diagnose the problem from the two ELBO terms and propose fixes.",
+   "model": "**Diagnosis.** The rebuild term is high and the KL term is very large: the encoder places each day's code in a narrow region far from $\\mathcal{N}(\\mathbf{0}, \\mathbf{I})$. The aggregate of the codes over all days does not fill the prior, so most prior draws land in regions no training day used, where the decoder was never trained. The model is behaving almost like a plain autoencoder.\n\n**Checks.** I would plot the per-coordinate KL and the spread of the encoder means: a few coordinates with huge KL and tiny variances confirm it. I would encode the training days and compare the cloud of codes with prior draws, and look for gaps between clusters.\n\n**Fixes.** Train longer or with a lower learning rate if the KL is still falling. Raise the weight on the KL term (a $\\beta$ above 1), or anneal it from 0 up to 1, so codes are pulled towards the prior. Reduce the code width or the decoder's capacity so it cannot memorise days. Check the decoder noise $s$: a very small $s$ makes the rebuild term dominate the KL. Finally, judge the fix by sample statistics against held-out days (variances, correlations, tails), not by rebuild error.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Reads the large KL term as codes far from the prior and the high rebuild term as near-autoencoder behaviour.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Explains why prior samples fail: prior draws land where no training code is, where the decoder was never trained.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Proposes a check: per-coordinate KL, encoder variances, or comparing encoded codes with prior draws."
+    },
+    {
+     "points": 3,
+     "text": "Proposes fixes: a heavier or annealed KL weight, smaller code or decoder, longer training, or a larger decoder noise."
+    },
+    {
+     "points": 1,
+     "text": "Judges success by sample statistics against held-out days, not by rebuild error."
+    }
+   ]
+  },
+  {
+   "id": "h-dl",
+   "difficulty": 3,
+   "skills": [
+    "rp-vae"
+   ],
+   "title": "A gradient through the log-variance",
+   "prose": "An encoder outputs $\\ell = \\ln\\sigma^2 = \\ln 4$, and $z = \\mu + e^{\\ell/2}\\epsilon$ with $\\epsilon = -0.5$.",
+   "question": "What is $\\partial z/\\partial \\ell$? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sigma",
+      "value": -1.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac12 e^{\\ell/2}\\epsilon = \\tfrac12 \\times 2 \\times (-0.5) = -0.5$.",
+    "generic": "Not quite. Differentiate $e^{\\ell/2}\\epsilon$ in $\\ell$.",
+    "byKey": {
+     "sigma": "That is $\\sigma\\epsilon$; the derivative in $\\ell$ has a factor $\\tfrac12$.",
+     "sign": "Keep the sign of $\\epsilon$."
+    }
+   },
+   "explain": {
+    "text": "$e^{\\ell/2} = \\sigma = 2$, and the derivative of $e^{\\ell/2}$ in $\\ell$ is $\\tfrac12 e^{\\ell/2}$, so $\\partial z/\\partial\\ell = \\tfrac12 \\times 2 \\times (-0.5) = -0.5$."
+   }
+  },
+  {
+   "id": "h-elbo",
+   "difficulty": 3,
+   "skills": [
+    "rp-vae"
+   ],
+   "title": "Two terms into one",
+   "prose": "Over a batch, a VAE's average rebuild term is 1.72 nats and its average KL term is 2.31 nats.",
+   "question": "What is the average ELBO?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.59,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "Number",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 4.03,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.59,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1.72 - 2.31 = -0.59$.",
+    "generic": "Not quite. ELBO = rebuild term minus KL term.",
+    "byKey": {
+     "sum": "You added the KL; subtract it.",
+     "sign": "Check the order: rebuild minus KL."
+    }
+   },
+   "explain": {
+    "text": "The ELBO is $1.72 - 2.31 = -0.59$ nats; the loss minimised in training is $0.59$."
+   }
+  },
+  {
+   "id": "h-wide-code",
+   "difficulty": 4,
+   "skills": [
+    "rp-vae"
+   ],
+   "title": "A code with spare room",
+   "prose": "A VAE with 8 code coordinates is trained on data that lie near a curve. Afterwards, six coordinates have an average KL below 0.001 nats and two have about 1.5 nats each.",
+   "question": "What is the best reading?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "spare",
+      "text": "It uses two coordinates; six sit at the prior, harmless if two suffice",
+      "correct": true
+     },
+     {
+      "id": "fail",
+      "text": "Training failed for six of the coordinates and must be rerun",
+      "why": "Unused coordinates are a cheap, stable state: the KL term rewards leaving spare room at the prior."
+     },
+     {
+      "id": "noise",
+      "text": "The six hold fine detail too small to measure",
+      "why": "Detail about a point would raise a coordinate's KL above 0."
+     },
+     {
+      "id": "all",
+      "text": "All eight are needed, since the total KL is above 0",
+      "why": "The total is carried by two coordinates; the rest contribute nothing."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. Spare coordinates fall back to the prior.",
+    "generic": "Not quite. What does a KL near 0 imply?"
+   },
+   "explain": {
+    "text": "Coordinates the decoder does not need cost KL and give nothing, so training pushes them to the prior. When the data do need them, the same effect is called posterior collapse."
+   }
+  },
+  {
+   "id": "h-kl3",
+   "difficulty": 3,
+   "skills": [
+    "rp-vae"
+   ],
+   "title": "A three-number code",
+   "prose": "An encoder returns three code coordinates with means 1, 0 and $-1$; their log-variances are 0, $\\ln 0.5$ and 0.",
+   "question": "Find the total KL against the standard normal prior. Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.097,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "mid",
+      "value": 0.097,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "nolog",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.5 + 0.097 + 0.5 \\approx 1.097$.",
+    "generic": "Not quite. Add the three coordinates' KLs.",
+    "byKey": {
+     "mid": "That is the middle coordinate alone.",
+     "nolog": "You dropped $-\\ln 0.5$ in the middle coordinate."
+    }
+   },
+   "explain": {
+    "text": "The outer coordinates cost $\\tfrac12$ each for their shifts; the middle one $\\tfrac12(0.5 - 1 + 0.693) \\approx 0.097$; the total is 1.097."
+   }
+  }
+ ]
+}
