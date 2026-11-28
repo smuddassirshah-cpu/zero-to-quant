@@ -124,7 +124,7 @@ def cov_level(**kw):
     return c
 c = cov_level()
 shown = {s_ for _, _, s_ in c.uncovered()}
-ok_v = {'12500', '25', '4', '0', '8', '2/3', '0.67', '11000', '365', '0.5'} <= shown and not ({'1999', '3', '77', '5', '2', '12345', '91', '61'} & shown)
+ok_v = {'12500', '25', '4', '0', '2/3', '0.67', '11000'} <= shown and not ({'1999', '3', '77', '5', '2', '12345', '91', '61', '8', '365', '0.5'} & shown)
 with contextlib.redirect_stdout(io.StringIO()):
     c.expect('lx', 'screens[0].prose', 12500)
     c.expect('lx', 'screens[0].prose', 0.25)                           # 25% by value x 100 too
@@ -135,6 +135,25 @@ c.literal(0.5, why='a label read off the chart, not computed')
 ok_v = ok_v and {s_ for _, _, s_ in c.uncovered()} == {'11000'}
 c.claim(True, 'round', covers=[11018])                                 # 11,000 reads to the thousand
 ok_v = ok_v and c.uncovered() == []
+# the narrowed filter (1267 follow-up): bare small whole numbers, axis labels and table headers are not claims; words for fractions and multiples, money, units, decimals and arithmetic are
+from numbers_lib import _stated
+def claims(txt):
+    return sorted(round(v, 4) for v, _, _, _, strong in _stated(txt) if strong)
+ok_f = (claims('There are 3 emails and 7 words in step 2.') == []
+        and claims('That is a third fewer, twice as many, and six times the size.') == [0.3333, 2, 6]
+        and claims('It costs £5 and takes 4 bits, 40 ms and 12 s.') == [4, 5, 12, 40]
+        and claims('Then 3 + 4 = 7 and 0.5 or 2/3 or 150.') == [0.5, 0.6667, 3, 4, 7, 150]
+        and claims('Two thirds of it, a quarter of that.') == [0.25, 0.6667])
+ft = Level('odes', 3)
+ft.files = {'a': {'screens': [{'prose': 'About a third of it.', 'canvas': {'params': {'xLabel': 'Day 41', 'rows': [['Day', '17']]}}, 'explain': 'It is 31 in all, 3 + 4.'}]},
+            'b': {'screens': [{'prose': 'Nothing here.'}]}}
+with contextlib.redirect_stdout(io.StringIO()):
+    ft.expect('b', 'screens[0].prose', 0.3333)        # a fraction or word must be covered in its own file: file b does not cover file a
+    left_f = {s_ for _, _, s_ in ft.uncovered()}
+ok_f = ok_f and left_f == {'a third', '31', '3', '4'}
+print(f"{'PASS' if ok_f else 'FAIL'} coverage filter: claims are decimals, fractions, words, money, units, arithmetic and big numbers; a fraction is covered in its own file only")
+if not ok_f:
+    sys.exit(1)
 c2 = cov_level()
 c2.claim(True, 'near', covers=[12480])                                 # 12,500 reads to the hundred: 12480 does not cover it
 ok_v = ok_v and '12500' in {s_ for _, _, s_ in c2.uncovered()}
