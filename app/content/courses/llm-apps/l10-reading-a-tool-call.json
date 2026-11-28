@@ -1,0 +1,892 @@
+{
+ "id": "l10-reading-a-tool-call",
+ "course": "llm-apps",
+ "title": "Reading a tool call",
+ "minutes": 14,
+ "objectives": [
+  "Code a parser that validates a model's tool call and returns errors the model can act on."
+ ],
+ "skills": [
+  "llm-agents"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Four bad calls",
+   "prose": "The scripted model's replies are text: a tool name and its arguments as JSON. Here are four planted bad calls and the errors the harness returns.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Four calls and their errors",
+     "lines": [
+      "call get_close {\"ticker\": \"DUNM\", \"date\": \"2024-03-12\"",
+      "  error: arguments are not valid JSON: Expecting ',' delimiter",
+      "call get_price {\"ticker\": \"ELRY\", \"date\": \"2024-03-07\"}",
+      "  error: unknown tool 'get_price'; available: get_close, pct_change, search_notes",
+      "call get_close {\"ticker\": \"CORR\", \"date\": 20240319}",
+      "  error: field 'date' must be string, got integer",
+      "call get_close {\"ticker\": \"HALL\"}",
+      "  error: missing required field 'date'"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Which call cannot even be read as arguments?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "json",
+      "text": "The call whose JSON lacks its closing brace",
+      "correct": true
+     },
+     {
+      "id": "unknown",
+      "text": "The call to get_price, which is not a tool",
+      "why": "Its arguments read fine; only the name is wrong."
+     },
+     {
+      "id": "type",
+      "text": "The call that sends the date as a number",
+      "why": "That JSON reads fine; the value has the wrong type."
+     },
+     {
+      "id": "missing",
+      "text": "The call with no date at all",
+      "why": "That JSON reads fine; a field is missing."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look for a call whose arguments do not parse at all."
+    }
+   ],
+   "feedback": {
+    "correct": "The broken JSON: `json.loads` raises on it, so it must be caught and reported, not crash the loop.",
+    "generic": "Not quite. Which arguments are not valid JSON?"
+   },
+   "explain": {
+    "text": "Reading a call has steps: parse the JSON, look the name up, validate the arguments. Each can fail, and each failure becomes a message to the model.",
+    "canvas": {
+     "highlight": [
+      "l1",
+      "l2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "title": "An error the model can use",
+   "prose": "Task T08 asks for CORR's close; the scripted model first sends the date as a number. The first run below returns 'invalid input'; the second returns the validator's message. Tap the line where the model sends a corrected call.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "invalid input, then a real message",
+     "lines": [
+      "--- error: 'invalid input'",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": 20240319}",
+      "tool: {\"error\": \"invalid input\"}",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": 20240319}",
+      "tool: {\"error\": \"invalid input\"}",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": 20240319}",
+      "tool: {\"error\": \"invalid input\"}",
+      "--- error from the validator",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": 20240319}",
+      "tool: {\"error\": \"field 'date' must be string, got integer\"}",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": \"2024-03-19\"}",
+      "tool: {\"result\": 100.39}",
+      "model: answer 100.39"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Tap the corrected call.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l11"
+    ],
+    "countWord": "lines"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The first run never changes its call."
+    },
+    {
+     "rung": "point",
+     "text": "In the second run, the call after the error has a string date."
+    }
+   ],
+   "feedback": {
+    "correct": "After \"field 'date' must be string, got integer\", the model resends the date as '2024-03-19' and gets 100.39.",
+    "generic": "Not quite. Find the call with a quoted date."
+   },
+   "explain": {
+    "text": "'invalid input' says nothing, so the scripted model repeats itself until the loop stops it. A message naming the field and the expected type is enough to fix the call, here and in most real models."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "What makes an error actionable",
+   "prose": "The error text goes back to the model as the tool's result. An **actionable** error says what was wrong and what was expected.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "call get_close {\"ticker\": \"CORR\", \"date\": 20240319}"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Which error lets the model fix `{\"ticker\": \"CORR\", \"date\": 20240319}`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "good",
+      "text": "\"field 'date' must be string, got integer\"",
+      "correct": true
+     },
+     {
+      "id": "invalid",
+      "text": "\"invalid input\"",
+      "why": "It does not say which field or what was expected."
+     },
+     {
+      "id": "trace",
+      "text": "A Python traceback from deep in the price table",
+      "why": "It names internal lines, not the field to change."
+     },
+     {
+      "id": "none",
+      "text": "No message; drop the call",
+      "why": "The model then never learns why nothing happened."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which message names the field and the type?"
+    }
+   ],
+   "feedback": {
+    "correct": "It names the field, the expected type and what arrived.",
+    "generic": "Not quite. Which message could you act on?"
+   },
+   "explain": {
+    "text": "The validator's message is written for the reader that will act on it, the model: field, expected, received."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "How much it matters",
+   "prose": "Run all 20 planted tasks twice: once with the validator's messages, once replacing every error with 'invalid input'. 7 tasks carry a planted error that a clear message can fix.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "good",
+       "label": "Clear errors"
+      },
+      {
+       "id": "poor",
+       "label": "'invalid input'"
+      }
+     ],
+     "yLabel": "Tasks solved",
+     "yMax": 20,
+     "showValues": true
+    },
+    "state": {
+     "values": {
+      "good": 16,
+      "poor": 0
+     }
+    }
+   },
+   "question": "With 'invalid input' for every error, how many of the 20 tasks end in success?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "good",
+      "value": 16,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all-but",
+      "value": 13,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Clear errors solve 16; every planted error then goes unfixed."
+    },
+    {
+     "rung": "point",
+     "text": "$16 - 7$."
+    }
+   ],
+   "feedback": {
+    "correct": "9 of 20, against 16: the 7 planted errors are fixed only when the message says what was wrong.",
+    "generic": "Not quite. Take away the tasks that needed a fix.",
+    "byKey": {
+     "good": "16 is with clear errors.",
+     "all-but": "Some tasks fail for other reasons too: subtract only the fixable ones from the clear-error count."
+    }
+   },
+   "explain": {
+    "text": "Clear errors: 16 of 20; 'invalid input': 9. The 7 planted errors are the difference; the other four failures are the model's own and need l12's checks.",
+    "canvas": {
+     "values": {
+      "poor": 9
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "An unknown tool",
+   "prose": "Task T07's script calls `get_price`, which does not exist. The model can only correct the name if the error tells it the real ones.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Four calls and their errors",
+     "lines": [
+      "call get_close {\"ticker\": \"DUNM\", \"date\": \"2024-03-12\"",
+      "  error: arguments are not valid JSON: Expecting ',' delimiter",
+      "call get_price {\"ticker\": \"ELRY\", \"date\": \"2024-03-07\"}",
+      "  error: unknown tool 'get_price'; available: get_close, pct_change, search_notes",
+      "call get_close {\"ticker\": \"CORR\", \"date\": 20240319}",
+      "  error: field 'date' must be string, got integer",
+      "call get_close {\"ticker\": \"HALL\"}",
+      "  error: missing required field 'date'"
+     ],
+     "wrap": true
+    },
+    "state": {
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    }
+   },
+   "question": "Which error should the harness return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "list",
+      "text": "Name the bad tool and list the three real ones",
+      "correct": true
+     },
+     {
+      "id": "short",
+      "text": "Reply \"unknown tool\" and nothing more",
+      "why": "The model still does not know what to call."
+     },
+     {
+      "id": "guess",
+      "text": "Quietly run get_close in its place",
+      "why": "Guessing hides the mistake and may pick the wrong tool."
+     },
+     {
+      "id": "raise",
+      "text": "Raise KeyError and stop the agent",
+      "why": "One bad name should not end the task."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does the model need to know to try again?"
+    }
+   ],
+   "feedback": {
+    "correct": "Name the bad tool and list the real ones.",
+    "generic": "Not quite. Which message lets the model choose again?"
+   },
+   "explain": {
+    "text": "Listing the available tools turns a dead end into a second try; the scripted model corrects to get_close on the next turn."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Raise or report?",
+   "prose": "A colleague's harness raises an exception whenever a call fails validation, 'so bad calls never slip through'.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Four calls and their errors",
+     "lines": [
+      "call get_close {\"ticker\": \"DUNM\", \"date\": \"2024-03-12\"",
+      "  error: arguments are not valid JSON: Expecting ',' delimiter",
+      "call get_price {\"ticker\": \"ELRY\", \"date\": \"2024-03-07\"}",
+      "  error: unknown tool 'get_price'; available: get_close, pct_change, search_notes",
+      "call get_close {\"ticker\": \"CORR\", \"date\": 20240319}",
+      "  error: field 'date' must be string, got integer",
+      "call get_close {\"ticker\": \"HALL\"}",
+      "  error: missing required field 'date'"
+     ],
+     "wrap": true
+    },
+    "state": {
+     "highlight": [
+      "l1",
+      "l2"
+     ]
+    }
+   },
+   "question": "What happens to task T06, whose first call has broken JSON?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "crash",
+      "text": "The exception ends the whole run; the model never gets to fix its call",
+      "correct": true
+     },
+     {
+      "id": "fixed",
+      "text": "The model sees the exception and fixes the call",
+      "why": "An exception stops the loop: the model is never asked again."
+     },
+     {
+      "id": "skip",
+      "text": "The call is skipped and the loop carries on",
+      "why": "Raising does not skip; it ends the loop unless something catches it."
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the JSON is fixed automatically",
+      "why": "Nothing repairs broken JSON by itself."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does an uncaught exception do to a loop?"
+    }
+   ],
+   "feedback": {
+    "correct": "The run crashes on the first bad call; with a reported error, the scripted model fixes it on turn two.",
+    "generic": "Not quite. Where does the exception go?",
+    "byKey": {
+     "fixed": "You assumed the model sees the exception. An uncaught exception stops the program; only an error returned as the tool result reaches the model."
+    }
+   },
+   "explain": {
+    "text": "Catch `json.JSONDecodeError` and validation failures, and return them as the tool result. Silently dropping the call is as bad: the model waits for a result that never comes."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "When the tool itself fails",
+   "prose": "Task T12 asks for CORR's close on 29 March 2024, a holiday. The call is valid, but `get_close` raises 'no close for CORR on 2024-03-29'. `run_call` catches it and returns it as the tool's result.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "T12",
+     "lines": [
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": \"2024-03-29\"}",
+      "tool: {\"error\": \"get_close failed: no close for CORR on 2024-03-29\"}",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": \"2024-03-28\"}",
+      "tool: {\"result\": 95.98}",
+      "model: answer 95.98"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "What close does the scripted model finally report? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 95.98,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "two-back",
+      "value": 96.66,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the trace after the error."
+    },
+    {
+     "rung": "point",
+     "text": "The model asks for 28 March instead."
+    }
+   ],
+   "feedback": {
+    "correct": "95.98: the error said there was no close, so the script stepped back a trading day.",
+    "generic": "Not quite. Follow the trace to the answer.",
+    "byKey": {
+     "two-back": "That is the close of 27 March. The script stepped back one trading day, to 28 March."
+    }
+   },
+   "explain": {
+    "text": "A tool failure is a result too. Reported as 'get_close failed: no close for CORR on 2024-03-29', it let the model recover and answer 95.98."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "Reading a call",
+   "prose": "What you built, in order: parse the JSON, look up the name, validate the arguments, run the tool. Any failure becomes the tool's result,\n\n```text\n('ok', name, args)   or   ('error', message)\n```\n\nand the message says what was wrong and what was expected.",
+   "question": "Which order is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Look up the name, parse the JSON, validate, run",
+      "correct": true
+     },
+     {
+      "id": "run-first",
+      "text": "Run the tool, then validate its result",
+      "why": "Validation must come before the tool runs, or bad input reaches it."
+     },
+     {
+      "id": "validate-first",
+      "text": "Validate, then parse the JSON",
+      "why": "There is nothing to validate until the JSON is parsed."
+     },
+     {
+      "id": "skip",
+      "text": "Parse and run; the tool will complain",
+      "why": "Its complaints may be unreadable, or it may do the wrong thing quietly."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "You cannot validate what you have not parsed."
+    }
+   ],
+   "feedback": {
+    "correct": "Name, parse, validate, run.",
+    "generic": "Not quite. What does each step need from the one before?"
+   },
+   "explain": {
+    "text": "Checking the name first lets the harness say 'unknown tool' even when the arguments are also bad; then parse, validate and run."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "parse_call and run_call in code",
+   "prose": "Write `parse_call(reply, tools)` and `run_call(name, args, tools)`. `tools` maps each name to `{'fn', 'schema', 'description'}`; `validate` from l9 is defined. Every failure returns `('error', message)`, never an exception.",
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import json\n\n\ndef parse_call(reply, tools):\n    # ('ok', name, args) or ('error', message); check the name, then\n    # parse the JSON, then validate(args, tools[name]['schema'])\n    ...\n\n\ndef run_call(name, args, tools):\n    # ('ok', result) or ('error', message) if the tool raises\n    ...\n",
+    "solution": "import json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'; available: {', '.join(sorted(tools))}\")\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', f'arguments are not valid JSON: {e.msg}')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed: {e}')\n",
+    "prelude": "import numpy\nTYPE_NAMES = {str: 'string', bool: 'boolean', int: 'integer', float: 'number', list: 'array', dict: 'object', type(None): 'null'}\ndef validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\nfrom llm_apps_ops_l3 import TOOLS\n",
+    "examples": [
+     {
+      "setup": "B = {'type': 'tool_call', 'name': 'get_close', 'arguments': '{\"ticker\": \"CORR\", \"date\": \"2024-03-08\"}'}",
+      "call": "parse_call(B, TOOLS)[0]",
+      "expect": "'ok'"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "B = {'type': 'tool_call', 'name': 'get_close', 'arguments': '{\"ticker\": \"CORR\", \"date\": \"2024-03-08\"}'}",
+      "call": "parse_call(B, TOOLS)",
+      "expect": "['ok', 'get_close', {'ticker': 'CORR', 'date': '2024-03-08'}]"
+     },
+     {
+      "call": "parse_call({'type': 'tool_call', 'name': 'get_close', 'arguments': '{\"ticker\": \"CORR\"'}, TOOLS)[0]",
+      "expect": "'error'"
+     },
+     {
+      "call": "'JSON' in parse_call({'type': 'tool_call', 'name': 'get_close', 'arguments': '{\"ticker\": \"CORR\"'}, TOOLS)[1]",
+      "expect": "True"
+     },
+     {
+      "call": "[w in parse_call({'type': 'tool_call', 'name': 'get_price', 'arguments': '{}'}, TOOLS)[1] for w in ('get_price', 'get_close', 'search_notes')]",
+      "expect": "[True, True, True]"
+     },
+     {
+      "call": "[w in parse_call({'type': 'tool_call', 'name': 'get_close', 'arguments': '{\"ticker\": \"CORR\", \"date\": 20240319}'}, TOOLS)[1] for w in ('date', 'string')]",
+      "expect": "[True, True]"
+     },
+     {
+      "call": "run_call('get_close', {'ticker': 'CORR', 'date': '2024-03-08'}, TOOLS)",
+      "expect": "['ok', 97.87]"
+     },
+     {
+      "call": "run_call('get_close', {'ticker': 'CORR', 'date': '2024-03-29'}, TOOLS)[0]",
+      "expect": "'error'"
+     },
+     {
+      "call": "'no close' in run_call('get_close', {'ticker': 'CORR', 'date': '2024-03-29'}, TOOLS)[1]",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests. The parse checks cover a good call and broken JSON (the error mentions JSON). Then an unknown tool (the error names it and the real tools) and an integer date (the error names the field and 'string'). The run checks cover a good close and a holiday whose error mentions 'no close'. `validate` and `TOOLS` are defined.",
+    "mutants": [
+     {
+      "source": "import json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'; available: {', '.join(sorted(tools))}\")\n    args = json.loads(reply.get('arguments', ''))\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed: {e}')\n",
+      "test": 2,
+      "symptom": "Lets broken JSON raise."
+     },
+     {
+      "source": "import json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', 'invalid input')\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', 'invalid input')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', 'invalid input')\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed: {e}')\n",
+      "test": 3,
+      "symptom": "Returns 'invalid input' for every failure."
+     },
+     {
+      "source": "import json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'\")\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', f'arguments are not valid JSON: {e.msg}')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed: {e}')\n",
+      "test": 4,
+      "symptom": "Does not list the real tools."
+     },
+     {
+      "source": "import json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'; available: {', '.join(sorted(tools))}\")\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', f'arguments are not valid JSON: {e.msg}')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    return ('ok', tools[name]['fn'](**args))\n",
+      "test": 7,
+      "symptom": "Lets a tool's exception escape."
+     },
+     {
+      "source": "import json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'; available: {', '.join(sorted(tools))}\")\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', f'arguments are not valid JSON: {e.msg}')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed')\n",
+      "test": 8,
+      "symptom": "Drops the tool's own message."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l3.py": "content/data/ai/llm_apps_ops_l3.py",
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Wrap `json.loads` in `try ... except json.JSONDecodeError`."
+    },
+    {
+     "rung": "point",
+     "text": "Join the validator's errors with '; ' into one message."
+    }
+   ],
+   "feedback": {
+    "correct": "Both match: every failure is a message the model can act on.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "Broken JSON must come back as ('error', ...), not crash: catch `json.JSONDecodeError`.",
+     "test-3": "Say what was wrong: an error for broken arguments should mention JSON.",
+     "test-4": "List the available tools, so the model can pick one of them.",
+     "test-7": "A tool that raises (no close on a holiday) is a result too: catch it and return ('error', message).",
+     "test-8": "Pass the tool's message on: 'no close for CORR on 2024-03-29' tells the model what to try next."
+    }
+   },
+   "explain": {
+    "text": "The harness never crashes on the model's mistakes and never hides them: each one becomes text the next turn can use."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Measuring the messages",
+   "prose": "Write `error_message(field, expected, got)` in the validator's form, and `retry_rate(results)`: the share of runs whose first call failed that the model later fixed. It is how a team checks that its messages work.",
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def error_message(field, expected, got):\n    # \"field 'date' must be string, got integer\"\n    ...\n\n\ndef retry_rate(results):\n    # results: [{'first_error': bool, 'fixed': bool}, ...]; share of the runs\n    # whose first call failed that were fixed later; None if none failed\n    ...\n",
+    "solution": "def error_message(field, expected, got):\n    return f\"field '{field}' must be {expected}, got {got}\"\n\n\ndef retry_rate(results):\n    fixed = [r for r in results if r['first_error']]\n    if not fixed:\n        return None\n    return sum(1 for r in fixed if r['fixed']) / len(fixed)\n",
+    "examples": [
+     {
+      "call": "error_message('ticker', 'string', 'null')",
+      "expect": "\"field 'ticker' must be string, got null\""
+     }
+    ],
+    "tests": [
+     {
+      "call": "error_message('date', 'string', 'integer')",
+      "expect": "\"field 'date' must be string, got integer\""
+     },
+     {
+      "call": "error_message('k', 'integer', 'boolean')",
+      "expect": "\"field 'k' must be integer, got boolean\""
+     },
+     {
+      "call": "retry_rate([{'first_error': True, 'fixed': True}, {'first_error': True, 'fixed': False}, {'first_error': False, 'fixed': False}])",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "retry_rate([{'first_error': False, 'fixed': False}]) is None",
+      "expect": "True"
+     },
+     {
+      "setup": "R = [{'first_error': True, 'fixed': True}] * 7 + [{'first_error': False, 'fixed': False}] * 13",
+      "call": "retry_rate(R)",
+      "expect": "1.0",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: two messages in the exact form, a retry rate over three runs, none to retry (None), and the 20 planted tasks with clear errors, 7 of 7 fixed.",
+    "mutants": [
+     {
+      "source": "def error_message(field, expected, got):\n    return f\"field {field} must be {expected}, got {got}\"\n\n\ndef retry_rate(results):\n    fixed = [r for r in results if r['first_error']]\n    if not fixed:\n        return None\n    return sum(1 for r in fixed if r['fixed']) / len(fixed)\n",
+      "test": 1,
+      "symptom": "Leaves the quotes off the field name."
+     },
+     {
+      "source": "def error_message(field, expected, got):\n    return f\"field '{field}' must be {expected}, got {got}\"\n\n\ndef retry_rate(results):\n    fixed = [r for r in results if r['first_error']]\n    if not fixed:\n        return None\n    return sum(1 for r in results if r['fixed']) / len(results)\n",
+      "test": 3,
+      "symptom": "Divides by every run, not just the failed ones."
+     },
+     {
+      "source": "def error_message(field, expected, got):\n    return f\"field '{field}' must be {expected}, got {got}\"\n\n\ndef retry_rate(results):\n    fixed = [r for r in results if r['first_error']]\n    if not fixed:\n        return 0.0\n    return sum(1 for r in fixed if r['fixed']) / len(fixed)\n",
+      "test": 4,
+      "symptom": "Returns 0 when nothing failed."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use an f-string with the field in single quotes."
+    },
+    {
+     "rung": "point",
+     "text": "Filter to the runs with a first error before dividing."
+    }
+   ],
+   "feedback": {
+    "correct": "Both match: with clear errors the scripted model fixed 7 of 7 planted errors.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Write the field in quotes: field 'date' must be string, got integer.",
+     "test-3": "The rate is over runs whose first call failed: 1 of 2 here.",
+     "test-4": "With no failed first calls there is nothing to fix: return None, not 0."
+    }
+   },
+   "explain": {
+    "text": "Clear messages gave a retry rate of 7/7; 'invalid input' gave 0/7. Measuring it, rather than assuming it, is l12's subject."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "An order gateway",
+   "prose": "A broker's order gateway receives orders from client algorithms. One order arrives with a limit price of −101.5 and a side of 'BUYY'.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "order {\"side\": \"BUYY\", \"qty\": 500, \"limit\": -101.5}"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "What should the gateway send back?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "A reject that names both faults and the allowed values",
+      "correct": true
+     },
+     {
+      "id": "first",
+      "text": "A reject naming the first fault only",
+      "why": "The sender fixes one and is rejected again for the other."
+     },
+     {
+      "id": "generic",
+      "text": "A reject that says only \"Order rejected\"",
+      "why": "The sender cannot tell what to fix."
+     },
+     {
+      "id": "fix",
+      "text": "Fill it as a buy at 101.5",
+      "why": "Guessing the client's intent on an order is dangerous."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does the client algorithm need in order to resend correctly?"
+    }
+   ],
+   "feedback": {
+    "correct": "Reject with every fault and the expected values, as a tool harness does.",
+    "generic": "Not quite. Which reply can a program act on?"
+   },
+   "explain": {
+    "text": "Gateways and tool harnesses solve the same problem: refuse malformed requests with reasons a program can act on, never guess."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Reading a call is ordinary code: look up the name, parse the JSON, validate the arguments, run the tool.",
+   "Every failure, including a tool that raises, goes back to the model as the tool's result; nothing crashes the loop and nothing is dropped.",
+   "Errors that name the field and the expected value let the model fix its call: here 7 of 7 planted errors, against 0 with 'invalid input'."
+  ],
+  "formula": {
+   "name": "A call's outcome",
+   "tex": "(\\text{ok}, \\text{name}, \\text{args}) \\;\\text{or}\\; (\\text{error}, \\text{message})",
+   "note": "The message says what was wrong and what was expected."
+  },
+  "trap": "Raising on a bad call (the run crashes) or returning 'invalid input' (the model cannot fix it)."
+ },
+ "quiz": [
+  {
+   "id": "q10-order",
+   "difficulty": 2,
+   "prose": "A reply has an unknown tool name and broken JSON arguments.",
+   "question": "What should `parse_call` report?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "unknown",
+      "text": "The unknown tool, listing the real ones",
+      "correct": true
+     },
+     {
+      "id": "json",
+      "text": "The broken JSON in the arguments",
+      "why": "The name is checked first: there is no schema to parse against for an unknown tool."
+     },
+     {
+      "id": "crash",
+      "text": "Nothing: it raises an exception",
+      "why": "It never raises; it returns an error."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The name is checked first.",
+    "generic": "Not quite. Which step comes first?"
+   },
+   "explain": {
+    "text": "With no such tool there is nothing to validate against, so the unknown name is the useful message."
+   }
+  },
+  {
+   "id": "q10-rate",
+   "difficulty": 2,
+   "prose": "Out of 12 runs whose first call failed, the model fixed 9.",
+   "question": "What is the retry rate? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.75,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$9/12 = 0.75$.",
+    "generic": "Not quite. Fixed over failed.",
+    "byKey": {
+     "inv": "0.25 is the share not fixed."
+    }
+   },
+   "explain": {
+    "text": "$9/12 = 0.75$ of failed first calls were fixed."
+   }
+  },
+  {
+   "id": "q10-raise",
+   "difficulty": 3,
+   "prose": "A tool raises ValueError('no close for HALL on 2024-03-29').",
+   "question": "What should the model receive?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "msg",
+      "text": "An error result with that message",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "Nothing; the call is skipped",
+      "why": "The model would wait for a result that never comes."
+     },
+     {
+      "id": "crash",
+      "text": "The loop stops with the exception",
+      "why": "One holiday should not end the task."
+     },
+     {
+      "id": "generic",
+      "text": "\"tool error\"",
+      "why": "The tool's message says exactly what to try next."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Return the tool's message as the result.",
+    "generic": "Not quite. What lets the model recover?"
+   },
+   "explain": {
+    "text": "'get_close failed: no close for HALL on 2024-03-29' tells the model to try another date."
+   }
+  }
+ ]
+}

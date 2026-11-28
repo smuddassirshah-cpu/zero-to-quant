@@ -1,0 +1,1411 @@
+{
+ "id": "l12-judging-an-agent",
+ "course": "llm-apps",
+ "title": "Judging an agent's work",
+ "minutes": 15,
+ "objectives": [
+  "Evaluate agent trajectories on planted tasks, and decide when a fixed workflow beats an agent."
+ ],
+ "skills": [
+  "llm-agents"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Right, but how?",
+   "prose": "Task T14 asks for ELRY's close on 14 March 2024. The scripted model answers at once, and the answer matches the true close.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "T14",
+     "lines": [
+      "user: [T14] What was ELRY's close on 2024-03-14?",
+      "model: answer 200.84"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Is this evidence that the agent works?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: it used no tool, so it is memory or luck",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: the answer is right",
+      "why": "Right by memory says nothing about whether it would look up a close it did not know."
+     },
+     {
+      "id": "half",
+      "text": "Partly: half marks",
+      "why": "Without the lookup there is no evidence the process works at all."
+     },
+     {
+      "id": "tool",
+      "text": "Yes: it must have used a tool internally",
+      "why": "The trace shows no tool call."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which tool did the task require, and was it called?"
+    }
+   ],
+   "feedback": {
+    "correct": "No: the task required get_close, and the trace shows no call.",
+    "generic": "Not quite. Check the trace for the required tool."
+   },
+   "explain": {
+    "text": "A right answer without the required lookup is l5's problem again: memory, not reading. Score the process as well as the answer."
+   }
+  },
+  {
+   "type": "explore",
+   "title": "A scorecard",
+   "prose": "All 20 planted tasks, run by the agent with clear error messages. A task counts as a **success** only if the answer is right and every required tool was used.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Task",
+      "Success",
+      "Right answer",
+      "Tools used",
+      "Script"
+     ],
+     "rows": [
+      [
+       "T01",
+       "yes",
+       "yes",
+       "get_close",
+       "direct"
+      ],
+      [
+       "T02",
+       "yes",
+       "yes",
+       "get_close",
+       "direct"
+      ],
+      [
+       "T03",
+       "yes",
+       "yes",
+       "get_close, pct_change",
+       "move"
+      ],
+      [
+       "T04",
+       "yes",
+       "yes",
+       "get_close, pct_change",
+       "move"
+      ],
+      [
+       "T05",
+       "yes",
+       "yes",
+       "search_notes",
+       "search"
+      ],
+      [
+       "T06",
+       "yes",
+       "yes",
+       "get_close",
+       "bad json"
+      ],
+      [
+       "T07",
+       "yes",
+       "yes",
+       "get_close",
+       "unknown tool"
+      ],
+      [
+       "T08",
+       "yes",
+       "yes",
+       "get_close",
+       "wrong type"
+      ],
+      [
+       "T09",
+       "yes",
+       "yes",
+       "get_close",
+       "missing arg"
+      ],
+      [
+       "T10",
+       "no",
+       "no",
+       "search_notes",
+       "loop"
+      ],
+      [
+       "T11",
+       "no",
+       "no",
+       "none",
+       "no tool"
+      ],
+      [
+       "T12",
+       "yes",
+       "yes",
+       "get_close",
+       "holiday"
+      ],
+      [
+       "T13",
+       "yes",
+       "yes",
+       "get_close",
+       "two paths"
+      ],
+      [
+       "T14",
+       "no",
+       "yes",
+       "none",
+       "memory"
+      ],
+      [
+       "T15",
+       "yes",
+       "yes",
+       "get_close",
+       "wrong type"
+      ],
+      [
+       "T16",
+       "yes",
+       "yes",
+       "get_close",
+       "direct"
+      ],
+      [
+       "T17",
+       "yes",
+       "yes",
+       "get_close, pct_change",
+       "move"
+      ],
+      [
+       "T18",
+       "yes",
+       "yes",
+       "get_close",
+       "bad json"
+      ],
+      [
+       "T19",
+       "yes",
+       "yes",
+       "search_notes",
+       "search"
+      ],
+      [
+       "T20",
+       "no",
+       "no",
+       "search_notes",
+       "loop"
+      ]
+     ],
+     "tap": "rows"
+    },
+    "state": {},
+    "maxHeight": 320
+   },
+   "question": "Tap every task that is not a success.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r9",
+     "r10",
+     "r13",
+     "r19"
+    ],
+    "countWord": "tasks"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the Success column."
+    },
+    {
+     "rung": "point",
+     "text": "Two endless searches, one wrong answer and one answer from memory."
+    }
+   ],
+   "feedback": {
+    "correct": "T10 and T20 looped, T11 answered wrongly with no tool, and T14 answered rightly with no tool.",
+    "generic": "Not quite. Tap the four rows marked 'no' under Success.",
+    "byKey": {
+     "r13": "T14 is marked success 'no': right answer, but no get_close.",
+     "r12": "T13 worked its percentage out itself; its required tool, get_close, was used, so it succeeds."
+    }
+   },
+   "explain": {
+    "text": "Four failures of four kinds: two loops stopped by the repeat check, one confident wrong answer and one right answer with no evidence behind it.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       9,
+       10,
+       13,
+       19
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A success rate with an error bar",
+   "prose": "The **success rate** is the share of tasks that succeed; with $n$ tasks, its standard error is $\\sqrt{p(1-p)/n}$ (`post-train` level 4).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Task",
+      "Success",
+      "Right answer",
+      "Tools used",
+      "Script"
+     ],
+     "rows": [
+      [
+       "T01",
+       "yes",
+       "yes",
+       "get_close",
+       "direct"
+      ],
+      [
+       "T02",
+       "yes",
+       "yes",
+       "get_close",
+       "direct"
+      ],
+      [
+       "T03",
+       "yes",
+       "yes",
+       "get_close, pct_change",
+       "move"
+      ],
+      [
+       "T04",
+       "yes",
+       "yes",
+       "get_close, pct_change",
+       "move"
+      ],
+      [
+       "T05",
+       "yes",
+       "yes",
+       "search_notes",
+       "search"
+      ],
+      [
+       "T06",
+       "yes",
+       "yes",
+       "get_close",
+       "bad json"
+      ],
+      [
+       "T07",
+       "yes",
+       "yes",
+       "get_close",
+       "unknown tool"
+      ],
+      [
+       "T08",
+       "yes",
+       "yes",
+       "get_close",
+       "wrong type"
+      ],
+      [
+       "T09",
+       "yes",
+       "yes",
+       "get_close",
+       "missing arg"
+      ],
+      [
+       "T10",
+       "no",
+       "no",
+       "search_notes",
+       "loop"
+      ],
+      [
+       "T11",
+       "no",
+       "no",
+       "none",
+       "no tool"
+      ],
+      [
+       "T12",
+       "yes",
+       "yes",
+       "get_close",
+       "holiday"
+      ],
+      [
+       "T13",
+       "yes",
+       "yes",
+       "get_close",
+       "two paths"
+      ],
+      [
+       "T14",
+       "no",
+       "yes",
+       "none",
+       "memory"
+      ],
+      [
+       "T15",
+       "yes",
+       "yes",
+       "get_close",
+       "wrong type"
+      ],
+      [
+       "T16",
+       "yes",
+       "yes",
+       "get_close",
+       "direct"
+      ],
+      [
+       "T17",
+       "yes",
+       "yes",
+       "get_close, pct_change",
+       "move"
+      ],
+      [
+       "T18",
+       "yes",
+       "yes",
+       "get_close",
+       "bad json"
+      ],
+      [
+       "T19",
+       "yes",
+       "yes",
+       "search_notes",
+       "search"
+      ],
+      [
+       "T20",
+       "no",
+       "no",
+       "search_notes",
+       "loop"
+      ]
+     ]
+    },
+    "state": {},
+    "maxHeight": 320
+   },
+   "question": "What is the standard error of the agent's success rate? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0894,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.008,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "n1",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$p = 16/20 = 0.8$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sqrt{0.8 \\times 0.2/20}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{0.8 \\times 0.2/20} = 0.0894$: a 95% band of about ±0.18.",
+    "generic": "Not quite. Take the square root of $p(1-p)/n$.",
+    "byKey": {
+     "var": "That is the variance; take its square root.",
+     "n1": "You left out the division by $n = 20$."
+    }
+   },
+   "explain": {
+    "text": "Success rate 0.8 with standard error 0.0894. Twenty tasks pin the rate down only to within about 18 points either way."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Steps compound",
+   "prose": "A real model makes each step right with some chance, not always. If every step of a task succeeds independently with chance 0.95, a task of $n$ steps succeeds with $0.95^n$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      20
+     ],
+     "y": [
+      0,
+      1
+     ],
+     "xLabel": "Steps",
+     "yLabel": "Task success",
+     "functions": [
+      {
+       "id": "a",
+       "expr": "0.95^x",
+       "label": "0.95 a step",
+       "domain": [
+        0,
+        20
+       ]
+      },
+      {
+       "id": "b",
+       "expr": "0.99^x",
+       "label": "0.99 a step",
+       "domain": [
+        0,
+        20
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 10,
+       "y": 0.5987,
+       "label": "10 steps"
+      }
+     ]
+    }
+   },
+   "question": "What is the chance a 10-step task succeeds? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5987,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.95,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply 0.95 by itself 10 times."
+    },
+    {
+     "rung": "point",
+     "text": "$e^{10 \\ln 0.95}$ gives the same."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.95^{10} = 0.5987$: worse than a coin toss would suggest by eye.",
+    "generic": "Not quite. Raise 0.95 to the 10th power.",
+    "byKey": {
+     "linear": "You took 5% off per step, 50% in all. Chances multiply: 0.95 times itself 10 times.",
+     "one": "That is one step."
+    }
+   },
+   "explain": {
+    "text": "$0.95^5 = 0.7738$, $0.95^{10} = 0.5987$, $0.95^{20} = 0.3585$; at 0.99 a step, 20 steps give 0.8179. Long agent runs fail more often than their steps suggest.",
+    "canvas": {
+     "points": {
+      "p": {
+       "x": 20,
+       "y": 0.3585,
+       "label": "20 steps"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Five points apart",
+   "prose": "Two agent variants score 0.70 and 0.75 on 40 tasks each.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0.4,
+     "max": 1.0,
+     "step": 0.1
+    },
+    "state": {
+     "intervals": [
+      {
+       "id": "a",
+       "from": 0.555,
+       "to": 0.845,
+       "label": "0.70 ± 2 SE",
+       "row": 0
+      },
+      {
+       "id": "b",
+       "from": 0.613,
+       "to": 0.887,
+       "label": "0.75 ± 2 SE",
+       "row": 1
+      }
+     ]
+    }
+   },
+   "question": "What is the standard error of a success rate of 0.70 on 40 tasks? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0725,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.0052,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "n",
+      "value": 0.4583,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sqrt{0.7 \\times 0.3/40}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{0.21/40} = 0.0725$, so a 5-point gap is under one standard error: not distinguishable.",
+    "generic": "Not quite. Use $\\sqrt{p(1-p)/n}$.",
+    "byKey": {
+     "var": "That is the variance.",
+     "n": "You left out the division by 40."
+    }
+   },
+   "explain": {
+    "text": "Each rate is uncertain by about 0.0725, so 0.70 against 0.75 is well inside the noise. Hundreds of tasks, or a paired comparison on the same tasks, are needed."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A paired comparison",
+   "prose": "Run the same 20 tasks with clear errors (0.80) and with 'invalid input' (0.45). Pair them by task: the difference is 1 where only the clear-error run succeeds, and 0 where both agree.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "g",
+       "label": "Clear errors"
+      },
+      {
+       "id": "p",
+       "label": "'invalid input'"
+      }
+     ],
+     "yLabel": "Success rate",
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "g": 0.8,
+      "p": 0.45
+     }
+    }
+   },
+   "question": "The mean difference is 0.35. Its standard error is 0.1094. How many standard errors from 0 is it? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.2,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 0.31,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the mean difference by its standard error."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.35/0.1094 = 3.2$: on these tasks the messages clearly matter.",
+    "generic": "Not quite. Mean over standard error.",
+    "byKey": {
+     "inv": "You divided the standard error by the mean."
+    }
+   },
+   "explain": {
+    "text": "Pairing on the same tasks removes the difference between easy and hard tasks: 0.35 is 3.2 standard errors from 0, though the 20 tasks were planted to show it."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Grading only the answer",
+   "prose": "A colleague's evaluation checks only whether each final answer matches the known answer, and reports the share.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Task",
+      "Success",
+      "Right answer",
+      "Tools used",
+      "Script"
+     ],
+     "rows": [
+      [
+       "T01",
+       "yes",
+       "yes",
+       "get_close",
+       "direct"
+      ],
+      [
+       "T02",
+       "yes",
+       "yes",
+       "get_close",
+       "direct"
+      ],
+      [
+       "T03",
+       "yes",
+       "yes",
+       "get_close, pct_change",
+       "move"
+      ],
+      [
+       "T04",
+       "yes",
+       "yes",
+       "get_close, pct_change",
+       "move"
+      ],
+      [
+       "T05",
+       "yes",
+       "yes",
+       "search_notes",
+       "search"
+      ],
+      [
+       "T06",
+       "yes",
+       "yes",
+       "get_close",
+       "bad json"
+      ],
+      [
+       "T07",
+       "yes",
+       "yes",
+       "get_close",
+       "unknown tool"
+      ],
+      [
+       "T08",
+       "yes",
+       "yes",
+       "get_close",
+       "wrong type"
+      ],
+      [
+       "T09",
+       "yes",
+       "yes",
+       "get_close",
+       "missing arg"
+      ],
+      [
+       "T10",
+       "no",
+       "no",
+       "search_notes",
+       "loop"
+      ],
+      [
+       "T11",
+       "no",
+       "no",
+       "none",
+       "no tool"
+      ],
+      [
+       "T12",
+       "yes",
+       "yes",
+       "get_close",
+       "holiday"
+      ],
+      [
+       "T13",
+       "yes",
+       "yes",
+       "get_close",
+       "two paths"
+      ],
+      [
+       "T14",
+       "no",
+       "yes",
+       "none",
+       "memory"
+      ],
+      [
+       "T15",
+       "yes",
+       "yes",
+       "get_close",
+       "wrong type"
+      ],
+      [
+       "T16",
+       "yes",
+       "yes",
+       "get_close",
+       "direct"
+      ],
+      [
+       "T17",
+       "yes",
+       "yes",
+       "get_close, pct_change",
+       "move"
+      ],
+      [
+       "T18",
+       "yes",
+       "yes",
+       "get_close",
+       "bad json"
+      ],
+      [
+       "T19",
+       "yes",
+       "yes",
+       "search_notes",
+       "search"
+      ],
+      [
+       "T20",
+       "no",
+       "no",
+       "search_notes",
+       "loop"
+      ]
+     ]
+    },
+    "state": {},
+    "maxHeight": 320
+   },
+   "question": "What does that report give for the 20 tasks? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.85,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "success",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the 'yes' entries under Right answer."
+    },
+    {
+     "rung": "point",
+     "text": "T14 counts, though it used no tool."
+    }
+   ],
+   "feedback": {
+    "correct": "17/20 = 0.85, against a success rate of 0.80: T14's memorised answer is counted as a working agent.",
+    "generic": "Not quite. Count right answers only.",
+    "byKey": {
+     "success": "0.80 is the success rate, which also requires the tools. The answer-only report counts T14 too."
+    }
+   },
+   "explain": {
+    "text": "Answer-only grading gives 0.85. The required-tool check is what caught T14; on new questions, memory will not be there to help."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two valid paths",
+   "prose": "Task T13 asks HALL's percentage move. The script fetched both closes and worked out the change itself instead of calling pct_change.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "T13",
+     "lines": [
+      "user: [T13] By what percentage did HALL move from 2024-03-11 to 2024-03-22?",
+      "model: call get_close {\"ticker\": \"HALL\", \"date\": \"2024-03-11\"}",
+      "tool: {\"result\": 30.1}",
+      "model: call get_close {\"ticker\": \"HALL\", \"date\": \"2024-03-22\"}",
+      "tool: {\"result\": 27.43}",
+      "model: answer -8.87%"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "How should T13 be scored?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "outcome",
+      "text": "As a success: right answer, both closes fetched",
+      "correct": true
+     },
+     {
+      "id": "path",
+      "text": "As a failure, since it skipped pct_change",
+      "why": "Scoring one exact path fails a valid alternative."
+     },
+     {
+      "id": "half",
+      "text": "Half marks for the missing tool",
+      "why": "The missing tool was not needed: the facts were fetched."
+     },
+     {
+      "id": "answer",
+      "text": "On the answer alone",
+      "why": "Then T14's memorised answer would pass too."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which tools are truly required to know the answer?"
+    }
+   ],
+   "feedback": {
+    "correct": "Score the outcome and the required facts (the closes), not one exact path.",
+    "generic": "Not quite. Was pct_change needed to know the answer?"
+   },
+   "explain": {
+    "text": "T13 lists only get_close as required. Requiring the facts, not a fixed sequence, lets valid alternatives pass and memorised answers fail."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "Agent or workflow",
+   "prose": "What you measured: score each run for a right answer and the required tools; aggregate into a success rate with its standard error; compare variants on the same tasks. Reliability compounds, $p^n$ for $n$ steps. On these tasks the fixed workflow of l11 succeeds on 20 of 20; the agent on 16.",
+   "question": "When do Anthropic's guidelines favour a workflow over an agent?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "known",
+      "text": "When the steps are known in advance",
+      "correct": true
+     },
+     {
+      "id": "hard",
+      "text": "When the task is hard",
+      "why": "Hard tasks with unknown steps are where an agent earns its cost."
+     },
+     {
+      "id": "cheap",
+      "text": "When model calls are free",
+      "why": "Cost is one reason; testability and reliability are others."
+     },
+     {
+      "id": "never",
+      "text": "Never: agents are always better",
+      "why": "Here the workflow beat the agent on every count."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did the workflow need to know to run?"
+    }
+   ],
+   "feedback": {
+    "correct": "When the steps are known: a fixed chain is cheaper, easier to test and as good.",
+    "generic": "Not quite. What did the workflow need?"
+   },
+   "explain": {
+    "text": "Start with the simplest thing that works, a workflow when the steps are known, and move to an agent only when the next step depends on what the last one found."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "score_trajectory in code",
+   "prose": "Write `score_trajectory(traj, task)`, the checks of the scorecard. `run_agent` from l11 and the scripted model are defined.",
+   "question": "Write `score_trajectory`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def score_trajectory(traj, task):\n    # {'correct', 'used_required', 'invalid_calls', 'steps', 'success'}:\n    # correct: traj['answer'] (stripped) equals task['answer'];\n    # used_required: every tool in task['required'] returned a result;\n    # invalid_calls: tool messages holding an error; steps: model replies;\n    # success: correct and used_required\n    ...\n",
+    "solution": "import math\n\n\ndef score_trajectory(traj, task):\n    used = {m['name'] for m in traj['messages'] if m['role'] == 'tool' and 'result' in m['content']}\n    correct = traj['answer'] is not None and traj['answer'].strip() == task['answer']\n    required = all(r in used for r in task['required'])\n    return {'correct': correct, 'used_required': required,\n            'invalid_calls': sum(1 for m in traj['messages'] if m['role'] == 'tool' and 'error' in m['content']),\n            'steps': sum(1 for m in traj['messages'] if m['role'] == 'assistant'),\n            'success': correct and required}\n",
+    "prelude": "import numpy\nTYPE_NAMES = {str: 'string', bool: 'boolean', int: 'integer', float: 'number', list: 'array', dict: 'object', type(None): 'null'}\ndef validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\nimport json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'; available: {', '.join(sorted(tools))}\")\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', f'arguments are not valid JSON: {e.msg}')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed: {e}')\ndef run_agent(task, model, tools, max_steps):\n    specs = [{'name': n, 'description': t['description'], 'input_schema': t['schema']} for n, t in tools.items()]\n    messages = [task_message(task)]\n    for _ in range(max_steps):\n        reply = model(messages, specs)\n        messages.append({'role': 'assistant', 'content': reply})\n        if reply['type'] == 'answer':\n            return {'status': 'answer', 'answer': reply['text'], 'messages': messages}\n        p = parse_call(reply, tools)\n        if p[0] == 'ok':\n            r = run_call(p[1], p[2], tools)\n            content = {'result': r[1]} if r[0] == 'ok' else {'error': r[1]}\n        else:\n            content = {'error': p[1]}\n        messages.append({'role': 'tool', 'name': reply['name'], 'content': content})\n        if repeated_call(messages, 3):\n            return {'status': 'repeated', 'answer': None, 'messages': messages}\n    return {'status': 'max_steps', 'answer': None, 'messages': messages}\n\n\ndef repeated_call(messages, window):\n    calls = [(m['content']['name'], m['content']['arguments']) for m in messages\n             if m['role'] == 'assistant' and m['content']['type'] == 'tool_call']\n    return len(calls) >= window and len(set(calls[-window:])) == 1\nfrom llm_apps_ops_l3 import TOOLS, TASKS, respond, task_message\nT = {t['id']: t for t in TASKS}\n",
+    "examples": [
+     {
+      "call": "score_trajectory(run_agent(T['T11'], respond, TOOLS, 8), T['T11'])['correct']",
+      "expect": "False"
+     }
+    ],
+    "tests": [
+     {
+      "call": "score_trajectory(run_agent(T['T01'], respond, TOOLS, 8), T['T01'])",
+      "expect": "{'correct': True, 'used_required': True, 'invalid_calls': 0, 'steps': 2, 'success': True}"
+     },
+     {
+      "call": "score_trajectory(run_agent(T['T14'], respond, TOOLS, 8), T['T14'])['success']",
+      "expect": "False"
+     },
+     {
+      "call": "score_trajectory(run_agent(T['T06'], respond, TOOLS, 8), T['T06'])",
+      "expect": "{'correct': True, 'used_required': True, 'invalid_calls': 1, 'steps': 3, 'success': True}"
+     },
+     {
+      "call": "score_trajectory({'answer': ' 97.87 ', 'messages': [{'role': 'assistant', 'content': {}}, {'role': 'tool', 'name': 'get_close', 'content': {'result': 97.87}}, {'role': 'assistant', 'content': {}}]}, T['T01'])['correct']",
+      "expect": "True"
+     },
+     {
+      "call": "score_trajectory({'answer': None, 'messages': [{'role': 'tool', 'name': 'get_close', 'content': {'error': 'x'}}]}, T['T01'])['used_required']",
+      "expect": "False"
+     },
+     {
+      "call": "score_trajectory(run_agent(T['T13'], respond, TOOLS, 8), T['T13'])['success']",
+      "expect": "True"
+     },
+     {
+      "call": "sum(score_trajectory(run_agent(t, respond, TOOLS, 8), t)['success'] for t in TASKS)",
+      "expect": "16"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests, each exact. They cover a clean run, the answer from memory, a run with one invalid call and an answer padded with spaces. Then a required tool that only failed, the run with two valid paths, and the count of successes over the 20 planted tasks. `run_agent` and the scripted `respond` are defined.",
+    "mutants": [
+     {
+      "source": "import math\n\n\ndef score_trajectory(traj, task):\n    used = {m['name'] for m in traj['messages'] if m['role'] == 'tool' and 'result' in m['content']}\n    correct = traj['answer'] is not None and traj['answer'].strip() == task['answer']\n    required = all(r in used for r in task['required'])\n    return {'correct': correct, 'used_required': required,\n            'invalid_calls': sum(1 for m in traj['messages'] if m['role'] == 'tool' and 'error' in m['content']),\n            'steps': sum(1 for m in traj['messages'] if m['role'] == 'assistant'),\n            'success': correct}\n",
+      "test": 2,
+      "symptom": "Counts a right answer as success without the required tools."
+     },
+     {
+      "source": "import math\n\n\ndef score_trajectory(traj, task):\n    used = {m['name'] for m in traj['messages'] if m['role'] == 'tool' and 'result' in m['content']}\n    correct = traj['answer'] is not None and traj['answer'].strip() == task['answer']\n    required = all(r in used for r in task['required'])\n    return {'correct': correct, 'used_required': required,\n            'invalid_calls': sum(1 for m in traj['messages'] if m['role'] == 'tool' and 'error' in m['content']),\n            'steps': len(traj['messages']),\n            'success': correct and required}\n",
+      "test": 1,
+      "symptom": "Counts every message as a step."
+     },
+     {
+      "source": "import math\n\n\ndef score_trajectory(traj, task):\n    used = {m['name'] for m in traj['messages'] if m['role'] == 'tool' and 'result' in m['content']}\n    correct = traj['answer'] == task['answer']\n    required = all(r in used for r in task['required'])\n    return {'correct': correct, 'used_required': required,\n            'invalid_calls': sum(1 for m in traj['messages'] if m['role'] == 'tool' and 'error' in m['content']),\n            'steps': sum(1 for m in traj['messages'] if m['role'] == 'assistant'),\n            'success': correct and required}\n",
+      "test": 4,
+      "symptom": "Compares the answer without stripping spaces."
+     },
+     {
+      "source": "import math\n\n\ndef score_trajectory(traj, task):\n    used = {m['name'] for m in traj['messages'] if m['role'] == 'tool'}\n    correct = traj['answer'] is not None and traj['answer'].strip() == task['answer']\n    required = all(r in used for r in task['required'])\n    return {'correct': correct, 'used_required': required,\n            'invalid_calls': sum(1 for m in traj['messages'] if m['role'] == 'tool' and 'error' in m['content']),\n            'steps': sum(1 for m in traj['messages'] if m['role'] == 'assistant'),\n            'success': correct and required}\n",
+      "test": 5,
+      "symptom": "Counts a tool as used even when its call failed."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l3.py": "content/data/ai/llm_apps_ops_l3.py",
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Collect the names of tool messages that hold a 'result'."
+    },
+    {
+     "rung": "point",
+     "text": "success is `correct and used_required`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your scores match: 16 of the 20 planted tasks succeed.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "T14 answered rightly from memory: success also needs every required tool to have returned a result.",
+     "test-1": "Steps are the model's replies only, not the question or the tool results.",
+     "test-4": "' 97.87 ' is the right close with spaces around it: strip before comparing.",
+     "test-5": "A get_close call that returned an error fetched nothing: count only calls that returned a result."
+    }
+   },
+   "explain": {
+    "text": "Checking the required tools catches the answer from memory; counting invalid calls and steps shows what a success cost."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "success_rate and compare_agents in code",
+   "prose": "Write `success_rate(scores)` and `compare_agents(a, b)`, where `a` and `b` are score dicts for the same tasks in the same order.",
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\ndef success_rate(scores):\n    # (share of scores with 'success', its standard error sqrt(p(1-p)/n))\n    ...\n\n\ndef compare_agents(a, b):\n    # paired over the same tasks: mean of success_a - success_b (as 1 or 0)\n    # and its standard error (n - 1 standard deviation over sqrt(n))\n    ...\n",
+    "solution": "import math\n\n\ndef success_rate(scores):\n    n = len(scores)\n    p = sum(1 for s in scores if s['success']) / n\n    return p, math.sqrt(p * (1 - p) / n)\n\n\ndef compare_agents(a, b):\n    d = [int(x['success']) - int(y['success']) for x, y in zip(a, b)]\n    n = len(d)\n    m = sum(d) / n\n    sd = math.sqrt(sum((x - m) ** 2 for x in d) / (n - 1))\n    return m, sd / math.sqrt(n)\n",
+    "examples": [
+     {
+      "call": "success_rate([{'success': True}, {'success': False}])",
+      "expect": "[0.5, 0.3535533905932738]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "success_rate([{'success': True}] * 16 + [{'success': False}] * 4)",
+      "expect": "[0.8, 0.08944271909999157]",
+      "compare": "isclose"
+     },
+     {
+      "call": "success_rate([{'success': True}] * 28 + [{'success': False}] * 12)",
+      "expect": "[0.7, 0.07245688373094719]",
+      "compare": "isclose"
+     },
+     {
+      "call": "compare_agents([{'success': True}, {'success': True}, {'success': False}], [{'success': False}, {'success': True}, {'success': False}])[0]",
+      "expect": "0.3333333333333333",
+      "compare": "isclose"
+     },
+     {
+      "call": "compare_agents([{'success': False}, {'success': True}], [{'success': True}, {'success': True}])",
+      "expect": "[-0.5, 0.5]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "G = [{'success': x} for x in [True, True, True, True, True, True, True, True, True, False, False, True, True, False, True, True, True, True, True, False]]\nP = [{'success': x} for x in [True, True, True, True, True, False, False, False, False, False, False, False, True, False, False, True, True, False, True, False]]",
+      "call": "compare_agents(G, P)",
+      "expect": "[0.35, 0.1094243309804831]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests within relative $10^{-9}$: 16 of 20 and 28 of 40, two small paired cases (one with B better), and the clear-error and 'invalid input' runs of the 20 planted tasks.",
+    "mutants": [
+     {
+      "source": "import math\n\n\ndef success_rate(scores):\n    n = len(scores)\n    p = sum(1 for s in scores if s['success']) / n\n    return p, math.sqrt(p * (1 - p) / (n - 1))\n\n\ndef compare_agents(a, b):\n    d = [int(x['success']) - int(y['success']) for x, y in zip(a, b)]\n    n = len(d)\n    m = sum(d) / n\n    sd = math.sqrt(sum((x - m) ** 2 for x in d) / (n - 1))\n    return m, sd / math.sqrt(n)\n",
+      "test": 1,
+      "symptom": "Divides by n - 1 in the standard error of a proportion."
+     },
+     {
+      "source": "import math\n\n\ndef success_rate(scores):\n    n = len(scores)\n    p = sum(1 for s in scores if s['success']) / n\n    return p, math.sqrt(p * (1 - p) / n)\n\n\ndef compare_agents(a, b):\n    d = [int(x['success']) - int(y['success']) for x, y in zip(a, b)]\n    n = len(d)\n    m = sum(d) / n\n    sd = math.sqrt(sum((x - m) ** 2 for x in d) / (n - 1))\n    return m, sd\n",
+      "test": 4,
+      "symptom": "Returns the standard deviation of the differences."
+     },
+     {
+      "source": "import math\n\n\ndef success_rate(scores):\n    n = len(scores)\n    p = sum(1 for s in scores if s['success']) / n\n    return p, math.sqrt(p * (1 - p) / n)\n\n\ndef compare_agents(a, b):\n    d = [int(y['success']) - int(x['success']) for x, y in zip(a, b)]\n    n = len(d)\n    m = sum(d) / n\n    sd = math.sqrt(sum((x - m) ** 2 for x in d) / (n - 1))\n    return m, sd / math.sqrt(n)\n",
+      "test": 3,
+      "symptom": "Subtracts the wrong way round."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A success counts 1, a failure 0."
+    },
+    {
+     "rung": "point",
+     "text": "Pair by position: `zip(a, b)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both match: 0.80 with standard error 0.0894, and a paired gain of 0.35 with standard error 0.1094.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "The standard error of a proportion is $\\sqrt{p(1-p)/n}$.",
+     "test-4": "Divide the standard deviation of the differences by $\\sqrt n$.",
+     "test-3": "Return a minus b: when B is better the mean is negative."
+    }
+   },
+   "explain": {
+    "text": "The paired standard error uses the spread of the per-task differences, which is smaller than two separate error bars suggest when the tasks vary in difficulty."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A weekly report",
+   "prose": "A research team wants a weekly report: pull the same 12 prices, compute their weekly changes, and search the notes for each company's latest news. Someone proposes an autonomous agent; someone else, a fixed pipeline.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "w",
+       "label": "Workflow"
+      },
+      {
+       "id": "a",
+       "label": "Agent"
+      }
+     ],
+     "yLabel": "Success on planted tasks",
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "w": 1.0,
+      "a": 0.8
+     }
+    }
+   },
+   "question": "What does this level's evidence support?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "pipe",
+      "text": "A fixed pipeline, since the steps are known",
+      "correct": true
+     },
+     {
+      "id": "agent",
+      "text": "An agent, because it can adapt",
+      "why": "Nothing here needs adapting: the steps are the same every week."
+     },
+     {
+      "id": "both",
+      "text": "An agent with a larger step cap than usual",
+      "why": "A larger cap raises cost and risk; it does not make known steps better."
+     },
+     {
+      "id": "model",
+      "text": "Ask the model to write the report from memory",
+      "why": "That is T14's failure on every line."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Are the steps known in advance?"
+    }
+   ],
+   "feedback": {
+    "correct": "A pipeline: known steps, fixed code. A model can still write the summary paragraph at the end.",
+    "generic": "Not quite. Are the steps known each week?"
+   },
+   "explain": {
+    "text": "The workflow solved 20 of 20 planted tasks with no model call; the agent 16. With 20-step weekly runs at 0.95 a step, an agent would finish only about 36% of weeks cleanly."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Score each run on planted tasks for a right answer and the required tools; a right answer without the tool is memory or luck, not evidence.",
+   "Report a success rate with its standard error $\\sqrt{p(1-p)/n}$, and compare variants paired on the same tasks; 40 tasks cannot separate 5 points.",
+   "Step reliability compounds as $p^n$; when the steps are known in advance, a fixed workflow is cheaper, testable and as good."
+  ],
+  "formula": {
+   "name": "Success rate",
+   "tex": "\\hat p \\pm \\sqrt{\\hat p(1 - \\hat p)/n}",
+   "note": "Success needs the answer and the required tools."
+  },
+  "trap": "Grading only the final answer: the memorised T14 counts as a working agent."
+ },
+ "quiz": [
+  {
+   "id": "q12-se",
+   "difficulty": 2,
+   "prose": "An agent succeeds on 45 of 60 tasks.",
+   "question": "What is the standard error of its success rate? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0559,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.0031,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{0.75 \\times 0.25/60} = 0.0559$.",
+    "generic": "Not quite. Use $\\sqrt{p(1-p)/n}$ with $p = 0.75$.",
+    "byKey": {
+     "var": "That is the variance."
+    }
+   },
+   "explain": {
+    "text": "$p = 45/60 = 0.75$, so the standard error is 0.0559."
+   }
+  },
+  {
+   "id": "q12-chain",
+   "difficulty": 2,
+   "prose": "Each step of a task succeeds independently with chance 0.98.",
+   "question": "What is the chance a 15-step task succeeds? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7386,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "lin",
+      "value": 0.7,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.98^{15} = 0.7386$.",
+    "generic": "Not quite. Raise 0.98 to the 15th power.",
+    "byKey": {
+     "lin": "You took 2% off per step. Chances multiply."
+    }
+   },
+   "explain": {
+    "text": "$0.98^{15} = 0.7386$: a quarter of such tasks fail somewhere."
+   }
+  },
+  {
+   "id": "q12-grade",
+   "difficulty": 3,
+   "prose": "An agent's answer is right, but it never called the tool the task needed.",
+   "question": "How should it be scored?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fail",
+      "text": "As a failure: the required tool was not used",
+      "correct": true
+     },
+     {
+      "id": "pass",
+      "text": "As a success: the answer is right",
+      "why": "A right answer by memory is no evidence the agent can look things up."
+     },
+     {
+      "id": "half",
+      "text": "Half a success",
+      "why": "There is no evidence of the process at all."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A failure: success needs the right answer and the required tools.",
+    "generic": "Not quite. What does a success need?"
+   },
+   "explain": {
+    "text": "Scoring the required facts as well as the answer stops memorised answers from counting."
+   }
+  }
+ ]
+}

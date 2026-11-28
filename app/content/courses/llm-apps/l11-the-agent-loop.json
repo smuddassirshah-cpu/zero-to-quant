@@ -1,0 +1,1076 @@
+{
+ "id": "l11-the-agent-loop",
+ "course": "llm-apps",
+ "title": "The agent loop",
+ "minutes": 15,
+ "objectives": [
+  "Build an agent loop with stop conditions and a step cap against a scripted model."
+ ],
+ "skills": [
+  "llm-agents"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One task, traced",
+   "prose": "An **agent** is a loop: send the messages to the model, run any tool it calls, append the result, and ask again until it answers. Task T03 asks how far DUNM moved from 1 to 15 March 2024. Here is the trace with the scripted model.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "T03",
+     "lines": [
+      "user: [T03] By what percentage did DUNM move from 2024-03-01 to 2024-03-15?",
+      "model: call get_close {\"ticker\": \"DUNM\", \"date\": \"2024-03-01\"}",
+      "tool: {\"result\": 54.25}",
+      "model: call get_close {\"ticker\": \"DUNM\", \"date\": \"2024-03-15\"}",
+      "tool: {\"result\": 56.46}",
+      "model: call pct_change {\"a\": 54.25, \"b\": 56.46}",
+      "tool: {\"result\": 4.07}",
+      "model: answer 4.07%"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "How many times is the model called?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "tools",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the lines that start 'model:'."
+    }
+   ],
+   "feedback": {
+    "correct": "4: three tool calls, then the answer 4.07%.",
+    "generic": "Not quite. Count the model's replies.",
+    "byKey": {
+     "tools": "That counts the tool calls; the final answer is a model call too.",
+     "all": "That counts every message, the user's and the tools' included."
+    }
+   },
+   "explain": {
+    "text": "Each model call adds one message; each tool call adds a result. 4 model calls and 3 results, after the question, make 8 messages."
+   }
+  },
+  {
+   "type": "explore",
+   "title": "Step through the loop",
+   "prose": "Slide through T03 one step at a time: each step appends one message, the model's reply or the tool's result.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      {
+       "v": "call get_close",
+       "label": "model"
+      },
+      {
+       "v": "result",
+       "label": "tool"
+      },
+      {
+       "v": "call get_close",
+       "label": "model"
+      },
+      {
+       "v": "result",
+       "label": "tool"
+      },
+      {
+       "v": "call pct_change",
+       "label": "model"
+      },
+      {
+       "v": "result",
+       "label": "tool"
+      },
+      {
+       "v": "answer",
+       "label": "model"
+      }
+     ],
+     "indexFrom": 1
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         0
+        ],
+        "label": "after step 1"
+       }
+      ]
+     },
+     "caption": "Messages so far: 2"
+    },
+    "controls": [
+     {
+      "bind": "s",
+      "label": "Step",
+      "frames": [
+       {
+        "highlight": {
+         "ranges": [
+          {
+           "range": [
+            0,
+            0
+           ],
+           "label": "after step 1"
+          }
+         ]
+        },
+        "caption": "Messages so far: 2"
+       },
+       {
+        "highlight": {
+         "ranges": [
+          {
+           "range": [
+            0,
+            1
+           ],
+           "label": "after step 2"
+          }
+         ]
+        },
+        "caption": "Messages so far: 3"
+       },
+       {
+        "highlight": {
+         "ranges": [
+          {
+           "range": [
+            0,
+            2
+           ],
+           "label": "after step 3"
+          }
+         ]
+        },
+        "caption": "Messages so far: 4"
+       },
+       {
+        "highlight": {
+         "ranges": [
+          {
+           "range": [
+            0,
+            3
+           ],
+           "label": "after step 4"
+          }
+         ]
+        },
+        "caption": "Messages so far: 5"
+       },
+       {
+        "highlight": {
+         "ranges": [
+          {
+           "range": [
+            0,
+            4
+           ],
+           "label": "after step 5"
+          }
+         ]
+        },
+        "caption": "Messages so far: 6"
+       },
+       {
+        "highlight": {
+         "ranges": [
+          {
+           "range": [
+            0,
+            5
+           ],
+           "label": "after step 6"
+          }
+         ]
+        },
+        "caption": "Messages so far: 7"
+       },
+       {
+        "highlight": {
+         "ranges": [
+          {
+           "range": [
+            0,
+            6
+           ],
+           "label": "after step 7"
+          }
+         ]
+        },
+        "caption": "Messages so far: 8"
+       }
+      ],
+      "frameLabels": [
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7"
+      ]
+     }
+    ]
+   },
+   "question": "After which step does the model first have both closes it needs?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "first",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The closes arrive as tool results."
+    },
+    {
+     "rung": "point",
+     "text": "The second result comes at step 4."
+    }
+   ],
+   "feedback": {
+    "correct": "After step 4: the second get_close result. Step 5 asks pct_change, step 6 returns it, step 7 answers.",
+    "generic": "Not quite. Find the second tool result.",
+    "byKey": {
+     "first": "Step 2 brings the first close only."
+    }
+   },
+   "explain": {
+    "text": "Step 4 brings the second close. The model plans nothing in advance here: each reply depends on the results so far, which makes it an agent rather than a fixed chain.",
+    "canvas": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         3
+        ],
+        "label": "after step 4"
+       }
+      ]
+     },
+     "caption": "Messages so far: 5"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Stopping",
+   "prose": "The loop stops when the model answers. It must also stop when the model never does. Task T10's script repeats one search for ever. With a **step cap** of 6 model calls and no other check, the loop runs to the cap.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "T10, cap 6",
+     "lines": [
+      "user: [T10] Which note is the best match for 'halloran margins profit'?",
+      "model: call search_notes {\"query\": \"halloran margins profit\", \"k\": 3}",
+      "tool: {\"result\": [76, 152, 178]}",
+      "model: call search_notes {\"query\": \"halloran margins profit\", \"k\": 3}",
+      "tool: {\"result\": [76, 152, 178]}",
+      "model: call search_notes {\"query\": \"halloran margins profit\", \"k\": 3}",
+      "tool: {\"result\": [76, 152, 178]}",
+      "model: call search_notes {\"query\": \"halloran margins profit\", \"k\": 3}",
+      "tool: {\"result\": [76, 152, 178]}",
+      "model: call search_notes {\"query\": \"halloran margins profit\", \"k\": 3}",
+      "tool: {\"result\": [76, 152, 178]}",
+      "model: call search_notes {\"query\": \"halloran margins profit\", \"k\": 3}",
+      "tool: {\"result\": [76, 152, 178]}"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "How many tool calls does T10 make before the cap stops it?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "cap-minus",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every model call here is a tool call."
+    }
+   ],
+   "feedback": {
+    "correct": "6: one per allowed model call, all identical.",
+    "generic": "Not quite. The cap counts model calls, and each is a search.",
+    "byKey": {
+     "cap-minus": "Every allowed model call is a search, including the last."
+    }
+   },
+   "explain": {
+    "text": "Without the cap the loop would run until the case times out; against a paid model it would run up a bill. The cap ends it after 6 calls, status 'max_steps'."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Repeated calls",
+   "prose": "A cheaper stop: if the last 3 tool calls are identical (same name, same arguments), nothing new can come of a fourth. Add that check to the same run of T10, cap still 6.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "T10, repeat check",
+     "lines": [
+      "user: [T10] Which note is the best match for 'halloran margins profit'?",
+      "model: call search_notes {\"query\": \"halloran margins profit\", \"k\": 3}",
+      "tool: {\"result\": [76, 152, 178]}",
+      "model: call search_notes {\"query\": \"halloran margins profit\", \"k\": 3}",
+      "tool: {\"result\": [76, 152, 178]}",
+      "model: call search_notes {\"query\": \"halloran margins profit\", \"k\": 3}",
+      "tool: {\"result\": [76, 152, 178]}"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "How many tool calls does T10 make now?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "cap",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Stop after the third identical call."
+    }
+   ],
+   "feedback": {
+    "correct": "3, status 'repeated': half the calls of the cap alone.",
+    "generic": "Not quite. Stop once 3 identical calls are in a row.",
+    "byKey": {
+     "cap": "That is without the repeat check."
+    }
+   },
+   "explain": {
+    "text": "The repeat check stops T10 after 3 calls. It cannot replace the cap: a model that varies its calls slightly never repeats exactly."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The same task as a workflow",
+   "prose": "T03's steps are known in advance: two closes, then the change. A **workflow** is code that runs those steps itself: `get_close`, `get_close`, `pct_change`, with no model choosing them.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      {
+       "v": "call get_close",
+       "label": "model"
+      },
+      {
+       "v": "result",
+       "label": "tool"
+      },
+      {
+       "v": "call get_close",
+       "label": "model"
+      },
+      {
+       "v": "result",
+       "label": "tool"
+      },
+      {
+       "v": "call pct_change",
+       "label": "model"
+      },
+      {
+       "v": "result",
+       "label": "tool"
+      },
+      {
+       "v": "answer",
+       "label": "model"
+      }
+     ],
+     "indexFrom": 1
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         6
+        ],
+        "label": "T03"
+       }
+      ]
+     }
+    }
+   },
+   "question": "How many model calls does the workflow need to get the number?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "agent",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "tools",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Who chooses the tools in a workflow?"
+    }
+   ],
+   "feedback": {
+    "correct": "None: the code makes the 3 tool calls itself and gets 4.07%. The agent took 4 model calls.",
+    "generic": "Not quite. The workflow needs no model to pick the steps.",
+    "byKey": {
+     "agent": "That is the agent's count.",
+     "tools": "3 is the tool calls; the question asks model calls."
+    }
+   },
+   "explain": {
+    "text": "A model may still phrase the reply, but the steps are fixed code: cheaper, faster and testable line by line. Anthropic's 'Building effective agents' advises starting there."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Results under the wrong role",
+   "prose": "A harness appends each tool result as a `user` message, with no tool name, instead of a `tool` message tied to its call. The scripted model, like a real one, reads results from tool messages.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "T01, results under 'user'",
+     "lines": [
+      "user: [T01] What was CORR's close on 2024-03-08?",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": \"2024-03-08\"}",
+      "user: {\"result\": 97.87}",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": \"2024-03-08\"}",
+      "user: {\"result\": 97.87}",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": \"2024-03-08\"}"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "What happens to T01, CORR's close on 8 March?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "repeat",
+      "text": "The model never sees its result and repeats the call until a stop fires",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the result is in the messages either way",
+      "why": "The model looks for the result of its call; under 'user' it is not one."
+     },
+     {
+      "id": "answer",
+      "text": "The model answers 97.87 at once",
+      "why": "It would, if it could see the result as a tool result."
+     },
+     {
+      "id": "error",
+      "text": "The harness raises an error",
+      "why": "Nothing checks roles; the run just goes round."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where does the scripted model look for results?"
+    }
+   ],
+   "feedback": {
+    "correct": "The call is repeated three times and the repeat check ends the run with no answer.",
+    "generic": "Not quite. Can the model tell the result belongs to its call?",
+    "byKey": {
+     "fine": "You assumed any message will do. Real APIs pair each result with the call that asked for it; a stray user message is not a result."
+    }
+   },
+   "explain": {
+    "text": "Append the result as a tool message tied to the call it answers. Real model APIs require this pairing and reject or ignore the rest."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "An answer with no tool",
+   "prose": "Task T11 asks for DUNM's close on 26 March. The scripted model answers at once, without calling a tool.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "T11",
+     "lines": [
+      "user: [T11] What was DUNM's close on 2024-03-26?",
+      "model: answer 56.38"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "What should the loop do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "accept",
+      "text": "Stop and record the answer; judging it is a separate step",
+      "correct": true
+     },
+     {
+      "id": "force",
+      "text": "Refuse the answer until a tool is called",
+      "why": "The loop runs the model; it does not grade it. Some tasks need no tool."
+     },
+     {
+      "id": "retry",
+      "text": "Ask the model again, hoping for a tool call",
+      "why": "Asking again without a reason is guesswork; record and judge instead."
+     },
+     {
+      "id": "error",
+      "text": "Raise an error",
+      "why": "Answering is allowed."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is answering without a tool ever right?"
+    }
+   ],
+   "feedback": {
+    "correct": "Stop and record it; l12's checks catch that this answer, 56.38, is wrong and used no tool.",
+    "generic": "Not quite. Is it the loop's job to grade answers?"
+   },
+   "explain": {
+    "text": "The loop records 56.38 with status 'answer'. Whether it was right, and whether the required tool was used, is scored afterwards against the task."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "The agent loop",
+   "prose": "What you built:\n\n```text\nmessages = [question]\nrepeat up to max_steps:\n    reply = model(messages, tools)\n    append reply\n    if reply is an answer: stop\n    result = run the call (or its error)\n    append result as a tool message\n    if the last 3 calls are identical: stop\n```\n\nand return every message, so the run can be scored.",
+   "question": "Which stop must never be left out?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cap",
+      "text": "The step cap",
+      "correct": true
+     },
+     {
+      "id": "repeat",
+      "text": "The repeated-call check",
+      "why": "Useful, but a model that varies its calls slightly never repeats exactly."
+     },
+     {
+      "id": "answer",
+      "text": "Stopping on an answer",
+      "why": "Without it the loop would not end on success either, but the cap would still end it."
+     },
+     {
+      "id": "timeout",
+      "text": "A wall-clock timeout instead",
+      "why": "A timeout helps, but the cap bounds cost in model calls directly."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which stop works whatever the model does?"
+    }
+   ],
+   "feedback": {
+    "correct": "The cap: it ends every run, whatever the model does.",
+    "generic": "Not quite. Which stop cannot be dodged?"
+   },
+   "explain": {
+    "text": "Only the cap bounds every run; the other stops end common cases sooner."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "run_agent in code",
+   "prose": "Write `run_agent(task, model, tools, max_steps)` and `repeated_call(messages, window)`. Stop on an answer, on 3 identical calls in a row, or at the cap; return every message.",
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def run_agent(task, model, tools, max_steps):\n    # messages start with task_message(task); each reply is appended as\n    # {'role': 'assistant', 'content': reply}; each result or error as\n    # {'role': 'tool', 'name': ..., 'content': {'result': r} or {'error': e}}.\n    # Return {'status': 'answer' | 'repeated' | 'max_steps',\n    #         'answer': text or None, 'messages': messages}\n    ...\n\n\ndef repeated_call(messages, window):\n    # True if the last `window` tool calls are identical (name and arguments)\n    ...\n",
+    "solution": "def run_agent(task, model, tools, max_steps):\n    specs = [{'name': n, 'description': t['description'], 'input_schema': t['schema']} for n, t in tools.items()]\n    messages = [task_message(task)]\n    for _ in range(max_steps):\n        reply = model(messages, specs)\n        messages.append({'role': 'assistant', 'content': reply})\n        if reply['type'] == 'answer':\n            return {'status': 'answer', 'answer': reply['text'], 'messages': messages}\n        p = parse_call(reply, tools)\n        if p[0] == 'ok':\n            r = run_call(p[1], p[2], tools)\n            content = {'result': r[1]} if r[0] == 'ok' else {'error': r[1]}\n        else:\n            content = {'error': p[1]}\n        messages.append({'role': 'tool', 'name': reply['name'], 'content': content})\n        if repeated_call(messages, 3):\n            return {'status': 'repeated', 'answer': None, 'messages': messages}\n    return {'status': 'max_steps', 'answer': None, 'messages': messages}\n\n\ndef repeated_call(messages, window):\n    calls = [(m['content']['name'], m['content']['arguments']) for m in messages\n             if m['role'] == 'assistant' and m['content']['type'] == 'tool_call']\n    return len(calls) >= window and len(set(calls[-window:])) == 1\n",
+    "prelude": "import numpy\nTYPE_NAMES = {str: 'string', bool: 'boolean', int: 'integer', float: 'number', list: 'array', dict: 'object', type(None): 'null'}\ndef validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\nimport json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'; available: {', '.join(sorted(tools))}\")\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', f'arguments are not valid JSON: {e.msg}')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed: {e}')\nfrom llm_apps_ops_l3 import TOOLS, TASKS, respond, task_message\nT = {t['id']: t for t in TASKS}\n",
+    "examples": [
+     {
+      "call": "run_agent(T['T02'], respond, TOOLS, 8)['status']",
+      "expect": "'answer'"
+     }
+    ],
+    "tests": [
+     {
+      "call": "run_agent(T['T01'], respond, TOOLS, 8)['answer']",
+      "expect": "'97.87'"
+     },
+     {
+      "call": "repeated_call([{'role': 'assistant', 'content': {'type': 'tool_call', 'name': 'a', 'arguments': '{}'}}] * 2, 3)",
+      "expect": "False"
+     },
+     {
+      "call": "run_agent(T['T10'], respond, TOOLS, 2)['status']",
+      "expect": "'max_steps'"
+     },
+     {
+      "call": "run_agent(T['T10'], respond, TOOLS, 8)['status']",
+      "expect": "'repeated'"
+     },
+     {
+      "call": "repeated_call([{'role': 'assistant', 'content': {'type': 'tool_call', 'name': 'a', 'arguments': '{}'}}, {'role': 'assistant', 'content': {'type': 'tool_call', 'name': 'a', 'arguments': '{\"k\": 1}'}}, {'role': 'assistant', 'content': {'type': 'tool_call', 'name': 'a', 'arguments': '{}'}}], 3)",
+      "expect": "False"
+     },
+     {
+      "call": "len(run_agent(T['T03'], respond, TOOLS, 8)['messages'])",
+      "expect": "8"
+     },
+     {
+      "call": "[m['role'] for m in run_agent(T['T01'], respond, TOOLS, 8)['messages']]",
+      "expect": "['user', 'assistant', 'tool', 'assistant']"
+     },
+     {
+      "call": "run_agent(T['T06'], respond, TOOLS, 8)['messages'][2]['content']",
+      "expect": "{'error': \"arguments are not valid JSON: Expecting ',' delimiter\"}"
+     },
+     {
+      "call": "run_agent(T['T11'], respond, TOOLS, 8)['status']",
+      "expect": "'answer'"
+     },
+     {
+      "call": "run_agent(T['T12'], respond, TOOLS, 8)['answer']",
+      "expect": "'95.98'"
+     }
+    ],
+    "how": "Submit runs 10 hidden tests, each exact. They cover a direct task's answer, two repeat checks, and the endless search under a cap of 2 and of 8. Then the length and roles of a run's messages, the error result of broken JSON, an answer with no tool, and the holiday task. `parse_call`, `run_call`, `TOOLS`, `TASKS` and the scripted `respond` are defined.",
+    "mutants": [
+     {
+      "source": "def run_agent(task, model, tools, max_steps):\n    specs = [{'name': n, 'description': t['description'], 'input_schema': t['schema']} for n, t in tools.items()]\n    messages = [task_message(task)]\n    for _ in range(max_steps):\n        reply = model(messages, specs)\n        messages.append({'role': 'assistant', 'content': reply})\n        if reply['type'] == 'answer':\n            return {'status': 'answer', 'answer': reply['text'], 'messages': messages}\n        p = parse_call(reply, tools)\n        if p[0] == 'ok':\n            r = run_call(p[1], p[2], tools)\n            content = {'result': r[1]} if r[0] == 'ok' else {'error': r[1]}\n        else:\n            content = {'error': p[1]}\n        messages.append({'role': 'tool', 'name': reply['name'], 'content': content})\n    return {'status': 'max_steps', 'answer': None, 'messages': messages}\n\n\ndef repeated_call(messages, window):\n    calls = [(m['content']['name'], m['content']['arguments']) for m in messages\n             if m['role'] == 'assistant' and m['content']['type'] == 'tool_call']\n    return len(calls) >= window and len(set(calls[-window:])) == 1\n",
+      "test": 4,
+      "symptom": "No repeated-call stop."
+     },
+     {
+      "source": "def run_agent(task, model, tools, max_steps):\n    specs = [{'name': n, 'description': t['description'], 'input_schema': t['schema']} for n, t in tools.items()]\n    messages = [task_message(task)]\n    for _ in range(max_steps):\n        reply = model(messages, specs)\n        messages.append({'role': 'assistant', 'content': reply})\n        if reply['type'] == 'answer':\n            return {'status': 'answer', 'answer': reply['text'], 'messages': messages}\n        p = parse_call(reply, tools)\n        if p[0] == 'ok':\n            r = run_call(p[1], p[2], tools)\n            content = {'result': r[1]} if r[0] == 'ok' else {'error': r[1]}\n        else:\n            content = {'error': p[1]}\n        messages.append({'role': 'user', 'content': content})\n        if repeated_call(messages, 3):\n            return {'status': 'repeated', 'answer': None, 'messages': messages}\n    return {'status': 'max_steps', 'answer': None, 'messages': messages}\n\n\ndef repeated_call(messages, window):\n    calls = [(m['content']['name'], m['content']['arguments']) for m in messages\n             if m['role'] == 'assistant' and m['content']['type'] == 'tool_call']\n    return len(calls) >= window and len(set(calls[-window:])) == 1\n",
+      "test": 1,
+      "symptom": "Appends results as user messages."
+     },
+     {
+      "source": "def run_agent(task, model, tools, max_steps):\n    specs = [{'name': n, 'description': t['description'], 'input_schema': t['schema']} for n, t in tools.items()]\n    messages = [task_message(task)]\n    for _ in range(max_steps + 1):\n        reply = model(messages, specs)\n        messages.append({'role': 'assistant', 'content': reply})\n        if reply['type'] == 'answer':\n            return {'status': 'answer', 'answer': reply['text'], 'messages': messages}\n        p = parse_call(reply, tools)\n        if p[0] == 'ok':\n            r = run_call(p[1], p[2], tools)\n            content = {'result': r[1]} if r[0] == 'ok' else {'error': r[1]}\n        else:\n            content = {'error': p[1]}\n        messages.append({'role': 'tool', 'name': reply['name'], 'content': content})\n        if repeated_call(messages, 3):\n            return {'status': 'repeated', 'answer': None, 'messages': messages}\n    return {'status': 'max_steps', 'answer': None, 'messages': messages}\n\n\ndef repeated_call(messages, window):\n    calls = [(m['content']['name'], m['content']['arguments']) for m in messages\n             if m['role'] == 'assistant' and m['content']['type'] == 'tool_call']\n    return len(calls) >= window and len(set(calls[-window:])) == 1\n",
+      "test": 3,
+      "symptom": "Allows one model call too many."
+     },
+     {
+      "source": "def run_agent(task, model, tools, max_steps):\n    specs = [{'name': n, 'description': t['description'], 'input_schema': t['schema']} for n, t in tools.items()]\n    messages = [task_message(task)]\n    for _ in range(max_steps):\n        reply = model(messages, specs)\n        messages.append({'role': 'assistant', 'content': reply})\n        if reply['type'] == 'answer':\n            return {'status': 'answer', 'answer': reply['text'], 'messages': messages}\n        p = parse_call(reply, tools)\n        if p[0] == 'ok':\n            r = run_call(p[1], p[2], tools)\n            content = {'result': r[1]} if r[0] == 'ok' else {'error': r[1]}\n        else:\n            content = {'error': 'invalid input'}\n        messages.append({'role': 'tool', 'name': reply['name'], 'content': content})\n        if repeated_call(messages, 3):\n            return {'status': 'repeated', 'answer': None, 'messages': messages}\n    return {'status': 'max_steps', 'answer': None, 'messages': messages}\n\n\ndef repeated_call(messages, window):\n    calls = [(m['content']['name'], m['content']['arguments']) for m in messages\n             if m['role'] == 'assistant' and m['content']['type'] == 'tool_call']\n    return len(calls) >= window and len(set(calls[-window:])) == 1\n",
+      "test": 8,
+      "symptom": "Replaces parse errors with 'invalid input'."
+     },
+     {
+      "source": "def run_agent(task, model, tools, max_steps):\n    specs = [{'name': n, 'description': t['description'], 'input_schema': t['schema']} for n, t in tools.items()]\n    messages = [task_message(task)]\n    for _ in range(max_steps):\n        reply = model(messages, specs)\n        messages.append({'role': 'assistant', 'content': reply})\n        if reply['type'] == 'answer':\n            return {'status': 'answer', 'answer': reply['text'], 'messages': messages}\n        p = parse_call(reply, tools)\n        if p[0] == 'ok':\n            r = run_call(p[1], p[2], tools)\n            content = {'result': r[1]} if r[0] == 'ok' else {'error': r[1]}\n        else:\n            content = {'error': p[1]}\n        messages.append({'role': 'tool', 'name': reply['name'], 'content': content})\n        if repeated_call(messages, 3):\n            return {'status': 'repeated', 'answer': None, 'messages': messages}\n    return {'status': 'max_steps', 'answer': None, 'messages': messages}\n\n\ndef repeated_call(messages, window):\n    calls = [(m['content']['name'], m['content']['arguments']) for m in messages\n             if m['role'] == 'assistant' and m['content']['type'] == 'tool_call']\n    return len(calls) >= window - 1 and len(set(calls[-window:])) == 1\n",
+      "test": 2,
+      "symptom": "Fires before `window` calls have been made."
+     },
+     {
+      "source": "def run_agent(task, model, tools, max_steps):\n    specs = [{'name': n, 'description': t['description'], 'input_schema': t['schema']} for n, t in tools.items()]\n    messages = [task_message(task)]\n    for _ in range(max_steps):\n        reply = model(messages, specs)\n        messages.append({'role': 'assistant', 'content': reply})\n        if reply['type'] == 'answer':\n            return {'status': 'answer', 'answer': reply['text'], 'messages': messages}\n        p = parse_call(reply, tools)\n        if p[0] == 'ok':\n            r = run_call(p[1], p[2], tools)\n            content = {'result': r[1]} if r[0] == 'ok' else {'error': r[1]}\n        else:\n            content = {'error': p[1]}\n        messages.append({'role': 'tool', 'name': reply['name'], 'content': content})\n        if repeated_call(messages, 3):\n            return {'status': 'repeated', 'answer': None, 'messages': messages}\n    return {'status': 'max_steps', 'answer': None, 'messages': messages}\n\n\ndef repeated_call(messages, window):\n    calls = [(m['content']['name'],) for m in messages\n             if m['role'] == 'assistant' and m['content']['type'] == 'tool_call']\n    return len(calls) >= window and len(set(calls[-window:])) == 1\n",
+      "test": 5,
+      "symptom": "Compares tool names only, not arguments."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l3.py": "content/data/ai/llm_apps_ops_l3.py",
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build `specs` from `tools`: name, description and input_schema, as l9 did."
+    },
+    {
+     "rung": "point",
+     "text": "After each tool message, call `repeated_call(messages, 3)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your loop matches on every planted script, including the cap.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-4": "Three identical searches should stop the run with status 'repeated', before the cap.",
+     "test-1": "Append each result as {'role': 'tool', 'name': ..., 'content': ...}: the model reads results from tool messages.",
+     "test-3": "The cap counts model calls: with max_steps 2 the loop calls the model twice, then stops.",
+     "test-8": "Pass parse_call's message on: the scripted model fixes broken JSON only when the error mentions JSON.",
+     "test-2": "Two calls are not three: return False until `window` calls exist.",
+     "test-5": "Calls with different arguments are not repeats: compare the name and the arguments."
+    }
+   },
+   "explain": {
+    "text": "Every stop leaves the full message list behind, so a run that failed can be read and scored, not just counted."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The workflow in code",
+   "prose": "Write `run_workflow(task, tools)`: the fixed chain for these tasks, with no model at all. Return the answer text and the tools called.",
+   "question": "Write `run_workflow`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def run_workflow(task, tools):\n    # (answer text, list of tool names called) with no model:\n    # a 'query' task -> best note id; one date -> close to 2 places;\n    # two dates -> pct_change of the two closes, to 2 places with '%'\n    ...\n",
+    "solution": "def run_workflow(task, tools):\n    calls = []\n    if 'query' in task:\n        ids = tools['search_notes']['fn'](task['query'], 1)\n        calls.append('search_notes')\n        return str(ids[0]), calls\n    closes = []\n    for d in task['dates']:\n        closes.append(tools['get_close']['fn'](task['ticker'], d))\n        calls.append('get_close')\n    if len(closes) == 1:\n        return f'{closes[0]:.2f}', calls\n    change = tools['pct_change']['fn'](closes[0], closes[1])\n    calls.append('pct_change')\n    return f'{change:.2f}%', calls\n",
+    "prelude": "import numpy\nTYPE_NAMES = {str: 'string', bool: 'boolean', int: 'integer', float: 'number', list: 'array', dict: 'object', type(None): 'null'}\ndef validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\nimport json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'; available: {', '.join(sorted(tools))}\")\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', f'arguments are not valid JSON: {e.msg}')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed: {e}')\nfrom llm_apps_ops_l3 import TOOLS, TASKS, respond, task_message\nT = {t['id']: t for t in TASKS}\n",
+    "examples": [
+     {
+      "call": "run_workflow(T['T02'], TOOLS)[0]",
+      "expect": "'27.74'"
+     }
+    ],
+    "tests": [
+     {
+      "call": "run_workflow(T['T01'], TOOLS)",
+      "expect": "['97.87', ['get_close']]"
+     },
+     {
+      "call": "run_workflow(T['T03'], TOOLS)[0]",
+      "expect": "'4.07%'"
+     },
+     {
+      "call": "run_workflow(T['T03'], TOOLS)[1]",
+      "expect": "['get_close', 'get_close', 'pct_change']"
+     },
+     {
+      "call": "run_workflow(T['T05'], TOOLS)",
+      "expect": "['49', ['search_notes']]"
+     },
+     {
+      "call": "run_workflow(T['T04'], TOOLS)[0]",
+      "expect": "'-1.57%'"
+     },
+     {
+      "call": "run_workflow({'ticker': 'CORR', 'dates': ['2024-03-11']}, TOOLS)[0]",
+      "expect": "'99.50'"
+     },
+     {
+      "call": "sum(run_workflow(t, TOOLS)[0] == t['answer'] for t in TASKS)",
+      "expect": "20"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: a close, a move and its three calls, and a search. Then a fall written with its minus sign, a close that ends in a zero, and the count of the 20 planted tasks answered right.",
+    "mutants": [
+     {
+      "source": "def run_workflow(task, tools):\n    calls = []\n    if 'query' in task:\n        ids = tools['search_notes']['fn'](task['query'], 1)\n        calls.append('search_notes')\n        return str(ids[0]), calls\n    closes = []\n    for d in task['dates']:\n        closes.append(tools['get_close']['fn'](task['ticker'], d))\n        calls.append('get_close')\n    if len(closes) == 1:\n        return f'{closes[0]:.2f}', calls\n    change = tools['pct_change']['fn'](closes[1], closes[0])\n    calls.append('pct_change')\n    return f'{change:.2f}%', calls\n",
+      "test": 2,
+      "symptom": "Swaps the two closes."
+     },
+     {
+      "source": "def run_workflow(task, tools):\n    calls = []\n    if 'query' in task:\n        ids = tools['search_notes']['fn'](task['query'], 1)\n        calls.append('search_notes')\n        return str(ids[0]), calls\n    closes = []\n    for d in task['dates']:\n        closes.append(tools['get_close']['fn'](task['ticker'], d))\n        calls.append('get_close')\n    if len(closes) == 1:\n        return str(closes[0]), calls\n    change = tools['pct_change']['fn'](closes[0], closes[1])\n    calls.append('pct_change')\n    return f'{change:.2f}%', calls\n",
+      "test": 6,
+      "symptom": "Does not format the close to 2 places."
+     },
+     {
+      "source": "def run_workflow(task, tools):\n    calls = []\n    if 'query' in task:\n        ids = tools['search_notes']['fn'](task['query'], 1)\n        calls.append('search_notes')\n        return str(ids[0]), calls\n    closes = []\n    for d in task['dates']:\n        closes.append(tools['get_close']['fn'](task['ticker'], d))\n        calls.append('get_close')\n    if len(closes) == 1:\n        return f'{closes[0]:.2f}', calls\n    change = tools['pct_change']['fn'](closes[0], closes[1])\n    return f'{change:.2f}%', calls\n",
+      "test": 3,
+      "symptom": "Leaves pct_change out of the calls list."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l3.py": "content/data/ai/llm_apps_ops_l3.py",
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Branch on what the task holds: a 'query', or one or two 'dates'."
+    },
+    {
+     "rung": "point",
+     "text": "Format closes with `f'{x:.2f}'`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your workflow answers all 20 planted tasks right, with no model call.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "The change runs from the first date to the second: pct_change(first, second).",
+     "test-6": "Write closes to 2 places, as the tasks' answers are: 97.87 stays 97.87, but 99.5 must read 99.50.",
+     "test-3": "Record every tool the workflow calls, pct_change included, so it can be scored."
+    }
+   },
+   "explain": {
+    "text": "When the steps are known, the chain is shorter than the agent, needs no model to pick tools, and cannot loop."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "An unbounded pipeline",
+   "prose": "A desk runs an automated research pipeline overnight: a model reads filings and calls tools until it is satisfied. One night a filing triggers an endless series of searches against a paid model API.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Overnight log",
+     "lines": [
+      "02:14 search 'covenant waiver corran'",
+      "02:14 search 'covenant waiver corran'",
+      "02:15 search 'covenant waiver corran'",
+      "...",
+      "07:58 search 'covenant waiver corran'"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Which control would have bounded the cost?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cap",
+      "text": "A step cap on model calls per filing",
+      "correct": true
+     },
+     {
+      "id": "bigger",
+      "text": "A larger model that loops less",
+      "why": "It may loop less often, not never; nothing bounds it."
+     },
+     {
+      "id": "prompt",
+      "text": "A prompt telling it not to repeat itself",
+      "why": "A prompt guides; only code bounds the loop."
+     },
+     {
+      "id": "alert",
+      "text": "An alert at 08:00",
+      "why": "An alert reports the cost after it is spent."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which control works whatever the model does?"
+    }
+   ],
+   "feedback": {
+    "correct": "A step cap, plus a repeated-call check to stop it sooner.",
+    "generic": "Not quite. Which control bounds the loop in code?"
+   },
+   "explain": {
+    "text": "A cap bounds the cost of every filing; the repeat check would have stopped this one after three identical searches."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "An agent is a loop: send the messages, run any tool call, append its result as a tool message, and repeat until the model answers.",
+   "Every loop needs a step cap; a repeated-call check stops common loops sooner, and the loop returns every message for scoring.",
+   "When the steps are known in advance, a workflow (fixed code calling the tools) is cheaper, testable and cannot loop."
+  ],
+  "formula": {
+   "name": "Stops",
+   "tex": "\\text{answer} \\;\\lor\\; \\text{3 identical calls} \\;\\lor\\; \\text{steps} = \\text{max\\_steps}",
+   "note": "The cap is the one stop that cannot be dodged."
+  },
+  "trap": "No step cap, or results appended under the wrong role so the model never sees them."
+ },
+ "quiz": [
+  {
+   "id": "q11-msgs",
+   "difficulty": 2,
+   "prose": "A run makes 2 tool calls and then answers.",
+   "question": "How many messages does it hold, counting the question?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "calls",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Question, 3 model replies, 2 results: 6.",
+    "generic": "Not quite. Count the question, each reply and each result.",
+    "byKey": {
+     "calls": "3 is the model calls."
+    }
+   },
+   "explain": {
+    "text": "1 question + 3 replies + 2 tool results = 6 messages."
+   }
+  },
+  {
+   "id": "q11-cap",
+   "difficulty": 2,
+   "prose": "A loop has a cap of 5 model calls and no other stop. The model searches the same thing every time.",
+   "question": "How many tool calls are made?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "5: one per allowed model call.",
+    "generic": "Not quite. Every model call is a search.",
+    "byKey": {
+     "four": "The last allowed call is a search too."
+    }
+   },
+   "explain": {
+    "text": "Each of the 5 model calls is a search, so 5 tool calls, then the cap stops it."
+   }
+  },
+  {
+   "id": "q11-repeat",
+   "difficulty": 3,
+   "prose": "Tool calls so far: search('a'), search('b'), search('a'), search('a').",
+   "question": "With a window of 3, has the repeat check fired?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: the last three calls are not all identical",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: 'a' was searched three times",
+      "why": "Three times, but not three in a row: 'b' sits between them."
+     },
+     {
+      "id": "two",
+      "text": "Yes: the last two are identical",
+      "why": "The window is 3."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No: the last three are 'b', 'a', 'a'.",
+    "generic": "Not quite. Look only at the last three calls."
+   },
+   "explain": {
+    "text": "The window looks at the last 3 calls: 'b', 'a', 'a' are not all the same."
+   }
+  }
+ ]
+}
