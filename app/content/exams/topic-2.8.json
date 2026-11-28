@@ -255,7 +255,7 @@
    ],
    "pace": 60,
    "title": "Three moves, three replies",
-   "prose": "You choose move a, b or c; your opponent then picks one of three replies. Your payoffs are 6, 2 and 9 under a, 5, 7 and 4 under b, and 8, 3 and 10 under c.",
+   "prose": "You choose move a, b or c; your opponent then picks one of three replies. Your payoffs are 6, 2 and 9 under a, 5, 7 and 4 under b, and 8, 3 and 10 under c. Your opponent wants your payoff as small as possible.",
    "question": "With both sides playing their best, what payoff do you get?",
    "widget": {
     "kind": "numeric",
@@ -388,7 +388,7 @@
     "options": [
      {
       "id": "R",
-      "text": "Venue R, with score 1.1079",
+      "text": "Venue R, with the lowest mean",
       "correct": true
      },
      {
@@ -398,7 +398,7 @@
      },
      {
       "id": "Q",
-      "text": "Venue Q, between the two",
+      "text": "Venue Q, with the second-best mean",
       "why": "Q scores 1.0505. R's 20 pulls earn a bonus of 0.7079, the largest of the three."
      },
      {
@@ -601,7 +601,7 @@
    ],
    "pace": 120,
    "title": "A move along the bottom row",
-   "prose": "On the course's slippery grid a move goes ahead with chance 0.8 and slips to each side with 0.1. Each move costs 0.04, and $\\gamma = 0.9$. The optimal values are 0.2168 at row 4 column 3 and 0.2830 at row 4 column 4, and row 3 column 3 is worth 0.2915.",
+   "prose": "On the course's slippery grid, where row 4 is the bottom row, a move goes ahead with chance 0.8 and slips to each side with 0.1. Each move costs 0.04, and $\\gamma = 0.9$. The optimal values are 0.2168 at row 4 column 3 and 0.2830 at row 4 column 4, and row 3 column 3 is worth 0.2915.",
    "question": "What does moving R score at row 4, column 3? Give a decimal to 4 places.",
    "widget": {
     "kind": "numeric",
@@ -1080,7 +1080,7 @@
     ]
    },
    "feedback": {
-    "correct": "It reads all 3 leaves of the first branch (worth 4) and all 3 of the second, where 9 and 7 are above 4 and 2 ends it. The third stops at its first leaf, 3: 7 in all.",
+    "correct": "It reads all 3 leaves of the first branch, worth 4. In the second, 9 and 7 are above 4 and 2 ends it. The third stops at its first leaf, 3: 7 in all.",
     "generic": "Track the value the root can already guarantee, and stop a branch once one of its leaves is no better.",
     "byKey": {
      "all": "Pruning skips the last two leaves of the third branch: its first leaf, 3, is already below 4.",
@@ -1684,7 +1684,7 @@
         "id": "new-b",
         "value": 0.625,
         "tol": {
-         "abs": 0.006
+         "abs": 0.005
         }
        }
       ]
@@ -2363,10 +2363,8 @@
     "correct": "The router learns each state's best venue, with a baseline per state that never sees the reward it is subtracted from.",
     "generic": "Read the first failing test.",
     "byKey": {
-     "test-1": "Step only `theta[s]`, give every dial its entry `[j == a] - pi[j]`, and update `b[s]` after the step, never before it.",
-     "test-2": "Keep a baseline per state, and update the visited state's baseline after each step.",
-     "test-4": "Only the visited state's dials move. The other state's chances stay at a third each.",
-     "test-6": "Check the sign: the step adds `lr * (r - b[s])` times the score."
+     "test-1": "Draw `s`, then `a`. Add `lr * (r - b[s])` times the entry `[j == a] - pi[j]` to every dial of `theta[s]` only, then update `b[s]`, never before the step.",
+     "test-2": "Keep a baseline per state, ignoring the action, and step it by `beta` after each update."
     }
    },
    "explain": {
@@ -2443,7 +2441,7 @@
       "compare": "equal"
      },
      {
-      "setup": "Q = q_learn(2000, 0)\nQ[('r3c1', 'R')] = max(Q[('r3c1', b)] for b in 'URDL') + 0.001",
+      "setup": "Q = q_learn(2000, 0)\nQ[('r3c1', 'U')] = max(Q[('r3c1', b)] for b in 'URDL') + 0.001",
       "call": "greedy_ok(Q)",
       "expect": "True",
       "compare": "equal"
@@ -2480,6 +2478,11 @@
       "source": "import random\n\nROWS, COLS = 3, 5\nWALL = {'r2c2', 'r2c4'}\nENDS = {'r1c5': 1.0, 'r3c5': -1.0}\nSTEP = -0.05\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\nOPEN = [s for s in CELLS if s not in ENDS]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = int(s[1]), int(s[3])\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef pay(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return ENDS.get(t, 0.0) + STEP\n\ndef optimal_sets(gamma=0.9):\n    \"\"\"Value iteration to convergence; {open cell: set of best actions, ties within 1e-9 kept}.\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    while True:\n        new = {s: 0.0 if s in ENDS else max(pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL')\n               for s in CELLS}\n        done = max(abs(new[s] - V[s]) for s in CELLS) < 1e-12\n        V = new\n        if done:\n            break\n    sets = {}\n    for s in OPEN:\n        q = {a: pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL'}\n        sets[s] = {a for a in 'URDL' if q[a] > max(q.values()) - 1e-9}\n    return sets\n\ndef q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0, gamma=0.9):\n    \"\"\"Q-learning on the grid. Return Q as {(cell, action): value} for all 13 cells.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): q0 for s in CELLS for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in ENDS:\n            if rng.random() < eps:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])   # ties: first in U, R, D, L\n            t = move(s, a)\n            r = pay(t)\n            target = r if t in ENDS else r + gamma * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += alpha * (target - Q[(s, a)])\n            s = t\n    return Q\n\ndef greedy_ok(Q):\n    \"\"\"True when every open cell's first best action is in optimal_sets()[cell].\"\"\"\n    sets = optimal_sets()\n    return all(max('URDL', key=lambda b: Q[(s, b)]) == min(sets[s], key='URDL'.index) for s in OPEN)\n",
       "test": 5,
       "symptom": "Compares with value iteration's first best move only, so a tie taken the other way fails."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 3, 5\nWALL = {'r2c2', 'r2c4'}\nENDS = {'r1c5': 1.0, 'r3c5': -1.0}\nSTEP = -0.05\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\nOPEN = [s for s in CELLS if s not in ENDS]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = int(s[1]), int(s[3])\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef pay(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return ENDS.get(t, 0.0) + STEP\n\ndef optimal_sets(gamma=0.9):\n    \"\"\"Value iteration to convergence; {open cell: set of best actions, ties within 1e-9 kept}.\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    while True:\n        new = {s: 0.0 if s in ENDS else max(pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL')\n               for s in CELLS}\n        done = max(abs(new[s] - V[s]) for s in CELLS) < 1e-12\n        V = new\n        if done:\n            break\n    sets = {}\n    for s in OPEN:\n        q = {a: pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL'}\n        sets[s] = {a for a in 'URDL' if q[a] > max(q.values()) - 1e-9}\n    return sets\n\ndef q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0, gamma=0.9):\n    \"\"\"Q-learning on the grid. Return Q as {(cell, action): value} for all 13 cells.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): q0 for s in CELLS for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in ENDS:\n            if rng.random() < eps:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])   # ties: first in U, R, D, L\n            t = move(s, a)\n            r = pay(t)\n            target = r if t in ENDS else r + gamma * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += alpha * (target - Q[(s, a)])\n            s = t\n    return Q\n\ndef greedy_ok(Q):\n    \"\"\"True when every open cell's first best action is in optimal_sets()[cell].\"\"\"\n    sets = optimal_sets()\n    return all(max('URDL', key=lambda b: Q[(s, b)]) == max(sets[s], key='URDL'.index) for s in OPEN)\n",
+      "test": 8,
+      "symptom": "Compares with value iteration's last best move only, so a tie taken the other way fails."
      }
     ]
    },
@@ -2490,7 +2493,8 @@
      "test-2": "Follow the order: `rng.choice(OPEN)` per episode, then `rng.random()` each step, `rng.choice('URDL')` only when exploring, ties to U, R, D, L, and the 0.05 step cost.",
      "test-3": "Entering an end cell, the target is the reward alone. The end cells' values stay at `q0` and must not be bootstrapped from.",
      "test-7": "`greedy_ok` must say False when a move is wrong. With every $Q$ at 0 the first best move is U everywhere, which is not optimal at r1c1.",
-     "test-8": "Compare each greedy move with the whole optimal set. At r3c1 both U and R are optimal."
+     "test-8": "Compare each greedy move with the whole optimal set. At r3c1 both U and R are optimal.",
+     "test-5": "Compare each greedy move with the whole optimal set. At r3c1 both U and R are optimal."
     }
    },
    "explain": {

@@ -187,7 +187,8 @@ bon = {kk: (two_ln / nn) ** 0.5 for kk, (nn, m) in rec.items()}
 sc = {kk: m + bon[kk] for kk, (nn, m) in rec.items()}
 ex._rec(max(sc, key=sc.get) == 'R' and correct_id(iid) == ['R'], 'e-ucb-three-venues: R has the top score and is the key', '')
 for kk in sc:
-    say(iid, 'widget.options', r4(sc[kk]))
+    if kk != 'R':
+        say(iid, 'widget.options', r4(sc[kk]))   # R's score sits in feedback.correct, so no option text shows one
     say(iid, 'explain.text', r4(bon[kk]))
 say(iid, 'widget.options', r4(bon['P']))
 say(iid, 'widget.options', r4(bon['R']))
