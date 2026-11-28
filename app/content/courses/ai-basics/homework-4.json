@@ -163,9 +163,15 @@
       "call": "bigram_writer(TEXT, 'the', [0.1, 0.5, 0.9], 1)",
       "expect": "['the', 'cat', 'ate', 'the']",
       "compare": "equal"
+     },
+     {
+      "setup": "TEXT = 'the cat sat on the mat . the cat ate the jam . the dog sat on the cat .'",
+      "call": "bigram_writer(TEXT, 'the', [0.9999999999999999], 1)",
+      "expect": "['the', 'dog']",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 9 hidden tests. Each answer must equal the expected list of words exactly.",
+    "how": "Submit runs 10 hidden tests. Each answer must equal the expected list of words exactly.",
     "mutants": [
      {
       "source": "def bigram_writer(text, start, us, power):\n    words = text.split()\n    heads = []\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        a = words[i]\n        b = words[i + 1]\n        if a not in heads:\n            heads.append(a)\n            nexts.append([])\n            counts.append([])\n        k = heads.index(a)\n        if b in nexts[k]:\n            counts[k][nexts[k].index(b)] += 1\n        else:\n            nexts[k].append(b)\n            counts[k].append(1)\n    out = [start]\n    word = start\n    for u in us:\n        if word not in heads:\n            break\n        k = heads.index(word)\n        raised = []\n        for c in counts[k]:\n            raised.append(c)\n        total = 0\n        for r in raised:\n            total = total + r\n        chosen = nexts[k][-1]\n        running = 0\n        for j in range(len(raised)):\n            running = running + raised[j] / total\n            if u < running:\n                chosen = nexts[k][j]\n                break\n        word = chosen\n        out.append(word)\n    return out\n",
@@ -186,6 +192,11 @@
       "source": "def bigram_writer(text, start, us, power):\n    words = text.split()\n    heads = []\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        a = words[i]\n        b = words[i + 1]\n        if a not in heads:\n            heads.append(a)\n            nexts.append([])\n            counts.append([])\n        k = heads.index(a)\n        if b in nexts[k]:\n            counts[k][nexts[k].index(b)] += 1\n        else:\n            nexts[k].append(b)\n            counts[k].append(1)\n    out = [start]\n    word = start\n    for u in us:\n        if word not in heads:\n            word = start\n        k = heads.index(word)\n        raised = []\n        for c in counts[k]:\n            raised.append(c ** power)\n        total = 0\n        for r in raised:\n            total = total + r\n        chosen = nexts[k][-1]\n        running = 0\n        for j in range(len(raised)):\n            running = running + raised[j] / total\n            if u < running:\n                chosen = nexts[k][j]\n                break\n        word = chosen\n        out.append(word)\n    return out\n",
       "test": 7,
       "symptom": "Jumps back to the start word at an empty row instead of stopping."
+     },
+     {
+      "source": "def bigram_writer(text, start, us, power):\n    words = text.split()\n    heads = []\n    nexts = []\n    counts = []\n    for i in range(len(words) - 1):\n        a = words[i]\n        b = words[i + 1]\n        if a not in heads:\n            heads.append(a)\n            nexts.append([])\n            counts.append([])\n        k = heads.index(a)\n        if b in nexts[k]:\n            counts[k][nexts[k].index(b)] += 1\n        else:\n            nexts[k].append(b)\n            counts[k].append(1)\n    out = [start]\n    word = start\n    for u in us:\n        if word not in heads:\n            break\n        k = heads.index(word)\n        raised = []\n        for c in counts[k]:\n            raised.append(c ** power)\n        total = 0\n        for r in raised:\n            total = total + r\n        chosen = None\n        running = 0\n        for j in range(len(raised)):\n            running = running + raised[j] / total\n            if u < running:\n                chosen = nexts[k][j]\n                break\n        word = chosen\n        out.append(word)\n    return out\n",
+      "test": 10,
+      "symptom": "Has no fall-back: when the running totals end just under u, the writer adds nothing instead of the last word."
      }
     ]
    },
@@ -194,7 +205,8 @@
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-2": "At power 2 the row for “buy” (low 1, the 2) becomes $\\tfrac15$ and $\\tfrac45$, so 0.25 picks “the”.",
-     "test-7": "“sat” starts no pair in that text, so the run stops there."
+     "test-7": "“sat” starts no pair in that text, so the run stops there.",
+     "test-10": "The running totals end at 0.9999999999999999, just under u. Fall back to the last word of the row."
     }
    },
    "explain": {
@@ -319,7 +331,7 @@
     "ab-language"
    ],
    "prose": "A picker is written with `u <= total` instead of `u < total`. On the row for “the” (cat $\\tfrac12$, mat, jam and dog $\\tfrac16$ each) it gets $u = 0.5$ and writes cat.",
-   "question": "Which word should $u = 0.5$ give, and why?",
+   "question": "Which word does the lessons' rule give for $u = 0.5$, and why?",
    "widget": {
     "kind": "choice",
     "layout": "stack",
@@ -337,7 +349,7 @@
      {
       "id": "either",
       "text": "Either: one draw of exactly 0.5 never matters",
-      "why": "Every boundary would then lean the same way, giving each word a little extra chance. Keep the rule exact."
+      "why": "Such a draw is rare, but a picker must follow one rule exactly, or its runs stop matching the tests and other seeded runs."
      }
     ]
    },
@@ -404,7 +416,7 @@
    "title": "Fluent nonsense",
    "kind": "longform",
    "prompt": "A next-word table trained on news text writes: “the bank cut rates rose sharply on the bank cut rates”. Each pair of words reads well, but the sentence makes no sense.\n\n(a) Say what the table knows when it picks a word. (b) Explain why every pair reads well. (c) Explain why the whole sentence can still be nonsense, with one example from the course text. (d) Say what a model would need to do better, and what temperature can and cannot fix.",
-   "model": "**(a)** The table knows one thing when it picks: the word just written. It looks up that word's row and picks the next word by its chance. It keeps no memory of anything earlier.\n\n**(b)** Every pair it writes was counted in real text. “bank cut”, “cut rates” and “rates rose” each appeared in the news. So each neighbouring pair is a pair someone wrote.\n\n**(c)** Meaning needs more than pairs. “rates rose” is fine after “interest”, but after “the bank cut rates” it contradicts what came before, and the table cannot see that far back. In the course text, “the cat ate the cat sat on the mat” is built from real pairs, yet no one wrote it and it makes little sense.\n\n**(d)** A better model must look further back: at many earlier words, not one. Real chatbots use networks that read a long run of tokens before choosing. Temperature cannot fix it: it only sharpens or flattens the same row. A low temperature repeats the likeliest pairs, as in “the cat sat on the cat sat on”; a high one makes rarer pairs more likely. Neither adds memory.",
+   "model": "**(a)** The table knows one thing when it picks: the word just written. It looks up that word's row and picks the next word by its chance. It keeps no memory of anything earlier.\n\n**(b)** Every pair it writes was counted in real text. “bank cut”, “cut rates” and “rates rose” each appeared in the news. So each neighbouring pair is a pair someone wrote.\n\n**(c)** Meaning needs more than pairs. “rates rose” is fine after “interest”, but after “the bank cut rates” it contradicts what came before, and the table cannot see that far back. In the course text, “the cat ate the cat sat on the mat” is built from real pairs, yet no one wrote it and it makes little sense.\n\n**(d)** A better model must look further back: at many earlier words, not one. Real chatbots use networks that read a long run of tokens before choosing. Temperature cannot fix it: it only sharpens or flattens the same row. A temperature near 0 repeats the likeliest pairs, as in “the cat sat on the cat sat on”; a high one makes rarer pairs more likely. Neither adds memory.",
    "rubric": [
     {
      "points": 2,

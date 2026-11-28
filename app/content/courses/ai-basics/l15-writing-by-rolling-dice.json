@@ -852,9 +852,14 @@
       "call": "pick(['on'], [1.0], 0.7)",
       "expect": "'on'",
       "compare": "equal"
+     },
+     {
+      "call": "pick(['a', 'b', 'c'], [0.3, 0.3, 0.3999], 0.99995)",
+      "expect": "'c'",
+      "compare": "equal"
      }
     ],
-    "how": "Check runs 7 hidden tests. Each answer must equal the expected word exactly.",
+    "how": "Check runs 8 hidden tests. Each answer must equal the expected word exactly.",
     "mutants": [
      {
       "source": "def pick(words, chances, u):\n    total = 0\n    for i in range(len(words)):\n        total = total + chances[i]\n        if u <= total:\n            return words[i]\n    return words[-1]\n",
@@ -870,6 +875,11 @@
       "source": "def pick(words, chances, u):\n    for i in range(len(words)):\n        if u < chances[i]:\n            return words[i]\n    return words[-1]\n",
       "test": 2,
       "symptom": "Compares u with each chance on its own instead of the running total."
+     },
+     {
+      "source": "def pick(words, chances, u):\n    for i in range(len(words)):\n        if u < sum(chances[:i + 1]):\n            return words[i]\n",
+      "test": 8,
+      "symptom": "Has no fall-back: when every running total is just under u, it returns nothing instead of the last word."
      }
     ]
    },
@@ -888,7 +898,8 @@
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-2": "0.5 is not above $\\tfrac12$: use `u < total`, so 0.5 goes on to mat.",
-     "test-6": "No running total is above this `u`. Return `words[-1]` after the loop."
+     "test-6": "No running total is above this `u`. Return `words[-1]` after the loop.",
+     "test-8": "These chances add to 0.9999, just under u. After the loop, return `words[-1]`."
     }
    },
    "explain": {
@@ -1047,7 +1058,7 @@
    "type": "transfer",
    "difficulty": 3,
    "title": "A chatbot's next word",
-   "prose": "A chatbot writes a reply one piece at a time in just this way, with the table replaced by a big network. Drafting a market note, after “The FTSE” its chances are rose 0.55, fell 0.35 and closed 0.10.",
+   "prose": "A chatbot writes a reply one piece at a time in just this way, with the table replaced by a big network that reads the whole text so far, not just the last word. Drafting a market note, after “The FTSE” its chances are rose 0.55, fell 0.35 and closed 0.10.",
    "canvas": {
     "kind": "bars",
     "params": {

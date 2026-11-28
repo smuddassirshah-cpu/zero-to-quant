@@ -105,7 +105,7 @@
     }
    },
    "explain": {
-    "text": "Writer A gives cat 0.75 and writer B only about 0.37. A is the safe writer: it nearly always takes the top word. B spreads its picks and writes more boldly."
+    "text": "Writer A gives cat 0.75 and writer B only about 0.37. A is the safe writer: it takes the top word three times in four. B spreads its picks and writes more boldly."
    }
   },
   {
@@ -569,7 +569,7 @@
     }
    },
    "explain": {
-    "text": "Temperature 2 takes roots and rescales, so unlikely words are picked more often. It never adds a word: a chance of 0 stays 0. “More creative” only means less predictable.",
+    "text": "Temperature 2 takes roots and rescales, so unlikely words are picked more often, but a chance of 0 stays 0. A real model gives almost every token a tiny chance, so a high temperature lets rare tokens through; it still adds no knowledge. “More creative” only means less predictable.",
     "canvas": {
      "highlight": [
       "xsofa"
@@ -581,7 +581,7 @@
    "type": "generalise",
    "difficulty": 2,
    "title": "Temperature as a power",
-   "prose": "At temperature $\\tfrac12$, square each chance and rescale; at 2, take square roots and rescale; at 1, leave the chances alone. $$\\text{new chance} = \\frac{(\\text{chance})^2}{\\text{sum of the squares}} \\quad (T = \\tfrac12)$$ As the temperature falls towards 0, the top word wins every time.",
+   "prose": "At temperature $\\tfrac12$, square each chance and rescale; at 2, take square roots and rescale; at 1, leave the chances alone. $$\\text{new chance} = \\frac{(\\text{chance})^2}{\\text{sum of the squares}} \\quad (T = \\tfrac12)$$ The power is 1 divided by the temperature: $1 \\div \\tfrac12 = 2$ and $1 \\div 2 = \\tfrac12$. As the temperature falls towards 0, the top word wins every time.",
    "question": "After “sat” the only word is “on”, with chance 1. What is its chance at temperature 2?",
    "widget": {
     "kind": "numeric",
@@ -673,7 +673,7 @@
       "compare": "isclose"
      }
     ],
-    "how": "Check runs 6 hidden tests. Each list is compared number by number with math.isclose.",
+    "how": "Check runs 6 hidden tests. Each list is compared number by number with `math.isclose`.",
     "mutants": [
      {
       "source": "def with_temperature(chances, power):\n    result = []\n    for c in chances:\n        result.append(round(c ** power, 4))\n    return result\n",
@@ -792,7 +792,7 @@
    "type": "ladder",
    "difficulty": 3,
    "title": "Three ways to split",
-   "prose": "Split “an unbelievable rally” three ways, leaving out the spaces: into words; into the pieces an, un, believ, able and rally; and into single characters.",
+   "prose": "Split “an unbelievable rally” three ways, leaving out the spaces: into words; into the pieces an, un, believ, able and rally; and into single characters. Real models keep the spaces too, usually stuck to the front of the next piece.",
    "canvas": {
     "kind": "pair",
     "stack": true,
@@ -926,7 +926,7 @@
     "options": [
      {
       "id": "both",
-      "text": "Pieces can spell any word, in fewer tokens",
+      "text": "Pieces can spell new words, in fewer tokens",
       "correct": true
      },
      {
@@ -959,66 +959,64 @@
     }
    },
    "explain": {
-    "text": "A fixed list of pieces can spell a word the model never saw, such as a new firm's name. It also takes far fewer tokens than characters: 5 against 19 here."
+    "text": "A fixed list of pieces, which keeps every single character as a last resort, can spell a word the model never saw, such as a new firm's name. It also takes far fewer tokens than characters: 5 against 19 here."
    }
   },
   {
    "type": "transfer",
    "difficulty": 3,
    "title": "Drafting a contract",
-   "prose": "A chatbot's temperature setting works just like this. A law firm drafting a contract wants the same safe wording every time. After “The buyer shall” the chances are pay $\\tfrac12$, and deliver, inspect and return $\\tfrac16$ each.",
+   "prose": "A chatbot's temperature setting works just like this. A law firm drafting a contract wants the same safe wording every time. After “The buyer shall” the chances are pay 0.6, and deliver and inspect 0.2 each.",
    "canvas": {
     "kind": "bars",
     "params": {
      "categories": [
       "pay",
       "deliver",
-      "inspect",
-      "return"
+      "inspect"
      ],
      "yLabel": "Chance",
      "showValues": true,
-     "yMax": 0.8,
+     "yMax": 0.9,
      "yMin": 0,
      "decimals": 2
     },
     "state": {
      "values": {
-      "pay": 0.5,
-      "deliver": 0.1667,
-      "inspect": 0.1667,
-      "return": 0.1667
+      "pay": 0.6,
+      "deliver": 0.2,
+      "inspect": 0.2
      }
     }
    },
-   "question": "At temperature $\\tfrac12$, what is the chance it writes “pay”? Give a fraction.",
+   "question": "At temperature $\\tfrac12$, what is the chance it writes “pay”? Give a fraction or a decimal.",
    "widget": {
     "kind": "numeric",
-    "answer": 0.75,
+    "answer": 0.8182,
     "tol": {
      "abs": 0.0005
     },
     "placeholder": "fraction",
     "label": "Chance",
-    "accept": "Any form equal to 3/4, or 0.75",
+    "accept": "Any form equal to 9/11, or 0.8182",
     "wrong": [
      {
       "id": "same",
-      "value": 0.5,
+      "value": 0.6,
       "tol": {
        "abs": 0.0005
       }
      },
      {
       "id": "no-rescale",
-      "value": 0.25,
+      "value": 0.36,
       "tol": {
        "abs": 0.0005
       }
      },
      {
       "id": "hot",
-      "value": 0.366,
+      "value": 0.4641,
       "tol": {
        "abs": 0.0005
       }
@@ -1028,37 +1026,36 @@
    "hints": [
     {
      "rung": "nudge",
-     "text": "These are the chances of the row for “the”."
+     "text": "Square each chance: 0.36, 0.04 and 0.04."
     },
     {
      "rung": "point",
-     "text": "pay has $\\tfrac12$.",
+     "text": "pay has 0.6.",
      "highlight": [
       "xpay"
      ]
     },
     {
      "rung": "step",
-     "text": "Square and rescale: $\\tfrac14 \\div \\tfrac13 = \\tfrac34$."
+     "text": "The squares add to 0.44, so pay is $0.36 \\div 0.44 = \\tfrac{9}{11}$."
     }
    ],
    "feedback": {
-    "correct": "$\\tfrac34$.",
+    "correct": "$\\tfrac{9}{11}$, about 0.8182.",
     "generic": "Not quite. Square each chance, then divide by the total of the squares.",
     "byKey": {
-     "same": "$\\tfrac12$ is the chance at temperature 1.",
-     "no-rescale": "$\\tfrac14$ is the square. Rescale by the total, $\\tfrac13$.",
-     "hot": "0.366 is temperature 2. The firm wants $\\tfrac12$."
+     "same": "0.6 is the chance at temperature 1.",
+     "no-rescale": "0.36 is the square. Rescale by the total of the squares, 0.44.",
+     "hot": "0.4641 is temperature 2. The firm wants $\\tfrac12$."
     }
    },
    "explain": {
-    "text": "These are the chances of the row for “the”, so temperature $\\tfrac12$ gives pay $\\tfrac34$. A firm sets the temperature low so the likeliest wording wins most of the time; lower still, it wins every time.",
+    "text": "The squares 0.36, 0.04 and 0.04 add to 0.44, so temperature $\\tfrac12$ gives pay $0.36 \\div 0.44 = \\tfrac{9}{11}$, about 0.8182. A firm sets the temperature low so the likeliest wording wins most of the time; lower still, it wins every time.",
     "canvas": {
      "values": {
-      "pay": 0.75,
-      "deliver": 0.0833,
-      "inspect": 0.0833,
-      "return": 0.0833
+      "pay": 0.8182,
+      "deliver": 0.0909,
+      "inspect": 0.0909
      }
     }
    }
@@ -1067,7 +1064,7 @@
  "summary": {
   "ideas": [
    "Temperature $\\tfrac12$ squares each chance and rescales, sharpening the row; temperature 2 takes square roots and rescales, flattening it.",
-   "A tie stays a tie, a certain word stays certain and a chance of 0 stays 0 at any temperature.",
+   "A tie stays a tie, a certain word stays certain and a chance of 0 stays 0 at any temperature in a table of counts.",
    "A model reads tokens: whole words, pieces of words or single characters. Pieces spell new words in few tokens."
   ],
   "formula": {
