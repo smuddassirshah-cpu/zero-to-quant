@@ -1,0 +1,2501 @@
+{
+ "id": "topic-2.8",
+ "topic": "2.8",
+ "name": "Reinforcement learning",
+ "minutes": 90,
+ "pass": 0.7,
+ "skills": {
+  "rl-bandit": "Bandits and exploration",
+  "rl-mdp": "Markov decision processes and dynamic programming",
+  "rl-td": "Temporal-difference learning",
+  "rl-pg": "Policy gradients",
+  "rl-search": "Search and self-play"
+ },
+ "items": [
+  {
+   "id": "e-regret-four-venues",
+   "difficulty": 2,
+   "skills": [
+    "rl-bandit"
+   ],
+   "tags": [
+    "regret"
+   ],
+   "pace": 75,
+   "title": "Four venues, one month",
+   "prose": "A broker routed 1,000 orders over four venues whose fill chances are 0.52, 0.48, 0.61 and 0.55. They received 300, 150, 400 and 150 orders.",
+   "question": "What is the expected regret of this routing, in fills? Give a decimal to 1 place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 55.5,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "a number",
+    "label": "Regret",
+    "wrong": [
+     {
+      "id": "fills",
+      "value": 554.5,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "per-order",
+      "value": 0.0555,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "worst-only",
+      "value": 19.5,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The gaps to 0.61 are 0.09, 0.13, 0 and 0.06, so regret is $27 + 19.5 + 0 + 9 = 55.5$ fills.",
+    "generic": "Multiply each venue's orders by its gap to the best fill chance, then add.",
+    "byKey": {
+     "fills": "That is the expected number of fills. Regret is the shortfall against sending all 1,000 orders to the 0.61 venue, which gives 610.",
+     "per-order": "That is the regret per order. Multiply by the 1,000 orders.",
+     "worst-only": "You counted only the 0.48 venue. The 0.52 and 0.55 venues trail the best one too."
+    }
+   },
+   "explain": {
+    "text": "The best venue fills with chance 0.61, so each order sent elsewhere loses its gap on average. $300 \\times 0.09 + 150 \\times 0.13 + 150 \\times 0.06 = 55.5$. Regret uses the true chances, not the fills that happened to arrive."
+   }
+  },
+  {
+   "id": "e-return-with-fees",
+   "difficulty": 2,
+   "skills": [
+    "rl-mdp"
+   ],
+   "tags": [
+    "return"
+   ],
+   "pace": 60,
+   "title": "Fees on the way",
+   "prose": "A quoting rule's episode pays £3, then $-$£1 in fees, then nothing, then £5, and ends. The discount is $\\gamma = 0.8$.",
+   "question": "What is the discounted return from the start, in pounds? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.76,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "label": "Return (£)",
+    "wrong": [
+     {
+      "id": "no-disc",
+      "value": 7,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "disc-first",
+      "value": 3.808,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "fee-added",
+      "value": 6.36,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$3 - 0.8 + 0 + 0.512 \\times 5 = 4.76$.",
+    "generic": "Discount the reward $k$ steps after the first by $0.8^k$, then add.",
+    "byKey": {
+     "no-disc": "You added the rewards without discounting. Each later step counts 0.8 times as much as the one before.",
+     "disc-first": "You discounted the first £3 too. It is paid at once and counts in full.",
+     "fee-added": "You added the fee as a gain. The fee lowers the return by 0.8 after discounting."
+    }
+   },
+   "explain": {
+    "text": "$G_0 = 3 + 0.8 \\times (-1) + 0.64 \\times 0 + 0.512 \\times 5 = 4.76$. The £5 three steps after the first is worth only £2.56 now."
+   }
+  },
+  {
+   "id": "e-td-wide-spread",
+   "difficulty": 2,
+   "skills": [
+    "rl-td"
+   ],
+   "tags": [
+    "td-update"
+   ],
+   "pace": 60,
+   "title": "Wide, then tight",
+   "prose": "A desk evaluates a quoting rule by TD(0). Its estimate for the state W (wide spread) is 0.4. One step pays $-0.1$ and lands in state T (tight spread), estimated at 0.9. Take $\\alpha = 0.2$ and $\\gamma = 0.95$.",
+   "question": "What is the new estimate for W? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.471,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "label": "V(W)",
+    "wrong": [
+     {
+      "id": "delta",
+      "value": 0.355,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 0.48,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "target",
+      "value": 0.755,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\delta = -0.1 + 0.95 \\times 0.9 - 0.4 = 0.355$, so the estimate rises by $0.2 \\times 0.355 = 0.071$ to 0.471.",
+    "generic": "Form the TD error $r + \\gamma V(s') - V(s)$, then add $\\alpha$ times it.",
+    "byKey": {
+     "delta": "That is the TD error. Add $\\alpha$ times it to the old estimate.",
+     "no-disc": "You left out $\\gamma$ on the next estimate: $\\delta$ would be 0.4, not 0.355.",
+     "target": "That is the target. Move only a fifth of the way towards it."
+    }
+   },
+   "explain": {
+    "text": "The target $-0.1 + 0.855 = 0.755$ stands in for the rest of the return. The estimate moves a fifth of the way towards it, from 0.4 to 0.471, without waiting for the episode to end."
+   }
+  },
+  {
+   "id": "e-softmax-three-dials",
+   "difficulty": 2,
+   "skills": [
+    "rl-pg"
+   ],
+   "tags": [
+    "softmax"
+   ],
+   "pace": 60,
+   "title": "Three dials",
+   "prose": "A softmax policy has dials $\\boldsymbol\\theta = (1, 0, -1)$ for three moves.",
+   "question": "What is the chance of the first move? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6652,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "a number",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "two-moves",
+      "value": 0.7311,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "uniform",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "third",
+      "value": 0.09,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^1 / (e^1 + e^0 + e^{-1}) = 2.7183 / 4.0862 = 0.6652$.",
+    "generic": "Exponentiate each dial and divide the first by their sum.",
+    "byKey": {
+     "two-moves": "You compared the first dial with the second only, as for two moves. The third move's $e^{-1}$ belongs in the sum too.",
+     "uniform": "That would need equal dials. Here the first dial is the largest.",
+     "third": "That is the third move's chance, $e^{-1} / 4.0862$."
+    }
+   },
+   "explain": {
+    "text": "The exponentials are 2.7183, 1 and 0.3679, adding to 4.0862. The first move takes 0.6652 of that, the second 0.2447 and the third 0.0900."
+   }
+  },
+  {
+   "id": "e-three-replies",
+   "difficulty": 2,
+   "skills": [
+    "rl-search"
+   ],
+   "tags": [
+    "minimax"
+   ],
+   "pace": 60,
+   "title": "Three moves, three replies",
+   "prose": "You choose move a, b or c; your opponent then picks one of three replies. Your payoffs are 6, 2 and 9 under a, 5, 7 and 4 under b, and 8, 3 and 10 under c.",
+   "question": "With both sides playing their best, what payoff do you get?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "Payoff",
+    "wrong": [
+     {
+      "id": "helps",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "worst",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "average",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your opponent holds you to 2 under a, 4 under b and 3 under c. You choose b, worth 4.",
+    "generic": "Take the smallest payoff under each move, then the largest of those.",
+    "byKey": {
+     "helps": "You took the best payoff anywhere, as if your opponent helped you. Under c they reply with 3.",
+     "worst": "That is the smallest payoff overall. You choose the move, so take the best of the three minima.",
+     "average": "You chose c for its average, 7. Your opponent does not reply at random: under c they pick 3."
+    }
+   },
+   "explain": {
+    "text": "Each min node takes its smallest payoff: 2, 4 and 3. The max root takes the largest of those, 4. The 10 under c is never reached, because your opponent answers c with 3."
+   }
+  },
+  {
+   "id": "e-beta-new-quote",
+   "difficulty": 2,
+   "skills": [
+    "rl-bandit"
+   ],
+   "tags": [
+    "beta-posterior"
+   ],
+   "pace": 60,
+   "title": "A prior for a new quote",
+   "prose": "A desk's prior for a new quote's hit rate is $\\mathrm{Beta}(2, 4)$. The quote then hits 9 times in 15.",
+   "question": "What is the posterior mean of the hit rate? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5238,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "a number",
+    "label": "Mean",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "flat",
+      "value": 0.5882,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "swap",
+      "value": 0.381,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "prior",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathrm{Beta}(2 + 9, 4 + 6) = \\mathrm{Beta}(11, 10)$, with mean $\\tfrac{11}{21} = 0.5238$.",
+    "generic": "Add the hits to the first parameter and the misses to the second, then divide the first by the sum.",
+    "byKey": {
+     "raw": "That is the raw rate, 9 of 15. The prior counts too.",
+     "flat": "You used a $\\mathrm{Beta}(1, 1)$ prior: $\\tfrac{10}{17}$. This prior is $\\mathrm{Beta}(2, 4)$.",
+     "swap": "You added the hits to the second parameter: $\\tfrac{8}{21}$.",
+     "prior": "That is the prior mean, $\\tfrac26$, before any quotes."
+    }
+   },
+   "explain": {
+    "text": "Hits add to the first parameter and misses to the second. The prior counts as 6 quotes already seen, 2 of them hits, so it pulls the raw 0.6 down to 0.5238."
+   }
+  },
+  {
+   "id": "e-ucb-three-venues",
+   "difficulty": 3,
+   "skills": [
+    "rl-bandit"
+   ],
+   "tags": [
+    "ucb"
+   ],
+   "pace": 120,
+   "title": "Pull 150",
+   "prose": "At pull $t = 150$ a UCB1 router's record is as follows. Venue P has 90 pulls with mean 0.58, venue Q 40 with mean 0.55 and venue R 20 with mean 0.40. Here $2\\ln 150 = 10.0213$.",
+   "question": "Which venue does UCB1 pull next?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "R",
+      "text": "Venue R, with score 1.1079",
+      "correct": true
+     },
+     {
+      "id": "P",
+      "text": "Venue P, with the best mean",
+      "why": "P's 90 pulls leave a bonus of only 0.3337, so it scores 0.9137."
+     },
+     {
+      "id": "Q",
+      "text": "Venue Q, between the two",
+      "why": "Q scores 1.0505. R's 20 pulls earn a bonus of 0.7079, the largest of the three."
+     },
+     {
+      "id": "wait",
+      "text": "None yet: UCB1 waits until R has 40 pulls",
+      "why": "UCB1 pulls the venue with the largest score on every step. It never waits."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "R scores $0.40 + \\sqrt{10.0213/20} = 1.1079$, above Q's 1.0505 and P's 0.9137.",
+    "generic": "Add each venue's bonus $\\sqrt{2\\ln t / n_a}$ to its mean and compare the scores."
+   },
+   "explain": {
+    "text": "The bonuses are 0.3337, 0.5005 and 0.7079. R's low mean rests on only 20 pulls, so its upper limit is the highest. UCB1 checks R again before writing it off."
+   }
+  },
+  {
+   "id": "e-floor-five-signals",
+   "difficulty": 3,
+   "skills": [
+    "rl-bandit"
+   ],
+   "tags": [
+    "regret-floor"
+   ],
+   "pace": 90,
+   "title": "Five signals",
+   "prose": "A fund allocates trades among five signals that win with chance 0.30, 0.42, 0.50, 0.56 and 0.62. Its allocator is epsilon-greedy with $\\varepsilon = 0.12$ and runs for 25,000 trades.",
+   "question": "However well it learns, what is the least regret its random trades cost over the 25,000 trades?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 420.0,
+    "tol": {
+     "abs": 0.5
+    },
+    "placeholder": "a number",
+    "label": "Regret",
+    "wrong": [
+     {
+      "id": "per-trade",
+      "value": 0.0168,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-eps",
+      "value": 3500.0,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "worst",
+      "value": 960.0,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\bar q = 0.48$, so the floor is $25000 \\times 0.12 \\times (0.62 - 0.48) = 420$.",
+    "generic": "Average the five values, take the gap to 0.62, then scale by $\\varepsilon$ and the trades.",
+    "byKey": {
+     "per-trade": "That is the floor per trade. Multiply by the 25,000 trades.",
+     "no-eps": "You charged every trade the random loss of 0.14. Only 12% of trades are random.",
+     "worst": "You used the worst signal's gap, 0.32. A uniform random pick loses the average gap, 0.14."
+    }
+   },
+   "explain": {
+    "text": "A random trade picks each signal one time in five, so it loses $0.62 - 0.48 = 0.14$ on average. About 3,000 trades are random, which costs 420 wins even once the best signal is known."
+   }
+  },
+  {
+   "id": "e-ewma-old-reward",
+   "difficulty": 3,
+   "skills": [
+    "rl-bandit"
+   ],
+   "tags": [
+    "constant-step"
+   ],
+   "pace": 90,
+   "title": "How much an old fill counts",
+   "prose": "A venue's fill estimate is updated with a constant step, $Q \\leftarrow Q + \\alpha(R - Q)$, with $\\alpha = 0.25$. The latest reward carries weight $\\alpha$ in the current estimate.",
+   "question": "What weight does the reward that came four updates before the latest one carry? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0791,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a number",
+    "label": "Weight",
+    "wrong": [
+     {
+      "id": "no-alpha",
+      "value": 0.3164,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "k-plus",
+      "value": 0.0593,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "k-minus",
+      "value": 0.1055,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.25 \\times 0.75^4 = 0.0791$.",
+    "generic": "A reward enters with weight $\\alpha$, and each later update keeps $1 - \\alpha$ of it.",
+    "byKey": {
+     "no-alpha": "You left out the $\\alpha$: a reward enters with weight 0.25 before four later updates scale it by $0.75^4$.",
+     "k-plus": "You counted five later updates. Four came after it, so the factor is $0.75^4$.",
+     "k-minus": "You counted three later updates. Four came after it, so the factor is $0.75^4$."
+    }
+   },
+   "explain": {
+    "text": "A reward enters with weight 0.25, and each later update keeps 0.75 of everything before. After four more updates it carries $0.25 \\times 0.75^4 = 0.0791$. Old evidence fades by a constant factor, so the estimate can follow a venue that changes."
+   }
+  },
+  {
+   "id": "e-quiet-or-carrying",
+   "difficulty": 3,
+   "skills": [
+    "rl-mdp"
+   ],
+   "tags": [
+    "policy-evaluation"
+   ],
+   "pace": 150,
+   "title": "Quiet or carrying stock",
+   "prose": "A market maker's fixed rule earns £2 a step when it holds no stock (state N) and loses £1 a step while it carries inventory (state I). In N it takes on inventory with chance 0.3 a step; in I it sells out, back to N, with chance 0.6. Rewards are discounted by $\\gamma = 0.9$.",
+   "question": "Starting in N, what is the rule worth, in pounds? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11.0989,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "label": "Value (£)",
+    "wrong": [
+     {
+      "id": "inventory",
+      "value": 7.8022,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "gamma-r",
+      "value": 9.989,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "n-only",
+      "value": 20,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.37 v_N - 0.27 v_I = 2$ and $-0.54 v_N + 0.64 v_I = -1$ give $v_N = 1.01 / 0.091 = 11.10$.",
+    "generic": "Write one Bellman equation per state, reward now plus 0.9 times the expected next value, and solve the pair.",
+    "byKey": {
+     "inventory": "That is the value starting in I. The question asks about N.",
+     "gamma-r": "You discounted the step's own reward too. Only the next value carries the 0.9.",
+     "n-only": "You valued £2 for ever, $2/(1 - 0.9)$. Spells with inventory cost some of that."
+    }
+   },
+   "explain": {
+    "text": "The equations are $v_N = 2 + 0.9(0.7 v_N + 0.3 v_I)$ and $v_I = -1 + 0.9(0.6 v_N + 0.4 v_I)$. Solving gives £11.10 in N and £7.80 in I. Inventory spells are short, so starting in I costs only £3.30."
+   }
+  },
+  {
+   "id": "e-slip-bottom-row",
+   "difficulty": 3,
+   "skills": [
+    "rl-mdp"
+   ],
+   "tags": [
+    "backup"
+   ],
+   "pace": 120,
+   "title": "A move along the bottom row",
+   "prose": "On the course's slippery grid a move goes ahead with chance 0.8 and slips to each side with 0.1. Each move costs 0.04, and $\\gamma = 0.9$. The optimal values are 0.2168 at row 4 column 3 and 0.2830 at row 4 column 4, and row 3 column 3 is worth 0.2915.",
+   "question": "What does moving R score at row 4, column 3? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2095,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a number",
+    "label": "Score",
+    "wrong": [
+     {
+      "id": "no-slip",
+      "value": 0.2147,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "edge-zero",
+      "value": 0.19,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-step",
+      "value": 0.2495,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-0.04 + 0.9(0.8 \\times 0.2830 + 0.1 \\times 0.2915 + 0.1 \\times 0.2168) = 0.2095$, below the cell's own value 0.2168.",
+    "generic": "List where R can land and with what chance, then take the step cost plus 0.9 times the expected value.",
+    "byKey": {
+     "no-slip": "You took R as certain. It slips up or down one time in ten each.",
+     "edge-zero": "A slip down runs off the grid, which leaves the agent at row 4 column 3, worth 0.2168, not nothing.",
+     "no-step": "You left out the step cost of 0.04."
+    }
+   },
+   "explain": {
+    "text": "R lands at row 4 column 4 with 0.8, slips up to row 3 column 3 with 0.1 and bumps the bottom edge with 0.1. Its score, 0.2095, is below 0.2168, so R is not the best move there. U is, and its score equals the cell's value."
+   }
+  },
+  {
+   "id": "e-certificate-sweeps",
+   "difficulty": 3,
+   "skills": [
+    "rl-mdp"
+   ],
+   "tags": [
+    "contraction"
+   ],
+   "pace": 90,
+   "title": "A certificate at 0.8",
+   "prose": "Value iteration runs with $\\gamma = 0.8$. Its first sweep changes the values by at most 2.5. After $k$ sweeps the error is at most $\\gamma^k \\times 2.5 / (1 - \\gamma)$.",
+   "question": "How many sweeps make that certificate at most 0.001?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 43,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "Sweeps",
+    "wrong": [
+     {
+      "id": "no-tail",
+      "value": 36,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "floor",
+      "value": 42,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "no-first",
+      "value": 39,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.8^k \\le 0.001 \\times 0.2 / 2.5 = 0.00008$ needs $k \\ge 42.3$, so 43 sweeps.",
+    "generic": "Solve $0.8^k \\times 2.5 / 0.2 \\le 0.001$ for $k$ and round up.",
+    "byKey": {
+     "no-tail": "You left out the factor $1/(1 - \\gamma) = 5$, the tail of all later changes.",
+     "floor": "You rounded down. After 42 sweeps the certificate is still just above 0.001.",
+     "no-first": "You left out the first sweep's change, 2.5."
+    }
+   },
+   "explain": {
+    "text": "Taking logs, $k \\ge \\ln 0.00008 / \\ln 0.8 = 42.3$, and the count must be whole, so 43 sweeps. The certificate holds for every MDP with this discount, and a given problem often settles sooner."
+   }
+  },
+  {
+   "id": "e-mc-two-episodes",
+   "difficulty": 3,
+   "skills": [
+    "rl-td"
+   ],
+   "tags": [
+    "monte-carlo"
+   ],
+   "pace": 150,
+   "title": "Two visits in one episode",
+   "prose": "A fixed policy gives two episodes, with $\\gamma = 0.9$. Episode 1 visits X, Y, X and Z, with rewards 1, $-2$, 4 and 3 on the four steps. Episode 2 visits X and Z, with rewards 0 and 3.",
+   "question": "What is the first-visit Monte Carlo estimate of $v(X)$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.6635,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a number",
+    "label": "v(X)",
+    "wrong": [
+     {
+      "id": "every",
+      "value": 4.6757,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 4.5,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "ep1",
+      "value": 4.627,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The first-visit returns are 4.627 and 2.7, which average 3.6635.",
+    "generic": "Work out each episode's return from X's first visit, backwards from the end, then average.",
+    "byKey": {
+     "every": "You also counted X's second visit in episode 1, with return 6.7. That is every-visit Monte Carlo.",
+     "no-disc": "You added the rewards without the discount.",
+     "ep1": "That is episode 1 alone. Average both episodes' first-visit returns."
+    }
+   },
+   "explain": {
+    "text": "Backwards through episode 1: 3, then $4 + 0.9 \\times 3 = 6.7$, then $-2 + 0.9 \\times 6.7 = 4.03$, then $1 + 0.9 \\times 4.03 = 4.627$. Episode 2 gives $0 + 0.9 \\times 3 = 2.7$. Their mean is 3.6635."
+   }
+  },
+  {
+   "id": "e-optimistic-end-cell",
+   "difficulty": 3,
+   "skills": [
+    "rl-td"
+   ],
+   "tags": [
+    "q-update"
+   ],
+   "pace": 90,
+   "title": "An optimistic start at the goal",
+   "prose": "Q-learning on the deterministic course grid starts every $Q$ at 1.2, the two end cells included. No true value there is above 0.96, so the start is optimistic. The agent moves R from r1c4 for the first time: it enters the +1 cell with reward $1 - 0.04 = 0.96$, and the episode ends. Take $\\alpha = 0.2$ and $\\gamma = 0.9$.",
+   "question": "What is the new $Q(\\text{r1c4}, R)$? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.152,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "label": "Q",
+    "wrong": [
+     {
+      "id": "no-mask",
+      "value": 1.368,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "target",
+      "value": 0.96,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-step",
+      "value": 1.16,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The step ends the episode, so the target is 0.96 alone: $1.2 + 0.2(0.96 - 1.2) = 1.152$.",
+    "generic": "Ask whether the step ends the episode before you build the target.",
+    "byKey": {
+     "no-mask": "You bootstrapped from the end cell's 1.2. An end cell has no future, so the target is the reward alone.",
+     "target": "That is the target. Move only a fifth of the way towards it.",
+     "no-step": "The reward for entering the +1 cell is $1 - 0.04 = 0.96$, not 1."
+    }
+   },
+   "explain": {
+    "text": "At an end cell the Q-learning target is $r$, with no $\\gamma \\max Q$ term, so the value falls from 1.2 to 1.152. The end cells' stored values are leftovers of the start and never change. Adding them would build a false 1.08 into every value near the goal."
+   }
+  },
+  {
+   "id": "e-step-size-rule",
+   "difficulty": 3,
+   "skills": [
+    "rl-td"
+   ],
+   "tags": [
+    "step-size"
+   ],
+   "pace": 90,
+   "title": "Settling on Q*",
+   "prose": "On the slippery grid two moves at one cell differ by only 0.007, and every target is noisy. You want Q-learning's estimates to settle on $Q^*$ exactly, not to jiggle in a band around it.",
+   "question": "Which step size for the $n$th update of a pair does that need?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "harmonic",
+      "text": "$\\alpha_n = 1/n$",
+      "correct": true
+     },
+     {
+      "id": "const",
+      "text": "$\\alpha = 0.1$ for every update",
+      "why": "A constant step keeps weighing the latest noisy targets, so the estimates stay in a band and two close moves keep swapping."
+     },
+     {
+      "id": "square",
+      "text": "$\\alpha_n = 1/n^2$",
+      "why": "These steps add up to a finite total, so the estimate stops moving before the noise is averaged out."
+     },
+     {
+      "id": "one",
+      "text": "$\\alpha = 1$ for every update",
+      "why": "The estimate jumps to each new target, so it is as noisy as one sample."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Steps of $1/n$ add up to infinity, so learning never stops, while their squares add up to a finite total, so the noise dies away.",
+    "generic": "Ask which steps never stop learning yet still average away the noise."
+   },
+   "explain": {
+    "text": "Convergence needs $\\sum \\alpha_n = \\infty$ and $\\sum \\alpha_n^2 < \\infty$ (Sutton and Barto, equation 2.7). $1/n$ meets both; a constant step meets only the first, and $1/n^2$ only the second."
+   }
+  },
+  {
+   "id": "e-venue-three-estimate",
+   "difficulty": 3,
+   "skills": [
+    "rl-pg"
+   ],
+   "tags": [
+    "score-estimate"
+   ],
+   "pace": 90,
+   "title": "An order to venue 3",
+   "prose": "A softmax router has chances $\\boldsymbol\\pi = (0.5, 0.3, 0.2)$ over three venues. It sends an order to venue 3, which earns £12.",
+   "question": "What is this order's REINFORCE estimate for venue 1's dial, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -6.0,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "label": "Estimate (£)",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 6.0,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "pulled-chance",
+      "value": -2.4,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "own-dial",
+      "value": 9.6,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Venue 1 was not chosen, so its score entry is $-0.5$, and the estimate is $12 \\times (-0.5) = -6$.",
+    "generic": "Multiply the reward by the score's entry for venue 1's dial, $[1 = a] - \\pi_1$.",
+    "byKey": {
+     "sign": "Venue 1 was not chosen, so its entry is $-\\pi_1$, which is negative.",
+     "pulled-chance": "You used venue 3's chance, 0.2. Each dial's entry uses its own chance.",
+     "own-dial": "That is the estimate for venue 3's dial, $12 \\times (1 - 0.2)$."
+    }
+   },
+   "explain": {
+    "text": "The score is $(-0.5, -0.3, 0.8)$: the chosen venue's dial goes up and every other goes down by its chance. Times the £12 reward, venue 1's dial gets $-6$. One order is one noisy sample of the gradient."
+   }
+  },
+  {
+   "id": "e-baseline-mean-payment",
+   "difficulty": 3,
+   "skills": [
+    "rl-pg"
+   ],
+   "tags": [
+    "baseline-variance"
+   ],
+   "pace": 150,
+   "title": "The mean payment as baseline",
+   "prose": "Two venues pay a fixed £4 and £12 an order and are chosen with $\\boldsymbol\\pi = (0.75, 0.25)$. The baseline is the mean payment, $b = 6$.",
+   "question": "What is the variance of the one-order estimate for the first venue's dial?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.0,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "label": "Variance",
+    "wrong": [
+     {
+      "id": "nomean",
+      "value": 5.25,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "sd",
+      "value": 1.7321,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "none",
+      "value": 18.75,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The estimates are $(4 - 6)(0.25) = -0.5$ and $(12 - 6)(-0.75) = -4.5$. Their mean is $-1.5$ and $E[X^2] = 5.25$, so the variance is 3.",
+    "generic": "Find the estimate after each venue, then its mean and its mean square, each weighted by $\\pi$.",
+    "byKey": {
+     "nomean": "That is $E[X^2]$. Subtract the squared mean, $(-1.5)^2 = 2.25$.",
+     "sd": "That is the standard deviation. Square it.",
+     "none": "That is the variance with no baseline. With $b = 6$ it falls to 3."
+    }
+   },
+   "explain": {
+    "text": "Without a baseline the estimates are 1 and $-9$, with variance 18.75. The baseline keeps the mean at the true $-1.5$ and cuts the variance to 3. It is a control variate: the score has mean 0, so subtracting $b$ times it adds no bias."
+   }
+  },
+  {
+   "id": "e-why-reward-to-go",
+   "difficulty": 3,
+   "skills": [
+    "rl-pg"
+   ],
+   "tags": [
+    "reward-to-go"
+   ],
+   "pace": 75,
+   "title": "Only what comes after",
+   "prose": "REINFORCE weights the score of the move at step $t$ by the reward-to-go $G_t$, the rewards from step $t$ on, rather than by the whole episode's return.",
+   "question": "Why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "noise",
+      "text": "Earlier rewards cannot depend on that move; they only add noise",
+      "correct": true
+     },
+     {
+      "id": "bias",
+      "text": "The whole return would bias the estimate",
+      "why": "It would still be unbiased. The earlier rewards have mean 0 against the later score, so they only add noise."
+     },
+     {
+      "id": "discount",
+      "text": "It discounts the rewards that come later on",
+      "why": "Reward-to-go here is a plain sum. It drops the earlier rewards; it does not shrink the later ones."
+     },
+     {
+      "id": "exact",
+      "text": "It makes one episode give the exact gradient",
+      "why": "One episode is still one noisy sample. Reward-to-go makes it less noisy."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The earlier rewards multiply a score whose mean is 0 given the past, so they add only noise.",
+    "generic": "Ask what a move at step $t$ can change."
+   },
+   "explain": {
+    "text": "A move cannot change rewards already paid, so their product with its score averages to 0. Dropping them keeps the estimate unbiased and lowers its variance, much as a baseline does."
+   }
+  },
+  {
+   "id": "e-ab-nine-leaves",
+   "difficulty": 3,
+   "skills": [
+    "rl-search"
+   ],
+   "tags": [
+    "alpha-beta"
+   ],
+   "pace": 120,
+   "title": "Nine leaves, left to right",
+   "prose": "Alpha-beta reads the leaves left to right. The max root has three min children, with leaves (4, 8, 6), (9, 7, 2) and (3, 9, 9).",
+   "question": "How many of the nine leaves does it read?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "Leaves",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "value",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "first-leaf",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "It reads all 3 leaves of the first branch (worth 4) and all 3 of the second, where 9 and 7 are above 4 and 2 ends it. The third stops at its first leaf, 3: 7 in all.",
+    "generic": "Track the value the root can already guarantee, and stop a branch once one of its leaves is no better.",
+    "byKey": {
+     "all": "Pruning skips the last two leaves of the third branch: its first leaf, 3, is already below 4.",
+     "value": "That is the root's value. The question asks how many leaves are read.",
+     "first-leaf": "You stopped the second branch after its first leaf. 9 and 7 are both above 4, so reading goes on until 2."
+    }
+   },
+   "explain": {
+    "text": "After the first branch the root can guarantee 4, and a min node is cut once a leaf is 4 or less. In the second branch that is the last leaf, 2; in the third it is the first, 3. So 7 leaves are read, and the root is worth 4."
+   }
+  },
+  {
+   "id": "e-uct-six-of-nine",
+   "difficulty": 3,
+   "skills": [
+    "rl-search"
+   ],
+   "tags": [
+    "uct"
+   ],
+   "pace": 90,
+   "title": "Six of nine",
+   "prose": "In a Monte Carlo tree search a child has won 6 of its 9 playouts, and its parent has 30 visits. The exploration constant is $c = \\sqrt 2$.",
+   "question": "What is the child's UCT score? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.536,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "a number",
+    "label": "Score",
+    "wrong": [
+     {
+      "id": "nob",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "nosq",
+      "value": 1.2011,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "own-n",
+      "value": 1.3654,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The average is $\\tfrac69 = 0.6667$ and the bonus $\\sqrt2\\sqrt{\\ln 30 / 9}$ is 0.8694, so the score is 1.5360.",
+    "generic": "Add the average $w/n$ to $c\\sqrt{\\ln N / n}$, with $N$ the parent's visits.",
+    "byKey": {
+     "nob": "That is the average alone. Add the exploration bonus.",
+     "nosq": "You left out the square root over $\\ln N / n$.",
+     "own-n": "You used the child's own 9 visits as $N$. The bonus uses the parent's 30."
+    }
+   },
+   "explain": {
+    "text": "$\\ln 30 = 3.4012$, over 9 visits is 0.3779, and $\\sqrt 2$ times its square root is 0.8694. The average, 0.6667, plus that bonus gives 1.5360."
+   }
+  },
+  {
+   "id": "e-selfplay-update",
+   "difficulty": 3,
+   "skills": [
+    "rl-search"
+   ],
+   "tags": [
+    "self-play"
+   ],
+   "pace": 75,
+   "title": "The opponent's best, negated",
+   "prose": "A self-play table plays both sides of a stick game, with $\\alpha = 0.5$. Its value for taking $k$ sticks from a pile of $n$ is $Q(n, k) = 0.2$. After the take, the opponent's best value at the new pile is $-0.6$.",
+   "question": "What is $Q(n, k)$ after the update? Give a decimal to 1 place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "a number",
+    "label": "Q",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -0.2,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "target",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The target is $-(-0.6) = 0.6$, so $Q$ moves half way: $0.2 + 0.5 \\times 0.4 = 0.4$.",
+    "generic": "Negate the opponent's best value to get the target, then move half way towards it.",
+    "byKey": {
+     "sign": "You used the opponent's value as your own. Their best is your worst, so the target is $+0.6$.",
+     "target": "That is the target. With $\\alpha = 0.5$ the value moves only half way."
+    }
+   },
+   "explain": {
+    "text": "Zero-sum: the opponent's best is your worst, so the target negates it. A pile where the opponent's best is $-0.6$ is good for you, and the value rises from 0.2 to 0.4."
+   }
+  },
+  {
+   "id": "e-thompson-one-try-each",
+   "difficulty": 4,
+   "skills": [
+    "rl-bandit"
+   ],
+   "tags": [
+    "thompson"
+   ],
+   "pace": 300,
+   "title": "One try each",
+   "prose": "Two quoting rules start from $\\mathrm{Beta}(1, 1)$. Rule A was tried once and filled; rule B was tried once and missed. So A's posterior is $\\mathrm{Beta}(2, 1)$, with density $2x$, and B's is $\\mathrm{Beta}(1, 2)$, with density $2(1 - x)$.",
+   "question": "Thompson sampling chooses between them.",
+   "parts": [
+    {
+     "question": "What is the chance that a draw from B's posterior lands below 0.5? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.75,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a number",
+      "label": "Chance",
+      "wrong": [
+       {
+        "id": "density",
+        "value": 1.0,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "uniform",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "a-cdf",
+        "value": 0.25,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$P(B < x) = 2x - x^2$, so at 0.5 it is $1 - 0.25 = 0.75$.",
+      "generic": "Integrate B's density $2(1 - u)$ from 0 to 0.5.",
+      "byKey": {
+       "density": "That is B's density at 0.5, not the chance of landing below it. Integrate the density from 0.",
+       "uniform": "That would hold for the uniform prior. A miss tilts B's density towards 0.",
+       "a-cdf": "That is A's chance, $x^2$. B's density leans the other way."
+      }
+     }
+    },
+    {
+     "question": "Using B's chance $2x - x^2$ of a draw below $x$, what is the chance that A's draw beats B's? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8333,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Chance",
+      "wrong": [
+       {
+        "id": "uniform-b",
+        "value": 0.6667,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "half",
+        "value": 0.5,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\int_0^1 2x(2x - x^2)\\,dx = \\tfrac43 - \\tfrac12 = \\tfrac56 = 0.8333$.",
+      "generic": "Weight $P(B < x)$ by A's density $2x$ and integrate from 0 to 1.",
+      "byKey": {
+       "uniform-b": "You treated B as uniform, $P(B < x) = x$. Its miss makes it $2x - x^2$.",
+       "half": "That would hold if the two posteriors were the same. A leans towards 1 and B towards 0."
+      }
+     }
+    },
+    {
+     "question": "Using the chance $\\tfrac56$, how many of the next 60 pulls go to A on average, if the posteriors stayed as they are?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 50,
+      "tol": {
+       "abs": 0.05
+      },
+      "placeholder": "a number",
+      "label": "Pulls",
+      "wrong": [
+       {
+        "id": "all",
+        "value": 60,
+        "tol": {
+         "abs": 0.05
+        }
+       },
+       {
+        "id": "half",
+        "value": 30,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$60 \\times \\tfrac56 = 50$.",
+      "generic": "Thompson pulls A whenever A's draw is the larger.",
+      "byKey": {
+       "all": "Thompson does not always pull the rule that looks better. B wins one draw in six.",
+       "half": "That treats the rules as equal. A wins five draws in six."
+      }
+     }
+    },
+    {
+     "question": "A is tried again and fills, so its density becomes $3x^2$. What is the chance now that A's draw beats B's? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.9,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a number",
+      "label": "Chance",
+      "wrong": [
+       {
+        "id": "old",
+        "value": 0.8333,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "uniform-b",
+        "value": 0.75,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\int_0^1 3x^2(2x - x^2)\\,dx = \\tfrac32 - \\tfrac35 = 0.9$.",
+      "generic": "Weight $2x - x^2$ by A's new density $3x^2$ and integrate.",
+      "byKey": {
+       "old": "That is the chance before A's second fill.",
+       "uniform-b": "You treated B as uniform: $\\int 3x^2 \\cdot x\\,dx = \\tfrac34$. B is still $\\mathrm{Beta}(1, 2)$."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "$P(A > B) = \\int_0^1 f_A(x)\\,P(B < x)\\,dx$, which is $\\tfrac56$ for $f_A = 2x$ and 0.9 for $f_A = 3x^2$. Probability matching gives A that share of the pulls. B still gets one pull in ten, in case its single miss was bad luck."
+   }
+  },
+  {
+   "id": "e-take-or-wait",
+   "difficulty": 4,
+   "skills": [
+    "rl-mdp"
+   ],
+   "tags": [
+    "optimal-stopping"
+   ],
+   "pace": 300,
+   "title": "Take the offer or wait",
+   "prose": "Each round a client offers an edge of £1k, £2k, £3k, £4k or £5k, each equally likely. You take it, which ends the game, or wait for the next round's offer. An offer one round later is worth $\\gamma = 0.75$ of the same offer now.",
+   "question": "Value the waiting game.",
+   "parts": [
+    {
+     "question": "What is the game worth, in £k, under the rule that takes only £4k or £5k? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.2727,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Value (£k)",
+      "wrong": [
+       {
+        "id": "no-disc",
+        "value": 4.5,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "kept-only",
+        "value": 1.8,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "any",
+        "value": 3.0,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$V = \\tfrac95 + \\tfrac35 \\times 0.75 V$, so $V = 1.8 / 0.55 = 3.2727$.",
+      "generic": "Condition on the first offer: keep it if it is 4 or 5, else you get $0.75V$.",
+      "byKey": {
+       "no-disc": "You let waiting cost nothing: $V = 1.8 + 0.6V$ gives 4.5. A later offer is worth only 0.75 as much.",
+       "kept-only": "That is the kept part alone, $(4 + 5)/5$. Add $\\tfrac35 \\times 0.75V$ for the rounds you wait.",
+       "any": "That is the mean offer: the rule that takes anything."
+      }
+     }
+    },
+    {
+     "question": "Using that value, what is waiting one round worth, in £k? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.4545,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Wait (£k)",
+      "wrong": [
+       {
+        "id": "same",
+        "value": 3.2727,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.75 \\times 3.2727 = 2.4545$.",
+      "generic": "Waiting gives the game's value one round later.",
+      "byKey": {
+       "same": "Waiting is worth $0.75V$, not $V$: the game restarts one round later."
+      }
+     }
+    },
+    {
+     "question": "With waiting worth 2.4545, is the rule that takes only £4k or £5k the best rule?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "options": [
+       {
+        "id": "take3",
+        "text": "No: take £3k as well, since 3 beats 2.4545",
+        "correct": true
+       },
+       {
+        "id": "yes",
+        "text": "Yes: 3 is below the game's value, 3.2727",
+        "why": "Compare an offer with what waiting is worth, $0.75V = 2.4545$, not with $V$."
+       },
+       {
+        "id": "only5",
+        "text": "No: take only £5k",
+        "why": "4 beats waiting at 2.4545, so the best rule keeps it."
+       },
+       {
+        "id": "take2",
+        "text": "No: take every offer of £2k or more",
+        "why": "2 is below 2.4545, so waiting beats it."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "An offer should be taken when it beats waiting. Here 3, 4 and 5 do, and 1 and 2 do not.",
+      "generic": "Compare each offer with the value of waiting."
+     }
+    },
+    {
+     "question": "What is the game worth, in £k, under the rule that takes £3k, £4k or £5k? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.4286,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Value (£k)",
+      "wrong": [
+       {
+        "id": "no-disc",
+        "value": 4.0,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "old",
+        "value": 3.2727,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "kept-only",
+        "value": 2.4,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$V = \\tfrac{12}{5} + \\tfrac25 \\times 0.75 V$, so $V = 2.4 / 0.7 = 3.4286$, more than 3.2727.",
+      "generic": "Keep 3, 4 or 5; otherwise you get $0.75V$.",
+      "byKey": {
+       "no-disc": "You let waiting cost nothing: $V = 2.4 + 0.4V$ gives 4. Waiting is worth $0.75V$.",
+       "old": "That is the old rule's value. The new rule keeps £3k too.",
+       "kept-only": "That is the kept part alone, $(3 + 4 + 5)/5$. Add the rounds you wait."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "Under the new rule waiting is worth $0.75 \\times 3.4286 = 2.5714$. Now 3 beats waiting and 2 does not, so the rule takes exactly the offers worth more than going on, and it is optimal. One step of policy improvement found it."
+   }
+  },
+  {
+   "id": "e-chain-td-mc",
+   "difficulty": 4,
+   "skills": [
+    "rl-td"
+   ],
+   "tags": [
+    "td-vs-mc"
+   ],
+   "pace": 270,
+   "title": "News along a chain",
+   "prose": "Every episode of a fixed policy walks A, B, C and ends, with rewards 0, 1 and 2 on the three steps, and $\\gamma = 1$. All estimates start at 0. TD(0) updates after each step with $\\alpha = 0.5$. Constant-step Monte Carlo moves each state towards its return at the end of the episode, also with $\\alpha = 0.5$.",
+   "question": "Follow both learners.",
+   "parts": [
+    {
+     "question": "After episode 1, what is TD's $V(B)$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a number",
+      "label": "V(B)",
+      "wrong": [
+       {
+        "id": "full",
+        "value": 1.0,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "return",
+        "value": 1.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "When B is updated, $V(C)$ is still 0, so the target is 1 and $V(B) = 0.5 \\times 1 = 0.5$.",
+      "generic": "Use the estimates as they stand at the moment of each update.",
+      "byKey": {
+       "full": "That is the target. Move only half way.",
+       "return": "That is Monte Carlo's update towards the return 3. TD's target is $1 + V(C)$."
+      }
+     }
+    },
+    {
+     "question": "After episode 1, what is TD's $V(A)$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a number",
+      "label": "V(A)",
+      "wrong": [
+       {
+        "id": "late",
+        "value": 0.25,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "mc",
+        "value": 1.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "A is updated first, when $V(B)$ is 0, so its target is $0 + 0 = 0$ and it stays at 0.",
+      "generic": "A's update comes before B's in the episode.",
+      "byKey": {
+       "late": "You used B's new 0.5, but B is updated after A in the episode.",
+       "mc": "That is Monte Carlo's estimate. TD's target from A is $0 + V(B)$."
+      }
+     }
+    },
+    {
+     "question": "After episode 1, what is Monte Carlo's $V(A)$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.5,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a number",
+      "label": "V(A)",
+      "wrong": [
+       {
+        "id": "full",
+        "value": 3.0,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "td",
+        "value": 0.0,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "A's return is $0 + 1 + 2 = 3$, and half way from 0 is 1.5.",
+      "generic": "Monte Carlo's target is the whole return from A.",
+      "byKey": {
+       "full": "That is the return. With $\\alpha = 0.5$ the estimate moves half way.",
+       "td": "That is TD's estimate. Monte Carlo uses the whole return, 3."
+      }
+     }
+    },
+    {
+     "question": "After episode 2, what is TD's $V(A)$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.25,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a number",
+      "label": "V(A)",
+      "wrong": [
+       {
+        "id": "mc",
+        "value": 2.25,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "new-b",
+        "value": 0.625,
+        "tol": {
+         "abs": 0.006
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "At the start of episode 2, $V(B) = 0.5$, so A's target is 0.5 and $V(A) = 0.25$.",
+      "generic": "Update A with $V(B)$ as it stands at the start of episode 2.",
+      "byKey": {
+       "mc": "That is Monte Carlo's $V(A)$ after two episodes, $1.5 + 0.5(3 - 1.5)$.",
+       "new-b": "You used B's value after its own update in episode 2, 1.25. A is updated first."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "TD's targets use the next estimate, so the rewards reach A one step per episode: 0, then 0.25. Monte Carlo's target is the whole return, 3, so A jumps to 1.5 and then 2.25. TD learns at every step but passes news back slowly; Monte Carlo waits for the end and passes it all at once."
+   }
+  },
+  {
+   "id": "e-two-dial-step",
+   "difficulty": 4,
+   "skills": [
+    "rl-pg"
+   ],
+   "tags": [
+    "reinforce-step"
+   ],
+   "pace": 300,
+   "title": "One episode, one step",
+   "prose": "A corridor policy has dials $(\\theta_L, \\theta_R) = (0, 0.4)$, so the chance of R is $p = 1/(1 + e^{-0.4})$ in every state. One episode takes three moves, R, L and R, with rewards $-1$, $-1$ and 4, and no discount.",
+   "question": "Work out the REINFORCE step for this episode.",
+   "parts": [
+    {
+     "question": "What is $p$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5987,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "p",
+      "wrong": [
+       {
+        "id": "dial",
+        "value": 0.4,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "left",
+        "value": 0.4013,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1/(1 + e^{-0.4}) = 0.5987$.",
+      "generic": "The chance of R is the logistic function of the gap $\\theta_R - \\theta_L$.",
+      "byKey": {
+       "dial": "That is the gap itself. Pass it through $1/(1 + e^{-x})$.",
+       "left": "That is the chance of L."
+      }
+     }
+    },
+    {
+     "question": "What reward-to-go weights the score of the L move?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a number",
+      "label": "Reward-to-go",
+      "wrong": [
+       {
+        "id": "whole",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "after",
+        "value": 4,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "From the L move on: $-1 + 4 = 3$.",
+      "generic": "Add the rewards from that move's own step to the end.",
+      "byKey": {
+       "whole": "That is the whole return, which counts the reward paid before the L move.",
+       "after": "You left out the L move's own reward, $-1$."
+      }
+     }
+    },
+    {
+     "question": "The right dial's score entry is $1 - p$ after R and $-p$ after L. What is the episode's estimate $\\sum_t G_t \\times$ entry$_t$ for the right dial? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6118,
+      "tol": {
+       "abs": 0.0002
+      },
+      "placeholder": "a number",
+      "label": "Estimate",
+      "wrong": [
+       {
+        "id": "whole",
+        "value": 0.4079,
+        "tol": {
+         "abs": 0.0002
+        }
+       },
+       {
+        "id": "right-only",
+        "value": 2.4079,
+        "tol": {
+         "abs": 0.0002
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2 \\times 0.40131 + 3 \\times (-0.59869) + 4 \\times 0.40131 = 0.6118$.",
+      "generic": "Multiply each move's reward-to-go by its entry and add the three terms.",
+      "byKey": {
+       "whole": "You weighted every move by the whole return, 2. Each move takes its own reward-to-go: 2, 3 and 4.",
+       "right-only": "You left out the L move. Its entry, $-p$, counts too."
+      }
+     }
+    },
+    {
+     "question": "Take a step with learning rate 0.1: $\\theta_R$ rises by 0.1 times the estimate and $\\theta_L$ falls by the same. What is the new $p$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6277,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "New p",
+      "wrong": [
+       {
+        "id": "one-dial",
+        "value": 0.6133,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "same",
+        "value": 0.5987,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The gap grows by $2 \\times 0.1 \\times 0.6118 = 0.1224$ to 0.5224, so $p = 0.6277$.",
+      "generic": "Both dials move, so the gap changes by twice the step.",
+      "byKey": {
+       "one-dial": "You moved only $\\theta_R$. $\\theta_L$ falls too, so the gap grows by twice the step.",
+       "same": "The step is small, but it is not zero."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "The entries are 0.4013, $-0.5987$ and 0.4013, weighted by 2, 3 and 4, for a sum of 0.6118. Raising $\\theta_R$ and lowering $\\theta_L$ widens the gap by 0.1224, so $p$ rises to 0.6277. This episode ended well after its R moves, so the step favours R."
+   }
+  },
+  {
+   "id": "e-mcts-two-sides",
+   "difficulty": 4,
+   "skills": [
+    "rl-search"
+   ],
+   "tags": [
+    "mcts-backup"
+   ],
+   "pace": 240,
+   "title": "A win for O",
+   "prose": "A tic-tac-toe search follows the path root, A, B and then expands a new child C. X moved into A, O moved into B and X moved into C. Before this iteration A had $w = 5$, $n = 8$ and B had $w = 2$, $n = 4$. Each node's $w$ counts wins for the player who moved into it, with a draw as half. The playout from C ends in a win for O.",
+   "question": "Back up the result.",
+   "parts": [
+    {
+     "question": "What is B's average $w/n$ after the back-up? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a number",
+      "label": "Average",
+      "wrong": [
+       {
+        "id": "same-side",
+        "value": 0.4,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "nocount",
+        "value": 0.75,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "draw",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "O moved into B and O won, so B goes from 2 of 4 to 3 of 5: 0.6.",
+      "generic": "Every node on the path gains a visit; a win counts only for the player who moved into the node.",
+      "byKey": {
+       "same-side": "You scored B from X's side. O moved into B, so O's win counts there.",
+       "nocount": "You added the win but not the visit: $n$ rises to 5.",
+       "draw": "The playout was a win for O, not a draw."
+      }
+     }
+    },
+    {
+     "question": "What is A's average after the back-up? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5556,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Average",
+      "wrong": [
+       {
+        "id": "credit",
+        "value": 0.6667,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "nocount",
+        "value": 0.625,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "X moved into A and lost, so A gains a visit but no win: $5/9 = 0.5556$.",
+      "generic": "Ask who moved into A.",
+      "byKey": {
+       "credit": "You credited A with O's win. X moved into A, so A gains only the visit.",
+       "nocount": "A gains a visit even though X lost: $n$ rises to 9."
+      }
+     }
+    },
+    {
+     "question": "A now has 9 visits. With $c = \\sqrt 2$, what is B's UCT score as a child of A? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.5375,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Score",
+      "wrong": [
+       {
+        "id": "nob",
+        "value": 0.6,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "old-n",
+        "value": 1.512,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.6 + \\sqrt2\\sqrt{\\ln 9 / 5} = 0.6 + 0.9375 = 1.5375$.",
+      "generic": "Use B's new average and visits, and A's 9 visits as $N$.",
+      "byKey": {
+       "nob": "That is the average alone. Add the bonus.",
+       "old-n": "You used A's old 8 visits. The back-up raised them to 9."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "Each node on the path gains a visit, and only the nodes O moved into gain the win. So B goes to 3 of 5 and A to 5 of 9. At A it is O's turn, so A's children are compared by averages from O's side, which is how B's $w$ is kept."
+   }
+  },
+  {
+   "id": "e-sell-low-or-wait",
+   "difficulty": 4,
+   "skills": [
+    "rl-mdp"
+   ],
+   "tags": [
+    "value-iteration"
+   ],
+   "pace": 210,
+   "title": "Sell low or wait",
+   "prose": "A position is Low or High. In Low you may sell for £1, which ends the episode, or wait for no reward. After a wait it is High next step with chance 0.5, else still Low. In High you may sell for £3 and end, or wait and stay High. $\\gamma = 0.9$, and value iteration starts from all zeros.",
+   "question": "Run value iteration.",
+   "parts": [
+    {
+     "question": "What is $V(\\text{Low})$ after two sweeps? Give a decimal to 1 place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.8,
+      "tol": {
+       "abs": 0.05
+      },
+      "placeholder": "a number",
+      "label": "V(Low)",
+      "wrong": [
+       {
+        "id": "one-sweep",
+        "value": 1.0,
+        "tol": {
+         "abs": 0.05
+        }
+       },
+       {
+        "id": "no-disc",
+        "value": 2.0,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Sweep 1 gives Low 1 and High 3. Sweep 2 gives Low $\\max(1, 0.9 \\times (0.5 \\times 1 + 0.5 \\times 3)) = 1.8$.",
+      "generic": "Back up each state from the previous sweep's table, twice.",
+      "byKey": {
+       "one-sweep": "That is after one sweep. Back up once more with the new table.",
+       "no-disc": "You left out $\\gamma$: waiting is worth $0.9 \\times 2 = 1.8$, not 2."
+      }
+     }
+    },
+    {
+     "question": "What is the optimal value $V^*(\\text{Low})$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.4545,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "V*(Low)",
+      "wrong": [
+       {
+        "id": "sell",
+        "value": 1.0,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "no-disc",
+        "value": 3.0,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "sweep2",
+        "value": 1.8,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$V^*(\\text{High}) = 3$, and waiting in Low gives $V = 0.9(0.5V + 1.5)$, so $V = 1.35/0.55 = 2.4545$.",
+      "generic": "Find $V^*(\\text{High})$ first, then solve Low's equation for the better action.",
+      "byKey": {
+       "sell": "That is selling at once. Waiting is worth more.",
+       "no-disc": "You dropped the discount: $V = 0.5V + 1.5$ gives 3.",
+       "sweep2": "That is the value after two sweeps. Value iteration has not settled yet."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "At the fixed point waiting in Low is worth $0.45V + 1.35$, so $V^*(\\text{Low}) = 2.4545$, well above selling at £1. Two sweeps already show the right action, but the value is still 0.65 short. Quote values only once the sweeps have settled."
+   }
+  },
+  {
+   "id": "e-take-one-three-four",
+   "difficulty": 5,
+   "skills": [
+    "rl-search"
+   ],
+   "tags": [
+    "minimax",
+    "self-play"
+   ],
+   "pace": 360,
+   "title": "Take 1, 3 or 4",
+   "prose": "A new stick game: each player in turn takes 1, 3 or 4 sticks, and whoever takes the last stick wins. With 0 sticks left, the player to move has lost.",
+   "question": "Solve the game, then check a self-play table.",
+   "parts": [
+    {
+     "question": "How many of the piles from 1 to 10 lose for the player to move against best play?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a number",
+      "label": "Piles",
+      "wrong": [
+       {
+        "id": "mult4",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "with-zero",
+        "value": 4,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Piles 2, 7 and 9 lose: every take from them leaves a pile that wins.",
+      "generic": "Work up from 0: a pile loses when every take leaves a winning pile for your opponent.",
+      "byKey": {
+       "mult4": "You used the rule of the game with takes 1 to 3, the multiples of 4. Here 4 wins at once.",
+       "with-zero": "You counted pile 0, which is not between 1 and 10."
+      }
+     }
+    },
+    {
+     "question": "From a pile of 12, how many sticks should you take?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a number",
+      "label": "Take",
+      "wrong": [
+       {
+        "id": "four",
+        "value": 4,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "one",
+        "value": 1,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Take 3 and leave 9, a losing pile for your opponent.",
+      "generic": "Find the take that leaves your opponent a losing pile.",
+      "byKey": {
+       "four": "That leaves 8: your opponent takes 1 and leaves you 7.",
+       "one": "That leaves 11: your opponent takes 4 and leaves you 7."
+      }
+     }
+    },
+    {
+     "question": "A self-play table starts with every value at 0 and $\\alpha = 0.5$. Its first update takes 4 from a pile of 4 and wins, so $Q(4, 4) = 0.5$. Next it takes 4 from a pile of 8, and the best value at the pile of 4 is 0.5. What is $Q(8, 4)$ now? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.25,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a number",
+      "label": "Q(8, 4)",
+      "wrong": [
+       {
+        "id": "sign",
+        "value": 0.25,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "target",
+        "value": -0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The target is $-0.5$, minus the opponent's best at 4, so $Q(8, 4) = 0 + 0.5 \\times (-0.5) = -0.25$.",
+      "generic": "Negate the opponent's best value at the pile you leave, then move half way.",
+      "byKey": {
+       "sign": "You used the opponent's value as your own. Leaving them a pile worth 0.5 to them is bad for you.",
+       "target": "That is the target. Move only half way."
+      }
+     }
+    },
+    {
+     "question": "After 500 self-play episodes the table wins 50% of its games against its own latest copy. What does that number show?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "options": [
+       {
+        "id": "nothing",
+        "text": "Nothing about its skill: test it against fixed opponents",
+        "correct": true
+       },
+       {
+        "id": "exact",
+        "text": "That it has learned the game exactly by now",
+        "why": "Two equal copies split their games whatever their skill, so 50% says nothing."
+       },
+       {
+        "id": "half",
+        "text": "That it is about half way to the best rule",
+        "why": "The rate against itself does not measure distance from the best rule."
+       },
+       {
+        "id": "explore",
+        "text": "That it needs to explore more in training",
+        "why": "Any agent scores about 50% against its own copy, however much it explores."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "A copy against itself splits its games. A random player or an earlier version shows progress.",
+      "generic": "Ask what any agent scores against an exact copy of itself."
+     }
+    }
+   ],
+   "explain": {
+    "text": "Pile 0 loses, and 1, 3 and 4 win at once; 2 forces a move to 1, and 7 and 9 leave only winning piles. So from 12 you take 3 and leave 9. Self-play finds the same piles by negating the opponent's best value, and it is judged against fixed opponents."
+   }
+  },
+  {
+   "id": "e-router-two-states",
+   "difficulty": 5,
+   "skills": [
+    "rl-pg"
+   ],
+   "tags": [
+    "reinforce",
+    "baseline"
+   ],
+   "pace": 600,
+   "title": "A router for calm and busy steps",
+   "prose": "A router meets two kinds of step, calm (state 0) and busy (state 1), and chooses among three venues. `R[s][a]` is venue `a`'s fixed payment in state `s`. Each state has its own softmax dials, all 0 at first, and its own baseline `b[s]`, also 0. `probs` (the softmax) and `pick` are written for you.",
+   "question": "Write `train_router(R, steps, lr, beta, seed)`. Each step: `s = 1 if rng.random() < 0.5 else 0`, then `pi = probs(theta[s])`, `a = pick(pi, rng)` and `r = R[s][a]`. Add `lr * (r - b[s])` times the score to `theta[s]` only; the score's entry for venue `j` is 1 if `j == a`, else 0, minus `pi[j]`. Then update `b[s] += beta * (r - b[s])`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport random\n\ndef probs(theta):\n    \"\"\"Softmax chances from a list of dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pick(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef train_router(R, steps, lr, beta, seed):\n    \"\"\"REINFORCE on a two-state router. Return [probs(theta[0]), probs(theta[1])].\"\"\"\n    rng = random.Random(seed)\n    k = len(R[0])\n    theta = [[0.0] * k, [0.0] * k]   # dials for state 0 (calm) and state 1 (busy)\n    b = [0.0, 0.0]                   # one baseline per state\n    # each step: draw s, then pick a, then step theta[s], then update b[s]\n    ...\n",
+    "solution": "import math\nimport random\n\ndef probs(theta):\n    \"\"\"Softmax chances from a list of dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pick(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef train_router(R, steps, lr, beta, seed):\n    \"\"\"REINFORCE on a two-state router. Return [probs(theta[0]), probs(theta[1])].\"\"\"\n    rng = random.Random(seed)\n    k = len(R[0])\n    theta = [[0.0] * k, [0.0] * k]\n    b = [0.0, 0.0]\n    for _ in range(steps):\n        s = 1 if rng.random() < 0.5 else 0\n        pi = probs(theta[s])\n        a = pick(pi, rng)\n        r = R[s][a]\n        adv = r - b[s]\n        theta[s] = [t + lr * adv * ((1.0 if j == a else 0.0) - pi[j]) for j, t in enumerate(theta[s])]\n        b[s] += beta * (r - b[s])\n    return [probs(theta[0]), probs(theta[1])]\n",
+    "examples": [
+     {
+      "call": "train_router([[1, 2, 0], [0, 1, 3]], 0, 0.1, 0.1, 0)",
+      "expect": "[[0.3333333333333333, 0.3333333333333333, 0.3333333333333333], [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "train_router([[0, 0, 0], [0, 0, 0]], 10, 0.1, 0.1, 0)",
+      "expect": "[[0.3333333333333333, 0.3333333333333333, 0.3333333333333333], [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "train_router([[1, 2, 0], [0, 1, 3]], 3, 0.5, 0.5, 7)",
+      "expect": "[[0.5031010311720857, 0.24844948441395717, 0.24844948441395717], [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "train_router([[1, 2, 0], [0, 1, 3]], 4, 0.5, 0.2, 3)",
+      "expect": "[[0.45186276187760605, 0.274068619061197, 0.274068619061197], [0.15914841794020865, 0.24509199218516803, 0.5957595898746233]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "train_router([[5, 6, 4], [5, 6, 4]], 6, 0.5, 0.5, 2)",
+      "expect": "[[0.06902181415199861, 0.06902181415199861, 0.8619563716960028], [0.8589810786775898, 0.07050946066120506, 0.07050946066120506]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "train_router([[1, 2, 0], [0, 1, 3]], 1, 0.1, 0.1, 1)[0]",
+      "expect": "[0.3333333333333333, 0.3333333333333333, 0.3333333333333333]",
+      "compare": "isclose"
+     },
+     {
+      "call": "train_router([[1, 2, 0], [0, 1, 3]], 50, 0.0, 0.1, 4)",
+      "expect": "[[0.3333333333333333, 0.3333333333333333, 0.3333333333333333], [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "all(t[0][1] > 0.9 and t[1][2] > 0.9 for t in (train_router([[1, 2, 0], [0, 1, 3]], 2000, 0.1, 0.1, s) for s in range(5)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "min(train_router([[1, 2, 0], [0, 1, 3]], 2000, 0.1, 0.1, 5)[1][2], train_router([[2, 0, 1], [0, 3, 1]], 2000, 0.1, 0.1, 6)[1][1]) > 0.9",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Three short seeded runs must match ours within `math.isclose`, so draw `s`, then `a`, then step the dials, then the baseline. Others check that the unvisited state's dials stay put and that a zero learning rate changes nothing. The last two need each state's best venue above 0.9 after 2,000 steps.",
+    "mutants": [
+     {
+      "source": "import math\nimport random\n\ndef probs(theta):\n    \"\"\"Softmax chances from a list of dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pick(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef train_router(R, steps, lr, beta, seed):\n    \"\"\"REINFORCE on a two-state router. Return [probs(theta[0]), probs(theta[1])].\"\"\"\n    rng = random.Random(seed)\n    k = len(R[0])\n    theta = [[0.0] * k, [0.0] * k]\n    b = [0.0, 0.0]\n    for _ in range(steps):\n        s = 1 if rng.random() < 0.5 else 0\n        pi = probs(theta[s])\n        a = pick(pi, rng)\n        r = R[s][a]\n        b[s] += beta * (r - b[s])\n        adv = r - b[s]\n        theta[s] = [t + lr * adv * ((1.0 if j == a else 0.0) - pi[j]) for j, t in enumerate(theta[s])]\n    return [probs(theta[0]), probs(theta[1])]\n",
+      "test": 1,
+      "symptom": "Updates the baseline before the step, so the step's baseline has already seen this reward."
+     },
+     {
+      "source": "import math\nimport random\n\ndef probs(theta):\n    \"\"\"Softmax chances from a list of dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pick(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef train_router(R, steps, lr, beta, seed):\n    \"\"\"REINFORCE on a two-state router. Return [probs(theta[0]), probs(theta[1])].\"\"\"\n    rng = random.Random(seed)\n    k = len(R[0])\n    theta = [[0.0] * k, [0.0] * k]\n    b = [0.0, 0.0]\n    for _ in range(steps):\n        s = 1 if rng.random() < 0.5 else 0\n        pi = probs(theta[s])\n        a = pick(pi, rng)\n        r = R[s][a]\n        adv = r - b[0]\n        theta[s] = [t + lr * adv * ((1.0 if j == a else 0.0) - pi[j]) for j, t in enumerate(theta[s])]\n        b[0] += beta * (r - b[0])\n    return [probs(theta[0]), probs(theta[1])]\n",
+      "test": 2,
+      "symptom": "Keeps one baseline for both states."
+     },
+     {
+      "source": "import math\nimport random\n\ndef probs(theta):\n    \"\"\"Softmax chances from a list of dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pick(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef train_router(R, steps, lr, beta, seed):\n    \"\"\"REINFORCE on a two-state router. Return [probs(theta[0]), probs(theta[1])].\"\"\"\n    rng = random.Random(seed)\n    k = len(R[0])\n    theta = [[0.0] * k, [0.0] * k]\n    b = [0.0, 0.0]\n    for _ in range(steps):\n        s = 1 if rng.random() < 0.5 else 0\n        pi = probs(theta[s])\n        a = pick(pi, rng)\n        r = R[s][a]\n        adv = r - b[s]\n        for z in (0, 1):\n            theta[z] = [t + lr * adv * ((1.0 if j == a else 0.0) - pi[j]) for j, t in enumerate(theta[z])]\n        b[s] += beta * (r - b[s])\n    return [probs(theta[0]), probs(theta[1])]\n",
+      "test": 1,
+      "symptom": "Steps the dials of both states with the visited state's score."
+     },
+     {
+      "source": "import math\nimport random\n\ndef probs(theta):\n    \"\"\"Softmax chances from a list of dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pick(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef train_router(R, steps, lr, beta, seed):\n    \"\"\"REINFORCE on a two-state router. Return [probs(theta[0]), probs(theta[1])].\"\"\"\n    rng = random.Random(seed)\n    k = len(R[0])\n    theta = [[0.0] * k, [0.0] * k]\n    b = [0.0, 0.0]\n    for _ in range(steps):\n        s = 1 if rng.random() < 0.5 else 0\n        pi = probs(theta[s])\n        a = pick(pi, rng)\n        r = R[s][a]\n        adv = r - b[s]\n        theta[s] = [t + lr * adv * ((1.0 - pi[j]) if j == a else 0.0) for j, t in enumerate(theta[s])]\n        b[s] += beta * (r - b[s])\n    return [probs(theta[0]), probs(theta[1])]\n",
+      "test": 1,
+      "symptom": "Moves only the chosen venue's dial, leaving out the minus pi for the others."
+     },
+     {
+      "source": "import math\nimport random\n\ndef probs(theta):\n    \"\"\"Softmax chances from a list of dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pick(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef train_router(R, steps, lr, beta, seed):\n    \"\"\"REINFORCE on a two-state router. Return [probs(theta[0]), probs(theta[1])].\"\"\"\n    rng = random.Random(seed)\n    k = len(R[0])\n    theta = [[0.0] * k, [0.0] * k]\n    b = [0.0, 0.0]\n    for _ in range(steps):\n        s = 1 if rng.random() < 0.5 else 0\n        pi = probs(theta[s])\n        a = pick(pi, rng)\n        r = R[s][a]\n        adv = r - b[s]\n        theta[s] = [t + lr * adv * ((1.0 if j == a else 0.0) - pi[j]) for j, t in enumerate(theta[s])]\n    return [probs(theta[0]), probs(theta[1])]\n",
+      "test": 1,
+      "symptom": "Never updates the baseline, so it stays at 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The router learns each state's best venue, with a baseline per state that never sees the reward it is subtracted from.",
+    "generic": "Read the first failing test.",
+    "byKey": {
+     "test-1": "Step only `theta[s]`, give every dial its entry `[j == a] - pi[j]`, and update `b[s]` after the step, never before it.",
+     "test-2": "Keep a baseline per state, and update the visited state's baseline after each step.",
+     "test-4": "Only the visited state's dials move. The other state's chances stay at a third each.",
+     "test-6": "Check the sign: the step adds `lr * (r - b[s])` times the score."
+    }
+   },
+   "explain": {
+    "text": "Each state's dials form their own softmax policy, so a step moves only the dials of the state that was seen. A baseline per state tracks that state's typical payment, as a learned $V(s)$ would. Updating it after the step keeps it fixed before the action is drawn, so the estimate stays unbiased."
+   }
+  },
+  {
+   "id": "e-q-learning-exit",
+   "difficulty": 5,
+   "skills": [
+    "rl-td",
+    "rl-mdp"
+   ],
+   "tags": [
+    "q-learning",
+    "gridworld"
+   ],
+   "pace": 600,
+   "title": "Q-learning on a new grid",
+   "prose": "A deterministic grid of 3 rows and 5 columns, row 1 at the top. There are walls at r2c2 and r2c4. Entering r1c5 pays +1 and entering r3c5 pays $-1$, and both end the episode. Every move also costs 0.05, and a move into a wall or off the grid stays put. The editor holds the grid, `move`, `pay` (the reward for entering a cell) and `optimal_sets()`: value iteration's best moves in each open cell, ties kept, with $\\gamma = 0.9$.",
+   "question": "Write `q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0)`: start every $Q$ at `q0`, end cells included, and begin each episode at `rng.choice(OPEN)`. Each step draws `rng.random()`; below `eps` take `rng.choice('URDL')`, else the first best action in the order U, R, D, L. Entering an end cell, the target is the reward alone. Then write `greedy_ok(Q)`, true when every open cell's first best action is in its optimal set.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\nROWS, COLS = 3, 5\nWALL = {'r2c2', 'r2c4'}\nENDS = {'r1c5': 1.0, 'r3c5': -1.0}\nSTEP = -0.05\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\nOPEN = [s for s in CELLS if s not in ENDS]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = int(s[1]), int(s[3])\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef pay(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return ENDS.get(t, 0.0) + STEP\n\ndef optimal_sets(gamma=0.9):\n    \"\"\"Value iteration to convergence; {open cell: set of best actions, ties within 1e-9 kept}.\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    while True:\n        new = {s: 0.0 if s in ENDS else max(pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL')\n               for s in CELLS}\n        done = max(abs(new[s] - V[s]) for s in CELLS) < 1e-12\n        V = new\n        if done:\n            break\n    sets = {}\n    for s in OPEN:\n        q = {a: pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL'}\n        sets[s] = {a for a in 'URDL' if q[a] > max(q.values()) - 1e-9}\n    return sets\n\ndef q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0, gamma=0.9):\n    \"\"\"Q-learning on the grid. Return Q as {(cell, action): value} for all 13 cells.\"\"\"\n    rng = random.Random(seed)\n    ...\n\ndef greedy_ok(Q):\n    \"\"\"True when every open cell's first best action is in optimal_sets()[cell].\"\"\"\n    ...\n",
+    "solution": "import random\n\nROWS, COLS = 3, 5\nWALL = {'r2c2', 'r2c4'}\nENDS = {'r1c5': 1.0, 'r3c5': -1.0}\nSTEP = -0.05\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\nOPEN = [s for s in CELLS if s not in ENDS]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = int(s[1]), int(s[3])\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef pay(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return ENDS.get(t, 0.0) + STEP\n\ndef optimal_sets(gamma=0.9):\n    \"\"\"Value iteration to convergence; {open cell: set of best actions, ties within 1e-9 kept}.\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    while True:\n        new = {s: 0.0 if s in ENDS else max(pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL')\n               for s in CELLS}\n        done = max(abs(new[s] - V[s]) for s in CELLS) < 1e-12\n        V = new\n        if done:\n            break\n    sets = {}\n    for s in OPEN:\n        q = {a: pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL'}\n        sets[s] = {a for a in 'URDL' if q[a] > max(q.values()) - 1e-9}\n    return sets\n\ndef q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0, gamma=0.9):\n    \"\"\"Q-learning on the grid. Return Q as {(cell, action): value} for all 13 cells.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): q0 for s in CELLS for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in ENDS:\n            if rng.random() < eps:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])   # ties: first in U, R, D, L\n            t = move(s, a)\n            r = pay(t)\n            target = r if t in ENDS else r + gamma * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += alpha * (target - Q[(s, a)])\n            s = t\n    return Q\n\ndef greedy_ok(Q):\n    \"\"\"True when every open cell's first best action is in optimal_sets()[cell].\"\"\"\n    sets = optimal_sets()\n    return all(max('URDL', key=lambda b: Q[(s, b)]) in sets[s] for s in OPEN)\n",
+    "examples": [
+     {
+      "call": "q_learn(0, 0)[('r1c1', 'U')]",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "sorted(optimal_sets()['r3c1'])",
+      "expect": "['R', 'U']",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "len(q_learn(1, 0))",
+      "expect": "52",
+      "compare": "equal"
+     },
+     {
+      "call": "sum(q_learn(5, 0).values())",
+      "expect": "0.03143199999999993",
+      "compare": "isclose"
+     },
+     {
+      "call": "sum(q_learn(5, 1, q0=0.5).values())",
+      "expect": "25.088556",
+      "compare": "isclose"
+     },
+     {
+      "call": "[q_learn(3, 2, q0=0.3)[('r1c5', a)] for a in 'URDL']",
+      "expect": "[0.3, 0.3, 0.3, 0.3]",
+      "compare": "isclose"
+     },
+     {
+      "call": "greedy_ok(q_learn(300, 0))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "S = {'r1c1': ['R'], 'r1c2': ['R'], 'r1c3': ['R'], 'r1c4': ['R'], 'r2c1': ['U'], 'r2c3': ['U'], 'r2c5': ['U'], 'r3c1': ['R', 'U'], 'r3c2': ['R'], 'r3c3': ['U'], 'r3c4': ['L']}",
+      "call": "all(all(max('URDL', key=lambda b: Q[(c, b)]) in S[c] for c in S) for Q in (q_learn(300, k) for k in range(1, 5)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "greedy_ok({(c, a): 0.0 for c in CELLS for a in 'URDL'})",
+      "expect": "False",
+      "compare": "equal"
+     },
+     {
+      "setup": "Q = q_learn(2000, 0)\nQ[('r3c1', 'R')] = max(Q[('r3c1', b)] for b in 'URDL') + 0.001",
+      "call": "greedy_ok(Q)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(max(q_learn(2000, 0)[('r3c1', a)] for a in 'URDL') - 0.3562) < 0.001",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. Two short seeded runs must match ours within `math.isclose`, so follow the order of random calls and the U, R, D, L tie rule. One of them starts at `q0 = 0.5`. After 300 episodes the greedy policy must lie in the optimal sets for seeds 0 to 4. `greedy_ok` must also accept a policy that takes the other of two tied moves.",
+    "mutants": [
+     {
+      "source": "import random\n\nROWS, COLS = 3, 5\nWALL = {'r2c2', 'r2c4'}\nENDS = {'r1c5': 1.0, 'r3c5': -1.0}\nSTEP = -0.05\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\nOPEN = [s for s in CELLS if s not in ENDS]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = int(s[1]), int(s[3])\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef pay(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return ENDS.get(t, 0.0) + STEP\n\ndef optimal_sets(gamma=0.9):\n    \"\"\"Value iteration to convergence; {open cell: set of best actions, ties within 1e-9 kept}.\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    while True:\n        new = {s: 0.0 if s in ENDS else max(pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL')\n               for s in CELLS}\n        done = max(abs(new[s] - V[s]) for s in CELLS) < 1e-12\n        V = new\n        if done:\n            break\n    sets = {}\n    for s in OPEN:\n        q = {a: pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL'}\n        sets[s] = {a for a in 'URDL' if q[a] > max(q.values()) - 1e-9}\n    return sets\n\ndef q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0, gamma=0.9):\n    \"\"\"Q-learning on the grid. Return Q as {(cell, action): value} for all 13 cells.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): q0 for s in CELLS for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in ENDS:\n            if rng.random() < eps:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])   # ties: first in U, R, D, L\n            t = move(s, a)\n            r = pay(t)\n            target = r + gamma * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += alpha * (target - Q[(s, a)])\n            s = t\n    return Q\n\ndef greedy_ok(Q):\n    \"\"\"True when every open cell's first best action is in optimal_sets()[cell].\"\"\"\n    sets = optimal_sets()\n    return all(max('URDL', key=lambda b: Q[(s, b)]) in sets[s] for s in OPEN)\n",
+      "test": 3,
+      "symptom": "Bootstraps from the end cells, whose values stay at q0."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 3, 5\nWALL = {'r2c2', 'r2c4'}\nENDS = {'r1c5': 1.0, 'r3c5': -1.0}\nSTEP = -0.05\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\nOPEN = [s for s in CELLS if s not in ENDS]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = int(s[1]), int(s[3])\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef pay(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return ENDS.get(t, 0.0) + STEP\n\ndef optimal_sets(gamma=0.9):\n    \"\"\"Value iteration to convergence; {open cell: set of best actions, ties within 1e-9 kept}.\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    while True:\n        new = {s: 0.0 if s in ENDS else max(pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL')\n               for s in CELLS}\n        done = max(abs(new[s] - V[s]) for s in CELLS) < 1e-12\n        V = new\n        if done:\n            break\n    sets = {}\n    for s in OPEN:\n        q = {a: pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL'}\n        sets[s] = {a for a in 'URDL' if q[a] > max(q.values()) - 1e-9}\n    return sets\n\ndef q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0, gamma=0.9):\n    \"\"\"Q-learning on the grid. Return Q as {(cell, action): value} for all 13 cells.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): q0 for s in CELLS for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in ENDS:\n            if rng.random() < eps:\n                a = rng.choice('URDL')\n            else:\n                a = max('LDRU', key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            r = pay(t)\n            target = r if t in ENDS else r + gamma * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += alpha * (target - Q[(s, a)])\n            s = t\n    return Q\n\ndef greedy_ok(Q):\n    \"\"\"True when every open cell's first best action is in optimal_sets()[cell].\"\"\"\n    sets = optimal_sets()\n    return all(max('URDL', key=lambda b: Q[(s, b)]) in sets[s] for s in OPEN)\n",
+      "test": 2,
+      "symptom": "Breaks greedy ties towards L, D, R, U instead of U, R, D, L."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 3, 5\nWALL = {'r2c2', 'r2c4'}\nENDS = {'r1c5': 1.0, 'r3c5': -1.0}\nSTEP = -0.05\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\nOPEN = [s for s in CELLS if s not in ENDS]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = int(s[1]), int(s[3])\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef pay(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return ENDS.get(t, 0.0) + STEP\n\ndef optimal_sets(gamma=0.9):\n    \"\"\"Value iteration to convergence; {open cell: set of best actions, ties within 1e-9 kept}.\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    while True:\n        new = {s: 0.0 if s in ENDS else max(pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL')\n               for s in CELLS}\n        done = max(abs(new[s] - V[s]) for s in CELLS) < 1e-12\n        V = new\n        if done:\n            break\n    sets = {}\n    for s in OPEN:\n        q = {a: pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL'}\n        sets[s] = {a for a in 'URDL' if q[a] > max(q.values()) - 1e-9}\n    return sets\n\ndef q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0, gamma=0.9):\n    \"\"\"Q-learning on the grid. Return Q as {(cell, action): value} for all 13 cells.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): q0 for s in CELLS for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in ENDS:\n            if rng.random() < eps:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])   # ties: first in U, R, D, L\n            t = move(s, a)\n            r = ENDS.get(t, 0.0)\n            target = r if t in ENDS else r + gamma * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += alpha * (target - Q[(s, a)])\n            s = t\n    return Q\n\ndef greedy_ok(Q):\n    \"\"\"True when every open cell's first best action is in optimal_sets()[cell].\"\"\"\n    sets = optimal_sets()\n    return all(max('URDL', key=lambda b: Q[(s, b)]) in sets[s] for s in OPEN)\n",
+      "test": 2,
+      "symptom": "Leaves out the 0.05 step cost."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 3, 5\nWALL = {'r2c2', 'r2c4'}\nENDS = {'r1c5': 1.0, 'r3c5': -1.0}\nSTEP = -0.05\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\nOPEN = [s for s in CELLS if s not in ENDS]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = int(s[1]), int(s[3])\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef pay(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return ENDS.get(t, 0.0) + STEP\n\ndef optimal_sets(gamma=0.9):\n    \"\"\"Value iteration to convergence; {open cell: set of best actions, ties within 1e-9 kept}.\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    while True:\n        new = {s: 0.0 if s in ENDS else max(pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL')\n               for s in CELLS}\n        done = max(abs(new[s] - V[s]) for s in CELLS) < 1e-12\n        V = new\n        if done:\n            break\n    sets = {}\n    for s in OPEN:\n        q = {a: pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL'}\n        sets[s] = {a for a in 'URDL' if q[a] > max(q.values()) - 1e-9}\n    return sets\n\ndef q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0, gamma=0.9):\n    \"\"\"Q-learning on the grid. Return Q as {(cell, action): value} for all 13 cells.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): q0 for s in CELLS for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in ENDS:\n            if rng.random() < eps:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])   # ties: first in U, R, D, L\n            t = move(s, a)\n            r = pay(t)\n            nxt = max('URDL', key=lambda b: Q[(t, b)]) if rng.random() >= eps else rng.choice('URDL')\n            target = r if t in ENDS else r + gamma * Q[(t, nxt)]\n            Q[(s, a)] += alpha * (target - Q[(s, a)])\n            s = t\n    return Q\n\ndef greedy_ok(Q):\n    \"\"\"True when every open cell's first best action is in optimal_sets()[cell].\"\"\"\n    sets = optimal_sets()\n    return all(max('URDL', key=lambda b: Q[(s, b)]) in sets[s] for s in OPEN)\n",
+      "test": 2,
+      "symptom": "Bootstraps from a sampled next action, as SARSA does, not from the max."
+     },
+     {
+      "source": "import random\n\nROWS, COLS = 3, 5\nWALL = {'r2c2', 'r2c4'}\nENDS = {'r1c5': 1.0, 'r3c5': -1.0}\nSTEP = -0.05\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\nOPEN = [s for s in CELLS if s not in ENDS]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = int(s[1]), int(s[3])\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef pay(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return ENDS.get(t, 0.0) + STEP\n\ndef optimal_sets(gamma=0.9):\n    \"\"\"Value iteration to convergence; {open cell: set of best actions, ties within 1e-9 kept}.\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    while True:\n        new = {s: 0.0 if s in ENDS else max(pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL')\n               for s in CELLS}\n        done = max(abs(new[s] - V[s]) for s in CELLS) < 1e-12\n        V = new\n        if done:\n            break\n    sets = {}\n    for s in OPEN:\n        q = {a: pay(move(s, a)) + gamma * V[move(s, a)] for a in 'URDL'}\n        sets[s] = {a for a in 'URDL' if q[a] > max(q.values()) - 1e-9}\n    return sets\n\ndef q_learn(episodes, seed, alpha=0.2, eps=0.2, q0=0.0, gamma=0.9):\n    \"\"\"Q-learning on the grid. Return Q as {(cell, action): value} for all 13 cells.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): q0 for s in CELLS for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in ENDS:\n            if rng.random() < eps:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])   # ties: first in U, R, D, L\n            t = move(s, a)\n            r = pay(t)\n            target = r if t in ENDS else r + gamma * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += alpha * (target - Q[(s, a)])\n            s = t\n    return Q\n\ndef greedy_ok(Q):\n    \"\"\"True when every open cell's first best action is in optimal_sets()[cell].\"\"\"\n    sets = optimal_sets()\n    return all(max('URDL', key=lambda b: Q[(s, b)]) == min(sets[s], key='URDL'.index) for s in OPEN)\n",
+      "test": 5,
+      "symptom": "Compares with value iteration's first best move only, so a tie taken the other way fails."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Q-learning's greedy policy lands in value iteration's optimal sets, ties allowed, without ever seeing the model.",
+    "generic": "Read the first failing test.",
+    "byKey": {
+     "test-2": "Follow the order: `rng.choice(OPEN)` per episode, then `rng.random()` each step, `rng.choice('URDL')` only when exploring, ties to U, R, D, L, and the 0.05 step cost.",
+     "test-3": "Entering an end cell, the target is the reward alone. The end cells' values stay at `q0` and must not be bootstrapped from.",
+     "test-7": "`greedy_ok` must say False when a move is wrong. With every $Q$ at 0 the first best move is U everywhere, which is not optimal at r1c1.",
+     "test-8": "Compare each greedy move with the whole optimal set. At r3c1 both U and R are optimal."
+    }
+   },
+   "explain": {
+    "text": "Value iteration needs the model; Q-learning needs only moves and rewards, and its greedy policy reaches the same optimal sets here. The comparison must use sets, because at r3c1 U and R tie. The terminal mask matters as soon as the end cells hold anything but 0, as a start at `q0 = 0.5` shows."
+   }
+  }
+ ]
+}
