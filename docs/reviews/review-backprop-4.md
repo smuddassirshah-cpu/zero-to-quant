@@ -321,3 +321,29 @@ def batch_matmul_backward(X, W, G):
 2. Pre-order (block as in l16 screens[2] mutant 2). SURVIVES.
 3. `sum` ignores `axis` (block as in l16 screens[4] mutant 1). SURVIVES.
 4. One maximum for the batch: `m = z.max(axis=1, keepdims=True)` becomes `m = np.full((z.shape[0], 1), z.max())`. SURVIVES.
+
+## Fix pass
+
+Graded answers changed: none (l16 screens[3] key stays -0.6031; the console now matches it). Mutants verified by `grade-all.mjs --code`: each fails its named test first.
+
+- autograd.py | module name | fixed in engine 1266 (merged at caf31d32); no content change.
+- autograd.py | `cross_entropy` negative target, `unbroadcast` shape check, views from `reshape`/`T`, `__pow__` ndarray exponent | frozen, not applied (v1.0, byte-identical in seven courses).
+- l16 screens[3] console | fixed: console now runs `zero_grad()` on the params and rebuilds `a = forward(X)` before the mean, so it prints -0.6031 as the key says; explain teaches the reset and the -7.8406 that follows without it.
+- l16 screens[4] tests[2] | fixed: replaced by the 3 by 3 root-backward test (expect `[[2,0,1],[3,1,2],[4,2,3]]`); mutant "sum ignores axis" added, fails test 3.
+- l13 screens[2] "no entry (k, j)" | fixed: now says the product is treated elementwise, W_kj meets X_ik in every row, G is 4 by 2.
+- l16 screens[6] feedback.correct | fixed: dropped the false `z.data` under the earlier `@` claim.
+- l16 screens[8] how "from ln 2" | fixed: "from about 0.89 to below 0.5" (model run starts at 0.8888).
+- l16 screens[2], screens[8], homework items[5] visited-set and order | fixed: shared interior node test (`[15.0]`) added to all three; mutants no-seen and pre-order added (fail the new test).
+- l16 screens[8], homework items[5] sum axis | fixed: sum-axis test added to both; mutant added.
+- l15 screens[9], l16 screens[8], homework items[5] one batch maximum | fixed: rows-1000-apart test added to all three (0.813262 and gradient as proposed, recomputed: rows give 1.3133 and 0.3133); mutant added.
+- l16 screens[9] tests[1] | fixed: call uses `__import__('autograd').grad_check`, so a trimmed import no longer gives a NameError.
+- l13 screens[6] "twelve orders" | fixed: eleven.
+- l13 screens[9] feedback.correct | fixed: defines e as the residual row.
+- l14 screens[8] canvas rows[3] | fixed: "axis 0, then the last axis, kept".
+- l16 screens[4] prose "Your class" | fixed: "The class".
+- l16 screens[2] how, homework items[5] how "5,000 deep" | fixed: 10,000 operations (hows also list the new tests).
+- review-4 items[8] explain | fixed: "between 1e-5 and 1e-4".
+- homework items[3] model "order 1e-2 to 1" | fixed: "usually far above the rounding floor, in both precisions".
+- l16 screens[8], homework items[0] `=` for `+=` | fixed: l16 test 10 (`(Z*Z).sum() + cross_entropy(Z, y)`) and homework test 7 (`tensor_exp(A) * A`) with assign mutants.
+- l16 screens[9] contract ops untested | declined: reviewer calls it acceptable; the number script covers them on the canonical file.
+- l15 screens[4] explain | fixed: "in proportion to their chances".

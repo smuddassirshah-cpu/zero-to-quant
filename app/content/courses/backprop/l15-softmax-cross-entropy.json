@@ -446,7 +446,7 @@
     }
    },
    "explain": {
-    "text": "The gradient is $(-0.341, 0.2424, 0.0986)$, summing to 0. A step against it raises $z_0$ and lowers the others, each by its own chance.",
+    "text": "The gradient is $(-0.341, 0.2424, 0.0986)$, summing to 0. A step against it raises $z_0$ and lowers the others in proportion to their chances.",
     "canvas": {
      "values": {
       "0": -0.341,
@@ -927,9 +927,14 @@
       "call": "show(softmax_ce(np.zeros((2, 27)), [5, 11]))",
       "expect": "(3.295837, [[0.018519, 0.018519, 0.018519, 0.018519, 0.018519, -0.481481, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519], [0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, -0.481481, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519, 0.018519]])",
       "compare": "equal"
+     },
+     {
+      "call": "show(softmax_ce(np.array([[0.0, -1.0], [1000.0, 999.0]]), [1, 0]))",
+      "expect": "(0.813262, [[0.365529, -0.365529], [-0.134471, 0.134471]])",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 6 hidden tests. Each compares the loss and the gradient rounded to 6 places. The cases: the course logits, three seeded rows, logits near 1000, logits $(0, -800)$, and equal logits over 27 classes. One more checks against central differences.",
+    "how": "Submit runs 7 hidden tests. Each compares the loss and the gradient rounded to 6 places. The cases: the course logits, three seeded rows, logits near 1000, logits $(0, -800)$, and equal logits over 27 classes. One more checks against central differences, and one batch has rows 1000 apart.",
     "prelude": "import numpy as np\n\n\ndef show(r):\n    return (round(float(r[0]), 6), np.round(r[1], 6).tolist())\n",
     "postlude": "\n\ndef matches_differences():\n    r = np.random.default_rng(8)\n    Z, y = r.standard_normal((4, 5)) * 3, [4, 0, 2, 2]\n    _, d = softmax_ce(Z.copy(), y)\n    worst, top = 0.0, 1e-12\n    for i in np.ndindex(Z.shape):\n        up, dn = Z.copy(), Z.copy()\n        up[i] += 1e-5\n        dn[i] -= 1e-5\n        num = (softmax_ce(up, y)[0] - softmax_ce(dn, y)[0]) / 2e-5\n        worst = max(worst, abs(d[i] - num))\n        top = max(top, abs(d[i]), abs(num))\n    return bool(worst / top < 1e-6)\n",
     "mutants": [
@@ -947,6 +952,11 @@
       "source": "import numpy as np\n\n\ndef softmax_ce(logits, targets):\n    n = logits.shape[0]\n    rows = np.arange(n)\n    m = np.zeros((n, 1))\n    e = np.exp(logits - m)\n    s = e.sum(axis=1, keepdims=True)\n    loss = np.mean(m[:, 0] + np.log(s[:, 0]) - logits[rows, targets])\n    d = e / s\n    d[rows, targets] -= 1\n    return loss, d / n\n",
       "test": 3,
       "symptom": "Without the largest logit taken out, exp(1000) overflows to inf."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef softmax_ce(logits, targets):\n    n = logits.shape[0]\n    rows = np.arange(n)\n    m = np.full((n, 1), logits.max())\n    e = np.exp(logits - m)\n    s = e.sum(axis=1, keepdims=True)\n    loss = np.mean(m[:, 0] + np.log(s[:, 0]) - logits[rows, targets])\n    d = e / s\n    d[rows, targets] -= 1\n    return loss, d / n\n",
+      "test": 7,
+      "symptom": "One maximum for the whole batch: a row far below the largest logit underflows to zero and the loss is infinite."
      }
     ]
    },
