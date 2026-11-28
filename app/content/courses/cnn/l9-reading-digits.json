@@ -1,0 +1,1918 @@
+{
+  "id": "l9-reading-digits",
+  "course": "cnn",
+  "title": "Reading digits",
+  "minutes": 15,
+  "objectives": [
+    "Run a CNN forward on the digits data from supplied weights, and read its confusion matrix."
+  ],
+  "skills": [
+    "cnn-train"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two hard digits",
+      "prose": "Two digits from the held-out 30% of the digits data: 1,797 images of 8 by 8 pixels, split 70/30 by class with seed 0. The data label one of these two as a 1.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "label": "A",
+              "rows": [
+                [
+                  0,
+                  0,
+                  1,
+                  12,
+                  16,
+                  8,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  13,
+                  16,
+                  16,
+                  8,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  13,
+                  16,
+                  14,
+                  16,
+                  12,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  11,
+                  6,
+                  7,
+                  16,
+                  2,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  11,
+                  16,
+                  1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  13,
+                  13,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  15,
+                  13,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  13,
+                  13,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "heat": {
+                "mode": "seq",
+                "range": [
+                  0,
+                  16
+                ],
+                "legend": false
+              }
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "rows": [
+                [
+                  0,
+                  0,
+                  7,
+                  13,
+                  15,
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  8,
+                  16,
+                  16,
+                  12,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  7,
+                  16,
+                  15,
+                  3,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  6,
+                  16,
+                  5,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  5,
+                  16,
+                  2,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  8,
+                  16,
+                  6,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  12,
+                  12,
+                  13,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  5,
+                  13,
+                  10,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "heat": {
+                "mode": "seq",
+                "range": [
+                  0,
+                  16
+                ],
+                "legend": false
+              }
+            }
+          ]
+        },
+        "state": {
+          "caption": "Digits data: Alpaydin and Kaynak, UCI Machine Learning Repository, CC BY 4.0. Grey levels 0 to 16."
+        }
+      },
+      "question": "Which image is labelled 1?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "A",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "B",
+            "why": "B is labelled 8: its two loops are squeezed into one thin column."
+          },
+          {
+            "id": "c",
+            "text": "Both",
+            "why": "Only one of them carries the label 1; the other is an 8."
+          },
+          {
+            "id": "d",
+            "text": "Neither",
+            "why": "One of them is labelled 1: the one with the flag at the top."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which one has a flag at the top, as a handwritten 1 often does?"
+        },
+        {
+          "rung": "point",
+          "text": "Look for two loops in the other one.",
+          "highlight": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A has one stroke and a flag; B hides two small loops."
+        }
+      ],
+      "feedback": {
+        "correct": "A is a 1 written with a flag. The CNN of this level gives it 1 with probability 0.69, and 9 with 0.23.",
+        "generic": "Not quite. Read each image for one stroke or two loops."
+      },
+      "explain": {
+        "text": "A is labelled 1, and the net agrees (0.69). B is labelled 8, but the net reads it as a 1 too, with probability 0.73: even a good net misreads a squeezed 8."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The forward pass, step by step",
+      "prose": "Step through the net of l7 from one image to ten probabilities. Each row is one step of the forward pass.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "step",
+            "shape",
+            "numbers"
+          ],
+          "rows": [
+            [
+              "input",
+              "1 × 8 × 8",
+              "64"
+            ],
+            [
+              "conv 3 × 3, 16 filters, padding 1",
+              "16 × 8 × 8",
+              "1,024"
+            ],
+            [
+              "ReLU",
+              "16 × 8 × 8",
+              "1,024"
+            ],
+            [
+              "max pool 2 × 2",
+              "16 × 4 × 4",
+              "?"
+            ],
+            [
+              "flatten",
+              "?",
+              "?"
+            ],
+            [
+              "dense",
+              "10",
+              "10"
+            ],
+            [
+              "softmax",
+              "10",
+              "10"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        },
+        "controls": [
+          {
+            "bind": "frame",
+            "label": "step",
+            "frames": [
+              {
+                "highlight": {
+                  "rows": [
+                    0
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    1
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    2
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    3
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    4
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    5
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    6
+                  ]
+                }
+              }
+            ],
+            "frameLabels": [
+              "input",
+              "conv",
+              "ReLU",
+              "max",
+              "flatten",
+              "dense",
+              "softmax"
+            ]
+          }
+        ]
+      },
+      "question": "How many numbers does one image leave after the 2 by 2 max pool?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 256,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "no-pool",
+            "value": 1024,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-map",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Pooling halves each side of every map."
+        },
+        {
+          "rung": "point",
+          "text": "16 maps of 8 by 8 become 16 maps of 4 by 4.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$16 \\times 4 \\times 4$."
+        }
+      ],
+      "feedback": {
+        "correct": "$16 \\times 4 \\times 4 = 256$.",
+        "generic": "Not quite. Pooling keeps every channel and halves each side.",
+        "byKey": {
+          "no-pool": "That is the count before pooling. Each 2 by 2 window becomes one number.",
+          "one-map": "That is one map of 4 by 4. There are 16 maps."
+        }
+      },
+      "explain": {
+        "text": "Each 8 by 8 map becomes 4 by 4, and all 16 maps stay: 256 numbers, the 256 inputs of the dense layer.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Naming the steps",
+      "prose": "The **forward pass** of this net is conv, ReLU, max pool, flatten, dense, softmax. The weights are fixed: the number script trained them on the 1,005 training digits, so here we only read.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "step",
+            "shape"
+          ],
+          "rows": [
+            [
+              "pooled maps",
+              "16 × 4 × 4"
+            ],
+            [
+              "flatten h",
+              "256"
+            ],
+            [
+              "dense hV + c",
+              "10"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "The dense layer turns the 256 numbers $\\mathbf{h}$ into 10 scores $\\mathbf{h}\\mathbf{V} + \\mathbf{c}$. What shape is $\\mathbf{V}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "256 by 10",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "1,024 by 10",
+            "why": "That would read the maps before pooling; the dense layer sees the 256 pooled numbers."
+          },
+          {
+            "id": "c",
+            "text": "10 by 256",
+            "why": "With $\\mathbf{h}$ a row of 256, $\\mathbf{h}\\mathbf{V}$ needs 256 rows in $\\mathbf{V}$."
+          },
+          {
+            "id": "d",
+            "text": "64 by 10",
+            "why": "That is one input pixel per row; the dense layer reads the 16 pooled maps."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many numbers come in, and how many scores go out?"
+        },
+        {
+          "rung": "point",
+          "text": "256 in, 10 out.",
+          "highlight": [
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One row of $\\mathbf{V}$ per input."
+        }
+      ],
+      "feedback": {
+        "correct": "256 rows, one per pooled number, and 10 columns, one per class.",
+        "generic": "Not quite. Count what the dense layer reads."
+      },
+      "explain": {
+        "text": "$\\mathbf{V}$ is 256 by 10 and $\\mathbf{c}$ has 10 entries: the 2,570 dense parameters of l7. The softmax then turns the 10 scores into probabilities."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The forward pass in code",
+      "prose": "Write `cnn_forward(X, params)` with the level 2 ops: `conv2d` with stride 1 and padding 1, `.relu()`, `maxpool2d(h, 2)`, a reshape, the dense layer, and `softmax` from the autograd.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> cnn_forward(X_te[:5], params).shape",
+            "(5, 10)",
+            ">>> cnn_forward(X_te[[366]], params).argmax()",
+            "1"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `cnn_forward`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom autograd import Tensor, softmax\nfrom cnn_ops_l2 import conv2d, maxpool2d\nfrom cnn_ops_l3 import load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nparams = load_weights('cnn-w-exit.json')   # [W, b, V, c]\n\n\ndef cnn_forward(X, params):\n    # X has shape (N, 1, 8, 8); return (N, 10) probabilities\n    W, b, V, c = params\n    ...\n",
+        "solution": "import numpy as np\nfrom autograd import Tensor, softmax\nfrom cnn_ops_l2 import conv2d, maxpool2d\nfrom cnn_ops_l3 import load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nparams = load_weights('cnn-w-exit.json')   # [W, b, V, c]\n\n\ndef cnn_forward(X, params):\n    W, b, V, c = params\n    h = conv2d(X, W, b, 1, 1).relu()\n    h = maxpool2d(h, 2)\n    z = h.reshape(len(X), -1) @ V + c\n    return softmax(z)\n",
+        "examples": [
+          {
+            "call": "cnn_forward(X_te[:5], params).shape",
+            "expect": "(5, 10)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "cnn_forward(X_te[:5], params).shape",
+            "expect": "(5, 10)",
+            "compare": "equal"
+          },
+          {
+            "call": "bool(np.allclose(cnn_forward(X_te[:50], params).sum(axis=1), 1))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "cnn_forward(X_te[[18, 34, 140, 366, 0]], params).argmax(axis=1).tolist()",
+            "expect": "[1, 1, 4, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "cnn_forward(X_te[[366]], params)[0].tolist()",
+            "expect": "[3.426785361344002e-07, 0.6900931212626429, 0.0004408671075001978, 0.00041399532561489275, 0.012473239911217677, 0.00013313929123850868, 1.1725876634953495e-07, 0.002225025756073261, 0.061622256025437014, 0.23259789538297307]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "bool((cnn_forward(X_te, params).argmax(axis=1) == y_te).mean() >= 0.98)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "zq_no('cnn_logits', 'predict', 'accuracy', 'fit')",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 6 hidden tests on the supplied weights `cnn-w-exit.json`. They check the shape, rows that sum to 1, the classes of five named held-out images, and the ten probabilities of image 366 (to $10^{-9}$). Then a held-out accuracy of at least 0.98, and no call to the module’s own `cnn_logits`, `predict` or `accuracy`. NumPy loads on the first run; the 540 images then take well under a second.",
+        "budget": 2000,
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "cnn_ops_l2.py": "content/data/ai/cnn_ops_l2.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "cnn_ops_l3.py": "content/data/ai/cnn_ops_l3.py",
+          "cnn-digits.txt": "content/data/ai/cnn-digits.txt",
+          "cnn-w-exit.json": "content/data/ai/cnn-w-exit.json"
+        },
+        "mutants": [
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, softmax\nfrom cnn_ops_l2 import conv2d, maxpool2d\nfrom cnn_ops_l3 import load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nparams = load_weights('cnn-w-exit.json')   # [W, b, V, c]\n\n\ndef cnn_forward(X, params):\n    W, b, V, c = params\n    h = conv2d(X, W, b, 1, 1)\n    h = maxpool2d(h, 2)\n    z = h.reshape(len(X), -1) @ V + c\n    return softmax(z)\n",
+            "test": 3,
+            "symptom": "The ReLU is left out, so negative responses reach the pool and some digits change class."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, softmax\nfrom cnn_ops_l2 import conv2d, maxpool2d\nfrom cnn_ops_l3 import load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nparams = load_weights('cnn-w-exit.json')   # [W, b, V, c]\n\n\ndef cnn_forward(X, params):\n    W, b, V, c = params\n    h = conv2d(X, W, b, 1, 1).relu()\n    h = maxpool2d(h, 2)\n    z = Tensor(h.data.transpose(0, 2, 3, 1).reshape(len(X), -1)) @ V + c\n    return softmax(z)\n",
+            "test": 3,
+            "symptom": "The maps are flattened position by position, not channel by channel, so V meets the wrong numbers."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, softmax\nfrom cnn_ops_l2 import conv2d, maxpool2d\nfrom cnn_ops_l3 import load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nparams = load_weights('cnn-w-exit.json')   # [W, b, V, c]\n\n\ndef cnn_forward(X, params):\n    W, b, V, c = params\n    h = conv2d(X, W, b, 1, 0).relu()\n    h = maxpool2d(h, 2)\n    z = h.reshape(len(X), -1) @ V + c\n    return softmax(z)\n",
+            "test": 1,
+            "symptom": "Padding 0 leaves 6 by 6 maps, 144 numbers after pooling, which do not fit the 256 rows of V."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, softmax\nfrom cnn_ops_l2 import conv2d, maxpool2d\nfrom cnn_ops_l3 import load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nparams = load_weights('cnn-w-exit.json')   # [W, b, V, c]\n\n\ndef cnn_forward(X, params):\n    W, b, V, c = params\n    h = conv2d(X, W, b, 1, 1).relu()\n    h = maxpool2d(h, 2)\n    z = h.reshape(len(X), -1) @ V + c\n    return z.data\n",
+            "test": 2,
+            "symptom": "The scores are returned before the softmax, so the rows do not sum to 1."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Unpack `W, b, V, c = params` first."
+        },
+        {
+          "rung": "point",
+          "text": "`conv2d(X, W, b, 1, 1)` returns a Tensor; `.relu()` and `maxpool2d` take Tensors."
+        },
+        {
+          "rung": "step",
+          "text": "Reshape to `(len(X), -1)`, then `@ V + c`, then `softmax`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your forward pass gives the supplied net’s probabilities.",
+        "generic": "Not quite. Check the shapes after each step against the table.",
+        "byKey": {
+          "test-1": "The shapes do not fit. Padding 1 keeps 8 by 8, so pooling leaves 256 numbers.",
+          "test-2": "The rows must sum to 1: apply `softmax` to the scores.",
+          "test-3": "Some classes are wrong. Check the ReLU, and flatten each image’s maps channel by channel with `reshape`.",
+          "test-6": "Build the pass from `conv2d` and `maxpool2d`; do not call the module’s own `cnn_logits`, `predict` or `accuracy`."
+        }
+      },
+      "explain": {
+        "text": "Five steps and a softmax: the same ops as level 2, now with trained weights. A plain `reshape` flattens each image channel by channel, which is the order $\\mathbf{V}$ was trained with."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Held-out accuracy",
+      "prose": "Run on all 540 held-out digits, the net’s answers fill a **confusion matrix**: row $i$, column $j$ counts the digits labelled $i$ that the net read as $j$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "C",
+              "label": "",
+              "rows": [
+                [
+                  54,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  55,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  52,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  53,
+                  0,
+                  1,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  54,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  54,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  54,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  54,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  50,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  52
+                ]
+              ],
+              "heat": {
+                "mode": "seq",
+                "legend": false
+              },
+              "rowLabels": [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9"
+              ],
+              "colLabels": [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9"
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Rows: the true digit. Columns: what the net says. 540 held-out digits."
+        }
+      },
+      "question": "What is the held-out accuracy? Give a decimal to 4 places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9852,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "error-rate",
+            "value": 0.0148,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Right answers sit on the diagonal."
+        },
+        {
+          "rung": "point",
+          "text": "The diagonal adds up to 532.",
+          "highlight": [
+            "C"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$532/540$."
+        }
+      ],
+      "feedback": {
+        "correct": "$532/540 = 0.9852$.",
+        "generic": "Not quite. Add the diagonal and divide by 540.",
+        "byKey": {
+          "error-rate": "That is the error rate: 8 misread out of 540. Accuracy is the diagonal over the total."
+        }
+      },
+      "explain": {
+        "text": "The diagonal holds 532 of the 540 digits, so accuracy is 0.9852. The 8 misreads sit off the diagonal."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The matrix in code",
+      "prose": "Write `confusion(y_true, y_pred, k)`: a $k$ by $k$ array whose row is the true class and column the predicted class.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> confusion([0, 1, 1, 2], [0, 1, 2, 2], 3)",
+            "array([[1, 0, 0],",
+            "       [0, 1, 1],",
+            "       [0, 0, 1]])"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `confusion`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef confusion(y_true, y_pred, k):\n    # a k by k array of counts: row = true class, column = predicted class\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef confusion(y_true, y_pred, k):\n    cm = np.zeros((k, k), dtype=int)\n    for t, p in zip(y_true, y_pred):\n        cm[t, p] += 1\n    return cm\n",
+        "examples": [
+          {
+            "call": "confusion([0, 1, 1, 2], [0, 1, 2, 2], 3).tolist()",
+            "expect": "[[1, 0, 0], [0, 1, 1], [0, 0, 1]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "confusion([0, 1, 1, 2], [0, 1, 2, 2], 3).tolist()",
+            "expect": "[[1, 0, 0], [0, 1, 1], [0, 0, 1]]",
+            "compare": "equal"
+          },
+          {
+            "call": "confusion([0, 0], [1, 1], 2).tolist()",
+            "expect": "[[0, 2], [0, 0]]",
+            "compare": "equal"
+          },
+          {
+            "call": "confusion([1], [1], 4).shape",
+            "expect": "(4, 4)",
+            "compare": "equal"
+          },
+          {
+            "call": "confusion(_y_te, _y_pred, 10).tolist()",
+            "expect": "[[54, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 55, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 52, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 53, 0, 1, 0, 0, 1, 0], [0, 0, 0, 0, 54, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 54, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 54, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 54, 0, 0], [0, 2, 0, 0, 0, 0, 0, 0, 50, 0], [0, 0, 0, 1, 0, 1, 0, 0, 0, 52]]",
+            "compare": "equal"
+          },
+          {
+            "call": "int(confusion(_y_te, _y_pred, 10).sum())",
+            "expect": "540",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 5 hidden tests: two small cases (one checks which way round rows and columns go) and a $k$ larger than any label seen. Then the 10 by 10 matrix of the supplied net on the 540 held-out digits, whose entries must add up to 540. Counts are compared exactly.",
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "cnn_ops_l2.py": "content/data/ai/cnn_ops_l2.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "cnn_ops_l3.py": "content/data/ai/cnn_ops_l3.py",
+          "cnn-digits.txt": "content/data/ai/cnn-digits.txt",
+          "cnn-w-exit.json": "content/data/ai/cnn-w-exit.json"
+        },
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef confusion(y_true, y_pred, k):\n    cm = np.zeros((k, k), dtype=int)\n    for t, p in zip(y_true, y_pred):\n        cm[p, t] += 1\n    return cm\n",
+            "test": 1,
+            "symptom": "Rows and columns are swapped: each row counts a predicted class."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef confusion(y_true, y_pred, k):\n    k = max(max(y_true), max(y_pred)) + 1\n    cm = np.zeros((k, k), dtype=int)\n    for t, p in zip(y_true, y_pred):\n        cm[t, p] += 1\n    return cm\n",
+            "test": 3,
+            "symptom": "The size comes from the labels seen, so a class with no images drops out of the table."
+          }
+        ],
+        "prelude": "import numpy as _np\nimport cnn_ops_l3 as _o\n_a = _o.load_split()\n_y_te = _a[5]\n_y_pred = _o.predict(_o.cnn_logits, _o.load_weights('cnn-w-exit.json'), _a[4])\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from a $k$ by $k$ array of zeros."
+        },
+        {
+          "rung": "point",
+          "text": "Each pair $(t, p)$ adds 1 to row $t$, column $p$."
+        },
+        {
+          "rung": "step",
+          "text": "Use $k$ for the size, even if a class never appears."
+        }
+      ],
+      "feedback": {
+        "correct": "Each pair lands in its cell.",
+        "generic": "Not quite. Row is the true class, column the prediction.",
+        "byKey": {
+          "test-1": "Your rows count predictions. Put the true class first: `cm[t, p]`.",
+          "test-2": "Your rows count predictions. Put the true class first: `cm[t, p]`.",
+          "test-3": "Size the array from `k`, not from the labels seen: a class with no images still gets a row."
+        }
+      },
+      "explain": {
+        "text": "One loop over the pairs fills the table. Sizing it by $k$ keeps the rows lined up with the classes whatever the data hold."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "98% on every digit?",
+      "prose": "A colleague says the net reads every digit about 99% of the time. Look along each row of the confusion matrix.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "C",
+              "label": "",
+              "rows": [
+                [
+                  54,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  55,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  52,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  53,
+                  0,
+                  1,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  54,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  54,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  54,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  54,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  50,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  52
+                ]
+              ],
+              "heat": {
+                "mode": "seq",
+                "legend": false
+              },
+              "rowLabels": [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9"
+              ],
+              "colLabels": [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9"
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Rows: the true digit. Columns: what the net says. 540 held-out digits."
+        }
+      },
+      "question": "Which digit does the net read worst, and what share of it does it read right? Give that share as a decimal to 4 places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9615,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "headline",
+            "value": 0.9852,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "error",
+            "value": 0.0385,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide each diagonal entry by its row total."
+        },
+        {
+          "rung": "point",
+          "text": "Row 8 holds 52 digits.",
+          "highlight": [
+            "C-r8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "50 of them sit on the diagonal."
+        }
+      ],
+      "feedback": {
+        "correct": "Digit 8: $50/52 = 0.9615$.",
+        "generic": "Not quite. Read row by row, not the whole matrix.",
+        "byKey": {
+          "headline": "That is the headline over all 540 digits. Row 8 holds 52 images and 2 of them are misread.",
+          "error": "That is the share of 8s it gets wrong. The question asks for the share it reads right."
+        }
+      },
+      "explain": {
+        "text": "Accuracy is an average over classes: every 0, 1, 4, 6 and 7 is right, while 8 drops to 0.9615. Two of the eight misreads are 8s read as 1.",
+        "canvas": {
+          "highlight": {
+            "C": {
+              "rows": [
+                8
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Per class in code",
+      "prose": "Write `per_class_accuracy(cm)`: for each true class, the share of its row that sits on the diagonal.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> per_class_accuracy(np.array([[8, 2], [1, 9]]))",
+            "array([0.8, 0.9])"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `per_class_accuracy`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef per_class_accuracy(cm):\n    # the share of each true class (each row) that the net reads right\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef per_class_accuracy(cm):\n    cm = np.asarray(cm, dtype=float)\n    return np.diag(cm) / cm.sum(axis=1)\n",
+        "examples": [
+          {
+            "call": "per_class_accuracy(np.array([[8, 2], [1, 9]])).tolist()",
+            "expect": "[0.8, 0.9]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "per_class_accuracy(np.array([[8, 2], [1, 9]])).tolist()",
+            "expect": "[0.8, 0.9]",
+            "compare": "isclose"
+          },
+          {
+            "call": "per_class_accuracy(np.array([[5, 0, 0], [5, 5, 0], [0, 0, 10]])).tolist()",
+            "expect": "[1.0, 0.5, 1.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "per_class_accuracy(_cm).tolist()",
+            "expect": "[1.0, 1.0, 0.9811320754716981, 0.9636363636363636, 1.0, 0.9818181818181818, 1.0, 1.0, 0.9615384615384616, 0.9629629629629629]",
+            "compare": "isclose"
+          },
+          {
+            "call": "int(np.argmin(per_class_accuracy(_cm)))",
+            "expect": "8",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 4 hidden tests: two small matrices (one tells rows from columns), the ten per-class accuracies of the supplied net on the held-out digits, and which class is worst. Values are compared to $10^{-9}$.",
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "cnn_ops_l2.py": "content/data/ai/cnn_ops_l2.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "cnn_ops_l3.py": "content/data/ai/cnn_ops_l3.py",
+          "cnn-digits.txt": "content/data/ai/cnn-digits.txt",
+          "cnn-w-exit.json": "content/data/ai/cnn-w-exit.json"
+        },
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef per_class_accuracy(cm):\n    cm = np.asarray(cm, dtype=float)\n    return np.diag(cm) / cm.sum(axis=0)\n",
+            "test": 1,
+            "symptom": "Dividing by column sums gives the share of each predicted class that was right, not of each true class."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef per_class_accuracy(cm):\n    cm = np.asarray(cm, dtype=float)\n    return np.diag(cm) / cm.sum()\n",
+            "test": 1,
+            "symptom": "Dividing by the total gives each class’s share of all images read right, not its own accuracy."
+          }
+        ],
+        "prelude": "import numpy as _np\nimport cnn_ops_l3 as _o\n_a = _o.load_split()\n_y_te = _a[5]\n_y_pred = _o.predict(_o.cnn_logits, _o.load_weights('cnn-w-exit.json'), _a[4])\n_cm = _np.zeros((10, 10), dtype=int)\nfor _t, _p in zip(_y_te, _y_pred):\n    _cm[_t, _p] += 1\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`np.diag(cm)` gives the right answers of each class."
+        },
+        {
+          "rung": "point",
+          "text": "Divide by the row totals."
+        },
+        {
+          "rung": "step",
+          "text": "`cm.sum(axis=1)` sums each row."
+        }
+      ],
+      "feedback": {
+        "correct": "Diagonal over row totals.",
+        "generic": "Not quite. Each class is one row.",
+        "byKey": {
+          "test-1": "Divide by the row sums, `cm.sum(axis=1)`: a row holds every image of one true class.",
+          "test-2": "Divide by the row sums: dividing by columns measures the predictions, not the classes."
+        }
+      },
+      "explain": {
+        "text": "The diagonal over the row totals is each class’s accuracy, also called its recall. Dividing by column totals would give the precision of each prediction instead."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What the filters learned",
+      "prose": "The 16 filters of the first layer were learned, not designed. Here are four. A positive weight rewards ink under it; a negative one rewards background.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "F13",
+              "label": "F13",
+              "rows": [
+                [
+                  0.71,
+                  0.87,
+                  1.28
+                ],
+                [
+                  0.86,
+                  0.34,
+                  0.28
+                ],
+                [
+                  -1.45,
+                  -1.24,
+                  -1.16
+                ]
+              ],
+              "heat": {
+                "mode": "div",
+                "range": [
+                  -1.5,
+                  1.5
+                ],
+                "legend": false
+              }
+            },
+            {
+              "id": "F3",
+              "label": "F3",
+              "rows": [
+                [
+                  -0.88,
+                  -0.82,
+                  0.24
+                ],
+                [
+                  -0.54,
+                  -0.28,
+                  0.2
+                ],
+                [
+                  1.14,
+                  1.05,
+                  -0.05
+                ]
+              ],
+              "heat": {
+                "mode": "div",
+                "range": [
+                  -1.5,
+                  1.5
+                ],
+                "legend": false
+              }
+            },
+            {
+              "id": "F7",
+              "label": "F7",
+              "rows": [
+                [
+                  0.19,
+                  0.21,
+                  -0.62
+                ],
+                [
+                  1.27,
+                  1.38,
+                  0.79
+                ],
+                [
+                  -2.0,
+                  -0.13,
+                  0.13
+                ]
+              ],
+              "heat": {
+                "mode": "div",
+                "range": [
+                  -1.5,
+                  1.5
+                ],
+                "legend": false
+              }
+            },
+            {
+              "id": "F1",
+              "label": "F1",
+              "rows": [
+                [
+                  -0.6,
+                  -0.29,
+                  -0.1
+                ],
+                [
+                  -1.1,
+                  -0.1,
+                  -0.59
+                ],
+                [
+                  -0.35,
+                  -0.26,
+                  -0.03
+                ]
+              ],
+              "heat": {
+                "mode": "div",
+                "range": [
+                  -1.5,
+                  1.5
+                ],
+                "legend": false
+              }
+            }
+          ]
+        },
+        "state": {
+          "caption": "Four of the 16 learned 3 by 3 filters (red negative, blue positive)."
+        }
+      },
+      "question": "Which filter responds most to the bottom edge of a stroke: ink above, background below?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "F13",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "F3",
+            "why": "F3 is the same edge the other way up: background above and ink below, so it fires on the top edge of a stroke."
+          },
+          {
+            "id": "c",
+            "text": "F7",
+            "why": "F7 is strongest along its middle row: it answers a thin horizontal stroke through the centre."
+          },
+          {
+            "id": "d",
+            "text": "F1",
+            "why": "F1 is negative almost everywhere: it fires where there is no ink at all."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ink above and background below: which filter has a positive top row and a negative bottom row?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the top and bottom rows of each filter.",
+          "highlight": [
+            "F13",
+            "F3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "F13 has top row [0.71, 0.87, 1.28] and bottom row [-1.45, -1.24, -1.16]."
+        }
+      ],
+      "feedback": {
+        "correct": "F13: positive on top, negative below, like the edge kernels of level 1.",
+        "generic": "Not quite. Match the sign pattern to ink above and background below."
+      },
+      "explain": {
+        "text": "F13 rewards ink in its top row and punishes it in its bottom row: a horizontal edge detector, learned from the data. F3 is its mirror image."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "An empty image",
+      "prose": "Feed the net an image of all zeros: no ink at all. Every convolution output is then its filter’s bias alone.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "Z",
+              "label": "all zeros",
+              "rows": [
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "heat": {
+                "mode": "seq",
+                "range": [
+                  0,
+                  16
+                ],
+                "legend": false
+              }
+            }
+          ]
+        },
+        "state": {
+          "caption": "An 8 by 8 image with no ink."
+        }
+      },
+      "question": "What does the net output?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Class 4, with probability 0.12",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "No class: every score is 0",
+            "why": "The biases $\\mathbf{b}$ and $\\mathbf{c}$ are not zero, and a softmax always gives probabilities that sum to 1."
+          },
+          {
+            "id": "c",
+            "text": "Class 0, with probability 1",
+            "why": "The net has never been taught that a blank page is a 0; it has no class for \"nothing\"."
+          },
+          {
+            "id": "d",
+            "text": "Every class at exactly 0.1",
+            "why": "That would need every score equal. The biases make them differ a little."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With $x = 0$, what is $\\mathbf{W} * x + \\mathbf{b}$?"
+        },
+        {
+          "rung": "point",
+          "text": "Each map is its bias $b_f$ everywhere; ReLU and pooling keep $\\max(b_f, 0)$."
+        },
+        {
+          "rung": "step",
+          "text": "The scores come from those constants, $\\mathbf{V}$ and $\\mathbf{c}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Class 4 at 0.12: close to a uniform guess, but still a class.",
+        "generic": "Not quite. Follow the zeros through each step."
+      },
+      "explain": {
+        "text": "Every map is the constant $\\max(b_f, 0)$, so the scores depend on the biases and $\\mathbf{V}$ alone. The softmax spreads the probability almost evenly, from 0.09 to 0.12, yet the net still names a class: it cannot say \"no digit\"."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The whole pass",
+      "prose": "For one image $x$: $$\\mathbf{p} = \\operatorname{softmax}\\big(\\operatorname{flat}(\\operatorname{pool}(\\operatorname{ReLU}(\\mathbf{W} * x + \\mathbf{b})))\\,\\mathbf{V} + \\mathbf{c}\\big).$$ Held-out accuracy is the diagonal of the confusion matrix over its total; each class has its own row.",
+      "question": "The net scores 0.9852 on the 540 held-out digits. What does that number alone not tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Which digits carry the errors",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "How many held-out digits it misreads",
+            "why": "It does: $540 \\times (1 - 0.9852) = 8$."
+          },
+          {
+            "id": "c",
+            "text": "Whether it beats a guess",
+            "why": "It does: a guess among 10 classes scores about 0.1."
+          },
+          {
+            "id": "d",
+            "text": "The share of digits it reads right",
+            "why": "That is exactly what accuracy is."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One number hides how the errors are spread; the rows of the confusion matrix show it.",
+        "generic": "Not quite. Accuracy is one average over all classes."
+      },
+      "explain": {
+        "text": "Accuracy averages over every digit, so it cannot say which classes fail. The confusion matrix keeps one row per class."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Trade tickets",
+      "prose": "A desk’s CNN sorts 2,000 scanned trade tickets into \"new\" and \"amendment\". It reads 1,940 right: 97%. Of the 2,000, 100 are amendments, and it reads 70 of those right.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "true \\ read as",
+            "new",
+            "amendment"
+          ],
+          "rows": [
+            [
+              "new (1,900)",
+              "1,870",
+              "30"
+            ],
+            [
+              "amendment (100)",
+              "30",
+              "70"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What share of amendments does it read right? Give a decimal to 2 places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.7,
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "headline",
+            "value": 0.97,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "new-row",
+            "value": 0.98,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the amendment row only."
+        },
+        {
+          "rung": "point",
+          "text": "70 of 100.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Ignore the 1,900 new tickets."
+        }
+      ],
+      "feedback": {
+        "correct": "$70/100 = 0.70$.",
+        "generic": "Not quite. The amendment row holds 100 tickets.",
+        "byKey": {
+          "headline": "That is the headline over all 2,000 tickets, which the 1,900 new ones dominate.",
+          "new-row": "That is the new-ticket row: 1,870 of 1,900. Read the amendment row."
+        }
+      },
+      "explain": {
+        "text": "The headline 0.97 hides a class read right only 0.70 of the time. A risk manager reads the amendment row, where a missed amendment costs money."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The forward pass is conv, ReLU, max pool, flatten, dense, softmax: 1 × 8 × 8 to 16 × 8 × 8 to 16 × 4 × 4 to 256 to 10.",
+      "On the 540 held-out digits the supplied net scores 0.9852; the confusion matrix puts its 8 misreads in their cells.",
+      "Per-class accuracy is each row’s diagonal over its total: digit 8 is read right only 0.9615 of the time."
+    ],
+    "formula": {
+      "name": "Per-class accuracy",
+      "tex": "\\text{acc}_i = \\dfrac{C_{ii}}{\\sum_j C_{ij}}",
+      "note": "Row $i$ holds every digit labelled $i$."
+    },
+    "trap": "A headline of 0.9852 is an average; one class can sit well below it."
+  },
+  "quiz": [
+    {
+      "id": "q-shape",
+      "difficulty": 2,
+      "question": "A 3 by 3 convolution with 8 filters and padding 1 reads an 8 by 8 image. A 2 by 2 max pool follows. How many numbers come out?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 128,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "no-pool",
+            "value": 512,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sixteen",
+            "value": 256,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$8 \\times 4 \\times 4 = 128$.",
+        "generic": "Not quite. Count channels times the pooled side squared.",
+        "byKey": {
+          "no-pool": "That is before pooling.",
+          "sixteen": "That is the 16-filter net. This one has 8 filters."
+        }
+      },
+      "explain": {
+        "text": "8 maps of 4 by 4: 128."
+      }
+    },
+    {
+      "id": "q-row",
+      "difficulty": 2,
+      "question": "A confusion row for digit 3 reads $(0, 1, 0, 48, 0, 1, 0, 0, 0, 0)$. What is the per-class accuracy for 3? Give a decimal to 2 places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.96,
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "count",
+            "value": 48,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "col",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$48/50 = 0.96$.",
+        "generic": "Not quite. Diagonal over the row total.",
+        "byKey": {
+          "count": "That is the count on the diagonal. Divide by the row total of 50.",
+          "col": "Every 3 is not read right: 2 of the 50 are misread."
+        }
+      },
+      "explain": {
+        "text": "The row holds 50 threes and 48 are on the diagonal: 0.96."
+      }
+    },
+    {
+      "id": "q-blank",
+      "difficulty": 3,
+      "question": "An image of all zeros goes into the net. Which parameters decide the output?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The biases $\\mathbf{b}$, $\\mathbf{c}$ and the weights $\\mathbf{V}$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The 3 by 3 weights $\\mathbf{W}$ of the 16 filters",
+            "why": "They multiply zeros, so they add nothing."
+          },
+          {
+            "id": "c",
+            "text": "None: the output is undefined for a blank page",
+            "why": "Softmax of any scores is a set of probabilities."
+          },
+          {
+            "id": "d",
+            "text": "Only the output bias $\\mathbf{c}$ of the dense layer",
+            "why": "The maps hold $\\max(b_f, 0)$, which $\\mathbf{V}$ also reads."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every map is $\\max(b_f, 0)$, which $\\mathbf{V}$ and $\\mathbf{c}$ turn into scores.",
+        "generic": "Not quite. Follow the zeros through the convolution."
+      },
+      "explain": {
+        "text": "$\\mathbf{W}$ multiplies zeros; the biases carry through the ReLU and pool to $\\mathbf{V}$ and $\\mathbf{c}$."
+      }
+    }
+  ]
+}

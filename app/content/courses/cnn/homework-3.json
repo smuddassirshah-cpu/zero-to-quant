@@ -1,0 +1,454 @@
+{
+  "id": "homework-3",
+  "course": "cnn",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-perf-report",
+      "difficulty": 5,
+      "skills": [
+        "cnn-train"
+      ],
+      "prose": "The Stage 2 exit asks for held-out accuracy of at least 0.98 and the clear-margin rule on one-pixel shifts. Return a dict: `cnn` and `mlp`, each net’s held-out accuracy; `cnn_shifted` and `mlp_shifted`, the accuracies on shifts right, left, down and up (zero fill); and `exit`, whether the CNN meets both parts.",
+      "question": "Write `digit_report(params_cnn, params_mlp, X_test, y_test)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef digit_report(params_cnn, params_mlp, X_test, y_test):\n    # keys: 'cnn', 'mlp', 'cnn_shifted', 'mlp_shifted', 'exit'\n    ...\n",
+        "solution": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef digit_report(params_cnn, params_mlp, X_test, y_test):\n    def score(fn, params, X):\n        return float((predict(fn, params, X) == y_test).mean())\n    rep = {'cnn': score(cnn_logits, params_cnn, X_test), 'mlp': score(mlp_logits, params_mlp, X_test)}\n    rep['cnn_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    rep['mlp_shifted'] = [score(mlp_logits, params_mlp, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    gap = np.mean(rep['cnn_shifted']) - np.mean(rep['mlp_shifted'])\n    rep['exit'] = bool(rep['cnn'] >= 0.98 and gap >= 0.10)\n    return rep\n",
+        "examples": [
+          {
+            "call": "sorted(digit_report(cnn, mlp, X_te, y_te))",
+            "expect": "['cnn', 'cnn_shifted', 'exit', 'mlp', 'mlp_shifted']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "sorted(digit_report(cnn, mlp, X_te, y_te))",
+            "expect": "['cnn', 'cnn_shifted', 'exit', 'mlp', 'mlp_shifted']",
+            "compare": "equal"
+          },
+          {
+            "call": "[digit_report(cnn, mlp, X_te, y_te)[k] for k in ('cnn', 'mlp')]",
+            "expect": "[0.9851851851851852, 0.9740740740740741]",
+            "compare": "isclose"
+          },
+          {
+            "call": "digit_report(cnn, mlp, X_te, y_te)['cnn_shifted']",
+            "expect": "[0.6574074074074074, 0.662962962962963, 0.49444444444444446, 0.6574074074074074]",
+            "compare": "isclose"
+          },
+          {
+            "call": "digit_report(cnn, mlp, X_te, y_te)['mlp_shifted']",
+            "expect": "[0.4740740740740741, 0.4648148148148148, 0.40185185185185185, 0.4462962962962963]",
+            "compare": "isclose"
+          },
+          {
+            "call": "digit_report(cnn, mlp, X_te, y_te)['exit']",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "mlp_aug = load_weights('cnn-w-mlp-aug.json')",
+            "call": "digit_report(cnn, mlp_aug, X_te, y_te)['exit']",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "setup": "small = load_weights('cnn-w-small.json')",
+            "call": "digit_report(small, mlp, X_te, y_te)['exit']",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "setup": "_yf = y_te.copy(); _ok = np.flatnonzero(predict(cnn_logits, cnn, X_te) == y_te)[:6]; _yf[_ok] = (_yf[_ok] + 1) % 10",
+            "call": "digit_report(cnn, mlp, X_te, _yf)['exit']",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 8 hidden tests. Tests 1 to 4 check the keys, both held-out accuracies and both lists of shifted accuracies for the supplied CNN and MLP, to $10^{-9}$. Tests 5 to 8 check the exit on four planted cases: the supplied pair (met), an MLP trained on shifted copies (margin not met), and the 8-filter net (held-out bar not met). The last case relabels six test digits, so held-out accuracy falls below 0.98 while the margin still holds. About two seconds in all.",
+        "budget": 3000,
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "cnn_ops_l2.py": "content/data/ai/cnn_ops_l2.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "cnn_ops_l3.py": "content/data/ai/cnn_ops_l3.py",
+          "cnn-digits.txt": "content/data/ai/cnn-digits.txt",
+          "cnn-w-exit.json": "content/data/ai/cnn-w-exit.json",
+          "cnn-w-mlp.json": "content/data/ai/cnn-w-mlp.json",
+          "cnn-w-mlp-aug.json": "content/data/ai/cnn-w-mlp-aug.json",
+          "cnn-w-small.json": "content/data/ai/cnn-w-small.json"
+        },
+        "mutants": [
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef digit_report(params_cnn, params_mlp, X_test, y_test):\n    def score(fn, params, X):\n        return float((predict(fn, params, X) == y_test).mean())\n    rep = {'cnn': score(cnn_logits, params_cnn, X_test), 'mlp': score(mlp_logits, params_mlp, X_test)}\n    rep['cnn_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    rep['mlp_shifted'] = [score(mlp_logits, params_mlp, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    gap = np.mean(rep['cnn_shifted']) - np.mean(rep['mlp_shifted'])\n    rep['exit'] = bool(rep['cnn'] >= 0.98 and abs(gap) >= 0.10)\n    return rep\n",
+            "test": 6,
+            "symptom": "With abs, an MLP trained on shifted copies that beats the CNN still lets the CNN pass."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef digit_report(params_cnn, params_mlp, X_test, y_test):\n    def score(fn, params, X):\n        return float((predict(fn, params, X) == y_test).mean())\n    rep = {'cnn': score(cnn_logits, params_cnn, X_test), 'mlp': score(mlp_logits, params_mlp, X_test)}\n    rep['cnn_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    rep['mlp_shifted'] = [score(mlp_logits, params_mlp, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    gap = np.mean(rep['cnn_shifted']) - np.mean(rep['mlp_shifted'])\n    rep['exit'] = bool(gap >= 0.10)\n    return rep\n",
+            "test": 8,
+            "symptom": "The held-out bar of 0.98 is never checked, so a net below it passes on the margin alone."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\nSHIFTS = [(0, 1), (0, -1), (1, 0), (-1, 0)]   # right, left, down, up\n\n\ndef digit_report(params_cnn, params_mlp, X_test, y_test):\n    def score(fn, params, X):\n        return float((predict(fn, params, X) == y_test).mean())\n    rep = {'cnn': score(cnn_logits, params_cnn, X_test), 'mlp': score(mlp_logits, params_mlp, X_test)}\n    rep['cnn_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    rep['mlp_shifted'] = [score(mlp_logits, params_mlp, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    gap = np.mean(rep['cnn_shifted']) - np.mean(rep['mlp_shifted'])\n    rep['exit'] = bool(rep['cnn'] >= 0.98 and gap >= 0.10)\n    return rep\n",
+            "test": 3,
+            "symptom": "The shifts come in the wrong order, so the four accuracies are reported under the wrong directions."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef digit_report(params_cnn, params_mlp, X_test, y_test):\n    def score(fn, params, X):\n        return float((predict(fn, params, X) == y_test).mean())\n    rep = {'cnn': score(cnn_logits, params_cnn, X_test), 'mlp': score(mlp_logits, params_mlp, X_test)}\n    rep['cnn_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    rep['mlp_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    gap = np.mean(rep['cnn_shifted']) - np.mean(rep['mlp_shifted'])\n    rep['exit'] = bool(rep['cnn'] >= 0.98 and gap >= 0.10)\n    return rep\n",
+            "test": 4,
+            "symptom": "The MLP’s shifted scores are computed with the CNN."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Your report reproduces the exit check on every planted case.",
+        "generic": "Not quite. Check each key against the definitions above.",
+        "byKey": {
+          "test-3": "Report the shifts in the order right, left, down, up.",
+          "test-4": "Score the MLP’s shifted digits with the MLP.",
+          "test-6": "The margin is one-sided: the CNN must beat the MLP by 0.10.",
+          "test-8": "Check both parts of the exit: held-out accuracy of at least 0.98 and the margin."
+        }
+      },
+      "explain": {
+        "text": "For the supplied pair: CNN 0.9852 held out, mean shifted 0.618 against 0.447, so the exit is met. An MLP trained on shifted copies (mean 0.951) breaks the margin."
+      },
+      "performance": "code",
+      "title": "Performance task: the exit report"
+    },
+    {
+      "id": "h-fine-tune",
+      "difficulty": 4,
+      "skills": [
+        "cnn-train"
+      ],
+      "prose": "Fine-tuning continues training from supplied weights. Starting from the exit weights, train with Adam on `X_aug`: the training digits and four copies shifted one pixel. Return new arrays and leave the ones passed in unchanged.",
+      "question": "Write `fine_tune(params, X, y, epochs, lr, seed)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits, shift_images, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]\nX_aug = np.concatenate([X_tr] + [shift_images(X_tr, dx, dy) for dx, dy in SHIFTS])   # 5,025 images\ny_aug = np.concatenate([y_tr] * 5)\n\n\ndef fine_tune(params, X, y, epochs, lr, seed):\n    # Adam from these weights; batches minibatch_indices(len(X), 32, seed + epoch)\n    ...\n",
+        "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits, shift_images, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]\nX_aug = np.concatenate([X_tr] + [shift_images(X_tr, dx, dy) for dx, dy in SHIFTS])   # 5,025 images\ny_aug = np.concatenate([y_tr] * 5)\n\n\ndef fine_tune(params, X, y, epochs, lr, seed):\n    params = [np.array(p, dtype=float) for p in params]\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t = 0\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X[idx]), y[idx])\n            loss.backward()\n            t += 1\n            params, m, v = adam_step(params, [p.grad for p in ts], m, v, t, lr)\n    return params\n",
+        "examples": [
+          {
+            "call": "[p.shape for p in fine_tune(cnn, X_aug[::50], y_aug[::50], 1, 0.01, 5)]",
+            "expect": "[(16, 1, 3, 3), (16,), (256, 10), (10,)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[p.shape for p in fine_tune(cnn, X_aug[::50], y_aug[::50], 1, 0.01, 5)]",
+            "expect": "[(16, 1, 3, 3), (16,), (256, 10), (10,)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "_ = fine_tune(cnn, X_aug[::50], y_aug[::50], 1, 0.01, 5)",
+            "call": "bool(np.array_equal(cnn[2], load_weights('cnn-w-exit.json')[2]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "from autograd import cross_entropy as _ce; _P = fine_tune(cnn, X_aug[::50], y_aug[::50], 1, 0.01, 5)",
+            "call": "_ce(cnn_logits(_P, X_aug[::50]), y_aug[::50]).item()",
+            "expect": "0.8906738017643003",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-07
+            }
+          },
+          {
+            "setup": "from autograd import cross_entropy as _ce; _P = fine_tune(cnn, X_aug[::50], y_aug[::50], 2, 0.01, 6)",
+            "call": "_ce(cnn_logits(_P, X_aug[::50]), y_aug[::50]).item()",
+            "expect": "0.6314950223715697",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-07
+            }
+          },
+          {
+            "setup": "_P = fine_tune(cnn, X_aug, y_aug, 1, 0.01, 0)",
+            "call": "bool(np.mean([accuracy(cnn_logits, _P, shift_images(X_va, dx, dy), y_va) for dx, dy in SHIFTS]) >= 0.85)",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 4000
+          },
+          {
+            "call": "zq_no('fit')",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 6 hidden tests. Test 1 checks the shapes and test 2 that the weights passed in are left unchanged. Tests 3 and 4 fine-tune on every 50th augmented image (101 images, 4 and 8 steps) and compare the loss to $10^{-7}$ of the model run. Test 5 fine-tunes one epoch on all 5,025 images (158 steps, about a second on a desktop, 4 s extra) and needs a mean shifted accuracy on validation of at least 0.85. Test 6 checks you did not call `fit`.",
+        "budget": 1000,
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "cnn_ops_l2.py": "content/data/ai/cnn_ops_l2.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "cnn_ops_l3.py": "content/data/ai/cnn_ops_l3.py",
+          "cnn-digits.txt": "content/data/ai/cnn-digits.txt",
+          "cnn-w-exit.json": "content/data/ai/cnn-w-exit.json"
+        },
+        "mutants": [
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits, shift_images, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]\nX_aug = np.concatenate([X_tr] + [shift_images(X_tr, dx, dy) for dx, dy in SHIFTS])   # 5,025 images\ny_aug = np.concatenate([y_tr] * 5)\n\n\ndef fine_tune(params, X, y, epochs, lr, seed):\n    params = [np.array(p, dtype=float) for p in params]\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t = 0\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X[idx]), y[idx])\n            loss.backward()\n            t = 1\n            params, m, v = adam_step(params, [p.grad for p in ts], m, v, t, lr)\n    return params\n",
+            "test": 3,
+            "symptom": "The step count is stuck at 1, so Adam’s bias correction treats every step as the first."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits, shift_images, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]\nX_aug = np.concatenate([X_tr] + [shift_images(X_tr, dx, dy) for dx, dy in SHIFTS])   # 5,025 images\ny_aug = np.concatenate([y_tr] * 5)\n\n\ndef fine_tune(params, X, y, epochs, lr, seed):\n    params = [np.array(p, dtype=float) for p in params]\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t = 0\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X), 32, seed):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X[idx]), y[idx])\n            loss.backward()\n            t += 1\n            params, m, v = adam_step(params, [p.grad for p in ts], m, v, t, lr)\n    return params\n",
+            "test": 4,
+            "symptom": "Each epoch repeats the first epoch’s batches."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits, shift_images, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]\nX_aug = np.concatenate([X_tr] + [shift_images(X_tr, dx, dy) for dx, dy in SHIFTS])   # 5,025 images\ny_aug = np.concatenate([y_tr] * 5)\n\n\ndef fine_tune(params, X, y, epochs, lr, seed):\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t = 0\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X[idx]), y[idx])\n            loss.backward()\n            t += 1\n            new, m, v = adam_step(params, [p.grad for p in ts], m, v, t, lr)\n            for p, q in zip(params, new):\n                p[...] = q\n    return params\n",
+            "test": 2,
+            "symptom": "The update is written into the arrays passed in, so the supplied weights change under the caller."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Your fine-tune matches the model run and lifts shifted accuracy.",
+        "generic": "Not quite. Check the step count, the shuffle and the copy.",
+        "byKey": {
+          "test-2": "Work on copies; leave the arrays passed in unchanged.",
+          "test-3": "Count Adam steps from 1 and add 1 at every step.",
+          "test-4": "Shuffle with `seed + epoch`.",
+          "test-6": "Write the loop; do not call `fit`."
+        }
+      },
+      "explain": {
+        "text": "One epoch on shifted copies, starting from the exit weights, lifts mean shifted accuracy on validation from about 0.65 to about 0.90 on three seeds."
+      },
+      "title": "Fine-tune on shifted copies"
+    },
+    {
+      "id": "h-order-run",
+      "difficulty": 4,
+      "skills": [
+        "cnn-train"
+      ],
+      "question": "Put the steps of an honest train, validate and test run in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Split the data once, by class, into train, validation and test, with a stated seed"
+          },
+          {
+            "id": "s2",
+            "text": "Train each candidate net on the training split"
+          },
+          {
+            "id": "s3",
+            "text": "Score the candidates on validation and pick the rate and the epoch count"
+          },
+          {
+            "id": "s4",
+            "text": "Score the chosen net once on the test split"
+          },
+          {
+            "id": "s5",
+            "text": "Report that score with the seeds, the split and the settings"
+          },
+          {
+            "id": "d1",
+            "text": "Retrain on the test digits it got wrong, then score the test split again",
+            "why": "Training on the test digits makes the test score a training score."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Split, train, choose on validation, test once, report.",
+        "generic": "Not quite. Each step uses only what the steps before it allow.",
+        "byKey": {
+          "d1": "Training on the test digits turns them into training data; the second score is no longer held out.",
+          "left-out": "Every step but one belongs."
+        }
+      },
+      "explain": {
+        "text": "Each later step depends on the earlier ones, and the test split is touched exactly once, after every choice."
+      },
+      "title": "An honest run"
+    },
+    {
+      "id": "h-vendor",
+      "difficulty": 4,
+      "skills": [
+        "cnn-train"
+      ],
+      "kind": "longform",
+      "title": "A vendor’s chart reader",
+      "prompt": "A vendor says its CNN \"reads any chart pattern\" from price charts drawn as images. Which tests would you ask for before buying, why would you include shifted and rescaled charts, and what result would make you buy? Write a short memo.",
+      "model": "**Tests to ask for.** Accuracy on a held-out set the vendor never trained or tuned on, with the confusion matrix, not one headline. Which patterns does it miss, and how often does it see a pattern that is not there? Then the same held-out charts shifted in time by a few bars and rescaled in price (a chart drawn over a range of 10 or of 50). Last, stretched in time: the pattern over 20 bars or 60.\n\n**Why shifted and rescaled inputs.** A CNN is only partly tolerant of moves: in our digits a one-pixel shift took a CNN from 0.99 to 0.62. Live charts never line up with the training windows, and a model that keys on where the pattern sits, or on its absolute price level, fails out of sample. A same-size baseline (an MLP, or logistic regression on the same inputs) run through the same tests shows whether the convolution adds anything.\n\n**What would make me buy.** A held-out accuracy well above the baseline and above chance, and the same on shifted, rescaled and stretched charts within a stated drop (say no more than 0.05). No class should fall far below the headline, and false patterns should be rare. The test set must have been touched once, with the seeds and the split logged so the result can be rerun. \"Reads any chart pattern\" is a claim about every input; only tests on inputs unlike the training data can support it, and then only for the patterns and shifts tested.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Asks for accuracy on a held-out set never used for training or tuning"
+        },
+        {
+          "points": 2,
+          "text": "Asks for the confusion matrix or per-pattern accuracy, and false positives, not one headline"
+        },
+        {
+          "points": 2,
+          "text": "Asks for tests on charts shifted in time and rescaled or stretched, and explains why (partial shift tolerance; live windows never line up)"
+        },
+        {
+          "points": 2,
+          "text": "Compares with a same-size or simple baseline through the same tests"
+        },
+        {
+          "points": 2,
+          "text": "States a buy rule with numbers: held-out above baseline and a bounded drop on shifted inputs, with a logged, rerunnable test"
+        }
+      ]
+    },
+    {
+      "id": "h-two-blocks",
+      "difficulty": 3,
+      "skills": [
+        "cnn-train"
+      ],
+      "question": "The digits net of l7 gains two residual blocks, each two 16-to-16 3 by 3 convolutions. How many parameters does the net have now?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12010,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "one-block",
+            "value": 7370,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "blocks-only",
+            "value": 9280,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2{,}730 + 2 \\times 4{,}640 = 12{,}010$.",
+        "generic": "Not quite. Add both blocks to the 2,730.",
+        "byKey": {
+          "one-block": "That is one block. There are two.",
+          "blocks-only": "Add the 2,730 of the base net."
+        }
+      },
+      "explain": {
+        "text": "Each block costs $2 \\times 16 \\times (16 \\times 9 + 1) = 4{,}640$, so the net has $2{,}730 + 9{,}280 = 12{,}010$."
+      },
+      "title": "Two blocks"
+    },
+    {
+      "id": "h-fix-eights",
+      "difficulty": 3,
+      "skills": [
+        "cnn-train"
+      ],
+      "question": "The supplied net reads 532 of the 540 held-out digits right, and misreads 2 of the 52 eights. If it read every 8 right and nothing else changed, what would its held-out accuracy be? Give a decimal to 4 places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9889,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "now",
+            "value": 0.9852,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "eights",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(532 + 2)/540 = 0.9889$.",
+        "generic": "Not quite. Add the fixed eights to the right answers.",
+        "byKey": {
+          "now": "That is today’s accuracy. Add the two eights it would now read right.",
+          "eights": "That is the accuracy on eights alone."
+        }
+      },
+      "explain": {
+        "text": "Two more right answers: 534 of 540, 0.9889. One weak class moves the headline by only $2/540$."
+      },
+      "title": "Fixing the eights"
+    },
+    {
+      "id": "h-aug-reading",
+      "difficulty": 4,
+      "skills": [
+        "cnn-train"
+      ],
+      "question": "After training both nets on shifted copies, the MLP’s mean shifted accuracy rises from 0.45 to 0.95 and the gap to the augmented CNN falls below 0.05. What is the fair conclusion?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Convolution builds in tolerance; with the same data the CNN keeps a small edge",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The MLP is now the better model for these images",
+            "why": "The augmented CNN still scores higher, and it needed no augmentation for most of its tolerance."
+          },
+          {
+            "id": "c",
+            "text": "Augmentation makes the choice of architecture irrelevant",
+            "why": "The gap shrinks, but it does not vanish, and it reappears for shifts the copies did not cover."
+          },
+          {
+            "id": "d",
+            "text": "The earlier comparison without augmentation was wrong",
+            "why": "It answered a different question: the same training data, no augmentation."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Same data, small edge: the CNN’s advantage is what it builds in.",
+        "generic": "Not quite. Compare like with like."
+      },
+      "explain": {
+        "text": "Without augmentation the CNN led by about 0.17; with it, by under 0.05. The fair claim is about tolerance per unit of data, and it holds only for the shifts tested."
+      },
+      "title": "Reading the augmented result"
+    }
+  ]
+}
