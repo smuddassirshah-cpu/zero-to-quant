@@ -1105,9 +1105,35 @@
       "tol": {
        "abs": 1e-09
       }
+     },
+     {
+      "setup": "opt = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUURULUUUUL'))",
+      "call": "evaluate_policy(opt, 0.1, 0.5)['r4c1']",
+      "expect": "-0.07233115507108162",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
      }
     ],
-    "how": "Submit runs 9 hidden tests with NumPy. Values must match ours within 1e-6."
+    "how": "Submit runs 10 hidden tests with NumPy. Values must match ours within 1e-6.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef policy_matrix(policy, slip):\n    \"\"\"P (19 by 19) and r (19) for a policy {cell: action}, in the order of CELLS.\n    An end cell's row of P is zero and its r is 0.\"\"\"\n    n = len(CELLS)\n    P = np.zeros((n, n))\n    r = np.zeros(n)\n    for i, s in enumerate(CELLS):\n        if s in TERMINAL:\n            P[i, i] = 1.0\n            continue\n        for t, p in transition(s, policy[s], slip).items():\n            P[i, CELLS.index(t)] += p\n            r[i] += p * reward(t)\n    return P, r\n\ndef evaluate_policy(policy, slip, gamma):\n    \"\"\"{cell: value} from solving (I - gamma P) v = r.\"\"\"\n    P, r = policy_matrix(policy, slip)\n    v = np.linalg.solve(np.eye(len(CELLS)) - gamma * P, r)\n    return {s: float(v[i]) for i, s in enumerate(CELLS)}\n",
+      "test": 1,
+      "symptom": "End cells get P[i, i] = 1, so I - gamma P changes their row."
+     },
+     {
+      "source": "import numpy as np\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef policy_matrix(policy, slip):\n    \"\"\"P (19 by 19) and r (19) for a policy {cell: action}, in the order of CELLS.\n    An end cell's row of P is zero and its r is 0.\"\"\"\n    n = len(CELLS)\n    P = np.zeros((n, n))\n    r = np.zeros(n)\n    for i, s in enumerate(CELLS):\n        if s in TERMINAL:\n            continue\n        for t, p in transition(s, policy[s], slip).items():\n            P[i, CELLS.index(t)] += p\n            r[i] += p * reward(s)\n    return P, r\n\ndef evaluate_policy(policy, slip, gamma):\n    \"\"\"{cell: value} from solving (I - gamma P) v = r.\"\"\"\n    P, r = policy_matrix(policy, slip)\n    v = np.linalg.solve(np.eye(len(CELLS)) - gamma * P, r)\n    return {s: float(v[i]) for i, s in enumerate(CELLS)}\n",
+      "test": 2,
+      "symptom": "r[i] uses reward(s), not reward(t)."
+     },
+     {
+      "source": "import numpy as np\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef policy_matrix(policy, slip):\n    \"\"\"P (19 by 19) and r (19) for a policy {cell: action}, in the order of CELLS.\n    An end cell's row of P is zero and its r is 0.\"\"\"\n    n = len(CELLS)\n    P = np.zeros((n, n))\n    r = np.zeros(n)\n    for i, s in enumerate(CELLS):\n        if s in TERMINAL:\n            continue\n        for t, p in transition(s, policy[s], slip).items():\n            P[i, CELLS.index(t)] += p\n            r[i] += p * reward(t)\n    return P, r\n\ndef evaluate_policy(policy, slip, gamma):\n    \"\"\"{cell: value} from solving (I - gamma P) v = r.\"\"\"\n    P, r = policy_matrix(policy, slip)\n    v = np.linalg.solve(np.eye(len(CELLS)) - 0.9 * P, r)\n    return {s: float(v[i]) for i, s in enumerate(CELLS)}\n",
+      "test": 10,
+      "symptom": "Ignores the gamma argument; every test uses 0.9."
+     }
+    ]
    },
    "hints": [
     {
@@ -1287,7 +1313,7 @@
     }
    },
    "explain": {
-    "text": "Solving gives £61.31 flat and £57.38 at the limit. The limit costs about £4, so a wider limit is worth up to that much to this desk. The same solve values any fixed rule, before deciding whether to change it."
+    "text": "Solving gives £61.31 flat and £57.38 at the limit. Starting at the limit costs about £4 against starting flat, and never hitting it would be worth £80, so the limit costs £18.69 from flat. The same solve values any fixed rule, before deciding whether to change it."
    }
   }
  ],

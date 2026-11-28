@@ -52,3 +52,22 @@ The number script re-implements every learner as an online loop (update right af
 ## course.json
 
 No change proposed.
+
+## rl_ops_l3.py as shipped
+
+`app/content/data/ai/rl_ops_l3.py`, for `ai-safety` L1 (naming rule: `docs/briefs/ai-strand-interfaces.md`). Pure Python, imports only `random`. Shipped through the `data` map of the l11 code widget (`"data": { "rl_ops_l3.py": "content/data/ai/rl_ops_l3.py" }`, `dataPeek: false`, so the learner does not see the model solution), where hidden test 10 imports it and checks it equals the learner's `q_learning`. A widget in `ai-safety` ships it the same way and uses `import rl_ops_l3 as ops`. `docs/reports/rl-L3-numbers.py` checks, bit for bit against its own independent agent, the figures below.
+
+Constants: `ROWS, COLS = 4, 5`; `WALL = {'r2c3'}`; `TERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}`; `STEP = -0.04`; `MOVES`, `SIDES`; `ACTIONS = 'URDL'`; `CELLS` (19 names `'r<row>c<col>'`); `OPEN` (the 17 non-end cells).
+
+- `move(s, a) -> str`: the cell reached from `s` by `a`; the edge and the wall leave the agent at `s`.
+- `reward(t) -> float`: `TERMINAL.get(t, 0.0) + STEP` for entering `t`.
+- `transition(s, a, slip=0.0) -> dict`: `{next cell: chance}`, the intended move with `1 - 2*slip` and each side move with `slip`.
+- `sample_next(s, a, slip, rng) -> str`: one draw of the next cell; with `slip` 0 it is `move(s, a)` and uses no random number, otherwise it uses one `rng.random()`.
+- `q_update(Q, s, a, r, s2, alpha, gamma, terminal, actions=ACTIONS) -> float`: updates `Q[(s, a)]` in place and returns it; the target is `r` when `terminal` is true, else `r + gamma * max Q(s2, .)`.
+- `greedy_action(Q, s, actions=ACTIONS) -> str`: the first best action in the order of `actions` (U, R, D, L).
+- `greedy_policy(Q, cells=OPEN, actions=ACTIONS) -> dict`: `{cell: first best action}`.
+- `class Gridworld(slip=0.0)`: members `actions` (`'URDL'`), `starts` (`OPEN`), `slip`, `is_end(s) -> bool`, `step(s, a, rng) -> (next cell, reward, done)`. Any other grid can reuse `run_episode` with an object that has these four members (`actions`, `starts`, `is_end`, `step`).
+- `run_episode(env, Q, start, alpha, gamma, eps, rng, max_steps=None, learn=True) -> (steps, total reward, reached)`: epsilon-greedy from `start`; per step it draws `rng.random()` for the exploring test, `rng.choice(env.actions)` if exploring, then the slip draw inside `env.step`; it updates `Q` after each step when `learn` is true; it stops at an end cell or after `max_steps` steps (`reached` is False if the cap ended it, so a looping agent still stops); the total reward is undiscounted, step costs included.
+- `q_learning(episodes, alpha, eps, seed, gamma=0.9, slip=0.0, max_steps=None) -> dict`: Q from all zeros, each episode starting at `rng.choice(OPEN)`; with `slip=0` and no cap it is rl l11's `q_learning` exactly.
+
+Checked against the course's numbers: `q_learning(500, 0.1, 0.2, s)` equals the independent agent's Q for seeds 0 to 49; 2,934.46 steps an agent over 500 episodes; 0.3228 at the start after 2,000 episodes (seed 0); `slip=0.1` equals the agent for seeds 0 to 4; seed 7 first matches value iteration at episode 4,400 and seed 0 at 7,600 (the lesson's range is 4,400 to 15,250); `q_update` gives 0.096 at an end cell and 0.221 for the l11 hand example; `max_steps=25` ends a looping greedy agent after 25 steps. It carries no ai-safety grid: that world is 5 by 5 with (row, col) from 0, so ai-safety supplies its own `env` (the four members above) and its own step cap.

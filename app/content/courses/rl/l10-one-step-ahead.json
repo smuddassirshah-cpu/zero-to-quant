@@ -1201,7 +1201,24 @@
       }
      }
     ],
-    "how": "Submit runs 7 hidden tests. Updates are compared with math.isclose; over seeds 0 to 19 the mean RMS error after 100 episodes must be below 0.09."
+    "how": "Submit runs 7 hidden tests. Updates are compared with `math.isclose`; over seeds 0 to 19 the mean RMS error after 100 episodes must be below 0.09.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n\ndef td0_update(V, s, r, s2, alpha, gamma, terminal):\n    \"\"\"Update V[s] in place by one TD(0) step and return the TD error.\"\"\"\n    target = r if terminal else r + gamma * V[s2]\n    delta = target - V[s]\n    V[s] += alpha * delta\n    return V[s]\n\ndef td0_random_walk(episodes, alpha, seed):\n    \"\"\"TD(0) on the random walk from V = 0.5 everywhere, gamma 1. Return [V['A'], ..., V['E']].\"\"\"\n    rng = random.Random(seed)\n    V = {s: 0.5 for s in 'ABCDE'}\n    for _ in range(episodes):\n        states, rewards = random_walk_episode(rng)\n        for i, s in enumerate(states):\n            last = i == len(states) - 1\n            td0_update(V, s, rewards[i], None if last else states[i + 1], alpha, 1.0, last)\n    return [V[s] for s in 'ABCDE']\n",
+      "test": 1,
+      "symptom": "td0_update returns V[s], not delta."
+     },
+     {
+      "source": "import random\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n\ndef td0_update(V, s, r, s2, alpha, gamma, terminal):\n    \"\"\"Update V[s] in place by one TD(0) step and return the TD error.\"\"\"\n    target = r if terminal else r + gamma * V[s2]\n    delta = target - V[s]\n    V[s] += alpha * delta\n    return delta\n\ndef td0_random_walk(episodes, alpha, seed):\n    \"\"\"TD(0) on the random walk from V = 0.5 everywhere, gamma 1. Return [V['A'], ..., V['E']].\"\"\"\n    rng = random.Random(seed)\n    V = {s: 0.5 for s in 'ABCDE'}\n    for _ in range(episodes):\n        states, rewards = random_walk_episode(rng)\n        for i, s in enumerate(states):\n            last = i == len(states) - 1\n            td0_update(V, s, rewards[-1], None, alpha, 1.0, True)\n    return [V[s] for s in 'ABCDE']\n",
+      "test": 6,
+      "symptom": "Every step uses the final reward as its target."
+     },
+     {
+      "source": "import random\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n\ndef td0_update(V, s, r, s2, alpha, gamma, terminal):\n    \"\"\"Update V[s] in place by one TD(0) step and return the TD error.\"\"\"\n    target = r if terminal else r + gamma * V[s2]\n    delta = target - V[s]\n    V[s] += alpha * delta\n    return delta\n\ndef td0_random_walk(episodes, alpha, seed):\n    \"\"\"TD(0) on the random walk from V = 0.5 everywhere, gamma 1. Return [V['A'], ..., V['E']].\"\"\"\n    rng = random.Random(seed)\n    V = {s: 0.0 for s in 'ABCDE'}\n    for _ in range(episodes):\n        states, rewards = random_walk_episode(rng)\n        for i, s in enumerate(states):\n            last = i == len(states) - 1\n            td0_update(V, s, rewards[i], None if last else states[i + 1], alpha, 1.0, last)\n    return [V[s] for s in 'ABCDE']\n",
+      "test": 4,
+      "symptom": "Estimates start at 0, not 0.5."
+     }
+    ]
    },
    "hints": [
     {

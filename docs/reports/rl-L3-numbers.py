@@ -15,6 +15,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'tools'))
 from numbers_lib import Level  # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'content', 'data', 'ai'))  # rl_ops_l3.py: shared with ai-safety, and imported by an l11 test
+import rl_ops_l3 as ops  # noqa: E402
 
 lv = Level('rl', 3)
 E, C = lv.expect, lv.claim
@@ -297,6 +299,41 @@ E('problems', 'items[0].parts[0].widget.answer', 0.48); E('problems', 'items[0].
 E('problems', 'items[1].parts[0].widget.answer', 1 + 0.9 * 0.5); E('problems', 'items[1].parts[1].widget.answer', 1 + 0.9 * 3)
 E('problems', 'items[1].parts[2].widget.answer', round(0.2 * (3.7 - 1.45), 2))
 E('problems', 'items[2].parts[0].widget.answer', 0.5); E('problems', 'items[2].parts[1].widget.answer', round(0.4 + 0.1 * 0.3, 2))
+
+# ---------- rl_ops_l3.py (shared with ai-safety L1) gives the course's own numbers ----------
+C(ops.CELLS == CELLS and ops.OPEN == OPEN and ops.TERMINAL == END and ops.ACTIONS == 'URDL', 'rl_ops_l3: cells, end cells and action order as the course')
+C(all(ops.move(s, a) == mv(s, a) for s in CELLS for a in 'URDL'), 'rl_ops_l3: move matches the grid rebuilt here')
+C(all(ops.transition(s, a, sl) == trans(s, a, sl) for s in OPEN for a in 'URDL' for sl in (0.0, 0.1)), 'rl_ops_l3: transition matches at slip 0 and 0.1')
+C(all(ops.reward(t) == END.get(t, 0.0) - 0.04 for t in CELLS), 'rl_ops_l3: rewards are the payoff less 0.04')
+C(all(ops.q_learning(500, 0.1, 0.2, s) == r500[s].Q for s in range(50)), 'rl_ops_l3: q_learning(500, 0.1, 0.2, seed) equals the course agent bit for bit, seeds 0 to 49')
+C(all(ops.q_learning(300, 0.1, 0.1, s, slip=0.1) == train(s, 300, eps=0.1, slip=0.1).Q for s in range(5)), 'rl_ops_l3: slip 0.1 equals the course agent, seeds 0 to 4')
+env0, tot = ops.Gridworld(0.0), 0
+for s_ in range(50):
+    rng_, Qn = random.Random(s_), {(c, a): 0.0 for c in CELLS for a in 'URDL'}
+    for _ in range(500):
+        n_, _r, ok_ = ops.run_episode(env0, Qn, rng_.choice(env0.starts), 0.1, 0.9, 0.2, rng_)
+        tot += n_
+        assert ok_
+C(abs(tot / 50 - mean_steps) < 1e-9 and round(tot / 50) == 2934, f'rl_ops_l3: run_episode counts {tot / 50:.2f} steps an agent over 500 episodes, as the lesson states (2,934)')
+C(round(max(ops.q_learning(2000, 0.1, 0.2, 0)[('r4c1', x)] for x in 'URDL'), 4) == 0.3228, 'rl_ops_l3: 0.3228 at the start after 2,000 episodes')
+C(ops.greedy_policy(ops.q_learning(500, 0.1, 0.2, 0)) == {s: max('URDL', key=lambda x: r500[0].Q[(s, x)]) for s in OPEN}, 'rl_ops_l3: greedy_policy is the first best in U, R, D, L')
+C(ops.q_learning(500, 0.1, 0.2, 3, max_steps=10000) == ops.q_learning(500, 0.1, 0.2, 3), 'rl_ops_l3: a cap the episodes never reach changes nothing')
+for sd in (7, 0):
+    rng_, Qn, hit, env1 = random.Random(sd), {(c, a): 0.0 for c in CELLS for a in 'URDL'}, None, ops.Gridworld(0.1)
+    for ep in range(1, slip[sd] + 1):
+        ops.run_episode(env1, Qn, rng_.choice(env1.starts), 0.1, 0.9, 0.1, rng_)
+        if ep % 50 == 0 and all(ops.greedy_action(Qn, c) in SS[c] for c in OPEN):
+            hit = ep
+            break
+    C(hit == slip[sd], f'rl_ops_l3: slippery seed {sd} first matches value iteration at episode {hit} (the lesson range 4,400 to 15,250)')
+Qm = {(c, a): 0.0 for c in CELLS for a in 'URDL'}; Qm[('r1c5', 'U')] = 0.5
+C(abs(ops.q_update(Qm, 'r1c4', 'R', 0.96, 'r1c5', 0.1, 0.9, True) - 0.096) < 1e-12, 'rl_ops_l3: q_update masks the end cell (0.096, not 0.141)')
+Qm = {(c, a): 0.0 for c in CELLS for a in 'URDL'}; Qm[('r2c4', 'U')] = 0.2; Qm[('r1c4', 'R')] = 0.5
+C(abs(ops.q_update(Qm, 'r2c4', 'U', -0.04, 'r1c4', 0.1, 0.9, False) - 0.221) < 1e-12, 'rl_ops_l3: q_update bootstraps from the best next move (0.221)')
+Ql = {(c, a): 0.0 for c in CELLS for a in 'URDL'}; Ql[('r4c1', 'U')] = 1.0; Ql[('r3c1', 'D')] = 1.0
+n_, tot_, ok_ = ops.run_episode(ops.Gridworld(0.0), Ql, 'r4c1', 0.1, 0.9, 0.0, random.Random(0), max_steps=25, learn=False)
+C((n_, ok_) == (25, False) and abs(tot_ + 1.0) < 1e-9, 'rl_ops_l3: a looping greedy agent ends at the cap (25 steps, not reached)')
+C(ops.greedy_action({(c, a): 0.0 for c in CELLS for a in 'URDL'}, 'r4c1') == 'U', 'rl_ops_l3: an all-tied cell goes to U, the first in the order')
 
 lv.check_wrongs()
 lv.report()

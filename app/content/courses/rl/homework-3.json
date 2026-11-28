@@ -73,9 +73,36 @@
       "call": "abs(max(Q[('r1c4', a)] for a in 'URDL') - 0.96) < 0.02",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "call": "max(learn_gridworld(500, 0)[('r4c1', a)] for a in 'URDL')",
+      "expect": "0.24894561528839818",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 8 hidden tests. The greedy policy must lie in the optimal sets for the named seeds, and the learned values must land within the stated distances."
+    "how": "Submit runs 9 hidden tests. The greedy policy must lie in the optimal sets for the named seeds, and the learned values must land within the stated distances. One seeded value must match ours, so break greedy ties by the first best action in the order U, R, D, L.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef learn_gridworld(episodes, seed):\n    \"\"\"Q-learning on the deterministic course gridworld. Return Q as {(cell, action): value}.\"\"\"\n    wall, ends = 'r2c3', {'r1c5': 1.0, 'r2c5': -1.0}\n    cells = [f'r{r}c{c}' for r in range(1, 5) for c in range(1, 6) if f'r{r}c{c}' != wall]\n    open_cells = [s for s in cells if s not in ends]\n    moves = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\n    def move(s, a):\n        r, c = int(s[1]) + moves[a][0], int(s[3]) + moves[a][1]\n        t = f'r{r}c{c}'\n        return t if 1 <= r <= 4 and 1 <= c <= 5 and t != wall else s\n\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in cells for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(open_cells)\n        while s not in ends:\n            if rng.random() < 0.2:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            r = ends.get(t, 0.0) - 0.04\n            target = r if t in ends else r + 0.9 * Q[(t, a)]\n            Q[(s, a)] += 0.1 * (target - Q[(s, a)])\n            s = t\n    return Q\n",
+      "test": 2,
+      "symptom": "Target uses Q(t, a), not the max."
+     },
+     {
+      "source": "import random\n\ndef learn_gridworld(episodes, seed):\n    \"\"\"Q-learning on the deterministic course gridworld. Return Q as {(cell, action): value}.\"\"\"\n    wall, ends = 'r2c3', {'r1c5': 1.0, 'r2c5': -1.0}\n    cells = [f'r{r}c{c}' for r in range(1, 5) for c in range(1, 6) if f'r{r}c{c}' != wall]\n    open_cells = [s for s in cells if s not in ends]\n    moves = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\n    def move(s, a):\n        r, c = int(s[1]) + moves[a][0], int(s[3]) + moves[a][1]\n        t = f'r{r}c{c}'\n        return t if 1 <= r <= 4 and 1 <= c <= 5 and t != wall else s\n\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in cells for a in 'URDL'}\n    def choose(s):\n        return rng.choice('URDL') if rng.random() < 0.2 else max('URDL', key=lambda b: Q[(s, b)])\n\n    for _ in range(episodes):\n        s = rng.choice(open_cells)\n        a = choose(s)\n        while s not in ends:\n            t = move(s, a)\n            r = ends.get(t, 0.0) - 0.04\n            if t in ends:\n                Q[(s, a)] += 0.1 * (r - Q[(s, a)])\n                break\n            a2 = choose(t)\n            Q[(s, a)] += 0.1 * (r + 0.9 * Q[(t, a2)] - Q[(s, a)])\n            s, a = t, a2\n    return Q\n",
+      "test": 5,
+      "symptom": "Chooses a2 first and bootstraps with it."
+     },
+     {
+      "source": "import random\n\ndef learn_gridworld(episodes, seed):\n    \"\"\"Q-learning on the deterministic course gridworld. Return Q as {(cell, action): value}.\"\"\"\n    wall, ends = 'r2c3', {'r1c5': 1.0, 'r2c5': -1.0}\n    cells = [f'r{r}c{c}' for r in range(1, 5) for c in range(1, 6) if f'r{r}c{c}' != wall]\n    open_cells = [s for s in cells if s not in ends]\n    moves = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\n    def move(s, a):\n        r, c = int(s[1]) + moves[a][0], int(s[3]) + moves[a][1]\n        t = f'r{r}c{c}'\n        return t if 1 <= r <= 4 and 1 <= c <= 5 and t != wall else s\n\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in cells for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(open_cells)\n        while s not in ends:\n            if rng.random() < 0.2:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            r = ends.get(t, 0.0)\n            target = r if t in ends else r + 0.9 * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += 0.1 * (target - Q[(s, a)])\n            s = t\n    return Q\n",
+      "test": 3,
+      "symptom": "Moves are free."
+     },
+     {
+      "source": "import random\n\ndef learn_gridworld(episodes, seed):\n    \"\"\"Q-learning on the deterministic course gridworld. Return Q as {(cell, action): value}.\"\"\"\n    wall, ends = 'r2c3', {'r1c5': 1.0, 'r2c5': -1.0}\n    cells = [f'r{r}c{c}' for r in range(1, 5) for c in range(1, 6) if f'r{r}c{c}' != wall]\n    open_cells = [s for s in cells if s not in ends]\n    moves = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\n    def move(s, a):\n        r, c = int(s[1]) + moves[a][0], int(s[3]) + moves[a][1]\n        t = f'r{r}c{c}'\n        return t if 1 <= r <= 4 and 1 <= c <= 5 and t != wall else s\n\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in cells for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(open_cells)\n        while s not in ends:\n            if rng.random() < 0.2:\n                a = rng.choice('URDL')\n            else:\n                m = max(Q[(s, b)] for b in 'URDL')\n                a = rng.choice([b for b in 'URDL' if Q[(s, b)] == m])\n            t = move(s, a)\n            r = ends.get(t, 0.0) - 0.04\n            target = r if t in ends else r + 0.9 * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += 0.1 * (target - Q[(s, a)])\n            s = t\n    return Q\n",
+      "test": 9,
+      "symptom": "Ignores the U, R, D, L tie order the prose asks for."
+     }
+    ]
    },
    "feedback": {
     "correct": "All pass: from nothing, the agent's greedy policy matches value iteration on every seed tested.",
@@ -135,7 +162,19 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 4 hidden tests. Seeded values must match ours within 1e-9; over seeds 0 to 9 the mean RMS error after 1,000 episodes must be below 0.045."
+    "how": "Submit runs 4 hidden tests. Seeded values must match ours within 1e-9; over seeds 0 to 9 the mean RMS error after 1,000 episodes must be below 0.045.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef walk_once(rng):\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n\ndef td0_decaying(episodes, seed):\n    \"\"\"TD(0) on the random walk from V = 0.5, gamma 1, step 1/n on a state's n-th update. Return [V['A'], ..., V['E']].\"\"\"\n    rng = random.Random(seed)\n    V = {s: 0.5 for s in 'ABCDE'}\n    n = {s: 0 for s in 'ABCDE'}\n    for _ in range(episodes):\n        states, rewards = walk_once(rng)\n        for i, s in enumerate(states):\n            n[s] += 1\n            last = i == len(states) - 1\n            target = rewards[i] if last else rewards[i] + V[states[i + 1]]\n            V[s] += 0.1 * (target - V[s])\n    return [V[s] for s in 'ABCDE']\n",
+      "test": 2,
+      "symptom": "Uses alpha = 0.1, not 1/n."
+     },
+     {
+      "source": "import random\n\ndef walk_once(rng):\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n\ndef td0_decaying(episodes, seed):\n    \"\"\"TD(0) on the random walk from V = 0.5, gamma 1, step 1/n on a state's n-th update. Return [V['A'], ..., V['E']].\"\"\"\n    rng = random.Random(seed)\n    V = {s: 0.5 for s in 'ABCDE'}\n    n = {s: 0 for s in 'ABCDE'}\n    for _ in range(episodes):\n        states, rewards = walk_once(rng)\n        for i, s in enumerate(states):\n            n[s] += 1\n            last = i == len(states) - 1\n            target = rewards[i] if last else rewards[i] + V[states[i + 1]]\n            V[s] += (target - V[s]) / (n[s] + 1)\n    return [V[s] for s in 'ABCDE']\n",
+      "test": 2,
+      "symptom": "Counts the initial 0.5 as a visit."
+     }
+    ]
    },
    "feedback": {
     "correct": "All pass. Over seeds 0 to 9 the mean RMS error after 1,000 episodes is 0.0305.",
@@ -309,7 +348,7 @@
    ],
    "kind": "longform",
    "title": "Why the slippery grid resists",
-   "prompt": "On the slippery gridworld (intended move 0.8, each side 0.1), Q-learning used a constant step $\\alpha = 0.1$ and $\\varepsilon = 0.1$. It matched value iteration's policy on 8 of 10 seeds, after 4,400 to 15,250 episodes, and failed within 20,000 on the other 2. On the deterministic grid every seed succeeded within 200. Explain why, and give two fixes.",
+   "prompt": "On the slippery gridworld (intended move 0.8, each side 0.1), Q-learning used a constant step $\\alpha = 0.1$ and $\\varepsilon = 0.1$. It first matched value iteration's policy on 8 of 10 seeds, after 4,400 to 15,250 episodes, then lost the match again; the other 2 never matched within 20,000. On the deterministic grid every seed succeeded within 200. Explain why, and give two fixes.",
    "model": "**What differs.** On the deterministic grid each target $r + \\gamma\\max Q(s', \\cdot)$ is a fixed number once the next values settle, so a constant step converges. On the slippery grid the next cell is random: the target for $Q(s, a)$ jumps between, say, the value of row 3 column 4 and the value of row 3 column 5. Each update moves $Q$ a tenth of the way towards the latest draw.\n\n**Why it never settles.** With a constant $\\alpha$ the estimate is a weighted average of roughly the last $1/\\alpha = 10$ targets. Its noise does not shrink however long we run: the estimates keep jiggling in a band. Stochastic approximation needs $\\sum \\alpha_t = \\infty$ and $\\sum \\alpha_t^2 < \\infty$ to converge, and a constant step breaks the second condition.\n\n**Why small gaps matter.** Value iteration's best move beats the next best by only 0.0073 at row 4 column 3 and 0.0077 at row 2 column 1. A band of noise wider than that keeps swapping the arg-max, so the greedy policy keeps flickering away from the optimum even when the values are nearly right.\n\n**Fix 1: shrinking steps.** Use a per-pair step $\\alpha = 1/n(s, a)$, or $1/n^{0.6}$ to learn faster early. The noise then averages out and the estimates converge, given enough visits.\n\n**Fix 2: average or use the model.** Keep exploring but report the greedy policy of a running average of the Q-table, or, if the slip model is known, plan with value iteration as in level 2. Lowering $\\alpha$ over time, or more episodes with a smaller fixed $\\alpha$, also narrows the band.",
    "rubric": [
     {

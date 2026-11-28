@@ -666,7 +666,19 @@
       "compare": "isclose"
      }
     ],
-    "how": "Submit runs 8 hidden tests. Pulls must use `rng.random() < p` exactly; regrets are compared with math.isclose."
+    "how": "Submit runs 8 hidden tests. Pulls must use `rng.random() < p` exactly; regrets are compared with `math.isclose`.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef pull(p, rng):\n    \"\"\"One order at a venue with fill chance p: 1 for a fill, else 0.\"\"\"\n    return 1 if rng.random() > p else 0\n\ndef regret(ps, pulls):\n    \"\"\"Expected regret of these pull counts, against always playing the best arm.\"\"\"\n    best = max(ps)\n    return sum(n * (best - p) for n, p in zip(pulls, ps))\n",
+      "test": 1,
+      "symptom": "A pull fills when rng.random() equals p, so pull(0.0, rng) can return 1."
+     },
+     {
+      "source": "import random\n\ndef pull(p, rng):\n    \"\"\"One order at a venue with fill chance p: 1 for a fill, else 0.\"\"\"\n    return 1 if rng.random() < p else 0\n\ndef regret(ps, pulls):\n    \"\"\"Expected regret of these pull counts, against always playing the best arm.\"\"\"\n    best = sum(ps) / len(ps)\n    return sum(n * (best - p) for n, p in zip(pulls, ps))\n",
+      "test": 4,
+      "symptom": "Regret measured against the average arm, not the best."
+     }
+    ]
    },
    "hints": [
     {
@@ -774,9 +786,27 @@
       "call": "run_greedy([0.2, 0.4, 0.6, 0.8], 500, 9)",
       "expect": "(397, [0, 0, 0, 500])",
       "compare": "equal"
+     },
+     {
+      "setup": "seen = []\ndef argmax_random(values, rng):\n    seen.append(list(values))\n    best = [i for i, v in enumerate(values) if v == max(values)]\n    return rng.choice(best)",
+      "call": "(run_greedy([0.45, 0.55, 0.6], 50, 1), seen[-1])[1]",
+      "expect": "[0.3061224489795918, 0.0, 0.0]",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 7 hidden tests. Each result must equal ours exactly, so follow the order of random calls in the prose."
+    "how": "Submit runs 8 hidden tests. Each result must equal ours exactly, so follow the order of random calls in the prose; the last test reads the estimates you pass to `argmax_random`, so call it for every choice.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef argmax_random(values, rng):\n    \"\"\"The index of a largest value; ties are broken at random.\"\"\"\n    best = [i for i, v in enumerate(values) if v == max(values)]\n    return rng.choice(best)\n\ndef run_greedy(ps, T, seed):\n    \"\"\"Always play the arm with the best estimate. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for _ in range(T):\n        a = Q.index(max(Q))\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += (r - Q[a]) / n[a]   # old + step * error\n        total += r\n    return total, n\n",
+      "test": 1,
+      "symptom": "Greedy breaks ties by the first index instead of argmax_random, so every run starts on A."
+     },
+     {
+      "source": "import random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef argmax_random(values, rng):\n    \"\"\"The index of a largest value; ties are broken at random.\"\"\"\n    best = [i for i, v in enumerate(values) if v == max(values)]\n    return rng.choice(best)\n\ndef run_greedy(ps, T, seed):\n    \"\"\"Always play the arm with the best estimate. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for _ in range(T):\n        a = argmax_random(Q, rng)\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += 0.1 * (r - Q[a])   # old + step * error\n        total += r\n    return total, n\n",
+      "test": 8,
+      "symptom": "Q[a] += 0.1 * (r - Q[a]): not the running mean."
+     }
+    ]
    },
    "hints": [
     {
