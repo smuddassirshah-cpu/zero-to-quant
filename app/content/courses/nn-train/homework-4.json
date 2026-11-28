@@ -1,0 +1,493 @@
+{
+ "id": "homework-4",
+ "course": "nn-train",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h4-report",
+   "difficulty": 5,
+   "skills": [
+    "nt-experiment"
+   ],
+   "title": "Performance task: an experiment report",
+   "performance": "code",
+   "prose": "From a blank start, write `experiment_report(results, baseline, changes)`. `results` is a list of runs `{\"config\", \"seed\", \"val\"}`. For each config in `changes`, pair its runs with the baseline's by seed (seeds both have). Return `{change: {\"mean_diff\", \"ci\": [low, high], \"survives\"}}`: the mean of change minus baseline, its 95% $t$ interval, and whether $|t|$ beats the two-sided Bonferroni cut-off for 5% across all the changes, `t_quantile(1 - 0.05/(2m), n - 1)`.",
+   "question": "Write `experiment_report`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    ...\n",
+    "solution": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    base = {r[\"seed\"]: r[\"val\"] for r in results if r[\"config\"] == baseline}\n    m = len(changes)\n    out = {}\n    for c in changes:\n        d = [r[\"val\"] - base[r[\"seed\"]] for r in results if r[\"config\"] == c and r[\"seed\"] in base]\n        n = len(d)\n        mean = sum(d) / n\n        se = math.sqrt(sum((x - mean) ** 2 for x in d) / (n - 1)) / math.sqrt(n)\n        half = t_quantile(0.975, n - 1) * se\n        crit = t_quantile(1 - 0.05 / (2 * m), n - 1)\n        out[c] = {\"mean_diff\": mean, \"ci\": [mean - half, mean + half], \"survives\": abs(mean / se) > crit}\n    return out\n",
+    "prelude": "import json, random\nfrom nt_ops_l4 import t_quantile\nRUNS = [r for r in json.load(open(\"nn-train-seeds.json\"))[\"runs\"] if r[\"split_seed\"] == 0]\n\n\ndef plant(seed, effects, n=10, noise=0.01):\n    g = random.Random(seed)\n    runs = []\n    for s in range(n):\n        base = 0.2 + 0.05 * g.gauss(0, 1)\n        runs.append({\"config\": \"base\", \"seed\": s, \"val\": base})\n        for name, eff in effects.items():\n            runs.append({\"config\": name, \"seed\": s, \"val\": base + eff + noise * g.gauss(0, 1)})\n    return runs\n\n\nP1 = plant(1, {\"real-down\": -0.03, \"null-1\": 0.0, \"real-up\": 0.02, \"null-2\": 0.0})\nEDGE = [{\"config\": \"base\", \"seed\": s, \"val\": 0.3} for s in range(10)] + [{\"config\": \"x\", \"seed\": s, \"val\": 0.3 + d} for s, d in enumerate([-0.012, 0.004, -0.009, -0.002, -0.015, 0.001, -0.006, -0.011, 0.003, -0.008])]\nEDGE2 = [{\"config\": \"x\", \"seed\": s, \"val\": 0.3 + d} for s, d in enumerate([-0.0112, 0.0028, -0.0085, -0.0025, -0.0138, 0.0002, -0.0059, -0.0103, 0.0019, -0.0077])]\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "nt_ops_l3.py": "content/data/ai/nt_ops_l3.py",
+     "nt_ops_l4.py": "content/data/ai/nt_ops_l4.py",
+     "nn-train-seeds.json": "content/data/ai/nn-train-seeds.json"
+    },
+    "examples": [
+     {
+      "call": "sorted(experiment_report(P1, \"base\", [\"real-down\"]))",
+      "compare": "equal",
+      "expect": "['real-down']"
+     }
+    ],
+    "tests": [
+     {
+      "call": "experiment_report(P1, \"base\", [\"real-down\", \"null-1\", \"real-up\", \"null-2\"])",
+      "compare": "isclose",
+      "expect": "{'real-down': {'mean_diff': -0.02701165315289621, 'ci': [-0.03266365370117644, -0.021359652604615982], 'survives': True}, 'null-1': {'mean_diff': 0.0014354987452586232, 'ci': [-0.006192296642246184, 0.00906329413276343], 'survives': False}, 'real-up': {'mean_diff': 0.02014900032160096, 'ci': [0.015252302855141803, 0.02504569778806012], 'survives': True}, 'null-2': {'mean_diff': -0.0040836634238227195, 'ci': [-0.008919353062057095, 0.0007520262144116562], 'survives': False}}"
+     },
+     {
+      "call": "{c: v[\"survives\"] for c, v in experiment_report(P1, \"base\", [\"real-down\", \"null-1\", \"real-up\", \"null-2\"]).items()}",
+      "compare": "equal",
+      "expect": "{'real-down': True, 'null-1': False, 'real-up': True, 'null-2': False}"
+     },
+     {
+      "call": "experiment_report(EDGE, \"base\", [\"x\"])[\"x\"][\"survives\"]",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "experiment_report(EDGE + [r for r in plant(5, {\"y\": 0.0, \"z\": 0.0, \"w\": 0.0, \"v\": 0.0}) if r[\"config\"] != \"base\"], \"base\", [\"x\", \"y\", \"z\", \"w\", \"v\"])[\"x\"][\"survives\"]",
+      "compare": "equal",
+      "expect": "False"
+     },
+     {
+      "call": "experiment_report(RUNS, \"adam+ln+do\", [\"sgd+ln+do\", \"adam+do\", \"adam+ln\"])",
+      "compare": "isclose",
+      "expect": "{'sgd+ln+do': {'mean_diff': 0.057749365582649016, 'ci': [0.010313875837339961, 0.10518485532795807], 'survives': False}, 'adam+do': {'mean_diff': 0.11122793351872437, 'ci': [0.07774217620770027, 0.14471369082974847], 'survives': True}, 'adam+ln': {'mean_diff': -0.023613150274934235, 'ci': [-0.03402107335608063, -0.013205227193787838], 'survives': True}}"
+     },
+     {
+      "setup": "part = [r for r in P1 if not (r[\"config\"] == \"real-up\" and r[\"seed\"] in (0, 3))][::-1]",
+      "call": "experiment_report(part, \"base\", [\"real-down\", \"null-1\", \"real-up\", \"null-2\"])",
+      "compare": "isclose",
+      "expect": "{'real-down': {'mean_diff': -0.02701165315289621, 'ci': [-0.03266365370117644, -0.021359652604615982], 'survives': True}, 'null-1': {'mean_diff': 0.0014354987452586232, 'ci': [-0.006192296642246184, 0.00906329413276343], 'survives': False}, 'real-up': {'mean_diff': 0.02088821849407829, 'ci': [0.014951056162859664, 0.026825380825296914], 'survives': True}, 'null-2': {'mean_diff': -0.0040836634238227195, 'ci': [-0.008919353062057095, 0.0007520262144116562], 'survives': False}}"
+     },
+     {
+      "call": "experiment_report(plant(9, {\"real\": -0.02, \"null\": 0.0}, n=6), \"base\", [\"real\", \"null\"])",
+      "compare": "isclose",
+      "expect": "{'real': {'mean_diff': -0.0181844574986041, 'ci': [-0.026713708299649183, -0.009655206697559015], 'survives': True}, 'null': {'mean_diff': 0.0011277523377782224, 'ci': [-0.007784354210757173, 0.010039858886313618], 'survives': False}}"
+     },
+     {
+      "call": "experiment_report(EDGE[:10] + EDGE2 + [r for r in plant(5, {\"y\": 0.0, \"z\": 0.0, \"w\": 0.0, \"v\": 0.0}) if r[\"config\"] != \"base\"], \"base\", [\"x\", \"y\", \"z\", \"w\", \"v\"])[\"x\"][\"survives\"]",
+      "compare": "equal",
+      "expect": "False"
+     }
+    ],
+    "how": "`RUNS` holds the runs of `nn-train-seeds.json` on split 0, `plant(seed, effects)` makes planted seed results with known real and null effects, and `t_quantile` comes from `nt_ops_l4.py`. Submit runs 8 hidden tests: a planted report with two real and two null effects, and its verdicts. Then a borderline effect alone and among five changes, our ablation, missing seeds out of order, six seeds, and a second borderline effect. Values within relative $10^{-9}$.",
+    "budget": 2000,
+    "mutants": [
+     {
+      "source": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    base = {r[\"seed\"]: r[\"val\"] for r in results if r[\"config\"] == baseline}\n    m = len(changes)\n    out = {}\n    for c in changes:\n        d = [r[\"val\"] - base[r[\"seed\"]] for r in results if r[\"config\"] == c and r[\"seed\"] in base]\n        n = len(d)\n        mean = sum(d) / n\n        se = math.sqrt(sum((x - mean) ** 2 for x in d) / (n - 1)) / math.sqrt(n)\n        half = t_quantile(0.975, n - 1) * se\n        crit = t_quantile(0.975, n - 1)\n        out[c] = {\"mean_diff\": mean, \"ci\": [mean - half, mean + half], \"survives\": abs(mean / se) > crit}\n    return out\n",
+      "test": 4,
+      "symptom": "Leaves out the Bonferroni correction."
+     },
+     {
+      "source": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    base = {r[\"seed\"]: r[\"val\"] for r in results if r[\"config\"] == baseline}\n    m = len(changes)\n    out = {}\n    for c in changes:\n        d = [r[\"val\"] - base[r[\"seed\"]] for r in results if r[\"config\"] == c and r[\"seed\"] in base]\n        n = len(d)\n        mean = sum(d) / n\n        se = math.sqrt(sum((x - mean) ** 2 for x in d) / (n - 1)) / math.sqrt(n)\n        half = t_quantile(0.975, n - 1) * se\n        crit = t_quantile(1 - 0.05 / m, n - 1)\n        out[c] = {\"mean_diff\": mean, \"ci\": [mean - half, mean + half], \"survives\": abs(mean / se) > crit}\n    return out\n",
+      "test": 5,
+      "symptom": "Corrects a one-sided level, so the bar is too low."
+     },
+     {
+      "source": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    base = {r[\"seed\"]: r[\"val\"] for r in results if r[\"config\"] == baseline}\n    m = len(changes)\n    out = {}\n    for c in changes:\n        d = [r[\"val\"] - base[r[\"seed\"]] for r in results if r[\"config\"] == c and r[\"seed\"] in base]\n        n = len(d)\n        mean = sum(d) / n\n        se = math.sqrt(sum((x - mean) ** 2 for x in d) / (n - 1)) / math.sqrt(n)\n        half = t_quantile(1 - 0.05 / (2 * m), n - 1) * se\n        crit = t_quantile(1 - 0.05 / (2 * m), n - 1)\n        out[c] = {\"mean_diff\": mean, \"ci\": [mean - half, mean + half], \"survives\": abs(mean / se) > crit}\n    return out\n",
+      "test": 1,
+      "symptom": "Widens the 95% interval to the corrected level."
+     },
+     {
+      "source": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    base = {r[\"seed\"]: r[\"val\"] for r in results if r[\"config\"] == baseline}\n    m = len(changes)\n    out = {}\n    for c in changes:\n        bl = [r[\"val\"] for r in results if r[\"config\"] == baseline]\n        d = [r[\"val\"] - bl[i] for i, r in enumerate(x for x in results if x[\"config\"] == c)]\n        n = len(d)\n        mean = sum(d) / n\n        se = math.sqrt(sum((x - mean) ** 2 for x in d) / (n - 1)) / math.sqrt(n)\n        half = t_quantile(0.975, n - 1) * se\n        crit = t_quantile(1 - 0.05 / (2 * m), n - 1)\n        out[c] = {\"mean_diff\": mean, \"ci\": [mean - half, mean + half], \"survives\": abs(mean / se) > crit}\n    return out\n",
+      "test": 6,
+      "symptom": "Pairs by position, so missing seeds shift every pair."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your report passes every hidden test, planted real and null effects included.",
+    "generic": "Not quite. Read the first failing test in the results."
+   },
+   "explain": {
+    "text": "Each change is a paired comparison with the baseline, so the seed noise cancels. The interval stays at 95%, while the verdict uses the corrected cut-off, so trying more changes raises the bar for each."
+   }
+  },
+  {
+   "id": "h4-logdiff",
+   "difficulty": 4,
+   "skills": [
+    "nt-experiment"
+   ],
+   "title": "Two logs, compared",
+   "prose": "When two runs of \"the same experiment\" disagree, the first job is to find what differed. Write `log_diff(log_a, log_b)` for logs shaped like ours: the sorted field names that differ, `\"config.lr\"` style for keys inside a dict field, skipping `\"run\"` and `\"events\"`.",
+   "question": "Write `log_diff`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def log_diff(log_a, log_b):\n    # the sorted list of fields that differ, ignoring \"run\" and \"events\";\n    # a dict field is compared key by key as \"field.key\"; a field in one log only counts as differing\n    ...\n",
+    "solution": "def log_diff(log_a, log_b):\n    out = []\n    for k in set(log_a) | set(log_b):\n        if k in (\"run\", \"events\"):\n            continue\n        a, b = log_a.get(k, \"<missing>\"), log_b.get(k, \"<missing>\")\n        if isinstance(a, dict) and isinstance(b, dict):\n            for j in set(a) | set(b):\n                if a.get(j, \"<missing>\") != b.get(j, \"<missing>\"):\n                    out.append(k + \".\" + j)\n        elif a != b:\n            out.append(k)\n    return sorted(out)\n",
+    "prelude": "import copy\nLOG1 = {\"run\": \"A-0\", \"code\": \"a41c9e2\", \"data\": \"spirals-600 v1\", \"split_seed\": 0, \"seed\": 0,\n        \"config\": {\"opt\": \"adam\", \"lr\": 0.01, \"hidden\": 16, \"batch\": 32, \"steps\": 300}, \"events\": []}\nLOG2 = copy.deepcopy(LOG1)\nLOG2[\"run\"] = \"A-0-again\"\nLOG2[\"split_seed\"] = 1\n",
+    "examples": [
+     {
+      "call": "log_diff(LOG1, LOG2)",
+      "compare": "equal",
+      "expect": "['split_seed']"
+     }
+    ],
+    "tests": [
+     {
+      "call": "log_diff(LOG1, LOG1)",
+      "compare": "equal",
+      "expect": "[]"
+     },
+     {
+      "call": "log_diff(LOG1, LOG2)",
+      "compare": "equal",
+      "expect": "['split_seed']"
+     },
+     {
+      "setup": "L3 = copy.deepcopy(LOG1)\nL3[\"config\"][\"lr\"] = 0.015\nL3[\"seed\"] = 4",
+      "call": "log_diff(LOG1, L3)",
+      "compare": "equal",
+      "expect": "['config.lr', 'seed']"
+     },
+     {
+      "setup": "L4 = copy.deepcopy(LOG1)\ndel L4[\"code\"]",
+      "call": "log_diff(L4, LOG1)",
+      "compare": "equal",
+      "expect": "['code']"
+     },
+     {
+      "setup": "L5 = copy.deepcopy(LOG1)\nL5[\"config\"][\"p\"] = 0.1\nL5[\"events\"] = [{\"step\": 6}]",
+      "call": "log_diff(LOG1, L5)",
+      "compare": "equal",
+      "expect": "['config.p']"
+     },
+     {
+      "setup": "L6 = copy.deepcopy(LOG1)\nL6[\"code\"] = None",
+      "call": "log_diff(L6, LOG1)",
+      "compare": "equal",
+      "expect": "['code']"
+     }
+    ],
+    "how": "`LOG1` is set-up A's log and `LOG2` the colleague's rerun on split 1. Submit runs 6 hidden tests on planted pairs of logs. Each list must match exactly.",
+    "budget": 1000,
+    "mutants": [
+     {
+      "source": "def log_diff(log_a, log_b):\n    out = []\n    for k in set(log_a) | set(log_b):\n        if k == \"run\":\n            continue\n        a, b = log_a.get(k, \"<missing>\"), log_b.get(k, \"<missing>\")\n        if isinstance(a, dict) and isinstance(b, dict):\n            for j in set(a) | set(b):\n                if a.get(j, \"<missing>\") != b.get(j, \"<missing>\"):\n                    out.append(k + \".\" + j)\n        elif a != b:\n            out.append(k)\n    return sorted(out)\n",
+      "test": 5,
+      "symptom": "Compares the events too, so every rerun differs."
+     },
+     {
+      "source": "def log_diff(log_a, log_b):\n    out = []\n    for k in set(log_a) | set(log_b):\n        if k in (\"run\", \"events\"):\n            continue\n        a, b = log_a.get(k, \"<missing>\"), log_b.get(k, \"<missing>\")\n        if isinstance(a, dict) and isinstance(b, dict):\n            if a != b:\n                out.append(k)\n        elif a != b:\n            out.append(k)\n    return sorted(out)\n",
+      "test": 3,
+      "symptom": "Reports the whole config, not the key that changed."
+     },
+     {
+      "source": "def log_diff(log_a, log_b):\n    out = []\n    for k in log_a:\n        if k in (\"run\", \"events\"):\n            continue\n        a, b = log_a.get(k, \"<missing>\"), log_b.get(k, \"<missing>\")\n        if isinstance(a, dict) and isinstance(b, dict):\n            for j in set(a) | set(b):\n                if a.get(j, \"<missing>\") != b.get(j, \"<missing>\"):\n                    out.append(k + \".\" + j)\n        elif a != b:\n            out.append(k)\n    return sorted(out)\n",
+      "test": 4,
+      "symptom": "Misses a field that only the second log has."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "All pass: your diff names the split seed in the colleague's rerun.",
+    "generic": "Not quite. Read the first failing test in the results."
+   },
+   "explain": {
+    "text": "A diff of the inputs finds the cause before anyone retrains. A field present in one log only is a difference, and so is a field set to None in one of them."
+   }
+  },
+  {
+   "id": "h4-order",
+   "difficulty": 3,
+   "skills": [
+    "nt-experiment"
+   ],
+   "title": "Running an ablation",
+   "prose": "A team will ablate a set-up with three changes on our spiral net.",
+   "question": "Put the steps in order. Leave out the two that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Fix the split and choose the seeds every row will use"
+     },
+     {
+      "id": "s2",
+      "text": "Train the full set-up on every seed"
+     },
+     {
+      "id": "s3",
+      "text": "Train one row per change, with that change alone removed, on the same seeds"
+     },
+     {
+      "id": "s4",
+      "text": "Pair each row with the full set-up by seed and average the differences"
+     },
+     {
+      "id": "s5",
+      "text": "Report each effect with its sd or interval across seeds"
+     },
+     {
+      "id": "x1",
+      "text": "Remove two changes in one row to halve the number of runs",
+      "why": "A row that changes two things cannot credit either."
+     },
+     {
+      "id": "x2",
+      "text": "Keep the seed whose table gives the clearest ranking",
+      "why": "Choosing the seed by its result is the luckiest draw again."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ],
+    "same": [
+     [
+      "s2",
+      "s3"
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Fix the seeds, train every row on them, pair, report with spreads.",
+    "generic": "Not quite. The seeds come first; the report last.",
+    "byKey": {
+     "x1": "One change per row.",
+     "x2": "Every seed counts."
+    }
+   },
+   "explain": {
+    "text": "The seeds are chosen before any result exists, and every row uses them, so differences can be paired. Each row removes one change, and the report carries the seed spread."
+   }
+  },
+  {
+   "id": "h4-slide",
+   "difficulty": 4,
+   "skills": [
+    "nt-experiment"
+   ],
+   "title": "One run each",
+   "kind": "longform",
+   "prompt": "A colleague's slide says: \"New architecture: validation loss 0.412 against 0.431 for the old one.\" Each figure is one training run. Write your reply: what you would ask them to run, how you would compare the two, and what result would convince you.",
+   "model": "Thanks: the gap is promising, but one run each cannot show it yet. Each figure is one draw; with a new seed either could move by more than 0.019. On our spiral net, ten seeds of one unchanged set-up ranged over 0.134.\n\n**What to run.** Both architectures on the same 10 seeds, the same split, data and code version, with the seed fixing the starting weights, the batch order and the dropout masks where the two share them. Log every run in full, including the curves, and keep the test set shut.\n\n**How to compare.** Pair the runs by seed and test the differences, new minus old: $t = \\bar d/(s_d/\\sqrt n)$ with $n - 1$ degrees of freedom, and the 95% interval $\\bar d \\pm t_{0.975,\\,n-1} s_d/\\sqrt n$. Not an unpaired test, which leaves the seed noise in. Report the mean and sd of each architecture across seeds too, and any seeds that failed.\n\n**What would convince me.** An interval for the mean difference that lies below 0, from seeds fixed in advance, with a gap that matters in practice. If several architectures were tried to find this one, the bar is higher: a Bonferroni level across all of them. If the new design also changed other things (the optimiser, the rate), an ablation that removes one change at a time on the same seeds, to show the architecture is what helped. Then one final test-set score.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says one run per set-up is one draw, and the 0.019 gap must be judged against the seed spread"
+    },
+    {
+     "points": 2,
+     "text": "Asks for several seeds of each, the same seeds for both, with split, data and code fixed"
+    },
+    {
+     "points": 2,
+     "text": "Compares with the paired test on the differences and an interval for the mean difference, not an unpaired test"
+    },
+    {
+     "points": 1,
+     "text": "States what would convince: an interval excluding 0 that matters in size"
+    },
+    {
+     "points": 1,
+     "text": "Corrects for multiple tries if many architectures were tried"
+    },
+    {
+     "points": 1,
+     "text": "Asks for an ablation if more than the architecture changed"
+    },
+    {
+     "points": 1,
+     "text": "Keeps the test set for one final score and logs every run"
+    }
+   ]
+  },
+  {
+   "id": "h4-seeds",
+   "difficulty": 3,
+   "skills": [
+    "nt-experiment"
+   ],
+   "prose": "Paired differences between two set-ups have an sd of about 0.015 across seeds. You want 80% power to detect a mean difference of 0.01 at a two-sided 5%. Take $z_{0.975} = 1.960$ and $z_{0.8} = 0.842$.",
+   "question": "How many paired seeds does the normal approximation ask for, rounded up?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 18,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "down",
+      "value": 17,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 14,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\big((1.960 + 0.842) \\times 0.015/0.01\\big)^2 \\approx 17.7$, so 18 seeds.",
+    "generic": "Not quite. Add the two quantiles, scale by $s_d/\\delta$, square, round up.",
+    "byKey": {
+     "down": "Round up: 17 seeds give a little under 80%.",
+     "one": "That uses the one-sided 1.645."
+    }
+   },
+   "explain": {
+    "text": "$(2.802 \\times 1.5)^2 \\approx 17.7$, rounded up to 18. The normal approximation runs a little low for so few seeds, so add one or two."
+   }
+  },
+  {
+   "id": "h4-bonf",
+   "difficulty": 3,
+   "skills": [
+    "nt-experiment"
+   ],
+   "prose": "A team compares 8 configurations with the baseline, each by a paired test, and wants a 5% chance at most of any false win.",
+   "question": "At what level should each test be run, by Bonferroni? Give 5 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.00625,
+    "tol": {
+     "abs": 5e-06
+    },
+    "wrong": [
+     {
+      "id": "none",
+      "value": 0.05,
+      "tol": {
+       "abs": 5e-06
+      }
+     },
+     {
+      "id": "nine",
+      "value": 0.00556,
+      "tol": {
+       "abs": 5e-06
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.05/8 = 0.00625$.",
+    "generic": "Not quite. Divide 5% by the number of tests.",
+    "byKey": {
+     "none": "That is the uncorrected level.",
+     "nine": "There are 8 tests, not 9."
+    }
+   },
+   "explain": {
+    "text": "Eight tests at $0.05/8 = 0.00625$ each keep the chance of any false win at or under 5%, whatever the dependence between them."
+   }
+  },
+  {
+   "id": "h4-masks",
+   "difficulty": 4,
+   "skills": [
+    "nt-experiment"
+   ],
+   "prose": "In a comparison of two set-ups, the seed fixes the starting weights and the batch order, but each set-up draws its dropout masks from a fresh generator.",
+   "question": "What does that cost the paired comparison?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "weaker",
+      "text": "Pairs share less noise, so $s_d$ grows and more seeds are needed for the same power",
+      "correct": true
+     },
+     {
+      "id": "bias",
+      "text": "The mean difference becomes biased towards whichever set-up drew the luckier masks",
+      "why": "Fresh masks add noise to each run but favour neither set-up, so the mean difference stays fair."
+     },
+     {
+      "id": "invalid",
+      "text": "The paired test no longer applies at all, since the runs are not pairs",
+      "why": "Pairs still share weights and batches; the test stands, with less power."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Like batches drawn from another seed in l16: the test is valid but weaker.",
+    "generic": "Not quite. Ask what the masks add to each pair.",
+    "byKey": {
+     "bias": "Extra noise is not bias.",
+     "invalid": "Weaker, not invalid."
+    }
+   },
+   "explain": {
+    "text": "The masks add noise that the two runs of a pair no longer share. $s_d$ rises, $t$ falls for the same mean gain, and the seeds needed grow with $s_d^2$."
+   }
+  },
+  {
+   "id": "h4-interval",
+   "difficulty": 4,
+   "skills": [
+    "nt-experiment"
+   ],
+   "prose": "Twelve paired seeds give a mean difference, new minus old, of $-0.008$ with sd 0.010. Take $t_{0.975,\\,11} = 2.201$.",
+   "question": "What is the upper end of the 95% interval? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.0016,
+    "tol": {
+     "abs": 0.00015
+    },
+    "wrong": [
+     {
+      "id": "lower",
+      "value": -0.0144,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "nosqrt",
+      "value": 0.014,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.0016,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-0.008 + 2.201 \\times 0.010/\\sqrt{12} = -0.0016$: the interval stays below 0.",
+    "generic": "Not quite. Mean plus the half-width.",
+    "byKey": {
+     "lower": "That is the lower end.",
+     "nosqrt": "Divide the sd by $\\sqrt{12}$.",
+     "sign": "The mean difference is negative."
+    }
+   },
+   "explain": {
+    "text": "The half-width is $2.201 \\times 0.010/\\sqrt{12} = 0.0064$, so the interval is -0.0144 to -0.0016: the new set-up is better on these seeds, by a little."
+   }
+  }
+ ]
+}

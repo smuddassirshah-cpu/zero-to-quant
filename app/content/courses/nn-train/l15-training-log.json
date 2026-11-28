@@ -1,0 +1,1263 @@
+{
+ "id": "l15-training-log",
+ "course": "nn-train",
+ "title": "A training log you can audit",
+ "minutes": 15,
+ "objectives": [
+  "Build a training log that records everything a rerun needs, and audit one."
+ ],
+ "skills": [
+  "nt-experiment"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two logs, two answers",
+   "prose": "Two colleagues ran \"the same experiment\" on our spiral net and got different validation losses. Here are their two training logs, field by field.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Field",
+      "Log 1",
+      "Log 2"
+     ],
+     "rows": [
+      [
+       "optimiser",
+       "Adam at 0.01",
+       "Adam at 0.01"
+      ],
+      [
+       "network",
+       "2-16-16-2 tanh",
+       "2-16-16-2 tanh"
+      ],
+      [
+       "steps, batch",
+       "300, 32",
+       "300, 32"
+      ],
+      [
+       "training seed",
+       "0",
+       "0"
+      ],
+      [
+       "split seed",
+       "0",
+       "1"
+      ],
+      [
+       "data",
+       "spirals-600 v1",
+       "spirals-600 v1"
+      ],
+      [
+       "code",
+       "a41c9e2",
+       "a41c9e2"
+      ],
+      [
+       "validation loss",
+       "0.093",
+       "0.041"
+      ]
+     ],
+     "tap": "rows"
+    }
+   },
+   "question": "Tap the row that explains why the two results differ.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r4"
+    ],
+    "max": 1
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look for the one setting that is not the same in both columns."
+    },
+    {
+     "rung": "point",
+     "text": "Every row but two matches; one of those is the result.",
+     "highlight": [
+      "r4",
+      "r7"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The split seed decides which rows train and which validate."
+    }
+   ],
+   "feedback": {
+    "correct": "The split seed: 0 against 1, so the two runs trained and validated on different rows.",
+    "generic": "Not quite. Find the setting that differs.",
+    "byKey": {
+     "r7": "That row is the result that differs; tap the setting behind it.",
+     "r3": "Both used training seed 0."
+    }
+   },
+   "explain": {
+    "text": "Everything matches but the split seed. Split 1 gives 0.041 and split 0 gives 0.093: a different 100 validation rows, and a different 400 training rows. Only a log that records the split lets anyone see that.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       4
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Everything a rerun needs",
+   "prose": "Name it: a **training log** records everything a rerun needs. That is the configuration and every hyperparameter, all seeds, the data version and split, the code version, losses at fixed intervals, wall time, and every time a test set was scored.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "run-A-0.json",
+     "lines": [
+      "{\"run\": \"A-0\", \"code\": \"a41c9e2\", \"data\": \"spirals-600 v1\",",
+      " \"split_seed\": 0, \"seed\": 0,",
+      " \"config\": {\"opt\": \"adam\", \"lr\": 0.01, \"hidden\": 16, \"batch\": 32, \"steps\": 300},",
+      " \"events\": [{\"step\": 6, \"kind\": \"loss\", \"train\": 0.47, \"val\": 0.47}, ...,",
+      "            {\"step\": 300, \"kind\": \"test\", \"loss\": 0.043}],",
+      " \"wall_seconds\": 0.1}"
+     ]
+    }
+   },
+   "question": "Select all that apply: which of these must the log hold so that someone else can rerun the experiment and get the same numbers?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "code",
+      "text": "The code version",
+      "correct": true
+     },
+     {
+      "id": "seeds",
+      "text": "Every seed: training and split",
+      "correct": true
+     },
+     {
+      "id": "data",
+      "text": "The data version",
+      "correct": true
+     },
+     {
+      "id": "curve",
+      "text": "Losses at fixed intervals",
+      "correct": true
+     },
+     {
+      "id": "final",
+      "text": "Only the final validation loss, to keep the log short",
+      "why": "A final number cannot show a run that blew up and recovered, or where a resume went wrong."
+     },
+     {
+      "id": "best",
+      "text": "The best seed's result, with the other seeds dropped",
+      "why": "Dropped seeds hide the spread that l13 asked for."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A rerun needs every input that could change a number."
+    },
+    {
+     "rung": "point",
+     "text": "The code, the data and every seed are inputs.",
+     "highlight": [
+      "l1",
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Curves are what you compare against when the rerun disagrees."
+    }
+   ],
+   "feedback": {
+    "correct": "Code, data, every seed and the curve: what the rerun needs and what it is checked against.",
+    "generic": "Not quite. Ask what a stranger would need to reproduce each number.",
+    "byKey": {
+     "final": "A final loss alone cannot show where two runs parted.",
+     "best": "Keep every seed."
+    }
+   },
+   "explain": {
+    "text": "Inputs (code, data, split, seeds, settings) let a rerun start the same way. The curve at fixed steps shows where two runs part, if they do. The test entries show how often the test set was looked at.",
+    "canvas": {
+     "highlight": [
+      "l1",
+      "l2",
+      "l4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Write a log entry",
+   "prose": "Set-up B, run with training seed 4: Adam at 0.015, 300 steps of batch 32, on split seed 0. Its final validation loss was 0.099.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "run-B-4.json",
+     "lines": [
+      "{\"run\": \"B-4\", \"code\": \"a41c9e2\", \"data\": \"spirals-600 v1\",",
+      " \"split_seed\": ?, \"seed\": ?,",
+      " \"config\": {\"opt\": \"adam\", \"lr\": ?, \"hidden\": 16, \"batch\": 32, \"steps\": 300},",
+      " \"events\": [..., {\"step\": 300, \"kind\": \"loss\", \"val\": ?}]}"
+     ]
+    }
+   },
+   "question": "Fill in the four missing fields.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Field",
+     "Value"
+    ],
+    "rows": [
+     [
+      "split_seed",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "seed",
+      {
+       "edit": true,
+       "answer": 4,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "lr",
+      {
+       "edit": true,
+       "answer": 0.015,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "alr",
+         "value": 0.01,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "val at step 300",
+      {
+       "edit": true,
+       "answer": 0.099,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read each value from the description above."
+    },
+    {
+     "rung": "point",
+     "text": "Two seeds: one for training, one for the split.",
+     "highlight": [
+      "l2",
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Set-up B runs Adam at 0.015."
+    }
+   ],
+   "feedback": {
+    "correct": "Split 0, seed 4, rate 0.015, final loss 0.099.",
+    "generic": "Not quite. Each field is in the description.",
+    "byKey": {
+     "alr": "That is set-up A's rate; B runs at 0.015."
+    }
+   },
+   "explain": {
+    "text": "Both seeds go in, as numbers, not \"default\". The rate is the setting that makes this B and not A. The final loss sits at the end of the curve, one event among many."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Audit a log",
+   "prose": "A colleague hands you this log for a run they want you to reproduce.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "run-C-2.json",
+     "lines": [
+      "{\"run\": \"C-2\", \"code\": \"a41c9e2\", \"data\": \"spirals-600 v1\",",
+      " \"seed\": 2,",
+      " \"config\": {\"opt\": \"sgd\", \"lr\": 0.5, \"hidden\": 16, \"batch\": 32, \"steps\": 300},",
+      " \"events\": [{\"step\": 6, \"kind\": \"loss\", \"train\": 0.46, \"val\": 0.43}, ...,",
+      "            {\"step\": 300, \"kind\": \"test\", \"loss\": 0.10}]}"
+     ]
+    }
+   },
+   "question": "Which field is missing?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "split",
+      "text": "The split seed",
+      "correct": true
+     },
+     {
+      "id": "code",
+      "text": "The code version",
+      "why": "The code version is there, `a41c9e2`."
+     },
+     {
+      "id": "seed",
+      "text": "The training seed",
+      "why": "The training seed is there: 2."
+     },
+     {
+      "id": "curve",
+      "text": "The loss curve",
+      "why": "The events hold losses at fixed steps."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check the inputs one by one."
+    },
+    {
+     "rung": "point",
+     "text": "Two seeds are needed.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Only one seed is in this log."
+    }
+   ],
+   "feedback": {
+    "correct": "No split seed: the rerun cannot know which rows were validation.",
+    "generic": "Not quite. Count the seeds.",
+    "byKey": {
+     "code": "The code version is on line 1.",
+     "seed": "The training seed is on line 2.",
+     "curve": "The curve is in the events."
+    }
+   },
+   "explain": {
+    "text": "The log has the training seed but not the split seed. As the two logs above showed, a different split moves the loss as much as a different seed.",
+    "canvas": {
+     "highlight": [
+      "l2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Karpathy's recipe",
+   "prose": "Karpathy's *A Recipe for Training Neural Networks*, in four steps. First get the data pipeline right: look at real batches and labels, which catches bad loaders and wrong labels. Then overfit one small batch, which catches a broken model or loss. Then regularise, to close the gap to validation. Then tune.",
+   "question": "Put the four steps in order. Leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d",
+      "text": "Look at the data and the batches the loader produces"
+     },
+     {
+      "id": "o",
+      "text": "Overfit one small batch to near-zero loss"
+     },
+     {
+      "id": "r",
+      "text": "Add regularisation until validation stops improving"
+     },
+     {
+      "id": "t",
+      "text": "Tune the learning rate and other settings on validation"
+     },
+     {
+      "id": "x",
+      "text": "Score the test set to choose the learning rate",
+      "why": "The test set is scored once, at the end; choosing anything on it turns it into a validation set."
+     }
+    ],
+    "answer": [
+     "d",
+     "o",
+     "r",
+     "t"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What must work before any loss means anything?"
+    },
+    {
+     "rung": "point",
+     "text": "A model that cannot fit 8 points will not fit 400."
+    },
+    {
+     "rung": "step",
+     "text": "Regularise once you can overfit; tune last, on validation."
+    }
+   ],
+   "feedback": {
+    "correct": "Data, overfit, regularise, tune; the test set stays shut.",
+    "generic": "Not quite. Each step assumes the one before works.",
+    "byKey": {
+     "x": "The test set chooses nothing.",
+     "o": "Check the data before trusting any fit.",
+     "r": "Regularise only once the net can overfit."
+    }
+   },
+   "explain": {
+    "text": "Each step checks what the next relies on: real data, then a model that can learn, then generalisation, then fine settings. The test set is not a step; it is scored once at the end."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 2,
+   "title": "Overfit one batch",
+   "prose": "Eight training points, our net, 200 Adam steps at 0.01 on that batch alone. One curve starts from our usual random weights; the other from all weights set to zero, a bug. Slide to reveal the steps.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "good",
+       "label": "random start",
+       "values": [
+        0.6504,
+        0.407,
+        0.2705,
+        0.1773,
+        0.1116,
+        0.0696,
+        0.0426,
+        0.0257,
+        0.0161,
+        0.0107,
+        0.0075,
+        0.0055,
+        0.0043,
+        0.0035,
+        0.0029,
+        0.0025,
+        0.0022,
+        0.002,
+        0.0018,
+        0.0017,
+        0.0015,
+        0.0014,
+        0.0013,
+        0.0013,
+        0.0012,
+        0.0011,
+        0.0011,
+        0.001,
+        0.001,
+        0.0009,
+        0.0009,
+        0.0008,
+        0.0008,
+        0.0008,
+        0.0007,
+        0.0007,
+        0.0007,
+        0.0006,
+        0.0006,
+        0.0006,
+        0.0006,
+        0.0006,
+        0.0005,
+        0.0005,
+        0.0005,
+        0.0005,
+        0.0005,
+        0.0005,
+        0.0004,
+        0.0004,
+        0.0004
+       ]
+      },
+      {
+       "id": "zero",
+       "label": "all zeros",
+       "values": [
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931,
+        0.6931
+       ],
+       "dashed": true
+      }
+     ],
+     "y": [
+      0,
+      0.8
+     ],
+     "xValues": [
+      0,
+      4,
+      8,
+      12,
+      16,
+      20,
+      24,
+      28,
+      32,
+      36,
+      40,
+      44,
+      48,
+      52,
+      56,
+      60,
+      64,
+      68,
+      72,
+      76,
+      80,
+      84,
+      88,
+      92,
+      96,
+      100,
+      104,
+      108,
+      112,
+      116,
+      120,
+      124,
+      128,
+      132,
+      136,
+      140,
+      144,
+      148,
+      152,
+      156,
+      160,
+      164,
+      168,
+      172,
+      176,
+      180,
+      184,
+      188,
+      192,
+      196,
+      200
+     ],
+     "xStep": 50,
+     "xLabel": "Step",
+     "yLabel": "Loss on the batch (nats)"
+    },
+    "state": {
+     "reveal": 1
+    },
+    "controls": [
+     {
+      "bind": "reveal",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "label": "Steps shown"
+     }
+    ]
+   },
+   "question": "Where does the all-zeros curve sit for all 200 steps? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.693,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "good",
+      "value": 0.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the flat dashed line."
+    },
+    {
+     "rung": "point",
+     "text": "With zero weights every hidden unit is the same and outputs 0.",
+     "highlight": [
+      "zero"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Four points of each class and no signal give the loss of a coin flip, $\\ln 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.693, which is $\\ln 2$: the net says 50-50 for every point and never moves.",
+    "generic": "Not quite. Read the dashed curve.",
+    "byKey": {
+     "good": "That is the random start, which reaches near zero."
+    }
+   },
+   "explain": {
+    "text": "From a random start the loss on 8 points falls to 0.0004. From zeros every gradient but the last bias is 0, and with four points of each class even that is 0, so the loss stays at $\\ln 2 = 0.693$. A net that cannot overfit one batch has a bug."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "The test set, twice",
+   "prose": "A log shows the test set scored at step 150. The rate was then lowered from 0.01 to 0.005, the run went on, and the test set was scored again at step 300. The report quotes the second test loss.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "run-D-1.json (events)",
+     "lines": [
+      "{\"step\": 150, \"kind\": \"test\", \"loss\": ...},",
+      "{\"step\": 150, \"kind\": \"set\", \"key\": \"lr\", \"value\": 0.005},",
+      "{\"step\": 300, \"kind\": \"test\", \"loss\": ...}"
+     ]
+    }
+   },
+   "question": "What is wrong with the reported test loss?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "touched",
+      "text": "The first test score chose a change, so the second is no longer a fair test",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: scoring the test set at fixed steps is a curve like any other",
+      "why": "A validation curve is fine; a test curve that steers the run makes the test set a validation set."
+     },
+     {
+      "id": "rate",
+      "text": "Only that the rate change should be in the config",
+      "why": "Logging the change is right, but the change was chosen by looking at the test set."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Why is a test set kept apart?"
+    },
+    {
+     "rung": "point",
+     "text": "What did the step-150 score lead to?",
+     "highlight": [
+      "l1",
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`validation` l1 checked that the test rows were touched once."
+    }
+   ],
+   "feedback": {
+    "correct": "The test set steered the run, so its last score is biased downwards.",
+    "generic": "Not quite. Ask what the first test score was used for.",
+    "byKey": {
+     "fine": "A test score that steers the run is not a test.",
+     "rate": "The change was logged; the problem is what chose it."
+    }
+   },
+   "explain": {
+    "text": "The test set was looked at, a setting changed, and the same test set judged the result. That is `validation` l1's touched test set. The log is what lets an auditor see it: count the test entries.",
+    "canvas": {
+     "highlight": [
+      "l1",
+      "l3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Edge case: stopped and resumed",
+   "prose": "Set-up A, seed 0, stopped at step 150 and resumed from a checkpoint. Restoring the weights, Adam's moments and step count, and the batch generator's state gives 0.0927, as the run that never stopped. Restarting the batch stream from the seed gives 0.1279; also resetting Adam gives 0.1101.",
+   "question": "What must the log show for the resumed run?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "Both segments, the checkpoint step, and that the optimiser and generator states were restored",
+      "correct": true
+     },
+     {
+      "id": "final",
+      "text": "Only the final validation loss, since the second segment is where the run ends",
+      "why": "The final loss cannot show whether the resume repeated batches or reset Adam."
+     },
+     {
+      "id": "second",
+      "text": "Only the second segment and its curve, since it produced the final weights",
+      "why": "The first segment made the checkpoint the second starts from."
+     }
+    ]
+   },
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "How the run resumed",
+      "Validation loss"
+     ],
+     "rows": [
+      [
+       "never stopped",
+       "0.0927"
+      ],
+      [
+       "all state restored",
+       "0.0927"
+      ],
+      [
+       "batch stream restarted",
+       "0.1279"
+      ],
+      [
+       "batch stream and Adam reset",
+       "0.1101"
+      ]
+     ]
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which resumes changed the result?"
+    },
+    {
+     "rung": "point",
+     "text": "A restarted stream repeats the first 150 batches.",
+     "highlight": [
+      "r2",
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The log must show what was restored, and both halves of the curve."
+    }
+   ],
+   "feedback": {
+    "correct": "Both segments, where it stopped, and what state came back: then a rerun can follow it.",
+    "generic": "Not quite. Ask what a rerun would need to land on the same number.",
+    "byKey": {
+     "final": "Three resumes, three final losses: the final number alone cannot tell them apart.",
+     "second": "The first segment matters too."
+    }
+   },
+   "explain": {
+    "text": "Only a full restore reproduces 0.0927; the other resumes moved the result by up to 0.035, as much as a new seed. So the log records the stop, the checkpoint, the restored states and both segments of the curve."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "An audit in code",
+   "prose": "Write `audit_log(log)` for logs shaped like ours: top-level fields, and `events`, each with a `step` and a `kind` of `\"loss\"`, `\"test\"`, `\"set\"` or `\"resume\"`. The comments in the starter give the exact problems and their order.",
+   "question": "Write `audit_log`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "REQUIRED = [\"code\", \"data\", \"split_seed\", \"seed\", \"config\"]\n\n\ndef audit_log(log):\n    # return the list of problems, in this order:\n    #   \"missing <field>\" for each REQUIRED field absent or None, in REQUIRED order\n    #   \"no loss curve\" when fewer than 2 loss events\n    #   \"test scored <k> times\" when k > 1 test events\n    #   then, event by event: \"changed <key> at step <step>\" for a set event,\n    #   \"resume at step <step> without a checkpoint\" for a resume event with no \"from\"\n    ...\n",
+    "solution": "REQUIRED = [\"code\", \"data\", \"split_seed\", \"seed\", \"config\"]\n\n\ndef audit_log(log):\n    problems = []\n    for field in REQUIRED:\n        if log.get(field) is None:\n            problems.append(\"missing \" + field)\n    events = log.get(\"events\", [])\n    if sum(e[\"kind\"] == \"loss\" for e in events) < 2:\n        problems.append(\"no loss curve\")\n    tests = sum(e[\"kind\"] == \"test\" for e in events)\n    if tests > 1:\n        problems.append(f\"test scored {tests} times\")\n    for e in events:\n        if e[\"kind\"] == \"set\":\n            problems.append(f\"changed {e['key']} at step {e['step']}\")\n        if e[\"kind\"] == \"resume\" and \"from\" not in e:\n            problems.append(f\"resume at step {e['step']} without a checkpoint\")\n    return problems\n",
+    "prelude": "import copy\nBASE = {\"run\": \"A-0\", \"code\": \"a41c9e2\", \"data\": \"spirals-600 v1\", \"split_seed\": 0, \"seed\": 0,\n        \"config\": {\"opt\": \"adam\", \"lr\": 0.01, \"hidden\": 16, \"batch\": 32, \"steps\": 300},\n        \"events\": [{\"step\": s, \"kind\": \"loss\", \"train\": 0.5, \"val\": 0.5} for s in range(6, 301, 6)]\n                  + [{\"step\": 300, \"kind\": \"test\", \"loss\": 0.05}]}\n\n\ndef variant(drop=(), none=(), add=(), keep_losses=None):\n    log = copy.deepcopy(BASE)\n    for k in drop:\n        del log[k]\n    for k in none:\n        log[k] = None\n    if keep_losses is not None:\n        log[\"events\"] = [e for e in log[\"events\"] if e[\"kind\"] != \"loss\"][:0] + [e for e in log[\"events\"] if e[\"kind\"] == \"loss\"][-keep_losses:] + [e for e in log[\"events\"] if e[\"kind\"] != \"loss\"]\n    log[\"events\"] = sorted(log[\"events\"] + list(add), key=lambda e: e[\"step\"])\n    return log\n",
+    "examples": [
+     {
+      "call": "audit_log(variant(drop=[\"code\"]))",
+      "compare": "equal",
+      "expect": "['missing code']"
+     }
+    ],
+    "tests": [
+     {
+      "call": "audit_log(BASE)",
+      "compare": "equal",
+      "expect": "[]"
+     },
+     {
+      "call": "audit_log(variant(drop=[\"split_seed\", \"code\"]))",
+      "compare": "equal",
+      "expect": "['missing code', 'missing split_seed']"
+     },
+     {
+      "call": "audit_log(variant(add=[{\"step\": 150, \"kind\": \"test\", \"loss\": 0.06}]))",
+      "compare": "equal",
+      "expect": "['test scored 2 times']"
+     },
+     {
+      "call": "audit_log(variant(add=[{\"step\": 150, \"kind\": \"set\", \"key\": \"lr\", \"value\": 0.005}]))",
+      "compare": "equal",
+      "expect": "['changed lr at step 150']"
+     },
+     {
+      "call": "audit_log(variant(keep_losses=1))",
+      "compare": "equal",
+      "expect": "['no loss curve']"
+     },
+     {
+      "call": "audit_log(variant(add=[{\"step\": 150, \"kind\": \"resume\"}, {\"step\": 210, \"kind\": \"resume\", \"from\": 200}]))",
+      "compare": "equal",
+      "expect": "['resume at step 150 without a checkpoint']"
+     },
+     {
+      "call": "audit_log(variant(none=[\"seed\"], add=[{\"step\": 150, \"kind\": \"test\", \"loss\": 0.06}, {\"step\": 150, \"kind\": \"test\", \"loss\": 0.06}, {\"step\": 100, \"kind\": \"set\", \"key\": \"p\", \"value\": 0.2}]))",
+      "compare": "equal",
+      "expect": "['missing seed', 'test scored 3 times', 'changed p at step 100']"
+     },
+     {
+      "call": "audit_log(variant(none=[\"data\"], drop=[\"config\"], keep_losses=0))",
+      "compare": "equal",
+      "expect": "['missing data', 'missing config']"
+     }
+    ],
+    "how": "`BASE` is a clean log of set-up A, seed 0, and `variant(...)` plants faults in a copy. Submit runs 8 hidden tests on planted logs: clean, missing fields, a second test score, a setting changed, the final loss only, a resume with and without a checkpoint, and two mixes. Each list must match exactly, in order.",
+    "budget": 1000,
+    "mutants": [
+     {
+      "source": "REQUIRED = [\"code\", \"data\", \"split_seed\", \"seed\", \"config\"]\n\n\ndef audit_log(log):\n    problems = []\n    for field in REQUIRED:\n        if log.get(field) is None:\n            problems.append(\"missing \" + field)\n    events = log.get(\"events\", [])\n    if sum(e[\"kind\"] == \"loss\" for e in events) < 2:\n        problems.append(\"no loss curve\")\n    tests = sum(e[\"kind\"] == \"test\" for e in events)\n    if tests >= 1:\n        problems.append(f\"test scored {tests} times\")\n    for e in events:\n        if e[\"kind\"] == \"set\":\n            problems.append(f\"changed {e['key']} at step {e['step']}\")\n        if e[\"kind\"] == \"resume\" and \"from\" not in e:\n            problems.append(f\"resume at step {e['step']} without a checkpoint\")\n    return problems\n",
+      "test": 1,
+      "symptom": "Counts the one allowed test score as a problem."
+     },
+     {
+      "source": "REQUIRED = [\"code\", \"data\", \"split_seed\", \"seed\", \"config\"]\n\n\ndef audit_log(log):\n    problems = []\n    for field in REQUIRED:\n        if field not in log:\n            problems.append(\"missing \" + field)\n    events = log.get(\"events\", [])\n    if sum(e[\"kind\"] == \"loss\" for e in events) < 2:\n        problems.append(\"no loss curve\")\n    tests = sum(e[\"kind\"] == \"test\" for e in events)\n    if tests > 1:\n        problems.append(f\"test scored {tests} times\")\n    for e in events:\n        if e[\"kind\"] == \"set\":\n            problems.append(f\"changed {e['key']} at step {e['step']}\")\n        if e[\"kind\"] == \"resume\" and \"from\" not in e:\n            problems.append(f\"resume at step {e['step']} without a checkpoint\")\n    return problems\n",
+      "test": 7,
+      "symptom": "Misses a field that is present but None."
+     },
+     {
+      "source": "REQUIRED = [\"code\", \"data\", \"split_seed\", \"seed\", \"config\"]\n\n\ndef audit_log(log):\n    problems = []\n    for field in REQUIRED:\n        if log.get(field) is None:\n            problems.append(\"missing \" + field)\n    events = log.get(\"events\", [])\n    if sum(e[\"kind\"] == \"loss\" for e in events) < 2:\n        problems.append(\"no loss curve\")\n    tests = sum(e[\"kind\"] == \"test\" for e in events)\n    if tests > 1:\n        problems.append(f\"test scored {tests} times\")\n    for e in events:\n        if e[\"kind\"] == \"resume\" and \"from\" not in e:\n            problems.append(f\"resume at step {e['step']} without a checkpoint\")\n    return problems\n",
+      "test": 4,
+      "symptom": "Ignores settings changed mid-run."
+     },
+     {
+      "source": "REQUIRED = [\"code\", \"data\", \"split_seed\", \"seed\", \"config\"]\n\n\ndef audit_log(log):\n    problems = []\n    for field in REQUIRED:\n        if log.get(field) is None:\n            problems.append(\"missing \" + field)\n    events = log.get(\"events\", [])\n    if sum(e[\"kind\"] == \"loss\" for e in events) < 2:\n        problems.append(\"no loss curve\")\n    tests = sum(e[\"kind\"] == \"test\" for e in events)\n    if tests > 1:\n        problems.append(f\"test scored {tests} times\")\n    for e in events:\n        if e[\"kind\"] == \"set\":\n            problems.append(f\"changed {e['key']} at step {e['step']}\")\n        if e[\"kind\"] == \"resume\" and \"from\" not in e:\n            problems.append(f\"resume at step {e['step']} without a checkpoint\")\n    return sorted(problems)\n",
+      "test": 7,
+      "symptom": "Sorts the problems instead of keeping the stated order."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Fields first, then the events."
+    },
+    {
+     "rung": "point",
+     "text": "A field set to `None` is as missing as an absent one."
+    },
+    {
+     "rung": "step",
+     "text": "Count test events once; walk the events in order for set and resume."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass: your audit finds every planted fault, in order.",
+    "generic": "Not quite. Read the first failing test in the results."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Overfit one batch, in code",
+   "prose": "Write `overfit_one_batch(make_net, batch, steps, lr)`: build `params = make_net()`, train them on the one batch with `loss_and_grads` and `adam_step` (step numbers from 1), and return `full_loss` on the batch after the last step. Our net should end near zero; the zero net cannot.",
+   "question": "Write `overfit_one_batch`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom nt_ops_l1 import loss_and_grads, full_loss, adam_step\n\n\ndef overfit_one_batch(make_net, batch, steps, lr):\n    # train make_net() on the one batch (Xb, yb) with Adam for `steps` steps; return the final loss on that batch\n    ...\n",
+    "solution": "import numpy as np\nfrom nt_ops_l1 import loss_and_grads, full_loss, adam_step\n\n\ndef overfit_one_batch(make_net, batch, steps, lr):\n    Xb, yb = batch\n    params = make_net()\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    for t in range(1, steps + 1):\n        _, grads = loss_and_grads(params, Xb, yb)\n        params, m, v = adam_step(params, grads, m, v, t, lr)\n    return full_loss(params, Xb, yb)\n",
+    "prelude": "import numpy as np\nfrom nt_ops_l1 import loss_and_grads, full_loss, adam_step\nfrom nt_ops_l4 import course_data, init_params, seed_streams\nX, y, tr, va, te = course_data(0)\nBATCH = (X[tr[:8]], y[tr[:8]])\nBATCH2 = (X[tr[8:16]], y[tr[8:16]])\n\n\ndef make_net():\n    return init_params(seed_streams(0)[0])\n\n\ndef zero_net():\n    return [np.zeros_like(q) for q in make_net()]\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "nt_ops_l3.py": "content/data/ai/nt_ops_l3.py",
+     "nt_ops_l4.py": "content/data/ai/nt_ops_l4.py"
+    },
+    "examples": [
+     {
+      "call": "overfit_one_batch(make_net, BATCH, 0, 0.01) > 0.3",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "tests": [
+     {
+      "call": "overfit_one_batch(make_net, BATCH, 5, 0.01)",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 0
+      },
+      "expect": "0.36626075282755316"
+     },
+     {
+      "call": "overfit_one_batch(make_net, BATCH, 200, 0.01) < 0.01",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "overfit_one_batch(zero_net, BATCH, 200, 0.01) > 0.6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "overfit_one_batch(make_net, BATCH, 0, 0.01)",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 0
+      },
+      "expect": "0.6503560865477467"
+     },
+     {
+      "call": "overfit_one_batch(make_net, BATCH2, 5, 0.02)",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 0
+      },
+      "expect": "0.19910716996472552"
+     }
+    ],
+    "how": "The data files and `autograd.py`, `nt_ops_l1.py` to `nt_ops_l4.py` are in the working directory. `BATCH` holds 8 training points, `make_net()` our usual start and `zero_net()` all zeros. Submit runs 5 hidden tests: a 5-step run exactly (relative $10^{-7}$), below 0.01 after 200 steps, the zero net stuck above 0.6, no steps at all, and a second batch.",
+    "budget": 3000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom nt_ops_l1 import loss_and_grads, full_loss, adam_step\n\n\ndef overfit_one_batch(make_net, batch, steps, lr):\n    Xb, yb = batch\n    params = make_net()\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    for t in range(steps):\n        _, grads = loss_and_grads(params, Xb, yb)\n        params, m, v = adam_step(params, grads, m, v, t, lr)\n    return full_loss(params, Xb, yb)\n",
+      "test": 1,
+      "symptom": "Counts Adam's steps from 0, so the first bias correction divides by zero."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l1 import loss_and_grads, full_loss, adam_step\n\n\ndef overfit_one_batch(make_net, batch, steps, lr):\n    Xb, yb = batch\n    params = make_net()\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    for t in range(1, steps + 1):\n        _, grads = loss_and_grads(params, Xb, yb)\n        adam_step(params, grads, m, v, t, lr)\n    return full_loss(params, Xb, yb)\n",
+      "test": 1,
+      "symptom": "Throws away the updated weights, so nothing learns."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l1 import loss_and_grads, full_loss, adam_step\n\n\ndef overfit_one_batch(make_net, batch, steps, lr):\n    Xb, yb = batch\n    params = make_net()\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    for t in range(1, steps + 1):\n        m = [np.zeros_like(p) for p in params]\n        v = [np.zeros_like(p) for p in params]\n        _, grads = loss_and_grads(params, Xb, yb)\n        params, m, v = adam_step(params, grads, m, v, t, lr)\n    return full_loss(params, Xb, yb)\n",
+      "test": 1,
+      "symptom": "Resets Adam's moments every step."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l1 import loss_and_grads, full_loss, adam_step\n\n\ndef overfit_one_batch(make_net, batch, steps, lr):\n    Xb, yb = batch\n    params = make_net()\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    for t in range(1, steps + 1):\n        last, grads = loss_and_grads(params, Xb, yb)\n        params, m, v = adam_step(params, grads, m, v, t, lr)\n    return loss_and_grads(params, Xb, yb)[0] if steps == 0 else last\n",
+      "test": 1,
+      "symptom": "Returns the loss measured before the last step."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Fresh Adam moments, zeros the shape of each parameter."
+    },
+    {
+     "rung": "point",
+     "text": "`adam_step` returns new parameters; keep them."
+    },
+    {
+     "rung": "step",
+     "text": "Step numbers run 1 to `steps`, and the loss is measured after the last step."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. After 200 steps our net is at 0.0004 on its 8 points; the zero net never leaves $\\ln 2$.",
+    "generic": "Not quite. Read the first failing test in the results."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "After a bad month",
+   "prose": "A model behind a live strategy had a bad month, and the risk committee asks whether last year's training did what the research note said. The team kept one of two records.",
+   "question": "Which record lets the team rerun last year's training and show it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "log",
+      "text": "A log of the code version, data and split, seeds, settings, curves and one test score",
+      "correct": true
+     },
+     {
+      "id": "slide",
+      "text": "The research note's slide with the final validation and test losses of the model",
+      "why": "Two final numbers cannot be rerun: the inputs that made them are missing."
+     },
+     {
+      "id": "weights",
+      "text": "The final trained weights of the live model, saved to disk with a date",
+      "why": "Weights show what was shipped, not how it was trained, so the training cannot be rerun or checked."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Rerunning needs the inputs, not the outputs."
+    },
+    {
+     "rung": "point",
+     "text": "Which record names the code, data and seeds?"
+    },
+    {
+     "rung": "step",
+     "text": "The curves let the rerun be checked step by step."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the full log lets the team rerun the training and compare it, curve for curve.",
+    "generic": "Not quite. Ask what a rerun needs.",
+    "byKey": {
+     "slide": "Final numbers cannot be rerun.",
+     "weights": "Weights are an output, not a recipe."
+    }
+   },
+   "explain": {
+    "text": "With the code, data, split, seeds and settings the team retrains last year's model and checks the curve matches the logged one. Then the bad month is a question about the market, not about whether the model was what it claimed."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A training log records everything a rerun needs: configuration, every seed, data version and split, code version, losses at fixed steps, wall time and every test score.",
+   "Karpathy's recipe: get the data right, overfit one small batch, then regularise, then tune; a net that cannot overfit 8 points has a bug.",
+   "A resume must restore the optimiser and generator states and log both segments: restarting the batch stream moved our loss from 0.093 to 0.128."
+  ],
+  "formula": {
+   "name": "Audit rules",
+   "tex": "\\#\\text{test scores} = 1, \\qquad \\#\\text{settings changed mid-run} = 0",
+   "note": "And no input missing: code, data, split seed, seed, configuration."
+  },
+  "trap": "A log with the final loss only, or a test set scored more than once."
+ },
+ "quiz": [
+  {
+   "id": "q15-field",
+   "difficulty": 2,
+   "prose": "A log holds the code version, the data version, the training seed, the configuration and a loss curve.",
+   "question": "What is still missing for an exact rerun on our set-up?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "split",
+      "text": "The split seed",
+      "correct": true
+     },
+     {
+      "id": "wall",
+      "text": "The wall time of the run",
+      "why": "Wall time is worth logging, but a rerun does not need it to get the same numbers."
+     },
+     {
+      "id": "plot",
+      "text": "A picture of the loss curve",
+      "why": "The curve is already there as numbers."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Without the split seed the rerun cannot rebuild the validation rows.",
+    "generic": "Not quite. Count the seeds.",
+    "byKey": {
+     "wall": "Wall time does not change any number.",
+     "plot": "The numbers are already logged."
+    }
+   },
+   "explain": {
+    "text": "Our runs use two seeds: one for training and one for the split. The log has only the first."
+   }
+  },
+  {
+   "id": "q15-overfit",
+   "difficulty": 3,
+   "prose": "A new net is trained on one batch of 8 points for 500 steps. Its loss on that batch stays at 0.69.",
+   "question": "What does that tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bug",
+      "text": "Something is broken: a working net memorises 8 points",
+      "correct": true
+     },
+     {
+      "id": "reg",
+      "text": "It needs more regularisation before it can fit",
+      "why": "Regularisation makes fitting harder, not easier; it comes after overfitting works."
+     },
+     {
+      "id": "data",
+      "text": "It needs more data to learn the pattern",
+      "why": "More data makes memorising harder; 8 points should be easy."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A net that cannot overfit 8 points has a bug in the model, loss or optimiser.",
+    "generic": "Not quite. Ask what a working net does to 8 points.",
+    "byKey": {
+     "reg": "Regularise only after the net can overfit.",
+     "data": "More data is the opposite of the test."
+    }
+   },
+   "explain": {
+    "text": "A loss of 0.69, about $\\ln 2$, means it still says 50-50. Karpathy's second step catches exactly this before any long run."
+   }
+  },
+  {
+   "id": "q15-test",
+   "difficulty": 2,
+   "prose": "A training log lists test-set scores at steps 100, 200 and 300.",
+   "question": "How many times should a test set be scored in a run whose test loss is reported?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Once, at the end.",
+    "generic": "Not quite. The test set reports once.",
+    "byKey": {
+     "three": "Three looks let the test set steer the run.",
+     "zero": "It is scored once, or there is nothing to report."
+    }
+   },
+   "explain": {
+    "text": "The test set is scored 1 time, after every choice is made. Curves during training use the validation set."
+   }
+  }
+ ]
+}

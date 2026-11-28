@@ -1,0 +1,1110 @@
+{
+ "id": "l14-ablations",
+ "course": "nn-train",
+ "title": "Taking one piece out",
+ "minutes": 14,
+ "objectives": [
+  "Design an ablation that removes one change at a time, and read which change mattered."
+ ],
+ "skills": [
+  "nt-experiment"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Three changes at once",
+   "prose": "Our spiral net again, ten seeds a row. The full set-up makes three changes to the baseline at once: Adam instead of SGD, layer norm before each tanh, and dropout 0.1 after it.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Set-up",
+      "Mean validation loss",
+      "sd"
+     ],
+     "rows": [
+      [
+       "SGD at 0.5 (baseline)",
+       "0.205",
+       "0.045"
+      ],
+      [
+       "Adam at 0.02, layer norm, dropout 0.1 (full)",
+       "0.045",
+       "0.017"
+      ]
+     ]
+    }
+   },
+   "question": "Which change did the work?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "adam",
+      "text": "Adam: the optimiser matters most on a hard problem",
+      "why": "A plausible guess, but both rows moved all three changes at once, so they cannot single Adam out."
+     },
+     {
+      "id": "ln",
+      "text": "Layer norm: it keeps the tanh units out of saturation",
+      "why": "Plausible again, but these two rows cannot separate layer norm from the other two."
+     },
+     {
+      "id": "do",
+      "text": "Dropout: regularising is what lowered the validation loss",
+      "why": "These rows changed dropout together with the rest, so they say nothing about it alone."
+     },
+     {
+      "id": "none",
+      "text": "These two rows cannot say: all three changed together",
+      "correct": true
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many settings differ between the two rows?"
+    },
+    {
+     "rung": "point",
+     "text": "Three changes moved together.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "To credit one change, a row must differ from another in that change alone."
+    }
+   ],
+   "feedback": {
+    "correct": "Two rows that differ in three ways cannot rank the three.",
+    "generic": "Not quite. Count what differs between the rows.",
+    "byKey": {
+     "adam": "Adam moved with two other changes.",
+     "ln": "Layer norm moved with two other changes.",
+     "do": "Dropout moved with two other changes."
+    }
+   },
+   "explain": {
+    "text": "The loss fell from 0.205 to 0.045, but any mix of the three changes could explain it. To find out, take one change out at a time."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Take one out",
+   "prose": "Each bar is the full set-up with one change taken out, ten seeds each, the same seeds in every bar. The dashed line is the full set-up.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "full",
+       "label": "full"
+      },
+      {
+       "id": "noadam",
+       "label": "no Adam"
+      },
+      {
+       "id": "noln",
+       "label": "no layer norm"
+      },
+      {
+       "id": "nodo",
+       "label": "no dropout"
+      }
+     ],
+     "yLabel": "Mean validation loss",
+     "yMin": 0,
+     "yMax": 0.18,
+     "showValues": true,
+     "decimals": 3,
+     "hlines": [
+      {
+       "id": "f",
+       "y": 0.0453,
+       "label": "full"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "full": 0.0453,
+      "noadam": 0.1031,
+      "noln": 0.1565,
+      "nodo": 0.0217
+     }
+    }
+   },
+   "question": "Tap the change whose removal raised the loss most.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "noln"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each bar with the dashed line."
+    },
+    {
+     "rung": "point",
+     "text": "The tallest bar shows the costliest removal.",
+     "highlight": [
+      "noln"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Without layer norm the loss is 0.157."
+    }
+   ],
+   "feedback": {
+    "correct": "Taking out layer norm costs most: 0.157 against 0.045.",
+    "generic": "Not quite. Find the tallest bar.",
+    "byKey": {
+     "noadam": "Removing Adam raised the loss to 0.103; removing layer norm raised it more.",
+     "nodo": "Removing dropout lowered the loss to 0.022: dropout was costing us.",
+     "full": "That bar is the full set-up itself."
+    }
+   },
+   "explain": {
+    "text": "Layer norm matters most here, Adam next. Removing dropout lowers the loss to 0.022, so on this small net dropout was hurting.",
+    "canvas": {
+     "highlight": [
+      "noln",
+      "nodo"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "An ablation",
+   "prose": "What you just read is an **ablation**: start from the full set-up, remove one change at a time, and measure each row across the same seeds. The effect of a change is the mean, over seeds, of (loss without it) minus (loss of the full set-up).",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "full",
+       "label": "full"
+      },
+      {
+       "id": "noadam",
+       "label": "no Adam"
+      },
+      {
+       "id": "noln",
+       "label": "no layer norm"
+      },
+      {
+       "id": "nodo",
+       "label": "no dropout"
+      }
+     ],
+     "yLabel": "Mean validation loss",
+     "yMin": 0,
+     "yMax": 0.18,
+     "showValues": true,
+     "decimals": 3
+    },
+    "state": {
+     "values": {
+      "full": 0.0453,
+      "noadam": 0.1031,
+      "noln": 0.1565,
+      "nodo": 0.0217
+     }
+    }
+   },
+   "question": "What is the effect of dropout, by that definition? Give 3 decimal places, with its sign.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.024,
+    "tol": {
+     "abs": 0.0015
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.024,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "level",
+      "value": 0.022,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loss without dropout, minus the full set-up's loss."
+    },
+    {
+     "rung": "point",
+     "text": "The two bars are 0.022 and 0.045.",
+     "highlight": [
+      "nodo",
+      "full"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The result is negative: removing dropout helped."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.0217 - 0.0453 = -0.0236$: dropout made the loss worse by about 0.024.",
+    "generic": "Not quite. Take the full set-up's loss from the loss without dropout.",
+    "byKey": {
+     "sign": "You subtracted the other way round. Without minus full is negative here.",
+     "level": "That is the loss without dropout; subtract the full set-up's."
+    }
+   },
+   "explain": {
+    "text": "Without dropout the loss is 0.0217, against 0.0453 with it. The effect is -0.0236: negative, so the change hurt. A positive effect means the full set-up needs the change."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Reading a removal table",
+   "prose": "The removal table: for each change, the mean over ten seeds of (without it) minus (full), and the sd of those ten differences.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Change removed",
+      "Effect",
+      "sd across seeds"
+     ],
+     "rows": [
+      [
+       "Adam",
+       "0.058",
+       "0.066"
+      ],
+      [
+       "layer norm",
+       "0.111",
+       "0.047"
+      ],
+      [
+       "dropout",
+       "-0.024",
+       "0.015"
+      ]
+     ]
+    }
+   },
+   "question": "Put the changes in order, the one the full set-up needs most first.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "ln",
+      "text": "Layer norm"
+     },
+     {
+      "id": "adam",
+      "text": "Adam"
+     },
+     {
+      "id": "do",
+      "text": "Dropout"
+     }
+    ],
+    "answer": [
+     "ln",
+     "adam",
+     "do"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A bigger positive effect means a costlier removal."
+    },
+    {
+     "rung": "point",
+     "text": "The effects are 0.111, 0.058 and -0.024.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Negative comes last: the set-up is better without it."
+    }
+   ],
+   "feedback": {
+    "correct": "Layer norm, then Adam; dropout has a negative effect.",
+    "generic": "Not quite. Sort by the effect, largest first.",
+    "byKey": {
+     "adam": "Adam's effect, 0.058, is smaller than layer norm's.",
+     "do": "Dropout's effect is negative, so it goes last."
+    }
+   },
+   "explain": {
+    "text": "Removing layer norm costs 0.111 and removing Adam 0.058, with sds of 0.047 and 0.066 across seeds. Adam's effect is noisy: its sd exceeds its mean. Dropout's -0.024 is small but steady.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Adding one at a time",
+   "prose": "The other direction adds one change at a time to the baseline. With dropout left out, here are the four mixes of Adam and layer norm, ten seeds each.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "no layer norm",
+      "layer norm"
+     ],
+     "rows": [
+      [
+       "SGD",
+       "0.205",
+       "0.086"
+      ],
+      [
+       "Adam",
+       "0.084",
+       "0.022"
+      ]
+     ],
+     "rowHeads": true
+    }
+   },
+   "question": "How much does switching to Adam lower the loss, without layer norm and with it? Give 3 decimal places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "",
+     "Adam's gain"
+    ],
+    "rows": [
+     [
+      "without layer norm",
+      {
+       "edit": true,
+       "answer": 0.121,
+       "tol": {
+        "abs": 0.0015
+       },
+       "wrong": [
+        {
+         "id": "sign0",
+         "value": -0.121,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "with layer norm",
+      {
+       "edit": true,
+       "answer": 0.064,
+       "tol": {
+        "abs": 0.0015
+       },
+       "wrong": [
+        {
+         "id": "sign1",
+         "value": -0.064,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two rows within one column."
+    },
+    {
+     "rung": "point",
+     "text": "Without layer norm: 0.205 to 0.084.",
+     "highlight": [
+      "r0c1",
+      "r1c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "With layer norm: 0.086 to 0.022."
+    }
+   ],
+   "feedback": {
+    "correct": "0.121 without layer norm, 0.064 with it: the gains differ.",
+    "generic": "Not quite. Take the Adam loss from the SGD loss in each column.",
+    "byKey": {
+     "sign0": "A gain is the SGD loss minus the Adam loss.",
+     "sign1": "A gain is the SGD loss minus the Adam loss."
+    }
+   },
+   "explain": {
+    "text": "Adding Adam to the baseline gains 0.121; adding it once layer norm is in gains only 0.064. The difference, -0.057, is the **interaction**: the two changes overlap. So the two directions of ablation can rank a change differently."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "How many runs",
+   "prose": "A remove-one ablation needs the full set-up plus one row per change, each over the same seeds.",
+   "question": "How many training runs does our ablation of three changes with 10 seeds need, the full set-up included?",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Row",
+      "Seeds"
+     ],
+     "rows": [
+      [
+       "full",
+       "10"
+      ],
+      [
+       "no Adam",
+       "10"
+      ],
+      [
+       "no layer norm",
+       "10"
+      ],
+      [
+       "no dropout",
+       "10"
+      ]
+     ]
+    }
+   },
+   "widget": {
+    "kind": "numeric",
+    "answer": 40,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "nofull",
+      "value": 30,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "fact",
+      "value": 80,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the rows, then multiply by the seeds."
+    },
+    {
+     "rung": "point",
+     "text": "Four rows: the full set-up and three removals.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(3 + 1) \\times 10$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(3 + 1) \\times 10 = 40$ runs.",
+    "generic": "Not quite. Rows times seeds.",
+    "byKey": {
+     "nofull": "You left out the full set-up's own ten runs.",
+     "fact": "That is every mix of the three changes, $2^3 \\times 10$; remove-one needs fewer.",
+     "one": "That is one row."
+    }
+   },
+   "explain": {
+    "text": "Changes plus one, times seeds: $(3 + 1) \\times 10 = 40$. Adding the add-one direction brings in the baseline and three more rows; with three changes that happens to be all $2^3 = 8$ mixes, 80 runs."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "One seed each",
+   "prose": "A colleague runs the ablation with seed 6 only. Removing Adam costs 0.237 and removing layer norm 0.118. Their slide says \"Adam is the key change\".",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Seed 6",
+      "Validation loss"
+     ],
+     "rows": [
+      [
+       "full",
+       "0.045"
+      ],
+      [
+       "no Adam",
+       "0.283"
+      ],
+      [
+       "no layer norm",
+       "0.163"
+      ],
+      [
+       "no dropout",
+       "0.023"
+      ]
+     ]
+    }
+   },
+   "question": "What should you tell them?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "seeds",
+      "text": "Seed 6 is one draw; over ten seeds layer norm's removal costs more (0.111 against 0.058)",
+      "correct": true
+     },
+     {
+      "id": "agree",
+      "text": "Agreed: on seed 6 removing Adam costs 0.237, about twice layer norm's",
+      "why": "You ranked the changes on one seed, where the ranking is a draw like any other."
+     },
+     {
+      "id": "both",
+      "text": "Remove Adam and layer norm together in one row, to save runs",
+      "why": "A row that changes two things cannot credit either one."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How much do single-seed differences vary?"
+    },
+    {
+     "rung": "point",
+     "text": "Adam's removal effect has an sd of 0.066 across seeds.",
+     "highlight": [
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Rank on the mean over seeds."
+    }
+   ],
+   "feedback": {
+    "correct": "One seed per row makes the \"most important\" change partly noise.",
+    "generic": "Not quite. Ask how big the seed-to-seed spread is.",
+    "byKey": {
+     "agree": "One seed per row can reorder the changes.",
+     "both": "Changing two things in one row confounds them."
+    }
+   },
+   "explain": {
+    "text": "Seed 6 happens to make SGD look bad: removing Adam there costs 0.237, against a mean of 0.058. Over ten seeds layer norm matters more. Ablate across seeds, one change per row."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Edge case: helps only with another",
+   "prose": "Suppose another net gives these means over ten seeds: base 0.300, a wider layer alone 0.310, dropout alone 0.290, both 0.240. The wider layer hurts on its own.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "no dropout",
+      "dropout"
+     ],
+     "rows": [
+      [
+       "narrow",
+       "0.300",
+       "0.290"
+      ],
+      [
+       "wider",
+       "0.310",
+       "0.240"
+      ]
+     ],
+     "rowHeads": true
+    }
+   },
+   "question": "What is the wider layer's effect on the loss when dropout is on? Give 3 decimal places, with its sign.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.05,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "alone",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Stay in the dropout column."
+    },
+    {
+     "rung": "point",
+     "text": "Wider with dropout minus narrow with dropout.",
+     "highlight": [
+      "r0c2",
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.240 - 0.290$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.240 - 0.290 = -0.050$: with dropout the wider layer helps.",
+    "generic": "Not quite. Compare the two rows in the dropout column.",
+    "byKey": {
+     "alone": "That is its effect without dropout, where it hurts.",
+     "sign": "The loss fell, so the effect on the loss is negative."
+    }
+   },
+   "explain": {
+    "text": "Without dropout the wider layer adds 0.010; with dropout it removes 0.050. A remove-one ablation from the full set-up credits it with 0.050, and an add-one ablation calls it harmful. Both are true: it helps only alongside dropout."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The rule",
+   "prose": "One change per row, every row on the same $n$ seeds. You measured each change by taking it out, and an interaction from a 2 by 2 table: $$\\Delta_k = \\frac{1}{n}\\sum_{s=1}^{n}\\big(L_s(\\text{full} - k) - L_s(\\text{full})\\big), \\qquad I = (L_{11} - L_{01}) - (L_{10} - L_{00}).$$",
+   "question": "An ablation row shows $\\Delta_k = -0.03$. What does that say about change $k$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "hurt",
+      "text": "Taking it out lowered the loss: the full set-up is better without it",
+      "correct": true
+     },
+     {
+      "id": "helped",
+      "text": "It is the most valuable change, since its effect is largest in size",
+      "why": "The sign matters: a negative effect means the loss fell when the change was removed."
+     },
+     {
+      "id": "nothing",
+      "text": "It did nothing, since the effect is below zero",
+      "why": "Below zero is not zero: the loss moved, downwards, when the change came out."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A negative effect means the change was costing the full set-up.",
+    "generic": "Not quite. Read the sign of without minus full.",
+    "byKey": {
+     "helped": "Negative means removing it helped.",
+     "nothing": "Negative is a real move, not none."
+    }
+   },
+   "explain": {
+    "text": "Without minus full is negative, so the loss fell when $k$ was removed. As with our dropout, the change was hurting, at least on these seeds."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "An ablation table in code",
+   "prose": "Write `ablation_table(runs, full, removed)`: for each change, pair each seed of the row without it with the same seed of `full`, and return the mean and sd ($n - 1$) of the differences. Then `interaction(t)` for a 2 by 2 table of mean losses.",
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def ablation_table(runs, full, removed):\n    # runs: dicts with \"config\", \"seed\", \"val\"; removed maps a change to the config without it\n    # return {change: (mean of without minus full, paired by seed; sd of those differences, n - 1)}\n    ...\n\n\ndef interaction(t):\n    # t[a][b]: mean loss with change A off (0) or on (1), and change B off or on\n    # return (A's effect with B off, A's effect with B on, their difference)\n    ...\n",
+    "solution": "def ablation_table(runs, full, removed):\n    base = {r[\"seed\"]: r[\"val\"] for r in runs if r[\"config\"] == full}\n    table = {}\n    for change, name in removed.items():\n        diffs = [r[\"val\"] - base[r[\"seed\"]] for r in runs if r[\"config\"] == name and r[\"seed\"] in base]\n        n = len(diffs)\n        mean = sum(diffs) / n\n        sd = (sum((d - mean) ** 2 for d in diffs) / (n - 1)) ** 0.5\n        table[change] = (mean, sd)\n    return table\n\n\ndef interaction(t):\n    # t[a][b]: mean loss with change A off (0) or on (1), and change B off or on\n    a_alone = t[1][0] - t[0][0]\n    a_with_b = t[1][1] - t[0][1]\n    return (a_alone, a_with_b, a_with_b - a_alone)\n",
+    "prelude": "import json\nRUNS = json.load(open(\"nn-train-seeds.json\"))[\"runs\"]\nRUNS = [r for r in RUNS if r[\"split_seed\"] == 0]\n",
+    "data": {
+     "nn-train-seeds.json": "content/data/ai/nn-train-seeds.json"
+    },
+    "examples": [
+     {
+      "call": "interaction([[0.3, 0.29], [0.31, 0.24]])",
+      "compare": "isclose",
+      "expect": "(0.010000000000000009, -0.04999999999999999, -0.06)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "ablation_table(RUNS, \"adam+ln+do\", {\"adam\": \"sgd+ln+do\", \"ln\": \"adam+do\", \"do\": \"adam+ln\"})",
+      "compare": "isclose",
+      "expect": "{'adam': (0.057749365582649016, 0.06631024227122505), 'ln': (0.11122793351872437, 0.046809860968053695), 'do': (-0.023613150274934235, 0.01454927322889804)}"
+     },
+     {
+      "setup": "mini = [{\"config\": \"f\", \"seed\": 0, \"val\": 0.1}, {\"config\": \"f\", \"seed\": 1, \"val\": 0.3}, {\"config\": \"g\", \"seed\": 1, \"val\": 0.35}, {\"config\": \"g\", \"seed\": 0, \"val\": 0.12}]",
+      "call": "ablation_table(mini, \"f\", {\"x\": \"g\"})",
+      "compare": "isclose",
+      "expect": "{'x': (0.03499999999999999, 0.021213203435596427)}"
+     },
+     {
+      "call": "ablation_table(RUNS, \"sgd\", {\"adam\": \"adam\", \"ln\": \"sgd+ln\"})",
+      "compare": "isclose",
+      "expect": "{'adam': (-0.1205038559760234, 0.055804790083279585), 'ln': (-0.11914576642569778, 0.07023708592034873)}"
+     },
+     {
+      "call": "interaction([[0.2047, 0.0856], [0.0842, 0.0217]])",
+      "compare": "isclose",
+      "expect": "(-0.1205, -0.0639, 0.0566)"
+     },
+     {
+      "call": "interaction([[1.0, 1.0], [2.0, 2.0]])[2]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0,
+       "abs": 1e-12
+      },
+      "expect": "0.0"
+     },
+     {
+      "setup": "shuffled = sorted(RUNS, key=lambda r: (r[\"val\"], r[\"config\"]))",
+      "call": "ablation_table(shuffled, \"adam+ln+do\", {\"adam\": \"sgd+ln+do\", \"ln\": \"adam+do\", \"do\": \"adam+ln\"})",
+      "compare": "isclose",
+      "expect": "{'adam': (0.057749365582649016, 0.06631024227122505), 'ln': (0.11122793351872437, 0.046809860968053695), 'do': (-0.023613150274934235, 0.01454927322889804)}"
+     }
+    ],
+    "how": "The runs of `nn-train-seeds.json` on split 0 are loaded as `RUNS`. Submit runs 6 hidden tests: our ablation from the file, a planted two-seed table listed out of seed order, the add-one direction, two interactions and the file's runs shuffled. Each value must be within relative $10^{-9}$.",
+    "budget": 2000,
+    "mutants": [
+     {
+      "source": "def ablation_table(runs, full, removed):\n    base = {r[\"seed\"]: r[\"val\"] for r in runs if r[\"config\"] == full}\n    table = {}\n    for change, name in removed.items():\n        diffs = [r[\"val\"] - base[r[\"seed\"]] for r in runs if r[\"config\"] == name and r[\"seed\"] in base]\n        n = len(diffs)\n        mean = sum(diffs) / n\n        w = [r[\"val\"] for r in runs if r[\"config\"] == name]\n        sd = (sum((x - sum(w) / len(w)) ** 2 for x in w) / (len(w) - 1)) ** 0.5\n        table[change] = (mean, sd)\n    return table\n\n\ndef interaction(t):\n    # t[a][b]: mean loss with change A off (0) or on (1), and change B off or on\n    a_alone = t[1][0] - t[0][0]\n    a_with_b = t[1][1] - t[0][1]\n    return (a_alone, a_with_b, a_with_b - a_alone)\n",
+      "test": 1,
+      "symptom": "Takes the sd of the removed row, not of the paired differences."
+     },
+     {
+      "source": "def ablation_table(runs, full, removed):\n    base = {r[\"seed\"]: r[\"val\"] for r in runs if r[\"config\"] == full}\n    table = {}\n    for change, name in removed.items():\n        diffs = [base[r[\"seed\"]] - r[\"val\"] for r in runs if r[\"config\"] == name and r[\"seed\"] in base]\n        n = len(diffs)\n        mean = sum(diffs) / n\n        sd = (sum((d - mean) ** 2 for d in diffs) / (n - 1)) ** 0.5\n        table[change] = (mean, sd)\n    return table\n\n\ndef interaction(t):\n    # t[a][b]: mean loss with change A off (0) or on (1), and change B off or on\n    a_alone = t[1][0] - t[0][0]\n    a_with_b = t[1][1] - t[0][1]\n    return (a_alone, a_with_b, a_with_b - a_alone)\n",
+      "test": 1,
+      "symptom": "Subtracts the other way round, so the signs flip."
+     },
+     {
+      "source": "def ablation_table(runs, full, removed):\n    base = {r[\"seed\"]: r[\"val\"] for r in runs if r[\"config\"] == full}\n    table = {}\n    for change, name in removed.items():\n        fl = [r[\"val\"] for r in runs if r[\"config\"] == full]\n        diffs = [r[\"val\"] - fl[i] for i, r in enumerate(x for x in runs if x[\"config\"] == name)]\n        n = len(diffs)\n        mean = sum(diffs) / n\n        sd = (sum((d - mean) ** 2 for d in diffs) / (n - 1)) ** 0.5\n        table[change] = (mean, sd)\n    return table\n\n\ndef interaction(t):\n    # t[a][b]: mean loss with change A off (0) or on (1), and change B off or on\n    a_alone = t[1][0] - t[0][0]\n    a_with_b = t[1][1] - t[0][1]\n    return (a_alone, a_with_b, a_with_b - a_alone)\n",
+      "test": 2,
+      "symptom": "Pairs by list position, so out-of-order seeds are mismatched."
+     },
+     {
+      "source": "def ablation_table(runs, full, removed):\n    base = {r[\"seed\"]: r[\"val\"] for r in runs if r[\"config\"] == full}\n    table = {}\n    for change, name in removed.items():\n        diffs = [r[\"val\"] - base[r[\"seed\"]] for r in runs if r[\"config\"] == name and r[\"seed\"] in base]\n        n = len(diffs)\n        mean = sum(diffs) / n\n        sd = (sum((d - mean) ** 2 for d in diffs) / (n - 1)) ** 0.5\n        table[change] = (mean, sd)\n    return table\n\n\ndef interaction(t):\n    # t[a][b]: mean loss with change A off (0) or on (1), and change B off or on\n    a_alone = t[1][0] - t[0][0]\n    a_with_b = t[1][1] - t[0][1]\n    return (a_alone, a_with_b, t[1][1] - t[0][0])\n",
+      "test": 4,
+      "symptom": "Takes the interaction as both changes against the base."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Key the full set-up's losses by seed first."
+    },
+    {
+     "rung": "point",
+     "text": "Pair by seed number, not by position in the list."
+    },
+    {
+     "rung": "step",
+     "text": "The interaction is A's effect with B on minus its effect with B off."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. Our table reads 0.0577, 0.1112 and -0.0236 for Adam, layer norm and dropout.",
+    "generic": "Not quite. Read the first failing test in the results."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Before the capital moves",
+   "prose": "A quant team's new return model adds five features and a new loss to last year's model, and its backtest is better. The head of research asks for a remove-one ablation, each row trained with 5 seeds.",
+   "question": "How many training runs is that, the full model included?",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Row",
+      "Seeds"
+     ],
+     "rows": [
+      [
+       "full model",
+       "5"
+      ],
+      [
+       "without feature 1",
+       "5"
+      ],
+      [
+       "...",
+       "..."
+      ],
+      [
+       "without the new loss",
+       "5"
+      ]
+     ]
+    }
+   },
+   "widget": {
+    "kind": "numeric",
+    "answer": 35,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "nofull",
+      "value": 30,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "five",
+      "value": 25,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "fact",
+      "value": 320,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the changes: features and the loss."
+    },
+    {
+     "rung": "point",
+     "text": "Six changes, so seven rows.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(6 + 1) \\times 5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(6 + 1) \\times 5 = 35$ runs.",
+    "generic": "Not quite. Count the changes, add the full row, multiply by the seeds.",
+    "byKey": {
+     "nofull": "You left out the full model's own runs.",
+     "five": "The new loss is a change too.",
+     "fact": "That is every mix, $2^6 \\times 5$; remove-one needs far fewer."
+    }
+   },
+   "explain": {
+    "text": "Five features and a loss are six changes, so seven rows of 5 seeds: 35 runs. Each feature's row shows what it adds on top of the rest, with a seed spread to judge it by."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "An ablation removes one change at a time from the full set-up, each row over the same seeds, and reports the mean difference and its sd.",
+   "On our net layer norm mattered most (0.111), Adam next (0.058), and dropout hurt (-0.024).",
+   "Changes interact: adding one to the baseline and removing it from the full set-up can disagree, so say which direction you ran."
+  ],
+  "formula": {
+   "name": "Ablation effect and interaction",
+   "tex": "\\Delta_k = \\overline{L(\\text{full} - k) - L(\\text{full})}, \\qquad I = (L_{11} - L_{01}) - (L_{10} - L_{00})",
+   "note": "Paired by seed; one change per row."
+  },
+  "trap": "One seed per row, or two changes in one row: the \"most important\" change is then partly noise or confounded."
+ },
+ "quiz": [
+  {
+   "id": "q14-runs",
+   "difficulty": 2,
+   "prose": "A remove-one ablation tests four changes, each row over 3 seeds.",
+   "question": "How many training runs, the full set-up included?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 15,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "nofull",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "fact",
+      "value": 48,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(4 + 1) \\times 3 = 15$.",
+    "generic": "Not quite. Rows times seeds.",
+    "byKey": {
+     "nofull": "The full set-up needs its own runs.",
+     "fact": "That is all $2^4$ mixes."
+    }
+   },
+   "explain": {
+    "text": "Four removals plus the full set-up make 5 rows, and $5 \\times 3 = 15$ runs."
+   }
+  },
+  {
+   "id": "q14-read",
+   "difficulty": 2,
+   "prose": "A removal table reads: change P, effect 0.040 (sd 0.005); change Q, effect 0.045 (sd 0.090), over ten seeds each.",
+   "question": "Which change does the evidence support more firmly?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "p",
+      "text": "P: its effect is steady across seeds",
+      "correct": true
+     },
+     {
+      "id": "q",
+      "text": "Q: its effect is the larger of the two",
+      "why": "Q's mean is a little larger, but its sd is twice its mean, so its sign is uncertain."
+     },
+     {
+      "id": "same",
+      "text": "Neither: the effects are almost equal",
+      "why": "The means are close, but the spreads differ eighteenfold."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "P's ten differences all sit near 0.040; Q's swing either way.",
+    "generic": "Not quite. Compare each effect with its sd.",
+    "byKey": {
+     "q": "Q's sd swamps its mean.",
+     "same": "Look at the sds."
+    }
+   },
+   "explain": {
+    "text": "An effect counts only against its seed spread. P's 0.040 has sd 0.005; Q's 0.045 has sd 0.090, so some seeds show Q hurting."
+   }
+  },
+  {
+   "id": "q14-inter",
+   "difficulty": 3,
+   "prose": "Mean losses: base 0.50; with change A 0.40; with change B 0.45; with both 0.30.",
+   "question": "What is the interaction: A's effect with B on, minus its effect with B off? Give 2 decimal places, with its sign.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.05,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "both",
+      "value": -0.2,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(0.30 - 0.45) - (0.40 - 0.50) = -0.05$.",
+    "generic": "Not quite. A's effect in each column, then the difference.",
+    "byKey": {
+     "sign": "Keep the order: with B on minus with B off.",
+     "both": "That is both changes against the base."
+    }
+   },
+   "explain": {
+    "text": "A lowers the loss by 0.10 alone and by 0.15 with B. The interaction is $-0.15 - (-0.10) = -0.05$: the two help more together."
+   }
+  }
+ ]
+}
