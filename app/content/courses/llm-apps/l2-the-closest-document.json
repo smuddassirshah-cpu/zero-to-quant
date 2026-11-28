@@ -577,7 +577,7 @@
     }
    },
    "explain": {
-    "text": "Note 4's 'inflation' term alone is 0.2015, below note 1's 0.3919. More than half of note 4's score came from 'and', a word with no meaning: in four notes it looked rare, so its IDF was high.",
+    "text": "Note 4's 'inflation' term alone is 0.2015, below note 1's 0.3919. More than half of note 4's score came from 'and', a word that says nothing about the subject: in four notes it looked rare, so its IDF was high.",
     "canvas": {
      "highlight": [
       "xn1",
@@ -784,9 +784,13 @@
       "setup": "import json\nN = [n['text'] for n in json.load(open('llm-apps-notes.json'))['notes']]",
       "call": "rank('corran refinancing debt', N)[:5]",
       "expect": "[49, 68, 85, 20, 13]"
+     },
+     {
+      "call": "rank('rates', N)[100:106]",
+      "expect": "[92, 93, 94, 95, 96, 97]"
      }
     ],
-    "how": "Submit runs 8 hidden tests. Three are cosines within absolute $10^{-9}$, one with a zero vector. Five are exact rankings: the four notes with and without stop words, a query with no known word, a one-word query with tied scores, and the first five of the 180-note file.",
+    "how": "Submit runs 9 hidden tests. Three are cosines within absolute $10^{-9}$, one with a zero vector. Six are exact rankings: the four notes with and without stop words, a query with no known word, a one-word query with tied scores, the first five of the 180-note file, and a slice of the 180-note ranking where many notes tie at 0.",
     "mutants": [
      {
       "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    a = np.asarray(a, dtype=float)\n    b = np.asarray(b, dtype=float)\n    na, nb = np.linalg.norm(a), np.linalg.norm(b)\n    if na == 0 or nb == 0:\n        return 0.0\n    return float(a @ b)\n\n\ndef rank(query, docs, stop_words=()):\n    model = fit_tfidf(docs, stop_words)\n    q = embed(query, model, stop_words)\n    if not q.any():\n        return []\n    scores = [cosine(q, row) for row in model['X']]\n    return sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n",
@@ -812,6 +816,11 @@
       "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    a = np.asarray(a, dtype=float)\n    b = np.asarray(b, dtype=float)\n    na, nb = np.linalg.norm(a), np.linalg.norm(b)\n    if na == 0 or nb == 0:\n        return 0.0\n    return float(a @ b / (na * nb))\n\n\ndef rank(query, docs, stop_words=()):\n    model = fit_tfidf(docs, stop_words)\n    q = embed(query, model, stop_words)\n    if not q.any():\n        return []\n    scores = [cosine(q, row) for row in model['X']]\n    return sorted(reversed(range(len(docs))), key=lambda i: -scores[i])\n",
       "test": 7,
       "symptom": "Breaks ties towards the higher index."
+     },
+     {
+      "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    a = np.asarray(a, dtype=float)\n    b = np.asarray(b, dtype=float)\n    na, nb = np.linalg.norm(a), np.linalg.norm(b)\n    if na == 0 or nb == 0:\n        return 0.0\n    return float(a @ b / (na * nb))\n\n\ndef rank(query, docs, stop_words=()):\n    model = fit_tfidf(docs, stop_words)\n    q = embed(query, model, stop_words)\n    if not q.any():\n        return []\n    scores = [cosine(q, row) for row in model['X']]\n    return [int(i) for i in np.argsort(-np.array(scores))]\n",
+      "test": 9,
+      "symptom": "Breaks ties with np.argsort, which does not keep index order in a long list."
      }
     ],
     "data": {
@@ -837,7 +846,8 @@
      "test-3": "A zero vector has length 0: return 0.0 before dividing.",
      "test-5": "With 'and', 'as' and 'on' left out, note 1 (index 0) must come first: drop the stop words from the notes and the query.",
      "test-6": "'gilt yields' shares no word with any note: return an empty list, not a ranking of zeros.",
-     "test-7": "Notes 1 and 2 tie for 'rates': the lower index, 0, must come first."
+     "test-7": "Notes 3 and 4 both score 0 for 'rates': the lower index, 2, must come before 3.",
+     "test-9": "Many notes tie at 0 here, and ties must stay in index order however long the list. `np.argsort` alone does not promise that: sort by `(-score, index)`."
     }
    },
    "explain": {
@@ -941,7 +951,7 @@
    "type": "transfer",
    "difficulty": 3,
    "title": "Apple, the fruit",
-   "prose": "A news screener for an equity desk scores headlines against **apple results**. The fruit story 'apple harvest results hit by frost' scores 0.5309, above the company story 'apple shares rise after record results' at 0.4523.",
+   "prose": "A news screener for an equity desk scores headlines, stop words left out, against **apple results**. The fruit story 'apple harvest results hit by frost' scores 0.5309, above the company story 'apple shares rise after record results' at 0.4523.",
    "canvas": {
     "kind": "bars",
     "params": {
@@ -1019,7 +1029,7 @@
     "generic": "Not quite. Compare the words each headline shares with the query."
    },
    "explain": {
-    "text": "Each headline shares 'apple' and 'results'; the fruit one has fewer other words diluting them, so it wins. A search that matches meaning rather than spelling is the next lesson."
+    "text": "Each headline shares 'apple' and 'results'; once the stop word 'by' is dropped the fruit one has fewer other words diluting them, so it wins. A search that matches meaning rather than spelling is the next lesson."
    }
   }
  ],

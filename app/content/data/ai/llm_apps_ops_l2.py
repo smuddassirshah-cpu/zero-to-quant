@@ -12,7 +12,8 @@ make_market(seed=0, days=2000, cutoff_day=1500, edge=0.0005, memory=2.0, late=2.
     "cutoff":  dates[cutoff_day - 1], the last day of the model's training text.
     "docs":    list of {"published": 'YYYY-MM-DD HH:MM', "day": t, "score": s}, one document a day, published at a
                minute drawn uniformly from 08:00 to 19:59. Its score is signal[t]
-               + memory * ret[t] / 0.01 for t < cutoff_day (the model has read what happened next)
+               + memory * ret[t] / 0.01 for t < cutoff_day (the model has read what happened next; the cut-off
+                 day's own next move, ret[cutoff_day - 1], is treated as known too, one day in 1,500)
                + late * ret[t] / 0.01 if published after 16:30 (news after the close already carries the next move)
                + drift for t >= days - 250 (a vendor update shifts every score up in the last year).
     "close":   '16:30', the decision time.

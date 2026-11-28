@@ -14,14 +14,14 @@
    "type": "problem",
    "difficulty": 1,
    "title": "The model reads only the label",
-   "prose": "There is no language model in this course's browser, so the agents here run against a **scripted model**: fixed replies, the same every run, built to show real behaviours. Like a real model, it picks a tool by reading the tools' descriptions. Below, three tools are offered with the same vague description, 'Gets data.', for the question about CORR's close.",
+   "prose": "There is no language model in this course's browser, so the agents here run against a **scripted model**: fixed replies, the same every run, built to show real behaviours. It picks by description, as a real model leans on it (a real one also reads names and schemas). Below, three tools are offered under the uninformative names tool_a, tool_b and tool_c, with the same vague description, 'Gets data.', for the question about CORR's close.",
    "canvas": {
     "kind": "console",
     "params": {
      "title": "Vague descriptions",
      "lines": [
       "user: [D01] What was CORR's close on 2024-03-08?",
-      "model: call search_notes {\"query\": \"What was CORR's close on 2024-03-08?\"}",
+      "model: call tool_a {\"query\": \"What was CORR's close on 2024-03-08?\"}",
       "tool: {\"result\": [101, 176, 94]}",
       "model: answer note 101"
      ],
@@ -36,23 +36,23 @@
     "options": [
      {
       "id": "search",
-      "text": "search_notes, the first one listed",
+      "text": "tool_a, the first one listed",
       "correct": true
      },
      {
       "id": "close",
-      "text": "get_close, the price tool",
-      "why": "That is the right tool, but nothing in 'Gets data.' told the model so."
+      "text": "tool_b, which is the price tool underneath",
+      "why": "That is the right tool, but nothing in 'Gets data.' or its name told the model so."
      },
      {
       "id": "pct",
-      "text": "pct_change",
-      "why": "It took the first tool on the list, search_notes."
+      "text": "tool_c",
+      "why": "It took the first tool on the list, tool_a."
      },
      {
       "id": "none",
       "text": "None: it refused",
-      "why": "It called a tool; the trace shows search_notes."
+      "why": "It called a tool; the trace shows tool_a."
      }
     ]
    },
@@ -63,11 +63,11 @@
     }
    ],
    "feedback": {
-    "correct": "search_notes: with nothing to choose by, it took the first tool, and answered 'note 101' to a price question.",
+    "correct": "tool_a, which is search_notes underneath: with nothing to choose by, it took the first tool, and answered 'note 101' to a price question.",
     "generic": "Not quite. Read the model's call in the trace."
    },
    "explain": {
-    "text": "A model sees only each tool's name, description and argument schema. With three identical descriptions it guessed, confidently and wrongly.",
+    "text": "A model sees each tool's name, description and argument schema. With nothing to tell three tools apart, it guessed, confidently and wrongly.",
     "canvas": {
      "highlight": [
       "l2",
@@ -79,7 +79,7 @@
   {
    "type": "explore",
    "title": "Fix the description",
-   "prose": "Now the tools carry real descriptions; get_close's says 'Closing price of one share on one trading day.' Tap the line where the model's choice changes.",
+   "prose": "Now the tools carry their real names and descriptions; get_close's says 'Closing price of one share on one trading day.' Tap the line where the model's choice changes.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -497,7 +497,7 @@
   {
    "type": "generalise",
    "title": "A tool is a contract",
-   "prose": "What you built: a tool is a name, a description the model reads, and a schema the harness checks,\n\n```text\n{\"name\": \"get_close\",\n \"description\": \"Closing price of one share...\",\n \"input_schema\": {\"type\": \"object\", \"properties\": {...},\n                  \"required\": [...], \"additionalProperties\": false}}\n```\n\nThis is the shape real model APIs use.",
+   "prose": "What you built: a tool is a name, a description the model reads, and a schema the harness checks,\n\n```text\n{\"name\": \"get_close\",\n \"description\": \"Closing price of one share...\",\n \"input_schema\": {\"type\": \"object\", \"properties\": {...},\n                  \"required\": [...], \"additionalProperties\": false}}\n```\n\nThis is the shape Anthropic's API uses; others rename `input_schema`.",
    "question": "Where does a rule such as 'k is at most 10' belong?",
    "widget": {
     "kind": "choice",
@@ -599,9 +599,13 @@
      {
       "call": "sorted(validate({}, {'type': 'object', 'properties': {}, 'additionalProperties': False}))",
       "expect": "[]"
+     },
+     {
+      "call": "sorted(validate({'query': 'debt', 'k': 2.5}, SN))",
+      "expect": "[\"field 'k' must be integer, got number\"]"
      }
     ],
-    "how": "Submit runs 10 hidden tests, each an exact sorted list. They cover a good call, a missing field, an integer date, a name outside the enum with an extra key, a boolean where an integer is wanted, and k above and below its bounds. The rest are a number where an enum string is wanted, arguments that are not an object, and an empty schema.",
+    "how": "Submit runs 11 hidden tests, each an exact sorted list. They cover a good call, a missing field, an integer date, a name outside the enum with an extra key, a boolean and a decimal where an integer is wanted, and k above and below its bounds. The rest are a number where an enum string is wanted, arguments that are not an object, and an empty schema.",
     "mutants": [
      {
       "source": "def validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\n",
@@ -627,6 +631,11 @@
       "source": "def validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\n",
       "test": 7,
       "symptom": "Checks the maximum but not the minimum."
+     },
+     {
+      "source": "def validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\n",
+      "test": 11,
+      "symptom": "Accepts 2.5 where an integer is wanted."
      }
     ],
     "data": {
@@ -653,7 +662,8 @@
      "test-8": "After a type error, skip the field's other checks: a number for the ticker is one error, not two.",
      "test-4": "'k' is not a get_close field: report \"unexpected field 'k'\".",
      "test-5": "In Python True is an int; refuse booleans where an integer is wanted.",
-     "test-7": "k = 0 is below the minimum of 1: report it."
+     "test-7": "k = 0 is below the minimum of 1: report it.",
+     "test-11": "2.5 is a number but not an integer: refuse it where an integer is wanted, and say it got a number."
     }
    },
    "explain": {
@@ -830,7 +840,7 @@
   "formula": {
    "name": "Tool record",
    "tex": "\\{\\text{name}, \\text{description}, \\text{input\\_schema}\\}",
-   "note": "The shape real model APIs use."
+   "note": "The shape Anthropic's API uses; others rename `input_schema`."
   },
   "trap": "A ticker typed as any string, with the rule only in the description: 'Corran Group' reaches the price table."
  },
@@ -904,7 +914,7 @@
   {
    "id": "q9-desc",
    "difficulty": 2,
-   "prose": "Two tools have the same description, 'Gets data.'",
+   "prose": "Two tools have the same description, 'Gets data.', and uninformative names.",
    "question": "What does a model use to choose between them?",
    "widget": {
     "kind": "choice",
@@ -912,7 +922,7 @@
     "options": [
      {
       "id": "guess",
-      "text": "Little more than their names and order: it is guessing",
+      "text": "Little more than their order: it is guessing",
       "correct": true
      },
      {
@@ -923,7 +933,7 @@
      {
       "id": "schema",
       "text": "Only their schemas, which are enough",
-      "why": "Schemas show arguments, not purpose."
+      "why": "Schemas show arguments, which help, but here nothing else tells the tools apart."
      },
      {
       "id": "results",
@@ -937,7 +947,7 @@
     "generic": "Not quite. What does the model see?"
    },
    "explain": {
-    "text": "The model sees name, description and schema. With equal descriptions it has little to go on."
+    "text": "The model sees name, description and schema. With equal descriptions and names it has little to go on."
    }
   }
  ]

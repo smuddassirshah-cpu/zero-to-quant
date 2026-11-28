@@ -276,7 +276,7 @@
    "type": "problem",
    "difficulty": 2,
    "title": "A success rate with an error bar",
-   "prose": "The **success rate** is the share of tasks that succeed; with $n$ tasks, its standard error is $\\sqrt{p(1-p)/n}$ (`post-train` level 4).",
+   "prose": "The **success rate** is the share of tasks that succeed; with $n$ tasks, its standard error is $\\sqrt{p(1-p)/n}$ (`post-train` level 4, when you reach it).",
    "canvas": {
     "kind": "table",
     "params": {
@@ -566,7 +566,7 @@
     }
    ],
    "feedback": {
-    "correct": "$0.95^{10} = 0.5987$: worse than a coin toss would suggest by eye.",
+    "correct": "$0.95^{10} = 0.5987$: four tasks in ten fail, though each step looks safe.",
     "generic": "Not quite. Raise 0.95 to the 10th power.",
     "byKey": {
      "linear": "You took 5% off per step, 50% in all. Chances multiply: 0.95 times itself 10 times.",
@@ -649,7 +649,7 @@
     }
    ],
    "feedback": {
-    "correct": "$\\sqrt{0.21/40} = 0.0725$, so a 5-point gap is under one standard error: not distinguishable.",
+    "correct": "$\\sqrt{0.21/40} = 0.0725$ for one rate. The difference of two such rates has standard error about 0.10, twice the 5-point gap: not distinguishable.",
     "generic": "Not quite. Use $\\sqrt{p(1-p)/n}$.",
     "byKey": {
      "var": "That is the variance.",
@@ -657,7 +657,7 @@
     }
    },
    "explain": {
-    "text": "Each rate is uncertain by about 0.0725, so 0.70 against 0.75 is well inside the noise. Hundreds of tasks, or a paired comparison on the same tasks, are needed."
+    "text": "Each rate is uncertain by about 0.0725 and their difference by about 0.10, so 0.70 against 0.75 is well inside the noise. Hundreds of tasks, or a paired comparison on the same tasks, are needed."
    }
   },
   {
@@ -980,17 +980,17 @@
     }
    ],
    "feedback": {
-    "correct": "Score the outcome and the required facts (the closes), not one exact path.",
+    "correct": "Score the outcome and the required tools (the ones that fetch the facts), not one exact path.",
     "generic": "Not quite. Was pct_change needed to know the answer?"
    },
    "explain": {
-    "text": "T13 lists only get_close as required. Requiring the facts, not a fixed sequence, lets valid alternatives pass and memorised answers fail."
+    "text": "T13 lists only get_close as required. Requiring the tools that fetch the facts, not a fixed sequence, lets valid alternatives pass and memorised answers fail."
    }
   },
   {
    "type": "generalise",
    "title": "Agent or workflow",
-   "prose": "What you measured: score each run for a right answer and the required tools; aggregate into a success rate with its standard error; compare variants on the same tasks. Reliability compounds, $p^n$ for $n$ steps. On these tasks the fixed workflow of l11 succeeds on 20 of 20; the agent on 16.",
+   "prose": "What you measured: score each run for a right answer and the required tools; aggregate into a success rate with its standard error; compare variants on the same tasks. Reliability compounds, $p^n$ for $n$ steps. On a fair run, both get only the question text. The fixed workflow of l11 succeeds on 19 of 20, failing T12, the holiday, and the agent on 16. The agent's four failures are planted in its script (two endless searches, an answer with no tool, a memorised answer), so they show what was planted, not how agents behave. On the other 16 tasks the agent is right on all 16 and the workflow on 15.",
    "question": "When do Anthropic's guidelines favour a workflow over an agent?",
    "widget": {
     "kind": "choice",
@@ -1004,7 +1004,7 @@
      {
       "id": "hard",
       "text": "When the task is hard",
-      "why": "Hard tasks with unknown steps are where an agent earns its cost."
+      "why": "Difficulty is not the test: a hard task with known steps still suits a workflow. An agent earns its cost when the steps are not known."
      },
      {
       "id": "cheap",
@@ -1014,7 +1014,7 @@
      {
       "id": "never",
       "text": "Never: agents are always better",
-      "why": "Here the workflow beat the agent on every count."
+      "why": "Agents are not always better: where the steps are known, a fixed chain is cheaper and cannot loop."
      }
     ]
    },
@@ -1025,11 +1025,11 @@
     }
    ],
    "feedback": {
-    "correct": "When the steps are known: a fixed chain is cheaper, easier to test and as good.",
+    "correct": "When the steps are known: a fixed chain is cheaper, easier to test and as good. An agent earns its cost when they are not, as in T12.",
     "generic": "Not quite. What did the workflow need?"
    },
    "explain": {
-    "text": "Start with the simplest thing that works, a workflow when the steps are known, and move to an agent only when the next step depends on what the last one found."
+    "text": "Start with the simplest thing that works, a workflow when the steps are known, and move to an agent only when the next step depends on what the last one found. Both are built from an augmented model (a model with tools, retrieval and memory), and prompt chaining and routing are two workflow patterns. On T12 the next step depended on an error, so only the agent could take it."
    }
   },
   {
@@ -1068,7 +1068,7 @@
       "expect": "True"
      },
      {
-      "call": "score_trajectory({'answer': None, 'messages': [{'role': 'tool', 'name': 'get_close', 'content': {'error': 'x'}}]}, T['T01'])['used_required']",
+      "call": "score_trajectory({'answer': '97.87', 'messages': [{'role': 'assistant', 'content': {'type': 'tool_call', 'name': 'get_close', 'arguments': '{}'}}, {'role': 'tool', 'name': 'get_close', 'content': {'error': 'x'}}, {'role': 'assistant', 'content': {'type': 'answer', 'text': '97.87'}}]}, T['T01'])['used_required']",
       "expect": "False"
      },
      {
@@ -1078,9 +1078,13 @@
      {
       "call": "sum(score_trajectory(run_agent(t, respond, TOOLS, 8), t)['success'] for t in TASKS)",
       "expect": "16"
+     },
+     {
+      "call": "score_trajectory({'answer': '97.87 or 98.10', 'messages': [{'role': 'assistant', 'content': {'type': 'tool_call', 'name': 'get_close', 'arguments': '{}'}}, {'role': 'tool', 'name': 'get_close', 'content': {'result': 97.87}}, {'role': 'assistant', 'content': {'type': 'answer', 'text': '97.87'}}]}, T['T01'])['correct']",
+      "expect": "False"
      }
     ],
-    "how": "Submit runs 7 hidden tests, each exact. They cover a clean run, the answer from memory, a run with one invalid call and an answer padded with spaces. Then a required tool that only failed, the run with two valid paths, and the count of successes over the 20 planted tasks. `run_agent` and the scripted `respond` are defined.",
+    "how": "Submit runs 8 hidden tests, each exact. They cover a clean run, the answer from memory, a run with one invalid call and an answer padded with spaces. Then a required tool whose only call failed, the run with two valid paths and the count of successes over the 20 planted tasks. The last test is a hedged answer that names two values. `run_agent` and the scripted `respond` are defined.",
     "mutants": [
      {
       "source": "import math\n\n\ndef score_trajectory(traj, task):\n    used = {m['name'] for m in traj['messages'] if m['role'] == 'tool' and 'result' in m['content']}\n    correct = traj['answer'] is not None and traj['answer'].strip() == task['answer']\n    required = all(r in used for r in task['required'])\n    return {'correct': correct, 'used_required': required,\n            'invalid_calls': sum(1 for m in traj['messages'] if m['role'] == 'tool' and 'error' in m['content']),\n            'steps': sum(1 for m in traj['messages'] if m['role'] == 'assistant'),\n            'success': correct}\n",
@@ -1101,6 +1105,16 @@
       "source": "import math\n\n\ndef score_trajectory(traj, task):\n    used = {m['name'] for m in traj['messages'] if m['role'] == 'tool'}\n    correct = traj['answer'] is not None and traj['answer'].strip() == task['answer']\n    required = all(r in used for r in task['required'])\n    return {'correct': correct, 'used_required': required,\n            'invalid_calls': sum(1 for m in traj['messages'] if m['role'] == 'tool' and 'error' in m['content']),\n            'steps': sum(1 for m in traj['messages'] if m['role'] == 'assistant'),\n            'success': correct and required}\n",
       "test": 5,
       "symptom": "Counts a tool as used even when its call failed."
+     },
+     {
+      "source": "import math\n\n\ndef score_trajectory(traj, task):\n    used = {m['name'] for m in traj['messages'] if m['role'] == 'tool' and 'result' in m['content']}\n    correct = traj['answer'] is not None and task['answer'] in traj['answer']\n    required = all(r in used for r in task['required'])\n    return {'correct': correct, 'used_required': required,\n            'invalid_calls': sum(1 for m in traj['messages'] if m['role'] == 'tool' and 'error' in m['content']),\n            'steps': sum(1 for m in traj['messages'] if m['role'] == 'assistant'),\n            'success': correct and required}\n",
+      "test": 8,
+      "symptom": "Counts an answer as right if it contains the true value, so a hedge passes."
+     },
+     {
+      "source": "import math\n\n\ndef score_trajectory(traj, task):\n    used = {m['content']['name'] for m in traj['messages'] if m['role'] == 'assistant' and m['content'].get('type') == 'tool_call'}\n    correct = traj['answer'] is not None and traj['answer'].strip() == task['answer']\n    required = all(r in used for r in task['required'])\n    return {'correct': correct, 'used_required': required,\n            'invalid_calls': sum(1 for m in traj['messages'] if m['role'] == 'tool' and 'error' in m['content']),\n            'steps': sum(1 for m in traj['messages'] if m['role'] == 'assistant'),\n            'success': correct and required}\n",
+      "test": 5,
+      "symptom": "Counts a required tool as used if it was called, even when the call failed."
      }
     ],
     "data": {
@@ -1126,11 +1140,12 @@
      "test-2": "T14 answered rightly from memory: success also needs every required tool to have returned a result.",
      "test-1": "Steps are the model's replies only, not the question or the tool results.",
      "test-4": "' 97.87 ' is the right close with spaces around it: strip before comparing.",
-     "test-5": "A get_close call that returned an error fetched nothing: count only calls that returned a result."
+     "test-5": "A get_close call that returned an error fetched nothing: count only tool messages that hold a result, not calls made.",
+     "test-8": "'97.87 or 98.10' hedges between two values. An answer is right only when it equals the true value once the spaces are stripped."
     }
    },
    "explain": {
-    "text": "Checking the required tools catches the answer from memory; counting invalid calls and steps shows what a success cost."
+    "text": "Checking the required tools catches the answer from memory; counting invalid calls and steps shows what a success cost. It checks that a required tool returned a result, not which ticker or date it was given, which a stricter scorer would also check."
    }
   },
   {
@@ -1239,14 +1254,14 @@
        "label": "Agent"
       }
      ],
-     "yLabel": "Success on planted tasks",
+     "yLabel": "Success on the 20 planted tasks, same questions",
      "yMax": 1,
      "showValues": true,
      "decimals": 2
     },
     "state": {
      "values": {
-      "w": 1.0,
+      "w": 0.95,
       "a": 0.8
      }
     }
@@ -1289,7 +1304,7 @@
     "generic": "Not quite. Are the steps known each week?"
    },
    "explain": {
-    "text": "The workflow solved 20 of 20 planted tasks with no model call; the agent 16. With 20-step weekly runs at 0.95 a step, an agent would finish only about 36% of weeks cleanly."
+    "text": "Given the same questions, the workflow solved 19 of 20 planted tasks with no model call and the agent 16. The agent's failures were planted, and T12 was the one task the agent solved and the workflow did not. If each of 20 steps succeeded with chance 0.95, an agent would finish only about 36% of weeks cleanly."
    }
   }
  ],
@@ -1297,7 +1312,7 @@
   "ideas": [
    "Score each run on planted tasks for a right answer and the required tools; a right answer without the tool is memory or luck, not evidence.",
    "Report a success rate with its standard error $\\sqrt{p(1-p)/n}$, and compare variants paired on the same tasks; 40 tasks cannot separate 5 points.",
-   "Step reliability compounds as $p^n$; when the steps are known in advance, a fixed workflow is cheaper, testable and as good."
+   "Step reliability compounds as $p^n$; when the steps are known in advance, a fixed workflow is cheaper, testable and as good, and an agent earns its cost when they are not."
   ],
   "formula": {
    "name": "Success rate",

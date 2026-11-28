@@ -12,7 +12,7 @@
    ],
    "performance": "code",
    "title": "An agent harness",
-   "prose": "Write `Agent(tools, schemas, max_steps)` from nothing, with a `run(task, model)` method. `tools` maps a name to a function; `schemas` maps it to `{'description', 'input_schema'}`; `model(messages, specs)` replies as in this level; a task has `id`, `question`, `answer` and `required`.\n\n- Start with `{'role': 'user', 'content': '[<id>] <question>'}`; show the model `name`, `description` and `input_schema` for each tool.\n- Validate every call (types, required, enum, bounds, extra keys). Return each failure as `{'error': message}` in a tool message. Mention JSON for broken arguments, list the real tools for an unknown one, name the field and the expected type or the missing field, and pass a tool's own exception message on.\n- Stop on an answer, after 3 identical calls in a row (`'repeated'`) or at the cap (`'max_steps'`).",
+   "prose": "Write `Agent(tools, schemas, max_steps)` from nothing, with a `run(task, model)` method. `tools` maps a name to a function; `schemas` maps it to `{'description', 'input_schema'}`; `model(messages, specs)` replies as in this level; a task has `id`, `question`, `answer` and `required`.\n\n- Start with `{'role': 'user', 'content': '[<id>] <question>'}`; show the model `name`, `description` and `input_schema` for each tool.\n- Validate every call (types, required, enum, bounds, extra keys). Return each failure as `{'error': message}` in a tool message. Mention JSON for broken arguments, list the real tools for an unknown one, name the field and the expected type (`string` or Python's `str` both count) or the missing field, and pass a tool's own exception message on.\n- Stop on an answer, after 3 identical calls in a row (`'repeated'`) or at the cap (`'max_steps'`).",
    "question": "Return `{'status', 'answer', 'messages', 'score'}`, with `score` as l12's `score_trajectory`.",
    "widget": {
     "kind": "code",
@@ -142,14 +142,14 @@
     "llm-agents"
    ],
    "title": "A fixed chain and its scorecard",
-   "prose": "The same tasks as a workflow: `fixed_chain(task, tools)` answers with no model, and `chain_scorecard(tasks, tools)` scores it. Here `tools` maps a name to its function.",
+   "prose": "The same tasks as a workflow: `fixed_chain(task, tools)` answers with no model from the raw question alone, and `chain_scorecard(tasks, tools)` scores it. Read the ticker, dates and search text with `parse_question(task['question'])`. The chain has no way to recover: if a tool raises, return `None`. Here `tools` maps a name to its function.",
    "question": "Write both functions.",
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import math\n\n\ndef fixed_chain(task, tools):\n    # answer text for a task with no model: a 'query' -> best note id;\n    # one date -> close to 2 places; two dates -> pct_change to 2 places + '%'\n    ...\n\n\ndef chain_scorecard(tasks, tools):\n    # {'solved': count right, 'rate': share right, 'se': sqrt(p(1 - p)/n)}\n    ...\n",
-    "solution": "import math\n\n\ndef fixed_chain(task, tools):\n    if 'query' in task:\n        return str(tools['search_notes'](task['query'], 1)[0])\n    closes = [tools['get_close'](task['ticker'], d) for d in task['dates']]\n    if len(closes) == 1:\n        return f'{closes[0]:.2f}'\n    return f\"{tools['pct_change'](closes[0], closes[1]):.2f}%\"\n\n\ndef chain_scorecard(tasks, tools):\n    right = [fixed_chain(t, tools) == t['answer'] for t in tasks]\n    p = sum(right) / len(right)\n    return {'solved': sum(right), 'rate': p, 'se': math.sqrt(p * (1 - p) / len(right))}\n",
-    "prelude": "import numpy\n",
+    "starter": "import math\n\n\ndef fixed_chain(task, tools):\n    # answer text for a task with no model, from task['question'] alone:\n    # a 'query' -> best note id; one date -> close to 2 places; two dates -> pct_change to 2 places + '%'.\n    # If a tool raises, return None\n    ...\n\n\ndef chain_scorecard(tasks, tools):\n    # {'solved': count right, 'rate': share right, 'se': sqrt(p(1 - p)/n)}\n    ...\n",
+    "solution": "import math\n\n\ndef fixed_chain(task, tools):\n    req = parse_question(task['question'])\n    try:\n        if req['query']:\n            return str(tools['search_notes'](req['query'], 1)[0])\n        closes = [tools['get_close'](req['ticker'], d) for d in req['dates']]\n        if len(closes) == 1:\n            return f'{closes[0]:.2f}'\n        return f\"{tools['pct_change'](closes[0], closes[1]):.2f}%\"\n    except Exception:\n        return None\n\n\ndef chain_scorecard(tasks, tools):\n    right = [fixed_chain(t, tools) == t['answer'] for t in tasks]\n    p = sum(right) / len(right)\n    return {'solved': sum(right), 'rate': p, 'se': math.sqrt(p * (1 - p) / len(right))}\n",
+    "prelude": "import numpy\nfrom llm_apps_ops_l3 import parse_question\n",
     "examples": [
      {
       "setup": "import llm_apps_ops_l3 as o3\nTL = {n: t['fn'] for n, t in o3.TOOLS.items()}",
@@ -164,7 +164,7 @@
       "expect": "'-4.95%'"
      },
      {
-      "call": "fixed_chain({'ticker': 'CORR', 'dates': ['2024-03-11']}, TL)",
+      "call": "fixed_chain({'question': \"What was CORR's close on 2024-03-11?\", 'ticker': 'CORR', 'dates': ['2024-03-11']}, TL)",
       "expect": "'99.50'"
      },
      {
@@ -172,30 +172,39 @@
       "expect": "'79'"
      },
      {
-      "call": "chain_scorecard(o3.TASKS, TL)",
-      "expect": "{'solved': 20, 'rate': 1.0, 'se': 0.0}",
-      "compare": "isclose"
+      "call": "fixed_chain(T['T12'], TL)",
+      "expect": "None"
      },
      {
       "call": "chain_scorecard([T['T01'], dict(T['T02'], answer='0.00')], TL)",
       "expect": "{'solved': 1, 'rate': 0.5, 'se': 0.3535533905932738}",
       "compare": "isclose"
+     },
+     {
+      "call": "chain_scorecard(o3.TASKS, TL)",
+      "expect": "{'solved': 19, 'rate': 0.95, 'se': 0.04873397172404484}",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 5 hidden tests: a percentage move, a close ending in zero, a search, the scorecard of the 20 planted tasks, and a two-task scorecard with one answer planted wrong (within relative $10^{-9}$).",
+    "how": "Submit runs 6 hidden tests: a percentage move, a close ending in zero, a search, the holiday task T12 (which gives `None`), a two-task scorecard with one answer planted wrong, and the scorecard of the 20 planted tasks (within relative $10^{-9}$).",
     "mutants": [
      {
-      "source": "import math\n\n\ndef fixed_chain(task, tools):\n    if 'query' in task:\n        return str(tools['search_notes'](task['query'], 1)[0])\n    closes = [tools['get_close'](task['ticker'], d) for d in task['dates']]\n    if len(closes) == 1:\n        return f'{closes[0]:.2f}'\n    return f\"{tools['pct_change'](closes[1], closes[0]):.2f}%\"\n\n\ndef chain_scorecard(tasks, tools):\n    right = [fixed_chain(t, tools) == t['answer'] for t in tasks]\n    p = sum(right) / len(right)\n    return {'solved': sum(right), 'rate': p, 'se': math.sqrt(p * (1 - p) / len(right))}\n",
+      "source": "import math\n\n\ndef fixed_chain(task, tools):\n    req = parse_question(task['question'])\n    try:\n        if req['query']:\n            return str(tools['search_notes'](req['query'], 1)[0])\n        closes = [tools['get_close'](req['ticker'], d) for d in req['dates']]\n        if len(closes) == 1:\n            return f'{closes[0]:.2f}'\n        return f\"{tools['pct_change'](closes[1], closes[0]):.2f}%\"\n    except Exception:\n        return None\n\n\ndef chain_scorecard(tasks, tools):\n    right = [fixed_chain(t, tools) == t['answer'] for t in tasks]\n    p = sum(right) / len(right)\n    return {'solved': sum(right), 'rate': p, 'se': math.sqrt(p * (1 - p) / len(right))}\n",
       "test": 1,
       "symptom": "Swaps the two closes."
      },
      {
-      "source": "import math\n\n\ndef fixed_chain(task, tools):\n    if 'query' in task:\n        return str(tools['search_notes'](task['query'], 1)[0])\n    closes = [tools['get_close'](task['ticker'], d) for d in task['dates']]\n    if len(closes) == 1:\n        return str(closes[0])\n    return f\"{tools['pct_change'](closes[0], closes[1]):.2f}%\"\n\n\ndef chain_scorecard(tasks, tools):\n    right = [fixed_chain(t, tools) == t['answer'] for t in tasks]\n    p = sum(right) / len(right)\n    return {'solved': sum(right), 'rate': p, 'se': math.sqrt(p * (1 - p) / len(right))}\n",
+      "source": "import math\n\n\ndef fixed_chain(task, tools):\n    req = parse_question(task['question'])\n    try:\n        if req['query']:\n            return str(tools['search_notes'](req['query'], 1)[0])\n        closes = [tools['get_close'](req['ticker'], d) for d in req['dates']]\n        if len(closes) == 1:\n            return str(closes[0])\n        return f\"{tools['pct_change'](closes[0], closes[1]):.2f}%\"\n    except Exception:\n        return None\n\n\ndef chain_scorecard(tasks, tools):\n    right = [fixed_chain(t, tools) == t['answer'] for t in tasks]\n    p = sum(right) / len(right)\n    return {'solved': sum(right), 'rate': p, 'se': math.sqrt(p * (1 - p) / len(right))}\n",
       "test": 2,
       "symptom": "Does not format a close to 2 places."
      },
      {
-      "source": "import math\n\n\ndef fixed_chain(task, tools):\n    if 'query' in task:\n        return str(tools['search_notes'](task['query'], 1)[0])\n    closes = [tools['get_close'](task['ticker'], d) for d in task['dates']]\n    if len(closes) == 1:\n        return f'{closes[0]:.2f}'\n    return f\"{tools['pct_change'](closes[0], closes[1]):.2f}%\"\n\n\ndef chain_scorecard(tasks, tools):\n    right = [fixed_chain(t, tools) == t['answer'] for t in tasks]\n    p = sum(right) / len(right)\n    return {'solved': sum(right), 'rate': p, 'se': math.sqrt(p * (1 - p))}\n",
+      "source": "import math\n\n\ndef fixed_chain(task, tools):\n    req = {'ticker': task.get('ticker'), 'dates': task.get('dates', []), 'query': task.get('query')}\n    try:\n        if req['query']:\n            return str(tools['search_notes'](req['query'], 1)[0])\n        closes = [tools['get_close'](req['ticker'], d) for d in req['dates']]\n        if len(closes) == 1:\n            return f'{closes[0]:.2f}'\n        return f\"{tools['pct_change'](closes[0], closes[1]):.2f}%\"\n    except Exception:\n        return None\n\n\ndef chain_scorecard(tasks, tools):\n    right = [fixed_chain(t, tools) == t['answer'] for t in tasks]\n    p = sum(right) / len(right)\n    return {'solved': sum(right), 'rate': p, 'se': math.sqrt(p * (1 - p) / len(right))}\n",
+      "test": 4,
+      "symptom": "Reads the task's own ticker and dates, not the question, so T12 is handed 28 March."
+     },
+     {
+      "source": "import math\n\n\ndef fixed_chain(task, tools):\n    req = parse_question(task['question'])\n    try:\n        if req['query']:\n            return str(tools['search_notes'](req['query'], 1)[0])\n        closes = [tools['get_close'](req['ticker'], d) for d in req['dates']]\n        if len(closes) == 1:\n            return f'{closes[0]:.2f}'\n        return f\"{tools['pct_change'](closes[0], closes[1]):.2f}%\"\n    except Exception:\n        return None\n\n\ndef chain_scorecard(tasks, tools):\n    right = [fixed_chain(t, tools) == t['answer'] for t in tasks]\n    p = sum(right) / len(right)\n    return {'solved': sum(right), 'rate': p, 'se': math.sqrt(p * (1 - p))}\n",
       "test": 5,
       "symptom": "Leaves n out of the standard error."
      }
@@ -207,16 +216,17 @@
     }
    },
    "feedback": {
-    "correct": "Both match: the chain solves all 20 planted tasks.",
+    "correct": "Both match: the chain solves 19 of the 20 planted tasks and cannot answer the holiday task, T12.",
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-1": "The move runs from the first date to the second.",
      "test-2": "Write closes to 2 places: 99.5 must read 99.50.",
+     "test-4": "T12 asks for 29 March, a holiday with no close. Read the dates from the question, and return None when a tool raises.",
      "test-5": "The standard error divides by n: $\\sqrt{p(1-p)/n}$."
     }
    },
    "explain": {
-    "text": "A rate of 1.0 on 20 tasks still has a standard error of 0 by this formula, which is a warning that 20 tasks say little about rare failures."
+    "text": "The chain solves 19 of 20: it cannot step back from the holiday, the one task whose steps were not fixed in advance. Had it scored 1.0, the standard error would be 0 by this formula, a warning that 20 tasks say little about rare failures."
    }
   },
   {
@@ -266,8 +276,8 @@
      },
      {
       "id": "x2",
-      "text": "Append the result as a user message",
-      "why": "Results go in tool messages tied to their call."
+      "text": "Append the result as plain text, not tied to its call",
+      "why": "A result must be paired with the call it answers."
      }
     ],
     "answer": [
@@ -289,7 +299,7 @@
     "generic": "Not quite. What does each step need from the one before?",
     "byKey": {
      "x1": "A bad call is the model's mistake to fix: report it, do not raise.",
-     "x2": "A result must be a tool message tied to its call."
+     "x2": "A result must be paired with the call it answers."
     }
    },
    "explain": {

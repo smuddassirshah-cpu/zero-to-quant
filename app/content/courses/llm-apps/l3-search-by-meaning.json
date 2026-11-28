@@ -649,7 +649,7 @@
      {
       "id": "size3",
       "text": "Size 3 with no overlap",
-      "why": "Windows of 3 start at 0, 3, 6: 'the going concern' and 'doubt from auditors' split it again."
+      "why": "Windows of 3 start at 0, 3, 6: 'but the going' and 'concern doubt from' split it again."
      },
      {
       "id": "whole",
@@ -1087,9 +1087,13 @@
      {
       "call": "search([1, 0], [[2, 0], [1, 0], [0, 1]], 2)",
       "expect": "[0, 1]"
+     },
+     {
+      "call": "search([1, 0], [[2, 0], [0, 1]] * 20, 5)",
+      "expect": "[0, 2, 4, 6, 8]"
      }
     ],
-    "how": "Submit runs 9 hidden tests, each an exact list. Five chunk: the 16-word passage with and without overlap, a text shorter than one window, a short last window and an empty text. Four search: the eight notes in LSA space at $k = 3$ and $k = 8$, a zero query, and a tie between a long and a short row.",
+    "how": "Submit runs 10 hidden tests, each an exact list. Five chunk: the 16-word passage with and without overlap, a text shorter than one window, a short last window and an empty text. Five search: the eight notes in LSA space at $k = 3$ and $k = 8$, a zero query, a tie between a long and a short row, and twenty tied rows among forty.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef chunk(text, size, overlap):\n    words = text.split()\n    if not words:\n        return []\n    out, start = [], 0\n    while True:\n        out.append(' '.join(words[start:start + size]))\n        if start + size >= len(words):\n            break\n        start += size\n    return out\n\n\ndef search(query_vec, doc_vecs, k):\n    q = np.asarray(query_vec, dtype=float)\n    D = np.asarray(doc_vecs, dtype=float)\n    nq = np.linalg.norm(q)\n    if nq == 0:\n        return []\n    nd = np.linalg.norm(D, axis=1)\n    s = np.where(nd > 0, D @ q / (np.where(nd > 0, nd, 1.0) * nq), 0.0)\n    return sorted(range(len(D)), key=lambda i: (-s[i], i))[:k]\n",
@@ -1110,6 +1114,11 @@
       "source": "import numpy as np\n\n\ndef chunk(text, size, overlap):\n    words = text.split()\n    if not words:\n        return []\n    out, start = [], 0\n    while True:\n        out.append(' '.join(words[start:start + size]))\n        if start + size >= len(words):\n            break\n        start += size - overlap\n    return out\n\n\ndef search(query_vec, doc_vecs, k):\n    q = np.asarray(query_vec, dtype=float)\n    D = np.asarray(doc_vecs, dtype=float)\n    nq = np.linalg.norm(q)\n    nd = np.linalg.norm(D, axis=1)\n    s = np.where(nd > 0, D @ q / (np.where(nd > 0, nd, 1.0) * nq), 0.0)\n    return sorted(range(len(D)), key=lambda i: (-s[i], i))[:k]\n",
       "test": 8,
       "symptom": "Ranks rows for a zero query."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef chunk(text, size, overlap):\n    words = text.split()\n    if not words:\n        return []\n    out, start = [], 0\n    while True:\n        out.append(' '.join(words[start:start + size]))\n        if start + size >= len(words):\n            break\n        start += size - overlap\n    return out\n\n\ndef search(query_vec, doc_vecs, k):\n    q = np.asarray(query_vec, dtype=float)\n    D = np.asarray(doc_vecs, dtype=float)\n    nq = np.linalg.norm(q)\n    if nq == 0:\n        return []\n    nd = np.linalg.norm(D, axis=1)\n    s = np.where(nd > 0, D @ q / (np.where(nd > 0, nd, 1.0) * nq), 0.0)\n    return [int(i) for i in np.argsort(-s)][:k]\n",
+      "test": 10,
+      "symptom": "Breaks ties with np.argsort, which does not keep index order in a long list."
      }
     ]
    },
@@ -1130,7 +1139,8 @@
      "test-1": "With overlap 2 the second window starts at word 4, not 6: step by size minus overlap.",
      "test-4": "Stop only once a window reaches the last word: 'f' is missing from your chunks.",
      "test-6": "Ranking by the dot product lets long rows win: divide by both lengths. Rows $(2, 0)$ and $(1, 0)$ tie at cosine 1.",
-     "test-8": "A zero query has no direction: return an empty list."
+     "test-8": "A zero query has no direction: return an empty list.",
+     "test-10": "Equal scores must keep index order in a long list too. `np.argsort` alone does not promise that: sort by `(-score, index)`."
     }
    },
    "explain": {

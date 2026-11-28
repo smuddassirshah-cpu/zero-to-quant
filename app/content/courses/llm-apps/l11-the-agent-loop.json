@@ -279,7 +279,7 @@
     }
    },
    "explain": {
-    "text": "Step 4 brings the second close. The model plans nothing in advance here: each reply depends on the results so far, which makes it an agent rather than a fixed chain.",
+    "text": "Step 4 brings the second close. A real model would choose each reply from the results so far; that choice is what makes it an agent rather than a fixed chain, though this scripted one follows a fixed script.",
     "canvas": {
      "highlight": {
       "ranges": [
@@ -418,7 +418,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "The same task as a workflow",
-   "prose": "T03's steps are known in advance: two closes, then the change. A **workflow** is code that runs those steps itself: `get_close`, `get_close`, `pct_change`, with no model choosing them.",
+   "prose": "T03's steps are known in advance: two closes, then the change. A **workflow** is fixed code that calls the tools, and sometimes the model, in a set order (prompt chaining and routing are two patterns). Here even the model call can go, since these steps need no judgement: `get_close`, `get_close`, `pct_change`, with no model choosing them.",
    "canvas": {
     "kind": "array",
     "params": {
@@ -507,14 +507,14 @@
     }
    },
    "explain": {
-    "text": "A model may still phrase the reply, but the steps are fixed code: cheaper, faster and testable line by line. Anthropic's 'Building effective agents' advises starting there."
+    "text": "A model may still phrase the reply, but the steps are fixed code: cheaper, faster and testable line by line, provided the steps really are known. Anthropic's 'Building effective agents' advises starting there."
    }
   },
   {
    "type": "trap",
    "difficulty": 3,
-   "title": "Results under the wrong role",
-   "prose": "A harness appends each tool result as a `user` message, with no tool name, instead of a `tool` message tied to its call. The scripted model, like a real one, reads results from tool messages.",
+   "title": "Results not tied to their call",
+   "prose": "A harness appends each tool result as plain text in a `user` message, with no tool name, instead of a tool result tied to the call it answers. The scripted model reads results from tool messages, as a real API pairs each result with its call.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -568,11 +568,11 @@
     "correct": "The call is repeated three times and the repeat check ends the run with no answer.",
     "generic": "Not quite. Can the model tell the result belongs to its call?",
     "byKey": {
-     "fine": "You assumed any message will do. Real APIs pair each result with the call that asked for it; a stray user message is not a result."
+     "fine": "You assumed any message will do. Real APIs pair each result with the call that asked for it; plain text with no pairing is not a result."
     }
    },
    "explain": {
-    "text": "Append the result as a tool message tied to the call it answers. Real model APIs require this pairing and reject or ignore the rest."
+    "text": "Append the result as a tool message tied to the call it answers. Real model APIs require this pairing (Anthropic's carries it in a tool-result block that names the call) and reject or ignore the rest."
    }
   },
   {
@@ -807,14 +807,14 @@
    "type": "problem",
    "difficulty": 3,
    "title": "The workflow in code",
-   "prose": "Write `run_workflow(task, tools)`: the fixed chain for these tasks, with no model at all. Return the answer text and the tools called.",
+   "prose": "Write `run_workflow(task, tools)`: the fixed chain for these tasks, with no model at all. It gets the same raw request as the agent, `task['question']`, and reads the ticker, dates and search text from that text with `parse_question`. Return the answer text and the tools called. A tool that raises ends the chain: return `None` and the tools called so far, the failed one included.",
    "question": "Write `run_workflow`.",
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "def run_workflow(task, tools):\n    # (answer text, list of tool names called) with no model:\n    # a 'query' task -> best note id; one date -> close to 2 places;\n    # two dates -> pct_change of the two closes, to 2 places with '%'\n    ...\n",
-    "solution": "def run_workflow(task, tools):\n    calls = []\n    if 'query' in task:\n        ids = tools['search_notes']['fn'](task['query'], 1)\n        calls.append('search_notes')\n        return str(ids[0]), calls\n    closes = []\n    for d in task['dates']:\n        closes.append(tools['get_close']['fn'](task['ticker'], d))\n        calls.append('get_close')\n    if len(closes) == 1:\n        return f'{closes[0]:.2f}', calls\n    change = tools['pct_change']['fn'](closes[0], closes[1])\n    calls.append('pct_change')\n    return f'{change:.2f}%', calls\n",
-    "prelude": "import numpy\nTYPE_NAMES = {str: 'string', bool: 'boolean', int: 'integer', float: 'number', list: 'array', dict: 'object', type(None): 'null'}\ndef validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\nimport json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'; available: {', '.join(sorted(tools))}\")\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', f'arguments are not valid JSON: {e.msg}')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed: {e}')\nfrom llm_apps_ops_l3 import TOOLS, TASKS, respond, task_message\nT = {t['id']: t for t in TASKS}\n",
+    "starter": "def run_workflow(task, tools):\n    # (answer text, list of tool names called) with no model, from task['question'] alone:\n    # a 'query' task -> best note id; one date -> close to 2 places;\n    # two dates -> pct_change of the two closes, to 2 places with '%'.\n    # If a tool raises, return (None, the tools called so far, the failed one included)\n    ...\n",
+    "solution": "def run_workflow(task, tools):\n    req = parse_question(task['question'])\n    calls = []\n    try:\n        if req['query']:\n            calls.append('search_notes')\n            ids = tools['search_notes']['fn'](req['query'], 1)\n            return str(ids[0]), calls\n        closes = []\n        for d in req['dates']:\n            calls.append('get_close')\n            closes.append(tools['get_close']['fn'](req['ticker'], d))\n        if len(closes) == 1:\n            return f'{closes[0]:.2f}', calls\n        calls.append('pct_change')\n        change = tools['pct_change']['fn'](closes[0], closes[1])\n        return f'{change:.2f}%', calls\n    except Exception:\n        return None, calls\n",
+    "prelude": "import numpy\nTYPE_NAMES = {str: 'string', bool: 'boolean', int: 'integer', float: 'number', list: 'array', dict: 'object', type(None): 'null'}\ndef validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\nimport json\n\n\ndef parse_call(reply, tools):\n    name = reply.get('name')\n    if name not in tools:\n        return ('error', f\"unknown tool '{name}'; available: {', '.join(sorted(tools))}\")\n    try:\n        args = json.loads(reply.get('arguments', ''))\n    except json.JSONDecodeError as e:\n        return ('error', f'arguments are not valid JSON: {e.msg}')\n    errors = validate(args, tools[name]['schema'])\n    if errors:\n        return ('error', '; '.join(errors))\n    return ('ok', name, args)\n\n\ndef run_call(name, args, tools):\n    try:\n        return ('ok', tools[name]['fn'](**args))\n    except Exception as e:\n        return ('error', f'{name} failed: {e}')\nfrom llm_apps_ops_l3 import TOOLS, TASKS, respond, task_message, parse_question\nT = {t['id']: t for t in TASKS}\n",
     "examples": [
      {
       "call": "run_workflow(T['T02'], TOOLS)[0]",
@@ -843,30 +843,44 @@
       "expect": "'-1.57%'"
      },
      {
-      "call": "run_workflow({'ticker': 'CORR', 'dates': ['2024-03-11']}, TOOLS)[0]",
+      "call": "run_workflow({'question': \"What was CORR's close on 2024-03-11?\", 'ticker': 'CORR', 'dates': ['2024-03-11']}, TOOLS)[0]",
       "expect": "'99.50'"
      },
      {
+      "call": "run_workflow(T['T12'], TOOLS)",
+      "expect": "[None, ['get_close']]"
+     },
+     {
       "call": "sum(run_workflow(t, TOOLS)[0] == t['answer'] for t in TASKS)",
-      "expect": "20"
+      "expect": "19"
      }
     ],
-    "how": "Submit runs 7 hidden tests: a close, a move and its three calls, and a search. Then a fall written with its minus sign, a close that ends in a zero, and the count of the 20 planted tasks answered right.",
+    "how": "Submit runs 8 hidden tests: a close, a move and its three calls, and a search. Then a fall written with its minus sign, a close that ends in a zero, the holiday task T12 (a raised error gives `None` and the calls made), and the count of the 20 planted tasks answered right. `parse_question`, `TOOLS`, `TASKS` and the scripted `respond` are defined.",
     "mutants": [
      {
-      "source": "def run_workflow(task, tools):\n    calls = []\n    if 'query' in task:\n        ids = tools['search_notes']['fn'](task['query'], 1)\n        calls.append('search_notes')\n        return str(ids[0]), calls\n    closes = []\n    for d in task['dates']:\n        closes.append(tools['get_close']['fn'](task['ticker'], d))\n        calls.append('get_close')\n    if len(closes) == 1:\n        return f'{closes[0]:.2f}', calls\n    change = tools['pct_change']['fn'](closes[1], closes[0])\n    calls.append('pct_change')\n    return f'{change:.2f}%', calls\n",
+      "source": "def run_workflow(task, tools):\n    req = parse_question(task['question'])\n    calls = []\n    try:\n        if req['query']:\n            calls.append('search_notes')\n            ids = tools['search_notes']['fn'](req['query'], 1)\n            return str(ids[0]), calls\n        closes = []\n        for d in req['dates']:\n            calls.append('get_close')\n            closes.append(tools['get_close']['fn'](req['ticker'], d))\n        if len(closes) == 1:\n            return f'{closes[0]:.2f}', calls\n        calls.append('pct_change')\n        change = tools['pct_change']['fn'](closes[1], closes[0])\n        return f'{change:.2f}%', calls\n    except Exception:\n        return None, calls\n",
       "test": 2,
       "symptom": "Swaps the two closes."
      },
      {
-      "source": "def run_workflow(task, tools):\n    calls = []\n    if 'query' in task:\n        ids = tools['search_notes']['fn'](task['query'], 1)\n        calls.append('search_notes')\n        return str(ids[0]), calls\n    closes = []\n    for d in task['dates']:\n        closes.append(tools['get_close']['fn'](task['ticker'], d))\n        calls.append('get_close')\n    if len(closes) == 1:\n        return str(closes[0]), calls\n    change = tools['pct_change']['fn'](closes[0], closes[1])\n    calls.append('pct_change')\n    return f'{change:.2f}%', calls\n",
+      "source": "def run_workflow(task, tools):\n    req = parse_question(task['question'])\n    calls = []\n    try:\n        if req['query']:\n            calls.append('search_notes')\n            ids = tools['search_notes']['fn'](req['query'], 1)\n            return str(ids[0]), calls\n        closes = []\n        for d in req['dates']:\n            calls.append('get_close')\n            closes.append(tools['get_close']['fn'](req['ticker'], d))\n        if len(closes) == 1:\n            return str(closes[0]), calls\n        calls.append('pct_change')\n        change = tools['pct_change']['fn'](closes[0], closes[1])\n        return f'{change:.2f}%', calls\n    except Exception:\n        return None, calls\n",
       "test": 6,
       "symptom": "Does not format the close to 2 places."
      },
      {
-      "source": "def run_workflow(task, tools):\n    calls = []\n    if 'query' in task:\n        ids = tools['search_notes']['fn'](task['query'], 1)\n        calls.append('search_notes')\n        return str(ids[0]), calls\n    closes = []\n    for d in task['dates']:\n        closes.append(tools['get_close']['fn'](task['ticker'], d))\n        calls.append('get_close')\n    if len(closes) == 1:\n        return f'{closes[0]:.2f}', calls\n    change = tools['pct_change']['fn'](closes[0], closes[1])\n    return f'{change:.2f}%', calls\n",
+      "source": "def run_workflow(task, tools):\n    req = parse_question(task['question'])\n    calls = []\n    try:\n        if req['query']:\n            calls.append('search_notes')\n            ids = tools['search_notes']['fn'](req['query'], 1)\n            return str(ids[0]), calls\n        closes = []\n        for d in req['dates']:\n            calls.append('get_close')\n            closes.append(tools['get_close']['fn'](req['ticker'], d))\n        if len(closes) == 1:\n            return f'{closes[0]:.2f}', calls\n        change = tools['pct_change']['fn'](closes[0], closes[1])\n        return f'{change:.2f}%', calls\n    except Exception:\n        return None, calls\n",
       "test": 3,
       "symptom": "Leaves pct_change out of the calls list."
+     },
+     {
+      "source": "def run_workflow(task, tools):\n    req = {'ticker': task.get('ticker'), 'dates': task.get('dates', []), 'query': task.get('query')}\n    calls = []\n    try:\n        if req['query']:\n            calls.append('search_notes')\n            ids = tools['search_notes']['fn'](req['query'], 1)\n            return str(ids[0]), calls\n        closes = []\n        for d in req['dates']:\n            calls.append('get_close')\n            closes.append(tools['get_close']['fn'](req['ticker'], d))\n        if len(closes) == 1:\n            return f'{closes[0]:.2f}', calls\n        calls.append('pct_change')\n        change = tools['pct_change']['fn'](closes[0], closes[1])\n        return f'{change:.2f}%', calls\n    except Exception:\n        return None, calls\n",
+      "test": 7,
+      "symptom": "Reads the task's own ticker and dates, not the question, so T12 is handed 28 March."
+     },
+     {
+      "source": "def run_workflow(task, tools):\n    req = parse_question(task['question'])\n    calls = []\n    try:\n        if req['query']:\n            calls.append('search_notes')\n            ids = tools['search_notes']['fn'](req['query'], 1)\n            return str(ids[0]), calls\n        closes = []\n        for d in req['dates']:\n            closes.append(tools['get_close']['fn'](req['ticker'], d))\n            calls.append('get_close')\n        if len(closes) == 1:\n            return f'{closes[0]:.2f}', calls\n        calls.append('pct_change')\n        change = tools['pct_change']['fn'](closes[0], closes[1])\n        return f'{change:.2f}%', calls\n    except Exception:\n        return None, calls\n",
+      "test": 7,
+      "symptom": "Records a tool only after it succeeds, so the failed call is missing."
      }
     ],
     "data": {
@@ -878,7 +892,7 @@
    "hints": [
     {
      "rung": "nudge",
-     "text": "Branch on what the task holds: a 'query', or one or two 'dates'."
+     "text": "Call `parse_question(task['question'])` and branch on what it found: a 'query', or one or two 'dates'."
     },
     {
      "rung": "point",
@@ -886,16 +900,17 @@
     }
    ],
    "feedback": {
-    "correct": "Your workflow answers all 20 planted tasks right, with no model call.",
+    "correct": "Your workflow answers 19 of the 20 planted tasks with no model call. T12 is the one it cannot answer.",
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-2": "The change runs from the first date to the second: pct_change(first, second).",
      "test-6": "Write closes to 2 places, as the tasks' answers are: 97.87 stays 97.87, but 99.5 must read 99.50.",
-     "test-3": "Record every tool the workflow calls, pct_change included, so it can be scored."
+     "test-3": "Record every tool the workflow calls, pct_change included, so it can be scored.",
+     "test-7": "T12 asks for 29 March, a holiday with no close. Read the dates from the question, and when get_close raises return None with the calls made so far, the failed one included."
     }
    },
    "explain": {
-    "text": "When the steps are known, the chain is shorter than the agent, needs no model to pick tools, and cannot loop."
+    "text": "When the steps are known, the chain is shorter than the agent, needs no model to pick tools, and cannot loop. When a step depends on what the last one found, as T12's holiday does, a fixed chain has no way to recover."
    }
   },
   {
@@ -964,14 +979,14 @@
   "ideas": [
    "An agent is a loop: send the messages, run any tool call, append its result as a tool message, and repeat until the model answers.",
    "Every loop needs a step cap; a repeated-call check stops common loops sooner, and the loop returns every message for scoring.",
-   "When the steps are known in advance, a workflow (fixed code calling the tools) is cheaper, testable and cannot loop."
+   "When the steps are known in advance, a workflow (fixed code calling the tools) is cheaper, testable and cannot loop; it cannot recover from a step it did not plan for."
   ],
   "formula": {
    "name": "Stops",
    "tex": "\\text{answer} \\;\\lor\\; \\text{3 identical calls} \\;\\lor\\; \\text{steps} = \\text{max\\_steps}",
    "note": "The cap is the one stop that cannot be dodged."
   },
-  "trap": "No step cap, or results appended under the wrong role so the model never sees them."
+  "trap": "No step cap, or results not paired with the call they answer, so the model never sees them."
  },
  "quiz": [
   {
