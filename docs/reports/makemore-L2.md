@@ -20,7 +20,7 @@ New data file: `app/content/data/ai/makemore-mlp.json` (57,838 bytes): the cours
 
 1. `node tools/validate.mjs`: 0 errors; level 2 warnings: three problem screens without a canvas (hooks and the initialisation question, deliberate), ladder canvas-kind changes and `O2-long-sentence` advisories under 35 words. No `[ai-mutants]` warning.
 2. `voice-scan.py 35 --summary`: 0 over 35 words, 0 lesson ids in code spans, 0 doubled words, 0 explanations over three sentences.
-3. `docs/reports/makemore-L2-numbers.py` (venv): exit 0, 205 of 205 checks, about a minute (it reruns the 40,000-step run, the sweep, the two 2D runs, five batch seeds and the block-4 run). The 28 "check by hand" lines were read; one found a slip value wrong (problems-2 part 2, 31 for 33), fixed.
+3. `docs/reports/makemore-L2-numbers.py` (venv): exit 0, 207 of 207 checks, about a minute (it reruns the 40,000-step run, the sweep, the two 2D runs, five batch seeds and the block-4 run). The 28 "check by hand" lines were read; one found a slip value wrong (problems-2 part 2, 31 for 33), fixed.
 4. `grade-all.mjs --code` on the seven files: 72 widgets and 7 code widgets, 0 failures after two mutant test numbers were corrected. Playthrough with `--local-cdn --mobile --why`: all passed (l5 13 checks, l6 13, l7 15, l8 12, quizzes 3/3; review 10 of 10; homework 7 of 7 with the performance starter failing and the longform marked; problems 11 parts, 14 slips routed); l5, l6, l7, review-2 and problems-2 replayed after their last edits. Screenshots at 440 px: three fixes (a code span in a narrow table column stacked its letters; graph labels "context" and "softmax" were cut to "conte..."; the scatter legend sat on points). The trainer was checked natively (60 reports in 2.1 s; the playthrough does not run a trainer). `fresh-check.mjs --file problems-2.json`: 0 hits after rewording one slip line.
 
 ## Numbers (route A: NumPy with hand gradients; route B: the autograd for short runs and a row-by-row loop for losses from the supplied weights)
@@ -43,3 +43,7 @@ The MLP and its split, initialisation and batches are the brief's. The supplied 
 ## Proposed course.json change
 
 None.
+
+## Exact short-run tests (AUTHORING section 9, rule added at 6c79d9c5)
+
+Every widget of the level that trains carries a seeded short run compared exactly: `train_mlp` (l8) checks two steps on a planted model to 6 places (losses and two weights), and `block4_run` (homework) now also checks 5 steps on the first 12 training names to 6 places (2.809033, recomputed with the hand gradient and with the autograd in the number script). Level 1's `train_bigram_net` already checks two steps on a planted list exactly.

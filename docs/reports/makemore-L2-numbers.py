@@ -258,6 +258,12 @@ for _ in range(200):
     ix = g4.integers(0, len(X4), 32); step(P4b, X4[ix], Y4[ix], 0.1)
 two('block 4 after 200 steps', loss(P4a, X4, Y4), loss(P4b, X4, Y4), 1e-9)
 lv.claim(round(l40, 4) == 3.2937 and round(loss(P4b, X4, Y4), 4) == 2.5619, 'block 4: 3.2937 then 2.5619')
+X12, Y12 = build(tr[:12], 4); P12 = init(0, block=4); g12 = np.random.default_rng(1)
+for _ in range(5):
+    ix = g12.integers(0, len(X12), 32); step(P12, X12[ix], Y12[ix], 0.1)
+P12a, _ = autograd_run(init(0, block=4), X12, Y12, 5, 0.1, 1)
+two('block 4, 5 steps on 12 names, hand and autograd', loss(P12, X12, Y12), loss(P12a, X12, Y12), 1e-10)
+E('homework', 'items[0].widget.tests[6].expect', round(loss(P12, X12, Y12), 6))
 E('homework', 'items[0].explain.text', 3.2937); E('homework', 'items[0].explain.text', 2.5619)
 npar = lambda k, d, H: 27 * d + k * d * H + H + H * 27 + 27  # noqa: E731
 rows = F('homework-2')['items'][1]['widget']['rows']

@@ -8,7 +8,7 @@
 Gates:
 1. `cd app && node tools/validate.mjs 2>&1 | tail -5`: 0 errors, no `[ai-mutants]` warning on the level's files.
 2. `VOICE_BASE=app/content/courses/makemore python3 docs/reviews/voice-scan.py 35 --summary`: 0 over 35 words, 0 lesson ids in code spans.
-3. `<venv>/bin/python docs/reports/makemore-L2-numbers.py`: exit 0 (205 of 205); it runs the model solution against all 6 tests, the starter (fails) and the four mutants. `node tools/grade-all.mjs --code --file content/courses/makemore/homework-2.json --local-cdn <pkgs>`: 0 failures in Pyodide.
+3. `<venv>/bin/python docs/reports/makemore-L2-numbers.py`: exit 0 (207 of 207); it runs the model solution against all 6 tests, the starter (fails) and the four mutants. `node tools/grade-all.mjs --code --file content/courses/makemore/homework-2.json --local-cdn <pkgs>`: 0 failures in Pyodide.
 4. `node tools/playthrough.mjs --set makemore/homework-2 --mobile --local-cdn <pkgs>` (desktop and 440 px): all passed, "1 performance starter fail" as required.
 
 - Overlapping screens: l7 screen 10 (`mlp_forward` with a planted and a seeded model) and screen 11 (`mlp_dev_loss` with `mlp_forward` given) build the two halves on the course sizes, and screen 3 counts the course model's weights in a table. The task asks for all three from an empty stub, for any sizes, on a new planted model (5 symbols, block 2), and adds the general count formula.
