@@ -103,17 +103,26 @@ def sqrt(x):
 
 # ------------------------------------------------------------------ difficulty 2
 iid = 'e-misreads-allowed'
-n, bar = 540, F(95, 100)
+n, bar = 540, F(98, 100)
 m = max(k for k in range(n + 1) if F(n - k, n) >= bar)          # count up: the most misreads that still meet the bar
 key(iid, m)
-wrong(iid, 'strict', max(k for k in range(n + 1) if F(n - k, n) > bar))
+ex.claim(F(n - m, n) >= bar and F(n - m - 1, n) < bar, 'e-misreads-allowed: 10 misreads pass, 11 fail (exact)', covers=[m])
+wrong(iid, 'up', m + 1)
 wrong(iid, 'right', n - m)
-wrong(iid, 'share', 1 - bar)
-for v in (540, 0.95):
-    say(iid, 'prose', v)
-for v in (540, 0.05, 27, 513, 0.95):
+wrong(iid, 'share', n * (1 - bar))
+say(iid, 'prose', 0.98)
+say(iid, 'prose', 540)
+for v in (540, 0.02, 10.8, 10, 530, round(530 / 540, 4)):
     say(iid, 'feedback.correct', v)
-    say(iid, 'explain.text', v) if v != 0.05 else None
+say(iid, 'feedback.byKey.up', 529)
+say(iid, 'feedback.byKey.up', round(529 / 540, 4))
+say(iid, 'feedback.byKey.up', 10.8)
+say(iid, 'feedback.byKey.share', 10.8)
+say(iid, 'feedback.byKey.share', 0.02)
+say(iid, 'feedback.byKey.share', 540)
+say(iid, 'feedback.byKey.right', 530)
+for v in (0.98, 540, 529.2, 530, 10):
+    say(iid, 'explain.text', v)
 os.chdir(DATA)
 _split = CNN.load_split()
 _exitp = CNN.load_weights('cnn-w-exit.json')
@@ -207,19 +216,29 @@ say(iid, 'explain.text', 0.005)
 
 iid = 'e-scaled-warmup'
 peak = F(5, 100) * F(512, 128)
-rate = peak * F(10, 40)
+rate = peak * F(15, 40)
 key(iid, rate, nd=6)
-wrong(iid, 'noscale', F(5, 100) * F(10, 40))
+wrong(iid, 'noscale', F(5, 100) * F(15, 40))
 wrong(iid, 'nowarm', peak)
-wrong(iid, 'sqrt', 0.05 * sqrt(F(512, 128)) * 10 / 40)
+wrong(iid, 'sqrt', 0.05 * sqrt(F(512, 128)) * 15 / 40)
 for v in (128, 0.05, 512, 40):
     say(iid, 'prose', v)
-for v in (0.05, 512, 128, 0.2, 10, 40):
+for v in (0.05, 512, 128, 0.2, 15, 40, 0.075):
     say(iid, 'feedback.correct', v)
 say(iid, 'feedback.byKey.sqrt', 0.1)
 say(iid, 'feedback.byKey.sqrt', 4)
-say(iid, 'explain.text', 0.05)
+say(iid, 'feedback.byKey.noscale', 0.05)
+say(iid, 'feedback.byKey.noscale', 15)
+say(iid, 'feedback.byKey.noscale', 40)
+say(iid, 'feedback.correct', '15/40')
+say(iid, 'feedback.byKey.noscale', 0.2)
+say(iid, 'feedback.byKey.nowarm', 0.2)
+say(iid, 'feedback.byKey.nowarm', 15)
+say(iid, 'feedback.byKey.nowarm', 40)
+say(iid, 'explain.text', 0.075)
 say(iid, 'explain.text', 0.2)
+say(iid, 'explain.text', 15)
+say(iid, 'explain.text', 40)
 
 iid = 'e-relu-variance'
 eh2 = F(3, 2) / 2
@@ -234,7 +253,6 @@ say(iid, 'feedback.byKey.sd', 0.0064)
 say(iid, 'explain.text', 0.96)
 
 iid = 'e-stop-then-ridge'
-Ls = [F(x) for x in node(P(iid) + '.prose').split('step 0: ')[1].split('.')[0].replace(' ', '').split(',')] if False else None
 Ls = [F(90, 100), F(70, 100), F(58, 100), F(55, 100), F(56, 100), F(53, 100), F(52, 100), F(54, 100), F(55, 100), F(57, 100)]
 for v in Ls:
     say(iid, 'prose', v)
@@ -303,6 +321,23 @@ def receptive(layers):
         lo, hi = s_ * lo, s_ * hi + k - 1
     return hi - lo + 1
 
+
+iid = 'e-shift-margin'
+accs = [F(66, 100), F(64, 100), F(50, 100), F(62, 100)]
+mean_s = sum(accs) / 4
+key(iid, mean_s - F(1, 10), nd=3)
+wrong(iid, 'nomargin', mean_s)
+wrong(iid, 'plus', mean_s + F(1, 10))
+wrong(iid, 'ratio', mean_s / F(11, 10))
+ex.claim(mean_s == F(605, 1000) and mean_s - F(1, 10) == F(505, 1000), 'e-shift-margin: mean 0.605, cap 0.505, exact', covers=[0.605, 0.505])
+for v in (0.10, 0.66, 0.64, 0.50, 0.62):
+    say(iid, 'prose', v)
+for v in (0.605, 0.505, 0.10, 4):
+    say(iid, 'feedback.correct', v)
+say(iid, 'feedback.byKey.nomargin', 0.605)
+say(iid, 'feedback.byKey.plus', 0.705)
+say(iid, 'feedback.byKey.ratio', 1.10)
+say(iid, 'explain.text', 0.505)
 
 iid = 'e-receptive-field'
 layers = [(3, 1), (2, 2), (3, 1), (3, 1)]
@@ -698,7 +733,6 @@ say(iid, 'feedback.byKey.noscale', 0.8, part=1)
 say(iid, 'feedback.byKey.noscale', 0.64, part=1)
 say(iid, 'feedback.byKey.second', 5, part=1)
 say(iid, 'feedback.byKey.second', 4, part=1)
-say(iid, 'feedback.byKey.p', 0, part=1) if False else None
 ex.claim(a * a == 4 and 1 - p == F(4, 5), 'e-dropout-spread: a^2 = 4, which with p/(1 - p) gives 4p/(1 - p)', covers=[4])
 say(iid, None, 0.5, part=2)
 
@@ -857,13 +891,13 @@ def cnn_route_b(ns):
 iid = 'e-cnn-exit'
 wc = code_checks(iid, cwd=DATA, swap=cnn_route_b)
 acc_b = CNN.accuracy(CNN.cnn_logits, _exitp, X_te, y_te)
-ex._rec(abs(acc_b - 532 / 540) < 1e-15 and acc_b >= 0.95, 'e-cnn-exit: cnn_ops_l3 scores the exit net 532/540, above 0.95', str(acc_b))
+ex._rec(abs(acc_b - 532 / 540) < 1e-15 and acc_b >= 0.98, 'e-cnn-exit: cnn_ops_l3 scores the exit net 532/540, above 0.98', str(acc_b))
 say(iid, 'feedback.correct', 532)
 say(iid, 'feedback.correct', round(acc_b, 4))
-say(iid, 'feedback.correct', 0.95)
+say(iid, 'feedback.correct', 0.98)
 say(iid, 'explain.text', 532)
-say(iid, 'question', 0.95)
-say(iid, 'widget.how', 0.95)
+say(iid, 'question', 0.98)
+say(iid, 'widget.how', 0.98)
 say(iid, 'widget.how', '10^{-9}')
 pre = wc['prelude']
 pns = {}
@@ -901,7 +935,7 @@ allw = {(it['id'], None, w_['id']) for it in items if 'widget' in it for w_ in i
 allw |= {(it['id'], k, w_['id']) for it in items for k, pt in enumerate(it.get('parts', [])) for w_ in pt['widget'].get('wrong', [])}
 ex._rec(allw <= CHECKED, f'every one of the {len(allw)} numeric slips is recomputed', str(sorted(allw - CHECKED)))
 ramp = {dd: sum(1 for it in items if it['difficulty'] == dd) for dd in (2, 3, 4, 5)}
-ex._rec(ramp == {2: 6, 3: 16, 4: 7, 5: 3}, f'ramp {ramp} for 32 items', '')
+ex._rec(ramp == {2: 6, 3: 17, 4: 7, 5: 3} and len(items) == 33, f'ramp {ramp} for 33 items', '')
 pace = sum(it['pace'] for it in items)
 ex._rec(pace / 60 <= doc['minutes'] - 5, f'paces add to {pace / 60:.1f} min, inside the {doc["minutes"]} minutes with slack', '')
 ex.check_wrongs()

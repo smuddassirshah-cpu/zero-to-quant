@@ -68,20 +68,21 @@ items = []
 
 # ================================================================ difficulty 2
 # 1 (cnn l9, l10): misreads the exit allows
-n1, bar1 = 540, 0.95
+n1, bar1 = 540, 0.98
 mis1 = math.floor(n1 * (1 - bar1) + 1e-9)
 items.append(item(
     "e-misreads-allowed", 2, ["cnn-train"], ["held-out-accuracy"], 60, "Room for error",
-    "This exam's digits check asks for a held-out accuracy of at least 0.95. The held-out split holds 540 digits.",
+    "This exam's digits check asks for a held-out accuracy of at least 0.98. The held-out split holds 540 digits.",
     "At most how many of the 540 may the net misread and still pass?",
-    num(mis1, 0, [("strict", mis1 - 1, 0), ("right", n1 - mis1, 0), ("share", 0.05, 0.005)], label="Misreads"),
-    fb("$540 \\times 0.05 = 27$ misreads leave 513 right, and $513/540 = 0.95$ exactly, which meets the bar.",
-       "Find the share it may get wrong, then turn it into a count of digits.",
-       {"strict": "At 27 misreads the accuracy is exactly 0.95. The bar is at least 0.95, so 27 still passes.",
-        "right": "513 is how many it must read right. The question asks how many it may misread.",
-        "share": "0.05 is the share it may misread. Multiply by the 540 digits for a count."}),
-    "Passing needs at least $0.95 \\times 540 = 513$ right, so at most $540 - 513 = 27$ wrong. "
-    "The supplied exit net of `cnn` misreads 8, well inside that."))
+    num(mis1, 0, [("up", mis1 + 1, 0), ("share", 10.8, 0.05), ("right", n1 - mis1, 0)], label="Misreads"),
+    fb("$540 \\times 0.02 = 10.8$ is the limit, so 10 whole digits. Ten misreads leave 530 right, "
+       "$530/540 = 0.9815$, which meets the bar.",
+       "Find the share it may get wrong, then turn it into a whole number of digits.",
+       {"up": "Eleven misreads leave 529 right, $529/540 = 0.9796$, under the bar. Round the limit of 10.8 down.",
+        "share": "10.8 is $540 \\times 0.02$, but misreads are whole digits. Ten passes and eleven does not.",
+        "right": "530 is about how many it must read right. The question asks how many it may misread."}),
+    "Passing needs at least $0.98 \\times 540 = 529.2$ right, so at least 530, and at most $540 - 530 = 10$ wrong. "
+    "The supplied exit net of `cnn` misreads 8, inside that."))
 
 # 2 (nn-train l13): seeds for a standard error
 s2, se2 = 0.03, 0.005
@@ -191,24 +192,25 @@ items.append(item(
     "That fails only when the gradient is as small as $\\epsilon$, which here halves the step to 0.005."))
 
 # 8 (nn-train l1, l4): linear scaling and a warm-up
-eta8, B8a, B8b, wu8, t8 = 0.05, 128, 512, 40, 10
+eta8, B8a, B8b, wu8, t8 = 0.05, 128, 512, 40, 15
 peak8 = eta8 * B8b / B8a
 rate8 = peak8 * t8 / wu8
 items.append(item(
     "e-scaled-warmup", 3, ["nt-optim"], ["lr-schedule"], 100, "A bigger batch, a warm-up",
     "A net trains well at batch 128 with $\\eta = 0.05$. The team moves to batch 512, scales the rate by the linear "
     "scaling rule, and warms up linearly from 0 over 40 steps.",
-    "What rate does step 10 use? Give a decimal.",
+    "What rate does step 15 use? Give a decimal.",
     num(r(rate8, 6), 0.0005, [("noscale", r(eta8 * t8 / wu8, 6), 0.0005), ("nowarm", r(peak8, 6), 0.0005),
                               ("sqrt", r(eta8 * math.sqrt(B8b / B8a) * t8 / wu8, 6), 0.0005)], label="Rate"),
-    fb("Linear scaling gives $0.05 \\times 512/128 = 0.2$. Ten steps into a 40-step warm-up the rate is "
-       "$0.2 \\times 10/40 = 0.05$.",
-       "Scale the peak rate with the batch size first, then take the warm-up's share at step 10.",
-       {"noscale": "That warms up to the old rate, 0.05. The rule raises the peak in proportion to the batch, to 0.2.",
-        "nowarm": "0.2 is the peak. At step 10 the warm-up has climbed only a quarter of the way.",
+    fb("Linear scaling gives $0.05 \\times 512/128 = 0.2$. Fifteen steps into a 40-step warm-up the rate is "
+       "$0.2 \\times 15/40 = 0.075$.",
+       "Scale the peak rate with the batch size first, then take the warm-up's share at step 15.",
+       {"noscale": "That warms up to the old rate, 0.05, so step 15 reads only $0.05 \\times 15/40$. The rule raises the "
+                   "peak in proportion to the batch, to 0.2.",
+        "nowarm": "0.2 is the peak. At step 15 the warm-up has climbed only $15/40$ of the way.",
         "sqrt": "That uses the square-root rule, a peak of 0.1. The linear scaling rule multiplies by $512/128 = 4$."}),
     "The linear scaling rule grows the rate with the batch, and the warm-up keeps the first large steps small. "
-    "At step 10 the two give the old rate back, 0.05, and the run then climbs to 0.2. "
+    "At step 15 the warm-up has climbed $15/40$ of the way, to 0.075, and the run then climbs to 0.2. "
     "Treat that peak as a starting point to confirm with a short sweep."))
 
 # 9 (nn-train l6): variance after a ReLU
@@ -311,6 +313,26 @@ items.append(item(
     "cancels in $B - A$. Here pairing cuts the sd of a comparison from 0.0602 to 0.0196, so a paired test needs far "
     "fewer seeds."))
 
+# 12b (cnn l12, homework-3): the clear-margin rule on shifted digits
+cnn12b = [0.66, 0.64, 0.50, 0.62]
+mean12b = sum(cnn12b) / 4
+cap12b = mean12b - 0.10
+items.append(item(
+    "e-shift-margin", 3, ["cnn-train"], ["shift-margin"], 100, "A clear margin on shifted digits",
+    "The exit compares the CNN with a same-size MLP on digits shifted one pixel right, left, down and up. It asks the "
+    "CNN's mean shifted accuracy to beat the MLP's by at least 0.10. The CNN scores 0.66, 0.64, 0.50 and 0.62 on the "
+    "four shifts.",
+    "What is the highest mean shifted accuracy the MLP may have for the CNN to meet the margin? Give a decimal to 3 places.",
+    num(r(cap12b, 3), 0.0005, [("nomargin", r(mean12b, 3), 0.0005), ("plus", r(mean12b + 0.10, 3), 0.0005),
+                               ("ratio", r(mean12b / 1.10, 3), 0.0005)], label="MLP mean"),
+    fb("The CNN's mean is $(0.66 + 0.64 + 0.50 + 0.62)/4 = 0.605$. The MLP must sit 0.10 below it: $0.605 - 0.10 = 0.505$.",
+       "Average the CNN's four accuracies, then take the margin off.",
+       {"nomargin": "0.605 is the CNN's own mean. The CNN must lead by 0.10, so the MLP must sit 0.10 below it.",
+        "plus": "0.705 adds the margin. The MLP must be 0.10 below the CNN, not above it.",
+        "ratio": "That divides by 1.10. The margin is a gap of 0.10 in accuracy, not a ratio."}),
+    "The margin rule is a difference of mean accuracies: not a ratio, and not any lead. A tie at 0.505 still passes, "
+    "since the rule asks for at least 0.10."))
+
 # 13 (cnn l7): receptive field through a pool
 layers13 = [(3, 1), (2, 2), (3, 1), (3, 1)]
 rf13, prod13 = 1, 1
@@ -329,7 +351,7 @@ items.append(item(
                     "input pixels, so the last two convs add 4 each.",
         "sum-k": "You added the kernel sizes. Each layer widens the view by $k - 1$ steps of its input, not by $k$."}),
     "One step on the pooled map is 2 input pixels. So each later 3 by 3 conv widens the view by 4 pixels, not 2, for a side of 12. "
-    "Pooling is what lets a few small kernels see most of an 8 by 8 digit."))
+    "Pooling is what lets a few small kernels see the whole of an 8 by 8 digit."))
 
 # 14 (sequence l7, l8): one query, three keys
 q14 = np.array([1.0, -1.0, 2.0, 0.0])
@@ -391,7 +413,7 @@ blk16 = att16 + mlp16 + ln16
 tot16 = blk16 + V16 * d16 + C16 * d16 + 2 * d16 + d16 * V16 + V16
 items.append(item(
     "e-model-count-80", 3, ["sqn-block"], ["parameter-count"], 150, "Counting a small model",
-    "A one-block model knows 100 tokens and reads at most 16 positions. The block has width 80, 4 heads and an MLP of "
+    "A one-block model knows 100 tokens and has learned positions for at most 16. The block has width 80, 4 heads and an MLP of "
     "width 320. Every projection has a bias, and both of its layer norms have a gain and a shift. It ends in a final layer norm "
     "and an untied unembedding with a bias.",
     "How many parameters does the model hold?",
@@ -590,7 +612,7 @@ items.append(parts(
       fb("Each valid slide of a kernel of length 2 loses one output: $30 - 1 - 1 = 28$, the same as one slide of length 3.",
          "Count the outputs of the first slide, then slide the second kernel over those.",
          {"one": "That is after the first slide. The second slide loses one more.",
-          "sum": "You took off both lengths. A kernel of length $k$ loses $k - 1$ outputs.",
+          "sum": "You took the combined kernel as length $2 + 2 = 4$. It has length $2 + 2 - 1 = 3$.",
           "all": "Valid positions only: each slide loses one output at the end."}))],
     "Convolutions are linear, so two in turn are one convolution whose kernel spreads each weight of the first over the "
     "second. The combined kernel has length $2 + 2 - 1 = 3$, which is why the count matches a single slide of 3."))
@@ -728,7 +750,7 @@ items.append(parts(
     "e-dropout-spread", 4, ["nt-general"], ["dropout"], 210, "The noise dropout adds",
     "A hidden unit outputs 2 and trains with inverted dropout at $p = 0.2$: it is kept with chance 0.8 and scaled by "
     "$1/(1 - p)$, or zeroed.",
-    "Dropout keeps the mean and adds noise.",
+    "Dropout changes what a unit passes on in training.",
     [("What is its expected output in training? Give a decimal.",
       num(r(mean29, 4), 0.0005, [("noscale", r((1 - p29) * a29, 4), 0.0005), ("surv", r(a29 / (1 - p29), 4), 0.0005)],
           label="Mean"),
