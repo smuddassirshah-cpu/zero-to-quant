@@ -8,19 +8,21 @@ Messages: [{"role": "user", "content": text}, {"role": "assistant", "content": r
 respond(messages, tools) -> {"type": "tool_call", "name": str, "arguments": "<JSON text>"} or {"type": "answer", "text": str}
     `tools` is the list of tool specs {"name", "description", "input_schema"} the model is shown. A tool result is a dict:
     {"result": value} on success or {"error": message}. Scripts that self-correct read the last error message: they fix
-    a call only when the message names what was wrong (the field and the expected type, the word JSON, the real tool name,
-    or the missing field); "invalid input" fixes nothing, so the script repeats its call.
+    a call only when the message names what was wrong (the field and the expected type, written "string" or "str", the word JSON, the real
+    tool name, or the missing field); "invalid input" fixes nothing, so the script repeats its call.
 TASKS: list of {"id", "question", "answer", "required", "kind", ...}: 20 planted tasks (see the table in the level report).
 get_close(ticker, date) -> float; search_notes(query, k=3) -> [note ids]; pct_change(a, b) -> rounded percentage change.
+parse_question(text) -> {"ticker", "dates", "query"}: the parsing step a fixed workflow needs, reading only the question's text.
 SCHEMAS: the JSON schema of each tool's arguments. TOOLS: {name: {"fn": f, "schema": s, "description": d}}.
 PRICES: {ticker: {date: close}} for 4 invented tickers over 20 business days of March 2024 (29 March, a holiday, has none).
 """
 import json
 import random
+import re
 
 import llm_apps_ops_l1 as _l1
 
-__version__ = "1.0"
+__version__ = "1.1"
 
 TICKERS = ["CORR", "DUNM", "ELRY", "HALL"]
 DAYS = ["2024-03-01", "2024-03-04", "2024-03-05", "2024-03-06", "2024-03-07", "2024-03-08", "2024-03-11", "2024-03-12",
@@ -65,6 +67,17 @@ def search_notes(query, k=3):
 
 def pct_change(a, b):
     return round((b - a) / a * 100, 2)
+
+
+def parse_question(text):
+    """What a workflow reads from the raw request: the ticker, every date and the quoted search text in the question.
+
+    A real workflow often spends a model call here; this stand-in uses patterns. It sees the question only, so a request
+    for 2024-03-29, a holiday, yields that date and nothing steps back to the 28th.
+    """
+    t = re.search(r"\b(" + "|".join(TICKERS) + r")\b", text)
+    q = re.search(r"best match for '([^']*)'", text)
+    return {"ticker": t.group(1) if t else None, "dates": re.findall(r"\d{4}-\d{2}-\d{2}", text), "query": q.group(1) if q else None}
 
 
 SCHEMAS = {
@@ -133,7 +146,7 @@ def _task(tid, kind, q, a):
 
 
 TASKS = [_task(*s) for s in _SPEC]
-# D01: the model picks a tool by its description; with no description naming a closing price it takes the first tool.
+# D01: the model picks a tool by its description; with no description naming a closing price it guesses the first tool.
 DEMO_TASKS = [dict(_task("D01", "pick", "What was CORR's close on 2024-03-08?", ("CORR", "2024-03-08")))]
 _BY_ID = {t["id"]: t for t in TASKS + DEMO_TASKS}
 
@@ -229,7 +242,7 @@ def _fixed_by(kind, err, names):
     if kind == "unknown_tool":
         return "get_close" in e
     if kind == "wrong_type":
-        return "date" in e and "string" in e
+        return "date" in e and "str" in e
     if kind == "missing_arg":
         return "date" in e and ("missing" in e or "required" in e)
     return False

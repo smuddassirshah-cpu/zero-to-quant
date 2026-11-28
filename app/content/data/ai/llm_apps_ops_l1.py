@@ -8,14 +8,15 @@ make_notes(seed=4) -> {"notes": [...], "queries": [...]}
     filler words, and in half of them one aside word from another topic. 36 are market notes with
     no company. Each note is {"id", "company", "topic", "text"} (company "" for a market note).
     20 labelled queries: {"text": "<company> <word> <word>", "relevant": [the 3 note ids of that pair]}.
-load_notes(path="llm-apps-notes.json") -> the same dict, read from the shipped file.
+load_notes(path="llm-apps-notes.json") -> the same notes and queries, read from the shipped file, plus an `about` line.
 make_reports(notes, seed=11, per=6) -> list of {"ids": [note ids], "text": notes joined by ". "}
     Long documents for chunking: the notes shuffled and cut into reports of `per` notes.
 tokenise(text) -> lower-case runs of letters a to z.
 fit_tfidf(docs, stop_words=()) -> {"vocab": sorted words, "index": {word: column}, "idf": array, "X": rows of length 1}
     scikit-learn's TfidfVectorizer defaults: raw counts, idf = ln((1 + n) / (1 + df)) + 1, each row scaled to length 1.
 embed(text, model, stop_words=()) -> the query's TF-IDF vector of length 1 (all zeros if no word is known).
-rank(text, model, stop_words=()) -> every row index, highest cosine first, ties to the lower index.
+rank(text, model, stop_words=()) -> every row index, highest cosine first, ties to the lower index. A query with no known word
+    still returns every index; the lesson's own `rank` (l2) returns [] instead.
 NumPy and the standard library only; nothing is kept between calls.
 """
 import json

@@ -196,6 +196,20 @@ lv.claim(close(0.03 / 0.01, 3), 'three standard errors', covers=[0.03, 3])
 l8 = 'l8-an-honest-text-backtest'
 k12 = math.sqrt(2 * math.log(12)) / math.sqrt(2)
 lv.claim(close(round(math.sqrt(2 * math.log(12)), 4), 2.2293) and close(round(k12, 4), 1.5764) and close(round(math.sqrt(2), 4), 1.4142), 'sqrt(2 ln 12) = 2.2293, over sqrt 2 = 1.5764', covers=[2.2293, 1.5764, 1.4142])
+
+
+def emax(n, grid=200001, lim=9.0):
+    """Expected maximum of n standard normals by trapezoid integration of x n phi(x) Phi(x)^(n-1) (route two: simulation below)."""
+    x = np.linspace(-lim, lim, grid)
+    phi = np.exp(-x * x / 2) / math.sqrt(2 * math.pi)
+    cdf = 0.5 * (1 + np.array([math.erf(v / math.sqrt(2)) for v in x]))
+    return float(np.trapezoid(x * n * phi * cdf ** (n - 1), x))
+
+
+sim = np.random.default_rng(5).standard_normal((200000, 12)).max(axis=1).mean()
+e12 = emax(12)
+lv.claim(close(e12, sim, 0.01) and close(e12 / math.sqrt(2), 1.15, 0.005) and e12 < math.sqrt(2 * math.log(12)),
+         f'the noise best of 12 averages {e12:.4f}, so about 1.15 over two years, below the allowance 1.58', covers=[1.15])
 lv.expect(l8, 'screens[0].widget.answer', round(2.1 - k12, 2))
 lv.expect(l8, 'screens[0].widget.wrong[1].value', round(2.1 - math.sqrt(2 * math.log(12)), 2))
 nmin = next(n for n in range(1, 1000) if math.sqrt(2 * math.log(n)) / math.sqrt(2) >= 2)

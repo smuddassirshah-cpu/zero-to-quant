@@ -1037,3 +1037,61 @@ def name_masking_test(texts, names, score):
     se = statistics.stdev(d) / math.sqrt(len(d))
     return m, se, (m / se if se > 0 else 0.0)
 ```
+
+## Fix pass
+
+I recomputed every changed number before writing it. The fair comparison comes from route B of `docs/reports/llm-apps-L3-numbers.py`, which has its own question parser; E[max of 12 normals] is by trapezoid integration and by simulation; the 0.10 standard error of a gap by two routes. After the edits: validator 0 errors with no `[ai-mutants]` or `[source-ban]` warning on llm-apps; voice scan 0 and 0; the three number scripts pass through the runner (3 of 3) and in strict mode (L1 394, L2 349, L3 245 checks, 0 uncovered); `grade-all --code --strict-feedback` 0 failures on each of the 15 edited files alone; playthrough green with and without `--mobile` on 11 lessons, 3 homeworks and problems-3.
+
+Status: fixed 34 (4 errors, 11 warnings, 19 notes), partly fixed 1 (a warning) (the `k` rename in l3), disputed 0, deferred 0. No lesson id and no `course.json` touched.
+
+### The fair comparison (error)
+
+The workflow and the agent now get the same raw request. `parse_question(text)` (new, in `llm_apps_ops_l3.py`, version 1.1) stands in for the parsing step; `run_workflow` and `fixed_chain` read only `task['question']`, and a raised tool error ends the chain with `None`. Result, computed in the script: the workflow answers 19 of 20 and fails only T12 (it reads 29 March, a holiday, and cannot step back); the agent answers 16 of 20 and its four failures (T10, T20 loops, T11 no tool, T14 memory) are planted and labelled planted on screen; on the other 16 tasks the agent is 16 of 16 and the workflow 15 of 16; the agent beats the workflow on 1 task (T12), the workflow beats the agent on 4, all planted. The lesson now says a fixed workflow wins when the steps are known and an agent earns its cost when they are not.
+
+1. l11 s9, l12 s8, s11, summary, homework-3 h-chain, the 20 of 20 claim: fixed as above. Graded answers changed: l11 `run_workflow` test 7 is the T12 case (None, calls so far) and test 8 now expects 19; hw3 `chain_scorecard` expects 19, 0.95, 0.0487; the l12 bars show 0.95 and 0.80. Mutants added for reading the task's own fields and for recording a call only after it succeeds.
+
+### Level 1
+
+2. l2 test-7 feedback (error): fixed, names notes 3 and 4 and the lower index 2.
+3. l3 size3 `why` (error): fixed, quotes 'but the going' and 'concern doubt from'.
+4. l4 pooled recall (warning): fixed, a sentence in s8 explain says `representations` pooled and here recall is per query.
+5. l4 `k` two meanings (warning): partly fixed. l4 now calls the LSA size $d$ and says level 3 called it $k$. Declined for l3: `lsa_embed(X, k)`, $\mathbf V_k$ and $k = 8$ are a function contract with hidden tests and the formula, so renaming them across the lesson risks more than it clears.
+6. homework-1 ties (warning, W05): fixed, test 12 (two identical documents, expects [0, 1]) and a mutant.
+7. homework-1 tail windows (warning, W08): fixed, test 13 (a 20-word document, expects [1, 0]; the extra tail window flips it) and a mutant.
+8. l2 s10 explain (note): fixed, stop words named.
+9. l2 s5 explain (note): fixed.
+10. l2 `rank` against the module's `rank` (note): fixed in the module docstring.
+11. l4 s7 slips (note): fixed, values 0.375 and 0.625 with tolerance 0.006.
+12. l2 and l3 unstable `argsort` (note, W03 and W04): fixed, l2 test 9 (a slice of the 180-note ranking where many notes tie) and l3 test 10 (twenty tied rows among forty), each with a mutant.
+
+### Level 2
+
+13. l8 noise best (warning): fixed. The curve and the text call $\sqrt{2\ln N}/\sqrt T$ a generous allowance; the best of 12 noise strategies averages 1.15 over two years (computed), against the allowance 1.58.
+14. l7 name effect (warning): fixed, before and after the cut-off comparison in s5 explain, dates and product names in s6 explain, the summary line.
+15. l6 latency (note): fixed, one sentence in s8 explain.
+16. l5 and l12 `post-train` (note): fixed, "when you reach it".
+17. homework-2 h-checklist (note): fixed, feedback.generic.
+
+### Level 3
+
+18. l10 s7 order (error): fixed, one order (name, parse, validate, run) in the prose and in s0 explain.
+19. l9 vague demo (warning): fixed. The three tools are `tool_a`, `tool_b`, `tool_c` with the same description, so there is nothing to tell them apart; the prose says a real model also reads names and schemas; quiz q9-desc follows.
+20. l11 trap wording (warning): fixed, "Results not tied to their call" in the title, prose, feedback, summary trap and homework-3 h-iteration option x2.
+21. l11 and l12 workflow definition (warning): fixed. l11 s4 defines a workflow as Anthropic does; l12 s8 explain names the augmented model, prompt chaining and routing.
+22. l12 "facts" (warning): fixed by saying "tools", and s9 explain says the scorer checks that a required tool returned a result, not which ticker or date. Test 5 is now a real trajectory (an assistant call, then its error), which kills W19; mutant added.
+23. l12 W18 (warning): fixed, test 8 (a hedged '97.87 or 98.10' is not correct) and a mutant.
+24. homework-3 h-agent wording (warning): fixed both ways. The scripted model now accepts `str` as well as `string`, and the prose says so.
+25. l9 W20 (note): fixed, test 11 (2.5 for an integer) and a mutant.
+26. l9 `input_schema` (note): fixed, "Anthropic's API uses; others rename `input_schema`".
+27. l10 s3 caption (note): fixed.
+28. l10 s9 how (note): fixed.
+29. l11 s1 explain (note): fixed.
+30. l12 s3 correct (note): fixed, "four tasks in ten fail, though each step looks safe".
+31. l12 s4 and problems-3 item 0 part 4 (note): fixed, the standard error of the difference is about 0.10, twice the gap (computed two ways).
+32. l12 s11 explain (note): fixed, "if each of 20 steps succeeded with chance 0.95".
+
+### Modules and scripts
+
+33. `llm_apps_ops_l2.make_market` (note): fixed in the docstring only, so no seeded figure changes.
+34. `llm_apps_ops_l1.load_notes` (note): fixed in the docstring.
+35. Number script runtime (note): added the `OMP_NUM_THREADS=1` line to the L1 and L3 script docstrings.

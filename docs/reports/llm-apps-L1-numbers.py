@@ -4,6 +4,7 @@ Route A is the content builder (NumPy, `llm_apps_ops_l1`). Route B here: pure-Py
 scikit-learn's TfidfVectorizer(token_pattern='[a-z]+') for IDF and rows, LSA by an eigen-decomposition of X^T X instead of an SVD,
 recall and MRR by hand loops; every code widget's hidden tests are rerun in CPython with its solution and with an independent twin,
 and every mutant is checked to fail its named test first. Strict coverage. Run through tools/run-number-scripts.mjs (venv Python).
+Run by hand with OMP_NUM_THREADS=1: BLAS threads make this script several times slower.
 """
 import json, math, os, sys, random, re, statistics
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -331,9 +332,9 @@ D13, V13 = b_lsa(X_, 13)
 fr13 = statistics.fmean([b_recall(sorted(range(180), key=lambda i, v=ops.embed(t, ops.fit_tfidf(NT)) @ V13: (-b_cosv(v, D13[i]), i)), r, 3) for t, r in fresh])
 lv.claim(close(fr13, 1.0), f'on 20 fresh queries k = 13 also gives recall at 3 of {fr13}')
 lv.claim(close(statistics.fmean([1, 0.5, 0]), 0.5), 'mean recall over A, B, D = 0.5', covers=[0.5])
-lv.expect(l4, 'screens[7].widget.wrong[0].value', round(1.5 / 4, 2))
-lv.claim(close(2.5 / 4, 0.625) and abs(0.625 - 0.63) <= 0.005 + 1e-12, "counting query C as 1 gives 0.625, written 0.63 with a band of 0.005 that holds 0.625")
-lv.expect(l4, 'screens[7].widget.wrong[1].value', 0.63)
+lv.expect(l4, 'screens[7].widget.wrong[0].value', 1.5 / 4)
+lv.claim(close(2.5 / 4, 0.625) and close(1.5 / 4, 0.375), "counting query C as 1 gives 0.625 and as 0 gives 0.375, exactly the wrong values, with a band of 0.006 that holds the rounded 0.63 and 0.38 too")
+lv.expect(l4, 'screens[7].widget.wrong[1].value', 2.5 / 4)
 lv.expect(l4, 'screens[11].widget.answer', 38 / 50)
 lv.expect(l4, 'screens[11].widget.wrong[1].value', round(38 / 250, 2))
 lv.claim(50 * 5 == 250 and 50 - 38 == 12, '50 searches of 5 notes is 250 listed; 12 misses', covers=[250, 12, 38, 50])
