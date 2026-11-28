@@ -354,7 +354,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "How big each write is",
-   "prose": "The bars give the length (norm) of the embedding, of each update and of the final stream at position 6. The five terms have lengths that add to 25.27, yet the final stream is only 12.20 long.",
+   "prose": "The bars give the length (norm) of the embedding, of each update and of the final stream at position 6. The five terms have lengths that add to about 25.3, yet the final stream is only 12.20 long.",
    "canvas": {
     "kind": "bars",
     "params": {
@@ -426,7 +426,7 @@
     "generic": "Not quite. Compare adding lengths with adding vectors."
    },
    "explain": {
-    "text": "By the triangle inequality, $\\lVert \\mathbf x_4 \\rVert \\le$ the sum of the lengths, with equality only when all terms line up. Here 12.20 against 25.27: the writes are big, and they partly cancel."
+    "text": "By the triangle inequality, $\\lVert \\mathbf x_4 \\rVert \\le$ the sum of the lengths, with equality only when all terms line up. Here 12.20 against about 25.3: the writes are big, and they partly cancel."
    }
   },
   {
@@ -566,7 +566,12 @@
    ],
    "feedback": {
     "correct": "Five snapshots of one running sum, and four lengths per position.",
-    "generic": "Not quite. Each entry must be the previous one plus a write."
+    "generic": "Not quite. Each entry must be the previous one plus a write.",
+    "byKey": {
+     "test-1": "Each entry must be the previous one plus a write; the final entry is the embedding plus all four updates, not the attention output alone.",
+     "test-4": "Measure each update, the difference between neighbouring entries, not the stream itself, and take the length over the features, not over the positions.",
+     "test-6": "Build the trace from the two updates of each block. Calling the shipped `stream` hands over the answer without building the sum."
+    }
    },
    "explain": {
     "text": "Each entry is the previous one plus a write, so the last entry minus the first is the sum of the writes. The norms are taken over the 32 features, one per position."
@@ -732,7 +737,7 @@
     }
    },
    "explain": {
-    "text": "Removing attention 2 drops the score to 0.6%, so that part does the reversing; MLP 2 adds little. This is ablation, which `nn-train` l14 met for whole design choices and `interp` L4 uses on single parts."
+    "text": "Removing attention 2 drops the score to 0.6%, so the reversal depends on it most; MLP 2 adds little. This is ablation, which `nn-train` l14 met for whole design choices and `interp` L4 uses on single parts."
    }
   },
   {
@@ -857,7 +862,10 @@
    ],
    "feedback": {
     "correct": "Without part 3 the model writes the wrong digits; without part 4 it barely notices.",
-    "generic": "Not quite. Leave the write out while the model runs, so later parts see the change."
+    "generic": "Not quite. Leave the write out while the model runs, so later parts see the change.",
+    "byKey": {
+     "test-1": "Leave the write out while the model runs, so later parts see the change. Number the parts from 1, and keep the final layer norm."
+    }
    },
    "explain": {
     "text": "Subtracting the write at the end would give a different answer: part 4 read a stream that held part 3's write. Ablation removes a part and lets everything downstream react."

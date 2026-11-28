@@ -647,9 +647,19 @@
       "call": "model_params(50257, 1024, 768, 3072, 12, tied=True)",
       "compare": "equal",
       "expect": "124490065"
+     },
+     {
+      "call": "block_params(64, 100)",
+      "compare": "equal",
+      "expect": "29860"
+     },
+     {
+      "call": "model_params(11, 12, 32, 96, 2)",
+      "compare": "equal",
+      "expect": "22411"
      }
     ],
-    "how": "Submit runs 8 hidden tests; each result must equal the expected whole number. Tests 5 and 6 count the supplied reversal model, `MODEL`, and check it against the formula.",
+    "how": "Submit runs 10 hidden tests; each result must equal the expected whole number. Tests 5 and 6 count the supplied reversal model, `MODEL`, and check it against the formula. Tests 9 and 10 use an MLP width that is not $4d$.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    attn = 4 * d * d + (4 * d if bias else 0)\n    mlp = 2 * d * d_mlp + (d_mlp + d if bias else 0)\n    norms = 0\n    return attn + mlp + norms\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    unembed = (0 if tied else d * vocab) + vocab\n    return vocab * d + ctx * d + n_blocks * block_params(d, d_mlp) + 2 * d + unembed\n\n\ndef count_arrays(params):\n    if isinstance(params, dict):\n        return sum(count_arrays(v) for v in params.values())\n    if isinstance(params, (list, tuple)):\n        return sum(count_arrays(v) for v in params)\n    return int(np.size(params))\n",
@@ -675,6 +685,11 @@
       "source": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    attn = 4 * d * d + (4 * d if bias else 0)\n    mlp = 2 * d * d_mlp + (d_mlp + d if bias else 0)\n    norms = 4 * d if bias else 2 * d\n    return attn + mlp + norms\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    unembed = (0 if tied else d * vocab) + vocab\n    return vocab * d + ctx * d + n_blocks * block_params(d, d_mlp) * 4 + 2 * d + unembed\n\n\ndef count_arrays(params):\n    if isinstance(params, dict):\n        return sum(count_arrays(v) for v in params.values())\n    if isinstance(params, (list, tuple)):\n        return sum(count_arrays(v) for v in params)\n    return int(np.size(params))\n",
       "test": 3,
       "symptom": "Multiplies by the number of heads."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    attn = 4 * d * d + (4 * d if bias else 0)\n    mlp = 2 * d * 4 * d + (4 * d + d if bias else 0)\n    norms = 4 * d if bias else 2 * d\n    return attn + mlp + norms\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    unembed = (0 if tied else d * vocab) + vocab\n    return vocab * d + ctx * d + n_blocks * block_params(d, d_mlp) + 2 * d + unembed\n\n\ndef count_arrays(params):\n    if isinstance(params, dict):\n        return sum(count_arrays(v) for v in params.values())\n    if isinstance(params, (list, tuple)):\n        return sum(count_arrays(v) for v in params)\n    return int(np.size(params))\n",
+      "test": 9,
+      "symptom": "Takes the MLP width as 4d and ignores d_mlp."
      }
     ]
    },
@@ -699,7 +714,15 @@
    ],
    "feedback": {
     "correct": "The formula and the arrays agree: the reversal model holds 26,571 numbers.",
-    "generic": "Not quite. Check each part against the table."
+    "generic": "Not quite. Check each part against the table.",
+    "byKey": {
+     "test-1": "The count leaves something out. Add attention, the MLP and both layer norms, gains and shifts.",
+     "test-2": "With `bias=False` every bias goes, the layer-norm shifts too; the gains stay.",
+     "test-3": "Heads slice the same matrices, so they do not multiply the count.",
+     "test-4": "Tying removes the unembedding matrix, but its bias of length $V$ stays.",
+     "test-5": "Count the arrays inside the list of blocks too: a value may be a list of dicts.",
+     "test-9": "The MLP width is an argument. Use `d_mlp` in the count, not $4d$."
+    }
    },
    "explain": {
     "text": "Counting the arrays checks the formula, and the formula checks the arrays: a mismatch means a missing bias or a stray matrix. For the reversal model both give 26,571."
@@ -795,7 +818,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "Tied embeddings",
-   "prose": "GPT-2 **ties** its embeddings: the unembedding reuses the token-embedding matrix (transposed), so it costs nothing new. Keep the unembedding's bias of 65. Start from the spike model's 60,545.",
+   "prose": "GPT-2 **ties** its embeddings: the unembedding reuses the token-embedding matrix (transposed), so it costs nothing new. Tie our spike model the same way, keeping its unembedding bias of 65. Start from the spike model's 60,545.",
    "canvas": {
     "kind": "table",
     "params": {

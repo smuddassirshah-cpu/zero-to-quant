@@ -143,7 +143,7 @@
     }
    },
    "explain": {
-    "text": "Wired up, the vector runs along the bottom and each part adds a correction to it. Attention goes first, so the MLP reads a vector that already holds the other positions' information.",
+    "text": "Wired up, the vector runs along the bottom and each part adds a correction to it. Attention goes first, so the MLP reads a vector that already holds the earlier positions' information.",
     "canvas": {
      "nodes": {
       "x": {
@@ -310,7 +310,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "One position by hand",
-   "prose": "One position, $d = 2$, $\\mathbf x = (1, 3)$. Layer norms have gain 1 and shift 0; ignore $\\epsilon$. With one position the attention weight is 1, so attention returns $\\operatorname{LN}_1(\\mathbf x)\\mathbf W_V\\mathbf W_O$, here $\\mathbf W_V = \\mathbf I$, $\\mathbf W_O = 0.5\\mathbf I$. The MLP has $\\mathbf W_1 = \\mathbf I$, $\\mathbf W_2 = 2\\mathbf I$ and no biases.",
+   "prose": "One position, $d = 2$, $\\mathbf x = (1, 3)$. Layer norms have gain 1 and shift 0; ignore $\\epsilon$. With one position the attention weight is 1, so attention returns $\\operatorname{LN}_1(\\mathbf x)\\mathbf W_V\\mathbf W_O$, here $\\mathbf W_V = \\mathbf I$, $\\mathbf W_O = 0.5\\mathbf I$, with no biases anywhere. The MLP has $\\mathbf W_1 = \\mathbf I$ and $\\mathbf W_2 = 2\\mathbf I$.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -519,7 +519,10 @@
    ],
    "feedback": {
     "correct": "Each row goes through the same two layers, and no row reads another.",
-    "generic": "Not quite. Check the order: widen, add $\\mathbf b_1$, ReLU, narrow, add $\\mathbf b_2$."
+    "generic": "Not quite. Check the order: widen, add $\\mathbf b_1$, ReLU, narrow, add $\\mathbf b_2$.",
+    "byKey": {
+     "test-1": "A row's output depends on more than its own vector, the ReLU is missing, or $\\mathbf b_1$ is added after it. Each row is widened, shifted by $\\mathbf b_1$, passed through ReLU and narrowed on its own."
+    }
    },
    "explain": {
     "text": "The products act on the last axis, so rows never meet: position 2 alone gives the same output as position 2 in the sequence. That is why the MLP can run on any number of positions."
@@ -710,7 +713,10 @@
    ],
    "feedback": {
     "correct": "That matches the reference block, and the last token moves no earlier output.",
-    "generic": "Not quite. Check which vector each layer norm reads and that both outputs are added to $\\mathbf x$."
+    "generic": "Not quite. Check which vector each layer norm reads and that both outputs are added to $\\mathbf x$.",
+    "byKey": {
+     "test-1": "The whole block disagrees with the reference. Check that each norm comes before its part, that both parts add to the stream, that LN 2 reads the stream after attention, and that the mask is causal."
+    }
    },
    "explain": {
     "text": "Two lines carry the block: each adds a part's output to the vector the part read through its norm. The leak test passes because only attention mixes positions, and it is masked."
@@ -881,14 +887,14 @@
    "type": "problem",
    "difficulty": 3,
    "title": "Checking the gradient",
-   "prose": "The autograd builds the block's backward pass from its ops. Check it: write `block_grad_check(fn, x, params, M)` returning `grad_check` for the loss $\\sum \\operatorname{fn}(\\mathbf x) \\odot \\mathbf M$, over $\\mathbf x$ and every parameter. `good` is `seq_ops_l4.block` with 2 heads; `no_bo_grad` hides a bug.",
+   "prose": "The autograd builds the block's backward pass from its ops. Check it: write `block_grad_check(fn, x, params, M)` returning `grad_check` for the loss $\\sum \\operatorname{fn}(\\mathbf x) \\odot \\mathbf M$, over $\\mathbf x$ and every parameter. `good` is `seq_ops_l4.block` with 2 heads; `no_bo_grad` and `no_x_grad` each hide a bug.",
    "question": "Complete `block_grad_check`.",
    "widget": {
     "kind": "code",
     "language": "python",
     "starter": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    # Wrap x and every array of params in a Tensor. The loss is (fn(X, P) * M).sum().\n    # Return grad_check over X and every parameter Tensor.\n    ...\n",
     "solution": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    X = Tensor(np.array(x, dtype=float))\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    return grad_check(lambda: (fn(X, P) * M).sum(), [X] + list(P.values()))\n",
-    "prelude": "import numpy as np\nfrom autograd import Tensor\nfrom seq_ops_l4 import block, init_block\n\n_g = np.random.default_rng(8)\nP4 = init_block(4, 8, seed=2)\nfor _k in P4:\n    P4[_k] = P4[_k] + 0.1 * _g.standard_normal(P4[_k].shape)\nX3 = _g.standard_normal((3, 4))\nM3 = _g.standard_normal((3, 4))\n\n\ndef good(x, P):\n    return block(x, P, 2)\n\n\ndef no_bo_grad(x, P):\n    # a planted bug: the attention output bias is used as a constant, so it never gets a gradient\n    Q = dict(P)\n    Q['bo'] = P['bo'].data\n    return block(x, Q, 2)\n",
+    "prelude": "import numpy as np\nfrom autograd import Tensor\nfrom seq_ops_l4 import block, init_block\n\n_g = np.random.default_rng(8)\nP4 = init_block(4, 8, seed=2)\nfor _k in P4:\n    P4[_k] = P4[_k] + 0.1 * _g.standard_normal(P4[_k].shape)\nX3 = _g.standard_normal((3, 4))\nM3 = _g.standard_normal((3, 4))\n\n\ndef good(x, P):\n    return block(x, P, 2)\n\n\ndef no_bo_grad(x, P):\n    # a planted bug: the attention output bias is used as a constant, so it never gets a gradient\n    Q = dict(P)\n    Q['bo'] = P['bo'].data\n    return block(x, Q, 2)\n\n\ndef no_x_grad(x, P):\n    # a second planted bug: the input is used as a constant, so it never gets a gradient\n    return block(Tensor(x.data), P, 2)\n",
     "data": {
      "autograd.py": "content/data/ai/autograd.py",
      "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
@@ -924,9 +930,14 @@
       "call": "isinstance(block_grad_check(good, X3[:1], P4, M3[:1]), float)",
       "compare": "equal",
       "expect": "True"
+     },
+     {
+      "call": "block_grad_check(no_x_grad, X3, P4, M3) > 1e-3",
+      "compare": "equal",
+      "expect": "True"
      }
     ],
-    "how": "Submit runs 4 hidden tests. Test 1 needs the reference block below $10^{-6}$; test 2 needs your check to catch a planted block whose output bias gets no gradient; test 3 checks that `X3` is unchanged.",
+    "how": "Submit runs 4 hidden tests. Test 1 needs the reference block below $10^{-6}$; test 2 needs your check to catch a planted block whose output bias gets no gradient; test 3 checks that `X3` is unchanged. Test 5 needs your check to catch a planted block that treats the input as a constant.",
     "mutants": [
      {
       "source": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    X = Tensor(np.array(x, dtype=float))\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    return grad_check(lambda: (fn(X, P) * M).sum(), [X])\n",
@@ -942,6 +953,11 @@
       "source": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    X = Tensor(np.array(x, dtype=float))\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    return grad_check(lambda: (fn(X, P) * M).sum(), [X] + list(params.values()))\n",
       "test": 1,
       "symptom": "Hands grad_check the plain arrays instead of the Tensors the loss uses."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, grad_check\n\n\ndef block_grad_check(fn, x, params, M):\n    X = Tensor(np.array(x, dtype=float))\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    return grad_check(lambda: (fn(X, P) * M).sum(), list(P.values()))\n",
+      "test": 5,
+      "symptom": "Checks the parameters but leaves the input out."
      }
     ]
    },
@@ -961,7 +977,12 @@
    ],
    "feedback": {
     "correct": "The reference block agrees with central differences, and the planted bug shows up.",
-    "generic": "Not quite. Wrap every array in a Tensor, and pass all of them to `grad_check`."
+    "generic": "Not quite. Wrap every array in a Tensor, and pass all of them to `grad_check`.",
+    "byKey": {
+     "test-1": "The reference block must pass below $10^{-6}$. Wrap the parameters in Tensors, and hand `grad_check` the same Tensors the loss uses, not plain arrays.",
+     "test-2": "A parameter with no gradient slipped through. Check every parameter as well as the input.",
+     "test-5": "Your check leaves $\\mathbf x$ out, so a block that treats the input as a constant gets through. Put X in the list you hand to `grad_check`."
+    }
    },
    "explain": {
     "text": "A check over the input alone would miss the bug: $\\mathbf b_O$ gets no gradient, but nothing upstream depends on that. Checking every parameter is what catches a wire left out of the backward pass."

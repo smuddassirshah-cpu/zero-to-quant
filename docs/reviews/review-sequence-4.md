@@ -1386,3 +1386,34 @@ def transformer_lm_forward(tokens, params, n_blocks, h):
     return _ln(x, params['lnf_g'], params['lnf_b']) @ params['U'] + params['c']
 ```
 
+
+## Fix pass
+
+Status per finding. All 24 applied; none declined. Recomputed before writing: 7 − 3 = 4; `block_params(64, 100)` = 16,640 + 12,964 + 256 = 29,860; `model_params(11, 12, 32, 96, 2)` = 352 + 384 + 2 × 10,624 + 64 + 363 = 22,411; bars 4.06 + 3.76 + 3.76 + 5.80 + 7.90 = 25.28.
+
+- seq_ops_l4.py, lm_logits and stream past the context | note | declined here: a module and brief item, no content file in scope; the module is unchanged. Carry to the `gpt` and `interp` briefs.
+- seq_ops_l4.py, mask only on `mha` | note | declined here, as above (README line, outside the level 4 content files).
+- seq_ops_l4.py, `bk` round-off | note | declined here, as above (report line; harmless).
+- seq_ops_l4.py, ReLU against GELU | note | declined here, as above (`docs/briefs/gpt.md` line).
+- sequence-L4-numbers.py, tautological claims | note | fixed: 12 parts, 24 writes, 1/11 and 1/5, head width and 9 − t are now computed from lists and arrays.
+- sequence-L4-numbers.py, l16 quiz[0] slip | note | fixed: `E(L16, 'quiz[0].widget.wrong[1].value', 7 - 3)`.
+- l16 quiz[0] 'seven' | error | fixed: value 4, which is 7 − 3.
+- l16 screens[9] feedback.generic | error | fixed: "three curves".
+- review-4, homework-4, problems-4 `{,}` | warning | fixed: 13 strings, the braces are gone outside maths (plain 12,704 and so on).
+- l16 objectives[0] | warning | fixed: two-block wording copied from `course.json`.
+- l16 screens[7] explain | warning | fixed: unsupported sentence cut, "Depth is what exposes the difference."
+- l16 screens[9] question | warning | fixed: "train well".
+- l14 screens[6] explain | warning | fixed: "the reversal depends on it most".
+- problems-4 items[1] prose | warning | fixed: "It knows 500 tokens and reads at most 64 positions".
+- l13 screens[8] tests | warning | fixed: `no_x_grad` in the prelude, test 5 (`> 1e-3`), mutant first failing test 5; `how` and prose updated.
+- l15 screens[6] tests | warning | fixed: tests 9 and 10 (29,860 and 22,411), `block_params` 4d mutant first failing test 9; script checks both by formula and zeros.
+- l14 screens[3] prose and explain | note | fixed: "about 25.3"; script claim rounds to 1 place.
+- l16 screens[1] explain | note | fixed: separator or a neighbour.
+- l13 screens[0] explain | note | fixed: "earlier positions'".
+- l13 screens[2] prose | note | fixed: "with no biases anywhere" beside W_O.
+- l15 screens[8] prose | note | fixed: tie our spike model, keeping its bias.
+- homework-4 items[1] 'extra' why | note | fixed: "a further norm ... still leaves no identity path".
+- homework-4 items[6] model | note | fixed: "blocks of the same form, each with its own weights".
+- problems-4 items[0].parts[3] explain | note | fixed: 66.4% stated once.
+
+Strict feedback (ENGINE-BACKLOG 1269): `byKey` test lines added for all 8 code widgets with mutants (l13 x3, l14 x2, l15, l16 x3, homework-4 x2); each is reached by a mutant and each mutant-failed test has one. Graded answers changed: l16 quiz[0] wrong value 5 to 4 (the correct answer 6 is unchanged); two new hidden tests in l15 and one in l13.
