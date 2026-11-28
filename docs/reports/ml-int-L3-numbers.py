@@ -163,6 +163,58 @@ lv.claim(abs(2 / (1 / math.sqrt(3)) - 3.4641) < 1e-4, 'hand case: differences (1
 lv.claim(abs(1 - 0.75 / 5 - 0.85) < 1e-12, 'hand case: 1 - 0.75/5 = 0.85', covers=[0.85, 0.75])
 lv.claim(abs(104 / 150 - share) < 1e-12, 'boosting wins 104 of 150 days', covers=['104/150'])
 lv.claim(500 - 150 - 5 - 1 == 344 and 349 == 350 - 1 and 499 == 500 - 1 and 289 == 290 - 1 and 299 == 300 - 1 and 399 == 400 - 1, 'last day indices of each block, counting from 0', covers=[344, 349, 499, 289, 299, 399, 10])
+# keys recomputed from the inputs as the screen shows them (the first error class of the review: a key from unrounded inputs)
+def from_shown(ref, scr, mean, se, se_short, label):
+    w = lv.files[ref]['screens'][scr]['widget']
+    key, tol = w['answer'], w['tol']['abs']
+    shown = lv.text(ref, f'screens[{scr}]')
+    for s in (mean, se):
+        lv.claim(str(s).replace('-', '') in shown.replace('−', '-').replace('-', ''), f'{label}: the screen shows {s}')
+    for s, how in ((se, 'as shown'), (se_short, 'rounded to 4 places')):
+        lv.claim(abs(mean / s - key) <= tol, f'{label}: {mean}/{s} = {mean / s:.4f} ({how}) lies within {key} +- {tol}')
+    lv.claim(abs(round(mean / se, 2) - key) < 1e-9, f'{label}: the displayed route rounds to the key {key}')
+
+
+from_shown('l10-a-fair-comparison', 3, 0.0414, 0.00787, 0.0079, 'l10 screens[3]')
+from_shown('l10-a-fair-comparison', 4, 0.0436, 0.00789, 0.0079, 'l10 screens[4]')
+from_shown('l11-when-the-net-wins', 2, -0.0233, 0.00676, 0.0068, 'l11 screens[2]')
+for k, ref, scr in ((('A', 0), 'l10', 3), (('A', 1), 'l10', 4), (('B', 0), 'l11', 2)):
+    lv.claim(abs(D[k].mean() / (D[k].std(ddof=1) / math.sqrt(150)) - lv.files[{'l10': 'l10-a-fair-comparison', 'l11': 'l11-when-the-net-wins'}[ref]]['screens'][scr]['widget']['answer']) <= 0.005,
+             f'{ref} screens[{scr}]: the key is also the unrounded t', covers=[round(D[k].std(ddof=1) / math.sqrt(150), 5)])
+md0 = D['A', 0].mean()
+lv.claim(abs(round(md0, 5) - 0.04139) < 1e-12 and abs(md0 - TQ * 0.00787 - 0.0258) < 5e-5 and abs(md0 + TQ * 0.00787 - 0.0569) < 5e-5,
+         'the interval from the displayed 0.04139 and 0.00787 is (0.0258, 0.0569) to 4 places', covers=[0.04139])
+# homework h4 from the displayed inputs: upper end, and the 1.96 slip, with disjoint bands
+hw = lv.files['homework-3']['items'][3]['widget']
+up_t, up_z = -0.0233 + 1.976 * 0.0068, -0.0233 + 1.96 * 0.0068
+wz = [x for x in hw['wrong'] if x['id'] == 'z'][0]
+lv.claim(abs(up_t - hw['answer']) <= hw['tol']['abs'] and abs(up_z - wz['value']) <= wz['tol']['abs'] and abs(hw['answer'] - wz['value']) > hw['tol']['abs'] + wz['tol']['abs'],
+         f'homework h4 from the displayed inputs: key {up_t:.5f}, the 1.96 slip {up_z:.5f}, the two bands disjoint')
+
+# Newey-West: world B seed 1 under a Bartlett kernel with 5 lags, by hand and by statsmodels
+import statsmodels.api as sm  # noqa: E402
+
+
+def nw_t(x, lags):
+    x = np.asarray(x, float)
+    n, m = len(x), x.mean()
+    e = x - m
+    s = e @ e / n
+    for lag in range(1, lags + 1):
+        s += 2 * (1 - lag / (lags + 1)) * (e[lag:] @ e[:-lag]) / n
+    return m / math.sqrt(s / n)
+
+
+hac5 = nw_t(D['B', 1], 5)
+sm5 = float(sm.OLS(D['B', 1], np.ones(150)).fit(cov_type='HAC', cov_kwds={'maxlags': 5, 'use_correction': False}).tvalues[0])
+agree('Newey-West t, world B seed 1, 5 lags: by hand against statsmodels', hac5, sm5, 1e-9, covers=[round(hac5, 2)])
+lv.claim(round(hac5, 2) == -2.43 and abs(T['B', 1] + 1.91) < 0.005 and abs(hac5) > 2 > abs(T['B', 1]),
+         'world B seed 1: plain t -1.91, Newey-West (5 lags) t -2.43, past the bar of 2', covers=[-1.91, 5, 4])
+lv.claim(round(stats.t.ppf(0.975, 7), 2) == 2.36, 'the two-sided 5% point with 7 degrees of freedom (8 seeds) is 2.36', covers=[2.36, 7])
+lv.claim(500 - 150 - 4 == 346 and 345 + 1 == 346 and 500 - 150 - 8 == 342 and 400 - 100 - (11 - 1) == 290, 'validation l7 purge h - 1 for a 5-day label: 346 training days (and 342 for a double purge); 11-day label: 290',
+         covers=[346, 345, 342, 4, 11, 10, 5])
+l11_prelude = lv.files['l11-when-the-net-wins']['screens'][8]['widget']['prelude']
+lv.claim('0.5 * np.tanh(1.5 * u) + 0.15 * u * v' in l11_prelude, 'world B signal coefficients 0.5, 1.5 and 0.15 are the l11 widget prelude\'s generator', covers=[0.5, 0.15, 1.5])
 lv.literal('0.975', why='the quantile level of a 95% interval, a setting')
 lv.literal('10^-6', why='a comparison tolerance, a setting')
 lv.literal('ten times', why='an invented model size in a distractor')
@@ -171,7 +223,6 @@ lv.literal('250', why='days of P&L in an invented transfer')
 lv.literal('40', why='feature counts in invented scenarios')
 lv.literal('15', why='a model setting: 15 leaves')
 lv.literal('32', why='a model setting: two layers of 32')
-lv.claim('0.5 * np.tanh(1.5 * u) + 0.15 * u * v' in open(__file__).read(), 'world B signal coefficients 0.5, 1.5 and 0.15 are the generator\'s', covers=[0.5, 0.15, 1.5])
 lv.literal('0.0001', why='an invented tie in an edge case')
 lv.literal('0.4', why='an invented t in an edge case')
 lv.literal('-0.7', why='an invented t in a quiz item')

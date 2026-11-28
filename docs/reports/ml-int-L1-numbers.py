@@ -201,6 +201,13 @@ agree('peak over first minimum, two routes', rp, EB[40] / EB[10], 1e-4, covers=[
 agree('error at 400 over first minimum, two routes', sh, EB[400] / EB[10], 1e-6, covers=[round(sh, 2), round(1 / sh, 2)])
 agree('norm at 40 over norm at 10, two routes', nr, NB[40] / NB[10], 1e-4, covers=[round(nr, 1), round(1 / nr, 2)])
 agree('noise floor ratio at 2000, two routes', E2A[2000] / EA[2000], E2B[2000] / EB[2000], 1e-6, covers=[round(E2A[2000] / EA[2000], 1)])
+E0 = med(lambda s: mn(s, 2000, 0.0)[0])
+noise_part = (EA[2000] - E0, E2A[2000] - E0)
+lv.claim(round(E0, 4) == 0.0461 and round(noise_part[0], 4) == 0.0185 and round(noise_part[1], 4) == 0.0763 and abs(noise_part[1] / noise_part[0] - 4) < 0.2,
+         'noise 0 floor at 2000 is 0.0461; the noise part goes from 0.0185 to 0.0763, four times', covers=[0.0461, 0.0185, 0.0763, 0.046])
+lv.claim(round(med(lambda s: mn(s, 40, 0.0)[0]), 1) == 2.5, 'with no label noise the peak at p = 40 is about 2.5', covers=[2.5])
+lv.claim(round(NA[40], 2) == 10.14 and round(NA[10], 3) == 1.166 and round(NA[40] / NA[10], 1) == 8.7 and round(10.14 / 1.166, 1) == 8.7,
+         'norms to four figures: 1.166 and 10.14, ratio 8.7 from the figures as shown', covers=[10.14, 1.166])
 ans(L3, 'screens[1]', round(nr, 1))
 ans(L3, 'screens[2]', round(rp))
 ans(L3, 'screens[3]', round(sh, 2))

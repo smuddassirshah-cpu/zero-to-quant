@@ -65,6 +65,8 @@ agree('float16 limit ln 65,504', math.log(65504), np.log(np.float64(np.finfo(np.
 agree('float64 limit ln(max float64)', math.log(np.finfo(np.float64).max), 709.782712893384, 1e-12, covers=[709.78, 1.8])
 lv.claim(len(str(int(1000 / math.log(10)) + 1)) == 3 and int(1000 / math.log(10)) + 1 == 435 and math.floor(-800 / math.log(10)) == -348 and np.exp(np.float64(-800)) == 0.0,
          'e^1000 has 435 digits; e^-800 is about 10^-348 and underflows to 0 in float64', covers=[435, '10^{-348}', '10^{-308}', '10^{308}'])
+lv.claim(float(np.nextafter(0.0, 1.0)) == 5e-324 and np.exp(np.float64(-800)) < float(np.nextafter(0.0, 1.0)),
+         'the smallest positive float64 (subnormal) is about 5 x 10^-324, and e^-800 is below it', covers=['5 \\times 10^{-324}', '10^{-324}', 5, 324])
 q1 = -1000 + math.log(2)
 agree('quiz 1: log(e^-1000 + e^-1000) against scipy', q1, logsumexp([-1000, -1000]), covers=[round(q1, 4), round(math.log(2), 4), round(-q1, 4)])
 q2 = 3 + math.log(1 + 2 * e2)
@@ -204,7 +206,11 @@ lv.claim(drill_says('mi-linear-relu-backward', '[[1, 2], [−1, −2]]') and dri
 agree('r1: larger entry of (-3, -3 + ln 3)', softmax([-3, -3 + math.log(3)])[1], 0.75, covers=[0.75, 0.5, 3])
 agree('r2: ln 4 against scipy', math.log(4), logsumexp([4, 4, 4, 4]) - 4, covers=[round(math.log(4), 4), round(math.log10(4), 4), 0.25])
 agree('r3: sqrt(96/6) = 4', math.sqrt(96 / 6), 4, covers=[round(math.sqrt(96), 4), 16, 96, 4])
-lv.claim(int(np.isinf(np.triu(np.full((6, 6), -np.inf), 1)[3]).sum()) == 2, 'r4: row 4 of a 6-token mask has 2 masked entries', covers=[2])
+mask6 = np.triu(np.full((6, 6), -np.inf), 1)
+lv.claim(int(np.isinf(mask6[1]).sum()) == 4, 'r4: row 2 of a 6-token mask has 4 masked entries', covers=[4, 2, 6, 3])
+lv.claim(int(np.isinf(mask6[1, :1]).sum()) == 0 and 2 - 1 == 1, 'r4 slip: the 1 earlier key is not masked', covers=[1])
+lv.claim(int(np.isinf(mask6[1]).sum()) + 1 == 5, 'r4 slip: also masking the query own key gives 5', covers=[5])
+E('review', 'items[3].widget.answer', int(np.isinf(mask6[1]).sum()))
 lv.claim(np.mean([2, 2, 5]) == 3, 'r5: centre y = 3', covers=[3, 9])
 dWr = np.outer([2, 1], [3, -1])
 lv.claim(dWr.tolist() == [[6, -2], [3, -1]] and dWr.T[1, 0] == -2, 'r7: dW = [[6, -2], [3, -1]]; the transposed slip gives -2', covers=[6, -2, 3])
