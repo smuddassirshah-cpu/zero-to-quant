@@ -1,0 +1,542 @@
+{
+ "id": "problems-4",
+ "course": "backprop",
+ "level": 4,
+ "title": "Gradients for arrays",
+ "minutes": 35,
+ "items": [
+  {
+   "id": "p-dense-layer",
+   "difficulty": 3,
+   "skills": [
+    "bp-arrays"
+   ],
+   "prose": "A dense layer scores three trades: $\\mathbf{Y} = \\mathbf{X}\\mathbf{W} + \\mathbf{b}$, with $$\\mathbf{X} = \\begin{pmatrix} 1 & 2 \\\\ 0 & -1 \\\\ 2 & 1 \\end{pmatrix}, \\quad \\mathbf{W} = \\begin{pmatrix} 1 & 0.5 \\\\ -2 & 1 \\end{pmatrix},$$ and $\\mathbf{b}$ a row of 2 added to every trade.",
+   "parts": [
+    {
+     "question": "The incoming gradient $\\mathbf{G} = \\partial L/\\partial \\mathbf{Y}$ has one entry per entry of $\\mathbf{Y}$. How many entries is that?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 6,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "weights",
+        "value": 4,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "inputs-plus",
+        "value": 8,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\mathbf{Y}$ is 3 by 2, so $\\mathbf{G}$ has 6 entries.",
+      "generic": "Not quite. Work out the shape of $\\mathbf{X}\\mathbf{W}$.",
+      "byKey": {
+       "weights": "That is the number of weights. $\\mathbf{G}$ has the shape of $\\mathbf{Y}$.",
+       "inputs-plus": "Count the entries of $\\mathbf{Y}$: 3 rows of 2."
+      }
+     },
+     "explain": {
+      "text": "3 by 2 times 2 by 2 is 3 by 2: 6 entries."
+     }
+    },
+    {
+     "question": "Now $\\mathbf{G} = \\begin{pmatrix} 0.5 & -1 \\\\ 1.5 & 0 \\\\ -0.5 & 2 \\end{pmatrix}$. What is $\\partial L/\\partial W_{12}$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "a number",
+      "wrong": [
+       {
+        "id": "sign",
+        "value": -3,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "other",
+        "value": -0.5,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Column 1 of $\\mathbf{X}$ against column 2 of $\\mathbf{G}$: $1 \\times (-1) + 0 \\times 0 + 2 \\times 2 = 3$.",
+      "generic": "Not quite. Use $\\mathbf{X}^T\\mathbf{G}$.",
+      "byKey": {
+       "sign": "Check the sign: $2 \\times 2$ outweighs the $-1$.",
+       "other": "That is $\\partial L/\\partial W_{11}$, from column 1 of $\\mathbf{G}$."
+      }
+     },
+     "explain": {
+      "text": "$(\\mathbf{X}^T\\mathbf{G})_{12} = -1 + 0 + 4 = 3$."
+     }
+    },
+    {
+     "question": "Using $\\mathbf{G}$ from part 2, what is $\\partial L/\\partial b_2$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "a number",
+      "wrong": [
+       {
+        "id": "mean",
+        "value": 0.3333,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "one-row",
+        "value": -1,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Column 2 of $\\mathbf{G}$ summed: $-1 + 0 + 2 = 1$.",
+      "generic": "Not quite. $b_2$ was added to all three trades.",
+      "byKey": {
+       "mean": "You averaged over the 3 trades; each trade’s copy counts in full.",
+       "one-row": "You took trade 1 only."
+      }
+     },
+     "explain": {
+      "text": "Broadcasting copied $b_2$ to 3 rows, so its gradient sums column 2: 1."
+     }
+    },
+    {
+     "question": "Using $\\mathbf{G}$ from part 2 and $\\mathbf{W}$ above, what is $\\partial L/\\partial X_{31}$, trade 3’s first feature? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "no-transpose",
+        "value": -4.5,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "sign",
+        "value": -0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Row 3 of $\\mathbf{G}$ against row 1 of $\\mathbf{W}$: $-0.5 \\times 1 + 2 \\times 0.5 = 0.5$.",
+      "generic": "Not quite. Use $\\mathbf{G}\\mathbf{W}^T$.",
+      "byKey": {
+       "no-transpose": "You used column 1 of $\\mathbf{W}$, as in $\\mathbf{G}\\mathbf{W}$. The transpose pairs with row 1.",
+       "sign": "Check the sign: $-0.5 + 1$ is positive."
+      }
+     },
+     "explain": {
+      "text": "$(\\mathbf{G}\\mathbf{W}^T)_{31} = -0.5 + 1 = 0.5$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-bucket-softmax",
+   "difficulty": 4,
+   "skills": [
+    "bp-arrays"
+   ],
+   "prose": "A model of tomorrow’s return bucket (down, flat, up) outputs logits $\\mathbf{z} = (\\ln 5, \\ln 3, \\ln 2)$, and the stock went up.",
+   "parts": [
+    {
+     "question": "What is $p_{\\text{up}}$, the softmax chance of up? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.2,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "logit",
+        "value": 0.7,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "equal",
+        "value": 0.3,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$e^{z_i}$ is $(5, 3, 2)$, so $p_{\\text{up}} = 2/10 = 0.2$.",
+      "generic": "Not quite. Exponentiate, then divide by the total.",
+      "byKey": {
+       "logit": "That is $\\ln 2$, the logit itself.",
+       "equal": "That is the flat bucket’s chance."
+      }
+     },
+     "explain": {
+      "text": "$e^{\\ln 5}, e^{\\ln 3}, e^{\\ln 2} = 5, 3, 2$; the total is 10, so the chances are $(0.5, 0.3, 0.2)$."
+     }
+    },
+    {
+     "question": "Using $p_{\\text{up}} = 0.2$ from part 1, what is the loss in nats? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.6094,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "bits",
+        "value": 2.3219,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "largest",
+        "value": 0.6931,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-\\ln 0.2 = 1.6094$ nats.",
+      "generic": "Not quite. Take $-\\ln$ of the true bucket’s chance.",
+      "byKey": {
+       "bits": "That is $-\\log_2 0.2$, in bits.",
+       "largest": "That is $-\\ln 0.5$, the down bucket, not the true one."
+      }
+     },
+     "explain": {
+      "text": "$L = -\\ln 0.2 = 1.6094$."
+     }
+    },
+    {
+     "question": "What is $\\partial L/\\partial z_{\\text{up}}$? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.8,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "no-target",
+        "value": 0.2,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.8,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.2 - 1 = -0.8$.",
+      "generic": "Not quite. The true bucket gets $p - 1$.",
+      "byKey": {
+       "no-target": "You left out the target.",
+       "sign": "Check the sign: $0.2 - 1$ is negative."
+      }
+     },
+     "explain": {
+      "text": "$\\mathbf{p} - \\mathbf{y} = (0.5, 0.3, -0.8)$."
+     }
+    },
+    {
+     "question": "This day is one row of a batch of 4, and the loss is the batch mean. With $-0.8$ from part 3, what is this row’s gradient entry for up? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.2,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "no-n",
+        "value": -0.8,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "times",
+        "value": -3.2,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.2,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-0.8/4 = -0.2$.",
+      "generic": "Not quite. The mean divides by the 4 rows.",
+      "byKey": {
+       "no-n": "You forgot the batch size.",
+       "times": "You multiplied by 4; the mean divides.",
+       "sign": "Dividing by 4 keeps the sign."
+      }
+     },
+     "explain": {
+      "text": "Each row carries a quarter of the mean: $-0.8/4 = -0.2$."
+     }
+    },
+    {
+     "question": "A gradient step with $\\eta = 0.5$ uses that $-0.2$. What is $z_{\\text{up}}$ after it, starting from $\\ln 2$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.7931,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "wrong-way",
+        "value": 0.5931,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "no-n",
+        "value": 1.0931,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\ln 2 - 0.5 \\times (-0.2) = 0.6931 + 0.1 = 0.7931$.",
+      "generic": "Not quite. Step against the gradient: $z - \\eta g$.",
+      "byKey": {
+       "wrong-way": "You stepped with the gradient. Subtract $\\eta g$, and $g$ is negative.",
+       "no-n": "You used $-0.8$, the undivided entry."
+      }
+     },
+     "explain": {
+      "text": "$z \\leftarrow z - \\eta g = 0.6931 + 0.1 = 0.7931$: the step raises the up logit."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-one-step",
+   "difficulty": 5,
+   "skills": [
+    "bp-arrays",
+    "bp-check"
+   ],
+   "prose": "A two-class classifier has logits $\\mathbf{Z} = \\mathbf{X}\\mathbf{W}$ with $\\mathbf{X} = \\begin{pmatrix} 2 & 0 \\\\ 0 & 1 \\end{pmatrix}$, $\\mathbf{W}$ starting at zeros, and targets: class 0 for row 1, class 1 for row 2. The loss is the mean cross-entropy over the 2 rows.",
+   "parts": [
+    {
+     "question": "What is the loss at the start, in nats? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6931,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "sum",
+        "value": 1.3863,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "bits",
+        "value": 1,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "All logits are 0, so each chance is $\\tfrac12$ and the mean loss is $\\ln 2 = 0.6931$.",
+      "generic": "Not quite. Equal logits give equal chances.",
+      "byKey": {
+       "sum": "That is the sum over 2 rows. The loss is a mean.",
+       "bits": "That is 1 bit. In nats it is $\\ln 2$."
+      }
+     },
+     "explain": {
+      "text": "Each row pays $-\\ln \\tfrac12 = \\ln 2$, so the mean is 0.6931."
+     }
+    },
+    {
+     "question": "$\\mathbf{G} = (\\mathbf{P} - \\mathbf{Y})/2$. What is $\\partial L/\\partial W_{11}$? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.5,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "no-n",
+        "value": -1,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "no-x",
+        "value": -0.25,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\mathbf{G}$ has $-0.25$ at row 1, class 0; $(\\mathbf{X}^T\\mathbf{G})_{11} = 2 \\times (-0.25) + 0 = -0.5$.",
+      "generic": "Not quite. Use $\\mathbf{X}^T\\mathbf{G}$ with the halved $\\mathbf{G}$.",
+      "byKey": {
+       "no-n": "You left out the division by 2 rows.",
+       "no-x": "That is $G_{11}$. Multiply by $X_{11} = 2$ through $\\mathbf{X}^T\\mathbf{G}$.",
+       "sign": "Check the sign: the true class gets $p - 1 < 0$."
+      }
+     },
+     "explain": {
+      "text": "$G_{11} = (0.5 - 1)/2 = -0.25$, and only row 1 has a first feature: $2 \\times (-0.25) = -0.5$."
+     }
+    },
+    {
+     "question": "One step with $\\eta = 1$ from $W_{11} = 0$, using $-0.5$ from part 2. What is the new $W_{11}$? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "wrong-way",
+        "value": -0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0 - 1 \\times (-0.5) = 0.5$.",
+      "generic": "Not quite. Step against the gradient.",
+      "byKey": {
+       "wrong-way": "You stepped with the gradient."
+      }
+     },
+     "explain": {
+      "text": "$W \\leftarrow W - \\eta \\nabla$: $0 + 0.5 = 0.5$."
+     }
+    },
+    {
+     "question": "After the step $\\mathbf{W} = \\begin{pmatrix} 0.5 & -0.5 \\\\ -0.25 & 0.25 \\end{pmatrix}$. What is the new mean loss? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.3005,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "one-row",
+        "value": 0.1269,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "sum",
+        "value": 0.601,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Row 1’s logits are $(1, -1)$, loss $\\ln(1 + e^{-2}) = 0.1269$; row 2’s are $(-0.25, 0.25)$, loss $\\ln(1 + e^{-0.5}) = 0.4741$. The mean is 0.3005.",
+      "generic": "Not quite. Recompute both rows’ logits with the new $\\mathbf{W}$.",
+      "byKey": {
+       "one-row": "That is row 1 alone. Average it with row 2.",
+       "sum": "That is the sum. The loss is a mean."
+      }
+     },
+     "explain": {
+      "text": "The step cut the loss from 0.6931 to $(0.1269 + 0.4741)/2 = 0.3005$, as a correct gradient should."
+     }
+    }
+   ]
+  }
+ ]
+}

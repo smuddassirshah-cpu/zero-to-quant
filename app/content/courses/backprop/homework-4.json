@@ -1,0 +1,400 @@
+{
+ "id": "homework-4",
+ "course": "backprop",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-exp-log-lse",
+   "difficulty": 5,
+   "skills": [
+    "bp-arrays",
+    "bp-check"
+   ],
+   "title": "Three more operations",
+   "prose": "The level’s `Tensor` (with `+`, `*`, `@`, `sum`, `tanh`, `relu`, `backward`) is loaded. Write three functions that each return a new `Tensor` with a backward closure: `tensor_exp(x)`, `tensor_log(x)`, and `logsumexp(x)`, the row-wise $\\ln \\sum_j e^{x_{ij}}$ of a 2-D tensor, of shape $(n, 1)$, computed with each row’s largest entry taken out.",
+   "question": "Write `tensor_exp`, `tensor_log` and `logsumexp`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef tensor_exp(x):\n    ...\n\n\ndef tensor_log(x):\n    ...\n\n\ndef logsumexp(x):\n    # row by row, shape (n, 1); take out\n    # each row's largest entry first\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef tensor_exp(x):\n    e = np.exp(x.data)\n    out = Tensor(e, (x,), \"exp\")\n\n    def _backward():\n        x.grad += e * out.grad\n    out._backward = _backward\n    return out\n\n\ndef tensor_log(x):\n    out = Tensor(np.log(x.data), (x,), \"log\")\n\n    def _backward():\n        x.grad += out.grad / x.data\n    out._backward = _backward\n    return out\n\n\ndef logsumexp(x):\n    m = x.data.max(axis=1, keepdims=True)\n    e = np.exp(x.data - m)\n    s = e.sum(axis=1, keepdims=True)\n    out = Tensor(m + np.log(s), (x,), \"logsumexp\")\n\n    def _backward():\n        x.grad += e / s * out.grad\n    out._backward = _backward\n    return out\n",
+    "examples": [
+     {
+      "call": "(lambda o: (o.data.shape, round(float(o.data[0, 0]), 6)))(logsumexp(Tensor(np.zeros((3, 4)))))",
+      "expect": "((3, 1), 1.386294)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "A = seeded((3, 4), 72)",
+      "call": "rel_check(lambda: (tensor_exp(A) * Tensor(R)).sum(), [A]) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "B = seeded((3, 4), 73, positive=True)",
+      "call": "rel_check(lambda: (tensor_log(B) * Tensor(R)).sum(), [B]) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "(lambda o: (o.data.shape, round(float(o.data[0, 0]), 6)))(logsumexp(Tensor(np.zeros((3, 4)))))",
+      "expect": "((3, 1), 1.386294)",
+      "compare": "equal"
+     },
+     {
+      "setup": "A = seeded((3, 4), 74)",
+      "call": "rel_check(lambda: (logsumexp(A) * Tensor(R1)).sum(), [A]) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(logsumexp(Tensor([[1000.0, 999.0, 998.1]])).data[0, 0]), 6)",
+      "expect": "1000.41703",
+      "compare": "equal"
+     },
+     {
+      "setup": "X = seeded((2, 3), 75); logsumexp(X).sum().backward()",
+      "call": "np.round(X.grad, 6).tolist()",
+      "expect": "[[0.099485, 0.448049, 0.452466], [0.365048, 0.393037, 0.241915]]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. `exp`, `log` and `logsumexp` are each checked against central differences below $10^{-6}$ (`rel_check` is loaded). Then the shape and value of `logsumexp` on zeros and near 1000, and its gradient, which must be each row’s softmax.",
+    "prelude": "import numpy as np\n\n\ndef unbroadcast(grad, shape):\n    shape = tuple(shape)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.sum(axis=tuple(range(extra)))\n    axes = tuple(i for i, n in enumerate(shape) if n == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n\n\nclass Tensor:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __add__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.data.shape)\n            other.grad += unbroadcast(out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.data.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(\"backward() needs a tensor of size 1\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, done = stack.pop()\n            if done:\n                order.append(node)\n            elif id(node) not in seen:\n                seen.add(id(node))\n                stack.append((node, True))\n                for p in node._prev:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n    def __matmul__(self, other):\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += out.grad @ other.data.T\n            other.grad += self.data.T @ out.grad\n        out._backward = _backward\n        return out\n\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.data.shape)\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad\n        out._backward = _backward\n        return out\n\n\ndef rel_check(f, params, h=1e-5):\n    for p in params:\n        p.grad = np.zeros_like(p.data)\n    f().backward()\n    worst, top = 0.0, 1e-12\n    for p in params:\n        g = p.grad.copy()\n        for i in np.ndindex(p.data.shape):\n            keep = p.data[i]\n            p.data[i] = keep + h\n            up = float(f().data)\n            p.data[i] = keep - h\n            down = float(f().data)\n            p.data[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(g[i] - num))\n            top = max(top, abs(g[i]), abs(num))\n    return worst / top\n\n\ndef seeded(shape, seed, positive=False):\n    a = np.random.default_rng(seed).standard_normal(shape)\n    return Tensor(np.abs(a) + 0.5 if positive else a)\n\n\nR = np.random.default_rng(70).standard_normal((3, 4))\nR1 = np.random.default_rng(71).standard_normal((3, 1))\n",
+    "budget": 3000,
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef tensor_exp(x):\n    e = np.exp(x.data)\n    out = Tensor(e, (x,), \"exp\")\n\n    def _backward():\n        x.grad += e * out.grad\n    out._backward = _backward\n    return out\n\n\ndef tensor_log(x):\n    out = Tensor(np.log(x.data), (x,), \"log\")\n\n    def _backward():\n        x.grad += out.grad * x.data\n    out._backward = _backward\n    return out\n\n\ndef logsumexp(x):\n    m = x.data.max(axis=1, keepdims=True)\n    e = np.exp(x.data - m)\n    s = e.sum(axis=1, keepdims=True)\n    out = Tensor(m + np.log(s), (x,), \"logsumexp\")\n\n    def _backward():\n        x.grad += e / s * out.grad\n    out._backward = _backward\n    return out\n",
+      "test": 2,
+      "symptom": "The log rule multiplies by x instead of dividing."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef tensor_exp(x):\n    e = np.exp(x.data)\n    out = Tensor(e, (x,), \"exp\")\n\n    def _backward():\n        x.grad += e * out.grad\n    out._backward = _backward\n    return out\n\n\ndef tensor_log(x):\n    out = Tensor(np.log(x.data), (x,), \"log\")\n\n    def _backward():\n        x.grad += out.grad / x.data\n    out._backward = _backward\n    return out\n\n\ndef logsumexp(x):\n    m = np.zeros((x.data.shape[0], 1))\n    e = np.exp(x.data - m)\n    s = e.sum(axis=1, keepdims=True)\n    out = Tensor(m + np.log(s), (x,), \"logsumexp\")\n\n    def _backward():\n        x.grad += e / s * out.grad\n    out._backward = _backward\n    return out\n",
+      "test": 5,
+      "symptom": "Without the largest entry taken out, exp(1000) overflows."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef tensor_exp(x):\n    e = np.exp(x.data)\n    out = Tensor(e, (x,), \"exp\")\n\n    def _backward():\n        x.grad += x.data * out.grad\n    out._backward = _backward\n    return out\n\n\ndef tensor_log(x):\n    out = Tensor(np.log(x.data), (x,), \"log\")\n\n    def _backward():\n        x.grad += out.grad / x.data\n    out._backward = _backward\n    return out\n\n\ndef logsumexp(x):\n    m = x.data.max(axis=1, keepdims=True)\n    e = np.exp(x.data - m)\n    s = e.sum(axis=1, keepdims=True)\n    out = Tensor(m + np.log(s), (x,), \"logsumexp\")\n\n    def _backward():\n        x.grad += e / s * out.grad\n    out._backward = _backward\n    return out\n",
+      "test": 1,
+      "symptom": "The exp rule uses x as the slope instead of e to the x."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "All three pass their gradient checks, and `logsumexp` is stable and passes back the softmax.",
+    "generic": "Not quite. Check the first failing test."
+   },
+   "explain": {
+    "text": "The slopes are $e^x$, $1/x$ and, for log-sum-exp, the softmax of the row. Taking out the row maximum $m$ uses $\\ln \\sum_j e^{x_j} = m + \\ln \\sum_j e^{x_j - m}$."
+   }
+  },
+  {
+   "id": "h-batch-matmul",
+   "difficulty": 4,
+   "skills": [
+    "bp-arrays"
+   ],
+   "title": "A batch of products",
+   "prose": "A sequence model applies one weight matrix to every item of a batch: `Y = X @ W` with `X` of shape $(B, n, k)$ and `W` of shape $(k, m)$, so NumPy broadcasts `W` across the batch. Write `batch_matmul_backward(X, W, G)` returning `(dX, dW)` with the shapes of `X` and `W`.",
+   "question": "Write `batch_matmul_backward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef batch_matmul_backward(X, W, G):\n    # X (B, n, k) @ W (k, m) = Y (B, n, m); G = dL/dY\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef batch_matmul_backward(X, W, G):\n    dX = G @ W.T\n    dW = (np.swapaxes(X, 1, 2) @ G).sum(axis=0)\n    return dX, dW\n",
+    "examples": [
+     {
+      "setup": "r = np.random.default_rng(80); X = r.standard_normal((5, 3, 4)); W = r.standard_normal((4, 2)); G = r.standard_normal((5, 3, 2))",
+      "call": "[a.shape for a in batch_matmul_backward(X, W, G)]",
+      "expect": "[(5, 3, 4), (4, 2)]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "r = np.random.default_rng(80); X = r.standard_normal((5, 3, 4)); W = r.standard_normal((4, 2)); G = r.standard_normal((5, 3, 2))",
+      "call": "[a.shape for a in batch_matmul_backward(X, W, G)]",
+      "expect": "[(5, 3, 4), (4, 2)]",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(80); X = r.standard_normal((5, 3, 4)); W = r.standard_normal((4, 2)); G = r.standard_normal((5, 3, 2))",
+      "call": "[np.round(a, 6).tolist() for a in batch_matmul_backward(X[:2], W, G[:2])]",
+      "expect": "[[[[0.449805, -0.16289, -0.682532, -0.276598], [0.324254, -0.217002, -0.765215, -0.194878], [-0.994358, 0.255592, 1.222135, 0.616195]], [[1.453359, -0.859996, -3.120782, -0.878583], [-0.223989, 0.17482, 0.596962, 0.133489], [-0.382519, 0.098254, 0.469951, 0.237047]]], [[-0.421432, 0.974808], [0.043684, -0.281449], [-1.035413, 2.228402], [0.37949, -0.474259]]]",
+      "compare": "equal"
+     },
+     {
+      "call": "agrees()",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(80); X = r.standard_normal((5, 3, 4)); W = r.standard_normal((4, 2)); G = r.standard_normal((5, 3, 2))",
+      "call": "np.round(batch_matmul_backward(X[:1], W, G[:1])[1] - X[0].T @ G[0], 9).tolist()",
+      "expect": "[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests: the two shapes, two seeded batches rounded to 6 places, a check against central differences, and a batch of one that must match the 2-D rule $\\mathbf{X}^T\\mathbf{G}$.",
+    "postlude": "\n\ndef agrees():\n    r = np.random.default_rng(81)\n    X, W, C = r.standard_normal((3, 2, 4)), r.standard_normal((4, 2)), r.standard_normal((3, 2, 2))\n    dX, dW = batch_matmul_backward(X, W, C)\n    worst, top = 0.0, 1e-12\n    for A, dA in ((X, dX), (W, dW)):\n        for i in np.ndindex(A.shape):\n            keep = A[i]\n            A[i] = keep + 1e-5\n            up = ((X @ W) * C).sum()\n            A[i] = keep - 1e-5\n            down = ((X @ W) * C).sum()\n            A[i] = keep\n            num = (up - down) / 2e-5\n            worst = max(worst, abs(dA[i] - num))\n            top = max(top, abs(dA[i]), abs(num))\n    return bool(worst / top < 1e-6)\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef batch_matmul_backward(X, W, G):\n    dX = G @ W.T\n    dW = (np.swapaxes(X, 1, 2) @ G)\n    return dX, dW\n",
+      "test": 1,
+      "symptom": "The weight gradient keeps one copy per batch item instead of summing them."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef batch_matmul_backward(X, W, G):\n    dX = G @ W.T\n    dW = (np.swapaxes(X, 1, 2) @ G).mean(axis=0)\n    return dX, dW\n",
+      "test": 2,
+      "symptom": "The batch copies are averaged, not added."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Both gradients have their input’s shape and agree with central differences.",
+    "generic": "Not quite. Check the shapes first."
+   },
+   "explain": {
+    "text": "`dX` is `G @ W.T` item by item. `W` was broadcast over the batch, so its gradient is the sum over items of $\\mathbf{X}_b^T\\mathbf{G}_b$: transpose the last two axes, multiply, and sum axis 0."
+   }
+  },
+  {
+   "id": "h-order-jacobian",
+   "difficulty": 3,
+   "skills": [
+    "bp-arrays"
+   ],
+   "prose": "Another route to the softmax with cross-entropy gradient goes through the softmax’s own derivatives. Take $L = -\\ln p_y$ with $p_j = e^{z_j}/S$ and $S = \\sum_k e^{z_k}$.",
+   "question": "Put the steps in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "j1",
+      "text": "$\\frac{\\partial L}{\\partial z_i} = -\\frac{1}{p_y} \\frac{\\partial p_y}{\\partial z_i}$, by the chain rule through $\\ln$."
+     },
+     {
+      "id": "j2",
+      "text": "$\\frac{\\partial p_y}{\\partial z_i} = \\frac{[i = y] e^{z_y} S - e^{z_y} e^{z_i}}{S^2}$, by the quotient rule."
+     },
+     {
+      "id": "j3",
+      "text": "That is $p_y([i = y] - p_i)$, splitting the fraction into $\\frac{e^{z_y}}{S}$ times $\\left([i = y] - \\frac{e^{z_i}}{S}\\right)$."
+     },
+     {
+      "id": "j4",
+      "text": "So $\\frac{\\partial L}{\\partial z_i} = -([i = y] - p_i) = p_i - [i = y]$, as the $p_y$ cancels."
+     },
+     {
+      "id": "x1",
+      "text": "$\\frac{\\partial p_y}{\\partial z_i} = p_i$ for every $i$, since $p$ is a softmax.",
+      "why": "That forgets that $z_i$ also sits in the denominator $S$, which is where the $-p_y p_i$ term comes from."
+     }
+    ],
+    "answer": [
+     "j1",
+     "j2",
+     "j3",
+     "j4"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "feedback": {
+    "correct": "Chain rule, quotient rule, factor out $p_y$, cancel: $\\mathbf{p} - \\mathbf{y}$ again.",
+    "generic": "Not quite. Start from the chain rule through the log.",
+    "byKey": {
+     "x1": "You dropped the denominator’s dependence on $z_i$. Every logit moves $S$.",
+     "left-out": "Every step but the shortcut belongs."
+    }
+   },
+   "explain": {
+    "text": "The quotient rule gives $\\partial p_y/\\partial z_i = p_y([i = y] - p_i)$; dividing by $-p_y$ leaves $p_i - [i = y]$, the same result as the log-sum-exp route."
+   }
+  },
+  {
+   "id": "h-precision",
+   "difficulty": 4,
+   "skills": [
+    "bp-check"
+   ],
+   "title": "float64 or float32",
+   "kind": "longform",
+   "prompt": "Your array autograd’s gradient check passes in float64 at $h = 10^{-5}$ with a relative error of $2.6 \\times 10^{-11}$. The same check in float32 at $h = 10^{-3}$ gives $8.0 \\times 10^{-5}$ and fails the $10^{-6}$ exit. Explain both results, say whether the float32 result points to a bug, and say what you would ship and what you would check.",
+   "model": "**Why float64 passes.** A central difference has two errors. The truncation error is about $\\tfrac{|f^{\\prime\\prime\\prime}|}{6}h^2$, about $2 \\times 10^{-11}$ at $h = 10^{-5}$ when $|f^{\\prime\\prime\\prime}|$ is of order 1. The rounding error is about $\\varepsilon |f| / h$ with $\\varepsilon \\approx 1.1 \\times 10^{-16}$, about $10^{-11}$. Both are far below $10^{-6}$, so $2.6 \\times 10^{-11}$ is what a correct backward pass gives.\n\n**Why float32 fails.** float32 keeps about 7 significant digits ($\\varepsilon \\approx 6 \\times 10^{-8}$). The difference $f(x + h) - f(x - h)$ cancels most of them, so the rounding error is about $\\varepsilon / h$, near $10^{-4}$ at $h = 10^{-3}$. A smaller $h$ makes it worse and a larger one raises the $h^2$ term, so float32 cannot reach $10^{-6}$ whatever $h$ is.\n\n**A bug?** No. The same code passes in float64, and the float32 error matches the rounding floor. A real bug gives errors of order $10^{-2}$ to 1 in both precisions.\n\n**What to ship.** Ship the autograd in float64, as the strand’s contract does, and keep the check in float64 with $h = 10^{-5}$ and the $10^{-6}$ threshold. If training later needs float32 for speed, check the gradients in float64 first, then compare float32 training runs against float64 ones by loss, not by gradient check.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Explains the float64 pass: truncation of order $h^2$ and rounding of order $\\varepsilon/h$ are both far below $10^{-6}$"
+    },
+    {
+     "points": 2,
+     "text": "Explains the float32 failure: about 7 digits, and the subtraction of two close losses cancels them"
+    },
+    {
+     "points": 2,
+     "text": "Says no step size rescues float32: smaller $h$ raises rounding, larger raises truncation"
+    },
+    {
+     "points": 2,
+     "text": "Concludes it is not a bug, because float64 passes and a bug shows in both precisions"
+    },
+    {
+     "points": 2,
+     "text": "Ships float64 and keeps the check at $h = 10^{-5}$ below $10^{-6}$"
+    }
+   ]
+  },
+  {
+   "id": "h-regression-grad",
+   "difficulty": 3,
+   "skills": [
+    "bp-arrays"
+   ],
+   "prose": "A linear fit $L = \\tfrac12 \\lVert \\mathbf{X}\\mathbf{W} - \\mathbf{Y} \\rVert^2$ has $$\\mathbf{X} = \\begin{pmatrix} 1 & 0 \\\\ 0 & 2 \\\\ 1 & 1 \\end{pmatrix}, \\quad \\mathbf{W} = \\begin{pmatrix} 0.5 \\\\ -1 \\end{pmatrix}, \\quad \\mathbf{Y} = \\begin{pmatrix} 1 \\\\ -1 \\\\ 0 \\end{pmatrix}.$$",
+   "question": "What is $\\partial L/\\partial W_{21}$? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -2.5,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "other",
+      "value": -1,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The residuals are $(-0.5, -1, -0.5)$; column 2 of $\\mathbf{X}$ gives $0 - 2 - 0.5 = -2.5$.",
+    "generic": "Not quite. $\\mathbf{G}$ is the residual $\\mathbf{X}\\mathbf{W} - \\mathbf{Y}$.",
+    "byKey": {
+     "sign": "You used $\\mathbf{Y} - \\mathbf{X}\\mathbf{W}$. The derivative of $\\tfrac12 r^2$ is $r$ with $r = \\mathbf{X}\\mathbf{W} - \\mathbf{Y}$.",
+     "other": "That is $\\partial L/\\partial W_{11}$, from column 1."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{X}\\mathbf{W} = (0.5, -2, -0.5)$, so $\\mathbf{G} = (-0.5, -1, -0.5)$ and $\\mathbf{X}^T\\mathbf{G} = (-1, -2.5)$."
+   }
+  },
+  {
+   "id": "h-perf-autograd",
+   "difficulty": 5,
+   "skills": [
+    "bp-arrays",
+    "bp-check"
+   ],
+   "title": "An array autograd",
+   "prose": "From a stub, build `Tensor` and `cross_entropy` to the strand’s contract. `Tensor(data)` stores float64 `data` and a same-shaped `grad`; `+` and `*` broadcast and accept plain numbers; `@`, `sum(axis=None, keepdims=False)` and `tanh()` record their backward rules; `backward()` needs a size-1 tensor and orders the graph without recursion. `cross_entropy(logits, targets)` is the mean loss in nats. `unbroadcast` is loaded.",
+   "question": "Write the class and `cross_entropy`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\nclass Tensor:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __add__(self, other):\n        ...\n\n    def __mul__(self, other):\n        ...\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def __matmul__(self, other):\n        ...\n\n    def sum(self, axis=None, keepdims=False):\n        ...\n\n    def tanh(self):\n        ...\n\n    def backward(self):\n        ...\n\n\ndef cross_entropy(logits, targets):\n    ...\n",
+    "solution": "import numpy as np\n\n\nclass Tensor:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __add__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.data.shape)\n            other.grad += unbroadcast(out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.data.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(\"backward() needs a tensor of size 1\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, done = stack.pop()\n            if done:\n                order.append(node)\n            elif id(node) not in seen:\n                seen.add(id(node))\n                stack.append((node, True))\n                for p in node._prev:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n    def __matmul__(self, other):\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += out.grad @ other.data.T\n            other.grad += self.data.T @ out.grad\n        out._backward = _backward\n        return out\n\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.data.shape)\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad\n        out._backward = _backward\n        return out\n\n\ndef cross_entropy(logits, targets):\n    z = logits.data\n    n = z.shape[0]\n    rows = np.arange(n)\n    y = np.asarray(targets)\n    m = z.max(axis=1, keepdims=True)\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    out = Tensor(np.mean(m[:, 0] + np.log(s[:, 0]) - z[rows, y]), (logits,), \"ce\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1\n        logits.grad += p * (out.grad / n)\n    out._backward = _backward\n    return out\n",
+    "examples": [
+     {
+      "setup": "w = Tensor([1.5, -2.0]); L = (w * w + w).sum(); L.backward()",
+      "call": "w.grad.tolist()",
+      "expect": "[4.0, -3.0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "w = Tensor([1.5, -2.0]); L = (w * w + w).sum(); L.backward()",
+      "call": "w.grad.tolist()",
+      "expect": "[4.0, -3.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "fresh_net(1) < 1e-6",
+      "expect": "np.True_",
+      "compare": "equal"
+     },
+     {
+      "call": "fresh_net(2) < 1e-6",
+      "expect": "np.True_",
+      "compare": "equal"
+     },
+     {
+      "call": "fresh_net(3) < 1e-6",
+      "expect": "np.True_",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(cross_entropy(Tensor(np.zeros((2, 4))), [2, 3]).data), 6)",
+      "expect": "1.386294",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(cross_entropy(Tensor([[1000.0, 999.0, 998.1]]), [0]).data), 6)",
+      "expect": "0.41703",
+      "compare": "equal"
+     },
+     {
+      "setup": "t = Tensor([1.0, 2.0])",
+      "call": "t.backward()",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "chain_depth(5000)",
+      "expect": "0.606515",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests. First a tensor used twice. Then three fresh seeded networks, checked against central differences below $10^{-6}$ in float64: a broadcast bias, two hidden layers with a row bias, and one weight used twice. Last, two loss values (equal logits, logits near 1000), `ValueError` for a loss of size 2, and a chain 5,000 operations deep.",
+    "prelude": "import numpy as np\n\n\ndef unbroadcast(grad, shape):\n    shape = tuple(shape)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.sum(axis=tuple(range(extra)))\n    axes = tuple(i for i, n in enumerate(shape) if n == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n",
+    "postlude": "\n\ndef fd_error(f, params, h=1e-5):\n    for p in params:\n        p.grad = np.zeros_like(p.data)\n    f().backward()\n    worst, top = 0.0, 1e-12\n    for p in params:\n        g = p.grad.copy()\n        for i in np.ndindex(p.data.shape):\n            keep = p.data[i]\n            p.data[i] = keep + h\n            up = float(f().data)\n            p.data[i] = keep - h\n            down = float(f().data)\n            p.data[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(g[i] - num))\n            top = max(top, abs(g[i]), abs(num))\n    return worst / top\n\n\ndef fresh_net(k):\n    r = np.random.default_rng(50 + k)\n    X = Tensor(r.standard_normal((6, 3)))\n    if k == 1:\n        W, b, V = Tensor(r.standard_normal((3, 5))), Tensor(r.standard_normal(5)), Tensor(r.standard_normal((5, 4)))\n        f = lambda: cross_entropy((X @ W + b).tanh() @ V, [3, 0, 1, 2, 2, 0])\n        return fd_error(f, [W, b, V])\n    if k == 2:\n        W1, W2, W3 = Tensor(r.standard_normal((3, 4))), Tensor(r.standard_normal((4, 4))), Tensor(r.standard_normal((4, 2)))\n        c = Tensor(r.standard_normal((1, 4)))\n        f = lambda: cross_entropy(((X @ W1 + c).tanh() @ W2).tanh() @ W3, [1, 1, 0, 1, 0, 0])\n        return fd_error(f, [W1, W2, W3, c])\n    W = Tensor(r.standard_normal((3, 3)))\n    f = lambda: cross_entropy((X @ W).tanh() @ W * 2.0, [2, 1, 0, 0, 1, 2])\n    return fd_error(f, [W])\n\n\ndef chain_depth(n):\n    x = Tensor([1.0])\n    y = x\n    for _ in range(n):\n        y = y * 0.9999 + 0.0\n    y.backward()\n    return round(float(x.grad[0]), 6)\n",
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\nclass Tensor:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __add__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.data.shape)\n            other.grad += unbroadcast(out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.data.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(\"backward() needs a tensor of size 1\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, done = stack.pop()\n            if done:\n                order.append(node)\n            elif id(node) not in seen:\n                seen.add(id(node))\n                stack.append((node, True))\n                for p in node._prev:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n    def __matmul__(self, other):\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += out.grad @ other.data.T\n            other.grad += self.data.T @ out.grad\n        out._backward = _backward\n        return out\n\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.data.shape)\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad\n        out._backward = _backward\n        return out\n\n\ndef cross_entropy(logits, targets):\n    z = logits.data\n    n = z.shape[0]\n    rows = np.arange(n)\n    y = np.asarray(targets)\n    m = z.max(axis=1, keepdims=True)\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    out = Tensor(np.mean(m[:, 0] + np.log(s[:, 0]) - z[rows, y]), (logits,), \"ce\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1\n        logits.grad += p * out.grad\n    out._backward = _backward\n    return out\n",
+      "test": 2,
+      "symptom": "The fused backward forgets the batch size."
+     },
+     {
+      "source": "import numpy as np\n\n\nclass Tensor:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __add__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.data.shape)\n            other.grad += unbroadcast(out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad = unbroadcast(other.data * out.grad, self.data.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(\"backward() needs a tensor of size 1\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, done = stack.pop()\n            if done:\n                order.append(node)\n            elif id(node) not in seen:\n                seen.add(id(node))\n                stack.append((node, True))\n                for p in node._prev:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n    def __matmul__(self, other):\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += out.grad @ other.data.T\n            other.grad += self.data.T @ out.grad\n        out._backward = _backward\n        return out\n\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.data.shape)\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad\n        out._backward = _backward\n        return out\n\n\ndef cross_entropy(logits, targets):\n    z = logits.data\n    n = z.shape[0]\n    rows = np.arange(n)\n    y = np.asarray(targets)\n    m = z.max(axis=1, keepdims=True)\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    out = Tensor(np.mean(m[:, 0] + np.log(s[:, 0]) - z[rows, y]), (logits,), \"ce\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1\n        logits.grad += p * (out.grad / n)\n    out._backward = _backward\n    return out\n",
+      "test": 1,
+      "symptom": "Assigning instead of adding loses a path when a tensor is used twice."
+     },
+     {
+      "source": "import numpy as np\n\n\nclass Tensor:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __add__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.data.shape)\n            other.grad += unbroadcast(out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.data.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(\"backward() needs a tensor of size 1\")\n        order, seen = [], set()\n\n        def build(node):\n            if id(node) not in seen:\n                seen.add(id(node))\n                for p in node._prev:\n                    build(p)\n                order.append(node)\n        build(self)\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n    def __matmul__(self, other):\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += out.grad @ other.data.T\n            other.grad += self.data.T @ out.grad\n        out._backward = _backward\n        return out\n\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.data.shape)\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad\n        out._backward = _backward\n        return out\n\n\ndef cross_entropy(logits, targets):\n    z = logits.data\n    n = z.shape[0]\n    rows = np.arange(n)\n    y = np.asarray(targets)\n    m = z.max(axis=1, keepdims=True)\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    out = Tensor(np.mean(m[:, 0] + np.log(s[:, 0]) - z[rows, y]), (logits,), \"ce\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1\n        logits.grad += p * (out.grad / n)\n    out._backward = _backward\n    return out\n",
+      "test": 8,
+      "symptom": "A recursive backward runs out of stack on a deep graph."
+     },
+     {
+      "source": "import numpy as np\n\n\nclass Tensor:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __add__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.data.shape)\n            other.grad += unbroadcast(out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Tensor) else Tensor(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.data.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.data.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(\"backward() needs a tensor of size 1\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, done = stack.pop()\n            if done:\n                order.append(node)\n            elif id(node) not in seen:\n                seen.add(id(node))\n                stack.append((node, True))\n                for p in node._prev:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n    def __matmul__(self, other):\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += out.grad @ other.data.T\n            other.grad += self.data.T @ out.grad\n        out._backward = _backward\n        return out\n\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.data.shape)\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad\n        out._backward = _backward\n        return out\n\n\ndef cross_entropy(logits, targets):\n    z = logits.data\n    n = z.shape[0]\n    rows = np.arange(n)\n    y = np.asarray(targets)\n    m = np.zeros((n, 1))\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    out = Tensor(np.mean(m[:, 0] + np.log(s[:, 0]) - z[rows, y]), (logits,), \"ce\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1\n        logits.grad += p * (out.grad / n)\n    out._backward = _backward\n    return out\n",
+      "test": 6,
+      "symptom": "Without the row maximum taken out, logits near 1000 overflow."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your autograd passes fresh gradient checks, handles reuse and broadcasting, and is stable.",
+    "generic": "Not quite. Check the first failing test."
+   },
+   "explain": {
+    "text": "Each operation adds its share into its parents’ `grad` with `+=`, summed by `unbroadcast`; `backward` orders the graph with a stack; `cross_entropy` uses log-sum-exp and one fused backward, $(\\mathbf{P} - \\mathbf{Y})/n$."
+   },
+   "performance": "code"
+  }
+ ]
+}

@@ -1,0 +1,1302 @@
+{
+ "id": "l14-broadcasting-backwards",
+ "course": "backprop",
+ "title": "Broadcasting runs backwards as a sum",
+ "minutes": 14,
+ "objectives": [
+  "Sum a gradient over the broadcast axes so that it has the shape of its input."
+ ],
+ "skills": [
+  "bp-arrays"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One bias, five rows",
+   "prose": "A layer adds a bias row $\\mathbf{b} = (0.5, -1, 2)$ to each of 5 rows: $\\mathbf{Y} = \\mathbf{X} + \\mathbf{b}$, with $\\mathbf{X}$ 5 by 3. The incoming gradient $\\mathbf{G} = \\partial L/\\partial \\mathbf{Y}$ is shown. Raise $b_2$ by 0.01: every entry in column 2 of $\\mathbf{Y}$ rises by 0.01.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "matrix",
+     "params": {
+      "matrices": [
+       {
+        "id": "G",
+        "rows": [
+         [
+          0.4,
+          -0.1,
+          0.4
+         ],
+         [
+          0.5,
+          0.3,
+          -0.2
+         ],
+         [
+          -0.1,
+          0.2,
+          0.1
+         ],
+         [
+          0.3,
+          -0.4,
+          0
+         ],
+         [
+          0.1,
+          0.2,
+          0.3
+         ]
+        ],
+        "label": "$\\mathbf{G} = \\partial L/\\partial \\mathbf{Y}$, 5 by 3"
+       }
+      ]
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       0.5,
+       -1,
+       2
+      ],
+      "showIndex": false
+     },
+     "state": {}
+    },
+    "state": {
+     "caption": "$\\mathbf{G}$, then the bias $\\mathbf{b}$."
+    }
+   },
+   "question": "By how much does $L$ change, to first order?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.002,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "one-row",
+      "value": -0.001,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "mean",
+      "value": 0.0004,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "gradient",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which entries of $\\mathbf{Y}$ moved?"
+    },
+    {
+     "rung": "point",
+     "text": "Each of the five entries in column 2 moves $L$ by $0.01 \\times G_{i2}$.",
+     "highlight": [
+      "left:G-c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Add column 2 of $\\mathbf{G}$, then multiply by 0.01."
+    }
+   ],
+   "feedback": {
+    "correct": "Each row adds $0.01 \\times G_{i2}$: $0.01 \\times (-0.1 + 0.3 + 0.2 - 0.4 + 0.2) = 0.002$.",
+    "generic": "Not quite. Every row of column 2 moved, and each moves $L$ by $0.01 \\times G_{i2}$.",
+    "byKey": {
+     "one-row": "You used row 1 only. $b_2$ was added to all five rows, so all five changes count.",
+     "mean": "You averaged the column. Each row’s change adds in full: there is no division by 5.",
+     "gradient": "That is the column sum, the gradient. The change is 0.01 times it."
+    }
+   },
+   "explain": {
+    "text": "Column 2 of $\\mathbf{G}$ adds up to 0.2, so the nudge moves $L$ by $0.01 \\times 0.2 = 0.002$. The bias was used five times, and the five effects add, as in level 2.",
+    "canvas": {
+     "left": {
+      "highlight": {
+       "G": {
+        "cols": [
+         1
+        ]
+       }
+      }
+     },
+     "right": {
+      "highlight": [
+       "c1"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Summed down the rows",
+   "prose": "Step through the columns. Each frame adds one column of $\\mathbf{G}$ and writes the sum into the bias cell it belongs to.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "matrix",
+     "params": {
+      "matrices": [
+       {
+        "id": "G",
+        "rows": [
+         [
+          0.4,
+          -0.1,
+          0.4
+         ],
+         [
+          0.5,
+          0.3,
+          -0.2
+         ],
+         [
+          -0.1,
+          0.2,
+          0.1
+         ],
+         [
+          0.3,
+          -0.4,
+          0
+         ],
+         [
+          0.1,
+          0.2,
+          0.3
+         ]
+        ],
+        "label": "$\\mathbf{G} = \\partial L/\\partial \\mathbf{Y}$, 5 by 3"
+       }
+      ]
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       0.5,
+       -1,
+       2
+      ],
+      "showIndex": false
+     },
+     "state": {}
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "left": {
+         "highlight": {
+          "G": {
+           "cols": [
+            0
+           ]
+          }
+         }
+        },
+        "right": {
+         "highlight": [
+          "c0"
+         ],
+         "cells": [
+          1.2,
+          -1,
+          2
+         ]
+        },
+        "caption": "Column 1 of $\\mathbf{G}$ adds up to 1.2: that is $\\partial L/\\partial b_1$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "G": {
+           "cols": [
+            1
+           ]
+          }
+         }
+        },
+        "right": {
+         "highlight": [
+          "c1"
+         ],
+         "cells": [
+          1.2,
+          0.2,
+          2
+         ]
+        },
+        "caption": "Column 2 of $\\mathbf{G}$ adds up to 0.2: that is $\\partial L/\\partial b_2$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "G": {
+           "cols": [
+            2
+           ]
+          }
+         }
+        },
+        "right": {
+         "highlight": [
+          "c2"
+         ],
+         "cells": [
+          1.2,
+          0.2,
+          0.6
+         ]
+        },
+        "caption": "Column 3 of $\\mathbf{G}$ adds up to 0.6: that is $\\partial L/\\partial b_3$."
+       }
+      ],
+      "frameLabels": [
+       "b1",
+       "b2",
+       "b3"
+      ],
+      "label": "Column",
+      "start": 0
+     }
+    ]
+   },
+   "question": "What is $\\partial L/\\partial b_3$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "one-row",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": 0.12,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Step to b3."
+    },
+    {
+     "rung": "point",
+     "text": "Add the lit column.",
+     "highlight": [
+      "left:G-c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.4 - 0.2 + 0.1 + 0 + 0.3$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.4 - 0.2 + 0.1 + 0 + 0.3 = 0.6$: column 3 of $\\mathbf{G}$, summed.",
+    "generic": "Not quite. Step to the third column and add it.",
+    "byKey": {
+     "one-row": "You took row 1 only. All five rows used $b_3$.",
+     "mean": "You divided by 5. Paths add; they are not averaged."
+    }
+   },
+   "explain": {
+    "text": "Every row used the same $b_3$, so its gradient collects $G_{i3}$ from every row: 0.6. The whole bias gradient is $(1.2, 0.2, 0.6)$.",
+    "canvas": {
+     "left": {
+      "highlight": {
+       "G": {
+        "cols": [
+         2
+        ]
+       }
+      }
+     },
+     "right": {
+      "highlight": [
+       "c2"
+      ],
+      "cells": [
+       1.2,
+       0.2,
+       0.6
+      ]
+     },
+     "caption": "Column 3 of $\\mathbf{G}$ adds up to 0.6: that is $\\partial L/\\partial b_3$."
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Broadcasting runs backwards as a sum",
+   "prose": "Broadcasting copied $\\mathbf{b}$ down 5 rows on the way forward. On the way back the copies’ gradients add up: $$\\frac{\\partial L}{\\partial b_j} = \\sum_i G_{ij}.$$ The rule: sum the incoming gradient over every axis that was broadcast, so the result has the input’s shape.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "matrix",
+     "params": {
+      "matrices": [
+       {
+        "id": "G",
+        "rows": [
+         [
+          0.4,
+          -0.1,
+          0.4
+         ],
+         [
+          0.5,
+          0.3,
+          -0.2
+         ],
+         [
+          -0.1,
+          0.2,
+          0.1
+         ],
+         [
+          0.3,
+          -0.4,
+          0
+         ],
+         [
+          0.1,
+          0.2,
+          0.3
+         ]
+        ],
+        "label": "$\\mathbf{G} = \\partial L/\\partial \\mathbf{Y}$, 5 by 3"
+       }
+      ]
+     },
+     "state": {
+      "highlight": {
+       "G": {
+        "rows": [
+         0,
+         1,
+         2,
+         3,
+         4
+        ]
+       }
+      }
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       1.2,
+       0.2,
+       0.6
+      ],
+      "showIndex": false
+     },
+     "state": {}
+    },
+    "state": {
+     "caption": "The bias gradient $\\partial L/\\partial \\mathbf{b}$, column by column."
+    }
+   },
+   "question": "`b` has shape `(3,)` and `G` has shape `(5, 3)`. Which line gives `b`’s gradient?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`G.sum(axis=0)`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`G.sum(axis=1)`",
+      "why": "That adds across each row and has shape `(5,)`: one number per row, not per bias entry."
+     },
+     {
+      "id": "c",
+      "text": "`G.mean(axis=0)`",
+      "why": "Each row’s use counts in full, so the copies add; the mean is 5 times too small."
+     },
+     {
+      "id": "d",
+      "text": "`G[0]`",
+      "why": "That keeps row 1 only. All five rows used `b`."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Broadcasting copied `b` along one axis."
+    },
+    {
+     "rung": "point",
+     "text": "That axis is the rows, axis 0."
+    },
+    {
+     "rung": "step",
+     "text": "Sum over axis 0."
+    }
+   ],
+   "feedback": {
+    "correct": "`G.sum(axis=0)` adds down the rows, the axis broadcasting created, leaving shape `(3,)`.",
+    "generic": "Not quite. Which axis did broadcasting add?",
+    "byKey": {
+     "b": "You summed along the rows. Broadcasting copied `b` down axis 0, so sum over axis 0."
+    }
+   },
+   "explain": {
+    "text": "Broadcasting stretched `b` along axis 0, so axis 0 is summed away: `G.sum(axis=0)` has shape `(3,)`, the shape of `b`."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A column broadcast",
+   "prose": "The console checks `G.sum(axis=0)` against central differences: they agree. Now add a column $\\mathbf{c}$ of shape `(5, 1)` instead: $\\mathbf{Y} = \\mathbf{X} + \\mathbf{c}$ gives each row its own $c_i$, copied across 3 columns. Take the same $\\mathbf{G}$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Checking the bias rule",
+     "lines": [
+      ">>> G.sum(axis=0)",
+      "array([1.2, 0.2, 0.6])",
+      ">>> central(L, b, h=1e-5)",
+      "array([1.2, 0.2, 0.6])"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\partial L/\\partial c_2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "first",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$c_2$ sits in row 2 of every column."
+    },
+    {
+     "rung": "point",
+     "text": "Add row 2 of $\\mathbf{G}$.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.5 + 0.3 - 0.2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$c_2$ was copied across row 2, so its gradient is row 2 summed: $0.5 + 0.3 - 0.2 = 0.6$.",
+    "generic": "Not quite. Which entries of $\\mathbf{Y}$ used $c_2$?",
+    "byKey": {
+     "first": "You took one entry. $c_2$ was copied into all three columns of row 2.",
+     "mean": "You averaged row 2. The three copies add."
+    }
+   },
+   "explain": {
+    "text": "Now axis 1 was broadcast, so the sum runs across each row: $\\partial L/\\partial \\mathbf{c} = (0.7, 0.6, 0.2, -0.1, 0.6)$, kept as a 5 by 1 column.",
+    "canvas": {
+     "tone": {
+      "l4": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Keeping the shape",
+   "prose": "In code, $\\mathbf{c}$ has shape `(5, 1)`, and its gradient must have it too. The backward line adds into `c.grad`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Shapes",
+     "lines": [
+      ">>> G.sum(axis=1, keepdims=True).shape",
+      "(5, 1)",
+      ">>> (c.grad + G.sum(axis=1)).shape",
+      "(5, 5)"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which expression has shape `(5, 1)` and the right values?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`G.sum(axis=1, keepdims=True)`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`G.sum(axis=1)`",
+      "why": "That has shape `(5,)`. Added to a `(5, 1)` array it broadcasts to 5 by 5, a silent bug."
+     },
+     {
+      "id": "c",
+      "text": "`G.sum(axis=0, keepdims=True)`",
+      "why": "That sums down the columns: shape `(1, 3)`, the gradient of a row bias."
+     },
+     {
+      "id": "d",
+      "text": "`G.sum()`",
+      "why": "That is one number, the gradient of a single scalar added everywhere."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A gradient has its input’s shape."
+    },
+    {
+     "rung": "point",
+     "text": "Which line keeps the summed axis?",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`keepdims=True`."
+    }
+   ],
+   "feedback": {
+    "correct": "`keepdims=True` leaves the summed axis with length 1, so the result is `(5, 1)`, like `c`.",
+    "generic": "Not quite. Check the shape each expression returns.",
+    "byKey": {
+     "b": "You dropped the axis. `(5,)` against `(5, 1)` broadcasts to `(5, 5)`, which is the wrong shape and the wrong numbers."
+    }
+   },
+   "explain": {
+    "text": "Summing over axis 1 with `keepdims=True` gives `(5, 1)`. Without it the result is `(5,)`, and `(5, 1) + (5,)` broadcasts to 5 by 5."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "sum() and mean() backwards",
+   "prose": "A loss is often a reduction. `Y.sum()` adds all 15 entries of a 5 by 3 `Y`, so each entry gets gradient 1: a gradient of ones. Now take $L$ = `Y.mean()`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Reductions",
+     "lines": [
+      ">>> Y.shape",
+      "(5, 3)",
+      ">>> L = Y.sum()      # dL/dY: all ones",
+      ">>> L = Y.mean()     # dL/dY: ?"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\partial L/\\partial Y_{ij}$ for one entry? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0667,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "rows",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "cols",
+      "value": 0.3333,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A mean is a sum divided by a count."
+    },
+    {
+     "rung": "point",
+     "text": "Count the entries of `Y`.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1/15$."
+    }
+   ],
+   "feedback": {
+    "correct": "The mean is the sum over 15, so each entry gets $\\tfrac{1}{15} = 0.0667$.",
+    "generic": "Not quite. How many entries does the mean divide by?",
+    "byKey": {
+     "sum": "That is the gradient of `sum()`. The mean divides by the count.",
+     "rows": "You divided by the 5 rows. `mean()` with no axis divides by all 15 entries.",
+     "cols": "You divided by the 3 columns. `mean()` with no axis divides by all 15 entries."
+    }
+   },
+   "explain": {
+    "text": "`Y.mean()` is $\\tfrac{1}{15}$ times the sum, so its gradient is ones over 15: 0.0667 in every entry. A mean along one axis divides by that axis’s length instead."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A bias that turns into a matrix",
+   "prose": "Tom’s `+` backward does `other.grad = other.grad + out.grad` with no sum. For $\\mathbf{X} + \\mathbf{b}$, `b.grad` starts with shape `(3,)` and `out.grad` is 5 by 3. His step is `b.data = b.data - lr * b.grad`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Tom’s run",
+     "lines": [
+      ">>> b.grad.shape",
+      "(5, 3)",
+      ">>> b.data = b.data - 0.1 * b.grad",
+      ">>> b.data.shape",
+      "(5, 3)"
+     ]
+    },
+    "state": {
+     "tone": {
+      "l2": "err",
+      "l5": "err"
+     }
+    }
+   },
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`b.grad` becomes 5 by 3, and one step makes `b` 5 by 3",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "NumPy raises a shape error at the addition, so nothing runs",
+      "why": "`(3,) + (5, 3)` broadcasts without complaint. Only an in-place `+=` into a `(3,)` array would refuse."
+     },
+     {
+      "id": "c",
+      "text": "Nothing goes wrong: the extra rows are ignored",
+      "why": "Nothing ignores them. The next forward pass adds a 5 by 3 matrix where a row was meant."
+     },
+     {
+      "id": "d",
+      "text": "`b.grad` keeps only row 1 of `out.grad` and drops the rest",
+      "why": "No row is picked out. Broadcasting stretches `b.grad` to fit all five rows."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does broadcasting do to `(3,) + (5, 3)`?"
+    },
+    {
+     "rung": "point",
+     "text": "Look at the shapes printed.",
+     "highlight": [
+      "l2",
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Both become `(5, 3)`."
+    }
+   ],
+   "feedback": {
+    "correct": "One gradient per row is the misconception: the bias has 3 numbers, so its gradient must have 3. Unsummed, the error spreads into `b` itself.",
+    "generic": "Not quite. Work out the shape of `(3,) + (5, 3)`.",
+    "byKey": {
+     "b": "You expected an error. Broadcasting accepts `(3,) + (5, 3)`, which is why the bug is silent."
+    }
+   },
+   "explain": {
+    "text": "Broadcasting turns `(3,) + (5, 3)` into a 5 by 3 array, so the gradient takes the wrong shape and the step spreads it into `b`. Summing over axis 0 first, `unbroadcast`, keeps `b` a row of 3."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A scalar broadcast",
+   "prose": "Now one number $s$ is added to every entry: $\\mathbf{Y} = \\mathbf{X} + s$, with $s$ of shape `()`. Every axis was broadcast. Take the same $\\mathbf{G}$.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "matrix",
+     "params": {
+      "matrices": [
+       {
+        "id": "G",
+        "rows": [
+         [
+          0.4,
+          -0.1,
+          0.4
+         ],
+         [
+          0.5,
+          0.3,
+          -0.2
+         ],
+         [
+          -0.1,
+          0.2,
+          0.1
+         ],
+         [
+          0.3,
+          -0.4,
+          0
+         ],
+         [
+          0.1,
+          0.2,
+          0.3
+         ]
+        ],
+        "label": "$\\mathbf{G} = \\partial L/\\partial \\mathbf{Y}$, 5 by 3"
+       }
+      ]
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "s"
+      ],
+      "showIndex": false
+     },
+     "state": {}
+    },
+    "state": {
+     "caption": "$\\mathbf{G}$, and the one number $s$ that every entry used."
+    }
+   },
+   "question": "What is $\\partial L/\\partial s$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.0,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "one-col",
+      "value": 1.2,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": 0.1333,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which axes were broadcast?"
+    },
+    {
+     "rung": "point",
+     "text": "Both: add every entry of $\\mathbf{G}$.",
+     "highlight": [
+      "left:G"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The column sums are 1.2, 0.2 and 0.6."
+    }
+   ],
+   "feedback": {
+    "correct": "$s$ was used by all 15 entries, so its gradient is all of $\\mathbf{G}$ added: $1.2 + 0.2 + 0.6 = 2.0$.",
+    "generic": "Not quite. Every entry of $\\mathbf{Y}$ used $s$.",
+    "byKey": {
+     "one-col": "You added column 1 only. $s$ went into every column.",
+     "mean": "You divided by 15. The 15 copies add."
+    }
+   },
+   "explain": {
+    "text": "A scalar is broadcast along both axes, so both are summed: `G.sum()` is 2.0, the column sums $1.2 + 0.2 + 0.6$ added.",
+    "canvas": {
+     "left": {
+      "highlight": {
+       "G": {
+        "rows": [
+         0,
+         1,
+         2,
+         3,
+         4
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "unbroadcast() in code",
+   "prose": "Write `unbroadcast(grad, shape)`: sum `grad` down to `shape`. First sum over any leading axes broadcasting added, then over every axis where `shape` has a 1, keeping that axis. `show(a)` (loaded) prints a result’s shape and values.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "`grad` shape",
+      "`shape`",
+      "Sum over"
+     ],
+     "rows": [
+      [
+       "`(5, 3)`",
+       "`(3,)`",
+       "axis 0"
+      ],
+      [
+       "`(5, 3)`",
+       "`(5, 1)`",
+       "axis 1, kept"
+      ],
+      [
+       "`(5, 3)`",
+       "`()`",
+       "both axes"
+      ],
+      [
+       "`(2, 4, 3)`",
+       "`(4, 1)`",
+       "axis 0, then axis 2 kept"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `unbroadcast`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef unbroadcast(grad, shape):\n    # 1. sum the extra leading axes\n    # 2. sum, keeping the axis, where\n    #    shape has a 1\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef unbroadcast(grad, shape):\n    shape = tuple(shape)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.sum(axis=tuple(range(extra)))\n    axes = tuple(i for i, n in enumerate(shape) if n == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n",
+    "examples": [
+     {
+      "call": "show(unbroadcast(np.arange(15.0).reshape(5, 3), (3,)))",
+      "expect": "((3,), [30.0, 35.0, 40.0])",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "show(unbroadcast(np.arange(15.0).reshape(5, 3), (3,)))",
+      "expect": "((3,), [30.0, 35.0, 40.0])",
+      "compare": "equal"
+     },
+     {
+      "call": "show(unbroadcast(np.arange(15.0).reshape(5, 3), (5, 1)))",
+      "expect": "((5, 1), [[3.0], [12.0], [21.0], [30.0], [39.0]])",
+      "compare": "equal"
+     },
+     {
+      "call": "show(unbroadcast(np.arange(15.0).reshape(5, 3), ()))",
+      "expect": "((), 105.0)",
+      "compare": "equal"
+     },
+     {
+      "call": "show(unbroadcast(np.arange(24.0).reshape(2, 4, 3), (4, 1)))",
+      "expect": "((4, 1), [[42.0], [60.0], [78.0], [96.0]])",
+      "compare": "equal"
+     },
+     {
+      "call": "show(unbroadcast(np.arange(15.0).reshape(5, 3), (1, 3)))",
+      "expect": "((1, 3), [[30.0, 35.0, 40.0]])",
+      "compare": "equal"
+     },
+     {
+      "call": "show(unbroadcast(np.arange(6.0).reshape(2, 3), (2, 3)))",
+      "expect": "((2, 3), [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]])",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests on shape pairs: `(3,)`, `(5, 1)`, `()` and `(1, 3)` from a 5 by 3 array, `(4, 1)` from a 2 by 4 by 3 array, and an unchanged shape. Each result’s shape and values must match exactly.",
+    "prelude": "import numpy as np\n\n\ndef show(a):\n    return (np.shape(a), np.asarray(a).tolist())\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef unbroadcast(grad, shape):\n    shape = tuple(shape)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.sum(axis=tuple(range(extra)))\n    axes = tuple(i for i, n in enumerate(shape) if n == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes)\n    return grad\n",
+      "test": 2,
+      "symptom": "The summed axis is dropped, so a (5, 1) gradient comes back as (5,)."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef unbroadcast(grad, shape):\n    shape = tuple(shape)\n    extra = grad.ndim - len(shape)\n    axes = tuple(i for i, n in enumerate(shape) if n == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n",
+      "test": 1,
+      "symptom": "The leading axes broadcasting added are never summed."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef unbroadcast(grad, shape):\n    shape = tuple(shape)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.mean(axis=tuple(range(extra)))\n    axes = tuple(i for i, n in enumerate(shape) if n == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n",
+      "test": 1,
+      "symptom": "Copies are averaged instead of added."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the number of axes first."
+    },
+    {
+     "rung": "point",
+     "text": "Leading extra axes go with one `sum`.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then sum, with `keepdims=True`, where `shape` has a 1 and `grad` does not."
+    }
+   ],
+   "feedback": {
+    "correct": "Every shape pair comes back with the input’s shape and the summed values.",
+    "generic": "Not quite. Check the first failing shape pair."
+   },
+   "explain": {
+    "text": "Leading axes are summed away; axes of length 1 are summed with `keepdims=True`. Every backward rule for a broadcasting operation ends with this call."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "One fee rate, many trades",
+   "prose": "A broker charges every trade the same fee rate $f$: costs = $f \\times$ notionals, with $f$ broadcast over four trades of £20,000, £35,000, £15,000 and £30,000. The total cost $C$ is the sum.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "£20k",
+      "£35k",
+      "£15k",
+      "£30k"
+     ],
+     "showIndex": false
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       0,
+       3
+      ],
+      "label": "each pays rate f"
+     }
+    }
+   },
+   "question": "By how many pounds does $C$ rise if $f$ rises by one basis point (0.0001)? Give the answer in pounds.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "pounds",
+    "wrong": [
+     {
+      "id": "average",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "largest",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ],
+    "unit": "£"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$f$ multiplies every notional."
+    },
+    {
+     "rung": "point",
+     "text": "Its gradient adds over all four trades.",
+     "highlight": [
+      "c0",
+      "c1",
+      "c2",
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.0001 \\times (20{,}000 + 35{,}000 + 15{,}000 + 30{,}000)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\partial C/\\partial f$ is the sum of the notionals, £100,000, so one basis point adds $0.0001 \\times 100{,}000 = £10$.",
+    "generic": "Not quite. $f$ was used by every trade.",
+    "byKey": {
+     "average": "You used the average trade. The fee hits all four, so the notionals add.",
+     "largest": "You used the largest trade only. All four trades pay the fee."
+    }
+   },
+   "explain": {
+    "text": "$f$ is broadcast across the trades, so its gradient sums over them: $\\partial C/\\partial f = £100{,}000$. A rise of 0.0001 costs £10 a round of trades."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A broadcast input is used once per copy, so its gradient adds the copies’ gradients: sum the incoming gradient over every axis that was broadcast.",
+   "Keep the input’s shape: a row bias gets `G.sum(axis=0)`, a column gets `G.sum(axis=1, keepdims=True)`, a scalar gets `G.sum()`.",
+   "`sum()` passes back ones and `mean()` passes back ones over the count; `unbroadcast(grad, shape)` does the summing for every broadcasting operation."
+  ],
+  "formula": {
+   "name": "Gradient of a broadcast",
+   "tex": "\\frac{\\partial L}{\\partial b_j} = \\sum_i G_{ij}",
+   "note": "For a bias row added to every row of a batch."
+  },
+  "trap": "A gradient left with one row per use has the wrong shape, and broadcasting lets the error spread silently."
+ },
+ "quiz": [
+  {
+   "id": "q-bias-col",
+   "difficulty": 2,
+   "prose": "A bias $\\mathbf{b}$ of shape `(2,)` is added to 3 rows, and $\\mathbf{G} = \\begin{pmatrix} 1 & -2 \\\\ 0.5 & 1 \\\\ 2 & 0.5 \\end{pmatrix}$.",
+   "question": "What is $\\partial L/\\partial b_2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "one-row",
+      "value": -2,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": -0.1667,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Column 2 summed: $-2 + 1 + 0.5 = -0.5$.",
+    "generic": "Not quite. Add column 2 of $\\mathbf{G}$.",
+    "byKey": {
+     "one-row": "You took row 1 only. All three rows used $b_2$.",
+     "mean": "You divided by 3. The copies add.",
+     "sign": "Check the sign: $-2 + 1 + 0.5$ is negative."
+    }
+   },
+   "explain": {
+    "text": "$b_2$ was added to all three rows, so $\\partial L/\\partial b_2 = -2 + 1 + 0.5 = -0.5$."
+   }
+  },
+  {
+   "id": "q-keepdims",
+   "difficulty": 3,
+   "prose": "`x` has shape `(4, 1)` and `y` has shape `(1, 3)`, so `x + y` is 4 by 3 with incoming gradient `G`.",
+   "question": "Which line gives `x`’s gradient?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`G.sum(axis=1, keepdims=True)`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`G.sum(axis=0, keepdims=True)`",
+      "why": "That is `y`’s gradient, shape `(1, 3)`."
+     },
+     {
+      "id": "c",
+      "text": "`G.sum(axis=1)`",
+      "why": "Right values, but shape `(4,)`: it broadcasts wrongly against `(4, 1)`."
+     },
+     {
+      "id": "d",
+      "text": "`G`",
+      "why": "That is 4 by 3. `x` has 4 numbers."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`x` was copied across axis 1, so sum that axis and keep it: shape `(4, 1)`.",
+    "generic": "Not quite. Which axis was `x` copied along?"
+   },
+   "explain": {
+    "text": "`x` was stretched along axis 1, so its gradient sums axis 1 with `keepdims=True`: `(4, 1)`."
+   }
+  },
+  {
+   "id": "q-mean-grad",
+   "difficulty": 2,
+   "prose": "`L = Y.mean()` for `Y` of shape `(10, 4)`.",
+   "question": "What is $\\partial L/\\partial Y_{ij}$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.025,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "rows",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "cols",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The mean divides by all 40 entries: $\\tfrac{1}{40} = 0.025$.",
+    "generic": "Not quite. Count the entries.",
+    "byKey": {
+     "sum": "That is the gradient of `sum()`.",
+     "rows": "You divided by the 10 rows only.",
+     "cols": "You divided by the 4 columns only."
+    }
+   },
+   "explain": {
+    "text": "`mean()` over all 40 entries has gradient $\\tfrac{1}{40} = 0.025$ in each."
+   }
+  }
+ ]
+}
