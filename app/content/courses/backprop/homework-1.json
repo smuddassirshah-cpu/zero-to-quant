@@ -1,0 +1,323 @@
+{
+ "id": "homework-1",
+ "course": "backprop",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-discount-rate",
+   "difficulty": 3,
+   "skills": [
+    "bp-chain"
+   ],
+   "prose": "A zero-coupon bond pays £100 in $T = 5$ years at a continuous rate $r = 0.04$. Its graph is $p = rT$, then $q = -p$, then $V = 100e^{q}$, so $V = \\text{£}81.87$.",
+   "question": "Backpropagate from $V$ to $r$. What is $\\partial V/\\partial r$, in pounds per unit of rate, to 2 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -409.37,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "in pounds",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 409.37,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "no-T",
+      "value": -81.87,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "used-r",
+      "value": -3.27,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$100e^{q} \\times (-1) \\times T = -81.8731 \\times 5 = -409.37$.",
+    "generic": "Not quite. Three arrows from $V$ back to $r$: the exponential, the minus sign, the product.",
+    "byKey": {
+     "sign": "You dropped the minus box. A higher rate lowers the price.",
+     "no-T": "You stopped at $q$. The product box passes $r$ the other input, $T = 5$.",
+     "used-r": "You multiplied by $r$. Into $r$, the product passes $T$."
+    }
+   },
+   "explain": {
+    "text": "Walking back: $\\partial V/\\partial q = 100e^{q} = 81.8731$, the minus box gives $-81.8731$, and the product passes $T = 5$. So $\\partial V/\\partial r = -409.37$ pounds per unit of rate."
+   }
+  },
+  {
+   "id": "h-order-branchfree",
+   "difficulty": 4,
+   "skills": [
+    "bp-chain"
+   ],
+   "prose": "Take $L = (xy + \\ln z)^2$ at $x = 2$, $y = 3$, $z = 1$, drawn as $p = xy$, $q = \\ln z$, $s = p + q$, $L = s^2$. Then $p = 6$, $q = 0$, $s = 6$ and $L = 36$.",
+   "question": "Put the backward pass in order. The two lines after the sum may come either way round. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "b1",
+      "text": "$\\partial L/\\partial L = 1$: start at the output"
+     },
+     {
+      "id": "b2",
+      "text": "$\\partial L/\\partial s = 2s = 12$: the square"
+     },
+     {
+      "id": "b3",
+      "text": "$\\partial L/\\partial p = \\partial L/\\partial q = 12$: a sum passes the gradient on"
+     },
+     {
+      "id": "b4",
+      "text": "$\\partial L/\\partial x = 12y = 36$ and $\\partial L/\\partial y = 12x = 24$: the product"
+     },
+     {
+      "id": "b5",
+      "text": "$\\partial L/\\partial z = 12 \\times \\tfrac{1}{z} = 12$: the log"
+     },
+     {
+      "id": "bx",
+      "text": "$\\partial L/\\partial z = 12 \\times \\ln z = 0$: the log",
+      "why": "You multiplied by the log's value. Its local derivative is $1/z$."
+     }
+    ],
+    "answer": [
+     "b1",
+     "b2",
+     "b3",
+     "b4",
+     "b5"
+    ],
+    "same": [
+     [
+      "b4",
+      "b5"
+     ]
+    ],
+    "distractors": [
+     "bx"
+    ]
+   },
+   "feedback": {
+    "correct": "Square, then sum, then the product and the log in either order.",
+    "generic": "Not quite. Each line needs the gradient the line before it found.",
+    "byKey": {
+     "bx": "That line multiplies by $\\ln z$. The log's local derivative is $1/z$."
+    }
+   },
+   "explain": {
+    "text": "The square gives $2s = 12$ and the sum passes 12 to both $p$ and $q$. The product and the log then work separately: $36$, $24$ and $12$."
+   }
+  },
+  {
+   "id": "h-code-square-log",
+   "difficulty": 4,
+   "skills": [
+    "bp-chain"
+   ],
+   "prose": "Turn the backward pass you just ordered into code. $L = (xy + \\ln z)^2$, for any $x$, $y$ and any $z > 0$.",
+   "question": "Write `grads_square_log(x, y, z)`, returning a dict of the three input gradients keyed `\"x\"`, `\"y\"`, `\"z\"`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef grads_square_log(x, y, z):\n    # forward pass, then back from L = (xy + ln z)^2\n    ...\n",
+    "solution": "import math\n\ndef grads_square_log(x, y, z):\n    p = x * y\n    q = math.log(z)\n    s = p + q\n    gs = 2 * s\n    return {\"x\": gs * y, \"y\": gs * x, \"z\": gs / z}\n",
+    "examples": [
+     {
+      "call": "grads_square_log(2, 3, 1)",
+      "expect": "{'x': 36.0, 'y': 24.0, 'z': 12.0}",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "grads_square_log(2, 3, 1)",
+      "expect": "{'x': 36.0, 'y': 24.0, 'z': 12.0}",
+      "compare": "isclose"
+     },
+     {
+      "call": "grads_square_log(0.5, -4, 2)",
+      "expect": "{'x': 10.454822555520437, 'y': -1.3068528194400546, 'z': -1.3068528194400546}",
+      "compare": "isclose"
+     },
+     {
+      "call": "grads_square_log(1.5, 2, 0.5)",
+      "expect": "{'x': 9.227411277760218, 'y': 6.920558458320164, 'z': 9.227411277760218}",
+      "compare": "isclose"
+     },
+     {
+      "call": "grads_square_log(-1, 0.25, 3)",
+      "expect": "{'x': 0.4243061443340549, 'y': -1.6972245773362196, 'z': 0.5657415257787398}",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. Each value is accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+   },
+   "feedback": {
+    "correct": "Forward to $s$, then $2s$, then one product per input.",
+    "generic": "Not quite. Compare with the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is $(2, 3, 1)$: 36, 24 and 12."
+    }
+   },
+   "explain": {
+    "text": "After $s = xy + \\ln z$, every gradient starts from $2s$: times $y$ for $x$, times $x$ for $y$, times $1/z$ for $z$."
+   }
+  },
+  {
+   "id": "h-code-grad-of",
+   "difficulty": 5,
+   "skills": [
+    "bp-chain"
+   ],
+   "prose": "An expression arrives as nested tuples: a name such as `\"a\"`, a number, `(\"add\", l, r)`, `(\"mul\", l, r)`, `(\"exp\", x)` or `(\"pow\", x, k)` with `k` a number. So $(ab + c)f$ is `(\"mul\", (\"add\", (\"mul\", \"a\", \"b\"), \"c\"), \"f\")`.",
+   "question": "Write `grad_of(spec, values)`: return a dict giving $\\partial(\\text{output})/\\partial v$ for every name $v$ in `values`. Each name appears once in a spec.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef grad_of(spec, values):\n    # spec: a name, a number, or (\"add\" | \"mul\", left, right),\n    # (\"exp\", inner) or (\"pow\", inner, k) with k a number\n    ...\n",
+    "solution": "import math\n\ndef grad_of(spec, values):\n    grads = {k: 0.0 for k in values}\n\n    def fwd(node):\n        if isinstance(node, str):\n            return values[node]\n        if isinstance(node, (int, float)):\n            return float(node)\n        op = node[0]\n        if op == \"add\":\n            return fwd(node[1]) + fwd(node[2])\n        if op == \"mul\":\n            return fwd(node[1]) * fwd(node[2])\n        if op == \"exp\":\n            return math.exp(fwd(node[1]))\n        if op == \"pow\":\n            return fwd(node[1]) ** node[2]\n        raise ValueError(op)\n\n    def back(node, g):\n        if isinstance(node, str):\n            grads[node] += g\n            return\n        if isinstance(node, (int, float)):\n            return\n        op = node[0]\n        if op == \"add\":\n            back(node[1], g)\n            back(node[2], g)\n        elif op == \"mul\":\n            back(node[1], g * fwd(node[2]))\n            back(node[2], g * fwd(node[1]))\n        elif op == \"exp\":\n            back(node[1], g * math.exp(fwd(node[1])))\n        elif op == \"pow\":\n            k = node[2]\n            back(node[1], g * k * fwd(node[1]) ** (k - 1))\n\n    back(spec, 1.0)\n    return grads\n",
+    "examples": [
+     {
+      "call": "grad_of(('mul', ('add', ('mul', 'a', 'b'), 'c'), 'f'), {'a': 1.5, 'b': -2.0, 'c': 4.0, 'f': -3.0})",
+      "expect": "{'a': 6.0, 'b': -4.5, 'c': -3.0, 'f': 1.0}",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "grad_of(('mul', ('add', ('mul', 'a', 'b'), 'c'), 'f'), {'a': 1.5, 'b': -2.0, 'c': 4.0, 'f': -3.0})",
+      "expect": "{'a': 6.0, 'b': -4.5, 'c': -3.0, 'f': 1.0}",
+      "compare": "isclose"
+     },
+     {
+      "call": "grad_of(('pow', ('exp', ('add', ('mul', 'w', 'x'), 'b')), 2), {'w': 2.0, 'x': 0.5, 'b': -1.5})",
+      "expect": "{'w': 0.36787944117144233, 'x': 1.4715177646857693, 'b': 0.7357588823428847}",
+      "compare": "isclose"
+     },
+     {
+      "call": "grad_of(('add', ('pow', 'u', 3), ('mul', 2, 'v')), {'u': -1.5, 'v': 4.0})",
+      "expect": "{'u': 6.75, 'v': 2.0}",
+      "compare": "isclose"
+     },
+     {
+      "call": "grad_of(('exp', ('mul', 'p', ('add', 'q', 1))), {'p': 0.5, 'q': -3.0})",
+      "expect": "{'p': -0.7357588823428847, 'q': 0.18393972058572117}",
+      "compare": "isclose"
+     },
+     {
+      "call": "grad_of(('mul', ('pow', ('add', 'm', -1), 2), ('exp', 'n')), {'m': 3.0, 'n': 0.0})",
+      "expect": "{'m': 4.0, 'n': 4.0}",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on five expression shapes. Each gradient is accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+   },
+   "feedback": {
+    "correct": "A forward helper for values and a backward helper that passes each box its gradient: that is backpropagation on any tree.",
+    "generic": "Not quite. Compare with the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is the course expression: 6, $-4.5$, $-3$ and 1.",
+     "test-3": "Test 3 has a number, 2, as an input. It needs no gradient, but it still scales $v$."
+    }
+   },
+   "explain": {
+    "text": "Write two helpers: one computes a node's value, the other walks down from the output carrying the gradient. At each box it multiplies by that box's local derivative and passes the result to each input."
+   }
+  },
+  {
+   "id": "h-count-bumps",
+   "difficulty": 3,
+   "skills": [
+    "bp-chain"
+   ],
+   "prose": "A pricing model has 2,000,000 inputs. A risk run checks every sensitivity by central differences, which bump each input up and then down and revalue twice.",
+   "question": "How many full revaluations does that need?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4000000,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "one-sided",
+      "value": 2000000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "plus-base",
+      "value": 2000001,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two revaluations per input: 4,000,000, against one forward and one backward pass for backpropagation.",
+    "generic": "Not quite. Two runs for each input.",
+    "byKey": {
+     "one-sided": "You counted one run per input. A central difference bumps each input both ways.",
+     "plus-base": "You counted one-sided bumps and a base run. Central differences need two runs per input and no base."
+    }
+   },
+   "explain": {
+    "text": "Each input needs a run with it bumped up and one with it bumped down: $2 \\times 2{,}000{,}000 = 4{,}000{,}000$ revaluations. One backward pass gives all 2,000,000 gradients for a few forward passes' cost."
+   }
+  },
+  {
+   "id": "h-perf-by-hand",
+   "performance": "derivation",
+   "difficulty": 5,
+   "skills": [
+    "bp-chain"
+   ],
+   "title": "Every gradient of a new expression",
+   "kind": "longform",
+   "prompt": "Take $L = (e^{xy} - 1)^2$ at $x = 0.5$ and $y = 0.8$, with one box per operation: a product, an exponential, a sum with the constant $-1$, and a square. Work it by hand and give:\n- (a) every forward value;\n- (b) every local derivative at those values;\n- (c) every gradient from $L$ back to $x$ and $y$, one box per line;\n- (d) a nudge check of $\\partial L/\\partial x$: move $x$ by 0.01, recompute $L$, and compare.\n\nOptional, one more point: say why the nudge and the gradient differ slightly.",
+   "model": "**Forward.** $p = xy = 0.4$; $q = e^{p} = 1.491825$; $s = q - 1 = 0.491825$; $L = s^2 = 0.241892$.\n\n**Local derivatives.** A product passes the other input: $\\partial p/\\partial x = y = 0.8$ and $\\partial p/\\partial y = x = 0.5$. The exponential is its own slope: $\\partial q/\\partial p = e^{p} = 1.491825$. The sum passes 1, and its constant needs no gradient. The square gives $\\partial L/\\partial s = 2s = 0.983649$.\n\n**Backward, from the output.**\n\n1. $\\partial L/\\partial L = 1$.\n2. $\\partial L/\\partial s = 1 \\times 2s = 0.983649$.\n3. $\\partial L/\\partial q = 0.983649 \\times 1 = 0.983649$.\n4. $\\partial L/\\partial p = 0.983649 \\times 1.491825 = 1.467432$.\n5. $\\partial L/\\partial x = 1.467432 \\times 0.8 = 1.173946$ and $\\partial L/\\partial y = 1.467432 \\times 0.5 = 0.733716$.\n\n**Nudge check.** Move $x$ to 0.51: $p = 0.408$, $q = e^{0.408} = 1.503807$, $s = 0.503807$, $L = 0.253822$. $L$ rose by 0.011930; the gradient predicts $1.173946 \\times 0.01 = 0.011739$. They agree to about 2%, and the gap shrinks with the nudge because $L$ curves in $x$.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Forward values $p = 0.4$, $q = 1.4918$, $s = 0.4918$, $L = 0.2419$",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Every local derivative: $y$, $x$, $e^p$, 1 and $2s$, at the right values",
+     "required": true
+    },
+    {
+     "points": 3,
+     "text": "Gradients worked from $L$ back, one box per line: $\\partial L/\\partial x = 1.1739$ and $\\partial L/\\partial y = 0.7337$",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Nudge check: $L$ rises by about 0.0119 against a predicted 0.0117",
+     "required": true
+    },
+    {
+     "points": 1,
+     "text": "Optional: the gap is the curvature of $L$ in $x$, and it shrinks with the nudge"
+    }
+   ]
+  }
+ ]
+}

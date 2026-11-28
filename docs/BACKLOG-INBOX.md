@@ -131,3 +131,8 @@ Raised later (audit trig):
 Raised later (session AK, strand ai):
 - (engine-pass-ak, open) Learn and Review list AI topics as ordinary rows; group them under the strand badge or a strand heading.
 - (engine-pass-ak, open) A stage exam's `draw` sources are not checked for ai origin; add a validator error if a stage exam draws from an `ai` course.
+
+Raised later (backprop level 1):
+- (backprop-1, graph `derive`) On a `graph` canvas every node lives in `state.nodes`, and `derive` puts each item with an id into its scope after the free parameters, so a control bound to `a` on a graph with a node `a` reads the node object and every derived value is NaN (`backprop/l1-expression-as-graph` screen 1). Workaround: the controls bind `va`, `vb`, `vc`, `vf`. Ask: let `state.params` names win over item ids in the derive scope, or have the validator warn when a bound name equals a node id.
+- (backprop-1, graph `valueLines`) Two value lines under neighbouring nodes overlap each other and the next box at 440 px when the gradients carry four decimals (`g = 0.7358` beside `g = 1.2131` on a seven-node chain); nothing keeps the text apart. Workaround: nodes staggered on two rows, `nodeRadius: 18`. Ask: a collision pass for value-line text (nudge a line sideways or above when it meets another label or a box).
+- (backprop-1, `frames` control) A `frames` control's readout sits at the right end of the slider and a label of two words ("start at L") wraps onto two lines at 440 px. Workaround: one-letter frame labels. Ask: give the readout the full row width below the slider on a phone.

@@ -1,0 +1,1679 @@
+{
+ "id": "l3-multiplying-along-a-path",
+ "course": "backprop",
+ "title": "Multiplying along a path",
+ "minutes": 13,
+ "objectives": [
+  "Find the gradient of the output with respect to an input by multiplying local derivatives along the path."
+ ],
+ "skills": [
+  "bp-chain"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Nudge and recompute",
+   "prose": "Back to $L = (ab + c)f$ at the course values, where $L = -3$. Move $a$ from 1.5 to 1.51 and run the forward pass again.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "a"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "By how much does $L$ move?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.06,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -0.06,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "added",
+      "value": -0.04,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Recompute $e$, $d$ and $L$ with $a = 1.51$."
+    },
+    {
+     "rung": "point",
+     "text": "$e = 1.51 \\times (-2) = -3.02$, so $d = 0.98$.",
+     "highlight": [
+      "e",
+      "d",
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$L = 0.98 \\times (-3) = -2.94$, which is 0.06 above $-3$."
+    }
+   ],
+   "feedback": {
+    "correct": "$L$ goes from $-3$ to $-2.94$: up by 0.06.",
+    "generic": "Not quite. Recompute every box with $a = 1.51$.",
+    "byKey": {
+     "sign": "You got the size right but the sign wrong. $L$ rises from $-3$ to $-2.94$.",
+     "added": "You added the local derivatives along the path. Recompute the boxes instead."
+    }
+   },
+   "explain": {
+    "text": "With $a = 1.51$: $e = -3.02$, $d = 0.98$, $L = -2.94$. So $L$ rose by 0.06, six times the nudge."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Walk back along the path",
+   "prose": "The slider walks from $L$ back to $a$. It starts at $L$ with 1, then multiplies by one local derivative per arrow: $\\partial L/\\partial d = f$, $\\partial d/\\partial e = 1$, $\\partial e/\\partial a = b$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {}
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "values2": {
+         "L": "1"
+        },
+        "current": "L"
+       },
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3"
+        },
+        "current": "d"
+       },
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3",
+         "e": "−3"
+        },
+        "current": "e"
+       },
+       {
+        "values2": {
+         "L": "1",
+         "d": "−3",
+         "e": "−3",
+         "a": "6"
+        },
+        "current": "a"
+       }
+      ],
+      "frameLabels": [
+       "L",
+       "d",
+       "e",
+       "a"
+      ],
+      "label": "Step back",
+      "start": 0
+     }
+    ]
+   },
+   "question": "What number arrives at $a$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "added",
+      "value": -4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to the last frame."
+    },
+    {
+     "rung": "point",
+     "text": "Each step multiplies by one local derivative.",
+     "highlight": [
+      "a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 \\times (-3) \\times 1 \\times (-2) = 6$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 \\times (-3) \\times 1 \\times (-2) = 6$: the rate you found by nudging, $0.06 / 0.01$.",
+    "generic": "Not quite. Multiply the local derivatives along the path.",
+    "byKey": {
+     "sign": "Two minus signs make a plus: $(-3) \\times (-2) = 6$.",
+     "added": "You added $-3 + 1 - 2$. Rates along a path multiply."
+    }
+   },
+   "explain": {
+    "text": "Walking back from $L$, each arrow multiplies by its local derivative: $1 \\times (-3) \\times 1 \\times (-2) = 6$. That matches the nudge: 0.06 for 0.01.",
+    "canvas": {
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "e": "−3",
+      "a": "6"
+     },
+     "current": "a"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Gradients and backpropagation",
+   "prose": "The number at $a$ is the **gradient** $\\dfrac{\\partial L}{\\partial a} = 6$: how fast $L$ moves per unit of $a$. Finding it by starting at $L$ with 1 and multiplying backwards is **backpropagation**.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "e": "−3",
+      "a": "6"
+     }
+    }
+   },
+   "question": "Use the gradient to predict how far $L$ moves when $a$ rises by 0.02.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.12,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "nudge-only",
+      "value": 0.02,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": -0.12,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Change in $L$ is about the gradient times the change in $a$."
+    },
+    {
+     "rung": "point",
+     "text": "$6 \\times 0.02$.",
+     "highlight": [
+      "a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is 0.12."
+    }
+   ],
+   "feedback": {
+    "correct": "$6 \\times 0.02 = 0.12$. Here it is exact, because $L$ is a straight line in $a$.",
+    "generic": "Not quite. Multiply the gradient by the move.",
+    "byKey": {
+     "nudge-only": "You gave the move in $a$. $L$ moves 6 times as far.",
+     "sign": "The gradient is $+6$, so $L$ rises."
+    }
+   },
+   "explain": {
+    "text": "The gradient says $L$ moves 6 times as far as $a$. So a rise of 0.02 moves $L$ by $6 \\times 0.02 = 0.12$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Why the prediction is exact",
+   "prose": "Hold $b$, $c$, $f$ at the course values and plot $L$ against $a$. The graph is $L = (-2a + 4)(-3) = 6a - 12$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.5,
+      2.5
+     ],
+     "y": [
+      -9,
+      3
+     ],
+     "functions": [
+      {
+       "id": "La",
+       "expr": "(-2*x + 4)*(-3)",
+       "label": "L(a)"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 1.5,
+       "y": -3,
+       "label": "(1.5, −3)"
+      }
+     ],
+     "tangent": {
+      "f": "La",
+      "x": 1.5,
+      "lengthPx": 120
+     }
+    }
+   },
+   "question": "What is the slope of this line?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "intercept",
+      "value": -12,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "value",
+      "value": -3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read off the coefficient of $a$."
+    },
+    {
+     "rung": "point",
+     "text": "$6a - 12$.",
+     "highlight": [
+      "La"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The slope is 6, the gradient."
+    }
+   ],
+   "feedback": {
+    "correct": "The slope is 6: the gradient is the slope of $L$ against $a$.",
+    "generic": "Not quite. The slope is the coefficient of $a$.",
+    "byKey": {
+     "intercept": "You gave the intercept. The slope is the coefficient of $a$.",
+     "value": "You gave $L$ at $a = 1.5$. The slope is how fast it changes."
+    }
+   },
+   "explain": {
+    "text": "$L = 6a - 12$ is a straight line in $a$ with slope 6. That is $\\partial L/\\partial a$, and on a straight line a prediction from the slope is exact."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The other inputs",
+   "prose": "Now walk back to $c$ and to $f$. The path to $c$ is $c \\to d \\to L$; the path to $f$ is one arrow, $f \\to L$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {
+      "L": "1",
+      "d": "−3"
+     }
+    }
+   },
+   "question": "Give both gradients.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Input",
+     "Path",
+     "Product of local derivatives"
+    ],
+    "rows": [
+     [
+      "$c$",
+      "$c \\to d \\to L$",
+      {
+       "edit": true,
+       "answer": -3,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "value-c",
+         "value": 4,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$f$",
+      "$f \\to L$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "own-f",
+         "value": -3,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start at $L$ with 1 each time."
+    },
+    {
+     "rung": "point",
+     "text": "To $c$: $1 \\times \\partial L/\\partial d \\times \\partial d/\\partial c$.",
+     "highlight": [
+      "c",
+      "f"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\partial L/\\partial c = 1 \\times (-3) \\times 1 = -3$ and $\\partial L/\\partial f = 1 \\times d = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\partial L/\\partial c = -3$ and $\\partial L/\\partial f = 1$.",
+    "generic": "Not quite. Multiply the local derivatives along each path.",
+    "byKey": {
+     "value-c": "You gave $c$ itself. Multiply along the path: $(-3) \\times 1$.",
+     "own-f": "You used $f$ itself. $\\partial L/\\partial f$ is the other input, $d = 1$."
+    }
+   },
+   "explain": {
+    "text": "To $c$: $1 \\times (-3) \\times 1 = -3$. To $f$: $1 \\times d = 1$. Both start from the 1 at $L$.",
+    "canvas": {
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "f": "1",
+      "e": "−3",
+      "c": "−3",
+      "a": "6",
+      "b": "−4.5"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Adding along a path",
+   "prose": "Jo walks back to $b$ along $b \\to e \\to d \\to L$. The local derivatives are $a = 1.5$, then 1, then $f = -3$. Jo adds them: $1.5 + 1 - 3 = -0.5$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "b",
+      "e",
+      "d",
+      "L"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "e": "−3"
+     }
+    }
+   },
+   "question": "What is $\\dfrac{\\partial L}{\\partial b}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -4.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "added",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 4.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "used-b",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Rates along a path multiply, as on the slider."
+    },
+    {
+     "rung": "point",
+     "text": "The 1 at $L$ becomes $-3$ at $e$.",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-3 \\times a = -3 \\times 1.5 = -4.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 \\times (-3) \\times 1 \\times 1.5 = -4.5$.",
+    "generic": "Not quite. Multiply the local derivatives along the path.",
+    "byKey": {
+     "added": "You added the local derivatives, as Jo did. $e$ moves 1.5 times as fast as $b$, and $L$ moves $-3$ times as fast as $e$. So $L$ moves $-4.5$ times as fast as $b$.",
+     "sign": "One minus sign along the path, so the gradient is negative.",
+     "used-b": "You used $b$ for the product box. Into $b$, the box passes the other input, $a$."
+    }
+   },
+   "explain": {
+    "text": "Rates compound: $e$ moves 1.5 times as fast as $b$, and $L$ moves $-3$ times as fast as $e$. So $\\partial L/\\partial b = -3 \\times 1.5 = -4.5$; a nudge of 0.01 in $b$ moves $L$ by $-0.045$.",
+    "canvas": {
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "f": "1",
+      "e": "−3",
+      "c": "−3",
+      "a": "6",
+      "b": "−4.5"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A box that is switched off",
+   "prose": "A **ReLU** box computes $r = \\max(0, d)$: it passes $d$ when $d > 0$ and gives 0 when $d < 0$. Its local derivative is 1 when $d > 0$ and 0 when $d < 0$. Now $L = \\max(0, ab + c)f$ with $c = 2$, so $d = -1$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 320,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.05,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.05,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.25,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.25,
+       "y": 0.82
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.47,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "r",
+       "label": "r = ReLU",
+       "x": 0.7,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.7,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = rf",
+       "x": 0.92,
+       "y": 0.42,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "r"
+      },
+      {
+       "from": "r",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "2",
+      "f": "−3",
+      "e": "−3",
+      "d": "−1",
+      "r": "0",
+      "L": "0"
+     }
+    }
+   },
+   "question": "What is $\\dfrac{\\partial L}{\\partial a}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "no-relu",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the ReLU box's local derivative at $d = -1$."
+    },
+    {
+     "rung": "point",
+     "text": "At $d = -1$ the box is off: its local derivative is 0.",
+     "highlight": [
+      "r"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Any product along the path that includes a 0 is 0."
+    }
+   ],
+   "feedback": {
+    "correct": "The ReLU is off at $d = -1$, so its local derivative is 0 and $\\partial L/\\partial a = 0$.",
+    "generic": "Not quite. What does the ReLU box pass back at $d = -1$?",
+    "byKey": {
+     "no-relu": "You skipped the ReLU box. At $d = -1$ it passes back 0, so everything behind it gets 0."
+    }
+   },
+   "explain": {
+    "text": "At $d = -1$ the ReLU outputs 0 and its local derivative is 0. Every path from $a$, $b$ or $c$ passes through it, so all three gradients are 0.",
+    "canvas": {
+     "values2": {
+      "L": "1",
+      "r": "−3",
+      "d": "0",
+      "e": "0",
+      "c": "0",
+      "a": "0",
+      "b": "0",
+      "f": "0"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "One product per path",
+   "prose": "Each gradient is the product of the local derivatives on its path: $$\\frac{\\partial L}{\\partial a} = \\frac{\\partial L}{\\partial d}\\,\\frac{\\partial d}{\\partial e}\\,\\frac{\\partial e}{\\partial a}.$$ Paths share their first steps back from $L$. Those shared products are worked out once and reused.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "f": "1",
+      "e": "−3",
+      "c": "−3",
+      "a": "6",
+      "b": "−4.5"
+     }
+    }
+   },
+   "question": "Which number do the gradients of $a$ and $b$ both reuse?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ge",
+      "text": "$\\partial L/\\partial e = -3$",
+      "correct": true
+     },
+     {
+      "id": "dea",
+      "text": "$\\partial e/\\partial a = -2$",
+      "why": "That local derivative sits only on the path to $a$. The shared part is everything after $e$."
+     },
+     {
+      "id": "gf",
+      "text": "$\\partial L/\\partial f = 1$",
+      "why": "You picked the path to $f$, which leaves $L$ on its own arrow."
+     },
+     {
+      "id": "ddc",
+      "text": "$\\partial d/\\partial c = 1$",
+      "why": "That arrow belongs to the path to $c$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where do the paths from $a$ and $b$ meet?"
+    },
+    {
+     "rung": "point",
+     "text": "Both pass through $e$.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Both reuse the gradient at $e$, $-3$."
+    }
+   ],
+   "feedback": {
+    "correct": "Both reuse $\\partial L/\\partial e = -3$: one multiplication more gives each.",
+    "generic": "Not quite. Find where the two paths join."
+   },
+   "explain": {
+    "text": "The paths from $a$ and $b$ both pass through $e$. So $\\partial L/\\partial e = -3$ is found once, and each takes one more product: $-3 \\times b = 6$ and $-3 \\times a = -4.5$.",
+    "canvas": {
+     "highlight": [
+      "e"
+     ]
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Attributing a P&L",
+   "prose": "The book from l1: P&L $= 500{,}000(0.6r_1 + 0.4r_2)$ with $r_1 = p_1/200 - 1$. The risk desk asks how much the P&L moves per £1 on the first share's price.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 240,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "p1",
+       "label": "p₁",
+       "x": 0.07,
+       "y": 0.22
+      },
+      {
+       "id": "p2",
+       "label": "p₂",
+       "x": 0.07,
+       "y": 0.78
+      },
+      {
+       "id": "r1",
+       "label": "r₁",
+       "x": 0.36,
+       "y": 0.22,
+       "shape": "rect"
+      },
+      {
+       "id": "r2",
+       "label": "r₂",
+       "x": 0.36,
+       "y": 0.78,
+       "shape": "rect"
+      },
+      {
+       "id": "R",
+       "label": "R",
+       "x": 0.64,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "P",
+       "label": "P&L",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "p1",
+       "to": "r1"
+      },
+      {
+       "from": "p2",
+       "to": "r2"
+      },
+      {
+       "from": "r1",
+       "to": "R"
+      },
+      {
+       "from": "r2",
+       "to": "R"
+      },
+      {
+       "from": "R",
+       "to": "P"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "caption": "$r_1 = p_1/200 - 1$, $r_2 = p_2/50 - 1$, $R = 0.6r_1 + 0.4r_2$, P&L $= 500{,}000R$",
+     "values": {
+      "p1": "206",
+      "p2": "49"
+     },
+     "values2": {
+      "P": "1"
+     }
+    }
+   },
+   "question": "Multiply the local derivatives back from the P&L to $p_1$. What is $\\partial(\\text{P\\&L})/\\partial p_1$, in pounds per pound?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1500,
+    "tol": {
+     "abs": 0.5
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "no-return",
+      "value": 300000,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "no-book",
+      "value": 0.003,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "There are three arrows on the path: $P$ to $R$, $R$ to $r_1$, $r_1$ to $p_1$."
+    },
+    {
+     "rung": "point",
+     "text": "The local derivatives are 500,000, then 0.6, then $1/200$.",
+     "highlight": [
+      "r1",
+      "R"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$500{,}000 \\times 0.6 \\times 0.005 = 1{,}500$."
+    }
+   ],
+   "feedback": {
+    "correct": "$500{,}000 \\times 0.6 \\times \\tfrac{1}{200} = 1{,}500$: each £1 on the first share moves the P&L by £1,500.",
+    "generic": "Not quite. Multiply one local derivative per arrow.",
+    "byKey": {
+     "no-return": "You stopped at $r_1$. The price box divides by 200, so multiply by $1/200$ too.",
+     "no-book": "You left out the £500,000 at the last box."
+    }
+   },
+   "explain": {
+    "text": "From P&L back to $p_1$: $500{,}000 \\times 0.6 \\times \\tfrac{1}{200} = 1{,}500$. The holding is 1,500 shares, so £1 on the price is £1,500 of P&L.",
+    "canvas": {
+     "values2": {
+      "P": "1",
+      "R": "500,000",
+      "r1": "300,000",
+      "p1": "1,500"
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The gradient $\\partial L/\\partial a$ is how fast $L$ moves per unit of $a$.",
+   "Backpropagation starts at $L$ with 1 and multiplies one local derivative per arrow on the way back.",
+   "Paths share their first steps back from $L$, so each shared product is computed once."
+  ],
+  "formula": {
+   "name": "Chain rule along a path",
+   "tex": "\\frac{\\partial L}{\\partial a} = \\frac{\\partial L}{\\partial d}\\,\\frac{\\partial d}{\\partial e}\\,\\frac{\\partial e}{\\partial a}",
+   "note": "This is $\\tfrac{dy}{dx} = \\tfrac{dy}{du}\\tfrac{du}{dx}$ applied once per arrow."
+  },
+  "trap": "Rates along a path multiply. Adding the local derivatives gives a number with no meaning."
+ },
+ "quiz": [
+  {
+   "id": "q-grad-a-fresh",
+   "difficulty": 2,
+   "prose": "Take $L = (ab + c)f$ at $a = 2$, $b = 5$, $c = -1$, $f = 0.5$.",
+   "question": "What is $\\partial L/\\partial a$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "added",
+      "value": 5.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "value",
+      "value": 4.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\partial L/\\partial a = f \\times 1 \\times b = 0.5 \\times 5 = 2.5$.",
+    "generic": "Not quite. Multiply back along $a \\to e \\to d \\to L$.",
+    "byKey": {
+     "added": "You added the local derivatives $0.5 + 1 + 5 - 1$. Multiply them instead.",
+     "value": "You gave $L$ itself. The gradient is a rate."
+    }
+   },
+   "explain": {
+    "text": "Along $a \\to e \\to d \\to L$ the local derivatives are $b = 5$, 1 and $f = 0.5$. Their product is 2.5."
+   }
+  },
+  {
+   "id": "q-start-value",
+   "difficulty": 2,
+   "prose": "Backpropagation walks from the output $L$ back to the inputs.",
+   "question": "What number does it start with at $L$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "1, since $\\partial L/\\partial L = 1$",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "The value of $L$",
+      "why": "You started from the value. The walk carries rates, and $L$ moves at rate 1 with itself."
+     },
+     {
+      "id": "zero",
+      "text": "0, since nothing has been computed yet",
+      "why": "You started at zero. Every product along a path would then be 0."
+     },
+     {
+      "id": "inputs",
+      "text": "The sum of the inputs",
+      "why": "You mixed in the inputs. The start is the rate of $L$ with itself."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "It starts with $\\partial L/\\partial L = 1$.",
+    "generic": "Not quite. How fast does $L$ move with itself?"
+   },
+   "explain": {
+    "text": "$L$ moves exactly as fast as itself, so the walk starts at 1. Each arrow back then multiplies in one local derivative."
+   }
+  },
+  {
+   "id": "q-predict-c",
+   "difficulty": 3,
+   "prose": "In the course graph $\\partial L/\\partial c = -3$, and $L$ is a straight line in $c$.",
+   "question": "$c$ falls from 4 to 3.98. By how much does $L$ move?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.06,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -0.06,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-3 \\times (-0.02) = 0.06$.",
+    "generic": "Not quite. Multiply the gradient by the move, with its sign.",
+    "byKey": {
+     "sign": "The move in $c$ is $-0.02$, and $-3 \\times (-0.02)$ is positive."
+    }
+   },
+   "explain": {
+    "text": "The move in $c$ is $-0.02$. So $L$ moves by $-3 \\times (-0.02) = 0.06$, exactly, since $L$ is straight in $c$."
+   }
+  }
+ ]
+}
