@@ -45,7 +45,7 @@
 
 
 # ---- Test harness, added by the drill when it runs. Not part of your code. ----
-${ZQ.widgets.codeImports.importHint(...defs.map(d => (d.setup == null ? '' : String(d.setup))))}${P.prelude || ''}
+${ZQ.widgets.codeImports.importHintFor(P.data, ...defs.map(d => (d.setup == null ? '' : String(d.setup))))}${P.prelude || ''}
 import contextlib as __zq_cl, io as __zq_io, json as __zq_json
 from fractions import Fraction as __zq_F
 ${J().JUDGE}
@@ -822,7 +822,7 @@ if not callable(globals().get(${py(P.fn)})):
       badge.hidden = false; badge.className = 'drl-badge is-run'; badge.textContent = '…';
       say(mode === 'examples' ? 'Running the examples.' : `Running ${n} hidden tests.`);
       /* ENGINE-BACKLOG 469 (E14): the drill's data files are written into the working directory before the learner's code loads (spec.prelude runs first) */
-      const spec = { fn: '__zq_case', compare: 'isclose', prelude: dataPrelude(P), tests: defs.map((_, i) => ({ args: `(${i},)`, expected: 1 })) };
+      const spec = { fn: '__zq_case', compare: 'isclose', prelude: dataPrelude(P), local: ZQ.widgets.codeImports.shippedNames({ data: P.data }), tests: defs.map((_, i) => ({ args: `(${i},)`, expected: 1 })) };
       const ok = pyr.exec(R.code + harness(P, defs), spec, (d) => onEvent(R, d), (info) => onEnd(R, info));
       if (!ok) { S.run = null; paintIdle(); }
       paintButtons();

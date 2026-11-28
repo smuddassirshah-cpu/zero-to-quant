@@ -2987,6 +2987,7 @@ Status block (engine pass AK canvas):
 1263. [Must] Validator: shape check of `mutants` on code widgets (error: non-empty `source`, integer `test` within the widget's hidden tests); warning `[ai-mutants]` for a Python code widget in a `strand: "ai"` course with fewer than two mutants.
 1264. [Should] `grade-all.mjs`: `--strand ai` filter; `--local-cdn` also takes the `fetch-vendor.sh` layout (`<dir>/pyodide`, `<dir>/compute-engine`); time the strand run.
 1265. [Should] CI: the `tests-browser` python leg runs `grade-all.mjs --code --strand ai --local-cdn vendor` after `fetch-vendor.sh`.
+1266. [Must] A module a widget ships itself (any `.py` name in `files` or `data`, by basename) is never passed to package loading: a shipped `autograd.py` no longer downloads the Pyodide `autograd` wheel. Code widgets, drills and the `trainer` widget alike.
 
 Status block (engine pass AK follow-up):
 - 1260: done. `validate.mjs`, `readiness-sums.mjs`, AUTHORING section 9; `test-strand-ai.mjs` (no row, optional, required rejected).
@@ -2995,6 +2996,7 @@ Status block (engine pass AK follow-up):
 - 1263: done. `validate.mjs` (code widget case; error on shape, warning `[ai-mutants]`), AUTHORING section 9; `test-validate-mutants.mjs`, listed in `acceptance.yml` validate-tests.
 - 1264: done. `grade-all.mjs` (`byStrand`, `ceSource`), `code-runner.mjs` (`makeRunner` layout); `test-grade-code.mjs` (strand filter, vendor layout). `--code --strand ai` on current content: 78 widgets, about 8 s with `--jobs 4`.
 - 1265: done. `acceptance.yml` tests-browser python leg; `ci-coverage.mjs` 0 problems.
+- 1266: done. `drill-worker.js` (`importsToLoad`, from `spec.local`), `code.js` (`shippedNames`, `importHintFor`), `drill.js`, `code-runner.mjs`; `test-trainer.mjs` (six checks).
 
 
 ### Engine pass AK (trainer and data): `docs/reports/engine-pass-ak-trainer.md`

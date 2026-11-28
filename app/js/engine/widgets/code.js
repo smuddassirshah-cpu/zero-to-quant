@@ -313,15 +313,20 @@ __ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(
      the list, so pandas never loaded) */
   const importsOf = (src) => String(src).split('\n').map(l => l.match(/^\s*(?:import\s+([\w.]+(?:\s+as\s+\w+)?(?:\s*,\s*[\w.]+(?:\s+as\s+\w+)?)*)|from\s+([\w.]+)\s+import\b)/)).filter(Boolean)
     .flatMap(m => (m[1] ? m[1].split(',').map(x => x.replace(/\s+as\s+\w+\s*$/, '')) : [m[2]]).map(x => x.trim())).filter(x => x && !x.startsWith('.'));
-  const importHint = (...srcs) => { const im = [...new Set(srcs.flatMap(importsOf))]; return im.length ? 'if False:\n' + im.map(x => '    import ' + x).join('\n') + '\n' : ''; };
+  /* ENGINE-BACKLOG 1266: a module the widget ships itself (any .py name in files or data, by basename) is never named in the hint, so
+     a shipped autograd.py cannot trigger a download of the unrelated Pyodide package of the same name */
+  const shippedMods = (files) => new Set(Object.keys(files || {}).filter(n => /\.py$/.test(n)).map(n => n.replace(/^.*\//, '').replace(/\.py$/, '')));
+  const shippedNames = (spec) => [...Object.keys((spec && spec.files) || {}), ...Object.keys((spec && spec.data) || {})].filter(n => /\.py$/.test(n));   // sent to the worker as spec.local
+  const importHint = (...srcs) => importHintFor(null, ...srcs);
+  const importHintFor = (files, ...srcs) => { const own = shippedMods(files), im = [...new Set(srcs.flatMap(importsOf))].filter(x => !own.has(x.split('.')[0])); return im.length ? 'if False:\n' + im.map(x => '    import ' + x).join('\n') + '\n' : ''; };
   Z.widgets.codeJudge = { JUDGE, tolOf };   // ENGINE-BACKLOG 861: the drill page compares with the same Python (js/screens/drill.js)
-  Z.widgets.codeImports = { importsOf, importHint, harness };   // read by tools/test-engine-runtime.mjs
+  Z.widgets.codeImports = { importsOf, importHint, importHintFor, shippedNames, harness };   // read by tools/test-engine-runtime.mjs
   /* item 163: prelude (hidden Python run in the learner's namespace before their code) and postlude (run after it).
      With either, the learner's code is carried as a string and compiled as solution.py, so its line numbers stay true. */
   /* inbox (backtest 2): files: { "engine_lib.py": "..." } are written into the run's working directory (on sys.path)
      before the prelude, so the learner's code and a pytest file can import helper modules */
   const filesCode = (files) => (files && typeof files === 'object' && Object.keys(files).length ? `import sys as _zfs\nif '' not in _zfs.path: _zfs.path.insert(0, '')\nfor _zn, _zt in __import__('json').loads(${JSON.stringify(JSON.stringify(files))}).items():\n    open(_zn, 'w').write(_zt)\n` : '');
-  const loadHarness = (src, pre, post, files) => `${importHint(src, pre, post, ...Object.values(files || {}))}${filesCode(files)}import linecache as _zlc
+  const loadHarness = (src, pre, post, files) => `${importHintFor(files, src, pre, post, ...Object.values(files || {}))}${filesCode(files)}import linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
 __ZQ_PRE = ${JSON.stringify(pre)}
 __ZQ_POST = ${JSON.stringify(post)}
@@ -339,7 +344,7 @@ def __zq_load():
 __zq_load()
 `;
   const scriptHarness = (src, cases, pre = '', post = '', files = null) => `
-${importHint(src, pre, post, ...Object.values(files || {}), ...cases.map(c => c.setup == null ? '' : String(c.setup)))}${filesCode(files)}import sys as _zs, io as _zio, linecache as _zlc
+${importHintFor(files, src, pre, post, ...Object.values(files || {}), ...cases.map(c => c.setup == null ? '' : String(c.setup)))}${filesCode(files)}import sys as _zs, io as _zio, linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
 __ZQ_PRE = ${JSON.stringify(pre)}
 __ZQ_POST = ${JSON.stringify(post)}
@@ -466,7 +471,7 @@ def __zq_case(_i):
     /* the load gets 5 s plus the widget's budget (or 30 s for heavy imports); each case 5 s plus its own budget, the
        widget's caseBudget, or, when the widget has a budget, that budget again (a slow numpy case keeps its room) */
     const caseMs = (k) => (k < 0 ? TEST_MS + extra : TEST_MS + (cases[k] && cases[k].budget != null ? Math.max(0, +cases[k].budget || 0) : spec.caseBudget != null ? Math.max(0, +spec.caseBudget || 0) : extra));
-    return { code, rows, limit, caseMs };
+    return { code, rows, limit, caseMs, local: shippedNames(spec) };
   };
   Z.widgets.codePlan = { casePlan, isOut, cleanTb, quietLib, MARK, TEST_MS, PYODIDE };   // read by tools/code-runner.mjs (item 1031)
 
@@ -537,7 +542,7 @@ def __zq_case(_i):
     const runCases0 = (cases, dataTexts) => new Promise((resolve) => {
       const { code, rows, limit, caseMs } = casePlan(spec, cases, ed.value, script, dataTexts);
       let loadErr = null, loaded = '';
-      const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, limit,
+      const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', local: shippedNames(spec), tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, limit,
         (d) => {
           if (d.kind === 'error') { loadErr = d.error; loaded = quietLib(d.stdout); }
           if (d.kind === 'loaded') loaded = quietLib(d.stdout);
@@ -648,7 +653,7 @@ def __zq_case(_i):
     const steps = Math.max(1, Math.min(20000, Math.round(+spec.steps || 500))), secs = Math.max(1, Math.min(300, +spec.maxSeconds || 120));
     const files = dataTexts && Object.keys(dataTexts).length ? dataTexts : null;
     const pre = String(spec.prelude || '');
-    const code = `${importHint(src, pre, ...Object.values(files || {}))}${filesCode(files)}import sys as _zs, time as _zt, json as _zj, math as _zm, re as _zre, linecache as _zlc
+    const code = `${importHintFor(files, src, pre, ...Object.values(files || {}))}${filesCode(files)}import sys as _zs, time as _zt, json as _zj, math as _zm, re as _zre, linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
 __ZQ_PRE = ${JSON.stringify(pre)}
 __ZQ_MAX = ${steps}
@@ -783,7 +788,7 @@ def __zq_train(_i):
       busy = true; stopping = false; clear(); res.innerHTML = '';
       push(); live.textContent = 'Starting.'; sync();
       let why = null, err = null, out = '';
-      Py.exec(plan.code, { fn: '__zq_train', compare: 'isclose', prelude: '', tests: [{ args: '(0,)', expected: 1 }] }, plan.ms + 8000,
+      Py.exec(plan.code, { fn: '__zq_train', compare: 'isclose', prelude: '', local: shippedNames(spec), tests: [{ args: '(0,)', expected: 1 }] }, plan.ms + 8000,
         (d) => {
           if (d.kind === 'steps') { take(d.rows); if (!flushT) flushT = setTimeout(push, 80); }
           else if (d.kind === 'stopped') why = d.why;
