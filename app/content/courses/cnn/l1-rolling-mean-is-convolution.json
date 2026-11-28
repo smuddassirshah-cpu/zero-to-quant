@@ -1,0 +1,1983 @@
+{
+ "id": "l1-rolling-mean-is-convolution",
+ "course": "cnn",
+ "title": "A rolling mean is a convolution",
+ "minutes": 14,
+ "objectives": [
+  "Write a rolling mean as a convolution with a kernel, and match it to pandas."
+ ],
+ "skills": [
+  "cnn-conv"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One mean as a dot product",
+   "prose": "Twelve closes of one stock in £, $x_0$ to $x_{11}$, as in `numpy-pandas`. The 3-day rolling mean on row 6 averages the window that ends there. Below the closes sit three weights, one per close in the window.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "12.40",
+       "12.55",
+       "12.31",
+       "12.48",
+       "12.62",
+       "12.44",
+       "12.70",
+       "12.85",
+       "12.66",
+       "12.90",
+       "13.05",
+       "12.98"
+      ],
+      "showIndex": true
+     },
+     "state": {
+      "highlight": {
+       "range": [
+        4,
+        6
+       ],
+       "label": "window"
+      }
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "⅓",
+       "⅓",
+       "⅓"
+      ],
+      "showIndex": false
+     },
+     "state": {}
+    },
+    "state": {
+     "caption": "The closes, then the three weights."
+    }
+   },
+   "question": "Which dot product gives the 3-day mean on row 6?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$(\\tfrac13, \\tfrac13, \\tfrac13) \\cdot (12.62, 12.44, 12.70)$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$(1, 1, 1) \\cdot (12.62, 12.44, 12.70)$",
+      "why": "You added the three closes. That is the sum, three times the mean."
+     },
+     {
+      "id": "c",
+      "text": "$(\\tfrac13, \\tfrac13, \\tfrac13) \\cdot (12.44, 12.70, 12.85)$",
+      "why": "You centred the window on row 6, so it reads row 7, a close from tomorrow. The window ends on its own row."
+     },
+     {
+      "id": "d",
+      "text": "$(\\tfrac13, \\tfrac13, \\tfrac13) \\cdot (12.70, 12.85, 12.66)$",
+      "why": "You started the window on row 6. It ends there and looks back two rows."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which three rows does the window ending on row 6 hold?"
+    },
+    {
+     "rung": "point",
+     "text": "Rows 4, 5 and 6.",
+     "highlight": [
+      "left:c4",
+      "left:c5",
+      "left:c6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Multiply each by a third and add."
+    }
+   ],
+   "feedback": {
+    "correct": "Rows 4, 5 and 6, each times $\\tfrac13$: the mean is £12.5867.",
+    "generic": "Not quite. Take the three closes that end on row 6, each times its weight.",
+    "byKey": {
+     "c": "You centred the window, so it reads a close after row 6. `rolling(3)` looks back only."
+    }
+   },
+   "explain": {
+    "text": "The window ending on row 6 holds $x_4, x_5, x_6$. Times $\\tfrac13$ each and added, that is $(12.62 + 12.44 + 12.70)/3 = 12.5867$: a mean is a dot product with equal weights.",
+    "canvas": {
+     "left": {
+      "highlight": {
+       "range": [
+        4,
+        6
+       ],
+       "label": "rows 4 to 6"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Slide the weights along",
+   "prose": "Step the window along the closes. At each stop the same three weights meet three closes, and their dot product is written below. The outputs are numbered from 0.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "12.40",
+       "12.55",
+       "12.31",
+       "12.48",
+       "12.62",
+       "12.44",
+       "12.70",
+       "12.85",
+       "12.66",
+       "12.90",
+       "13.05",
+       "12.98"
+      ],
+      "showIndex": true
+     },
+     "state": {
+      "highlight": {
+       "range": [
+        0,
+        2
+       ],
+       "label": "window"
+      }
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…"
+      ],
+      "showIndex": true
+     },
+     "state": {}
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           0,
+           2
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c0"
+         ]
+        },
+        "caption": "Window $x_{0}$ to $x_{2}$: output $y_{0} = 12.4200$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           1,
+           3
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "12.45",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c1"
+         ]
+        },
+        "caption": "Window $x_{1}$ to $x_{3}$: output $y_{1} = 12.4467$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           2,
+           4
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "12.45",
+          "12.47",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c2"
+         ]
+        },
+        "caption": "Window $x_{2}$ to $x_{4}$: output $y_{2} = 12.4700$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           3,
+           5
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "12.45",
+          "12.47",
+          "12.51",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c3"
+         ]
+        },
+        "caption": "Window $x_{3}$ to $x_{5}$: output $y_{3} = 12.5133$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           4,
+           6
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "12.45",
+          "12.47",
+          "12.51",
+          "12.59",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c4"
+         ]
+        },
+        "caption": "Window $x_{4}$ to $x_{6}$: output $y_{4} = 12.5867$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           5,
+           7
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "12.45",
+          "12.47",
+          "12.51",
+          "12.59",
+          "12.66",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c5"
+         ]
+        },
+        "caption": "Window $x_{5}$ to $x_{7}$: output $y_{5} = 12.6633$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           6,
+           8
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "12.45",
+          "12.47",
+          "12.51",
+          "12.59",
+          "12.66",
+          "12.74",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c6"
+         ]
+        },
+        "caption": "Window $x_{6}$ to $x_{8}$: output $y_{6} = 12.7367$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           7,
+           9
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "12.45",
+          "12.47",
+          "12.51",
+          "12.59",
+          "12.66",
+          "12.74",
+          "12.80",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c7"
+         ]
+        },
+        "caption": "Window $x_{7}$ to $x_{9}$: output $y_{7} = 12.8033$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           8,
+           10
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "12.45",
+          "12.47",
+          "12.51",
+          "12.59",
+          "12.66",
+          "12.74",
+          "12.80",
+          "12.87",
+          "…"
+         ],
+         "highlight": [
+          "c8"
+         ]
+        },
+        "caption": "Window $x_{8}$ to $x_{10}$: output $y_{8} = 12.8700$."
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           9,
+           11
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          "12.42",
+          "12.45",
+          "12.47",
+          "12.51",
+          "12.59",
+          "12.66",
+          "12.74",
+          "12.80",
+          "12.87",
+          "12.98"
+         ],
+         "highlight": [
+          "c9"
+         ]
+        },
+        "caption": "Window $x_{9}$ to $x_{11}$: output $y_{9} = 12.9767$."
+       }
+      ],
+      "frameLabels": [
+       "0",
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7",
+       "8",
+       "9"
+      ],
+      "label": "Output",
+      "start": 0
+     }
+    ]
+   },
+   "question": "How many outputs do the twelve closes give?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "all-rows",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "n-k",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Step to the last frame."
+    },
+    {
+     "rung": "point",
+     "text": "The last window is $x_9$ to $x_{11}$."
+    },
+    {
+     "rung": "step",
+     "text": "Starts 0 to 9."
+    }
+   ],
+   "feedback": {
+    "correct": "Ten stops: the window starts at $x_0$ and its last start is $x_9$.",
+    "generic": "Not quite. Step to the last frame and count the outputs.",
+    "byKey": {
+     "all-rows": "You counted a value per close. The first two closes never end a full window.",
+     "n-k": "You took $12 - 3$. Starts run from 0 to 9, which is ten of them."
+    }
+   },
+   "explain": {
+    "text": "The window can start at $x_0$, $x_1$, up to $x_9$: 10 positions. That matches the two NaNs of `rolling(3)` on twelve rows.",
+    "canvas": {
+     "left": {
+      "highlight": {
+       "range": [
+        9,
+        11
+       ],
+       "label": "window"
+      }
+     },
+     "right": {
+      "cells": [
+       "12.42",
+       "12.45",
+       "12.47",
+       "12.51",
+       "12.59",
+       "12.66",
+       "12.74",
+       "12.80",
+       "12.87",
+       "12.98"
+      ],
+      "highlight": [
+       "c9"
+      ]
+     },
+     "caption": "Window $x_{9}$ to $x_{11}$: output $y_{9} = 12.9767$."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A one-dimensional convolution",
+   "prose": "What you slid is a **convolution** in one dimension: a **kernel** of weights moves along a signal, and each output is a dot product. With **valid** positions only, $n$ inputs and a kernel of length $k$ give $n - k + 1$ outputs.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "closes $n$",
+      "kernel $k$",
+      "valid outputs"
+     ],
+     "rows": [
+      [
+       "12",
+       "3",
+       "10"
+      ],
+      [
+       "12",
+       "5",
+       "8"
+      ],
+      [
+       "250",
+       "20",
+       "?"
+      ]
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   },
+   "question": "A year of 250 closes meets a 20-day mean kernel. How many valid outputs are there?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 231,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "all-rows",
+      "value": 250,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "n-k",
+      "value": 230,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nan",
+      "value": 19,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use the two rows of the table as a check."
+    },
+    {
+     "rung": "point",
+     "text": "$12 - 3 + 1 = 10$."
+    },
+    {
+     "rung": "step",
+     "text": "$250 - 20 + 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$250 - 20 + 1 = 231$ outputs.",
+    "generic": "Not quite. Count the start positions of a full window.",
+    "byKey": {
+     "all-rows": "That is one per close. The first 19 closes cannot end a full window.",
+     "n-k": "You left out the first start. Starts run from 0 to 230.",
+     "nan": "That is the number of NaNs `rolling(20)` would give, not the outputs."
+    }
+   },
+   "explain": {
+    "text": "Starts run from 0 to $250 - 20 = 230$, so there are $230 + 1 = 231$ valid outputs. `rolling(20)` would show the 19 missing ones as NaN."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Weights that lean on today",
+   "prose": "A weighted mean puts more on the newest close. The kernel $(0.2, 0.3, 0.5)$ is written oldest to newest, so $0.5$ meets the last close of each window.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "12.40",
+       "12.55",
+       "12.31",
+       "12.48",
+       "12.62",
+       "12.44",
+       "12.70",
+       "12.85",
+       "12.66",
+       "12.90",
+       "13.05",
+       "12.98"
+      ],
+      "showIndex": true
+     },
+     "state": {
+      "highlight": {
+       "range": [
+        0,
+        2
+       ],
+       "label": "window"
+      }
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "0.2",
+       "0.3",
+       "0.5"
+      ],
+      "showIndex": false
+     },
+     "state": {}
+    },
+    "state": {
+     "caption": "The closes and the kernel, oldest weight first."
+    }
+   },
+   "question": "Fill in the first two outputs to 3 decimal places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "window",
+     "output"
+    ],
+    "rows": [
+     [
+      "$x_0, x_1, x_2$",
+      {
+       "edit": true,
+       "answer": 12.4,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "flipped",
+         "value": 12.427,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$x_1, x_2, x_3$",
+      {
+       "edit": true,
+       "answer": 12.443,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "flipped",
+         "value": 12.464,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Line the kernel up under the first window."
+    },
+    {
+     "rung": "point",
+     "text": "$0.2 \\times 12.40 + 0.3 \\times 12.55 + 0.5 \\times 12.31$.",
+     "highlight": [
+      "left:c0",
+      "left:c1",
+      "left:c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then slide one place and repeat for $x_1, x_2, x_3$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.2 \\times 12.40 + 0.3 \\times 12.55 + 0.5 \\times 12.31 = 12.400$, then $12.443$.",
+    "generic": "Not quite. Multiply each close by the weight under it and add.",
+    "byKey": {
+     "flipped": "You put 0.5 on the oldest close. The kernel is written oldest to newest, so 0.5 meets the newest."
+    }
+   },
+   "explain": {
+    "text": "$y_0 = 2.48 + 3.765 + 6.155 = 12.400$ and $y_1 = 2.51 + 3.693 + 6.24 = 12.443$. The weights sum to 1, so each output is an average, pulled towards the latest close.",
+    "canvas": {
+     "left": {
+      "highlight": {
+       "range": [
+        1,
+        3
+       ],
+       "label": "window 1"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Weights that fade",
+   "prose": "An exponentially weighted mean gives lag $j$ the weight $\\alpha(1 - \\alpha)^j$. With $\\alpha = 0.5$ and five lags kept, the raw weights add to $0.96875$, not 1. Divide each by that total so the kernel averages.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "lag 4",
+      "lag 3",
+      "lag 2",
+      "lag 1",
+      "lag 0"
+     ],
+     "yLabel": "raw weight",
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "lag 4": 0.03125,
+      "lag 3": 0.0625,
+      "lag 2": 0.125,
+      "lag 1": 0.25,
+      "lag 0": 0.5
+     }
+    }
+   },
+   "question": "What weight does the newest close (lag 0) get after normalising? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.516,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "oldest",
+      "value": 0.032,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the five raw weights."
+    },
+    {
+     "rung": "point",
+     "text": "They add to 0.96875."
+    },
+    {
+     "rung": "step",
+     "text": "$0.5 / 0.96875$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.5 / 0.96875 = 0.516$.",
+    "generic": "Not quite. Divide the lag-0 weight by the total of the five.",
+    "byKey": {
+     "raw": "That is the raw weight. Five lags only add to 0.96875, so each weight is divided by that.",
+     "oldest": "That is lag 4, the oldest close. Lag 0 is the newest."
+    }
+   },
+   "explain": {
+    "text": "Normalised, the weights are $0.516, 0.258, 0.129, 0.065, 0.032$ from newest to oldest. As a kernel written oldest first, the order reverses."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Where each output lands",
+   "prose": "`np.correlate(close, k, \"valid\")` returns only the 10 full windows, numbered from 0. pandas keeps all 12 rows and writes each mean on its window’s last row, with NaN before.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "px",
+       "label": "Close",
+       "values": [
+        12.4,
+        12.55,
+        12.31,
+        12.48,
+        12.62,
+        12.44,
+        12.7,
+        12.85,
+        12.66,
+        12.9,
+        13.05,
+        12.98
+       ]
+      },
+      {
+       "id": "ma",
+       "label": "3-day mean",
+       "values": [
+        null,
+        null,
+        12.42,
+        12.4467,
+        12.47,
+        12.5133,
+        12.5867,
+        12.6633,
+        12.7367,
+        12.8033,
+        12.87,
+        12.9767
+       ]
+      }
+     ],
+     "x": "dates",
+     "dates": [
+      "2024-04-02",
+      "2024-04-03",
+      "2024-04-04",
+      "2024-04-05",
+      "2024-04-08",
+      "2024-04-09",
+      "2024-04-10",
+      "2024-04-11",
+      "2024-04-12",
+      "2024-04-15",
+      "2024-04-16",
+      "2024-04-17"
+     ],
+     "money": "£",
+     "height": 240
+    },
+    "state": {}
+   },
+   "question": "`y = np.correlate(close, np.ones(3) / 3, \"valid\")`. On which row of `close.rolling(3).mean()` does `y[0]` sit? Rows count from 0.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a row number",
+    "wrong": [
+     {
+      "id": "start",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "centre",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The first full window is rows 0, 1 and 2."
+    },
+    {
+     "rung": "point",
+     "text": "pandas labels a window by its last row."
+    },
+    {
+     "rung": "step",
+     "text": "Row $0 + 3 - 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "Row 2: the first window is rows 0 to 2 and pandas writes on its last row.",
+    "generic": "Not quite. Which row ends the first full window?",
+    "byKey": {
+     "start": "You put it on the window’s first row. `rolling` writes it on the last row.",
+     "centre": "That is the middle row, where `rolling(3, center=True)` would put it."
+    }
+   },
+   "explain": {
+    "text": "Output $t$ covers rows $t$ to $t + 2$, so it sits on row $t + k - 1 = t + 2$. Rows 0 and 1 are the two NaNs.",
+    "canvas": {
+     "markers": [
+      {
+       "id": "m0",
+       "i": 2,
+       "series": "ma",
+       "label": "y[0]"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The flip",
+   "prose": "In mathematics, convolution reverses the kernel first: $(x * k)_t = \\sum_j k_j\\, x_{t-j}$. Deep learning libraries slide the kernel unflipped, which is cross-correlation, and still call it convolution. A symmetric kernel such as $(\\tfrac13, \\tfrac13, \\tfrac13)$ hides the difference.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> x = np.array([3, 5, 4, 8, 6])",
+      ">>> np.correlate(x, [1, 0, -1], 'valid')",
+      "array([-1, -3, -2])",
+      ">>> np.convolve(x, [1, 0, -1], 'valid')",
+      "array([ ?,  ?,  ?])"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the first value of `np.convolve(x, [1, 0, -1], 'valid')`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-flip",
+      "value": -1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "second",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which way round does `np.convolve` use the kernel?"
+    },
+    {
+     "rung": "point",
+     "text": "It reverses it to $(-1, 0, 1)$.",
+     "highlight": [
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-1 \\times 3 + 0 \\times 5 + 1 \\times 4$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1$: `np.convolve` flips the kernel to $(-1, 0, 1)$, so the first window gives $-3 + 4 = 1$.",
+    "generic": "Not quite. Reverse the kernel, then slide it.",
+    "byKey": {
+     "no-flip": "You slid $(1, 0, -1)$ as written. That is `np.correlate`; `np.convolve` reverses the kernel first.",
+     "second": "That is the second window. The first is $(3, 5, 4)$."
+    }
+   },
+   "explain": {
+    "text": "Flipped, the kernel is $(-1, 0, 1)$, and the first window gives $-3 + 0 + 4 = 1$. Each output is the negative of the correlation: $(1, 3, 2)$. A CNN learns its kernel, so the flip only renames the weights.",
+    "canvas": {
+     "lines": [
+      ">>> x = np.array([3, 5, 4, 8, 6])",
+      ">>> np.correlate(x, [1, 0, -1], 'valid')",
+      "array([-1, -3, -2])",
+      ">>> np.convolve(x, [1, 0, -1], 'valid')",
+      "array([1, 3, 2])"
+     ],
+     "tone": {
+      "l5": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Same kernel, every position",
+   "prose": "One kernel, slid everywhere: $$y_t = \\sum_{j=0}^{k-1} k_j\\, x_{t+j}, \\qquad t = 0, \\dots, n - k.$$ It is **linear** (scale or add the inputs and the outputs scale or add) and **shift-equivariant**. Step the spike along, with the kernel $(0.2, 0.3, 0.5)$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "x",
+       "label": "Input",
+       "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "id": "y",
+       "label": "Output",
+       "values": [
+        null,
+        null,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.3,
+        0.2,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ],
+     "y": [
+      0,
+      1.1
+     ],
+     "height": 220,
+     "decimals": 2
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "series": {
+         "x": {
+          "values": [
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           1.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0
+          ]
+         },
+         "y": {
+          "values": [
+           null,
+           null,
+           0.0,
+           0.0,
+           0.0,
+           0.5,
+           0.3,
+           0.2,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0
+          ]
+         }
+        },
+        "caption": "Spike on day 5: outputs 0.5, 0.3, 0.2 on days 5 to 7."
+       },
+       {
+        "series": {
+         "x": {
+          "values": [
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           1.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0
+          ]
+         },
+         "y": {
+          "values": [
+           null,
+           null,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.5,
+           0.3,
+           0.2,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0
+          ]
+         }
+        },
+        "caption": "Spike on day 8: outputs 0.5, 0.3, 0.2 on days 8 to 10."
+       },
+       {
+        "series": {
+         "x": {
+          "values": [
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           1.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0
+          ]
+         },
+         "y": {
+          "values": [
+           null,
+           null,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.5,
+           0.3,
+           0.2,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0
+          ]
+         }
+        },
+        "caption": "Spike on day 11: outputs 0.5, 0.3, 0.2 on days 11 to 13."
+       }
+      ],
+      "frameLabels": [
+       "day 5",
+       "day 8",
+       "day 11"
+      ],
+      "label": "Spike",
+      "start": 0
+     }
+    ]
+   },
+   "question": "The spike moves 3 days later. What does the output do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The same three values move 3 days later",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The three values change, because other closes are in the window",
+      "why": "The other closes are 0 here, and the kernel is the same at every position, so only the place changes."
+     },
+     {
+      "id": "c",
+      "text": "The three values come out in reverse order",
+      "why": "The order depends on the kernel alone: 0.5, 0.3, 0.2 wherever the spike is."
+     },
+     {
+      "id": "d",
+      "text": "The outputs shrink, because the spike is further from the start",
+      "why": "No weight depends on the position. A convolution treats every day the same."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the first and second frames."
+    },
+    {
+     "rung": "point",
+     "text": "The values stay 0.5, 0.3, 0.2."
+    },
+    {
+     "rung": "step",
+     "text": "Only the days move."
+    }
+   ],
+   "feedback": {
+    "correct": "Shift the input and the output shifts by the same amount.",
+    "generic": "Not quite. Step through the frames and compare the three values."
+   },
+   "explain": {
+    "text": "Each window sees the spike once, with weight $0.5$, then $0.3$, then $0.2$, wherever the spike sits. That is shift-equivariance; the echo reads the kernel newest first.",
+    "canvas": {
+     "series": {
+      "x": {
+       "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "y": {
+       "values": [
+        null,
+        null,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.3,
+        0.2,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     },
+     "caption": "Spike on day 8: outputs 0.5, 0.3, 0.2 on days 8 to 10."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The loop",
+   "prose": "Write `conv1d_valid(x, k)`: the sliding dot product of the kernel with every full window of `x`, as a NumPy array. Use a loop; `np.correlate` and `np.convolve` are only the checks.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> conv1d_valid([3, 5, 4, 8, 6], [1, 0, -1])",
+      "array([-1., -3., -2.])"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `conv1d_valid`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef conv1d_valid(x, k):\n    # y[t] = sum over j of k[j] * x[t + j], one t per full window\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef conv1d_valid(x, k):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    n, m = len(x), len(k)\n    out = [x[t:t + m] @ k for t in range(n - m + 1)]\n    return np.array(out)\n",
+    "examples": [
+     {
+      "call": "conv1d_valid([3, 5, 4, 8, 6], [1, 0, -1]).tolist()",
+      "expect": "[-1.0, -3.0, -2.0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "conv1d_valid([3, 5, 4, 8, 6], [1, 0, -1]).tolist()",
+      "expect": "[-1.0, -3.0, -2.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "c = np.array([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98])",
+      "call": "len(conv1d_valid(c, np.ones(3) / 3))",
+      "expect": "10",
+      "compare": "equal"
+     },
+     {
+      "setup": "c = np.array([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98])",
+      "call": "bool(np.allclose(conv1d_valid(c, [0.2, 0.3, 0.5]), np.correlate(c, [0.2, 0.3, 0.5], 'valid')))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(11); x = r.standard_normal(30); k = r.standard_normal(4)",
+      "call": "bool(np.allclose(conv1d_valid(x, k[::-1]), np.convolve(x, k, 'valid')))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "len(conv1d_valid([1.0, 2.0], [1.0, 1.0, 1.0]))",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "'convolve' not in __learner_source__ and 'correlate' not in __learner_source__",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. They cover the trap's signal, the count on twelve closes and a match with `np.correlate`. Then the flip identity against `np.convolve`, a kernel longer than the signal (no output), and a check that you wrote the loop.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef conv1d_valid(x, k):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)[::-1]\n    n, m = len(x), len(k)\n    return np.array([x[t:t + m] @ k for t in range(n - m + 1)])\n",
+      "test": 1,
+      "symptom": "The kernel is flipped, so it computes np.convolve, not the sliding dot product."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv1d_valid(x, k):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    n, m = len(x), len(k)\n    return np.array([x[t:t + m] @ k for t in range(n - m)])\n",
+      "test": 1,
+      "symptom": "The loop stops one window early: n - k outputs, not n - k + 1."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv1d_valid(x, k):\n    return np.correlate(np.asarray(x, float), np.asarray(k, float), 'valid')\n",
+      "test": 5,
+      "symptom": "It calls np.correlate, which swaps a kernel longer than the signal round and returns an output where none fits."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A list of dot products, one per start."
+    },
+    {
+     "rung": "point",
+     "text": "`x[t:t + m] @ k` for each start `t`."
+    },
+    {
+     "rung": "step",
+     "text": "`range(n - m + 1)`."
+    }
+   ],
+   "feedback": {
+    "correct": "One dot product per start, $n - k + 1$ starts.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The trap signal came out wrong: check the kernel is not reversed, and that the last window is included.",
+     "test-5": "A kernel longer than the signal has no full window, so the result is empty. `np.correlate` swaps the two round instead.",
+     "test-6": "The tests only use `np.correlate` and `np.convolve` as checks. Write the loop yourself."
+    }
+   },
+   "explain": {
+    "text": "`x[t:t + m] @ k` is one window’s dot product, and `range(n - m + 1)` visits every full window, none when the kernel is longer."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Matching pandas",
+   "prose": "Write `rolling_mean_as_conv(close, n)` for a Series of closes. Convolve with the mean kernel, then put each output on its window’s last row, NaN before, as `close.rolling(n).mean()` does. `conv1d_valid` is defined for you.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "px",
+       "label": "Close",
+       "values": [
+        12.4,
+        12.55,
+        12.31,
+        12.48,
+        12.62,
+        12.44,
+        12.7,
+        12.85,
+        12.66,
+        12.9,
+        13.05,
+        12.98
+       ]
+      },
+      {
+       "id": "ma",
+       "label": "3-day mean",
+       "values": [
+        null,
+        null,
+        12.42,
+        12.4467,
+        12.47,
+        12.5133,
+        12.5867,
+        12.6633,
+        12.7367,
+        12.8033,
+        12.87,
+        12.9767
+       ]
+      }
+     ],
+     "x": "dates",
+     "dates": [
+      "2024-04-02",
+      "2024-04-03",
+      "2024-04-04",
+      "2024-04-05",
+      "2024-04-08",
+      "2024-04-09",
+      "2024-04-10",
+      "2024-04-11",
+      "2024-04-12",
+      "2024-04-15",
+      "2024-04-16",
+      "2024-04-17"
+     ],
+     "money": "£",
+     "height": 220
+    },
+    "state": {}
+   },
+   "question": "Write `rolling_mean_as_conv`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nimport pandas as pd\n\n\ndef rolling_mean_as_conv(close, n):\n    # conv1d_valid(x, k) from the last screen is defined for you\n    ...\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\n\ndef rolling_mean_as_conv(close, n):\n    y = conv1d_valid(close.to_numpy(), np.ones(n) / n)\n    vals = np.concatenate([np.full(n - 1, np.nan), y])\n    return pd.Series(vals, index=close.index)\n",
+    "examples": [
+     {
+      "setup": "c = pd.Series([12.4, 12.55, 12.31, 12.48, 12.62, 12.44, 12.7, 12.85, 12.66, 12.9, 13.05, 12.98], index=pd.to_datetime(['2024-04-02', '2024-04-03', '2024-04-04', '2024-04-05', '2024-04-08', '2024-04-09', '2024-04-10', '2024-04-11', '2024-04-12', '2024-04-15', '2024-04-16', '2024-04-17']))",
+      "call": "round(float(rolling_mean_as_conv(c, 3).iloc[-1]), 4)",
+      "expect": "12.9767",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "c = pd.Series([12.4, 12.55, 12.31, 12.48, 12.62, 12.44, 12.7, 12.85, 12.66, 12.9, 13.05, 12.98], index=pd.to_datetime(['2024-04-02', '2024-04-03', '2024-04-04', '2024-04-05', '2024-04-08', '2024-04-09', '2024-04-10', '2024-04-11', '2024-04-12', '2024-04-15', '2024-04-16', '2024-04-17']))",
+      "call": "bool(rolling_mean_as_conv(c, 3).round(6).equals(c.rolling(3).mean().round(6)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "c = pd.Series([12.4, 12.55, 12.31, 12.48, 12.62, 12.44, 12.7, 12.85, 12.66, 12.9, 13.05, 12.98], index=pd.to_datetime(['2024-04-02', '2024-04-03', '2024-04-04', '2024-04-05', '2024-04-08', '2024-04-09', '2024-04-10', '2024-04-11', '2024-04-12', '2024-04-15', '2024-04-16', '2024-04-17']))",
+      "call": "int(rolling_mean_as_conv(c, 5).isna().sum())",
+      "expect": "4",
+      "compare": "equal"
+     },
+     {
+      "setup": "c = pd.Series([12.4, 12.55, 12.31, 12.48, 12.62, 12.44, 12.7, 12.85, 12.66, 12.9, 13.05, 12.98], index=pd.to_datetime(['2024-04-02', '2024-04-03', '2024-04-04', '2024-04-05', '2024-04-08', '2024-04-09', '2024-04-10', '2024-04-11', '2024-04-12', '2024-04-15', '2024-04-16', '2024-04-17']))",
+      "call": "list(rolling_mean_as_conv(c, 3).index) == list(c.index)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(5); c = pd.Series(100 + np.cumsum(r.normal(0, 1, 30)), index=pd.bdate_range(\"2024-05-01\", periods=30))",
+      "call": "bool(rolling_mean_as_conv(c, 7).round(6).equals(c.rolling(7).mean().round(6)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "'.rolling(' not in __learner_source__",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: equal to `rolling(3).mean()` on the twelve closes (NaNs and dates included), four NaNs for $n = 5$, the dates kept, a seeded 30-day path with $n = 7$, and no `rolling` in your code.",
+    "prelude": "import numpy as np\n\ndef conv1d_valid(x, k):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    n, m = len(x), len(k)\n    return np.array([x[t:t + m] @ k for t in range(n - m + 1)])\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\nimport pandas as pd\n\n\ndef rolling_mean_as_conv(close, n):\n    y = conv1d_valid(close.to_numpy(), np.ones(n) / n)\n    return pd.Series(y, index=close.index[n - 1:])\n",
+      "test": 1,
+      "symptom": "The NaN rows are dropped, so the Series is shorter than close."
+     },
+     {
+      "source": "import numpy as np\nimport pandas as pd\n\n\ndef rolling_mean_as_conv(close, n):\n    y = conv1d_valid(close.to_numpy(), np.ones(n) / n)\n    vals = np.concatenate([y, np.full(n - 1, np.nan)])\n    return pd.Series(vals, index=close.index)\n",
+      "test": 1,
+      "symptom": "Each mean lands on its window’s first row, so the NaNs sit at the end."
+     },
+     {
+      "source": "import numpy as np\nimport pandas as pd\n\n\ndef rolling_mean_as_conv(close, n):\n    y = conv1d_valid(close.to_numpy(), np.ones(n))\n    vals = np.concatenate([np.full(n - 1, np.nan), y])\n    return pd.Series(vals, index=close.index)\n",
+      "test": 1,
+      "symptom": "A kernel of ones gives the rolling sum, not the mean."
+     },
+     {
+      "source": "import numpy as np\nimport pandas as pd\n\n\ndef rolling_mean_as_conv(close, n):\n    return close.rolling(n).mean()\n",
+      "test": 5,
+      "symptom": "It calls rolling instead of building the kernel."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`conv1d_valid(close.to_numpy(), np.ones(n) / n)`."
+    },
+    {
+     "rung": "point",
+     "text": "Put `n - 1` NaNs in front with `np.full`."
+    },
+    {
+     "rung": "step",
+     "text": "Wrap it in `pd.Series(..., index=close.index)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Kernel of $\\tfrac1n$s, $n - 1$ NaNs in front, and the dates of `close`.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The values or their rows differ from `rolling(3).mean()`. Each mean belongs on its window’s last row, with $n - 1$ NaNs first.",
+     "test-5": "Build it from the kernel: `rolling` is the check here, not the answer."
+    }
+   },
+   "explain": {
+    "text": "`np.ones(n) / n` is the mean kernel. The $n - k + 1$ valid outputs go after $n - 1$ NaNs, so output $t$ lands on row $t + n - 1$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A desk’s fast signal",
+   "prose": "A desk’s trend signal is an exponentially weighted mean of closes. Write `ewm_kernel(alpha, length)`: the normalised weights, oldest first, ready to slide along closes with no flip. Every moving-average signal is a convolution with a fixed kernel; a CNN learns its kernel instead.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "lag 4",
+      "lag 3",
+      "lag 2",
+      "lag 1",
+      "lag 0"
+     ],
+     "yLabel": "weight",
+     "showValues": true,
+     "decimals": 3
+    },
+    "state": {
+     "values": {
+      "lag 4": 0.032,
+      "lag 3": 0.065,
+      "lag 2": 0.129,
+      "lag 1": 0.258,
+      "lag 0": 0.516
+     }
+    }
+   },
+   "question": "Write `ewm_kernel`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef ewm_kernel(alpha, length):\n    # weights alpha * (1 - alpha) ** lag for lags 0 .. length - 1,\n    # divided by their sum, returned OLDEST first\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef ewm_kernel(alpha, length):\n    w = alpha * (1 - alpha) ** np.arange(length)\n    w = w / w.sum()\n    return w[::-1]\n",
+    "examples": [
+     {
+      "call": "np.round(ewm_kernel(0.5, 5), 6).tolist()",
+      "expect": "[0.032258, 0.064516, 0.129032, 0.258065, 0.516129]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(float(np.sum(ewm_kernel(0.3, 8))), 12)",
+      "expect": "1.0",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(ewm_kernel(0.2, 4)[-1] > ewm_kernel(0.2, 4)[0])",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(ewm_kernel(0.5, 5), 6).tolist()",
+      "expect": "[0.032258, 0.064516, 0.129032, 0.258065, 0.516129]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(ewm_kernel(0.3, 3), 6).tolist()",
+      "expect": "[0.223744, 0.319635, 0.456621]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(ewm_kernel(0.4, 1), 6).tolist()",
+      "expect": "[1.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "len(ewm_kernel(0.1, 20))",
+      "expect": "20",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: the weights add to 1, the newest weight is last, the values for $\\alpha = 0.5$ and 0.3 to 6 places, a kernel of length 1, and the length.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef ewm_kernel(alpha, length):\n    w = alpha * (1 - alpha) ** np.arange(length)\n    return w[::-1]\n",
+      "test": 1,
+      "symptom": "The weights are not divided by their sum, so the kernel does not average."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef ewm_kernel(alpha, length):\n    w = alpha * (1 - alpha) ** np.arange(length)\n    return w / w.sum()\n",
+      "test": 2,
+      "symptom": "Newest first: slid without a flip, the biggest weight meets the oldest close."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`alpha * (1 - alpha) ** np.arange(length)` gives lag 0 first."
+    },
+    {
+     "rung": "point",
+     "text": "Divide by `w.sum()`."
+    },
+    {
+     "rung": "step",
+     "text": "Reverse with `w[::-1]`."
+    }
+   ],
+   "feedback": {
+    "correct": "Raw weights, divided by their sum, reversed so the newest is last.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The weights must add to 1, or the signal drifts away from the price level. Divide by their sum.",
+     "test-2": "The newest weight must be last: the kernel meets each window oldest first."
+    }
+   },
+   "explain": {
+    "text": "`alpha * (1 - alpha) ** np.arange(length)` lists lag 0 first. Dividing by the sum makes an average, and `[::-1]` puts the newest weight last, where it meets today’s close."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A 1D convolution slides a kernel along a signal and takes a dot product at each position: $n$ inputs and a kernel of $k$ give $n - k + 1$ valid outputs.",
+   "A rolling mean is the kernel of $\\tfrac1n$s; pandas writes output $t$ on row $t + n - 1$ with NaN before, `np.correlate(..., \"valid\")` returns the full windows only.",
+   "Deep learning slides the kernel unflipped (cross-correlation); `np.convolve` flips it. The two agree for a symmetric kernel, and every position uses the same weights."
+  ],
+  "formula": {
+   "name": "Valid 1D convolution (no flip)",
+   "tex": "y_t = \\sum_{j=0}^{k-1} k_j\\, x_{t+j}, \\quad t = 0, \\dots, n - k",
+   "note": "Write the kernel oldest weight first."
+  },
+  "trap": "An asymmetric kernel through `np.convolve` is reversed: $(1, 0, -1)$ gives the negative of the sliding dot product."
+ },
+ "quiz": [
+  {
+   "id": "q-longer-kernel",
+   "difficulty": 2,
+   "prose": "A kernel of length 5 slides along a signal of 3 closes, valid positions only.",
+   "question": "How many outputs are there?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "formula",
+      "value": -1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "rows",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "None: no full window fits.",
+    "generic": "Not quite. Can a window of 5 fit inside 3 closes?",
+    "byKey": {
+     "formula": "You applied $n - k + 1$ blindly. A count cannot be negative: no window fits, so there are 0.",
+     "rows": "That is one per close. A window needs 5 closes and there are only 3."
+    }
+   },
+   "explain": {
+    "text": "$n - k + 1 = 3 - 5 + 1 = -1$, so no start position exists. A valid convolution of a kernel longer than the signal is empty."
+   }
+  },
+  {
+   "id": "q-symmetric",
+   "difficulty": 2,
+   "prose": "The kernel is $(0.25, 0.5, 0.25)$.",
+   "question": "Do `np.convolve(x, k, 'valid')` and `np.correlate(x, k, 'valid')` agree?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Yes, for every signal",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Only when the signal is symmetric",
+      "why": "The flip reverses the kernel, not the signal. This kernel reads the same both ways."
+     },
+     {
+      "id": "c",
+      "text": "No, one is the negative of the other",
+      "why": "That happens for an antisymmetric kernel such as $(1, 0, -1)$."
+     },
+     {
+      "id": "d",
+      "text": "No, they differ in length",
+      "why": "Both return the $n - k + 1$ valid outputs."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Reversed, $(0.25, 0.5, 0.25)$ is the same kernel.",
+    "generic": "Not quite. What does the flip do to this kernel?"
+   },
+   "explain": {
+    "text": "Convolution reverses the kernel before sliding; a symmetric kernel is unchanged by that, so the two agree. An asymmetric one shows the difference."
+   }
+  },
+  {
+   "id": "q-weighted",
+   "difficulty": 3,
+   "prose": "Signal $(2, 4, 6, 8)$, kernel $(0.25, 0.25, 0.5)$, slid with no flip.",
+   "question": "What is the last output? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.5,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "flipped",
+      "value": 5.5,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "first",
+      "value": 4.5,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.25 \\times 4 + 0.25 \\times 6 + 0.5 \\times 8 = 6.5$.",
+    "generic": "Not quite. Line the kernel up under the last three values.",
+    "byKey": {
+     "flipped": "You put 0.5 on the oldest value of the window. Unflipped, 0.5 meets 8.",
+     "first": "That is the first window, $(2, 4, 6)$."
+    }
+   },
+   "explain": {
+    "text": "The last window is $(4, 6, 8)$: $1 + 1.5 + 4 = 6.5$. With the kernel reversed it would be $2 + 1.5 + 2 = 5.5$."
+   }
+  }
+ ]
+}

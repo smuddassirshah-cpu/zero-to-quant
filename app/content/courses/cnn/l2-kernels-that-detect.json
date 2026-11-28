@@ -1,0 +1,1936 @@
+{
+ "id": "l2-kernels-that-detect",
+ "course": "cnn",
+ "title": "Kernels that detect",
+ "minutes": 15,
+ "objectives": [
+  "Design one-dimensional kernels that smooth, difference or detect a pattern, and read their outputs."
+ ],
+ "skills": [
+  "cnn-conv"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Three kernels, three outputs",
+   "prose": "A 30-day price path, seeded with `np.random.default_rng(22)`, has a one-day spike on day 18. Three kernels slid along it, unflipped, gave outputs A, B and C, each drawn on its window’s last day.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "shareMargins": true,
+    "left": {
+     "kind": "series",
+     "params": {
+      "series": [
+       {
+        "id": "px",
+        "label": "Price",
+        "values": [
+         99.44,
+         98.96,
+         98.44,
+         98.19,
+         98.77,
+         98.13,
+         98.51,
+         99.01,
+         98.87,
+         98.59,
+         98.78,
+         99.26,
+         100.12,
+         100.48,
+         101.12,
+         100.94,
+         100.59,
+         99.9,
+         102.44,
+         99.29,
+         99.37,
+         98.85,
+         99.17,
+         99.13,
+         98.87,
+         98.57,
+         99.38,
+         99.44,
+         99.09,
+         98.7
+        ]
+       }
+      ],
+      "money": "£",
+      "height": 190,
+      "indexFrom": 0
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "series",
+     "params": {
+      "series": [
+       {
+        "id": "A",
+        "label": "A",
+        "values": [
+         null,
+         null,
+         -0.04,
+         0.27,
+         0.83,
+         -1.22,
+         1.02,
+         0.12,
+         -0.64,
+         -0.14,
+         0.47,
+         0.29,
+         0.38,
+         -0.5,
+         0.28,
+         -0.82,
+         -0.17,
+         -0.34,
+         3.23,
+         -5.69,
+         3.23,
+         -0.6,
+         0.84,
+         -0.36,
+         -0.22,
+         -0.04,
+         1.11,
+         -0.75,
+         -0.41,
+         -0.04
+        ]
+       },
+       {
+        "id": "B",
+        "label": "B",
+        "values": [
+         null,
+         -0.48,
+         -0.52,
+         -0.25,
+         0.58,
+         -0.64,
+         0.38,
+         0.5,
+         -0.14,
+         -0.28,
+         0.19,
+         0.48,
+         0.86,
+         0.36,
+         0.64,
+         -0.18,
+         -0.35,
+         -0.69,
+         2.54,
+         -3.15,
+         0.08,
+         -0.52,
+         0.32,
+         -0.04,
+         -0.26,
+         -0.3,
+         0.81,
+         0.06,
+         -0.35,
+         -0.39
+        ]
+       },
+       {
+        "id": "C",
+        "label": "C",
+        "values": [
+         null,
+         null,
+         null,
+         null,
+         -1.6,
+         -1.54,
+         1.81,
+         -1.96,
+         -0.74,
+         1.94,
+         0.59,
+         -1.56,
+         -1.72,
+         -0.93,
+         0.84,
+         0.48,
+         2.35,
+         1.67,
+         -2.04,
+         -3.66,
+         10.61,
+         -3.4,
+         -2.27,
+         -1.56,
+         0.46,
+         1.06,
+         -0.77,
+         -2.54,
+         1.55,
+         2.02
+        ]
+       }
+      ],
+      "height": 210,
+      "baseline": 0,
+      "indexFrom": 0
+     },
+     "state": {}
+    },
+    "state": {
+     "caption": "Price, then outputs A, B and C."
+    }
+   },
+   "question": "Put each kernel on the output it made.",
+   "widget": {
+    "kind": "place",
+    "mode": "assign",
+    "tokens": [
+     {
+      "id": "kd",
+      "text": "$(-1, 1)$"
+     },
+     {
+      "id": "k2",
+      "text": "$(1, -2, 1)$"
+     },
+     {
+      "id": "ks",
+      "text": "$(-1, -1, 4, -1, -1)$"
+     }
+    ],
+    "slots": [
+     {
+      "id": "A",
+      "label": "Output A",
+      "accepts": [
+       "k2"
+      ]
+     },
+     {
+      "id": "B",
+      "label": "Output B",
+      "accepts": [
+       "kd"
+      ]
+     },
+     {
+      "id": "C",
+      "label": "Output C",
+      "accepts": [
+       "ks"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which output is largest exactly where the spike is?"
+    },
+    {
+     "rung": "point",
+     "text": "C stands out at the spike; B rises then falls.",
+     "highlight": [
+      "right:C"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(-1, 1)$ is the change, $(1, -2, 1)$ the bend."
+    }
+   ],
+   "feedback": {
+    "correct": "B is the daily change, A the bend, and C the spike detector, which jumps to its largest value at the spike.",
+    "generic": "Not quite. Which output is tallest at day 18, and which swings both ways around it?",
+    "byKey": {
+     "kd": "Two weights, $-1$ then $1$, give tomorrow minus today: the daily change, B, which jumps up into the spike and down out of it.",
+     "k2": "Three weights $(1, -2, 1)$ measure the bend. At a one-day spike it dips hard, with a rise either side: A.",
+     "ks": "Four times the middle less its four neighbours is largest where one day stands above the rest: C."
+    }
+   },
+   "explain": {
+    "text": "C peaks at 10.61 on day 20, the window centred on the spike. B goes up then down, the change into and out of day 18. A dips to $-5.69$ on day 19, the window centred on the spike.",
+    "canvas": {
+     "right": {
+      "highlight": [
+       "C"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Where the window looks like the kernel",
+   "prose": "The signal has one bump shaped like the kernel $(1, 3, 1)$. Slide the kernel along and watch the outputs. Output $y_t$ belongs to the window that starts at $x_t$.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       1,
+       0,
+       1,
+       0,
+       1,
+       3,
+       1,
+       0,
+       1,
+       0,
+       0,
+       1
+      ]
+     },
+     "state": {
+      "highlight": {
+       "range": [
+        0,
+        2
+       ],
+       "label": "window"
+      }
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…",
+       "…"
+      ]
+     },
+     "state": {}
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           0,
+           2
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c0"
+         ]
+        },
+        "caption": "$y_{0} = 1 + 3 \\times 0 + 1 = 2$"
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           1,
+           3
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          3,
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c1"
+         ]
+        },
+        "caption": "$y_{1} = 0 + 3 \\times 1 + 0 = 3$"
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           2,
+           4
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          3,
+          2,
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c2"
+         ]
+        },
+        "caption": "$y_{2} = 1 + 3 \\times 0 + 1 = 2$"
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           3,
+           5
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          3,
+          2,
+          6,
+          "…",
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c3"
+         ]
+        },
+        "caption": "$y_{3} = 0 + 3 \\times 1 + 3 = 6$"
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           4,
+           6
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          3,
+          2,
+          6,
+          11,
+          "…",
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c4"
+         ]
+        },
+        "caption": "$y_{4} = 1 + 3 \\times 3 + 1 = 11$"
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           5,
+           7
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          3,
+          2,
+          6,
+          11,
+          6,
+          "…",
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c5"
+         ]
+        },
+        "caption": "$y_{5} = 3 + 3 \\times 1 + 0 = 6$"
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           6,
+           8
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          3,
+          2,
+          6,
+          11,
+          6,
+          2,
+          "…",
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c6"
+         ]
+        },
+        "caption": "$y_{6} = 1 + 3 \\times 0 + 1 = 2$"
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           7,
+           9
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          3,
+          2,
+          6,
+          11,
+          6,
+          2,
+          3,
+          "…",
+          "…"
+         ],
+         "highlight": [
+          "c7"
+         ]
+        },
+        "caption": "$y_{7} = 0 + 3 \\times 1 + 0 = 3$"
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           8,
+           10
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          3,
+          2,
+          6,
+          11,
+          6,
+          2,
+          3,
+          1,
+          "…"
+         ],
+         "highlight": [
+          "c8"
+         ]
+        },
+        "caption": "$y_{8} = 1 + 3 \\times 0 + 0 = 1$"
+       },
+       {
+        "left": {
+         "highlight": {
+          "range": [
+           9,
+           11
+          ],
+          "label": "window"
+         }
+        },
+        "right": {
+         "cells": [
+          2,
+          3,
+          2,
+          6,
+          11,
+          6,
+          2,
+          3,
+          1,
+          1
+         ],
+         "highlight": [
+          "c9"
+         ]
+        },
+        "caption": "$y_{9} = 0 + 3 \\times 0 + 1 = 1$"
+       }
+      ],
+      "frameLabels": [
+       "0",
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7",
+       "8",
+       "9"
+      ],
+      "label": "Position $t$",
+      "start": 0
+     }
+    ]
+   },
+   "question": "At which output position $t$ is the response largest?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a position",
+    "wrong": [
+     {
+      "id": "signal-peak",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "end",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Step to the frame with the biggest output."
+    },
+    {
+     "rung": "point",
+     "text": "The window $(1, 3, 1)$ starts at $x_4$."
+    },
+    {
+     "rung": "step",
+     "text": "$1 + 3 \\times 3 + 1 = 11$ at $t = 4$."
+    }
+   ],
+   "feedback": {
+    "correct": "$t = 4$: the window $(1, 3, 1)$ matches the kernel exactly and gives 11.",
+    "generic": "Not quite. Step through and find the biggest output.",
+    "byKey": {
+     "signal-peak": "That is where the 3 sits in the signal. Output $t$ is numbered by its window’s first cell, which is 4.",
+     "end": "You numbered the output by its window’s last cell. Here $y_t$ is numbered by the first."
+    }
+   },
+   "explain": {
+    "text": "At $t = 4$ the window is $(1, 3, 1)$, the kernel itself: $1 + 9 + 1 = 11$. Any other window lines up less of the 3 with the weight 3.",
+    "canvas": {
+     "left": {
+      "highlight": {
+       "range": [
+        4,
+        6
+       ],
+       "label": "window"
+      }
+     },
+     "right": {
+      "cells": [
+       2,
+       3,
+       2,
+       6,
+       11,
+       "…",
+       "…",
+       "…",
+       "…",
+       "…"
+      ],
+      "highlight": [
+       "c4"
+      ]
+     },
+     "caption": "$y_{4} = 1 + 3 \\times 3 + 1 = 11$"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A sliding cosine",
+   "prose": "A kernel **detects** the shape it resembles: the sliding dot product is largest where the window lines up with it. Divide by both lengths and each output is the cosine of the angle between window and kernel, as in `vectors` level 1. A perfect match scores 1.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      3,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+     ]
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         3,
+         5
+        ],
+        "label": "window $t = 3$"
+       }
+      ]
+     }
+    }
+   },
+   "question": "What is the cosine at $t = 3$, window $(0, 1, 3)$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.572,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 6,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one-length",
+      "value": 0.545,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Dot product first."
+    },
+    {
+     "rung": "point",
+     "text": "$0 \\times 1 + 1 \\times 3 + 3 \\times 1 = 6$."
+    },
+    {
+     "rung": "step",
+     "text": "Divide by $\\sqrt{0 + 1 + 9}$ and $\\sqrt{1 + 9 + 1}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$6 / (\\sqrt{10}\\sqrt{11}) = 0.572$.",
+    "generic": "Not quite. Divide the dot product by both lengths.",
+    "byKey": {
+     "raw": "That is the raw dot product. Divide by $\\lVert\\mathbf{w}\\rVert\\lVert\\mathbf{k}\\rVert$ to get the cosine.",
+     "one-length": "You divided by $\\lVert\\mathbf{k}\\rVert^2 = 11$. The window has its own length, $\\sqrt{10}$."
+    }
+   },
+   "explain": {
+    "text": "The dot product is $0 + 3 + 3 = 6$; the lengths are $\\sqrt{10}$ and $\\sqrt{11}$, so the cosine is $6 / \\sqrt{110} = 0.572$. At $t = 4$ it is exactly 1."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The change kernel",
+   "prose": "The kernel $(-1, 1)$ gives tomorrow minus today, the daily change in £, as `diff()` did in `numpy-pandas` level 3. Here `close` holds the twelve closes as a Series.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "px",
+       "label": "Close",
+       "values": [
+        12.4,
+        12.55,
+        12.31,
+        12.48,
+        12.62,
+        12.44,
+        12.7,
+        12.85,
+        12.66,
+        12.9,
+        13.05,
+        12.98
+       ]
+      },
+      {
+       "id": "d",
+       "label": "Change",
+       "values": [
+        null,
+        0.15,
+        -0.24,
+        0.17,
+        0.14,
+        -0.18,
+        0.26,
+        0.15,
+        -0.19,
+        0.24,
+        0.15,
+        -0.07
+       ],
+       "axis": 2
+      }
+     ],
+     "money": "£",
+     "height": 220
+    },
+    "state": {}
+   },
+   "question": "Which line gives the same 11 numbers as `np.correlate(close, [-1, 1], 'valid')`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`close.diff().iloc[1:]`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`close.diff()`",
+      "why": "That keeps the first row as NaN: 12 entries, not the 11 valid ones."
+     },
+     {
+      "id": "c",
+      "text": "`close.pct_change().iloc[1:]`",
+      "why": "That divides each change by the day before: a return, not a change in £."
+     },
+     {
+      "id": "d",
+      "text": "`-close.diff().iloc[1:]`",
+      "why": "That is today minus tomorrow, the kernel $(1, -1)$ slid unflipped."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$(-1, 1)$ is $x_{t+1} - x_t$."
+    },
+    {
+     "rung": "point",
+     "text": "Which line has no NaN and no division?"
+    },
+    {
+     "rung": "step",
+     "text": "`diff()` then drop its first row."
+    }
+   ],
+   "feedback": {
+    "correct": "`diff()` is the kernel $(-1, 1)$; dropping the NaN leaves the 11 valid outputs.",
+    "generic": "Not quite. Which line is tomorrow minus today, with no NaN?"
+   },
+   "explain": {
+    "text": "Each output is $-x_t + x_{t+1}$, the change. `diff()` writes it on the later day and leaves NaN on the first, so `.iloc[1:]` gives the same 11 numbers."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The bend kernel",
+   "prose": "The kernel $(1, -2, 1)$ is the change of the change: $(x_{t+2} - x_{t+1}) - (x_{t+1} - x_t)$. It is near 0 on a straight run and large where the path bends.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "12.40",
+      "12.55",
+      "12.31",
+      "12.48",
+      "12.62",
+      "12.44",
+      "12.70",
+      "12.85",
+      "12.66",
+      "12.90",
+      "13.05",
+      "12.98"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       0,
+       2
+      ],
+      "label": "$1, -2, 1$"
+     }
+    }
+   },
+   "question": "What is its first output on the twelve closes, $12.40, 12.55, 12.31$? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.39,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.39,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "first-diff",
+      "value": -0.15,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply the middle close by $-2$."
+    },
+    {
+     "rung": "point",
+     "text": "$12.40 + 12.31 - 2 \\times 12.55$."
+    },
+    {
+     "rung": "step",
+     "text": "That is $24.71 - 25.10$."
+    }
+   ],
+   "feedback": {
+    "correct": "$12.40 - 2 \\times 12.55 + 12.31 = -0.39$.",
+    "generic": "Not quite. Weights $1, -2, 1$ on the three closes.",
+    "byKey": {
+     "sign": "You have the sign the wrong way round. The middle close gets $-2$.",
+     "first-diff": "That is one change only, $12.40 - 12.55$. The bend needs all three closes."
+    }
+   },
+   "explain": {
+    "text": "$12.40 - 25.10 + 12.31 = -0.39$: up 0.15, then down 0.24, so the path bent down by 0.39."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A threshold makes a detector",
+   "prose": "Normalise each window of the price path and the spike kernel: subtract each one’s mean and divide by its length. The response then runs from $-1$ to 1 whatever the price level. Flag every position above a threshold.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "r",
+       "label": "Response",
+       "values": [
+        -0.371,
+        -0.477,
+        0.783,
+        -0.584,
+        -0.238,
+        0.634,
+        0.324,
+        -0.693,
+        -0.316,
+        -0.126,
+        0.1,
+        0.072,
+        0.668,
+        0.396,
+        -0.245,
+        -0.343,
+        0.916,
+        -0.266,
+        -0.172,
+        -0.877,
+        0.235,
+        0.487,
+        -0.276,
+        -0.783,
+        0.479,
+        0.576
+       ]
+      }
+     ],
+     "y": [
+      -1,
+      1
+     ],
+     "height": 220,
+     "baseline": 0,
+     "hlines": [
+      {
+       "id": "h7",
+       "y": 0.7,
+       "label": "0.7"
+      },
+      {
+       "id": "h9",
+       "y": 0.9,
+       "label": "0.9"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "With a threshold of 0.7, how many positions are flagged?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "strict",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all-positive",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look only above the 0.7 line."
+    },
+    {
+     "rung": "point",
+     "text": "Two points rise above it."
+    },
+    {
+     "rung": "step",
+     "text": "$t = 2$ and $t = 16$."
+    }
+   ],
+   "feedback": {
+    "correct": "Two: the spike at $t = 16$ (0.916) and a false alarm at $t = 2$ (0.783).",
+    "generic": "Not quite. Count the points above the 0.7 line.",
+    "byKey": {
+     "strict": "You used the 0.9 line. At 0.7 a second, false, detection appears at $t = 2$.",
+     "all-positive": "You counted every positive response. Only those above 0.7 are flagged."
+    }
+   },
+   "explain": {
+    "text": "Above 0.7 sit $t = 16$, the window centred on day 18, and $t = 2$, where noise happened to look like a spike. A higher threshold drops the false alarm and, on another path, might drop a real one."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Big output, big price",
+   "prose": "A price climbs £1 a day from £100, with one £4 bump on day 6. The bump kernel $(1, 3, 1)$ slid along it gives raw outputs from 542 at the bump to 640 at the end.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "raw",
+       "label": "Raw output",
+       "values": [
+        505.0,
+        510.0,
+        515.0,
+        520.0,
+        529.0,
+        542.0,
+        539.0,
+        540.0,
+        545.0,
+        550.0,
+        555.0,
+        560.0,
+        565.0,
+        570.0,
+        575.0,
+        580.0,
+        585.0,
+        590.0,
+        595.0,
+        600.0,
+        605.0,
+        610.0,
+        615.0,
+        620.0,
+        625.0,
+        630.0,
+        635.0,
+        640.0
+       ]
+      },
+      {
+       "id": "n",
+       "label": "Normalised",
+       "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.359,
+        0.918,
+        -0.756,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ],
+       "axis": 2
+      }
+     ],
+     "y2": [
+      -1,
+      1
+     ],
+     "height": 230
+    },
+    "state": {
+     "hide": [
+      "n"
+     ]
+    }
+   },
+   "question": "The raw output is largest at $t = 27$. What does that tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Only that the price level is highest there",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The path looks most like the bump at $t = 27$",
+      "why": "You read a big output as a match. The kernel’s weights are all positive, so the output grows with the price level, bump or not."
+     },
+     {
+      "id": "c",
+      "text": "The kernel is too short to see the bump",
+      "why": "Three weights cover the one-day bump. The level, not the length, hides it."
+     },
+     {
+      "id": "d",
+      "text": "The bump is too small to detect at all",
+      "why": "Normalised, the window at $t = 5$ scores 0.918 and the straight runs score 0."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every weight of $(1, 3, 1)$ is positive."
+    },
+    {
+     "rung": "point",
+     "text": "So the output is about 5 times the price wherever you are."
+    },
+    {
+     "rung": "step",
+     "text": "Normalise the window first."
+    }
+   ],
+   "feedback": {
+    "correct": "A kernel of positive weights rewards a high level. Centre and scale each window, and the bump wins.",
+    "generic": "Not quite. What else makes a dot product large?",
+    "byKey": {
+     "b": "You read the largest raw output as the best match. Here it only tracks the level."
+    }
+   },
+   "explain": {
+    "text": "Each raw output is about 5 times the price, so it climbs with the trend: 640 at the end. Normalised, every straight window scores 0 and the bump’s window at $t = 5$ scores 0.918.",
+    "canvas": {
+     "series": {
+      "n": {
+       "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.359,
+        0.918,
+        -0.756,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     },
+     "hide": [
+      "raw"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Padding the ends",
+   "prose": "A \"same\" output keeps one value per close by padding the ends: for a kernel of 3, one extra value each side. Zero padding adds 0; edge padding repeats the end close.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "0",
+      "12.40",
+      "12.55",
+      "12.31",
+      "12.48",
+      "12.62",
+      "12.44",
+      "…"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       0,
+       2
+      ],
+      "label": "first window"
+     }
+    }
+   },
+   "question": "With zero padding, what is the first output of the bend kernel $(1, -2, 1)$ on the twelve closes? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -12.25,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "edge",
+      "value": 0.15,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 12.25,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put a 0 in front of 12.40."
+    },
+    {
+     "rung": "point",
+     "text": "The window is $(0, 12.40, 12.55)$."
+    },
+    {
+     "rung": "step",
+     "text": "$0 - 24.80 + 12.55$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0 - 2 \\times 12.40 + 12.55 = -12.25$: a huge bend that is not in the data.",
+    "generic": "Not quite. The first window is $(0, 12.40, 12.55)$.",
+    "byKey": {
+     "edge": "That is edge padding, which repeats 12.40. Zero padding puts a 0 there.",
+     "sign": "The middle close gets $-2$, so the sum is negative."
+    }
+   },
+   "explain": {
+    "text": "The padded window is $(0, 12.40, 12.55)$, so the output is $-12.25$, a false bend at the start. Edge padding gives $12.40 - 24.80 + 12.55 = 0.15$, close to the real bends."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Detecting a shape",
+   "prose": "For a window $\\mathbf{w}_t$ and kernel $\\mathbf{k}$, each with its mean removed: $$r_t = \\frac{(\\mathbf{w}_t - \\bar w_t) \\cdot (\\mathbf{k} - \\bar k)}{\\lVert \\mathbf{w}_t - \\bar w_t \\rVert \\, \\lVert \\mathbf{k} - \\bar k \\rVert}.$$ It ignores the level and the scale of the window, so a threshold on $r_t$ means the same everywhere.",
+   "question": "A window scores $r_t = 1$. Which window could it be, for the kernel $(1, 3, 1)$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$(101, 103, 101)$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$(1, 2, 3)$",
+      "why": "A straight run centres to $(-1, 0, 1)$, at right angles to the bump: $r_t = 0$."
+     },
+     {
+      "id": "c",
+      "text": "$(3, 1, 3)$",
+      "why": "That is the bump upside down: $r_t = -1$."
+     },
+     {
+      "id": "d",
+      "text": "$(100, 100, 100)$",
+      "why": "A flat window has no shape once its mean is removed; the detector returns 0 there."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Centred, $(101, 103, 101)$ is $\\tfrac23(-1, 2, -1)$, the same direction as the centred kernel.",
+    "generic": "Not quite. Remove each mean and compare the shapes."
+   },
+   "explain": {
+    "text": "The kernel centres to $\\tfrac23(-1, 2, -1)$ and $(101, 103, 101)$ centres to $\\tfrac43(-1, 2, -1)$: the same direction, so $r_t = 1$. The level 101 and the size 2 do not matter."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Padding in code",
+   "prose": "Write `pad_same(x, k_len, mode)`: pad so that a valid slide of a kernel of length `k_len` returns one value per input. Put $(k - 1) // 2$ values on the left and the rest on the right.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> pad_same([1.0, 2.0, 3.0], 3, 'zero')",
+      "array([0., 1., 2., 3., 0.])",
+      ">>> pad_same([1.0, 2.0, 3.0], 3, 'edge')",
+      "array([1., 1., 2., 3., 3.])"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `pad_same`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef pad_same(x, k_len, mode):\n    # (k_len - 1) // 2 values on the left, the rest of k_len - 1 on the right\n    # mode 'zero' adds 0.0, mode 'edge' repeats the end value; else ValueError\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef pad_same(x, k_len, mode):\n    x = np.asarray(x, dtype=float)\n    left = (k_len - 1) // 2\n    right = k_len - 1 - left\n    if mode == 'zero':\n        return np.concatenate([np.zeros(left), x, np.zeros(right)])\n    if mode == 'edge':\n        return np.concatenate([np.full(left, x[0]), x, np.full(right, x[-1])])\n    raise ValueError(f'unknown mode {mode!r}')\n",
+    "examples": [
+     {
+      "call": "pad_same([1.0, 2.0, 3.0], 3, 'zero').tolist()",
+      "expect": "[0.0, 1.0, 2.0, 3.0, 0.0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "pad_same([1.0, 2.0, 3.0], 3, 'zero').tolist()",
+      "expect": "[0.0, 1.0, 2.0, 3.0, 0.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "pad_same([1.0, 2.0, 3.0], 5, 'edge').tolist()",
+      "expect": "[1.0, 1.0, 1.0, 2.0, 3.0, 3.0, 3.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "pad_same([5.0, 6.0, 7.0, 8.0], 2, 'zero').tolist()",
+      "expect": "[5.0, 6.0, 7.0, 8.0, 0.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "pad_same([5.0, 6.0, 7.0, 8.0], 4, 'edge').tolist()",
+      "expect": "[5.0, 5.0, 6.0, 7.0, 8.0, 8.0, 8.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "len(pad_same(np.ones(12), 7, 'zero'))",
+      "expect": "18",
+      "compare": "equal"
+     },
+     {
+      "call": "pad_same([1.0, 2.0], 3, 'reflect')",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. They pad for kernels of 3 and 5, and for even kernels of 2 and 4 (the extra value goes on the right). Then the length for a kernel of 7, and `ValueError` for an unknown mode.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef pad_same(x, k_len, mode):\n    x = np.asarray(x, dtype=float)\n    p = (k_len - 1) // 2\n    if mode == 'zero':\n        return np.concatenate([np.zeros(p), x, np.zeros(p)])\n    if mode == 'edge':\n        return np.concatenate([np.full(p, x[0]), x, np.full(p, x[-1])])\n    raise ValueError(mode)\n",
+      "test": 3,
+      "symptom": "The same padding each side: an even kernel comes out one value short."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef pad_same(x, k_len, mode):\n    x = np.asarray(x, dtype=float)\n    left = (k_len - 1) // 2\n    right = k_len - 1 - left\n    if mode == 'edge':\n        return np.concatenate([np.full(left, x[0]), x, np.full(right, x[-1])])\n    return np.concatenate([np.zeros(left), x, np.zeros(right)])\n",
+      "test": 6,
+      "symptom": "Any unknown mode is padded with zeros instead of raising."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef pad_same(x, k_len, mode):\n    x = np.asarray(x, dtype=float)\n    left = (k_len - 1) // 2\n    right = k_len - 1 - left\n    if mode in ('zero', 'edge'):\n        return np.concatenate([np.zeros(left), x, np.zeros(right)])\n    raise ValueError(mode)\n",
+      "test": 2,
+      "symptom": "Edge mode pads with zeros too, so the false bends stay."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many values in all? $k - 1$."
+    },
+    {
+     "rung": "point",
+     "text": "Left `(k_len - 1) // 2`, right `k_len - 1 - left`."
+    },
+    {
+     "rung": "step",
+     "text": "`np.full(left, x[0])` for edge mode."
+    }
+   ],
+   "feedback": {
+    "correct": "Left $(k - 1)//2$, right the remainder, zeros or repeated ends.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-3": "An even kernel needs $k - 1$ values in all, an odd number: one more on the right.",
+     "test-6": "An unknown mode should raise `ValueError`, not pad quietly."
+    }
+   },
+   "explain": {
+    "text": "$n + k - 1$ values slid with a kernel of $k$ give $(n + k - 1) - k + 1 = n$ outputs. Edge padding repeats the end close, so it adds no false jump."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The bend as a convolution",
+   "prose": "Write `second_difference(x)` as one valid convolution with the bend kernel, no padding. `conv1d_valid` from level 1 is defined for you; `np.diff(x, 2)` is only the check.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> second_difference([1.0, 4.0, 9.0, 16.0, 25.0])",
+      "array([2., 2., 2.])"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `second_difference`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef second_difference(x):\n    # conv1d_valid(x, k) from level 1 is defined for you\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef second_difference(x):\n    return conv1d_valid(x, [1.0, -2.0, 1.0])\n",
+    "examples": [
+     {
+      "call": "np.round(second_difference([1.0, 4.0, 9.0, 16.0, 25.0]), 6).tolist()",
+      "expect": "[2.0, 2.0, 2.0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(second_difference([12.40, 12.55, 12.31, 12.48]), 6).tolist()",
+      "expect": "[-0.39, 0.41]",
+      "compare": "equal"
+     },
+     {
+      "call": "len(second_difference(np.arange(10.0)))",
+      "expect": "8",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(4); x = 100 + np.cumsum(r.normal(0, 1, 25))",
+      "call": "bool(np.allclose(second_difference(x), np.diff(x, 2)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(second_difference([1.0, 4.0, 9.0, 16.0, 25.0]), 6).tolist()",
+      "expect": "[2.0, 2.0, 2.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "'diff' not in __learner_source__.replace('second_difference', '')",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: the first closes, the length $n - 2$, a match with `np.diff(x, 2)` on a seeded path, the squares (bend 2 everywhere), and no `diff` in your code.",
+    "prelude": "import numpy as np\n\ndef conv1d_valid(x, k):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    n, m = len(x), len(k)\n    return np.array([x[t:t + m] @ k for t in range(n - m + 1)])\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef second_difference(x):\n    return conv1d_valid(x, [-1.0, 2.0, -1.0])\n",
+      "test": 1,
+      "symptom": "The signs are reversed: a downward bend reads as upward."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef second_difference(x):\n    x = np.concatenate([[x[0]], np.asarray(x, float), [x[-1]]])\n    return conv1d_valid(x, [1.0, -2.0, 1.0])\n",
+      "test": 1,
+      "symptom": "The signal is edge-padded first, so the output has n values, not n - 2."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef second_difference(x):\n    return np.diff(np.asarray(x, float), 2)\n",
+      "test": 5,
+      "symptom": "It calls np.diff instead of sliding the kernel."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which kernel is the bend?"
+    },
+    {
+     "rung": "point",
+     "text": "$(1, -2, 1)$."
+    },
+    {
+     "rung": "step",
+     "text": "`conv1d_valid(x, [1.0, -2.0, 1.0])`."
+    }
+   ],
+   "feedback": {
+    "correct": "One kernel, $(1, -2, 1)$, slid along the valid windows.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The first closes give $-0.39$ and $0.41$. Check the signs and that nothing was padded.",
+     "test-5": "Slide the kernel; `np.diff` is the check, not the answer."
+    }
+   },
+   "explain": {
+    "text": "Symmetric kernels need no thought about the flip: $(1, -2, 1)$ reads the same both ways. On $1, 4, 9, 16, 25$ the bend is 2 everywhere, as for $t^2$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A volume spike in a tick series",
+   "prose": "A desk watches minute volumes for a sudden burst. Write `detect(x, k, threshold)` returning every $t$ where $r_t$ beats the threshold. A fixed kernel finds a named shape; a learned kernel can find shapes no one named.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "v",
+       "label": "Volume",
+       "values": [
+        176,
+        214,
+        178,
+        199,
+        210,
+        195,
+        197,
+        191,
+        208,
+        191,
+        220,
+        199,
+        195,
+        207,
+        187,
+        191,
+        209,
+        215,
+        208,
+        197,
+        219,
+        217,
+        199,
+        208,
+        218,
+        202,
+        205,
+        185,
+        211,
+        224,
+        217,
+        204,
+        213,
+        170,
+        176,
+        187,
+        181,
+        200,
+        187,
+        209,
+        621,
+        204,
+        207,
+        202,
+        200,
+        199,
+        212,
+        187,
+        195,
+        223,
+        194,
+        199,
+        202,
+        202,
+        211,
+        215,
+        199,
+        190,
+        192,
+        203
+       ]
+      }
+     ],
+     "height": 200,
+     "xLabel": "minute"
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "m",
+       "i": 40,
+       "series": "v",
+       "label": "burst"
+      }
+     ]
+    }
+   },
+   "question": "Write `detect`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef detect(x, k, threshold):\n    # positions t where the normalised response r_t > threshold\n    # r_t = 0 where the centred window is flat\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef detect(x, k, threshold):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    m = len(k)\n    kc = k - k.mean()\n    hits = []\n    for t in range(len(x) - m + 1):\n        w = x[t:t + m] - x[t:t + m].mean()\n        d = np.linalg.norm(w) * np.linalg.norm(kc)\n        r = 0.0 if d == 0 else (w @ kc) / d\n        if r > threshold:\n            hits.append(t)\n    return hits\n",
+    "examples": [
+     {
+      "call": "detect([5.0, 5.0, 5.0, 9.0, 5.0, 5.0], [1, 3, 1], 0.5)",
+      "expect": "[2]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "r = np.random.default_rng(3); v = r.poisson(200, 60).astype(float); v[40] *= 3",
+      "call": "detect(v, [-1, -1, 4, -1, -1], 0.95)",
+      "expect": "[38]",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(3); v = r.poisson(200, 60).astype(float); v[40] *= 3",
+      "call": "detect(v, [-1, -1, 4, -1, -1], 0.9)",
+      "expect": "[38, 47]",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(22); p = np.round(100 + np.cumsum(r.normal(0, 0.4, 30)), 2); p[18] = round(p[18] + 3, 2)",
+      "call": "detect(p, [-1, -1, 4, -1, -1], 0.7)",
+      "expect": "[2, 16]",
+      "compare": "equal"
+     },
+     {
+      "call": "detect([5.0, 5.0, 5.0, 9.0, 5.0, 5.0], [1, 3, 1], 0.5)",
+      "expect": "[2]",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(3); v = r.poisson(200, 60).astype(float); v[40] *= 3",
+      "call": "detect(v * 1000 + 50, [-1, -1, 4, -1, -1], 0.95)",
+      "expect": "[38]",
+      "compare": "equal"
+     },
+     {
+      "call": "detect([1.0, 2.0], [1, 3, 1], 0.5)",
+      "expect": "[]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. They use the seeded minute volumes at thresholds 0.95 and 0.9, and the price path at 0.7. Then flat windows (no division by zero), the volumes rescaled and shifted, and a kernel longer than the signal.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef detect(x, k, threshold):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    m = len(k)\n    return [t for t in range(len(x) - m + 1) if x[t:t + m] @ k > threshold]\n",
+      "test": 1,
+      "symptom": "The raw dot product is compared with the threshold, so every big window is flagged."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef detect(x, k, threshold):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    m = len(k)\n    hits = []\n    for t in range(len(x) - m + 1):\n        w = x[t:t + m]\n        r = (w @ k) / (np.linalg.norm(w) * np.linalg.norm(k))\n        if r > threshold:\n            hits.append(t)\n    return hits\n",
+      "test": 1,
+      "symptom": "The window is not centred, so its level swamps its shape and nothing is flagged."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef detect(x, k, threshold):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    m = len(k)\n    kc = k - k.mean()\n    hits = []\n    for t in range(len(x) - m + 1):\n        w = x[t:t + m] - x[t:t + m].mean()\n        r = (w @ kc) / np.linalg.norm(kc)\n        if r > threshold:\n            hits.append(t)\n    return hits\n",
+      "test": 1,
+      "symptom": "The window’s own length is left out, so a large window scores above 1."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over the valid starts."
+    },
+    {
+     "rung": "point",
+     "text": "`w = x[t:t + m] - x[t:t + m].mean()` and `kc = k - k.mean()`."
+    },
+    {
+     "rung": "step",
+     "text": "`r = w @ kc / (norm(w) * norm(kc))`, 0 when the product of norms is 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Centre both, divide by both lengths, and compare with the threshold.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The volumes should flag only $t = 38$ at 0.95, the window centred on minute 40. Centre the window and divide by both lengths."
+    }
+   },
+   "explain": {
+    "text": "Centring removes the level and dividing by the lengths removes the scale, so `v * 1000 + 50` flags the same minute. A flat window has no shape, so it scores 0."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "$(-1, 1)$ gives the daily change, $(1, -2, 1)$ the bend, and a kernel shaped like a pattern responds most where the window matches it.",
+   "Normalise before reading a response as a match: centre and divide by both lengths, so $r_t$ runs from $-1$ to 1 whatever the level and scale.",
+   "Padding keeps one output per input; zeros at the ends create false jumps and bends, edge padding fewer. A threshold on $r_t$ trades misses against false alarms."
+  ],
+  "formula": {
+   "name": "Normalised response",
+   "tex": "r_t = \\frac{(\\mathbf{w}_t - \\bar w_t) \\cdot (\\mathbf{k} - \\bar k)}{\\lVert \\mathbf{w}_t - \\bar w_t \\rVert \\, \\lVert \\mathbf{k} - \\bar k \\rVert}",
+   "note": "Defined as 0 on a flat window."
+  },
+  "trap": "A kernel of positive weights gives its largest raw output where the signal is largest, not where it matches."
+ },
+ "quiz": [
+  {
+   "id": "q-which-kernel",
+   "difficulty": 2,
+   "question": "Slid unflipped, which kernel gives today’s close minus yesterday’s, on the later day’s window?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$(-1, 1)$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$(1, -1)$",
+      "why": "Unflipped, $(1, -1)$ gives yesterday minus today, the change with its sign reversed."
+     },
+     {
+      "id": "c",
+      "text": "$(1, -2, 1)$",
+      "why": "That is the bend, the change of the change."
+     },
+     {
+      "id": "d",
+      "text": "$(\\tfrac12, \\tfrac12)$",
+      "why": "That averages the two days."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-x_{t} + x_{t+1}$ is today minus yesterday.",
+    "generic": "Not quite. The first weight meets the older close."
+   },
+   "explain": {
+    "text": "The first weight meets the older close, so $(-1, 1)$ gives newer minus older: the daily change."
+   }
+  },
+  {
+   "id": "q-cosine",
+   "difficulty": 3,
+   "prose": "Kernel $(1, 0, -1)$, window $(4, 2, 0)$.",
+   "question": "What is the cosine between them? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.632,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one-length",
+      "value": 2,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4 / (\\sqrt{2}\\sqrt{20}) = 0.632$.",
+    "generic": "Not quite. Dot product over both lengths.",
+    "byKey": {
+     "raw": "That is the dot product. Divide by both lengths.",
+     "one-length": "You divided by $\\lVert\\mathbf{k}\\rVert^2 = 2$ only."
+    }
+   },
+   "explain": {
+    "text": "The dot product is $4 - 0 = 4$; the lengths are $\\sqrt{2}$ and $\\sqrt{20}$, so the cosine is $4/\\sqrt{40} = 0.632$."
+   }
+  },
+  {
+   "id": "q-same-length",
+   "difficulty": 2,
+   "prose": "Twelve closes, a kernel of 5, padded for a \"same\" output.",
+   "question": "How many outputs?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "valid",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "padded-len",
+      "value": 16,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Twelve: padding of 2 each side keeps one output per close.",
+    "generic": "Not quite. \"Same\" means the same length as the input.",
+    "byKey": {
+     "valid": "That is the valid count, $12 - 5 + 1$. Padding adds 4 values first.",
+     "padded-len": "That is the padded length, $12 + 4$. The outputs number $16 - 5 + 1$."
+    }
+   },
+   "explain": {
+    "text": "Padding adds $k - 1 = 4$ values, 2 each side, so there are $16 - 5 + 1 = 12$ outputs, one per close."
+   }
+  }
+ ]
+}

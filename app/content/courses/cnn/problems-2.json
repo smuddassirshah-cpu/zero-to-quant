@@ -1,0 +1,457 @@
+{
+ "id": "problems-2",
+ "course": "cnn",
+ "level": 2,
+ "title": "Stride, padding and pooling",
+ "minutes": 35,
+ "items": [
+  {
+   "id": "p-small-cnn",
+   "difficulty": 4,
+   "skills": [
+    "cnn-layers"
+   ],
+   "prose": "A small CNN reads 12 by 12 one-channel images. Its layers: conv 3 by 3, 8 filters, padding 1; max pool 2 by 2; conv 3 by 3 from 8 to 16 channels, no padding; dense to 10 classes.",
+   "parts": [
+    {
+     "question": "What is the side of the map after the second conv?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "pad",
+        "value": 6,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "no-pool",
+        "value": 10,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "12 → 12 → 6 → 4.",
+      "generic": "Not quite. Layer by layer.",
+      "byKey": {
+       "pad": "The second conv has no padding: $6 - 3 + 1 = 4$.",
+       "no-pool": "The pool halves 12 to 6 first."
+      }
+     },
+     "explain": {
+      "text": "Padding 1 keeps 12; the pool gives 6; $6 - 3 + 1 = 4$, so the dense layer sees $16 \\times 4 \\times 4 = 256$ values."
+     }
+    },
+    {
+     "question": "Using the 16 maps of 4 by 4 from part 1, how many parameters does the whole net have?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3818,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "no-bias",
+        "value": 3784,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "no-cin",
+        "value": 2810,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$80 + 1{,}168 + 2{,}570 = 3{,}818$.",
+      "generic": "Not quite. Count each layer; pooling has none.",
+      "byKey": {
+       "no-bias": "Each filter and each class has a bias.",
+       "no-cin": "The second conv’s filters each have a kernel for all 8 input channels."
+      }
+     },
+     "explain": {
+      "text": "$8 \\times 10 = 80$, $16 \\times 73 = 1{,}168$, $256 \\times 10 + 10 = 2{,}570$: 3,818."
+     }
+    },
+    {
+     "question": "How many multiply-adds do the two conv layers take per image, together?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 28800,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "params",
+        "value": 1248,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "first-only",
+        "value": 10368,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$144 \\times 9 \\times 8 + 16 \\times 72 \\times 16 = 10{,}368 + 18{,}432 = 28{,}800$.",
+      "generic": "Not quite. Positions times terms times filters, for each conv.",
+      "byKey": {
+       "params": "That is the two conv layers’ parameters.",
+       "first-only": "That is the first conv alone."
+      }
+     },
+     "explain": {
+      "text": "The first runs at 144 positions, the second at 16, yet the second, with 8 input channels, costs more: 18,432 against 10,368, 28,800 in all."
+     }
+    },
+    {
+     "question": "A one-hidden-layer MLP from the 144 pixels through $H$ units to 10 classes may have no more parameters than the CNN’s 3,818 from part 2. What is the largest $H$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 24,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "rounded",
+        "value": 25,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "one-layer",
+        "value": 26,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$155H + 10 \\le 3{,}818$ gives $H = 24$, with 3,730 parameters.",
+      "generic": "Not quite. Count $144H + H + 10H + 10$.",
+      "byKey": {
+       "rounded": "You rounded $3{,}808/155 = 24.6$ up. $H = 25$ gives 3,885, over the budget.",
+       "one-layer": "You counted only the first layer: $145H \\le 3{,}818$."
+      }
+     },
+     "explain": {
+      "text": "$144H + H$ for the first layer and $10H + 10$ for the second: $155H + 10$. $H = 24$ gives 3,730; $H = 25$ gives 3,885, over the budget."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-size-chain",
+   "difficulty": 3,
+   "skills": [
+    "cnn-layers"
+   ],
+   "prose": "A layer reads a series of 50 daily features as a one-dimensional input, with padding and stride chosen by hand.",
+   "parts": [
+    {
+     "question": "With a kernel of 4, padding 1 and stride 3, how many outputs are there?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 17,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "pad-once",
+        "value": 16,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "stride1",
+        "value": 49,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\lfloor 48/3 \\rfloor + 1 = 17$.",
+      "generic": "Not quite. $\\lfloor (n + 2p - k)/s \\rfloor + 1$.",
+      "byKey": {
+       "pad-once": "Padding goes on both ends: $50 + 2 - 4 = 48$, then $48/3 + 1$.",
+       "stride1": "That is stride 1. Divide by the stride of 3."
+      }
+     },
+     "explain": {
+      "text": "$50 + 2 - 4 = 48$, and $48/3 + 1 = 17$."
+     }
+    },
+    {
+     "question": "Instead of the 17 outputs of part 1, a \"same\" output is wanted with a kernel of 7 at stride 1. What padding is needed on each side?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "total",
+        "value": 6,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "half-k",
+        "value": 3.5,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$(7 - 1)/2 = 3$.",
+      "generic": "Not quite. $p = (k - 1)/2$.",
+      "byKey": {
+       "total": "That is both ends together.",
+       "half-k": "Padding is whole: $(k - 1)/2$."
+      }
+     },
+     "explain": {
+      "text": "Padding 3 at each end keeps 50 outputs at stride 1."
+     }
+    },
+    {
+     "question": "Keep the padding of 3 from part 2 and the kernel of 7, but use stride 2. How many outputs?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 25,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "no-floor",
+        "value": 25.5,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "same",
+        "value": 50,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\lfloor 49/2 \\rfloor + 1 = 25$.",
+      "generic": "Not quite. Use the formula with $s = 2$.",
+      "byKey": {
+       "no-floor": "Round $49/2$ down first.",
+       "same": "\"Same\" holds only at stride 1."
+      }
+     },
+     "explain": {
+      "text": "$50 + 6 - 7 = 49$; $\\lfloor 49/2 \\rfloor + 1 = 25$: stride 2 halves the series, as a weekly sampling of overlapping windows would."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-im2col-chain",
+   "difficulty": 5,
+   "skills": [
+    "cnn-layers"
+   ],
+   "prose": "A 2-channel 5 by 5 image goes through im2col with a 3 by 3 kernel, padding 1 and stride 2, then through 4 filters.",
+   "parts": [
+    {
+     "question": "What is the output side?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "stride1",
+        "value": 5,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "no-floor",
+        "value": 2.5,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\lfloor 4/2 \\rfloor + 1 = 3$.",
+      "generic": "Not quite. $5 + 2 - 3 = 4$, then the stride.",
+      "byKey": {
+       "stride1": "That is stride 1.",
+       "no-floor": "You divided $5/2$; the formula uses the padded side less the kernel, $4/2 + 1$."
+      }
+     },
+     "explain": {
+      "text": "$\\lfloor (5 + 2 - 3)/2 \\rfloor + 1 = 3$."
+     }
+    },
+    {
+     "question": "Using the 3 by 3 output of part 1, how many columns does the patch matrix have?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 18,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "one-channel",
+        "value": 9,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "rows",
+        "value": 9.5,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2 \\times 3 \\times 3 = 18$; it has 9 rows.",
+      "generic": "Not quite. One column per entry of a 2-channel window.",
+      "byKey": {
+       "one-channel": "Each row holds both channels’ windows.",
+       "rows": "Columns count window entries."
+      }
+     },
+     "explain": {
+      "text": "Each row is a $2 \\times 3 \\times 3$ window: 18 columns, 9 rows."
+     }
+    },
+    {
+     "question": "With the 9 by 18 patch matrix of parts 1 and 2 and 4 filters, how many multiply-adds does the product take?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 648,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "params",
+        "value": 76,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "one-filter",
+        "value": 162,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$9 \\times 18 \\times 4 = 648$.",
+      "generic": "Not quite. Rows times columns times filters.",
+      "byKey": {
+       "params": "That is the parameter count.",
+       "one-filter": "That is one filter; there are 4."
+      }
+     },
+     "explain": {
+      "text": "A $9 \\times 18$ by $18 \\times 4$ product takes $9 \\times 18 \\times 4 = 648$ multiply-adds."
+     }
+    },
+    {
+     "question": "Backward, col2im adds an all-ones gradient back. Counting from 0, how many patches hold the pixel at row 1, column 1?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "stride1",
+        "value": 9,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "one",
+        "value": 1,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "4: two windows in each direction cover it.",
+      "generic": "Not quite. With padding it is padded pixel (2, 2); which windows of stride 2 cover it?",
+      "byKey": {
+       "stride1": "That is stride 1. At stride 2 fewer windows overlap.",
+       "one": "The centre pixel (2, 2) sits in one window; pixel (1, 1) sits where two rows and two columns of windows meet."
+      }
+     },
+     "explain": {
+      "text": "Windows start at padded rows 0, 2 and 4 and cover 3 rows each, so padded row 2 lies in the first two; likewise for columns: $2 \\times 2 = 4$."
+     }
+    }
+   ]
+  }
+ ]
+}
