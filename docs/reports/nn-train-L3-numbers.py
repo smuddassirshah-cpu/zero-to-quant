@@ -176,8 +176,10 @@ def train_a(lam=0.0, p=0.0, steps=2000, lr=0.01, seed=0):
     return P
 
 
-# 2,000 full-batch Adam steps on a net that can memorise 30 points amplify rounding: the two routes agree to about 0.3%
-# (lambda 0: 0.17458 with autograd, 0.17425 by hand). The lessons show route A's figures; route B must agree within 0.5%.
+# 2,000 full-batch Adam steps on a net that can memorise 30 points amplify rounding: the final validation error depends on
+# the BLAS thread count (lambda 0.01 gives 0.1041 to 0.1048, lambda 0.03 gives 0.1134 to 0.1143, lambda 0 differs in the third place).
+# So the long runs are single-route results (route A) shown to 2 places, and the routes are compared on a 50-step run, where they
+# agree to 1e-9. The lessons state only what holds under both thread settings.
 LAMS = [0, 1e-4, 1e-3, 1e-2, 3e-2, 1e-1]
 WD, WDB = {}, {}
 for lam in LAMS:
@@ -185,11 +187,14 @@ for lam in LAMS:
     PB, _ = train_b(lam=lam)
     WD[lam] = (mse_b(PA, Xt, Yt), mse_b(PA, Xv, Yv))
     WDB[lam] = (mse_b(PB, Xt, Yt), mse_b(PB, Xv, Yv))
-    agree(f'weight decay {lam}: validation error, autograd against the hand backward (0.5%)', WD[lam][1], WDB[lam][1], 0.005)
-    E('l9-weight-decay', f'screens[3].canvas.state.values.l{str(lam).replace(".", "")}', round(WD[lam][1], 4))
+    PA50 = train_a(lam=lam, steps=50)
+    PB50, _ = train_b(lam=lam, steps=50)
+    agree(f'weight decay {lam}: validation error after 50 steps, autograd against the hand backward', mse_b(PA50, Xv, Yv), mse_b(PB50, Xv, Yv), 1e-9)
+    E('l9-weight-decay', f'screens[3].canvas.state.values.l{str(lam).replace(".", "")}', round(WD[lam][1], 2))
     cov(*WD[lam])
-lv.claim(min(WD, key=lambda k: WD[k][1]) == 0.01 and min(WDB, key=lambda k: WDB[k][1]) == 0.01, 'the lowest validation error is at lambda 0.01, in both routes')
+lv.claim(min(WD, key=lambda k: WD[k][1]) == 0.01, 'weight decay 0.01 gives the lowest validation error of the six (route A)')
 lv.claim(WD[0][1] > WD[1e-3][1] and WD[0.1][1] > WD[0.03][1] > WD[0.01][1], 'validation error against lambda is a U')
+lv.claim(round(WD[0.01][1], 2) < round(WD[1e-3][1], 2), 'at 2 places weight decay 0.01 reads below 0.001')
 var_yv = float(Yv.var())
 cov(var_yv, 0.09)
 P1 = train_a(lam=1.0)
@@ -247,10 +252,10 @@ for p in (0.0, 0.1, 0.2, 0.3, 0.5):
     DP[p] = mse_b(train_a(p=p), Xv, Yv)
     PB, _ = train_b(p=p)
     DPB[p] = mse_b(PB, Xv, Yv)
-    agree(f'dropout {p}: validation error, autograd against the hand backward (0.5%)', DP[p], DPB[p], 0.005)
-    E('l11-dropout', f'screens[3].canvas.state.values.p{str(p).replace(".", "")}', round(DP[p], 4))
+    agree(f'dropout {p}: validation error after 50 steps, autograd against the hand backward', mse_b(train_a(p=p, steps=50), Xv, Yv), mse_b(train_b(p=p, steps=50)[0], Xv, Yv), 1e-9)
+    E('l11-dropout', f'screens[3].canvas.state.values.p{str(p).replace(".", "")}', round(DP[p], 3))
     cov(DP[p])
-lv.claim(min(DP, key=DP.get) == 0.2 and min(DPB, key=DPB.get) == 0.2, 'the lowest validation error is at p = 0.2, in both routes')
+lv.claim(min(DP, key=DP.get) == 0.2, 'the lowest validation error is at p = 0.2 (route A)')
 E('l11-dropout', 'screens[0].widget.answer', 0.2)
 E('l11-dropout', 'screens[1].widget.answer', 1 / (1 - 0.2))
 cov(0.8, 2, 1 / 0.2)
@@ -380,6 +385,8 @@ def judge(a, e, cmp, tol=None):
 
     def close(x, y):
         x, y = flat(x), flat(y)
+        if isinstance(x, dict) or isinstance(y, dict):  # as the page's judge: same keys, then each value within tolerance
+            return isinstance(x, dict) and isinstance(y, dict) and set(x) == set(y) and all(close(x[k], y[k]) for k in x)
         if isinstance(x, (list, tuple)) or isinstance(y, (list, tuple)):
             return isinstance(x, (list, tuple)) and isinstance(y, (list, tuple)) and len(x) == len(y) and all(close(p, q) for p, q in zip(x, y))
         if nan(x) and nan(y):
