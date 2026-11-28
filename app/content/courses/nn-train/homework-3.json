@@ -1,0 +1,373 @@
+{
+ "id": "homework-3",
+ "course": "nn-train",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h3-select",
+   "difficulty": 5,
+   "skills": [
+    "nt-general"
+   ],
+   "title": "Performance task: choosing decay and dropout",
+   "performance": "code",
+   "prose": "From a blank start, write `regularise_and_select(X_tr, y_tr, X_val, y_val, lams, ps, steps=300)`. For each pair $(\\lambda, p)$ train a 1-16-1 tanh net and return the pair with the lowest validation MSE, and a dict of every pair's validation MSE. The recipe: `g = np.random.default_rng(0)`; `W1 = g.standard_normal((1, 16))`, `b1` zeros, `W2 = g.standard_normal((16, 1)) / 4`, `b2` zeros; full-batch Adam at 0.02 (the usual $\\beta$s, $\\epsilon = 10^{-8}$); loss = MSE + $\\tfrac{\\lambda}{2}(\\lVert\\mathbf{W}_1\\rVert^2 + \\lVert\\mathbf{W}_2\\rVert^2)$; dropout on the hidden layer with `nt_ops_l3.dropout(h, p, rng=rng)`, `rng = np.random.default_rng(1)` per run; validate with no dropout.",
+   "question": "Write `regularise_and_select`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l3 import dropout\n\n\ndef regularise_and_select(X_tr, y_tr, X_val, y_val, lams, ps, steps=300):\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l3 import dropout\n\n\ndef _adam(P, G, m, v, t, lr=0.02):\n    m = [0.9 * a + 0.1 * g for a, g in zip(m, G)]\n    v = [0.999 * a + 0.001 * g * g for a, g in zip(v, G)]\n    return [p - lr * (a / (1 - 0.9 ** t)) / (np.sqrt(b / (1 - 0.999 ** t)) + 1e-8) for p, a, b in zip(P, m, v)], m, v\n\n\ndef _fit(X, y, lam, p, steps):\n    g = np.random.default_rng(0)\n    P = [g.standard_normal((1, 16)), np.zeros(16), g.standard_normal((16, 1)) / 4, np.zeros(1)]\n    m = [np.zeros_like(q) for q in P]\n    v = [np.zeros_like(q) for q in P]\n    rng = np.random.default_rng(1)\n    for t in range(steps):\n        T = [Tensor(q) for q in P]\n        h = (Tensor(X) @ T[0] + T[1]).tanh()\n        if p > 0:\n            h, _ = dropout(h, p, rng=rng)\n        out = h @ T[2] + T[3]\n        loss = ((out - Tensor(y)) ** 2).mean() + 0.5 * lam * ((T[0] ** 2).sum() + (T[2] ** 2).sum())\n        loss.backward()\n        P, m, v = _adam(P, [q.grad for q in T], m, v, t + 1)\n    return P\n\n\ndef regularise_and_select(X_tr, y_tr, X_val, y_val, lams, ps, steps=300):\n    losses = {}\n    for lam in lams:\n        for p in ps:\n            P = _fit(X_tr, y_tr, lam, p, steps)\n            pred = np.tanh(X_val @ P[0] + P[1]) @ P[2] + P[3]\n            losses[(lam, p)] = float(np.mean((pred - y_val) ** 2))\n    return min(losses, key=losses.get), losses\n",
+    "prelude": "import numpy as np\n_g = np.random.default_rng(51)\nXa = np.sort(_g.uniform(-1, 1, 24))[:, None]\nXb = _g.uniform(-1, 1, 60)[:, None]\nclean_a, clean_b = np.sin(3 * Xa), np.sin(3 * Xb)\nnoise_a, noise_b = _g.standard_normal((24, 1)), _g.standard_normal((60, 1))\nmix_a = np.sin(3 * Xa) + 0.4 * _g.standard_normal((24, 1))\nmix_b = np.sin(3 * Xb) + 0.4 * _g.standard_normal((60, 1))\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l3.py": "content/data/ai/nt_ops_l3.py"
+    },
+    "examples": [
+     {
+      "call": "len(regularise_and_select(Xa, mix_a, Xb, mix_b, [0.0], [0.0], steps=1)[1])",
+      "compare": "equal",
+      "expect": "1"
+     }
+    ],
+    "tests": [
+     {
+      "call": "regularise_and_select(Xa, mix_a, Xb, mix_b, [0.0, 0.1], [0.0, 0.5], steps=5)[1]",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 0
+      },
+      "compare": "isclose",
+      "expect": "{(0.0, 0.0): 0.49192259741479083, (0.0, 0.5): 0.4596718854670391, (0.1, 0.0): 0.4654478091344877, (0.1, 0.5): 0.4483541355800817}"
+     },
+     {
+      "call": "len(regularise_and_select(Xa, mix_a, Xb, mix_b, [0.0, 0.01, 0.1], [0.0], steps=3)[1])",
+      "compare": "equal",
+      "expect": "3"
+     },
+     {
+      "call": "regularise_and_select(Xa, clean_a, Xb, clean_b, [0.0, 1.0], [0.0, 0.5])[0]",
+      "compare": "equal",
+      "expect": "(0.0, 0.0)"
+     },
+     {
+      "call": "regularise_and_select(Xa, noise_a, Xb, noise_b, [0.0, 3.0], [0.0])[0]",
+      "compare": "equal",
+      "expect": "(3.0, 0.0)"
+     },
+     {
+      "call": "regularise_and_select(Xa, mix_a, Xb, mix_b, [0.0], [0.0, 0.2], steps=20)[1]",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 0
+      },
+      "compare": "isclose",
+      "expect": "{(0.0, 0.0): 0.382881053318174, (0.0, 0.2): 0.3845756074759275}"
+     }
+    ],
+    "how": "`autograd.py` and `nt_ops_l3.py` are in the working directory; the planted data sets are loaded. Submit runs 5 hidden tests. Test 1 compares a 5-step grid exactly (to 7 figures), and test 2 checks one entry per pair. Test 3 trains on a clean sine, where no regularisation must win; test 4 on pure noise, where the strongest penalty must win. Test 5 compares a 20-step run with dropout exactly.",
+    "budget": 8000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l3 import dropout\n\n\ndef _adam(P, G, m, v, t, lr=0.02):\n    m = [0.9 * a + 0.1 * g for a, g in zip(m, G)]\n    v = [0.999 * a + 0.001 * g * g for a, g in zip(v, G)]\n    return [p - lr * (a / (1 - 0.9 ** t)) / (np.sqrt(b / (1 - 0.999 ** t)) + 1e-8) for p, a, b in zip(P, m, v)], m, v\n\n\ndef _fit(X, y, lam, p, steps):\n    g = np.random.default_rng(0)\n    P = [g.standard_normal((1, 16)), np.zeros(16), g.standard_normal((16, 1)) / 4, np.zeros(1)]\n    m = [np.zeros_like(q) for q in P]\n    v = [np.zeros_like(q) for q in P]\n    rng = np.random.default_rng(1)\n    for t in range(steps):\n        T = [Tensor(q) for q in P]\n        h = (Tensor(X) @ T[0] + T[1]).tanh()\n        out = h @ T[2] + T[3]\n        loss = ((out - Tensor(y)) ** 2).mean() + 0.5 * lam * ((T[0] ** 2).sum() + (T[2] ** 2).sum())\n        loss.backward()\n        P, m, v = _adam(P, [q.grad for q in T], m, v, t + 1)\n    return P\n\n\ndef regularise_and_select(X_tr, y_tr, X_val, y_val, lams, ps, steps=300):\n    losses = {}\n    for lam in lams:\n        for p in ps:\n            P = _fit(X_tr, y_tr, lam, p, steps)\n            pred = np.tanh(X_val @ P[0] + P[1]) @ P[2] + P[3]\n            losses[(lam, p)] = float(np.mean((pred - y_val) ** 2))\n    return min(losses, key=losses.get), losses\n",
+      "test": 1,
+      "symptom": "Never applies dropout."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l3 import dropout\n\n\ndef _adam(P, G, m, v, t, lr=0.02):\n    m = [0.9 * a + 0.1 * g for a, g in zip(m, G)]\n    v = [0.999 * a + 0.001 * g * g for a, g in zip(v, G)]\n    return [p - lr * (a / (1 - 0.9 ** t)) / (np.sqrt(b / (1 - 0.999 ** t)) + 1e-8) for p, a, b in zip(P, m, v)], m, v\n\n\ndef _fit(X, y, lam, p, steps):\n    g = np.random.default_rng(0)\n    P = [g.standard_normal((1, 16)), np.zeros(16), g.standard_normal((16, 1)) / 4, np.zeros(1)]\n    m = [np.zeros_like(q) for q in P]\n    v = [np.zeros_like(q) for q in P]\n    rng = np.random.default_rng(1)\n    for t in range(steps):\n        T = [Tensor(q) for q in P]\n        h = (Tensor(X) @ T[0] + T[1]).tanh()\n        if p > 0:\n            h, _ = dropout(h, p, rng=rng)\n        out = h @ T[2] + T[3]\n        loss = ((out - Tensor(y)) ** 2).mean() + 0.5 * lam * ((T[0] ** 2).sum() + (T[1] ** 2).sum() + (T[2] ** 2).sum() + (T[3] ** 2).sum())\n        loss.backward()\n        P, m, v = _adam(P, [q.grad for q in T], m, v, t + 1)\n    return P\n\n\ndef regularise_and_select(X_tr, y_tr, X_val, y_val, lams, ps, steps=300):\n    losses = {}\n    for lam in lams:\n        for p in ps:\n            P = _fit(X_tr, y_tr, lam, p, steps)\n            pred = np.tanh(X_val @ P[0] + P[1]) @ P[2] + P[3]\n            losses[(lam, p)] = float(np.mean((pred - y_val) ** 2))\n    return min(losses, key=losses.get), losses\n",
+      "test": 1,
+      "symptom": "Penalises the biases as well."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l3 import dropout\n\n\ndef _adam(P, G, m, v, t, lr=0.02):\n    m = [0.9 * a + 0.1 * g for a, g in zip(m, G)]\n    v = [0.999 * a + 0.001 * g * g for a, g in zip(v, G)]\n    return [p - lr * (a / (1 - 0.9 ** t)) / (np.sqrt(b / (1 - 0.999 ** t)) + 1e-8) for p, a, b in zip(P, m, v)], m, v\n\n\ndef _fit(X, y, lam, p, steps):\n    g = np.random.default_rng(0)\n    P = [g.standard_normal((1, 16)), np.zeros(16), g.standard_normal((16, 1)) / 4, np.zeros(1)]\n    m = [np.zeros_like(q) for q in P]\n    v = [np.zeros_like(q) for q in P]\n    rng = np.random.default_rng(1)\n    for t in range(steps):\n        T = [Tensor(q) for q in P]\n        h = (Tensor(X) @ T[0] + T[1]).tanh()\n        if p > 0:\n            h, _ = dropout(h, p, rng=rng)\n        out = h @ T[2] + T[3]\n        loss = ((out - Tensor(y)) ** 2).mean() + 0.5 * lam * ((T[0] ** 2).sum() + (T[2] ** 2).sum())\n        loss.backward()\n        P, m, v = _adam(P, [q.grad for q in T], m, v, t + 1)\n    return P\n\n\ndef regularise_and_select(X_tr, y_tr, X_val, y_val, lams, ps, steps=300):\n    losses = {}\n    for lam in lams:\n        for p in ps:\n            P = _fit(X_tr, y_tr, lam, p, steps)\n            pred = np.tanh(X_val @ P[0] + P[1]) @ P[2] * (1 - p) + P[3]\n            losses[(lam, p)] = float(np.mean((pred - y_val) ** 2))\n    return min(losses, key=losses.get), losses\n",
+      "test": 1,
+      "symptom": "Scales again at validation: double scaling."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l3 import dropout\n\n\ndef _adam(P, G, m, v, t, lr=0.02):\n    m = [0.9 * a + 0.1 * g for a, g in zip(m, G)]\n    v = [0.999 * a + 0.001 * g * g for a, g in zip(v, G)]\n    return [p - lr * (a / (1 - 0.9 ** t)) / (np.sqrt(b / (1 - 0.999 ** t)) + 1e-8) for p, a, b in zip(P, m, v)], m, v\n\n\ndef _fit(X, y, lam, p, steps):\n    g = np.random.default_rng(0)\n    P = [g.standard_normal((1, 16)), np.zeros(16), g.standard_normal((16, 1)) / 4, np.zeros(1)]\n    m = [np.zeros_like(q) for q in P]\n    v = [np.zeros_like(q) for q in P]\n    rng = np.random.default_rng(1)\n    for t in range(steps):\n        T = [Tensor(q) for q in P]\n        h = (Tensor(X) @ T[0] + T[1]).tanh()\n        if p > 0:\n            h, _ = dropout(h, p, rng=rng)\n        out = h @ T[2] + T[3]\n        loss = ((out - Tensor(y)) ** 2).mean() + 0.5 * lam * ((T[0] ** 2).sum() + (T[2] ** 2).sum())\n        loss.backward()\n        P, m, v = _adam(P, [q.grad for q in T], m, v, t + 1)\n    return P\n\n\ndef regularise_and_select(X_tr, y_tr, X_val, y_val, lams, ps, steps=300):\n    losses = {}\n    for lam in lams:\n        for p in ps:\n            P = _fit(X_tr, y_tr, lam, p, steps)\n            pred = np.tanh(X_val @ P[0] + P[1]) @ P[2] + P[3]\n            losses[(lam, p)] = float(np.mean((pred - y_val) ** 2))\n    return max(losses, key=losses.get), losses\n",
+      "test": 3,
+      "symptom": "Picks the pair with the highest validation loss."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your selection passes every hidden test, including the planted clean and noise sets.",
+    "generic": "Not quite. Read the first failing test in the results."
+   },
+   "explain": {
+    "text": "Each pair trains from the same start and masks, so the validation losses differ only by the setting. On clean data no regularisation wins; on pure noise the strongest penalty, which flattens the net to a constant, wins."
+   }
+  },
+  {
+   "id": "h3-decay-ridge",
+   "difficulty": 4,
+   "skills": [
+    "nt-general"
+   ],
+   "title": "Decay converges to ridge",
+   "prose": "Write `decay_vs_ridge(X, y, lam, eta, steps)`: decayed gradient descent from zero on the halved mean squared loss, and the ridge solution for the same $\\lambda$. Run long enough, the two should agree.",
+   "question": "Write `decay_vs_ridge`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef decay_vs_ridge(X, y, lam, eta, steps):\n    # (weights after `steps` of decayed gradient descent from 0 on 0.5 |Xw - y|^2 / n, ridge solution for the same lam)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef decay_vs_ridge(X, y, lam, eta, steps):\n    X, y = np.asarray(X, dtype=float), np.asarray(y, dtype=float)\n    n, d = X.shape\n    w = np.zeros(d)\n    for _ in range(steps):\n        w = (1 - eta * lam) * w - eta * X.T @ (X @ w - y) / n\n    ridge = np.linalg.solve(X.T @ X / n + lam * np.eye(d), X.T @ y / n)\n    return w, ridge\n",
+    "prelude": "import numpy as np\n_g = np.random.default_rng(61)\nXq = _g.standard_normal((40, 3))\nyq = Xq @ np.array([1.0, -2.0, 0.5]) + 0.3 * _g.standard_normal(40)\n",
+    "examples": [
+     {
+      "call": "decay_vs_ridge(np.eye(2), np.ones(2), 0.0, 0.5, 1)[0].tolist()",
+      "compare": "isclose",
+      "expect": "[0.25, 0.25]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "decay_vs_ridge(Xq, yq, 0.5, 0.1, 4)[0].tolist()",
+      "compare": "isclose",
+      "expect": "[0.3982267184506644, -0.6654485054269479, 0.03129401036864427]"
+     },
+     {
+      "call": "decay_vs_ridge(Xq, yq, 0.5, 0.1, 4)[1].tolist()",
+      "compare": "isclose",
+      "expect": "[0.6885059628197464, -1.369498697074649, 0.19423673828480792]"
+     },
+     {
+      "setup": "w, r = decay_vs_ridge(Xq, yq, 0.5, 0.1, 2000)",
+      "call": "float(np.abs(w - r).max())",
+      "expect": "0.0",
+      "tol": {
+       "rel": 0,
+       "abs": 1e-09
+      },
+      "compare": "isclose"
+     },
+     {
+      "setup": "w, r = decay_vs_ridge(Xq, yq, 0.0, 0.1, 3000)",
+      "call": "float(np.abs(r - np.linalg.lstsq(Xq, yq, rcond=None)[0]).max())",
+      "expect": "0.0",
+      "tol": {
+       "rel": 0,
+       "abs": 1e-09
+      },
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. Two compare four decayed steps and the ridge weights on a seeded problem to $10^{-9}$. After 2,000 steps the two must agree to $10^{-9}$, and with $\\lambda = 0$ the ridge weights must be least squares.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef decay_vs_ridge(X, y, lam, eta, steps):\n    X, y = np.asarray(X, dtype=float), np.asarray(y, dtype=float)\n    n, d = X.shape\n    w = np.zeros(d)\n    for _ in range(steps):\n        w = (1 - lam) * w - eta * X.T @ (X @ w - y) / n\n    ridge = np.linalg.solve(X.T @ X / n + lam * np.eye(d), X.T @ y / n)\n    return w, ridge\n",
+      "test": 1,
+      "symptom": "Decays by lam instead of eta * lam."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef decay_vs_ridge(X, y, lam, eta, steps):\n    X, y = np.asarray(X, dtype=float), np.asarray(y, dtype=float)\n    n, d = X.shape\n    w = np.zeros(d)\n    for _ in range(steps):\n        w = (1 - eta * lam) * w - eta * X.T @ (X @ w - y) / n\n    ridge = np.linalg.solve(X.T @ X + lam * np.eye(d), X.T @ y)\n    return w, ridge\n",
+      "test": 2,
+      "symptom": "Puts the penalty against the summed loss, not the mean."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef decay_vs_ridge(X, y, lam, eta, steps):\n    X, y = np.asarray(X, dtype=float), np.asarray(y, dtype=float)\n    n, d = X.shape\n    w = np.zeros(d)\n    for _ in range(steps):\n        w = w - eta * X.T @ (X @ w - y) / n\n    ridge = np.linalg.solve(X.T @ X / n + lam * np.eye(d), X.T @ y / n)\n    return w, ridge\n",
+      "test": 1,
+      "symptom": "Forgets the decay."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Both pass: after 2,000 steps decayed descent sits on the ridge solution.",
+    "generic": "Not quite. Read the first failing test in the results."
+   },
+   "explain": {
+    "text": "Decayed descent is descent on the ridge objective, so it converges to the ridge minimiser $(\\mathbf{X}^T\\mathbf{X}/n + \\lambda\\mathbf{I})^{-1}\\mathbf{X}^T\\mathbf{y}/n$."
+   }
+  },
+  {
+   "id": "h3-step-order",
+   "difficulty": 4,
+   "skills": [
+    "nt-general"
+   ],
+   "title": "The decayed step, derived",
+   "prose": "Start from the penalised loss $J(\\mathbf{w}) = L(\\mathbf{w}) + \\tfrac{\\lambda}{2}\\lVert\\mathbf{w}\\rVert^2$ and one gradient step of size $\\eta$.",
+   "question": "Put the derivation in order. Leave out the two lines that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "$\\nabla\\big(\\tfrac{\\lambda}{2}\\lVert\\mathbf{w}\\rVert^2\\big) = \\lambda\\mathbf{w}$, differentiating each $\\tfrac{\\lambda}{2}w_j^2$"
+     },
+     {
+      "id": "s2",
+      "text": "$\\nabla J = \\nabla L + \\lambda\\mathbf{w}$, since gradients add"
+     },
+     {
+      "id": "s3",
+      "text": "$\\mathbf{w} \\leftarrow \\mathbf{w} - \\eta(\\nabla L + \\lambda\\mathbf{w})$, one gradient step on $J$"
+     },
+     {
+      "id": "s4",
+      "text": "$\\mathbf{w} \\leftarrow (1 - \\eta\\lambda)\\mathbf{w} - \\eta\\nabla L$, collecting the $\\mathbf{w}$ terms"
+     },
+     {
+      "id": "x1",
+      "text": "$\\nabla\\big(\\tfrac{\\lambda}{2}\\lVert\\mathbf{w}\\rVert^2\\big) = \\lambda$, a constant",
+      "why": "The penalty grows with each weight, so its gradient is $\\lambda\\mathbf{w}$, not a constant."
+     },
+     {
+      "id": "x2",
+      "text": "$\\mathbf{w} \\leftarrow (1 - \\lambda)\\mathbf{w} - \\eta\\nabla L$",
+      "why": "The step size multiplies the penalty's gradient too: the factor is $1 - \\eta\\lambda$."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "Differentiate the penalty, add, step, collect: the factor $1 - \\eta\\lambda$.",
+    "generic": "Not quite. Each line uses the one before.",
+    "byKey": {
+     "x1": "The penalty's gradient is $\\lambda\\mathbf{w}$.",
+     "x2": "The step size multiplies $\\lambda\\mathbf{w}$ too."
+    }
+   },
+   "explain": {
+    "text": "The penalty's gradient $\\lambda\\mathbf{w}$ joins the data gradient, and the step multiplies both by $\\eta$. Collecting gives the shrink factor $1 - \\eta\\lambda$ before the usual step."
+   }
+  },
+  {
+   "id": "h3-adamw-gap",
+   "difficulty": 3,
+   "skills": [
+    "nt-general"
+   ],
+   "title": "L2 in Adam against AdamW",
+   "prose": "At step 1, a weight $w = 4$ has gradient $g = 0.5$; $\\eta = 0.01$ and $\\lambda = 0.05$.",
+   "question": "By how much does AdamW's new $w$ fall below that of Adam with $\\lambda w$ added to the gradient? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.002,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "lam",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Adam with L2: the gradient $0.5 + 0.2 = 0.7$ is rescaled to a step of 0.01, giving 3.99. AdamW: $4 - 0.01(1 + 0.2) = 3.988$. The gap is 0.002.",
+    "generic": "Not quite. Work out both updates.",
+    "byKey": {
+     "zero": "At step 1 Adam's rescaling removes the penalty, so the two differ.",
+     "lam": "The decay is $\\eta\\lambda w$, not $\\lambda$."
+    }
+   },
+   "explain": {
+    "text": "Adam turns any first gradient into a step of $\\eta$, so L2 in the loss changes nothing at step 1; AdamW adds $\\eta\\lambda w = 0.002$ on top."
+   }
+  },
+  {
+   "id": "h3-which-split",
+   "difficulty": 3,
+   "skills": [
+    "nt-general"
+   ],
+   "title": "Choosing two settings at once",
+   "prose": "A team tries 12 decay and dropout pairs and picks the pair with the lowest validation loss.",
+   "question": "What should it report as the expected error on new data?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "test",
+      "text": "The test-set error of the chosen pair, measured once",
+      "correct": true
+     },
+     {
+      "id": "val",
+      "text": "The best validation loss, since it is out of sample",
+      "why": "The validation set chose the pair, so its best loss is optimistic."
+     },
+     {
+      "id": "mean",
+      "text": "The mean validation loss over the 12 pairs",
+      "why": "That describes the search, not the chosen net."
+     },
+     {
+      "id": "train",
+      "text": "The chosen pair's training loss",
+      "why": "Training loss is the most optimistic of all."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The test error, once: the only number no choice has touched.",
+    "generic": "Not quite. Which data set made no choice?"
+   },
+   "explain": {
+    "text": "Twelve tries on one validation set pick some luck. The test set, read once after choosing, gives the honest estimate."
+   }
+  },
+  {
+   "id": "h3-cannot-overfit",
+   "difficulty": 5,
+   "skills": [
+    "nt-general"
+   ],
+   "title": "A net that cannot overfit?",
+   "kind": "longform",
+   "prompt": "A researcher reports that a 2-million-parameter net \"cannot overfit\" a data set of 5,000 rows, because its test error fell when the net grew from 1 million to 2 million parameters. Say what double descent does and does not license here, and what you would check before accepting the claim.",
+   "model": "What double descent shows: past the interpolation threshold, roughly where the parameters can fit the training rows exactly, test error can fall again as the model grows. Training tends to pick a small-norm fit among the many exact ones. So a lower test error at 2 million than at 1 million is possible and does not by itself signal a mistake.\n\nWhat it does not license: \"cannot overfit\". The curve has a peak near the threshold, where the error can be far worse than for smaller or larger models. Where that peak sits moves with the noise level, the data size and the regularisation. One comparison of two sizes is one draw; it shows neither that larger is always better nor that this net is past every peak. The fall is also an empirical tendency for nets, not a theorem.\n\nWhat I would check: (1) the test set was untouched by any choice (size, stopping step, decay); otherwise the fall may be selection. (2) Repeat across several seeds and report the spread: is the fall bigger than the run-to-run noise? (3) Plot test error against size at more points, to see where the peak is and whether 2 million sits on the second descent. (4) Compare with a smaller net with a tuned ridge penalty or early stopping; in our random-feature runs a small penalty removed the peak and matched the large models. (5) Check training error: if it is 0, the net interpolates, and its test error depends on which exact fit training found. (6) Check for leakage between the 5,000 training rows and the test rows (duplicates, overlapping dates).",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Explains double descent: past the threshold, error can fall again as the fit among many exact ones has small norm"
+    },
+    {
+     "points": 2,
+     "text": "Rejects \"cannot overfit\": the peak is real and moves with noise, data size and regularisation"
+    },
+    {
+     "points": 2,
+     "text": "Treats one comparison as one draw: asks for several seeds and the spread"
+    },
+    {
+     "points": 1,
+     "text": "Asks for more sizes, to locate the peak"
+    },
+    {
+     "points": 1,
+     "text": "Checks that the test set chose nothing"
+    },
+    {
+     "points": 1,
+     "text": "Compares with a regularised smaller model (ridge or early stopping)"
+    },
+    {
+     "points": 1,
+     "text": "Checks for leakage between training and test rows"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,520 @@
+{
+ "id": "problems-1",
+ "course": "nn-train",
+ "level": 1,
+ "title": "Optimiser problems",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p1-valley",
+   "difficulty": 5,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "A least-squares fit of two correlated factors has Hessian $\\mathbf{H} = \\begin{pmatrix} 4.25 & 3.75 \\\\ 3.75 & 4.25 \\end{pmatrix}$.",
+   "parts": [
+    {
+     "question": "What is the largest eigenvalue of $\\mathbf{H}$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 8,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "small",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "diag",
+        "value": 4.25,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$4.25 \\pm 3.75$ gives 8 and 0.5.",
+      "generic": "Not quite. A matrix $\\begin{pmatrix} a & b \\\\ b & a \\end{pmatrix}$ has eigenvalues $a \\pm b$.",
+      "byKey": {
+       "small": "That is the smallest.",
+       "diag": "A diagonal entry is not an eigenvalue here."
+      }
+     },
+     "explain": {
+      "text": "For $\\begin{pmatrix} a & b \\\\ b & a \\end{pmatrix}$ the eigenvectors are $(1, 1)$ and $(1, -1)$, with eigenvalues $a + b = 8$ and $a - b = 0.5$."
+     }
+    },
+    {
+     "question": "Using the eigenvalues 8 and 0.5 from part 1, what rate per step does plain descent get at its best fixed step? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8824,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "step",
+        "value": 0.2353,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "hb",
+        "value": 0.6,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\kappa = 16$, so $(\\kappa - 1)/(\\kappa + 1) = 15/17 = 0.8824$, at step $2/8.5 = 0.2353$.",
+      "generic": "Not quite. Use $(\\kappa - 1)/(\\kappa + 1)$.",
+      "byKey": {
+       "step": "That is the best step itself.",
+       "hb": "That is the heavy ball's rate."
+      }
+     },
+     "explain": {
+      "text": "$\\kappa = 8/0.5 = 16$ and the best step $2/(0.5 + 8)$ gives the rate $15/17 = 0.8824$."
+     }
+    },
+    {
+     "question": "With $\\kappa = 16$, what is the best heavy-ball $\\beta$? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.36,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "root",
+        "value": 0.6,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "kappa",
+        "value": 0.78,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\sqrt\\kappa = 4$, so $\\beta = (3/5)^2 = 0.36$ and the rate is 0.6.",
+      "generic": "Not quite. Square $(\\sqrt\\kappa - 1)/(\\sqrt\\kappa + 1)$.",
+      "byKey": {
+       "root": "That is the rate $\\sqrt\\beta$.",
+       "kappa": "You used $\\kappa$, not $\\sqrt\\kappa$."
+      }
+     },
+     "explain": {
+      "text": "$(4 - 1)/(4 + 1) = 0.6$, squared 0.36."
+     }
+    },
+    {
+     "question": "The error shrinks by a factor of 0.6 each step. After how many steps is it first below a thousandth of where it started?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 14,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "gd",
+        "value": 56,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "floor",
+        "value": 13,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\ln 1000/\\ln(1/0.6) = 6.908/0.511 = 13.5$, so 14 steps; plain descent needs 56.",
+      "generic": "Not quite. Solve $0.6^k \\le 10^{-3}$ and round up.",
+      "byKey": {
+       "gd": "That is plain descent's count.",
+       "floor": "At step 13 the error is still 0.0013 of the start."
+      }
+     },
+     "explain": {
+      "text": "$0.6^{13} = 0.0013$ and $0.6^{14} = 0.00078$, so 14 steps, against 56 for plain descent."
+     }
+    },
+    {
+     "question": "Plain descent now uses minibatch gradients whose first coordinate has sd 2 across rows. At the best step of 0.2353, the noise a step adds is $s \\cdot 2/\\sqrt B$. What is the smallest batch that keeps it at most 0.01?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2215,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "root",
+        "value": 48,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "nos",
+        "value": 40000,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\sqrt B \\ge 0.2353 \\times 2/0.01 = 47.06$, so $B \\ge 2214.5$: 2215.",
+      "generic": "Not quite. Solve for $\\sqrt B$, then square and round up.",
+      "byKey": {
+       "root": "You stopped at $\\sqrt B$.",
+       "nos": "You left the step size out."
+      }
+     },
+     "explain": {
+      "text": "$0.2353 \\times 2/\\sqrt B \\le 0.01$ needs $\\sqrt B \\ge 47.06$, so $B \\ge 2214.5$, rounded up to 2215."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p2-adam-warm",
+   "difficulty": 4,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "One weight is trained by Adam ($\\beta_1 = 0.9$, $\\beta_2 = 0.999$, $\\epsilon = 10^{-8}$). Its first two gradients are 4 and then $-2$; after step 1, $m = 0.4$ and $v = 0.016$.",
+   "parts": [
+    {
+     "question": "What is $m$ after step 2? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.16,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "nob",
+        "value": 0.56,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "last",
+        "value": -0.2,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.9 \\times 0.4 + 0.1 \\times (-2) = 0.36 - 0.2 = 0.16$.",
+      "generic": "Not quite. $m \\leftarrow 0.9m + 0.1g$.",
+      "byKey": {
+       "nob": "You added $0.2$; the gradient is $-2$.",
+       "last": "That is $0.1g$ alone."
+      }
+     },
+     "explain": {
+      "text": "$0.36 - 0.2 = 0.16$."
+     }
+    },
+    {
+     "question": "With $m = 0.16$ from part 1 and $v = 0.019984$ after step 2, what is the corrected $\\hat m$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8421,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "none",
+        "value": 0.16,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "one",
+        "value": 1.6,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.16/(1 - 0.9^2) = 0.16/0.19 = 0.8421$.",
+      "generic": "Not quite. Divide by $1 - \\beta_1^2$.",
+      "byKey": {
+       "none": "That is $m$ uncorrected.",
+       "one": "You divided by step 1's correction, 0.1."
+      }
+     },
+     "explain": {
+      "text": "At step 2 the correction is $1 - 0.81 = 0.19$, so $\\hat m = 0.8421$."
+     }
+    },
+    {
+     "question": "With $\\hat m = 0.8421$ and $\\hat v = 0.019984/0.001999 = 9.9970$, how far does the weight move at step 2 with $\\eta = 0.01$? Give 6 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.002663,
+      "tol": {
+       "abs": 2e-06
+      },
+      "wrong": [
+       {
+        "id": "sgd",
+        "value": 0.02,
+        "tol": {
+         "abs": 2e-06
+        }
+       },
+       {
+        "id": "nocorr",
+        "value": 0.011318,
+        "tol": {
+         "abs": 2e-06
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.01 \\times 0.8421/\\sqrt{9.9970} = 0.002663$.",
+      "generic": "Not quite. Step by $\\eta\\,\\hat m/\\sqrt{\\hat v}$.",
+      "byKey": {
+       "sgd": "That is SGD's step, $0.01 \\times 2$.",
+       "nocorr": "You used $m$ and $v$ uncorrected."
+      }
+     },
+     "explain": {
+      "text": "$\\sqrt{9.9970} = 3.1618$, so the step is $0.01 \\times 0.8421/3.1618 = 0.002663$."
+     }
+    },
+    {
+     "question": "Now a warm-up over 10 steps to $\\eta_{\\max} = 0.01$ sets the rate at step $t$ to $0.01\\,t/10$. Using the same $\\hat m$ and $\\hat v$, how far does the weight move at step 2? Give 6 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.000533,
+      "tol": {
+       "abs": 2e-06
+      },
+      "wrong": [
+       {
+        "id": "full",
+        "value": 0.002663,
+        "tol": {
+         "abs": 2e-06
+        }
+       },
+       {
+        "id": "one",
+        "value": 0.000266,
+        "tol": {
+         "abs": 2e-06
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The rate is $0.01 \\times 2/10 = 0.002$, so the step is a fifth of part 3's: 0.000533.",
+      "generic": "Not quite. Work out the warm-up rate at step 2 first.",
+      "byKey": {
+       "full": "That is the step with no warm-up.",
+       "one": "That uses step 1's rate."
+      }
+     },
+     "explain": {
+      "text": "Warm-up gives $0.002$ at step 2, so the move is $0.002 \\times 0.2663 = 0.000533$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p3-epochs",
+   "difficulty": 3,
+   "skills": [
+    "nt-optim"
+   ],
+   "prose": "A model trains on 20,000 rows with batches of 50 for 10 epochs, under cosine decay from $\\eta_{\\max} = 0.08$ with no warm-up, ending at the last step.",
+   "parts": [
+    {
+     "question": "How many steps is the whole run?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4000,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "epoch",
+        "value": 400,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "rows",
+        "value": 200000,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "400 steps an epoch times 10 epochs is 4,000.",
+      "generic": "Not quite. Count steps per epoch first.",
+      "byKey": {
+       "epoch": "That is one epoch.",
+       "rows": "That is rows read, not steps."
+      }
+     },
+     "explain": {
+      "text": "$20{,}000/50 = 400$ steps an epoch, and 10 epochs make 4,000."
+     }
+    },
+    {
+     "question": "With $T = 4{,}000$ from part 1, what is the rate at the end of epoch 3, step 1,200? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0635,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "linear",
+        "value": 0.056,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "half",
+        "value": 0.04,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.04(1 + \\cos(0.3\\pi)) = 0.04 \\times 1.5878 = 0.0635$.",
+      "generic": "Not quite. $t/T = 0.3$.",
+      "byKey": {
+       "linear": "That is a straight-line decay.",
+       "half": "That is halfway, step 2,000."
+      }
+     },
+     "explain": {
+      "text": "$\\cos(0.3\\pi) = 0.5878$, so the rate is 0.0635."
+     }
+    },
+    {
+     "question": "A coefficient's gradient has sd 1.5 across rows. Taking rows as independent, what is its sd for a batch of 50? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.2121,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "linear",
+        "value": 0.03,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "var",
+        "value": 0.045,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1.5/\\sqrt{50} = 0.2121$.",
+      "generic": "Not quite. Divide by $\\sqrt{B}$.",
+      "byKey": {
+       "linear": "You divided by 50.",
+       "var": "That is the variance, $2.25/50$."
+      }
+     },
+     "explain": {
+      "text": "$\\sqrt{50} = 7.071$, so the sd is 0.2121."
+     }
+    },
+    {
+     "question": "Using the rate 0.0635 and the batch sd 0.2121, how much noise does one step add to that coefficient at step 1,200 (rate times sd)? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0135,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "max",
+        "value": 0.017,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "row",
+        "value": 0.0953,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.0635 \\times 0.2121 = 0.0135$.",
+      "generic": "Not quite. Multiply the two.",
+      "byKey": {
+       "max": "You used the peak rate, 0.08.",
+       "row": "You used one row's sd, 1.5."
+      }
+     },
+     "explain": {
+      "text": "The step noise is $\\eta_t \\cdot \\sigma/\\sqrt B = 0.0635 \\times 0.2121 = 0.0135$; it falls to 0 with the rate at the end."
+     }
+    }
+   ]
+  }
+ ]
+}

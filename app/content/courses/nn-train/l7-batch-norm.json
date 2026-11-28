@@ -1,0 +1,922 @@
+{
+ "id": "l7-batch-norm",
+ "course": "nn-train",
+ "title": "Batch normalisation",
+ "minutes": 15,
+ "objectives": [
+  "Write batch normalisation for training and for inference, and see what it does to a deep net."
+ ],
+ "skills": [
+  "nt-signal"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two runs at a large step",
+   "prose": "The same deep tanh net (four hidden layers of 64) trains on the spirals with SGD at step 1, from the same start and batches. One run adds **batch normalisation** before each tanh; the other does not. The chart shows the full loss.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "plain",
+       "label": "no batch norm",
+       "values": [
+        5.3407,
+        9.3238,
+        15.1276,
+        3.0799,
+        8.5271,
+        25.7923,
+        18.8924,
+        10.7633,
+        10.8435,
+        15.2699,
+        11.2451,
+        25.3705,
+        5.3306,
+        6.9904,
+        4.4354,
+        13.4959,
+        17.4777,
+        19.559,
+        29.242,
+        31.4286,
+        11.2638,
+        37.4475,
+        25.634,
+        28.2806,
+        7.4577,
+        17.7466,
+        20.4219,
+        20.1916,
+        18.1428,
+        24.2159
+       ]
+      },
+      {
+       "id": "bn",
+       "label": "batch norm",
+       "values": [
+        0.5514,
+        0.6866,
+        0.6219,
+        0.5758,
+        0.5189,
+        0.4768,
+        0.5361,
+        0.4758,
+        0.4614,
+        0.4563,
+        0.4533,
+        0.4357,
+        0.4237,
+        0.4638,
+        0.4902,
+        0.3486,
+        0.4054,
+        0.2137,
+        0.3803,
+        0.1719,
+        0.2624,
+        1.043,
+        0.1043,
+        0.0708,
+        0.0607,
+        0.0446,
+        0.0695,
+        0.124,
+        0.0532,
+        0.1766
+       ]
+      }
+     ],
+     "xValues": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200,
+      210,
+      220,
+      230,
+      240,
+      250,
+      260,
+      270,
+      280,
+      290,
+      300
+     ],
+     "yScale": "log",
+     "y": [
+      0.01,
+      100
+     ],
+     "xLabel": "Step",
+     "yLabel": "Full loss (nats; capped at 50)"
+    },
+    "state": {
+     "caption": "A 2-64-64-64-64-2 tanh net on the spirals, SGD at step 1, batch 32, batch seed 1."
+    }
+   },
+   "question": "Which run trains?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "bn",
+      "text": "The run with batch norm; the plain one blows up",
+      "correct": true
+     },
+     {
+      "id": "plain",
+      "text": "The plain run; batch norm only adds noise",
+      "why": "The plain run ends above 1 nat on every seed tried, while batch norm ends below 0.25."
+     },
+     {
+      "id": "both",
+      "text": "Both, at the same speed",
+      "why": "At step 1 the plain run's loss jumps up and stays high."
+     },
+     {
+      "id": "neither",
+      "text": "Neither: step 1 is too large for any deep net",
+      "why": "With batch norm it ends below 0.25 nats on every seed tried."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Follow each line to step 300."
+    },
+    {
+     "rung": "point",
+     "text": "The plain line climbs far above where it started.",
+     "highlight": [
+      "plain",
+      "bn"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The batch-norm line ends far below it."
+    }
+   ],
+   "feedback": {
+    "correct": "Batch norm trains and the plain net blows up. At step 0.1 the plain net trains too.",
+    "generic": "Not quite. Read the two lines at the end.",
+    "byKey": {
+     "plain": "Batch norm keeps each layer's inputs on a fixed scale, which is what lets the large step work."
+    }
+   },
+   "explain": {
+    "text": "Over five seeds the plain net ends above 1 nat every time and the normalised one below 0.25. The exact figures at so large a step change with the arithmetic's rounding, but that split does not."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Normalise a batch by hand",
+   "prose": "Name it: **batch normalisation** takes each feature over the batch, subtracts the batch mean $\\mu$, divides by $\\sqrt{\\sigma^2 + \\epsilon}$ (the variance divides by the batch size), then scales by $\\gamma$ and shifts by $\\beta$, both learned.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "row",
+      "feature value"
+     ],
+     "rows": [
+      [
+       "1",
+       "2"
+      ],
+      [
+       "2",
+       "4"
+      ],
+      [
+       "3",
+       "6"
+      ],
+      [
+       "4",
+       "8"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "One feature over a batch of 4. $\\epsilon = 10^{-5}$."
+    }
+   },
+   "question": "Before $\\gamma$ and $\\beta$, what does the row with value 8 become? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.3416,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "nosqrt",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "ddof",
+      "value": 1.1619,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "nomean",
+      "value": 3.5777,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The mean is 5."
+    },
+    {
+     "rung": "point",
+     "text": "The variance is $(9 + 1 + 1 + 9)/4 = 5$.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(8 - 5)/\\sqrt{5}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(8 - 5)/\\sqrt{5 + 10^{-5}} = 1.3416$.",
+    "generic": "Not quite. Subtract the mean, then divide by the root of the variance.",
+    "byKey": {
+     "nosqrt": "You divided by the variance; divide by its square root.",
+     "ddof": "You divided the squared deviations by 3; batch norm uses the batch size, 4.",
+     "nomean": "You forgot to subtract the mean."
+    }
+   },
+   "explain": {
+    "text": "Mean 5, variance 5, so 8 becomes $3/2.2361 = 1.3416$. The four rows become $-1.34$, $-0.45$, $0.45$ and $1.34$: mean 0, sd 1."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Why gamma and beta",
+   "prose": "Normalising forces every feature to mean 0 and sd 1, which may not suit the next layer. So the output is $\\gamma\\hat x + \\beta$, with $\\gamma$ and $\\beta$ learned per feature: the net can undo the normalisation if that helps.",
+   "question": "With $\\gamma = 2$ and $\\beta = 1$, what is the output for the row whose $\\hat x$ is 1.3416? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.6833,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "swap",
+      "value": 3.3416,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "nob",
+      "value": 2.6833,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply by $\\gamma$, then add $\\beta$."
+    },
+    {
+     "rung": "point",
+     "text": "$2 \\times 1.3416$."
+    },
+    {
+     "rung": "step",
+     "text": "Then add 1."
+    }
+   ],
+   "feedback": {
+    "correct": "$2\\hat x + 1 = 3.6833$.",
+    "generic": "Not quite. Scale by $\\gamma$, then shift by $\\beta$.",
+    "byKey": {
+     "swap": "You added $\\gamma$ and multiplied by $\\beta$.",
+     "nob": "You left out $\\beta$."
+    }
+   },
+   "explain": {
+    "text": "$\\gamma\\hat x + \\beta = 3.6833$. With $\\gamma = \\sqrt{5}$ and $\\beta = 5$ the layer would give back the raw batch exactly."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Running averages",
+   "prose": "At inference there may be one example, so there is no batch to average. During training the layer keeps **running averages**, each step moving them a share 0.1 towards the batch's mean and variance, from a mean of 0 and a variance of 1.",
+   "question": "Two training batches both have mean 5 and variance 5. What is the running mean after them? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.95,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "batch",
+      "value": 5.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sum",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "After one batch: $0.9 \\times 0 + 0.1 \\times 5$."
+    },
+    {
+     "rung": "point",
+     "text": "That is 0.5."
+    },
+    {
+     "rung": "step",
+     "text": "Then $0.9 \\times 0.5 + 0.1 \\times 5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.5$, then $0.45 + 0.5 = 0.95$; the running variance goes 1, 1.4, 1.76.",
+    "generic": "Not quite. Apply the update twice.",
+    "byKey": {
+     "one": "That is after one batch.",
+     "batch": "That is the batch mean; the running mean only moves a tenth of the way each step.",
+     "sum": "You added two tenths of 5 and forgot the 0.9 on the old value."
+    }
+   },
+   "explain": {
+    "text": "Each step keeps 0.9 of the old value and adds 0.1 of the batch's, so 0 goes to 0.5, then 0.95. Over many batches it settles on the data's typical mean."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Training mode, inference mode",
+   "prose": "After those two batches, the running mean is 0.95 and the running variance 1.76. In inference mode the layer normalises with these instead of the batch.",
+   "question": "What does inference mode give the value 8 (before $\\gamma$ and $\\beta$)? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.314,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "train",
+      "value": 1.342,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "novar",
+      "value": 7.05,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the running mean 0.95."
+    },
+    {
+     "rung": "point",
+     "text": "Divide by $\\sqrt{1.76}$."
+    },
+    {
+     "rung": "step",
+     "text": "$7.05/1.3266$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(8 - 0.95)/\\sqrt{1.76} = 5.314$, against 1.342 in training mode: one input, two outputs.",
+    "generic": "Not quite. Use the running statistics.",
+    "byKey": {
+     "train": "That is the training-mode value, which uses the batch.",
+     "novar": "You subtracted the mean and did not divide."
+    }
+   },
+   "explain": {
+    "text": "The same input gives 1.342 in training mode and 5.314 in inference mode, because the running averages have not yet caught up with the data. After enough batches the two agree on typical batches."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Scoring one trade at a time",
+   "prose": "Gil deploys the net and scores live trades one at a time, but leaves the batch-norm layers in training mode, using the batch's own mean and variance.",
+   "question": "What does each batch-norm layer output for a single trade?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "beta",
+      "text": "$\\beta$ for every feature, whatever the trade: a batch of one has variance 0",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "The same as in testing, since the weights are the same",
+      "why": "The weights are the same, but training mode normalises by the batch, and a batch of one is just the trade itself."
+     },
+     {
+      "id": "nan",
+      "text": "Not a number, from dividing by 0",
+      "why": "The $\\epsilon$ keeps the division finite; the numerator is 0 anyway."
+     },
+     {
+      "id": "raw",
+      "text": "The raw input, since there is nothing to normalise",
+      "why": "Subtracting the mean of one value leaves 0, not the value."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the mean of a batch of one value?"
+    },
+    {
+     "rung": "point",
+     "text": "The value itself, so $x - \\mu = 0$."
+    },
+    {
+     "rung": "step",
+     "text": "Then $\\gamma \\cdot 0 + \\beta = \\beta$."
+    }
+   ],
+   "feedback": {
+    "correct": "Every output is $\\beta$: the trade is its own mean, so the input is erased. Use inference mode, with the running averages.",
+    "generic": "Not quite. Normalise a batch of one value.",
+    "byKey": {
+     "same": "That is the classic live-system bug: training mode makes a prediction depend on the rest of its batch."
+    }
+   },
+   "explain": {
+    "text": "A batch of one has $\\mu = x$, so $\\hat x = 0$ and the layer outputs $\\beta$ for every trade. Even with larger batches, training mode makes one trade's score depend on which others share its batch."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Batch norm, forward",
+   "prose": "Write `batchnorm_forward(x, gamma, beta, eps, mode, running)` for `x` of shape $(N, D)$, with `running = (mean, var)`. In `\"train\"` mode use the batch's mean and variance (divided by $N$) and move the running pair a share 0.1 towards them; in `\"eval\"` mode use the running pair and leave it unchanged.",
+   "question": "Write `batchnorm_forward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef batchnorm_forward(x, gamma, beta, eps, mode, running):\n    # x (N, D); running = (mean, var). \"train\": batch statistics (variance over N), and running moves 0.1 of the way to them.\n    # \"eval\": use running, unchanged. Return (out, (new_mean, new_var)).\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef batchnorm_forward(x, gamma, beta, eps, mode, running):\n    x = np.asarray(x, dtype=float)\n    rm, rv = np.asarray(running[0], dtype=float), np.asarray(running[1], dtype=float)\n    if mode == \"train\":\n        mu, var = x.mean(axis=0), x.var(axis=0)\n        new = (0.9 * rm + 0.1 * mu, 0.9 * rv + 0.1 * var)\n    else:\n        mu, var, new = rm, rv, (rm, rv)\n    out = gamma * (x - mu) / np.sqrt(var + eps) + beta\n    return out, new\n",
+    "prelude": "import numpy as np\n_g = np.random.default_rng(6)\nXb = _g.standard_normal((5, 3)) * 2 + 1\nG3 = np.array([1.0, 2.0, 0.5])\nB3 = np.array([0.0, -1.0, 3.0])\n",
+    "examples": [
+     {
+      "call": "batchnorm_forward(np.array([[1.0], [3.0]]), 1.0, 0.0, 1e-5, \"eval\", (np.zeros(1), np.ones(1)))[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.9999950000374997], [2.999985000112499]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[a.tolist() if hasattr(a, \"tolist\") else a for a in [batchnorm_forward(np.array([[2.0], [4.0], [6.0], [8.0]]), 1.0, 0.0, 1e-5, \"train\", (np.zeros(1), np.ones(1)))[0]]]",
+      "compare": "isclose",
+      "expect": "[[[-1.3416394448610998], [-0.4472131482870333], [0.4472131482870333], [1.3416394448610998]]]"
+     },
+     {
+      "call": "[a.tolist() for a in batchnorm_forward(np.array([[2.0], [4.0], [6.0], [8.0]]), 1.0, 0.0, 1e-5, \"train\", (np.zeros(1), np.ones(1)))[1]]",
+      "compare": "isclose",
+      "expect": "[[0.5], [1.4]]"
+     },
+     {
+      "call": "batchnorm_forward(Xb, G3, B3, 1e-5, \"train\", (np.zeros(3), np.ones(3)))[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[1.1897051114243158, 1.6160624647460162, 2.222407810145318], [-0.5851375637670369, -0.8555189205672676, 3.710875286729988], [0.5946629880581221, 0.7108190671473109, 3.3060478533229767], [0.4418949374861642, -3.5610791202295027, 2.786260200871673], [-1.6411254732015657, -2.910283491096557, 2.9744088489300444]]"
+     },
+     {
+      "call": "batchnorm_forward(Xb, G3, B3, 1e-5, \"eval\", (np.full(3, 0.5), np.full(3, 2.0)))[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[1.8428793661445653, 4.73176864237456, 1.3713307936433423], [0.15844093355645378, 2.5743293188223864, 4.132882516947447], [1.278146595394172, 3.9415831704452717, 3.381806719892693], [1.1331600119341891, 0.2126502733034772, 2.417445381831948], [-0.8437586663647735, 0.7807287069049365, 2.7665173175353264]]"
+     },
+     {
+      "call": "[a.tolist() for a in batchnorm_forward(Xb, G3, B3, 1e-5, \"eval\", (np.full(3, 0.5), np.full(3, 2.0)))[1]]",
+      "compare": "isclose",
+      "expect": "[[0.5, 0.5, 0.5], [2.0, 2.0, 2.0]]"
+     },
+     {
+      "call": "batchnorm_forward(np.array([[3.0, 1.0], [3.0, 2.0]]), 1.0, 0.0, 1e-5, \"train\", (np.zeros(2), np.ones(2)))[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.0, -0.9999800005999799], [0.0, 0.9999800005999799]]"
+     },
+     {
+      "call": "batchnorm_forward(np.array([[7.0, -2.0]]), np.array([1.5, 1.0]), np.array([0.1, 0.2]), 1e-5, \"train\", (np.zeros(2), np.ones(2)))[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.1, 0.2]]"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests, compared to $10^{-9}$: the batch of 4 from the lesson and its running averages, a seeded batch in both modes, a constant feature, and a batch of one row.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef batchnorm_forward(x, gamma, beta, eps, mode, running):\n    x = np.asarray(x, dtype=float)\n    rm, rv = np.asarray(running[0], dtype=float), np.asarray(running[1], dtype=float)\n    if mode == \"train\":\n        mu, var = x.mean(axis=0), x.var(axis=0, ddof=1)\n        new = (0.9 * rm + 0.1 * mu, 0.9 * rv + 0.1 * var)\n    else:\n        mu, var, new = rm, rv, (rm, rv)\n    out = gamma * (x - mu) / np.sqrt(var + eps) + beta\n    return out, new\n",
+      "test": 1,
+      "symptom": "Divides the variance by N - 1."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef batchnorm_forward(x, gamma, beta, eps, mode, running):\n    x = np.asarray(x, dtype=float)\n    rm, rv = np.asarray(running[0], dtype=float), np.asarray(running[1], dtype=float)\n    if mode == \"train\":\n        mu, var = x.mean(axis=0), x.var(axis=0)\n        new = (0.1 * rm + 0.9 * mu, 0.1 * rv + 0.9 * var)\n    else:\n        mu, var, new = rm, rv, (rm, rv)\n    out = gamma * (x - mu) / np.sqrt(var + eps) + beta\n    return out, new\n",
+      "test": 2,
+      "symptom": "Swaps the weights of the running average."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef batchnorm_forward(x, gamma, beta, eps, mode, running):\n    x = np.asarray(x, dtype=float)\n    rm, rv = np.asarray(running[0], dtype=float), np.asarray(running[1], dtype=float)\n    if mode == \"train\":\n        mu, var = x.mean(axis=1, keepdims=True), x.var(axis=1, keepdims=True)\n        new = (0.9 * rm + 0.1 * mu, 0.9 * rv + 0.1 * var)\n    else:\n        mu, var, new = rm, rv, (rm, rv)\n    out = gamma * (x - mu) / np.sqrt(var + eps) + beta\n    return out, new\n",
+      "test": 1,
+      "symptom": "Normalises over the features of each row instead of over the batch."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef batchnorm_forward(x, gamma, beta, eps, mode, running):\n    x = np.asarray(x, dtype=float)\n    rm, rv = np.asarray(running[0], dtype=float), np.asarray(running[1], dtype=float)\n    if mode == \"train\":\n        mu, var = x.mean(axis=0), x.var(axis=0)\n        new = (0.9 * rm + 0.1 * mu, 0.9 * rv + 0.1 * var)\n    else:\n        mu, var = x.mean(axis=0), x.var(axis=0)\n        new = (rm, rv)\n    out = gamma * (x - mu) / np.sqrt(var + eps) + beta\n    return out, new\n",
+      "test": 4,
+      "symptom": "Uses the batch statistics in eval mode."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef batchnorm_forward(x, gamma, beta, eps, mode, running):\n    x = np.asarray(x, dtype=float)\n    rm, rv = np.asarray(running[0], dtype=float), np.asarray(running[1], dtype=float)\n    if mode == \"train\":\n        mu, var = x.mean(axis=0), x.var(axis=0)\n        new = (0.9 * rm + 0.1 * mu, 0.9 * rv + 0.1 * var)\n    else:\n        mu, var, new = rm, rv, (rm, rv)\n    out = gamma * (x - mu) / (np.sqrt(var) + eps) + beta\n    return out, new\n",
+      "test": 1,
+      "symptom": "Puts eps outside the root."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Means and variances go over axis 0, the batch."
+    },
+    {
+     "rung": "point",
+     "text": "Keep `eps` inside the square root."
+    },
+    {
+     "rung": "step",
+     "text": "In eval mode return the running pair as it came."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass, including the batch of one, which comes out as $\\beta$.",
+    "generic": "Not quite. Read the first failing test in the results."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Batch norm, backward",
+   "prose": "Now the training-mode op for our autograd. Its backward must remember that every $\\hat x_i$ depends on the whole batch through $\\mu$ and $\\sigma^2$: with $d_i = \\gamma\\,g_i$, $$\\frac{\\partial L}{\\partial x_i} = \\frac{1}{N\\sigma}\\Big(N d_i - \\sum_j d_j - \\hat x_i \\sum_j d_j \\hat x_j\\Big).$$",
+   "question": "Write `batchnorm_op`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\n\n\ndef batchnorm_op(x, gamma, beta, eps=1e-5):\n    # training mode as a Tensor op: forward, plus a _backward that adds into x.grad, gamma.grad and beta.grad\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\n\n\ndef batchnorm_op(x, gamma, beta, eps=1e-5):\n    n = x.data.shape[0]\n    mu = x.data.mean(axis=0)\n    inv = 1 / np.sqrt(x.data.var(axis=0) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"batchnorm\")\n\n    def _backward():\n        g = out.grad\n        gamma.grad += (g * xhat).sum(axis=0)\n        beta.grad += g.sum(axis=0)\n        d = g * gamma.data\n        x.grad += inv / n * (n * d - d.sum(axis=0) - xhat * (d * xhat).sum(axis=0))\n    out._backward = _backward\n    return out\n",
+    "prelude": "import numpy as np\nfrom autograd import Tensor, grad_check as _gc\n_g = np.random.default_rng(8)\nXa = _g.standard_normal((6, 4))\nGa = _g.standard_normal(4)\nBa = _g.standard_normal(4)\nRa = _g.standard_normal((6, 4))\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py"
+    },
+    "examples": [
+     {
+      "setup": "x, g, b = Tensor(np.array([[1.0], [3.0]])), Tensor(np.ones(1)), Tensor(np.zeros(1))",
+      "call": "batchnorm_op(x, g, b).data.tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.9999950000374997], [0.9999950000374997]]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x, g, b = Tensor(Xa), Tensor(Ga), Tensor(Ba)",
+      "call": "batchnorm_op(x, g, b).data.tolist()",
+      "compare": "isclose",
+      "expect": "[[-1.683075449925981, 1.9751026710546145, -0.743672320939902, -2.4980835232776215], [-1.629123143938582, 1.7126658546406375, -0.825542569902753, -1.9111109878775718], [-1.9362597646094526, 1.3511280738805884, -1.1751574191524137, -2.3573349382182784], [-1.927142390145304, 1.325239179471973, -0.8870925429745581, -2.044629374159159], [-1.8423627754288388, 1.340207894573311, -0.8499355901727498, -2.474481200457292], [-1.8804104446796852, 1.6104557343600734, -0.6872495965890331, -2.1625671251338017]]"
+     },
+     {
+      "setup": "x, g, b = Tensor(Xa), Tensor(Ga), Tensor(Ba)\n(batchnorm_op(x, g, b) * Tensor(Ra)).sum().backward()",
+      "call": "[g.grad.tolist(), b.grad.tolist()]",
+      "compare": "isclose",
+      "expect": "[[-1.9929236633917116, -2.5519597220848214, -4.242194186718674, -2.1494010546515363], [0.5797230294945352, -1.6051424111064496, -2.6328670743337437, 0.07172772099799929]]"
+     },
+     {
+      "setup": "x, g, b = Tensor(Xa), Tensor(Ga), Tensor(Ba)\n(batchnorm_op(x, g, b) * Tensor(Ra)).sum().backward()",
+      "call": "x.grad.tolist()",
+      "compare": "isclose",
+      "expect": "[[0.051883879660247746, -0.22298883707666797, 0.12485982283184026, 0.5276358585987304], [-0.08787228632396824, 0.20108099842600752, 0.4438845945887651, -0.3331930094802567], [-0.13403601935351453, 0.04391583351602428, -0.0722396037909291, -0.7256303280483676], [-0.020102390172223296, -0.14737443689742946, -0.289396804617175, 0.6123038380200563], [0.0898162969666415, -0.11142872425071643, 0.15152749737038362, -0.15151755793478447], [0.10031051922281682, 0.236795166282782, -0.35863550638288494, 0.0704011988446219]]"
+     },
+     {
+      "setup": "x, g, b = Tensor(Xa), Tensor(Ga), Tensor(Ba)",
+      "call": "_gc(lambda: (batchnorm_op(x, g, b) * Tensor(Ra)).sum(), [x, g, b]) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "x, g, b = Tensor(Xa), Tensor(Ga), Tensor(Ba)\nL = (batchnorm_op(x, g, b) * Tensor(Ra)).sum() + (batchnorm_op(x, g, b) * Tensor(Ra[::-1])).sum()\nL.backward()",
+      "call": "x.grad.tolist()",
+      "compare": "isclose",
+      "expect": "[[0.09551176063490739, -0.030422135922421795, -0.4183136538355775, 0.5573462785517458], [-0.09451747078025481, 0.16790577306126186, 0.5775442408981586, -0.33077009685622233], [-0.058859369893492164, -0.0014209777202707288, -0.2746141293063819, -0.2559756116346416], [-0.061487682625535646, -0.010654373492047592, -0.06693834933811674, -0.03928319543930625], [-0.03304577839491446, 0.03506689244433592, 0.5599584818234371, -0.7211630626599884], [0.1523985410592898, -0.16047517837085787, -0.3776365902415193, 0.7898456880384127]]"
+     },
+     {
+      "setup": "x, g, b = Tensor(np.array([[1.0, 2.0], [1.0, 5.0], [1.0, -1.0]])), Tensor(np.ones(2)), Tensor(np.zeros(2))\n(batchnorm_op(x, g, b) * Tensor(np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]))).sum().backward()",
+      "call": "bool(np.isfinite(x.grad).all())",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "`autograd.py` is in the working directory. Submit runs 6 hidden tests on a seeded batch of 6 rows. They check the forward pass and the gradients of $\\gamma$, $\\beta$ and $\\mathbf{x}$ to $10^{-9}$, and `grad_check` below $10^{-6}$. The last two use an input fed to two batch-norm calls and a constant feature.",
+    "budget": 2000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef batchnorm_op(x, gamma, beta, eps=1e-5):\n    n = x.data.shape[0]\n    mu = x.data.mean(axis=0)\n    inv = 1 / np.sqrt(x.data.var(axis=0) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"batchnorm\")\n\n    def _backward():\n        g = out.grad\n        gamma.grad += (g * xhat).sum(axis=0)\n        beta.grad += g.sum(axis=0)\n        d = g * gamma.data\n        x.grad += d * inv\n    out._backward = _backward\n    return out\n",
+      "test": 3,
+      "symptom": "Treats the batch mean and variance as constants in the backward pass."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef batchnorm_op(x, gamma, beta, eps=1e-5):\n    n = x.data.shape[0]\n    mu = x.data.mean(axis=0)\n    inv = 1 / np.sqrt(x.data.var(axis=0) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"batchnorm\")\n\n    def _backward():\n        g = out.grad\n        gamma.grad += (g * xhat).sum(axis=0)\n        beta.grad += g.sum(axis=0)\n        d = g * gamma.data\n        x.grad += inv / n * (n * d - d.sum(axis=0))\n    out._backward = _backward\n    return out\n",
+      "test": 3,
+      "symptom": "Drops the variance's share of the gradient."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef batchnorm_op(x, gamma, beta, eps=1e-5):\n    n = x.data.shape[0]\n    mu = x.data.mean(axis=0)\n    inv = 1 / np.sqrt(x.data.var(axis=0) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"batchnorm\")\n\n    def _backward():\n        g = out.grad\n        gamma.grad += g.sum(axis=0)\n        beta.grad += g.sum(axis=0)\n        d = g * gamma.data\n        x.grad += inv / n * (n * d - d.sum(axis=0) - xhat * (d * xhat).sum(axis=0))\n    out._backward = _backward\n    return out\n",
+      "test": 2,
+      "symptom": "Gives gamma the gradient of beta."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef batchnorm_op(x, gamma, beta, eps=1e-5):\n    n = x.data.shape[0]\n    mu = x.data.mean(axis=0)\n    inv = 1 / np.sqrt(x.data.var(axis=0) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"batchnorm\")\n\n    def _backward():\n        g = out.grad\n        gamma.grad += (g * xhat).sum(axis=0)\n        beta.grad += g.sum(axis=0)\n        d = g * gamma.data\n        x.grad = inv / n * (n * d - d.sum(axis=0) - xhat * (d * xhat).sum(axis=0))\n    out._backward = _backward\n    return out\n",
+      "test": 5,
+      "symptom": "Assigns the gradient instead of adding it."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Save `xhat` and `inv` from the forward pass for the closure."
+    },
+    {
+     "rung": "point",
+     "text": "`gamma.grad` gets the batch sum of `g * xhat`; `beta.grad` the sum of `g`."
+    },
+    {
+     "rung": "step",
+     "text": "Add into `x.grad` with `+=`, so a reused output adds up."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass: your op matches central differences, and `nt_ops_l2.batchnorm` adds the eval mode and running averages to it.",
+    "generic": "Not quite. Read the first failing test in the results."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 2,
+   "title": "One trade, scored properly",
+   "prose": "In inference mode a feature has running mean 0.2 and running variance 0.04, with $\\gamma = 1.5$ and $\\beta = 0.1$. A live trade arrives with value 0.5 on that feature.",
+   "question": "What does the layer output for it? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.35,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "train",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "novar",
+      "value": 0.55,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "var",
+      "value": 11.35,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Normalise with the running pair."
+    },
+    {
+     "rung": "point",
+     "text": "$(0.5 - 0.2)/\\sqrt{0.04} = 1.5$."
+    },
+    {
+     "rung": "step",
+     "text": "$1.5 \\times 1.5 + 0.1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1.5 \\times 0.3/0.2 + 0.1 = 2.35$, the same however many trades share the request.",
+    "generic": "Not quite. Use the running mean and variance.",
+    "byKey": {
+     "train": "That is $\\beta$, what training mode gives a batch of one.",
+     "novar": "You did not divide by the running sd.",
+     "var": "You divided by the variance, 0.04, instead of the sd, 0.2."
+    }
+   },
+   "explain": {
+    "text": "$(0.5 - 0.2)/0.2 = 1.5$, so the output is $1.5 \\times 1.5 + 0.1 = 2.35$. Inference mode makes each trade's score depend on that trade alone."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Batch norm normalises each feature by the batch's mean and variance (with $\\epsilon$), then applies a learned $\\gamma\\hat x + \\beta$.",
+   "Training keeps running averages; inference uses them, so one input gives one output. A batch of one in training mode outputs $\\beta$.",
+   "On the deep spiral net at step 1, the plain net blew up on all five seeds while batch norm ended below 0.25 nats."
+  ],
+  "formula": {
+   "name": "Batch norm",
+   "tex": "y_i = \\gamma\\,\\dfrac{x_i - \\mu_B}{\\sqrt{\\sigma_B^2 + \\epsilon}} + \\beta",
+   "note": "$\\mu_B$, $\\sigma_B^2$: over the batch, per feature; the variance divides by $N$."
+  },
+  "trap": "Scoring in training mode makes a prediction depend on the rest of its batch."
+ },
+ "quiz": [
+  {
+   "id": "q7-three",
+   "difficulty": 2,
+   "prose": "One feature over a batch of three: 1, 2 and 6.",
+   "question": "What does 6 become after batch normalisation, before $\\gamma$ and $\\beta$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.389,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "ddof",
+      "value": 1.134,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "nosqrt",
+      "value": 0.643,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Mean 3, variance $(4 + 1 + 9)/3 = 4.667$, so $3/2.160 = 1.389$.",
+    "generic": "Not quite. Subtract the mean, divide by the root of the variance.",
+    "byKey": {
+     "ddof": "You divided by 2; batch norm divides by the batch size, 3.",
+     "nosqrt": "You divided by the variance."
+    }
+   },
+   "explain": {
+    "text": "$\\mu = 3$, $\\sigma^2 = 14/3$, so $\\hat x = 3/\\sqrt{14/3} = 1.389$."
+   }
+  },
+  {
+   "id": "q7-const",
+   "difficulty": 2,
+   "prose": "A feature is 4.0 for every row of a batch.",
+   "question": "What does batch norm output for it (with $\\gamma$, $\\beta$)?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "beta",
+      "text": "$\\beta$ for every row, thanks to $\\epsilon$",
+      "correct": true
+     },
+     {
+      "id": "nan",
+      "text": "Not a number, since the variance is 0",
+      "why": "$\\epsilon$ is there to stop exactly that."
+     },
+     {
+      "id": "four",
+      "text": "4.0, unchanged",
+      "why": "Subtracting the batch mean, 4.0, leaves 0."
+     },
+     {
+      "id": "gamma",
+      "text": "$\\gamma$ for every row",
+      "why": "The normalised value is 0, and $\\gamma \\times 0 = 0$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Every row gives $\\beta$.",
+    "generic": "Not quite. Subtract the mean first."
+   },
+   "explain": {
+    "text": "The mean is 4.0, so $x - \\mu = 0$ and $0/\\sqrt{0 + \\epsilon} = 0$. The output is $\\gamma \\cdot 0 + \\beta = \\beta$."
+   }
+  },
+  {
+   "id": "q7-mode",
+   "difficulty": 3,
+   "question": "Which mode should a batch-norm layer use when the model scores live data?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "eval",
+      "text": "Inference mode, with the running averages from training",
+      "correct": true
+     },
+     {
+      "id": "train",
+      "text": "Training mode, so it adapts to the live data",
+      "why": "Then a score depends on which other rows share the batch, and a batch of one gives $\\beta$."
+     },
+     {
+      "id": "both",
+      "text": "Either: they give the same output",
+      "why": "They agree only when the batch statistics match the running ones."
+     },
+     {
+      "id": "off",
+      "text": "Neither: drop the layer at inference",
+      "why": "The layer's $\\gamma$, $\\beta$ and running statistics are part of the model."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Inference mode: each row is scored on its own.",
+    "generic": "Not quite. What should a live score depend on?"
+   },
+   "explain": {
+    "text": "Inference mode uses fixed running averages, so a row's output depends only on that row."
+   }
+  }
+ ]
+}

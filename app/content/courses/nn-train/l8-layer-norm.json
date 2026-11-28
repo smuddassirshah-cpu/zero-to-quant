@@ -1,0 +1,781 @@
+{
+ "id": "l8-layer-norm",
+ "course": "nn-train",
+ "title": "Layer normalisation",
+ "minutes": 15,
+ "objectives": [
+  "Write layer normalisation with its backward pass, and say when it is preferred to batch normalisation."
+ ],
+ "skills": [
+  "nt-signal"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A batch of one, again",
+   "prose": "Batch norm on a batch of one erases the input. Text models also see sequences of different lengths, so a \"batch statistic\" mixes positions and examples. Another way: normalise each example over its own features, one row at a time.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "feature 1",
+      "feature 2",
+      "feature 3"
+     ],
+     "rows": [
+      [
+       "example 1",
+       "1",
+       "4",
+       "7"
+      ],
+      [
+       "example 2",
+       "2",
+       "5",
+       "9"
+      ],
+      [
+       "example 3",
+       "3",
+       "6",
+       "14"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Batch norm averages down each column; layer norm across each row."
+    }
+   },
+   "question": "Normalised across its own features, what happens to a single example?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "keeps",
+      "text": "Its features get mean 0 and sd 1, on its own",
+      "correct": true
+     },
+     {
+      "id": "erased",
+      "text": "It is erased, as with batch norm",
+      "why": "Its features differ from one another, so their spread is not 0."
+     },
+     {
+      "id": "batch",
+      "text": "It still depends on the other examples",
+      "why": "Only its own features enter its mean and variance."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing changes: one example cannot be normalised",
+      "why": "One example with several features has a mean and a variance of its own."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Batch norm averages down a column."
+    },
+    {
+     "rung": "point",
+     "text": "Here we average along the example's own row."
+    },
+    {
+     "rung": "step",
+     "text": "A row of several different numbers has a non-zero spread."
+    }
+   ],
+   "feedback": {
+    "correct": "Each example is normalised by its own features, so it stands alone.",
+    "generic": "Not quite. What goes into the mean now?",
+    "byKey": {
+     "erased": "That was batch norm's problem; a row has several different features."
+    }
+   },
+   "explain": {
+    "text": "Averaging along the row uses only that example's features, so a batch of one is fine and no other example matters. That is **layer normalisation**."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Normalise one example by hand",
+   "prose": "Name it: **layer normalisation** takes each example's feature vector, subtracts its mean, divides by $\\sqrt{\\sigma^2 + \\epsilon}$ (over its own $D$ features), then applies a learned $\\gamma$ and $\\beta$ per feature. It keeps no running statistics, so training and inference agree.",
+   "question": "An example has features $(1, 2, 3, 6)$. What does the 6 become, before $\\gamma$ and $\\beta$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.6036,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "ddof",
+      "value": 1.3887,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "nosqrt",
+      "value": 0.8571,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The mean is 3."
+    },
+    {
+     "rung": "point",
+     "text": "The variance is $(4 + 1 + 0 + 9)/4 = 3.5$."
+    },
+    {
+     "rung": "step",
+     "text": "$3/\\sqrt{3.5}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$3/\\sqrt{3.5} = 1.6036$.",
+    "generic": "Not quite. Use the example's own mean and variance.",
+    "byKey": {
+     "ddof": "You divided by 3; layer norm divides by the number of features, 4.",
+     "nosqrt": "You divided by the variance."
+    }
+   },
+   "explain": {
+    "text": "Mean 3, variance 3.5, so 6 becomes $3/1.8708 = 1.6036$. The same input always gives the same output, in training and in use."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Which axis",
+   "prose": "In a sequence model a batch is an array of shape (32, 10, 64): 32 sequences of 10 positions, each a vector of 64 features. Layer norm normalises over the last axis, one vector at a time.",
+   "question": "How many separate means does one layer-norm call compute on this array?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 320,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "feat",
+      "value": 64,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 20480,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "batch",
+      "value": 32,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One mean per feature vector."
+    },
+    {
+     "rung": "point",
+     "text": "There is one vector per sequence and position."
+    },
+    {
+     "rung": "step",
+     "text": "$32 \\times 10$."
+    }
+   ],
+   "feedback": {
+    "correct": "$32 \\times 10 = 320$ vectors, each with its own mean over 64 features.",
+    "generic": "Not quite. Count the feature vectors.",
+    "byKey": {
+     "feat": "64 is how many numbers each mean averages, not how many means there are.",
+     "all": "That counts every number; each mean covers 64 of them.",
+     "batch": "Each sequence has 10 positions, each normalised on its own."
+    }
+   },
+   "explain": {
+    "text": "The last axis is reduced, so the result has shape (32, 10, 1): 320 means. `sequence` L4 puts this op before attention and the MLP in each block (pre-norm residual), and reuses this course's `layernorm`."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Layer norm, backward",
+   "prose": "We derive $\\partial L/\\partial x_i$ for one feature vector, with $\\hat x_i = (x_i - \\mu)/s$, $s = \\sqrt{\\sigma^2 + \\epsilon}$, and $d_i = \\gamma_i\\,\\partial L/\\partial y_i$ the gradient reaching $\\hat x_i$.",
+   "question": "Put the lines in order. Leave out the two that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "b1",
+      "text": "$\\partial \\mu/\\partial x_i = 1/D$, since $\\mu$ is the mean of $D$ features"
+     },
+     {
+      "id": "b2",
+      "text": "$\\partial s/\\partial x_i = \\hat x_i/D$, from $\\sigma^2 = \\tfrac1D\\sum_j (x_j - \\mu)^2$"
+     },
+     {
+      "id": "b3",
+      "text": "$\\partial \\hat x_j/\\partial x_i = \\big(\\delta_{ij} - \\tfrac1D - \\tfrac1D\\hat x_i\\hat x_j\\big)/s$, by the quotient rule"
+     },
+     {
+      "id": "b4",
+      "text": "$\\partial L/\\partial x_i = \\sum_j d_j\\,\\partial \\hat x_j/\\partial x_i$, the chain rule over every $\\hat x_j$"
+     },
+     {
+      "id": "b5",
+      "text": "$\\partial L/\\partial x_i = \\tfrac1s\\big(d_i - \\tfrac1D\\sum_j d_j - \\hat x_i\\,\\tfrac1D\\sum_j d_j\\hat x_j\\big)$, collecting terms"
+     },
+     {
+      "id": "x1",
+      "text": "$\\partial L/\\partial x_i = d_i/s$, treating $\\mu$ and $s$ as constants",
+      "why": "Every $\\hat x_j$ depends on $x_i$ through $\\mu$ and $s$, so those paths add terms."
+     },
+     {
+      "id": "x2",
+      "text": "$\\partial \\mu/\\partial x_i = 1$, since $x_i$ appears in the mean once",
+      "why": "It appears with weight $1/D$."
+     }
+    ],
+    "answer": [
+     "b1",
+     "b2",
+     "b3",
+     "b4",
+     "b5"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ],
+    "same": [
+     [
+      "b1",
+      "b2"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with how the mean and the scale move with $x_i$."
+    },
+    {
+     "rung": "point",
+     "text": "Then differentiate $\\hat x_j$ with the quotient rule."
+    },
+    {
+     "rung": "step",
+     "text": "Finally sum over $j$ and collect."
+    }
+   ],
+   "feedback": {
+    "correct": "Mean and scale first, then the quotient rule, the chain rule, and collecting the sums.",
+    "generic": "Not quite. Each line uses the one before.",
+    "byKey": {
+     "x1": "That drops the paths through $\\mu$ and $s$, which every feature shares.",
+     "x2": "The mean weights each feature by $1/D$."
+    }
+   },
+   "explain": {
+    "text": "Each feature moves the shared mean by $1/D$ and the shared scale by $\\hat x_i/D$. Summing those paths subtracts the mean of $d$ and the part of $d$ along $\\hat x$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "The wrong axis",
+   "prose": "Hal writes layer norm as `(x - x.mean(axis=0)) / np.sqrt(x.var(axis=0) + eps)` for `x` of shape (batch, features). It runs, and the training loss falls.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "feature 1",
+      "feature 2",
+      "feature 3"
+     ],
+     "rows": [
+      [
+       "example 1",
+       "1",
+       "4",
+       "7"
+      ],
+      [
+       "example 2",
+       "2",
+       "5",
+       "9"
+      ],
+      [
+       "example 3",
+       "3",
+       "6",
+       "14"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Batch norm averages down each column; layer norm across each row."
+    }
+   },
+   "question": "What has he built?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "bn",
+      "text": "Batch norm, without running averages",
+      "correct": true
+     },
+     {
+      "id": "ln",
+      "text": "Layer norm: the formula is the same",
+      "why": "The formula is the same, but axis 0 averages down the batch, not across the features."
+     },
+     {
+      "id": "none",
+      "text": "Nothing useful: the output is all zeros",
+      "why": "Each feature still has mean 0 and sd 1 over the batch; it is not zero."
+     },
+     {
+      "id": "error",
+      "text": "Code that fails on a batch of one at once",
+      "why": "With one row, the variance over axis 0 is 0 and every output is 0, but nothing raises an error."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which axis does `axis=0` average over?"
+    },
+    {
+     "rung": "point",
+     "text": "Axis 0 is the batch."
+    },
+    {
+     "rung": "step",
+     "text": "That is batch norm's statistic."
+    }
+   ],
+   "feedback": {
+    "correct": "Axis 0 is the batch, so this is batch norm in training mode, with all its faults: one example's output depends on the others.",
+    "generic": "Not quite. Read the axis.",
+    "byKey": {
+     "ln": "That is the trap: the same formula over the wrong axis silently becomes batch norm."
+    }
+   },
+   "explain": {
+    "text": "Layer norm reduces over the last axis, the features of each example. Over axis 0 the same formula is batch norm, and a loss that falls hides the change."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Layer norm, forward",
+   "prose": "Write `layernorm_forward(x, gamma, beta, eps)`, normalising over the last axis of an array of any shape. Then `compare_norms(x)`, returning layer norm and batch norm of an $(N, D)$ array, both with $\\gamma = 1$, $\\beta = 0$, $\\epsilon = 10^{-5}$.",
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef layernorm_forward(x, gamma, beta, eps):\n    # normalise over the last axis of x, then gamma * xhat + beta\n    ...\n\n\ndef compare_norms(x):\n    # (layer norm of x, batch norm of x) with gamma = 1, beta = 0, eps = 1e-5; x of shape (N, D)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef layernorm_forward(x, gamma, beta, eps):\n    x = np.asarray(x, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    var = x.var(axis=-1, keepdims=True)\n    return gamma * (x - mu) / np.sqrt(var + eps) + beta\n\n\ndef compare_norms(x):\n    x = np.asarray(x, dtype=float)\n    ln = layernorm_forward(x, 1.0, 0.0, 1e-5)\n    bn = (x - x.mean(axis=0)) / np.sqrt(x.var(axis=0) + 1e-5)\n    return ln, bn\n",
+    "examples": [
+     {
+      "call": "layernorm_forward(np.array([0.0, 2.0]), 1.0, 0.0, 1e-5).tolist()",
+      "compare": "isclose",
+      "expect": "[-0.9999950000374997, 0.9999950000374997]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "layernorm_forward(np.array([1.0, 2.0, 3.0, 6.0]), 1.0, 0.0, 1e-5).tolist()",
+      "compare": "isclose",
+      "expect": "[-1.0690434404458735, -0.5345217202229368, 0.0, 1.6035651606688102]"
+     },
+     {
+      "call": "layernorm_forward(np.array([[1.0, 4.0, 7.0], [2.0, 5.0, 9.0]]), np.array([1.0, 2.0, 0.5]), np.array([0.0, 1.0, -1.0]), 1e-5).tolist()",
+      "compare": "isclose",
+      "expect": "[[-1.2247438507721387, 1.0, -0.3876280746139307], [-1.162475680527521, 0.767504863894496, -0.36063837570986346]]"
+     },
+     {
+      "call": "layernorm_forward(np.arange(24.0).reshape(2, 3, 4) ** 1.5, 1.0, 0.0, 1e-5).tolist()",
+      "compare": "isclose",
+      "expect": "[[[-1.141007739570316, -0.6352743772255343, 0.2894222203747581, 1.4868598964210924], [-1.299184544618123, -0.4889203793313889, 0.40701335892142243, 1.3810915650280895], [-1.317547893398264, -0.4710573180202727, 0.42386836402763883, 1.3647368473908978]], [[-1.3248113541531337, -0.4639198379755024, 0.43075338376041733, 1.3579778083682164], [-1.328707804292881, -0.46007328886795457, 0.4345001101517308, 1.354280983009103], [-1.3311386314899007, -0.4576671883869465, 0.4368567941507238, 1.351949025726127]]]"
+     },
+     {
+      "call": "layernorm_forward(np.array([[5.0, 5.0, 5.0]]), 1.0, 0.25, 1e-5).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.25, 0.25, 0.25]]"
+     },
+     {
+      "call": "[a.tolist() for a in compare_norms(np.array([[1.0, 4.0, 7.0], [2.0, 5.0, 9.0], [3.0, 6.0, 14.0]]))]",
+      "compare": "isclose",
+      "expect": "[[[-1.2247438507721387, 0.0, 1.2247438507721387], [-1.162475680527521, -0.11624756805275199, 1.278723248580273], [-1.0051411889135538, -0.35897899604055494, 1.3641201849541085]], [[-1.2247356859083902, -1.2247356859083902, -1.0190487428175694], [0.0, 0.0, -0.3396829142725232], [1.2247356859083902, 1.2247356859083902, 1.3587316570900927]]]"
+     },
+     {
+      "setup": "M = np.array([[1.0, 4.0, 7.0], [2.0, 5.0, 9.0], [3.0, 6.0, 14.0]])",
+      "call": "bool(np.allclose(compare_norms(M)[0], compare_norms(M.T)[1].T))",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, compared to $10^{-9}$: one vector, a batch with $\\gamma$ and $\\beta$, a 3-D array and equal features. The last two compare the two norms on the table's matrix: layer norm of $\\mathbf{X}$ is batch norm of $\\mathbf{X}^T$, transposed.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef layernorm_forward(x, gamma, beta, eps):\n    x = np.asarray(x, dtype=float)\n    mu = x.mean(axis=0)\n    var = x.var(axis=0)\n    return gamma * (x - mu) / np.sqrt(var + eps) + beta\n\n\ndef compare_norms(x):\n    x = np.asarray(x, dtype=float)\n    ln = layernorm_forward(x, 1.0, 0.0, 1e-5)\n    bn = (x - x.mean(axis=0)) / np.sqrt(x.var(axis=0) + 1e-5)\n    return ln, bn\n",
+      "test": 2,
+      "symptom": "Normalises over the batch axis, which is batch norm."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef layernorm_forward(x, gamma, beta, eps):\n    x = np.asarray(x, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    var = x.var(axis=-1, keepdims=True, ddof=1)\n    return gamma * (x - mu) / np.sqrt(var + eps) + beta\n\n\ndef compare_norms(x):\n    x = np.asarray(x, dtype=float)\n    ln = layernorm_forward(x, 1.0, 0.0, 1e-5)\n    bn = (x - x.mean(axis=0)) / np.sqrt(x.var(axis=0) + 1e-5)\n    return ln, bn\n",
+      "test": 1,
+      "symptom": "Divides the variance by D - 1."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef layernorm_forward(x, gamma, beta, eps):\n    x = np.asarray(x, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    var = x.var(axis=-1, keepdims=True)\n    return gamma * (x - mu) / np.sqrt(var) + beta\n\n\ndef compare_norms(x):\n    x = np.asarray(x, dtype=float)\n    ln = layernorm_forward(x, 1.0, 0.0, 1e-5)\n    bn = (x - x.mean(axis=0)) / np.sqrt(x.var(axis=0) + 1e-5)\n    return ln, bn\n",
+      "test": 1,
+      "symptom": "Leaves out eps, so equal features give nan."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef layernorm_forward(x, gamma, beta, eps):\n    x = np.asarray(x, dtype=float)\n    mu = x.mean(axis=1, keepdims=True)\n    var = x.var(axis=1, keepdims=True)\n    return gamma * (x - mu) / np.sqrt(var + eps) + beta\n\n\ndef compare_norms(x):\n    x = np.asarray(x, dtype=float)\n    ln = layernorm_forward(x, 1.0, 0.0, 1e-5)\n    bn = (x - x.mean(axis=0)) / np.sqrt(x.var(axis=0) + 1e-5)\n    return ln, bn\n",
+      "test": 1,
+      "symptom": "Hard-codes axis 1, which fails for a single vector."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`axis=-1, keepdims=True` keeps the shapes lined up for any number of axes."
+    },
+    {
+     "rung": "point",
+     "text": "Batch norm reduces over axis 0."
+    },
+    {
+     "rung": "step",
+     "text": "Keep `eps` inside the root."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass: on a matrix, layer norm is batch norm of the transpose, transposed back.",
+    "generic": "Not quite. Read the first failing test in the results."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Layer norm, backward",
+   "prose": "Write `layernorm(x, gamma, beta, eps=1e-5)` as an op for our autograd, for any leading shape, with the backward you just derived. `sequence` L4 imports the course's op under this name.",
+   "question": "Write `layernorm`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\n\n\ndef layernorm(x, gamma, beta, eps=1e-5):\n    # over the last axis of x (any leading shape), as a Tensor op with its backward\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\n\n\ndef layernorm(x, gamma, beta, eps=1e-5):\n    d = x.data.shape[-1]\n    mu = x.data.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.data.var(axis=-1, keepdims=True) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"layernorm\")\n\n    def _backward():\n        g = out.grad\n        lead = tuple(range(g.ndim - 1))\n        gamma.grad += (g * xhat).sum(axis=lead) if lead else g * xhat\n        beta.grad += g.sum(axis=lead) if lead else g\n        dx = g * gamma.data\n        x.grad += inv / d * (d * dx - dx.sum(axis=-1, keepdims=True) - xhat * (dx * xhat).sum(axis=-1, keepdims=True))\n    out._backward = _backward\n    return out\n",
+    "prelude": "import numpy as np\nfrom autograd import Tensor, grad_check as _gc\n_g = np.random.default_rng(9)\nXl = _g.standard_normal((3, 5))\nGl = _g.standard_normal(5)\nBl = _g.standard_normal(5)\nRl = _g.standard_normal((3, 5))\nX3 = _g.standard_normal((2, 3, 5))\nR3 = _g.standard_normal((2, 3, 5))\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py"
+    },
+    "examples": [
+     {
+      "setup": "x, g, b = Tensor(np.array([[0.0, 2.0]])), Tensor(np.ones(2)), Tensor(np.zeros(2))",
+      "call": "layernorm(x, g, b).data.tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.9999950000374997, 0.9999950000374997]]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x, g, b = Tensor(Xl), Tensor(Gl), Tensor(Bl)",
+      "call": "layernorm(x, g, b).data.tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.5952821215329127, -0.025351435575902442, -3.6808204630991757, 1.9743540987961523, 1.803693986199183], [-0.5419951247323378, -0.689392504496221, -0.19200536978058014, 2.5432804834782337, -2.252513506387876], [-0.8640966952339326, -0.1894362363475839, -2.0529855982973344, 1.6866447279249774, 0.20366405311693803]]"
+     },
+     {
+      "setup": "x, g, b = Tensor(Xl), Tensor(Gl), Tensor(Bl)\n(layernorm(x, g, b) * Tensor(Rl)).sum().backward()",
+      "call": "[x.grad.tolist(), g.grad.tolist(), b.grad.tolist()]",
+      "compare": "isclose",
+      "expect": "[[[0.609591618172033, 0.32733632669164475, -0.620266465666031, 0.5240309398296394, -0.8406924190272862], [2.1835341960001218, 2.195024996134327, -4.371171486826114, 2.4226443227110543, -2.4300320280193892], [-0.08543911117059749, 0.010722095950023346, 0.39597170567644474, 0.05630672301548971, -0.37756141347136035]], [-0.9365650947347341, -1.1172283255204671, -0.5680379357306476, 0.9122930489559556, 0.5298355413029913], [0.7134064126571822, -0.21160748826901493, -2.2189934489080505, 0.2651425168480276, -2.989013849559766]]"
+     },
+     {
+      "setup": "x, g, b = Tensor(Xl), Tensor(Gl), Tensor(Bl)",
+      "call": "_gc(lambda: (layernorm(x, g, b) * Tensor(Rl)).sum(), [x, g, b]) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "x, g, b = Tensor(X3), Tensor(Gl), Tensor(Bl)",
+      "call": "_gc(lambda: (layernorm(x, g, b) * Tensor(R3)).sum(), [x, g, b]) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "x, g, b = Tensor(np.array([0.5, -1.0, 2.0, 0.0, 1.5])), Tensor(Gl), Tensor(Bl)\n(layernorm(x, g, b) * Tensor(Rl[0])).sum().backward()",
+      "call": "[x.grad.tolist(), g.grad.tolist()]",
+      "compare": "isclose",
+      "expect": "[[0.6317076461783798, -0.3332078170004663, 0.1352464498871902, 0.17930265503528167, -0.6130489341003855], [0.03606903413880285, -1.215080093608653, -1.1687795742104823, -0.4313561580936843, -0.9872661004985563]]"
+     },
+     {
+      "setup": "x, g, b = Tensor(np.full((1, 5), 2.0)), Tensor(Gl), Tensor(Bl)\n(layernorm(x, g, b) * Tensor(Rl[:1])).sum().backward()",
+      "call": "[layernorm(x, g, b).data.tolist(), bool(np.isfinite(x.grad).all())]",
+      "compare": "isclose",
+      "expect": "[[[-0.39836128088991196, 0.18595392958113843, -1.5226704029731744, 2.343232381708724, -0.09402582933360398]], True]"
+     }
+    ],
+    "how": "`autograd.py` is in the working directory. Submit runs 6 hidden tests. Two check the forward pass and all three gradients on a seeded (3, 5) batch to $10^{-9}$, and two need `grad_check` below $10^{-6}$ on that batch and on a (2, 3, 5) array. The last two use a single vector and a vector of equal features.",
+    "budget": 2000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef layernorm(x, gamma, beta, eps=1e-5):\n    d = x.data.shape[-1]\n    mu = x.data.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.data.var(axis=-1, keepdims=True) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"layernorm\")\n\n    def _backward():\n        g = out.grad\n        lead = tuple(range(g.ndim - 1))\n        gamma.grad += (g * xhat).sum(axis=lead) if lead else g * xhat\n        beta.grad += g.sum(axis=lead) if lead else g\n        dx = g * gamma.data\n        x.grad += dx * inv\n    out._backward = _backward\n    return out\n",
+      "test": 2,
+      "symptom": "Treats the mean and scale as constants in the backward pass."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef layernorm(x, gamma, beta, eps=1e-5):\n    d = x.data.shape[-1]\n    mu = x.data.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.data.var(axis=-1, keepdims=True) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"layernorm\")\n\n    def _backward():\n        g = out.grad\n        lead = tuple(range(g.ndim - 1))\n        gamma.grad += (g * xhat).sum(axis=0) if lead else g * xhat\n        beta.grad += g.sum(axis=lead) if lead else g\n        dx = g * gamma.data\n        x.grad += inv / d * (d * dx - dx.sum(axis=-1, keepdims=True) - xhat * (dx * xhat).sum(axis=-1, keepdims=True))\n    out._backward = _backward\n    return out\n",
+      "test": 4,
+      "symptom": "Sums gamma's gradient over the first axis only, which breaks for 3-D input."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef layernorm(x, gamma, beta, eps=1e-5):\n    d = x.data.shape[-1]\n    mu = x.data.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.data.var(axis=-1, keepdims=True) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"layernorm\")\n\n    def _backward():\n        g = out.grad\n        lead = tuple(range(g.ndim - 1))\n        gamma.grad += (g * xhat).sum(axis=lead) if lead else g * xhat\n        beta.grad += g.sum(axis=lead) if lead else g\n        dx = g * gamma.data\n        x.grad += inv / d * (d * dx - dx.sum(axis=0, keepdims=True) - xhat * (dx * xhat).sum(axis=0, keepdims=True))\n    out._backward = _backward\n    return out\n",
+      "test": 2,
+      "symptom": "Sums the backward over the batch axis instead of the features."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef layernorm(x, gamma, beta, eps=1e-5):\n    d = x.data.shape[-1]\n    mu = x.data.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.data.var(axis=-1, keepdims=True, ddof=1) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"layernorm\")\n\n    def _backward():\n        g = out.grad\n        lead = tuple(range(g.ndim - 1))\n        gamma.grad += (g * xhat).sum(axis=lead) if lead else g * xhat\n        beta.grad += g.sum(axis=lead) if lead else g\n        dx = g * gamma.data\n        x.grad += inv / d * (d * dx - dx.sum(axis=-1, keepdims=True) - xhat * (dx * xhat).sum(axis=-1, keepdims=True))\n    out._backward = _backward\n    return out\n",
+      "test": 1,
+      "symptom": "Divides the variance by D - 1."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Reduce over `axis=-1, keepdims=True` throughout."
+    },
+    {
+     "rung": "point",
+     "text": "Sum the gradients of $\\gamma$ and $\\beta$ over every axis but the last."
+    },
+    {
+     "rung": "step",
+     "text": "Add into `x.grad` with the collected formula."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass: your op matches central differences on 2-D and 3-D input, as `nt_ops_l2.layernorm` does.",
+    "generic": "Not quite. Read the first failing test in the results."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 2,
+   "title": "Scoring each stock on its own",
+   "prose": "A model scores each stock every day from its own feature vector, in batches of whatever stocks happen to update together. The desk needs a stock's score not to depend on which others share its batch.",
+   "question": "Which normalisation meets that, and why?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "ln",
+      "text": "Layer norm: each stock is normalised by its own features alone",
+      "correct": true
+     },
+     {
+      "id": "bn",
+      "text": "Batch norm in training mode: it adapts to each day's batch",
+      "why": "That makes a score depend on the batch, exactly what the desk forbids."
+     },
+     {
+      "id": "bneval",
+      "text": "Batch norm in inference mode only, which is as good in training too",
+      "why": "In inference mode it is fixed per row, but training it still mixes the batch, and its running averages drift as the stock universe changes."
+     },
+     {
+      "id": "none",
+      "text": "Neither: normalisation always mixes examples",
+      "why": "Layer norm uses only the row's own features."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which statistic uses only one row?"
+    },
+    {
+     "rung": "point",
+     "text": "Layer norm reduces over the features."
+    },
+    {
+     "rung": "step",
+     "text": "So a stock's output ignores the other stocks."
+    }
+   ],
+   "feedback": {
+    "correct": "Layer norm: a stock's score depends on its own feature vector only, in training and in use.",
+    "generic": "Not quite. Which norm never looks at other rows?"
+   },
+   "explain": {
+    "text": "Layer norm's mean and variance come from one stock's features, so batch membership cannot change its score. It needs no running averages either."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Layer norm normalises each example over its own features (the last axis), then applies $\\gamma$ and $\\beta$; it has no running averages.",
+   "It acts the same in training and inference and never mixes examples, so a batch of one and sequences of any length are fine.",
+   "Its backward subtracts the mean of the incoming gradient and its part along $\\hat x$; over the wrong axis it silently becomes batch norm."
+  ],
+  "formula": {
+   "name": "Layer norm",
+   "tex": "y_i = \\gamma_i\\,\\dfrac{x_i - \\mu}{\\sqrt{\\sigma^2 + \\epsilon}} + \\beta_i",
+   "note": "$\\mu$, $\\sigma^2$: over the $D$ features of one example."
+  },
+  "trap": "The same formula over the batch axis is batch norm, not layer norm."
+ },
+ "quiz": [
+  {
+   "id": "q8-axis",
+   "difficulty": 2,
+   "prose": "A batch has shape (16, 128): 16 examples of 128 features.",
+   "question": "Over which axis does layer norm compute its mean?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "last",
+      "text": "The last axis, the 128 features of each example",
+      "correct": true
+     },
+     {
+      "id": "first",
+      "text": "Axis 0, the 16 examples",
+      "why": "That is batch norm's axis."
+     },
+     {
+      "id": "both",
+      "text": "Both axes at once, all 2,048 numbers",
+      "why": "One mean for everything would not normalise each example."
+     },
+     {
+      "id": "none",
+      "text": "Neither: it uses running averages",
+      "why": "Layer norm keeps no running averages."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The last axis: one mean per example.",
+    "generic": "Not quite. Which axis holds one example's features?"
+   },
+   "explain": {
+    "text": "Layer norm reduces over the features, giving 16 means, one per example."
+   }
+  },
+  {
+   "id": "q8-equal",
+   "difficulty": 2,
+   "prose": "An example's features are all 3.0. Layer norm uses $\\gamma = 2$, $\\beta = 0.5$ and $\\epsilon = 10^{-5}$.",
+   "question": "What does each feature become?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "gamma",
+      "value": 2.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "raw",
+      "value": 3.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$x - \\mu = 0$, so every output is $\\beta = 0.5$.",
+    "generic": "Not quite. Subtract the example's mean first.",
+    "byKey": {
+     "gamma": "$\\gamma$ multiplies 0 here.",
+     "raw": "The mean, 3.0, is subtracted."
+    }
+   },
+   "explain": {
+    "text": "The mean is 3.0 and the variance 0, so $\\hat x = 0/\\sqrt{\\epsilon} = 0$, and the output is $\\gamma \\cdot 0 + \\beta = 0.5$."
+   }
+  },
+  {
+   "id": "q8-five",
+   "difficulty": 3,
+   "prose": "An example has features $(2, 4, 4, 4, 6)$.",
+   "question": "What does the 6 become after layer norm, before $\\gamma$ and $\\beta$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5811,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "ddof",
+      "value": 1.4142,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "nosqrt",
+      "value": 1.25,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Mean 4, variance $8/5 = 1.6$, so $2/\\sqrt{1.6} = 1.5811$.",
+    "generic": "Not quite. Use the mean and variance of the five features.",
+    "byKey": {
+     "ddof": "You divided by 4; divide by the number of features, 5.",
+     "nosqrt": "You divided by the variance."
+    }
+   },
+   "explain": {
+    "text": "$\\mu = 4$, $\\sigma^2 = (4 + 0 + 0 + 0 + 4)/5 = 1.6$, so $\\hat x = 2/\\sqrt{1.6} = 1.5811$."
+   }
+  }
+ ]
+}

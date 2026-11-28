@@ -1,0 +1,876 @@
+{
+ "id": "l5-saturation",
+ "course": "nn-train",
+ "title": "When gradients vanish",
+ "minutes": 14,
+ "objectives": [
+  "Explain why saturating activations and deep products of small slopes make gradients vanish."
+ ],
+ "skills": [
+  "nt-signal"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which layer learns?",
+   "prose": "A net of ten sigmoid layers, each 100 wide, starts from weights with sd 0.1. One backward pass on a batch of 64 gives each layer's weights a gradient. The bars show their sizes on a log scale.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "L1",
+       "label": "1"
+      },
+      {
+       "id": "L2",
+       "label": "2"
+      },
+      {
+       "id": "L3",
+       "label": "3"
+      },
+      {
+       "id": "L4",
+       "label": "4"
+      },
+      {
+       "id": "L5",
+       "label": "5"
+      },
+      {
+       "id": "L6",
+       "label": "6"
+      },
+      {
+       "id": "L7",
+       "label": "7"
+      },
+      {
+       "id": "L8",
+       "label": "8"
+      },
+      {
+       "id": "L9",
+       "label": "9"
+      },
+      {
+       "id": "L10",
+       "label": "10"
+      }
+     ],
+     "yScale": "log",
+     "xLabel": "Layer (1 is next to the input)",
+     "yLabel": "Size of the weight gradient"
+    },
+    "state": {
+     "values": {
+      "L1": 4.381e-08,
+      "L2": 7.4e-07,
+      "L3": 3.014e-06,
+      "L4": 1.408e-05,
+      "L5": 6.699e-05,
+      "L6": 0.0002879,
+      "L7": 0.001289,
+      "L8": 0.006577,
+      "L9": 0.02794,
+      "L10": 0.1232
+     },
+     "caption": "Ten sigmoid layers of width 100, weights with sd 0.1, one batch of 64."
+    }
+   },
+   "question": "With one step size for every layer, which layer's weights move the most?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "last",
+      "text": "Layer 10, next to the output",
+      "correct": true
+     },
+     {
+      "id": "first",
+      "text": "Layer 1, next to the input, since everything flows through it",
+      "why": "Everything flows through it, but its gradient is the smallest: about 4.4e-08."
+     },
+     {
+      "id": "equal",
+      "text": "All about the same: the layers are the same size",
+      "why": "The bars span from 4.4e-08 to 0.12, a factor of millions."
+     },
+     {
+      "id": "middle",
+      "text": "A middle layer, where signal and gradient balance",
+      "why": "The bars fall steadily from the output back to the input."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A step moves each weight by the step size times its gradient."
+    },
+    {
+     "rung": "point",
+     "text": "Compare the tallest and shortest bars.",
+     "highlight": [
+      "L10",
+      "L1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Layer 10's gradient is 0.123; layer 1's is 4.4e-08."
+    }
+   ],
+   "feedback": {
+    "correct": "Layer 10: its gradient is 0.123, against 4.4e-08 for layer 1, about 2.8 million times smaller.",
+    "generic": "Not quite. Read the bars from right to left.",
+    "byKey": {
+     "first": "That is the trap of the picture: layer 1 matters most to the output, yet gets the weakest signal."
+    }
+   },
+   "explain": {
+    "text": "Each layer back from the output shrinks the gradient by roughly a factor of 4 to 5, so layer 1 gets 4.4e-08 against 0.123. With one step size, the early layers barely move."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A product of slopes",
+   "prose": "Name it: the backward pass multiplies by each layer's **activation slope**. The sigmoid's slope $\\sigma(z)(1 - \\sigma(z))$ is at most 0.25, at $z = 0$. So a gradient that crosses ten sigmoid layers is multiplied by at most $0.25^{10}$ from the slopes alone: it **vanishes**.",
+   "question": "What is $0.25^{10}$? Give it in units of $10^{-7}$, to 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9.5,
+    "tol": {
+     "abs": 0.05
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "nine",
+      "value": 38.1,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ],
+    "scale": 1e-07
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$0.25 = 1/4$, so $0.25^{10} = 1/4^{10}$."
+    },
+    {
+     "rung": "point",
+     "text": "$4^{10} = 1{,}048{,}576$."
+    },
+    {
+     "rung": "step",
+     "text": "$1/1{,}048{,}576 \\approx 9.5 \\times 10^{-7}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.25^{10} = 1/1{,}048{,}576 \\approx 9.5 \\times 10^{-7}$.",
+    "generic": "Not quite. Multiply 0.25 by itself ten times.",
+    "byKey": {
+     "linear": "You multiplied 0.25 by 10. The slopes multiply, so it is a power.",
+     "nine": "That is nine layers, $0.25^9$."
+    }
+   },
+   "explain": {
+    "text": "Ten factors of at most 0.25 give at most $9.5 \\times 10^{-7}$. The weights add factors of their own, but the slopes alone make the gradient vanish."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 2,
+   "title": "Reading the slopes",
+   "prose": "The curves are the slopes of the sigmoid and of tanh. Slide the input. A tanh unit with input 3 is **saturated**: it sits on the flat part, where the slope is nearly 0.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -6,
+      6
+     ],
+     "y": [
+      -0.1,
+      1.1
+     ],
+     "xLabel": "pre-activation $z$",
+     "yLabel": "slope",
+     "functions": [
+      {
+       "id": "ds",
+       "expr": "exp(-x) / (1 + exp(-x))^2",
+       "label": "sigmoid slope",
+       "labelAt": 3.5
+      },
+      {
+       "id": "dt",
+       "expr": "1 - ((exp(x) - exp(-x)) / (exp(x) + exp(-x)))^2",
+       "label": "tanh slope",
+       "labelAt": -2.2
+      }
+     ],
+     "params": {
+      "z": 2
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 2,
+       "y": 0.10499358540350662,
+       "on": "ds",
+       "label": "sigmoid"
+      },
+      {
+       "id": "Q",
+       "x": 2,
+       "y": 0.07065082485316443,
+       "on": "dt",
+       "label": "tanh"
+      }
+     ],
+     "vlines": [
+      {
+       "id": "v",
+       "x": 2,
+       "label": ""
+      }
+     ]
+    },
+    "derive": {
+     "P.x": "z",
+     "P.y": "exp(-z) / pow(1 + exp(-z), 2)",
+     "Q.x": "z",
+     "Q.y": "1 - pow((exp(z) - exp(-z)) / (exp(z) + exp(-z)), 2)",
+     "v.x": "z",
+     "caption": "$z$ = {{fixed(z, 1)}}: sigmoid slope {{fixed(exp(-z) / pow(1 + exp(-z), 2), 4)}}, tanh slope {{fixed(1 - pow((exp(z) - exp(-z)) / (exp(z) + exp(-z)), 2), 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "z",
+      "min": -6,
+      "max": 6,
+      "step": 0.1,
+      "start": 2,
+      "label": "Input $z$",
+      "decimals": 1
+     }
+    ],
+    "maxHeight": 280
+   },
+   "question": "What is the tanh slope $1 - \\tanh^2(3)$ at an input of 3? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0099,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "sig",
+      "value": 0.0452,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "notsq",
+      "value": 0.0049,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to $z = 3$."
+    },
+    {
+     "rung": "point",
+     "text": "Read the tanh slope in the caption.",
+     "highlight": [
+      "Q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tanh(3) = 0.9951$, so $1 - 0.9951^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - \\tanh^2(3) = 0.0099$: a gradient through that unit keeps under 1% of itself.",
+    "generic": "Not quite. Read the tanh curve at 3.",
+    "byKey": {
+     "sig": "That is the sigmoid's slope at 3.",
+     "notsq": "You took $1 - \\tanh(3)$; the slope squares the tanh."
+    }
+   },
+   "explain": {
+    "text": "At $z = 3$ tanh is 0.9951, so its slope is 0.0099. tanh's slope peaks at 1 at $z = 0$, four times the sigmoid's peak, and both die away for large $|z|$.",
+    "canvas": {
+     "params": {
+      "z": 3
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Down one path",
+   "prose": "One path runs down four sigmoid layers with every weight on it equal to 1. The table gives each layer's pre-activation and slope.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "layer",
+      "pre-activation $z$",
+      "sigmoid slope"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.5",
+       "0.2350"
+      ],
+      [
+       "2",
+       "−1",
+       "0.1966"
+      ],
+      [
+       "3",
+       "2",
+       "0.1050"
+      ],
+      [
+       "4",
+       "0",
+       "0.2500"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "One path down four sigmoid layers, every weight on it equal to 1."
+    }
+   },
+   "question": "What factor do the four slopes apply to a gradient on this path? Give 4 significant figures.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.001213,
+    "tol": {
+     "abs": 5e-07
+    },
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 0.7866,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "peak",
+      "value": 0.00390625,
+      "tol": {
+       "abs": 5e-06
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply the four slopes."
+    },
+    {
+     "rung": "point",
+     "text": "$0.2350 \\times 0.1966 = 0.0462$.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then times 0.1050 and 0.25."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.2350 \\times 0.1966 \\times 0.1050 \\times 0.25 = 0.001213$.",
+    "generic": "Not quite. The backward pass multiplies the slopes.",
+    "byKey": {
+     "sum": "You added the slopes. The chain rule multiplies them.",
+     "peak": "That is $0.25^4$, every unit at its steepest; these are flatter."
+    }
+   },
+   "explain": {
+    "text": "The product is 0.001213: four ordinary pre-activations cost a factor of about 800. Saturated units cost far more."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Dead units",
+   "prose": "ReLU's slope is 1 for $z > 0$ and 0 otherwise, so it never shrinks a passing gradient. But a unit whose pre-activation is never positive on the data passes nothing back: a **dead** unit, which no step can revive.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "unit",
+      "largest pre-activation over 200 rows"
+     ],
+     "rows": [
+      [
+       "1",
+       "2.31"
+      ],
+      [
+       "2",
+       "−0.47"
+      ],
+      [
+       "3",
+       "0.05"
+      ],
+      [
+       "4",
+       "−1.92"
+      ],
+      [
+       "5",
+       "0.88"
+      ],
+      [
+       "6",
+       "0.00"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "A ReLU layer after training. Slope 0 at $z \\le 0$, as in our autograd."
+    }
+   },
+   "question": "How many of these six units are dead on these 200 rows?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "neg",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "small",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A unit lives if its largest pre-activation is above 0."
+    },
+    {
+     "rung": "point",
+     "text": "Units 2 and 4 never get above 0.",
+     "highlight": [
+      "r5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Unit 6 peaks at exactly 0, where the slope is 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Three: units 2, 4 and 6 never get a positive pre-activation, so their slope is 0 on every row.",
+    "generic": "Not quite. Count units whose largest pre-activation is at most 0.",
+    "byKey": {
+     "neg": "Unit 6 peaks at exactly 0, and the slope there is 0, so it is dead too.",
+     "small": "Unit 3 peaks at 0.05, above 0, so it still passes gradient on some rows."
+    }
+   },
+   "explain": {
+    "text": "Units 2, 4 and 6 have slope 0 on every row, so their weights get no gradient and stay dead. Unit 3, at 0.05, is alive on at least one row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Overfitting, or failing to fit?",
+   "prose": "Dev trains the ten-layer sigmoid net on 400 points. After 300 steps the training loss has hardly moved from where it started. He decides the net is too big and must be overfitting.",
+   "question": "What is the better diagnosis?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "vanish",
+      "text": "It cannot fit the training data: gradients vanish",
+      "correct": true
+     },
+     {
+      "id": "overfit",
+      "text": "Overfitting: a big net memorises noise",
+      "why": "Overfitting needs a low training loss and a high held-out one; here even the training loss is stuck."
+     },
+     {
+      "id": "data",
+      "text": "Too little data: 400 points cannot train ten layers",
+      "why": "More data would not help a net whose early layers barely move on the data it has."
+     },
+     {
+      "id": "rate",
+      "text": "The step size is too large",
+      "why": "A large step makes the loss jump or blow up; this loss barely moves."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is the training loss low?"
+    },
+    {
+     "rung": "point",
+     "text": "Overfitting means low training loss and high held-out loss."
+    },
+    {
+     "rung": "step",
+     "text": "Here the training loss is stuck: the net cannot fit."
+    }
+   ],
+   "feedback": {
+    "correct": "Failing to fit: the training loss is stuck because the early layers' gradients have vanished.",
+    "generic": "Not quite. Look at the training loss first.",
+    "byKey": {
+     "overfit": "That is the misconception: a deep sigmoid net often fails on the training data itself, which overfitting cannot explain."
+    }
+   },
+   "explain": {
+    "text": "Overfitting shows a training loss far below the held-out loss. A training loss that will not fall points to optimisation: here the slopes of ten sigmoid layers."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Slopes and gradients in code",
+   "prose": "Write `layer_slopes(z, act)` for `\"sigmoid\"`, `\"tanh\"` and `\"relu\"` (slope 0 at $z \\le 0$); `grad_norms_by_layer(Ws, x)`, which runs `h = sigmoid(h @ W)` through the list, takes the mean of $h^2$ as the loss, and returns each $\\mathbf{W}$'s gradient norm; and `dead_units(W, b, X)`.",
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l2 import sigmoid\n\n\ndef layer_slopes(z, act):\n    # elementwise slope of \"sigmoid\", \"tanh\" or \"relu\" at the array z (relu: 0 at z <= 0)\n    ...\n\n\ndef grad_norms_by_layer(Ws, x):\n    # h = sigmoid(h @ W) for each W in turn from h = x; loss = mean of h ** 2; norm of each W's gradient\n    ...\n\n\ndef dead_units(W, b, X):\n    # number of ReLU units whose pre-activation X @ W + b is never above 0 on any row\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l2 import sigmoid\n\n\ndef layer_slopes(z, act):\n    z = np.asarray(z, dtype=float)\n    if act == \"sigmoid\":\n        s = 1 / (1 + np.exp(-z))\n        return s * (1 - s)\n    if act == \"tanh\":\n        return 1 - np.tanh(z) ** 2\n    if act == \"relu\":\n        return (z > 0).astype(float)\n    raise ValueError(act)\n\n\ndef grad_norms_by_layer(Ws, x):\n    ts = [Tensor(W) for W in Ws]\n    h = Tensor(x)\n    for W in ts:\n        h = sigmoid(h @ W)\n    (h * h).mean().backward()\n    return [float(np.linalg.norm(W.grad)) for W in ts]\n\n\ndef dead_units(W, b, X):\n    Z = np.asarray(X) @ np.asarray(W) + np.asarray(b)\n    return int((Z.max(axis=0) <= 0).sum())\n",
+    "prelude": "import numpy as np\n_g = np.random.default_rng(1)\nWs10 = [_g.standard_normal((100, 100)) * 0.1 for _ in range(10)]\nx10 = _g.standard_normal((64, 100))\n_h = np.random.default_rng(4)\nWs3 = [_h.standard_normal((5, 5)) for _ in range(3)]\nx3 = _h.standard_normal((4, 5))\nWd = _h.standard_normal((3, 6))\nbd = np.array([0.5, -3.0, 0.0, -4.0, 1.0, -2.5])\nXd = _h.standard_normal((50, 3))\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py"
+    },
+    "examples": [
+     {
+      "call": "layer_slopes(np.array([0.0]), \"sigmoid\").tolist()",
+      "compare": "isclose",
+      "expect": "[0.25]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "layer_slopes(np.array([-2.0, 0.0, 3.0]), \"sigmoid\").tolist()",
+      "compare": "isclose",
+      "expect": "[0.1049935854035065, 0.25, 0.045176659730912]"
+     },
+     {
+      "call": "layer_slopes(np.array([-2.0, 0.0, 3.0]), \"tanh\").tolist()",
+      "compare": "isclose",
+      "expect": "[0.07065082485316443, 1.0, 0.009866037165440211]"
+     },
+     {
+      "call": "layer_slopes(np.array([-2.0, 0.0, 3.0]), \"relu\").tolist()",
+      "compare": "equal",
+      "expect": "[0.0, 0.0, 1.0]"
+     },
+     {
+      "call": "grad_norms_by_layer(Ws3, x3)",
+      "tol": {
+       "rel": 1e-09,
+       "abs": 0
+      },
+      "compare": "isclose",
+      "expect": "[0.004833271405303177, 0.03757407181507598, 0.10170764423441923]"
+     },
+     {
+      "call": "grad_norms_by_layer(Ws10, x10)",
+      "tol": {
+       "rel": 1e-09,
+       "abs": 0
+      },
+      "compare": "isclose",
+      "expect": "[4.3809002085721044e-08, 7.400264910563415e-07, 3.0138490131410827e-06, 1.4076747552763788e-05, 6.699039829256535e-05, 0.0002879356585714294, 0.0012892891442373262, 0.006577201513945718, 0.027935865623417308, 0.12322421771256534]"
+     },
+     {
+      "call": "dead_units(Wd, bd, Xd)",
+      "compare": "equal",
+      "expect": "2"
+     },
+     {
+      "call": "dead_units(np.array([[1.0, -1.0]]), np.zeros(2), np.array([[0.0], [2.0]]))",
+      "compare": "equal",
+      "expect": "1"
+     }
+    ],
+    "how": "`autograd.py` and `nt_ops_l2.py` (with `sigmoid`) are in the working directory, and `Ws10`, `x10` hold the hook's net. Submit runs 7 hidden tests, compared to $10^{-9}$. Tests 1 to 3 check the slopes, tests 4 and 5 the gradient norms of a small seeded net and of the hook's net, and tests 6 and 7 count dead units.",
+    "budget": 2000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l2 import sigmoid\n\n\ndef layer_slopes(z, act):\n    z = np.asarray(z, dtype=float)\n    if act == \"sigmoid\":\n        s = 1 / (1 + np.exp(-z))\n        return s\n    if act == \"tanh\":\n        return 1 - np.tanh(z) ** 2\n    if act == \"relu\":\n        return (z > 0).astype(float)\n    raise ValueError(act)\n\n\ndef grad_norms_by_layer(Ws, x):\n    ts = [Tensor(W) for W in Ws]\n    h = Tensor(x)\n    for W in ts:\n        h = sigmoid(h @ W)\n    (h * h).mean().backward()\n    return [float(np.linalg.norm(W.grad)) for W in ts]\n\n\ndef dead_units(W, b, X):\n    Z = np.asarray(X) @ np.asarray(W) + np.asarray(b)\n    return int((Z.max(axis=0) <= 0).sum())\n",
+      "test": 1,
+      "symptom": "Returns the sigmoid itself, not its slope."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l2 import sigmoid\n\n\ndef layer_slopes(z, act):\n    z = np.asarray(z, dtype=float)\n    if act == \"sigmoid\":\n        s = 1 / (1 + np.exp(-z))\n        return s * (1 - s)\n    if act == \"tanh\":\n        return 1 - np.tanh(z)\n    if act == \"relu\":\n        return (z > 0).astype(float)\n    raise ValueError(act)\n\n\ndef grad_norms_by_layer(Ws, x):\n    ts = [Tensor(W) for W in Ws]\n    h = Tensor(x)\n    for W in ts:\n        h = sigmoid(h @ W)\n    (h * h).mean().backward()\n    return [float(np.linalg.norm(W.grad)) for W in ts]\n\n\ndef dead_units(W, b, X):\n    Z = np.asarray(X) @ np.asarray(W) + np.asarray(b)\n    return int((Z.max(axis=0) <= 0).sum())\n",
+      "test": 2,
+      "symptom": "Forgets to square tanh in its slope."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l2 import sigmoid\n\n\ndef layer_slopes(z, act):\n    z = np.asarray(z, dtype=float)\n    if act == \"sigmoid\":\n        s = 1 / (1 + np.exp(-z))\n        return s * (1 - s)\n    if act == \"tanh\":\n        return 1 - np.tanh(z) ** 2\n    if act == \"relu\":\n        return (z >= 0).astype(float)\n    raise ValueError(act)\n\n\ndef grad_norms_by_layer(Ws, x):\n    ts = [Tensor(W) for W in Ws]\n    h = Tensor(x)\n    for W in ts:\n        h = sigmoid(h @ W)\n    (h * h).mean().backward()\n    return [float(np.linalg.norm(W.grad)) for W in ts]\n\n\ndef dead_units(W, b, X):\n    Z = np.asarray(X) @ np.asarray(W) + np.asarray(b)\n    return int((Z.max(axis=0) <= 0).sum())\n",
+      "test": 3,
+      "symptom": "Gives ReLU slope 1 at exactly 0."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l2 import sigmoid\n\n\ndef layer_slopes(z, act):\n    z = np.asarray(z, dtype=float)\n    if act == \"sigmoid\":\n        s = 1 / (1 + np.exp(-z))\n        return s * (1 - s)\n    if act == \"tanh\":\n        return 1 - np.tanh(z) ** 2\n    if act == \"relu\":\n        return (z > 0).astype(float)\n    raise ValueError(act)\n\n\ndef grad_norms_by_layer(Ws, x):\n    ts = [Tensor(W) for W in Ws]\n    h = Tensor(x)\n    for W in ts:\n        h = sigmoid(h @ W)\n    (h * h).sum().backward()\n    return [float(np.linalg.norm(W.grad)) for W in ts]\n\n\ndef dead_units(W, b, X):\n    Z = np.asarray(X) @ np.asarray(W) + np.asarray(b)\n    return int((Z.max(axis=0) <= 0).sum())\n",
+      "test": 4,
+      "symptom": "Sums the loss instead of averaging it."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom nt_ops_l2 import sigmoid\n\n\ndef layer_slopes(z, act):\n    z = np.asarray(z, dtype=float)\n    if act == \"sigmoid\":\n        s = 1 / (1 + np.exp(-z))\n        return s * (1 - s)\n    if act == \"tanh\":\n        return 1 - np.tanh(z) ** 2\n    if act == \"relu\":\n        return (z > 0).astype(float)\n    raise ValueError(act)\n\n\ndef grad_norms_by_layer(Ws, x):\n    ts = [Tensor(W) for W in Ws]\n    h = Tensor(x)\n    for W in ts:\n        h = sigmoid(h @ W)\n    (h * h).mean().backward()\n    return [float(np.linalg.norm(W.grad)) for W in ts]\n\n\ndef dead_units(W, b, X):\n    Z = np.asarray(X) @ np.asarray(W) + np.asarray(b)\n    return int((Z.min(axis=0) <= 0).sum())\n",
+      "test": 6,
+      "symptom": "Calls a unit dead if it is off on any row, not on every row."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`(z > 0).astype(float)` is ReLU's slope."
+    },
+    {
+     "rung": "point",
+     "text": "Wrap each `W` in a `Tensor` so its `.grad` fills in."
+    },
+    {
+     "rung": "step",
+     "text": "A unit is dead when the largest of its column of `X @ W + b` is at most 0."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. The hook's net gives 0.1232 for layer 10 and 4.381e-08 for layer 1.",
+    "generic": "Not quite. Read the first failing test in the results."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Income in pounds",
+   "prose": "A credit model feeds raw annual income in pounds into a tanh unit beside ratios that sit near 1. With a weight of 0.0001, an income of £52,000 gives a pre-activation of 5.2.",
+   "question": "What is the unit's slope there? Give it in units of $10^{-4}$, to 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.22,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "notsq",
+      "value": 0.61,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ],
+    "scale": 0.0001
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The slope is $1 - \\tanh^2(5.2)$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tanh(5.2) = 0.999939$."
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 0.999939^2 \\approx 1.22e-04$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - \\tanh^2(5.2) = 1.22 \\times 10^{-4}$: the unit is saturated, so its weights barely learn. Standardised (`stat-learning` l9), the same customer gives about $z = 0.3$ and a slope of 0.92.",
+    "generic": "Not quite. Put 5.2 into $1 - \\tanh^2$.",
+    "byKey": {
+     "notsq": "You took $1 - \\tanh(5.2)$; square the tanh."
+    }
+   },
+   "explain": {
+    "text": "At 5.2 the slope is 1.22 in units of $10^{-4}$: every gradient through this unit is cut ten-thousandfold. Scaling the income first is the fix."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The backward pass multiplies by every layer's activation slope. The sigmoid's is at most 0.25, so ten layers can cost a factor of $9.5 \\times 10^{-7}$.",
+   "A saturated unit sits where the curve is flat: tanh's slope at 3 is 0.0099. Unscaled inputs saturate the first layer.",
+   "ReLU passes a gradient unchanged on its positive side, but a unit that is never on is dead and never learns."
+  ],
+  "formula": {
+   "name": "Gradient down a chain",
+   "tex": "\\frac{\\partial L}{\\partial z_1} = \\frac{\\partial L}{\\partial z_k}\\prod_{j=2}^{k} w_j\\,\\phi'(z_{j-1})",
+   "note": "One path; the slopes $\\phi'$ multiply."
+  },
+  "trap": "A stuck training loss is a failure to fit, not overfitting: check the gradients before the data."
+ },
+ "quiz": [
+  {
+   "id": "q5-six",
+   "difficulty": 2,
+   "prose": "A gradient crosses six sigmoid layers, each at its steepest point.",
+   "question": "What factor do the slopes apply? Give it in units of $10^{-4}$, to 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.44,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "five",
+      "value": 9.77,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ],
+    "scale": 0.0001
+   },
+   "feedback": {
+    "correct": "$0.25^6 = 1/4096 \\approx 2.44 \\times 10^{-4}$.",
+    "generic": "Not quite. Raise 0.25 to the sixth power.",
+    "byKey": {
+     "linear": "You multiplied by 6 instead of raising to the sixth.",
+     "five": "That is five layers."
+    }
+   },
+   "explain": {
+    "text": "Six factors of 0.25 give $1/4096$, about $2.44 \\times 10^{-4}$."
+   }
+  },
+  {
+   "id": "q5-relu",
+   "difficulty": 2,
+   "question": "Why does a ReLU stack not shrink a gradient the way a sigmoid stack does?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "one",
+      "text": "Its slope is exactly 1 wherever the unit is on",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "Its slope is 0 everywhere, so nothing passes",
+      "why": "Its slope is 1 for positive inputs; 0 only where the unit is off."
+     },
+     {
+      "id": "quarter",
+      "text": "Its slope is 0.25 like the sigmoid's, but it is faster",
+      "why": "The slope is 1 on the positive side, not 0.25."
+     },
+     {
+      "id": "bound",
+      "text": "It has no slope at all",
+      "why": "ReLU has slope 1 or 0 almost everywhere."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Slope 1 on the positive side passes the gradient unchanged.",
+    "generic": "Not quite. What is ReLU's slope for $z > 0$?"
+   },
+   "explain": {
+    "text": "ReLU is $\\max(0, z)$, so its slope is 1 for $z > 0$: a live path keeps its gradient. The risk is dead units, with slope 0 on every row."
+   }
+  },
+  {
+   "id": "q5-raw",
+   "difficulty": 3,
+   "prose": "Unscaled features near 1,000 enter a tanh layer whose weights have sd 0.1.",
+   "question": "What happens in the first layer?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "sat",
+      "text": "The units saturate and pass almost no gradient",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the weights are small, so the layer is fine",
+      "why": "Weights of 0.1 times inputs of 1,000 give pre-activations near 100."
+     },
+     {
+      "id": "dead",
+      "text": "The units die, as ReLU units do",
+      "why": "tanh units do not die; they saturate, with slopes near 0 but never exactly 0."
+     },
+     {
+      "id": "vanish",
+      "text": "Only the last layer is affected",
+      "why": "The first layer sees the raw inputs, so it saturates first."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Saturation from the first layer: $|z|$ near 100 gives a slope near 0.",
+    "generic": "Not quite. Estimate the pre-activations."
+   },
+   "explain": {
+    "text": "A weight of 0.1 on an input of 1,000 already gives 100. At $|z| = 100$, $1 - \\tanh^2$ is 0 to machine precision, so nothing flows back."
+   }
+  }
+ ]
+}
