@@ -1,0 +1,1425 @@
+{
+ "id": "l3-optimism",
+ "course": "rl",
+ "title": "Optimism under uncertainty",
+ "minutes": 15,
+ "objectives": [
+  "Derive the UCB bonus from a tail bound and code the UCB1 agent."
+ ],
+ "skills": [
+  "rl-bandit"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "How sure is 6 of 10?",
+   "prose": "Venue B has filled 55 of 100 test orders. Venue C has filled 6 of 10. Greedy would pick C at 0.60 over B at 0.55. But 10 orders is a small sample, and `estimation` taught us to measure that with a standard error.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "B",
+      "C"
+     ],
+     "xLabel": "Venue",
+     "yLabel": "Fill rate so far",
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "B": 0.55,
+      "C": 0.6
+     }
+    }
+   },
+   "question": "What is the standard error of C's estimate, $\\sqrt{\\hat p(1 - \\hat p)/n}$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1549,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "b",
+      "value": 0.0497,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "var",
+      "value": 0.024,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "no-n",
+      "value": 0.4899,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Here $\\hat p = 0.6$ and $n = 10$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\hat p(1 - \\hat p) = 0.24$.",
+     "highlight": [
+      "xC"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{0.24/10}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{0.6 \\times 0.4 / 10} = 0.1549$.",
+    "generic": "Not quite. Use C's own rate and its 10 orders.",
+    "byKey": {
+     "b": "That is B's standard error, from 100 orders. C has only 10.",
+     "var": "That is the variance $0.24/10$. Take its square root.",
+     "no-n": "You left out the 10 orders. Divide by $n$ before the square root."
+    }
+   },
+   "explain": {
+    "text": "C's standard error is 0.1549, three times B's 0.0497. C's true rate could easily lie anywhere from 0.45 to 0.75. An arm with few pulls deserves a closer look before we trust or dismiss it.",
+    "canvas": {
+     "highlight": [
+      "xC"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two tail bounds",
+   "prose": "How likely is a mean of $n$ rewards in $[0, 1]$ to miss its true value by $\\varepsilon$ or more? Chebyshev gives $1/(4n\\varepsilon^2)$, since a reward's variance is at most $\\tfrac14$. A second bound, Hoeffding's, gives $2e^{-2n\\varepsilon^2}$. Move $\\varepsilon$ and compare them on a log scale.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      10,
+      1000
+     ],
+     "y": [
+      1e-05,
+      10
+     ],
+     "yScale": "log",
+     "xLabel": "Rewards averaged, $n$",
+     "yLabel": "Bound on the miss chance",
+     "height": 320,
+     "functions": [
+      {
+       "id": "cheb",
+       "expr": "0.25/(x*eps^2)",
+       "label": "Chebyshev"
+      },
+      {
+       "id": "hoef",
+       "expr": "2*exp(-2*x*eps^2)",
+       "label": "Hoeffding",
+       "labelSide": "below"
+      }
+     ],
+     "params": {
+      "eps": 0.1
+     }
+    },
+    "state": {
+     "params": {
+      "eps": 0.1
+     },
+     "vlines": [
+      {
+       "id": "n400",
+       "x": 400,
+       "label": "$n = 400$"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "eps",
+      "min": 0.05,
+      "max": 0.2,
+      "step": 0.01,
+      "start": 0.1,
+      "label": "$\\varepsilon$"
+     }
+    ]
+   },
+   "question": "At $n = 400$ and $\\varepsilon = 0.1$, which bound is smaller?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "h",
+      "text": "Hoeffding's, by a factor of about 90",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "Chebyshev's, by a factor of about 90",
+      "why": "Read the curves at the dashed line. Chebyshev's falls like $1/n$; Hoeffding's falls exponentially."
+     },
+     {
+      "id": "eq",
+      "text": "They are about equal there",
+      "why": "They are near each other only for small $n$. By $n = 400$ they are two orders of magnitude apart."
+     },
+     {
+      "id": "dep",
+      "text": "It depends on the venue",
+      "why": "Both bounds hold for any rewards in $[0, 1]$. Neither uses the venue's true rate."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Hoeffding gives 0.00067 against Chebyshev's 0.0625.",
+    "generic": "Read both curves where they cross the dashed line at $n = 400$."
+   },
+   "explain": {
+    "text": "Chebyshev shrinks like $1/n$; Hoeffding shrinks like $e^{-2n\\varepsilon^2}$. At $n = 400$ they give 0.0625 and 0.00067. For bounded rewards, Hoeffding is far tighter.",
+    "canvas": {
+     "params": {
+      "eps": 0.1
+     },
+     "highlight": [
+      "hoef"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Chebyshev for a fill rate",
+   "prose": "Chebyshev's inequality, from `limits-thm`, says $P(|\\bar X_n - \\mu| \\ge \\varepsilon) \\le \\mathrm{Var}(\\bar X_n)/\\varepsilon^2$. A 0 or 1 reward has variance $p(1 - p) \\le \\tfrac14$, so $\\mathrm{Var}(\\bar X_n) \\le \\tfrac{1}{4n}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      10,
+      1000
+     ],
+     "y": [
+      1e-05,
+      10
+     ],
+     "yScale": "log",
+     "xLabel": "Rewards averaged, $n$",
+     "yLabel": "Bound on the miss chance",
+     "height": 280,
+     "functions": [
+      {
+       "id": "cheb",
+       "expr": "0.25/(x*0.01)",
+       "label": "Chebyshev, $\\varepsilon = 0.1$"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p100",
+       "x": 100,
+       "y": 0.25,
+       "label": "$n = 100$"
+      }
+     ]
+    }
+   },
+   "question": "What does Chebyshev give for $n = 100$ and $\\varepsilon = 0.1$? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.25,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "no-quarter",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sd",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "eps",
+      "value": 0.025,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The bound is $\\tfrac{1}{4n\\varepsilon^2}$."
+    },
+    {
+     "rung": "point",
+     "text": "$4n\\varepsilon^2 = 4 \\times 100 \\times 0.01$.",
+     "highlight": [
+      "p100"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is 4, so the bound is $\\tfrac14$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{1}{4 \\times 100 \\times 0.01} = 0.25$.",
+    "generic": "Not quite. Put $n = 100$ and $\\varepsilon^2 = 0.01$ into $\\tfrac{1}{4n\\varepsilon^2}$.",
+    "byKey": {
+     "no-quarter": "You used variance 1. A 0 or 1 reward has variance at most $\\tfrac14$.",
+     "sd": "You took a square root. Chebyshev divides the variance by $\\varepsilon^2$.",
+     "eps": "You divided by $\\varepsilon$ ten times too much. Use $\\varepsilon^2 = 0.01$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{1}{4 \\times 100 \\times 0.01} = 0.25$: a one-in-four chance of missing by 0.1 or more, at worst. It needs no assumption but bounded variance, and it is loose.",
+    "canvas": {
+     "highlight": [
+      "p100"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Hoeffding's bound",
+   "prose": "For $n$ independent rewards in $[0, 1]$, **Hoeffding's inequality** says $$P(\\bar X_n - \\mu \\ge \\varepsilon) \\le e^{-2n\\varepsilon^2}.$$ The same holds for the lower tail, so a miss either way has chance at most $2e^{-2n\\varepsilon^2}$. At $n = 100$ and $\\varepsilon = 0.1$ that is 0.1353 one-sided and 0.2707 two-sided.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      10,
+      1000
+     ],
+     "y": [
+      1e-05,
+      10
+     ],
+     "yScale": "log",
+     "xLabel": "Rewards averaged, $n$",
+     "yLabel": "Bound on the miss chance",
+     "height": 280,
+     "functions": [
+      {
+       "id": "cheb",
+       "expr": "0.25/(x*0.01)",
+       "label": "Chebyshev"
+      },
+      {
+       "id": "hoef",
+       "expr": "2*exp(-0.02*x)",
+       "label": "Hoeffding",
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "n400",
+       "x": 400,
+       "label": "$n = 400$"
+      }
+     ]
+    }
+   },
+   "question": "What is Hoeffding's two-sided bound at $n = 400$ and $\\varepsilon = 0.1$? Give a decimal to 5 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.00067,
+    "tol": {
+     "abs": 5e-06
+    },
+    "wrong": [
+     {
+      "id": "one-sided",
+      "value": 0.00034,
+      "tol": {
+       "abs": 5e-06
+      }
+     },
+     {
+      "id": "cheb",
+      "value": 0.0625,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "n100",
+      "value": 0.2707,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$2n\\varepsilon^2 = 2 \\times 400 \\times 0.01$."
+    },
+    {
+     "rung": "point",
+     "text": "That is 8, so the bound is $2e^{-8}$.",
+     "highlight": [
+      "hoef"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e^{-8} = 0.000335$; double it."
+    }
+   ],
+   "feedback": {
+    "correct": "$2e^{-8} = 0.00067$, against Chebyshev's 0.0625.",
+    "generic": "Not quite. Work out $2n\\varepsilon^2$, then $2e^{-2n\\varepsilon^2}$.",
+    "byKey": {
+     "one-sided": "That is one tail. A miss either way doubles it.",
+     "cheb": "That is Chebyshev's bound at $n = 400$. Hoeffding's is the exponential one.",
+     "n100": "That is the two-sided bound at $n = 100$. Use $n = 400$."
+    }
+   },
+   "explain": {
+    "text": "At $n = 400$, $2e^{-8} = 0.00067$, about 90 times smaller than Chebyshev's 0.0625. Quadrupling $n$ cuts Chebyshev by 4 but raises Hoeffding's exponent fourfold. We use Hoeffding to size an exploration bonus.",
+    "canvas": {
+     "highlight": [
+      "hoef",
+      "n400"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "From a bound to a bonus",
+   "prose": "Arm $a$ has $n_a$ rewards with mean $Q_a$. We want an upper limit $Q_a + \\varepsilon$ that the true value exceeds only with a chance that shrinks as pull $t$ grows: $t^{-4}$. Hoeffding bounds that chance by $e^{-2n_a\\varepsilon^2}$.",
+   "question": "Put the steps in order. Leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Set the bound equal to the target: $e^{-2n_a\\varepsilon^2} = t^{-4}$"
+     },
+     {
+      "id": "s2",
+      "text": "Take logs of both sides: $-2n_a\\varepsilon^2 = -4\\ln t$"
+     },
+     {
+      "id": "s3",
+      "text": "Divide both sides by $-2n_a$: $\\varepsilon^2 = 2\\ln t / n_a$"
+     },
+     {
+      "id": "s4",
+      "text": "Take the positive square root: $\\varepsilon = \\sqrt{2\\ln t / n_a}$"
+     },
+     {
+      "id": "d1",
+      "text": "Take logs of both sides: $-2n_a\\varepsilon^2 = -4t$",
+      "why": "The log of $t^{-4}$ is $-4\\ln t$, not $-4t$. The logarithm is what makes the bonus grow so slowly."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start by writing the requirement as an equation."
+    },
+    {
+     "rung": "point",
+     "text": "Undo the exponential with a log."
+    },
+    {
+     "rung": "step",
+     "text": "Then isolate $\\varepsilon^2$ and take a square root."
+    }
+   ],
+   "feedback": {
+    "correct": "So the bonus is $\\sqrt{2\\ln t / n_a}$, and **UCB1** pulls the arm with the largest $Q_a + \\sqrt{2\\ln t / n_a}$.",
+    "generic": "Not quite. Each line must follow from the one before it.",
+    "byKey": {
+     "d1": "You took the log of $t^{-4}$ as $-4t$. It is $-4\\ln t$.",
+     "left-out": "Every correct step is needed. Only one line is false."
+    }
+   },
+   "explain": {
+    "text": "Setting $e^{-2n_a\\varepsilon^2} = t^{-4}$ and solving gives $\\varepsilon = \\sqrt{2\\ln t / n_a}$. The bonus shrinks as an arm is pulled and grows slowly with time. Acting on the optimistic score $Q_a + \\varepsilon$ is **optimism under uncertainty**."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Scores by hand",
+   "prose": "At pull $t = 100$ the three venues stand as below. UCB1 adds the bonus $\\sqrt{2\\ln t / n_a}$ to each estimate and pulls the largest score. Here $2\\ln 100 = 9.2103$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B",
+      "C"
+     ],
+     "xLabel": "Venue",
+     "yLabel": "Estimate",
+     "yMax": 1.6,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 0.4,
+      "B": 0.55,
+      "C": 0.6
+     },
+     "caption": "Estimates only. Your scores add the bonus."
+    }
+   },
+   "question": "Fill in A's bonus and score and B's bonus. Give decimals to 4 places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Venue",
+     "$Q_a$",
+     "$n_a$",
+     "Bonus",
+     "Score"
+    ],
+    "rows": [
+     [
+      "A",
+      "0.40",
+      "10",
+      {
+       "edit": true,
+       "answer": 0.9597,
+       "tol": {
+        "abs": 0.0002
+       },
+       "wrong": [
+        {
+         "id": "no-root",
+         "value": 0.921,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      },
+      {
+       "edit": true,
+       "answer": 1.3597,
+       "tol": {
+        "abs": 0.0003
+       },
+       "bind": "values.A",
+       "wrong": [
+        {
+         "id": "estimate",
+         "value": 0.4,
+         "tol": {
+          "abs": 0.0001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "B",
+      "0.55",
+      "50",
+      {
+       "edit": true,
+       "answer": 0.4292,
+       "tol": {
+        "abs": 0.0002
+       },
+       "wrong": [
+        {
+         "id": "no-root",
+         "value": 0.1842,
+         "tol": {
+          "abs": 0.0002
+         }
+        }
+       ]
+      },
+      "0.9792"
+     ],
+     [
+      "C",
+      "0.60",
+      "39",
+      "0.4860",
+      "1.0860"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A's bonus is $\\sqrt{9.2103/10}$."
+    },
+    {
+     "rung": "point",
+     "text": "B's bonus is $\\sqrt{9.2103/50}$.",
+     "highlight": [
+      "xA"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A: $\\sqrt{0.92103} = 0.9597$, score $0.40 + 0.9597$."
+    }
+   ],
+   "feedback": {
+    "correct": "A scores 1.3597, B 0.9792 and C 1.0860, so UCB1 pulls A.",
+    "generic": "Not quite. Divide 9.2103 by the pull count, then take the square root.",
+    "byKey": {
+     "no-root": "You left out the square root. The bonus is $\\sqrt{2\\ln t / n_a}$.",
+     "estimate": "You wrote the estimate alone. The score is estimate plus bonus."
+    }
+   },
+   "explain": {
+    "text": "A's 10 pulls earn a bonus of 0.9597, so it scores 1.3597 despite the lowest estimate. B's 50 pulls earn only 0.4292. UCB1 pulls A to check it.",
+    "canvas": {
+     "values": {
+      "A": 1.3597,
+      "B": 0.9792,
+      "C": 1.086
+     },
+     "caption": "Scores: estimate plus bonus."
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The best estimate?",
+   "prose": "At pull $t = 1000$, three strategies stand as below. $2\\ln 1000 = 13.8155$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Arm",
+      "$Q_a$",
+      "$n_a$"
+     ],
+     "rows": [
+      [
+       "P",
+       "0.62",
+       "900"
+      ],
+      [
+       "Q",
+       "0.50",
+       "8"
+      ],
+      [
+       "R",
+       "0.58",
+       "91"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which arm does UCB1 pull next?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "q",
+      "text": "Q, with score 1.81",
+      "correct": true
+     },
+     {
+      "id": "p",
+      "text": "P, with the highest estimate",
+      "why": "You picked the best estimate. P's 900 pulls leave a bonus of only 0.12, so it scores 0.74."
+     },
+     {
+      "id": "r",
+      "text": "R, the best mix of the two",
+      "why": "R scores 0.97. Q's 8 pulls give it a bonus of 1.31, far above the rest."
+     },
+     {
+      "id": "none",
+      "text": "None: UCB1 stops once it is sure",
+      "why": "UCB1 never stops: the bonus grows with $\\ln t$, so every arm is checked again now and then."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add each arm's bonus to its estimate."
+    },
+    {
+     "rung": "point",
+     "text": "Q's bonus is $\\sqrt{13.8155/8}$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Scores: P 0.7439, R 0.9696, Q 1.8141."
+    }
+   ],
+   "feedback": {
+    "correct": "Q scores $0.50 + 1.3141 = 1.8141$, the largest.",
+    "generic": "Not quite. Compare scores, not estimates.",
+    "byKey": {
+     "p": "You chose the highest estimate. With 900 pulls behind it, P's bonus is small; Q, with 8, could still be best."
+    }
+   },
+   "explain": {
+    "text": "Q's bonus is 1.3141 because it has only 8 pulls. Its score 1.8141 beats P's 0.7439. The bonus stops an arm with few pulls from being written off on a short record.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code UCB1",
+   "prose": "Write `hoeffding_bound(n, eps)` and `ucb_scores(means, counts, t)`, with bonus `math.sqrt(2 * math.log(t) / c)` and `math.inf` for an arm never pulled. In `run_ucb`, for $t$ from 1 to `T`: score, take `a = s.index(max(s))`, pull, then `Q[a] += (r - Q[a]) / n[a]`. Untried arms always win, so each arm is tried once first.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Returns"
+     ],
+     "rows": [
+      [
+       "`hoeffding_bound(100, 0.1)`",
+       "0.1353"
+      ],
+      [
+       "`ucb_scores([0.5, 0.0], [8, 0], 12)`",
+       "[1.2876..., inf]"
+      ],
+      [
+       "`run_ucb([0.45, 0.55, 0.6], 3, 0)[1]`",
+       "[1, 1, 1]"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef hoeffding_bound(n, eps):\n    \"\"\"One-sided bound on P(mean of n rewards in [0, 1] exceeds its value by eps).\"\"\"\n    ...\n\ndef ucb_scores(means, counts, t):\n    \"\"\"UCB1 scores at pull t; an arm never pulled scores infinity.\"\"\"\n    ...\n\ndef run_ucb(ps, T, seed):\n    \"\"\"Run UCB1 for T pulls. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+    "solution": "import math\nimport random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef hoeffding_bound(n, eps):\n    \"\"\"One-sided bound on P(mean of n rewards in [0, 1] exceeds its value by eps).\"\"\"\n    return math.exp(-2 * n * eps ** 2)\n\ndef ucb_scores(means, counts, t):\n    \"\"\"UCB1 scores at pull t; an arm never pulled scores infinity.\"\"\"\n    return [math.inf if c == 0 else m + math.sqrt(2 * math.log(t) / c)\n            for m, c in zip(means, counts)]\n\ndef run_ucb(ps, T, seed):\n    \"\"\"Run UCB1 for T pulls. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    Q = [0.0] * k\n    n = [0] * k\n    total = 0\n    for t in range(1, T + 1):\n        s = ucb_scores(Q, n, t)\n        a = s.index(max(s))          # ties: the lowest index\n        r = pull(ps[a], rng)\n        n[a] += 1\n        Q[a] += (r - Q[a]) / n[a]\n        total += r\n    return total, n\n",
+    "examples": [
+     {
+      "call": "ucb_scores([0.4, 0.55, 0.6], [10, 50, 39], 100)",
+      "expect": "[1.3597051824376163, 0.9791932052578696, 1.085965609524393]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "ucb_scores([0.4, 0.55, 0.6], [10, 50, 39], 100)",
+      "expect": "[1.3597051824376163, 0.9791932052578696, 1.085965609524393]",
+      "compare": "isclose"
+     },
+     {
+      "call": "ucb_scores([0.5, 0.0, 0.7], [8, 0, 3], 12)",
+      "expect": "[0.5 + math.sqrt(2 * math.log(12) / 8), math.inf, 0.7 + math.sqrt(2 * math.log(12) / 3)]",
+      "compare": "equal"
+     },
+     {
+      "call": "ucb_scores([0, 0], [0, 0], 1)",
+      "expect": "[math.inf, math.inf]",
+      "compare": "equal"
+     },
+     {
+      "call": "hoeffding_bound(100, 0.1)",
+      "expect": "math.exp(-2)",
+      "compare": "isclose"
+     },
+     {
+      "call": "hoeffding_bound(400, 0.1)",
+      "expect": "math.exp(-8)",
+      "compare": "isclose"
+     },
+     {
+      "call": "run_ucb([0.45, 0.55, 0.6], 3, 0)[1]",
+      "expect": "[1, 1, 1]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_ucb([0.45, 0.55, 0.6], 1000, 0)",
+      "expect": "(552, [202, 309, 489])",
+      "compare": "equal"
+     },
+     {
+      "call": "run_ucb([0.45, 0.55, 0.6], 1000, 3)",
+      "expect": "(574, [57, 343, 600])",
+      "compare": "equal"
+     },
+     {
+      "call": "run_ucb([0.2, 0.5, 0.8], 2000, 1)",
+      "expect": "(1539, [43, 101, 1856])",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. Runs must equal ours exactly (pick the lowest index on a tie); scores and bounds are compared with math.isclose."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`math.exp(-2 * n * eps ** 2)` is the bound."
+    },
+    {
+     "rung": "point",
+     "text": "In `ucb_scores`, test `c == 0` before dividing.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "In the loop, `a = s.index(max(s))` takes the lowest index on a tie."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. The first three pulls go to A, B and C in turn because each untried arm scores infinity.",
+    "generic": "Some tests fail. Check the infinite score for an untried arm, and that $t$ starts at 1."
+   },
+   "explain": {
+    "text": "An untried arm scores `math.inf`, so pulls 1 to 3 go to each arm once. After that the bonus does the exploring: no random draws are needed to choose. Only the pulls use the generator."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "How UCB1 does here",
+   "prose": "We ran UCB1 and epsilon-greedy ($\\varepsilon = 0.1$) on seeds 0 to 199, and a UCB with a smaller bonus, $0.5\\sqrt{\\ln t / n_a}$. At 1,000 pulls the mean regrets were 37.8, 24.0 and 18.3. On 20 longer runs, UCB1 only overtook epsilon-greedy between 40,000 and 50,000 pulls.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "eg",
+       "label": "ε-greedy 0.1",
+       "values": [
+        0.0,
+        1.11,
+        2.08,
+        2.94,
+        3.74,
+        4.5,
+        5.21,
+        5.86,
+        6.48,
+        7.09,
+        7.68,
+        8.26,
+        8.79,
+        9.31,
+        9.82,
+        10.32,
+        10.82,
+        11.31,
+        11.79,
+        12.28,
+        12.76,
+        13.23,
+        13.69,
+        14.15,
+        14.58,
+        15.02,
+        15.45,
+        15.87,
+        16.26,
+        16.66,
+        17.06,
+        17.47,
+        17.87,
+        18.24,
+        18.61,
+        18.98,
+        19.35,
+        19.72,
+        20.09,
+        20.45,
+        20.79,
+        21.11,
+        21.43,
+        21.77,
+        22.09,
+        22.42,
+        22.75,
+        23.07,
+        23.39,
+        23.71,
+        24.03
+       ]
+      },
+      {
+       "id": "u1",
+       "label": "UCB1",
+       "values": [
+        0.0,
+        1.23,
+        2.33,
+        3.31,
+        4.34,
+        5.3,
+        6.22,
+        7.16,
+        8.1,
+        8.97,
+        9.84,
+        10.69,
+        11.49,
+        12.3,
+        13.14,
+        13.94,
+        14.77,
+        15.62,
+        16.42,
+        17.22,
+        18.01,
+        18.78,
+        19.52,
+        20.2,
+        21.01,
+        21.79,
+        22.52,
+        23.26,
+        23.95,
+        24.64,
+        25.36,
+        26.05,
+        26.73,
+        27.37,
+        28.01,
+        28.67,
+        29.3,
+        29.95,
+        30.65,
+        31.32,
+        31.87,
+        32.43,
+        33.02,
+        33.64,
+        34.24,
+        34.88,
+        35.48,
+        36.08,
+        36.66,
+        37.25,
+        37.78
+       ]
+      },
+      {
+       "id": "u5",
+       "label": "smaller bonus",
+       "values": [
+        0.0,
+        1.12,
+        2.03,
+        2.8,
+        3.49,
+        4.13,
+        4.75,
+        5.29,
+        5.79,
+        6.26,
+        6.76,
+        7.24,
+        7.67,
+        8.1,
+        8.49,
+        8.94,
+        9.34,
+        9.68,
+        10.03,
+        10.35,
+        10.67,
+        10.99,
+        11.3,
+        11.61,
+        11.92,
+        12.26,
+        12.59,
+        12.85,
+        13.1,
+        13.34,
+        13.6,
+        13.88,
+        14.15,
+        14.37,
+        14.58,
+        14.83,
+        15.09,
+        15.33,
+        15.59,
+        15.87,
+        16.14,
+        16.42,
+        16.65,
+        16.89,
+        17.11,
+        17.31,
+        17.51,
+        17.7,
+        17.9,
+        18.08,
+        18.28
+       ]
+      }
+     ],
+     "xValues": [
+      0,
+      20,
+      40,
+      60,
+      80,
+      100,
+      120,
+      140,
+      160,
+      180,
+      200,
+      220,
+      240,
+      260,
+      280,
+      300,
+      320,
+      340,
+      360,
+      380,
+      400,
+      420,
+      440,
+      460,
+      480,
+      500,
+      520,
+      540,
+      560,
+      580,
+      600,
+      620,
+      640,
+      660,
+      680,
+      700,
+      720,
+      740,
+      760,
+      780,
+      800,
+      820,
+      840,
+      860,
+      880,
+      900,
+      920,
+      940,
+      960,
+      980,
+      1000
+     ],
+     "xLabel": "Pulls",
+     "yLabel": "Mean regret",
+     "y": [
+      0,
+      40
+     ],
+     "decimals": 1
+    },
+    "state": {}
+   },
+   "question": "Why does UCB1 trail epsilon-greedy over the first 1,000 pulls on these venues?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "loose",
+      "text": "Its worst-case bonus keeps it checking B, only 0.05 behind C",
+      "correct": true
+     },
+     {
+      "id": "random",
+      "text": "It explores at random more often than epsilon-greedy does",
+      "why": "UCB1 never explores at random. It chooses by score; its extra pulls of B come from a large bonus."
+     },
+     {
+      "id": "bug",
+      "text": "Its regret grows linearly, so it will trail at every horizon",
+      "why": "UCB1's regret grows like $\\ln T$. It overtakes epsilon-greedy's linear floor, here after about 40,000 pulls."
+     },
+     {
+      "id": "never",
+      "text": "It never pulls the best venue C often enough to find it",
+      "why": "It finds C; it just keeps paying to confirm that B is worse, because the gap is small."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask what the bonus is guarding against."
+    },
+    {
+     "rung": "point",
+     "text": "Hoeffding holds for any rewards in $[0, 1]$, so it is loose for these.",
+     "highlight": [
+      "u1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A gap of 0.05 needs many pulls before the bonus is smaller than the gap."
+    }
+   ],
+   "feedback": {
+    "correct": "The bound is safe for every bandit, so it over-explores this one. A smaller bonus did best here.",
+    "generic": "Not quite. Ask why the bonus stays large compared with the 0.05 gap."
+   },
+   "explain": {
+    "text": "The bonus stays above the gap of 0.05 until B has about $2\\ln t / 0.05^2 \\approx 5{,}500$ pulls at $t = 1000$. UCB1 pays that to be safe on any bandit. Practitioners shrink the bonus, at the cost of the guarantee.",
+    "canvas": {
+     "highlight": [
+      "u1",
+      "eg"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Optimism under uncertainty",
+   "prose": "UCB1 pulls the arm with the largest $$Q_a + \\sqrt{\\frac{2\\ln t}{n_a}},$$ an upper limit the true value exceeds with chance at most $t^{-4}$ by Hoeffding. An arm with few pulls gets a large bonus; the bonus shrinks as it is pulled and grows like $\\ln t$ for arms left alone.",
+   "question": "What score does UCB1 give an arm it has never pulled?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "inf",
+      "text": "Infinity, so it is pulled before any arm is pulled twice",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "Zero, since it has no estimate yet",
+      "why": "With $n_a = 0$ the bonus divides by zero. Taking it as infinite makes UCB1 try every arm once first."
+     },
+     {
+      "id": "half",
+      "text": "One half, the middle of the range of a reward",
+      "why": "UCB1 has no prior guess. An untried arm's bonus is unbounded, so its score is infinite."
+     },
+     {
+      "id": "bonus",
+      "text": "The bonus alone, $\\sqrt{2\\ln t}$",
+      "why": "The bonus divides by $n_a$, which is 0. The score is infinite, not $\\sqrt{2\\ln t}$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Infinite: every arm is tried once before any is tried twice.",
+    "generic": "Look at the bonus when $n_a = 0$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Funding research ideas",
+   "prose": "A research team runs one backtest trial a day across three ideas; a trial succeeds if the idea beats its benchmark. So far: X 15 of 30, Y 14 of 25, Z 1 of 4. The team chooses trial 60 by UCB1. Here $2\\ln 60 = 8.1887$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Idea",
+      "Successes",
+      "Trials",
+      "Rate"
+     ],
+     "rows": [
+      [
+       "X",
+       "15",
+       "30",
+       "0.50"
+      ],
+      [
+       "Y",
+       "14",
+       "25",
+       "0.56"
+      ],
+      [
+       "Z",
+       "1",
+       "4",
+       "0.25"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is idea Z's UCB1 score? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.6808,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "bonus",
+      "value": 1.4308,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-root",
+      "value": 2.2972,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "y",
+      "value": 1.1323,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Z's rate is 0.25 from 4 trials."
+    },
+    {
+     "rung": "point",
+     "text": "Its bonus is $\\sqrt{8.1887/4}$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.25 + \\sqrt{2.0472}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.25 + \\sqrt{8.1887/4} = 0.25 + 1.4308 = 1.6808$, above X's 1.0225 and Y's 1.1323: Z gets the trial.",
+    "generic": "Not quite. Add Z's bonus to its rate of 0.25.",
+    "byKey": {
+     "bonus": "That is the bonus alone. Add Z's rate of 0.25.",
+     "no-root": "You left out the square root in the bonus.",
+     "y": "That is Y's score. The question asks about Z."
+    }
+   },
+   "explain": {
+    "text": "Z's 4 trials earn a bonus of 1.4308, so it scores 1.6808 and gets trial 60. One lucky start can sink an idea's rate; UCB keeps a weak-looking idea alive until it has had a fair number of trials.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "For rewards in $[0, 1]$, Hoeffding bounds a one-sided miss by $e^{-2n\\varepsilon^2}$, far tighter than Chebyshev's $\\tfrac{1}{4n\\varepsilon^2}$ once $n$ is large.",
+   "Setting that bound to $t^{-4}$ gives the bonus $\\sqrt{2\\ln t / n_a}$. UCB1 pulls the largest $Q_a$ plus bonus, and an untried arm scores infinity.",
+   "The bound guards against every bandit, so UCB1 can over-explore close arms. Its regret grows like $\\ln T$, but on venues 0.05 apart it beat epsilon-greedy only after about 40,000 pulls."
+  ],
+  "formula": {
+   "name": "UCB1 score",
+   "tex": "Q_a + \\sqrt{\\dfrac{2\\ln t}{n_a}}",
+   "note": "For rewards in $[0, 1]$; an arm with $n_a = 0$ scores infinity."
+  },
+  "trap": "Pulling the arm with the best estimate when another arm has only a few pulls. The bonus is there to give that arm a fair hearing."
+ },
+ "quiz": [
+  {
+   "id": "q-bonus-1000",
+   "difficulty": 2,
+   "prose": "An arm has been pulled 10 times by pull $t = 1000$.",
+   "question": "What is its UCB1 bonus $\\sqrt{2\\ln t / n_a}$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.1754,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "no-root",
+      "value": 1.3816,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "t100",
+      "value": 0.9597,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{13.8155/10} = 1.1754$.",
+    "generic": "Not quite. Use $2\\ln 1000 = 13.8155$ and $n_a = 10$.",
+    "byKey": {
+     "no-root": "You left out the square root.",
+     "t100": "That is the bonus at $t = 100$. The log has grown since."
+    }
+   },
+   "explain": {
+    "text": "$2\\ln 1000 = 13.8155$, over 10 pulls is 1.3816, and its square root is 1.1754. The same arm had 0.9597 at $t = 100$: the bonus creeps up while an arm waits."
+   }
+  },
+  {
+   "id": "q-cheb-bonus",
+   "difficulty": 3,
+   "prose": "Building the bonus from Chebyshev instead, $\\tfrac{1}{4n\\varepsilon^2} = t^{-4}$ gives $\\varepsilon = t^2/(2\\sqrt n)$.",
+   "question": "What does that rule do in practice?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "forever",
+      "text": "It explores far too long: at $t = 100$ and $n = 10$ the bonus is about 1,581",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "Much the same as UCB1, since both are tail bounds",
+      "why": "Chebyshev's tail falls like $1/n$, so the bonus must grow like $t^2$, not $\\sqrt{\\ln t}$."
+     },
+     {
+      "id": "less",
+      "text": "It explores less than UCB1 because the bound is looser",
+      "why": "A looser bound needs a wider interval for the same tail chance, so it explores more."
+     },
+     {
+      "id": "greedy",
+      "text": "It behaves like greedy after a few pulls",
+      "why": "The bonus grows like $t^2$, so it never lets go of an arm. That is the opposite of greedy."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With a bonus of $t^2/(2\\sqrt n)$ every arm looks best for a very long time.",
+    "generic": "Not quite. Put $t = 100$ and $n = 10$ into $t^2/(2\\sqrt n)$."
+   },
+   "explain": {
+    "text": "At $t = 100$ and $n = 10$ the Chebyshev bonus is $10000/(2\\sqrt{10}) = 1581.1$, against UCB1's 0.9597. A rewards-in-$[0, 1]$ problem needs Hoeffding's exponential tail to give a sensible bonus."
+   }
+  },
+  {
+   "id": "q-hoef-50",
+   "difficulty": 2,
+   "prose": "Fifty rewards in $[0, 1]$ are averaged.",
+   "question": "What is Hoeffding's bound on the chance that the mean exceeds the true value by 0.1 or more? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3679,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "two",
+      "value": 0.7358,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "cheb",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^{-2 \\times 50 \\times 0.01} = e^{-1} = 0.3679$.",
+    "generic": "Not quite. Use the one-sided bound $e^{-2n\\varepsilon^2}$.",
+    "byKey": {
+     "two": "That is the two-sided bound. The question asks about exceeding only.",
+     "cheb": "That is Chebyshev's $\\tfrac{1}{4n\\varepsilon^2}$, which bounds both tails together."
+    }
+   },
+   "explain": {
+    "text": "$2n\\varepsilon^2 = 2 \\times 50 \\times 0.01 = 1$, so the bound is $e^{-1} = 0.3679$."
+   }
+  }
+ ]
+}

@@ -131,3 +131,6 @@ Raised later (audit trig):
 Raised later (session AK, strand ai):
 - (engine-pass-ak, open) Learn and Review list AI topics as ordinary rows; group them under the strand badge or a strand heading.
 - (engine-pass-ak, open) A stage exam's `draw` sources are not checked for ai origin; add a validator error if a stage exam draws from an `ai` course.
+Raised later (rl level 1):
+- `bars` canvas: no way for the learner to pull an arm by tapping a bar (draw one seeded 0 or 1 outcome for that category and update its running estimate). Wanted for the l1 hook, "tap venues and watch the estimates move". Workaround: a `frames` control over 11 precomputed patches of 30 round-robin orders (`rl/l1-which-machine` screen 1). Ask: a per-category seeded `sim` with tap-to-pull, counts and a running mean per bar.
+- `code` widget: an exact-on-seed test of an agent fails with "Expected (449, [1000, 0, 0]), got ..." and nothing tells the learner where their run left ours; an algebraically equal update (`Q += (1/n)*(r - Q)` against `Q += (r - Q)/n`) changes float ties and the whole trajectory. Workaround: every prose states the update and bonus lines verbatim. Ask: a `trace` compare that runs a hidden reference beside the learner's code and reports the first step where the chosen actions differ.
