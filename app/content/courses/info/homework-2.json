@@ -1,0 +1,424 @@
+{
+ "id": "homework-2",
+ "course": "info",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-kl-report",
+   "difficulty": 4,
+   "skills": [
+    "if-cross"
+   ],
+   "prose": "Return the KL divergence $D(p \\| q)$ in both units, as a dict with the keys `\"bits\"` and `\"nats\"`.",
+   "question": "Complete `kl_report(p, q)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef kl_report(p, q):\n    \"\"\"{\"bits\": D(p || q) in bits, \"nats\": the same in nats}; math.inf for both if q_i = 0 < p_i.\"\"\"\n    ...\n",
+    "solution": "import math\n\ndef kl_report(p, q):\n    \"\"\"{\"bits\": D(p || q) in bits, \"nats\": the same in nats}; math.inf for both if q_i = 0 < p_i.\"\"\"\n    nats = 0.0\n    for pi, qi in zip(p, q):\n        if pi == 0:\n            continue\n        if qi == 0:\n            return {\"bits\": math.inf, \"nats\": math.inf}\n        nats += pi * math.log(pi / qi)\n    return {\"bits\": nats / math.log(2), \"nats\": nats}\n",
+    "examples": [
+     {
+      "call": "kl_report([0.3, 0.5, 0.2], [0.25, 0.25, 0.5])[\"bits\"]",
+      "expect": "0.31452470277266564",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "kl_report([0.3, 0.5, 0.2], [0.25, 0.25, 0.5])[\"bits\"]",
+      "expect": "0.31452470277266564",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "kl_report([0.3, 0.5, 0.2], [0.25, 0.25, 0.5])[\"nats\"]",
+      "expect": "0.218011910943328",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "kl_report([0.25, 0.25, 0.5], [0.3, 0.5, 0.2])[\"bits\"]",
+      "expect": "0.34520544598523273",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "kl_report([0.6, 0.4], [0.6, 0.4])",
+      "expect": "{'bits': 0.0, 'nats': 0.0}",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "kl_report([0.5, 0.5, 0.0], [0.5, 0.25, 0.25])[\"nats\"]",
+      "expect": "0.34657359027997264",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "math.isinf(kl_report([0.5, 0.5], [1.0, 0.0])[\"bits\"])",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Values are accepted within 1e-9; one test expects math.inf."
+   },
+   "feedback": {
+    "correct": "Both units agree with every test.",
+    "generic": "Some tests failed. Read the first failing row.",
+    "byKey": {
+     "error": "Your code stopped with an error. Return a dict, and return infinity rather than divide by zero.",
+     "test-3": "Test 3 swaps $p$ and $q$. The weights come from the first argument."
+    }
+   },
+   "explain": {
+    "text": "Work in nats with `math.log`, then divide by $\\ln 2$ for bits: one sum, two units.\n\n```python\nreturn {\"bits\": nats / math.log(2), \"nats\": nats}\n```"
+   }
+  },
+  {
+   "id": "h-smoothing",
+   "difficulty": 5,
+   "skills": [
+    "if-likelihood"
+   ],
+   "prose": "Add-$\\alpha$ smoothing turns training counts $c_i$ over $k$ outcomes into chances $q_i = \\dfrac{c_i + \\alpha}{N + k\\alpha}$. A desk counts next-day return buckets in a training year and a test month. The best $\\alpha$ gives the least cross-entropy on the test counts.",
+   "question": "Write `best_smoothing(train_counts, test_counts, alphas)`. With $\\alpha = 0$ an unseen test bucket makes the loss infinite, so that $\\alpha$ cannot win.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef best_smoothing(train_counts, test_counts, alphas):\n    \"\"\"The alpha whose add-alpha model of train_counts has the least\n    cross-entropy on test_counts; the smallest such alpha on a tie.\"\"\"\n    ...\n",
+    "solution": "import math\n\ndef held_out_loss(train_counts, test_counts, alpha):\n    n, k, m = sum(train_counts), len(train_counts), sum(test_counts)\n    loss = 0.0\n    for tr, te in zip(train_counts, test_counts):\n        if te == 0:\n            continue\n        q = (tr + alpha) / (n + k * alpha)\n        if q == 0:\n            return math.inf\n        loss -= te / m * math.log(q)\n    return loss\n\ndef best_smoothing(train_counts, test_counts, alphas):\n    \"\"\"The alpha whose add-alpha model of train_counts has the least\n    cross-entropy on test_counts; the smallest such alpha on a tie.\"\"\"\n    return min(alphas, key=lambda a: (held_out_loss(train_counts, test_counts, a), a))\n",
+    "examples": [
+     {
+      "call": "best_smoothing([12, 30, 40, 18, 0], [3, 9, 10, 6, 2], [0, 0.1, 0.5, 1, 2, 5, 20])",
+      "expect": "5",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "best_smoothing([12, 30, 40, 18, 0], [3, 9, 10, 6, 2], [0, 0.1, 0.5, 1, 2, 5, 20])",
+      "expect": "5",
+      "compare": "equal"
+     },
+     {
+      "call": "best_smoothing([12, 30, 40, 18, 0], [3, 9, 12, 6, 0], [0, 0.1, 0.5, 1, 2, 5, 20])",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "best_smoothing([5, 0, 3, 2], [4, 1, 3, 2], [0, 0.1, 0.5, 1, 2, 5, 20])",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "best_smoothing([2, 9, 5], [3, 4, 3], [0, 0.1, 0.5, 1, 2, 5, 20])",
+      "expect": "20",
+      "compare": "equal"
+     },
+     {
+      "call": "best_smoothing([2, 9, 5], [3, 4, 3], [0.1, 0.5])",
+      "expect": "0.5",
+      "compare": "equal"
+     },
+     {
+      "call": "best_smoothing([5, 0, 3, 2], [4, 1, 3, 2], [0, 0.1])",
+      "expect": "0.1",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Each result must equal the expected alpha exactly."
+   },
+   "feedback": {
+    "correct": "Your search picks the smoothing that predicts the test month best.",
+    "generic": "Some tests failed. Read the first failing row.",
+    "byKey": {
+     "error": "Your code stopped with an error. A chance of 0 inside a log must give an infinite loss, not a crash.",
+     "test-2": "Test 2 has no unseen bucket, and no smoothing wins there. Make sure $\\alpha = 0$ is not ruled out when its loss is finite.",
+     "test-6": "Test 6 offers 0 and 0.1. With an unseen bucket, 0 gives an infinite loss, so 0.1 wins."
+    }
+   },
+   "explain": {
+    "text": "Score each $\\alpha$ by the held-out cross-entropy, skipping test buckets with no count. Unsmoothed counts fail on unseen buckets; too much smoothing flattens what the counts know.\n\n```python\nreturn min(alphas, key=lambda a: (held_out_loss(train_counts, test_counts, a), a))\n```"
+   }
+  },
+  {
+   "id": "h-mle-to-ce",
+   "difficulty": 4,
+   "skills": [
+    "if-likelihood"
+   ],
+   "prose": "The coin of level 2 found the same $\\theta$ two ways. Here is the general argument.",
+   "question": "Put the steps from \"maximise the likelihood\" to \"minimise the cross-entropy\" in order. Leave out the two that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Maximise $L(\\theta) = \\prod_i q_\\theta(x_i)$ over $\\theta$."
+     },
+     {
+      "id": "s2",
+      "text": "Equivalently maximise $\\ln L(\\theta) = \\sum_i \\ln q_\\theta(x_i)$: $\\ln$ is increasing, so the peak does not move."
+     },
+     {
+      "id": "s3",
+      "text": "Equivalently minimise $-\\tfrac1n \\sum_i \\ln q_\\theta(x_i)$: multiplying by $-\\tfrac1n < 0$ turns a maximum into a minimum."
+     },
+     {
+      "id": "s4",
+      "text": "Group equal outcomes: this is $-\\sum_x \\hat p(x) \\ln q_\\theta(x) = H(\\hat p, q_\\theta)$."
+     },
+     {
+      "id": "s5",
+      "text": "Write $H(\\hat p, q_\\theta) = H(\\hat p) + D(\\hat p \\| q_\\theta)$: only the KL term moves with $\\theta$."
+     },
+     {
+      "id": "d1",
+      "text": "Multiply by $-\\tfrac1n$, which keeps a maximum a maximum.",
+      "why": "A negative factor flips the order: the largest becomes the smallest."
+     },
+     {
+      "id": "d2",
+      "text": "Apply Jensen to move $\\ln$ outside the sum.",
+      "why": "No inequality is needed: every step here is an exact rewriting."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Log, then a negative average, then grouping by outcome: the likelihood becomes a cross-entropy.",
+    "generic": "Not quite. Take logs first, then average with a minus sign, then group.",
+    "byKey": {
+     "d1": "You kept a maximum after multiplying by a negative number. It becomes a minimum.",
+     "d2": "You used an inequality. Each step here is an equality.",
+     "left-out": "A step that belongs was left out. There are five."
+    }
+   },
+   "explain": {
+    "text": "Each step keeps the same best $\\theta$. The last line shows why: $H(\\hat p)$ is fixed, so the best $\\theta$ makes $D(\\hat p \\| q_\\theta)$ as small as the family allows."
+   }
+  },
+  {
+   "id": "h-lower-kl",
+   "difficulty": 5,
+   "skills": [
+    "if-cross"
+   ],
+   "question": "Explain what is missing from a colleague's rule.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "A colleague says: \"a model with lower KL divergence to the training frequencies is always better.\" What is missing? Say what lower training KL does measure, give a case where the rule picks the wrong model, and say what you would compare instead.",
+    "model": "**What it measures.** $D(\\hat p_{\\text{train}} \\| q)$ is the training loss minus a constant, $H(\\hat p_{\\text{train}})$. Lower KL means the model fits the training counts more closely, nothing more.\n\n**Where it fails.** The raw training frequencies have KL 0, the least possible. But they give chance 0 to any outcome not seen in training. If one appears later, the held-out cross-entropy is infinite. In the smoothing exercise, $\\alpha = 0$ had the lowest training KL and an infinite test loss on the data with an unseen bucket, while $\\alpha = 5$ did best.\n\n**What is missing.** The rule needs held-out data: the goal is to predict new data, not to copy old counts. With few counts, the training frequencies are noisy, and some smoothing usually helps.\n\n**Instead.** Compare models by their average negative log-likelihood (cross-entropy) on a held-out set, in one unit, on the same symbols. Choose smoothing or model size by that score.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Says training KL equals the training loss minus a constant, so it only measures fit to the training counts."
+     },
+     {
+      "points": 2,
+      "text": "Gives the copy-the-counts model as the case where the rule fails: KL 0 on training, yet chance 0 for unseen outcomes."
+     },
+     {
+      "points": 2,
+      "text": "Explains that a zero chance for an outcome that later happens makes the held-out cross-entropy infinite."
+     },
+     {
+      "points": 2,
+      "text": "Proposes comparing held-out average negative log-likelihood (cross-entropy or perplexity) instead."
+     },
+     {
+      "points": 1,
+      "text": "Mentions smoothing, or noisy counts from small samples, as the fix the rule misses."
+     },
+     {
+      "points": 1,
+      "text": "Notes the comparison must use one unit and the same test symbols."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your answer with the model and tick each rubric row you met.",
+    "generic": "Compare your answer with the model and tick each rubric row you met."
+   },
+   "explain": {
+    "text": "Lower training KL rewards copying the training counts. Prediction is judged on new data, so held-out cross-entropy is the score."
+   }
+  },
+  {
+   "id": "h-kl-proof",
+   "difficulty": 5,
+   "skills": [
+    "if-cross"
+   ],
+   "question": "Prove that the KL divergence is never negative, and compute one.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "Let $p$ and $q$ be distributions over the same outcomes. Prove that $D(p \\| q) = \\sum_i p_i \\log_2 \\frac{p_i}{q_i} \\ge 0$, using Jensen's inequality. State where you need $p_i > 0$, and when equality holds. Then compute $D(p \\| q)$ in bits for $p = (0.6, 0.3, 0.1)$ and $q = (0.4, 0.4, 0.2)$. Optional, one more point: give it in nats too.",
+    "model": "**Set-up.** Sum only over outcomes with $p_i > 0$: there $q_i / p_i$ is defined, and terms with $p_i = 0$ contribute 0. If some $q_i = 0 < p_i$, $D = \\infty \\ge 0$, so assume every such $q_i > 0$.\n\n1. $-D(p \\| q) = \\sum p_i \\log_2 \\tfrac{q_i}{p_i}$: flip each fraction, which flips the sign of its log.\n2. $= E_p\\big[\\log_2 \\tfrac{q(X)}{p(X)}\\big]$: a sum weighted by $p_i$ is an expected value under $p$.\n3. $\\le \\log_2 E_p\\big[\\tfrac{q(X)}{p(X)}\\big]$: Jensen, since $\\log_2$ is concave.\n4. $= \\log_2 \\sum q_i$: in each term $p_i \\cdot \\tfrac{q_i}{p_i} = q_i$.\n5. $\\le \\log_2 1 = 0$: the $q_i$ add to at most 1, and $\\log_2$ is increasing.\n\nSo $D(p \\| q) \\ge 0$. The last sum runs over $p_i > 0$, so it is at most 1, and exactly 1 when $q$ puts no chance outside them.\n\n**Equality.** Jensen is an equality only when $q_i / p_i$ is one constant $c$; the last step needs $\\sum q_i = c = 1$. So $D = 0$ exactly when $q = p$.\n\n**Example.** The terms are $0.6 \\log_2 1.5 \\approx 0.351$, $0.3 \\log_2 0.75 \\approx -0.125$ and $0.1 \\log_2 0.5 = -0.100$. So $D \\approx 0.126$ bits; in nats, $0.126 \\times 0.6931 \\approx 0.088$.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "States the claim with the hypothesis: the sum runs over $p_i > 0$, and says the ratio $q_i/p_i$ needs it (or treats $q_i = 0 < p_i$ as infinite).",
+      "required": true
+     },
+     {
+      "points": 2,
+      "text": "Writes $-D$ as $E_p[\\log_2(q/p)]$ and applies Jensen, naming the concavity of $\\log_2$ for the direction.",
+      "required": true
+     },
+     {
+      "points": 2,
+      "text": "Cancels to $\\log_2 \\sum q_i$ and uses $\\sum q_i \\le 1$ (equal to 1 when $q$ has no outcomes outside $p$'s) to reach $\\le 0$.",
+      "required": true
+     },
+     {
+      "points": 2,
+      "text": "Equality only when $q = p$: Jensen needs a constant ratio, and the sum step forces it to be 1.",
+      "required": true
+     },
+     {
+      "points": 1,
+      "text": "Computes $D(p \\| q) \\approx 0.126$ bits for the given pair.",
+      "required": true
+     },
+     {
+      "points": 1,
+      "text": "Optional: gives the same value in nats, about 0.088."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your proof with the model and tick each rubric row you met.",
+    "generic": "Compare your proof with the model and tick each rubric row you met."
+   },
+   "explain": {
+    "text": "Concavity does the work; the hypothesis $p_i > 0$ makes the ratio and the expected value make sense."
+   },
+   "performance": "derivation",
+   "pace": 1500
+  },
+  {
+   "id": "h-ppl-mix",
+   "difficulty": 3,
+   "skills": [
+    "if-likelihood"
+   ],
+   "prose": "A model loses 2.2 bits a letter on a test set. Another reports perplexity 4.2 on the same letters.",
+   "question": "What is the first model's perplexity? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.59,
+    "tol": {
+     "abs": 0.005
+    },
+    "label": "Perplexity",
+    "accept": "4.59, from $2^{2.2}$.",
+    "wrong": [
+     {
+      "id": "e",
+      "value": 9.03,
+      "tol": {
+       "abs": 0.006
+      }
+     },
+     {
+      "id": "loss",
+      "value": 2.2,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2^{2.2} \\approx 4.59$, so the second model, at 4.2, is better.",
+    "generic": "Not quite. Raise 2 to the loss in bits.",
+    "byKey": {
+     "e": "You took $e^{2.2}$. The loss is in bits.",
+     "loss": "That is the loss."
+    }
+   },
+   "explain": {
+    "text": "$2^{2.2} \\approx 4.59$ choices against 4.2, so the second model is less unsure on these letters."
+   }
+  },
+  {
+   "id": "h-ce-fresh",
+   "difficulty": 4,
+   "skills": [
+    "if-cross"
+   ],
+   "prose": "Truth $p = (0.5, 0.3, 0.2)$ for three order types; a model says $q = (0.6, 0.2, 0.2)$.",
+   "question": "What is $H(p, q)$, in bits? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.529,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "bits",
+    "label": "Cross-entropy",
+    "accept": "1.529, from $0.5(0.737) + 0.3(2.322) + 0.2(2.322)$.",
+    "wrong": [
+     {
+      "id": "entropy",
+      "value": 1.485,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "swapped",
+      "value": 1.412,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nats",
+      "value": 1.06,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.5 \\times 0.737 + 0.3 \\times 2.322 + 0.2 \\times 2.322 \\approx 1.529$ bits.",
+    "generic": "Not quite. Weigh $-\\log_2 q$ by $p$.",
+    "byKey": {
+     "entropy": "That is $H(p)$. The code is built for $q$.",
+     "swapped": "You weighed by $q$ and took logs of $p$.",
+     "nats": "That is in nats."
+    }
+   },
+   "explain": {
+    "text": "$-\\log_2 0.6 \\approx 0.737$ and $-\\log_2 0.2 \\approx 2.322$. Weighted by $p$: 1.529 bits, 0.044 above the entropy 1.485."
+   }
+  }
+ ]
+}

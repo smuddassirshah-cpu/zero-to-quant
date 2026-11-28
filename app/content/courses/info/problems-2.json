@@ -1,0 +1,542 @@
+{
+ "id": "problems-2",
+ "course": "info",
+ "level": 2,
+ "title": "Models, losses and the data",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-volume-bands",
+   "difficulty": 4,
+   "skills": [
+    "if-cross",
+    "if-likelihood"
+   ],
+   "prose": "A desk files each day's trading volume in one of four bands: quiet, normal, busy and frantic. Over years the bands came with shares 0.35, 0.3, 0.25 and 0.1. Model B forecasts 0.4, 0.35, 0.15 and 0.1.",
+   "parts": [
+    {
+     "question": "How many bits does one day's band carry, under the true shares? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.883,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Entropy",
+      "wrong": [
+       {
+        "id": "equal",
+        "value": 2,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "nats",
+        "value": 1.305,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The true shares give $H \\approx 1.883$ bits a day.",
+      "generic": "Not yet. Weigh each band's $-\\log_2$ share by that share.",
+      "byKey": {
+       "equal": "Two bits is four equally common bands. Quiet days are three and a half times as common as frantic ones.",
+       "nats": "Natural logs give 1.305 nats; the desk counts in bits."
+      }
+     },
+     "explain": {
+      "text": "The terms $p(-\\log_2 p)$ are 0.530, 0.521, 0.500 and 0.332, adding to 1.883 bits."
+     }
+    },
+    {
+     "question": "A code is built on model B. How many bits a day does it spend on average? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.933,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Cross-entropy",
+      "wrong": [
+       {
+        "id": "entropy",
+        "value": 1.883,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "swapped",
+        "value": 1.846,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "B's code spends $H(p, q_B) \\approx 1.933$ bits a day.",
+      "generic": "Not yet. The days arrive with the true shares; the word lengths are $-\\log_2$ of B's chances.",
+      "byKey": {
+       "entropy": "That is the cost with the true shares. B's code is built on B's chances.",
+       "swapped": "That weighs B's chances and logs the true shares: the roles are the wrong way round."
+      }
+     },
+     "explain": {
+      "text": "B's word lengths are 1.322, 1.515, 2.737 and 3.322 bits. Weighted by the true shares they average 1.933."
+     }
+    },
+    {
+     "question": "Using parts 1 and 2, how far is model B from the truth, $D(p \\| q_B)$, in bits? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.05,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "KL",
+      "wrong": [
+       {
+        "id": "reversed",
+        "value": 0.044,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "sum",
+        "value": 3.816,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1.933 - 1.883 = 0.050$ bits a day.",
+      "generic": "Not yet. The divergence is the code's cost above the floor of part 1.",
+      "byKey": {
+       "reversed": "That is $D(q_B \\| p)$, with B as the truth. The days follow the true shares.",
+       "sum": "Adding the two parts gives no meaning. Take part 1 from part 2."
+      }
+     },
+     "explain": {
+      "text": "B overpays $1.933 - 1.883 = 0.050$ bits a day for its errors: too few busy days (0.15 against 0.25) and too many quiet ones."
+     }
+    },
+    {
+     "question": "Using part 2, what is model B's perplexity on these days? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.82,
+      "tol": {
+       "abs": 0.005
+      },
+      "label": "Perplexity",
+      "wrong": [
+       {
+        "id": "e",
+        "value": 6.91,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "loss",
+        "value": 1.93,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2^{1.933} \\approx 3.82$ effective bands.",
+      "generic": "Not yet. Part 2 is in bits, so raise 2 to it.",
+      "byKey": {
+       "e": "Raising $e$ to a loss in bits overstates it: 6.91 is not a perplexity here.",
+       "loss": "That is the loss itself, not the count of choices."
+      }
+     },
+     "explain": {
+      "text": "A loss of 1.933 bits is as unsure as a fair choice among $2^{1.933} \\approx 3.82$ bands. That is a little under the 4 bands there are."
+     }
+    },
+    {
+     "question": "Model A gives each band 0.25. Which model's code is cheaper on the true days?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "b",
+        "text": "B: 1.933 bits a day against 2",
+        "correct": true
+       },
+       {
+        "id": "a",
+        "text": "A: equal shares hedge against every band",
+        "why": "A's code spends 2 bits on every day, more than B's 1.933."
+       },
+       {
+        "id": "tie",
+        "text": "Neither: both are wrong models",
+        "why": "Both are wrong, but by different amounts: A by 0.117 bits a day, B by 0.050."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "B is cheaper: its divergence is 0.050 bits, A's is 0.117.",
+      "generic": "Not yet. Work out A's cost: every word is 2 bits.",
+      "byKey": {
+       "a": "Hedging costs here: A's 2 bits beat nothing."
+      }
+     },
+     "explain": {
+      "text": "A costs $-\\log_2 0.25 = 2$ bits a day, 0.117 above the floor; B costs 1.933, 0.050 above it."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-fills",
+   "difficulty": 3,
+   "skills": [
+    "if-likelihood"
+   ],
+   "prose": "A market maker's quotes were filled 21 times in 60. She models each quote as filled with one constant chance $\\theta$, fitted by maximum likelihood.",
+   "parts": [
+    {
+     "question": "What is the fitted $\\theta$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.35,
+      "tol": {
+       "abs": 0.005
+      },
+      "label": "Fitted chance",
+      "wrong": [
+       {
+        "id": "odds",
+        "value": 0.54,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "fair",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\hat\\theta = 21/60 = 0.35$.",
+      "generic": "Not yet. The likelihood peaks at the share of filled quotes.",
+      "byKey": {
+       "odds": "Twenty-one over 39 compares fills with misses. The share of fills divides by all 60 quotes.",
+       "fair": "A half ignores the record: only 21 of 60 filled."
+      }
+     },
+     "explain": {
+      "text": "The maximum likelihood estimate is the share of fills, $21/60 = 0.35$."
+     }
+    },
+    {
+     "question": "Using part 1, what is the least average negative log-likelihood per quote, in nats? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.647,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "nats",
+      "label": "Nats per quote",
+      "wrong": [
+       {
+        "id": "bits",
+        "value": 0.934,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "half",
+        "value": 0.693,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "At 0.35 the loss is $-(0.35 \\ln 0.35 + 0.65 \\ln 0.65) \\approx 0.647$ nats.",
+      "generic": "Not yet. At the fit, the loss is the entropy of the shares 0.35 and 0.65, in nats.",
+      "byKey": {
+       "bits": "That figure, 0.934, is in bits. Natural logs give nats.",
+       "half": "That is the loss at $\\theta = 0.5$, which is $\\ln 2$. The fit does better."
+      }
+     },
+     "explain": {
+      "text": "The cross-entropy to the data bottoms out at its entropy: $0.35 \\times 1.050 + 0.65 \\times 0.431 \\approx 0.647$ nats."
+     }
+    },
+    {
+     "question": "Using part 2, what is the perplexity per quote? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.91,
+      "tol": {
+       "abs": 0.005
+      },
+      "label": "Perplexity",
+      "wrong": [
+       {
+        "id": "base-two",
+        "value": 1.57,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "loss",
+        "value": 0.65,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$e^{0.647} \\approx 1.91$: a little under the 2 of a fair coin.",
+      "generic": "Not yet. Part 2 is in nats, so raise $e$ to it.",
+      "byKey": {
+       "base-two": "Two raised to a loss in nats understates it; use $e$.",
+       "loss": "That is the loss, not the count of choices."
+      }
+     },
+     "explain": {
+      "text": "Perplexity is $e^{0.647} \\approx 1.91$ effective outcomes per quote."
+     }
+    },
+    {
+     "question": "Her risk desk insists $\\theta \\ge 0.45$. Using part 2, how many nats per quote does the best allowed $\\theta$ lose above the fit? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.021,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "nats",
+      "label": "Extra nats",
+      "wrong": [
+       {
+        "id": "loss",
+        "value": 0.668,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "bits",
+        "value": 0.03,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "At 0.45 the loss is 0.668 nats, so the gap is $0.668 - 0.647 = 0.021$.",
+      "generic": "Not yet. The best allowed value is the boundary, 0.45; find its loss and take part 2 from it.",
+      "byKey": {
+       "loss": "That is the whole loss at 0.45. The question asks how much above the fit it is.",
+       "bits": "That gap is in bits; the question asks for nats."
+      }
+     },
+     "explain": {
+      "text": "The gap is $D(\\hat p \\| q_{0.45}) \\approx 0.021$ nats: the price of a family that cannot reach the data's 0.35."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-unseen-down",
+   "difficulty": 5,
+   "skills": [
+    "if-cross",
+    "if-likelihood"
+   ],
+   "prose": "A model of a share's next-day move (up, flat, down) is fitted to 10 training days: 8 up, 2 flat, no down. A test fortnight of 10 days has 6 up, 2 flat and 2 down.",
+   "parts": [
+    {
+     "question": "Using the raw training shares as the model, what is its cross-entropy on the test days?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "inf",
+        "text": "Infinite: the model gives a down day chance 0",
+        "correct": true
+       },
+       {
+        "id": "finite",
+        "text": "Finite, since down days are rare",
+        "why": "Two test days are down, and the raw model gives them chance 0."
+       },
+       {
+        "id": "zero",
+        "text": "Zero, since the model fits training exactly",
+        "why": "Fitting the training days says nothing about the test days."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "A down day costs $-\\log_2 0$ bits under the raw model: no bound.",
+      "generic": "Not yet. Look up the raw model's chance for a down day.",
+      "byKey": {
+       "finite": "Rarity does not help: the chance is exactly 0."
+      }
+     },
+     "explain": {
+      "text": "The raw shares are 0.8, 0.2 and 0. Each test down day costs $-\\log_2 0$, so the test cross-entropy is infinite."
+     }
+    },
+    {
+     "question": "Add one to each training count before dividing. What chance does the smoothed model give a down day? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.077,
+      "tol": {
+       "abs": 0.001
+      },
+      "label": "Chance of a down day",
+      "wrong": [
+       {
+        "id": "ten",
+        "value": 0.1,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "eleven",
+        "value": 0.091,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$(0 + 1)/(10 + 3) = 1/13 \\approx 0.077$.",
+      "generic": "Not yet. Each of the three counts gets one more, so the total becomes 13.",
+      "byKey": {
+       "ten": "One over ten forgets that the total grows by three.",
+       "eleven": "One over 11 adds one to the total only. Each of the three outcomes gets one."
+      }
+     },
+     "explain": {
+      "text": "The smoothed chances are $9/13$, $3/13$ and $1/13$: up, flat and down."
+     }
+    },
+    {
+     "question": "Using the smoothed chances from part 2, what is the cross-entropy on the test days, in bits? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.481,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "Cross-entropy",
+      "wrong": [
+       {
+        "id": "entropy",
+        "value": 1.371,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "swapped",
+        "value": 1.225,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "nats",
+        "value": 1.027,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.6 \\times 0.531 + 0.2 \\times 2.115 + 0.2 \\times 3.700 \\approx 1.481$ bits.",
+      "generic": "Not yet. Test shares 0.6, 0.2, 0.2 weigh the smoothed word lengths.",
+      "byKey": {
+       "entropy": "That is the test days' own entropy, the floor.",
+       "swapped": "The smoothed chances were used as weights there: the test shares should weigh.",
+       "nats": "That is in nats."
+      }
+     },
+     "explain": {
+      "text": "The smoothed word lengths are 0.531, 2.115 and 3.700 bits; the test shares 0.6, 0.2 and 0.2 weigh them to 1.481."
+     }
+    },
+    {
+     "question": "The test shares have entropy 1.371 bits. Using part 3, what is the KL divergence of the smoothed model from the test shares, in bits? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.111,
+      "tol": {
+       "abs": 0.001
+      },
+      "unit": "bits",
+      "label": "KL",
+      "wrong": [
+       {
+        "id": "cross",
+        "value": 1.481,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "reversed",
+        "value": -0.111,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1.481 - 1.371 \\approx 0.111$ bits a day: finite, where the raw model's was infinite.",
+      "generic": "Not yet. Take the test entropy from the smoothed cross-entropy.",
+      "byKey": {
+       "cross": "That is the whole test cost. The divergence is the part above 1.371.",
+       "reversed": "A divergence is never negative. Take the entropy from the cross-entropy."
+      }
+     },
+     "explain": {
+      "text": "Smoothing trades a little fit on the training days for a finite cost on new ones: 0.111 bits a day here."
+     }
+    }
+   ]
+  }
+ ]
+}
