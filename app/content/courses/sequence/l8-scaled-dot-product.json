@@ -1,0 +1,1038 @@
+{
+ "id": "l8-scaled-dot-product",
+ "course": "sequence",
+ "title": "Why divide by the square root of d",
+ "minutes": 15,
+ "objectives": [
+  "Derive why scores are divided by the square root of the key size, and see softmax saturate without it."
+ ],
+ "skills": [
+  "sqn-attend"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Wider and wider scores",
+   "prose": "Draw queries and keys whose entries are independent with mean 0 and variance 1. The curves show how their raw dot products spread at width $d = 4$ and at $d = 64$. A softmax turns 16 such scores into weights.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {
+      "mu": 0,
+      "sigma": 8
+     },
+     "x": [
+      -30,
+      30
+     ],
+     "xLabel": "raw dot product",
+     "showSd": true,
+     "yMax": 0.22
+    },
+    "state": {
+     "overlay": [
+      {
+       "id": "o",
+       "family": "normal",
+       "params": {
+        "mu": 0,
+        "sigma": 2
+       },
+       "label": "d = 4"
+      }
+     ],
+     "caption": "Solid: $d = 64$, sd 8. Dashed: $d = 4$, sd 2."
+    }
+   },
+   "question": "At $d = 64$, what do the weights over 16 keys usually look like?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "peak",
+      "text": "One weight near 1, the rest near 0",
+      "correct": true
+     },
+     {
+      "id": "flat",
+      "text": "All 16 near $\\tfrac{1}{16}$",
+      "why": "That needs scores close together. At $d = 64$ they spread over tens, so the exponentials differ by huge factors."
+     },
+     {
+      "id": "same",
+      "text": "The same as at $d = 4$, since the softmax rescales",
+      "why": "The softmax rescales the sum, not the gaps. Wider gaps give sharper weights."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the widths of the two curves."
+    },
+    {
+     "rung": "point",
+     "text": "At $d = 64$ the scores spread about four times as wide.",
+     "highlight": [
+      "curve"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A gap of 10 between scores is a factor $e^{10}$ in weight."
+    }
+   ],
+   "feedback": {
+    "correct": "One weight takes almost everything: with seed 4, the top weight is 0.9996 at $d = 64$.",
+    "generic": "Not quite. What do wide gaps do inside an exponential?"
+   },
+   "explain": {
+    "text": "Scores spread over tens, so the largest exponential swamps the rest: on seed 4 the top weight is 0.9996 at $d = 64$ against 0.3424 at $d = 4$. The softmax has saturated."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The variance of a dot product",
+   "prose": "If the entries of $\\mathbf q$ and $\\mathbf k$ are independent with mean 0 and variance 1, each product $q_i k_i$ has mean 0 and variance 1, and the $d$ products add. So $\\operatorname{Var}(\\mathbf q \\cdot \\mathbf k) = d$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {
+      "mu": 0,
+      "sigma": 8
+     },
+     "x": [
+      -30,
+      30
+     ],
+     "xLabel": "raw dot product",
+     "showSd": true,
+     "yMax": 0.22
+    },
+    "state": {
+     "overlay": [
+      {
+       "id": "o",
+       "family": "normal",
+       "params": {
+        "mu": 0,
+        "sigma": 2
+       },
+       "label": "d = 4"
+      }
+     ],
+     "caption": "Solid: $d = 64$, sd 8. Dashed: $d = 4$, sd 2."
+    }
+   },
+   "question": "What is the standard deviation of a raw dot product at $d = 64$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "var",
+      "value": 64,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The variance is $d$."
+    },
+    {
+     "rung": "point",
+     "text": "Take the square root of 64.",
+     "highlight": [
+      "sd"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{64} = 8$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{64} = 8$.",
+    "generic": "Not quite. The standard deviation is the root of the variance.",
+    "byKey": {
+     "var": "That is the variance. Take its square root.",
+     "one": "Each product has standard deviation 1; the sum of 64 has more."
+    }
+   },
+   "explain": {
+    "text": "$\\operatorname{Var}(\\mathbf q \\cdot \\mathbf k) = 64$, so the spread is 8. A simulation of 20,000 draws from `default_rng(1)` gives a variance of 63.73."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Check it by simulation",
+   "prose": "The same 20,000-draw simulation at $d = 16$ gives a variance of 15.94, and at $d = 4$, 4.02. Each is close to $d$, as the rule says.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {
+      "mu": 0,
+      "sigma": 4
+     },
+     "x": [
+      -30,
+      30
+     ],
+     "xLabel": "raw dot product",
+     "showSd": true,
+     "yMax": 0.22
+    },
+    "state": {
+     "overlay": [
+      {
+       "id": "o",
+       "family": "normal",
+       "params": {
+        "mu": 0,
+        "sigma": 2
+       },
+       "label": "d = 4"
+      }
+     ],
+     "caption": "Solid: $d = 16$, sd 4. Dashed: $d = 4$, sd 2."
+    }
+   },
+   "question": "What standard deviation does the rule give at $d = 16$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "var",
+      "value": 16,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "quarter",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Variance $d = 16$."
+    },
+    {
+     "rung": "point",
+     "text": "Its square root.",
+     "highlight": [
+      "sd"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{16} = 4$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{16} = 4$; the simulation's 15.94 has root 3.992.",
+    "generic": "Not quite. Root of the variance.",
+    "byKey": {
+     "var": "That is the variance.",
+     "quarter": "That is $\\sqrt 4$, for $d = 4$."
+    }
+   },
+   "explain": {
+    "text": "The spread grows like $\\sqrt d$: 2, 4 and 8 at widths 4, 16 and 64. Quadrupling the width doubles the spread of the scores."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A saturated softmax has no slope",
+   "prose": "With two scores $(s, 0)$ the first weight is $1/(1 + e^{-s})$, the sigmoid, and its slope is $w(1 - w)$. A gap of 8 is one standard deviation at $d = 64$. Slide $s$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -10,
+      10
+     ],
+     "y": [
+      -0.05,
+      1.05
+     ],
+     "xLabel": "score gap $s$",
+     "yLabel": "weight",
+     "functions": [
+      {
+       "id": "w",
+       "expr": "1 / (1 + exp(-x))",
+       "label": "softmax of $(s, 0)$",
+       "labelAt": -6
+      },
+      {
+       "id": "dw",
+       "expr": "exp(-x) / (1 + exp(-x))^2",
+       "label": "its slope",
+       "labelAt": 3
+      }
+     ],
+     "params": {
+      "s": 8
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 8,
+       "y": 0.999665,
+       "on": "w",
+       "label": ""
+      }
+     ]
+    },
+    "derive": {
+     "P.x": "s",
+     "P.y": "1 / (1 + exp(-s))",
+     "caption": "$s$ = {{fixed(s, 1)}}: weight {{fixed(1 / (1 + exp(-s)), 4)}}, slope {{fixed(exp(-s) / pow(1 + exp(-s), 2), 6)}}"
+    },
+    "controls": [
+     {
+      "bind": "s",
+      "min": -10,
+      "max": 10,
+      "step": 0.5,
+      "start": 8,
+      "label": "$s$",
+      "decimals": 1
+     }
+    ],
+    "maxHeight": 260
+   },
+   "question": "What is the slope at $s = 8$? Give 6 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.000335,
+    "tol": {
+     "abs": 5e-07
+    },
+    "wrong": [
+     {
+      "id": "peak",
+      "value": 0.25,
+      "tol": {
+       "abs": 5e-07
+      }
+     },
+     {
+      "id": "weight",
+      "value": 0.999665,
+      "tol": {
+       "abs": 5e-07
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption at $s = 8$."
+    },
+    {
+     "rung": "point",
+     "text": "The weight is 0.9997.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.99966 \\times 0.00034$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.000335: about 750 times smaller than the slope 0.25 at $s = 0$.",
+    "generic": "Not quite. Read the slope at $s = 8$.",
+    "byKey": {
+     "peak": "0.25 is the slope at $s = 0$. At 8 the curve is flat.",
+     "weight": "That is the weight. The slope is $w(1 - w)$."
+    }
+   },
+   "explain": {
+    "text": "At $s = 8$ the weight is 0.9997 and the slope 0.000335: a gradient through this softmax all but vanishes, as through a saturated unit in nn-train l5. Wide scores stop attention learning."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Why the variance is d",
+   "prose": "Derive $\\operatorname{Var}(\\mathbf q \\cdot \\mathbf k) = d$ for entries that are independent, with mean 0 and variance 1. Put the steps in order and leave out the two that do not belong.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "$\\mathbf q \\cdot \\mathbf k = \\sum_{i=1}^{d} q_i k_i$, by definition."
+     },
+     {
+      "id": "s2",
+      "text": "$E[q_i k_i] = E[q_i]\\,E[k_i] = 0$, since $q_i$ and $k_i$ are independent with mean 0."
+     },
+     {
+      "id": "s3",
+      "text": "$\\operatorname{Var}(q_i k_i) = E[q_i^2 k_i^2] = E[q_i^2]\\,E[k_i^2] = 1$, by independence and unit variances."
+     },
+     {
+      "id": "s4",
+      "text": "The $d$ products are independent of each other, so their variances add."
+     },
+     {
+      "id": "s5",
+      "text": "So $\\operatorname{Var}(\\mathbf q \\cdot \\mathbf k) = d$, and the standard deviation is $\\sqrt d$."
+     },
+     {
+      "id": "d1",
+      "text": "$E[q_i k_i] = E[q_i]\\,E[k_i]$ holds for any two variables, so no assumption is needed.",
+      "why": "The product rule for means needs independence (or zero covariance). A query correlated with its key breaks it."
+     },
+     {
+      "id": "d2",
+      "text": "$\\operatorname{Var}(\\mathbf q \\cdot \\mathbf k) = d^2$, since a sum of $d$ terms scales the variance by $d^2$.",
+      "why": "A sum of $d$ independent terms adds $d$ variances; $d^2$ is the rule for one term multiplied by $d$."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "same": [
+     [
+      "s2",
+      "s3"
+     ]
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the definition of the dot product."
+    },
+    {
+     "rung": "point",
+     "text": "Find the mean and variance of one product, then add the $d$ of them."
+    },
+    {
+     "rung": "step",
+     "text": "Independence is needed twice: inside each product, and between the products."
+    }
+   ],
+   "feedback": {
+    "correct": "Definition, one product's mean and variance, then the sum.",
+    "generic": "Not quite. Work out one product before the sum.",
+    "byKey": {
+     "d1": "The product of means rule needs independence, which the step must say.",
+     "d2": "Independent variances add: $d$ terms give $d$, not $d^2$.",
+     "left-out": "Every line but the two distractors belongs."
+    }
+   },
+   "explain": {
+    "text": "One product has mean 0 and variance 1 by independence; $d$ independent products have variance $d$. Each step uses an assumption, and the result is only as good as they are."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Divide by the square root of d",
+   "prose": "The cure: divide every score by $\\sqrt d$, which brings the variance back to 1. That is **scaled dot-product attention**, $\\operatorname{softmax}(\\mathbf Q\\mathbf K^\\top/\\sqrt d)\\,\\mathbf V$ (Vaswani et al., 2017). At $d = 64$ a raw score of 16 is two standard deviations high.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$d$",
+      "sd of raw score",
+      "divide by",
+      "sd after"
+     ],
+     "rows": [
+      [
+       "4",
+       "2",
+       "2",
+       "1"
+      ],
+      [
+       "16",
+       "4",
+       "4",
+       "1"
+      ],
+      [
+       "64",
+       "8",
+       "8",
+       "1"
+      ]
+     ]
+    }
+   },
+   "question": "What does that score become after scaling?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "byd",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "raw",
+      "value": 16,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sqrt{64} = 8$."
+    },
+    {
+     "rung": "point",
+     "text": "Divide 16 by 8.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$16/8 = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$16/\\sqrt{64} = 2$: still two standard deviations, now on a unit scale.",
+    "generic": "Not quite. Divide by $\\sqrt d$.",
+    "byKey": {
+     "byd": "You divided by $d = 64$. The scale is $\\sqrt d = 8$.",
+     "raw": "That is the raw score. Scaled attention divides it by $\\sqrt d$."
+    }
+   },
+   "explain": {
+    "text": "$16/8 = 2$. Dividing by $\\sqrt d$ keeps the scores at unit spread whatever the width, so the softmax stays in its sloped region. On seed 4 the top weight falls from 0.9996 to 0.2927 at $d = 64$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Dividing by d",
+   "prose": "A colleague divides the scores by $d$ instead of $\\sqrt d$, \"to be safe\". Raw scores at $d = 64$ have standard deviation 8.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "scaling",
+      "sd at $d = 64$"
+     ],
+     "rows": [
+      [
+       "none",
+       "8"
+      ],
+      [
+       "$\\div\\sqrt d$",
+       "1"
+      ],
+      [
+       "$\\div d$",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "What is the standard deviation of the scores after dividing by $d = 64$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.125,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "sqrt",
+      "value": 1,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "var",
+      "value": 0.0156,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the spread 8 by 64."
+    },
+    {
+     "rung": "point",
+     "text": "$8/64$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.125."
+    }
+   ],
+   "feedback": {
+    "correct": "$8/64 = 0.125$: the scores bunch together and the weights go nearly uniform.",
+    "generic": "Not quite. Divide the standard deviation by $d$.",
+    "byKey": {
+     "sqrt": "That is dividing by $\\sqrt d$.",
+     "var": "$1/64$ is the variance after dividing by $d$; its square root is 0.125."
+    }
+   },
+   "explain": {
+    "text": "Dividing by $d$ leaves variance $1/d$, spread 0.125 at $d = 64$. Every score is near 0, so the weights are near $\\tfrac{1}{16}$ each: on seed 4 the top weight is 0.0792. Attention can no longer pick anything out."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Entries that are not unit variance",
+   "prose": "Edge case: the rule assumed unit variances. Suppose every entry of $\\mathbf q$ and $\\mathbf k$ has standard deviation 3 instead. Then each product has variance 81, the raw score at $d = 64$ has variance $81 \\times 64$, and dividing by $\\sqrt d$ still leaves a variance of 81.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "entry sd",
+      "product variance",
+      "scaled-score sd"
+     ],
+     "rows": [
+      [
+       "1",
+       "1",
+       "1"
+      ],
+      [
+       "3",
+       "81",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "What is the standard deviation of the scaled score?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Variance 81 after scaling."
+    },
+    {
+     "rung": "point",
+     "text": "Its root.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{81} = 9$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{81} = 9$: still saturated.",
+    "generic": "Not quite. Root of 81.",
+    "byKey": {
+     "one": "Scaling by $\\sqrt d$ fixes the width, not the entries' own scale.",
+     "three": "That is one entry's spread; a product of two has variance $9 \\times 9$."
+    }
+   },
+   "explain": {
+    "text": "The scaled score has spread $\\sqrt{81} = 9$: $\\div\\sqrt d$ corrects for the width only. If the entries are not standardised the scores still saturate. Layer normalisation, in level 4, keeps them standardised before every attention layer."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Scaling in code",
+   "prose": "Write `dot_variance(d, n, seed)`, the variance of $n$ simulated dot products; `scaled_attention(Q, K, V)`; and `softmax_saturation(d, seed)`, the largest of 16 softmax weights without and with the $\\sqrt d$ scaling, for the draws the comments give.",
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef dot_variance(d, n, seed):\n    # n draws of q and k (draw q, then k, each rng.standard_normal((n, d)) from default_rng(seed)); variance of q . k\n    ...\n\n\ndef scaled_attention(Q, K, V):\n    # softmax(Q K^T / sqrt(d)) V, d the width of Q and K\n    ...\n\n\ndef softmax_saturation(d, seed):\n    # q = rng.standard_normal(d), then K = rng.standard_normal((16, d)); scores K q\n    # return [largest softmax weight of the raw scores, largest of the scores / sqrt(d)]\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef dot_variance(d, n, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal((n, d))\n    k = rng.standard_normal((n, d))\n    return float(np.var((q * k).sum(axis=1)))\n\n\ndef _softmax(S):\n    S = S - S.max(axis=-1, keepdims=True)\n    E = np.exp(S)\n    return E / E.sum(axis=-1, keepdims=True)\n\n\ndef scaled_attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    return _softmax(Q @ K.T / np.sqrt(Q.shape[-1])) @ V\n\n\ndef softmax_saturation(d, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal(d)\n    K = rng.standard_normal((16, d))\n    s = K @ q\n    return [float(_softmax(s).max()), float(_softmax(s / np.sqrt(d)).max())]\n",
+    "examples": [
+     {
+      "call": "scaled_attention([[1.0, 0.0]], [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], [[2.0], [4.0], [9.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[[5.203336278039358]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "dot_variance(64, 20000, 1)",
+      "expect": "64.0",
+      "tol": {
+       "rel": 0,
+       "abs": 2.0
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "dot_variance(4, 20000, 2)",
+      "expect": "4.0",
+      "tol": {
+       "rel": 0,
+       "abs": 0.3
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "scaled_attention([[1.0, 0.0]], [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], [[2.0], [4.0], [9.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[[5.203336278039358]]"
+     },
+     {
+      "setup": "g = np.random.default_rng(5); Qr, Kr, Vr = g.standard_normal((3, 16)), g.standard_normal((6, 16)), g.standard_normal((6, 2))",
+      "call": "scaled_attention(Qr, Kr, Vr).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.4215781681217008, -0.7702055073397187], [-0.3671615135194701, 0.19923842955405743], [-0.10011041132662687, 0.046428371107748764]]"
+     },
+     {
+      "call": "scaled_attention([[400.0, 400.0, 400.0, 400.0]], [[1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0]], [[1.0], [0.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[[1.0]]"
+     },
+     {
+      "call": "softmax_saturation(64, 4)",
+      "compare": "isclose",
+      "expect": "[0.9995998342383281, 0.29271166804613197]"
+     },
+     {
+      "call": "softmax_saturation(4, 4)",
+      "compare": "isclose",
+      "expect": "[0.34243517624771286, 0.17767929007213226]"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Tests 1 and 2 accept a simulated variance within 2 of 64 and within 0.3 of 4; the rest compare to $10^{-9}$. Test 5 has a scaled score of 800, test 6 is the screen's seed 4 at $d = 64$.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef dot_variance(d, n, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal((n, d))\n    k = rng.standard_normal((n, d))\n    return float(np.var((q * k).sum(axis=1)))\n\n\ndef _softmax(S):\n    S = S - S.max(axis=-1, keepdims=True)\n    E = np.exp(S)\n    return E / E.sum(axis=-1, keepdims=True)\n\n\ndef scaled_attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    return _softmax(Q @ K.T / Q.shape[-1]) @ V\n\n\ndef softmax_saturation(d, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal(d)\n    K = rng.standard_normal((16, d))\n    s = K @ q\n    return [float(_softmax(s).max()), float(_softmax(s / np.sqrt(d)).max())]\n",
+      "test": 3,
+      "symptom": "Divides the scores by d instead of its square root."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef dot_variance(d, n, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal((n, d))\n    k = rng.standard_normal((n, d))\n    return float(np.var(q * k))\n\n\ndef _softmax(S):\n    S = S - S.max(axis=-1, keepdims=True)\n    E = np.exp(S)\n    return E / E.sum(axis=-1, keepdims=True)\n\n\ndef scaled_attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    return _softmax(Q @ K.T / np.sqrt(Q.shape[-1])) @ V\n\n\ndef softmax_saturation(d, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal(d)\n    K = rng.standard_normal((16, d))\n    s = K @ q\n    return [float(_softmax(s).max()), float(_softmax(s / np.sqrt(d)).max())]\n",
+      "test": 1,
+      "symptom": "Takes the variance of single products, not of their sum."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef dot_variance(d, n, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal((n, d))\n    k = rng.standard_normal((n, d))\n    return float(np.var((q * k).sum(axis=1)))\n\n\ndef _softmax(S):\n    S = S - S.max(axis=-1, keepdims=True)\n    E = np.exp(S)\n    return E / E.sum(axis=-1, keepdims=True)\n\n\ndef scaled_attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    return _softmax(Q @ K.T / np.sqrt(Q.shape[-1])) @ V\n\n\ndef softmax_saturation(d, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal(d)\n    K = rng.standard_normal((16, d))\n    s = K @ q\n    return [float(_softmax(s / np.sqrt(d)).max()), float(_softmax(s).max())]\n",
+      "test": 6,
+      "symptom": "Returns the two weights the wrong way round."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef dot_variance(d, n, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal((n, d))\n    k = rng.standard_normal((n, d))\n    return float(np.var((q * k).sum(axis=1)))\n\n\ndef _softmax(S):\n    E = np.exp(S)\n    return E / E.sum(axis=-1, keepdims=True)\n\n\ndef scaled_attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    return _softmax(Q @ K.T / np.sqrt(Q.shape[-1])) @ V\n\n\ndef softmax_saturation(d, seed):\n    rng = np.random.default_rng(seed)\n    q = rng.standard_normal(d)\n    K = rng.standard_normal((16, d))\n    s = K @ q\n    return [float(_softmax(s).max()), float(_softmax(s / np.sqrt(d)).max())]\n",
+      "test": 5,
+      "symptom": "Leaves out the maximum, so large scores overflow."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Draw `q` then `k` with `rng.standard_normal((n, d))`, sum `q * k` along each row, take `np.var`."
+    },
+    {
+     "rung": "point",
+     "text": "Divide `Q @ K.T` by `np.sqrt(d)` with `d = Q.shape[-1]`."
+    },
+    {
+     "rung": "step",
+     "text": "For the saturation, draw `q` first, then `K`."
+    }
+   ],
+   "feedback": {
+    "correct": "On seed 4 at $d = 64$ the top weight falls from 0.9996 to 0.2927 with scaling.",
+    "generic": "Not yet. Check the scale and the order of the draws.",
+    "byKey": {
+     "test-1": "Take the variance of the sums $\\sum_i q_i k_i$, one per draw.",
+     "test-3": "Divide by $\\sqrt d$, not $d$.",
+     "test-5": "Subtract each row's largest score before `np.exp`.",
+     "test-6": "Return the raw weight first, then the scaled one."
+    }
+   },
+   "explain": {
+    "text": "Your simulation recovers $\\operatorname{Var} \\approx d$, and the saturation check shows the cure: 0.9996 unscaled against 0.2927 scaled. Scaled attention is the version every transformer uses."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A signal built from many features",
+   "prose": "A desk combines 100 standardised features into one signal by a dot product with 100 weights, each drawn with mean 0 and variance 1 and independent of the features. The signal goes into a softmax that allocates capital across ten strategies.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "features",
+      "sd of the signal"
+     ],
+     "rows": [
+      [
+       "4",
+       "2"
+      ],
+      [
+       "16",
+       "4"
+      ],
+      [
+       "100",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "What is the standard deviation of the raw signal?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "var",
+      "value": 100,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Variance equals the number of features."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sqrt{100}$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "10."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{100} = 10$: add features and the softmax saturates, unless the signal is divided by $\\sqrt{100}$.",
+    "generic": "Not quite. Root of the variance.",
+    "byKey": {
+     "var": "That is the variance.",
+     "one": "One feature's product has sd 1; a hundred add up."
+    }
+   },
+   "explain": {
+    "text": "$\\operatorname{Var} = 100$, so the spread is 10, and a softmax over such signals puts nearly all the capital on one strategy. Dividing by the square root of the number of features keeps it calm: that is why every attention layer is scaled."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "With independent entries of mean 0 and variance 1, $\\operatorname{Var}(\\mathbf q \\cdot \\mathbf k) = d$: spread 8 at $d = 64$ (a 20,000-draw simulation gives 63.73).",
+   "Wide scores saturate the softmax: one weight near 1 and a slope near 0, 0.000335 at a gap of 8.",
+   "Scaled dot-product attention divides by $\\sqrt d$, restoring unit spread. Dividing by $d$ overshoots to near-uniform weights, and unscaled entries need layer norm."
+  ],
+  "formula": {
+   "name": "Scaled dot-product attention",
+   "tex": "\\operatorname{softmax}\\!\\Big(\\frac{\\mathbf Q\\mathbf K^\\top}{\\sqrt d}\\Big)\\mathbf V",
+   "note": "Unit-variance scores when the entries are standardised."
+  },
+  "trap": "Dividing by $d$ instead of $\\sqrt d$ leaves variance $1/d$, and the weights go nearly uniform."
+ },
+ "quiz": [
+  {
+   "id": "q-sd",
+   "difficulty": 2,
+   "prose": "Queries and keys have independent entries with mean 0 and variance 1.",
+   "question": "What is the standard deviation of a raw dot product at $d = 256$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "var",
+      "value": 256,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{256} = 16$.",
+    "generic": "Not quite. Root of $d$.",
+    "byKey": {
+     "var": "That is the variance."
+    }
+   },
+   "explain": {
+    "text": "The variance is $d = 256$, so the spread is 16."
+   }
+  },
+  {
+   "id": "q-scale",
+   "difficulty": 2,
+   "prose": "A raw score is 24 at $d = 36$.",
+   "question": "What is it after scaling by $\\sqrt d$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "byd",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$24/6 = 4$.",
+    "generic": "Not quite. Divide by $\\sqrt{36} = 6$.",
+    "byKey": {
+     "byd": "You divided by $d$. Use $\\sqrt d = 6$."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{36} = 6$ and $24/6 = 4$."
+   }
+  },
+  {
+   "id": "q-why",
+   "difficulty": 3,
+   "prose": "An attention layer without scaling trains well at $d = 8$ and stalls at $d = 512$.",
+   "question": "What is the likeliest cause?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sat",
+      "text": "At $d = 512$ the raw scores spread widely, the softmax saturates and its gradient vanishes",
+      "correct": true
+     },
+     {
+      "id": "data",
+      "text": "Too little data for a wider layer",
+      "why": "More data cannot help while the softmax has no slope."
+     },
+     {
+      "id": "lr",
+      "text": "The learning rate is too high for a wide layer",
+      "why": "A high rate would make it unstable, not stall it; a stall points to vanishing gradients."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Spread $\\sqrt{512} \\approx 22.6$, one weight near 1, no slope.",
+    "generic": "Not quite. What happens to the score spread as $d$ grows?"
+   },
+   "explain": {
+    "text": "Raw scores spread like $\\sqrt d$, so at 512 the softmax sits on its flat parts and passes almost no gradient. Dividing by $\\sqrt d$ fixes it."
+   }
+  }
+ ]
+}

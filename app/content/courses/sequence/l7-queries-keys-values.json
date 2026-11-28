@@ -1,0 +1,1118 @@
+{
+ "id": "l7-queries-keys-values",
+ "course": "sequence",
+ "title": "Queries, keys and values",
+ "minutes": 14,
+ "objectives": [
+  "Write attention with query, key and value matrices, and check its shapes."
+ ],
+ "skills": [
+  "sqn-attend"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Learned queries and keys",
+   "prose": "Lesson 6 compared raw features. Attention first maps them by learned matrices: the query is $\\mathbf q = \\mathbf x_q\\mathbf W_Q$, each key $\\mathbf k = \\mathbf x_k\\mathbf W_K$, and the score is the dot product $\\mathbf q \\cdot \\mathbf k$. Take $\\mathbf x_q = (1, 2)$ and $\\mathbf x_k = (1, -1)$ with the matrices shown.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "xq",
+       "rows": [
+        [
+         1,
+         2
+        ]
+       ],
+       "label": "$\\mathbf x_q$"
+      },
+      {
+       "id": "WQ",
+       "rows": [
+        [
+         1.0,
+         0.0
+        ],
+        [
+         0.5,
+         1.0
+        ]
+       ],
+       "label": "$\\mathbf W_Q$"
+      },
+      {
+       "id": "q",
+       "rows": [
+        [
+         2.0,
+         2.0
+        ]
+       ],
+       "label": "$\\mathbf q$"
+      },
+      {
+       "id": "xk",
+       "rows": [
+        [
+         1,
+         -1
+        ]
+       ],
+       "label": "$\\mathbf x_k$"
+      },
+      {
+       "id": "WK",
+       "rows": [
+        [
+         1.0,
+         1.0
+        ],
+        [
+         0.0,
+         1.0
+        ]
+       ],
+       "label": "$\\mathbf W_K$"
+      },
+      {
+       "id": "k",
+       "rows": [
+        [
+         1.0,
+         0.0
+        ]
+       ],
+       "label": "$\\mathbf k$"
+      }
+     ],
+     "ops": [
+      "×",
+      "=",
+      "",
+      "×",
+      "="
+     ]
+    },
+    "state": {
+     "hidden": [
+      "q",
+      "k"
+     ]
+    }
+   },
+   "question": "What is the score $\\mathbf q \\cdot \\mathbf k$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.0,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "raw",
+      "value": -1.0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "qonly",
+      "value": 4.0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply out $\\mathbf q$ and $\\mathbf k$ first."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathbf q = (1 + 1, 2) = (2, 2)$.",
+     "highlight": [
+      "q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\mathbf k = (1, 1 - 1) = (1, 0)$, so $\\mathbf q \\cdot \\mathbf k = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf q = (2, 2)$, $\\mathbf k = (1, 0)$, so the score is 2.",
+    "generic": "Not quite. Map both through their matrices, then take the dot product.",
+    "byKey": {
+     "raw": "You took the dot product of the raw features, $1 - 2 = -1$. Map them through $\\mathbf W_Q$ and $\\mathbf W_K$ first.",
+     "qonly": "You added the entries of $\\mathbf q$. The score is $\\mathbf q \\cdot \\mathbf k$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf q = (2, 2)$ and $\\mathbf k = (1, 0)$ give 2, where the raw features gave $-1$. The matrices decide what counts as similar, and they are learned.",
+    "canvas": {
+     "hidden": []
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Queries, keys and values",
+   "prose": "That is **attention**: $\\mathbf Q = \\mathbf X_q\\mathbf W_Q$, $\\mathbf K = \\mathbf X_k\\mathbf W_K$, $\\mathbf V = \\mathbf X_k\\mathbf W_V$, scores $\\mathbf Q\\mathbf K^\\top$, a softmax along each row, and output $\\operatorname{softmax}(\\mathbf Q\\mathbf K^\\top)\\mathbf V$. Take 3 queries and 5 keys of width $d = 4$, and values of width 2.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "array",
+      "shape"
+     ],
+     "rows": [
+      [
+       "$\\mathbf Q$",
+       "3 by 4"
+      ],
+      [
+       "$\\mathbf K$",
+       "5 by 4"
+      ],
+      [
+       "$\\mathbf V$",
+       "5 by 2"
+      ],
+      [
+       "$\\mathbf Q\\mathbf K^\\top$",
+       "?"
+      ],
+      [
+       "output",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "How many scores are there?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 15,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "qd",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "kd",
+      "value": 20,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "out",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One score per pair of a query and a key."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathbf Q\\mathbf K^\\top$ is (3 by 4) times (4 by 5).",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "3 by 5."
+    }
+   ],
+   "feedback": {
+    "correct": "$3 \\times 5 = 15$: one score for every query and key.",
+    "generic": "Not quite. Count the pairs.",
+    "byKey": {
+     "qd": "That is the size of $\\mathbf Q$. The scores pair queries with keys.",
+     "kd": "That is the size of $\\mathbf K$.",
+     "out": "That is the output, 3 by 2. The scores come before it."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf Q\\mathbf K^\\top$ is 3 by 5, 15 scores, and each of its 3 rows of weights sums to 1. The output, weights times $\\mathbf V$, is 3 by 2: one value-sized row per query."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One output row by hand",
+   "prose": "One query $\\mathbf q = (1, 0)$ against three keys $(1, 0)$, $(0, 1)$ and $(1, 1)$, holding the values 2, 4 and 9.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "key",
+      "score",
+      "weight",
+      "value"
+     ],
+     "rows": [
+      [
+       "(1, 0)",
+       "1",
+       "?",
+       "2"
+      ],
+      [
+       "(0, 1)",
+       "0",
+       "?",
+       "4"
+      ],
+      [
+       "(1, 1)",
+       "1",
+       "?",
+       "9"
+      ]
+     ]
+    }
+   },
+   "question": "What is the output? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.267,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 5,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "top",
+      "value": 9,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "noexp",
+      "value": 5.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The scores are 1, 0, 1."
+    },
+    {
+     "rung": "point",
+     "text": "Weights $e/(2e + 1) = 0.4223$, $1/(2e + 1) = 0.1554$, 0.4223.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.4223 \\times 2 + 0.1554 \\times 4 + 0.4223 \\times 9$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(2e + 4 + 9e)/(2e + 1) = 5.2670$.",
+    "generic": "Not quite. Softmax the scores, then weight the values.",
+    "byKey": {
+     "mean": "You weighted the values equally. The scores 1, 0, 1 are not equal.",
+     "top": "That is the largest value. Two keys tie on top and the third still counts.",
+     "noexp": "You used the scores as weights, $(2 + 9)/2$. The softmax exponentiates first."
+    }
+   },
+   "explain": {
+    "text": "Weights 0.4223, 0.1554, 0.4223; output $0.8446 + 0.6214 + 3.8009 \\approx 5.2670$. Each output row is a weighted mean of the value rows, with weights from one row of scores."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Why a dot product",
+   "prose": "Lesson 6 scored by $-\\lVert\\mathbf q - \\mathbf k\\rVert^2$. Expanding, $-\\lVert\\mathbf q - \\mathbf k\\rVert^2 = 2\\,\\mathbf q \\cdot \\mathbf k - \\lVert\\mathbf q\\rVert^2 - \\lVert\\mathbf k\\rVert^2$. With learned $\\mathbf W_Q$ and $\\mathbf W_K$, $\\mathbf q \\cdot \\mathbf k$ can be any bilinear similarity $\\mathbf x_q^\\top\\mathbf W_Q\\mathbf W_K^\\top\\mathbf x_k$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "term",
+      "varies across keys?"
+     ],
+     "rows": [
+      [
+       "$2\\,\\mathbf q \\cdot \\mathbf k$",
+       "yes"
+      ],
+      [
+       "$\\lVert\\mathbf q\\rVert^2$",
+       "no"
+      ],
+      [
+       "$\\lVert\\mathbf k\\rVert^2$",
+       "yes"
+      ]
+     ]
+    }
+   },
+   "question": "Which term of the distance score can the softmax over keys ignore?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "q",
+      "text": "$\\lVert\\mathbf q\\rVert^2$: it is the same for every key in the row",
+      "correct": true
+     },
+     {
+      "id": "k",
+      "text": "$\\lVert\\mathbf k\\rVert^2$: it is the same for every query",
+      "why": "It is the same for every query, but the softmax runs over keys, and it differs from key to key, so it changes the weights."
+     },
+     {
+      "id": "both",
+      "text": "Both norms, so dot products and distances always rank keys alike",
+      "why": "Only the query's norm cancels. Keys of different lengths are ranked differently by the two scores."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The softmax ignores anything added to every score in a row."
+    },
+    {
+     "rung": "point",
+     "text": "Within one row the query is fixed.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The key norm changes from key to key."
+    }
+   ],
+   "feedback": {
+    "correct": "The query norm cancels; the key norms do not.",
+    "generic": "Not quite. Which term is constant along a row?",
+    "byKey": {
+     "k": "The key norm is not constant along a row, so dropping it changes the weights."
+    }
+   },
+   "explain": {
+    "text": "Adding the same number to a row of scores leaves the softmax unchanged, so $-\\lVert\\mathbf q\\rVert^2$ drops out. $-\\lVert\\mathbf k\\rVert^2$ does not: the dot product favours long keys that the distance would not. With equal key norms the two scores rank keys alike."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "The wrong axis",
+   "prose": "Two queries, two keys, scores $\\begin{pmatrix} 1 & 0 \\\\ 3 & 0 \\end{pmatrix}$ (rows are queries). A colleague writes `softmax(S, axis=0)`.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "S",
+       "rows": [
+        [
+         1.0,
+         0.0
+        ],
+        [
+         3.0,
+         0.0
+        ]
+       ],
+       "label": "$\\mathbf S$",
+       "rowLabels": [
+        "$q_1$",
+        "$q_2$"
+       ],
+       "colLabels": [
+        "$k_1$",
+        "$k_2$"
+       ]
+      }
+     ]
+    },
+    "state": {
+     "highlight": {
+      "S": {
+       "rows": [
+        0
+       ]
+      }
+     }
+    }
+   },
+   "question": "What weight should query 1 put on key 1? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7311,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "cols",
+      "value": 0.1192,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each query's weights must sum to 1 over the keys."
+    },
+    {
+     "rung": "point",
+     "text": "Use row 1: scores 1 and 0.",
+     "highlight": [
+      "S-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e/(e + 1)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$e/(e + 1) = 0.7311$: softmax along each row.",
+    "generic": "Not quite. Normalise over the keys, along the row.",
+    "byKey": {
+     "cols": "You took the softmax down the column, over the queries: 0.1192. Each query's weights must sum to 1 over the keys.",
+     "half": "The two scores differ, so the weights do."
+    }
+   },
+   "explain": {
+    "text": "Along row 1 the weights are 0.7311 and 0.2689, summing to 1. Down the column you get 0.1192: weights that sum to 1 over the queries, which means nothing. For $\\mathbf Q\\mathbf K^\\top$ with queries in rows, use `axis=-1`."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One key only",
+   "prose": "Edge case: a query meets a single key with value $(3, -1)$, and its score is 0.7.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "key",
+      "score",
+      "value"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.7",
+       "(3, −1)"
+      ]
+     ]
+    }
+   },
+   "question": "What weight does the key get?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "score",
+      "value": 0.7,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The weights must sum to 1."
+    },
+    {
+     "rung": "point",
+     "text": "There is only one weight.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e^{0.7}/e^{0.7} = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "1, whatever the score: the output is the value $(3, -1)$.",
+    "generic": "Not quite. One weight that sums to 1.",
+    "byKey": {
+     "score": "The score is not the weight: the softmax of one number is 1.",
+     "half": "With one key there is nothing to share with."
+    }
+   },
+   "explain": {
+    "text": "$e^{0.7}/e^{0.7} = 1$. With one key, attention returns its value exactly, whatever the query. Weights only matter when there is a choice."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Attention in code",
+   "prose": "Write `attention(Q, K, V)`, returning $\\operatorname{softmax}(\\mathbf Q\\mathbf K^\\top)\\mathbf V$ with the softmax along each row, and `attention_shapes(n_q, n_k, d, d_v)`, the shapes of $\\mathbf Q$, $\\mathbf K$, $\\mathbf V$, the scores and the output.",
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef attention(Q, K, V):\n    # softmax(Q K^T) V, the softmax along each row (largest score subtracted first); no scaling yet\n    ...\n\n\ndef attention_shapes(n_q, n_k, d, d_v):\n    # {'Q': [...], 'K': [...], 'V': [...], 'scores': [...], 'out': [...]}, each a list of two sizes\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef attention_shapes(n_q, n_k, d, d_v):\n    return {'Q': [n_q, d], 'K': [n_k, d], 'V': [n_k, d_v], 'scores': [n_q, n_k], 'out': [n_q, d_v]}\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "attention([[1.0, 0.0]], [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], [[2.0], [4.0], [9.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[[5.266956394754555]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "attention([[1.0, 0.0]], [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], [[2.0], [4.0], [9.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[[5.266956394754555]]"
+     },
+     {
+      "call": "attention([[1.0, 0.0], [0.0, 2.0]], [[1.0, 1.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.7310585786300049, 0.2689414213699951], [0.5, 0.5]]"
+     },
+     {
+      "call": "attention([[0.3, -0.2]], [[5.0, 1.0]], [[3.0, -1.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[[3.0, -1.0]]"
+     },
+     {
+      "call": "attention([[100.0, 0.0]], [[10.0, 0.0], [9.0, 0.0]], [[1.0], [0.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[[1.0]]"
+     },
+     {
+      "setup": "g = np.random.default_rng(3); Qr, Kr, Vr = g.standard_normal((3, 4)), g.standard_normal((5, 4)), g.standard_normal((5, 2))",
+      "call": "attention(Qr, Kr, Vr).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.21650188011907512, 0.5571826846985776], [0.6299259827072431, 0.6227498345859019], [-2.377318651253599, 0.8631057920609003]]"
+     },
+     {
+      "call": "attention_shapes(3, 5, 4, 2)",
+      "compare": "equal",
+      "expect": "{'Q': [3, 4], 'K': [5, 4], 'V': [5, 2], 'scores': [3, 5], 'out': [3, 2]}"
+     },
+     {
+      "call": "attention_shapes(1, 7, 16, 3)",
+      "compare": "equal",
+      "expect": "{'Q': [1, 16], 'K': [7, 16], 'V': [7, 3], 'scores': [1, 7], 'out': [1, 3]}"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests, compared to $10^{-9}$. Test 2 has two queries (rows must each sum to 1 over the keys), test 3 one key, test 4 scores of 1,000 and 900.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T\n    S = S - S.max(axis=0, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=0, keepdims=True)\n    return A @ V\n\n\ndef attention_shapes(n_q, n_k, d, d_v):\n    return {'Q': [n_q, d], 'K': [n_k, d], 'V': [n_k, d_v], 'scores': [n_q, n_k], 'out': [n_q, d_v]}\n",
+      "test": 1,
+      "symptom": "Takes the softmax down the columns, over the queries."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef attention_shapes(n_q, n_k, d, d_v):\n    return {'Q': [n_q, d], 'K': [n_k, d], 'V': [n_k, d_v], 'scores': [n_q, n_k], 'out': [n_q, d_v]}\n",
+      "test": 4,
+      "symptom": "Leaves out the maximum, so large scores overflow."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ K\n\n\ndef attention_shapes(n_q, n_k, d, d_v):\n    return {'Q': [n_q, d], 'K': [n_k, d], 'V': [n_k, d_v], 'scores': [n_q, n_k], 'out': [n_q, d_v]}\n",
+      "test": 1,
+      "symptom": "Averages the keys instead of the values."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef attention(Q, K, V):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef attention_shapes(n_q, n_k, d, d_v):\n    return {'Q': [n_q, d], 'K': [n_k, d], 'V': [n_k, d_v], 'scores': [n_k, n_q], 'out': [n_q, d_v]}\n",
+      "test": 6,
+      "symptom": "Gives the score matrix keys by queries."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`S = Q @ K.T` has one row per query."
+    },
+    {
+     "rung": "point",
+     "text": "Subtract each row's maximum, exponentiate, divide by each row's sum (`axis=-1`)."
+    },
+    {
+     "rung": "step",
+     "text": "Multiply the weights by `V`, not `K`."
+    }
+   ],
+   "feedback": {
+    "correct": "Each row of weights sums to 1 over the keys, and the output is a weighted mean of the values.",
+    "generic": "Not yet. Check the softmax axis.",
+    "byKey": {
+     "test-1": "Normalise along each row (over the keys), and average the values.",
+     "test-4": "Subtract the row maximum before `np.exp`: scores of 1,000 overflow otherwise.",
+     "test-6": "The scores have one row per query and one column per key."
+    }
+   },
+   "explain": {
+    "text": "Rows are queries, so every reduction runs along `axis=-1`. The output has one row per query, of the values' width."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Attention through the autograd",
+   "prose": "Write `attention_autograd(Xq, Xk, params)`: build $\\mathbf Q$, $\\mathbf K$ and $\\mathbf V$ as Tensors, the output with `softmax(..., axis=-1)` and `swap_last` from `seq_ops_l2.py`, then call `backward()` on the sum of the output and return the output and the three gradients.",
+   "question": "Complete `attention_autograd`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\nfrom seq_ops_l2 import softmax, swap_last\n\n\ndef attention_autograd(Xq, Xk, params):\n    # Q = Xq WQ, K = Xk WK, V = Xk WV (params holds 'WQ', 'WK', 'WV' as arrays)\n    # out = softmax(Q K^T, axis=-1) V; call backward() on out.sum()\n    # return (out as an array, {'WQ': grad, 'WK': grad, 'WV': grad})\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\nfrom seq_ops_l2 import softmax, swap_last\n\n\ndef attention_autograd(Xq, Xk, params):\n    W = {k: Tensor(v) for k, v in params.items()}\n    Q = Tensor(Xq) @ W['WQ']\n    K = Tensor(Xk) @ W['WK']\n    V = Tensor(Xk) @ W['WV']\n    out = softmax(Q @ swap_last(K), axis=-1) @ V\n    out.sum().backward()\n    return out.data, {k: t.grad for k, t in W.items()}\n",
+    "prelude": "import numpy as np\n\ng = np.random.default_rng(4)\nXq, Xk = g.standard_normal((3, 4)), g.standard_normal((5, 4))\nP = {'WQ': 0.5 * g.standard_normal((4, 4)), 'WK': 0.5 * g.standard_normal((4, 4)), 'WV': 0.5 * g.standard_normal((4, 2))}\n\n\ndef fd_err(Xq, Xk, params, eps=1e-6):\n    _, grads = attention_autograd(Xq, Xk, params)\n    worst, scale = 0.0, 1e-12\n    for key, val in params.items():\n        for i in np.ndindex(val.shape):\n            up = {k: v.copy() for k, v in params.items()}\n            dn = {k: v.copy() for k, v in params.items()}\n            up[key][i] += eps\n            dn[key][i] -= eps\n            num = (attention_autograd(Xq, Xk, up)[0].sum() - attention_autograd(Xq, Xk, dn)[0].sum()) / (2 * eps)\n            worst = max(worst, abs(num - grads[key][i]))\n            scale = max(scale, abs(num), abs(grads[key][i]))\n    return worst / scale\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py"
+    },
+    "examples": [
+     {
+      "call": "attention_autograd(Xq, Xk, P)[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.7159184401176454, -0.7468101751170257], [1.2026675254502408, -0.2898859655061615], [0.6901648771107759, -0.6539005430314754]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "attention_autograd(Xq, Xk, P)[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.7159184401176454, -0.7468101751170257], [1.2026675254502408, -0.2898859655061615], [0.6901648771107759, -0.6539005430314754]]"
+     },
+     {
+      "call": "attention_autograd(Xq, Xk, P)[1][\"WQ\"].tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.28710933628099766, 0.2836273611565464, -4.4405338095176194, -1.6233150164263133], [-0.005692176511866185, -0.004088726803071406, 0.09972629046663789, 0.03747082743727797], [0.18145386677032074, 0.133617372688937, 0.17551424160620657, -0.1439965479761568], [0.19449614632413417, -0.02709686292651037, 2.0023986920448897, 0.6025905449909621]]"
+     },
+     {
+      "call": "attention_autograd(Xq, Xk, P)[1][\"WK\"].tolist()",
+      "compare": "isclose",
+      "expect": "[[-1.3429293722570774, 1.4123194246738215, 0.40603231028198145, 1.2704381587577793], [2.728443321248222, -3.0764369936176617, -0.5700368848972512, -2.4260977763079556], [-1.8661702777617761, 1.9738078029518904, 0.5044808974800837, 1.7229833454616912], [3.9070747768796408, -4.105516281471949, -1.105980718035133, -3.639789027204648]]"
+     },
+     {
+      "call": "attention_autograd(Xq, Xk, P)[1][\"WV\"].tolist()",
+      "compare": "isclose",
+      "expect": "[[2.953613597322411, 2.953613597322411], [-4.608683924517874, -4.608683924517874], [-1.0104560991975169, -1.0104560991975169], [-0.04716928105293389, -0.04716928105293389]]"
+     },
+     {
+      "call": "fd_err(Xq, Xk, P) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "attention_autograd(Xq, Xk[:1], P)[1][\"WK\"].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]]"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, compared to $10^{-9}$. `seq_ops_l2.py` holds `softmax(x, axis)` and `swap_last(x)`, two Tensor ops the autograd lacks. Test 5 checks your gradients against central differences (relative error under $10^{-6}$); test 6 has one key, whose $\\mathbf W_K$ gradient is 0.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom seq_ops_l2 import softmax, swap_last\n\n\ndef attention_autograd(Xq, Xk, params):\n    W = {k: Tensor(v) for k, v in params.items()}\n    Q = Tensor(Xq) @ W['WQ']\n    K = Tensor(Xk) @ W['WK']\n    V = Tensor(Xk) @ W['WV']\n    out = softmax(Q @ swap_last(K), axis=0) @ V\n    out.sum().backward()\n    return out.data, {k: t.grad for k, t in W.items()}\n",
+      "test": 1,
+      "symptom": "Softmax over the queries instead of the keys."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom seq_ops_l2 import softmax, swap_last\n\n\ndef attention_autograd(Xq, Xk, params):\n    W = {k: Tensor(v) for k, v in params.items()}\n    Q = Tensor(Xq) @ W['WQ']\n    K = Tensor(Xk) @ W['WK']\n    V = Tensor(Xq) @ W['WV']\n    out = softmax(Q @ swap_last(K), axis=-1) @ V\n    out.sum().backward()\n    return out.data, {k: t.grad for k, t in W.items()}\n",
+      "test": 1,
+      "symptom": "Builds the values from the queries' rows."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nfrom seq_ops_l2 import softmax, swap_last\n\n\ndef attention_autograd(Xq, Xk, params):\n    W = {k: Tensor(v) for k, v in params.items()}\n    Q = Tensor(Xq) @ W['WQ']\n    K = Tensor(Xk @ params['WK'])\n    V = Tensor(Xk) @ W['WV']\n    out = softmax(Q @ swap_last(K), axis=-1) @ V\n    out.sum().backward()\n    return out.data, {k: t.grad for k, t in W.items()}\n",
+      "test": 3,
+      "symptom": "Builds K from plain arrays, so W_K gets no gradient."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Wrap each weight matrix in a `Tensor` so it collects a gradient."
+    },
+    {
+     "rung": "point",
+     "text": "`swap_last(K)` is $\\mathbf K^\\top$; `softmax(S, axis=-1)` normalises each row."
+    },
+    {
+     "rung": "step",
+     "text": "`out.sum().backward()`, then read `.grad` of each weight Tensor."
+    }
+   ],
+   "feedback": {
+    "correct": "The autograd carries the gradient through the softmax to all three matrices; central differences agree.",
+    "generic": "Not yet. Keep every step a Tensor operation.",
+    "byKey": {
+     "test-1": "Softmax over the keys (`axis=-1`), and values from the keys' rows `Xk`.",
+     "test-3": "Build $\\mathbf K$ as `Tensor(Xk) @ W[\"WK\"]`, so the gradient reaches $\\mathbf W_K$."
+    }
+   },
+   "explain": {
+    "text": "The softmax op passes back $\\mathbf s \\odot (\\mathbf g - \\sum \\mathbf g \\odot \\mathbf s)$ along each row, and `swap_last` swaps the gradient back. With one key every weight is 1 whatever the scores, so $\\mathbf W_K$ gets no gradient."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Attention",
+   "prose": "You built it piece by piece:\n$$\\operatorname{Attention}(\\mathbf Q, \\mathbf K, \\mathbf V) = \\operatorname{softmax}(\\mathbf Q\\mathbf K^\\top)\\,\\mathbf V,$$\nwith $\\mathbf Q = \\mathbf X_q\\mathbf W_Q$, $\\mathbf K = \\mathbf X_k\\mathbf W_K$, $\\mathbf V = \\mathbf X_k\\mathbf W_V$ and the softmax along each row. It is lesson 6's soft lookup with learned features and a dot-product score.",
+   "question": "For $n_q$ queries and $n_k$ keys, what shape is the matrix of weights?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "qk",
+      "text": "$n_q$ by $n_k$, each row summing to 1",
+      "correct": true
+     },
+     {
+      "id": "kq",
+      "text": "$n_k$ by $n_q$, each column summing to 1",
+      "why": "That is the transpose. Rows are queries."
+     },
+     {
+      "id": "qd",
+      "text": "$n_q$ by $d$",
+      "why": "That is $\\mathbf Q$. The weights pair queries with keys."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One row per query, one column per key, rows summing to 1.",
+    "generic": "Not quite. Which axis is the softmax taken along?"
+   },
+   "explain": {
+    "text": "$\\mathbf Q\\mathbf K^\\top$ pairs every query with every key, and the softmax runs along each row. The output then has one row per query, as wide as the values."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Each stock looks back at its own past",
+   "prose": "A model forecasts each stock's return. For today it forms a query from today's features and a key and a value from each of the last 60 days' features, all by learned matrices, and returns the attention-weighted mean of the values.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -2,
+      2
+     ],
+     "y": [
+      -2,
+      2
+     ],
+     "equal": true,
+     "xLabel": "yesterday's return (standardised)",
+     "yLabel": "volume ratio (standardised)"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "k0",
+       "x": -1,
+       "y": 1.5,
+       "label": "−0.8"
+      },
+      {
+       "id": "k1",
+       "x": 1,
+       "y": 1,
+       "label": "−0.5"
+      },
+      {
+       "id": "k2",
+       "x": -0.5,
+       "y": 0.5,
+       "label": "+0.2"
+      },
+      {
+       "id": "k3",
+       "x": 1.5,
+       "y": 0.5,
+       "label": "+0.6"
+      },
+      {
+       "id": "k4",
+       "x": -1.5,
+       "y": 0,
+       "label": "+0.1"
+      },
+      {
+       "id": "k5",
+       "x": 0.5,
+       "y": 0,
+       "label": "+0.4"
+      },
+      {
+       "id": "k6",
+       "x": -1,
+       "y": -0.5,
+       "label": "+0.9"
+      },
+      {
+       "id": "k7",
+       "x": 0,
+       "y": -1,
+       "label": "−0.3"
+      },
+      {
+       "id": "k8",
+       "x": 1.5,
+       "y": -1,
+       "label": "−1.1"
+      },
+      {
+       "id": "k9",
+       "x": 0.5,
+       "y": -1.5,
+       "label": "+1.2"
+      },
+      {
+       "id": "q",
+       "x": 0.0,
+       "y": 0.0,
+       "label": "query",
+       "drag": false
+      }
+     ]
+    },
+    "maxHeight": 340
+   },
+   "question": "What has the model learned that the analogue model of lesson 5 could not?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sim",
+      "text": "What \"similar day\" means, through $\\mathbf W_Q$ and $\\mathbf W_K$, by gradient descent",
+      "correct": true
+     },
+     {
+      "id": "k",
+      "text": "The best number of neighbours $k$",
+      "why": "There is no $k$: every day gets a weight. The new thing is a learned similarity."
+     },
+     {
+      "id": "future",
+      "text": "The future returns of the 60 days",
+      "why": "The values come from the past days only. Nothing about the future goes in."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did the hard lookup lack?"
+    },
+    {
+     "rung": "point",
+     "text": "A gradient through the choice of days.",
+     "highlight": [
+      "q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Soft weights from learned dot products give one."
+    }
+   ],
+   "feedback": {
+    "correct": "The similarity is learned end to end: attention over time.",
+    "generic": "Not quite. What can now be trained?"
+   },
+   "explain": {
+    "text": "The weights are smooth in $\\mathbf W_Q$ and $\\mathbf W_K$, so the forecast error trains what similarity means. That is attention over time, and level 3 makes the whole sequence attend to itself."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Attention maps queries and keys by learned matrices and scores them by dot products: $\\operatorname{softmax}(\\mathbf Q\\mathbf K^\\top)\\mathbf V$.",
+   "3 queries and 5 keys give a 3 by 5 score matrix whose rows each sum to 1; one query over the values 2, 4, 9 with scores 1, 0, 1 gives 5.2670.",
+   "The dot product with learned matrices is any bilinear similarity; against the distance score it drops only the query norm, not the key norms. `seq_ops_l2` adds the softmax and axis swap the autograd lacks."
+  ],
+  "formula": {
+   "name": "Attention",
+   "tex": "\\operatorname{softmax}(\\mathbf Q\\mathbf K^\\top)\\,\\mathbf V",
+   "note": "Softmax along each row, over the keys."
+  },
+  "trap": "A softmax down the columns makes weights sum to 1 over the queries: every row must be normalised over the keys."
+ },
+ "quiz": [
+  {
+   "id": "q-shape",
+   "difficulty": 2,
+   "prose": "Attention runs with 4 queries, 10 keys of width 8, and values of width 3.",
+   "question": "How many numbers are in the output?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "scores",
+      "value": 40,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "vals",
+      "value": 30,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The output is 4 by 3: 12 numbers.",
+    "generic": "Not quite. One value-sized row per query.",
+    "byKey": {
+     "scores": "That is the score matrix, 4 by 10.",
+     "vals": "That is $\\mathbf V$, 10 by 3."
+    }
+   },
+   "explain": {
+    "text": "Weights (4 by 10) times values (10 by 3) give 4 by 3: 12 numbers."
+   }
+  },
+  {
+   "id": "q-row",
+   "difficulty": 2,
+   "prose": "One query scores 0 against two keys holding the values 1 and 5.",
+   "question": "What is the output?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sum",
+      "value": 6,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Equal scores give equal weights, $\\tfrac12$ each: the output is 3.",
+    "generic": "Not quite. Equal scores, equal weights.",
+    "byKey": {
+     "one": "That is the first value alone. The weights are equal.",
+     "sum": "You added the values. The weights are a half each."
+    }
+   },
+   "explain": {
+    "text": "The softmax of $(0, 0)$ is $(0.5, 0.5)$, so the output is $0.5 \\times 1 + 0.5 \\times 5 = 3$."
+   }
+  },
+  {
+   "id": "q-axis",
+   "difficulty": 3,
+   "prose": "Scores $\\mathbf S = \\mathbf Q\\mathbf K^\\top$ have queries in rows.",
+   "question": "Along which axis does the softmax run?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "row",
+      "text": "Along each row, over the keys (`axis=-1`)",
+      "correct": true
+     },
+     {
+      "id": "col",
+      "text": "Down each column, over the queries (`axis=0`)",
+      "why": "Then each key's weights would sum to 1 over the queries, which mixes queries."
+     },
+     {
+      "id": "all",
+      "text": "Over the whole matrix",
+      "why": "Then all the weights together sum to 1, so each query gets a fraction of one average."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each query spreads a weight of 1 over the keys.",
+    "generic": "Not quite. Whose weights must sum to 1?"
+   },
+   "explain": {
+    "text": "Each query needs a weighted mean of the values, so its weights over the keys must sum to 1: the softmax runs along the row."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1181 @@
+{
+ "id": "l6-soft-neighbours",
+ "course": "sequence",
+ "title": "Neighbours made smooth",
+ "minutes": 14,
+ "objectives": [
+  "Build a softmax-weighted average of neighbours, and set its temperature on held-out error."
+ ],
+ "skills": [
+  "sqn-attend"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Weights that fall off smoothly",
+   "prose": "Same ten days. Instead of the nearest $k$, give every day a weight that falls off smoothly with its distance from the query, and forecast the weighted mean of their values. Drag the query; slide $\\tau$, which sets how fast the weights fall off.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -2,
+      2
+     ],
+     "y": [
+      -2,
+      2
+     ],
+     "equal": true,
+     "xLabel": "yesterday's return (standardised)",
+     "yLabel": "volume ratio (standardised)"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "k0",
+       "x": -1,
+       "y": 1.5,
+       "label": "−0.8"
+      },
+      {
+       "id": "k1",
+       "x": 1,
+       "y": 1,
+       "label": "−0.5"
+      },
+      {
+       "id": "k2",
+       "x": -0.5,
+       "y": 0.5,
+       "label": "+0.2"
+      },
+      {
+       "id": "k3",
+       "x": 1.5,
+       "y": 0.5,
+       "label": "+0.6"
+      },
+      {
+       "id": "k4",
+       "x": -1.5,
+       "y": 0,
+       "label": "+0.1"
+      },
+      {
+       "id": "k5",
+       "x": 0.5,
+       "y": 0,
+       "label": "+0.4"
+      },
+      {
+       "id": "k6",
+       "x": -1,
+       "y": -0.5,
+       "label": "+0.9"
+      },
+      {
+       "id": "k7",
+       "x": 0,
+       "y": -1,
+       "label": "−0.3"
+      },
+      {
+       "id": "k8",
+       "x": 1.5,
+       "y": -1,
+       "label": "−1.1"
+      },
+      {
+       "id": "k9",
+       "x": 0.5,
+       "y": -1.5,
+       "label": "+1.2"
+      },
+      {
+       "id": "q",
+       "x": 0.0,
+       "y": 0.0,
+       "label": "query",
+       "drag": true
+      }
+     ]
+    },
+    "maxHeight": 340,
+    "derive": {
+     "let": {
+      "s0": "exp(-(pow(q.x - (-1), 2) + pow(q.y - (1.5), 2)) / tau)",
+      "s1": "exp(-(pow(q.x - (1), 2) + pow(q.y - (1), 2)) / tau)",
+      "s2": "exp(-(pow(q.x - (-0.5), 2) + pow(q.y - (0.5), 2)) / tau)",
+      "s3": "exp(-(pow(q.x - (1.5), 2) + pow(q.y - (0.5), 2)) / tau)",
+      "s4": "exp(-(pow(q.x - (-1.5), 2) + pow(q.y - (0), 2)) / tau)",
+      "s5": "exp(-(pow(q.x - (0.5), 2) + pow(q.y - (0), 2)) / tau)",
+      "s6": "exp(-(pow(q.x - (-1), 2) + pow(q.y - (-0.5), 2)) / tau)",
+      "s7": "exp(-(pow(q.x - (0), 2) + pow(q.y - (-1), 2)) / tau)",
+      "s8": "exp(-(pow(q.x - (1.5), 2) + pow(q.y - (-1), 2)) / tau)",
+      "s9": "exp(-(pow(q.x - (0.5), 2) + pow(q.y - (-1.5), 2)) / tau)",
+      "z": "s0 + s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8 + s9",
+      "out": "(s0 * (-0.8) + s1 * (-0.5) + s2 * (0.2) + s3 * (0.6) + s4 * (0.1) + s5 * (0.4) + s6 * (0.9) + s7 * (-0.3) + s8 * (-1.1) + s9 * (1.2)) / z"
+     },
+     "caption": "query ({{fixed(q.x, 2)}}, {{fixed(q.y, 2)}}), $\\tau$ = {{fixed(tau, 2)}}: soft forecast {{fixed(out, 3)}}%"
+    },
+    "controls": [
+     {
+      "bind": "tau",
+      "min": 0.05,
+      "max": 3,
+      "step": 0.05,
+      "start": 0.5,
+      "label": "$\\tau$",
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "At today, $(0, 0)$, with $\\tau = 0.5$, what is the soft forecast? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.283,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "hard",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": 0.07,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put the query at $(0, 0)$ and $\\tau$ at 0.5."
+    },
+    {
+     "rung": "point",
+     "text": "Read the caption.",
+     "highlight": [
+      "q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Drag a little: the forecast now moves smoothly instead of jumping."
+    }
+   ],
+   "feedback": {
+    "correct": "0.283%: every day counts, the near ones most.",
+    "generic": "Not quite. Read the caption at $(0, 0)$ and $\\tau = 0.5$.",
+    "byKey": {
+     "hard": "That is the nearest day alone. Every day now has a weight.",
+     "mean": "That is the plain mean of all ten. Nearer days weigh more."
+    }
+   },
+   "explain": {
+    "text": "Each day gets the weight $e^{-d^2/\\tau}$, rescaled to sum to 1; at $\\tau = 0.5$ today's forecast is 0.283%. Dragging the query moves every weight a little, so the forecast slides instead of jumping."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The softmax of the scores",
+   "prose": "Give each key a **score**, $s_i = -\\lVert q - k_i\\rVert^2$, higher for nearer keys. The weights are the **softmax** of the scores at temperature $\\tau$: $\\alpha_i = e^{s_i/\\tau} / \\sum_j e^{s_j/\\tau}$. Take three keys scoring 2, 1 and 0.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "a",
+       "label": "score 2"
+      },
+      {
+       "id": "b",
+       "label": "score 1"
+      },
+      {
+       "id": "c",
+       "label": "score 0"
+      }
+     ],
+     "yMin": 0,
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 3,
+     "yLabel": "weight"
+    },
+    "state": {
+     "values": {
+      "a": 0.665,
+      "b": 0.245,
+      "c": 0.09
+     },
+     "params": {
+      "tau": 1
+     }
+    },
+    "derive": {
+     "let": {
+      "z": "exp(2 / tau) + exp(1 / tau) + 1"
+     },
+     "values.a": "exp(2 / tau) / z",
+     "values.b": "exp(1 / tau) / z",
+     "values.c": "1 / z",
+     "caption": "$\\tau$ = {{fixed(tau, 2)}}"
+    },
+    "controls": [
+     {
+      "bind": "tau",
+      "min": 0.1,
+      "max": 5,
+      "step": 0.1,
+      "start": 1,
+      "label": "$\\tau$",
+      "decimals": 1
+     }
+    ]
+   },
+   "question": "At $\\tau = 1$, what weight does the top score get? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.665,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "share",
+      "value": 0.667,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Exponentiate each score."
+    },
+    {
+     "rung": "point",
+     "text": "$e^2 = 7.389$, $e^1 = 2.718$, $e^0 = 1$.",
+     "highlight": [
+      "xa"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide $e^2$ by their sum, 11.107."
+    }
+   ],
+   "feedback": {
+    "correct": "$e^2/(e^2 + e + 1) = 7.389/11.107 = 0.665$.",
+    "generic": "Not quite. Exponentiate, then divide by the sum.",
+    "byKey": {
+     "share": "You divided the scores themselves, $2/3$. The softmax exponentiates first.",
+     "one": "Softmax gives every score some weight; the top one gets the most, not all."
+    }
+   },
+   "explain": {
+    "text": "The weights are $e^2, e^1, e^0$ over their sum 11.107: 0.665, 0.245 and 0.090. The forecast $\\hat y = \\sum_i \\alpha_i v_i$ is a **softmax-weighted average**, called kernel regression."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Turning the temperature up",
+   "prose": "The temperature plays the part of $k$. Slide $\\tau$ to 2: the scores are halved before the softmax.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "a",
+       "label": "score 2"
+      },
+      {
+       "id": "b",
+       "label": "score 1"
+      },
+      {
+       "id": "c",
+       "label": "score 0"
+      }
+     ],
+     "yMin": 0,
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 3,
+     "yLabel": "weight"
+    },
+    "state": {
+     "values": {
+      "a": 0.665,
+      "b": 0.245,
+      "c": 0.09
+     },
+     "params": {
+      "tau": 2
+     }
+    },
+    "derive": {
+     "let": {
+      "z": "exp(2 / tau) + exp(1 / tau) + 1"
+     },
+     "values.a": "exp(2 / tau) / z",
+     "values.b": "exp(1 / tau) / z",
+     "values.c": "1 / z",
+     "caption": "$\\tau$ = {{fixed(tau, 2)}}"
+    },
+    "controls": [
+     {
+      "bind": "tau",
+      "min": 0.1,
+      "max": 5,
+      "step": 0.1,
+      "start": 2,
+      "label": "$\\tau$",
+      "decimals": 1
+     }
+    ]
+   },
+   "question": "At $\\tau = 2$, what weight does the top score get? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.506,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "cold",
+      "value": 0.665,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.333,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Halve the scores to 1, 0.5 and 0."
+    },
+    {
+     "rung": "point",
+     "text": "$e^1 = 2.718$, $e^{0.5} = 1.649$, $e^0 = 1$.",
+     "highlight": [
+      "xa"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide 2.718 by 5.367."
+    }
+   ],
+   "feedback": {
+    "correct": "$e/(e + e^{0.5} + 1) = 0.506$: the weights spread out.",
+    "generic": "Not quite. Divide the scores by 2 first.",
+    "byKey": {
+     "cold": "That is $\\tau = 1$. Halve the scores first.",
+     "half": "You halved the weight. The scores are halved inside the exponential."
+    }
+   },
+   "explain": {
+    "text": "At $\\tau = 2$ the top weight drops from 0.665 to 0.506. A small $\\tau$ approaches the nearest key alone (1-NN); a large $\\tau$ approaches equal weights, the mean of all values ($k = n$)."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Choosing tau on held-out days",
+   "prose": "$\\tau$ is chosen the way $k$ was: on held-out data. With stat-learning l4's `make_knn(300, 11)`, the first 200 days are the keys and values and the last 100 are scored. The line is the held-out mean squared error for $\\tau$ from 0.01 to 5; forecasting the training mean scores 1.0082.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "m",
+       "label": "held-out MSE",
+       "values": [
+        1.0229,
+        0.8991,
+        0.7357,
+        0.6519,
+        0.6058,
+        0.6224,
+        0.7115,
+        0.8327,
+        0.9484
+       ]
+      }
+     ],
+     "xValues": [
+      0.01,
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.5,
+      1,
+      2,
+      5
+     ],
+     "xScale": "log",
+     "y": [
+      0.5,
+      1.1
+     ],
+     "xLabel": "$\\tau$",
+     "yLabel": "MSE",
+     "decimals": 4,
+     "height": 220
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "mean",
+       "y": 1.0082,
+       "label": "training mean"
+      }
+     ]
+    }
+   },
+   "question": "Which $\\tau$ has the lowest held-out error?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "small",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "large",
+      "value": 5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the bottom of the curve."
+    },
+    {
+     "rung": "point",
+     "text": "Read the lowest point.",
+     "highlight": [
+      "m"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Its error is 0.6058."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tau = 0.2$, with error 0.6058.",
+    "generic": "Not quite. Find the lowest point of the curve.",
+    "byKey": {
+     "small": "At $\\tau = 0.01$ the weights copy the nearest day, noise and all: error 1.0229.",
+     "large": "At $\\tau = 5$ the weights are nearly equal and the forecast is close to the mean: error 0.9484."
+    }
+   },
+   "explain": {
+    "text": "Too small and the forecast memorises one neighbour; too large and it averages everything. $\\tau = 0.2$ balances them at 0.6058, as $k = 7$ balanced $k$-NN."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Now the query has a slope",
+   "prose": "Every weight moves smoothly with the query, so the forecast has a gradient. Differentiating $\\hat y = \\sum_i \\alpha_i v_i$ with $s_i = -\\lVert q - k_i\\rVert^2$ gives $\\partial\\hat y/\\partial q = \\tfrac{2}{\\tau}\\sum_i \\alpha_i (v_i - \\hat y)(k_i - q)$. The table lists each day's term of the first entry, at today with $\\tau = 1$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "day",
+      "key",
+      "term"
+     ],
+     "rows": [
+      [
+       "0",
+       "(−1, 1.5)",
+       "0.0319"
+      ],
+      [
+       "1",
+       "(1, 1)",
+       "−0.0791"
+      ],
+      [
+       "2",
+       "(−0.5, 0.5)",
+       "0.0089"
+      ],
+      [
+       "3",
+       "(1.5, 0.5)",
+       "0.0355"
+      ],
+      [
+       "4",
+       "(−1.5, 0)",
+       "0.0172"
+      ],
+      [
+       "5",
+       "(0.5, 0)",
+       "0.0504"
+      ],
+      [
+       "6",
+       "(−1, −0.5)",
+       "−0.1507"
+      ],
+      [
+       "7",
+       "(0, −1)",
+       "0.0000"
+      ],
+      [
+       "8",
+       "(1.5, −1)",
+       "−0.0617"
+      ],
+      [
+       "9",
+       "(0.5, −1.5)",
+       "0.0313"
+      ]
+     ],
+     "compact": true
+    }
+   },
+   "question": "What is $\\partial\\hat y/\\partial q_1$, the slope along yesterday's return? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.116,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.116,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the ten terms."
+    },
+    {
+     "rung": "point",
+     "text": "Each term is $2\\alpha_i (v_i - \\hat y)\\,k_{i,1}$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The terms sum to -0.1163."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\partial\\hat y/\\partial q_1 = -0.116$: a slope the hard lookup never had.",
+    "generic": "Not quite. Add the terms in the table.",
+    "byKey": {
+     "zero": "That is the hard lookup's slope. Every soft weight moves with the query, so this one is not 0.",
+     "sign": "Check the sign: the terms sum to a negative number."
+    }
+   },
+   "explain": {
+    "text": "The ten terms sum to -0.116, and the second entry is -0.096. Each term is a day's pull towards its key, scaled by how far its value sits from the forecast. That slope is what lets a model learn where to look."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Softmax picks the largest",
+   "prose": "A colleague reads the softmax as \"pick the key with the top score, smoothly\". For three days scoring 2, 1 and 0 at $\\tau = 1$, they forecast the top day's value alone.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "a",
+       "label": "score 2"
+      },
+      {
+       "id": "b",
+       "label": "score 1"
+      },
+      {
+       "id": "c",
+       "label": "score 0"
+      }
+     ],
+     "yMin": 0,
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 3,
+     "yLabel": "weight"
+    },
+    "state": {
+     "values": {
+      "a": 0.665,
+      "b": 0.245,
+      "c": 0.09
+     },
+     "params": {
+      "tau": 1
+     }
+    },
+    "derive": {
+     "let": {
+      "z": "exp(2 / tau) + exp(1 / tau) + 1"
+     },
+     "values.a": "exp(2 / tau) / z",
+     "values.b": "exp(1 / tau) / z",
+     "values.c": "1 / z",
+     "caption": "$\\tau$ = {{fixed(tau, 2)}}"
+    },
+    "controls": [
+     {
+      "bind": "tau",
+      "min": 0.1,
+      "max": 5,
+      "step": 0.1,
+      "start": 1,
+      "label": "$\\tau$",
+      "decimals": 1
+     }
+    ]
+   },
+   "question": "What share of the forecast does the top day actually carry?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.665,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "third",
+      "value": 0.333,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the bars at $\\tau = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "The top bar is under 0.7.",
+     "highlight": [
+      "xa"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It is 0.665."
+    }
+   ],
+   "feedback": {
+    "correct": "0.665: a third of the forecast comes from the other two.",
+    "generic": "Not quite. Read the top bar.",
+    "byKey": {
+     "all": "Picking the largest is what the softmax does only as $\\tau \\to 0$. At $\\tau = 1$ the other days carry a third.",
+     "third": "Equal weights come at large $\\tau$. At $\\tau = 1$ the top day carries two thirds."
+    }
+   },
+   "explain": {
+    "text": "The softmax weights every score: 0.665, 0.245 and 0.090. The top one dominates only at small $\\tau$. Treat it as a weighting, never as an argmax."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Scores far apart in size",
+   "prose": "Edge case: dot products can reach the hundreds. `np.exp(1000)` overflows to infinity, so the naive softmax of $(1000, 999)$ gives NaN. The **stable softmax** subtracts the largest score first, which leaves the weights unchanged (backprop L4).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "score",
+      "minus the largest",
+      "exponential"
+     ],
+     "rows": [
+      [
+       "1000",
+       "0",
+       "1"
+      ],
+      [
+       "999",
+       "−1",
+       "0.3679"
+      ]
+     ]
+    }
+   },
+   "question": "What weight does the score 1000 get? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7311,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "nan",
+      "value": 1,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract 1000 from both scores."
+    },
+    {
+     "rung": "point",
+     "text": "The exponentials are 1 and $e^{-1} = 0.3679$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide 1 by 1.3679."
+    }
+   ],
+   "feedback": {
+    "correct": "$1/(1 + e^{-1}) = 0.7311$.",
+    "generic": "Not quite. Subtract the largest, then take the softmax.",
+    "byKey": {
+     "nan": "Overflow does not mean the top score takes everything: a gap of 1 gives 0.7311.",
+     "half": "The scores differ by 1, so the weights are not equal."
+    }
+   },
+   "explain": {
+    "text": "Only the gaps between scores matter, so $(1000, 999)$ behaves like $(0, -1)$: weights 0.7311 and 0.2689. Subtracting the maximum keeps every exponential at most 1, so nothing overflows."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The soft lookup in code",
+   "prose": "Write `stable_softmax(s, axis)`, `soft_lookup(q, K, V, tau)` with scores $-\\lVert q - k_i\\rVert^2/\\tau$, and `best_tau(K_tr, V_tr, K_val, V_val, taus)`, which returns the $\\tau$ with the lowest held-out mean squared error.",
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef stable_softmax(s, axis=-1):\n    # softmax along axis, with the largest entry subtracted first\n    ...\n\n\ndef soft_lookup(q, K, V, tau):\n    # scores -||q - k_i||^2 / tau, softmax weights, weighted mean of V\n    ...\n\n\ndef best_tau(K_tr, V_tr, K_val, V_val, taus):\n    # the tau in taus with the lowest mean squared error on the held-out rows (the first on a tie)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef stable_softmax(s, axis=-1):\n    s = np.asarray(s, dtype=float)\n    z = np.exp(s - s.max(axis=axis, keepdims=True))\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef soft_lookup(q, K, V, tau):\n    K, q = np.asarray(K, dtype=float), np.asarray(q, dtype=float)\n    scores = -((K - q) ** 2).sum(axis=1) / tau\n    return float(stable_softmax(scores) @ np.asarray(V, dtype=float))\n\n\ndef best_tau(K_tr, V_tr, K_val, V_val, taus):\n    errs = []\n    for tau in taus:\n        pred = np.array([soft_lookup(q, K_tr, V_tr, tau) for q in K_val])\n        errs.append(np.mean((pred - np.asarray(V_val)) ** 2))\n    return taus[int(np.argmin(errs))]\n",
+    "prelude": "import numpy as np\n\nK10 = np.array([[-1, 1.5], [1, 1], [-0.5, 0.5], [1.5, 0.5], [-1.5, 0], [0.5, 0], [-1, -0.5], [0, -1], [1.5, -1], [0.5, -1.5]], dtype=float)\nV10 = np.array([-0.8, -0.5, 0.2, 0.6, 0.1, 0.4, 0.9, -0.3, -1.1, 1.2])\n\n\ndef make_knn(n, seed):\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, 2))\n    signal = (0.8 * X[:, 0] * np.tanh(2 * X[:, 1]) - 0.3 * X[:, 1] ** 2 + 0.3)\n    y = (signal + rng.normal(0, 0.7, n)).round(2)\n    return X, y\n\n\nX, y = make_knn(300, 11)\nXtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]\n",
+    "examples": [
+     {
+      "call": "stable_softmax(np.array([2.0, 1.0, 0.0])).tolist()",
+      "compare": "isclose",
+      "expect": "[0.6652409557748218, 0.24472847105479764, 0.09003057317038046]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "stable_softmax(np.array([2.0, 1.0, 0.0])).tolist()",
+      "compare": "isclose",
+      "expect": "[0.6652409557748218, 0.24472847105479764, 0.09003057317038046]"
+     },
+     {
+      "call": "stable_softmax(np.array([1000.0, 999.0, 998.0])).tolist()",
+      "compare": "isclose",
+      "expect": "[0.6652409557748218, 0.24472847105479764, 0.09003057317038046]"
+     },
+     {
+      "call": "stable_softmax(np.array([[1.0, 2.0], [3.0, 3.0]]), axis=0).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.11920292202211755, 0.2689414213699951], [0.8807970779778823, 0.7310585786300049]]"
+     },
+     {
+      "call": "soft_lookup([0.0, 0.0], K10, V10, 0.5)",
+      "compare": "isclose",
+      "expect": "0.2833305397369961"
+     },
+     {
+      "call": "soft_lookup([0.0, 0.0], K10, V10, 1000.0)",
+      "compare": "isclose",
+      "expect": "0.07027364721769383"
+     },
+     {
+      "call": "soft_lookup([1.5, -1.0], K10, V10, 0.001)",
+      "compare": "isclose",
+      "expect": "-1.1"
+     },
+     {
+      "call": "best_tau(Xtr, ytr, Xte, yte, [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5])",
+      "compare": "isclose",
+      "expect": "0.2"
+     },
+     {
+      "call": "best_tau(Xtr[:50], ytr[:50], Xte[:30], yte[:30], [0.1, 1.0, 10.0])",
+      "compare": "isclose",
+      "expect": "1.0"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests, compared to $10^{-9}$. Test 2 has scores near 1,000, test 3 takes the softmax down columns, and tests 5 and 6 are the hot and cold ends. Tests 7 and 8 use `make_knn(300, 11)` split 200 and 100 (`Xtr`, `ytr`, `Xte`, `yte` are defined).",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef stable_softmax(s, axis=-1):\n    s = np.asarray(s, dtype=float)\n    z = np.exp(s)\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef soft_lookup(q, K, V, tau):\n    K, q = np.asarray(K, dtype=float), np.asarray(q, dtype=float)\n    scores = -((K - q) ** 2).sum(axis=1) / tau\n    return float(stable_softmax(scores) @ np.asarray(V, dtype=float))\n\n\ndef best_tau(K_tr, V_tr, K_val, V_val, taus):\n    errs = []\n    for tau in taus:\n        pred = np.array([soft_lookup(q, K_tr, V_tr, tau) for q in K_val])\n        errs.append(np.mean((pred - np.asarray(V_val)) ** 2))\n    return taus[int(np.argmin(errs))]\n",
+      "test": 2,
+      "symptom": "Leaves out the maximum, so scores near 1,000 overflow."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef stable_softmax(s, axis=-1):\n    s = np.asarray(s, dtype=float)\n    z = np.exp(s - s.max(axis=axis, keepdims=True))\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef soft_lookup(q, K, V, tau):\n    K, q = np.asarray(K, dtype=float), np.asarray(q, dtype=float)\n    scores = ((K - q) ** 2).sum(axis=1) / tau\n    return float(stable_softmax(scores) @ np.asarray(V, dtype=float))\n\n\ndef best_tau(K_tr, V_tr, K_val, V_val, taus):\n    errs = []\n    for tau in taus:\n        pred = np.array([soft_lookup(q, K_tr, V_tr, tau) for q in K_val])\n        errs.append(np.mean((pred - np.asarray(V_val)) ** 2))\n    return taus[int(np.argmin(errs))]\n",
+      "test": 4,
+      "symptom": "Uses the distance itself as the score, so far keys weigh most."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef stable_softmax(s, axis=-1):\n    s = np.asarray(s, dtype=float)\n    z = np.exp(s - s.max(axis=axis, keepdims=True))\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef soft_lookup(q, K, V, tau):\n    K, q = np.asarray(K, dtype=float), np.asarray(q, dtype=float)\n    scores = -((K - q) ** 2).sum(axis=1) * tau\n    return float(stable_softmax(scores) @ np.asarray(V, dtype=float))\n\n\ndef best_tau(K_tr, V_tr, K_val, V_val, taus):\n    errs = []\n    for tau in taus:\n        pred = np.array([soft_lookup(q, K_tr, V_tr, tau) for q in K_val])\n        errs.append(np.mean((pred - np.asarray(V_val)) ** 2))\n    return taus[int(np.argmin(errs))]\n",
+      "test": 4,
+      "symptom": "Multiplies by the temperature instead of dividing."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef stable_softmax(s, axis=-1):\n    s = np.asarray(s, dtype=float)\n    z = np.exp(s - s.max())\n    return z / z.sum()\n\n\ndef soft_lookup(q, K, V, tau):\n    K, q = np.asarray(K, dtype=float), np.asarray(q, dtype=float)\n    scores = -((K - q) ** 2).sum(axis=1) / tau\n    return float(stable_softmax(scores) @ np.asarray(V, dtype=float))\n\n\ndef best_tau(K_tr, V_tr, K_val, V_val, taus):\n    errs = []\n    for tau in taus:\n        pred = np.array([soft_lookup(q, K_tr, V_tr, tau) for q in K_val])\n        errs.append(np.mean((pred - np.asarray(V_val)) ** 2))\n    return taus[int(np.argmin(errs))]\n",
+      "test": 3,
+      "symptom": "Ignores the axis and normalises over the whole array."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract `s.max(axis=axis, keepdims=True)` before `np.exp`."
+    },
+    {
+     "rung": "point",
+     "text": "Scores are minus the squared distance, divided by `tau`."
+    },
+    {
+     "rung": "step",
+     "text": "In `best_tau`, forecast every held-out row for each `tau`, and keep the error."
+    }
+   ],
+   "feedback": {
+    "correct": "Your sweep picks $\\tau = 0.2$ on the stat-learning days, as the chart did.",
+    "generic": "Not yet. Check the stable softmax and the sign of the score.",
+    "byKey": {
+     "test-2": "Subtract the largest score before exponentiating: scores near 1,000 overflow otherwise.",
+     "test-3": "Normalise along the axis you are given, not over the whole array.",
+     "test-4": "The score is minus the squared distance over $\\tau$: near keys score higher."
+    }
+   },
+   "explain": {
+    "text": "The stable softmax never overflows, and the soft lookup is a weighted mean that moves smoothly with the query. The sweep reproduces the chart's choice, $\\tau = 0.2$."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Neighbours made smooth",
+   "prose": "You replaced a hard choice by soft weights:\n$$\\hat y = \\sum_i \\alpha_i v_i, \\qquad \\alpha_i = \\frac{e^{s_i/\\tau}}{\\sum_j e^{s_j/\\tau}}, \\qquad s_i = -\\lVert q - k_i\\rVert^2.$$\nSmall $\\tau$ approaches 1-NN, large $\\tau$ the mean. Every weight, and so the forecast, has a gradient in $q$ and in the keys.",
+   "question": "What happens to the weights as $\\tau \\to 0$, when the nearest key is unique?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "hard",
+      "text": "The nearest key's weight tends to 1 and the rest to 0",
+      "correct": true
+     },
+     {
+      "id": "equal",
+      "text": "They all tend to the same value",
+      "why": "That is $\\tau \\to \\infty$."
+     },
+     {
+      "id": "nan",
+      "text": "They are undefined",
+      "why": "With the stable softmax they are always defined; they tend to the hard choice."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The soft lookup tends to the hard one: 1-NN is its cold limit.",
+    "generic": "Not quite. What does dividing the scores by a tiny $\\tau$ do?"
+   },
+   "explain": {
+    "text": "Dividing by a tiny $\\tau$ stretches the gaps between scores, so the top one's exponential swamps the rest. With a tie at the top the weight splits evenly instead."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A forecast a risk committee can read",
+   "prose": "A soft analogue model weights every past day by its similarity to today. For one stock, three past days carry almost all the weight, 0.6, 0.3 and 0.1, and their next-day returns were 1.2%, $-0.4$% and 0.5%.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "day",
+      "weight",
+      "next-day return"
+     ],
+     "rows": [
+      [
+       "A",
+       "0.6",
+       "1.2%"
+      ],
+      [
+       "B",
+       "0.3",
+       "−0.4%"
+      ],
+      [
+       "C",
+       "0.1",
+       "0.5%"
+      ]
+     ]
+    }
+   },
+   "question": "What is the forecast return? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.65,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 0.43,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "top",
+      "value": 1.2,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply each return by its weight."
+    },
+    {
+     "rung": "point",
+     "text": "$0.6 \\times 1.2 = 0.72$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.72 - 0.12 + 0.05$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.72 - 0.12 + 0.05 = 0.65$%.",
+    "generic": "Not quite. Take the weighted mean.",
+    "byKey": {
+     "mean": "You averaged the three returns equally. Use the weights.",
+     "top": "That is day A alone. B and C carry 40%."
+    }
+   },
+   "explain": {
+    "text": "The forecast is $0.6 \\times 1.2 + 0.3 \\times (-0.4) + 0.1 \\times 0.5 = 0.65$%. Its weights say which past days drove it, an audit trail a committee can read."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A soft lookup weights every key by a softmax of its score: scores 2, 1, 0 give 0.665, 0.245, 0.090 at $\\tau = 1$, and the top weight is 0.506 at $\\tau = 2$.",
+   "$\\tau$ plays the part of $k$: small $\\tau$ approaches 1-NN, large $\\tau$ the mean. Chosen on held-out days, $\\tau = 0.2$ scores 0.6058.",
+   "The forecast has a gradient in the query and the keys, so it can be trained. Subtract the largest score before exponentiating."
+  ],
+  "formula": {
+   "name": "Soft lookup",
+   "tex": "\\hat y = \\sum_i \\alpha_i v_i, \\quad \\alpha_i = \\frac{e^{s_i/\\tau}}{\\sum_j e^{s_j/\\tau}}",
+   "note": "Kernel regression with scores $s_i = -\\lVert q - k_i\\rVert^2$."
+  },
+  "trap": "The softmax weights every key; the largest dominates only at small $\\tau$."
+ },
+ "quiz": [
+  {
+   "id": "q-w",
+   "difficulty": 2,
+   "prose": "Two keys score 3 and 1.",
+   "question": "At $\\tau = 1$, what weight does the first get? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.881,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "share",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/(1 + e^{-2}) = 0.881$.",
+    "generic": "Not quite. Exponentiate, then divide by the sum.",
+    "byKey": {
+     "share": "You divided the scores, $3/4$. Exponentiate first."
+    }
+   },
+   "explain": {
+    "text": "Only the gap of 2 matters: $1/(1 + e^{-2}) = 0.881$."
+   }
+  },
+  {
+   "id": "q-tau",
+   "difficulty": 2,
+   "prose": "A soft lookup is run with a very large $\\tau$.",
+   "question": "What does its forecast approach?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mean",
+      "text": "The plain mean of all the values",
+      "correct": true
+     },
+     {
+      "id": "nn",
+      "text": "The nearest key's value",
+      "why": "That is the small-$\\tau$ limit."
+     },
+     {
+      "id": "zero",
+      "text": "Zero",
+      "why": "The weights approach equality, not zero: they still sum to 1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Equal weights, so the mean of all values.",
+    "generic": "Not quite. What happens to the weights as $\\tau$ grows?"
+   },
+   "explain": {
+    "text": "Large $\\tau$ shrinks every score towards 0, so the weights approach $1/n$ each and the forecast approaches the mean."
+   }
+  },
+  {
+   "id": "q-shift",
+   "difficulty": 3,
+   "prose": "Every score of a softmax is raised by 50.",
+   "question": "What happens to the weights?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "Nothing: only the gaps between scores matter",
+      "correct": true
+     },
+     {
+      "id": "top",
+      "text": "The top weight grows towards 1",
+      "why": "Adding the same amount keeps every gap, so no weight moves."
+     },
+     {
+      "id": "overflow",
+      "text": "They overflow",
+      "why": "The stable softmax subtracts the maximum, so the shift cancels."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A common shift cancels between the top and bottom of the fraction.",
+    "generic": "Not quite. Write $e^{s_i + 50} = e^{50}e^{s_i}$."
+   },
+   "explain": {
+    "text": "$e^{s_i + 50} = e^{50}e^{s_i}$, and the $e^{50}$ cancels in the ratio. That is also why the stable softmax may subtract the maximum."
+   }
+  }
+ ]
+}
