@@ -13,7 +13,7 @@ Branch `ai-w5-sequence`. Skill `sqn-self` on every file.
 | `review-3.json` | 9 items, `pass` 0.8 | none |
 | `homework-3.json` | 8 items (one `order`, one `longform`, two `code`) | `head_patterns` (3), `causal_mha_forward` performance task (5) |
 | `problems-3.json` | 4 chained items, 16 parts, one at difficulty 5 | none |
-| `app/content/data/ai/seq_ops_l3.py` | new module, 2,351 bytes, SHA-256 `37ce243f0a9a...` | |
+| `app/content/data/ai/seq_ops_l3.py` | new module, v1.1 after the fix pass (see the end of this report) | |
 | `app/content/data/ai/sequence-attn-names.json` | weights, 116,103 bytes, SHA-256 `6f9c03264262...` | |
 
 Number script `docs/reports/sequence-L3-numbers.py` (`--write` retrains and rewrites the weights file); performance report `docs/reports/sequence-3-perf.md`.
@@ -37,7 +37,7 @@ Also: `grade-all.mjs --code --file` on every file, 0 failures (7 Python widgets,
 
 ## Numbers and their sources
 
-- l9: the toy sequence $a\,b\,c\,a\,b$ with identity matrices: row a4 0.267, 0.132, 0.202, 0.267, 0.132; b5 on b2 0.2594 (vectorised against a loop); 121 scores; 16 times the scores for 4 times the headlines.
+- l9: the toy sequence $a\,b\,c\,a\,b$ with identity matrices: row a4 0.267, 0.132, 0.202, 0.267, 0.132; b5 on b2 0.2595 (0.259453, vectorised against a loop); 121 scores; 16 times the scores for 4 times the headlines.
 - l10: the recorded runs (300 steps, seed 0, means over tens of steps): unmasked training loss falls to about 0.16, the same weights score 6.84 on dev with the mask, the masked run sits near 2.35. 10 and 528 allowed pairs (counted on `causal_mask`); masked row 0.2689 and 0.7311; masking after the softmax leaves 0.0566; graded training starts at 3.3803 and its tenth loss is 2.6899 (threshold 2.75).
 - l11: 16 features a head; feature 37 in head 2; $4 \times 64^2 = 16{,}384$ weights.
 - l12: without positions, ".mar" and ".amr" give the same chance of i next, 0.2377 (equal to $10^{-12}$); with positions 0.2910 and 0.4306. $\sin 3 = 0.1411$, $\sin(2.8117) = 0.3239$, self dot product 16 and 15.31 at offset 1, the same at every $t$ (checked on a table of 20 positions).
@@ -52,11 +52,11 @@ Slowest case per widget: l9 21 ms; l10 98 ms and 650 ms (`train_steps`, 10 steps
 Public names and signatures, for `sequence` L4, `gpt` and `interp` (it imports `Tensor` and `_wrap` from `autograd.py` v1.0 and `softmax`, `swap_last` from `seq_ops_l2.py`):
 
 - `causal_mask(T) -> np.ndarray`: T by T float array, 0 where key $j \le$ query $i$, `-inf` above the diagonal. Add it to the scores.
-- `permute(x, axes) -> Tensor`: `np.transpose` of a Tensor by `axes`; backward applies the inverse permutation.
+- `permute(x, axes) -> Tensor`: `np.transpose` of a Tensor by `axes` (negative axes allowed from v1.1); backward applies the inverse permutation.
 - `split_heads(x, h) -> Tensor`: $(\dots, T, d) \to (\dots, h, T, d/h)$; head $k$ holds features $k\,d/h$ to $(k + 1)\,d/h - 1$. Raises `ValueError` if $h$ does not divide $d$.
 - `merge_heads(x) -> Tensor`: $(\dots, h, T, d_h) \to (\dots, T, h\,d_h)$, the inverse of `split_heads`.
 - `attention(Q, K, V, mask=None) -> Tensor`: $\operatorname{softmax}(\mathbf Q\mathbf K^\top/\sqrt d + \text{mask})\,\mathbf V$, the softmax along the last axis, $d$ the last axis of $\mathbf Q$; works on stacks of heads.
-- `__version__ = "1.0"`.
+- `__version__ = "1.1"` (v1.0 in the first draft; see "seq_ops_l3.py as shipped" below).
 
 Gradient checks: `permute` on a 3-D array, `split_heads` and `merge_heads` alone and in a round trip on a batch, masked `attention` on a stack with the mask fixed (all under $10^{-6}$ against central differences), and `causal_mask(32)` with 528 zeros and 496 entries at $-\infty$.
 
@@ -73,3 +73,13 @@ No change proposed.
 ## Backlog
 
 One bullet under "Raised later (sequence level 3)" in `docs/BACKLOG-INBOX.md`.
+
+## seq_ops_l3.py as shipped
+
+v1.1 (fix pass of `docs/reviews/review-sequence.md`), 3,310 bytes, SHA-256 `6187fda66d5275176b60f5dd2e91643306aded66a2847fff70a3b8204c40bf94`. Changes from v1.0 (`37ce243f0a9a...`), every signature unchanged:
+
+- `permute` normalises each axis with `a % ndim` before taking the inverse, so negative axes give the right gradient (v1.0 gave a wrong gradient on a 3 by 3 by 3 array and crashed on 2 by 3 by 4).
+- `attention` takes its softmax from a private `_masked_softmax`: a query row with every score at `-inf` gives weights 0, output 0 and gradient 0 (v1.0 gave NaN). Every other row is bit-identical to `seq_ops_l2.softmax`, which is unchanged (SHA-256 `fa2bed08afe4...`).
+- Docstring: `mask` is a NumPy array and `axes` is required.
+
+Gradient checks added to `docs/reports/sequence-L3-numbers.py` (central differences, under $10^{-6}$): `permute` with `(-1, 0, 1)` and `(0, -1, -2)` on 3 by 3 by 3, with `(-1, 0, 1)`, `(-2, -1, 0)` and `(2, 0, 1)` on 2 by 3 by 4, and masked `attention` with one fully masked row (finite output equal to 0, gradient 0 on that row). The only widget that ships the module, l10 screens[8] and [9], reads it from `content/data/ai/seq_ops_l3.py` through its `data` map, so there is no second copy to refresh.

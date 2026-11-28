@@ -1694,3 +1694,54 @@ def head_patterns(X, params, h):
     return A / A.sum(axis=-1, keepdims=True)
 ```
 
+
+## Fix pass
+
+I recomputed every corrected number before writing it: $e^{2.2737} = 9.7153$ and $e^{2.273664} = 9.7149$; $2.273664/\ln 2 = 3.28020$; the three attention weights of problems-3 item 1 as 0.248255, 0.248255, 0.503490 (sum of the first and third 0.751745); $0.85^6 = 0.37715$ and the actual size 10.6556 at $k = 6$. Number scripts: `run-number-scripts.mjs --only sequence-L` 3 of 3 passed; directly with `ZQ_NUMBERS_STRICT=1` L1 395, L2 302 and L3 303 checks, exit 0, 0 uncovered, no `claim(True, covers=...)`. Validator 0 errors with no `[ai-mutants]` or `[source-ban]` on sequence files; voice scan 0 and 0; `same-course-reuse.mjs --all` no error for sequence; `grade-all.mjs --file <f> --code` 0 failures on all 15 edited files, each alone; playthrough of every edited lesson, set and problem set green with and without `--mobile`.
+
+Status: fixed 31, disputed 0 (one finding needs no change, by its own text), deferred 1. Graded answers changed: 1 (problems-3 items[3].parts[2]). Hidden tests added: l3 tests 9 and 10, l6 test 9, l10 test 10, each with a mutant.
+
+### Modules
+- seq_ops_l3 `permute`, error: fixed in v1.1: axes are normalised with `a % ndim` before the inverse; gradient-checked on 3x3x3 and 2x3x4 with negative axes in `sequence-L3-numbers.py`. SHA-256 `6187fda66d5275176b60f5dd2e91643306aded66a2847fff70a3b8204c40bf94` (end of `docs/reports/sequence-L3.md`).
+- seq_ops_l2 `softmax` fully masked row, warning: fixed where it matters, in `seq_ops_l3.attention` (private `_masked_softmax`: weights 0, output 0, gradient 0, other rows bit-identical); `seq_ops_l2.py` is a warning only and stays byte-identical (SHA-256 unchanged). Gradient-checked with a fully masked row.
+- `softmax` name clash with `autograd.softmax`, note: deferred to the main session (one sentence in `app/content/data/ai/README.md` and AUTHORING section 9, which content agents do not edit).
+- `attention`/`permute` argument notes: fixed in the v1.1 docstring ("`mask` is a NumPy array", "`axes` is required").
+
+### Number scripts and reports
+- `covers=` claims, note: fixed. L1 compares A's eigenvalues, P's (0.95) and Q's squared (0.99) where it covers them; L2 marks 0.002 and 0.001 literal with a reason and checks one-key softmax with the real softmax; L3 compares the table's first sine entries.
+- l10 '2.6899', note: fixed. `E(L10, 'screens[9].widget.how', ...)` from the solution's own run (`ref_eval`); the literal is gone.
+- Report slips, note: fixed in `sequence-L1.md` (395 checks), `-L2.md` (second slope -0.096), `-L3.md` (0.2595).
+
+### Level 1
+- l2 screens[5] cut position, warning: fixed in prose and `byKey.test-1`: before steps $K + 1$, $2K + 1$ (loop index `t = K, 2K, ...`), each window $K$ steps.
+- l3 screens[9] option `explode`, warning: fixed with the 0.85/4 matrix as proposed.
+- l3 screens[8] `explodes`, warning: fixed. Test 9 `explodes([[0.85, 4.0], [0.0, 0.85]], 6, 5.0)` is `False` and test 10 `explodes([[2.0]], 3, 8.0)` is `False` (exact tie, so `>=` returns `True`); mutants for `>=` (test 10) and for the actual gradient norm (test 9); byKey lines added; `how` says 10 tests.
+- homework-1 items[3] explain, warning: fixed ("largest singular value below 1 guarantees vanishing; ... eigenvalues set the rate").
+- l2 screens[4] `10^-5`, note: fixed (`10^{-5}`).
+- l2 quiz[1] `w`, note: fixed.
+- l2 screens[8] hint, note: fixed (first and 17th window).
+- l3 option C, note: fixed ("size 1 (0.99998 with these rounded entries)"), checked in the L1 script.
+- problems-1 items[0] parts[2], note: fixed ("along the growing direction").
+
+### Level 2
+- l6 `stable_softmax`, warning: fixed. Test 9 `stable_softmax([[1, -1000], [0, -1001]], axis=0)` expects 0.7311 and 0.2689 in both columns (full precision); mutant with the global maximum fails it; byKey `test-9` added.
+- l8 test-6 line, warning: fixed.
+- l8 screens[7] layer normalisation, warning: fixed with the proposed wording.
+- homework-2 `d2`, warning: fixed (no reference to author-only mutants).
+- l8 screens[3] "gap of 8", note: fixed.
+- l5 screens[5] row numbers, note: fixed (sixth and eighth listed, indices 5 and 7).
+- l7 screens[3] bilinear, note: fixed ("of rank up to the key width").
+
+### Level 3
+- problems-3 items[3] parts[2], error: fixed. Key 9.72 (the item shows 2.2737 and $e^{2.2737} = 9.7153$); tolerance widened from 0.005 to 0.006 so that both 9.7153 (what the learner computes) and 9.7149 (from the unrounded loss) are marked right; correct feedback and explain say 9.72; the script now computes `exp(round(dev, 4))` and checks all three fields.
+- Lesson numbering, warning: fixed in l9 (two places: "Lesson 12", "lesson 12"), l10 ("lesson 9") and l12 ("lesson 10's trained model").
+- l11 test-5 line, warning: fixed.
+- l10 `leak_test`, warning: fixed. `leaky1_fn` (mask `np.triu(..., 2)`) added to the prelude (`logits_of` takes `lead`), test 10 `leak_test(leaky1_fn, NAME, 3)` is `True`; the last-token mutant fails it; byKey `test-10` added.
+- l12 screens[3] explain, warning: fixed with the rotation wording.
+- l12 quiz[1], warning: fixed ("Causal self-attention without positions").
+- l10 screens[5] and problems-3 items[0] shown working, note: fixed without changing a key: the l10 line quotes 2.273664, the problems-3 item quotes the weights to 6 places (0.751745 rounds to 0.7517, the existing key).
+- l11 `4{{,}}096`, note: fixed.
+- "held-out names", note: no change needed, as the finding says; the lessons never say "unseen names".
+
+### Code widgets
+- byKey gaps, note: fixed: l1 `test-3`, l6 `test-7`, l12 `test-4`, homework-1 `test-2` (adds "add each step's term"), l10 `test-1` (adds "in nats").

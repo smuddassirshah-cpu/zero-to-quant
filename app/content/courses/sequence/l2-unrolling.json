@@ -706,14 +706,14 @@
     }
    },
    "explain": {
-    "text": "$(1.266296 - 1.274330)/0.02 = -0.4017$; the autograd gives $-0.401705$. Two routes agreeing to 4 places is the evidence that the backward pass is right. `autograd.grad_check` does the same with a nudge of $10^-5$."
+    "text": "$(1.266296 - 1.274330)/0.02 = -0.4017$; the autograd gives $-0.401705$. Two routes agreeing to 4 places is the evidence that the backward pass is right. `autograd.grad_check` does the same with a nudge of $10^{-5}$."
    }
   },
   {
    "type": "ladder",
    "difficulty": 3,
    "title": "Cutting the chain",
-   "prose": "A series of a million steps makes a graph of a million steps. **Truncated backprop through time** cuts it every $K$ steps: the state carries on forward, but the backward pass stops at each cut. Write `truncated_bptt(x, params, K)`: replace `h` by `Tensor(h.data)` before step $K$, $2K$, and so on.",
+   "prose": "A series of a million steps makes a graph of a million steps. **Truncated backprop through time** cuts it every $K$ steps: the state carries on forward, but the backward pass stops at each cut. Write `truncated_bptt(x, params, K)`: replace `h` by `Tensor(h.data)` before steps $K + 1$, $2K + 1$, and so on (loop index `t = K, 2K, ...`), so each window holds $K$ steps.",
    "question": "Complete `truncated_bptt`.",
    "widget": {
     "kind": "code",
@@ -796,7 +796,7 @@
     "correct": "The forward pass is unchanged and each gradient now reaches back at most $K$ steps.",
     "generic": "Not yet. Cut the graph, not the state.",
     "byKey": {
-     "test-1": "Keep the state's value at the cut (`Tensor(h.data)`), and cut only before steps $K$, $2K$, and so on."
+     "test-1": "Keep the state's value at the cut (`Tensor(h.data)`), and cut only before steps $K + 1$, $2K + 1$, and so on (loop index `t = K, 2K, ...`), so each window holds $K$ steps."
     }
    },
    "explain": {
@@ -1101,7 +1101,7 @@
     },
     {
      "rung": "step",
-     "text": "The open and the close are 17 windows apart."
+     "text": "The open and the close sit in the first and the 17th window."
     }
    ],
    "feedback": {
@@ -1192,7 +1192,7 @@
     "correct": "With $T = 1$ it is an ordinary layer: $\\partial h_1/\\partial w = h_0 = 3$.",
     "generic": "Not quite. Differentiate $w\\,h_0$.",
     "byKey": {
-     "w": "You differentiated with respect to $h_0$ and set $w = 0$. The derivative in $w$ is $h_0$."
+     "w": "You treated $w\\,h_0$ as a constant. Its derivative in $w$ is $h_0$."
     }
    },
    "explain": {

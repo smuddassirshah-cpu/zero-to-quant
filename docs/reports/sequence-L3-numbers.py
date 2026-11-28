@@ -203,6 +203,21 @@ g = np.random.default_rng(0)
 A_ = Tensor(g.standard_normal((2, 3, 4)))
 Wt = g.standard_normal((4, 2, 3))
 lv.claim(grad_check(lambda: (S3.permute(A_, (2, 0, 1)) * Wt).sum(), [A_]) < 1e-6, 'permute: gradient against central differences')
+# v1.1: permute with negative axes, and a fully masked softmax row (central differences on the weights that feed the loss)
+for shp, axs in (((3, 3, 3), (-1, 0, 1)), ((3, 3, 3), (0, -1, -2)), ((2, 3, 4), (-1, 0, 1)), ((2, 3, 4), (-2, -1, 0)), ((2, 3, 4), (2, 0, -2 % 3))):
+    Ap = Tensor(g.standard_normal(shp))
+    Wp = g.standard_normal(np.transpose(Ap.data, axs).shape)
+    lv.claim(grad_check(lambda: (S3.permute(Ap, axs) * Wp).sum(), [Ap]) < 1e-6 and np.array_equal(S3.permute(Ap, axs).data, np.transpose(Ap.data, axs)),
+             f'permute{axs} on {shp}: value as np.transpose, gradient against central differences')
+Qm, Km, Vm = (Tensor(g.standard_normal((5, 4))) for _ in range(3))
+Mm = S3.causal_mask(5).copy()
+Mm[2, :] = -np.inf
+Om = S3.attention(Qm, Km, Vm, Mm)
+Wm = g.standard_normal((5, 4))
+lv.claim(np.isfinite(Om.data).all() and np.array_equal(Om.data[2], np.zeros(4)), 'a fully masked row gives output 0, not NaN')
+lv.claim(grad_check(lambda: (S3.attention(Qm, Km, Vm, Mm) * Wm).sum(), [Qm, Km, Vm]) < 1e-6, 'masked attention with a fully masked row: gradient against central differences')
+(S3.attention(Qm, Km, Vm, Mm) * Wm).sum().backward()
+lv.claim(np.isfinite(Qm.grad).all() and np.array_equal(Qm.grad[2], np.zeros(4)), 'the fully masked query row gets gradient 0, not NaN')
 Xs = Tensor(g.standard_normal((5, 8)))
 lv.claim(np.array_equal(S3.merge_heads(S3.split_heads(Xs, 4)).data, Xs.data) and S3.split_heads(Xs, 4).shape == (4, 5, 2), 'split then merge is the identity; (5, 8) splits to (4, 5, 2)')
 lv.claim(np.array_equal(S3.split_heads(Xs, 4).data[2], Xs.data[:, 4:6]), 'head 2 holds features 4 and 5')
@@ -305,7 +320,7 @@ two('T = 32 pairs', 32 * 33 / 2, 528)
 lv.claim(32 * 33 == 1056 and 32 * 32 == 1024 and 32 * 31 / 2 == 496, 'shown 1,056 and 1,024', covers=[1056, 1024])
 w2 = sm([1.0, 2.0])
 two('masked row', float(w2[0]), 1 / (1 + e)); E(L10, 'screens[3].widget.answer', round(float(w2[0]), 4)); E(L10, 'screens[3].explain.text', round(float(w2[1]), 4)); E(L10, 'screens[3].widget.wrong[0].value', round(float(sm([1, 2, 5, 3])[0]), 4))
-E(L10, 'screens[5].prose', round(dev[1], 4)); E(L10, 'screens[5].widget.answer', round(dev[1] / LN2, 4)); E(L10, 'screens[5].widget.wrong[2].value', round(dev[1] / math.log(10), 4))
+E(L10, 'screens[5].prose', round(dev[1], 4)); E(L10, 'screens[5].widget.answer', round(dev[1] / LN2, 4)); E(L10, 'screens[5].feedback.correct', round(dev[1], 6)); E(L10, 'screens[5].feedback.correct', round(dev[1] / LN2, 4)); E(L10, 'screens[5].widget.wrong[2].value', round(dev[1] / math.log(10), 4))
 E(L10, 'screens[5].canvas', round(dev[4], 4)); E(L10, 'screens[5].canvas', round(dev[4] / LN2, 4)); E(L10, 'screens[5].explain.text', round(big / LN2 - dev[1] / LN2, 4))
 lv.claim(round(LN2, 4) == 0.6931, 'ln 2', covers=[0.6931])
 af = sm([1, 2, 5, 3])
@@ -372,7 +387,7 @@ E('problems', 'items[1].parts[2].widget.wrong[1].value', 8 * 1024); E('problems'
 two('10000^(1/4)', 10000 ** 0.25, 10.0); E('problems', 'items[2].parts[1].widget.answer', round(math.sin(2), 4)); E('problems', 'items[2].parts[2].widget.answer', round(math.cos(2), 4)); E('problems', 'items[2].parts[1].widget.wrong[1].value', round(math.sin(20), 4))
 E('problems', 'items[3].parts[0].widget.answer', round(2.4514 - dev[1], 4)); E('problems', 'items[3].parts[0].widget.wrong[0].value', round(dev[1] / 2.4514, 4))
 E('problems', 'items[3].parts[1].widget.answer', round((2.4514 - dev[1]) / LN2, 4)); E('problems', 'items[3].parts[1].widget.wrong[0].value', round((2.4514 - dev[1]) * LN2, 4))
-E('problems', 'items[3].parts[2].widget.answer', round(math.exp(dev[1]), 2)); E('problems', 'items[3].parts[2].widget.wrong[0].value', round(2 ** dev[1], 2)); E('problems', 'items[3].parts[2].widget.wrong[1].value', round(math.exp(2.4514), 2))
+E('problems', 'items[3].parts[2].widget.answer', round(math.exp(round(dev[1], 4)), 2)); E('problems', 'items[3].parts[2].feedback.correct', round(math.exp(round(dev[1], 4)), 2)); E('problems', 'items[3].parts[2].explain.text', round(math.exp(round(dev[1], 4)), 2)); E('problems', 'items[3].parts[2].widget.wrong[0].value', round(2 ** dev[1], 2)); E('problems', 'items[3].parts[2].widget.wrong[1].value', round(math.exp(2.4514), 2))
 E('problems', 'items[3].parts[3].widget.answer', round(7 * (2.4514 - dev[1]) / LN2, 2)); E('problems', 'items[3].parts[3].widget.wrong[0].value', round(6 * (2.4514 - dev[1]) / LN2, 2))
 lv.claim(round(dev[1], 6) == WJ['dev_h1'], 'the 6-place dev loss printed in the working', covers=[WJ['dev_h1']])
 lv.claim(128 * 129 // 2 == 8256 and 128 * 128 == 16384, 'homework pairs', covers=[8256])
@@ -484,6 +499,29 @@ def first_fail(w, src):
         sys.path.insert(0, DATA)
 
 
+def ref_eval(w, call):
+    cwd, dd = os.getcwd(), tempfile.mkdtemp()
+    os.chdir(dd)
+    try:
+        for kk, v in (w.get('data') or {}).items():
+            shutil.copy(os.path.join(APP, v), os.path.join(dd, kk))
+        sys.path.insert(0, dd)
+        purge()
+        ns = {'__name__': '__zq__', '__learner_source__': w['solution']}
+        with np.errstate(all='ignore'):
+            exec(ZQ_LIB, ns)
+            exec((w.get('prelude') or '') + '\n', ns)
+            exec(w['solution'], ns)
+            return eval(call, ns)
+    finally:
+        os.chdir(cwd)
+        sys.path.remove(dd)
+        shutil.rmtree(dd, ignore_errors=True)
+        purge()
+        sys.path.insert(0, DATA)
+
+
+E(L10, 'screens[9].widget.how', round(float(ref_eval(F(L10)['screens'][9]['widget'], 'train_steps(start_model(0), XB, YB, 10, 1.0)[-1]')), 4))
 nw = nm = 0
 for fid, doc in lv.files.items():
     for u in doc.get('screens', []) + doc.get('items', []):
@@ -504,13 +542,15 @@ print(f'code widgets {nw}, mutants {nm}')
 lv.claim(32 * 33 / 2 == 528 and 32 * 31 / 2 == 496 and 6 * 7 / 2 == 21 and 10 * 11 / 2 == 55 and 128 * 129 / 2 == 8256, 'the T(T + 1)/2 workings', covers=[33 / 2, 31 / 2, 7 / 2, 11 / 2, 129 / 2])
 lv.claim(37 // 16 == 2 and 37 % 4 == 1 and 47 - 32 == 15, 'feature 37 by 16 and by 4', covers=[37 / 4, 37 / 16])
 lv.claim(16 / 64 == 1 / 4 and 2 * 32 == 64, 'a quarter of the width; concatenation doubles 32', covers=[1 / 4, 2])
-lv.claim(math.sin(3 / 1) == math.sin(3) and math.sin(2 / 1) == math.sin(2), 'angles t/1', covers=[3 / 1, 2 / 1])
+lv.claim(abs(PE[3, 0] - math.sin(3)) < 1e-12 and abs(PE[2, 0] - math.sin(2)) < 1e-12, 'angle t / 10000^0 = t: the first sine entry of the table at t = 3 and 2', covers=[3 / 1, 2 / 1])
 lv.claim(2 / 32 == 0.0625 and 2 / 8 == 0.25, 'exponents 2/32 and 2/8', covers=[2 / 32, 2 / 8])
-lv.claim(round(float(Aw[2, 0]), 4) == 0.2483, 'problem weight 0.2483', covers=[0.2483])
+for v_ in (Aw[2, 0], Aw[2, 2]):
+    E('problems', 'items[0].parts[2].question', round(float(v_), 6))
+E('problems', 'items[0].parts[2].feedback.correct', round(float(Aw[2, 0] + Aw[2, 2]), 6))
 lv.check_wrongs()
 for t_, why in [('33', 'T + 1 for T = 32, in the working'), ('37', 'the feature asked about, a given'), ('47', 'the last feature of head 2, 2 x 16 + 15'), ('10000', 'the sinusoid constant of Vaswani et al.'),
                 ('60', 'days in the transfer, a given'), ('39', 'the last of 40 positions, a given'), ('four times', 'a distractor\'s wrong claim, answered in its why'), ('3,000', 'training steps, a setting'), ('0.6', 'a given weight and embedding entry'), ('0.8', 'a given embedding entry'), ('0.5', 'a given weight'), ('500', 'trades on the tape, a given'),
-                ('160', 'headlines on a busy day, a given'), ('40', 'headlines and tokens, givens'), ('2.75', 'the graded threshold, set with a margin above 2.6899'), ('2.6899', 'the reference\'s tenth loss, from the solution run'),
+                ('160', 'headlines on a busy day, a given'), ('40', 'headlines and tokens, givens'), ('2.75', 'the graded threshold, set with a margin above 2.6899'), 
                 ('10^-6', 'test tolerances'), ('10^-9', 'test tolerances'), ('1.5', 'a given key'), ('22,807', 'dev symbols, checked above'), ('128', 'a given context'), ('120', 'a given width'),
                 ('96', 'a given width'), ('64', 'given widths'), ('48', 'a given width'), ('256', 'training windows in the graded run, a setting')]:
     LIT(t_, why=why)

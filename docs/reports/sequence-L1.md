@@ -20,7 +20,7 @@ Number script `docs/reports/sequence-L1-numbers.py`; performance report `docs/re
 
 1. Validator: `node tools/validate.mjs` 0 errors; no `[source-ban]` or `[ai-mutants]` warning on these files.
 2. Voice: `VOICE_BASE=app/content/courses/sequence python3 docs/reviews/voice-scan.py 35`: 0 sentences over 35 words, 0 explanations over three sentences, 0 lesson ids in code spans, 0 doubled words.
-3. Numbers: `node tools/run-number-scripts.mjs --python <venv> --only sequence-L1`: passed (389 checks, strict coverage, 57 literals each with a reason, 27 s).
+3. Numbers: `node tools/run-number-scripts.mjs --python <venv> --only sequence-L1`: passed (395 checks, strict coverage, 57 literals each with a reason, 27 s).
 4. Playthrough with `--local-cdn`, desktop and `--mobile`: all 4 lessons, `review-1`, `homework-1` (performance starter fails, longform marked by the button) and `problems-1` passed; l2 and `problems-1` replayed after their last edit, both modes.
 
 Also: `grade-all.mjs --code --file` on all seven files, 0 failures (9 Python widgets, 30 mutants each failing its named test first); `same-course-reuse.mjs --all` lists nothing for the course.

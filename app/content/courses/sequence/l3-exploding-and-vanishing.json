@@ -451,7 +451,7 @@
      {
       "id": "C",
       "text": "$\\mathbf C$: it turns the gradient at every step",
-      "why": "A turn keeps length: $\\mathbf C$'s eigenvalues have size exactly 1, so the gradient neither grows nor shrinks."
+      "why": "A turn keeps length: $\\mathbf C$'s eigenvalues have size 1 (0.99998 with these rounded entries), so the gradient neither grows nor shrinks."
      }
     ]
    },
@@ -1029,9 +1029,19 @@
       "call": "explodes([[1.05, 0.0], [0.0, 0.3]], 50, 11.0)",
       "compare": "equal",
       "expect": "True"
+     },
+     {
+      "call": "explodes([[0.85, 4.0], [0.0, 0.85]], 6, 5.0)",
+      "compare": "equal",
+      "expect": "False"
+     },
+     {
+      "call": "explodes([[2.0]], 3, 8.0)",
+      "compare": "equal",
+      "expect": "False"
      }
     ],
-    "how": "Submit runs 8 hidden tests, compared to $10^{-9}$. Tests 1 to 3 check the sizes (the second matrix is not symmetric), tests 4 to 6 the spectral radius (complex and negative eigenvalues), tests 7 and 8 `explodes`.",
+    "how": "Submit runs 10 hidden tests, compared to $10^{-9}$. Tests 1 to 3 check the sizes (the second matrix is not symmetric), tests 4 to 6 the spectral radius (complex and negative eigenvalues), tests 7 to 10 `explodes`. Test 9 is a matrix whose actual size grows for a while; test 10 is an exact tie.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    W, v = np.asarray(W, dtype=float), np.asarray(g, dtype=float)\n    out = []\n    for _ in range(T + 1):\n        out.append(float(np.linalg.norm(v)))\n        v = W @ v\n    return out\n\n\ndef spectral_radius(W):\n    return float(np.max(np.abs(np.linalg.eigvals(np.asarray(W, dtype=float)))))\n\n\ndef explodes(W, T, factor):\n    return bool(spectral_radius(W) ** T > factor)\n",
@@ -1052,6 +1062,16 @@
       "source": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    W, v = np.asarray(W, dtype=float), np.asarray(g, dtype=float)\n    out = []\n    for _ in range(T):\n        v = W.T @ v\n        out.append(float(np.linalg.norm(v)))\n    return out\n\n\ndef spectral_radius(W):\n    return float(np.max(np.abs(np.linalg.eigvals(np.asarray(W, dtype=float)))))\n\n\ndef explodes(W, T, factor):\n    return bool(spectral_radius(W) ** T > factor)\n",
       "test": 1,
       "symptom": "Leaves out the starting size, so the list is one short."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    W, v = np.asarray(W, dtype=float), np.asarray(g, dtype=float)\n    out = []\n    for _ in range(T + 1):\n        out.append(float(np.linalg.norm(v)))\n        v = W.T @ v\n    return out\n\n\ndef spectral_radius(W):\n    return float(np.max(np.abs(np.linalg.eigvals(np.asarray(W, dtype=float)))))\n\n\ndef explodes(W, T, factor):\n    return bool(spectral_radius(W) ** T >= factor)\n",
+      "test": 10,
+      "symptom": "Uses >= where the rule says exceeds: wrong only at an exact tie."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    W, v = np.asarray(W, dtype=float), np.asarray(g, dtype=float)\n    out = []\n    for _ in range(T + 1):\n        out.append(float(np.linalg.norm(v)))\n        v = W.T @ v\n    return out\n\n\ndef spectral_radius(W):\n    return float(np.max(np.abs(np.linalg.eigvals(np.asarray(W, dtype=float)))))\n\n\ndef explodes(W, T, factor):\n    g = np.zeros(len(W))\n    g[0] = 1.0\n    return bool(grad_norm_through_time(W, g, T)[-1] > factor)\n",
+      "test": 9,
+      "symptom": "Judges by the actual size of one gradient, not by the spectral radius."
      }
     ]
    },
@@ -1074,7 +1094,9 @@
     "generic": "Not yet. Check the transpose and the size of complex eigenvalues.",
     "byKey": {
      "test-1": "The backward pass multiplies by $\\mathbf W^\\top$, and the list starts with $\\lVert\\mathbf g\\rVert$ at $k = 0$.",
-     "test-4": "The radius is the largest size of an eigenvalue. This turn has entries and real parts under 1, yet radius 1: take `np.abs` of `np.linalg.eigvals`."
+     "test-4": "The radius is the largest size of an eigenvalue. This turn has entries and real parts under 1, yet radius 1: take `np.abs` of `np.linalg.eigvals`.",
+     "test-9": "`explodes` is about the long run, so use $\\rho^T$, not the size of one gradient: this matrix has $\\rho^6 = 0.377$ although its gradient is bigger at $k = 6$.",
+     "test-10": "The test is strict: $\\rho^T$ must exceed `factor`, not equal it."
     }
    },
    "explain": {
@@ -1099,7 +1121,7 @@
      {
       "id": "explode",
       "text": "If any entry of $\\mathbf W$ exceeds 1 the gradient explodes",
-      "why": "Entries do not decide it: $\\mathbf N$ had entries 0.9 and radius 0, and $\\mathbf D$ entries under 1.06 and radius 1.05."
+      "why": "Entries do not decide it: lesson 3's $\\begin{pmatrix} 0.85 & 4 \\\\ 0 & 0.85 \\end{pmatrix}$ has an entry of 4 and radius 0.85, and its gradient vanishes in the long run."
      },
      {
       "id": "safe",
