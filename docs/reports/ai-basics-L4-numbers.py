@@ -7,6 +7,7 @@ hidden tests in CPython, the starter fails one, and each mutant fails the test i
 with random.Random(7) (the same Mersenne Twister as Pyodide; the code widget's hidden test checks it in the browser).
 Run: <venv>/bin/python docs/reports/ai-basics-L4-numbers.py   (exits 0 when every check passes)
 """
+import json
 import math
 import os
 import random
@@ -206,7 +207,8 @@ lv.claim(abs(float(ch([2, 1])[0]) - 0.6667) < 0.0005 and F(2, 16) == F('0.125'),
 lv.expect('l14', scr('l14', 'Which total?') + '.widget.answer', 0.1667)
 lv.claim(F(1, 20) == F('0.05') and abs(1 / 19 - 0.0526) < 0.0001 and F(3, 20) + 3 * F(1, 20) == F(6, 20), 'trap slips 1/20, 1/19, 1/4; 20-word chances add to 6/20')
 lv.expect('l14', scr('l14', 'Chances from a row') + '.widget.answer', float(ch([4, 3, 1])[0]))
-UPD = {'up': {'up': 68, 'down': 62}, 'down': {'up': 61, 'down': 58}}
+UPD = {'up': {'up': int(node('l14', scr('l14', 'Up after up') + '.canvas.params.rows')[0][1]), 'down': int(node('l14', scr('l14', 'Up after up') + '.canvas.params.rows')[0][2])}, 'down': {'up': int(node('l14', scr('l14', 'Up after up') + '.canvas.params.rows')[1][1]), 'down': int(node('l14', scr('l14', 'Up after up') + '.canvas.params.rows')[1][2])}}
+lv.claim(UPD == {'up': {'up': 68, 'down': 62}, 'down': {'up': 61, 'down': 58}}, 'share table read from the canvas: 68, 62, 61, 58')
 lv.claim(68 + 62 == 130 and 68 + 61 == 129 and 68 + 62 + 61 + 58 == 249, 'share table totals 130, 129, 249')
 lv.claim(round(68 / 130, 3) == 0.523 and round(68 / 129, 3) == 0.527 and round(68 / 249, 3) == 0.273, 'share chances 0.523, slips 0.527, 0.273')
 lv.claim(abs(float(F(68, 130)) - 0.523) < 0.0005, 'share 68/130 exact')
@@ -270,7 +272,12 @@ lv.claim(len("unbelievable") == 12 and len("an") + len("unbelievable") + len("ra
 tok = node('l16', scr('l16', 'Three ways to split') + '.widget.rows')
 lv.claim([r[1]['answer'] for r in tok] == [len("an unbelievable rally".split()), 5, len("anunbelievablerally")], 'three splits 3, 5, 19')
 lv.claim(''.join(node('l16', scr('l16', 'Three ways to split') + '.canvas.right.params.cells')) == 'anunbelievablerally', 'character cells')
-lv.expect('l16', scr('l16', 'Drafting a contract') + '.widget.answer', float(TH[0]))
+CTR = [F(3, 5), F(1, 5), F(1, 5)]
+CTT = tp(CTR, 2)
+lv.claim(CTT[0] == F(9, 11) and F(9, 25) / F(11, 25) == F(9, 11) and round(float(CTT[0]), 4) == 0.8182, 'contract: pay 0.6, squares 0.36, 0.04, 0.04 add to 0.44, pay 9/11 = 0.8182')
+lv.claim(round(float(tp(CTR, 0.5)[0]), 4) == 0.4641 and [c ** 2 for c in CTR][0] == F(9, 25), 'contract slips: 0.6, 0.36, 0.4641')
+lv.expect('l16', scr('l16', 'Drafting a contract') + '.widget.answer', round(float(CTT[0]), 4))
+lv.claim([w['value'] for w in node('l16', scr('l16', 'Drafting a contract') + '.widget.wrong')] == [0.6, 0.36, 0.4641], 'contract wrong values read from the widget')
 lv.expect('l16', quiz('l16', 'q-half-half') + '.widget.answer', float(tp([F(1, 2), F(1, 2)], 2)[0]))
 lv.expect('l16', quiz('l16', 'q-quarter') + '.widget.answer', float(tp([F(1, 4), F(3, 4)], 2)[1]))
 lv.claim(0.0625 + 0.5625 == 0.625 and 0.5625 / 0.625 == 0.9, 'quarter: squares 0.0625, 0.5625, total 0.625')
@@ -327,6 +334,8 @@ b2 = tp(BOE, 0.5)
 lv.claim([round(x, 4) for x in b2] == [0.5625, 0.1875, 0.1875, 0.0625] and abs(sum([0.9, 0.3, 0.3, 0.1]) - 1.6) < 1e-12, 'BoE temperature 2 exact: 0.5625, 0.1875, 0.1875, 0.0625')
 lv.expect('problems', item('problems', 'p-boe') + '.parts[0].widget.answer', round(b2[0], 4))
 lv.expect('problems', item('problems', 'p-boe') + '.parts[1].widget.answer', round(b2[3], 4))
+ratio = float(b2[3]) / float(BOE[3])
+lv.claim(abs(ratio - 6.25) < 1e-9 and 6 < ratio < 7 and 'more than six times' in json.dumps(node('problems', item('problems', 'p-boe') + '.parts[1]'), ensure_ascii=False), 'p-boe prose ratio 0.0625 / 0.01 = 6.25: more than six times')
 lv.claim(sample(b2, 0.6) == 1 and sample(BOE, 0.6) == 0, 'BoE u 0.6: cut at T 2, hold at T 1')
 bh = tp(BOE, 2)
 lv.expect('problems', item('problems', 'p-boe') + '.parts[4].widget.answer', round(float(bh[0]), 4))

@@ -841,3 +841,29 @@ def bigram_writer(text, start, us, power):
     return out
 ```
 
+
+## Fix pass
+
+I recomputed every changed number before writing it (fractions and floats in Python 3.12): 0.0625 / 0.01 = 6.25; test 8 running totals 0.3, 0.6, 0.9999 all below 0.99995; the bigram row for "the" ends at dog with running total 0.9999999999999999; the contract row 0.36 / 0.44 = 9/11 = 0.8182, temperature 2 gives 0.7746 / 1.6690 = 0.4641.
+
+Status: fixed 15, declined 1 (note 27, outside scope), 0 deferred.
+
+- problems-4 p-boe parts[1] explain (error): fixed, "more than six times its chance at temperature 1" (6.25).
+- l15 screens[8] (warning): fixed. Test 8 `pick(['a', 'b', 'c'], [0.3, 0.3, 0.3999], 0.99995)` expects `'c'`; the `sum(chances[:i + 1])` picker with no fall-back added as a mutant naming test 8; hidden-test count in `how` now 8; `test-8` feedback line added. Test 6 kept.
+- homework-4 h-bigram-writer (warning): fixed. Test 10 `bigram_writer(TEXT, 'the', [0.9999999999999999], 1)` expects `['the', 'dog']`; the `chosen = None` writer added as a mutant naming test 10; `how` says 10; `test-10` feedback line added.
+- homework-4 h-at-or-above (warning): fixed. Question now asks what the lessons' rule gives for $u = 0.5$; the 'either' why says a picker must follow one rule exactly, with no false claim about extra chance.
+- l16 screens[5] explain and summary.ideas[1] (warning): fixed. Explain says a real model gives almost every token a tiny chance, so a high temperature lets rare tokens through, still without knowledge; the idea now reads "in a table of counts". Explain stays at three sentences.
+- l16 screens[11] (warning): fixed with fresh chances pay 0.6, deliver 0.2, inspect 0.2 (return dropped from the canvas, yMax 0.9); answer 0.8182 (9/11); slips 0.6, 0.36, 0.4641; hints, feedback and explain rewritten. The numbers script now checks the answer, the slips and the wrong values read from the widget.
+- l15 screens[11] (note): fixed, the network "reads the whole text so far, not just the last word".
+- l16 screens[0] (note): fixed, "takes the top word three times in four".
+- l16 screens[10] (note): fixed. The option reads "Pieces can spell new words, in fewer tokens"; the explain adds that the list keeps every single character as a last resort.
+- l16 screens[6] (note): fixed, power = 1 divided by the temperature added to the prose.
+- l16 screens[9] (note): fixed, a sentence on real models keeping the spaces added to the prose.
+- homework-4 h-long-nonsense (d) (note): fixed, "A temperature near 0".
+- l13 screens[9] (note): fixed, "Early phone keyboards suggested...".
+- l14 and l16 widget.how (note): fixed, `math.isclose` in code formatting.
+- docs/reports/ai-basics-L4-numbers.py (note): fixed in part. It now claims the p-boe ratio 6.25 and "more than six times" from the prose, reads the l14 share table from the canvas, and checks the contract figures; the l16 pieces count (5) and the roots total are left as literals because the pieces count is already read from the widget rows and the roots claim recomputes both. Result 430 of 430.
+- ai-use l1 and l4 straight quotes (note 27): declined. The files are outside this fix pass, which may touch only ai-use l6; AUTHORING.md shows no binding quote rule, so it is left to the ai-use owner.
+- ai-use l6 screens[8] mutants: added three, no hidden test needed. No rounding (fails test 1), simple interest instead of compounding (test 1), and at least one year of compounding (`range(max(years, 1))`, fails test 4). All three are refused by the existing five tests; `ai-use-L2-numbers.py` passes 204 of 204.
+
+Checks: validator 0 errors and no `[ai-mutants]` warning on ai-basics or ai-use; voice scan 0 and 0 on both courses; `grade-all --code` 0 failures on all seven files; playthrough green with and without `--mobile` on l13 to l16, homework-4, problems-4 and ai-use l6. Graded answers changed: l16 Drafting a contract (0.75 to 0.8182).
