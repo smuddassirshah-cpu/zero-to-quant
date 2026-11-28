@@ -2094,3 +2094,49 @@ def decay_vs_ridge(X, y, lam, eta, steps):
     ridge = np.linalg.solve(X.T @ X / n + lam * np.eye(d), X.T @ y / n)
     return w, ridge
 ```
+
+## Fix pass
+
+I recomputed every changed figure before writing it: the l10 3,000-step run by route A in the number script (autograd, the shipped modules, `adam_step`) under default threads and under CI's single-thread environment (`OPENBLAS_CORETYPE=Haswell`, one thread), the ten-seed step-150 means of l4 by the script's own `ls_run`, the l5 gradient norms and ratios in a scratch script, and the new l8 expected values with the model solution, checked against test 2's values. I disputed nothing; one finding needed no action and two were not mine to change (frozen module, state file).
+
+Status: fixed 21, declined 1, no action 1, deferred 1. Graded answers changed: none. Stated figures changed: l10 "0.1668" to "0.167" and "0.0106" to "0.011" (feedback and summary), l5 "ten-thousandfold" to "about eight-thousandfold", review-2 "a fifteenth" to "about a fourteenth", l4 trap explain (new figures 0.0017 against 0.0034, recomputed).
+
+Number scripts: `lv.claim(True, 'route B values', covers=COV)` is gone from all three. The 487 values that went through it are now 391 recomputed values, each compared with the figures the level states at their stated precision (`cov()` covers a value only when it equals a stated figure; L1 189, L2 135, L3 67), 13 recomputed values that no figure states (dropped), and 83 typed constants that matched nothing or were covered by a computed value (dropped). Literals: 28 added with reasons, 2 removed (L2's 1,048,576 and 2,048 are now `cov(4 ** 10)` and `cov(16 * 128)`), so 74 in total against 48. Added literals are settings, sizes, step inputs of an `E()` call, three given validation curves, and three rounding words (a quarter, ten times, halved) each beside a claim that checks the figure behind it. All three scripts exit 0 through `run-number-scripts.mjs` and directly with `ZQ_NUMBERS_STRICT=1`, 0 uncovered.
+
+### Modules
+1. `adamw_step` decays every array: fixed in the text, module frozen. l9 screens[4] explain now says the course's `adamw_step` decays every array it is given, so pass the weights alone or give biases and norm gains $\lambda = 0$; the L3 report says the same.
+2. `dropout` mode, `p` order and `early_stop([])`: declined, the modules are frozen for this pass. Left for the engine inbox.
+3. `warmup_cosine` rate 0 at $t = 0$: fixed in l4 (see the l4 screens[4] line).
+
+### Number scripts
+4. Coverage by `claim(True, covers=...)`: fixed as above. L3 now runs route A for the 3,000 steps of l10 and `expect`s 660, 0.1029, 0.0528, 0.167 and 0.011 in the feedback and the summary, and checks route B ends at the same figures to the places stated.
+
+### Level 1
+5. l4 screens[6] trap: fixed. Explain now reads "One step's loss is one draw from the band: over ten seeds the cosine is already lower at step 150 (0.0017 against 0.0034). Judge schedules at the end of equal runs, on several seeds." The point hint says the cosine still runs at half the starting rate (0.1 against 0.2, checked). I also changed the `seed` distractor's why, which said more seeds would not help, to say that over ten the cosine is already lower at step 150, so it stays true. The script computes both means and `expect`s them.
+6. l4 screens[7] clamp: fixed. Tests 6 and 7, `warmup_cosine(-5, 0.1, 20, 300)` giving 0.0 and `warmup_cosine(-5, 0.2, 0, 300)` giving 0.2, now sit after the past-the-end test (so the tests after them are 8 and 9); the clamp-above-only solution is a `mutant` failing test 6 (it returns -0.025). The `how` line says 9 tests.
+7. l4 screens[4] note: fixed in byKey `zero`: at $t = 0$ the rate is 0, so Adam's first gradient only fills $m$ and $v$; the first step that moves, $t = 1$, runs at $0.1 \times 1/20$.
+8. l1 screens[3] spikes: fixed, one sentence in the explain; the script checks epochs 15 and 19 spike (1.0976, 0.7776) and recover (0.1824, 0.1421).
+9. l2 screens[7] `how`: fixed, tests 1 and 2 check the new point and the velocity.
+10. review-1 items[8]: fixed, "can vary ... by more than the 0.04 gap".
+11. Threshold margins: no action, as the finding says.
+
+### Level 2
+12. l6 ReLU "halves the variance": fixed in l6 screens[3] prose and explain, the summary, problems-2 part 3 (question, `lecun` line, explain) and the homework-2 item title, which said the same thing the item's own distractor marks wrong. ReLU halves the second moment.
+13. l6 summary LeCun and tanh: fixed with the proposed wording.
+14. l5 dead unit: fixed in screens[4] prose and the summary ("its own weights stop learning"; only the layers below can bring it back).
+15. l8 screens[6] tests: fixed. Tests 7 (two layer-norm calls sharing $x$, $\gamma$, $\beta$, all three gradients compared) and 8 (the residual-path form the review proposed) are added; W1 and W2 are `mutants` failing test 7. Test 8 alone would depend on the order of the backward pass, which is why test 7 is the one the mutants name. The `how` line says 8 tests.
+16. l5 screens[0]: fixed, "about 4 to 5 a layer, and more at layer 1, whose inputs average 0" (recomputed: 16.9 from layer 1 to 2, 4.1 to 5.1 elsewhere).
+17. l5 screens[7]: fixed, "about eight-thousandfold" (1 / 1.22e-4 = 8,197), covered by `cov(round(1 / slope, -3))`.
+18. review-2 items[4]: fixed, "about a fourteenth" (1 / 0.0707 = 14.2); the script's claim now rounds to 14.
+19. l7 screens[2]: fixed, "almost exactly, $\epsilon$ aside".
+20. l7 screens[7]: fixed, $s = \sqrt{\sigma^2 + \epsilon}$ and $1/(Ns)$.
+
+### Level 3
+21. l10 screens[0] and summary: fixed, 0.167 and 0.011; the chart is labelled as one run in the prose. Recomputed at 0.16667 and 0.01052 under CI's environment and 0.16677 and 0.01058 under default threads; both round to the figures stated.
+22. Four missing `byKey` lines: fixed (l9 screens[3] `train`, l4 screens[4] `half`, l10 screens[0] `start` and screens[2] `end`).
+23. l10 screens[6] graded function and `gd_vs_ridge_path` rate: deferred. The L3 report discloses both; the DECISIONS entry is for the main session, since state files are outside this pass.
+
+### Course-wide
+24. Paper names: fixed in l3 (Kingma and Ba, 2015), l6 (He et al., 2015), l7 (Ioffe and Szegedy, 2015), l8 (Ba, Kiros and Hinton, 2016), l11 (after Srivastava et al., 2014) and l12 (Belkin et al., 2019); l7's sentence is split to stay under 35 words.
+
+Checks after the edits: validator 0 errors with no `[ai-mutants]` or `[source-ban]` warning on nn-train; voice scan 0 sentences over 35 words and 0 explanations over three sentences; `same-course-reuse.mjs --all` no error for nn-train; `grade-all.mjs --file <f> --code` 0 failures on each of the 16 edited files alone, every new mutant failing its named test.

@@ -1309,7 +1309,8 @@
     "correct": "$0.1/(0.1/20) = 20$. On our spiral net it made no reliable difference: Adam at 0.1 with cosine decay ended at a mean of 0.0091 over five seeds, and 0.0082 with 15 warm-up steps.",
     "generic": "Not quite. Compare the two rates at step 1.",
     "byKey": {
-     "zero": "Step 0 runs at rate 0 under this warm-up; step 1 is the first that moves."
+     "half": "A tenth of 0.1 would be ten times smaller; the rate here is $0.1/20$, a twentieth.",
+     "zero": "At $t = 0$ the rate is 0, so Adam's first gradient only fills $m$ and $v$; the first step that moves, $t = 1$, runs at $0.1 \\times 1/20$."
     }
    },
    "explain": {
@@ -2402,7 +2403,7 @@
      {
       "id": "seed",
       "text": "Only that one seed is too few; at step 150 the comparison is fair",
-      "why": "More seeds help, but a schedule is judged where it is meant to finish, at the same total steps."
+      "why": "More seeds help: over ten the cosine is already lower at step 150. But a schedule is judged where it is meant to finish, at the same total steps."
      },
      {
       "id": "log",
@@ -2418,7 +2419,7 @@
     },
     {
      "rung": "point",
-     "text": "Nothing yet: it matches the constant rate until 180.",
+     "text": "At step 150 the cosine still runs at half the starting rate.",
      "highlight": [
       "v150"
      ]
@@ -2436,7 +2437,7 @@
     }
    },
    "explain": {
-    "text": "A decaying schedule trades early speed for a low finish, so a mid-run snapshot favours the constant rate. One step's loss is also one draw from the band. Compare final losses of runs with the same total steps."
+    "text": "One step's loss is one draw from the band: over ten seeds the cosine is already lower at step 150 (0.0017 against 0.0034). Judge schedules at the end of equal runs, on several seeds."
    }
   },
   {
@@ -2484,6 +2485,16 @@
       "expect": "0.0"
      },
      {
+      "call": "warmup_cosine(-5, 0.1, 20, 300)",
+      "compare": "isclose",
+      "expect": "0.0"
+     },
+     {
+      "call": "warmup_cosine(-5, 0.2, 0, 300)",
+      "compare": "isclose",
+      "expect": "0.2"
+     },
+     {
       "call": "warmup_cosine(20, 0.1, 20, 300)",
       "compare": "isclose",
       "expect": "0.1"
@@ -2494,12 +2505,17 @@
       "expect": "[0.0, 0.0015, 0.003, 0.0015, 0.0, 0.0]"
      }
     ],
-    "how": "Submit runs 7 hidden tests, each compared to $10^{-9}$. They check points on the cosine with and without warm-up, a step in the warm-up and a step past the end (clamped to 0). The last two check the first step after warm-up and a table of six steps.",
+    "how": "Submit runs 9 hidden tests, each compared to $10^{-9}$. They check points on the cosine with and without warm-up, a step in the warm-up, and a step past the end or below 0 (both clamped). The last two check the first step after warm-up and a table of six steps.",
     "mutants": [
      {
       "source": "import math\n\n\ndef warmup_cosine(t, lr_max, warmup, total):\n    if t < warmup:\n        return lr_max * t / warmup\n    span = total - warmup\n    if span <= 0:\n        return lr_max\n    return lr_max * 0.5 * (1 + math.cos(math.pi * (t - warmup) / span))\n\n\ndef schedule_table(lr_max, warmup, total, ts):\n    return [warmup_cosine(t, lr_max, warmup, total) for t in ts]\n",
       "test": 5,
       "symptom": "Leaves t unclamped, so the rate climbs back after total."
+     },
+     {
+      "source": "import math\n\n\ndef warmup_cosine(t, lr_max, warmup, total):\n    t = min(t, total)\n    if t < warmup:\n        return lr_max * t / warmup\n    span = total - warmup\n    if span <= 0:\n        return lr_max\n    return lr_max * 0.5 * (1 + math.cos(math.pi * (t - warmup) / span))\n\n\ndef schedule_table(lr_max, warmup, total, ts):\n    return [warmup_cosine(t, lr_max, warmup, total) for t in ts]\n",
+      "test": 6,
+      "symptom": "Clamps t only above, so a step below 0 gives a negative rate."
      },
      {
       "source": "import math\n\n\ndef warmup_cosine(t, lr_max, warmup, total):\n    t = min(max(t, 0), total)\n    if t < warmup:\n        return lr_max * t / warmup\n    span = total - warmup\n    if span <= 0:\n        return lr_max\n    return lr_max * 0.5 * (1 + math.cos(math.pi * t / total))\n\n\ndef schedule_table(lr_max, warmup, total, ts):\n    return [warmup_cosine(t, lr_max, warmup, total) for t in ts]\n",

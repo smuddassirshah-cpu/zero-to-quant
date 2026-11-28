@@ -23,7 +23,7 @@ ROOT = os.path.join(HERE, '..', '..')
 APP = os.path.join(ROOT, 'app')
 DATA = os.path.join(APP, 'content', 'data', 'ai')
 sys.path.insert(0, os.path.join(APP, 'tools'))
-from numbers_lib import Level  # noqa: E402
+from numbers_lib import Level, _stated, _text_strings  # noqa: E402
 
 sys.path.insert(0, DATA)
 from autograd import Tensor, cross_entropy, grad_check  # noqa: E402
@@ -32,12 +32,32 @@ from nt_ops_l1 import spirals  # noqa: E402
 
 lv = Level('nn-train', 2)
 E = lv.expect
-COV = []
 EPS = 1e-5
+_STATED = []
+_strs = []
+for _fid, _doc in lv.files.items():
+    _text_strings(_doc, '', _fid, _strs)
+for _fid, _path, _text in _strs:
+    for _v, _tol, _pct, _shown, _strong in _stated(_text):
+        _STATED.append((abs(_v), _tol, _pct))
+NCOV = {'matched': 0, 'unstated': 0}
+
+
+def is_stated(x):
+    """True when a figure on screen equals x to its stated precision (the comparison coverage makes by value)"""
+    a = abs(float(x))
+    return any(abs(a - t) <= tol for v, tol, pct in _STATED for t in ((v, v / 100) if pct else (v,)))
 
 
 def cov(*vals):
-    COV.extend(vals)
+    """Computed values, recomputed in this script: each one is compared with the figures the level states, at their stated precision.
+    A value that matches covers them; a value no figure matches covers nothing (it is simply not stated)."""
+    for x in vals:
+        if is_stated(x):
+            lv._cover(float(x))
+            NCOV['matched'] += 1
+        else:
+            NCOV['unstated'] += 1
 
 
 def agree(label, a, b, rel=1e-9):
@@ -147,24 +167,22 @@ gnA = [float(np.linalg.norm(t_.grad)) for t_ in ts]
 lv.claim(max(abs(a - b) / b for a, b in zip(gnA, gnB)) < 1e-9, 'hook gradient norms: autograd and the hand backward agree')
 F5 = lv._file(L5)[1]
 lv.claim(all(abs(F5['screens'][0]['canvas']['state']['values'][f'L{i + 1}'] - gnB[i]) <= 1e-3 * gnB[i] for i in range(10)), 'hook bars hold the ten gradient norms')
-cov(gnB[0], gnB[9], gnB[9] / gnB[0], 64)
+cov(gnB[0], gnB[9], gnB[9] / gnB[0])
 E(L5, 'screens[1].widget.answer', round(0.25 ** 10 / 1e-7, 1))
-cov(0.25 ** 10, 4 ** 10, round(0.25 ** 9 / 1e-7, 1), 2.5)
+cov(0.25 ** 10, 4 ** 10, round(0.25 ** 9 / 1e-7, 1))
 E(L5, 'screens[2].widget.answer', round(1 - math.tanh(3) ** 2, 4))
 cov(math.tanh(3), ds(3), 1 - math.tanh(3), 4 * 0.25)
 chain = ds(0.5) * ds(-1) * ds(2) * ds(0)
 E(L5, 'screens[3].widget.answer', float(f'{chain:.4g}'))
-cov(ds(0.5), ds(-1), ds(2), ds(0.5) * ds(-1), ds(0.5) + ds(-1) + ds(2) + ds(0), 0.25 ** 4, 1 / chain, 800)
+cov(ds(0.5), ds(-1), ds(2), ds(0.5) * ds(-1), ds(0.5) + ds(-1) + ds(2) + ds(0), 0.25 ** 4, 1 / chain)
 lv.claim(abs(1 / chain - 800) < 50, 'a factor of about 800')
 E(L5, 'screens[4].widget.answer', sum(v <= 0 for v in (2.31, -0.47, 0.05, -1.92, 0.88, 0.0)))
-cov(2.31, -0.47, 0.05, -1.92, 0.88, 200)
 lv.literal('2.31', why='the dead-unit table is a stated example')
 z52 = 0.0001 * 52000
 E(L5, 'screens[7].widget.answer', round((1 - math.tanh(z52) ** 2) / 1e-4, 2))
-cov(z52, math.tanh(z52), 1 - math.tanh(z52) ** 2, round((1 - math.tanh(z52)) / 1e-4, 2), 1 - math.tanh(0.3) ** 2, 52000, 0.0001)
+cov(z52, math.tanh(z52), 1 - math.tanh(z52) ** 2, round((1 - math.tanh(z52)) / 1e-4, 2), 1 - math.tanh(0.3) ** 2)
 E(L5, 'quiz[0].widget.answer', round(0.25 ** 6 / 1e-4, 2))
-cov(4096, 0.25 ** 5 / 1e-4, 1.5)
-cov(1000, 100, 0.1)
+cov(0.25 ** 5 / 1e-4)
 
 # ================= l6-initialisation =================
 L6 = 'l6-initialisation'
@@ -186,19 +204,18 @@ lin = {s: sd_by_layer(10, 100, s, 'linear', 0) for s in STOPS}
 for s in STOPS:
     theory = (100 * s * s) ** 5
     lv.claim(0.5 < lin[s][-1] / theory < 2.0, f'weight sd {s}: simulated sd after 10 layers {lin[s][-1]:.3g} near the theory {theory:.3g}')
-    cov(float(f'{lin[s][-1]:.3g}'))
+cov(*[float(f'{lin[s][-1]:.3g}') for s in STOPS])   # the captions print three significant figures
 cov(lin[0.05][-1], lin[0.1][-1], lin[1.0][-1], lin[0.01][-1])
 E(L6, 'screens[0].widget.answer', 0.1)
 E(L6, 'screens[1].widget.answer', 100 * 1.0 ** 2)
-cov(1e20, 1e10, 10)
 E(L6, 'screens[2].widget.answer', 50 * 0.04 * 1)
 gz = np.random.default_rng(0)
 simv = float((gz.standard_normal((20000, 100)) * gz.standard_normal((20000, 100))).sum(1).var())
-cov(simv, 0.2, 1 / math.sqrt(50), 20000)
+cov(simv, 1 / math.sqrt(50))
 lv.claim(abs(simv - 100) < 3, f'the 20,000-draw simulation is near 100 ({simv:.2f})')
 E(L6, 'screens[3].widget.answer', round(math.sqrt(2 / 100), 4))
 r141, r01 = sd_by_layer(10, 100, math.sqrt(0.02), 'relu', 0), sd_by_layer(10, 100, 0.1, 'relu', 0)
-cov(r141[-1], r01[-1], 0.02, math.sqrt(0.5 / 100), math.sqrt(2))
+cov(r141[-1], r01[-1], math.sqrt(0.5 / 100), math.sqrt(2))
 zr = np.random.default_rng(5).standard_normal(400000)
 agree('ReLU keeps half the second moment (simulation)', float(np.mean(np.maximum(zr, 0) ** 2)), 0.5, 0.01)
 
@@ -221,14 +238,13 @@ def sym_b(c, steps=100):
 
 S05 = sym_b(0.5)
 lv.claim(np.ptp(S05, axis=1).max() == 0.0 and np.abs(sym_b(0.0)).max() == 0.0, 'equal starts stay equal (0.5) and zero starts never move')
-cov(*S05[:, 0].tolist(), 0.5)
+cov(*S05[:, 0].tolist())
 E(L6, 'screens[7].widget.answer', round(0.8 * 0.5 ** 7, 6))
-cov(0.8 * 0.25 ** 7, 0.8 * 0.5 ** 8, 0.8)
+cov(0.8 * 0.25 ** 7, 0.8 * 0.5 ** 8)
 E(L6, 'quiz[0].widget.answer', math.sqrt(2 / 50))
 E(L6, 'quiz[2].widget.answer', (100 * 0.2 ** 2) ** 10)
-cov(2 ** 10, 0.04, 4)
+cov(2 ** 10)
 lv.literal('1,000', why='the number of input rows in the hook, a stated choice')
-lv.literal('1,048,576', why='4 to the tenth, stated in the quiz and checked by the key')
 
 # ================= l7-batch-norm =================
 L7 = 'l7-batch-norm'
@@ -290,29 +306,28 @@ bnA = [deep_run(True, 1.0, s, 'A') for s in (1, 2, 3, 4, 5)]
 bnB = [deep_run(True, 1.0, s, 'B') for s in (1, 2, 3, 4, 5)]
 plA = [deep_run(False, 1.0, s, 'A') for s in (1, 2, 3, 4, 5)]
 print('batch-norm finals, op:', np.round(bnA, 4), 'composed:', np.round(bnB, 4))
-# At step 1 the runs are sensitive to rounding (seed 1 ends 0.177 with the op and 0.194 composed), so the lesson states only the split.
+# At step 1 the runs are sensitive to rounding (seed 1 ends 0.177 with the op and 0.194 composed at default threads, 0.190 and 0.177 at one thread), so the lesson states only the split.
 lv.claim(min(plA) > 0.5 and max(bnA) < 0.25 and max(bnB) < 0.25, 'at step 1 the plain net ends above 0.5 nats on every seed and batch norm below 0.25, in both routes (stable under both BLAS thread settings)')
 agree('batch norm at step 1, seed 2: op against composition', bnA[1], bnB[1], 1e-5)
-cov(0.25, 1)
 plS = [deep_run(False, 0.1, s, 'A') for s in (1, 2, 3)]
 lv.claim(max(plS) < 0.2, 'at step 0.1 the plain net trains')
 xb = np.array([2.0, 4.0, 6.0, 8.0])
 xh8 = (8 - xb.mean()) / math.sqrt(xb.var() + EPS)
 E(L7, 'screens[1].widget.answer', round(xh8, 4))
-cov(xb.mean(), xb.var(), math.sqrt(5), 3 / 5, 3 / math.sqrt(xb.var(ddof=1)), 8 / math.sqrt(5), 1.34, 0.45)
+cov(xb.mean(), xb.var(), math.sqrt(5), 3 / 5, 3 / math.sqrt(xb.var(ddof=1)), 8 / math.sqrt(5))
 E(L7, 'screens[2].widget.answer', round(2 * xh8 + 1, 4))
-cov(xh8 + 2, 2 * xh8, math.sqrt(5), 5)
+cov(xh8 + 2, 2 * xh8, math.sqrt(5))
 rm2 = 0.9 * (0.1 * 5) + 0.1 * 5
 rv1 = 0.9 + 0.5
 rv2 = 0.9 * rv1 + 0.5
 E(L7, 'screens[3].widget.answer', round(rm2, 4))
-cov(0.5, rv1, rv2, 0.45, 1.0)
+cov(rv1, rv2)
 inf8 = (8 - rm2) / math.sqrt(rv2 + EPS)
 E(L7, 'screens[4].widget.answer', round(inf8, 3))
 cov(8 - rm2, math.sqrt(rv2), xh8)
 tr = 1.5 * 0.3 / math.sqrt(0.04 + EPS) + 0.1
 E(L7, 'screens[8].widget.answer', round(tr, 2))
-cov(1.5 * 0.3 + 0.1, 1.5 * 0.3 / 0.04 + 0.1, 0.3 / 0.2, 0.2)
+cov(1.5 * 0.3 + 0.1, 1.5 * 0.3 / 0.04 + 0.1, 0.3 / 0.2)
 q3 = np.array([1.0, 2.0, 6.0])
 E(L7, 'quiz[0].widget.answer', round(3 / math.sqrt(q3.var() + EPS), 3))
 cov(q3.var(), math.sqrt(q3.var()), 14 / 3)
@@ -330,34 +345,34 @@ bnMT = ((M.T - M.T.mean(0)) / np.sqrt(M.T.var(0) + EPS)).T
 lv.claim(np.allclose(lnM, bnMT), 'layer norm of X equals batch norm of X transposed, transposed back')
 E(L8, 'quiz[1].widget.answer', 0.5)
 E(L8, 'quiz[2].widget.answer', round(2 / math.sqrt(1.6 + EPS), 4))
-cov(1.6, math.sqrt(1.6), 2 / math.sqrt(2.0), 2 / 1.6)
-lv.literal('2,048', why='16 times 128, a count named in a distractor')
+cov(math.sqrt(1.6), 2 / math.sqrt(2.0), 2 / 1.6)
+cov(16 * 128)
 
 # ================= review, problems, homework =================
 E('review', 'items[0].widget.answer', round(math.sqrt(2 / 72), 4))
 cov(1 / 6, 1 / math.sqrt(72), 2 / 72, 1 / 36)
 E('review', 'items[1].widget.answer', round(0.25 ** 5 / 1e-4, 2))
-cov(1024, 0.25 ** 4 / 1e-4)
+cov(0.25 ** 4 / 1e-4)
 b3 = np.array([1.0, 2.0, 9.0])
 E('review', 'items[2].widget.answer', round(5 / math.sqrt(b3.var() + EPS), 3))
 cov(b3.var(), math.sqrt(b3.var()), 38 / 3)
 E('review', 'items[4].widget.answer', round(1 - math.tanh(2) ** 2, 4))
 cov(math.tanh(2), 1 / 15)
-lv.claim(abs((1 - math.tanh(2) ** 2) - 1 / 15) < 0.005, 'tanh slope at 2 is about a fifteenth of its peak')
+lv.claim(round(1 / (1 - math.tanh(2) ** 2)) == 14, 'tanh slope at 2 is about a fourteenth of its peak (1 / 0.0707 = 14.2)')
+cov(1 / (1 - math.tanh(2) ** 2))
 E('review', 'items[5].widget.answer', 64 * 0.25 ** 2)
-cov(0.0625, 1 / 8, 16)
+cov(1 / 8)
 E('review', 'items[6].widget.answer', round(2 * (1 - 0.9 ** 3), 3))
-cov(0.2, 0.38, 0.6, 160)
 E('problems', 'items[0].parts[0].widget.answer', 256 * 0.01)
 E('problems', 'items[0].parts[1].widget.answer', round(2.56 ** 5, 1))
-cov(math.sqrt(2.56 ** 5), 25.6, 2.56 * 5, 2.56 ** 4)
+cov(math.sqrt(2.56 ** 5), 2.56 * 5, 2.56 ** 4)
 E('problems', 'items[0].parts[2].widget.answer', 1 / math.sqrt(256))
 E('problems', 'items[0].parts[3].widget.answer', round(math.sqrt(2 / 256), 4))
 cov(1 / 256, math.sqrt(0.5 / 256))
 E('problems', 'items[1].parts[0].widget.answer', round(ds(1), 4))
 cov(sig(1), 1 - sig(1))
 E('problems', 'items[1].parts[1].widget.answer', round(0.25 ** 8 / 1e-5, 2))
-cov(65536, 0.25 ** 7 / 1e-5)
+cov(0.25 ** 7 / 1e-5)
 E('problems', 'items[1].parts[2].widget.answer', round(ds(1) ** 8 / 1e-6, 2))
 cov(ds(1) ** 7 / 1e-6, 0.25 ** 8 / 1e-6, 0.25 ** 8 / ds(1) ** 8)
 lv.claim(6 < 0.25 ** 8 / ds(1) ** 8 < 8, 'about seven times smaller')
@@ -365,15 +380,14 @@ xh7 = 3 / math.sqrt(5 + EPS)
 E('problems', 'items[2].parts[0].widget.answer', round(xh7, 4))
 E('problems', 'items[2].parts[1].widget.answer', round(0.5 * xh7 + 2, 4))
 E('problems', 'items[2].parts[3].widget.answer', round(xh7, 4))
-cov(3 / math.sqrt(20 / 3), 2 * xh7 + 0.5, 0.5 * xh7, 3.6, 0.4)
+cov(3 / math.sqrt(20 / 3), 2 * xh7 + 0.5, 0.5 * xh7)
 f6 = (100 * 0.12 ** 2) ** 6
 E('homework', 'items[3].widget.answer', round(f6, 2))
-cov(1.2 ** 6, 1.44, 0.0144)
+cov(1.2 ** 6)
 lv.literal('100', why='layer width, a stated choice')
 for lit in ('400', '300', '128', '256', '10^-7'):
     lv.literal(lit, why='a stated size, step count or unit in a question')
-cov(float(f'{gnB[9] / gnB[0] / 1e6:.1f}'), 0.25, float(f'{0.25 ** 10:.1e}'), float(f'{1 - math.tanh(z52) ** 2:.2e}'), 2.44e-4, float(f'{lin[0.05][-1]:.1e}'), *STOPS,
-    float(f'{lin[1.0][-1]:.1e}'), 8, 2, 72, 9.77e-4, 25, 20, 3, 2 / 256, 1.53e-5, 2.23e-6, 7)
+cov(float(f'{gnB[9] / gnB[0] / 1e6:.1f}'), float(f'{0.25 ** 10:.1e}'), float(f'{1 - math.tanh(z52) ** 2:.2e}'), float(f'{lin[0.05][-1]:.1e}'), *STOPS, float(f'{lin[1.0][-1]:.1e}'), 2 / 256)
 lv.literal('10^-5', why='batch and layer norm epsilon, a stated setting')
 lv.literal('10^-6', why='the gradient-check tolerance and step stated in how lines')
 lv.literal('10^-9', why='the hidden tests\' comparison tolerance')
@@ -467,6 +481,21 @@ for fid, doc in lv.files.items():
             lv.claim(got == mu['test'], f'{lab}: mutant "{mu["symptom"][:48]}" first fails test {mu["test"]} (got {got})')
 print(f'code widgets {nw}, mutants {nm}')
 
-lv.claim(True, 'route B values', covers=COV)
+# figures worked by hand in the text, recomputed from their definitions (the settings below are the only literals)
+cov(ds(0), len(gnB), round(1 / chain, -2), 0.25 ** 6, 0.25 ** 5, float(f'{0.25 ** 8:.3g}'), 4 ** 8, float(f'{ds(1) ** 8:.3g}'), round(0.25 ** 8 / ds(1) ** 8))
+cov((100 * 1.0 ** 2) ** 10, math.sqrt((100 * 1.0 ** 2) ** 10), 100 * 0.05 ** 2, math.sqrt(64), math.sqrt(64 * 0.25 ** 2))
+cov(float(xb.max()), *((xb - xb.mean()) / np.sqrt(xb.var())).tolist(), 0.9 * 0.5)
+xv5 = np.array([2.0, 4.0, 4.0, 4.0, 6.0])
+cov(float(xv5.var()), 8 * 20, *((b3 - b3.mean()) ** 2).tolist(), 0.12 ** 2, round(1 / float(np.mean(np.maximum(zr, 0) ** 2)), 1))
+lv.literal('200', why='the number of rows in the dead-unit example, a stated size')
+lv.literal('52,000', why='the income in pounds in the transfer scenario, a given')
+lv.literal('10^-4', why='the unit the answer is asked in, a stated choice')
+lv.literal('eight times', why='the depth of the forecasting net in the scenario (8 layers), a given')
+lv.literal('twice', why='the number of running-average updates the question applies, a given')
+lv.literal('three times', why='the number of running-average updates the question applies, a given')
+lv.literal('72', why='the fan-in given in a review item')
+lv.literal('20', why='the number of positions in a review item, a given size')
+lv.literal('8', why='the batch size of a review item, a given size')
+lv.claim(NCOV['matched'] > 0, f'recomputed values compared with the figures the level states: {NCOV["matched"]} equal a stated figure at its stated precision, {NCOV["unstated"]} are not stated')
 lv.check_wrongs()
 lv.report()
