@@ -1473,3 +1473,44 @@ def maxpool_overlap(x, size, stride):
     x = np.asarray(x, dtype=float)[::stride, ::stride]
     return np.lib.stride_tricks.sliding_window_view(x, (size, size)).max(axis=(2, 3)) if min(x.shape) >= size else np.array([[x.max()]])
 ```
+
+## Fix pass
+
+Status per finding, in the order of the review. Checks: validator 0 errors with no `[ai-mutants]` warning on cnn; voice scan 0 and 0; `cnn-L1-numbers.py` 362 of 362 and `cnn-L2-numbers.py` 333 of 333, exit 0; `grade-all.mjs --file <f> --code` 0 failures on all 11 edited files (every new mutant first fails its named test); playthrough green with and without `--mobile` on l1 to l8, homework-1 and homework-2 (`problems-2` is not playable by `--set`, so it was graded by `grade-all` only). Graded answers changed: none by value; l2 screens[8] option a now reads (101, 105, 101) (still the correct id), and problems-2 p-im2col-chain part 2 lost its `rows` wrong value (9.5).
+
+Ops modules (not edited)
+- cnn_ops_l2.py conv2d bias shape never checked | for level 3 (check `b.shape == (f,)` in level 3's own module).
+- cnn_ops_l2.py out_size with s < 1 or p < 0 | for level 3 (raise `ValueError` in a new module).
+- cnn_ops_l2.py im2col memory for full-batch l11 | for level 3 (train in mini-batches of about 64 and say so in its brief).
+
+Level 1
+- l2 screens[8] explain 4/3 | fixed: recomputed, the mean of (101, 103, 101) is 101.67, centre (-2/3, 4/3, -2/3) = 2/3 (-1, 2, -1); took the reviewer's route, option a is now (101, 105, 101) which centres to 4/3 (-1, 2, -1) (mean 102.33, deviations -4/3, 8/3, -4/3); feedback, explain and "size of the bump" reworded.
+- l3 screens[0] hint "4 + 4 + 0" | fixed: window rows 1 to 3, columns 3 to 5, right column (4, 4, 1) = 9, left (4, 0, 0) = 4, output 5.
+- homework-1 h-full-convolution test 5 | fixed: test 5 now parses `__learner_source__` and rejects an attribute or name `convolve` or `correlate`; starter comment reworded; the solution carries the starter's comments (regression); mutant `np.convolve(x, k)` fails test 5.
+- l2 detect, flat window guard | fixed: test 7 `detect([5, 5, 5, 9, 5], [1, 3, 1], -0.6)` expects [0, 1, 2] (recomputed: scores 0, -0.5, 1); the unguarded mutant gives [1, 2] and fails test 7.
+- l2 second_difference, `np.convolve` | fixed: test 5 bans `diff`, `convolve`, `correlate` by syntax tree; mutant `np.convolve(..., [1, -2, 1], 'valid')` fails test 5.
+- l4 kernel_gradient_check prose | fixed: prose now says divided by the larger of max|g| and max|g_num|; test 6 on `x * 1e4` expects below 1e-6; mutant returning the absolute error fails test 6.
+- l4 kernel_gradient_check test 4 | fixed: `isinstance(..., float)`; `np.float64` now passes.
+- l4 screens[5] "thousandfold" | fixed: 198,403 / 92 = 2,156, so "more than two thousandfold".
+- l4 screens[7] option c | fixed as proposed.
+- l4 screens[9] "tens of milliseconds" | fixed: "well under a second".
+- l1 and l4 missing links | fixed: l1 screens[6] prose links `limits-thm` (density of X + Y), l4 screens[11] prose links `arma`.
+- homework-1 h-perf-conv2d square images | fixed: test 8 on a (2, 5, 7) image with (3, 2, 3, 3) kernels against the loop-free reference, shape and values; starter comment now says h by w; mutant `oh = ow = ...` fails test 8.
+
+Level 2
+- l8 screens[9] test 5 | fixed: test 5 checks the syntax tree for `For`, `While` and `comprehension` nodes; the solution carries the starter's comment (and one with "for"), so a correct commented solution is covered; a list-comprehension mutant fails test 5 (the existing loop mutant still does).
+- homework-2 "about 12,500" | fixed: 80 + 1,168 + 4,640 + 5,130 = 11,018 = 6,138 + 2,320 + 2,560; now "about 11,000".
+- homework-2 multiply-adds sentence | fixed: 73,728 + 294,912 + 147,456 + 2,560 = 518,656; second conv is 56.9%; sentence replaced as proposed.
+- l5 screens[10] explain | fixed: (9 + 2 - 3)/2 = 4, plus 1 = 5.
+- l6 screens[2] prose and screens[5] option d | fixed: recomputed the shifted map's averages 1.25, 2, 0.75, 2 (all four change from 2.5, 1, 1.5, 3.25).
+- l7 screens[3] explain | fixed: 9,216 against 65,536 in the table.
+- l8 screens[3] explain | fixed with a correction to the proposal: entry 3 of the kernel is 1 but meets a 0 of the patch, so the non-zero products are at entries 4, 5 and 7 only: -4 + 2 + 3 = 1 (the proposed "3, 4, 5 and 7" would still be wrong).
+- problems-2 'rows' wrong value | fixed: `rows` dropped; one-channel line widened.
+- problems-2 weekly sampling | fixed: "as sampling every other day would".
+- l5 screens[6] explain | fixed: "Column 9 is never read" (windows start 0, 2, 4, 6 and reach column 8).
+- homework-2 h-perf-conv-layer | fixed: test 9 checks the forward pass at stride 2 (bias-at-stride-1 mutant fails it); test 10 bans `convolve`, `correlate` variants and any `scipy` import by syntax tree (scipy mutant fails it).
+
+Both levels
+- numbers scripts do not check every number in a string | deferred: engine item (a `numbers_lib` mode); this pass checked every hint and explain it touched by hand.
+
+Declined: none. Never edited: `course.json`, lesson ids, `cnn_ops_l1.py`, `cnn_ops_l2.py`.

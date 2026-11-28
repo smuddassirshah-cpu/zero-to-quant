@@ -74,9 +74,21 @@
       "call": "bool(np.allclose(res[1], _num_grad(lambda: float(np.sum(_ref_forward(x, W, b, s, p) * d)), x), atol=1e-6))",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(92); x = r.standard_normal((2, 7, 7)); W = r.standard_normal((2, 2, 3, 3)); b = r.standard_normal(2); s, p = 2, 1; d = r.standard_normal((2, 4, 4)); res = conv_layer_forward_backward(x, W, b, s, p, d)",
+      "call": "bool(np.allclose(res[0], _ref_forward(x, W, b, s, p)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "import ast",
+      "call": "not any((isinstance(n, ast.Attribute) and n.attr in ('convolve', 'correlate', 'convolve2d', 'correlate2d', 'fftconvolve')) or (isinstance(n, ast.Name) and n.id in ('convolve', 'correlate', 'convolve2d', 'correlate2d', 'fftconvolve')) or (isinstance(n, (ast.Import, ast.ImportFrom)) and 'scipy' in ast.dump(n)) for n in ast.walk(ast.parse(__learner_source__)))",
+      "expect": "True",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 8 hidden tests on seeded inputs. They check the forward pass against loops and the three gradients against central differences, at stride 1 with padding 1 (overlapping patches), stride 2 with padding 1, and stride 2 with no overlap.",
+    "how": "Submit runs 10 hidden tests on seeded inputs. They check the forward pass against loops and the three gradients against central differences, at stride 1 with padding 1 (overlapping patches), stride 2 with padding 1, and stride 2 with no overlap. The forward pass is also checked at stride 2, and no library convolution (`convolve`, `correlate`, `scipy`) may appear in your code; comments do not count.",
     "prelude": "import numpy as np\n\ndef _ref_forward(x, W, b, s, p):\n    xp = np.pad(x, ((0, 0), (p, p), (p, p)))\n    f, c, k, _ = W.shape\n    oh, ow = (xp.shape[1] - k) // s + 1, (xp.shape[2] - k) // s + 1\n    return np.array([[[np.sum(xp[:, i * s:i * s + k, j * s:j * s + k] * W[o]) + b[o] for j in range(ow)] for i in range(oh)] for o in range(f)])\n\ndef _num_grad(f, A, h=1e-6):\n    g = np.zeros_like(A)\n    for i in np.ndindex(A.shape):\n        keep = A[i]; A[i] = keep + h; up = f(); A[i] = keep - h; down = f(); A[i] = keep\n        g[i] = (up - down) / (2 * h)\n    return g\n",
     "budget": 4000,
     "mutants": [
@@ -99,6 +111,16 @@
       "source": "import numpy as np\n\n\ndef conv_layer_forward_backward(x, W, b, stride, pad, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    c, h, w = x.shape\n    f, _, k, _ = W.shape\n    xp = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))\n    oh = (h + 2 * pad - k) // stride + 1\n    ow = (w + 2 * pad - k) // stride + 1\n    cols = np.array([xp[:, i * stride:i * stride + k, j * stride:j * stride + k].ravel()\n                     for i in range(oh) for j in range(ow)])\n    Wm = W.reshape(f, -1)\n    out = (cols @ Wm.T + b).T.reshape(f, oh, ow)\n    g = dout.reshape(f, -1).T\n    dW = (cols.T @ g).reshape(W.shape)\n    db = g.sum(axis=0)\n    dcols = g @ Wm\n    dxp = np.zeros_like(xp)\n    for i in range(oh):\n        for j in range(ow):\n            r, q = i * stride, j * stride\n            dxp[:, r:r + k, q:q + k] += dcols[i * ow + j].reshape(c, k, k)\n    dx = dxp[:, pad:pad + h, pad:pad + w]\n    return out, dx, dW, db\n",
       "test": 2,
       "symptom": "The weight gradient is transposed before the reshape, scrambling the filters."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv_layer_forward_backward(x, W, b, stride, pad, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    c, h, w = x.shape\n    f, _, k, _ = W.shape\n    xp = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))\n    oh = (h + 2 * pad - k) // stride + 1\n    ow = (w + 2 * pad - k) // stride + 1\n    cols = np.array([xp[:, i * stride:i * stride + k, j * stride:j * stride + k].ravel()\n                     for i in range(oh) for j in range(ow)])\n    Wm = W.reshape(f, -1)\n    out = (cols @ Wm.T + (b if stride == 1 else 0)).T.reshape(f, oh, ow)\n    g = dout.reshape(f, -1).T\n    dW = (g.T @ cols).reshape(W.shape)\n    db = g.sum(axis=0)\n    dcols = g @ Wm\n    dxp = np.zeros_like(xp)\n    for i in range(oh):\n        for j in range(ow):\n            r, q = i * stride, j * stride\n            dxp[:, r:r + k, q:q + k] += dcols[i * ow + j].reshape(c, k, k)\n    dx = dxp[:, pad:pad + h, pad:pad + w]\n    return out, dx, dW, db\n",
+      "test": 9,
+      "symptom": "The bias is added only at stride 1, so the forward pass is wrong at stride 2."
+     },
+     {
+      "source": "import numpy as np\nfrom scipy.signal import correlate\n\n\ndef conv_layer_forward_backward(x, W, b, stride, pad, dout):\n    x = np.asarray(x, dtype=float); W = np.asarray(W, dtype=float); dout = np.asarray(dout, dtype=float)\n    xp = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))\n    f, c, k, _ = W.shape\n    full = np.array([correlate(xp, W[o], 'valid')[0] for o in range(f)])\n    out = full[:, ::stride, ::stride] + np.asarray(b)[:, None, None]\n    up = np.zeros((f,) + full.shape[1:]); up[:, ::stride, ::stride] = dout\n    dW = np.array([[correlate(xp[ci], up[o], 'valid') for ci in range(c)] for o in range(f)])\n    dxp = np.zeros_like(xp)\n    for o in range(f):\n        for ci in range(c):\n            dxp[ci] += correlate(np.pad(up[o], k - 1), W[o, ci][::-1, ::-1], 'valid')\n    h, w = x.shape[1:]\n    return out, dxp[:, pad:pad + h, pad:pad + w], dW, dout.sum(axis=(1, 2))\n",
+      "test": 10,
+      "symptom": "It calls scipy's correlate instead of building the patch matrix."
      }
     ]
    },
@@ -253,7 +275,7 @@
    "title": "A CNN under 10,000 parameters",
    "kind": "longform",
    "prompt": "Design a CNN for 32 by 32 single-channel inputs and 10 classes with at most 10,000 parameters. State every layer with its kernel, padding and stride, the shape after it, and its parameters, and give the total. Then justify two trade-offs you made (for example depth against width, pooling against stride, where the parameters go).",
-   "model": "**A design.**\n\n| layer | out shape | params |\n|---|---|---:|\n| input | 1 × 32 × 32 | 0 |\n| conv 3 × 3, 8 filters, pad 1 | 8 × 32 × 32 | 80 |\n| max pool 2 × 2 | 8 × 16 × 16 | 0 |\n| conv 3 × 3, 16 filters, pad 1 | 16 × 16 × 16 | 1,168 |\n| max pool 2 × 2 | 16 × 8 × 8 | 0 |\n| conv 3 × 3, 16 filters, pad 1 | 16 × 8 × 8 | 2,320 |\n| max pool 2 × 2 | 16 × 4 × 4 | 0 |\n| dense 256 → 10 | 10 | 2,570 |\n| **total** | | **6,138** |\n\nEach conv count is $c_{\\text{out}}(c_{\\text{in}} \\cdot 9 + 1)$ and the dense one $256 \\times 10 + 10$.\n\n**Trade-off 1: pool before the dense layer.** Without the three pools the dense layer would see $16 \\times 32 \\times 32 = 16{,}384$ inputs and need 163,850 parameters, sixteen times the budget. Pooling (or stride 2) shrinks the map so the head stays small; the price is lost position detail.\n\n**Trade-off 2: small kernels stacked.** Three 3 by 3 layers with pools between give a receptive field of $1 + 2 + 1 + 2 \\times 2 + 1 \\times 2 + 2 \\times 4 = 18$ pixels using 9 weights per channel pair each, where one large kernel would cost far more. Depth also adds nonlinearities.\n\n**Where the parameters go.** 42% sit in the dense head; widening the last conv to 32 filters would add 2,320 conv parameters and double the head to 5,130, about 12,500 in all, over budget. Multiply-adds are dominated by the first two layers, which run on the largest maps.",
+   "model": "**A design.**\n\n| layer | out shape | params |\n|---|---|---:|\n| input | 1 × 32 × 32 | 0 |\n| conv 3 × 3, 8 filters, pad 1 | 8 × 32 × 32 | 80 |\n| max pool 2 × 2 | 8 × 16 × 16 | 0 |\n| conv 3 × 3, 16 filters, pad 1 | 16 × 16 × 16 | 1,168 |\n| max pool 2 × 2 | 16 × 8 × 8 | 0 |\n| conv 3 × 3, 16 filters, pad 1 | 16 × 8 × 8 | 2,320 |\n| max pool 2 × 2 | 16 × 4 × 4 | 0 |\n| dense 256 → 10 | 10 | 2,570 |\n| **total** | | **6,138** |\n\nEach conv count is $c_{\\text{out}}(c_{\\text{in}} \\cdot 9 + 1)$ and the dense one $256 \\times 10 + 10$.\n\n**Trade-off 1: pool before the dense layer.** Without the three pools the dense layer would see $16 \\times 32 \\times 32 = 16{,}384$ inputs and need 163,850 parameters, sixteen times the budget. Pooling (or stride 2) shrinks the map so the head stays small; the price is lost position detail.\n\n**Trade-off 2: small kernels stacked.** Three 3 by 3 layers with pools between give a receptive field of $1 + 2 + 1 + 2 \\times 2 + 1 \\times 2 + 2 \\times 4 = 18$ pixels using 9 weights per channel pair each, where one large kernel would cost far more. Depth also adds nonlinearities.\n\n**Where the parameters go.** 42% sit in the dense head; widening the last conv to 32 filters would add 2,320 conv parameters and double the head to 5,130, about 11,000 in all, over budget. Multiply-adds peak in the second conv (294,912 of 518,656), where 16 filters meet 8 channels on a 16 by 16 map; parameters peak in the head.",
    "rubric": [
     {
      "points": 3,

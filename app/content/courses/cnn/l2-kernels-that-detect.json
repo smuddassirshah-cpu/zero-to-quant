@@ -1375,7 +1375,7 @@
     "options": [
      {
       "id": "a",
-      "text": "$(101, 103, 101)$",
+      "text": "$(101, 105, 101)$",
       "correct": true
      },
      {
@@ -1396,11 +1396,11 @@
     ]
    },
    "feedback": {
-    "correct": "Centred, $(101, 103, 101)$ is $\\tfrac23(-1, 2, -1)$, the same direction as the centred kernel.",
+    "correct": "Centred, $(101, 105, 101)$ is $\\tfrac23(-1, 2, -1)$, the same direction as the centred kernel.",
     "generic": "Not quite. Remove each mean and compare the shapes."
    },
    "explain": {
-    "text": "The kernel centres to $\\tfrac23(-1, 2, -1)$ and $(101, 103, 101)$ centres to $\\tfrac43(-1, 2, -1)$: the same direction, so $r_t = 1$. The level 101 and the size 2 do not matter."
+    "text": "The kernel centres to $\\tfrac23(-1, 2, -1)$ and $(101, 105, 101)$ centres to $\\tfrac43(-1, 2, -1)$: the same direction, so $r_t = 1$. The level 101 and the size of the bump do not matter."
    }
   },
   {
@@ -1563,12 +1563,13 @@
       "compare": "equal"
      },
      {
-      "call": "'diff' not in __learner_source__.replace('second_difference', '')",
+      "setup": "import ast",
+      "call": "not any((isinstance(n, ast.Attribute) and n.attr in ('diff', 'convolve', 'correlate')) or (isinstance(n, ast.Name) and n.id in ('diff', 'convolve', 'correlate')) for n in ast.walk(ast.parse(__learner_source__)))",
       "expect": "True",
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 5 hidden tests: the first closes, the length $n - 2$, a match with `np.diff(x, 2)` on a seeded path, the squares (bend 2 everywhere), and no `diff` in your code.",
+    "how": "Submit runs 5 hidden tests: the first closes, the length $n - 2$, a match with `np.diff(x, 2)` on a seeded path, and the squares (bend 2 everywhere). The fifth bans `diff`, `convolve` and `correlate` in your code; comments do not count.",
     "prelude": "import numpy as np\n\ndef conv1d_valid(x, k):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    n, m = len(x), len(k)\n    return np.array([x[t:t + m] @ k for t in range(n - m + 1)])\n",
     "mutants": [
      {
@@ -1585,6 +1586,11 @@
       "source": "import numpy as np\n\n\ndef second_difference(x):\n    return np.diff(np.asarray(x, float), 2)\n",
       "test": 5,
       "symptom": "It calls np.diff instead of sliding the kernel."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef second_difference(x):\n    return np.convolve(np.asarray(x, dtype=float), [1.0, -2.0, 1.0], 'valid')\n",
+      "test": 5,
+      "symptom": "It calls np.convolve; the symmetric bend kernel hides the flip, so only the source check catches the library call."
      }
     ]
    },
@@ -1751,9 +1757,14 @@
       "call": "detect([1.0, 2.0], [1, 3, 1], 0.5)",
       "expect": "[]",
       "compare": "equal"
+     },
+     {
+      "call": "detect([5.0, 5.0, 5.0, 9.0, 5.0], [1, 3, 1], -0.6)",
+      "expect": "[0, 1, 2]",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 6 hidden tests. They use the seeded minute volumes at thresholds 0.95 and 0.9, and the price path at 0.7. Then flat windows (no division by zero), the volumes rescaled and shifted, and a kernel longer than the signal.",
+    "how": "Submit runs 7 hidden tests. They use the seeded minute volumes at thresholds 0.95 and 0.9, and the price path at 0.7. Then flat windows (no division by zero), once with a negative threshold so that a flat window scores above it, the volumes rescaled and shifted, and a kernel longer than the signal.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef detect(x, k, threshold):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    m = len(k)\n    return [t for t in range(len(x) - m + 1) if x[t:t + m] @ k > threshold]\n",
@@ -1769,6 +1780,11 @@
       "source": "import numpy as np\n\n\ndef detect(x, k, threshold):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    m = len(k)\n    kc = k - k.mean()\n    hits = []\n    for t in range(len(x) - m + 1):\n        w = x[t:t + m] - x[t:t + m].mean()\n        r = (w @ kc) / np.linalg.norm(kc)\n        if r > threshold:\n            hits.append(t)\n    return hits\n",
       "test": 1,
       "symptom": "The window’s own length is left out, so a large window scores above 1."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef detect(x, k, threshold):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    m = len(k)\n    kc = k - k.mean()\n    hits = []\n    for t in range(len(x) - m + 1):\n        w = x[t:t + m] - x[t:t + m].mean()\n        r = (w @ kc) / (np.linalg.norm(w) * np.linalg.norm(kc))\n        if r > threshold:\n            hits.append(t)\n    return hits\n",
+      "test": 7,
+      "symptom": "A flat window gives 0/0 = nan, and nan is never above a threshold, so a flat window is dropped when the threshold is negative."
      }
     ]
    },
