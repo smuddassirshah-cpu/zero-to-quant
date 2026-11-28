@@ -594,3 +594,65 @@ def two_layer_grads(x, W1, w2, y):
     dy = w2 @ a - y
     return 0.5 * dy ** 2, np.outer(dy * w2 * (a > 0), x), dy * a
 ```
+
+## Fix pass
+
+Branch `fix-ml-int` from `claude/inspiring-dirac-ckxdoa`. 40 fixed, 1 partly fixed with the rest deferred, 1 needing no change, 0 declined. Graded answers changed: 1 (l10 quiz[2], 345 to 346); the three l10 and l11 keys keep their values, with more inputs shown and a wider tolerance. Purge rule: `validation` l7 is right (row t's label uses days t + 1 to t + h, so h - 1 rows overlap); `ml-int` now uses h - 1, so there is nothing to record for the audit session.
+
+### Level 1
+
+1. l3 screens[5]: fixed. Option `dd` now says the decomposition still holds and variance peaks at p = n and falls past it; hint, explain and the `agree` line say the same.
+2. l3 screens[7]: fixed. The prose says p = n here and, for a deep net, effective complexity about n; the `data` line cites sample-wise non-monotonicity.
+3. l3 screens[0] to [6]: partly fixed, rest deferred. The missing interview points are added (bias-variance in screens[5], effective complexity and sample-wise descent in screens[7], gradient descent from zero reaching the smallest-norm fit in screens[3]); the merge of screens[1] to [3] is deferred, because it moves screen indexes that the number script and the playthrough key on.
+4. l3 quiz[2]: fixed. The `var` line and the explain now say the noise part does quadruple (0.0185 to 0.0763, 4.1 times) on top of a 0.0461 floor; the figures are recomputed in `ml-int-L1-numbers.py` (noise 0 rerun, 20 seeds).
+5. l3 screens[8]: fixed, "out-of-sample R² under 1 per cent" in the option and the explain.
+6. l3 screens[1]: fixed. The norms are shown as 1.166 and 10.14 (unrounded 1.1658 and 10.1408), so 10.14/1.166 = 8.7 is true as printed; key unchanged.
+7. l2 objectives and screens[7]: fixed with a new quiz[3] on choosing SGD with momentum; the Wilson, Reddi and warm-up points are in the options and whys.
+8. l4 screens[10] `test-4`: fixed, "A logit of 800 overflowed."
+9. l2 screens[3]: fixed, "RMSProp with momentum has no correction".
+10. l3 screens[4]: fixed, the no-noise peak of about 2.5 is added (computed: 2.4989).
+11. l4 screens[6]: fixed, "In a fully connected layer".
+12. l4 screens[9]: fixed, "divided by the wrong count, for example by V as well".
+
+### Level 2
+
+13. l8 screens[4] `sign`: fixed. The path through Z₂,₁ gives -2 and the kink adds +1/2, total -1.5.
+14. mi-cross-entropy-logits: fixed. New test "Rows 1,000 apart" (0.8132616875182228) and a planted batch-maximum solution; `planted-check` 0 failures with `--near-miss --require` (the existing near miss is kept as the one near miss).
+15. l7 screens[9] test 4: fixed. `old` is now a float `np.array`; the `np.asarray` aliasing solution is recorded as a mutant on test 4.
+16. l8 screens[8]: fixed. Test 5 `mi_grad_check(..., [1, 2])` expects [2.0, 4.0]; the no-dtype copy is a mutant on test 5, with a byKey line.
+17. review-2 items[3]: fixed. It asks about row 2 of 6: answer 4, `past` 1, `with-self` 5, each with its own line; the script checks all three.
+18. l6 objective: fixed, "inside twenty minutes, the pace of the drill after it"; the screen's own prose already says the lesson takes fifteen.
+19. l6 screens[5]: fixed, one sentence on zeroing after the softmax and why masking first is the norm.
+20. l6 screens[11] `flat`: fixed, "does B times the work".
+21. l7 screens[6]: fixed, "`stat-learning` l16".
+22. l5 screens[5]: fixed, "smallest positive float64 is about 5 × 10^-324" (checked with `nextafter`).
+23. mi-layernorm-backward examples: fixed. They use eps = 1e-5; the first example's dx is 0 only up to a term of order eps (about 5e-6), so its tolerance is 1e-4 and the note says so.
+
+### Level 3
+
+24. l10 screens[3]: fixed. The prose and hint show 0.00787 (0.0414/0.00787 = 5.2605); the tolerance is 0.03 so the 0.0079 route (5.24) is accepted too. The script divides the displayed inputs both ways and checks the tolerance.
+25. l10 screens[4]: fixed. Standard error 0.00789 (0.0436/0.00789 = 5.526); tolerance 0.03 (the 0.0079 route gives 5.52).
+26. l11 screens[2]: fixed. Standard error 0.00676 (-0.0233/0.00676 = -3.447); tolerance 0.03 (0.0068 gives -3.43).
+27. Newey-West: fixed. l10 screens[2] explain says the plain error is right here and an h-day target or autocorrelated errors need a Newey-West (HAC) error with at least h - 1 lags; also in the formula note, screens[8], l12 screens[8] and a new l10 quiz[3]. Recomputed (statsmodels HAC and a hand Bartlett kernel agree): world B seed 1, 5 lags, t = -2.43 against the plain -1.91, so the verdict goes from no change to the network (4 lags give -2.31, also past 2); the quiz explain says so.
+28. Purge rule: `validation` l7 is correct and `ml-int` was one day over. l10 quiz[2] now uses a 4-day purge (h - 1), key 346, with a `h` slip at 345; the `fair_split` tests use purge 4 (346 and 345 to 350); screens[10] explain says a 5-day label needs h - 1 = 4 and this case's one-day target needs 0, so 350 days train; review-3 items[4] states the h - 1 rule (answer 290 unchanged).
+29. l12 screens[3] and l10/l11: fixed in the places the text means data. l12 screens[3] explain separates training seeds from fresh periods; l10 screens[4] says a second seed is a new market, which real data never offers; l11 screens[3] and [4] say "draw".
+30. l10 screens[5] and quiz[1]: fixed. The explain and the `corr` option say "in real data", and the explain says this generator draws each stock-day separately.
+31. l9 screens[9] and the formula note: fixed, one sentence on the benchmark (0, the training mean or the test mean); the mutant stays.
+32. l11 screens[6], option `tails`, summary: fixed. Trees win on thresholds, useless features and features with heavy tails or odd scales; the key is on features.
+33. homework-3 items[3] `z`: fixed. Value -0.0100, tolerance 3e-5 (the slip is -0.009972 from the shown inputs; the key band is [-0.00995, -0.00985]); the script checks both from the displayed inputs.
+34. The 20 key-length items: fixed. Each distractor was lengthened to a similar specificity (one new condition or number each) and no item has a key over 1.5 times the longest distractor; the validator shows no `[key-length]` on ml-int.
+35. homework-3 items[5] model: fixed, "fixed, untuned settings for both models".
+36. l10 screens[7]: fixed, "0.04139 ± 1.976 × 0.00787" gives (0.0258, 0.0569) as printed.
+37. l12 formula note and screens[3]: fixed, "With few seeds the t bar is above 2", and the explain gives 2.36 for 8 seeds (t quantile, 7 degrees of freedom).
+38. l11 screens[8] explain: fixed, one sentence on the shuffled early-stopping validation set.
+39. The four `wrong` entries without a byKey line: fixed (l11 screens[1] `sign`, l12 screens[1] `A`, l6 screens[6] `zero`, l9 screens[1] `inverse`).
+
+### Number scripts
+
+40. L3 world B signal claim: fixed. It now reads the l11 widget's `prelude`.
+41. L3 BLAS threads: no change, as the review says.
+42. Rounded-input coverage: fixed locally. `ml-int-L3-numbers.py` has a `from_shown` check for the three keys and homework h4; the general helper is raised in `docs/BACKLOG-INBOX.md`.
+
+### Checks
+
+Validator 0 errors, no `[ai-mutants]` or `[source-ban]` on ml-int; `voice-scan.py 35` 0 and 0; the three number scripts pass through the CI runner and directly with `ZQ_NUMBERS_STRICT=1`; `grade-all.mjs --code --strict-feedback` 0 failures on every edited file; `planted-check.mjs --near-miss --require` 0 failures on the two edited drills; `same-course-reuse.mjs --all` lists nothing for ml-int.

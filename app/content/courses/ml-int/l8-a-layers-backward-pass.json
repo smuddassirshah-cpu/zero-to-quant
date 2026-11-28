@@ -633,7 +633,7 @@
     "byKey": {
      "gt": "That is the analytic value with gradient 0 at the kink. The central difference sees half of the other side.",
      "ge": "That is the analytic value with gradient 1 at the kink. The central difference averages the two.",
-     "sign": "Both paths carry a negative gradient here: $-1 \\times 2$ and half of $-1$."
+     "sign": "You flipped the total. The path through $Z_{2,1}$ gives $-2$ and the kink adds $+\\tfrac{1}{2}$, so the total is $-1.5$, which is negative."
     }
    },
    "explain": {
@@ -960,9 +960,18 @@
        "rel": 1e-06,
        "abs": 1e-06
       }
+     },
+     {
+      "call": "mi_grad_check(lambda v: float((v ** 2).sum()), [1, 2]).tolist()",
+      "expect": "[2.0, 4.0]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
      }
     ],
-    "how": "Submit runs 4 hidden tests. Test 1 is the sum of squares, gradient $2x$. Test 2 is $e^{5x}$ at $x = 1$ with a step of $10^{-4}$, where a one-sided difference is off by about 1 part in 4,000. Test 3 checks the input is unchanged. Test 4 is $d\\mathbf{W}$ for this lesson's layer with the middle bias at 0.5, which moves $Z_{2,2}$ off the kink. Values are compared to a relative error of $10^{-6}$.",
+    "how": "Submit runs 5 hidden tests. Test 1 is the sum of squares, gradient $2x$. Test 2 is $e^{5x}$ at $x = 1$ with a step of $10^{-4}$, where a one-sided difference is off by about 1 part in 4,000. Test 3 checks the input is unchanged. Test 4 is $d\\mathbf{W}$ for this lesson's layer with the middle bias at 0.5, which moves $Z_{2,2}$ off the kink. Test 5 passes the integers `[1, 2]`, which a copy without a float dtype would truncate. Values are compared to a relative error of $10^{-6}$.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef mi_grad_check(f, x, eps=1e-6):\n    x = np.array(x, dtype=float)\n    g = np.zeros_like(x)\n    for i in np.ndindex(x.shape):\n        old = x[i]\n        x[i] = old + eps\n        up = f(x)\n        x[i] = old\n        down = f(x)\n        x[i] = old\n        g[i] = (up - down) / eps\n    return g\n",
@@ -978,6 +987,11 @@
       "source": "import numpy as np\n\n\ndef mi_grad_check(f, x, eps=1e-6):\n    x = np.asarray(x, dtype=float)\n    g = np.zeros_like(x)\n    for i in np.ndindex(x.shape):\n        old = x[i]\n        x[i] = old + eps\n        up = f(x)\n        x[i] = old - eps\n        down = f(x)\n        g[i] = (up - down) / (2 * eps)\n    return g\n",
       "test": 3,
       "symptom": "Nudges the caller's array in place and never puts it back."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mi_grad_check(f, x, eps=1e-6):\n    x = np.array(x)\n    g = np.zeros_like(x)\n    for i in np.ndindex(x.shape):\n        old = x[i]\n        x[i] = old + eps\n        up = f(x)\n        x[i] = old - eps\n        down = f(x)\n        x[i] = old\n        g[i] = (up - down) / (2 * eps)\n    return g\n",
+      "test": 5,
+      "symptom": "Copies the input without a float dtype, so on an integer input every nudge truncates and the gradient is 0."
      }
     ]
    },
@@ -1001,7 +1015,8 @@
     "byKey": {
      "test-1": "The sum of squares should give $2x$. Divide the two-sided difference by $2\\epsilon$.",
      "test-2": "Off by about 1 part in 4,000 on $e^{5x}$. A one-sided difference has error of order $\\epsilon$; use both sides.",
-     "test-3": "You changed the caller's array. Copy it with `np.array(x, dtype=float)` and restore each entry."
+     "test-3": "You changed the caller's array. Copy it with `np.array(x, dtype=float)` and restore each entry.",
+     "test-5": "An integer input gave a zero gradient: the nudges were truncated. Copy with `dtype=float`."
     }
    },
    "explain": {

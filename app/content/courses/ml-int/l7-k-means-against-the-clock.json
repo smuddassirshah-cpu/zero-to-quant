@@ -1315,7 +1315,7 @@
    "tags": [
     "k-means"
    ],
-   "prose": "The interview asked for a fixed start, so the result is reproducible. Say the alternatives from l16 in one sentence each. k-means++ picks each new centre with probability proportional to $D(x)^2$, the squared distance to the nearest chosen centre. Several starts keep the run with the lowest inertia, $$\\sum_i \\|\\mathbf{x}_i - \\boldsymbol{\\mu}_{c_i}\\|^2.$$",
+   "prose": "The interview asked for a fixed start, so the result is reproducible. Say the alternatives from `stat-learning` l16 in one sentence each. k-means++ picks each new centre with probability proportional to $D(x)^2$, the squared distance to the nearest chosen centre. Several starts keep the run with the lowest inertia, $$\\sum_i \\|\\mathbf{x}_i - \\boldsymbol{\\mu}_{c_i}\\|^2.$$",
    "question": "Why does k-means++ help?",
    "widget": {
     "kind": "choice",
@@ -1537,8 +1537,8 @@
       "expect": "[[2.0, 3.0]]"
      },
      {
-      "setup": "old = [[7.0, 7.0], [8.0, 8.0]]\n_ = update_centres([[1, 1]], [0], old)",
-      "call": "old",
+      "setup": "old = np.array([[7.0, 7.0], [8.0, 8.0]])\n_ = update_centres([[1, 1]], [0], old)",
+      "call": "old.tolist()",
       "compare": "equal",
       "expect": "[[7.0, 7.0], [8.0, 8.0]]"
      },
@@ -1548,7 +1548,7 @@
       "expect": "[[1.0], [3.0], [9.0]]"
      }
     ],
-    "how": "Submit runs 5 hidden tests: the first update of this lesson's six points, an empty cluster, $k = 1$, the old centres left unchanged, and one dimension with an empty cluster 0. Numbers are compared to $10^{-9}$.",
+    "how": "Submit runs 5 hidden tests: the first update of this lesson's six points, an empty cluster, $k = 1$, the old centres, a float array, left unchanged, and one dimension with an empty cluster 0. Numbers are compared to $10^{-9}$.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef update_centres(points, labels, old):\n    P = np.asarray(points, dtype=float)\n    new = np.array(old, dtype=float)\n    labels = np.asarray(labels)\n    for j in range(len(new)):\n        new[j] = P[labels == j].mean(axis=0)\n    return new\n",
@@ -1564,6 +1564,11 @@
       "source": "import numpy as np\n\n\ndef update_centres(points, labels, old):\n    P = np.asarray(points, dtype=float)\n    new = np.zeros((len(old), P.shape[1]))\n    labels = np.asarray(labels)\n    for j in range(len(new)):\n        if (labels == j).any():\n            new[j] = P[labels == j].mean(axis=0)\n    return new\n",
       "test": 5,
       "symptom": "Starts from zeros, so an empty cluster moves to the origin."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef update_centres(points, labels, old):\n    P = np.asarray(points, dtype=float)\n    new = np.asarray(old, dtype=float)\n    labels = np.asarray(labels)\n    for j in range(len(new)):\n        if (labels == j).any():\n            new[j] = P[labels == j].mean(axis=0)\n    return new\n",
+      "test": 4,
+      "symptom": "Wraps the caller's float array without copying it, so the update overwrites the old centres."
      }
     ]
    },
@@ -1587,7 +1592,8 @@
     "byKey": {
      "test-1": "The first update is off: cluster 1 should be $(4, 4.25)$. Average the points, do not sum them.",
      "test-2": "The empty cluster came out as nan. Replace a centre only when its cluster has points.",
-     "test-5": "Empty cluster 0 should keep its old centre, 1. Start from a copy of `old`, not from zeros."
+     "test-5": "Empty cluster 0 should keep its old centre, 1. Start from a copy of `old`, not from zeros.",
+     "test-4": "Your update overwrote the caller's centres. Copy with `np.array(old, dtype=float)`, not `np.asarray`."
     }
    },
    "explain": {

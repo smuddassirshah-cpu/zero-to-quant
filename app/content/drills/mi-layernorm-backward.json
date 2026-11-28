@@ -1,178 +1,178 @@
 {
-  "course": "ml-int",
-  "pack": "mi",
-  "skills": [
-    "mi-code"
-  ],
-  "id": "mi-layernorm-backward",
-  "name": "Backward through layer norm",
-  "difficulty": 5,
-  "pace": 1800,
-  "tags": [
-    "backward-pass",
-    "layer-norm"
-  ],
-  "fn": "mi_layernorm_backward",
-  "returns": "a tuple (dx, dgamma, dbeta) of NumPy arrays",
-  "brief": "Layer norm normalises each row of $\\mathbf{x}$ over its last axis and then scales and shifts: $\\hat{\\mathbf{x}} = (\\mathbf{x} - \\mu)/\\sqrt{\\sigma^2 + \\epsilon}$, $\\mathbf{y} = \\boldsymbol{\\gamma} \\odot \\hat{\\mathbf{x}} + \\boldsymbol{\\beta}$, with $\\mu$ and $\\sigma^2$ the row's mean and variance (dividing by $N$).\n\nGiven `dout`, the gradient with respect to $\\mathbf{y}$, write `mi_layernorm_backward(x, gamma, dout, eps)` returning $(d\\mathbf{x}, d\\boldsymbol{\\gamma}, d\\boldsymbol{\\beta})$.",
-  "definition": "With $d\\hat{\\mathbf{x}} = d\\mathbf{y} \\odot \\boldsymbol{\\gamma}$ and bars for means over the row: $d\\mathbf{x} = \\frac{1}{\\sqrt{\\sigma^2 + \\epsilon}}\\big(d\\hat{\\mathbf{x}} - \\overline{d\\hat{\\mathbf{x}}} - \\hat{\\mathbf{x}} \\odot \\overline{d\\hat{\\mathbf{x}} \\odot \\hat{\\mathbf{x}}}\\big)$. $d\\boldsymbol{\\gamma}$ and $d\\boldsymbol{\\beta}$ sum $d\\mathbf{y} \\odot \\hat{\\mathbf{x}}$ and $d\\mathbf{y}$ over the rows.",
-  "constraints": [
-    "Between 1 and 32 rows of length 2 to 32; `eps` is positive.",
-    "Use the variance that divides by $N$.",
-    "NumPy is available.",
-    "Each test has a 5-second limit in the browser.",
-    {
-      "arg": "x",
-      "type": "list",
-      "len": [
-        1,
-        64
-      ],
-      "of": {
-        "type": "list",
-        "len": [
-          1,
-          64
-        ],
-        "of": "number"
-      }
-    },
-    {
-      "arg": "gamma",
-      "type": "list",
-      "len": [
-        2,
-        32
-      ],
-      "of": "number"
-    },
-    {
-      "arg": "dout",
-      "type": "list",
-      "len": [
-        1,
-        64
-      ],
-      "of": {
-        "type": "list",
-        "len": [
-          1,
-          64
-        ],
-        "of": "number"
-      }
-    },
-    {
-      "arg": "eps",
-      "type": "float",
-      "range": [
-        1e-12,
-        1
-      ]
-    }
-  ],
-  "hint": "Compute $\\hat{\\mathbf{x}}$ and $1/\\sqrt{\\sigma^2 + \\epsilon}$ once. Each row of $d\\mathbf{x}$ should sum to 0.",
-  "starter": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    ...\n",
-  "solution": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    g = np.asarray(gamma, dtype=float)\n    dy = np.asarray(dout, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    rs = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xh = (x - mu) * rs\n    dxh = dy * g\n    dx = rs * (dxh - dxh.mean(axis=-1, keepdims=True) - xh * (dxh * xh).mean(axis=-1, keepdims=True))\n    return dx, (dy * xh).sum(axis=0), dy.sum(axis=0)\n",
-  "prelude": "import numpy as np\n\n\ndef _case(seed, B, N):\n    r = np.random.default_rng(seed)\n    return r.normal(size=(B, N)), r.normal(size=N), r.normal(size=(B, N))\n\n\ndef _cd_ok():\n    x, g, d = _case(9, 3, 5)\n    eps = 1e-5\n    def f(x, g):\n        xh = (x - x.mean(-1, keepdims=True)) / np.sqrt(x.var(-1, keepdims=True) + eps)\n        return float((d * (xh * g)).sum())\n    got = mi_layernorm_backward(x, g, d, eps)\n    worst = 0.0\n    for k, A in enumerate((x, g)):\n        for i in np.ndindex(A.shape):\n            P = [x.copy(), g.copy()]; M = [x.copy(), g.copy()]\n            P[k][i] += 1e-6; M[k][i] -= 1e-6\n            worst = max(worst, abs((f(*P) - f(*M)) / 2e-6 - got[k][i]))\n    return worst < 1e-6\n",
-  "examples": [
-    {
-      "call": "mi_layernorm_backward([[1, 3]], [1, 1], [[1, 0]], 0.0)[0].tolist()",
-      "compare": "isclose",
-      "tol": {
-        "rel": 1e-09,
-        "abs": 1e-12
-      },
-      "note": "Two entries normalise to ±1 whatever their gap, so dx is 0.",
-      "expect": "[[0.0, 0.0]]"
-    },
-    {
-      "call": "mi_layernorm_backward([[1, 3]], [1, 1], [[1, 0]], 0.0)[2].tolist()",
-      "compare": "isclose",
-      "note": "dbeta is the column sum of dout.",
-      "expect": "[1.0, 0.0]"
-    }
-  ],
-  "tests": [
-    {
-      "name": "dx",
-      "call": "mi_layernorm_backward([[1, 2, 4], [0, -1, 3]], [1, 0.5, 2], [[0.5, -1, 2], [1, 0, -0.5]], 1e-5)[0].tolist()",
-      "compare": "isclose",
-      "tol": {
-        "rel": 1e-09,
-        "abs": 1e-12
-      },
-      "why": "dx = [[0.744502, −1.116769, 0.372267], [0.452575, −0.339430, −0.113145]].",
-      "expect": "[[0.7445019852053995, -1.1167688701537002, 0.37226688494830174], [0.4525753831506897, -0.33943000992797245, -0.11314537322271712]]"
-    },
-    {
-      "name": "dgamma",
-      "call": "mi_layernorm_backward([[1, 2, 4], [0, -1, 3]], [1, 0.5, 2], [[0.5, -1, 2], [1, 0, -0.5]], 1e-5)[1].tolist()",
-      "compare": "isclose",
-      "why": "dgamma = (−0.926752, 0.267260, 1.986199).",
-      "expect": "[-0.9267523571397346, 0.26726038286257453, 1.9861985436502185]"
-    },
-    {
-      "name": "dbeta",
-      "call": "mi_layernorm_backward([[1, 2, 4], [0, -1, 3]], [1, 0.5, 2], [[0.5, -1, 2], [1, 0, -0.5]], 1e-5)[2].tolist()",
-      "compare": "isclose",
-      "why": "dbeta = (1.5, −1, 1.5).",
-      "expect": "[1.5, -1.0, 1.5]"
-    },
-    {
-      "name": "Rows of dx sum to 0",
-      "call": "bool(np.allclose(mi_layernorm_backward(*_case(5, 4, 6), 1e-5)[0].sum(axis=1), 0, atol=1e-10))",
-      "compare": "equal",
-      "why": "Adding a constant to a row leaves the output unchanged.",
-      "expect": "True"
-    },
-    {
-      "name": "A constant row",
-      "call": "mi_layernorm_backward([[2, 2, 2]], [1, 1, 1], [[1, -1, 0.5]], 1e-5)[0].tolist()",
-      "compare": "isclose",
-      "why": "The variance is 0, so eps sets the scale: dx is about 316 times dout minus its mean.",
-      "expect": "[[263.5231383473649, -368.9323936863109, 105.40925533894598]]"
-    },
-    {
-      "name": "Central differences",
-      "call": "_cd_ok()",
-      "compare": "equal",
-      "why": "dx and dgamma agree with central differences to 1e-6.",
-      "expect": "np.True_"
-    },
-    {
-      "name": "Shapes",
-      "call": "[list(np.shape(v)) for v in mi_layernorm_backward(*_case(2, 3, 7), 1e-5)]",
-      "compare": "equal",
-      "why": "(3, 7), (7,) and (7,).",
-      "expect": "[[3, 7], [7], [7]]"
-    },
-    {
-      "name": "Another eps",
-      "call": "mi_layernorm_backward([[1, 2, 4], [0, -1, 3]], [1, 0.5, 2], [[0.5, -1, 2], [1, 0, -0.5]], 0.5)[0].tolist()",
-      "compare": "isclose",
-      "why": "A large eps changes every entry.",
-      "expect": "[[0.34874291623145803, -1.0462287486943735, 0.6974858324629161], [0.4363526120737778, -0.2671546604533332, -0.16919795162044451]]"
-    }
-  ],
-  "how": "Submit runs 8 hidden tests: dx, dgamma and dbeta on the stated case, row sums of dx, a constant row, central differences on a random case, the shapes, and a large eps. Numbers are compared to $10^{-9}$ relative.",
-  "notes": [
-    "Two terms come from the mean and the variance depending on every entry of the row.",
-    "Each row of dx sums to 0: a quick check to say aloud."
-  ],
-  "planted": [
-    {
-      "code": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    g = np.asarray(gamma, dtype=float)\n    dy = np.asarray(dout, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    rs = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xh = (x - mu) * rs\n    dxh = dy * g\n    dx = rs * (dxh - dxh.mean(axis=-1, keepdims=True))\n    return dx, (dy * xh).sum(axis=0), dy.sum(axis=0)\n",
-      "slip": "Drops the term in x-hat, the mean of dx-hat times x-hat, which leaves dgamma and dbeta right and dx wrong.",
-      "nearMiss": true
-    },
-    {
-      "code": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    g = np.asarray(gamma, dtype=float)\n    dy = np.asarray(dout, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    rs = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xh = (x - mu) * rs\n    dxh = dy\n    dx = rs * (dxh - dxh.mean(axis=-1, keepdims=True) - xh * (dxh * xh).mean(axis=-1, keepdims=True))\n    return dx, (dy * xh).sum(axis=0), dy.sum(axis=0)\n",
-      "slip": "Forgets to multiply by gamma on the way back."
-    },
-    {
-      "code": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    g = np.asarray(gamma, dtype=float)\n    dy = np.asarray(dout, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    rs = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xh = (x - mu) * rs\n    dxh = dy * g\n    dx = rs * (dxh - dxh.mean(axis=-1, keepdims=True) - xh * (dxh * xh).mean(axis=-1, keepdims=True))\n    return dx, (dy * x).sum(axis=0), dy.sum(axis=0)\n",
-      "slip": "Uses x instead of x-hat for dgamma."
-    }
-  ]
+ "course": "ml-int",
+ "pack": "mi",
+ "skills": [
+  "mi-code"
+ ],
+ "id": "mi-layernorm-backward",
+ "name": "Backward through layer norm",
+ "difficulty": 5,
+ "pace": 1800,
+ "tags": [
+  "backward-pass",
+  "layer-norm"
+ ],
+ "fn": "mi_layernorm_backward",
+ "returns": "a tuple (dx, dgamma, dbeta) of NumPy arrays",
+ "brief": "Layer norm normalises each row of $\\mathbf{x}$ over its last axis and then scales and shifts: $\\hat{\\mathbf{x}} = (\\mathbf{x} - \\mu)/\\sqrt{\\sigma^2 + \\epsilon}$, $\\mathbf{y} = \\boldsymbol{\\gamma} \\odot \\hat{\\mathbf{x}} + \\boldsymbol{\\beta}$, with $\\mu$ and $\\sigma^2$ the row's mean and variance (dividing by $N$).\n\nGiven `dout`, the gradient with respect to $\\mathbf{y}$, write `mi_layernorm_backward(x, gamma, dout, eps)` returning $(d\\mathbf{x}, d\\boldsymbol{\\gamma}, d\\boldsymbol{\\beta})$.",
+ "definition": "With $d\\hat{\\mathbf{x}} = d\\mathbf{y} \\odot \\boldsymbol{\\gamma}$ and bars for means over the row: $d\\mathbf{x} = \\frac{1}{\\sqrt{\\sigma^2 + \\epsilon}}\\big(d\\hat{\\mathbf{x}} - \\overline{d\\hat{\\mathbf{x}}} - \\hat{\\mathbf{x}} \\odot \\overline{d\\hat{\\mathbf{x}} \\odot \\hat{\\mathbf{x}}}\\big)$. $d\\boldsymbol{\\gamma}$ and $d\\boldsymbol{\\beta}$ sum $d\\mathbf{y} \\odot \\hat{\\mathbf{x}}$ and $d\\mathbf{y}$ over the rows.",
+ "constraints": [
+  "Between 1 and 32 rows of length 2 to 32; `eps` is positive.",
+  "Use the variance that divides by $N$.",
+  "NumPy is available.",
+  "Each test has a 5-second limit in the browser.",
+  {
+   "arg": "x",
+   "type": "list",
+   "len": [
+    1,
+    64
+   ],
+   "of": {
+    "type": "list",
+    "len": [
+     1,
+     64
+    ],
+    "of": "number"
+   }
+  },
+  {
+   "arg": "gamma",
+   "type": "list",
+   "len": [
+    2,
+    32
+   ],
+   "of": "number"
+  },
+  {
+   "arg": "dout",
+   "type": "list",
+   "len": [
+    1,
+    64
+   ],
+   "of": {
+    "type": "list",
+    "len": [
+     1,
+     64
+    ],
+    "of": "number"
+   }
+  },
+  {
+   "arg": "eps",
+   "type": "float",
+   "range": [
+    1e-12,
+    1
+   ]
+  }
+ ],
+ "hint": "Compute $\\hat{\\mathbf{x}}$ and $1/\\sqrt{\\sigma^2 + \\epsilon}$ once. Each row of $d\\mathbf{x}$ should sum to 0.",
+ "starter": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    ...\n",
+ "solution": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    g = np.asarray(gamma, dtype=float)\n    dy = np.asarray(dout, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    rs = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xh = (x - mu) * rs\n    dxh = dy * g\n    dx = rs * (dxh - dxh.mean(axis=-1, keepdims=True) - xh * (dxh * xh).mean(axis=-1, keepdims=True))\n    return dx, (dy * xh).sum(axis=0), dy.sum(axis=0)\n",
+ "prelude": "import numpy as np\n\n\ndef _case(seed, B, N):\n    r = np.random.default_rng(seed)\n    return r.normal(size=(B, N)), r.normal(size=N), r.normal(size=(B, N))\n\n\ndef _cd_ok():\n    x, g, d = _case(9, 3, 5)\n    eps = 1e-5\n    def f(x, g):\n        xh = (x - x.mean(-1, keepdims=True)) / np.sqrt(x.var(-1, keepdims=True) + eps)\n        return float((d * (xh * g)).sum())\n    got = mi_layernorm_backward(x, g, d, eps)\n    worst = 0.0\n    for k, A in enumerate((x, g)):\n        for i in np.ndindex(A.shape):\n            P = [x.copy(), g.copy()]; M = [x.copy(), g.copy()]\n            P[k][i] += 1e-6; M[k][i] -= 1e-6\n            worst = max(worst, abs((f(*P) - f(*M)) / 2e-6 - got[k][i]))\n    return worst < 1e-6\n",
+ "examples": [
+  {
+   "call": "mi_layernorm_backward([[1, 3]], [1, 1], [[1, 0]], 1e-5)[0].tolist()",
+   "compare": "isclose",
+   "tol": {
+    "rel": 0,
+    "abs": 0.0001
+   },
+   "note": "Two entries normalise to ±1 whatever their gap, so dx is 0 up to a term of order eps.",
+   "expect": "[[0.0, 0.0]]"
+  },
+  {
+   "call": "mi_layernorm_backward([[1, 3]], [1, 1], [[1, 0]], 1e-5)[2].tolist()",
+   "compare": "isclose",
+   "note": "dbeta is the column sum of dout.",
+   "expect": "[1.0, 0.0]"
+  }
+ ],
+ "tests": [
+  {
+   "name": "dx",
+   "call": "mi_layernorm_backward([[1, 2, 4], [0, -1, 3]], [1, 0.5, 2], [[0.5, -1, 2], [1, 0, -0.5]], 1e-5)[0].tolist()",
+   "compare": "isclose",
+   "tol": {
+    "rel": 1e-09,
+    "abs": 1e-12
+   },
+   "why": "dx = [[0.744502, −1.116769, 0.372267], [0.452575, −0.339430, −0.113145]].",
+   "expect": "[[0.7445019852053995, -1.1167688701537002, 0.37226688494830174], [0.4525753831506897, -0.33943000992797245, -0.11314537322271712]]"
+  },
+  {
+   "name": "dgamma",
+   "call": "mi_layernorm_backward([[1, 2, 4], [0, -1, 3]], [1, 0.5, 2], [[0.5, -1, 2], [1, 0, -0.5]], 1e-5)[1].tolist()",
+   "compare": "isclose",
+   "why": "dgamma = (−0.926752, 0.267260, 1.986199).",
+   "expect": "[-0.9267523571397346, 0.26726038286257453, 1.9861985436502185]"
+  },
+  {
+   "name": "dbeta",
+   "call": "mi_layernorm_backward([[1, 2, 4], [0, -1, 3]], [1, 0.5, 2], [[0.5, -1, 2], [1, 0, -0.5]], 1e-5)[2].tolist()",
+   "compare": "isclose",
+   "why": "dbeta = (1.5, −1, 1.5).",
+   "expect": "[1.5, -1.0, 1.5]"
+  },
+  {
+   "name": "Rows of dx sum to 0",
+   "call": "bool(np.allclose(mi_layernorm_backward(*_case(5, 4, 6), 1e-5)[0].sum(axis=1), 0, atol=1e-10))",
+   "compare": "equal",
+   "why": "Adding a constant to a row leaves the output unchanged.",
+   "expect": "True"
+  },
+  {
+   "name": "A constant row",
+   "call": "mi_layernorm_backward([[2, 2, 2]], [1, 1, 1], [[1, -1, 0.5]], 1e-5)[0].tolist()",
+   "compare": "isclose",
+   "why": "The variance is 0, so eps sets the scale: dx is about 316 times dout minus its mean.",
+   "expect": "[[263.5231383473649, -368.9323936863109, 105.40925533894598]]"
+  },
+  {
+   "name": "Central differences",
+   "call": "_cd_ok()",
+   "compare": "equal",
+   "why": "dx and dgamma agree with central differences to 1e-6.",
+   "expect": "np.True_"
+  },
+  {
+   "name": "Shapes",
+   "call": "[list(np.shape(v)) for v in mi_layernorm_backward(*_case(2, 3, 7), 1e-5)]",
+   "compare": "equal",
+   "why": "(3, 7), (7,) and (7,).",
+   "expect": "[[3, 7], [7], [7]]"
+  },
+  {
+   "name": "Another eps",
+   "call": "mi_layernorm_backward([[1, 2, 4], [0, -1, 3]], [1, 0.5, 2], [[0.5, -1, 2], [1, 0, -0.5]], 0.5)[0].tolist()",
+   "compare": "isclose",
+   "why": "A large eps changes every entry.",
+   "expect": "[[0.34874291623145803, -1.0462287486943735, 0.6974858324629161], [0.4363526120737778, -0.2671546604533332, -0.16919795162044451]]"
+  }
+ ],
+ "how": "Submit runs 8 hidden tests: dx, dgamma and dbeta on the stated case, row sums of dx, a constant row, central differences on a random case, the shapes, and a large eps. Numbers are compared to $10^{-9}$ relative.",
+ "notes": [
+  "Two terms come from the mean and the variance depending on every entry of the row.",
+  "Each row of dx sums to 0: a quick check to say aloud."
+ ],
+ "planted": [
+  {
+   "code": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    g = np.asarray(gamma, dtype=float)\n    dy = np.asarray(dout, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    rs = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xh = (x - mu) * rs\n    dxh = dy * g\n    dx = rs * (dxh - dxh.mean(axis=-1, keepdims=True))\n    return dx, (dy * xh).sum(axis=0), dy.sum(axis=0)\n",
+   "slip": "Drops the term in x-hat, the mean of dx-hat times x-hat, which leaves dgamma and dbeta right and dx wrong.",
+   "nearMiss": true
+  },
+  {
+   "code": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    g = np.asarray(gamma, dtype=float)\n    dy = np.asarray(dout, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    rs = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xh = (x - mu) * rs\n    dxh = dy\n    dx = rs * (dxh - dxh.mean(axis=-1, keepdims=True) - xh * (dxh * xh).mean(axis=-1, keepdims=True))\n    return dx, (dy * xh).sum(axis=0), dy.sum(axis=0)\n",
+   "slip": "Forgets to multiply by gamma on the way back."
+  },
+  {
+   "code": "import numpy as np\n\n\ndef mi_layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    g = np.asarray(gamma, dtype=float)\n    dy = np.asarray(dout, dtype=float)\n    mu = x.mean(axis=-1, keepdims=True)\n    rs = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xh = (x - mu) * rs\n    dxh = dy * g\n    dx = rs * (dxh - dxh.mean(axis=-1, keepdims=True) - xh * (dxh * xh).mean(axis=-1, keepdims=True))\n    return dx, (dy * x).sum(axis=0), dy.sum(axis=0)\n",
+   "slip": "Uses x instead of x-hat for dgamma."
+  }
+ ]
 }
