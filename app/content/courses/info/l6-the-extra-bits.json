@@ -888,7 +888,7 @@
     }
    },
    "explain": {
-    "text": "$D(p \\| u) = 2 - 1.75$ and $D(u \\| p) = 2.25 - 2$, both 0.25 by chance. For the coins the two orders give 0.531 and 0.737."
+    "text": "$D(p \\| u) = 2 - 1.75$ and $D(u \\| p) = 2.25 - 2$, both 0.25 by chance. For the coins the two orders give 0.531 and 0.737. Since $D(p \\| u) = \\log_2 n - H(p) \\ge 0$, equal chances give the most entropy: here $2 - 1.75$."
    }
   },
   {
@@ -1028,9 +1028,34 @@
       "call": "math.isinf(kl_bits([0.25, 0.25, 0.5], [0.5, 0.5, 0.0]))",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "call": "kl_bits([0.5, 0.5, 0.0], [0.5, 0.5, 0.0])",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
      }
     ],
-    "how": "Check runs 7 hidden tests. Values are accepted within 1e-9, and one test expects math.inf."
+    "how": "Check runs 8 hidden tests. Values are accepted within 1e-9, and one test expects math.inf.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef kl_bits(p, q):\n    \"\"\"D(p || q) in bits; math.inf if some q_i = 0 < p_i.\"\"\"\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if qi == 0:\n            return math.inf\n        if pi == 0:\n            continue\n        total += pi * math.log2(pi / qi)\n    return total\n",
+      "test": 8,
+      "symptom": "Tests q before p, so a term with p = q = 0 returns infinity instead of being skipped."
+     },
+     {
+      "source": "import math\n\ndef kl_bits(p, q):\n    \"\"\"D(p || q) in bits; math.inf if some q_i = 0 < p_i.\"\"\"\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if pi == 0:\n            continue\n        if qi == 0:\n            return math.inf\n        total += qi * math.log2(qi / pi)\n    return total\n",
+      "test": 1,
+      "symptom": "Computes D(q || p), the arguments swapped."
+     },
+     {
+      "source": "import math\n\ndef kl_bits(p, q):\n    \"\"\"D(p || q) in bits; math.inf if some q_i = 0 < p_i.\"\"\"\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if pi == 0:\n            continue\n        if qi == 0:\n            continue\n        total += pi * math.log2(pi / qi)\n    return total\n",
+      "test": 7,
+      "symptom": "Skips a zero in q under a positive p instead of returning infinity."
+     }
+    ]
    },
    "hints": [
     {
@@ -1052,7 +1077,8 @@
     "byKey": {
      "error": "Your code stopped with an error. A zero in `q` should return `math.inf`, not divide by zero.",
      "test-6": "Test 6 has $p_3 = 0$. That term is skipped, whatever $q_3$ is.",
-     "test-7": "Test 7 has $q_3 = 0$ under $p_3 = 0.5$. Return `math.inf`."
+     "test-7": "Test 7 has $q_3 = 0$ under $p_3 = 0.5$. Return `math.inf`.",
+     "test-8": "Test 8 has $p_3 = q_3 = 0$. Check `pi == 0` first and skip the term: $0 \\log 0$ counts as 0, so the sum is 0."
     }
    },
    "explain": {

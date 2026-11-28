@@ -72,16 +72,53 @@
       "call": "math.isinf(kl_report([0.5, 0.5], [1.0, 0.0])[\"bits\"])",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "call": "math.isinf(kl_report([0.5, 0.5], [1.0, 0.0])[\"nats\"])",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "kl_report([0.5, 0.5, 0.0], [0.5, 0.5, 0.0])",
+      "expect": "{'bits': 0.0, 'nats': 0.0}",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
      }
     ],
-    "how": "Submit runs 6 hidden tests. Values are accepted within 1e-9; one test expects math.inf."
+    "how": "Submit runs 8 hidden tests. Values are accepted within 1e-9; two tests expect math.inf.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef kl_report(p, q):\n    \"\"\"{\"bits\": D(p || q) in bits, \"nats\": the same in nats}; math.inf for both if q_i = 0 < p_i.\"\"\"\n    nats = 0.0\n    for pi, qi in zip(p, q):\n        if qi == 0:\n            return {\"bits\": math.inf, \"nats\": math.inf}\n        if pi == 0:\n            continue\n        nats += pi * math.log(pi / qi)\n    return {\"bits\": nats / math.log(2), \"nats\": nats}\n",
+      "test": 8,
+      "symptom": "Tests q before p, so a term with p = q = 0 returns infinity instead of being skipped."
+     },
+     {
+      "source": "import math\n\ndef kl_report(p, q):\n    \"\"\"{\"bits\": D(p || q) in bits, \"nats\": the same in nats}; math.inf for both if q_i = 0 < p_i.\"\"\"\n    nats = 0.0\n    for pi, qi in zip(p, q):\n        if pi == 0:\n            continue\n        if qi == 0:\n            return {\"bits\": math.inf, \"nats\": 0.0}\n        nats += pi * math.log(pi / qi)\n    return {\"bits\": nats / math.log(2), \"nats\": nats}\n",
+      "test": 7,
+      "symptom": "Gives infinity in bits but 0 in nats when q_i = 0 < p_i."
+     },
+     {
+      "source": "import math\n\ndef kl_report(p, q):\n    \"\"\"{\"bits\": D(p || q) in bits, \"nats\": the same in nats}; math.inf for both if q_i = 0 < p_i.\"\"\"\n    nats = 0.0\n    for pi, qi in zip(p, q):\n        if pi == 0:\n            continue\n        if qi == 0:\n            return {\"bits\": math.inf, \"nats\": math.inf}\n        nats += pi * math.log(pi / qi)\n    return {\"bits\": nats * math.log(2), \"nats\": nats}\n",
+      "test": 1,
+      "symptom": "Converts nats to bits the wrong way round."
+     },
+     {
+      "source": "import math\n\ndef kl_report(p, q):\n    \"\"\"{\"bits\": D(p || q) in bits, \"nats\": the same in nats}; math.inf for both if q_i = 0 < p_i.\"\"\"\n    nats = 0.0\n    for pi, qi in zip(p, q):\n        if pi == 0:\n            continue\n        if qi == 0:\n            return {\"bits\": math.inf, \"nats\": math.inf}\n        nats += qi * math.log(qi / pi)\n    return {\"bits\": nats / math.log(2), \"nats\": nats}\n",
+      "test": 1,
+      "symptom": "Weights by q instead of p, which is D(q || p)."
+     }
+    ]
    },
    "feedback": {
     "correct": "Both units agree with every test.",
     "generic": "Some tests failed. Read the first failing row.",
     "byKey": {
      "error": "Your code stopped with an error. Return a dict, and return infinity rather than divide by zero.",
-     "test-3": "Test 3 swaps $p$ and $q$. The weights come from the first argument."
+     "test-3": "Test 3 swaps $p$ and $q$. The weights come from the first argument.",
+     "test-7": "Test 7 wants infinity in nats as well as in bits when $q_i = 0 < p_i$.",
+     "test-8": "Test 8 has $p_3 = q_3 = 0$. Skip a term with $p_i = 0$ before you test $q_i$."
     }
    },
    "explain": {
@@ -138,9 +175,26 @@
       "call": "best_smoothing([5, 0, 3, 2], [4, 1, 3, 2], [0, 0.1])",
       "expect": "0.1",
       "compare": "equal"
+     },
+     {
+      "call": "best_smoothing([5, 5], [3, 3], [2, 0.5, 1])",
+      "expect": "0.5",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 6 hidden tests. Each result must equal the expected alpha exactly."
+    "how": "Submit runs 7 hidden tests. Each result must equal the expected alpha exactly.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef held_out_loss(train_counts, test_counts, alpha):\n    n, k, m = sum(train_counts), len(train_counts), sum(test_counts)\n    loss = 0.0\n    for tr, te in zip(train_counts, test_counts):\n        if te == 0:\n            continue\n        q = (tr + alpha) / (n + k * alpha)\n        if q == 0:\n            return math.inf\n        loss -= te / m * math.log(q)\n    return loss\n\ndef best_smoothing(train_counts, test_counts, alphas):\n    \"\"\"The alpha whose add-alpha model of train_counts has the least\n    cross-entropy on test_counts; the smallest such alpha on a tie.\"\"\"\n    return min(alphas, key=lambda a: (held_out_loss(train_counts, test_counts, a), -a))\n",
+      "test": 7,
+      "symptom": "On a tie it returns the largest alpha, not the smallest."
+     },
+     {
+      "source": "import math\n\ndef held_out_loss(train_counts, test_counts, alpha):\n    n, k, m = sum(train_counts), len(train_counts), sum(test_counts)\n    loss = 0.0\n    for tr, te in zip(train_counts, test_counts):\n        q = (tr + alpha) / (n + k * alpha)\n        if q == 0:\n            return math.inf\n        loss -= te / m * math.log(q)\n    return loss\n\ndef best_smoothing(train_counts, test_counts, alphas):\n    \"\"\"The alpha whose add-alpha model of train_counts has the least\n    cross-entropy on test_counts; the smallest such alpha on a tie.\"\"\"\n    return min(alphas, key=lambda a: (held_out_loss(train_counts, test_counts, a), a))\n",
+      "test": 2,
+      "symptom": "A test bucket with no count still sinks alpha = 0 when its chance is 0."
+     }
+    ]
    },
    "feedback": {
     "correct": "Your search picks the smoothing that predicts the test month best.",
@@ -148,7 +202,8 @@
     "byKey": {
      "error": "Your code stopped with an error. A chance of 0 inside a log must give an infinite loss, not a crash.",
      "test-2": "Test 2 has no unseen bucket, and no smoothing wins there. Make sure $\\alpha = 0$ is not ruled out when its loss is finite.",
-     "test-6": "Test 6 offers 0 and 0.1. With an unseen bucket, 0 gives an infinite loss, so 0.1 wins."
+     "test-6": "Test 6 offers 0 and 0.1. With an unseen bucket, 0 gives an infinite loss, so 0.1 wins.",
+     "test-7": "Test 7 is a tie: every $\\alpha$ gives $q = 0.5$ and the same loss. Return the smallest, 0.5, not the first or the largest."
     }
    },
    "explain": {
@@ -161,7 +216,7 @@
    "skills": [
     "if-likelihood"
    ],
-   "prose": "The coin of level 2 found the same $\\theta$ two ways. Here is the general argument.",
+   "prose": "The coin of l8 found the same $\\theta$ two ways. Here is the general argument.",
    "question": "Put the steps from \"maximise the likelihood\" to \"minimise the cross-entropy\" in order. Leave out the two that do not belong.",
    "widget": {
     "kind": "order",

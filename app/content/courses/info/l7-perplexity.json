@@ -538,7 +538,7 @@
      {
       "id": "fine-same-data",
       "text": "Nothing, since both use the same names",
-      "why": "Same data, different units. Compare per letter, or on the same test set per name."
+      "why": "Same data, different units. Convert one into the other's unit before comparing."
      }
     ]
    },
@@ -567,7 +567,7 @@
     }
    },
    "explain": {
-    "text": "A word is several letters, so a per-word perplexity is naturally larger. Compare both as bits per letter on the same test names, or not at all."
+    "text": "A word is several letters, so a per-word perplexity is naturally larger. To compare, convert: 150 per name is $\\log_2 150 = 7.23$ bits a name, and over 7.12 symbols a name that is 1.02 bits, perplexity 2.0 a symbol. Per symbol the word model is the better one."
    }
   },
   {
@@ -779,7 +779,24 @@
       "compare": "raises"
      }
     ],
-    "how": "Check runs 7 hidden tests. Values are accepted within 1e-9; one test expects a ValueError."
+    "how": "Check runs 7 hidden tests. Values are accepted within 1e-9; one test expects a ValueError.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef perplexity(avg_loss, unit):\n    \"\"\"2**loss for \"bits\", e**loss for \"nats\"; ValueError for any other unit.\"\"\"\n    if unit == \"bits\":\n        return math.e ** avg_loss\n    if unit == \"nats\":\n        return math.exp(avg_loss)\n    raise ValueError(\"unit must be bits or nats\")\n",
+      "test": 1,
+      "symptom": "Treats bits as nats."
+     },
+     {
+      "source": "import math\n\ndef perplexity(avg_loss, unit):\n    \"\"\"2**loss for \"bits\", e**loss for \"nats\"; ValueError for any other unit.\"\"\"\n    if unit == \"bits\":\n        return 2 ** avg_loss\n    if unit == \"nats\":\n        return math.exp(avg_loss)\n    return 2 ** avg_loss\n",
+      "test": 7,
+      "symptom": "An unknown unit is read as bits instead of raising ValueError."
+     },
+     {
+      "source": "import math\n\ndef perplexity(avg_loss, unit):\n    \"\"\"2**loss for \"bits\", e**loss for \"nats\"; ValueError for any other unit.\"\"\"\n    if unit == \"bits\":\n        return 2 ** avg_loss\n    if unit == \"nats\":\n        return 2 ** avg_loss\n    raise ValueError(\"unit must be bits or nats\")\n",
+      "test": 2,
+      "symptom": "Treats nats as bits."
+     }
+    ]
    },
    "hints": [
     {
@@ -892,7 +909,7 @@
     }
    },
    "explain": {
-    "text": "$\\ln 11.6 \\approx 2.451$ and $\\ln 8.7 \\approx 2.163$. A fall of 0.29 nats a letter is as if each letter had a third fewer choices: $11.6 / 8.7 \\approx 1.33$.",
+    "text": "$\\ln 11.6 \\approx 2.451$ and $\\ln 8.7 \\approx 2.163$. A fall of 0.29 nats a letter is as if each letter had a quarter fewer choices: $8.7 / 11.6 = 0.75$.",
     "canvas": {
      "points": {
       "p1": {

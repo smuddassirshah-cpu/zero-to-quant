@@ -139,7 +139,24 @@
       }
      }
     ],
-    "how": "Submit runs 7 hidden tests. Each value is accepted within 1e-9."
+    "how": "Submit runs 7 hidden tests. Each value is accepted within 1e-9.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef average_code_length(probs, codes):\n    \"\"\"sum of p times the length of its word.\"\"\"\n    return sum(p for p, w in zip(probs, codes))\n\ndef code_gap(probs, codes):\n    \"\"\"Average length minus the entropy, in bits.\"\"\"\n    h = -sum(p * math.log2(p) for p in probs if p > 0)\n    return average_code_length(probs, codes) - h\n",
+      "test": 1,
+      "symptom": "Sums the chances, so every average comes out as 1."
+     },
+     {
+      "source": "import math\n\ndef average_code_length(probs, codes):\n    \"\"\"sum of p times the length of its word.\"\"\"\n    return sum(p * len(w) for p, w in zip(probs, codes))\n\ndef code_gap(probs, codes):\n    \"\"\"Average length minus the entropy, in bits.\"\"\"\n    h = -sum(p * math.log2(p) for p in probs if p > 0)\n    return average_code_length(probs, codes) + h\n",
+      "test": 2,
+      "symptom": "The gap adds the entropy instead of taking it away."
+     },
+     {
+      "source": "import math\n\ndef average_code_length(probs, codes):\n    \"\"\"sum of p times the length of its word.\"\"\"\n    return sum(p * len(w) for p, w in zip(probs, codes))\n\ndef code_gap(probs, codes):\n    \"\"\"Average length minus the entropy, in bits.\"\"\"\n    h = -sum(p * math.log(p) for p in probs if p > 0)\n    return average_code_length(probs, codes) - h\n",
+      "test": 2,
+      "symptom": "The entropy is in nats while the lengths are in bits."
+     }
+    ]
    },
    "feedback": {
     "correct": "Both functions agree with every test.",
@@ -392,7 +409,24 @@
      }
     ],
     "how": "Submit runs 11 hidden tests on five distributions: one with ties, one of 8 symbols, one out of order, two symbols and a single symbol. Each checks the prefix property, the count of words, Kraft's budget, or Huffman's average to within 1e-9.",
-    "postlude": "def _huff_avg(P):\n    q = sorted(P)\n    total = 0.0\n    while len(q) > 1:\n        a, b = q[0], q[1]\n        q = sorted(q[2:] + [a + b])\n        total += a + b\n    return total\n\ndef _prefix_ok(C):\n    return all(not (i != j and b.startswith(a)) for i, a in enumerate(C) for j, b in enumerate(C))\n\ndef _avg_ok(P, C):\n    return abs(sum(p * len(w) for p, w in zip(P, C)) - _huff_avg(P)) < 1e-9\n\ndef _kraft_ok(C):\n    return sum(2 ** -len(w) for w in C) <= 1 + 1e-12\n\ndef _bits_ok(C):\n    return len(C) > 0 and all(len(w) > 0 and set(w) <= {\"0\", \"1\"} for w in C)\n"
+    "postlude": "def _huff_avg(P):\n    q = sorted(P)\n    total = 0.0\n    while len(q) > 1:\n        a, b = q[0], q[1]\n        q = sorted(q[2:] + [a + b])\n        total += a + b\n    return total\n\ndef _prefix_ok(C):\n    return all(not (i != j and b.startswith(a)) for i, a in enumerate(C) for j, b in enumerate(C))\n\ndef _avg_ok(P, C):\n    return abs(sum(p * len(w) for p, w in zip(P, C)) - _huff_avg(P)) < 1e-9\n\ndef _kraft_ok(C):\n    return sum(2 ** -len(w) for w in C) <= 1 + 1e-12\n\ndef _bits_ok(C):\n    return len(C) > 0 and all(len(w) > 0 and set(w) <= {\"0\", \"1\"} for w in C)\n",
+    "mutants": [
+     {
+      "source": "import heapq\n\ndef huffman_code(probs):\n    \"\"\"One bit string per symbol, in the order of probs: a Huffman code.\"\"\"\n    if len(probs) == 1:\n        return [\"0\"]\n    codes = [\"\"] * len(probs)\n    heap = [(p, i, [i]) for i, p in enumerate(probs)]\n    heapq.heapify(heap)\n    count = len(probs)\n    while len(heap) > 1:\n        p0, _, s0 = heapq.heappop(heap)\n        p1, _, s1 = heapq.heappop(heap)\n        for i in s0:\n            codes[i] = \"0\" + codes[i]\n        for i in s1:\n            codes[i] = \"0\" + codes[i]\n        heapq.heappush(heap, (p0 + p1, count, s0 + s1))\n        count += 1\n    return codes\n",
+      "test": 1,
+      "symptom": "Both halves of a merge get a 0, so words repeat or start one another."
+     },
+     {
+      "source": "import heapq\n\ndef huffman_code(probs):\n    \"\"\"One bit string per symbol, in the order of probs: a Huffman code.\"\"\"\n    if len(probs) == 1:\n        return [\"\"]\n    codes = [\"\"] * len(probs)\n    heap = [(p, i, [i]) for i, p in enumerate(probs)]\n    heapq.heapify(heap)\n    count = len(probs)\n    while len(heap) > 1:\n        p0, _, s0 = heapq.heappop(heap)\n        p1, _, s1 = heapq.heappop(heap)\n        for i in s0:\n            codes[i] = \"0\" + codes[i]\n        for i in s1:\n            codes[i] = \"1\" + codes[i]\n        heapq.heappush(heap, (p0 + p1, count, s0 + s1))\n        count += 1\n    return codes\n",
+      "test": 8,
+      "symptom": "A single symbol gets an empty word instead of one bit."
+     },
+     {
+      "source": "import heapq\n\ndef huffman_code(probs):\n    \"\"\"One bit string per symbol, in the order of probs: a Huffman code.\"\"\"\n    if len(probs) == 1:\n        return [\"0\"]\n    codes = [\"\"] * len(probs)\n    heap = [(p, i, [i]) for i, p in enumerate(probs)]\n    heapq.heapify(heap)\n    count = len(probs)\n    while len(heap) > 1:\n        p0, _, s0 = heapq.heappop(heap)\n        p1, _, s1 = heapq.heappop(heap)\n        for i in s0:\n            codes[i] = \"0\" + codes[i]\n        for i in s1:\n            codes[i] = \"1\" + codes[i]\n        heapq.heappush(heap, (p0, count, s0 + s1))\n        count += 1\n    return codes\n",
+      "test": 3,
+      "symptom": "A merged node keeps only one part's weight, so the tree is not optimal."
+     }
+    ]
    },
    "feedback": {
     "correct": "Your words are a prefix code with Huffman's average length.",
@@ -439,7 +473,7 @@
      {
       "id": "lossy",
       "text": "True, because 0.8 is close enough to 1 bit",
-      "why": "Close is not enough. Below 1 bit a toss, two runs must share a word."
+      "why": "Close is not enough. No decodable code averages below the entropy, 1 bit a toss; at 0.8 the Kraft budget would be overspent."
      }
     ]
    },
@@ -448,7 +482,7 @@
     "generic": "Not quite. What is the entropy of a fair toss?"
    },
    "explain": {
-    "text": "The entropy of a fair toss is 1 bit, and no decodable code averages below the entropy. At 0.8 bits a toss, there are fewer words than runs, so two runs would share a word."
+    "text": "The entropy of a fair toss is 1 bit, and no decodable code averages below the entropy. At 0.8 bits a toss the Kraft budget would be overspent, so no decodable code can average that."
    }
   },
   {

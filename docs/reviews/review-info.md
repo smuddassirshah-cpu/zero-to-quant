@@ -42,3 +42,40 @@ Counts: 4 errors, 8 warnings, 13 notes.
 ## Checked and sound
 
 KL is never called a distance (l6 says it is not one); the Jensen proofs in l6, homework-2 items[4] and l10 have their $p_i > 0$ hypothesis and the equality case; homework-3 items[0] keeps "only on average"; every Huffman tie claim, Kraft sum, prefix answer and merged-weight total recomputes; all mutual information, bias and corrected figures in l9 to l12, review-3, homework-3 and problems-3 recompute; nats and bits conversions and perplexities that `makemore` and `gpt` reuse (2.4546 nats, 3.5412 bits, 11.64; 11.6 to 8.7) agree with their briefs.
+
+## Fix pass
+
+Level 1
+- l4 screens[7] error: fixed. Now "Averaged over the text, that cost is least when $q$ matches the text's own shares, and then it equals their entropy." No cross-entropy named.
+- l4 objectives, screens[3] warning: fixed. Screens[3] explain now says 4.0723 is the floor only for codes that treat each symbol on its own.
+- l2 screens[5] / l6 screens[7] Jensen warning: fixed in l6 screens[7] explain: $D(p \| u) = \log_2 n - H(p) \ge 0$, so equal chances give the most entropy. The l2 promise ("level 2 proves it") stays and is now kept.
+- l3 screens[3] and [5] note: fixed ("Lesson 2 found ...", "The last lesson gave ...").
+- l4 screens[6] note: fixed (header, checksum and a note of the run).
+- l1 screens[1] note: fixed ($16/6 \approx 2.67$ on average).
+- l1 screens[7] option 4 note: fixed; its why and byKey line now speak of the model, not a code.
+- homework-1 items[6] note: fixed in the explain and the "close" why (Kraft budget would be overspent).
+
+Level 2
+- l7 screens[9] error: fixed. $8.7 / 11.6 = 0.75$ recomputed, a quarter fewer.
+- l8 screens[5] warning: fixed with the one-observation sentence ($-\ln q_\theta(y)$ nats, one-hot at $y$). The `backprop` course.json L4 `why` wording is outside this pass (course.json is not touched): deferred, for the inbox.
+- l7 screens[5] warning: fixed. Explain converts 150 per name: $\log_2 150 = 7.23$ bits a name; over 7.12 symbols (228,146 / 32,033) that is 1.02 bits a symbol, perplexity 2.0 (1.0153 and 2.021 recomputed; with 7.1222 symbols it is 1.015, the same to two places). Option 3 why now matches.
+- l6 screens[9] warning: fixed with test 8 (p = q = 0 expecting 0.0) and a test-8 byKey line.
+- l5 screens[7] and summary.ideas[1] note: fixed ("The next lesson proves it").
+- l5 screens[6] note: fixed (0.69 bits; $0.7 \times 0.415 + 0.2 \times 2 = 0.69$ recomputed).
+- homework-2 items[1] note: fixed with test 7 (tie, expects 0.5) and byKey.
+- homework-2 items[2] note: fixed ("The coin of l8").
+- problems-2 items[0].parts[2] note: fixed (extra bits a day).
+
+Level 3
+- l11 canvas totals error: fixed, 150 on screens 1, 2 and 7 and 350 on screen 9 (45+55+50, 75+75, 75+100+100+75, 175+175 recomputed).
+- l12 canvas totals error: fixed, 4 on screen 0 and 250 on screen 8. A table-total check (rows, columns, grand total) is added to `docs/reports/info-L1-numbers.py`, `-L2-` and `-L3-`, run over the level's lessons, review, homework and problems; none of the L1 and L2 files has a count table with a wrong total.
+- l9 screens[3] and [6] warning: fixed, 0.1 bits (the hit rate minus 0.5) in the wrong value, the prose and the option.
+- l11 screens[9] explain and summary warning: fixed ("can only lose information, never add it"; "can lose information").
+- homework-3 items[1] warning: fixed, but by a different test than the one proposed: test 7, `null_mi_quantile(2, 2, 2, 200, 0.999, 1)` = 1.0 exactly (a sample of two days and two states carries 0 or 1 bit, and the top of 200 runs is 1 with near certainty). It is exact whatever the draw order, so no seed sweep is needed. The nats version returns 0.693 and fails it.
+- l10 screens[2] note: fixed ("at least 0").
+- l12 screens[10] note: fixed (no mention of the testing course).
+- l11 screens[6] note: fixed ("the log of one plus the count").
+
+Planted wrong solutions that passed: the four are the nats null quantile (homework-3 items[1]), the zero-in-q-first check in l6 `kl_bits`, the largest-alpha-on-tie in homework-2 items[1], and a fourth found by sweep: homework-2 items[0] `kl_report` (q-first on p = q = 0, and 0 nats for the infinite case, both passed 6 tests; tests 7 and 8 added). Each was run and now fails. The l11 `rank_features` nats and n-1 variants still pass: they rank identically, so they are not wrong answers to that task.
+
+Mutants (ENGINE-BACKLOG 1263): every Python code widget in L1 to L3 (20) carries 2 to 4 `mutants`, 56 in all, each checked to first fail its named test by `grade-all.mjs --code`. The validator accepts the field.

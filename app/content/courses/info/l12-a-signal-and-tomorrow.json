@@ -40,7 +40,7 @@
        "Total",
        "2",
        "2",
-       "1"
+       "4"
       ]
      ]
     },
@@ -2815,7 +2815,7 @@
        "Total",
        "130",
        "120",
-       "1"
+       "250"
       ]
      ]
     },
@@ -2950,7 +2950,24 @@
       "setup": "import random; r = random.Random(11); s = [r.randrange(3) for _ in range(250)]; y = [r.randrange(2) for _ in range(250)]"
      }
     ],
-    "how": "Check runs 7 hidden tests: planted samples (exact to 1e-9), a constant signal, and a seeded useless sample of 250 days whose corrected estimate must lie within 0.01 bits of 0."
+    "how": "Check runs 7 hidden tests: planted samples (exact to 1e-9), a constant signal, and a seeded useless sample of 250 days whose corrected estimate must lie within 0.01 bits of 0.",
+    "mutants": [
+     {
+      "source": "import math\nfrom collections import Counter\n\ndef mi_estimate(signal, signs, corrected):\n    \"\"\"Plug-in mutual information, in bits, of two equal-length lists of states.\n    If corrected, subtract (k_x - 1)(k_y - 1) / (2 n ln 2), counting the states seen.\"\"\"\n    n = len(signal)\n    cx, cy, cxy = Counter(signal), Counter(signs), Counter(zip(signal, signs))\n    est = sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n    if corrected:\n        est += (len(cx) - 1) * (len(cy) - 1) / (2 * n * math.log(2))\n    return est\n",
+      "test": 2,
+      "symptom": "The correction is added instead of subtracted."
+     },
+     {
+      "source": "import math\nfrom collections import Counter\n\ndef mi_estimate(signal, signs, corrected):\n    \"\"\"Plug-in mutual information, in bits, of two equal-length lists of states.\n    If corrected, subtract (k_x - 1)(k_y - 1) / (2 n ln 2), counting the states seen.\"\"\"\n    n = len(signal)\n    cx, cy, cxy = Counter(signal), Counter(signs), Counter(zip(signal, signs))\n    est = sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n    if corrected:\n        est -= len(cx) * len(cy) / (2 * n * math.log(2))\n    return est\n",
+      "test": 2,
+      "symptom": "Counts states instead of states minus one."
+     },
+     {
+      "source": "import math\nfrom collections import Counter\n\ndef mi_estimate(signal, signs, corrected):\n    \"\"\"Plug-in mutual information, in bits, of two equal-length lists of states.\n    If corrected, subtract (k_x - 1)(k_y - 1) / (2 n ln 2), counting the states seen.\"\"\"\n    n = len(signal)\n    cx, cy, cxy = Counter(signal), Counter(signs), Counter(zip(signal, signs))\n    est = sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n    if corrected:\n        est -= (len(cx) - 1) * (len(cy) - 1) / (2 * n)\n    return est\n",
+      "test": 2,
+      "symptom": "The bias is left in nats while the estimate is in bits."
+     }
+    ]
    },
    "hints": [
     {
@@ -2982,7 +2999,7 @@
   {
    "type": "transfer",
    "difficulty": 3,
-   "prose": "A backtest scores a four-state signal against the next day's sign on one year, 250 days. The plug-in estimate is 0.011 bits. The testing course warned that among many signals tried, one will look good by chance.",
+   "prose": "A backtest scores a four-state signal against the next day's sign on one year, 250 days. The plug-in estimate is 0.011 bits. Among many signals tried, one will look good by chance.",
    "question": "What bias should be subtracted? Give a decimal to 4 places.",
    "widget": {
     "kind": "numeric",
