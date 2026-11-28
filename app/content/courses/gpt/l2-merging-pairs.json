@@ -1,0 +1,1475 @@
+{
+  "id": "l2-merging-pairs",
+  "course": "gpt",
+  "title": "Merging pairs",
+  "minutes": 15,
+  "objectives": [
+    "Write the byte-pair encoding training loop and run its first merges by hand."
+  ],
+  "skills": [
+    "gpt-token"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One new symbol",
+      "prose": "Here are the 23 bytes of `bid bids bidder bidding`. We may invent one new symbol for a pair of neighbours. Written wherever the pair stands, it saves one cell each time.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "b",
+            "i",
+            "d",
+            "␣",
+            "b",
+            "i",
+            "d",
+            "s",
+            "␣",
+            "b",
+            "i",
+            "d",
+            "d",
+            "e",
+            "r",
+            "␣",
+            "b",
+            "i",
+            "d",
+            "d",
+            "i",
+            "n",
+            "g"
+          ],
+          "wrap": 12
+        },
+        "state": {
+          "caption": "bid bids bidder bidding: 23 bytes, one cell each; the box is a space."
+        }
+      },
+      "question": "Which pairs would shorten the row the most? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "bi",
+            "text": "`b` then `i`",
+            "correct": true
+          },
+          {
+            "id": "id",
+            "text": "`i` then `d`",
+            "correct": true
+          },
+          {
+            "id": "sp-b",
+            "text": "space then `b`",
+            "why": "It stands in 3 places; `bid` at the start has no space before it."
+          },
+          {
+            "id": "dd",
+            "text": "`d` then `d`",
+            "why": "Only `bidder` and `bidding` hold it: 2 places."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count how often each pair stands side by side."
+        },
+        {
+          "rung": "point",
+          "text": "Every word starts with `bid`.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`b i` and `i d` each appear 4 times, once in each word; the others appear fewer times."
+        }
+      ],
+      "feedback": {
+        "correct": "`bi` and `id` each stand in 4 places, so either saves 4 cells.",
+        "generic": "Not quite. Count the places where each pair stands side by side.",
+        "byKey": {
+          "sp-b": "A space comes before only three of the four `bid`s.",
+          "dd": "`dd` appears in two words, not four."
+        }
+      },
+      "explain": {
+        "text": "Both `bi` and `id` appear once in each of the four words, a tie at 4. Which one we take needs a rule; we come to it shortly.",
+        "canvas": {
+          "highlight": {
+            "ranges": [
+              [
+                0,
+                1
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                9,
+                10
+              ],
+              [
+                16,
+                17
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Merge after merge",
+      "prose": "Byte-pair encoding repeats that move: replace the most frequent pair with a new id, then count again. New ids start at 256, after the 256 bytes. Step through the merges.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "b",
+            "i",
+            "d",
+            "␣",
+            "b",
+            "i",
+            "d",
+            "s",
+            "␣",
+            "b",
+            "i",
+            "d",
+            "d",
+            "e",
+            "r",
+            "␣",
+            "b",
+            "i",
+            "d",
+            "d",
+            "i",
+            "n",
+            "g"
+          ],
+          "steps": [
+            {
+              "cells": [
+                "b",
+                "i",
+                "d",
+                "␣",
+                "b",
+                "i",
+                "d",
+                "s",
+                "␣",
+                "b",
+                "i",
+                "d",
+                "d",
+                "e",
+                "r",
+                "␣",
+                "b",
+                "i",
+                "d",
+                "d",
+                "i",
+                "n",
+                "g"
+              ],
+              "caption": "Start: 23 bytes."
+            },
+            {
+              "cells": [
+                "bi",
+                "d",
+                "␣",
+                "bi",
+                "d",
+                "s",
+                "␣",
+                "bi",
+                "d",
+                "d",
+                "e",
+                "r",
+                "␣",
+                "bi",
+                "d",
+                "d",
+                "i",
+                "n",
+                "g"
+              ],
+              "caption": "Merge 1: `bi` replaces a pair in 4 places, id 256. 19 tokens."
+            },
+            {
+              "cells": [
+                "bid",
+                "␣",
+                "bid",
+                "s",
+                "␣",
+                "bid",
+                "d",
+                "e",
+                "r",
+                "␣",
+                "bid",
+                "d",
+                "i",
+                "n",
+                "g"
+              ],
+              "caption": "Merge 2: `bid` replaces a pair in 4 places, id 257. 15 tokens."
+            },
+            {
+              "cells": [
+                "bid",
+                "␣bid",
+                "s",
+                "␣bid",
+                "d",
+                "e",
+                "r",
+                "␣bid",
+                "d",
+                "i",
+                "n",
+                "g"
+              ],
+              "caption": "Merge 3: `␣bid` replaces a pair in 3 places, id 258. 12 tokens."
+            },
+            {
+              "cells": [
+                "bid",
+                "␣bid",
+                "s",
+                "␣bidd",
+                "e",
+                "r",
+                "␣bidd",
+                "i",
+                "n",
+                "g"
+              ],
+              "caption": "Merge 4: `␣bidd` replaces a pair in 2 places, id 259. 10 tokens."
+            }
+          ],
+          "wrap": 12
+        },
+        "state": {
+          "step": 0
+        },
+        "controls": [
+          {
+            "bind": "step",
+            "min": 0,
+            "max": 4,
+            "step": 1,
+            "label": "Merge",
+            "start": 0
+          }
+        ]
+      },
+      "question": "How many tokens are left once no pair appears twice?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "one-early",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "bytes",
+            "value": 23,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Tokens left"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide to the last merge and count the cells."
+        },
+        {
+          "rung": "point",
+          "text": "After merge 4 every pair of neighbours appears once.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Ten tokens: four merges took 23 bytes down to 10.",
+        "generic": "Not quite. Slide to the end and count the cells.",
+        "byKey": {
+          "one-early": "That is the count after merge 3. ` bid` followed by `d` still appears twice there.",
+          "bytes": "That is the count before any merge."
+        }
+      },
+      "explain": {
+        "text": "The merges are `bi`, `bid`, ` bid` and ` bidd`, ids 256 to 259. Then every pair appears once, so we stop with 10 tokens."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Count again after a merge",
+      "prose": "After merge 1, every `b i` is the new token `bi`, id 256. The counts must be taken on this new row, not on the bytes. That loop of count, merge, count is **byte-pair encoding** (BPE).",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "bi",
+            "d",
+            "␣",
+            "bi",
+            "d",
+            "s",
+            "␣",
+            "bi",
+            "d",
+            "d",
+            "e",
+            "r",
+            "␣",
+            "bi",
+            "d",
+            "d",
+            "i",
+            "n",
+            "g"
+          ],
+          "wrap": 10
+        },
+        "state": {
+          "caption": "After merge 1: 19 tokens."
+        }
+      },
+      "question": "Count each pair in the new row.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Pair",
+          "Count"
+        ],
+        "rows": [
+          [
+            "`bi` then `d`",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "space then `bi`",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "with-start",
+                  "value": 4,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "`i` then `d`",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "old-bytes",
+                  "value": 4,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read pairs off the new row of 19 cells."
+        },
+        {
+          "rung": "point",
+          "text": "Every `i` that was followed by `d` is now inside `bi`.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`bi d` 4 times, space `bi` 3 times, `i d` no longer anywhere."
+        }
+      ],
+      "feedback": {
+        "correct": "4, 3 and 0. The next merge is `bi` with `d`, the token `bid`.",
+        "generic": "Not quite. Count on the row as it is after the merge.",
+        "byKey": {
+          "old-bytes": "You counted on the original bytes. After the merge each of those `i`s sits inside `bi`, so `i d` is gone.",
+          "with-start": "The first `bi` starts the text, so no space comes before it: 3, not 4."
+        }
+      },
+      "explain": {
+        "text": "Counts always come from the current row. `i d` was 4 on the bytes, but merge 1 swallowed every one of those `i`s. Next `bi d` wins with 4."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Overlapping pairs",
+      "prose": "Our rule counts every position where a pair starts, so pairs may overlap. A position size in an order log reads `1000`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        "state": {
+          "caption": "The bytes of 1000."
+        }
+      },
+      "question": "Under our rule, how many times does the pair `0` then `0` occur in `1000`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "no-overlap",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zeros",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Count of the pair"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "List the starting positions of every pair of neighbours."
+        },
+        {
+          "rung": "point",
+          "text": "Positions 1 to 2 and 2 to 3 both hold `0 0`.",
+          "highlight": [
+            "c1",
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two positions start the pair, so the count is 2."
+        }
+      ],
+      "feedback": {
+        "correct": "Two: positions 1 and 2 both start the pair `0 0`.",
+        "generic": "Not quite. Count positions, letting pairs share a byte.",
+        "byKey": {
+          "no-overlap": "You counted without overlaps, as if each byte could join only one pair. Our counting rule lets the middle 0 belong to both.",
+          "zeros": "That is the number of zeros. Three zeros make two neighbouring pairs."
+        }
+      },
+      "explain": {
+        "text": "The count is 2, yet the merge itself runs left to right and replaces only one, giving `1`, `00`, `0`. Counting and merging are different steps; state the counting rule, because another rule gives another tokeniser.",
+        "canvas": {
+          "highlight": {
+            "ranges": [
+              {
+                "range": [
+                  1,
+                  2
+                ],
+                "label": "pair 1"
+              },
+              {
+                "range": [
+                  2,
+                  3
+                ],
+                "label": "pair 2"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Breaking a tie",
+      "prose": "In `papa mama`, `pa` and `ma` each appear twice. Our rule: on a tie, merge the pair that occurs first in the sequence.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "p",
+            "a",
+            "p",
+            "a",
+            "␣",
+            "m",
+            "a",
+            "m",
+            "a"
+          ]
+        },
+        "state": {
+          "caption": "papa mama"
+        }
+      },
+      "question": "Which pair does our rule merge first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pa",
+            "text": "`pa`",
+            "correct": true
+          },
+          {
+            "id": "ma",
+            "text": "`ma`",
+            "why": "You broke the tie alphabetically. Our rule takes the pair that occurs first in the text."
+          },
+          {
+            "id": "ap",
+            "text": "`ap`",
+            "why": "`ap` occurs once, between the two `pa`s. It is not in the tie."
+          },
+          {
+            "id": "both",
+            "text": "Both at once",
+            "why": "One merge makes one new id. The other pair can win a later round."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both have count 2."
+        },
+        {
+          "rung": "point",
+          "text": "Which of them appears first, reading from the left?",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pa` starts at position 0; `ma` first starts at position 5."
+        }
+      ],
+      "feedback": {
+        "correct": "`pa`: it appears first in the sequence.",
+        "generic": "Not quite. Apply the tie rule: the pair that occurs first.",
+        "byKey": {
+          "ma": "Alphabetical order is another valid rule, and it gives another tokeniser. Ours takes the earliest pair."
+        }
+      },
+      "explain": {
+        "text": "`pa` occurs first, so it becomes id 256. A different tie rule gives a different, equally valid tokeniser: the merge list must record which pairs were chosen."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Merges on Shakespeare",
+      "prose": "Train with the same rule on the first 20,000 characters of the Shakespeare slice. The first merges join a letter and the space after it: word endings.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Merge",
+            "Token",
+            "Merge",
+            "Token"
+          ],
+          "rows": [
+            [
+              "1",
+              "e␣",
+              "5",
+              "ou"
+            ],
+            [
+              "2",
+              "th",
+              "6",
+              ",␣"
+            ],
+            [
+              "3",
+              "t␣",
+              "7",
+              "d␣"
+            ],
+            [
+              "4",
+              "s␣",
+              "8",
+              "r␣"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "The first eight merges; the box is a space."
+        }
+      },
+      "question": "After 50 merges the 20,000 bytes are 13,665 tokens. How many bytes per token is that? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.4636,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 0.6833,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Bytes per token"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Bytes per token is bytes divided by tokens."
+        },
+        {
+          "rung": "point",
+          "text": "Divide 20,000 by 13,665.",
+          "highlight": [
+            "r0c1",
+            "r0c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$20000 / 13665 \\approx 1.4636$."
+        }
+      ],
+      "feedback": {
+        "correct": "$20000 / 13665 \\approx 1.4636$ bytes per token.",
+        "generic": "Not quite. Divide the bytes by the tokens.",
+        "byKey": {
+          "inverted": "You divided tokens by bytes. Bytes per token puts bytes on top."
+        }
+      },
+      "explain": {
+        "text": "Each token now covers 1.4636 bytes on average, where a byte tokeniser covers 1. That ratio is how much the merges compress the text."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Vocabulary against length",
+      "prose": "Every merge adds one id to the vocabulary, so the model's embedding table gains a row. The bars show the token count of the same 20,000 bytes as merges grow.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "0",
+            "25",
+            "50",
+            "100",
+            "150",
+            "200"
+          ],
+          "xLabel": "Merges",
+          "yLabel": "Tokens",
+          "showValues": true,
+          "yMax": 23000
+        },
+        "state": {
+          "values": {
+            "0": 20000,
+            "25": 15240,
+            "50": 13665,
+            "100": 11886,
+            "150": 10731,
+            "200": 9940
+          }
+        }
+      },
+      "question": "From 50 to 200 merges the vocabulary grows from 306 to 456 ids. By what percentage does the sequence shrink? Give one decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2726,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 0.3747,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "vocab",
+            "value": 0.4902,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "unit": "%",
+        "label": "Shrink in per cent"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The sequence goes from 13,665 to 9,940 tokens."
+        },
+        {
+          "rung": "point",
+          "text": "Shrink is the drop divided by the starting count.",
+          "highlight": [
+            "x50",
+            "x200"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(13665 - 9940) / 13665 \\approx 0.273$, so about 27.3%."
+        }
+      ],
+      "feedback": {
+        "correct": "About 27.3% fewer tokens, bought with 150 more rows in the embedding table.",
+        "generic": "Not quite. Divide the drop in tokens by the count at 50 merges.",
+        "byKey": {
+          "inverted": "You divided by the count at 200 merges. A shrink is measured from where it starts, 13,665.",
+          "vocab": "That is how much the vocabulary grew, $150 / 306$. The question asks about the sequence."
+        }
+      },
+      "explain": {
+        "text": "The drop is 3,725 tokens out of 13,665, about 27.3%. Each merge saves less than the last, while the vocabulary keeps growing by one.",
+        "canvas": {
+          "highlight": [
+            "x50",
+            "x200"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The training loop",
+      "prose": "Here is what you did, as code. New ids run from 256, and the loop stops when no pair appears twice.\n```python\nids = list(text.encode('utf-8'))\nmerges = []\nfor k in range(n_merges):\n    counts = pair_counts(ids)\n    if not counts:\n        break\n    pair = max(counts, key=counts.get)\n    if counts[pair] < 2:\n        break\n    ids = merge(ids, pair, 256 + k)\n    merges.append(pair)\n```",
+      "question": "Why does `max(counts, key=counts.get)` follow our tie rule?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "order",
+            "text": "Keys keep first-seen order; `max` keeps the first maximum",
+            "correct": true
+          },
+          {
+            "id": "sort",
+            "text": "`max` sorts the pairs and returns the smallest on a tie",
+            "why": "`max` does not sort; on a tie it keeps the first key it met."
+          },
+          {
+            "id": "random",
+            "text": "Ties are rare, so any choice will do",
+            "why": "Ties are common, as `bi` and `id` showed. The rule must be fixed to repeat a tokeniser."
+          },
+          {
+            "id": "last",
+            "text": "`max` returns the last of equal values, the newest pair",
+            "why": "It returns the first one it meets, the pair seen earliest."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In what order does `pair_counts` add keys to the dict?"
+        }
+      ],
+      "feedback": {
+        "correct": "Keys enter the dict in the order pairs first occur, and `max` keeps the first maximum.",
+        "generic": "Not quite. Think about the dict's key order and what `max` does on a tie."
+      },
+      "explain": {
+        "text": "`pair_counts` adds each pair when first seen, so key order is sequence order. `max` returns the first key with the largest count, which is our tie rule."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Count the pairs",
+      "prose": "Write `pair_counts(ids)`: a dict from each pair of neighbours `(a, b)` in `ids` to its count. Count every position, so overlaps count.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1",
+            "2",
+            "3",
+            "1",
+            "2"
+          ]
+        },
+        "state": {
+          "caption": "[1, 2, 3, 1, 2]: (1, 2) twice, (2, 3) and (3, 1) once."
+        }
+      },
+      "question": "Write `pair_counts(ids)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def pair_counts(ids):\n    ...\n",
+        "solution": "def pair_counts(ids):\n    counts = {}\n    for pair in zip(ids, ids[1:]):\n        counts[pair] = counts.get(pair, 0) + 1\n    return counts\n",
+        "examples": [
+          {
+            "call": "sorted(pair_counts([1, 2, 3, 1, 2]).items())",
+            "expect": "[((1, 2), 2), ((2, 3), 1), ((3, 1), 1)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "sorted([list(k) + [v] for k, v in pair_counts([1, 2, 3, 1, 2]).items()])",
+            "expect": "[[1, 2, 2], [2, 3, 1], [3, 1, 1]]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted([list(k) + [v] for k, v in pair_counts([97, 97, 97]).items()])",
+            "expect": "[[97, 97, 2]]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted([list(k) + [v] for k, v in pair_counts([7, 7, 7, 7]).items()])",
+            "expect": "[[7, 7, 3]]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(pair_counts([]))",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "len(pair_counts([42]))",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "setup": "c = pair_counts(list(b'bid bids bidder bidding'))",
+            "call": "[c[(98, 105)], c[(105, 100)], c[(32, 98)], c[(100, 100)], sum(c.values())]",
+            "expect": "[4, 4, 3, 2, 22]",
+            "compare": "equal"
+          },
+          {
+            "call": "[list(k) for k in pair_counts([3, 1, 2, 3, 1, 2, 9])]",
+            "expect": "[[3, 1], [1, 2], [2, 3], [2, 9]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = [1, 2, 1, 2]; pair_counts(a)",
+            "call": "a",
+            "expect": "[1, 2, 1, 2]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: overlapping pairs, lists of length 0 and 1, the toy text, the order in which pairs are first seen, and an input left unchanged. Counts are compared as sorted lists.",
+        "mutants": [
+          {
+            "source": "def pair_counts(ids):\n    counts, i = {}, 0\n    while i + 1 < len(ids):\n        p = (ids[i], ids[i + 1])\n        counts[p] = counts.get(p, 0) + 1\n        i += 2 if ids[i] == ids[i + 1] else 1\n    return counts\n",
+            "test": 2,
+            "symptom": "Skips a byte after a repeated pair, so overlaps such as aaa count once."
+          },
+          {
+            "source": "def pair_counts(ids):\n    counts = {}\n    for pair in zip(ids, ids[1:]):\n        counts[pair] = counts.get(pair, 0) + 1\n    return dict(sorted(counts.items()))\n",
+            "test": 7,
+            "symptom": "Sorts the pairs, so the first-seen order the tie rule needs is lost."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`zip(ids, ids[1:])` gives every pair of neighbours."
+        },
+        {
+          "rung": "point",
+          "text": "Add 1 to a pair's count each time it appears.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Loop over `zip(ids, ids[1:])` and do `counts[pair] = counts.get(pair, 0) + 1`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every pair is counted, overlaps included, in the order first seen.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is `[97, 97, 97]`, which holds the pair twice. Count every position; do not skip a byte after a match.",
+          "test-7": "Test 7 checks the key order. Add pairs as you meet them, left to right, so ties break the same way."
+        }
+      },
+      "explain": {
+        "text": "`zip(ids, ids[1:])` walks every position once, so overlaps count. A plain dict keeps first-seen order, which the tie rule needs."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Apply one merge",
+      "prose": "Write `merge(ids, pair, new_id)`: a new list where every occurrence of `pair`, scanning left to right, becomes `new_id`. Leave `ids` unchanged.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "97",
+            "97",
+            "97"
+          ]
+        },
+        "state": {
+          "caption": "merge([97, 97, 97], (97, 97), 256) gives [256, 97]."
+        }
+      },
+      "question": "Write `merge(ids, pair, new_id)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def merge(ids, pair, new_id):\n    ...\n",
+        "solution": "def merge(ids, pair, new_id):\n    out, i = [], 0\n    while i < len(ids):\n        if i + 1 < len(ids) and ids[i] == pair[0] and ids[i + 1] == pair[1]:\n            out.append(new_id)\n            i += 2\n        else:\n            out.append(ids[i])\n            i += 1\n    return out\n",
+        "examples": [
+          {
+            "call": "merge([1, 2, 3, 1, 2], (1, 2), 256)",
+            "expect": "[256, 3, 256]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "merge([1, 2, 3, 1, 2], (1, 2), 256)",
+            "expect": "[256, 3, 256]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([97, 97, 97], (97, 97), 256)",
+            "expect": "[256, 97]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([97, 97, 97, 97], (97, 97), 256)",
+            "expect": "[256, 256]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([1, 2], (2, 3), 9)",
+            "expect": "[1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([], (1, 2), 9)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([2, 1, 2, 1], (1, 2), 7)",
+            "expect": "[2, 7, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([1, 2, 1], (2, 1), 5)",
+            "expect": "[1, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(merge(list(b'bid bids bidder bidding'), (98, 105), 256))",
+            "expect": "19",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = [1, 2, 3]; merge(a, (1, 2), 5)",
+            "call": "a",
+            "expect": "[1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(merge([1, 2, 3] * 20000, (2, 3), 4))",
+            "expect": "40000",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: overlapping runs such as `aaa`, a pair that never occurs, a pair at either end, the toy text, an input left unchanged, and a list of 60,000 ids.",
+        "mutants": [
+          {
+            "source": "def merge(ids, pair, new_id):\n    out, i = [], len(ids) - 1\n    while i >= 0:\n        if i > 0 and ids[i - 1] == pair[0] and ids[i] == pair[1]:\n            out.append(new_id)\n            i -= 2\n        else:\n            out.append(ids[i])\n            i -= 1\n    return out[::-1]\n",
+            "test": 2,
+            "symptom": "Scans right to left, so aaa becomes a then aa."
+          },
+          {
+            "source": "def merge(ids, pair, new_id):\n    i = 0\n    while i + 1 < len(ids):\n        if ids[i] == pair[0] and ids[i + 1] == pair[1]:\n            ids[i:i + 2] = [new_id]\n        i += 1\n    return ids\n",
+            "test": 9,
+            "symptom": "Edits the input list in place instead of building a new one."
+          },
+          {
+            "source": "def merge(ids, pair, new_id):\n    out, i = [], 0\n    while i + 1 < len(ids):\n        if i + 1 < len(ids) and ids[i] == pair[0] and ids[i + 1] == pair[1]:\n            out.append(new_id)\n            i += 2\n        else:\n            out.append(ids[i])\n            i += 1\n    return out\n",
+            "test": 2,
+            "symptom": "Stops before the last id, which is dropped when no pair starts there."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Walk an index `i` along the list."
+        },
+        {
+          "rung": "point",
+          "text": "On a match, append `new_id` and jump `i` by 2; otherwise append `ids[i]` and move by 1.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Check `i + 1 < len(ids)` before reading `ids[i + 1]`, so the last element is kept."
+        }
+      ],
+      "feedback": {
+        "correct": "Each match is replaced once, left to right, and the input is untouched.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is `[97, 97, 97]`. After replacing the first pair, jump past both ids, so the answer is `[256, 97]`.",
+          "test-7": "Test 7 has the pair at the very end. Keep reading until the last pair is checked.",
+          "test-9": "Test 9 checks that `ids` is unchanged. Build a new list instead of editing the old one."
+        }
+      },
+      "explain": {
+        "text": "Jumping two places after a match is what stops `aaa` becoming two merged tokens. The scan is left to right, which is part of the rule."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Train the tokeniser",
+      "prose": "Write `train_bpe(text, n_merges)`: the list of merged pairs, in order, the pair for id 256 first. `pair_counts` and `merge` are defined for you. Stop early when no pair appears twice.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "bid",
+            "␣bid",
+            "s",
+            "␣bidd",
+            "e",
+            "r",
+            "␣bidd",
+            "i",
+            "n",
+            "g"
+          ]
+        },
+        "state": {
+          "caption": "The toy text after its four merges: 10 tokens."
+        }
+      },
+      "question": "Write `train_bpe(text, n_merges)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "def pair_counts(ids):\n    counts = {}\n    for pair in zip(ids, ids[1:]):\n        counts[pair] = counts.get(pair, 0) + 1\n    return counts\n\ndef merge(ids, pair, new_id):\n    out, i = [], 0\n    while i < len(ids):\n        if i + 1 < len(ids) and ids[i] == pair[0] and ids[i + 1] == pair[1]:\n            out.append(new_id)\n            i += 2\n        else:\n            out.append(ids[i])\n            i += 1\n    return out\n",
+        "data": {
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "starter": "def train_bpe(text, n_merges):\n    ids = list(text.encode('utf-8'))\n    merges = []\n    ...\n    return merges\n",
+        "solution": "def train_bpe(text, n_merges):\n    ids = list(text.encode('utf-8'))\n    merges = []\n    for k in range(n_merges):\n        counts = pair_counts(ids)\n        if not counts:\n            break\n        pair = max(counts, key=counts.get)\n        if counts[pair] < 2:\n            break\n        ids = merge(ids, pair, 256 + k)\n        merges.append(pair)\n    return merges\n",
+        "examples": [
+          {
+            "call": "[list(p) for p in train_bpe('bid bids bidder bidding', 10)]",
+            "expect": "[[98, 105], [256, 100], [32, 257], [258, 100]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[list(p) for p in train_bpe('bid bids bidder bidding', 10)]",
+            "expect": "[[98, 105], [256, 100], [32, 257], [258, 100]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[list(p) for p in train_bpe('bid bids bidder bidding', 2)]",
+            "expect": "[[98, 105], [256, 100]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[list(p) for p in train_bpe('papa mama', 1)]",
+            "expect": "[[112, 97]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[list(p) for p in train_bpe('aaaaaaaa', 5)]",
+            "expect": "[[97, 97], [256, 256]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[list(p) for p in train_bpe('£££', 5)]",
+            "expect": "[[194, 163], [256, 256]]",
+            "compare": "equal"
+          },
+          {
+            "call": "train_bpe('', 3)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "train_bpe('abcd', 3)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "train_bpe('bid bids bidder bidding', 0)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "setup": "m = train_bpe(open('tiny-shakespeare.txt').read()[:20000], 50)",
+            "call": "[len(m)] + [list(p) for p in m[:8]] + [list(m[-1])]",
+            "expect": "[50, [101, 32], [116, 104], [116, 32], [115, 32], [111, 117], [44, 32], [100, 32], [114, 32], [264, 103]]",
+            "compare": "equal",
+            "budget": 4000
+          }
+        ],
+        "how": "Check runs 9 hidden tests: the toy text with 10, 2 and 0 merges, the tie in `papa mama`, eight a's, three pound signs and texts with no repeated pair. The last makes 50 merges on the first 20,000 Shakespeare characters and checks the count, the first eight and the last. `pair_counts` and `merge` are defined for you.",
+        "mutants": [
+          {
+            "source": "def train_bpe(text, n_merges):\n    ids = list(text.encode('utf-8'))\n    merges = []\n    for k in range(n_merges):\n        counts = pair_counts(ids)\n        if not counts:\n            break\n        pair = min(p for p in counts if counts[p] == max(counts.values()))\n        if counts[pair] < 2:\n            break\n        ids = merge(ids, pair, 256 + k)\n        merges.append(pair)\n    return merges\n",
+            "test": 3,
+            "symptom": "Breaks ties by the smallest pair, not the first one seen."
+          },
+          {
+            "source": "def train_bpe(text, n_merges):\n    ids = list(text.encode('utf-8'))\n    merges = []\n    for k in range(n_merges):\n        counts = pair_counts(ids)\n        if not counts:\n            break\n        pair = max(counts, key=counts.get)\n        ids = merge(ids, pair, 256 + k)\n        merges.append(pair)\n    return merges\n",
+            "test": 1,
+            "symptom": "Never stops early, so it merges pairs that appear once."
+          },
+          {
+            "source": "def train_bpe(text, n_merges):\n    ids = list(text.encode('utf-8'))\n    merges = []\n    for k in range(n_merges):\n        counts = pair_counts(list(text.encode('utf-8')))\n        if not counts:\n            break\n        pair = max(counts, key=counts.get)\n        if counts[pair] < 2:\n            break\n        ids = merge(ids, pair, 256 + k)\n        merges.append(pair)\n    return merges\n",
+            "test": 1,
+            "symptom": "Counts every round on the original bytes instead of the current ids."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the UTF-8 bytes of `text`."
+        },
+        {
+          "rung": "point",
+          "text": "Each round: count, pick the top pair, stop if it appears fewer than twice, merge it as id `256 + k`.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Follow the loop on the last screen; append each chosen pair to `merges` and return it."
+        }
+      ],
+      "feedback": {
+        "correct": "Your merges match ours on the toy, the ties and the Shakespeare slice.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 is the tie in `papa mama`. Take the pair seen first, which `max(counts, key=counts.get)` does.",
+          "test-4": "Test 4 is a run of a's. After `aa` is merged, count again on the new ids; `(256, 256)` then appears 3 times.",
+          "test-7": "Test 7 has no pair twice, so no merge should be made. Check the count before merging."
+        }
+      },
+      "explain": {
+        "text": "Each round counts on the current ids, so later merges build on earlier ones. On the first 20,000 Shakespeare characters 50 merges give 13,665 tokens."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Compressing an order log",
+      "prose": "A desk keeps a log of order messages. Trained on it, BPE's first eight merges are listed below; they take the 63-byte log to 35 tokens.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Order log",
+          "lines": [
+            "NEW BUY VOD 100",
+            "NEW SELL BP 200",
+            "NEW BUY BP 100",
+            "CXL BUY VOD 100",
+            "",
+            "First 8 merges (␣ is a space):",
+            "␣B  00  00\\n  NE  NEW  ␣BU  ␣BUY  ␣1"
+          ]
+        }
+      },
+      "question": "What do the first merges of an order log capture?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fields",
+            "text": "Fields that recur on many lines: NEW, BUY, 00",
+            "correct": true
+          },
+          {
+            "id": "prices",
+            "text": "The prices, because numbers merge first",
+            "why": "Numbers merge only where they repeat: the round sizes 100 and 200 share `00`. A varied price would not."
+          },
+          {
+            "id": "rare",
+            "text": "The rarest tickers, to save space on them",
+            "why": "BPE always merges the most frequent pair; a rare ticker stays as bytes longest."
+          },
+          {
+            "id": "none",
+            "text": "Nothing useful: BPE is built for English",
+            "why": "It works on any bytes. A log's repeated fields compress well."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "BPE merges the most frequent pair."
+        },
+        {
+          "rung": "point",
+          "text": "Which strings appear on almost every line?",
+          "highlight": [
+            "l1",
+            "l2",
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`NEW`, ` BUY` and `00` recur; tickers and sizes vary more."
+        }
+      ],
+      "feedback": {
+        "correct": "The recurring fields come first, so a log's boilerplate costs few tokens.",
+        "generic": "Not quite. Think about which pairs are most frequent in the log."
+      },
+      "explain": {
+        "text": "The most frequent pairs come from text repeated on many lines: the field names and the round sizes. Fields that vary, such as unusual prices, stay as several tokens."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Byte-pair encoding starts from bytes and repeatedly merges the most frequent pair of neighbours into a new id, 256 upwards.",
+      "Count on the current ids, overlaps included; merge left to right; on a tie take the pair that occurs first; stop when no pair appears twice.",
+      "More merges mean shorter sequences and a larger embedding table; each merge saves less than the one before."
+    ],
+    "formula": {
+      "name": "One round of BPE",
+      "tex": "\\text{pair}^* = \\arg\\max_{(a, b)} \\text{count}(a, b), \\quad (a, b) \\to 256 + k",
+      "note": "Ties go to the pair that occurs first."
+    },
+    "trap": "Counting on the original bytes after a merge, or counting pairs without overlaps: state the rule, because another rule gives another tokeniser."
+  },
+  "quiz": [
+    {
+      "id": "q-next-merge",
+      "difficulty": 2,
+      "prose": "A tokeniser is trained on `see sea seen` with our rules. Pair counts on the bytes: `s e` 3, `e e` 2, `e a` 1, `e n` 1, `e` then space 1, space then `s` 2.",
+      "question": "Which pair is merged first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "se",
+            "text": "`se`",
+            "correct": true
+          },
+          {
+            "id": "ee",
+            "text": "`ee`",
+            "why": "`ee` appears twice; `se` appears three times."
+          },
+          {
+            "id": "sp-s",
+            "text": "space then `s`",
+            "why": "Two places only: `see` at the start has no space before it."
+          },
+          {
+            "id": "en",
+            "text": "`en`",
+            "why": "It appears once, in `seen`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`se`, with 3, is the most frequent pair.",
+        "generic": "Not quite. Merge the pair with the highest count."
+      },
+      "explain": {
+        "text": "`se` starts all three words, so it has the top count, 3. It becomes id 256."
+      }
+    },
+    {
+      "id": "q-overlap-merge",
+      "difficulty": 3,
+      "question": "What does `merge([5, 5, 5, 5, 5], (5, 5), 300)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`[300, 300, 5]`",
+            "correct": true
+          },
+          {
+            "id": "over",
+            "text": "`[300, 300, 300, 300]`",
+            "why": "You merged every overlapping position. The merge jumps past both ids after a match."
+          },
+          {
+            "id": "one",
+            "text": "`[300, 5, 5, 5]`",
+            "why": "The scan carries on after the first match."
+          },
+          {
+            "id": "tail",
+            "text": "`[5, 300, 300]`",
+            "why": "The scan starts from the left, so the first pair is merged first."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Left to right: two merges, then a single 5 is left.",
+        "generic": "Not quite. Scan from the left, jumping two places after each match."
+      },
+      "explain": {
+        "text": "Positions 0 and 1 merge, then 2 and 3, and the last 5 has no partner. Counting found 4 overlapping pairs, but only 2 can be merged."
+      }
+    },
+    {
+      "id": "q-trade-off",
+      "difficulty": 3,
+      "question": "A team doubles the number of merges in its tokeniser. What happens? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "shorter",
+            "text": "The same text becomes fewer tokens",
+            "correct": true
+          },
+          {
+            "id": "table",
+            "text": "The model's embedding table gets more rows",
+            "correct": true
+          },
+          {
+            "id": "unknown",
+            "text": "Some characters become unknown to the tokeniser",
+            "why": "Bytes stay in the vocabulary, so nothing becomes unknown."
+          },
+          {
+            "id": "halves",
+            "text": "The token count halves",
+            "why": "Each extra merge saves less than the last: 100 merges gave 11,886 tokens and 200 gave 9,940, not half."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Shorter sequences, bought with a larger vocabulary.",
+        "generic": "Not quite. Think about what each merge adds and what it saves."
+      },
+      "explain": {
+        "text": "Every merge adds one id, so the embedding table grows, and shortens the text a little. The savings fall off: 100 merges gave 11,886 tokens and 200 gave 9,940."
+      }
+    }
+  ]
+}

@@ -1,0 +1,503 @@
+{
+  "id": "problems-1",
+  "course": "gpt",
+  "level": 1,
+  "title": "Tokens, bytes and clean data",
+  "minutes": 40,
+  "items": [
+    {
+      "id": "p-bond-merges",
+      "difficulty": 5,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "A fixed-income desk trains a small tokeniser on its notes. It learns five merges, in this order: 256 is `o n`, 257 is 256 then `d`, 258 is `b` then 257, 259 is a space then 258, and 260 is `u n`. It now encodes `bonds fund bond`, which is 15 bytes.",
+      "parts": [
+        {
+          "question": "Apply merge 256 alone. How many ids does the text become?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 13,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "one-place",
+                "value": 14,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "bytes",
+                "value": 15,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Ids"
+          },
+          "feedback": {
+            "correct": "13: `on` stands in two places, each saving one id.",
+            "generic": "Not quite. Count the places where `o` is followed by `n`.",
+            "byKey": {
+              "one-place": "`on` appears in both `bonds` and `bond`, so two ids are saved, not one.",
+              "bytes": "That is the count before the merge."
+            }
+          },
+          "explain": {
+            "text": "`o n` occurs in `bonds` and in `bond`; `fund` has `u n`, a different pair. Two replacements take 15 ids to 13."
+          }
+        },
+        {
+          "question": "Now apply all five merges in order. How many tokens is the text?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "no-un",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-space",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Tokens"
+          },
+          "feedback": {
+            "correct": "7: `bond`, `s`, space, `f`, `un`, `d`, ` bond`.",
+            "generic": "Not quite. Apply each merge in turn to the row the last one left.",
+            "byKey": {
+              "no-un": "You stopped before merge 260. `fund` holds `u n`, which joins.",
+              "no-space": "Merge 259 needs a space before `bond`; the first word has none, so it stays `bond` without one."
+            }
+          },
+          "explain": {
+            "text": "After 256 to 259 the row is `bond s space f u n d  bond`, 8 ids; then 260 joins `u n`. That leaves 7 tokens."
+          }
+        },
+        {
+          "question": "Using the 7 tokens from part 2, how many bytes per token does this text get? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.1429,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "inverted",
+                "value": 0.4667,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Bytes per token"
+          },
+          "feedback": {
+            "correct": "$15 / 7 \\approx 2.1429$ bytes per token.",
+            "generic": "Not quite. Divide the bytes by the tokens.",
+            "byKey": {
+              "inverted": "Your figure is below 1, which would mean a token holds less than a byte. Swap the division."
+            }
+          },
+          "explain": {
+            "text": "The text is 15 bytes in 7 tokens, so $15 / 7 \\approx 2.1429$."
+          }
+        },
+        {
+          "question": "A model scores 4.1 nats per token on this text. Using $15 / 7$ bytes per token from part 3, what is its loss in bits per byte? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.7604,
+            "tol": {
+              "abs": 0.0002
+            },
+            "wrong": [
+              {
+                "id": "no-ln2",
+                "value": 1.9133,
+                "tol": {
+                  "abs": 0.0002
+                }
+              },
+              {
+                "id": "per-token",
+                "value": 5.915,
+                "tol": {
+                  "abs": 0.0002
+                }
+              }
+            ],
+            "label": "Bits per byte"
+          },
+          "feedback": {
+            "correct": "$4.1 \\times 7 / (15 \\ln 2) \\approx 2.7604$ bits per byte.",
+            "generic": "Not quite. Share the loss among the bytes of a token, then turn nats into bits.",
+            "byKey": {
+              "no-ln2": "Your figure is still in nats. Convert it to bits with $\\ln 2$.",
+              "per-token": "Your figure is a whole token's loss in bits; a token here spans $15 / 7$ bytes."
+            }
+          },
+          "explain": {
+            "text": "Spread over $15 / 7$ bytes, 4.1 nats become $4.1 \\times 7 / 15$ nats each. In bits that is about 2.7604, after a division by $\\ln 2$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-client-field",
+      "difficulty": 3,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "A client register exports names to a settlement system whose name field holds a fixed number of bytes. One client is `Lefèvre & Søn`, 13 characters long.",
+      "parts": [
+        {
+          "question": "How many bytes is the name in UTF-8?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 15,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "chars",
+                "value": 13,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "three-each",
+                "value": 17,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Bytes"
+          },
+          "feedback": {
+            "correct": "15: `è` and `ø` take 2 bytes each, the other 11 characters 1 each.",
+            "generic": "Not quite. Give each character its UTF-8 byte count.",
+            "byKey": {
+              "chars": "That counts characters. `è` and `ø` take 2 bytes each.",
+              "three-each": "`è` and `ø` are below U+0800, so they take 2 bytes, not 3."
+            }
+          },
+          "explain": {
+            "text": "`è` is U+00E8 and `ø` is U+00F8, both in the two-byte range. So $11 + 2 + 2 = 15$ bytes."
+          }
+        },
+        {
+          "question": "Using the byte counts from part 1, the field holds 12 bytes. A cut that never splits a character keeps how many characters?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 11,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "twelve",
+                "value": 12,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "ten",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Characters kept"
+          },
+          "feedback": {
+            "correct": "11 characters, `Lefèvre & S`, exactly 12 bytes.",
+            "generic": "Not quite. Add characters while their bytes still fit in 12.",
+            "byKey": {
+              "twelve": "12 characters would include `ø`, ending at byte 14.",
+              "ten": "`S` ends exactly at byte 12, so it fits."
+            }
+          },
+          "explain": {
+            "text": "The bytes run up to 12 at `S`, since `è` used 2. The next character, `ø`, needs bytes 13 and 14, so the cut keeps 11 characters."
+          }
+        },
+        {
+          "question": "Unlike the safe cut of part 2, another system cuts the raw bytes at 13 and decodes with `errors='replace'`. How many characters does it show, counting the replacement character?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 12,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "ignore",
+                "value": 11,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "both-bytes",
+                "value": 13,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Characters shown"
+          },
+          "feedback": {
+            "correct": "12: `Lefèvre & S` and one U+FFFD.",
+            "generic": "Not quite. Byte 13 is the first half of `ø`; what does `replace` do with it?",
+            "byKey": {
+              "ignore": "That is what `errors='ignore'` would show. `replace` adds U+FFFD in place of the broken byte.",
+              "both-bytes": "Only one byte of `ø` survived; the broken sequence becomes a single U+FFFD."
+            }
+          },
+          "explain": {
+            "text": "The first 12 bytes decode to 11 characters, and the lone first byte of `ø` becomes one U+FFFD. That shows 12 characters."
+          }
+        },
+        {
+          "question": "A byte-level tokeniser with no merges reads the whole name, the 15 bytes from part 1. How many tokens does it make?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 15,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "chars",
+                "value": 13,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Tokens"
+          },
+          "feedback": {
+            "correct": "15, one per byte.",
+            "generic": "Not quite. With no merges, what is each token?",
+            "byKey": {
+              "chars": "Tokens are bytes here, not characters; `è` and `ø` are 2 tokens each."
+            }
+          },
+          "explain": {
+            "text": "With no merges every byte is its own token. The name is 15 bytes, so 15 tokens."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-transcripts",
+      "difficulty": 4,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "A research team builds a corpus of 12,400 earnings-call transcripts from several vendors, then scores a model on a held-out test set.",
+      "parts": [
+        {
+          "question": "Exact deduplication finds 9,850 distinct transcripts. How many does it remove?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2550,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "kept",
+                "value": 9850,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Transcripts removed"
+          },
+          "feedback": {
+            "correct": "$12400 - 9850 = 2550$ copies go.",
+            "generic": "Not quite. Subtract the distinct transcripts from the total.",
+            "byKey": {
+              "kept": "That is the number kept, not removed."
+            }
+          },
+          "explain": {
+            "text": "Each distinct transcript is kept once, so $12400 - 9850 = 2550$ are removed."
+          }
+        },
+        {
+          "question": "Two remaining transcripts have 1,200 and 1,150 distinct shingles, 1,100 of them shared. What is their Jaccard similarity? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.88,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "over-first",
+                "value": 0.9167,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "over-sum",
+                "value": 0.4681,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Jaccard similarity"
+          },
+          "feedback": {
+            "correct": "$1100 / 1250 = 0.8800$.",
+            "generic": "Not quite. Jaccard puts the shared count over the count in either set.",
+            "byKey": {
+              "over-first": "You divided by one set's size. Use the union, $1200 + 1150 - 1100$.",
+              "over-sum": "You divided by the sum of the sizes, which counts the shared ones twice."
+            }
+          },
+          "explain": {
+            "text": "The union is $1200 + 1150 - 1100 = 1250$, so $J = 1100 / 1250 = 0.88$."
+          }
+        },
+        {
+          "question": "Using the similarity of 0.88 from part 2, does a filter with threshold 0.85 flag the pair?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "yes",
+                "text": "Yes: 0.88 is at least 0.85",
+                "correct": true
+              },
+              {
+                "id": "no",
+                "text": "No: they are different transcripts",
+                "why": "The filter sees only the score; 0.88 clears the 0.85 threshold."
+              },
+              {
+                "id": "no2",
+                "text": "No: only identical texts are flagged",
+                "why": "That is exact deduplication. A near-duplicate filter flags scores above its threshold."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The pair is flagged as near duplicates.",
+            "generic": "Not quite. Compare the score with the threshold."
+          },
+          "explain": {
+            "text": "0.88 is above 0.85, so the filter flags the pair, and one of the two is dropped. A reader should check the pair does not differ in a key figure."
+          }
+        },
+        {
+          "question": "The test set has 400 transcripts, and 36 of them also sit in the training corpus. What percentage of the test set leaked?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.09,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "count",
+                "value": 0.36,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "over-train",
+                "value": 0.0037,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ],
+            "unit": "%",
+            "label": "Leaked share"
+          },
+          "feedback": {
+            "correct": "$36 / 400 = 9\\%$ of the test set leaked.",
+            "generic": "Not quite. Divide the leaked transcripts by the test set's size.",
+            "byKey": {
+              "count": "You typed the count of 36 as a percentage. Give the share of the 400.",
+              "over-train": "You divided by the training corpus. The share asked is of the test set."
+            }
+          },
+          "explain": {
+            "text": "$36 / 400 = 0.09$, so 9% of the test transcripts were seen in training. Their loss will look better than the model deserves."
+          }
+        },
+        {
+          "question": "After the clean-up the test loss is 2.2 nats per token. The tokeniser packs 4.0 bytes into each token here. Convert the loss to bits per byte, to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.7935,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "no-ln2",
+                "value": 0.55,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "per-token",
+                "value": 3.1739,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Bits per byte"
+          },
+          "feedback": {
+            "correct": "$2.2 / (4 \\ln 2) \\approx 0.7935$ bits per byte.",
+            "generic": "Not quite. Spread the loss over the bytes in a token, then change nats to bits.",
+            "byKey": {
+              "no-ln2": "0.55 is still in nats. A bit is worth $\\ln 2$ nats.",
+              "per-token": "That figure is per token. Share it among the 4 bytes."
+            }
+          },
+          "explain": {
+            "text": "Each byte carries $2.2 / 4 = 0.55$ nats, and 0.55 nats is $0.55 / \\ln 2$ bits. That comes to about 0.7935."
+          }
+        }
+      ]
+    }
+  ]
+}
