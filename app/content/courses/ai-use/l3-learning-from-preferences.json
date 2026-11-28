@@ -1,0 +1,1029 @@
+{
+ "id": "l3-learning-from-preferences",
+ "course": "ai-use",
+ "title": "Learning from preferences",
+ "minutes": 13,
+ "objectives": [
+  "Describe how people's rankings of answers shape a chatbot's replies."
+ ],
+ "skills": [
+  "au-making"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Two replies to the same question, both from one assistant. Pick the better one. On the next screens we see why your choice matters.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "tap": "sides",
+    "leftLabel": "Reply A",
+    "rightLabel": "Reply B",
+    "left": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "You: Should I put all my savings into one share?",
+       "Reply A: Yes. Pick a share you believe in and go all in. Fortune favours the bold."
+      ],
+      "wrap": true,
+      "title": "Reply A (an invented example)"
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "You: Should I put all my savings into one share?",
+       "Reply B: That is risky. One firm can fall a long way, and your savings would fall with it. Spreading money across many shares lowers that risk."
+      ],
+      "wrap": true,
+      "title": "Reply B (an invented example)"
+     },
+     "state": {}
+    }
+   },
+   "question": "Tap the better reply.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "right"
+    ],
+    "countWord": "replies"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which reply tells you about the risk?"
+    },
+    {
+     "rung": "point",
+     "text": "One reply gives a reason.",
+     "highlight": [
+      "right"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Reply B is honest about what could go wrong and says why."
+    }
+   ],
+   "feedback": {
+    "correct": "Reply B is honest about the risk and gives a reason.",
+    "generic": "Not quite right. Ask which reply would protect your savings.",
+    "byKey": {
+     "left": "Reply A sounds bold and agrees with you. But one share can lose most of its value, and your savings with it."
+    }
+   },
+   "explain": {
+    "text": "Reply B is honest about the risk and explains it. You just did what people do when a chatbot is trained: compare two replies and say which is better."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Your choice is the raw material of the third stage. Slide to add it to the first two.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "nodes": [
+      {
+       "id": "web",
+       "label": "Web text",
+       "x": 0.12,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "pre",
+       "label": "Pretraining",
+       "x": 0.5,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "base",
+       "label": "Base model",
+       "x": 0.88,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "ex",
+       "label": "Example chats",
+       "x": 0.12,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "ft",
+       "label": "Fine-tuning",
+       "x": 0.5,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "asst",
+       "label": "Assistant",
+       "x": 0.88,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "web",
+       "to": "pre"
+      },
+      {
+       "from": "pre",
+       "to": "base"
+      },
+      {
+       "from": "base",
+       "to": "ft"
+      },
+      {
+       "from": "ex",
+       "to": "ft"
+      },
+      {
+       "from": "ft",
+       "to": "asst"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Stages 1 and 2 give an assistant."
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "caption": "Stages 1 and 2 give an assistant."
+       },
+       {
+        "nodes": {
+         "rank": {
+          "label": "Rankings",
+          "x": 0.12,
+          "y": 0.85,
+          "shape": "rect"
+         },
+         "fbt": {
+          "label": "Feedback training",
+          "x": 0.5,
+          "y": 0.85,
+          "shape": "rect"
+         },
+         "bot": {
+          "label": "Chatbot",
+          "x": 0.88,
+          "y": 0.85,
+          "shape": "rect"
+         }
+        },
+        "edges": {
+         "e-asst-fbt": {
+          "from": "asst",
+          "to": "fbt"
+         },
+         "e-rank-fbt": {
+          "from": "rank",
+          "to": "fbt"
+         },
+         "e-fbt-bot": {
+          "from": "fbt",
+          "to": "bot"
+         }
+        },
+        "caption": "Stage 3: people rank pairs of replies, and the assistant is trained on the rankings."
+       }
+      ],
+      "frameLabels": [
+       "Stages 1-2",
+       "Stage 3"
+      ],
+      "label": "Stages",
+      "start": 0
+     }
+    ]
+   },
+   "question": "In stage 3, what do people give the model?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ranks",
+      "text": "Rankings: which of two replies is better",
+      "correct": true
+     },
+     {
+      "id": "web",
+      "text": "More web text to read",
+      "why": "Slide to stage 3. The new box is rankings, not text."
+     },
+     {
+      "id": "replies",
+      "text": "Replies they wrote for it to copy",
+      "why": "Written replies were stage 2. In stage 3 people compare replies the assistant wrote."
+     },
+     {
+      "id": "answers",
+      "text": "The right answer to each question",
+      "why": "Raters compare two replies; they do not supply the right answer."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to stage 3. What new box feeds the last training?"
+    },
+    {
+     "rung": "point",
+     "text": "Look at the box on the bottom left.",
+     "highlight": [
+      "rank",
+      "fbt"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Rankings and the assistant feed feedback training, which gives the chatbot."
+    }
+   ],
+   "feedback": {
+    "correct": "Rankings: people say which of two replies they prefer.",
+    "generic": "Not quite right. Slide to stage 3 and read the box that feeds feedback training."
+   },
+   "explain": {
+    "text": "In stage 3 the assistant writes replies, people rank them, and the assistant is trained on the rankings. The result is the chatbot people use.",
+    "canvas": {
+     "nodes": {
+      "rank": {
+       "label": "Rankings",
+       "x": 0.12,
+       "y": 0.85,
+       "shape": "rect"
+      },
+      "fbt": {
+       "label": "Feedback training",
+       "x": 0.5,
+       "y": 0.85,
+       "shape": "rect"
+      },
+      "bot": {
+       "label": "Chatbot",
+       "x": 0.88,
+       "y": 0.85,
+       "shape": "rect"
+      }
+     },
+     "edges": {
+      "e-asst-fbt": {
+       "from": "asst",
+       "to": "fbt"
+      },
+      "e-rank-fbt": {
+       "from": "rank",
+       "to": "fbt"
+      },
+      "e-fbt-bot": {
+       "from": "fbt",
+       "to": "bot"
+      }
+     },
+     "caption": "Stage 3: people rank pairs of replies, and the assistant is trained on the rankings."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "People called raters read pairs of replies and pick the better one. The model is then trained so that the preferred kind of reply becomes more likely. This is **training from human feedback**. A later course, `post-train`, does the mathematics.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Request",
+      "Reply 1",
+      "Reply 2",
+      "Rater prefers"
+     ],
+     "rows": [
+      [
+       "Explain inflation simply.",
+       "Prices in general rise over time, so money buys less.",
+       "Inflation is a macroeconomic phenomenon whereby ...",
+       "Reply 1"
+      ],
+      [
+       "Is this email a scam?",
+       "It asks for your password, a common scam sign. Do not reply.",
+       "Probably fine.",
+       "Reply 1"
+      ]
+     ],
+     "align": "left"
+    },
+    "state": {}
+   },
+   "question": "After training on a great many such rankings, which replies become more likely?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "preferred",
+      "text": "Replies like the ones raters preferred",
+      "correct": true
+     },
+     {
+      "id": "rejected",
+      "text": "Replies like the ones raters rejected",
+      "why": "Training pushes towards the preferred reply in each pair, not away from it."
+     },
+     {
+      "id": "copied",
+      "text": "Replies copied word for word from the table",
+      "why": "It learns the kind of reply preferred, then writes new replies of that kind."
+     },
+     {
+      "id": "true",
+      "text": "Replies that are certainly true",
+      "why": "Raters said which reply they preferred. That is not the same as checking it is true."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does each ranking say?"
+    },
+    {
+     "rung": "point",
+     "text": "Read the last column.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each ranking says which kind of reply people liked. Training makes that kind more likely."
+    }
+   ],
+   "feedback": {
+    "correct": "The kind of reply raters preferred becomes more likely.",
+    "generic": "Not quite right. Ask what each ranking tells the model."
+   },
+   "explain": {
+    "text": "Each ranking says \"this kind of reply, not that one\". Over a great many rankings, the preferred kind becomes more likely. Here that means plain, useful replies.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "The request: \"How can I get rich quickly?\" Rank the three replies, 1 for best. The raters' guide says an honest, harmless reply beats one that sounds helpful but misleads.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Reply",
+      "Text"
+     ],
+     "rows": [
+      [
+       "P",
+       "Buy this coin today. It is certain to triple by Friday."
+      ],
+      [
+       "Q",
+       "There is no safe way to get rich quickly. Saving steadily and spreading risk works better over years."
+      ],
+      [
+       "R",
+       "I cannot help with that."
+      ]
+     ],
+     "align": "left"
+    },
+    "state": {}
+   },
+   "question": "Fill in the rank of each reply.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Reply",
+     "Rank",
+     "Helpful?",
+     "Honest?",
+     "Harmless?"
+    ],
+    "rows": [
+     [
+      "P",
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "bold-first",
+         "value": 1,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      },
+      "seems so",
+      "no",
+      "no"
+     ],
+     [
+      "Q",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      },
+      "yes",
+      "yes",
+      "yes"
+     ],
+     [
+      "R",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "refusal-last",
+         "value": 3,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      },
+      "no",
+      "yes",
+      "yes"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which reply passes all three tests?"
+    },
+    {
+     "rung": "point",
+     "text": "Read the yes and no columns.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Q passes all three, so it is 1. Under the guide, honest and harmless R beats misleading P."
+    }
+   ],
+   "feedback": {
+    "correct": "Q first, R second, P last.",
+    "generic": "Not quite right. Use the guide: honesty and harm come before sounding helpful.",
+    "byKey": {
+     "bold-first": "You ranked P first because it sounds helpful. It is false and could cost money, so under the guide it ranks last.",
+     "refusal-last": "You put the refusal last. It is unhelpful, but it is honest and harmless, so under the guide it beats P."
+    }
+   },
+   "explain": {
+    "text": "Q is helpful, honest and harmless, so it ranks first. R is honest and harmless but unhelpful. P sounds helpful, but it is false and could cost money, so under the guide R beats P."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "The request: \"My spreadsheet says this share will double this year. Am I right?\" Three replies came back.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Reply",
+      "Text"
+     ],
+     "rows": [
+      [
+       "X",
+       "Great work. You clearly have a gift for this, and it will double."
+      ],
+      [
+       "Y",
+       "No one can know that. It would need profits to grow very fast. Here is how to check your inputs."
+      ],
+      [
+       "Z",
+       "Some shares double in a year, but most do not. Your spreadsheet is a guess."
+      ]
+     ],
+     "align": "left",
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "Tap the reply that pleases the reader but is wrong.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r0"
+    ],
+    "countWord": "replies"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which reply praises you?"
+    },
+    {
+     "rung": "point",
+     "text": "Look for flattery.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "X flatters you and agrees. But no one can know that a share will double."
+    }
+   ],
+   "feedback": {
+    "correct": "X flatters and agrees, and claims to know what no one can know.",
+    "generic": "Not quite right. Find the reply that tells you what you hoped to hear.",
+    "byKey": {
+     "r1": "Y is careful and honest. It may disappoint the reader, but it is not wrong.",
+     "r2": "Z is blunt but true: most shares do not double in a year."
+    }
+   },
+   "explain": {
+    "text": "X flatters you and agrees, which feels good to read. But no one can know a share will double. A rater in a hurry might still prefer it.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "Suppose raters preferred confident, flattering replies a little more often than careful ones. The model is trained on a great many such rankings. The numbers are illustrative.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "flat",
+       "label": "Confident, flattering"
+      },
+      {
+       "id": "careful",
+       "label": "Careful, honest"
+      }
+     ],
+     "yLabel": "Share of rankings won",
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "flat": 0.55,
+      "careful": 0.45
+     }
+    }
+   },
+   "question": "What does feedback training then teach the model?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "liked",
+      "text": "To write more replies of the kind raters liked, flattery included",
+      "correct": true
+     },
+     {
+      "id": "truthful",
+      "text": "To tell the truth, since people checked every single reply",
+      "why": "You read the rankings as a truth check. Raters said which reply they liked, not which was true."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing much, since the gap between the two is small",
+      "why": "Over a great many rankings a small preference still points one way, and the model moves that way."
+     },
+     {
+      "id": "careful",
+      "text": "To be more careful, since careful replies are better",
+      "why": "Better by our standards, but raters preferred the other kind more often. The model follows the rankings."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which kind of reply won more rankings?"
+    },
+    {
+     "rung": "point",
+     "text": "Compare the two bars.",
+     "highlight": [
+      "flat"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Training makes the kind that won more rankings more likely, whether or not it is true."
+    }
+   ],
+   "feedback": {
+    "correct": "It learns to please raters. If they liked flattery, flattery becomes more likely.",
+    "generic": "Not quite right. Training follows the rankings.",
+    "byKey": {
+     "truthful": "You read the rankings as a truth check. Raters said which reply they liked; training makes liked replies more likely, true or not."
+    }
+   },
+   "explain": {
+    "text": "Feedback training makes the preferred kind of reply more likely. Here raters preferred confident flattery a little more often, so the model drifts towards it. Feedback makes a chatbot more like what raters preferred, which is not the same as more truthful."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Two raters see the same pair. Reply 1 has a joke about bankers. One rater finds it funny and prefers it; the other finds it rude and prefers Reply 2.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Rater",
+      "Prefers"
+     ],
+     "rows": [
+      [
+       "Rater 1",
+       "Reply 1 (the joke)"
+      ],
+      [
+       "Rater 2",
+       "Reply 2 (no joke)"
+      ]
+     ],
+     "align": "left"
+    },
+    "state": {}
+   },
+   "question": "What does the model learn from this pair?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nothing-clear",
+      "text": "No clear lesson: the two rankings pull opposite ways",
+      "correct": true
+     },
+     {
+      "id": "who",
+      "text": "To tell jokes only to people who enjoy them",
+      "why": "Nothing in a pair of rankings says who likes jokes. The model sees two opposite verdicts on one pair."
+     },
+     {
+      "id": "first",
+      "text": "To joke, since the funny rater went first",
+      "why": "Order decides nothing; each ranking counts once."
+     },
+     {
+      "id": "never",
+      "text": "Never to joke, since one rater was offended",
+      "why": "One ranking each way gives no clear direction. What most raters prefer, over many pairs, decides."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Do the two rankings agree?"
+    },
+    {
+     "rung": "point",
+     "text": "Read both rows.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "One says joke, one says no joke. Together they give no clear direction."
+    }
+   ],
+   "feedback": {
+    "correct": "The two rankings cancel. Over many pairs, what most raters prefer decides.",
+    "generic": "Not quite right. Ask what the two rankings say together."
+   },
+   "explain": {
+    "text": "For this pair the two rankings cancel out. Across many pairs, the model moves towards what most raters prefer. So the raters' guide, and who the raters are, both matter."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "All three stages: web text, then example chats, then rankings. The last stage learns what raters preferred, which is not always what is true or what its makers meant. $$\\text{assistant} \\xrightarrow{\\text{people's rankings}} \\text{chatbot}$$",
+   "question": "Which sentence is the rule for training from human feedback?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rule",
+      "text": "Replies like those people preferred become more likely",
+      "correct": true
+     },
+     {
+      "id": "true",
+      "text": "Replies become true, because people read them",
+      "why": "Reading is not checking. Raters said what they preferred."
+     },
+     {
+      "id": "facts",
+      "text": "The model learns new facts from the raters",
+      "why": "Raters give rankings, not facts."
+     },
+     {
+      "id": "one",
+      "text": "The model copies the taste of one rater",
+      "why": "It learns from many raters' rankings, not one person's taste."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The preferred kind of reply becomes more likely.",
+    "generic": "Not quite right. Recall what a ranking tells the model."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A head of desk praises a junior's market calls when they match her view. She frowns when they do not. Nobody checks which calls turned out right. The desk is invented.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Week",
+      "Junior's call",
+      "Boss agreed?",
+      "Turned out right?"
+     ],
+     "rows": [
+      [
+       "1",
+       "Rates rise",
+       "yes",
+       "no"
+      ],
+      [
+       "2",
+       "Oil falls",
+       "no",
+       "yes"
+      ],
+      [
+       "3",
+       "Pound rises",
+       "yes",
+       "no"
+      ],
+      [
+       "4",
+       "Gold rises",
+       "no",
+       "yes"
+      ]
+     ],
+     "align": "left"
+    },
+    "state": {}
+   },
+   "question": "What is the junior learning, and how is it like training from human feedback?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "please",
+      "text": "To make calls the boss likes, as a model learns what raters prefer",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "To make right calls, since praise always rewards good work",
+      "why": "Read the table: the praised calls were wrong. The praise follows the boss's view, not the outcome."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing at all, since praise is only words and changes no one",
+      "why": "Praise is a reward, and people, like models, move towards what is rewarded."
+     },
+     {
+      "id": "ignore",
+      "text": "To ignore the boss, as a model learns to ignore its raters",
+      "why": "A model moves towards its raters' preferences; it does not learn to ignore them."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which calls did the boss agree with?"
+    },
+    {
+     "rung": "point",
+     "text": "Compare the last two columns.",
+     "highlight": [
+      "c2",
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The praised calls were the wrong ones. The reward follows agreement, not results."
+    }
+   ],
+   "feedback": {
+    "correct": "The junior learns to agree with the boss. A model learns to please its raters in the same way.",
+    "generic": "Not quite right. Compare what was praised with what turned out right."
+   },
+   "explain": {
+    "text": "The boss rewarded agreement, and in these four weeks agreement went with wrong calls. A junior trained this way learns to please the boss, as a model learns what raters like. A desk fixes it by rewarding results that are checked.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       2,
+       3
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Raters read pairs of replies and say which they prefer. Training then makes the preferred kind of reply more likely.",
+   "The chatbot learns what raters preferred, which can include confident flattery. Preferred is not the same as true.",
+   "Raters disagree; across many pairs the model follows what most of them prefer, so the raters' guide matters."
+  ],
+  "formula": {
+   "name": "Training from human feedback",
+   "tex": "\\text{assistant} \\xrightarrow{\\text{rankings}} \\text{chatbot}",
+   "note": "Preferred replies become more likely; the mathematics is in `post-train`."
+  },
+  "trap": "Feedback does not make a chatbot truthful. It makes it more like what raters preferred."
+ },
+ "quiz": [
+  {
+   "id": "q-raters",
+   "difficulty": 2,
+   "question": "In training from human feedback, what do raters do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rank",
+      "text": "Say which of two replies they prefer",
+      "correct": true
+     },
+     {
+      "id": "write",
+      "text": "Write the perfect reply for the model to copy",
+      "why": "Writing replies was fine-tuning, in l2."
+     },
+     {
+      "id": "check",
+      "text": "Check every fact in every reply",
+      "why": "Raters rank replies; they are not checking each fact."
+     },
+     {
+      "id": "code",
+      "text": "Change the network's numbers by hand",
+      "why": "The training changes the numbers. Raters supply rankings."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "They rank pairs of replies.",
+    "generic": "Not quite right. Recall what came out of your tap on the first screen."
+   },
+   "explain": {
+    "text": "Raters read two replies to one request and say which they prefer. Training then makes the preferred kind of reply more likely."
+   }
+  },
+  {
+   "id": "q-not-true",
+   "difficulty": 3,
+   "question": "A chatbot was trained from many people's rankings. Is everything it says now true?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: it is more like what raters preferred, which is not the same as true",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: people checked its replies, so they are true",
+      "why": "Ranking is not checking. Raters said which reply they liked."
+     },
+     {
+      "id": "mostly",
+      "text": "Yes, as long as the raters were experts",
+      "why": "Even expert raters judge a pair quickly; preference is still not a check of every fact."
+     },
+     {
+      "id": "never",
+      "text": "No: training from feedback makes it less truthful",
+      "why": "It can make replies better, honest ones included. It just does not guarantee truth."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Feedback shapes it towards what raters preferred. That is not a guarantee of truth.",
+    "generic": "Not quite right. Ask what a ranking measures."
+   },
+   "explain": {
+    "text": "Feedback makes the model more like what raters preferred. Raters often prefer true, careful replies. But sometimes they prefer confident or flattering ones, and they do not check every fact."
+   }
+  },
+  {
+   "id": "q-guide",
+   "difficulty": 3,
+   "question": "Raters are told: \"Prefer the shortest reply.\" What happens to the chatbot's replies?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "short",
+      "text": "They tend to get shorter, helpful or not",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "They get better in every way",
+      "why": "They get shorter. Shorter is not better in every way."
+     },
+     {
+      "id": "same",
+      "text": "Nothing changes, since length does not matter",
+      "why": "The rankings favour short replies, so short replies become more likely."
+     },
+     {
+      "id": "longer",
+      "text": "They get longer, to explain more",
+      "why": "That is the opposite of what the rankings reward."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The model drifts towards whatever the rankings reward: here, short replies.",
+    "generic": "Not quite right. The model follows the rankings."
+   },
+   "explain": {
+    "text": "The rankings reward short replies, so short replies become more likely. The guide given to raters shapes the chatbot."
+   }
+  }
+ ]
+}

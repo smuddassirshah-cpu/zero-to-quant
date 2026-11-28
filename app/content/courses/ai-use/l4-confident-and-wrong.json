@@ -1,0 +1,975 @@
+{
+ "id": "l4-confident-and-wrong",
+ "course": "ai-use",
+ "title": "Confident and wrong",
+ "minutes": 14,
+ "objectives": [
+  "Explain why a model that predicts likely text can state false facts fluently."
+ ],
+ "skills": [
+  "au-limits"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "A chatbot is asked for a book and a statistic. The reply is fluent and sure. This reply is an invented example.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "You: Recommend a book on market crashes, with one statistic from it.",
+      "Chatbot: Read \"Ledgers in the Storm: A Short History of Market Panics\" (2011).",
+      "Chatbot: It shows that 73% of market crashes follow a rise in interest rates."
+     ],
+     "wrap": true,
+     "title": "An invented example"
+    },
+    "state": {}
+   },
+   "question": "The title and the 73% both read smoothly. What can you tell from the reply alone?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nothing",
+      "text": "Nothing about whether they are real: fluent text is what it makes",
+      "correct": true
+     },
+     {
+      "id": "real",
+      "text": "They are real, since it gives a year, a title and a figure",
+      "why": "Details are cheap to write. A year and a percentage make text look checked, but they are just likely tokens."
+     },
+     {
+      "id": "false",
+      "text": "They are false, because chatbots make up every book they name",
+      "why": "Often the details are right. You cannot tell which from the text, so you check."
+     },
+     {
+      "id": "half",
+      "text": "The book is real, but the 73% may well be made up",
+      "why": "You trusted the title because it is long and specific. That tells you nothing either."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Would an invented title read any differently from a real one?"
+    },
+    {
+     "rung": "point",
+     "text": "Look at how sure the last line sounds.",
+     "highlight": [
+      "l2",
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The model writes likely text. A real title and an invented one read the same."
+    }
+   ],
+   "feedback": {
+    "correct": "From the text alone you cannot tell. Fluent and sure is how it writes, true or not.",
+    "generic": "Not quite right. Ask whether the wording alone could tell real from invented."
+   },
+   "explain": {
+    "text": "We made up the book and the statistic for this lesson, yet they read as well as real ones. A model writes likely text, so fluency tells you nothing about truth. The rest of this lesson shows why.",
+    "canvas": {
+     "shade": {
+      "claims": [
+       "l2",
+       "l3"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Back to the table from ai-basics. The text says \"the dog sat on the cat\", never \"the dog sat on the mat\". Step through the sentence one pair at a time.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "the",
+      "dog",
+      "sat",
+      "on",
+      "the",
+      "mat",
+      "."
+     ],
+     "steps": [
+      {
+       "highlight": {
+        "range": [
+         0,
+         1
+        ],
+        "label": "chance 1/6"
+       },
+       "caption": "\"dog\" after \"the\": 1 of 6 times in the text, so chance $\\tfrac16$."
+      },
+      {
+       "highlight": {
+        "range": [
+         1,
+         2
+        ],
+        "label": "chance 1"
+       },
+       "caption": "\"sat\" after \"dog\": 1 of 1 times in the text, so chance 1."
+      },
+      {
+       "highlight": {
+        "range": [
+         2,
+         3
+        ],
+        "label": "chance 1"
+       },
+       "caption": "\"on\" after \"sat\": 2 of 2 times in the text, so chance 1."
+      },
+      {
+       "highlight": {
+        "range": [
+         3,
+         4
+        ],
+        "label": "chance 1"
+       },
+       "caption": "\"the\" after \"on\": 2 of 2 times in the text, so chance 1."
+      },
+      {
+       "highlight": {
+        "range": [
+         4,
+         5
+        ],
+        "label": "chance 1/6"
+       },
+       "caption": "\"mat\" after \"the\": 1 of 6 times in the text, so chance $\\tfrac16$."
+      },
+      {
+       "highlight": {
+        "range": [
+         5,
+         6
+        ],
+        "label": "chance 1"
+       },
+       "caption": "\".\" after \"mat\": 1 of 1 times in the text, so chance 1."
+      }
+     ]
+    },
+    "state": {
+     "step": 0
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "label": "Pair",
+      "start": 0
+     }
+    ]
+   },
+   "question": "Multiply the six chances. What is the chance the table writes this sentence after \"the\"?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0278,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "fraction or decimal",
+    "label": "Chance of the sentence",
+    "accept": "1/36, or 0.0278 ± 0.0005",
+    "wrong": [
+     {
+      "id": "one-sixth",
+      "value": 0.1667,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "added-sixths",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Step through all six pairs and note each chance."
+    },
+    {
+     "rung": "point",
+     "text": "Two pairs have chance $\\tfrac16$; the other four have chance 1.",
+     "highlight": [
+      "c0",
+      "c1",
+      "c4",
+      "c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Multiply: $\\tfrac16 \\times \\tfrac16 = \\tfrac{1}{36}$, and the four 1s change nothing."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac16 \\times 1 \\times 1 \\times 1 \\times \\tfrac16 \\times 1 = \\tfrac{1}{36}$, about 0.028.",
+    "generic": "Not quite right. Multiply the chance of each of the six pairs.",
+    "byKey": {
+     "one-sixth": "You used one of the two $\\tfrac16$ pairs. Mat after the is also $\\tfrac16$, so multiply again.",
+     "added-sixths": "You added the two $\\tfrac16$ chances. One pair follows another, so the chances multiply.",
+     "zero": "You took a sentence not in the text to have chance 0. Every pair in it is in the text, so its chance is not 0."
+    }
+   },
+   "explain": {
+    "text": "Every pair in the sentence appears in the text, so each has a chance above 0. Multiplying gives $\\tfrac16 \\times \\tfrac16 = \\tfrac{1}{36}$, about 0.028. So about 1 run in 36 writes a sentence the text never says.",
+    "canvas": {
+     "highlight": {
+      "range": [
+       0,
+       6
+      ],
+      "label": "chance 1/36"
+     },
+     "caption": "Six true pairs, one sentence the text never says."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Every pair is true to the text; the sentence is not in it. A fluent statement that nothing the model saw supports, written because it is likely text, is called a **hallucination**.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "the",
+      "dog",
+      "sat",
+      "on",
+      "the",
+      "mat",
+      "."
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       0,
+       6
+      ],
+      "label": "never in the text"
+     }
+    }
+   },
+   "question": "Why can the table still write this sentence?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "joins",
+      "text": "It joins likely pairs, and nothing checks the whole sentence",
+      "correct": true
+     },
+     {
+      "id": "remembers",
+      "text": "It remembers the sentence from the text it read",
+      "why": "Search the text: it has \"the dog sat on the cat\". The mat sentence is new."
+     },
+     {
+      "id": "bug",
+      "text": "There is a bug in the way the table was built",
+      "why": "The table works as built: it joins likely pairs. That is the point."
+     },
+     {
+      "id": "zero",
+      "text": "It cannot: a sentence not in the text has chance 0",
+      "why": "You found its chance is $\\tfrac{1}{36}$, not 0. About 1 run in 36 writes it."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is each pair in the text?"
+    },
+    {
+     "rung": "point",
+     "text": "Each pair had a chance above 0.",
+     "highlight": [
+      "c4",
+      "c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The table checks pairs, one at a time. Nothing checks the whole sentence against the text."
+    }
+   ],
+   "feedback": {
+    "correct": "It joins likely pairs. Nothing checks the sentence as a whole.",
+    "generic": "Not quite right. Recall what the table looks at when it picks a word."
+   },
+   "explain": {
+    "text": "The table only ever looks at one pair at a time, and every pair is likely. Nothing compares the finished sentence with the text. A chatbot is far larger, but it too writes likely text with nothing checking it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Back to the book and the 73%. A chatbot can hallucinate for more than one reason.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "You: Recommend a book on market crashes, with one statistic from it.",
+      "Chatbot: Read \"Ledgers in the Storm: A Short History of Market Panics\" (2011).",
+      "Chatbot: It shows that 73% of market crashes follow a rise in interest rates."
+     ],
+     "wrap": true,
+     "title": "An invented example"
+    },
+    "state": {}
+   },
+   "question": "Select all that apply: why might it write an invented book and figure?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "likely",
+      "text": "It predicts likely words, not true ones",
+      "correct": true
+     },
+     {
+      "id": "helpful",
+      "text": "It was rewarded for sounding helpful, so it gives an answer",
+      "correct": true
+     },
+     {
+      "id": "unaware",
+      "text": "It cannot tell what it does not know",
+      "correct": true
+     },
+     {
+      "id": "lying",
+      "text": "It wants to trick you on purpose",
+      "why": "It has no aim to trick anyone. It writes likely text, as l1 to l3 trained it to."
+     },
+     {
+      "id": "makers",
+      "text": "Its makers put false facts into it",
+      "why": "Nobody needs to put falsehoods in. Likely text can be false all by itself."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Recall each stage: pretraining, fine-tuning, feedback."
+    },
+    {
+     "rung": "point",
+     "text": "One reason comes from each stage you met.",
+     "highlight": [
+      "l2",
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Pretraining predicts likely words; feedback rewards sounding helpful; and nothing tells it where its knowledge stops."
+    }
+   ],
+   "feedback": {
+    "correct": "Likely words, a reward for sounding helpful, and no sense of what it does not know.",
+    "generic": "Not quite right. Each stage of training gives one reason."
+   },
+   "explain": {
+    "text": "Pretraining makes it predict likely words, not true ones. Fine-tuning and feedback reward a helpful answer over \"I do not know\", unless the examples taught doubt. And nothing in training tells it where its knowledge stops."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Sort five claims from this reply. \"Likely true\" means general and widely known; \"check first\" means a specific number or source; \"likely invented\" means no one could know it.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "You: I want to start saving. Any facts I should know?",
+      "Chatbot: Saving a little each month adds up over the years.",
+      "Chatbot: If prices rise, a pound buys less in ten years than it does today.",
+      "Chatbot: UK prices rose 4% last year.",
+      "Chatbot: A 2017 study, \"Habits of Savers\", found that 41% of savers stop within a year.",
+      "Chatbot: Next year the FTSE 100 will rise exactly 9%."
+     ],
+     "wrap": true,
+     "title": "An invented example"
+    },
+    "state": {}
+   },
+   "question": "Drag each claim into its bin.",
+   "widget": {
+    "kind": "place",
+    "mode": "assign",
+    "tokens": [
+     {
+      "id": "save",
+      "text": "Saving monthly adds up"
+     },
+     {
+      "id": "prices",
+      "text": "A pound buys less if prices rise"
+     },
+     {
+      "id": "four",
+      "text": "UK prices rose 4% last year"
+     },
+     {
+      "id": "study",
+      "text": "A 2017 study found 41% stop"
+     },
+     {
+      "id": "nine",
+      "text": "The FTSE 100 will rise 9% next year"
+     }
+    ],
+    "slots": [
+     {
+      "id": "true",
+      "label": "Likely true",
+      "accepts": [
+       "save",
+       "prices"
+      ]
+     },
+     {
+      "id": "check",
+      "label": "Check first",
+      "accepts": [
+       "four",
+       "study"
+      ]
+     },
+     {
+      "id": "invented",
+      "label": "Likely invented",
+      "accepts": [
+       "nine"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which claims hold a specific number or a named source?"
+    },
+    {
+     "rung": "point",
+     "text": "The last line is about next year.",
+     "highlight": [
+      "l4",
+      "l5",
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Two general claims are likely true; the 4% and the study need checking; nobody can know next year's rise."
+    }
+   ],
+   "feedback": {
+    "correct": "Two general claims, two to check, and one that no one could know.",
+    "generic": "Not quite right. Ask of each claim: is it general, specific, or unknowable?",
+    "byKey": {
+     "four": "A specific figure for one year is exactly what to check. It may be right or wrong.",
+     "study": "A named study with a percentage is a source to find and read before you use it.",
+     "nine": "Nobody can know next year's rise, so an exact figure for it is invented.",
+     "save": "That saving adds up is general and widely known. It does not depend on one figure.",
+     "prices": "That rising prices shrink what a pound buys is general and widely known."
+    }
+   },
+   "explain": {
+    "text": "General, widely repeated claims are likely true. Specific numbers and named sources may be right or invented, so check them first. A precise figure for next year is invented, because no one can know it.",
+    "canvas": {
+     "shade": {
+      "check": [
+       "l4",
+       "l5"
+      ],
+      "invented": [
+       "l6"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "Another invented reply: \"The firm was founded in 1887. I am certain of this.\" A colleague says: \"It said it was certain, so it must be right.\"",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "You: When was the firm founded?",
+      "Chatbot: The firm was founded in 1887. I am certain of this."
+     ],
+     "wrap": true,
+     "title": "An invented example"
+    },
+    "state": {}
+   },
+   "question": "What does \"I am certain of this\" tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nothing",
+      "text": "Nothing about truth: it is likely text after a confident answer",
+      "correct": true
+     },
+     {
+      "id": "said-sure",
+      "text": "That the year is right, because the model said it was sure",
+      "why": "You took its words as a measure of its knowledge. \"I am certain\" is just more likely text."
+     },
+     {
+      "id": "checked",
+      "text": "That the model checked the year before replying",
+      "why": "Nothing in the reply was checked. It was written one likely token at a time."
+     },
+     {
+      "id": "wrong",
+      "text": "That the year is wrong, as sure answers usually are",
+      "why": "Sure answers are often right too. The words tell you nothing either way."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How was the phrase \"I am certain\" produced?"
+    },
+    {
+     "rung": "point",
+     "text": "It is the second sentence of the reply.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Like every other token, it was written because it is likely text there."
+    }
+   ],
+   "feedback": {
+    "correct": "\"I am certain\" is more likely text, not a measure of truth.",
+    "generic": "Not quite right. Ask how the phrase itself was written.",
+    "byKey": {
+     "said-sure": "You took \"I am certain\" as a sign the year is right. It is more likely text, written the same way as the year, and checks nothing."
+    }
+   },
+   "explain": {
+    "text": "A sentence saying \"I am certain\" is written the same way as the year: because it is likely text. It may follow a right year or a wrong one. Only a check against a source tells you which.",
+    "canvas": {
+     "shade": {
+      "claim": [
+       "l2"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Two replies, both \"certain\". The first is right. The second is wrong: UK coins went decimal in 1971.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "You: What currency does the UK use?",
+       "Chatbot: The pound sterling. I am certain of this."
+      ],
+      "wrap": true,
+      "title": "Reply 1 (invented)"
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "You: In which year did UK coins go decimal?",
+       "Chatbot: In 1981. I am certain of this."
+      ],
+      "wrap": true,
+      "title": "Reply 2 (invented)"
+     },
+     "state": {}
+    }
+   },
+   "question": "What would have told the right reply from the wrong one?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "check",
+      "text": "Checking each against a reliable source",
+      "correct": true
+     },
+     {
+      "id": "tone",
+      "text": "A careful reading of the tone of each reply",
+      "why": "The tone is the same in both. Tone tells you nothing here."
+     },
+     {
+      "id": "length",
+      "text": "The length of each reply",
+      "why": "Both are short. Length tells you nothing about truth."
+     },
+     {
+      "id": "ask",
+      "text": "Asking it again whether it is sure",
+      "why": "It would most likely say it is sure again. Asking again gives more likely text, not a check."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is different about how the two replies sound?"
+    },
+    {
+     "rung": "point",
+     "text": "Both end with the same sentence.",
+     "highlight": [
+      "left:l2",
+      "right:l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "They sound the same, so only a check against a source can tell them apart."
+    }
+   ],
+   "feedback": {
+    "correct": "Only a check against a source separates them. They sound exactly alike.",
+    "generic": "Not quite right. Ask what differs between the two replies, apart from the facts."
+   },
+   "explain": {
+    "text": "A right answer and a wrong one came with the same words of confidence. Tone tells you nothing. Checking against a reliable source does."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "The table multiplied true pairs into a sentence the text never says: $\\tfrac16 \\times 1 \\times 1 \\times 1 \\times \\tfrac16 \\times 1 = \\tfrac{1}{36}$. A chatbot does the same far larger. So treat every specific name, number, quote and reference as unchecked until you check it.",
+   "question": "Which parts of a chatbot's reply should you treat as unchecked?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "all-specific",
+      "text": "Every specific name, number, quote and reference",
+      "correct": true
+     },
+     {
+      "id": "unsure",
+      "text": "Only the parts where it says it is unsure",
+      "why": "Confidence is likely text too. A sure-sounding claim needs checking as much as any."
+     },
+     {
+      "id": "numbers",
+      "text": "Only the numbers, since names and quotes are safe",
+      "why": "Names, quotes and references are invented as easily as numbers."
+     },
+     {
+      "id": "none",
+      "text": "None, as long as the chatbot is widely used",
+      "why": "Every chatbot trained this way writes likely text. Being widely used checks nothing."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Every specific name, number, quote and reference, until checked.",
+    "generic": "Not quite right. Recall which details the book example invented."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "An analyst asks a chatbot for a figure for a client pitch. They paste the reply straight in. The reply below is an invented example.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "You: What is the average yearly return of the FTSE 100 since 1984?",
+      "Chatbot: Since 1984 the FTSE 100 has returned an average of 7.2% a year, including dividends."
+     ],
+     "wrap": true,
+     "title": "An invented example"
+    },
+    "state": {}
+   },
+   "question": "What is the problem, and what should come first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "check",
+      "text": "The figure is unchecked: find it in the index's published data before using it",
+      "correct": true
+     },
+     {
+      "id": "precise",
+      "text": "None at all, since a figure with a decimal place must be carefully worked out",
+      "why": "A decimal place is cheap to write. A likely-looking number with one is easy text to produce."
+     },
+     {
+      "id": "drop",
+      "text": "The figure must be wrong, so it should be dropped from the pitch entirely",
+      "why": "It may be right. The point is that you do not know until you check."
+     },
+     {
+      "id": "again",
+      "text": "Nothing, as long as asking the chatbot again gives the same answer",
+      "why": "Asking the same model again only gives more likely text, not a check. Level 2 shows real checks."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Who checked the 7.2%?"
+    },
+    {
+     "rung": "point",
+     "text": "The figure is in the second line.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Nobody did. A figure for clients must be found in the source data first."
+    }
+   ],
+   "feedback": {
+    "correct": "The 7.2% is unchecked. Find it in the index's own published data before it goes to a client. Use the same period, with dividends.",
+    "generic": "Not quite right. Ask who has checked the figure so far."
+   },
+   "explain": {
+    "text": "The 7.2% might be right, a little off, or invented, and the reply reads the same either way. A client sees it as the firm's claim. So it is checked against the published data first, with the same start year and dividends included.",
+    "canvas": {
+     "shade": {
+      "figure": [
+       "l2"
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A model writes likely text. Joining likely pieces can give a fluent sentence nothing supports: a hallucination.",
+   "It happens because the model predicts likely words, was rewarded for sounding helpful, and cannot tell what it does not know.",
+   "Tone tells you nothing: \"I am certain\" is likely text. Treat every specific name, number, quote and reference as unchecked until checked."
+  ],
+  "formula": {
+   "name": "A fluent sentence the text never says",
+   "tex": "\\tfrac16 \\times 1 \\times 1 \\times 1 \\times \\tfrac16 \\times 1 = \\tfrac{1}{36}",
+   "note": "Every pair is in the text; the sentence is not."
+  },
+  "trap": "\"It said it was sure, so it is right\" is wrong. A sure tone is likely text, not a check."
+ },
+ "quiz": [
+  {
+   "id": "q-same-chance",
+   "difficulty": 3,
+   "question": "From the ai-basics table, \"the cat sat on the mat .\" is in the text and gets chance $\\tfrac{1}{36}$ after \"the\". \"The dog sat on the mat .\" is not in the text and also gets $\\tfrac{1}{36}$. What does this show?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cannot-tell",
+      "text": "The chance cannot tell a sentence in the text from one that is not",
+      "correct": true
+     },
+     {
+      "id": "both-true",
+      "text": "Both sentences must be in the text",
+      "why": "Search the text: only the cat sentence is there."
+     },
+     {
+      "id": "mistake",
+      "text": "One of the two chances must be a mistake",
+      "why": "Both are right: $\\tfrac12 \\times \\tfrac13 \\times 1 \\times 1 \\times \\tfrac16 \\times 1$ and $\\tfrac16 \\times 1 \\times 1 \\times 1 \\times \\tfrac16 \\times 1$ are each $\\tfrac{1}{36}$."
+     },
+     {
+      "id": "higher",
+      "text": "A sentence in the text always gets a higher chance",
+      "why": "Here they are equal, so being in the text did not raise the chance."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Seen and unseen sentences can get the same chance: likely is not the same as true.",
+    "generic": "Not quite right. Compare the two chances."
+   },
+   "explain": {
+    "text": "The cat sentence is $\\tfrac12 \\times \\tfrac13 \\times 1 \\times 1 \\times \\tfrac16 \\times 1 = \\tfrac{1}{36}$, the same as the dog sentence. The table gives no sign which one the text says. Likely and true are different things."
+   }
+  },
+  {
+   "id": "q-certain",
+   "difficulty": 2,
+   "question": "A chatbot ends its answer with \"I am completely certain.\" What does that tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nothing",
+      "text": "Nothing about whether the answer is right",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "That the answer is right, since it says so",
+      "why": "\"I am completely certain\" is likely text, not a measure of truth."
+     },
+     {
+      "id": "checked",
+      "text": "That it checked the answer before replying",
+      "why": "Nothing was checked; the words were predicted."
+     },
+     {
+      "id": "wrong",
+      "text": "That the answer is probably wrong",
+      "why": "Confident answers are often right. The words tell you nothing either way."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Nothing: the phrase is likely text.",
+    "generic": "Not quite right. Ask how the phrase was written."
+   },
+   "explain": {
+    "text": "The phrase is written the same way as the answer: as likely text. A right answer and a wrong one can both end with it."
+   }
+  },
+  {
+   "id": "q-which",
+   "difficulty": 2,
+   "question": "Which of these is a hallucination?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "report",
+      "text": "A reply that cites a report that does not exist",
+      "correct": true
+     },
+     {
+      "id": "dunno",
+      "text": "A reply that says \"I do not know\"",
+      "why": "Admitting it does not know is the opposite of a hallucination."
+     },
+     {
+      "id": "sum",
+      "text": "A reply that gets 15% of £200 right",
+      "why": "A right answer is not a hallucination."
+     },
+     {
+      "id": "tone",
+      "text": "A reply written in a cheerful tone",
+      "why": "Tone is style, not a false statement."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "An invented report, stated fluently, is a hallucination.",
+    "generic": "Not quite right. A hallucination is a fluent statement nothing supports."
+   },
+   "explain": {
+    "text": "A hallucination is a fluent statement that nothing the model saw supports. A report that does not exist, cited as if real, is one."
+   }
+  },
+  {
+   "id": "q-what-check",
+   "difficulty": 3,
+   "question": "You will paste parts of a chatbot's reply into a client note. Which part matters most to check first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "figure",
+      "text": "The specific percentage you will quote to the client",
+      "correct": true
+     },
+     {
+      "id": "greeting",
+      "text": "The friendly opening sentence",
+      "why": "The greeting states no fact. Check the claims a client will rely on."
+     },
+     {
+      "id": "general",
+      "text": "A general remark that prices change over time",
+      "why": "That is general and widely known. The specific figure is the risk."
+     },
+     {
+      "id": "length",
+      "text": "Whether the reply is long enough",
+      "why": "Length is not a fact to check."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The specific figure a client will rely on.",
+    "generic": "Not quite right. Ask which detail could be invented and would matter."
+   },
+   "explain": {
+    "text": "A specific figure is easy for a model to invent and costly if wrong in front of a client. Check it against its source first."
+   }
+  }
+ ]
+}

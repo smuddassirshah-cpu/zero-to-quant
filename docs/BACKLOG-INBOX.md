@@ -131,3 +131,13 @@ Raised later (audit trig):
 Raised later (session AK, strand ai):
 - (engine-pass-ak, open) Learn and Review list AI topics as ordinary rows; group them under the strand badge or a strand heading.
 - (engine-pass-ak, open) A stage exam's `draw` sources are not checked for ai origin; add a validator error if a stage exam draws from an `ai` course.
+Raised later (ai-use level 1):
+- `array` canvas: a `highlight.range` band `label` is plain text, so KaTeX shows raw (`chance $\tfrac16$`); `ai-use/l4-confident-and-wrong` `screens[1]` writes "chance 1/6" instead. Render band labels like captions.
+- No chat-transcript canvas: every chatbot reply in ai-use is a `console` with "You:" and "Chatbot:" prefixes (monospace, `wrap: true`). A `chat` canvas (speaker bubbles, tappable turns, a "made-up example" tag) would read better for the whole AI strand.
+- Ladder canvas-kind warning fires between `array` (a token row) and `console` (a transcript), and between `table` and `graph`, though the screens show the same text; add `array` and `console` to the natural neighbours (`l1-reading-the-internet` `screens[4]`, `l4` `screens[3]`).
+- `tap-regions` in a part needs the canvas on the part; an item-level stem canvas does not count, so a transcript that later parts refer to is drawn inside part 1 only (`ai-use/homework-1` `h3-six-claims`, `problems-1` `p3-best-fund`).
+Raised later (ai-use level 2):
+- `console` tap mode selects whole lines only. "Tap the claims in this reply" needs one claim per line, so every transcript is written a sentence to a line (`ai-use/l7-checking-claims` `screens[1]`, `l8` `screens[1]`); a phrase-level tap (spans inside a line) would allow real paragraphs.
+- `pair` with `tap: "sides"` makes each side one target, so a screen cannot compare two worked replies and also ask for the wrong step inside one; `ai-use/l8-asking-for-the-working` splits this over `screens[0]` (tap a side) and `screens[1]` (tap a line).
+Raised later (ai-use level 3):
+- `graph` `rect` nodes in a row of three overlapped at exactly 440 px with labels of 15 to 17 characters ("Stored for a time", "Used in training?"): the width cap of ENGINE-BACKLOG 609 applies only below 440 px. `ai-use/l9-what-not-to-paste` `screens[1]` now uses two-line labels; apply the cap at 440 px too, or whenever two boxes would touch.
