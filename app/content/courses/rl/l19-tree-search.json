@@ -1,0 +1,1014 @@
+{
+ "id": "l19-tree-search",
+ "course": "rl",
+ "title": "Monte Carlo tree search",
+ "minutes": 15,
+ "objectives": [
+  "Build Monte Carlo tree search with the UCB rule in the tree."
+ ],
+ "skills": [
+  "rl-search"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which branch to try next",
+   "prose": "A search has tried two moves from the root, 4 times in all: A won 2 of 3 random playouts, B won 1 of 1. As in level 1, a well-tried average deserves less benefit of the doubt than a barely tried one.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Child",
+      "Wins $w$",
+      "Visits $n$"
+     ],
+     "rows": [
+      [
+       "A",
+       "2",
+       "3"
+      ],
+      [
+       "B",
+       "1",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which move should the next playout start from?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "B",
+      "text": "B: higher average, fewer visits",
+      "correct": true
+     },
+     {
+      "id": "A",
+      "text": "A: it has the most wins so far",
+      "why": "Wins alone favour whatever was tried most. Compare averages and how sure each is."
+     },
+     {
+      "id": "both",
+      "text": "Neither: stop and pick A",
+      "why": "Four playouts are far too few to stop."
+     },
+     {
+      "id": "rand",
+      "text": "Pick one of the two at random",
+      "why": "We can do better: UCB from level 1 weighs average and uncertainty."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Level 1's UCB adds a bonus that shrinks with visits."
+    },
+    {
+     "rung": "point",
+     "text": "B has 1 visit, A has 3."
+    },
+    {
+     "rung": "step",
+     "text": "B's average is also higher: 1 against 0.67."
+    }
+   ],
+   "feedback": {
+    "correct": "B: higher average and a larger bonus.",
+    "generic": "Not quite. Think of UCB from level 1.",
+    "byKey": {
+     "A": "You counted wins. A has more because it was tried more."
+    }
+   },
+   "explain": {
+    "text": "B's average is 1 and its bonus large; A's average is 0.67 with a smaller bonus. Treating each node's children as a bandit is the heart of **Monte Carlo tree search**."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Visits pile up on the winner",
+   "prose": "X to move can win at once in cell 2 (top right). We ran MCTS from this board, seed 0. Slide through the number of iterations and watch the visit counts.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "c2",
+       "label": "cell 2"
+      },
+      {
+       "id": "c5",
+       "label": "cell 5"
+      },
+      {
+       "id": "c6",
+       "label": "cell 6"
+      },
+      {
+       "id": "c7",
+       "label": "cell 7"
+      },
+      {
+       "id": "c8",
+       "label": "cell 8"
+      }
+     ],
+     "yLabel": "visits",
+     "showValues": true
+    },
+    "state": {
+     "values": {
+      "c2": 9,
+      "c5": 4,
+      "c6": 3,
+      "c7": 2,
+      "c8": 2
+     },
+     "caption": "20 iterations, seed 0"
+    },
+    "controls": [
+     {
+      "bind": "frame",
+      "frames": [
+       {
+        "values": {
+         "c2": 9,
+         "c5": 4,
+         "c6": 3,
+         "c7": 2,
+         "c8": 2
+        },
+        "caption": "20 iterations, seed 0"
+       },
+       {
+        "values": {
+         "c2": 26,
+         "c5": 11,
+         "c6": 5,
+         "c7": 4,
+         "c8": 4
+        },
+        "caption": "50 iterations, seed 0"
+       },
+       {
+        "values": {
+         "c2": 140,
+         "c5": 25,
+         "c6": 13,
+         "c7": 11,
+         "c8": 11
+        },
+        "caption": "200 iterations, seed 0"
+       },
+       {
+        "values": {
+         "c2": 898,
+         "c5": 47,
+         "c6": 21,
+         "c7": 17,
+         "c8": 17
+        },
+        "caption": "1000 iterations, seed 0"
+       }
+      ],
+      "frameLabels": [
+       "20",
+       "50",
+       "200",
+       "1000"
+      ],
+      "label": "Iterations"
+     }
+    ]
+   },
+   "question": "Where do the visits go as the search grows?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "2",
+      "text": "Most go to cell 2, more so over time",
+      "correct": true
+     },
+     {
+      "id": "even",
+      "text": "They stay spread evenly over cells",
+      "why": "Slide to 1,000: cell 2 has 898."
+     },
+     {
+      "id": "5",
+      "text": "Most go to cell 5, the block",
+      "why": "Blocking matters only if X cannot win at once."
+     },
+     {
+      "id": "first",
+      "text": "All go to the first cell tried",
+      "why": "Every child is tried once first; then UCT chooses."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Cell 2 takes 9 of 20 visits, then 898 of 1,000.",
+    "generic": "Slide to the end."
+   },
+   "explain": {
+    "text": "Every playout from cell 2 is a win, so its average stays at 1 and UCT keeps choosing it. The other moves get just enough visits to keep their bonus in check."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The UCT score",
+   "prose": "Inside the tree, MCTS picks the child with the largest **UCT** score $\\dfrac{w}{n} + c\\sqrt{\\dfrac{\\ln N}{n}}$, with $N$ the parent's visits and $c = \\sqrt 2$ for rewards in $[0, 1]$: level 1's UCB bonus.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Child",
+      "Wins $w$",
+      "Visits $n$"
+     ],
+     "rows": [
+      [
+       "A",
+       "2",
+       "3"
+      ],
+      [
+       "B",
+       "1",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is child A's score ($w = 2$, $n = 3$, $N = 4$)? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.628,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "nobonus",
+      "value": 0.6667,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "noroot",
+      "value": 2.1323,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The average is $2/3$."
+    },
+    {
+     "rung": "point",
+     "text": "The bonus is $\\sqrt2 \\sqrt{\\ln 4 / 3}$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.6667 + 0.9613$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.6667 + 0.9613 = 1.6280$; B scores 2.6651.",
+    "generic": "Not quite. Add the average and the bonus.",
+    "byKey": {
+     "nobonus": "That is the average alone.",
+     "noroot": "You left out the square root in the bonus."
+    }
+   },
+   "explain": {
+    "text": "A scores 1.6280 and B 2.6651, so the next iteration descends into B, as you chose."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Backing up a result",
+   "prose": "One iteration has four steps: **select** by UCT down the tree, **expand** one new child, **simulate** a random playout from it, and **back up** the result along the path. Each node keeps $w$ from the view of the player who moved into it: 1 for a win, 0.5 for a draw.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Child",
+      "Wins $w$",
+      "Visits $n$"
+     ],
+     "rows": [
+      [
+       "A",
+       "2",
+       "3"
+      ],
+      [
+       "B",
+       "1",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "A node had $w = 3$, $n = 5$. The new playout is a draw. What is its average after the back-up? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5833,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "nodraw",
+      "value": 0.5,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "nocount",
+      "value": 0.7,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Draws add 0.5 to $w$ and 1 to $n$."
+    },
+    {
+     "rung": "point",
+     "text": "$w = 3.5$, $n = 6$."
+    },
+    {
+     "rung": "step",
+     "text": "$3.5/6$."
+    }
+   ],
+   "feedback": {
+    "correct": "$3.5/6 = 0.5833$.",
+    "generic": "Not quite. Add 0.5 to $w$ and 1 to $n$.",
+    "byKey": {
+     "nodraw": "You added nothing for the draw: a draw counts half.",
+     "nocount": "You forgot to add the visit."
+    }
+   },
+   "explain": {
+    "text": "After the draw $w = 3.5$ and $n = 6$, an average of 0.5833."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The most visited move",
+   "prose": "When the iterations run out, MCTS plays the root's most visited child, not the one with the best average. After 1,000 iterations from the winning board, cell 2 has 898 visits.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "c2",
+       "label": "cell 2"
+      },
+      {
+       "id": "c5",
+       "label": "cell 5"
+      },
+      {
+       "id": "c6",
+       "label": "cell 6"
+      },
+      {
+       "id": "c7",
+       "label": "cell 7"
+      },
+      {
+       "id": "c8",
+       "label": "cell 8"
+      }
+     ],
+     "yLabel": "visits",
+     "showValues": true
+    },
+    "state": {
+     "values": {
+      "c2": 898,
+      "c5": 47,
+      "c6": 21,
+      "c7": 17,
+      "c8": 17
+     },
+     "caption": "1000 iterations, seed 0"
+    }
+   },
+   "question": "What share of the root's visits went to cell 2? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.898,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "rest",
+      "value": 0.102,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "pct",
+      "value": 89.8,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide 898 by 1,000."
+    },
+    {
+     "rung": "point",
+     "text": "Each iteration visits exactly one root child.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.898."
+    }
+   ],
+   "feedback": {
+    "correct": "$898/1{,}000 = 0.898$.",
+    "generic": "Not quite. Divide by the 1,000 iterations.",
+    "byKey": {
+     "rest": "That is the share of the other four cells.",
+     "pct": "Give a decimal, not a percentage."
+    }
+   },
+   "explain": {
+    "text": "Each iteration passes through one root child, so the shares sum to 1; cell 2 took 0.898. Visit counts are steadier than averages."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code MCTS",
+   "prose": "Write `uct_score`, then `mcts(board, player, iterations, seed)`: select by UCT while a node is fully expanded, expand its first untried move, play out with `rng`, and back up to every node on the path. `Node`, `moves` and `playout` are given.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 3,
+     "cells": [
+      [
+       "X",
+       "X",
+       ""
+      ],
+      [
+       "O",
+       "O",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false
+    },
+    "state": {}
+   },
+   "question": "Complete the two functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport random\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef moves(board):\n    \"\"\"Empty cells, or none once someone has won.\"\"\"\n    return [] if winner(board) else [i for i in range(9) if board[i] == '.']\n\ndef playout(board, player, rng):\n    \"\"\"Random moves to the end; return 'X', 'O' or None (draw).\"\"\"\n    while True:\n        w = winner(board)\n        if w:\n            return w\n        ms = moves(board)\n        if not ms:\n            return None\n        i = rng.choice(ms)\n        board = board[:i] + player + board[i + 1:]\n        player = other(player)\n\nclass Node:\n    def __init__(self, board, player, move=None, mover=None):\n        self.board, self.player = board, player   # player to move\n        self.move, self.mover = move, mover       # how we got here\n        self.untried = moves(board)               # in cell order\n        self.children = []\n        self.n, self.w = 0, 0.0                    # visits, mover's wins\n\ndef uct_score(w, n, N, c=math.sqrt(2)):\n    \"\"\"Average plus bonus; an unvisited child scores infinity.\"\"\"\n    ...\n\ndef mcts(board, player, iterations, seed, c=math.sqrt(2)):\n    \"\"\"Select by UCT, expand the first untried move, play out\n    at random, back up; return the most visited first move.\"\"\"\n    rng = random.Random(seed)\n    root = Node(board, player)\n    ...\n",
+    "solution": "import math\nimport random\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef moves(board):\n    \"\"\"Empty cells, or none once someone has won.\"\"\"\n    return [] if winner(board) else [i for i in range(9) if board[i] == '.']\n\ndef playout(board, player, rng):\n    \"\"\"Random moves to the end; return 'X', 'O' or None (draw).\"\"\"\n    while True:\n        w = winner(board)\n        if w:\n            return w\n        ms = moves(board)\n        if not ms:\n            return None\n        i = rng.choice(ms)\n        board = board[:i] + player + board[i + 1:]\n        player = other(player)\n\nclass Node:\n    def __init__(self, board, player, move=None, mover=None):\n        self.board, self.player = board, player   # player to move\n        self.move, self.mover = move, mover       # how we got here\n        self.untried = moves(board)               # in cell order\n        self.children = []\n        self.n, self.w = 0, 0.0                    # visits, mover's wins\n\ndef uct_score(w, n, N, c=math.sqrt(2)):\n    \"\"\"Average plus bonus; an unvisited child scores infinity.\"\"\"\n    if n == 0:\n        return math.inf\n    return w / n + c * math.sqrt(math.log(N) / n)\n\ndef mcts(board, player, iterations, seed, c=math.sqrt(2)):\n    \"\"\"Select by UCT, expand the first untried move, play out\n    at random, back up; return the most visited first move.\"\"\"\n    rng = random.Random(seed)\n    root = Node(board, player)\n    for _ in range(iterations):\n        node, path = root, [root]\n        while not node.untried and node.children:        # select\n            parent = node\n            node = max(parent.children,\n                       key=lambda ch: uct_score(ch.w, ch.n, parent.n, c))\n            path.append(node)\n        if node.untried:                                 # expand\n            m = node.untried.pop(0)\n            b = node.board[:m] + node.player + node.board[m + 1:]\n            child = Node(b, other(node.player), m, node.player)\n            node.children.append(child)\n            node = child\n            path.append(node)\n        result = playout(node.board, node.player, rng)   # simulate\n        for nd in path:                                  # back up\n            nd.n += 1\n            if nd.mover is not None:\n                if result == nd.mover:\n                    nd.w += 1.0\n                elif result is None:\n                    nd.w += 0.5\n    return max(root.children, key=lambda ch: ch.n).move\n",
+    "examples": [
+     {
+      "call": "uct_score(2, 3, 4)",
+      "expect": "1.6280179244005888",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "uct_score(2, 3, 4)",
+      "expect": "1.6280179244005888",
+      "compare": "isclose"
+     },
+     {
+      "call": "uct_score(1, 1, 4)",
+      "expect": "2.6651092223153956",
+      "compare": "isclose"
+     },
+     {
+      "call": "uct_score(0, 0, 10)",
+      "expect": "math.inf",
+      "compare": "equal"
+     },
+     {
+      "call": "uct_score(30, 40, 41, 0.5)",
+      "expect": "0.9023477122142041",
+      "compare": "isclose"
+     },
+     {
+      "call": "[mcts('XX.OO....', 'X', 200, s) for s in range(3)]",
+      "expect": "[2, 2, 2]",
+      "compare": "equal",
+      "budget": 3000
+     },
+     {
+      "call": "mcts('OO.X....X', 'X', 300, 0)",
+      "expect": "2",
+      "compare": "equal",
+      "budget": 3000
+     },
+     {
+      "call": "mcts('XOXXOOO.X', 'X', 5, 0)",
+      "expect": "7",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: UCT scores (`math.isclose`), then seeded searches on planted boards: a win in one for seeds 0 to 2, a block, and a board with one move left.",
+    "mutants": [
+     {
+      "source": "import math\nimport random\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef moves(board):\n    \"\"\"Empty cells, or none once someone has won.\"\"\"\n    return [] if winner(board) else [i for i in range(9) if board[i] == '.']\n\ndef playout(board, player, rng):\n    \"\"\"Random moves to the end; return 'X', 'O' or None (draw).\"\"\"\n    while True:\n        w = winner(board)\n        if w:\n            return w\n        ms = moves(board)\n        if not ms:\n            return None\n        i = rng.choice(ms)\n        board = board[:i] + player + board[i + 1:]\n        player = other(player)\n\nclass Node:\n    def __init__(self, board, player, move=None, mover=None):\n        self.board, self.player = board, player   # player to move\n        self.move, self.mover = move, mover       # how we got here\n        self.untried = moves(board)               # in cell order\n        self.children = []\n        self.n, self.w = 0, 0.0                    # visits, mover's wins\n\ndef uct_score(w, n, N, c=math.sqrt(2)):\n    \"\"\"Average plus bonus; an unvisited child scores infinity.\"\"\"\n    if n == 0:\n        return math.inf\n    return w / n\n\ndef mcts(board, player, iterations, seed, c=math.sqrt(2)):\n    \"\"\"Select by UCT, expand the first untried move, play out\n    at random, back up; return the most visited first move.\"\"\"\n    rng = random.Random(seed)\n    root = Node(board, player)\n    for _ in range(iterations):\n        node, path = root, [root]\n        while not node.untried and node.children:        # select\n            parent = node\n            node = max(parent.children,\n                       key=lambda ch: uct_score(ch.w, ch.n, parent.n, c))\n            path.append(node)\n        if node.untried:                                 # expand\n            m = node.untried.pop(0)\n            b = node.board[:m] + node.player + node.board[m + 1:]\n            child = Node(b, other(node.player), m, node.player)\n            node.children.append(child)\n            node = child\n            path.append(node)\n        result = playout(node.board, node.player, rng)   # simulate\n        for nd in path:                                  # back up\n            nd.n += 1\n            if nd.mover is not None:\n                if result == nd.mover:\n                    nd.w += 1.0\n                elif result is None:\n                    nd.w += 0.5\n    return max(root.children, key=lambda ch: ch.n).move\n",
+      "test": 1,
+      "symptom": "No exploration bonus: the child with the best average so far."
+     },
+     {
+      "source": "import math\nimport random\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef moves(board):\n    \"\"\"Empty cells, or none once someone has won.\"\"\"\n    return [] if winner(board) else [i for i in range(9) if board[i] == '.']\n\ndef playout(board, player, rng):\n    \"\"\"Random moves to the end; return 'X', 'O' or None (draw).\"\"\"\n    while True:\n        w = winner(board)\n        if w:\n            return w\n        ms = moves(board)\n        if not ms:\n            return None\n        i = rng.choice(ms)\n        board = board[:i] + player + board[i + 1:]\n        player = other(player)\n\nclass Node:\n    def __init__(self, board, player, move=None, mover=None):\n        self.board, self.player = board, player   # player to move\n        self.move, self.mover = move, mover       # how we got here\n        self.untried = moves(board)               # in cell order\n        self.children = []\n        self.n, self.w = 0, 0.0                    # visits, mover's wins\n\ndef uct_score(w, n, N, c=math.sqrt(2)):\n    \"\"\"Average plus bonus; an unvisited child scores infinity.\"\"\"\n    if n == 0:\n        return math.inf\n    return w / n + c * math.sqrt(math.log(N) / n)\n\ndef mcts(board, player, iterations, seed, c=math.sqrt(2)):\n    \"\"\"Select by UCT, expand the first untried move, play out\n    at random, back up; return the most visited first move.\"\"\"\n    rng = random.Random(seed)\n    root = Node(board, player)\n    for _ in range(iterations):\n        node, path = root, [root]\n        while not node.untried and node.children:        # select\n            parent = node\n            node = max(parent.children,\n                       key=lambda ch: uct_score(ch.w, ch.n, parent.n, c))\n            path.append(node)\n        if node.untried:                                 # expand\n            m = node.untried.pop(0)\n            b = node.board[:m] + node.player + node.board[m + 1:]\n            child = Node(b, other(node.player), m, node.player)\n            node.children.append(child)\n            node = child\n            path.append(node)\n        result = playout(node.board, node.player, rng)   # simulate\n        for nd in path:                                  # back up\n            nd.n += 1\n            if nd.mover is not None:\n                if result == nd.player:\n                    nd.w += 1.0\n                elif result is None:\n                    nd.w += 0.5\n    return max(root.children, key=lambda ch: ch.n).move\n",
+      "test": 5,
+      "symptom": "Backs up the result for the player to move, not the player who moved."
+     }
+    ],
+    "budget": 3000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "An unvisited child scores `math.inf`."
+    },
+    {
+     "rung": "point",
+     "text": "A node's `w` counts results for `mover`, the player who moved into it."
+    },
+    {
+     "rung": "step",
+     "text": "Return `max(root.children, key=lambda ch: ch.n).move`."
+    }
+   ],
+   "feedback": {
+    "correct": "All hidden tests pass.",
+    "generic": "Some tests fail. Read the first failing row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A lucky average",
+   "prose": "After a short search, root child A has 1 visit and 1 win; child B has 40 visits and 30 wins. A colleague plays A, \"since its average is 1.0, against B's 0.75\".",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Child",
+      "Wins",
+      "Visits",
+      "Average"
+     ],
+     "rows": [
+      [
+       "A",
+       "1",
+       "1",
+       "1.00"
+      ],
+      [
+       "B",
+       "30",
+       "40",
+       "0.75"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which move should the search play?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "B",
+      "text": "B, the most visited",
+      "correct": true
+     },
+     {
+      "id": "A",
+      "text": "A, the best average",
+      "why": "One playout is one sample: level 1's trap of a high estimate from a small count."
+     },
+     {
+      "id": "either",
+      "text": "Either: both look winning",
+      "why": "A's 1.0 rests on a single random game."
+     },
+     {
+      "id": "more",
+      "text": "Neither: the averages are useless",
+      "why": "They are useful; the visit counts say how far to trust them."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How sure is each average?"
+    },
+    {
+     "rung": "point",
+     "text": "A rests on one playout."
+    },
+    {
+     "rung": "step",
+     "text": "UCT kept visiting B because it kept looking good."
+    }
+   ],
+   "feedback": {
+    "correct": "Play the most visited move.",
+    "generic": "Not quite. Weigh how often each was tried.",
+    "byKey": {
+     "A": "You picked the highest average from a single visit, the level 1 trap again."
+    }
+   },
+   "explain": {
+    "text": "UCT sends visits to moves that stay good under scrutiny, so B's 40 visits are the evidence. A's perfect average is one lucky playout."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One move left",
+   "prose": "On this board X has one empty cell to play.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 3,
+     "cells": [
+      [
+       "X",
+       "O",
+       "X"
+      ],
+      [
+       "X",
+       "O",
+       "O"
+      ],
+      [
+       "O",
+       "",
+       "X"
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false
+    },
+    "state": {}
+   },
+   "question": "How many children does the root have, and what does MCTS return after 5 iterations? Give the number of children.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "cells",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the empty cells."
+    },
+    {
+     "rung": "point",
+     "text": "Only cell 7 is empty.",
+     "highlight": [
+      "r3c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "One child; it is returned."
+    }
+   ],
+   "feedback": {
+    "correct": "One child, cell 7, so MCTS returns 7 whatever the playouts say.",
+    "generic": "Not quite. Count the legal moves.",
+    "byKey": {
+     "cells": "Only empty cells are moves.",
+     "zero": "The game is not over: one cell is still empty."
+    }
+   },
+   "explain": {
+    "text": "With one legal move the root has 1 child and every iteration goes through it. Search costs time but cannot change a forced move."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Monte Carlo tree search",
+   "prose": "Repeat: select by $\\dfrac{w}{n} + c\\sqrt{\\dfrac{\\ln N}{n}}$ down the tree, expand one child, play out at random, back up the result. Then play the most visited move. It needs no evaluation function: random games estimate values.",
+   "question": "What does MCTS use instead of an evaluation function?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "playout",
+      "text": "Results of random playouts",
+      "correct": true
+     },
+     {
+      "id": "table",
+      "text": "A table of every position seen",
+      "why": "That is l17's memo, which needs the whole tree."
+     },
+     {
+      "id": "ab",
+      "text": "Alpha-beta bounds",
+      "why": "MCTS prunes nothing; it spends visits unevenly instead."
+     },
+     {
+      "id": "human",
+      "text": "Rules of thumb from experts",
+      "why": "It needs only the rules of the game."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Playouts estimate values; UCT spends them where they matter.",
+    "generic": "Look at the simulate step."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Searching execution paths",
+   "prose": "An execution desk searches over slicing schedules with a market simulator. After 600 simulations, schedule P has 420 runs averaging 0.71 of the best fill; schedule Q has 9 runs averaging 0.78.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Schedule",
+      "Runs",
+      "Average fill"
+     ],
+     "rows": [
+      [
+       "P",
+       "420",
+       "0.71"
+      ],
+      [
+       "Q",
+       "9",
+       "0.78"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which schedule should the desk trade if it must stop now?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "P",
+      "text": "P, the most simulated",
+      "correct": true
+     },
+     {
+      "id": "Q",
+      "text": "Q, the higher average",
+      "why": "Nine runs is a small sample; the search kept preferring P."
+     },
+     {
+      "id": "both",
+      "text": "Half of each",
+      "why": "The question is which single schedule to run."
+     },
+     {
+      "id": "none",
+      "text": "Neither until every schedule has 420 runs",
+      "why": "Equal runs would waste the simulator on weak schedules."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Trust the visit counts."
+    },
+    {
+     "rung": "point",
+     "text": "UCT gave Q its chances and kept returning to P."
+    },
+    {
+     "rung": "step",
+     "text": "Pick P."
+    }
+   ],
+   "feedback": {
+    "correct": "Trade P: 420 runs are the evidence.",
+    "generic": "Not quite. How much evidence backs each average?",
+    "byKey": {
+     "Q": "You chose the best average from 9 runs."
+    }
+   },
+   "explain": {
+    "text": "MCTS with a simulator is planning by sampling: visits flow to schedules that keep doing well. With 420 runs against 9, P is the better-supported choice."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "MCTS repeats four steps: select by UCT ($c = \\sqrt2$ for rewards in $[0, 1]$), expand one child, play out at random, back up.",
+   "It plays the most visited move: from a board with a win in one, seed 0 sent 898 of 1,000 visits to the winning cell.",
+   "A high average from few visits is level 1's trap again; a forced move is returned whatever the playouts say."
+  ],
+  "formula": {
+   "name": "UCT",
+   "tex": "\\dfrac{w}{n} + c\\sqrt{\\dfrac{\\ln N}{n}}",
+   "note": "$N$ is the parent's visits; an unvisited child scores infinity."
+  },
+  "trap": "Playing the child with the highest average after a few visits instead of the most visited one."
+ },
+ "quiz": [
+  {
+   "id": "q-uct",
+   "difficulty": 2,
+   "prose": "A child has $w = 3$, $n = 4$; its parent $N = 16$; $c = \\sqrt2$.",
+   "question": "What is its UCT score? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.9274,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "nob",
+      "value": 0.75,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "nosq",
+      "value": 2.1365,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.75 + \\sqrt2 \\sqrt{\\ln 16/4} = 1.9274$.",
+    "generic": "Not quite. Add the average and the bonus.",
+    "byKey": {
+     "nob": "That is the average alone.",
+     "nosq": "You left out the square root over $\\ln N / n$."
+    }
+   },
+   "explain": {
+    "text": "The average is 0.75 and the bonus $\\sqrt2 \\times \\sqrt{0.6931} = 1.1774$, so the score is 1.9274."
+   }
+  },
+  {
+   "id": "q-steps",
+   "difficulty": 2,
+   "question": "In which step does MCTS add a node to its tree?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "exp",
+      "text": "Expand",
+      "correct": true
+     },
+     {
+      "id": "sel",
+      "text": "Select",
+      "why": "Select only walks existing nodes."
+     },
+     {
+      "id": "sim",
+      "text": "Simulate",
+      "why": "Playout positions are not stored."
+     },
+     {
+      "id": "bu",
+      "text": "Back up",
+      "why": "Back-up updates counts on the path."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One new node per iteration, at expansion.",
+    "generic": "Not quite."
+   },
+   "explain": {
+    "text": "Selection walks the tree, expansion adds one child, the playout is thrown away after its result is backed up."
+   }
+  },
+  {
+   "id": "q-play",
+   "difficulty": 3,
+   "question": "After the search, which root move does MCTS play?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "visits",
+      "text": "The one with the most visits",
+      "correct": true
+     },
+     {
+      "id": "avg",
+      "text": "The one with the best average",
+      "why": "A small sample can show a high average."
+     },
+     {
+      "id": "uct",
+      "text": "The one with the highest UCT score",
+      "why": "UCT includes an exploration bonus, which is for searching, not playing."
+     },
+     {
+      "id": "last",
+      "text": "The last one expanded",
+      "why": "Order of expansion says nothing."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Most visits: the steadiest evidence.",
+    "generic": "Not quite."
+   },
+   "explain": {
+    "text": "Visits accumulate where UCT kept finding good results, so the count is the most reliable signal."
+   }
+  }
+ ]
+}

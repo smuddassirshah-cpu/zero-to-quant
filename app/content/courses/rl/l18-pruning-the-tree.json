@@ -1,0 +1,1045 @@
+{
+ "id": "l18-pruning-the-tree",
+ "course": "rl",
+ "title": "Pruning the tree",
+ "minutes": 15,
+ "objectives": [
+  "Implement alpha-beta pruning and a table of seen positions, and count the work saved."
+ ],
+ "skills": [
+  "rl-search"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Leaves you never need",
+   "prose": "You move first (a, b or c); your opponent then picks 1, 2 or 3. Read the leaves left to right, a-1 first. Branch a is worth 5. Under b the first leaf is 4: your opponent can hold you to 4 or less there, so b already loses to a.",
+   "canvas": {
+    "kind": "tree",
+    "maxHeight": 360,
+    "params": {
+     "levels": [
+      {
+       "label": "You (max)",
+       "branches": [
+        {
+         "id": "a",
+         "label": "a"
+        },
+        {
+         "id": "b",
+         "label": "b"
+        },
+        {
+         "id": "c",
+         "label": "c"
+        }
+       ]
+      },
+      {
+       "label": "Opponent (min)",
+       "branches": [
+        {
+         "id": "1",
+         "label": "1"
+        },
+        {
+         "id": "2",
+         "label": "2"
+        },
+        {
+         "id": "3",
+         "label": "3"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "a-1": "5",
+      "a-2": "9",
+      "a-3": "7",
+      "b-1": "4",
+      "b-2": "8",
+      "b-3": "10",
+      "c-1": "6",
+      "c-2": "2",
+      "c-3": "11"
+     }
+    },
+    "state": {
+     "show": "none"
+    }
+   },
+   "question": "Tap every leaf you never need to read.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "b-2",
+     "b-3",
+     "c-3"
+    ],
+    "wrong": [
+     {
+      "id": "bonly",
+      "set": [
+       "b-2",
+       "b-3"
+      ]
+     }
+    ],
+    "countWord": "leaves"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Once a min node falls to 5 or below, stop reading it."
+    },
+    {
+     "rung": "point",
+     "text": "Under c, leaf 6 is fine but leaf 2 drops it below 5.",
+     "highlight": [
+      "b-1",
+      "c-2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So b-2, b-3 and c-3 are never read."
+    }
+   ],
+   "feedback": {
+    "correct": "Three leaves are skipped: b-2, b-3 and c-3.",
+    "generic": "Not quite. Stop reading a min node as soon as it cannot beat 5.",
+    "byKey": {
+     "bonly": "Under c, after leaf 2 the branch is worth at most 2, below 5, so c-3 is skipped too."
+    }
+   },
+   "explain": {
+    "text": "Alpha-beta keeps the best value found for you (5 after branch a). A min node that drops to 5 or below cannot change your choice, so the rest of its leaves are skipped.",
+    "canvas": {
+     "dim": [
+      "b-2",
+      "b-3",
+      "c-3"
+     ],
+     "values": {
+      "a": "5",
+      "b": "≤4",
+      "c": "≤2",
+      "root": "5"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The value does not change",
+   "prose": "Pruning skipped three leaves of the same tree.",
+   "canvas": {
+    "kind": "tree",
+    "maxHeight": 360,
+    "params": {
+     "levels": [
+      {
+       "label": "You (max)",
+       "branches": [
+        {
+         "id": "a",
+         "label": "a"
+        },
+        {
+         "id": "b",
+         "label": "b"
+        },
+        {
+         "id": "c",
+         "label": "c"
+        }
+       ]
+      },
+      {
+       "label": "Opponent (min)",
+       "branches": [
+        {
+         "id": "1",
+         "label": "1"
+        },
+        {
+         "id": "2",
+         "label": "2"
+        },
+        {
+         "id": "3",
+         "label": "3"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "a-1": "5",
+      "a-2": "9",
+      "a-3": "7",
+      "b-1": "4",
+      "b-2": "8",
+      "b-3": "10",
+      "c-1": "6",
+      "c-2": "2",
+      "c-3": "11"
+     }
+    },
+    "state": {
+     "show": "none",
+     "dim": [
+      "b-2",
+      "b-3",
+      "c-3"
+     ]
+    }
+   },
+   "question": "What value does alpha-beta return at the root?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "big",
+      "value": 11,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "c",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Pruning only skips lines that cannot matter."
+    },
+    {
+     "rung": "point",
+     "text": "Plain minimax gives a 5, b 4, c 2.",
+     "highlight": [
+      "a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The root takes 5."
+    }
+   ],
+   "feedback": {
+    "correct": "5, exactly as plain minimax.",
+    "generic": "Not quite. Pruning never changes the value.",
+    "byKey": {
+     "big": "That leaf was never read, and your opponent would never allow it.",
+     "c": "Under c your opponent picks 2, not 6."
+    }
+   },
+   "explain": {
+    "text": "Plain minimax gives min nodes 5, 4 and 2 and a root of 5. Alpha-beta returns the same 5 and reads 6 leaves instead of 9.",
+    "canvas": {
+     "values": {
+      "a": "5",
+      "root": "5"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Pruning tic-tac-toe",
+   "prose": "Alpha-beta from the empty board, trying cells in the order 0 to 8 (row by row), visits 18,297 nodes. Plain minimax visits 549,946. The two return the same value, 0.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 3,
+     "cells": [
+      [
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false
+    },
+    "state": {}
+   },
+   "question": "What fraction of plain minimax's nodes does alpha-beta visit? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0333,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 30.0566,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "saved",
+      "value": 0.9667,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the small count by the large."
+    },
+    {
+     "rung": "point",
+     "text": "$18{,}297 / 549{,}946$."
+    },
+    {
+     "rung": "step",
+     "text": "About 3.3%."
+    }
+   ],
+   "feedback": {
+    "correct": "$18{,}297/549{,}946 = 0.0333$.",
+    "generic": "Not quite. Divide alpha-beta's count by minimax's.",
+    "byKey": {
+     "inv": "You divided the other way.",
+     "saved": "That is the share saved."
+    }
+   },
+   "explain": {
+    "text": "Alpha-beta visits 0.0333 of the nodes, about one in thirty, for the same value. Both counts include the root and every terminal board."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Move order matters",
+   "prose": "Cuts come early when strong moves are tried first. Trying the centre, then the corners, then the edges (cells 4, 0, 2, 6, 8, 1, 3, 5, 7), alpha-beta visits 7,275 nodes instead of 18,297.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 3,
+     "cells": [
+      [
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false
+    },
+    "state": {
+     "mark": {
+      "r2c2": {
+       "text": "1",
+       "pos": "centre"
+      },
+      "r1c1": {
+       "text": "2",
+       "pos": "centre"
+      },
+      "r1c3": {
+       "text": "3",
+       "pos": "centre"
+      },
+      "r3c1": {
+       "text": "4",
+       "pos": "centre"
+      },
+      "r3c3": {
+       "text": "5",
+       "pos": "centre"
+      }
+     }
+    }
+   },
+   "question": "What share of the row-by-row count is that? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3976,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 2.515,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "saved",
+      "value": 0.6024,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide 7,275 by 18,297."
+    },
+    {
+     "rung": "point",
+     "text": "About 0.4."
+    },
+    {
+     "rung": "step",
+     "text": "$7{,}275/18{,}297$."
+    }
+   ],
+   "feedback": {
+    "correct": "$7{,}275/18{,}297 = 0.3976$.",
+    "generic": "Not quite. Divide the new count by the old.",
+    "byKey": {
+     "inv": "You divided the other way.",
+     "saved": "That is the share saved."
+    }
+   },
+   "explain": {
+    "text": "Better ordering cut the work to 0.3976 of the row-by-row count. The best case tries the best move first everywhere, which a good heuristic approximates."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code alpha-beta",
+   "prose": "Write `alphabeta(board, player, alpha, beta)`, trying cells 0 to 8, returning the value for X and the number of calls made, the first included. X raises `alpha`, O lowers `beta`; stop a node's loop once `alpha >= beta`.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 3,
+     "cells": [
+      [
+       "X",
+       "X",
+       ""
+      ],
+      [
+       "O",
+       "O",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false
+    },
+    "state": {}
+   },
+   "question": "Complete `alphabeta`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "LINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef alphabeta(board, player, alpha, beta):\n    \"\"\"Minimax value for X with pruning, moves tried in cell order\n    0 to 8. Return (value, nodes), counting every call.\"\"\"\n    ...\n",
+    "solution": "LINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef alphabeta(board, player, alpha, beta):\n    \"\"\"Minimax value for X with pruning, moves tried in cell order\n    0 to 8. Return (value, nodes), counting every call.\"\"\"\n    w = winner(board)\n    if w:\n        return (1 if w == 'X' else -1), 1\n    if '.' not in board:\n        return 0, 1\n    nodes = 1\n    best = -2 if player == 'X' else 2\n    for i in range(9):\n        if board[i] != '.':\n            continue\n        child = board[:i] + player + board[i + 1:]\n        v, n = alphabeta(child, other(player), alpha, beta)\n        nodes += n\n        if player == 'X':\n            best = max(best, v)\n            alpha = max(alpha, best)\n        else:\n            best = min(best, v)\n            beta = min(beta, best)\n        if alpha >= beta:\n            break      # the other player will never allow this line\n    return best, nodes\n",
+    "examples": [
+     {
+      "call": "alphabeta('XX.OO....', 'X', -2, 2)[0]",
+      "expect": "1",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "alphabeta('.........', 'X', -2, 2)[0]",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "alphabeta('.........', 'X', -2, 2)[1] < 20000",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 4000
+     },
+     {
+      "call": "alphabeta('XX.OO....', 'O', -2, 2)[0]",
+      "expect": "-1",
+      "compare": "equal"
+     },
+     {
+      "call": "[alphabeta(b, 'O', -2, 2)[0] for b in ('X........', '....X....', '.X.......')]",
+      "expect": "[0, 0, 0]",
+      "compare": "equal"
+     },
+     {
+      "call": "alphabeta('XOXOXO...', 'X', -2, 2)[0]",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "alphabeta('X........', 'O', -2, 2)[1] < 4000",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 4000
+     },
+     {
+      "call": "alphabeta('XOXXOOO.X', 'X', -2, 2)",
+      "expect": "(0, 2)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: values on planted boards (they must equal minimax's), and node counts below ceilings: under 20,000 from the empty board, where the full tree has 549,946.",
+    "mutants": [
+     {
+      "source": "LINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef alphabeta(board, player, alpha, beta):\n    \"\"\"Minimax value for X with pruning, moves tried in cell order\n    0 to 8. Return (value, nodes), counting every call.\"\"\"\n    w = winner(board)\n    if w:\n        return (1 if w == 'X' else -1), 1\n    if '.' not in board:\n        return 0, 1\n    nodes = 1\n    best = -2 if player == 'X' else 2\n    for i in range(9):\n        if board[i] != '.':\n            continue\n        child = board[:i] + player + board[i + 1:]\n        v, n = alphabeta(child, other(player), alpha, beta)\n        nodes += n\n        if player == 'X':\n            best = max(best, v)\n            alpha = max(alpha, best)\n        else:\n            best = min(best, v)\n            beta = min(beta, best)\n    return best, nodes\n",
+      "test": 2,
+      "symptom": "No pruning: plain minimax that counts nodes."
+     },
+     {
+      "source": "LINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef alphabeta(board, player, alpha, beta):\n    \"\"\"Minimax value for X with pruning, moves tried in cell order\n    0 to 8. Return (value, nodes), counting every call.\"\"\"\n    w = winner(board)\n    if w:\n        return (1 if w == 'X' else -1), 1\n    if '.' not in board:\n        return 0, 1\n    nodes = 1\n    best = -2 if player == 'X' else 2\n    for i in range(9):\n        if board[i] != '.':\n            continue\n        child = board[:i] + player + board[i + 1:]\n        v, n = alphabeta(child, other(player), alpha, beta)\n        nodes += n\n        if player == 'X':\n            best = max(best, v)\n            alpha = max(alpha, best)\n        else:\n            best = min(best, v)\n            alpha = max(alpha, best)\n        if alpha >= beta:\n            break      # the other player will never allow this line\n    return best, nodes\n",
+      "test": 2,
+      "symptom": "At min nodes alpha is raised instead of beta, so cuts come from the wrong side."
+     }
+    ],
+    "budget": 4000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At a max node raise alpha; at a min node lower beta."
+    },
+    {
+     "rung": "point",
+     "text": "Count 1 for the call itself, then add each child's count."
+    },
+    {
+     "rung": "step",
+     "text": "Break when alpha >= beta."
+    }
+   ],
+   "feedback": {
+    "correct": "All hidden tests pass.",
+    "generic": "Some tests fail. Read the first failing row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Pruning does not change the answer",
+   "prose": "A colleague turns pruning off \"to be safe\", because they think alpha-beta trades accuracy for speed.",
+   "canvas": {
+    "kind": "tree",
+    "maxHeight": 360,
+    "params": {
+     "levels": [
+      {
+       "label": "You (max)",
+       "branches": [
+        {
+         "id": "a",
+         "label": "a"
+        },
+        {
+         "id": "b",
+         "label": "b"
+        },
+        {
+         "id": "c",
+         "label": "c"
+        }
+       ]
+      },
+      {
+       "label": "Opponent (min)",
+       "branches": [
+        {
+         "id": "1",
+         "label": "1"
+        },
+        {
+         "id": "2",
+         "label": "2"
+        },
+        {
+         "id": "3",
+         "label": "3"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "a-1": "5",
+      "a-2": "9",
+      "a-3": "7",
+      "b-1": "4",
+      "b-2": "8",
+      "b-3": "10",
+      "c-1": "6",
+      "c-2": "2",
+      "c-3": "11"
+     }
+    },
+    "state": {
+     "show": "none",
+     "dim": [
+      "b-2",
+      "b-3",
+      "c-3"
+     ]
+    }
+   },
+   "question": "Is that right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "No: the value is exact; only the work changes",
+      "correct": true
+     },
+     {
+      "id": "approx",
+      "text": "Yes: it gives only an approximate value",
+      "why": "It skips only lines that cannot change the decision, so the value is exact."
+     },
+     {
+      "id": "depth",
+      "text": "Yes, unless the game tree is shallow",
+      "why": "Depth does not matter: every cut is justified by a bound."
+     },
+     {
+      "id": "order",
+      "text": "Only when the best move order is used",
+      "why": "Order changes how much is pruned, never the value."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a cut skip?"
+    },
+    {
+     "rung": "point",
+     "text": "Lines the other player would never allow.",
+     "highlight": [
+      "b-2",
+      "c-3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Those lines cannot change the root."
+    }
+   ],
+   "feedback": {
+    "correct": "Alpha-beta is exact: same value, less work.",
+    "generic": "Not quite. Check the root value with and without pruning.",
+    "byKey": {
+     "approx": "You treated pruning as an approximation. It is exact: our runs give 0 from the empty board both ways."
+    }
+   },
+   "explain": {
+    "text": "A branch is cut only once its value cannot affect the choice above it, so the root value is the minimax value. Depth limits with an evaluation function are the approximation, not pruning."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The worst order",
+   "prose": "Now the same nine leaves come in the worst order: branches worst first, and each branch's leaves best for you first.",
+   "canvas": {
+    "kind": "tree",
+    "maxHeight": 360,
+    "params": {
+     "levels": [
+      {
+       "label": "You (max)",
+       "branches": [
+        {
+         "id": "a",
+         "label": "a"
+        },
+        {
+         "id": "b",
+         "label": "b"
+        },
+        {
+         "id": "c",
+         "label": "c"
+        }
+       ]
+      },
+      {
+       "label": "Opponent (min)",
+       "branches": [
+        {
+         "id": "1",
+         "label": "1"
+        },
+        {
+         "id": "2",
+         "label": "2"
+        },
+        {
+         "id": "3",
+         "label": "3"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "a-1": "11",
+      "a-2": "6",
+      "a-3": "2",
+      "b-1": "10",
+      "b-2": "8",
+      "b-3": "4",
+      "c-1": "9",
+      "c-2": "7",
+      "c-3": "5"
+     }
+    },
+    "state": {
+     "show": "none"
+    }
+   },
+   "question": "How many leaves does alpha-beta read?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "After the first branch the best value is 2."
+    },
+    {
+     "rung": "point",
+     "text": "Under the second branch, 10, 8 and 4 all beat 2.",
+     "highlight": [
+      "a",
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Every leaf must be read."
+    }
+   ],
+   "feedback": {
+    "correct": "All 9: with the worst order nothing is pruned.",
+    "generic": "Not quite. Check when each min node first drops to the best value so far.",
+    "byKey": {
+     "six": "That was the good order's count. Here every leaf beats the bound until the last."
+    }
+   },
+   "explain": {
+    "text": "All 9 leaves are read. Branch values come in as 2, 4, 5, each better than the last, and every min node's smallest leaf comes last. No cut ever fires, so alpha-beta does as much work as minimax."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Alpha and beta",
+   "prose": "$\\alpha$ is the best value you can already guarantee; $\\beta$ the best your opponent can. A node whose value falls outside $(\\alpha, \\beta)$ cannot be chosen, so its remaining children are skipped. For deep games, search stops at a depth limit and an **evaluation function** estimates the value there; that is an approximation, unlike pruning.",
+   "question": "What does a transposition table add to alpha-beta?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "repeat",
+      "text": "It reuses the value of a position reached by another move order",
+      "correct": true
+     },
+     {
+      "id": "order",
+      "text": "It fixes the move order",
+      "why": "Order is a separate choice."
+     },
+     {
+      "id": "eval",
+      "text": "It replaces the evaluation function",
+      "why": "It stores values; it does not estimate them."
+     },
+     {
+      "id": "bound",
+      "text": "It sets alpha and beta to their final values",
+      "why": "It stores results, not the window."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A table is l17's memo: one evaluation per position.",
+    "generic": "Think of repeated boards."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Pruning scenarios",
+   "prose": "A risk desk compares two hedges by their worst scenario loss. Hedge A's worst case is a £2m loss. The first scenario checked for hedge B already loses £3m.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Hedge",
+      "Worst loss so far"
+     ],
+     "rows": [
+      [
+       "A (all scenarios)",
+       "£2m"
+      ],
+      [
+       "B (first scenario)",
+       "£3m"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many more scenarios for B must be checked before rejecting it?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "B's worst case can only get worse."
+    },
+    {
+     "rung": "point",
+     "text": "It is already worse than A's."
+    },
+    {
+     "rung": "step",
+     "text": "So B is out."
+    }
+   ],
+   "feedback": {
+    "correct": "None: B's worst case is already worse than A's.",
+    "generic": "Not quite. Can more scenarios make B's worst case better?",
+    "byKey": {
+     "all": "You checked everything. A bound already decides it.",
+     "one": "Even one more cannot rescue B."
+    }
+   },
+   "explain": {
+    "text": "The worst case is a min over scenarios, so it can only fall. Once B's is below A's, B is cut, as a min node is in alpha-beta; 0 more scenarios need checking."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Alpha-beta skips a branch once it cannot change the choice above; the value is exactly minimax's, only the work changes.",
+   "From the empty tic-tac-toe board, cells in order 0 to 8: 18,297 nodes against 549,946; centre and corners first: 7,275.",
+   "Good move order gives the most cuts; the worst order prunes nothing. A transposition table is the memo of l17."
+  ],
+  "formula": {
+   "name": "Cut rule",
+   "tex": "\\alpha \\ge \\beta \\Rightarrow \\text{skip the remaining children}",
+   "note": "$\\alpha$: your guaranteed value; $\\beta$: your opponent's."
+  },
+  "trap": "Thinking alpha-beta approximates the value: it is exact; depth limits are the approximation."
+ },
+ "quiz": [
+  {
+   "id": "q-cut",
+   "difficulty": 2,
+   "prose": "A max root has found 6 under its first branch. Its second branch is a min node whose first leaf is 3.",
+   "question": "How many more leaves under the second branch must be read?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "None: that branch is already worth at most 3.",
+    "generic": "Not quite. Compare with 6.",
+    "byKey": {
+     "all": "The min node can only fall below 3.",
+     "one": "No leaf can lift it above 3."
+    }
+   },
+   "explain": {
+    "text": "The min node is worth at most 3, below the 6 already found, so the rest is skipped; 0 more leaves."
+   }
+  },
+  {
+   "id": "q-ab-value",
+   "difficulty": 2,
+   "question": "Alpha-beta and plain minimax are run on the same tree. Which differs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nodes",
+      "text": "The number of nodes visited",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "The root value",
+      "why": "Pruning is exact."
+     },
+     {
+      "id": "move",
+      "text": "The move chosen at the root",
+      "why": "The chosen value is the same; with ties the same move order gives the same move."
+     },
+     {
+      "id": "legal",
+      "text": "The legal moves",
+      "why": "Rules do not change."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Only the work.",
+    "generic": "Not quite."
+   },
+   "explain": {
+    "text": "Pruning skips branches that cannot matter, so only the node count changes."
+   }
+  },
+  {
+   "id": "q-order",
+   "difficulty": 3,
+   "question": "Which move order gives alpha-beta the most cuts?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "best",
+      "text": "Best moves first",
+      "correct": true
+     },
+     {
+      "id": "worst",
+      "text": "Worst moves first",
+      "why": "That prunes least, as the nine-leaf tree showed."
+     },
+     {
+      "id": "random",
+      "text": "Random order",
+      "why": "Random is in between."
+     },
+     {
+      "id": "any",
+      "text": "Order makes no difference",
+      "why": "18,297 against 7,275 says otherwise."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Strong moves first set tight bounds early.",
+    "generic": "Not quite."
+   },
+   "explain": {
+    "text": "An early strong move raises alpha (or lowers beta) at once, so later branches are cut sooner."
+   }
+  }
+ ]
+}

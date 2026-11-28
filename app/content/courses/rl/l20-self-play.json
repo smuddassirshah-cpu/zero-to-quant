@@ -1,0 +1,931 @@
+{
+ "id": "l20-self-play",
+ "course": "rl",
+ "title": "Learning by self-play",
+ "minutes": 15,
+ "objectives": [
+  "Train a value table by self-play and explain how AlphaZero extends the idea."
+ ],
+ "skills": [
+  "rl-search"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Learning from your own games",
+   "prose": "One table $Q(n, k)$ plays both sides of Nim: the value of taking $k$ sticks from a pile of $n$, for the player who moves. After you take $k$ and leave $n'$, it is your opponent's turn, and your gain is their loss.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 1,
+     "cols": 13,
+     "cells": [
+      [
+       "0",
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7",
+       "8",
+       "9",
+       "10",
+       "11",
+       "12"
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Your opponent's best value at $n'$ is $0.8$. What target should update $Q(n, k)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.8,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Zero-sum: what is good for them is bad for you."
+    },
+    {
+     "rung": "point",
+     "text": "Negate their best value."
+    },
+    {
+     "rung": "step",
+     "text": "$-0.8$."
+    }
+   ],
+   "feedback": {
+    "correct": "The target is $-0.8$: their best is your worst.",
+    "generic": "Not quite. The game is zero-sum.",
+    "byKey": {
+     "sign": "You used their value as yours. Their win is your loss.",
+     "zero": "The opponent's position is not neutral: it is worth 0.8 to them."
+    }
+   },
+   "explain": {
+    "text": "The target is $-0.8$. Minimax with one table: $\\text{target} = -\\max_{k'} Q(n', k')$. It is l11's Q-learning target with the max replaced by the opponent's best, negated."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Win rate against a stranger",
+   "prose": "The table learns by playing itself ($\\alpha = 0.5$, $\\varepsilon = 0.2$, random starting piles, seed 0). Every 10 episodes we froze it and played 200 games from 21 sticks, moving first, against a player who takes 1 to 3 at random. Slide to draw the curve.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "win",
+       "label": "Win rate",
+       "values": [
+        0.43,
+        0.77,
+        0.935,
+        0.9,
+        0.995,
+        0.975,
+        0.985,
+        0.995,
+        0.985,
+        0.99,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ]
+      }
+     ],
+     "xValues": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200,
+      210,
+      220,
+      230,
+      240,
+      250,
+      260,
+      270,
+      280,
+      290,
+      300
+     ],
+     "xLabel": "Self-play episodes",
+     "yLabel": "Win rate vs random",
+     "y": [
+      0,
+      1
+     ],
+     "decimals": 2
+    },
+    "state": {
+     "reveal": 0.2
+    },
+    "controls": [
+     {
+      "bind": "reveal",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "start": 0.2,
+      "label": "Drawn",
+      "format": "percent"
+     }
+    ]
+   },
+   "question": "What happens to the win rate?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rise",
+      "text": "It climbs to 1: the table finds the winning rule",
+      "correct": true
+     },
+     {
+      "id": "flat",
+      "text": "It stays near one half",
+      "why": "Slide to the end: it reaches 1."
+     },
+     {
+      "id": "fall",
+      "text": "It falls as the table plays itself",
+      "why": "Self-play here sharpens the table; the curve rises."
+     },
+     {
+      "id": "jump",
+      "text": "It is 1 from the start",
+      "why": "At 0 episodes the table always takes 1 stick and wins only some games."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "From 0.43 at the start to 1.00.",
+    "generic": "Slide to the end and read the line."
+   },
+   "explain": {
+    "text": "The untrained table wins 0.43 of games; once it has learned to leave multiples of 4, it wins every game. This run is seed 0.",
+    "canvas": {
+     "reveal": 1
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The last stick",
+   "prose": "If you take the last stick, the game ends and you have won. There is no opponent value to negate.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 1,
+     "cols": 13,
+     "cells": [
+      [
+       "0",
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7",
+       "8",
+       "9",
+       "10",
+       "11",
+       "12"
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "What target updates $Q(n, k)$ when $k = n$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "neg",
+      "value": -1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The mover wins."
+    },
+    {
+     "rung": "point",
+     "text": "A win is worth 1."
+    },
+    {
+     "rung": "step",
+     "text": "1."
+    }
+   ],
+   "feedback": {
+    "correct": "The target is 1: a win.",
+    "generic": "Not quite. Who won?",
+    "byKey": {
+     "neg": "Taking the last stick wins in this game.",
+     "zero": "The game is over and you won, so the value is 1, not 0."
+    }
+   },
+   "explain": {
+    "text": "Terminal moves anchor the table: $Q(n, n) \\to 1$ for $n \\le 3$, and the negated targets carry that knowledge back to larger piles."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What the table learns",
+   "prose": "After 500 episodes (seed 0), the greedy move from every pile that is not a multiple of 4 takes the remainder, $n \\bmod 4$. At piles 4, 8, 12, 16 and 20 every move has a negative value.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 1,
+     "cols": 13,
+     "cells": [
+      [
+       "0",
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7",
+       "8",
+       "9",
+       "10",
+       "11",
+       "12"
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "From a pile of 14, which take does the table choose?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute $14 \\bmod 4$."
+    },
+    {
+     "rung": "point",
+     "text": "$14 = 12 + 2$."
+    },
+    {
+     "rung": "step",
+     "text": "Take 2 and leave 12."
+    }
+   ],
+   "feedback": {
+    "correct": "Take 2 and leave 12.",
+    "generic": "Not quite. Leave a multiple of 4.",
+    "byKey": {
+     "one": "That leaves 13, which wins for your opponent.",
+     "three": "That leaves 11."
+    }
+   },
+   "explain": {
+    "text": "The table recovers the multiples of 4 exactly: from 14 it takes 2. Where every move loses (a multiple of 4), every value is negative."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code self-play",
+   "prose": "Write the loop of `self_play_nim`: each episode starts from a random pile from 1 to 21 (`rng.randint`). Each move draws `rng.random()` and explores with chance $\\varepsilon$ (`rng.choice`); otherwise it takes the greedy move, ties to the fewest sticks. Update $Q(n, k)$ towards 1 when it takes the last stick, else towards $-\\max_{k'} Q(n', k')$.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 1,
+     "cols": 13,
+     "cells": [
+      [
+       "0",
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7",
+       "8",
+       "9",
+       "10",
+       "11",
+       "12"
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Complete `self_play_nim`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\ndef self_play_nim(episodes, alpha, eps, seed, top=21):\n    \"\"\"Q[(n, k)]: value of taking k from n for the player to move.\n    Both sides use the same table.\"\"\"\n    rng = random.Random(seed)\n    Q = {(n, k): 0.0 for n in range(1, top + 1) for k in (1, 2, 3) if k <= n}\n    ...\n    return Q\n",
+    "solution": "import random\n\ndef self_play_nim(episodes, alpha, eps, seed, top=21):\n    \"\"\"Q[(n, k)]: value of taking k from n for the player to move.\n    Both sides use the same table.\"\"\"\n    rng = random.Random(seed)\n    Q = {(n, k): 0.0 for n in range(1, top + 1) for k in (1, 2, 3) if k <= n}\n\n    def takes(n):\n        return [k for k in (1, 2, 3) if k <= n]\n\n    for _ in range(episodes):\n        n = rng.randint(1, top)\n        while n > 0:\n            if rng.random() < eps:\n                k = rng.choice(takes(n))\n            else:\n                k = max(takes(n), key=lambda j: Q[(n, j)])   # ties: fewest sticks\n            n2 = n - k\n            if n2 == 0:\n                target = 1.0                                   # took the last stick\n            else:\n                target = -max(Q[(n2, j)] for j in takes(n2))   # the opponent's best, negated\n            Q[(n, k)] += alpha * (target - Q[(n, k)])\n            n = n2\n    return Q\n",
+    "examples": [
+     {
+      "call": "len(self_play_nim(10, 0.5, 0.2, 0))",
+      "expect": "60",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "len(self_play_nim(10, 0.5, 0.2, 0))",
+      "expect": "60",
+      "compare": "equal"
+     },
+     {
+      "call": "all(max((k for k in (1, 2, 3) if k <= n), key=lambda k: Q[(n, k)]) == n % 4 for n in range(1, 22) if n % 4)",
+      "expect": "True",
+      "compare": "equal",
+      "setup": "Q = self_play_nim(500, 0.5, 0.2, 0)"
+     },
+     {
+      "call": "all((lambda Q: all(max((k for k in (1, 2, 3) if k <= n), key=lambda k: Q[(n, k)]) == n % 4 for n in range(1, 22) if n % 4))(self_play_nim(500, 0.5, 0.2, s)) for s in range(1, 5))",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 3000
+     },
+     {
+      "call": "all(max(Q[(n, k)] for k in (1, 2, 3)) < 0 for n in (4, 8, 12, 16, 20))",
+      "expect": "True",
+      "compare": "equal",
+      "setup": "Q = self_play_nim(500, 0.5, 0.2, 0)"
+     },
+     {
+      "call": "Q[(1, 1)]",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      },
+      "setup": "Q = self_play_nim(500, 0.5, 0.2, 0)"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on 500 self-play episodes. For seeds 0 to 4, the greedy move from every pile that is not a multiple of 4 must take the remainder. Every move from a multiple of 4 must be valued below 0, and taking the last stick must be worth 1.",
+    "mutants": [
+     {
+      "source": "import random\n\ndef self_play_nim(episodes, alpha, eps, seed, top=21):\n    \"\"\"Q[(n, k)]: value of taking k from n for the player to move.\n    Both sides use the same table.\"\"\"\n    rng = random.Random(seed)\n    Q = {(n, k): 0.0 for n in range(1, top + 1) for k in (1, 2, 3) if k <= n}\n\n    def takes(n):\n        return [k for k in (1, 2, 3) if k <= n]\n\n    for _ in range(episodes):\n        n = rng.randint(1, top)\n        while n > 0:\n            if rng.random() < eps:\n                k = rng.choice(takes(n))\n            else:\n                k = max(takes(n), key=lambda j: Q[(n, j)])   # ties: fewest sticks\n            n2 = n - k\n            if n2 == 0:\n                target = 1.0                                   # took the last stick\n            else:\n                target = max(Q[(n2, j)] for j in takes(n2))   # the opponent's best, negated\n            Q[(n, k)] += alpha * (target - Q[(n, k)])\n            n = n2\n    return Q\n",
+      "test": 2,
+      "symptom": "The opponent's value is not negated: their win counts as yours."
+     },
+     {
+      "source": "import random\n\ndef self_play_nim(episodes, alpha, eps, seed, top=21):\n    \"\"\"Q[(n, k)]: value of taking k from n for the player to move.\n    Both sides use the same table.\"\"\"\n    rng = random.Random(seed)\n    Q = {(n, k): 0.0 for n in range(1, top + 1) for k in (1, 2, 3) if k <= n}\n\n    def takes(n):\n        return [k for k in (1, 2, 3) if k <= n]\n\n    for _ in range(episodes):\n        n = rng.randint(1, top)\n        while n > 0:\n            if rng.random() < eps:\n                k = rng.choice(takes(n))\n            else:\n                k = max(takes(n), key=lambda j: Q[(n, j)])   # ties: fewest sticks\n            n2 = n - k\n            if n2 == 0:\n                target = 0.0\n            else:\n                target = -max(Q[(n2, j)] for j in takes(n2))   # the opponent's best, negated\n            Q[(n, k)] += alpha * (target - Q[(n, k)])\n            n = n2\n    return Q\n",
+      "test": 2,
+      "symptom": "Taking the last stick is worth 0, so nothing is ever learned."
+     }
+    ],
+    "budget": 3000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Both players read and write the same table."
+    },
+    {
+     "rung": "point",
+     "text": "The target after a move is minus the best value at the new pile."
+    },
+    {
+     "rung": "step",
+     "text": "Taking the last stick has target 1."
+    }
+   ],
+   "feedback": {
+    "correct": "All hidden tests pass.",
+    "generic": "Some tests fail. Read the first failing row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "It only beats itself",
+   "prose": "A team trains a trading agent by self-play and reports a 50% win rate against its own latest version as proof of progress.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Opponent",
+      "What it measures"
+     ],
+     "rows": [
+      [
+       "Its latest self",
+       "Nothing about skill"
+      ],
+      [
+       "Random player",
+       "Basic competence"
+      ],
+      [
+       "Earlier versions",
+       "Progress over time"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is wrong with that test?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fixed",
+      "text": "It should be tested against fixed opponents too",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: 50% against itself is ideal",
+      "why": "Two equal copies split their games whatever their skill: the number says nothing."
+     },
+     {
+      "id": "more",
+      "text": "It needs more self-play games",
+      "why": "More games against itself still cannot show skill."
+     },
+     {
+      "id": "lower",
+      "text": "It should lose more often",
+      "why": "The win rate against itself is uninformative either way."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a copy of yourself win against you?"
+    },
+    {
+     "rung": "point",
+     "text": "About half, at any skill."
+    },
+    {
+     "rung": "step",
+     "text": "Measure against opponents that do not change."
+    }
+   ],
+   "feedback": {
+    "correct": "Evaluate against fixed opponents: a random player, earlier versions, known strategies.",
+    "generic": "Not quite. What can a win rate against itself show?",
+    "byKey": {
+     "fine": "You took 50% against itself as a result. Any agent scores that against its own copy."
+    }
+   },
+   "explain": {
+    "text": "A self-play agent can also drift into habits that only work against itself. Fixed opponents, such as our random player, show real progress."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "AlphaGo and AlphaZero (reading)",
+   "prose": "Reading, not rebuilt: Silver et al. (2016) put two networks inside MCTS for Go. A **policy network** (this level's idea) gives prior chances for each move, steering selection; a **value network** (level 3's idea) scores positions instead of random playouts. AlphaGo beat Lee Sedol 4 games to 1 in 2016. AlphaZero (2018) learned Go, chess and shogi from self-play alone.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Plain MCTS",
+      "AlphaZero"
+     ],
+     "rows": [
+      [
+       "UCT bonus, uniform over moves",
+       "Bonus weighted by the policy network"
+      ],
+      [
+       "Random playout",
+       "Value network"
+      ],
+      [
+       "No learning",
+       "Networks trained on self-play games"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "In AlphaZero, what replaces the random playout of plain MCTS?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "value",
+      "text": "The value network's estimate of the position",
+      "correct": true
+     },
+     {
+      "id": "policy",
+      "text": "The policy network's move chances",
+      "why": "Those steer which children are tried; the value network replaces the playout."
+     },
+     {
+      "id": "ab",
+      "text": "Alpha-beta search to the end",
+      "why": "Go is far too large for that."
+     },
+     {
+      "id": "table",
+      "text": "A table of every position",
+      "why": "Go has far too many positions for a table."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which step needs a guess at who will win?"
+    },
+    {
+     "rung": "point",
+     "text": "The simulate step."
+    },
+    {
+     "rung": "step",
+     "text": "The value network answers it directly."
+    }
+   ],
+   "feedback": {
+    "correct": "The value network replaces the playout.",
+    "generic": "Not quite. Match each network to an MCTS step.",
+    "byKey": {
+     "policy": "You matched the wrong network. The policy network sets priors for selection."
+    }
+   },
+   "explain": {
+    "text": "The policy network focuses selection; the value network replaces simulation. Self-play games then train both, so search and learning improve each other."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Self-play",
+   "prose": "One table (or network) plays both sides: $$Q(n, k) \\leftarrow Q(n, k) + \\alpha\\big[-\\max_{k'} Q(n', k') - Q(n, k)\\big],$$ with target 1 for taking the last stick. It needs no teacher and no expert games, only the rules and a fair way to test progress.",
+   "question": "Why does self-play need some exploration ($\\varepsilon > 0$)?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "try",
+      "text": "To keep trying moves it has ruled out",
+      "correct": true
+     },
+     {
+      "id": "fast",
+      "text": "To make each episode shorter",
+      "why": "Exploring does not shorten Nim."
+     },
+     {
+      "id": "rand",
+      "text": "To beat a random player later",
+      "why": "The greedy table beats it without exploring at test time."
+     },
+     {
+      "id": "none",
+      "text": "It does not: greedy self-play is enough",
+      "why": "Greedy play repeats the same lines and leaves other values untouched."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Exploring keeps every value up to date, as in levels 1 and 3.",
+    "generic": "Think about level 1's greedy agent."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A market of copies",
+   "prose": "A desk trains market-making agents by letting copies of one agent trade against each other. In simulation they earn steadily. Live, the market holds many different participants.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Test against",
+      "Shows"
+     ],
+     "rows": [
+      [
+       "Copies of itself",
+       "Self-consistency only"
+      ],
+      [
+       "Replayed real flow",
+       "Behaviour against real traders"
+      ],
+      [
+       "Scripted strategies",
+       "Robustness to known styles"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the main risk?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "overfit",
+      "text": "They learned to exploit copies, not real flow",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "None: profits in self-play carry over",
+      "why": "Self-play profits show how the agent does against itself, not against others."
+     },
+     {
+      "id": "slow",
+      "text": "Training was far too slow to finish",
+      "why": "Speed is not the issue."
+     },
+     {
+      "id": "rules",
+      "text": "The market's rules differ",
+      "why": "The rules can be the same; the opponents are what differ."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Who were the counterparties in training?"
+    },
+    {
+     "rung": "point",
+     "text": "Only copies."
+    },
+    {
+     "rung": "step",
+     "text": "Real markets are not copies."
+    }
+   ],
+   "feedback": {
+    "correct": "Test against fixed and replayed opponents before trusting self-play gains.",
+    "generic": "Not quite. Who does the agent face live?",
+    "byKey": {
+     "none": "You trusted self-play profit. A market of identical agents can also move together and amplify each other."
+    }
+   },
+   "explain": {
+    "text": "Self-play agents can co-adapt, and a market full of identical agents can crowd the same side. Replayed flow and scripted strategies are the fixed opponents a desk needs."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Self-play: one table plays both sides; the target after a move is minus the opponent's best value, or the result at the end.",
+   "On Nim, 500 self-play episodes (seeds 0 to 4) recover the rule exactly: take $n \\bmod 4$, and every move from a multiple of 4 is valued below 0.",
+   "AlphaZero puts a policy network and a value network inside MCTS and trains both on self-play games (reading); test any self-play agent against fixed opponents."
+  ],
+  "formula": {
+   "name": "Self-play target",
+   "tex": "Q(n, k) \\leftarrow Q(n, k) + \\alpha\\big[-\\max_{k'} Q(n', k') - Q(n, k)\\big]",
+   "note": "Target 1 when the move takes the last stick."
+  },
+  "trap": "Measuring a self-play agent only against itself: test it against opponents that do not change."
+ },
+ "quiz": [
+  {
+   "id": "q-target",
+   "difficulty": 2,
+   "prose": "In self-play Nim, after your move the opponent's best value is $-0.4$.",
+   "question": "What is your move's target?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "same",
+      "value": -0.4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Negate: $0.4$.",
+    "generic": "Not quite. Negate the opponent's best value.",
+    "byKey": {
+     "same": "Their bad position is good for you.",
+     "one": "The game is not over."
+    }
+   },
+   "explain": {
+    "text": "The opponent's best is $-0.4$, so your target is $0.4$."
+   }
+  },
+  {
+   "id": "q-nim9",
+   "difficulty": 2,
+   "prose": "A self-play table has learned Nim exactly.",
+   "question": "From a pile of 9, how many sticks does it take?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Leave 8.",
+    "generic": "Not quite. Leave a multiple of 4.",
+    "byKey": {
+     "three": "That leaves 6.",
+     "two": "That leaves 7."
+    }
+   },
+   "explain": {
+    "text": "$9 \\bmod 4 = 1$: take 1 and leave 8."
+   }
+  },
+  {
+   "id": "q-az",
+   "difficulty": 3,
+   "question": "What do AlphaZero's networks replace in plain MCTS?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "Uniform priors and random playouts",
+      "correct": true
+     },
+     {
+      "id": "tree",
+      "text": "The search tree itself, entirely",
+      "why": "AlphaZero still searches with MCTS."
+     },
+     {
+      "id": "rules",
+      "text": "The rules of the game it plays",
+      "why": "It is given the rules."
+     },
+     {
+      "id": "uct",
+      "text": "The visit counts at the root",
+      "why": "Visits are still counted and decide the move."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Priors and playouts.",
+    "generic": "Not quite."
+   },
+   "explain": {
+    "text": "The policy network weights the exploration bonus by learned move chances, and the value network scores leaf positions instead of random games."
+   }
+  }
+ ]
+}
