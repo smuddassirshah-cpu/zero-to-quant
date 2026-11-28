@@ -1394,6 +1394,11 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         const cm = /(?:^|[\\/])courses[\\/]([^\\/]+)[\\/]/.exec(String(file));
         if (cm && aiCourse(cm[1]) && (Array.isArray(w.mutants) ? w.mutants.length : 0) < 2) warn(file, `${where}.mutants`, '[ai-mutants] an AI-strand Python code widget carries at least two mutants (wrong solutions, the lesson\'s own bug among them), each failing a named hidden test; check with grade-all.mjs --code --file <path>');
       }
+      /* ENGINE-BACKLOG 1268: a hidden test that searches the learner's source text trips on comments and misses other spellings; zq_uses and zq_no read the syntax tree */
+      {
+        const cm2 = /(?:^|[\\/])courses[\\/]([^\\/]+)[\\/]/.exec(String(file));
+        if (cm2 && aiCourse(cm2[1]) && (Array.isArray(w.tests) ? w.tests : []).some(t => t && typeof t === 'object' && /__learner_source__/.test(String(t.call ?? '') + '\n' + String(t.setup ?? '')))) warn(file, `${where}.tests`, '[source-ban] a hidden test searches the learner\'s source text (__learner_source__), so comments trip it and other spellings slip past; use zq_uses(*names, loops=, attrs=, ops=) or zq_no(...) (docs/AUTHORING.md section 9)');
+      }
       ['prelude', 'postlude'].forEach(k => { if (w[k] != null && typeof w[k] !== 'string') err(file, `${where}.${k}`, `${k} is Python source, a string`); });
       dataFiles(file, where, w);
       if (w.allocCheck != null) err(file, `${where}.allocCheck`, 'allocCheck is for C++ code items (language: "cpp")');

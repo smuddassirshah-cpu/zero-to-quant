@@ -443,7 +443,10 @@ def __zq_case(_i):
 
   /* Item 1037: helpers a widget may use in its hidden prelude, postlude or test cases without defining them (added to the prelude only when the
      text names them). zq_no_sort(extra=()) is True when the learner's code uses none of sorted, .sort, heapq (names and operators only: comments,
-     strings and docstrings are skipped) nor any name in `extra`: a test { "call": "zq_no_sort()", "expect": "True" } holds a merge to a real merge. */
+     strings and docstrings are skipped) nor any name in `extra`: a test { "call": "zq_no_sort()", "expect": "True" } holds a merge to a real merge.
+     Item 1268: zq_uses(*names, loops=False, attrs=(), ops=()) returns the sorted list of what the learner's syntax tree uses among the names (called or
+     referenced, np.x and numpy.x as x), for/while/comprehension when loops=True, attribute names in attrs ('.encode') and operators in ops ('@', '**');
+     zq_no(...) is True when that list is empty. Comments, strings and docstrings never count. A trainer's prelude may name them too. */
   const LIB = `def zq_no_sort(extra=()):
     try:
         _tk = __import__('tokenize')
@@ -452,8 +455,68 @@ def __zq_case(_i):
         return not ({'sorted', 'heapq'} | set(extra)) & set(_t) and ('.', 'sort') not in set(zip(_t, _t[1:]))
     except Exception:
         return not any(w in __learner_source__ for w in ('sorted(', '.sort(', 'heapq', *extra))
+def zq_uses(*names, loops=False, attrs=(), ops=()):
+    _ast = __import__('ast')
+    _found = set()
+    _attrs = {a.lstrip('.') for a in attrs}
+    _opn = {'@': 'MatMult', '**': 'Pow', '*': 'Mult', '+': 'Add', '-': 'Sub', '/': 'Div', '//': 'FloorDiv', '%': 'Mod', '<<': 'LShift', '>>': 'RShift', '&': 'BitAnd', '|': 'BitOr', '^': 'BitXor'}
+    _want = {_opn[o]: o for o in ops if o in _opn}
+    try:
+        _tree = _ast.parse(__learner_source__)
+    except Exception:
+        _tree = None
+    if _tree is None:
+        _tk = __import__('tokenize')
+        _io = __import__('io')
+        try:
+            _tt = [(x.type, x.string) for x in _tk.generate_tokens(_io.StringIO(__learner_source__).readline) if x.type in (_tk.NAME, _tk.OP)]
+        except Exception:
+            _tt = []
+        _s = [v for _, v in _tt]
+        for _i, (_k, _v) in enumerate(_tt):
+            if _v in names and (_i == 0 or _s[_i - 1] != '.' or (_i > 1 and _s[_i - 2] in ('np', 'numpy'))):
+                _found.add(_v)
+            if loops and _v in ('for', 'while') and _k == _tk.NAME:
+                _found.add(_v)
+            if _v in ops:
+                _found.add(_v)
+            if _i and _s[_i - 1] == '.' and _v in _attrs:
+                _found.add('.' + _v)
+        return sorted(_found)
+    _np = {'np', 'numpy'}
+    for _n in _ast.walk(_tree):
+        if isinstance(_n, _ast.Import):
+            for _a in _n.names:
+                if _a.name.split('.')[0] == 'numpy':
+                    _np.add(_a.asname or 'numpy')
+        elif isinstance(_n, _ast.ImportFrom) and _n.module and _n.module.split('.')[0] == 'numpy':
+            for _a in _n.names:
+                if _a.name in names:
+                    _found.add(_a.name)
+    for _n in _ast.walk(_tree):
+        if isinstance(_n, _ast.Name) and _n.id in names:
+            _found.add(_n.id)
+        elif isinstance(_n, _ast.Attribute):
+            _r = _n.value
+            while isinstance(_r, _ast.Attribute):
+                _r = _r.value
+            if _n.attr in names and isinstance(_r, _ast.Name) and _r.id in _np:
+                _found.add(_n.attr)
+            if _n.attr in _attrs:
+                _found.add('.' + _n.attr)
+        elif loops and isinstance(_n, (_ast.For, _ast.AsyncFor)):
+            _found.add('for')
+        elif loops and isinstance(_n, _ast.While):
+            _found.add('while')
+        elif loops and isinstance(_n, (_ast.ListComp, _ast.SetComp, _ast.DictComp, _ast.GeneratorExp)):
+            _found.add('comprehension')
+        elif isinstance(_n, (_ast.BinOp, _ast.AugAssign)) and type(_n.op).__name__ in _want:
+            _found.add(_want[type(_n.op).__name__])
+    return sorted(_found)
+def zq_no(*names, loops=False, attrs=(), ops=()):
+    return not zq_uses(*names, loops=loops, attrs=attrs, ops=ops)
 `;
-  const needsLib = (spec, cases) => /\bzq_no_sort\b/.test([spec.prelude, spec.postlude, ...cases.map(c => String(c.call) + '\n' + String(c.setup))].join('\n'));
+  const needsLib = (spec, cases) => /\bzq_(?:no_sort|uses|no)\b/.test([spec.prelude, spec.postlude, ...cases.map(c => String(c.call) + '\n' + String(c.setup))].join('\n'));
   /* The Python source, empty result rows and time limits of one run of `cases` (item 1031: shared with tools/code-runner.mjs, which runs
      it in node, so the tool grades exactly what the page runs). script: any case is a stdout, stdin, argv or raises-with-no-call case. */
   const casePlan = (spec, cases, src, script, dataTexts) => {
@@ -652,7 +715,7 @@ def __zq_case(_i):
   const trainPlan = (spec, src, dataTexts) => {
     const steps = Math.max(1, Math.min(20000, Math.round(+spec.steps || 500))), secs = Math.max(1, Math.min(300, +spec.maxSeconds || 120));
     const files = dataTexts && Object.keys(dataTexts).length ? dataTexts : null;
-    const pre = String(spec.prelude || '');
+    const pre = (needsLib(spec, []) ? LIB : '') + String(spec.prelude || '');   // item 1268: helpers for a prelude that names them
     const code = `${importHintFor(files, src, pre, ...Object.values(files || {}))}${filesCode(files)}import sys as _zs, time as _zt, json as _zj, math as _zm, re as _zre, linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
 __ZQ_PRE = ${JSON.stringify(pre)}
