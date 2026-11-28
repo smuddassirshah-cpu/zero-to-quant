@@ -131,3 +131,8 @@ Raised later (audit trig):
 Raised later (session AK, strand ai):
 - (engine-pass-ak, open) Learn and Review list AI topics as ordinary rows; group them under the strand badge or a strand heading.
 - (engine-pass-ak, open) A stage exam's `draw` sources are not checked for ai origin; add a validator error if a stage exam draws from an `ai` course.
+Raised later (ai-basics level 1):
+- (ai-basics-1) `boxes` with `itemKind: "card"` and word labels ("Handwriting", "Loan risk") draws the text wider than its card, cards overlap inside a container, and three containers run off a 440 px column. Needed: sort five named jobs into two bins. Workaround: `place` in assign mode with five slots (the jobs) and interchangeable chips (`byText`). Ask: size a card to its label, or wrap cards inside a container.
+- (ai-basics-1) A `table` canvas can be tapped by cell or by row (`tap: "rows"`) but not by column, so "tap the column that is the label" cannot be asked. Workaround: `place` with the column names as tokens and slots "what the model sees" and "the answer we want". Ask: `tap: "cols"` with ids `c{j}`.
+- (ai-basics-1) No canvas keeps a history of what the learner tried, so "a bar appears for each threshold you try" (bars filled from the drags on a plane) cannot be built. Workaround: the explore screen shows the live count in a derive caption and the next screen shows all eleven bars. Ask: a derive target that appends (a bar value written on each drag end) so bars fill as the learner explores.
+- (ai-basics-1) A `pair` of two ten-row tables stacks at 440 px into a canvas far taller than the phone. Workaround: one table with both models' columns. Ask: say so in the pair README.
