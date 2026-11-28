@@ -114,6 +114,65 @@ except SystemExit:
     pass
 if not ok_b:
     sys.exit(1)
+# ENGINE-BACKLOG 1267: coverage of on-screen numbers
+def cov_level(**kw):
+    c = Level('odes', 3, **kw)
+    c.files = {'lx': {'id': 'lx', 'screens': [{'type': 'learn', 'prose': 'In 1999 the fee was £12,500 and the rate 25%. Lesson 3 uses `x = 77` and 2^5.',
+        'hints': [{'text': 'Add 4 + 4 + 0 to get 8.'}], 'explain': {'text': 'That is \\tfrac{2}{3}, about 0.67, or 11,000 in round terms.', 'canvas': {'values': {'a': 91}}},
+        'widget': {'kind': 'numeric', 'answer': 8, 'starter': 'x = 12345', 'feedback': 'ignored'},
+        'canvas': {'params': {'xLabel': 'Day 365', 'points': [{'x': 61, 'label': 'p 0.5'}]}}}]}}
+    return c
+c = cov_level()
+shown = {s_ for _, _, s_ in c.uncovered()}
+ok_v = {'12500', '25', '4', '0', '8', '2/3', '0.67', '11000', '365', '0.5'} <= shown and not ({'1999', '3', '77', '5', '2', '12345', '91', '61'} & shown)
+with contextlib.redirect_stdout(io.StringIO()):
+    c.expect('lx', 'screens[0].prose', 12500)
+    c.expect('lx', 'screens[0].prose', 0.25)                           # 25% by value x 100 too
+    c.expect('lx', 'screens[0].hints', 4)
+    c.claim(True, 'sum', covers=[8, 0, 2 / 3])                         # 2/3 covers "2/3" and "0.67" within the stated precision
+c.literal('365', why='a day count from the lesson context')
+c.literal(0.5, why='a label read off the chart, not computed')
+ok_v = ok_v and {s_ for _, _, s_ in c.uncovered()} == {'11000'}
+c.claim(True, 'round', covers=[11018])                                 # 11,000 reads to the thousand
+ok_v = ok_v and c.uncovered() == []
+c2 = cov_level()
+c2.claim(True, 'near', covers=[12480])                                 # 12,500 reads to the hundred: 12480 does not cover it
+ok_v = ok_v and '12500' in {s_ for _, _, s_ in c2.uncovered()}
+try:
+    c2.literal('1', why='')
+    ok_v = False
+except ValueError:
+    pass
+print(f"{'PASS' if ok_v else 'FAIL'} coverage: counts uncovered numbers, skips years, ids, code and exponents, expect, claim covers and literal cover them by precision")
+if not ok_v:
+    sys.exit(1)
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    cov_level().report()                                               # default: prints, never fails
+out1 = buf.getvalue()
+ok_r = 'coverage:' in out1 and 'uncovered lx' in out1
+with contextlib.redirect_stdout(io.StringIO()):
+    try:
+        cov_level(coverage='strict').report()
+        ok_r = False
+    except SystemExit as e:
+        ok_r = ok_r and e.code == 1
+    os.environ['ZQ_NUMBERS_STRICT'] = '1'
+    try:
+        cov_level().report()
+        ok_r = False
+    except SystemExit as e:
+        ok_r = ok_r and e.code == 1
+    del os.environ['ZQ_NUMBERS_STRICT']
+    off = cov_level(coverage='off')
+    off.report()
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    off.report()
+ok_r = ok_r and 'coverage' not in buf.getvalue()
+print(f"{'PASS' if ok_r else 'FAIL'} coverage: warns by default, strict (argument or ZQ_NUMBERS_STRICT=1) fails, off is silent")
+if not ok_r:
+    sys.exit(1)
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
     bad = [

@@ -32,6 +32,13 @@ wrong[] list. Each numeric wrong value must lie outside the answer's tolerance, 
 (abs: |v-a| <= abs; rel: |v-a| <= |a|*rel; a wrong entry's own tol widens it, default abs 1e-9); a hit is a failed check. It also
 reads the feedback.byKey text for that wrong id on the same screen or item and prints "check by hand" (not a failure) when the
 text states numbers and none equals the wrong value: a count by default, the lines with verbose=True or --verbose. Call it in every number script, before report().
+
+Coverage (ENGINE-BACKLOG 1267): report() also lists every number in the level's on-screen text (prose, question, hints, explain, how, why, model answers, byKey
+lines, summary, canvas labels, table cells; not code, years, list numbers, "lesson 3"-style ids, exponents or subscripts) that no check compared against. A number
+is covered when an expect, check_wrongs (answers and wrong values), slip, claim(..., covers=[...]) or literal value equals it to its stated precision (a
+trailing-zero integer to its last non-zero digit; "25%" also by value x 100; sign ignored). Default: print the count and the first five, never fail.
+Strict: Level(course, n, coverage="strict") or ZQ_NUMBERS_STRICT=1 makes an uncovered number fail the run; coverage="off" skips it; --verbose lists them all.
+    lv.literal("12,500", why="a round figure from the brief, not a computed result")   # a deliberately unchecked number; why is required
 """
 import json
 import math
@@ -148,9 +155,89 @@ def _numbers(s):
     return out + fr
 
 
+_CODE = re.compile(r'```.*?```|`[^`\n]*`', re.S)
+_IDISH = re.compile(r'\b(?:lessons?|levels?|items?|screens?|parts?|problems?|steps?|hints?|homework|review)\s+\d+(?:\s*(?:and|,|to|-)\s*\d+)*', re.I)
+_LISTNUM = re.compile(r'(?m)^[ \t]*\(?\d+[.)]\s')
+_SCI = re.compile(r'(\d+(?:\.\d+)?)\s*(?:\\times|\\cdot|×)\s*10\^(-?\d+)')
+_POW10 = re.compile(r'(?<![\w.])10\^(-?\d+)')
+_SLASH = re.compile(r'(?<![\w./])(\d+)\s*/\s*(\d+)(?![\w./])')
+_EXPSUB = re.compile(r'(?<![\w.])\d+(?:\.\d+)?\^\s*-?[\d.]+|\^\s*-?[\d.]+|_\d+')
+_TEXT_KEYS = {'prose', 'question', 'text', 'hint', 'hints', 'explain', 'how', 'why', 'label', 'caption', 'title', 'generic', 'correct', 'byKey', 'summary',
+              'ideas', 'trap', 'note', 'objectives', 'rows', 'columns', 'colHeads', 'rowHeads', 'xLabel', 'yLabel', 'rootLabel', 'frameLabels', 'prompt',
+              'postlude', 'symptom', 'placeholder', 'unit', 'description'}
+_TEXT_SKIP = {'id', 'kind', 'type', 'highlight', 'rung', 'values', 'ids', 'accept', 'tol', 'answer', 'wrong', 'starter', 'solution', 'tests', 'examples',
+              'mutants', 'setup', 'call', 'expect', 'compare', 'source', 'code'}
+_CANVAS_TEXT = {'label', 'caption', 'xLabel', 'yLabel', 'rootLabel', 'frameLabels', 'title', 'text'}
+
+
+def _stated(s):
+    """Numbers a learner reads in a string: a list of (value, tolerance, percent, shown). Code, years, list numbers, "lesson 3" ids, exponents and subscripts are
+    left out; a fraction (LaTeX or a/b) and a sci-notation number are each one value."""
+    out = []
+    s = _LISTNUM.sub(' ', _IDISH.sub(' ', _CODE.sub(' ', s)))
+
+    def frac(m):
+        a, b = (m.group(1), m.group(2)) if m.group(1) is not None else (m.group(3), m.group(4))
+        try:
+            x, y = float(normalise(a)), float(normalise(b))
+            if y != 0:
+                out.append((x / y, max(5e-4, 1e-3 * abs(x / y)), False, f'{a}/{b}'))
+        except ValueError:
+            pass
+        return ' '
+
+    def val(m, v, tol):
+        out.append((v, tol, False, m.group(0)))
+        return ' '
+    s = normalise(_FRAC.sub(frac, s))
+    s = _SCI.sub(lambda m: val(m, float(m.group(1)) * 10 ** int(m.group(2)), 1e-3 * float(m.group(1)) * 10 ** int(m.group(2))), s)
+    s = _POW10.sub(lambda m: val(m, 10.0 ** int(m.group(1)), 1e-9), s)
+    s = _SLASH.sub(lambda m: val(m, int(m.group(1)) / int(m.group(2)), max(5e-4, 1e-3 * int(m.group(1)) / int(m.group(2)))) if int(m.group(2)) else ' ', s)
+    s = _EXPSUB.sub(' ', s)
+    for m in _NUM.finditer(s):
+        raw = m.group(0).rstrip('.')
+        if re.fullmatch(r'-?(?:1[5-9]\d\d|20\d\d)', raw):
+            continue                                              # a year
+        try:
+            v = float(raw)
+        except ValueError:
+            continue
+        d = raw.lstrip('-')
+        if re.fullmatch(r'\d+\.\d+', d):
+            tol = 0.5 * 10 ** -len(d.split('.')[1])
+        elif re.fullmatch(r'\d+', d):
+            tol = 0.5 * 10 ** max(len(d) - len(d.rstrip('0')) - 1, 0)   # 12,500 reads to the hundred, 11,000 to the thousand
+        else:
+            tol = 1e-9 * max(1.0, abs(v))
+        pct = s[m.end():m.end() + 3].lstrip().startswith(('%', '\\%'))
+        out.append((v, tol + 1e-9, pct, raw))
+    return out
+
+
+def _text_strings(node, path, fid, out, text=False, canvas=False):
+    """Collect (file, path, string) for every on-screen string: under a text key, minus code, answers and ids; a canvas contributes only its label keys."""
+    if isinstance(node, str):
+        if text:
+            out.append((fid, path, node))
+    elif isinstance(node, list):
+        for i, x in enumerate(node):
+            _text_strings(x, f'{path}[{i}]', fid, out, text, canvas)
+    elif isinstance(node, dict):
+        for k, x in node.items():
+            if k in _TEXT_SKIP:
+                continue
+            p = f'{path}.{k}' if path else k
+            if k == 'canvas':
+                _text_strings(x, p, fid, out, False, True)
+            elif canvas:
+                _text_strings(x, p, fid, out, text or k in _CANVAS_TEXT, True)
+            else:
+                _text_strings(x, p, fid, out, text or k in _TEXT_KEYS, False)
+
+
 class Level:
-    def __init__(self, course, n):
-        self.course, self.n, self.files, self.results = course, n, {}, []
+    def __init__(self, course, n, coverage=None):
+        self.course, self.n, self.files, self.results, self.coverage = course, n, {}, [], coverage
         d = os.path.join(COURSES, course)
         with open(os.path.join(d, 'course.json'), encoding='utf8') as f:
             lv = json.load(f)['levels'][n - 1]
@@ -161,6 +248,45 @@ class Level:
                     self.files[fid] = json.load(f)
         if not self.files:
             raise SystemExit(f'numbers_lib: no files for {course} level {n}')
+
+    def _cv(self):
+        return self.__dict__.setdefault('_cvals', [])
+
+    def _cover(self, *vals):
+        """Record values some check compared against (numbers, or strings whose numbers count)."""
+        for v in vals:
+            if isinstance(v, str):
+                self._cv().extend(x[0] for x in _stated(v))
+            elif isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v):
+                self._cv().append(float(v))
+
+    def literal(self, value, why):
+        """ENGINE-BACKLOG 1267: mark a number (or the numbers of a string) as deliberately unchecked; `why` is required and listed by report()."""
+        if not isinstance(why, str) or len(why.strip()) < 8:
+            raise ValueError('literal(): why must say why the number is left unchecked')
+        self._cover(value)
+        self.__dict__.setdefault('_lits', []).append((value, why))
+
+    def uncovered(self):
+        """Every on-screen number no check compared against: a list of (file, path, shown)."""
+        strs = []
+        for fid, doc in self.files.items():
+            _text_strings(doc, '', fid, strs)
+        cv, seen, out = sorted(abs(v) for v in self._cv()), set(), []
+        import bisect
+        for fid, path, text in strs:
+            for v, tol, pct, shown in _stated(text):
+                a = abs(v)
+                hit = False
+                for t in ((a, a / 100) if pct else (a,)):
+                    i = bisect.bisect_left(cv, t - tol)
+                    if i < len(cv) and cv[i] <= t + tol:
+                        hit = True
+                        break
+                if not hit and (fid, path, shown) not in seen:
+                    seen.add((fid, path, shown))
+                    out.append((fid, path, shown))
+        return out
 
     def _file(self, ref):
         if ref in ('review', 'homework', 'problems'):
@@ -176,6 +302,7 @@ class Level:
 
     def expect(self, ref, path, value, fmt=None):
         label = f'{ref} {path} = {value!r}'
+        self._cover(value)
         try:
             txt = self.text(ref, path)
         except KeyError as e:
@@ -189,14 +316,16 @@ class Level:
             ok = any(abs(x - value) <= 1e-9 * max(1.0, abs(value)) for x in _numbers(txt))
         return self._rec(ok, label, '' if ok else f'not found in: {txt[:120]!r}')
 
-    def claim(self, ok, label, note=''):
-        """Record a claim that is not a single number (an inequality, a coverage statement, what a chart shows)."""
+    def claim(self, ok, label, note='', covers=()):
+        """Record a claim that is not a single number (an inequality, a coverage statement, what a chart shows). `covers`: the numbers the claim compares (coverage, 1267)."""
+        self._cover(*covers)
         return self._rec(bool(ok), label, '' if ok else (note or 'claim is false'))
 
-    def claim_text(self, ref, path, phrase, ok, label=None):
+    def claim_text(self, ref, path, phrase, ok, label=None, covers=()):
         """A claim tied to its wording: while `phrase` is in the text, `ok` must be true; once a fix rewords it away the check passes,
         so a number script exits 0 after the content is fixed."""
         label = label or f'{ref} {path} says {phrase!r}'
+        self._cover(*covers)
         try:
             txt = self.text(ref, path)
         except KeyError as e:
@@ -205,8 +334,8 @@ class Level:
             return self._rec(True, label, 'wording no longer in the text')
         return self._rec(bool(ok), label, '' if ok else f'the sentence is still in the text and is false: {phrase!r}')
 
-    def stated(self, ref, path, phrase, ok):
-        return self.claim_text(ref, path, phrase, ok)
+    def stated(self, ref, path, phrase, ok, covers=()):
+        return self.claim_text(ref, path, phrase, ok, covers=covers)
 
     def check_wrongs(self, file=None, verbose=False):
         """Assert no numeric wrong[] value lies inside its answer's tolerance; count the byKey texts that state other numbers
@@ -229,6 +358,7 @@ class Level:
                 fb = node['feedback']['byKey']
             ans, wr = node.get('answer'), node.get('wrong')
             if isinstance(ans, (int, float)) and not isinstance(ans, bool) and isinstance(wr, list):
+                self._cover(ans, *[w.get('value') for w in wr if isinstance(w, dict)])
                 ha = half(ans, node.get('tol'))
                 for i, w in enumerate(wr):
                     v = w.get('value') if isinstance(w, dict) else None
@@ -277,6 +407,7 @@ class Level:
         if not isinstance(ans, (int, float)) or isinstance(ans, bool) or len(ent) != 1 or not isinstance(ent[0].get('value'), (int, float)):
             return self._rec(False, label, 'no numeric answer, or no single numeric wrong entry with this id')
         e, ha = ent[0], _half(ans, w.get('tol'))
+        self._cover(ans, e['value'], *[r[1] if isinstance(r, tuple) else r for r in routes])
         hs, ok = _half(e['value'], e.get('tol') or {'abs': 1e-9}), True
         ok &= self._rec(abs(e['value'] - ans) > ha + hs, f'{label}: band apart from the key band', f'the slip band {e["value"]!r} +-{hs:.6g} meets the key band {ans!r} +-{ha:.6g}')
         fb = part.get('feedback') if isinstance(part, dict) else None
@@ -327,7 +458,23 @@ class Level:
         print(f"{'ok ' if ok else 'BAD'} {label}" + (f'  ({note})' if note else ''))
         return ok
 
+    def _coverage(self):
+        mode = self.coverage or ('strict' if os.environ.get('ZQ_NUMBERS_STRICT') == '1' else 'warn')
+        if mode == 'off':
+            return
+        miss = self.uncovered()
+        lits = self.__dict__.get('_lits', [])
+        verbose = '--verbose' in sys.argv or '-v' in sys.argv
+        print(f'numbers_lib: coverage: {len(miss)} on-screen number(s) no check compared against' + (f', {len(lits)} marked literal' if lits else '') + (' (strict)' if mode == 'strict' else ''))
+        for fid, path, shown in (miss if verbose or mode == 'strict' else miss[:5]):
+            print(f'  uncovered {fid} {path}: {shown}')
+        if miss and not verbose and mode != 'strict' and len(miss) > 5:
+            print(f'  ... {len(miss) - 5} more (--verbose lists them; lv.literal(value, why=...) marks one as deliberate)')
+        if miss and mode == 'strict':
+            self.results.append((False, f'coverage: {len(miss)} uncovered number(s)', 'check each with expect, or mark it with literal()'))
+
     def report(self):
+        self._coverage()
         bad = [r for r in self.results if not r[0]]
         print(f'numbers_lib: {len(self.results) - len(bad)} of {len(self.results)} checks passed')
         if bad:
@@ -338,8 +485,8 @@ class Bank(Level):
     """One interview bank file, content/bank/<file id>.json (B2-E4). Paths read items[<item id>].widget.answer; item parts read
     items[<id>].parts[<n>].widget...; the file argument of expect and text may be left out, and claim_text and stated take none."""
 
-    def __init__(self, file_id):
-        self.course, self.n, self.id, self.results = 'bank', 0, file_id, []
+    def __init__(self, file_id, coverage=None):
+        self.course, self.n, self.id, self.results, self.coverage = 'bank', 0, file_id, [], coverage
         p = os.path.join(BANK, f'{file_id}.json')
         if not os.path.exists(p):
             raise SystemExit(f'numbers_lib: no bank file {file_id} ({p})')
