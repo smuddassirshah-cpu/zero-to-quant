@@ -68,8 +68,8 @@ const { H: HR, cur: curR, setMinutes, examMinutes } = loadHours(CONTENT);
 let stageApp = 0, stageOut = 0;
 for (const s of curR.stages) {
   const a = HR.stageApp(s.id), o = HR.stageOut(s.id);
-  near(a, s.topics.reduce((x, t) => x + HR.topicApp(t.id), 0), `stage ${s.id} in-app is the sum of its topics`, 1e-6);
-  near(o, s.topics.reduce((x, t) => x + HR.topicOut(t.id), 0), `stage ${s.id} outside is the sum of its topics`, 1e-6);
+  near(a, s.topics.filter((t) => !HR.aiTopic(t)).reduce((x, t) => x + HR.topicApp(t.id), 0), `stage ${s.id} in-app is the sum of its non-AI topics`, 1e-6);
+  near(o, s.topics.filter((t) => !HR.aiTopic(t)).reduce((x, t) => x + HR.topicOut(t.id), 0), `stage ${s.id} outside is the sum of its non-AI topics`, 1e-6);
   ok(a > 0 && o >= 0, `stage ${s.id} has in-app and non-negative outside hours (${a.toFixed(1)}, ${o.toFixed(1)})`);
   ok(a + o + 1e-6 >= HR.stage(s.id), `stage ${s.id}: in-app plus outside is at least the stored hours (outside is floored, never raised)`);
   for (const t of s.topics) {

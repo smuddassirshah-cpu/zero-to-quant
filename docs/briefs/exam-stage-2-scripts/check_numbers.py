@@ -908,9 +908,10 @@ for iid, it in ITEM.items():
 rec(sorted(covered) == ['2.1', '2.2', '2.3', '2.4', '2.5'], f'every topic 2.1 to 2.5 on an auto-graded item, none from 2.6 (the researcher track): {sorted(covered)}')
 for tp in sorted(covered):
     rec(len(covered[tp]) >= 2, f'topic {tp}: {len(covered[tp])} auto-graded items')
-stage2_skills = {s for s, tp in skill_topic.items() if tp.startswith('2.') and tp != '2.6'}
+AI_TOPICS = {'0.8', '1.12', '2.7', '2.8', '2.9', '3.6'}  # strand ai (ENGINE-BACKLOG 1218): never on a stage exam
+stage2_skills = {s for s, tp in skill_topic.items() if tp.startswith('2.') and tp != '2.6' and tp not in AI_TOPICS}
 used = {s for it in ITEM.values() for s in it['skills']}
-rec(stage2_skills <= used, f'every Stage 2 skill outside topic 2.6 on an item (missing {sorted(stage2_skills - used)})')
+rec(stage2_skills <= used, f'every Stage 2 skill outside topic 2.6 and the AI topics on an item (missing {sorted(stage2_skills - used)})')
 rec(not any(skill_topic[s_] == '2.6' for s_ in used), 'no item carries a topic 2.6 skill')
 refs = {n_ for it in ITEM.values() for w_ in ([it['widget']] if 'widget' in it else [p_['widget'] for p_ in it['parts']]) for n_ in w_.get('data', {})}
 files_ = set(os.listdir(DATA))
