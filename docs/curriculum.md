@@ -62,7 +62,7 @@ Stage hours are the sum of topic hours; nothing stores them. In the app counts e
 | 2.4 | Contests | 10 | 130 | 16 | 16 |
 | 2.5 | Numerical methods and optimisation | 25 | 65 | 34 | 34 |
 | 2.6 | Statistical modelling | 13 | 37 | 18 | 18 |
-| 2.7 | Deep learning | 43 | 197 | 64 | 56 |
+| 2.7 | Deep learning | 44 | 196 | 64 | 60 |
 | 2.8 | Reinforcement learning | 15 | 105 | 20 | 20 |
 | 2.9 | Language models | 26 | 174 | 48 | 4 |
 | 3.1 | Research papers | 15 | 135 | 30 | 30 |
@@ -325,12 +325,12 @@ AI strand (optional, outside every stage figure above and the quant path): 6 top
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0. From nothing | 0.8 | AI from nothing | 40 | 20 | 20 | 2 | 7 of 7 | 28 of 28 |
 | 1. Foundations | 1.12 | Neural networks from scratch | 150 | 29 | 121 | 3 | 10 of 10 | 40 of 40 |
-| 2. Intermediate | 2.7 | Deep learning | 240 | 43 | 197 | 4 | 14 of 16 | 56 of 64 |
+| 2. Intermediate | 2.7 | Deep learning | 240 | 44 | 196 | 4 | 15 of 16 | 60 of 64 |
 | 2. Intermediate | 2.8 | Reinforcement learning | 120 | 15 | 105 | 1 | 5 of 5 | 20 of 20 |
 | 2. Intermediate | 2.9 | Language models | 200 | 26 | 174 | 3 | 1 of 12 | 4 of 48 |
 | 3. Advanced | 3.6 | Frontier AI | 200 | 27 | 173 | 4 | 0 of 13 | 0 of 52 |
 
-Levels written today: 37 of 63. A level counts as written when every lesson file in its list exists; a later run of the tool updates the marks.
+Levels written today: 38 of 63. A level counts as written when every lesson file in its list exists; a later run of the tool updates the marks.
 
 | Topic | Course | Name | Levels | Lessons written |
 | --- | --- | --- | --- | --- |
@@ -341,7 +341,7 @@ Levels written today: 37 of 63. A level counts as written when every lesson file
 | 1.12 | makemore | First language models | 1 written, 2 written, 3 written | 12 of 12 |
 | 2.7 | nn-train | Training Networks | 1 written, 2 written, 3 written, 4 written | 16 of 16 |
 | 2.7 | cnn | Convolutional Networks | 1 written, 2 written, 3 written | 12 of 12 |
-| 2.7 | sequence | Sequences and Attention | 1 written, 2 written, 3 written, 4 to write | 12 of 16 |
+| 2.7 | sequence | Sequences and Attention | 1 written, 2 written, 3 written, 4 written | 16 of 16 |
 | 2.7 | representations | Embeddings and Generative Models | 1 written, 2 written, 3 written, 4 written, 5 to write | 16 of 20 |
 | 2.8 | rl | Reinforcement Learning | 1 written, 2 written, 3 written, 4 written, 5 written | 20 of 20 |
 | 2.9 | gpt | Build a GPT | 1 written, 2 to write, 3 to write, 4 to write, 5 to write | 4 of 20 |
