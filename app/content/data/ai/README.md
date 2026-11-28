@@ -20,3 +20,5 @@ Lessons name these files in a `code` or `trainer` widget's `data` map (`"names.t
 Licence: the UCI Machine Learning Repository's "Optical Recognition of Handwritten Digits" data set (the test set of NIST-derived preprocessed digits by E. Alpaydin and C. Kaynak), released under CC BY 4.0. Credit line: "Digits data: Alpaydin, E. and Kaynak, C., Optical Recognition of Handwritten Digits, UCI Machine Learning Repository, CC BY 4.0, as bundled with scikit-learn."
 
 Put the credit line of every data set a lesson uses in that lesson's closing prose or a `how` line; the courses' voice rules apply (British English, no em-dashes).
+
+Modules: `autograd.softmax` (v1.0) has no gradient; the differentiable one is `seq_ops_l2.softmax`. Import it by name after any `from autograd import *`, never before (see `docs/briefs/ai-strand-interfaces.md`, Attention ops).
