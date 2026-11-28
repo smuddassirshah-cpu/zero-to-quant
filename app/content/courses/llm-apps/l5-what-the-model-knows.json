@@ -1,0 +1,2303 @@
+{
+ "id": "l5-what-the-model-knows",
+ "course": "llm-apps",
+ "title": "What the model already knows",
+ "minutes": 15,
+ "objectives": [
+  "Explain why a model's training cut-off is look-ahead, and find the clean test window."
+ ],
+ "skills": [
+  "llm-lookahead"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A signal that stopped working",
+   "prose": "A vendor sells a daily sentiment score from a language model. Trading its sign on our seeded market (the generator plants real signal, memory of later returns and late news, each of a known size) gives the P&L below, from January 2016 to September 2023.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "pnl",
+       "label": "Cumulative P&L, %",
+       "values": [
+        0.43,
+        8.9,
+        15.06,
+        20.63,
+        32.87,
+        36.49,
+        38.06,
+        44.09,
+        50.19,
+        57.0,
+        64.28,
+        70.41,
+        76.26,
+        79.78,
+        84.99,
+        87.52,
+        92.05,
+        99.62,
+        102.79,
+        110.95,
+        114.65,
+        124.37,
+        128.4,
+        131.8,
+        139.63,
+        143.84,
+        154.73,
+        158.33,
+        161.58,
+        171.57,
+        177.57,
+        181.64,
+        185.73,
+        191.02,
+        192.64,
+        191.86,
+        194.8,
+        198.03,
+        206.28,
+        207.81,
+        209.2,
+        217.58,
+        224.66,
+        232.07,
+        233.82,
+        241.54,
+        240.7,
+        243.75,
+        250.78,
+        260.05,
+        261.82,
+        266.01,
+        271.58,
+        274.09,
+        280.54,
+        281.99,
+        287.6,
+        296.03,
+        297.42,
+        303.09,
+        307.65,
+        311.71,
+        319.16,
+        323.96,
+        323.99,
+        328.91,
+        331.61,
+        335.57,
+        344.1,
+        350.96,
+        351.88,
+        351.57,
+        358.92,
+        361.0,
+        369.83,
+        377.73,
+        381.79,
+        384.22,
+        386.53,
+        394.15,
+        394.53,
+        399.23,
+        403.35,
+        408.6,
+        413.24,
+        415.95,
+        424.97,
+        433.95,
+        440.83,
+        449.39,
+        454.48,
+        458.5,
+        461.72,
+        461.93,
+        468.19,
+        473.31,
+        476.98,
+        482.68,
+        489.36,
+        491.26,
+        497.64,
+        505.41,
+        505.24,
+        513.43,
+        519.97,
+        524.18,
+        529.0,
+        533.9,
+        541.32,
+        547.08,
+        552.12,
+        556.25,
+        564.09,
+        563.49,
+        569.46,
+        571.8,
+        576.88,
+        584.18,
+        590.96,
+        593.91,
+        601.13,
+        608.82,
+        614.79,
+        618.49,
+        622.87,
+        626.27,
+        633.67,
+        641.18,
+        650.34,
+        653.8,
+        657.45,
+        660.86,
+        667.5,
+        679.72,
+        685.52,
+        691.73,
+        690.12,
+        693.17,
+        701.23,
+        705.87,
+        707.09,
+        714.78,
+        723.11,
+        729.06,
+        736.28,
+        735.04,
+        738.43,
+        745.55,
+        749.35,
+        752.08,
+        759.53,
+        761.77,
+        761.91,
+        763.0,
+        763.13,
+        763.45,
+        766.96,
+        770.73,
+        768.66,
+        771.06,
+        770.66,
+        771.37,
+        769.16,
+        775.39,
+        777.21,
+        773.21,
+        772.34,
+        772.2,
+        770.5,
+        772.46,
+        772.69,
+        770.49,
+        773.19,
+        778.67,
+        782.69,
+        783.62,
+        779.67,
+        784.11,
+        787.42,
+        788.21,
+        787.54,
+        785.32,
+        785.92,
+        791.92,
+        786.53,
+        791.78,
+        792.68,
+        793.66,
+        791.78,
+        789.48,
+        790.22,
+        791.81,
+        794.21,
+        794.01,
+        799.43,
+        796.9,
+        794.06,
+        789.18,
+        788.48,
+        789.83
+       ]
+      }
+     ],
+     "x": "index",
+     "yLabel": "Cumulative P&L, %",
+     "xLabel": "Trading day ÷ 10"
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "cut",
+       "i": 150,
+       "label": "1 Oct 2021"
+      }
+     ]
+    }
+   },
+   "question": "What most likely changed on 1 October 2021, where the slope breaks?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cutoff",
+      "text": "The model's training text ends there",
+      "correct": true
+     },
+     {
+      "id": "regime",
+      "text": "The market regime changed that month",
+      "why": "A regime change would not lift the earlier slope to an annual Sharpe near 9; and the planted data has none."
+     },
+     {
+      "id": "costs",
+      "text": "Trading costs rose sharply",
+      "why": "This P&L has no costs in it at all."
+     },
+     {
+      "id": "luck",
+      "text": "The strategy's run of luck ended",
+      "why": "Luck does not produce a Sharpe near 9 for six years and then stop on one date."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A Sharpe ratio near 9 for six years is not a trading edge anyone has."
+    },
+    {
+     "rung": "point",
+     "text": "Ask what the model could have read about those years.",
+     "highlight": [
+      "cut"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The break sits at the model's training cut-off: before it, the scores were partly memory.",
+    "generic": "Not quite. What does a language model know about the years it was trained on?"
+   },
+   "explain": {
+    "text": "Before the cut-off the annualised Sharpe is 9.2; after it, 1.0. The model was trained on text that described those earlier days, including what followed them.",
+    "canvas": {
+     "highlight": [
+      "cut"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "title": "How much of the test is clean?",
+   "prose": "Drag the vendor's stated cut-off along the backtest's dates. Only the days after it test the model's reading; the days before it may test its memory.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 2016,
+     "max": 2024,
+     "step": 1,
+     "labels": true
+    },
+    "state": {
+     "points": [
+      {
+       "id": "c",
+       "x": 2021.75,
+       "label": "cut-off",
+       "drag": true
+      }
+     ],
+     "intervals": [
+      {
+       "id": "test",
+       "from": 2016.0,
+       "to": 2023.67,
+       "label": "backtest",
+       "row": 1
+      }
+     ],
+     "caption": "Share after the cut-off: {{fixed(max(0, min(1, (2023.67 - c.x) / 7.67)), 2)}} (by calendar time)"
+    },
+    "derive": {
+     "caption": "Share after the cut-off: {{fixed(max(0, min(1, (2023.67 - c.x) / 7.67)), 2)}} (by calendar time)"
+    }
+   },
+   "question": "With the cut-off at 1 October 2021, what share of the 2,000 trading days comes after it? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.25,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "before",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The backtest is 2,000 trading days; the cut-off is trading day 1,500."
+    },
+    {
+     "rung": "point",
+     "text": "Days after it: $2000 - 1500$."
+    }
+   ],
+   "feedback": {
+    "correct": "$500/2000 = 0.25$: a quarter of the backtest tests reading.",
+    "generic": "Not quite. Count the trading days after the cut-off and divide by 2,000.",
+    "byKey": {
+     "before": "0.75 is the share before the cut-off, the part that may be memory."
+    }
+   },
+   "explain": {
+    "text": "Day 1,500 is 1 October 2021, so 500 of 2,000 days, 0.25, are after it. The caption's calendar share is close; counting trading days is exact."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The clean window",
+   "prose": "A model trained on text up to its **training cut-off** may have **memorised** what happened on earlier dates. Only dates after the cut-off form the **clean window**, where a score must come from reading. There the daily P&L has mean 0.0605% and standard deviation 0.9640%.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "pnl",
+       "label": "Cumulative P&L, %",
+       "values": [
+        0.43,
+        8.9,
+        15.06,
+        20.63,
+        32.87,
+        36.49,
+        38.06,
+        44.09,
+        50.19,
+        57.0,
+        64.28,
+        70.41,
+        76.26,
+        79.78,
+        84.99,
+        87.52,
+        92.05,
+        99.62,
+        102.79,
+        110.95,
+        114.65,
+        124.37,
+        128.4,
+        131.8,
+        139.63,
+        143.84,
+        154.73,
+        158.33,
+        161.58,
+        171.57,
+        177.57,
+        181.64,
+        185.73,
+        191.02,
+        192.64,
+        191.86,
+        194.8,
+        198.03,
+        206.28,
+        207.81,
+        209.2,
+        217.58,
+        224.66,
+        232.07,
+        233.82,
+        241.54,
+        240.7,
+        243.75,
+        250.78,
+        260.05,
+        261.82,
+        266.01,
+        271.58,
+        274.09,
+        280.54,
+        281.99,
+        287.6,
+        296.03,
+        297.42,
+        303.09,
+        307.65,
+        311.71,
+        319.16,
+        323.96,
+        323.99,
+        328.91,
+        331.61,
+        335.57,
+        344.1,
+        350.96,
+        351.88,
+        351.57,
+        358.92,
+        361.0,
+        369.83,
+        377.73,
+        381.79,
+        384.22,
+        386.53,
+        394.15,
+        394.53,
+        399.23,
+        403.35,
+        408.6,
+        413.24,
+        415.95,
+        424.97,
+        433.95,
+        440.83,
+        449.39,
+        454.48,
+        458.5,
+        461.72,
+        461.93,
+        468.19,
+        473.31,
+        476.98,
+        482.68,
+        489.36,
+        491.26,
+        497.64,
+        505.41,
+        505.24,
+        513.43,
+        519.97,
+        524.18,
+        529.0,
+        533.9,
+        541.32,
+        547.08,
+        552.12,
+        556.25,
+        564.09,
+        563.49,
+        569.46,
+        571.8,
+        576.88,
+        584.18,
+        590.96,
+        593.91,
+        601.13,
+        608.82,
+        614.79,
+        618.49,
+        622.87,
+        626.27,
+        633.67,
+        641.18,
+        650.34,
+        653.8,
+        657.45,
+        660.86,
+        667.5,
+        679.72,
+        685.52,
+        691.73,
+        690.12,
+        693.17,
+        701.23,
+        705.87,
+        707.09,
+        714.78,
+        723.11,
+        729.06,
+        736.28,
+        735.04,
+        738.43,
+        745.55,
+        749.35,
+        752.08,
+        759.53,
+        761.77,
+        761.91,
+        763.0,
+        763.13,
+        763.45,
+        766.96,
+        770.73,
+        768.66,
+        771.06,
+        770.66,
+        771.37,
+        769.16,
+        775.39,
+        777.21,
+        773.21,
+        772.34,
+        772.2,
+        770.5,
+        772.46,
+        772.69,
+        770.49,
+        773.19,
+        778.67,
+        782.69,
+        783.62,
+        779.67,
+        784.11,
+        787.42,
+        788.21,
+        787.54,
+        785.32,
+        785.92,
+        791.92,
+        786.53,
+        791.78,
+        792.68,
+        793.66,
+        791.78,
+        789.48,
+        790.22,
+        791.81,
+        794.21,
+        794.01,
+        799.43,
+        796.9,
+        794.06,
+        789.18,
+        788.48,
+        789.83
+       ]
+      }
+     ],
+     "x": "index",
+     "yLabel": "Cumulative P&L, %",
+     "xLabel": "Trading day ÷ 10"
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "cut",
+       "i": 150,
+       "label": "1 Oct 2021"
+      }
+     ]
+    }
+   },
+   "question": "What is the annualised Sharpe ratio in the clean window? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.0,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "daily",
+      "value": 0.0627,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "x252",
+      "value": 15.81,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Annualise a daily Sharpe by $\\sqrt{252}$."
+    },
+    {
+     "rung": "point",
+     "text": "$0.0605 / 0.9640 \\times \\sqrt{252}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.0605 / 0.9640 \\times \\sqrt{252} = 1.00$.",
+    "generic": "Not quite. Divide the mean by the standard deviation, then multiply by the square root of 252.",
+    "byKey": {
+     "daily": "That is the daily Sharpe. Multiply by $\\sqrt{252}$ to annualise.",
+     "x252": "You multiplied by 252. Sharpe ratios scale by the square root of time."
+    }
+   },
+   "explain": {
+    "text": "$0.0627 \\times 15.875 = 1.00$, against 9.22 before the cut-off. The clean figure is the one that measures reading."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Before the cut-off",
+   "prose": "Before the cut-off the daily P&L has mean 0.5058% and standard deviation 0.8711%. The planted memory adds twice the next day's return, in units of its spread, to the score.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "pnl",
+       "label": "Cumulative P&L, %",
+       "values": [
+        0.43,
+        8.9,
+        15.06,
+        20.63,
+        32.87,
+        36.49,
+        38.06,
+        44.09,
+        50.19,
+        57.0,
+        64.28,
+        70.41,
+        76.26,
+        79.78,
+        84.99,
+        87.52,
+        92.05,
+        99.62,
+        102.79,
+        110.95,
+        114.65,
+        124.37,
+        128.4,
+        131.8,
+        139.63,
+        143.84,
+        154.73,
+        158.33,
+        161.58,
+        171.57,
+        177.57,
+        181.64,
+        185.73,
+        191.02,
+        192.64,
+        191.86,
+        194.8,
+        198.03,
+        206.28,
+        207.81,
+        209.2,
+        217.58,
+        224.66,
+        232.07,
+        233.82,
+        241.54,
+        240.7,
+        243.75,
+        250.78,
+        260.05,
+        261.82,
+        266.01,
+        271.58,
+        274.09,
+        280.54,
+        281.99,
+        287.6,
+        296.03,
+        297.42,
+        303.09,
+        307.65,
+        311.71,
+        319.16,
+        323.96,
+        323.99,
+        328.91,
+        331.61,
+        335.57,
+        344.1,
+        350.96,
+        351.88,
+        351.57,
+        358.92,
+        361.0,
+        369.83,
+        377.73,
+        381.79,
+        384.22,
+        386.53,
+        394.15,
+        394.53,
+        399.23,
+        403.35,
+        408.6,
+        413.24,
+        415.95,
+        424.97,
+        433.95,
+        440.83,
+        449.39,
+        454.48,
+        458.5,
+        461.72,
+        461.93,
+        468.19,
+        473.31,
+        476.98,
+        482.68,
+        489.36,
+        491.26,
+        497.64,
+        505.41,
+        505.24,
+        513.43,
+        519.97,
+        524.18,
+        529.0,
+        533.9,
+        541.32,
+        547.08,
+        552.12,
+        556.25,
+        564.09,
+        563.49,
+        569.46,
+        571.8,
+        576.88,
+        584.18,
+        590.96,
+        593.91,
+        601.13,
+        608.82,
+        614.79,
+        618.49,
+        622.87,
+        626.27,
+        633.67,
+        641.18,
+        650.34,
+        653.8,
+        657.45,
+        660.86,
+        667.5,
+        679.72,
+        685.52,
+        691.73,
+        690.12,
+        693.17,
+        701.23,
+        705.87,
+        707.09,
+        714.78,
+        723.11,
+        729.06,
+        736.28,
+        735.04,
+        738.43,
+        745.55,
+        749.35,
+        752.08,
+        759.53,
+        761.77,
+        761.91,
+        763.0,
+        763.13,
+        763.45,
+        766.96,
+        770.73,
+        768.66,
+        771.06,
+        770.66,
+        771.37,
+        769.16,
+        775.39,
+        777.21,
+        773.21,
+        772.34,
+        772.2,
+        770.5,
+        772.46,
+        772.69,
+        770.49,
+        773.19,
+        778.67,
+        782.69,
+        783.62,
+        779.67,
+        784.11,
+        787.42,
+        788.21,
+        787.54,
+        785.32,
+        785.92,
+        791.92,
+        786.53,
+        791.78,
+        792.68,
+        793.66,
+        791.78,
+        789.48,
+        790.22,
+        791.81,
+        794.21,
+        794.01,
+        799.43,
+        796.9,
+        794.06,
+        789.18,
+        788.48,
+        789.83
+       ]
+      }
+     ],
+     "x": "index",
+     "yLabel": "Cumulative P&L, %",
+     "xLabel": "Trading day ÷ 10"
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "cut",
+       "i": 150,
+       "label": "1 Oct 2021"
+      }
+     ]
+    }
+   },
+   "question": "What is the annualised Sharpe before the cut-off? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9.2,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "daily",
+      "value": 0.58,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Same formula as the last screen."
+    },
+    {
+     "rung": "point",
+     "text": "$0.5058 / 0.8711 \\times \\sqrt{252}$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 9.2, more than nine times the clean 1.00.",
+    "generic": "Not quite. Mean over standard deviation, times $\\sqrt{252}$.",
+    "byKey": {
+     "daily": "That is the daily figure; annualise it."
+    }
+   },
+   "explain": {
+    "text": "9.2 before against 1.00 after. No real strategy jumps by that much at a model's cut-off; the difference is memory, not skill."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Has it seen this document?",
+   "prose": "A memorisation check from `post-train` level 4: give the model a news story's opening words and compare what it writes back with the story. Count the story's **n-grams** (runs of $n$ words) that appear in the model's text. The story has 16 words; the model's text repeats its first 12.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Text"
+     ],
+     "rows": [
+      [
+       "Story",
+       "lenders to corran refused to extend the credit line on friday and the shares fell sharply"
+      ],
+      [
+       "Model",
+       "lenders to corran refused to extend the credit line on friday and its bonds fell"
+      ]
+     ],
+     "align": [
+      "left",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What share of the story's 5-grams appear in the model's text? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6667,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "three",
+      "value": 0.7143,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "words",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A 16-word story has $16 - 5 + 1 = 12$ five-grams."
+    },
+    {
+     "rung": "point",
+     "text": "A 5-gram is shared when all five words sit inside the shared opening of 12 words."
+    },
+    {
+     "rung": "step",
+     "text": "That is $12 - 5 + 1 = 8$ of them."
+    }
+   ],
+   "feedback": {
+    "correct": "8 of 12: 0.6667. Its 3-grams overlap 0.7143.",
+    "generic": "Not quite. Count 5-grams that lie inside the 12 shared words.",
+    "byKey": {
+     "three": "0.7143 is the 3-gram share. Longer n-grams are the stricter test.",
+     "words": "That counts words. The check counts runs of five words."
+    }
+   },
+   "explain": {
+    "text": "Eight of the story's twelve 5-grams appear word for word: 0.6667. A model that writes back two thirds of a story's 5-grams has very likely read it; short n-grams match by chance, which is why $n$ of 5 or more is used."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A cut-off is a claim",
+   "prose": "The vendor's documents give the model's training cut-off as 1 October 2021.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "pnl",
+       "label": "Cumulative P&L, %",
+       "values": [
+        0.43,
+        8.9,
+        15.06,
+        20.63,
+        32.87,
+        36.49,
+        38.06,
+        44.09,
+        50.19,
+        57.0,
+        64.28,
+        70.41,
+        76.26,
+        79.78,
+        84.99,
+        87.52,
+        92.05,
+        99.62,
+        102.79,
+        110.95,
+        114.65,
+        124.37,
+        128.4,
+        131.8,
+        139.63,
+        143.84,
+        154.73,
+        158.33,
+        161.58,
+        171.57,
+        177.57,
+        181.64,
+        185.73,
+        191.02,
+        192.64,
+        191.86,
+        194.8,
+        198.03,
+        206.28,
+        207.81,
+        209.2,
+        217.58,
+        224.66,
+        232.07,
+        233.82,
+        241.54,
+        240.7,
+        243.75,
+        250.78,
+        260.05,
+        261.82,
+        266.01,
+        271.58,
+        274.09,
+        280.54,
+        281.99,
+        287.6,
+        296.03,
+        297.42,
+        303.09,
+        307.65,
+        311.71,
+        319.16,
+        323.96,
+        323.99,
+        328.91,
+        331.61,
+        335.57,
+        344.1,
+        350.96,
+        351.88,
+        351.57,
+        358.92,
+        361.0,
+        369.83,
+        377.73,
+        381.79,
+        384.22,
+        386.53,
+        394.15,
+        394.53,
+        399.23,
+        403.35,
+        408.6,
+        413.24,
+        415.95,
+        424.97,
+        433.95,
+        440.83,
+        449.39,
+        454.48,
+        458.5,
+        461.72,
+        461.93,
+        468.19,
+        473.31,
+        476.98,
+        482.68,
+        489.36,
+        491.26,
+        497.64,
+        505.41,
+        505.24,
+        513.43,
+        519.97,
+        524.18,
+        529.0,
+        533.9,
+        541.32,
+        547.08,
+        552.12,
+        556.25,
+        564.09,
+        563.49,
+        569.46,
+        571.8,
+        576.88,
+        584.18,
+        590.96,
+        593.91,
+        601.13,
+        608.82,
+        614.79,
+        618.49,
+        622.87,
+        626.27,
+        633.67,
+        641.18,
+        650.34,
+        653.8,
+        657.45,
+        660.86,
+        667.5,
+        679.72,
+        685.52,
+        691.73,
+        690.12,
+        693.17,
+        701.23,
+        705.87,
+        707.09,
+        714.78,
+        723.11,
+        729.06,
+        736.28,
+        735.04,
+        738.43,
+        745.55,
+        749.35,
+        752.08,
+        759.53,
+        761.77,
+        761.91,
+        763.0,
+        763.13,
+        763.45,
+        766.96,
+        770.73,
+        768.66,
+        771.06,
+        770.66,
+        771.37,
+        769.16,
+        775.39,
+        777.21,
+        773.21,
+        772.34,
+        772.2,
+        770.5,
+        772.46,
+        772.69,
+        770.49,
+        773.19,
+        778.67,
+        782.69,
+        783.62,
+        779.67,
+        784.11,
+        787.42,
+        788.21,
+        787.54,
+        785.32,
+        785.92,
+        791.92,
+        786.53,
+        791.78,
+        792.68,
+        793.66,
+        791.78,
+        789.48,
+        790.22,
+        791.81,
+        794.21,
+        794.01,
+        799.43,
+        796.9,
+        794.06,
+        789.18,
+        788.48,
+        789.83
+       ]
+      }
+     ],
+     "x": "index",
+     "yLabel": "Cumulative P&L, %",
+     "xLabel": "Trading day ÷ 10"
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "cut",
+       "i": 150,
+       "label": "1 Oct 2021"
+      }
+     ]
+    }
+   },
+   "question": "Why treat that date as a claim to test, not a fact?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "Models are updated after release, and text near the cut-off is thin",
+      "correct": true
+     },
+     {
+      "id": "lie",
+      "text": "Vendors usually lie about dates",
+      "why": "No dishonesty is needed: a later fine-tune or update moves the real cut-off quietly."
+     },
+     {
+      "id": "exact",
+      "text": "The cut-off is exact, so it needs no test",
+      "why": "Training text near the cut-off is sparse and updates add later text; the boundary is fuzzy."
+     },
+     {
+      "id": "irrelevant",
+      "text": "It does not matter once you use the clean window",
+      "why": "The clean window is defined by the cut-off, so a wrong cut-off makes the window wrong."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What happens to a deployed model after its first release?"
+    }
+   ],
+   "feedback": {
+    "correct": "Updates can add later text and the boundary is fuzzy; leave a buffer and check with an overlap test.",
+    "generic": "Not quite. Can the real cut-off differ from the stated one?"
+   },
+   "explain": {
+    "text": "A buffer of a few months after the stated cut-off, and an overlap test on documents from just after it, guard against a fuzzy or moved boundary."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Only the news, not the prices",
+   "prose": "A researcher argues: 'The model was trained on news text, never on price data, so it cannot know the returns.'",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "pnl",
+       "label": "Cumulative P&L, %",
+       "values": [
+        0.43,
+        8.9,
+        15.06,
+        20.63,
+        32.87,
+        36.49,
+        38.06,
+        44.09,
+        50.19,
+        57.0,
+        64.28,
+        70.41,
+        76.26,
+        79.78,
+        84.99,
+        87.52,
+        92.05,
+        99.62,
+        102.79,
+        110.95,
+        114.65,
+        124.37,
+        128.4,
+        131.8,
+        139.63,
+        143.84,
+        154.73,
+        158.33,
+        161.58,
+        171.57,
+        177.57,
+        181.64,
+        185.73,
+        191.02,
+        192.64,
+        191.86,
+        194.8,
+        198.03,
+        206.28,
+        207.81,
+        209.2,
+        217.58,
+        224.66,
+        232.07,
+        233.82,
+        241.54,
+        240.7,
+        243.75,
+        250.78,
+        260.05,
+        261.82,
+        266.01,
+        271.58,
+        274.09,
+        280.54,
+        281.99,
+        287.6,
+        296.03,
+        297.42,
+        303.09,
+        307.65,
+        311.71,
+        319.16,
+        323.96,
+        323.99,
+        328.91,
+        331.61,
+        335.57,
+        344.1,
+        350.96,
+        351.88,
+        351.57,
+        358.92,
+        361.0,
+        369.83,
+        377.73,
+        381.79,
+        384.22,
+        386.53,
+        394.15,
+        394.53,
+        399.23,
+        403.35,
+        408.6,
+        413.24,
+        415.95,
+        424.97,
+        433.95,
+        440.83,
+        449.39,
+        454.48,
+        458.5,
+        461.72,
+        461.93,
+        468.19,
+        473.31,
+        476.98,
+        482.68,
+        489.36,
+        491.26,
+        497.64,
+        505.41,
+        505.24,
+        513.43,
+        519.97,
+        524.18,
+        529.0,
+        533.9,
+        541.32,
+        547.08,
+        552.12,
+        556.25,
+        564.09,
+        563.49,
+        569.46,
+        571.8,
+        576.88,
+        584.18,
+        590.96,
+        593.91,
+        601.13,
+        608.82,
+        614.79,
+        618.49,
+        622.87,
+        626.27,
+        633.67,
+        641.18,
+        650.34,
+        653.8,
+        657.45,
+        660.86,
+        667.5,
+        679.72,
+        685.52,
+        691.73,
+        690.12,
+        693.17,
+        701.23,
+        705.87,
+        707.09,
+        714.78,
+        723.11,
+        729.06,
+        736.28,
+        735.04,
+        738.43,
+        745.55,
+        749.35,
+        752.08,
+        759.53,
+        761.77,
+        761.91,
+        763.0,
+        763.13,
+        763.45,
+        766.96,
+        770.73,
+        768.66,
+        771.06,
+        770.66,
+        771.37,
+        769.16,
+        775.39,
+        777.21,
+        773.21,
+        772.34,
+        772.2,
+        770.5,
+        772.46,
+        772.69,
+        770.49,
+        773.19,
+        778.67,
+        782.69,
+        783.62,
+        779.67,
+        784.11,
+        787.42,
+        788.21,
+        787.54,
+        785.32,
+        785.92,
+        791.92,
+        786.53,
+        791.78,
+        792.68,
+        793.66,
+        791.78,
+        789.48,
+        790.22,
+        791.81,
+        794.21,
+        794.01,
+        799.43,
+        796.9,
+        794.06,
+        789.18,
+        788.48,
+        789.83
+       ]
+      }
+     ],
+     "x": "index",
+     "yLabel": "Cumulative P&L, %",
+     "xLabel": "Trading day ÷ 10"
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "cut",
+       "i": 150,
+       "label": "1 Oct 2021"
+      }
+     ]
+    }
+   },
+   "question": "Why is the backtest before the cut-off still contaminated?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "describes",
+      "text": "News after a date describes what prices did, so the model has read the outcomes",
+      "correct": true
+     },
+     {
+      "id": "safe",
+      "text": "It is not: without prices the model cannot leak returns",
+      "why": "News reports say 'shares fell 8% after...'. Reading later news is reading the returns."
+     },
+     {
+      "id": "prices",
+      "text": "Because news sites also print price tables",
+      "why": "Even without tables, the words 'rallied' or 'collapsed' carry the outcome."
+     },
+     {
+      "id": "random",
+      "text": "Because language models are random",
+      "why": "Randomness adds noise; it does not create a Sharpe near 9."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a news story written the day after a profit warning say?"
+    }
+   ],
+   "feedback": {
+    "correct": "Later news is a record of what prices did; a model that read it can score earlier days with hindsight.",
+    "generic": "Not quite. What do news stories after an event report?",
+    "byKey": {
+     "safe": "You assumed text without prices is safe. Stories after a date report the move itself, so the model has read the returns in words."
+    }
+   },
+   "explain": {
+    "text": "A story dated after an earnings miss says the shares fell. The model's memory of that story is what gave the planted Sharpe of 9.2 before the cut-off."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A cut-off after the sample",
+   "prose": "A second model's training text runs to March 2024. Our backtest ends in September 2023.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 2016,
+     "max": 2025,
+     "step": 1
+    },
+    "state": {
+     "points": [
+      {
+       "id": "c2",
+       "x": 2024.2,
+       "label": "cut-off"
+      }
+     ],
+     "intervals": [
+      {
+       "id": "test",
+       "from": 2016.0,
+       "to": 2023.67,
+       "label": "backtest",
+       "row": 1
+      }
+     ]
+    }
+   },
+   "question": "What share of the backtest is in its clean window?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is any backtest day after the cut-off?"
+    }
+   ],
+   "feedback": {
+    "correct": "None: every day is before the cut-off, so the backtest cannot tell reading from memory.",
+    "generic": "Not quite. Compare the backtest's end with the cut-off.",
+    "byKey": {
+     "all": "You counted the whole backtest. Every day of it is before this model's cut-off."
+    }
+   },
+   "explain": {
+    "text": "A model whose cut-off is after the whole sample has no clean window: 0. Only data that arrives after the cut-off can test it, so the test waits."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "Look-ahead from what a model knows",
+   "prose": "What you found, as `fin-ml` level 2's rule applied to a model: a score dated $t$ must not use anything learned after $t$. For a model with cut-off $c$ and a buffer $b$, only dates $t > c + b$ test reading, and the share of the backtest left is\n\n$$\\frac{\\#\\{t : t > c + b\\}}{\\#\\{t\\}}.$$",
+   "question": "A backtest runs 2016 to 2023 and the model's cut-off is 2019. Which result should be quoted?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "after",
+      "text": "The Sharpe after 2019 plus a buffer, and the share it covers",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "The Sharpe ratio over all eight years",
+      "why": "Five of the eight years may be memory; the full figure mixes them in."
+     },
+     {
+      "id": "before",
+      "text": "The Sharpe ratio before 2019, which has more data",
+      "why": "More data of the wrong kind: those years test memory."
+     },
+     {
+      "id": "average",
+      "text": "The average of the two periods' Sharpe ratios",
+      "why": "Averaging in memorised years still inflates the result."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which dates can test reading?"
+    }
+   ],
+   "feedback": {
+    "correct": "Quote the clean window only, and say how long it is.",
+    "generic": "Not quite. Which period can the model not remember?"
+   },
+   "explain": {
+    "text": "Only the clean window measures reading. Its length matters too: a short window gives a noisy Sharpe, the subject of level 2's last lesson."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "clean_window in code",
+   "prose": "Write `clean_window(dates, cutoff, buffer_days)` and `share_after_cutoff(dates, cutoff)` for dates written 'YYYY-MM-DD'. A buffer of $b$ days keeps only dates later than the cut-off plus $b$ calendar days.",
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import datetime as dt\n\n\ndef clean_window(dates, cutoff, buffer_days):\n    # the dates ('YYYY-MM-DD') strictly after cutoff + buffer_days calendar days\n    ...\n\n\ndef share_after_cutoff(dates, cutoff):\n    # share of the dates strictly after the cutoff\n    ...\n",
+    "solution": "import datetime as dt\n\n\ndef clean_window(dates, cutoff, buffer_days):\n    edge = dt.date.fromisoformat(cutoff) + dt.timedelta(days=buffer_days)\n    return [d for d in dates if dt.date.fromisoformat(d) > edge]\n\n\ndef share_after_cutoff(dates, cutoff):\n    c = dt.date.fromisoformat(cutoff)\n    return sum(1 for d in dates if dt.date.fromisoformat(d) > c) / len(dates)\n",
+    "prelude": "import numpy\nimport pandas\n",
+    "examples": [
+     {
+      "call": "share_after_cutoff(['2021-01-04', '2021-01-05'], '2021-01-04')",
+      "expect": "0.5",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "D = ['2021-09-29', '2021-09-30', '2021-10-01', '2021-10-04', '2021-12-30', '2021-12-31', '2022-01-03']",
+      "call": "clean_window(D, '2021-10-01', 0)",
+      "expect": "['2021-10-04', '2021-12-30', '2021-12-31', '2022-01-03']"
+     },
+     {
+      "call": "clean_window(D, '2021-10-01', 90)",
+      "expect": "['2021-12-31', '2022-01-03']"
+     },
+     {
+      "call": "clean_window(D, '2021-10-01', 91)",
+      "expect": "['2022-01-03']"
+     },
+     {
+      "call": "share_after_cutoff(D, '2021-10-01')",
+      "expect": "0.5714285714285714",
+      "compare": "isclose"
+     },
+     {
+      "call": "share_after_cutoff(D, '2024-03-31')",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "setup": "import numpy\nimport pandas\nfrom llm_apps_ops_l2 import make_market\nMK = make_market()",
+      "call": "share_after_cutoff(MK['dates'], MK['cutoff'])",
+      "expect": "0.25",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(clean_window(MK['dates'], MK['cutoff'], 91))",
+      "expect": "435"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Lists must match exactly and shares within relative $10^{-9}$. They cover a cut-off with no buffer and buffers of 90 and 91 days (the second reaches the last day of 2021). Then come shares with a cut-off inside and after the dates, and the seeded market's share and clean days with a 91-day buffer.",
+    "mutants": [
+     {
+      "source": "import datetime as dt\n\n\ndef clean_window(dates, cutoff, buffer_days):\n    edge = dt.date.fromisoformat(cutoff) + dt.timedelta(days=buffer_days)\n    return [d for d in dates if dt.date.fromisoformat(d) >= edge]\n\n\ndef share_after_cutoff(dates, cutoff):\n    c = dt.date.fromisoformat(cutoff)\n    return sum(1 for d in dates if dt.date.fromisoformat(d) > c) / len(dates)\n",
+      "test": 1,
+      "symptom": "Keeps the cut-off day itself."
+     },
+     {
+      "source": "import datetime as dt\n\n\ndef clean_window(dates, cutoff, buffer_days):\n    edge = dt.date.fromisoformat(cutoff) + dt.timedelta(weeks=buffer_days // 7)\n    return [d for d in dates if dt.date.fromisoformat(d) > edge]\n\n\ndef share_after_cutoff(dates, cutoff):\n    c = dt.date.fromisoformat(cutoff)\n    return sum(1 for d in dates if dt.date.fromisoformat(d) > c) / len(dates)\n",
+      "test": 2,
+      "symptom": "Rounds the buffer down to whole weeks."
+     },
+     {
+      "source": "import datetime as dt\n\n\ndef clean_window(dates, cutoff, buffer_days):\n    edge = dt.date.fromisoformat(cutoff) + dt.timedelta(days=buffer_days)\n    return [d for d in dates if dt.date.fromisoformat(d) > edge]\n\n\ndef share_after_cutoff(dates, cutoff):\n    c = dt.date.fromisoformat(cutoff)\n    return sum(1 for d in dates if dt.date.fromisoformat(d) > c)\n",
+      "test": 4,
+      "symptom": "Returns the count, not the share."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l2.py": "content/data/ai/llm_apps_ops_l2.py"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`dt.date.fromisoformat` reads a date; add `dt.timedelta(days=buffer_days)`."
+    },
+    {
+     "rung": "point",
+     "text": "'Strictly after' means `>`, not `>=`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both match on every test.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "The cut-off day is still inside the training text: keep only dates strictly after it.",
+     "test-2": "A buffer of 90 calendar days ends on 30 December, so the 30th is still inside it: add the days exactly.",
+     "test-4": "Divide the count of later dates by the number of dates."
+    }
+   },
+   "explain": {
+    "text": "The cut-off day is the last day the model may have read, so it is excluded; the buffer adds whole calendar days, not trading days."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "sharpe_by_period in code",
+   "prose": "Write `sharpe_by_period(pnl, dates, cutoff)`: the annualised Sharpe ratio up to and including the cut-off, and after it. On the seeded market this should give the two figures you computed.",
+   "question": "Write `sharpe_by_period`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef sharpe_by_period(pnl, dates, cutoff):\n    # (annualised Sharpe on dates up to and including the cutoff,\n    #  annualised Sharpe on dates after it); sd with n - 1, times sqrt(252)\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\n\ndef sharpe_by_period(pnl, dates, cutoff):\n    pnl = np.asarray(pnl, dtype=float)\n    after = np.array([d > cutoff for d in dates])\n    def sr(x):\n        return float(x.mean() / x.std(ddof=1) * math.sqrt(252))\n    return sr(pnl[~after]), sr(pnl[after])\n",
+    "prelude": "import numpy as np\nfrom llm_apps_ops_l2 import make_market\nimport pandas as pd\n\n\ndef _pnl(m):\n    D = pd.DataFrame(m['docs'])\n    D['published'] = pd.to_datetime(D['published'])\n    days = pd.DataFrame({'decision': pd.to_datetime(m['dates']) + pd.Timedelta('16:30:00')})\n    J = pd.merge_asof(days, D.sort_values('published'), left_on='decision', right_on='published', direction='backward')\n    return np.nan_to_num(np.sign(J['score'].to_numpy()) * m['ret'])\n",
+    "examples": [
+     {
+      "call": "sharpe_by_period([0.01, 0.0, 0.02, 0.01], ['2021-09-30', '2021-10-01', '2021-10-04', '2021-10-05'], '2021-10-01')",
+      "expect": "[11.224972160321826, 33.67491648096547]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "sharpe_by_period([0.01, -0.01, 0.01, -0.01], ['2021-09-30', '2021-10-01', '2021-10-04', '2021-10-05'], '2021-10-01')",
+      "expect": "[0.0, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "setup": "MK = make_market()\nP = _pnl(MK)",
+      "call": "sharpe_by_period(P, MK['dates'], MK['cutoff'])",
+      "expect": "[9.216466452271026, 0.995981502488025]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0.002
+      }
+     },
+     {
+      "call": "sharpe_by_period([0.01, -0.005, 0.02, 0.0, 0.01, -0.01], ['2021-09-28', '2021-09-29', '2021-09-30', '2021-10-04', '2021-10-05', '2021-10-06'], '2021-10-01')",
+      "expect": "[10.513149660756937, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "sharpe_by_period([0.01, 0.03, 0.02, 0.01], ['2021-10-01', '2021-10-01', '2021-10-04', '2021-10-05'], '2021-10-01')",
+      "expect": "[22.449944320643652, 33.67491648096547]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "sharpe_by_period(P, MK['dates'], MK['cutoff'])",
+      "expect": "[9.216466452271026, 0.995981502488025]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "setup": "M2 = make_market(seed=1)\nP2 = _pnl(M2)",
+      "call": "sharpe_by_period(P2, M2['dates'], M2['cutoff'])",
+      "expect": "[9.02653332499861, -0.34518047576690586]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Three are small hand cases (two with entries on the cut-off date), within relative $10^{-9}$ or absolute $10^{-12}$. Three use the seeded market: seed 0 within relative 0.002 and within 0.0005, and seed 1 within 0.0005. `make_market` and a helper `_pnl` that trades the sign of the as-of score are defined for you.",
+    "mutants": [
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef sharpe_by_period(pnl, dates, cutoff):\n    pnl = np.asarray(pnl, dtype=float)\n    after = np.array([d > cutoff for d in dates])\n    def sr(x):\n        return float(x.mean() / x.std() * math.sqrt(252))\n    return sr(pnl[~after]), sr(pnl[after])\n",
+      "test": 3,
+      "symptom": "Uses the population standard deviation."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef sharpe_by_period(pnl, dates, cutoff):\n    pnl = np.asarray(pnl, dtype=float)\n    after = np.array([d >= cutoff for d in dates])\n    def sr(x):\n        return float(x.mean() / x.std(ddof=1) * math.sqrt(252))\n    return sr(pnl[~after]), sr(pnl[after])\n",
+      "test": 1,
+      "symptom": "Puts the cut-off date in the clean period."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef sharpe_by_period(pnl, dates, cutoff):\n    pnl = np.asarray(pnl, dtype=float)\n    after = np.array([d > cutoff for d in dates])\n    def sr(x):\n        return float(x.mean() / x.std(ddof=1) * 252)\n    return sr(pnl[~after]), sr(pnl[after])\n",
+      "test": 2,
+      "symptom": "Annualises by 252 instead of its square root."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l2.py": "content/data/ai/llm_apps_ops_l2.py"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the date strings with the cut-off: 'YYYY-MM-DD' sorts as dates do."
+    },
+    {
+     "rung": "point",
+     "text": "Annualise with `math.sqrt(252)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your split matches: 9.216 before and 0.996 after on seed 0.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-3": "Use the $n - 1$ standard deviation: with three days in each period the difference shows.",
+     "test-1": "The cut-off date belongs to the period before, which here then holds one gain and one loss: the model may have read that day.",
+     "test-2": "Annualise a daily Sharpe by $\\sqrt{252}$, not 252."
+    }
+   },
+   "explain": {
+    "text": "Dates written as 'YYYY-MM-DD' compare correctly as strings, so the split needs no date parsing. The cut-off day goes with the period the model may have read."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Questions for a vendor",
+   "prose": "A data vendor offers a model-scored news sentiment feed with a backtest from 2012 and a Sharpe ratio of 3. Your desk can trial it for three months.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "pnl",
+       "label": "Cumulative P&L, %",
+       "values": [
+        0.43,
+        8.9,
+        15.06,
+        20.63,
+        32.87,
+        36.49,
+        38.06,
+        44.09,
+        50.19,
+        57.0,
+        64.28,
+        70.41,
+        76.26,
+        79.78,
+        84.99,
+        87.52,
+        92.05,
+        99.62,
+        102.79,
+        110.95,
+        114.65,
+        124.37,
+        128.4,
+        131.8,
+        139.63,
+        143.84,
+        154.73,
+        158.33,
+        161.58,
+        171.57,
+        177.57,
+        181.64,
+        185.73,
+        191.02,
+        192.64,
+        191.86,
+        194.8,
+        198.03,
+        206.28,
+        207.81,
+        209.2,
+        217.58,
+        224.66,
+        232.07,
+        233.82,
+        241.54,
+        240.7,
+        243.75,
+        250.78,
+        260.05,
+        261.82,
+        266.01,
+        271.58,
+        274.09,
+        280.54,
+        281.99,
+        287.6,
+        296.03,
+        297.42,
+        303.09,
+        307.65,
+        311.71,
+        319.16,
+        323.96,
+        323.99,
+        328.91,
+        331.61,
+        335.57,
+        344.1,
+        350.96,
+        351.88,
+        351.57,
+        358.92,
+        361.0,
+        369.83,
+        377.73,
+        381.79,
+        384.22,
+        386.53,
+        394.15,
+        394.53,
+        399.23,
+        403.35,
+        408.6,
+        413.24,
+        415.95,
+        424.97,
+        433.95,
+        440.83,
+        449.39,
+        454.48,
+        458.5,
+        461.72,
+        461.93,
+        468.19,
+        473.31,
+        476.98,
+        482.68,
+        489.36,
+        491.26,
+        497.64,
+        505.41,
+        505.24,
+        513.43,
+        519.97,
+        524.18,
+        529.0,
+        533.9,
+        541.32,
+        547.08,
+        552.12,
+        556.25,
+        564.09,
+        563.49,
+        569.46,
+        571.8,
+        576.88,
+        584.18,
+        590.96,
+        593.91,
+        601.13,
+        608.82,
+        614.79,
+        618.49,
+        622.87,
+        626.27,
+        633.67,
+        641.18,
+        650.34,
+        653.8,
+        657.45,
+        660.86,
+        667.5,
+        679.72,
+        685.52,
+        691.73,
+        690.12,
+        693.17,
+        701.23,
+        705.87,
+        707.09,
+        714.78,
+        723.11,
+        729.06,
+        736.28,
+        735.04,
+        738.43,
+        745.55,
+        749.35,
+        752.08,
+        759.53,
+        761.77,
+        761.91,
+        763.0,
+        763.13,
+        763.45,
+        766.96,
+        770.73,
+        768.66,
+        771.06,
+        770.66,
+        771.37,
+        769.16,
+        775.39,
+        777.21,
+        773.21,
+        772.34,
+        772.2,
+        770.5,
+        772.46,
+        772.69,
+        770.49,
+        773.19,
+        778.67,
+        782.69,
+        783.62,
+        779.67,
+        784.11,
+        787.42,
+        788.21,
+        787.54,
+        785.32,
+        785.92,
+        791.92,
+        786.53,
+        791.78,
+        792.68,
+        793.66,
+        791.78,
+        789.48,
+        790.22,
+        791.81,
+        794.21,
+        794.01,
+        799.43,
+        796.9,
+        794.06,
+        789.18,
+        788.48,
+        789.83
+       ]
+      }
+     ],
+     "x": "index",
+     "yLabel": "Cumulative P&L, %",
+     "xLabel": "Trading day ÷ 10"
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "cut",
+       "i": 150,
+       "label": "1 Oct 2021"
+      }
+     ]
+    }
+   },
+   "question": "Which question matters most before the trial?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cutoff",
+      "text": "What is the model's cut-off, and was it retrained?",
+      "correct": true
+     },
+     {
+      "id": "sharpe",
+      "text": "Can the Sharpe ratio be shown with costs?",
+      "why": "Costs matter, but a backtest scored by a model that has read the period can be wrong by far more than costs."
+     },
+     {
+      "id": "coverage",
+      "text": "How many stocks does the feed cover?",
+      "why": "Coverage is useful, but it cannot tell memory from reading."
+     },
+     {
+      "id": "latency",
+      "text": "How fast is the feed delivered each morning?",
+      "why": "Speed matters for trading, but first ask whether the backtest is real."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which fact decides how much of the backtest is clean?"
+    }
+   ],
+   "feedback": {
+    "correct": "The cut-off (and any retraining) decides which years of the backtest test reading.",
+    "generic": "Not quite. Which fact tells memory from reading?"
+   },
+   "explain": {
+    "text": "Ask for the cut-off and the retraining history, then judge the backtest only on dates after them; the three-month trial is itself a clean window, if a short one."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A model trained on text up to its cut-off has read what happened after earlier dates, so a backtest before the cut-off can score memory, not reading.",
+   "Only the clean window, dates after the cut-off plus a buffer, tests reading; quote its Sharpe and how much of the sample it covers.",
+   "A stated cut-off is a claim: models are updated and the boundary is fuzzy, so add a buffer and check suspect documents with an n-gram overlap test."
+  ],
+  "formula": {
+   "name": "Clean share",
+   "tex": "\\frac{\\#\\{t : t > c + b\\}}{\\#\\{t\\}}",
+   "note": "$c$ the cut-off, $b$ the buffer."
+  },
+  "trap": "'It saw only news, not prices': later news describes the prices."
+ },
+ "quiz": [
+  {
+   "id": "q5-share",
+   "difficulty": 2,
+   "prose": "A backtest has 1,250 trading days. The scoring model's cut-off falls after day 1,000.",
+   "question": "What share of the backtest is clean? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "before",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$250/1250 = 0.20$.",
+    "generic": "Not quite. Count the days after the cut-off.",
+    "byKey": {
+     "before": "0.80 is the share before the cut-off."
+    }
+   },
+   "explain": {
+    "text": "$1250 - 1000 = 250$ clean days, 0.20 of the backtest."
+   }
+  },
+  {
+   "id": "q5-annual",
+   "difficulty": 2,
+   "prose": "In a clean window, a strategy's daily P&L has mean 0.05% and standard deviation 1%.",
+   "question": "What is its annualised Sharpe ratio? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.79,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "x252",
+      "value": 12.6,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "daily",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.05 \\times \\sqrt{252} = 0.79$.",
+    "generic": "Not quite. Multiply the daily Sharpe by $\\sqrt{252}$.",
+    "byKey": {
+     "x252": "You multiplied by 252, not its square root.",
+     "daily": "That is the daily Sharpe."
+    }
+   },
+   "explain": {
+    "text": "The daily Sharpe is $0.05/1 = 0.05$, and $0.05 \\times 15.875 = 0.79$."
+   }
+  },
+  {
+   "id": "q5-ngram",
+   "difficulty": 3,
+   "prose": "A 12-word document's opening is given to a model, which writes back the document's first 10 words exactly and then something else.",
+   "question": "What share of the document's 5-grams does it reproduce? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.75,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "words",
+      "value": 0.8333,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "8 five-grams in all, 6 inside the shared 10 words: 0.75.",
+    "generic": "Not quite. Count 5-grams inside the shared opening.",
+    "byKey": {
+     "words": "That is the share of words. Count runs of five."
+    }
+   },
+   "explain": {
+    "text": "$12 - 5 + 1 = 8$ five-grams; $10 - 5 + 1 = 6$ lie inside the shared words, so the share is 0.75."
+   }
+  },
+  {
+   "id": "q5-trap",
+   "difficulty": 3,
+   "prose": "A colleague says a sentiment model cannot leak because it never saw any prices.",
+   "question": "What is the best reply?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "news",
+      "text": "The news it read after each date reports what prices did",
+      "correct": true
+     },
+     {
+      "id": "agree",
+      "text": "Agreed: no prices means no leak",
+      "why": "Stories report moves in words: 'the shares fell 8%'."
+     },
+     {
+      "id": "prices",
+      "text": "It probably saw price tables too",
+      "why": "That may be so, but the words alone already carry the outcome."
+     },
+     {
+      "id": "random",
+      "text": "Its outputs are random, so it cannot leak",
+      "why": "Randomness does not remove memorised content."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Later news describes the returns, so reading it is reading the outcomes.",
+    "generic": "Not quite. What do news stories after an event report?"
+   },
+   "explain": {
+    "text": "Text written after a date describes what happened then, prices included, so a model trained on it carries the outcome."
+   }
+  }
+ ]
+}

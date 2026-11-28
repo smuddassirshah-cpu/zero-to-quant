@@ -1,0 +1,438 @@
+{
+ "id": "homework-2",
+ "course": "llm-apps",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-text-signal",
+   "difficulty": 5,
+   "skills": [
+    "llm-features"
+   ],
+   "performance": "code",
+   "title": "An honest text-signal report",
+   "prose": "Write `text_signal_report(panel, docs, cutoff, buffer_days, folds, n_trials)` from nothing. `panel` is `{'dates': [...], 'ret': [...]}`, where `ret[t]` is earned by a position set at the 16:30 close of `dates[t]`; each document is `{'published': 'YYYY-MM-DD HH:MM', 'score': s}`.\n\n- Keep dates later than the cut-off plus `buffer_days` calendar days.\n- Feature: the latest score published at or before each day's close (none: no position).\n- Cut the kept days into `folds` blocks with bounds `round(i * n / folds)`; trade blocks 2 on with the sign of the feature minus the mean known feature of the earlier blocks.",
+   "question": "Return `{'sharpe': s, 'haircut': h}`: the annualised Sharpe of the traded days, and $s - \\sqrt{2\\ln N}/\\sqrt T$ with $T$ their number over 252.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import bisect\nimport datetime as dt\nimport math\n\n\ndef text_signal_report(panel, docs, cutoff, buffer_days, folds, n_trials, decision_time='16:30'):\n    ...\n",
+    "solution": "import bisect\nimport datetime as dt\nimport math\n\n\ndef text_signal_report(panel, docs, cutoff, buffer_days, folds, n_trials, decision_time='16:30'):\n    edge = (dt.date.fromisoformat(cutoff) + dt.timedelta(days=buffer_days)).isoformat()\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = [(d, r) for d, r in zip(panel['dates'], panel['ret']) if d > edge]\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' ' + decision_time)\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat[:b[k]] if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > mu else -1 if f < mu else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    sharpe = m / sd * math.sqrt(252)\n    years = len(pnl) / 252\n    return {'sharpe': sharpe, 'haircut': sharpe - math.sqrt(2 * math.log(n_trials)) / math.sqrt(years)}\n",
+    "prelude": "import numpy\nimport pandas\n",
+    "examples": [
+     {
+      "setup": "HP = {'dates': ['2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05', '2024-01-08', '2024-01-09', '2024-01-10', '2024-01-11', '2024-01-12', '2024-01-15'], 'ret': [0.01, -0.02, 0.01, 0.02, -0.01, 0.03, -0.02, 0.01, 0.02, -0.01]}\nA = [{'published': '2024-01-02 10:00', 'score': 4}, {'published': '2024-01-03 10:00', 'score': 4}, {'published': '2024-01-04 10:00', 'score': 4}, {'published': '2024-01-05 10:00', 'score': 1}, {'published': '2024-01-08 10:00', 'score': -1}, {'published': '2024-01-09 10:00', 'score': 2}, {'published': '2024-01-10 10:00', 'score': -2}, {'published': '2024-01-11 10:00', 'score': 1}, {'published': '2024-01-12 10:00', 'score': -1}, {'published': '2024-01-15 10:00', 'score': 2}]",
+      "call": "round(text_signal_report(HP, A, '2024-01-02', 2, 2, 1)['sharpe'], 2)",
+      "expect": "-6.93",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "setup": "HP = {'dates': ['2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05', '2024-01-08', '2024-01-09', '2024-01-10', '2024-01-11', '2024-01-12', '2024-01-15'], 'ret': [0.01, -0.02, 0.01, 0.02, -0.01, 0.03, -0.02, 0.01, 0.02, -0.01]}\nA = [{'published': '2024-01-02 10:00', 'score': 4}, {'published': '2024-01-03 10:00', 'score': 4}, {'published': '2024-01-04 10:00', 'score': 4}, {'published': '2024-01-05 10:00', 'score': 1}, {'published': '2024-01-08 10:00', 'score': -1}, {'published': '2024-01-09 10:00', 'score': 2}, {'published': '2024-01-10 10:00', 'score': -2}, {'published': '2024-01-11 10:00', 'score': 1}, {'published': '2024-01-12 10:00', 'score': -1}, {'published': '2024-01-15 10:00', 'score': 2}]",
+      "call": "text_signal_report(HP, A, '2024-01-02', 2, 2, 1)",
+      "expect": "{'sharpe': -6.92820323027551, 'haircut': -6.92820323027551}",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "B = [{'published': '2024-01-02 10:00', 'score': 4}, {'published': '2024-01-03 10:00', 'score': 4}, {'published': '2024-01-04 10:00', 'score': 4}, {'published': '2024-01-05 10:00', 'score': 1}, {'published': '2024-01-08 10:00', 'score': -1}, {'published': '2024-01-09 10:00', 'score': 2}, {'published': '2024-01-10 10:00', 'score': -2}, {'published': '2024-01-11 17:10', 'score': 1}, {'published': '2024-01-12 10:00', 'score': -1}, {'published': '2024-01-15 10:00', 'score': 2}]",
+      "call": "text_signal_report(HP, B, '2024-01-02', 2, 2, 1)",
+      "expect": "{'sharpe': -36.66060555964672, 'haircut': -36.66060555964672}",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "C = [{'published': '2024-01-02 10:00', 'score': 4}, {'published': '2024-01-03 10:00', 'score': 4}, {'published': '2024-01-04 10:00', 'score': 4}, {'published': '2024-01-05 10:00', 'score': 0.1}, {'published': '2024-01-08 10:00', 'score': 0.2}, {'published': '2024-01-09 10:00', 'score': 0.3}, {'published': '2024-01-10 10:00', 'score': 0.3}, {'published': '2024-01-11 10:00', 'score': 0.6}, {'published': '2024-01-12 10:00', 'score': 0.25}, {'published': '2024-01-15 10:00', 'score': 0.5}]",
+      "call": "text_signal_report(HP, C, '2024-01-02', 2, 2, 1)",
+      "expect": "{'sharpe': 6.92820323027551, 'haircut': 6.92820323027551}",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "text_signal_report(HP, A, '2024-01-02', 2, 2, 5)['haircut']",
+      "expect": "-23.37160826965008",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "text_signal_report(HP, A, '2023-12-29', 0, 2, 1)['sharpe']",
+      "expect": "-4.593220484431882",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "import numpy\nimport pandas\nfrom llm_apps_ops_l2 import make_market\nM0 = make_market()",
+      "call": "text_signal_report(M0, M0['docs'], M0['cutoff'], 0, 5, 12)",
+      "expect": "{'sharpe': 0.474983668259648, 'haircut': -1.294474547899434}",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "setup": "M3 = make_market(seed=3)",
+      "call": "text_signal_report(M3, M3['docs'], M3['cutoff'], 60, 4, 8)",
+      "expect": "{'sharpe': 1.8768134345695915, 'haircut': 0.13135542760148855}",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Five are ten-day hand cases within relative $10^{-9}$, each built so that one leak or slip changes the answer. They test the buffer, a document published after the close, a threshold fitted on later days, the years used in the haircut, and a cut-off before every date. Two are the seeded market (seed 0 with 5 folds and 12 trials; seed 3 with a 60-day buffer, 4 folds and 8 trials), within 0.0005.",
+    "mutants": [
+     {
+      "source": "import bisect\nimport datetime as dt\nimport math\n\n\ndef text_signal_report(panel, docs, cutoff, buffer_days, folds, n_trials, decision_time='16:30'):\n    edge = (dt.date.fromisoformat(cutoff) + dt.timedelta(days=0)).isoformat()\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = [(d, r) for d, r in zip(panel['dates'], panel['ret']) if d > edge]\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' ' + decision_time)\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat[:b[k]] if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > mu else -1 if f < mu else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    sharpe = m / sd * math.sqrt(252)\n    years = len(pnl) / 252\n    return {'sharpe': sharpe, 'haircut': sharpe - math.sqrt(2 * math.log(n_trials)) / math.sqrt(years)}\n",
+      "test": 1,
+      "symptom": "Ignores the buffer after the cut-off."
+     },
+     {
+      "source": "import bisect\nimport datetime as dt\nimport math\n\n\ndef text_signal_report(panel, docs, cutoff, buffer_days, folds, n_trials, decision_time='16:30'):\n    edge = (dt.date.fromisoformat(cutoff) + dt.timedelta(days=buffer_days)).isoformat()\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = [(d, r) for d, r in zip(panel['dates'], panel['ret']) if d > edge]\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' 23:59')\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat[:b[k]] if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > mu else -1 if f < mu else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    sharpe = m / sd * math.sqrt(252)\n    years = len(pnl) / 252\n    return {'sharpe': sharpe, 'haircut': sharpe - math.sqrt(2 * math.log(n_trials)) / math.sqrt(years)}\n",
+      "test": 2,
+      "symptom": "Joins on the date, so after-close documents feed the same day."
+     },
+     {
+      "source": "import bisect\nimport datetime as dt\nimport math\n\n\ndef text_signal_report(panel, docs, cutoff, buffer_days, folds, n_trials, decision_time='16:30'):\n    edge = (dt.date.fromisoformat(cutoff) + dt.timedelta(days=buffer_days)).isoformat()\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = [(d, r) for d, r in zip(panel['dates'], panel['ret']) if d > edge]\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' ' + decision_time)\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > mu else -1 if f < mu else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    sharpe = m / sd * math.sqrt(252)\n    years = len(pnl) / 252\n    return {'sharpe': sharpe, 'haircut': sharpe - math.sqrt(2 * math.log(n_trials)) / math.sqrt(years)}\n",
+      "test": 3,
+      "symptom": "Fits the threshold on the whole clean window."
+     },
+     {
+      "source": "import bisect\nimport datetime as dt\nimport math\n\n\ndef text_signal_report(panel, docs, cutoff, buffer_days, folds, n_trials, decision_time='16:30'):\n    edge = (dt.date.fromisoformat(cutoff) + dt.timedelta(days=buffer_days)).isoformat()\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = [(d, r) for d, r in zip(panel['dates'], panel['ret']) if d > edge]\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' ' + decision_time)\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat[:b[k]] if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > mu else -1 if f < mu else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    sharpe = m / sd * math.sqrt(252)\n    years = n / 252\n    return {'sharpe': sharpe, 'haircut': sharpe - math.sqrt(2 * math.log(n_trials)) / math.sqrt(years)}\n",
+      "test": 4,
+      "symptom": "Haircuts over the whole clean window, not the out-of-sample days."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l2.py": "content/data/ai/llm_apps_ops_l2.py"
+    }
+   },
+   "feedback": {
+    "correct": "Your report matches on every planted case and on the seeded market.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Keep only dates later than the cut-off plus the buffer: here 2 calendar days, so 3 and 4 January are out.",
+     "test-2": "A document from 17:10 was not out at that day's 16:30 close: join on the decision time.",
+     "test-3": "Fit each fold's threshold on the folds before it only.",
+     "test-4": "The Sharpe was measured on the out-of-sample days only: use their number over 252 as T."
+    }
+   },
+   "explain": {
+    "text": "Each step closes one leak: the buffer and cut-off for memory, the close-time join for late news, past-only thresholds for fitting, and the haircut over the days actually traded for selection."
+   }
+  },
+  {
+   "id": "h-masking",
+   "difficulty": 4,
+   "skills": [
+    "llm-lookahead"
+   ],
+   "title": "A name-masking test",
+   "prose": "A risk team wants a reusable masking test for any scorer. `score(text)` returns a number; `names` lists the companies to hide.",
+   "question": "Write `name_masking_test(texts, names, score)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport re\nimport statistics\n\n\ndef name_masking_test(texts, names, score):\n    # mask each name (whole words, any case, longest first) with 'NAME';\n    # return (mean of score(raw) - score(masked), its standard error, z)\n    ...\n",
+    "solution": "import math\nimport re\nimport statistics\n\n\ndef name_masking_test(texts, names, score):\n    def mask(t):\n        for n in sorted(names, key=len, reverse=True):\n            t = re.sub(r'\\b' + re.escape(n) + r'\\b', 'NAME', t, flags=re.IGNORECASE)\n        return t\n    d = [score(t) - score(mask(t)) for t in texts]\n    m = statistics.fmean(d)\n    se = statistics.stdev(d) / math.sqrt(len(d))\n    return m, se, (m / se if se > 0 else 0.0)\n",
+    "examples": [
+     {
+      "setup": "LEX = {'beat': 1.0, 'raised': 0.8, 'missed': -1.0, 'cut': -0.8, 'probe': -0.6}\ndef score(t):\n    w = t.lower().split()\n    s = sum(LEX.get(x, 0.0) for x in w)\n    s += 0.5 * w.count('corran') + 0.3 * w.count('dunmore') + 0.4 * w.count('corranby')\n    return s / len(w)\nTX = ['Corran beat forecasts', 'dunmore raised guidance again', 'CORRAN missed targets', 'Ellery cut jobs', 'regulator opens probe into Corran', 'Dunmore and Corran beat']",
+      "call": "round(name_masking_test(TX[:2], ['Corran', 'Dunmore'], score)[0], 4)",
+      "expect": "0.1208",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "setup": "LEX = {'beat': 1.0, 'raised': 0.8, 'missed': -1.0, 'cut': -0.8, 'probe': -0.6}\ndef score(t):\n    w = t.lower().split()\n    s = sum(LEX.get(x, 0.0) for x in w)\n    s += 0.5 * w.count('corran') + 0.3 * w.count('dunmore') + 0.4 * w.count('corranby')\n    return s / len(w)\nTX = ['Corran beat forecasts', 'dunmore raised guidance again', 'CORRAN missed targets', 'Ellery cut jobs', 'regulator opens probe into Corran', 'Dunmore and Corran beat']",
+      "call": "name_masking_test([TX[0], TX[5]], ['Corran', 'Dunmore'], score)",
+      "expect": "[0.18333333333333335, 0.016666666666666663, 11.000000000000004]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "name_masking_test(TX[:2], ['Corran', 'Dunmore'], score)",
+      "expect": "[0.12083333333333335, 0.04583333333333334, 2.6363636363636367]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "name_masking_test(TX, ['Corran', 'Dunmore'], score)",
+      "expect": "[0.11805555555555557, 0.03030834338944222, 3.8951503894033253]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "name_masking_test(TX, ['Ellery'], score)",
+      "expect": "[0.0, 0.0, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "name_masking_test(['Corranby rose', 'Corran rose'], ['Corran'], score)",
+      "expect": "[0.125, 0.125, 1.0]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "how": "Submit runs 5 hidden tests within relative $10^{-9}$ (absolute $10^{-12}$ where every change is 0). A toy scorer, `score`, gives a bonus to three names. The tests cover two headlines with names as written, two with a name in lower case, six headlines in mixed case, a name the scorer ignores, and a name inside a longer word.",
+    "mutants": [
+     {
+      "source": "import math\nimport re\nimport statistics\n\n\ndef name_masking_test(texts, names, score):\n    def mask(t):\n        for n in sorted(names, key=len, reverse=True):\n            t = re.sub(r'\\b' + re.escape(n) + r'\\b', 'NAME', t)\n        return t\n    d = [score(t) - score(mask(t)) for t in texts]\n    m = statistics.fmean(d)\n    se = statistics.stdev(d) / math.sqrt(len(d))\n    return m, se, (m / se if se > 0 else 0.0)\n",
+      "test": 2,
+      "symptom": "Masks only names in their given case."
+     },
+     {
+      "source": "import math\nimport re\nimport statistics\n\n\ndef name_masking_test(texts, names, score):\n    def mask(t):\n        for n in sorted(names, key=len, reverse=True):\n            t = re.sub(r'\\b' + re.escape(n) + r'\\b', 'NAME', t, flags=re.IGNORECASE)\n        return t\n    d = [score(t) - score(mask(t)) for t in texts]\n    m = statistics.fmean(d)\n    se = statistics.stdev(d)\n    return m, se, (m / se if se > 0 else 0.0)\n",
+      "test": 1,
+      "symptom": "Reports the standard deviation as the standard error."
+     },
+     {
+      "source": "import math\nimport re\nimport statistics\n\n\ndef name_masking_test(texts, names, score):\n    def mask(t):\n        for n in sorted(names, key=len, reverse=True):\n            t = re.sub(r'\\b' + re.escape(n) + r'\\b', 'NAME', t, flags=re.IGNORECASE)\n        return t\n    d = [score(t) - score(mask(t)) for t in texts]\n    m = statistics.fmean(d)\n    se = statistics.stdev(d) / math.sqrt(len(d))\n    return m, se, (m / se if se > 0 else float('nan'))\n",
+      "test": 4,
+      "symptom": "Returns NaN when every change is 0."
+     },
+     {
+      "source": "import math\nimport re\nimport statistics\n\n\ndef name_masking_test(texts, names, score):\n    def mask(t):\n        for n in sorted(names, key=len, reverse=True):\n            t = re.sub(re.escape(n), 'NAME', t, flags=re.IGNORECASE)\n        return t\n    d = [score(t) - score(mask(t)) for t in texts]\n    m = statistics.fmean(d)\n    se = statistics.stdev(d) / math.sqrt(len(d))\n    return m, se, (m / se if se > 0 else 0.0)\n",
+      "test": 5,
+      "symptom": "Masks a name inside a longer word."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your test matches on every case.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "'dunmore' in lower case is the same company: mask names in any case.",
+     "test-1": "Divide the standard deviation of the changes by $\\sqrt n$.",
+     "test-4": "When masking changes nothing, the mean and its standard error are 0: report z as 0.",
+     "test-5": "'Corranby' is another firm: mask whole words only."
+    }
+   },
+   "explain": {
+    "text": "The mean change says how much names move the scores; its standard error says whether the sample is large enough to tell."
+   }
+  },
+  {
+   "id": "h-checklist",
+   "difficulty": 3,
+   "skills": [
+    "llm-features"
+   ],
+   "title": "Reviewing a text backtest",
+   "prose": "A reviewer works through a submitted text-signal backtest. Two of the steps below would make the review worse.",
+   "question": "Put the review steps in order and leave out the two that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "k1",
+      "text": "Ask for the scoring model's cut-off and retraining dates"
+     },
+     {
+      "id": "k2",
+      "text": "Restrict the test to dates after the cut-off plus a buffer"
+     },
+     {
+      "id": "k3",
+      "text": "Check every feature is joined backward on publication time"
+     },
+     {
+      "id": "k4",
+      "text": "Check vocabularies and thresholds are fitted inside each fold"
+     },
+     {
+      "id": "k5",
+      "text": "Recompute the Sharpe ratio net of costs"
+     },
+     {
+      "id": "k6",
+      "text": "Haircut for every prompt, scheme and model in the log"
+     },
+     {
+      "id": "x1",
+      "text": "Keep the years before the cut-off, since they add data",
+      "why": "Those years test memory; more of them only adds bias."
+     },
+     {
+      "id": "x2",
+      "text": "Count only the final model as a trial",
+      "why": "Every prompt and scheme tried is a trial; counting one removes the haircut."
+     }
+    ],
+    "answer": [
+     "k1",
+     "k2",
+     "k3",
+     "k4",
+     "k5",
+     "k6"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "Cut-off first, then the window, timing, fitting, costs and the haircut.",
+    "generic": "Not quite. Decide which dates count before checking anything built on them.",
+    "byKey": {
+     "x1": "Pre-cut-off years test memory; leave them out.",
+     "x2": "Each prompt or scheme tried is a trial for the haircut."
+    }
+   },
+   "explain": {
+    "text": "The cut-off defines the window; the window and timestamps define the feature; folds define the fitting; costs and the haircut adjust the result."
+   }
+  },
+  {
+   "id": "h-pitch",
+   "difficulty": 4,
+   "skills": [
+    "llm-lookahead"
+   ],
+   "title": "A Sharpe of 3",
+   "kind": "longform",
+   "prompt": "A vendor pitches a news signal scored by a large language model: a Sharpe ratio of 3 over 2012 to 2023, net of costs. List what you would check, in order, and why each check comes where it does.",
+   "model": "**1. The model's cut-off and retraining history.** If the scoring model was trained on text to 2023, every backtest year is before its cut-off and the Sharpe may be memory: news after each date reports what prices did. Ask for the cut-off and any later fine-tuning; with no clean window the backtest proves nothing.\n\n**2. The clean window.** Recompute the Sharpe on dates after the cut-off plus a buffer only, and state its length. A short window needs a high Sharpe to clear noise: over one year, about 1.96.\n\n**3. Timestamps.** Check that each document is dated by its first publication time and joined backward at the decision time; after-close news and revised versions leak hours or weeks.\n\n**4. Fitting.** Check vocabularies, embeddings, thresholds and scalers are fitted inside each walk-forward fold, and run a name-masking test with its standard error to see whether the model recognises companies.\n\n**5. Costs and capacity.** Recompute with realistic turnover costs.\n\n**6. Selection.** Ask how many prompts, models and scoring schemes were tried and haircut the clean Sharpe by $\\sqrt{2\\ln N}/\\sqrt T$. Only then compare the result with a live trial, which is itself a clean window.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Starts with the scoring model's training cut-off and retraining, and explains why a pre-cut-off backtest can be memory"
+    },
+    {
+     "points": 2,
+     "text": "Restricts the test to the clean window after the cut-off and notes that a short window needs a high Sharpe"
+    },
+    {
+     "points": 2,
+     "text": "Checks timestamps: first publication time, backward as-of join, after-close and revised documents"
+    },
+    {
+     "points": 2,
+     "text": "Checks fitting inside folds and proposes a name-masking test judged with a standard error"
+    },
+    {
+     "points": 2,
+     "text": "Recomputes costs and haircuts for the number of prompts, models and schemes tried"
+    }
+   ]
+  },
+  {
+   "id": "h-window",
+   "difficulty": 3,
+   "skills": [
+    "llm-lookahead"
+   ],
+   "title": "How long is clean?",
+   "prose": "A backtest runs on 1,764 trading days. The scoring model's cut-off falls after day 1,260, and the desk adds a buffer of 63 trading days.",
+   "question": "How many years of 252 trading days does the clean window cover? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.75,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "no-buffer",
+      "value": 2.0,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "all",
+      "value": 7.0,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(1764 - 1260 - 63)/252 = 441/252 = 1.75$ years.",
+    "generic": "Not quite. Take off the days up to the cut-off and the buffer.",
+    "byKey": {
+     "no-buffer": "2.00 forgets the 63-day buffer.",
+     "all": "7.00 is the whole backtest."
+    }
+   },
+   "explain": {
+    "text": "$1764 - 1260 = 504$ days after the cut-off, less 63 of buffer, leaves 441 days: 1.75 years."
+   }
+  },
+  {
+   "id": "h-vendor-claim",
+   "difficulty": 4,
+   "skills": [
+    "llm-features"
+   ],
+   "title": "Two figures",
+   "prose": "A team's text signal shows a Sharpe ratio of 2.4 over the full sample and 0.6 over the year after its scoring model's cut-off, net of costs, from 6 prompts tried.",
+   "question": "Which statement is best supported?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "weak",
+      "text": "Only the clean 0.6 counts, and one year is too short to tell",
+      "correct": true
+     },
+     {
+      "id": "strong",
+      "text": "The signal is strong: 2.4 over the full sample",
+      "why": "Most of the full sample is before the cut-off, where the scores may be memory."
+     },
+     {
+      "id": "avg",
+      "text": "The truth is in between, about 1.5",
+      "why": "Averaging a contaminated figure with a clean one does not fix it."
+     },
+     {
+      "id": "fail",
+      "text": "The signal is proven worthless",
+      "why": "0.6 over one year is not proof of zero either; it is too short to tell."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Only the clean year counts, and a year is short.",
+    "generic": "Not quite. Which figure is free of memory, and how precise is it?"
+   },
+   "explain": {
+    "text": "Over one year a Sharpe must exceed about 1.96 to clear noise, and 6 tries haircut it further. The clean 0.6 is inconclusive; a longer live trial is the honest next step."
+   }
+  }
+ ]
+}

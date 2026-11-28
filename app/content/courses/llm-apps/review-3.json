@@ -1,0 +1,405 @@
+{
+ "id": "review-3",
+ "course": "llm-apps",
+ "level": 3,
+ "pass": 0.8,
+ "items": [
+  {
+   "id": "r3-errors",
+   "difficulty": 2,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "get_close needs `ticker` (one of CORR, DUNM, ELRY, HALL) and `date` (a string), with no extra keys. A call sends `{\"ticker\": \"corr\", \"date\": \"2024-03-08\", \"currency\": \"GBP\"}`.",
+   "question": "How many errors does the validator report?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two: 'corr' is not in the enum (case matters) and 'currency' is unexpected.",
+    "generic": "Not quite. Check the enum and the extra key.",
+    "byKey": {
+     "one": "Both the lower-case ticker and the extra key are errors.",
+     "three": "The date is a valid string; only two rules are broken."
+    }
+   },
+   "explain": {
+    "text": "The enum is case-sensitive, so 'corr' fails, and 'currency' is an extra key: 2 errors."
+   }
+  },
+  {
+   "id": "r3-where",
+   "difficulty": 2,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "A tool must only be called with k from 1 to 10.",
+   "question": "Where should that rule live?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "schema",
+      "text": "In the schema, as minimum and maximum",
+      "correct": true
+     },
+     {
+      "id": "desc",
+      "text": "Only in the description",
+      "why": "A description is read by the model; nothing checks it."
+     },
+     {
+      "id": "model",
+      "text": "In the model's training",
+      "why": "You cannot rely on that; check it in code."
+     },
+     {
+      "id": "none",
+      "text": "Nowhere: the tool will cope",
+      "why": "The tool may misbehave silently."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "In the schema, where the harness checks it.",
+    "generic": "Not quite. Which part is enforced?"
+   },
+   "explain": {
+    "text": "`\"minimum\": 1, \"maximum\": 10` in the schema makes the harness refuse a bad k with a clear message."
+   }
+  },
+  {
+   "id": "r3-msg",
+   "difficulty": 3,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "A call sends `{\"query\": \"debt\", \"k\": \"5\"}` to search_notes, whose k is an integer.",
+   "question": "Which error message is most actionable?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "good",
+      "text": "field 'k' must be integer, got string",
+      "correct": true
+     },
+     {
+      "id": "bad",
+      "text": "bad request",
+      "why": "It names neither the field nor the type."
+     },
+     {
+      "id": "trace",
+      "text": "TypeError: '<' not supported between instances of 'str' and 'int'",
+      "why": "A traceback describes the code, not the fix."
+     },
+     {
+      "id": "silent",
+      "text": "No message; use k = 3",
+      "why": "Silently replacing the value hides the error."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "It names the field, the expected type and what arrived.",
+    "generic": "Not quite. Which message says how to fix the call?"
+   },
+   "explain": {
+    "text": "The model sent the string \"5\"; the message tells it to send the integer 5."
+   }
+  },
+  {
+   "id": "r3-retry",
+   "difficulty": 3,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "With clear error messages, a model's first call failed on 14 of 50 runs, and 12 of those 14 were fixed on a later turn.",
+   "question": "What is the retry rate? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8571,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 0.24,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$12/14 = 0.8571$.",
+    "generic": "Not quite. Fixed over failed.",
+    "byKey": {
+     "all": "You divided by all 50 runs; the rate is over the 14 that failed."
+    }
+   },
+   "explain": {
+    "text": "$12/14 = 0.8571$ of failed first calls were fixed."
+   }
+  },
+  {
+   "id": "r3-msgs",
+   "difficulty": 2,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "A run makes 3 tool calls, one of them an error, and then answers.",
+   "question": "How many messages does it hold, counting the question?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "calls",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "no-err",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1 question, 4 model replies, 3 tool results: 8.",
+    "generic": "Not quite. Every call gets a result, errors included.",
+    "byKey": {
+     "calls": "4 is the model calls.",
+     "no-err": "The error is a tool result too."
+    }
+   },
+   "explain": {
+    "text": "Every tool call, failed or not, gets a tool message, so 1 + 4 + 3 = 8."
+   }
+  },
+  {
+   "id": "r3-cap",
+   "difficulty": 3,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "An agent loop has a step cap of 8 and a repeat check over 3 calls. A model alternates search('a') and search('b') for ever.",
+   "question": "How many tool calls are made before the loop stops?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "8: the calls alternate, so 3 identical calls in a row never occur, and only the cap stops it.",
+    "generic": "Not quite. Does the repeat check ever fire?",
+    "byKey": {
+     "three": "The repeat check needs 3 identical calls in a row; alternating calls never give that."
+    }
+   },
+   "explain": {
+    "text": "Alternating calls dodge the repeat check, so the cap of 8 ends the run: the cap is the stop that cannot be dodged."
+   }
+  },
+  {
+   "id": "r3-se",
+   "difficulty": 3,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "An agent succeeds on 36 of 50 planted tasks.",
+   "question": "What is the standard error of its success rate? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0635,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.004,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{0.72 \\times 0.28/50} = 0.0635$.",
+    "generic": "Not quite. Use $\\sqrt{p(1-p)/n}$.",
+    "byKey": {
+     "var": "That is the variance."
+    }
+   },
+   "explain": {
+    "text": "$p = 36/50 = 0.72$, so the standard error is 0.0635."
+   }
+  },
+  {
+   "id": "r3-chain",
+   "difficulty": 3,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "Each step of an agent's task succeeds independently with chance 0.9.",
+   "question": "What is the chance a 6-step task succeeds? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5314,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "lin",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.9^6 = 0.5314$.",
+    "generic": "Not quite. Raise 0.9 to the 6th power.",
+    "byKey": {
+     "lin": "You took 10% off per step. Chances multiply."
+    }
+   },
+   "explain": {
+    "text": "$0.9^6 = 0.5314$: barely better than half."
+   }
+  },
+  {
+   "id": "r3-grade",
+   "difficulty": 4,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "A scorecard marks a task a success when the final answer is right. One task's right answer came with no tool call at all.",
+   "question": "What is wrong with the scorecard?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tools",
+      "text": "It should also require the task's tools",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: right is right",
+      "why": "A memorised answer is no evidence the agent can look up a new one."
+     },
+     {
+      "id": "steps",
+      "text": "It should count steps instead",
+      "why": "Steps measure cost, not whether the process worked."
+     },
+     {
+      "id": "human",
+      "text": "Only a human can grade agents",
+      "why": "Planted tasks with known answers and required tools can be graded by code."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Success needs the right answer and the required tools.",
+    "generic": "Not quite. What does a right answer without the tool show?"
+   },
+   "explain": {
+    "text": "Requiring the facts the task needs, here a tool result, separates a working process from a lucky or memorised answer."
+   }
+  },
+  {
+   "id": "r3-workflow",
+   "difficulty": 4,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "A task always needs the same three tool calls in the same order.",
+   "question": "What does Anthropic's 'Building effective agents' advise?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "wf",
+      "text": "A workflow: fixed code calling the three tools",
+      "correct": true
+     },
+     {
+      "id": "agent",
+      "text": "An agent, which can choose its steps",
+      "why": "Choosing is wasted when the steps never change."
+     },
+     {
+      "id": "two",
+      "text": "Two agents checking each other",
+      "why": "More model calls add cost and failure points to known steps."
+     },
+     {
+      "id": "none",
+      "text": "Neither: ask the model directly",
+      "why": "The model needs the tools' data."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A workflow: the simplest thing that works.",
+    "generic": "Not quite. Are the steps known?"
+   },
+   "explain": {
+    "text": "When the steps are known, a workflow is cheaper, easier to test and as good; agents are for steps that depend on what is found."
+   }
+  }
+ ]
+}

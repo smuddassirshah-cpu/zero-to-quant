@@ -1,0 +1,1218 @@
+{
+ "id": "l1-words-as-weights",
+ "course": "llm-apps",
+ "title": "Words as weights",
+ "minutes": 14,
+ "objectives": [
+  "Write TF-IDF weights for a small corpus and match scikit-learn."
+ ],
+ "skills": [
+  "llm-retrieve"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Four notes, one question",
+   "prose": "An analyst types **inflation and rates** into the desk's note search. The index holds four short research notes.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Note",
+      "Text"
+     ],
+     "rows": [
+      [
+       "1",
+       "rates rise as inflation stays high"
+      ],
+      [
+       "2",
+       "bank shares rise on higher rates"
+      ],
+      [
+       "3",
+       "oil falls as supply grows"
+      ],
+      [
+       "4",
+       "inflation falls and bonds rally"
+      ]
+     ],
+     "align": [
+      "center",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which note answers the question best?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "n1",
+      "text": "Note 1",
+      "correct": true
+     },
+     {
+      "id": "n2",
+      "text": "Note 2",
+      "why": "Note 2 is about bank shares. It mentions rates but says nothing about inflation."
+     },
+     {
+      "id": "n3",
+      "text": "Note 3",
+      "why": "Note 3 is about oil supply and shares no word with the question."
+     },
+     {
+      "id": "n4",
+      "text": "Note 4",
+      "why": "Note 4 is about inflation and bonds. Its only other link to the question is the word 'and'."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read each note as an analyst would: which one connects inflation to rates?"
+    },
+    {
+     "rung": "point",
+     "text": "Note 1 says rates rise while inflation stays high.",
+     "highlight": [
+      "r0"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Note 1 links rising rates to high inflation, which is what was asked.",
+    "generic": "Not quite. Look for the note that talks about both inflation and rates.",
+    "byKey": {
+     "n4": "Note 4 mentions inflation, but its other word in common with the question is 'and'."
+    }
+   },
+   "explain": {
+    "text": "Note 1 is the only note about both inflation and rates. A search engine cannot read, though: next we see what it compares.",
+    "canvas": {
+     "highlight": [
+      "r0"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "title": "Counting shared words",
+   "prose": "A search engine compares words, not meanings. The simplest score counts the words a note shares with the question **inflation and rates**.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Note",
+      "Text"
+     ],
+     "rows": [
+      [
+       "1",
+       "rates rise as inflation stays high"
+      ],
+      [
+       "2",
+       "bank shares rise on higher rates"
+      ],
+      [
+       "3",
+       "oil falls as supply grows"
+      ],
+      [
+       "4",
+       "inflation falls and bonds rally"
+      ]
+     ],
+     "align": [
+      "center",
+      "left"
+     ],
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "Tap every note that shares the most words with the question.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r0",
+     "r3"
+    ],
+    "countWord": "notes"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check each note for 'inflation', 'and' and 'rates'."
+    },
+    {
+     "rung": "point",
+     "text": "Note 1 has 'rates' and 'inflation'.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Note 4 has 'inflation' and 'and': two words as well."
+    }
+   ],
+   "feedback": {
+    "correct": "Notes 1 and 4 each share two words. A plain count cannot separate them, and note 4's second match is 'and'.",
+    "generic": "Not quite. Count the question's three words in each note.",
+    "byKey": {
+     "r1": "Note 2 shares only 'rates': one word.",
+     "r2": "Note 3 shares no word with the question.",
+     "r3": "Note 4 shares 'inflation' and 'and': two words, as many as note 1.",
+     "r0": "Note 1 shares 'rates' and 'inflation': two words."
+    }
+   },
+   "explain": {
+    "text": "Notes 1 and 4 tie on two shared words each. To break the tie, words need weights: 'and' should count for less than 'inflation'.",
+    "canvas": {
+     "highlight": [
+      "r0",
+      "r3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Document frequency",
+   "prose": "A word that appears in many notes says little about any one of them. The number of notes that contain a word is its **document frequency**, $\\text{df}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Note",
+      "Text"
+     ],
+     "rows": [
+      [
+       "1",
+       "rates rise as inflation stays high"
+      ],
+      [
+       "2",
+       "bank shares rise on higher rates"
+      ],
+      [
+       "3",
+       "oil falls as supply grows"
+      ],
+      [
+       "4",
+       "inflation falls and bonds rally"
+      ]
+     ],
+     "align": [
+      "center",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the document frequency of each word over the four notes.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Word",
+     "df"
+    ],
+    "rows": [
+     [
+      "inflation",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "rates",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "and",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "as",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count notes, not appearances."
+    },
+    {
+     "rung": "point",
+     "text": "'as' is in note 1 and note 3.",
+     "highlight": [
+      "r0",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "'inflation' is in notes 1 and 4; 'rates' in notes 1 and 2; 'and' only in note 4."
+    }
+   ],
+   "feedback": {
+    "correct": "'inflation', 'rates' and 'as' are each in two notes; 'and' is in one.",
+    "generic": "Not quite. For each word, count the notes that contain it at least once."
+   },
+   "explain": {
+    "text": "Each word is counted once per note that holds it. In these four notes 'and' happens to look rare; in a real corpus it is in nearly every document."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Inverse document frequency",
+   "prose": "scikit-learn's `TfidfVectorizer` turns df into an **inverse document frequency** for each word $t$, with $n$ notes:\n\n$$\\text{idf}(t) = \\ln\\frac{1 + n}{1 + \\text{df}(t)} + 1.$$\n\nThe log is the natural one, from `exp-log` level 2.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Word",
+      "df"
+     ],
+     "rows": [
+      [
+       "inflation",
+       "2"
+      ],
+      [
+       "rates",
+       "2"
+      ],
+      [
+       "and",
+       "1"
+      ],
+      [
+       "as",
+       "2"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is idf('inflation') over the four notes? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5108,
+    "tol": {
+     "abs": 6e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "no-plus",
+      "value": 0.5108,
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "id": "plain",
+      "value": 0.6931,
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "id": "plain-plus",
+      "value": 1.6931,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Here $n = 4$ and df('inflation') $= 2$."
+    },
+    {
+     "rung": "point",
+     "text": "Inside the log: $(1 + 4)/(1 + 2) = 5/3$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln(5/3) + 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln(5/3) + 1 = 1.5108$.",
+    "generic": "Not quite. Put $n = 4$ and $\\text{df} = 2$ into the formula, then add 1 after the log.",
+    "byKey": {
+     "no-plus": "You stopped at $\\ln(5/3)$. scikit-learn adds 1 after the log as well.",
+     "plain": "You used $\\ln(n/\\text{df})$ with no 1s at all. The smooth formula adds 1 to the top and bottom, and 1 outside.",
+     "plain-plus": "You added 1 outside the log but not inside it. Inside, both $n$ and df get 1 added."
+    }
+   },
+   "explain": {
+    "text": "$\\ln\\frac{1+4}{1+2} + 1 = \\ln(5/3) + 1 = 1.5108$. A word in only one note gets $\\ln(5/2) + 1 = 1.9163$, so rarer words weigh more."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One note as a vector",
+   "prose": "Note 1 has six words, each once. Its **TF-IDF vector** has one entry per word: the count (the **term frequency**) times the IDF. Four of its words are in two notes (weight 1.5108); 'stays' and 'high' are in one (weight 1.9163).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Word",
+      "Count",
+      "idf",
+      "Weight"
+     ],
+     "rows": [
+      [
+       "rates",
+       "1",
+       "1.5108",
+       "1.5108"
+      ],
+      [
+       "rise",
+       "1",
+       "1.5108",
+       "1.5108"
+      ],
+      [
+       "as",
+       "1",
+       "1.5108",
+       "1.5108"
+      ],
+      [
+       "inflation",
+       "1",
+       "1.5108",
+       "1.5108"
+      ],
+      [
+       "stays",
+       "1",
+       "1.9163",
+       "1.9163"
+      ],
+      [
+       "high",
+       "1",
+       "1.9163",
+       "1.9163"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the length of note 1's TF-IDF vector? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.0589,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 9.8759,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "squares",
+      "value": 16.4747,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Length is the square root of the sum of squared entries."
+    },
+    {
+     "rung": "point",
+     "text": "$4 \\times 1.5108^2 + 2 \\times 1.9163^2$ comes first.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That sum is about 16.4745; take its square root."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{4 \\times 1.5108^2 + 2 \\times 1.9163^2} = 4.0589$.",
+    "generic": "Not quite. Square each weight, add, then take the square root.",
+    "byKey": {
+     "sum": "You added the weights. Length squares them first, adds, then takes the root.",
+     "squares": "That is the squared length. Take its square root."
+    }
+   },
+   "explain": {
+    "text": "$4 \\times 1.5108^2 + 2 \\times 1.9163^2 \\approx 16.4745$, and $\\sqrt{16.4745} = 4.0589$. Dividing by this length is the next step."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Length 1",
+   "prose": "scikit-learn divides every note's vector by its length, so each note becomes a vector of length 1. Long and short notes then compare on equal terms.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Word",
+      "Weight",
+      "Length 1"
+     ],
+     "rows": [
+      [
+       "rates",
+       "1.5108",
+       "?"
+      ],
+      [
+       "inflation",
+       "1.5108",
+       "?"
+      ],
+      [
+       "stays",
+       "1.9163",
+       "0.4721"
+      ],
+      [
+       "high",
+       "1.9163",
+       "0.4721"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the weight of 'inflation' in note 1 after dividing by the length 4.0589? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3722,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "by-sum",
+      "value": 0.153,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "by-squares",
+      "value": 0.0917,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the weight by the length."
+    },
+    {
+     "rung": "point",
+     "text": "$1.5108 / 4.0589$.",
+     "highlight": [
+      "r1"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$1.5108 / 4.0589 = 0.3722$, the figure scikit-learn prints for note 1.",
+    "generic": "Not quite. Divide 1.5108 by the length 4.0589.",
+    "byKey": {
+     "by-sum": "You divided by the sum of the weights, 9.8759. scikit-learn divides by the length.",
+     "by-squares": "You divided by the squared length. Use its square root, 4.0589."
+    }
+   },
+   "explain": {
+    "text": "$1.5108 / 4.0589 = 0.3722$ and $1.9163 / 4.0589 = 0.4721$. The six squared entries now add to 1."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Where the IDF comes from",
+   "prose": "To score the question, it is turned into a TF-IDF vector too. A teammate fits the IDF on the question alone: one 'document', in which every word appears.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Word",
+      "df"
+     ],
+     "rows": [
+      [
+       "inflation",
+       "2"
+      ],
+      [
+       "rates",
+       "2"
+      ],
+      [
+       "and",
+       "1"
+      ],
+      [
+       "as",
+       "2"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What IDF should 'and' carry in the question's vector? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.9163,
+    "tol": {
+     "abs": 6e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "query",
+      "value": 1.0,
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "id": "no-plus",
+      "value": 0.9163,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which collection tells us how rare a word is: the question or the notes?"
+    },
+    {
+     "rung": "point",
+     "text": "'and' is in one of the four notes.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln(5/2) + 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln(5/2) + 1 = 1.9163$: the IDF fitted on the notes.",
+    "generic": "Not quite. Use the df of 'and' in the four notes.",
+    "byKey": {
+     "query": "You fitted the IDF on the question. There every word has df 1 out of 1, so each gets $\\ln(2/2) + 1 = 1$ and they all count the same.",
+     "no-plus": "That is $\\ln(5/2)$ without the 1 added after the log."
+    }
+   },
+   "explain": {
+    "text": "The IDF belongs to the collection being searched: fitted once on the notes, it gives 'and' $\\ln(5/2) + 1 = 1.9163$ in every query. Fitted on the question alone, every word would weigh 1."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "TF-IDF",
+   "prose": "What you just built, for word $t$ in note $d$ of $n$ notes:\n\n$$w_{t,d} = \\text{tf}(t, d) \\times \\left(\\ln\\frac{1 + n}{1 + \\text{df}(t)} + 1\\right),$$\n\nthen each note's vector is divided by its length. These are scikit-learn's defaults; other libraries drop the 1s or use other logs, so always state the formula.",
+   "question": "A word appears in all four notes. What is its IDF under this formula?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "one",
+      "text": "1",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "0",
+      "why": "0 is the plain $\\ln(n/\\text{df})$. The smooth formula adds 1 after the log."
+     },
+     {
+      "id": "l54",
+      "text": "$\\ln(5/4) + 1$",
+      "why": "You added 1 to $n$ but not to df. With df $= n$ the fraction is $5/5$."
+     },
+     {
+      "id": "undef",
+      "text": "It is undefined",
+      "why": "The 1 added inside the log keeps the fraction positive; nothing divides by zero."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With df $= n = 4$ the fraction is $5/5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln(5/5) + 1 = 1$: the lowest weight a word can get, but not zero.",
+    "generic": "Not quite. Put df $= 4$ into the formula."
+   },
+   "explain": {
+    "text": "A word in every note gets $\\ln 1 + 1 = 1$, the floor of the scale. The plain formula would give it 0 and drop it from every score."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "tokenise and idf in code",
+   "prose": "Write `tokenise(text)`: lower case, then keep the runs of the letters a to z. Then write `idf(docs)`, a dict from each word to its smooth IDF. scikit-learn's own tokeniser drops one-letter words and keeps digits, so the tests used `token_pattern='[a-z]+'` to match yours.",
+   "question": "Write `tokenise` and `idf`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport re\n\n\ndef tokenise(text):\n    # lower-case runs of the letters a to z\n    ...\n\n\ndef idf(docs):\n    # {word: ln((1 + n) / (1 + df)) + 1} over the list of texts docs\n    ...\n",
+    "solution": "import math\nimport re\n\n\ndef tokenise(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef idf(docs):\n    n = len(docs)\n    df = {}\n    for d in docs:\n        for w in set(tokenise(d)):\n            df[w] = df.get(w, 0) + 1\n    return {w: math.log((1 + n) / (1 + c)) + 1 for w, c in df.items()}\n",
+    "examples": [
+     {
+      "call": "tokenise('Bank shares rise')",
+      "expect": "['bank', 'shares', 'rise']"
+     }
+    ],
+    "tests": [
+     {
+      "call": "tokenise('Rates Rise as INFLATION stays high')",
+      "expect": "['rates', 'rise', 'as', 'inflation', 'stays', 'high']"
+     },
+     {
+      "call": "tokenise('Q3 profit: up 12%, as forecast.')",
+      "expect": "['q', 'profit', 'up', 'as', 'forecast']"
+     },
+     {
+      "setup": "D4 = ['rates rise as inflation stays high', 'bank shares rise on higher rates', 'oil falls as supply grows', 'inflation falls and bonds rally']",
+      "call": "idf(D4)['inflation']",
+      "expect": "1.5108256237659907",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "idf(D4)['oil']",
+      "expect": "1.916290731874155",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "sorted(idf(D4))",
+      "expect": "['and', 'as', 'bank', 'bonds', 'falls', 'grows', 'high', 'higher', 'inflation', 'oil', 'on', 'rally', 'rates', 'rise', 'shares', 'stays', 'supply']"
+     },
+     {
+      "call": "idf(['oil up', 'oil down', 'oil flat'])['oil']",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "idf(['rates rates rates', 'oil'])['rates']",
+      "expect": "1.4054651081081644",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "import json\nN = [n['text'] for n in json.load(open('llm-apps-notes.json'))['notes']]",
+      "call": "[round(idf(N)[w], 9) for w in ('corran', 'the', 'refinancing')]",
+      "expect": "[3.254058052, 3.202764758, 3.254058052]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "how": "Submit runs 8 hidden tests. Text results must match exactly; IDF values within relative $10^{-9}$ of scikit-learn's `TfidfVectorizer(token_pattern='[a-z]+').idf_`, worked out ahead of time. They cover capitals, punctuation and digits, two words of the four notes, the vocabulary, a word in every note, a word repeated inside one note and three words of the 180-note file.",
+    "mutants": [
+     {
+      "source": "import math\nimport re\n\n\ndef tokenise(text):\n    return re.findall(r\"[a-z]+\", text)\n\n\ndef idf(docs):\n    n = len(docs)\n    df = {}\n    for d in docs:\n        for w in set(tokenise(d)):\n            df[w] = df.get(w, 0) + 1\n    return {w: math.log((1 + n) / (1 + c)) + 1 for w, c in df.items()}\n",
+      "test": 1,
+      "symptom": "Never lowers the case, so capital letters are lost."
+     },
+     {
+      "source": "import math\nimport re\n\n\ndef tokenise(text):\n    return text.lower().split()\n\n\ndef idf(docs):\n    n = len(docs)\n    df = {}\n    for d in docs:\n        for w in set(tokenise(d)):\n            df[w] = df.get(w, 0) + 1\n    return {w: math.log((1 + n) / (1 + c)) + 1 for w, c in df.items()}\n",
+      "test": 2,
+      "symptom": "Splits on spaces, so punctuation and digits stay attached."
+     },
+     {
+      "source": "import math\nimport re\n\n\ndef tokenise(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef idf(docs):\n    n = len(docs)\n    df = {}\n    for d in docs:\n        for w in set(tokenise(d)):\n            df[w] = df.get(w, 0) + 1\n    return {w: math.log((1 + n) / (1 + c)) for w, c in df.items()}\n",
+      "test": 3,
+      "symptom": "Leaves out the 1 added after the log."
+     },
+     {
+      "source": "import math\nimport re\n\n\ndef tokenise(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef idf(docs):\n    n = len(docs)\n    df = {}\n    for d in docs:\n        for w in tokenise(d):\n            df[w] = df.get(w, 0) + 1\n    return {w: math.log((1 + n) / (1 + c)) + 1 for w, c in df.items()}\n",
+      "test": 7,
+      "symptom": "Counts every appearance instead of every note, so a repeated word looks common."
+     }
+    ],
+    "data": {
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`re.findall(r\"[a-z]+\", text.lower())` does the tokenising."
+    },
+    {
+     "rung": "point",
+     "text": "For df, loop over `set(tokenise(d))` so a word counts once per note."
+    }
+   ],
+   "feedback": {
+    "correct": "Your IDF matches scikit-learn's on every test.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Lower the text first: 'Rates' and 'INFLATION' must come out as 'rates' and 'inflation'.",
+     "test-2": "Splitting on spaces keeps 'profit:' and '12%,' whole. Keep only runs of the letters a to z.",
+     "test-3": "Your IDF of 'inflation' is 1 too small: add 1 after the log, as scikit-learn does.",
+     "test-7": "'rates' is in one note of two, so its df is 1. Count each note once per word, with `set`."
+    }
+   },
+   "explain": {
+    "text": "The `set` makes df count notes, not appearances; the outer `+ 1` keeps a word found everywhere at weight 1 rather than 0."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The whole matrix",
+   "prose": "Now the whole **document-term matrix**: one row per note, one column per word in sorted order. Use `tokenise` and `idf` from the last screen; they are already defined.",
+   "question": "Write `tfidf_matrix(docs)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\ndef tfidf_matrix(docs):\n    # returns (vocab, rows): vocab is the sorted list of words;\n    # rows[i][j] is count times idf of vocab[j] in docs[i],\n    # each row divided by its length (a row of zeros stays zeros)\n    ...\n",
+    "solution": "import math\n\n\ndef tfidf_matrix(docs):\n    w = idf(docs)\n    vocab = sorted(w)\n    col = {t: j for j, t in enumerate(vocab)}\n    rows = []\n    for d in docs:\n        r = [0.0] * len(vocab)\n        for t in tokenise(d):\n            r[col[t]] += w[t]\n        n = math.sqrt(sum(x * x for x in r))\n        rows.append([x / n for x in r] if n > 0 else r)\n    return vocab, rows\n",
+    "prelude": "import math\nimport re\n\n\ndef tokenise(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef idf(docs):\n    n = len(docs)\n    df = {}\n    for d in docs:\n        for w in set(tokenise(d)):\n            df[w] = df.get(w, 0) + 1\n    return {w: math.log((1 + n) / (1 + c)) + 1 for w, c in df.items()}\n",
+    "examples": [
+     {
+      "call": "tfidf_matrix(['oil up', 'oil'])[0]",
+      "expect": "['oil', 'up']"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "D4 = ['rates rise as inflation stays high', 'bank shares rise on higher rates', 'oil falls as supply grows', 'inflation falls and bonds rally']",
+      "call": "tfidf_matrix(D4)[0]",
+      "expect": "['and', 'as', 'bank', 'bonds', 'falls', 'grows', 'high', 'higher', 'inflation', 'oil', 'on', 'rally', 'rates', 'rise', 'shares', 'stays', 'supply']"
+     },
+     {
+      "call": "tfidf_matrix(D4)[1][0]",
+      "expect": "[0.0, 0.3722248517590162, 0.0, 0.0, 0.0, 0.0, 0.47212002654617047, 0.0, 0.3722248517590162, 0.0, 0.0, 0.0, 0.3722248517590162, 0.3722248517590162, 0.0, 0.47212002654617047, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "tfidf_matrix(D4)[1][3]",
+      "expect": "[0.4854606118156975, 0.0, 0.0, 0.4854606118156975, 0.3827427224171519, 0.0, 0.0, 0.0, 0.3827427224171519, 0.0, 0.0, 0.4854606118156975, 0.0, 0.0, 0.0, 0.0, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "tfidf_matrix(['rates rates rise', 'rise'])[1]",
+      "expect": "[[0.9421556246632359, 0.33517574332792605], [0.0, 1.0]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "tfidf_matrix(['', 'oil'])[1]",
+      "expect": "[[0.0], [1.0]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "setup": "import json\nN = [n['text'] for n in json.load(open('llm-apps-notes.json'))['notes']]",
+      "call": "[round(sum(x * x for x in r), 9) for r in tfidf_matrix(N)[1][:5]]",
+      "expect": "[1.0, 1.0, 1.0, 1.0, 1.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "round(max(tfidf_matrix(N)[1][7]), 9)",
+      "expect": "0.372850018",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "how": "Submit runs 7 hidden tests; `tokenise` and `idf` from the last screen are already defined. Weights must match within absolute $10^{-9}$ of scikit-learn's `TfidfVectorizer(token_pattern='[a-z]+')` output: the four notes' vocabulary and two of their rows, a repeated word, an empty note and rows of the 180-note file.",
+    "mutants": [
+     {
+      "source": "import math\n\n\ndef tfidf_matrix(docs):\n    w = idf(docs)\n    vocab = sorted(w)\n    col = {t: j for j, t in enumerate(vocab)}\n    rows = []\n    for d in docs:\n        r = [0.0] * len(vocab)\n        for t in tokenise(d):\n            r[col[t]] += w[t]\n        rows.append(r)\n    return vocab, rows\n",
+      "test": 2,
+      "symptom": "Never divides by the length."
+     },
+     {
+      "source": "import math\n\n\ndef tfidf_matrix(docs):\n    w = idf(docs)\n    vocab = sorted(w)\n    col = {t: j for j, t in enumerate(vocab)}\n    rows = []\n    for d in docs:\n        r = [0.0] * len(vocab)\n        for t in set(tokenise(d)):\n            r[col[t]] += w[t]\n        n = math.sqrt(sum(x * x for x in r))\n        rows.append([x / n for x in r] if n > 0 else r)\n    return vocab, rows\n",
+      "test": 4,
+      "symptom": "Counts a repeated word once."
+     },
+     {
+      "source": "import math\n\n\ndef tfidf_matrix(docs):\n    w = idf(docs)\n    vocab = sorted(w)\n    col = {t: j for j, t in enumerate(vocab)}\n    rows = []\n    for d in docs:\n        r = [0.0] * len(vocab)\n        for t in tokenise(d):\n            r[col[t]] += w[t]\n        n = math.sqrt(sum(x * x for x in r))\n        rows.append([x / n for x in r])\n    return vocab, rows\n",
+      "test": 5,
+      "symptom": "Divides an empty note by its zero length."
+     }
+    ],
+    "data": {
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add `w[t]` to the word's column once for every appearance, then divide by the length."
+    },
+    {
+     "rung": "point",
+     "text": "Guard the empty note: a length of 0 leaves the row as it is."
+    }
+   ],
+   "feedback": {
+    "correct": "Your matrix matches scikit-learn's to $10^{-9}$.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "Note 1's row must have length 1: divide each weight by the row's length.",
+     "test-4": "'rates' appears twice in the first note, so its term frequency is 2: count every appearance in the note.",
+     "test-5": "An empty note has length 0: leave its row as zeros instead of dividing."
+    }
+   },
+   "explain": {
+    "text": "Each row adds the IDF once for every appearance, which is count times IDF, then divides by the length. These are the defaults the checks matched."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Rare words in filings",
+   "prose": "A bank reads 200 company filings. 'restatement' appears in 4 of them and 'company' in 196. In a filing that uses each word once, the TF-IDF weights decide what the filing is about.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Word",
+      "Filings containing it"
+     ],
+     "rows": [
+      [
+       "restatement",
+       "4"
+      ],
+      [
+       "company",
+       "196"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many times the weight of 'company' does 'restatement' carry before the length step? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.6,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "plain",
+      "value": 193.6,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "df-ratio",
+      "value": 49,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out both IDFs with $n = 200$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\ln(201/5) + 1$ and $\\ln(201/197) + 1$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide the first by the second."
+    }
+   ],
+   "feedback": {
+    "correct": "$4.6939 / 1.0201 = 4.60$: the rare word carries about four and a half times the weight.",
+    "generic": "Not quite. Compute each IDF with the smooth formula, then divide.",
+    "byKey": {
+     "plain": "You used $\\ln(n/\\text{df})$ without the 1s, which gives 'company' almost no weight. The smooth formula keeps it near 1.",
+     "df-ratio": "You divided the document frequencies. The weight is the IDF, a log, so the ratio is far smaller."
+    }
+   },
+   "explain": {
+    "text": "$\\ln(201/5) + 1 = 4.6939$ and $\\ln(201/197) + 1 = 1.0201$, so 'restatement' weighs 4.60 times as much. A search for restatements then finds the filings that use the word, not every filing that says 'company'."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A search engine compares words, so words need weights: a word found in few notes tells you more than one found in all of them.",
+   "TF-IDF weighs a word in a note by its count times $\\ln\\frac{1+n}{1+\\text{df}} + 1$, then scales each note to length 1.",
+   "The IDF is fitted on the collection being searched and reused for every query; libraries differ in the 1s and the log, so state the formula."
+  ],
+  "formula": {
+   "name": "Smooth IDF (scikit-learn)",
+   "tex": "\\text{idf}(t) = \\ln\\frac{1 + n}{1 + \\text{df}(t)} + 1",
+   "note": "df counts notes, not appearances; a word in every note gets 1."
+  },
+  "trap": "Fitting the IDF on the query: every word then weighs 1 and the weighting vanishes."
+ },
+ "quiz": [
+  {
+   "id": "q-df-repeat",
+   "difficulty": 2,
+   "prose": "A corpus has 9 notes. The word 'covenant' appears three times in note 5 and in no other note.",
+   "question": "What is the document frequency of 'covenant'?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "count",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "It is in one note, so df is 1.",
+    "generic": "Not quite. Count notes, not appearances.",
+    "byKey": {
+     "count": "3 is how often it appears. df counts the notes that hold it: one."
+    }
+   },
+   "explain": {
+    "text": "df counts each note once, however often the word appears in it, so df is 1. The 3 shows up as the term frequency in note 5."
+   }
+  },
+  {
+   "id": "q-idf-9",
+   "difficulty": 2,
+   "prose": "In a corpus of 9 notes, 'downgrade' appears in 2 of them.",
+   "question": "What is its smooth IDF, $\\ln\\frac{1+n}{1+\\text{df}} + 1$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.204,
+    "tol": {
+     "abs": 6e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "no-plus",
+      "value": 1.204,
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "id": "plain-plus",
+      "value": 2.5041,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln(10/3) + 1 = 2.2040$.",
+    "generic": "Not quite. Use $n = 9$ and $\\text{df} = 2$.",
+    "byKey": {
+     "no-plus": "You left out the 1 after the log.",
+     "plain-plus": "You skipped the 1s inside the log: $(1 + 9)/(1 + 2)$, not $9/2$."
+    }
+   },
+   "explain": {
+    "text": "$\\ln\\frac{10}{3} + 1 = 1.2040 + 1 = 2.2040$."
+   }
+  },
+  {
+   "id": "q-what-raises",
+   "difficulty": 3,
+   "prose": "Every note's vector has length 1. The word 'covenant' appears once in note 8.",
+   "question": "Which change raises the weight of 'covenant' in note 8?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rarer",
+      "text": "Fewer other notes contain 'covenant'",
+      "correct": true
+     },
+     {
+      "id": "more-notes",
+      "text": "More notes containing 'covenant' are added",
+      "why": "That raises its df, which lowers its IDF."
+     },
+     {
+      "id": "longer",
+      "text": "Note 8 gains ten more words",
+      "why": "More words make the row longer, so after dividing by the length each entry, 'covenant' included, shrinks."
+     },
+     {
+      "id": "query",
+      "text": "The query uses 'covenant' twice",
+      "why": "The query never changes the IDF; it is fitted on the notes."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Fewer notes holding the word means a smaller df and a larger IDF.",
+    "generic": "Not quite. Which part of the weight depends on the other notes?"
+   },
+   "explain": {
+    "text": "The weight is count times IDF, divided by the row's length. Only a smaller df or a larger count in note 8 raises it; extra words dilute it."
+   }
+  },
+  {
+   "id": "q-two-words",
+   "difficulty": 2,
+   "prose": "A note has exactly two words, each with raw TF-IDF weight 2.5.",
+   "question": "What is each weight after the note's vector is scaled to length 1? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7071,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "by-sum",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "raw",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The length is $2.5\\sqrt 2$, so each weight is $1/\\sqrt 2 = 0.7071$.",
+    "generic": "Not quite. Divide by the length, $\\sqrt{2.5^2 + 2.5^2}$.",
+    "byKey": {
+     "by-sum": "You divided by the sum, 5. The length is $\\sqrt{12.5} = 3.5355$.",
+     "raw": "That is the weight before the length step."
+    }
+   },
+   "explain": {
+    "text": "$2.5 / \\sqrt{12.5} = 0.7071$, whatever the common weight: two equal entries always become $1/\\sqrt 2$."
+   }
+  }
+ ]
+}

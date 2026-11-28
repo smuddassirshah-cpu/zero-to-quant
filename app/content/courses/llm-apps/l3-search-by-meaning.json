@@ -1,0 +1,1381 @@
+{
+ "id": "l3-search-by-meaning",
+ "course": "llm-apps",
+ "title": "Searching by meaning",
+ "minutes": 15,
+ "objectives": [
+  "Build a search over embeddings, with documents split into overlapping chunks."
+ ],
+ "skills": [
+  "llm-retrieve"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "No word in common",
+   "prose": "Eight notes: four on interest rates, four on a firm's funding. A portfolio manager searches **bond yields**. Note 3, 'inflation lifts rates again', is plainly about rates.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Note",
+      "Text"
+     ],
+     "rows": [
+      [
+       "1",
+       "gilt yields rise as rates climb"
+      ],
+      [
+       "2",
+       "rates and inflation push yields higher"
+      ],
+      [
+       "3",
+       "inflation lifts rates again"
+      ],
+      [
+       "4",
+       "yields fall as inflation cools"
+      ],
+      [
+       "5",
+       "lenders cut credit lines to the firm"
+      ],
+      [
+       "6",
+       "the firm seeks new funding from lenders"
+      ],
+      [
+       "7",
+       "funding gap widens as lenders pull credit"
+      ],
+      [
+       "8",
+       "higher rates squeeze funding for the firm"
+      ]
+     ],
+     "align": [
+      "center",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the TF-IDF cosine of the query with note 3?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "guess",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which words do the query and note 3 share?"
+    },
+    {
+     "rung": "point",
+     "text": "'bond' is in no note, and note 3 has no 'yields'.",
+     "highlight": [
+      "r2"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "0: they share no word, so word overlap cannot see that note 3 is about rates.",
+    "generic": "Not quite. List the words the two have in common.",
+    "byKey": {
+     "guess": "You judged the meaning. TF-IDF only multiplies shared words, and there are none."
+    }
+   },
+   "explain": {
+    "text": "The query's only known word is 'yields', which note 3 lacks, so every product is 0. Synonyms and related words are invisible to word overlap.",
+    "canvas": {
+     "highlight": [
+      "r2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "title": "Notes as points",
+   "prose": "**Latent semantic analysis** (LSA) keeps the two strongest directions of the notes' TF-IDF matrix, so words that occur together pull their notes together. Each note becomes a point; Q is the query. Cosine compares directions from the origin.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      {
+       "id": "p0",
+       "x": 0.417,
+       "y": -0.319,
+       "label": "N1",
+       "group": "rates"
+      },
+      {
+       "id": "p1",
+       "x": 0.692,
+       "y": -0.432,
+       "label": "N2",
+       "group": "rates"
+      },
+      {
+       "id": "p2",
+       "x": 0.467,
+       "y": -0.353,
+       "label": "N3",
+       "group": "rates"
+      },
+      {
+       "id": "p3",
+       "x": 0.42,
+       "y": -0.414,
+       "label": "N4",
+       "group": "rates"
+      },
+      {
+       "id": "p4",
+       "x": 0.356,
+       "y": 0.582,
+       "label": "N5",
+       "group": "funding"
+      },
+      {
+       "id": "p5",
+       "x": 0.434,
+       "y": 0.592,
+       "label": "N6",
+       "group": "funding"
+      },
+      {
+       "id": "p6",
+       "x": 0.335,
+       "y": 0.557,
+       "label": "N7",
+       "group": "funding"
+      },
+      {
+       "id": "p7",
+       "x": 0.652,
+       "y": 0.184,
+       "label": "N8",
+       "group": "funding"
+      },
+      {
+       "id": "p8",
+       "x": 0.32,
+       "y": -0.287,
+       "label": "Q",
+       "group": "query"
+      }
+     ],
+     "xRange": [
+      -0.1,
+      0.8
+     ],
+     "yRange": [
+      -0.6,
+      0.8
+     ],
+     "xLabel": "LSA direction 1",
+     "yLabel": "LSA direction 2",
+     "groups": [
+      {
+       "id": "rates",
+       "label": "Rates notes"
+      },
+      {
+       "id": "funding",
+       "label": "Funding notes"
+      },
+      {
+       "id": "query",
+       "label": "Query"
+      }
+     ],
+     "height": 360
+    },
+    "state": {
+     "lines": [
+      {
+       "id": "qdir",
+       "m": -0.8966,
+       "b": 0,
+       "label": "Q's direction",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "Tap the four notes whose direction is closest to the query's.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "p0",
+     "p1",
+     "p2",
+     "p3"
+    ],
+    "only": [
+     "p0",
+     "p1",
+     "p2",
+     "p3",
+     "p4",
+     "p5",
+     "p6",
+     "p7"
+    ],
+    "countWord": "notes"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at the angle from the origin, not the distance."
+    },
+    {
+     "rung": "point",
+     "text": "The rates notes lie below the horizontal axis, as Q does.",
+     "highlight": [
+      "p8"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "N1 to N4, the rates notes, all point the way Q does, note 3 included.",
+    "generic": "Not quite. Pick the notes whose line from the origin runs closest to Q's.",
+    "byKey": {
+     "p7": "N8 'higher rates squeeze funding' shares 'rates', so it leans towards the rates notes, but its angle is wider.",
+     "p4": "N5 is a funding note and points up and to the right, away from Q."
+    }
+   },
+   "explain": {
+    "text": "In LSA space, note 3 sits among the rates notes because it shares 'rates' and 'inflation' with notes that say 'yields'. The query finds it through them.",
+    "canvas": {
+     "highlight": [
+      "p0",
+      "p1",
+      "p2",
+      "p3",
+      "p8"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The cosine in LSA space",
+   "prose": "These points are **embeddings**: short vectors placed so that related texts lie near each other. Here they come from a truncated SVD (`eigen` level 3, if you have it), not a downloaded model. Q is $(0.320, -0.287)$ and note 3 is $(0.467, -0.353)$.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      {
+       "id": "p0",
+       "x": 0.417,
+       "y": -0.319,
+       "label": "N1",
+       "group": "rates"
+      },
+      {
+       "id": "p1",
+       "x": 0.692,
+       "y": -0.432,
+       "label": "N2",
+       "group": "rates"
+      },
+      {
+       "id": "p2",
+       "x": 0.467,
+       "y": -0.353,
+       "label": "N3",
+       "group": "rates"
+      },
+      {
+       "id": "p3",
+       "x": 0.42,
+       "y": -0.414,
+       "label": "N4",
+       "group": "rates"
+      },
+      {
+       "id": "p4",
+       "x": 0.356,
+       "y": 0.582,
+       "label": "N5",
+       "group": "funding"
+      },
+      {
+       "id": "p5",
+       "x": 0.434,
+       "y": 0.592,
+       "label": "N6",
+       "group": "funding"
+      },
+      {
+       "id": "p6",
+       "x": 0.335,
+       "y": 0.557,
+       "label": "N7",
+       "group": "funding"
+      },
+      {
+       "id": "p7",
+       "x": 0.652,
+       "y": 0.184,
+       "label": "N8",
+       "group": "funding"
+      },
+      {
+       "id": "p8",
+       "x": 0.32,
+       "y": -0.287,
+       "label": "Q",
+       "group": "query"
+      }
+     ],
+     "xRange": [
+      -0.1,
+      0.8
+     ],
+     "yRange": [
+      -0.6,
+      0.8
+     ],
+     "xLabel": "LSA direction 1",
+     "yLabel": "LSA direction 2",
+     "groups": [
+      {
+       "id": "rates",
+       "label": "Rates notes"
+      },
+      {
+       "id": "funding",
+       "label": "Funding notes"
+      },
+      {
+       "id": "query",
+       "label": "Query"
+      }
+     ],
+     "height": 360
+    },
+    "state": {
+     "lines": [
+      {
+       "id": "qdir",
+       "m": -0.8966,
+       "b": 0,
+       "label": "Q's direction",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "What is their cosine? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9965,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "dot",
+      "value": 0.2508,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "tfidf",
+      "value": 0.0,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Dot product over the product of the lengths."
+    },
+    {
+     "rung": "point",
+     "text": "The dot product is $0.320 \\times 0.467 + (-0.287) \\times (-0.353)$.",
+     "highlight": [
+      "p2",
+      "p8"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "About 0.9965: almost the same direction, against a TF-IDF cosine of 0.",
+    "generic": "Not quite. Divide the dot product by both lengths.",
+    "byKey": {
+     "dot": "That is the dot product. These vectors are not of length 1, so divide by both lengths.",
+     "tfidf": "0 was the TF-IDF cosine. In LSA space the two point almost the same way."
+    }
+   },
+   "explain": {
+    "text": "The dot product is 0.2508 and the lengths are 0.4298 and 0.5854, so the cosine is about 0.9965. LSA ranks note 3 among the top four for 'bond yields'.",
+    "canvas": {
+     "highlight": [
+      "p2",
+      "p8"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Cutting a document into chunks",
+   "prose": "A long report is cut into **chunks**, short windows of words, and each chunk is indexed alone. A window of 6 words that starts every 4 words overlaps its neighbour by 2. The last window may be short.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "sales",
+      "held",
+      "up",
+      "but",
+      "the",
+      "going",
+      "concern",
+      "doubt",
+      "from",
+      "auditors",
+      "hit",
+      "the",
+      "shares",
+      "hard",
+      "this",
+      "week"
+     ],
+     "wrap": 8
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         5
+        ],
+        "label": "chunk 1"
+       },
+       {
+        "range": [
+         4,
+         9
+        ],
+        "label": "chunk 2"
+       }
+      ]
+     }
+    }
+   },
+   "question": "How many chunks does this 16-word passage give with size 6 and overlap 2?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "no-overlap",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "per-word",
+      "value": 11,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Windows start at word 0, 4, 8, ..."
+    },
+    {
+     "rung": "point",
+     "text": "Stop once a window reaches the last word, word 15.",
+     "highlight": [
+      "c12"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Starts at words 0, 4, 8 and 12; the fourth window, 'shares hard this week', reaches the end. Four chunks.",
+    "generic": "Not quite. Step the start by $6 - 2 = 4$ words.",
+    "byKey": {
+     "no-overlap": "Three is the count with no overlap, stepping by 6. With overlap 2 the step is 4.",
+     "per-word": "That starts a window at every word. The step is size minus overlap, 4."
+    }
+   },
+   "explain": {
+    "text": "The step is size minus overlap, $6 - 2 = 4$, so windows start at 0, 4, 8 and 12. The window at 12 holds the last four words.",
+    "canvas": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         5
+        ],
+        "label": "1"
+       },
+       {
+        "range": [
+         4,
+         9
+        ],
+        "label": "2"
+       },
+       {
+        "range": [
+         8,
+         13
+        ],
+        "label": "3"
+       },
+       {
+        "range": [
+         12,
+         15
+        ],
+        "label": "4"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A split answer",
+   "prose": "A credit analyst asks about **going concern doubt**. With no overlap, the 6-word windows are 'sales held up but the going', 'concern doubt from auditors hit the' and 'shares hard this week'.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "sales",
+      "held",
+      "up",
+      "but",
+      "the",
+      "going",
+      "concern",
+      "doubt",
+      "from",
+      "auditors",
+      "hit",
+      "the",
+      "shares",
+      "hard",
+      "this",
+      "week"
+     ],
+     "wrap": 8
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         5
+        ],
+        "label": "chunk 1"
+       },
+       {
+        "range": [
+         6,
+         11
+        ],
+        "label": "chunk 2"
+       },
+       {
+        "range": [
+         12,
+         15
+        ],
+        "label": "chunk 3"
+       }
+      ]
+     }
+    }
+   },
+   "question": "Which way of cutting keeps the phrase 'going concern doubt' whole in one chunk?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ov2",
+      "text": "Size 6 with overlap 2",
+      "correct": true
+     },
+     {
+      "id": "ov0",
+      "text": "Size 6 with no overlap",
+      "why": "The phrase straddles the boundary after word 5: 'going' ends chunk 1, 'concern doubt' opens chunk 2."
+     },
+     {
+      "id": "size3",
+      "text": "Size 3 with no overlap",
+      "why": "Windows of 3 start at 0, 3, 6: 'the going concern' and 'doubt from auditors' split it again."
+     },
+     {
+      "id": "whole",
+      "text": "Any size: chunks never split phrases",
+      "why": "A fixed window ignores sentences and phrases; it can cut anywhere."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The phrase is words 5 to 7."
+    },
+    {
+     "rung": "point",
+     "text": "Which window covers words 5, 6 and 7?",
+     "highlight": [
+      "c5",
+      "c6",
+      "c7"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "With overlap 2, chunk 2 starts at word 4: 'the going concern doubt from auditors' holds the whole phrase.",
+    "generic": "Not quite. Find a window that covers words 5 to 7."
+   },
+   "explain": {
+    "text": "An answer that falls across a boundary is split between two chunks and matches neither well. Overlap gives every boundary a second window that straddles it.",
+    "canvas": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         4,
+         9
+        ],
+        "label": "chunk 2"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Too long a window",
+   "prose": "Take plain word counts with no IDF, to keep the sums small. The query 'going concern doubt' has three words, each once. Chunk 2, 'the going concern doubt from auditors', has six different words, and its cosine with the query is $3/\\sqrt{3 \\times 6} = 0.7071$.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "sales",
+      "held",
+      "up",
+      "but",
+      "the",
+      "going",
+      "concern",
+      "doubt",
+      "from",
+      "auditors",
+      "hit",
+      "the",
+      "shares",
+      "hard",
+      "this",
+      "week"
+     ],
+     "wrap": 8
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         15
+        ],
+        "label": "whole passage"
+       }
+      ]
+     }
+    }
+   },
+   "question": "What is the cosine of the query with the whole 16-word passage, in which 'the' appears twice? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4082,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "no-repeat",
+      "value": 0.433,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "chunk",
+      "value": 0.7071,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The passage's squared length is 14 words counted once plus $2^2$ for 'the'."
+    },
+    {
+     "rung": "point",
+     "text": "That is 18; the dot product with the query is still 3."
+    },
+    {
+     "rung": "step",
+     "text": "$3/\\sqrt{3 \\times 18}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$3/\\sqrt{54} = 0.4082$, against 0.7071 for the chunk.",
+    "generic": "Not quite. Keep the dot product at 3 and use the passage's length.",
+    "byKey": {
+     "no-repeat": "You gave 'the' a count of 1. It appears twice, so it adds 4 to the squared length.",
+     "chunk": "That is the chunk's cosine. The whole passage is longer."
+    }
+   },
+   "explain": {
+    "text": "The same three matches sit inside 16 words, so the passage scores $3/\\sqrt{54} = 0.4082$. Every extra word dilutes the match; a 50-page report as one vector dilutes it to almost nothing."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "One vector for the whole report",
+   "prose": "A colleague indexes each 50-page broker report as one vector, so the search can say which report to read. One report covers a covenant breach in two sentences on page 37.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "sales",
+      "held",
+      "up",
+      "but",
+      "the",
+      "going",
+      "concern",
+      "doubt",
+      "from",
+      "auditors",
+      "hit",
+      "the",
+      "shares",
+      "hard",
+      "this",
+      "week"
+     ],
+     "wrap": 8
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         15
+        ],
+        "label": "one vector"
+       }
+      ]
+     }
+    }
+   },
+   "question": "What happens when an analyst searches for that covenant breach?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "buried",
+      "text": "The breach is a tiny share of the report's words, so it scores low",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: cosine divides out length, so long reports are safe",
+      "why": "Cosine divides out length, not dilution. The breach words become a tiny share of a long vector, so the match itself shrinks."
+     },
+     {
+      "id": "finds",
+      "text": "The report ranks first because it contains every word",
+      "why": "Containing the words is not enough: their weight is spread over thousands of others."
+     },
+     {
+      "id": "passage",
+      "text": "The search returns page 37",
+      "why": "One vector per report can only return the whole report; it cannot point to a passage."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Recall the 16-word passage against its 6-word chunk."
+    },
+    {
+     "rung": "point",
+     "text": "Fifty pages is thousands of words."
+    }
+   ],
+   "feedback": {
+    "correct": "The breach is drowned by the rest of the report, and even a hit returns all 50 pages.",
+    "generic": "Not quite. What did the whole passage do to the cosine?",
+    "byKey": {
+     "fine": "You trusted the length step. It stops long notes winning by size, but it cannot stop two sentences being swamped by fifty pages."
+    }
+   },
+   "explain": {
+    "text": "Two relevant sentences in fifty pages are a sliver of the vector, so the cosine is tiny. Chunks of a few hundred words, with overlap, let the passage itself be found and handed to a language model."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "Search over embeddings",
+   "prose": "What you did, for a TF-IDF matrix $\\mathbf{X}$ (notes by words) and its SVD $\\mathbf{X} = \\mathbf{U}\\mathbf{\\Sigma}\\mathbf{V}^\\top$:\n\n$$\\mathbf{D} = \\mathbf{X}\\mathbf{V}_k = \\mathbf{U}_k\\mathbf{\\Sigma}_k, \\qquad \\mathbf{q}_k = \\mathbf{q}\\mathbf{V}_k,$$\n\nthen rank notes by the cosine of $\\mathbf{q}_k$ with each row of $\\mathbf{D}$. A real system uses a trained embedding model instead of an SVD; the search step is the same.",
+   "question": "A new query arrives. How is it placed in the LSA space?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fold",
+      "text": "Multiply its TF-IDF vector by $\\mathbf{V}_k$",
+      "correct": true
+     },
+     {
+      "id": "refit",
+      "text": "Add it to the notes and redo the SVD",
+      "why": "That moves every note's coordinates for each query, and costs a full SVD per search."
+     },
+     {
+      "id": "raw",
+      "text": "Use its TF-IDF vector as it is",
+      "why": "It has one entry per word; the note vectors have only $k$ entries."
+     },
+     {
+      "id": "avg",
+      "text": "Average the vectors of the notes it shares words with",
+      "why": "That borrows the notes' positions, and a query with no shared word would have none."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The notes themselves are $\\mathbf{X}\\mathbf{V}_k$."
+    }
+   ],
+   "feedback": {
+    "correct": "The query goes through the same map as the notes: $\\mathbf{q}\\mathbf{V}_k$.",
+    "generic": "Not quite. How were the notes mapped?"
+   },
+   "explain": {
+    "text": "Notes are $\\mathbf{X}\\mathbf{V}_k$, so a query is $\\mathbf{q}\\mathbf{V}_k$: one matrix product, no refit. That is how 'bond yields' landed at Q."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "lsa_embed in code",
+   "prose": "An SVD's directions come with an arbitrary sign: $\\mathbf{u}$ and $-\\mathbf{u}$ are equally valid, and libraries differ. Fix it so results repeat: flip each direction so the entry of largest size in its column of $\\mathbf{U}_k$ is positive. `fit_tfidf` is supplied.",
+   "question": "Write `lsa_embed(X, k)` returning $(\\mathbf{D}, \\mathbf{V}_k)$.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef lsa_embed(X, k):\n    # returns (D, V): D = U_k S_k, one row per note; V = V_k, words by k\n    # flip each component so that the entry of largest size in\n    # each column of U_k is positive\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef lsa_embed(X, k):\n    X = np.asarray(X, dtype=float)\n    U, s, Vt = np.linalg.svd(X, full_matrices=False)\n    U, s, V = U[:, :k], s[:k], Vt[:k].T\n    signs = np.sign(U[np.argmax(np.abs(U), axis=0), np.arange(k)])\n    signs[signs == 0] = 1\n    return U * s * signs, V * signs\n",
+    "prelude": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed, STOP_WORDS\n",
+    "examples": [
+     {
+      "setup": "M8 = ['gilt yields rise as rates climb', 'rates and inflation push yields higher', 'inflation lifts rates again', 'yields fall as inflation cools', 'lenders cut credit lines to the firm', 'the firm seeks new funding from lenders', 'funding gap widens as lenders pull credit', 'higher rates squeeze funding for the firm']\nX8 = fit_tfidf(M8, STOP_WORDS)['X']",
+      "call": "lsa_embed(X8, 2)[0].shape",
+      "expect": "[8, 2]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "M8 = ['gilt yields rise as rates climb', 'rates and inflation push yields higher', 'inflation lifts rates again', 'yields fall as inflation cools', 'lenders cut credit lines to the firm', 'the firm seeks new funding from lenders', 'funding gap widens as lenders pull credit', 'higher rates squeeze funding for the firm']\nX8 = fit_tfidf(M8, STOP_WORDS)['X']",
+      "call": "np.round(lsa_embed(X8, 2)[0], 6).tolist()",
+      "expect": "[[0.417174, -0.319229], [0.691673, -0.432064], [0.466941, -0.35264], [0.42046, -0.414495], [0.356318, 0.581533], [0.433857, 0.591677], [0.335401, 0.557307], [0.652058, 0.184225]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 2e-06
+      }
+     },
+     {
+      "call": "lsa_embed(X8, 2)[1].shape",
+      "expect": "[24, 2]"
+     },
+     {
+      "call": "np.round(lsa_embed(X8, 2)[0][:, 0] / np.linalg.norm(lsa_embed(X8, 2)[0][:, 0]), 6).tolist()",
+      "expect": "[0.302639, 0.501775, 0.338742, 0.305023, 0.258491, 0.314742, 0.243317, 0.473036]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 2e-06
+      }
+     },
+     {
+      "call": "bool(np.allclose(X8 @ lsa_embed(X8, 3)[1], lsa_embed(X8, 3)[0]))",
+      "expect": "True"
+     },
+     {
+      "call": "np.round(lsa_embed(-X8, 2)[0], 6).tolist()",
+      "expect": "[[0.417174, -0.319229], [0.691673, -0.432064], [0.466941, -0.35264], [0.42046, -0.414495], [0.356318, 0.581533], [0.433857, 0.591677], [0.335401, 0.557307], [0.652058, 0.184225]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 2e-06
+      }
+     },
+     {
+      "setup": "import json\nN = [n['text'] for n in json.load(open('llm-apps-notes.json'))['notes']]\nXN = fit_tfidf(N)['X']",
+      "call": "np.round(lsa_embed(XN, 8)[0][:3], 6).tolist()",
+      "expect": "[[0.3278, -0.116687, -0.380309, -0.335579, -0.105901, -0.1531, 0.004034, 0.095339], [0.340113, 0.530166, 0.158642, -0.26028, -0.069055, -0.062664, 0.202362, -0.042191], [0.321269, -0.122746, -0.396583, -0.338777, -0.159737, -0.18348, -0.030067, -0.067605]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 2e-06
+      }
+     }
+    ],
+    "how": "Submit runs 6 hidden tests; arrays are rounded to 6 places and compared within absolute $2 \\times 10^{-6}$. They cover the eight notes at $k = 2$, the shape of $\\mathbf{V}_k$ and the first direction scaled to length 1. The rest check $\\mathbf{D} = \\mathbf{X}\\mathbf{V}_k$, the matrix with every sign flipped, and three notes of the 180-note file at $k = 8$.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef lsa_embed(X, k):\n    X = np.asarray(X, dtype=float)\n    U, s, Vt = np.linalg.svd(X, full_matrices=False)\n    U, s, V = U[:, :k], s[:k], Vt[:k].T\n    signs = np.sign(U[np.argmax(np.abs(U), axis=0), np.arange(k)])\n    signs[signs == 0] = 1\n    return U * signs, V * signs\n",
+      "test": 1,
+      "symptom": "Leaves out the singular values."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef lsa_embed(X, k):\n    X = np.asarray(X, dtype=float)\n    U, s, Vt = np.linalg.svd(X, full_matrices=False)\n    U, s, V = U[:, :k], s[:k], Vt[:, :k]\n    signs = np.sign(U[np.argmax(np.abs(U), axis=0), np.arange(k)])\n    signs[signs == 0] = 1\n    return U * s * signs, V * signs\n",
+      "test": 2,
+      "symptom": "Takes columns of Vt instead of rows."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef lsa_embed(X, k):\n    X = np.asarray(X, dtype=float)\n    U, s, Vt = np.linalg.svd(X, full_matrices=False)\n    U, s, V = U[:, :k], s[:k], Vt[:k].T\n    signs = np.sign(V[np.argmax(np.abs(V), axis=0), np.arange(k)])\n    signs[signs == 0] = 1\n    return U * s * signs, V * signs\n",
+      "test": 5,
+      "symptom": "Fixes the sign from V instead of U."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.linalg.svd(X, full_matrices=False)` returns `U, s, Vt`."
+    },
+    {
+     "rung": "point",
+     "text": "Find each column's sign with `np.argmax(np.abs(U), axis=0)`, then multiply the column of $\\mathbf{U}_k$ and of $\\mathbf{V}_k$ by it."
+    }
+   ],
+   "feedback": {
+    "correct": "Your embedding matches on every test, signs included.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Note rows are $\\mathbf{U}_k\\mathbf{\\Sigma}_k$: multiply each column of $\\mathbf{U}_k$ by its singular value.",
+     "test-2": "$\\mathbf{V}_k$ is words by $k$: take the first $k$ rows of `Vt` and transpose them.",
+     "test-5": "The sign rule reads $\\mathbf{U}_k$: make the largest entry by size in each column of $\\mathbf{U}_k$ positive."
+    }
+   },
+   "explain": {
+    "text": "Flipping a direction in both $\\mathbf{U}_k$ and $\\mathbf{V}_k$ leaves $\\mathbf{X}\\mathbf{V}_k = \\mathbf{U}_k\\mathbf{\\Sigma}_k$ true, so the rule changes nothing but the sign, and the same matrix gives the same vectors on every machine."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "chunk and search in code",
+   "prose": "Write `chunk(text, size, overlap)` on words split at spaces, with $0 \\le$ overlap $<$ size; an empty text gives no chunks. Then `search(query_vec, doc_vecs, k)` by cosine, which works for TF-IDF rows and LSA rows alike.",
+   "question": "Write `chunk` and `search`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef chunk(text, size, overlap):\n    # windows of `size` words, each starting size - overlap words\n    # after the last; stop once a window reaches the last word\n    ...\n\n\ndef search(query_vec, doc_vecs, k):\n    # the k rows of doc_vecs with the highest cosine with query_vec,\n    # ties to the lower index; [] for a zero query\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef chunk(text, size, overlap):\n    words = text.split()\n    if not words:\n        return []\n    out, start = [], 0\n    while True:\n        out.append(' '.join(words[start:start + size]))\n        if start + size >= len(words):\n            break\n        start += size - overlap\n    return out\n\n\ndef search(query_vec, doc_vecs, k):\n    q = np.asarray(query_vec, dtype=float)\n    D = np.asarray(doc_vecs, dtype=float)\n    nq = np.linalg.norm(q)\n    if nq == 0:\n        return []\n    nd = np.linalg.norm(D, axis=1)\n    s = np.where(nd > 0, D @ q / (np.where(nd > 0, nd, 1.0) * nq), 0.0)\n    return sorted(range(len(D)), key=lambda i: (-s[i], i))[:k]\n",
+    "prelude": "import numpy as np\n",
+    "examples": [
+     {
+      "call": "chunk('a b c d e', 3, 1)",
+      "expect": "['a b c', 'c d e']"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "P = 'sales held up but the going concern doubt from auditors hit the shares hard this week'",
+      "call": "chunk(P, 6, 2)",
+      "expect": "['sales held up but the going', 'the going concern doubt from auditors', 'from auditors hit the shares hard', 'shares hard this week']"
+     },
+     {
+      "call": "chunk(P, 6, 0)",
+      "expect": "['sales held up but the going', 'concern doubt from auditors hit the', 'shares hard this week']"
+     },
+     {
+      "call": "chunk('one two three', 5, 1)",
+      "expect": "['one two three']"
+     },
+     {
+      "call": "chunk('a b c d e f', 3, 1)",
+      "expect": "['a b c', 'c d e', 'e f']"
+     },
+     {
+      "call": "chunk('', 4, 1)",
+      "expect": "[]"
+     },
+     {
+      "setup": "D = [[0.417, -0.319], [0.692, -0.432], [0.467, -0.353], [0.42, -0.414], [0.356, 0.582], [0.434, 0.592], [0.335, 0.557], [0.652, 0.184]]",
+      "call": "search([0.32, -0.287], D, 3)",
+      "expect": "[3, 0, 2]"
+     },
+     {
+      "call": "search([0.32, -0.287], D, 8)",
+      "expect": "[3, 0, 2, 1, 7, 5, 4, 6]"
+     },
+     {
+      "call": "search([0, 0], D, 3)",
+      "expect": "[]"
+     },
+     {
+      "call": "search([1, 0], [[2, 0], [1, 0], [0, 1]], 2)",
+      "expect": "[0, 1]"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests, each an exact list. Five chunk: the 16-word passage with and without overlap, a text shorter than one window, a short last window and an empty text. Four search: the eight notes in LSA space at $k = 3$ and $k = 8$, a zero query, and a tie between a long and a short row.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef chunk(text, size, overlap):\n    words = text.split()\n    if not words:\n        return []\n    out, start = [], 0\n    while True:\n        out.append(' '.join(words[start:start + size]))\n        if start + size >= len(words):\n            break\n        start += size\n    return out\n\n\ndef search(query_vec, doc_vecs, k):\n    q = np.asarray(query_vec, dtype=float)\n    D = np.asarray(doc_vecs, dtype=float)\n    nq = np.linalg.norm(q)\n    if nq == 0:\n        return []\n    nd = np.linalg.norm(D, axis=1)\n    s = np.where(nd > 0, D @ q / (np.where(nd > 0, nd, 1.0) * nq), 0.0)\n    return sorted(range(len(D)), key=lambda i: (-s[i], i))[:k]\n",
+      "test": 1,
+      "symptom": "Steps by the full size, ignoring the overlap."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef chunk(text, size, overlap):\n    words = text.split()\n    if not words:\n        return []\n    out, start = [], 0\n    while True:\n        out.append(' '.join(words[start:start + size]))\n        if start + size >= len(words) - 1:\n            break\n        start += size - overlap\n    return out\n\n\ndef search(query_vec, doc_vecs, k):\n    q = np.asarray(query_vec, dtype=float)\n    D = np.asarray(doc_vecs, dtype=float)\n    nq = np.linalg.norm(q)\n    if nq == 0:\n        return []\n    nd = np.linalg.norm(D, axis=1)\n    s = np.where(nd > 0, D @ q / (np.where(nd > 0, nd, 1.0) * nq), 0.0)\n    return sorted(range(len(D)), key=lambda i: (-s[i], i))[:k]\n",
+      "test": 4,
+      "symptom": "Stops one word early, so a short last window is lost."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef chunk(text, size, overlap):\n    words = text.split()\n    if not words:\n        return []\n    out, start = [], 0\n    while True:\n        out.append(' '.join(words[start:start + size]))\n        if start + size >= len(words):\n            break\n        start += size - overlap\n    return out\n\n\ndef search(query_vec, doc_vecs, k):\n    q = np.asarray(query_vec, dtype=float)\n    D = np.asarray(doc_vecs, dtype=float)\n    nq = np.linalg.norm(q)\n    if nq == 0:\n        return []\n    nd = np.linalg.norm(D, axis=1)\n    s = D @ q\n    return sorted(range(len(D)), key=lambda i: (-s[i], i))[:k]\n",
+      "test": 6,
+      "symptom": "Ranks by the dot product, not the cosine."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef chunk(text, size, overlap):\n    words = text.split()\n    if not words:\n        return []\n    out, start = [], 0\n    while True:\n        out.append(' '.join(words[start:start + size]))\n        if start + size >= len(words):\n            break\n        start += size - overlap\n    return out\n\n\ndef search(query_vec, doc_vecs, k):\n    q = np.asarray(query_vec, dtype=float)\n    D = np.asarray(doc_vecs, dtype=float)\n    nq = np.linalg.norm(q)\n    nd = np.linalg.norm(D, axis=1)\n    s = np.where(nd > 0, D @ q / (np.where(nd > 0, nd, 1.0) * nq), 0.0)\n    return sorted(range(len(D)), key=lambda i: (-s[i], i))[:k]\n",
+      "test": 8,
+      "symptom": "Ranks rows for a zero query."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start at 0 and step by `size - overlap` until a window reaches the end."
+    },
+    {
+     "rung": "point",
+     "text": "For `search`, divide each dot product by both lengths and sort by `(-score, index)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your chunks and search match on every test.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "With overlap 2 the second window starts at word 4, not 6: step by size minus overlap.",
+     "test-4": "Stop only once a window reaches the last word: 'f' is missing from your chunks.",
+     "test-6": "Ranking by the dot product lets long rows win: divide by both lengths. Rows $(2, 0)$ and $(1, 0)$ tie at cosine 1.",
+     "test-8": "A zero query has no direction: return an empty list."
+    }
+   },
+   "explain": {
+    "text": "The loop stops as soon as a window covers the last word, so no word is lost and no empty chunk is made. `search` is the l2 ranking with the vectors passed in, so the same code serves TF-IDF and LSA."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Funding risk in other words",
+   "prose": "A risk manager wants every note on Corran's funding in the desk's 180-note file. Three notes cover it, using 'liquidity', 'lenders' and 'covenant' more than 'refinancing' or 'debt'. The search is **corran refinancing debt**, by TF-IDF and by LSA with $k = 8$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Rank",
+      "TF-IDF",
+      "LSA, k = 8"
+     ],
+     "rows": [
+      [
+       "1",
+       "note 49 (funding)",
+       "?"
+      ],
+      [
+       "2",
+       "note 68",
+       "?"
+      ],
+      [
+       "3",
+       "note 85",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many of the three Corran funding notes does LSA put in its top 3?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "tfidf",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Think about which words the funding notes share with each other."
+    },
+    {
+     "rung": "point",
+     "text": "LSA groups 'liquidity', 'lenders' and 'covenant' with 'refinancing' and 'debt'."
+    }
+   ],
+   "feedback": {
+    "correct": "All 3: notes 49, 72 and 54. TF-IDF found 1.",
+    "generic": "Not quite. LSA finds notes through the words they share with other funding notes.",
+    "byKey": {
+     "tfidf": "1 is what TF-IDF finds. LSA matches the funding words that occur with 'refinancing' and 'debt'."
+    }
+   },
+   "explain": {
+    "text": "LSA's top 3 are notes 49, 72 and 54, all Corran funding notes; TF-IDF's are notes 49, 68 and 85. Note 54 never says 'refinancing' or 'debt', but its words occur with them elsewhere.",
+    "canvas": {
+     "values": {
+      "r0c2": "note 49 (funding)",
+      "r1c2": "note 72 (funding)",
+      "r2c2": "note 54 (funding)"
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Word overlap misses synonyms; embeddings place related texts near each other, so a note can be found without sharing a word.",
+   "LSA builds embeddings with no downloaded model: keep $k$ SVD directions of the TF-IDF matrix and map notes and queries by $\\mathbf{V}_k$.",
+   "Long documents are cut into overlapping chunks, so a passage is found and returned rather than drowned in its report."
+  ],
+  "formula": {
+   "name": "LSA embedding",
+   "tex": "\\mathbf{D} = \\mathbf{X}\\mathbf{V}_k = \\mathbf{U}_k\\mathbf{\\Sigma}_k, \\quad \\mathbf{q}_k = \\mathbf{q}\\mathbf{V}_k",
+   "note": "Fix each direction's sign so results repeat."
+  },
+  "trap": "Indexing a whole report as one vector: the relevant passage is a sliver of it."
+ },
+ "quiz": [
+  {
+   "id": "q-chunks-20",
+   "difficulty": 2,
+   "prose": "A 20-word passage is cut into windows of 8 words with overlap 3.",
+   "question": "How many chunks does it give?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "no-overlap",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Starts at 0, 5 and 10; the window at 10 reaches word 17, so a fourth starts at 15 and reaches the end.",
+    "generic": "Not quite. Step by $8 - 3 = 5$ and stop once a window reaches word 19."
+   },
+   "explain": {
+    "text": "The step is 5: windows start at 0, 5, 10 and 15, and the one at 15 holds the last five words: 4 chunks."
+   }
+  },
+  {
+   "id": "q-overlap-why",
+   "difficulty": 2,
+   "prose": "A retriever cuts reports into chunks of 200 words.",
+   "question": "Why give the chunks an overlap?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "boundary",
+      "text": "So that a passage cut by a boundary is whole in some chunk",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "To have more chunks, which raises recall",
+      "why": "More chunks are a cost, not the aim; the point is the boundaries."
+     },
+     {
+      "id": "idf",
+      "text": "To make the IDF more accurate",
+      "why": "Repeating words in two chunks slightly distorts df; overlap is not for IDF."
+     },
+     {
+      "id": "short",
+      "text": "To keep each chunk short",
+      "why": "Overlap makes the windows step less far; it does not shorten them."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Every boundary gets a second window across it.",
+    "generic": "Not quite. What goes wrong at a boundary?"
+   },
+   "explain": {
+    "text": "Without overlap, an answer that straddles a boundary is split and matches neither chunk well."
+   }
+  },
+  {
+   "id": "q-lsa-dims",
+   "difficulty": 2,
+   "prose": "A TF-IDF matrix has 500 notes and 3,000 words. LSA keeps $k = 50$ directions.",
+   "question": "How many numbers describe each note after LSA?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 50,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "words",
+      "value": 3000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "notes",
+      "value": 500,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "50: one coordinate per kept direction.",
+    "generic": "Not quite. Each note becomes a row of $\\mathbf{U}_k\\mathbf{\\Sigma}_k$.",
+    "byKey": {
+     "words": "3,000 is the TF-IDF width before LSA.",
+     "notes": "500 is the number of notes, the rows."
+    }
+   },
+   "explain": {
+    "text": "Each note's row of $\\mathbf{D} = \\mathbf{U}_k\\mathbf{\\Sigma}_k$ has $k = 50$ entries, down from 3,000."
+   }
+  },
+  {
+   "id": "q-synonym",
+   "difficulty": 3,
+   "prose": "A note says 'gilt coupons climb'. The query is 'bond yields'. In the collection, 'gilt' and 'yields' often occur in the same notes.",
+   "question": "Which search can rank the note highly?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "lsa",
+      "text": "LSA, because co-occurring words share directions",
+      "correct": true
+     },
+     {
+      "id": "tfidf",
+      "text": "TF-IDF, because 'gilt' has a high IDF",
+      "why": "IDF weighs shared words; this note shares none with the query."
+     },
+     {
+      "id": "both",
+      "text": "Neither: the note shares no word with the query",
+      "why": "LSA does not need a shared word, only words that occur together elsewhere."
+     },
+     {
+      "id": "stop",
+      "text": "TF-IDF with stop words removed",
+      "why": "Removing stop words cannot create a shared word."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "LSA links words through the notes they share.",
+    "generic": "Not quite. Which method uses co-occurrence?"
+   },
+   "explain": {
+    "text": "TF-IDF scores 0 with no shared word; LSA places 'gilt' near 'yields' because they occur together."
+   }
+  }
+ ]
+}

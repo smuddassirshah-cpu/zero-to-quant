@@ -1,0 +1,1583 @@
+{
+ "id": "l4-did-we-find-it",
+ "course": "llm-apps",
+ "title": "Did we find it?",
+ "minutes": 15,
+ "objectives": [
+  "Code recall at k and mean reciprocal rank, and compare two retrievers on labelled queries."
+ ],
+ "skills": [
+  "llm-retrieve"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Did the search find it?",
+   "prose": "Back to the four notes and **inflation and rates**, stop words kept. The search ranked them 4, 1, 2, 3. An analyst marks notes 1 and 4 as the ones that answer the question: the **relevant** notes.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "note 4",
+      "note 1",
+      "note 2",
+      "note 3"
+     ],
+     "indexFrom": 1
+    },
+    "state": {
+     "done": [
+      1,
+      2
+     ],
+     "highlight": {
+      "range": [
+       1,
+       1
+      ],
+      "label": "top 1"
+     }
+    }
+   },
+   "question": "What share of the relevant notes is in the top 1?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "precision",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "count",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many relevant notes are there, and how many are in the top 1?"
+    },
+    {
+     "rung": "point",
+     "text": "Note 4 is relevant and is first; note 1 is second.",
+     "highlight": [
+      "c1"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "One of the two relevant notes is in the top 1: 0.5.",
+    "generic": "Not quite. Divide the relevant notes found by the relevant notes there are.",
+    "byKey": {
+     "precision": "1 is the share of the top 1 that is relevant. The question asks the share of relevant notes found.",
+     "count": "There are 2 relevant notes; the share found is 1 of them."
+    }
+   },
+   "explain": {
+    "text": "Note 4 is relevant and first, note 1 is second, so the top 1 holds half the relevant notes: 0.5. In the top 2 it holds both.",
+    "canvas": {
+     "highlight": {
+      "range": [
+       1,
+       2
+      ],
+      "label": "top 2"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "title": "Recall at k",
+   "prose": "The 180-note file comes with 20 **labelled queries**: a question and the notes that answer it. For **halloran margins profit** the three relevant notes are drawn bold. Slide $k$ to see how many of them the top $k$ holds.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "note 76",
+      "note 152",
+      "note 178",
+      "note 130",
+      "note 90",
+      "note 40"
+     ],
+     "indexFrom": 1
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       1,
+       1
+      ],
+      "label": "top 1"
+     },
+     "caption": "Recall at 1: 1 of 3 relevant notes.",
+     "done": [
+      1,
+      2,
+      5
+     ]
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "label": "k",
+      "frames": [
+       {
+        "highlight": {
+         "range": [
+          1,
+          1
+         ],
+         "label": "top 1"
+        },
+        "caption": "Recall at 1: 1 of 3 relevant notes."
+       },
+       {
+        "highlight": {
+         "range": [
+          1,
+          2
+         ],
+         "label": "top 2"
+        },
+        "caption": "Recall at 2: 2 of 3 relevant notes."
+       },
+       {
+        "highlight": {
+         "range": [
+          1,
+          3
+         ],
+         "label": "top 3"
+        },
+        "caption": "Recall at 3: 2 of 3 relevant notes."
+       },
+       {
+        "highlight": {
+         "range": [
+          1,
+          4
+         ],
+         "label": "top 4"
+        },
+        "caption": "Recall at 4: 2 of 3 relevant notes."
+       },
+       {
+        "highlight": {
+         "range": [
+          1,
+          5
+         ],
+         "label": "top 5"
+        },
+        "caption": "Recall at 5: 3 of 3 relevant notes."
+       },
+       {
+        "highlight": {
+         "range": [
+          1,
+          6
+         ],
+         "label": "top 6"
+        },
+        "caption": "Recall at 6: 3 of 3 relevant notes."
+       }
+      ],
+      "frameLabels": [
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6"
+      ]
+     }
+    ]
+   },
+   "question": "What is the smallest $k$ at which the top $k$ holds all three relevant notes?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "first",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide until the caption says 3 of 3."
+    },
+    {
+     "rung": "point",
+     "text": "The third relevant note is at rank 5."
+    }
+   ],
+   "feedback": {
+    "correct": "At $k = 5$: the relevant notes are at ranks 1, 2 and 5.",
+    "generic": "Not quite. Find the rank of the lowest bold note.",
+    "byKey": {
+     "first": "At $k = 2$ the top 2 holds two of the three. The third is further down."
+    }
+   },
+   "explain": {
+    "text": "**Recall at $k$** is the share of relevant notes in the top $k$: 1 of 3, then 2 of 3 from $k = 2$, and 3 of 3 from $k = 5$. It never falls as $k$ grows.",
+    "canvas": {
+     "highlight": {
+      "range": [
+       1,
+       5
+      ],
+      "label": "top 5"
+     },
+     "caption": "Recall at 5: 3 of 3 relevant notes."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Precision at k",
+   "prose": "Recall asks how much of what we need was found. **Precision at $k$** asks the other way round: what share of the top $k$ is relevant. This is `stat-learning`'s precision and recall, restricted to the top $k$.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "note 76",
+      "note 152",
+      "note 178",
+      "note 130",
+      "note 90",
+      "note 40"
+     ],
+     "indexFrom": 1
+    },
+    "state": {
+     "done": [
+      1,
+      2,
+      5
+     ],
+     "highlight": {
+      "range": [
+       1,
+       3
+      ],
+      "label": "top 3"
+     }
+    }
+   },
+   "question": "What is precision at 3 for the same query? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6667,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "over-six",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "count",
+      "value": 2,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many of the top 3 are bold?"
+    },
+    {
+     "rung": "point",
+     "text": "Two of the three.",
+     "highlight": [
+      "c1",
+      "c2",
+      "c3"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "2 of the top 3 are relevant: 0.6667.",
+    "generic": "Not quite. Count the relevant notes among the first three and divide by 3.",
+    "byKey": {
+     "over-six": "You divided by the 6 notes shown. Precision at 3 divides by 3.",
+     "count": "2 is the count; precision is a share of the 3."
+    }
+   },
+   "explain": {
+    "text": "Here precision at 3 and recall at 3 are both $2/3 = 0.6667$, because there happen to be 3 relevant notes. With 2 relevant notes they would differ."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Mean reciprocal rank",
+   "prose": "Sometimes one good passage is enough. The **reciprocal rank** of a query is $1/r$, where $r$ is the rank of the first relevant note; the **mean reciprocal rank** (MRR) averages it over queries. Three queries find their first relevant note at ranks 1, 3 and 2.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Query",
+      "First relevant at rank",
+      "1/r"
+     ],
+     "rows": [
+      [
+       "A",
+       "1",
+       "1"
+      ],
+      [
+       "B",
+       "3",
+       "?"
+      ],
+      [
+       "C",
+       "2",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the MRR? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6111,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "mean-rank",
+      "value": 2,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "inv-mean",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Take $1/r$ for each query first."
+    },
+    {
+     "rung": "point",
+     "text": "$1$, $1/3$ and $1/2$.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Average them."
+    }
+   ],
+   "feedback": {
+    "correct": "$(1 + 1/3 + 1/2)/3 = 0.6111$.",
+    "generic": "Not quite. Average the reciprocals, not the ranks.",
+    "byKey": {
+     "mean-rank": "2 is the mean rank. MRR averages $1/r$.",
+     "inv-mean": "That is 1 over the mean rank. Take each reciprocal first, then average."
+    }
+   },
+   "explain": {
+    "text": "$1 + 0.3333 + 0.5 = 1.8333$, and a third of that is 0.6111. A first hit at rank 1 counts three times as much as one at rank 3."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two retrievers, 20 queries",
+   "prose": "Now compare TF-IDF with LSA at $k = 8$ on all 20 labelled queries, by recall at 3. Each query gives a pair of scores, so we work with the **difference** per query, LSA minus TF-IDF. The differences add up to 4.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Query",
+      "TF-IDF",
+      "LSA",
+      "LSA − TF-IDF"
+     ],
+     "rows": [
+      [
+       "corran refinancing debt",
+       "1/3",
+       "1",
+       "2/3"
+      ],
+      [
+       "halloran margins profit",
+       "2/3",
+       "2/3",
+       "0"
+      ],
+      [
+       "garside revenue earnings",
+       "2/3",
+       "2/3",
+       "0"
+      ],
+      [
+       "ashcombe offer shareholders",
+       "1/3",
+       "1",
+       "2/3"
+      ],
+      [
+       "garside pipeline crude",
+       "2/3",
+       "2/3",
+       "0"
+      ],
+      [
+       "ashcombe settlement court",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "corran crude pipeline",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "brackley merger offer",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "ashcombe liquidity refinancing",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "fairholt regulator settlement",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "garside rates yields",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "ellery settlement fine",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "brackley crude pipeline",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "fairholt crude refining",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "brackley gilts inflation",
+       "1/3",
+       "1/3",
+       "0"
+      ],
+      [
+       "corran merger acquisition",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "dunmore guidance margins",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "halloran inflation yields",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "corran probe fine",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "ellery barrels oil",
+       "1",
+       "2/3",
+       "−1/3"
+      ]
+     ]
+    },
+    "state": {},
+    "maxHeight": 300
+   },
+   "question": "What is the mean difference in recall at 3? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "lsa-mean",
+      "value": 0.83,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "total",
+      "value": 4,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the sum of the differences by the number of queries."
+    },
+    {
+     "rung": "point",
+     "text": "$4/20$."
+    }
+   ],
+   "feedback": {
+    "correct": "$4/20 = 0.20$: LSA finds a fifth more of the relevant notes on average, 0.8333 against 0.6333.",
+    "generic": "Not quite. Average the last column.",
+    "byKey": {
+     "lsa-mean": "That is LSA's own mean recall. The question asks the mean of the differences.",
+     "total": "4 is the sum. Divide by the 20 queries."
+    }
+   },
+   "explain": {
+    "text": "Mean recall at 3 is 0.6333 for TF-IDF and 0.8333 for LSA, so the mean difference is 0.20. Pairing by query removes the variation between easy and hard queries."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Is the gain real?",
+   "prose": "The 20 differences have standard deviation 0.2513. As in `testing` level 2, the standard error of their mean is the standard deviation over $\\sqrt n$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Query",
+      "TF-IDF",
+      "LSA",
+      "LSA − TF-IDF"
+     ],
+     "rows": [
+      [
+       "corran refinancing debt",
+       "1/3",
+       "1",
+       "2/3"
+      ],
+      [
+       "halloran margins profit",
+       "2/3",
+       "2/3",
+       "0"
+      ],
+      [
+       "garside revenue earnings",
+       "2/3",
+       "2/3",
+       "0"
+      ],
+      [
+       "ashcombe offer shareholders",
+       "1/3",
+       "1",
+       "2/3"
+      ],
+      [
+       "garside pipeline crude",
+       "2/3",
+       "2/3",
+       "0"
+      ],
+      [
+       "ashcombe settlement court",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "corran crude pipeline",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "brackley merger offer",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "ashcombe liquidity refinancing",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "fairholt regulator settlement",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "garside rates yields",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "ellery settlement fine",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "brackley crude pipeline",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "fairholt crude refining",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "brackley gilts inflation",
+       "1/3",
+       "1/3",
+       "0"
+      ],
+      [
+       "corran merger acquisition",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "dunmore guidance margins",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "halloran inflation yields",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "corran probe fine",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "ellery barrels oil",
+       "1",
+       "2/3",
+       "−1/3"
+      ]
+     ]
+    },
+    "state": {},
+    "maxHeight": 300
+   },
+   "question": "What is the standard error of the mean difference? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0562,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.2513,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "over-n",
+      "value": 0.0126,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$n = 20$."
+    },
+    {
+     "rung": "point",
+     "text": "$0.2513 / \\sqrt{20}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.2513 / \\sqrt{20} = 0.0562$, so the gain of 0.20 is about 3.6 standard errors from 0.",
+    "generic": "Not quite. Divide the standard deviation by the square root of 20.",
+    "byKey": {
+     "sd": "That is the spread of single differences. The mean of 20 is less uncertain: divide by $\\sqrt{20}$.",
+     "over-n": "You divided by 20. The standard error divides by $\\sqrt{20}$."
+    }
+   },
+   "explain": {
+    "text": "$0.2513 / 4.4721 = 0.0562$. A mean gain of 0.20 is 3.6 standard errors above 0, so on these queries LSA's gain is unlikely to be noise."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Choosing k on the test queries",
+   "prose": "A colleague tries LSA with every $k$ from 4 to 16 on the same 20 labelled queries. $k = 13$ gives recall at 3 of 1.0, the best, and the colleague reports 1.0 as the tool's recall.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Query",
+      "TF-IDF",
+      "LSA",
+      "LSA − TF-IDF"
+     ],
+     "rows": [
+      [
+       "corran refinancing debt",
+       "1/3",
+       "1",
+       "2/3"
+      ],
+      [
+       "halloran margins profit",
+       "2/3",
+       "2/3",
+       "0"
+      ],
+      [
+       "garside revenue earnings",
+       "2/3",
+       "2/3",
+       "0"
+      ],
+      [
+       "ashcombe offer shareholders",
+       "1/3",
+       "1",
+       "2/3"
+      ],
+      [
+       "garside pipeline crude",
+       "2/3",
+       "2/3",
+       "0"
+      ],
+      [
+       "ashcombe settlement court",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "corran crude pipeline",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "brackley merger offer",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "ashcombe liquidity refinancing",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "fairholt regulator settlement",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "garside rates yields",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "ellery settlement fine",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "brackley crude pipeline",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "fairholt crude refining",
+       "2/3",
+       "1",
+       "1/3"
+      ],
+      [
+       "brackley gilts inflation",
+       "1/3",
+       "1/3",
+       "0"
+      ],
+      [
+       "corran merger acquisition",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "dunmore guidance margins",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "halloran inflation yields",
+       "1/3",
+       "2/3",
+       "1/3"
+      ],
+      [
+       "corran probe fine",
+       "1",
+       "1",
+       "0"
+      ],
+      [
+       "ellery barrels oil",
+       "1",
+       "2/3",
+       "−1/3"
+      ]
+     ]
+    },
+    "state": {},
+    "maxHeight": 300
+   },
+   "question": "What is wrong with reporting 1.0?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tuned",
+      "text": "$k$ was picked on these queries, so 1.0 overstates recall on new ones",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: 1.0 is what the queries gave",
+      "why": "The queries gave it to the best of 13 settings. Picking the winner on the data you report on inflates it, the `validation` level 3 rule."
+     },
+     {
+      "id": "k-high",
+      "text": "A larger $k$ is always better, so 16 should be reported",
+      "why": "Recall at 16 directions on these queries is 1.0 too; the issue is where $k$ was chosen, not its size."
+     },
+     {
+      "id": "too-few",
+      "text": "20 queries is too few to compute recall",
+      "why": "Recall can be computed on 20; the issue is that the same 20 chose $k$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where was $k$ chosen, and where was recall measured?"
+    },
+    {
+     "rung": "point",
+     "text": "Recall `validation` level 3: tuning and testing on the same data."
+    }
+   ],
+   "feedback": {
+    "correct": "The 1.0 belongs to queries that chose $k$; only labelled queries kept aside can measure the tool.",
+    "generic": "Not quite. Which data picked $k$?",
+    "byKey": {
+     "fine": "You reported the winner on the data that crowned it. Keep labelled queries aside for the final figure."
+    }
+   },
+   "explain": {
+    "text": "Choose $k$ on one set of labelled queries and report recall on another. On 20 fresh queries this planted corpus happens to give 1.0 at $k = 13$ as well, but only fresh queries could show that."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A query with no answer",
+   "prose": "Four labelled queries give recall at 3 of 1, 0.5, 0 and one with no relevant note at all: the right answer is that the file has nothing. Recall divides by the number of relevant notes, so for that query it is undefined.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Query",
+      "Relevant notes",
+      "Found in top 3",
+      "Recall at 3"
+     ],
+     "rows": [
+      [
+       "A",
+       "2",
+       "2",
+       "1"
+      ],
+      [
+       "B",
+       "2",
+       "1",
+       "0.5"
+      ],
+      [
+       "C",
+       "0",
+       "0",
+       "undefined"
+      ],
+      [
+       "D",
+       "3",
+       "0",
+       "0"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the mean recall at 3 over the queries where it is defined? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "as-zero",
+      "value": 0.38,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "as-one",
+      "value": 0.63,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Leave out query C and average the other three."
+    },
+    {
+     "rung": "point",
+     "text": "$(1 + 0.5 + 0)/3$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(1 + 0.5 + 0)/3 = 0.50$, reported with 'one query excluded: no relevant note'.",
+    "generic": "Not quite. Average only the defined recalls.",
+    "byKey": {
+     "as-zero": "You counted query C as 0 over four queries. Its recall is undefined, not 0: exclude it and say so.",
+     "as-one": "You counted query C as 1. Exclude it instead, and report the count."
+    }
+   },
+   "explain": {
+    "text": "Recall over A, B and D is 0.50. Report that one query was excluded; such queries test whether the tool can say 'nothing found', which recall cannot measure.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "Measuring retrieval",
+   "prose": "For a query with relevant set $R$ and ranked list $L$:\n\n$$\\text{recall@}k = \\frac{|L_{1..k} \\cap R|}{|R|}, \\quad \\text{precision@}k = \\frac{|L_{1..k} \\cap R|}{k}, \\quad \\text{RR} = \\frac{1}{r_{\\text{first}}},$$\n\neach averaged over queries with $R$ not empty. Compare two retrievers by the per-query differences and their standard error.",
+   "question": "A language model can read only 3 passages. Which figure tells you whether it is given what it needs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "r3",
+      "text": "Recall at 3",
+      "correct": true
+     },
+     {
+      "id": "r10",
+      "text": "Recall at 10",
+      "why": "The model never sees passages 4 to 10, so finding them there does not help it."
+     },
+     {
+      "id": "p3",
+      "text": "Precision at 3",
+      "why": "Precision says how clean the 3 are, not whether the needed passages are among them."
+     },
+     {
+      "id": "mrr",
+      "text": "MRR alone",
+      "why": "MRR rewards the first hit; a question that needs two passages needs recall."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which $k$ matches what the model reads?"
+    }
+   ],
+   "feedback": {
+    "correct": "Recall at the number of passages the model reads.",
+    "generic": "Not quite. What does the model actually see?"
+   },
+   "explain": {
+    "text": "Set $k$ to the number of passages the model reads, here 3, and report recall at 3 on labelled queries kept aside for the purpose."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "recall_at_k and mrr in code",
+   "prose": "Write `recall_at_k(ranked, relevant, k)`, returning `None` when there is no relevant note. Then `mrr(rankings, relevants)` over several queries: a query whose relevant notes are never found scores 0, and one with no relevant note is left out.",
+   "question": "Write `recall_at_k` and `mrr`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def recall_at_k(ranked, relevant, k):\n    # share of the relevant ids in ranked[:k]; None if relevant is empty\n    ...\n\n\ndef mrr(rankings, relevants):\n    # mean of 1/r over queries with a relevant id, r the rank of the\n    # first relevant id (0 if none is found)\n    ...\n",
+    "solution": "def recall_at_k(ranked, relevant, k):\n    rel = set(relevant)\n    if not rel:\n        return None\n    return len(set(ranked[:k]) & rel) / len(rel)\n\n\ndef mrr(rankings, relevants):\n    rr = []\n    for ranked, relevant in zip(rankings, relevants):\n        if not relevant:\n            continue\n        r = next((i + 1 for i, d in enumerate(ranked) if d in relevant), None)\n        rr.append(1 / r if r else 0.0)\n    return sum(rr) / len(rr)\n",
+    "examples": [
+     {
+      "call": "recall_at_k([2, 0, 1], [0], 2)",
+      "expect": "1.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "recall_at_k([4, 1, 2, 3], [1, 4], 1)",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "recall_at_k([4, 1, 2, 3], [1, 4], 2)",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "recall_at_k([5, 6, 7], [5, 5, 8], 3)",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "recall_at_k([1, 2, 3], [], 3) is None",
+      "expect": "True"
+     },
+     {
+      "call": "mrr([[3, 1, 2], [2, 9, 8, 7], [9, 4]], [[3], [7], [4, 1]])",
+      "expect": "0.5833333333333334",
+      "compare": "isclose"
+     },
+     {
+      "call": "mrr([[1, 2], [3, 4]], [[2], [9]])",
+      "expect": "0.25",
+      "compare": "isclose"
+     },
+     {
+      "call": "mrr([[1, 2], [3, 4], [5]], [[2], [], [5]])",
+      "expect": "0.75",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests, each within relative $10^{-9}$ or an exact None. Four check recall: the worked values at $k = 1$ and 2, a repeated relevant id and a query with no relevant id. Three check MRR, including a query whose note is never found and one with none to find.",
+    "mutants": [
+     {
+      "source": "def recall_at_k(ranked, relevant, k):\n    rel = set(relevant)\n    if not rel:\n        return None\n    return len(set(ranked[:k]) & rel) / k\n\n\ndef mrr(rankings, relevants):\n    rr = []\n    for ranked, relevant in zip(rankings, relevants):\n        if not relevant:\n            continue\n        r = next((i + 1 for i, d in enumerate(ranked) if d in relevant), None)\n        rr.append(1 / r if r else 0.0)\n    return sum(rr) / len(rr)\n",
+      "test": 1,
+      "symptom": "Divides by k, which is precision."
+     },
+     {
+      "source": "def recall_at_k(ranked, relevant, k):\n    rel = set(relevant)\n    if not rel:\n        return None\n    return len(set(ranked[:k]) & rel) / len(relevant)\n\n\ndef mrr(rankings, relevants):\n    rr = []\n    for ranked, relevant in zip(rankings, relevants):\n        if not relevant:\n            continue\n        r = next((i + 1 for i, d in enumerate(ranked) if d in relevant), None)\n        rr.append(1 / r if r else 0.0)\n    return sum(rr) / len(rr)\n",
+      "test": 3,
+      "symptom": "Counts a repeated relevant id twice."
+     },
+     {
+      "source": "def recall_at_k(ranked, relevant, k):\n    rel = set(relevant)\n    return len(set(ranked[:k]) & rel) / len(rel)\n\n\ndef mrr(rankings, relevants):\n    rr = []\n    for ranked, relevant in zip(rankings, relevants):\n        if not relevant:\n            continue\n        r = next((i + 1 for i, d in enumerate(ranked) if d in relevant), None)\n        rr.append(1 / r if r else 0.0)\n    return sum(rr) / len(rr)\n",
+      "test": 4,
+      "symptom": "Divides by zero for a query with no relevant note."
+     },
+     {
+      "source": "def recall_at_k(ranked, relevant, k):\n    rel = set(relevant)\n    if not rel:\n        return None\n    return len(set(ranked[:k]) & rel) / len(rel)\n\n\ndef mrr(rankings, relevants):\n    rr = []\n    for ranked, relevant in zip(rankings, relevants):\n        if not relevant:\n            rr.append(0.0)\n            continue\n        r = next((i + 1 for i, d in enumerate(ranked) if d in relevant), None)\n        rr.append(1 / r if r else 0.0)\n    return sum(rr) / len(rr)\n",
+      "test": 7,
+      "symptom": "Counts a query with no relevant note as 0 in the MRR."
+     },
+     {
+      "source": "def recall_at_k(ranked, relevant, k):\n    rel = set(relevant)\n    if not rel:\n        return None\n    return len(set(ranked[:k]) & rel) / len(rel)\n\n\ndef mrr(rankings, relevants):\n    rr = []\n    for ranked, relevant in zip(rankings, relevants):\n        if not relevant:\n            continue\n        r = next((i for i, d in enumerate(ranked) if d in relevant), None)\n        rr.append(1 / (r + 1) if r else 0.0)\n    return sum(rr) / len(rr)\n",
+      "test": 5,
+      "symptom": "Treats a first hit at rank 1 as not found (index 0 is falsy)."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`len(set(ranked[:k]) & set(relevant))` counts the hits."
+    },
+    {
+     "rung": "point",
+     "text": "In `mrr`, skip a query whose relevant list is empty before looking for its first hit."
+    }
+   ],
+   "feedback": {
+    "correct": "Both measures match on every test.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Recall divides by the number of relevant notes, 2 here, not by $k$.",
+     "test-3": "The relevant list holds 5 twice, but it is one note: divide by the number of distinct relevant ids, 2.",
+     "test-4": "A query with no relevant note has no recall: return None, do not divide by 0.",
+     "test-7": "Leave queries with nothing to find out of the MRR, as for recall.",
+     "test-5": "A relevant note at rank 1 gives a reciprocal rank of 1: index 0 is a hit, not a miss."
+    }
+   },
+   "explain": {
+    "text": "Sets make a repeated id count once; returning None, not 0, keeps a query with nothing to find from dragging the mean down."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "compare in code",
+   "prose": "Write `compare(r1, r2, queries, k)`: run both retrievers on every labelled query, take the per-query difference in recall at $k$, and return its mean and standard error. Leave out queries with no relevant note.",
+   "question": "Write `compare`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\ndef compare(r1, r2, queries, k):\n    # r1, r2: functions from a query text to a ranked list of ids;\n    # queries: (text, relevant ids) pairs. Return (mean, se) of\n    # recall@k of r1 minus recall@k of r2 over queries with a\n    # relevant id; se uses the n - 1 standard deviation\n    ...\n",
+    "solution": "import math\n\n\ndef compare(r1, r2, queries, k):\n    diffs = []\n    for text, relevant in queries:\n        a = recall_at_k(r1(text), relevant, k)\n        b = recall_at_k(r2(text), relevant, k)\n        if a is None:\n            continue\n        diffs.append(a - b)\n    n = len(diffs)\n    mean = sum(diffs) / n\n    sd = math.sqrt(sum((d - mean) ** 2 for d in diffs) / (n - 1))\n    return mean, sd / math.sqrt(n)\n",
+    "prelude": "import math\nimport json\nimport numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\nNOTES = json.load(open('llm-apps-notes.json'))\nTEXTS = [n['text'] for n in NOTES['notes']]\nQUERIES = [(q['text'], q['relevant']) for q in NOTES['queries']]\n_M = fit_tfidf(TEXTS)\n_U, _s, _Vt = np.linalg.svd(_M['X'], full_matrices=False)\n\n\ndef tfidf_search(text):\n    s = _M['X'] @ embed(text, _M)\n    return sorted(range(len(s)), key=lambda i: (-s[i], i))\n\n\ndef lsa_search(text, k=8):\n    V = _Vt[:k].T\n    D = _M['X'] @ V\n    q = embed(text, _M) @ V\n    s = D @ q / (np.linalg.norm(D, axis=1) * np.linalg.norm(q))\n    return sorted(range(len(s)), key=lambda i: (-s[i], i))\n\n\ndef recall_at_k(ranked, relevant, k):\n    rel = set(relevant)\n    if not rel:\n        return None\n    return len(set(ranked[:k]) & rel) / len(rel)\n",
+    "examples": [
+     {
+      "setup": "A = lambda t: [1, 2]\nB = lambda t: [2, 1]",
+      "call": "compare(A, B, [('q', [1]), ('r', [2])], 1)",
+      "expect": "[0.0, 1.0]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "A = lambda t: {'x': [1, 2, 3], 'y': [4, 5, 6], 'z': [7, 8, 9]}[t]\nB = lambda t: {'x': [3, 9, 9], 'y': [9, 9, 9], 'z': [7, 9, 9]}[t]\nQ3 = [('x', [1, 3]), ('y', [4]), ('z', [7, 8])]",
+      "call": "compare(A, B, Q3, 2)[0]",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "compare(A, B, Q3, 2)[1]",
+      "expect": "0.2886751345948129",
+      "compare": "isclose"
+     },
+     {
+      "call": "compare(B, A, Q3, 2)[0]",
+      "expect": "-0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "compare(A, B, Q3 + [('x', [])], 2)",
+      "expect": "[0.5, 0.2886751345948129]",
+      "compare": "isclose"
+     },
+     {
+      "call": "compare(lsa_search, tfidf_search, QUERIES, 3)",
+      "expect": "[0.2, 0.05619514869490164]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "compare(tfidf_search, lambda t: tfidf_search(t)[::-1], QUERIES[:6], 5)",
+      "expect": "[0.6666666666666666, 0.08606629658238704]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "how": "Submit runs 6 hidden tests within relative $10^{-9}$. Four use three made-up queries: the mean, the standard error, the two retrievers swapped, and an extra query with no relevant note. Two run LSA against TF-IDF on the 20 labelled queries at $k = 3$, and TF-IDF against its own reversed list. `recall_at_k`, `tfidf_search`, `lsa_search` and `QUERIES` are defined for you.",
+    "mutants": [
+     {
+      "source": "import math\n\n\ndef compare(r1, r2, queries, k):\n    diffs = []\n    for text, relevant in queries:\n        a = recall_at_k(r1(text), relevant, k)\n        b = recall_at_k(r2(text), relevant, k)\n        if a is None:\n            continue\n        diffs.append(a - b)\n    n = len(diffs)\n    mean = sum(diffs) / n\n    sd = math.sqrt(sum((d - mean) ** 2 for d in diffs) / (n - 1))\n    return mean, sd\n",
+      "test": 2,
+      "symptom": "Returns the standard deviation, not the standard error."
+     },
+     {
+      "source": "import math\n\n\ndef compare(r1, r2, queries, k):\n    diffs = []\n    for text, relevant in queries:\n        a = recall_at_k(r1(text), relevant, k)\n        b = recall_at_k(r2(text), relevant, k)\n        if a is None:\n            continue\n        diffs.append(b - a)\n    n = len(diffs)\n    mean = sum(diffs) / n\n    sd = math.sqrt(sum((d - mean) ** 2 for d in diffs) / (n - 1))\n    return mean, sd / math.sqrt(n)\n",
+      "test": 1,
+      "symptom": "Subtracts the wrong way round."
+     },
+     {
+      "source": "import math\n\n\ndef compare(r1, r2, queries, k):\n    diffs = []\n    for text, relevant in queries:\n        a = recall_at_k(r1(text), relevant, k)\n        b = recall_at_k(r2(text), relevant, k)\n        if a is None:\n            a, b = 0.0, 0.0\n        diffs.append(a - b)\n    n = len(diffs)\n    mean = sum(diffs) / n\n    sd = math.sqrt(sum((d - mean) ** 2 for d in diffs) / (n - 1))\n    return mean, sd / math.sqrt(n)\n",
+      "test": 4,
+      "symptom": "Counts a query with no relevant note as a difference of 0."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`recall_at_k` returns None for a query to leave out."
+    },
+    {
+     "rung": "point",
+     "text": "Standard error: the $n - 1$ standard deviation of the differences over $\\sqrt n$."
+    }
+   ],
+   "feedback": {
+    "correct": "Your comparison matches on every test: LSA's gain is 0.20 with standard error 0.0562.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "The standard error of the mean is the standard deviation over $\\sqrt n$.",
+     "test-1": "Return recall of `r1` minus recall of `r2`: here A beats B, so the mean is positive.",
+     "test-4": "A query with no relevant note has no recall: leave it out, or it pulls the mean towards 0 and shrinks the standard error."
+    }
+   },
+   "explain": {
+    "text": "Pairing by query is the point: both retrievers face the same easy and hard questions, so the differences vary far less than two separate recall figures would."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 2,
+   "title": "Did analysts find their note?",
+   "prose": "A research team logs 50 searches in its note tool. Each search had one note the analyst needed, and that note was in the tool's top 5 on 38 of them.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "found",
+       "label": "In top 5"
+      },
+      {
+       "id": "missed",
+       "label": "Not in top 5"
+      }
+     ],
+     "yLabel": "Searches",
+     "showValues": true
+    },
+    "state": {
+     "values": {
+      "found": 38,
+      "missed": 12
+     }
+    }
+   },
+   "question": "What is the tool's recall at 5 over these searches? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.76,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "missed",
+      "value": 0.24,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "over-top",
+      "value": 0.15,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One relevant note per search, so each search's recall is 0 or 1."
+    },
+    {
+     "rung": "point",
+     "text": "$38/50$."
+    }
+   ],
+   "feedback": {
+    "correct": "$38/50 = 0.76$: about three searches in four put the needed note where the analyst would see it.",
+    "generic": "Not quite. Average the per-search recall, 1 or 0.",
+    "byKey": {
+     "missed": "0.24 is the share missed.",
+     "over-top": "You divided by all 250 listed notes. Recall divides by the relevant notes, one per search."
+    }
+   },
+   "explain": {
+    "text": "With one relevant note per search, recall at 5 is the share of searches whose note was in the top 5: $38/50 = 0.76$. The 12 misses are the ones to read first when improving the tool."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Retrieval is measured on labelled queries: recall at $k$ is the share of relevant notes in the top $k$, precision at $k$ the share of the top $k$ that is relevant.",
+   "MRR averages $1/r$ of the first relevant hit; queries with no relevant note are left out and counted.",
+   "Compare two retrievers by per-query differences and their standard error, with settings chosen on queries kept apart from those you report on."
+  ],
+  "formula": {
+   "name": "Recall at k",
+   "tex": "\\text{recall@}k = \\frac{|L_{1..k} \\cap R|}{|R|}",
+   "note": "Set $k$ to what the model reads."
+  },
+  "trap": "Choosing $k$ (or any setting) on the queries you then report recall on."
+ },
+ "quiz": [
+  {
+   "id": "q-rp",
+   "difficulty": 2,
+   "prose": "A query has 4 relevant notes. The top 5 of a search holds 2 of them.",
+   "question": "What are recall at 5 and precision at 5?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Recall 0.5, precision 0.4",
+      "correct": true
+     },
+     {
+      "id": "swap",
+      "text": "Recall 0.4, precision 0.5",
+      "why": "You swapped them: recall divides by the 4 relevant notes, precision by the 5 listed."
+     },
+     {
+      "id": "both",
+      "text": "Both 0.4",
+      "why": "Recall divides by the 4 relevant notes, not by 5."
+     },
+     {
+      "id": "both5",
+      "text": "Both 0.5",
+      "why": "Precision divides by the 5 listed notes."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2/4 = 0.5$ and $2/5 = 0.4$.",
+    "generic": "Not quite. Recall divides by what is relevant; precision by what is listed."
+   },
+   "explain": {
+    "text": "Recall at 5 is $2/4 = 0.5$; precision at 5 is $2/5 = 0.4$."
+   }
+  },
+  {
+   "id": "q-mrr",
+   "difficulty": 2,
+   "prose": "Four queries find their first relevant note at ranks 1, 1, 4 and never.",
+   "question": "What is the MRR? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5625,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "skip",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(1 + 1 + 0.25 + 0)/4 = 0.5625$.",
+    "generic": "Not quite. A query that never finds its note scores 0.",
+    "byKey": {
+     "skip": "You left out the query that found nothing. It had a note to find, so it counts as 0."
+    }
+   },
+   "explain": {
+    "text": "Reciprocal ranks 1, 1, 0.25 and 0 average to 0.5625. Only a query with no relevant note at all is left out."
+   }
+  },
+  {
+   "id": "q-se",
+   "difficulty": 3,
+   "prose": "Two retrievers are compared on 25 labelled queries. The per-query differences in recall at 3 have mean 0.04 and standard deviation 0.30.",
+   "question": "What is the standard error of the mean difference? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.06,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.30/\\sqrt{25} = 0.06$, larger than the 0.04 gap: no evidence either retriever is better.",
+    "generic": "Not quite. Divide the standard deviation by $\\sqrt{25}$.",
+    "byKey": {
+     "sd": "0.30 is the spread of one difference; divide by $\\sqrt{25} = 5$."
+    }
+   },
+   "explain": {
+    "text": "$0.30/5 = 0.06$. A gap of 0.04 is under one standard error, so these 25 queries cannot separate the two."
+   }
+  },
+  {
+   "id": "q-k-choice",
+   "difficulty": 3,
+   "prose": "A model reads only the top 2 passages. Retriever A has recall at 10 of 0.9 and recall at 2 of 0.4; retriever B has 0.7 and 0.6.",
+   "question": "Which should feed the model?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "b",
+      "text": "B, because its recall at 2 is higher",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "A, because its recall at 10 is higher",
+      "why": "The model never reads passages 3 to 10."
+     },
+     {
+      "id": "tie",
+      "text": "Either: their average recalls are equal",
+      "why": "Averaging across $k$ mixes in passages the model never sees."
+     },
+     {
+      "id": "neither",
+      "text": "Neither: compare MRR instead",
+      "why": "MRR is fine as a second figure, but recall at 2 matches what the model reads."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "B: at the $k$ the model reads, B finds more.",
+    "generic": "Not quite. Which $k$ matters here?"
+   },
+   "explain": {
+    "text": "Judge a retriever at the $k$ the model reads. B's recall at 2 is 0.6 against A's 0.4."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1205 @@
+{
+ "id": "l8-an-honest-text-backtest",
+ "course": "llm-apps",
+ "title": "An honest text backtest",
+ "minutes": 15,
+ "objectives": [
+  "Design a text-signal backtest that survives a cut-off check and the number of models tried."
+ ],
+ "skills": [
+  "llm-features"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The best of twelve prompts",
+   "prose": "A researcher scores news with a language model, trying 12 prompt wordings over the 2 years after the model's cut-off, and reports the best: a Sharpe ratio of 2.1. `validation` level 3's haircut subtracts what the best of $N$ noise strategies reaches over $T$ years, about $\\sqrt{2\\ln N}/\\sqrt T$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      1,
+      60
+     ],
+     "y": [
+      0,
+      3
+     ],
+     "xLabel": "N",
+     "yLabel": "Best noise Sharpe",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "sqrt(2*ln(x))/sqrt(2)",
+       "label": "T = 2",
+       "domain": [
+        1,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 12,
+       "y": 1.5764,
+       "label": "N = 12"
+      }
+     ]
+    }
+   },
+   "question": "What is the haircut Sharpe ratio? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.52,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "noise",
+      "value": 1.58,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "no-root-T",
+      "value": -0.13,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sqrt{2\\ln 12} = 2.2293$."
+    },
+    {
+     "rung": "point",
+     "text": "Divide by $\\sqrt 2$, then subtract from 2.1.",
+     "highlight": [
+      "p"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$2.1 - 2.2293/1.4142 = 2.1 - 1.5764 = 0.52$.",
+    "generic": "Not quite. Subtract $\\sqrt{2\\ln 12}/\\sqrt 2$ from 2.1.",
+    "byKey": {
+     "noise": "1.58 is what noise alone gives the best of 12. Subtract it from 2.1.",
+     "no-root-T": "You forgot to divide by $\\sqrt T$; over 2 years the noise best is $2.2293/\\sqrt 2$."
+    }
+   },
+   "explain": {
+    "text": "Twelve tries over two years give the best noise strategy about 1.58, so the reported 2.1 is worth about 0.52 after the haircut.",
+    "canvas": {
+     "highlight": [
+      "p"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "title": "How many tries until 2 is noise?",
+   "prose": "Slide $T$, the years of clean data. The curve is the best Sharpe ratio that $N$ noise strategies reach, the haircut.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      1,
+      120
+     ],
+     "y": [
+      0,
+      3.5
+     ],
+     "xLabel": "N",
+     "yLabel": "Best noise Sharpe",
+     "params": {
+      "T": 2
+     },
+     "functions": [
+      {
+       "id": "f",
+       "expr": "sqrt(2*ln(x))/sqrt(T)",
+       "label": "noise best",
+       "domain": [
+        1,
+        120
+       ]
+      }
+     ]
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "two",
+       "y": 2,
+       "label": "Sharpe 2"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "T",
+      "min": 0.5,
+      "max": 8,
+      "step": 0.5,
+      "label": "T, years",
+      "start": 2
+     }
+    ]
+   },
+   "question": "With $T = 2$ years, what is the smallest $N$ whose noise best is at least 2?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 55,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "e4",
+      "value": 54.6,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "n4",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $\\sqrt{2\\ln N}/\\sqrt 2 = 2$."
+    },
+    {
+     "rung": "point",
+     "text": "That is $\\ln N = 4$, so $N = e^4$."
+    },
+    {
+     "rung": "step",
+     "text": "$e^4 = 54.6$; round up."
+    }
+   ],
+   "feedback": {
+    "correct": "$e^4 = 54.6$, so 55 tries: with two years of data, the best of 55 noise strategies reaches a Sharpe of 2.",
+    "generic": "Not quite. Solve for $N$ and round up.",
+    "byKey": {
+     "e4": "54.6 tries cannot happen; round up to a whole number.",
+     "n4": "4 is $\\ln N$; take $e^4$."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{2\\ln N} = 2\\sqrt 2$ gives $\\ln N = 4$ and $N = e^4 \\approx 54.6$, so 55. A desk that tries 55 prompts on two years should expect a Sharpe of 2 from noise alone."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Walk-forward folds",
+   "prose": "Fitting anything, even a threshold, on the whole clean window uses its future. **Walk-forward** validation (`validation` level 2) cuts the 500 clean days into 5 consecutive folds; each fold is traded with a threshold fitted on the folds before it, so the first fold only trains.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Design",
+      "Days used",
+      "Sharpe"
+     ],
+     "rows": [
+      [
+       "All dates, as-of join",
+       "2,000",
+       "6.84"
+      ],
+      [
+       "After cut-off, date join",
+       "500",
+       "4.90"
+      ],
+      [
+       "After cut-off, full-sample mean",
+       "400",
+       "0.27"
+      ],
+      [
+       "After cut-off, walk-forward, 5 folds",
+       "400",
+       "0.47"
+      ]
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       3
+      ]
+     }
+    }
+   },
+   "question": "How many days of out-of-sample P&L does this give?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 400,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 500,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 100,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each fold is 100 days."
+    },
+    {
+     "rung": "point",
+     "text": "Folds 2 to 5 are traded."
+    }
+   ],
+   "feedback": {
+    "correct": "Four folds of 100: 400 days, each traded with a threshold from earlier days only.",
+    "generic": "Not quite. The first fold has no earlier data to fit on.",
+    "byKey": {
+     "all": "The first fold has nothing before it to fit on, so it only trains.",
+     "one": "100 is one fold. Folds 2 to 5 are all traded."
+    }
+   },
+   "explain": {
+    "text": "Folds 2 to 5 give 400 out-of-sample days. Here the threshold is the mean score of the earlier folds; a vocabulary or a scaler would be fitted the same way."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Costs",
+   "prose": "In the clean window the daily P&L has mean 0.0605% and standard deviation 0.9640%. Trading the sign each day turns the book over often; assume costs of 0.02% a day.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Design",
+      "Days used",
+      "Sharpe"
+     ],
+     "rows": [
+      [
+       "All dates, as-of join",
+       "2,000",
+       "6.84"
+      ],
+      [
+       "After cut-off, date join",
+       "500",
+       "4.90"
+      ],
+      [
+       "After cut-off, full-sample mean",
+       "400",
+       "0.27"
+      ],
+      [
+       "After cut-off, walk-forward, 5 folds",
+       "400",
+       "0.47"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the annualised Sharpe ratio after costs? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.67,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "gross",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "x252",
+      "value": 10.6,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the cost from the daily mean first."
+    },
+    {
+     "rung": "point",
+     "text": "$(0.0605 - 0.02)/0.9640 \\times \\sqrt{252}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(0.0605 - 0.02)/0.9640 \\times \\sqrt{252} = 0.67$.",
+    "generic": "Not quite. Take the cost off the mean, then annualise.",
+    "byKey": {
+     "gross": "1.00 is before costs.",
+     "x252": "Annualise by $\\sqrt{252}$, not 252."
+    }
+   },
+   "explain": {
+    "text": "Costs take the clean Sharpe from 1.00 to 0.67, a third of it gone. A text signal that trades daily must clear its costs as well as its leaks."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Four designs, one signal",
+   "prose": "Four backtests of the same seeded scores. Only one design avoids every leak met in this level.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Design",
+      "Days used",
+      "Sharpe"
+     ],
+     "rows": [
+      [
+       "All dates, as-of join",
+       "2,000",
+       "6.84"
+      ],
+      [
+       "After cut-off, date join",
+       "500",
+       "4.90"
+      ],
+      [
+       "After cut-off, full-sample mean",
+       "400",
+       "0.27"
+      ],
+      [
+       "After cut-off, walk-forward, 5 folds",
+       "400",
+       "0.47"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which Sharpe ratio should be reported?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "wf",
+      "text": "0.47, walk-forward",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "6.84, all dates",
+      "why": "Three quarters of those days are before the cut-off, where the scores are partly memory."
+     },
+     {
+      "id": "date",
+      "text": "4.90, date join",
+      "why": "The date join hands each close the documents published after it."
+     },
+     {
+      "id": "full",
+      "text": "0.27, full-sample mean",
+      "why": "Its threshold uses the whole window, future days included. It happens to be lower here: a leak can lower a result as well as raise it, and either way the figure is not a test."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which design uses only the clean window, as-of timestamps and past-only fitting?"
+    }
+   ],
+   "feedback": {
+    "correct": "0.47: the only figure every decision could have produced at the time.",
+    "generic": "Not quite. Check each design for memory, timing and fitting leaks.",
+    "byKey": {
+     "full": "You chose the lowest figure as the safe one. A leak changes the answer in either direction; 0.27 still fitted its threshold on the future."
+    }
+   },
+   "explain": {
+    "text": "Memory gives 6.84 and late timestamps 4.90; fitting on the whole window gives 0.27. Only walk-forward after the cut-off, 0.47, is a backtest, and it still needs costs and a haircut."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Six months is not enough",
+   "prose": "A model's cut-off leaves only six months of clean data. A noise strategy's Sharpe ratio measured over $T$ years has a standard error of about $1/\\sqrt T$ (`testing` level 3).",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.25,
+      5
+     ],
+     "y": [
+      0,
+      4.5
+     ],
+     "xLabel": "T, years",
+     "yLabel": "Sharpe needed",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "1.96/sqrt(x)",
+       "label": "1.96 / √T",
+       "domain": [
+        0.25,
+        5
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "q",
+       "x": 0.5,
+       "y": 2.7719,
+       "label": "six months"
+      }
+     ]
+    }
+   },
+   "question": "What Sharpe ratio must six months show to be 1.96 standard errors above zero? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.77,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "times",
+      "value": 1.39,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "half",
+      "value": 3.92,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $\\text{SR}\\sqrt T = 1.96$ with $T = 0.5$."
+    },
+    {
+     "rung": "point",
+     "text": "$1.96/\\sqrt{0.5}$.",
+     "highlight": [
+      "q"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$1.96/\\sqrt{0.5} = 2.77$: below that, six months cannot tell skill from luck.",
+    "generic": "Not quite. Divide 1.96 by $\\sqrt{0.5}$.",
+    "byKey": {
+     "times": "You multiplied by $\\sqrt{0.5}$. A shorter window needs a higher Sharpe.",
+     "half": "You divided by 0.5; divide by its square root."
+    }
+   },
+   "explain": {
+    "text": "Six months needs a Sharpe above 2.77 before it is clear of noise at the usual level. Most real signals run between 0.5 and 2, so a short clean window rarely proves anything."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "One model, twelve prompts",
+   "prose": "A team reports a news signal's Sharpe ratio of 1.9 over 2 clean years. 'We used one model,' they say, 'so there is no multiple testing.' Their log shows 12 prompt wordings were tried.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      1,
+      60
+     ],
+     "y": [
+      0,
+      3
+     ],
+     "xLabel": "N",
+     "yLabel": "Best noise Sharpe",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "sqrt(2*ln(x))/sqrt(2)",
+       "label": "T = 2",
+       "domain": [
+        1,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 12,
+       "y": 1.5764,
+       "label": "N = 12"
+      },
+      {
+       "id": "o",
+       "x": 1,
+       "y": 0,
+       "label": "N = 1"
+      }
+     ]
+    }
+   },
+   "question": "What is the haircut Sharpe ratio for 12 trials? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.32,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1.9,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each prompt wording is a trial."
+    },
+    {
+     "rung": "point",
+     "text": "$1.9 - 1.5764$.",
+     "highlight": [
+      "p"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$1.9 - 1.5764 = 0.32$: most of the result is the selection.",
+    "generic": "Not quite. Count every prompt wording as a trial.",
+    "byKey": {
+     "one": "You took 'one model' as one trial. Each of the 12 prompts produced its own signal, and the best was kept."
+    }
+   },
+   "explain": {
+    "text": "A prompt, a scoring scheme or a model version that produced a backtest is a trial. With 12 of them the 1.9 is worth about 0.32.",
+    "canvas": {
+     "highlight": [
+      "p"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "The honest checklist",
+   "prose": "Put the steps of an honest text backtest in the order they are applied.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "c1",
+      "text": "Find the scoring model's cut-off and keep only dates after it, plus a buffer"
+     },
+     {
+      "id": "c2",
+      "text": "Stamp every document with its first publication time"
+     },
+     {
+      "id": "c3",
+      "text": "Join scores to decisions with a backward as-of join"
+     },
+     {
+      "id": "c4",
+      "text": "Fit vocabularies, thresholds and scalers inside each walk-forward fold"
+     },
+     {
+      "id": "c5",
+      "text": "Subtract trading costs from the out-of-sample P&L"
+     },
+     {
+      "id": "c6",
+      "text": "Haircut the Sharpe ratio for every prompt and model tried"
+     }
+    ],
+    "answer": [
+     "c1",
+     "c2",
+     "c3",
+     "c4",
+     "c5",
+     "c6"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Decide which dates count before building anything on them."
+    },
+    {
+     "rung": "point",
+     "text": "The haircut comes last, on the final out-of-sample figure."
+    }
+   ],
+   "feedback": {
+    "correct": "Dates, stamps, join, fitting, costs, haircut.",
+    "generic": "Not quite. Each step needs the one before it."
+   },
+   "explain": {
+    "text": "The clean window decides which data exist; stamps and the join build the feature; fitting happens inside folds; costs and the haircut adjust the final figure."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "An honest text backtest",
+   "prose": "What you assembled: a clean window after the cut-off, as-of stamps, past-only fitting in walk-forward folds, costs, and a haircut for $N$ trials over $T$ clean years,\n\n$$\\text{SR}_{\\text{honest}} = \\text{SR}_{\\text{best}} - \\frac{\\sqrt{2\\ln N}}{\\sqrt T}.$$",
+   "question": "Which figure goes in the research note?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "h",
+      "text": "The net walk-forward Sharpe, its haircut and the window's length",
+      "correct": true
+     },
+     {
+      "id": "best",
+      "text": "The best Sharpe found",
+      "why": "The best of many tries is biased upward; report the haircut and the count."
+     },
+     {
+      "id": "all",
+      "text": "The Sharpe over the full sample, for its length",
+      "why": "The full sample includes memorised years."
+     },
+     {
+      "id": "in",
+      "text": "The in-sample fit, since it uses the most data",
+      "why": "In-sample figures are fitted to the answer."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which figure could a reader reproduce honestly?"
+    }
+   ],
+   "feedback": {
+    "correct": "The out-of-sample figure, net of costs, haircut, with the window's length.",
+    "generic": "Not quite. Which figure has every leak removed?"
+   },
+   "explain": {
+    "text": "Report the walk-forward Sharpe after costs, the number of trials and its haircut, and how long the clean window is; a reader can then judge it."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "haircut in code",
+   "prose": "Write `haircut(best_sharpe, n_trials, years)` with `validation` level 3's rule of thumb.",
+   "question": "Write `haircut`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\ndef haircut(best_sharpe, n_trials, years):\n    # best_sharpe minus sqrt(2 ln N) / sqrt(T)\n    ...\n",
+    "solution": "import math\n\n\ndef haircut(best_sharpe, n_trials, years):\n    return best_sharpe - math.sqrt(2 * math.log(n_trials)) / math.sqrt(years)\n",
+    "examples": [
+     {
+      "call": "haircut(1.9, 12, 2)",
+      "expect": "0.32364133212393575",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "haircut(1.0, 1, 3)",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "haircut(1.5, 100, 1)",
+      "expect": "-1.534854258770293",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "haircut(2.1, 12, 2)",
+      "expect": "0.5236413321239359",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "haircut(0.8, 40, 0.5)",
+      "expect": "-3.0412911652796826",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "how": "Submit runs 4 hidden tests within relative $10^{-9}$: a single trial, 100 trials over 1 year, the 12 prompts over 2 years, and 40 trials over half a year.",
+    "mutants": [
+     {
+      "source": "import math\n\n\ndef haircut(best_sharpe, n_trials, years):\n    return best_sharpe - math.sqrt(2 * math.log(n_trials)) / years\n",
+      "test": 3,
+      "symptom": "Divides by T instead of its square root."
+     },
+     {
+      "source": "import math\n\n\ndef haircut(best_sharpe, n_trials, years):\n    return best_sharpe - math.sqrt(2 * math.log10(n_trials)) / math.sqrt(years)\n",
+      "test": 2,
+      "symptom": "Uses the base-10 logarithm."
+     },
+     {
+      "source": "import math\n\n\ndef haircut(best_sharpe, n_trials, years):\n    return best_sharpe - math.sqrt(2 * math.log(n_trials + 1)) / math.sqrt(years)\n",
+      "test": 1,
+      "symptom": "Adds one to the number of trials."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`math.sqrt(2 * math.log(n_trials)) / math.sqrt(years)` is the noise best."
+    }
+   ],
+   "feedback": {
+    "correct": "Your haircut matches: 0.5236 for the 12 prompts.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-3": "The noise best shrinks with $\\sqrt T$, not $T$.",
+     "test-2": "The formula uses the natural log, `math.log`.",
+     "test-1": "With one trial there is no selection, so the haircut is 0: use $\\ln N$, not $\\ln(N + 1)$."
+    }
+   },
+   "explain": {
+    "text": "One trial gives $\\ln 1 = 0$ and no haircut; more trials and fewer years both raise what noise can reach."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "honest_backtest in code",
+   "prose": "Write `honest_backtest(panel, docs, cutoff, folds)`: clean window, backward as-of join at the 16:30 close, and walk-forward folds whose threshold is the mean feature of the earlier folds. On the seeded market it should give the walk-forward figure in the table.",
+   "question": "Write `honest_backtest`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import bisect\nimport math\n\n\ndef honest_backtest(panel, docs, cutoff, folds, decision_time='16:30'):\n    # panel: {'dates': [...], 'ret': [...]}, ret[t] earned by a position\n    # set at the close of dates[t]. Keep dates after the cutoff; feature =\n    # latest doc score known at the decision time; cut the kept days into\n    # `folds` blocks (bounds round(i * n / folds)); trade blocks 2 on with\n    # sign(feature - mean of earlier known features), 0 if no feature.\n    # Return the annualised Sharpe of that P&L.\n    ...\n",
+    "solution": "import bisect\nimport math\n\n\ndef honest_backtest(panel, docs, cutoff, folds, decision_time='16:30'):\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = [(d, r) for d, r in zip(panel['dates'], panel['ret']) if d > cutoff]\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' ' + decision_time)\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat[:b[k]] if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > mu else -1 if f < mu else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    return m / sd * math.sqrt(252)\n",
+    "prelude": "import numpy\nimport pandas\n",
+    "examples": [
+     {
+      "setup": "HP = {'dates': ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05', '2024-01-06', '2024-01-07', '2024-01-08'], 'ret': [0.01, -0.02, 0.01, 0.02, -0.01, 0.03, -0.02, 0.01]}\nT1 = [{'published': '2024-01-01 09:00', 'score': 5}, {'published': '2024-01-02 09:00', 'score': 5}, {'published': '2024-01-03 09:00', 'score': 1}, {'published': '2024-01-04 09:00', 'score': -1}, {'published': '2024-01-05 09:00', 'score': 2}, {'published': '2024-01-06 09:00', 'score': -2}, {'published': '2024-01-07 09:00', 'score': 1}, {'published': '2024-01-08 09:00', 'score': -1}]",
+      "call": "round(honest_backtest(HP, T1, '2024-01-01', 2), 4)",
+      "expect": "-4.2053",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "setup": "HP = {'dates': ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05', '2024-01-06', '2024-01-07', '2024-01-08'], 'ret': [0.01, -0.02, 0.01, 0.02, -0.01, 0.03, -0.02, 0.01]}\nT1 = [{'published': '2024-01-01 09:00', 'score': 5}, {'published': '2024-01-02 09:00', 'score': 5}, {'published': '2024-01-03 09:00', 'score': 1}, {'published': '2024-01-04 09:00', 'score': -1}, {'published': '2024-01-05 09:00', 'score': 2}, {'published': '2024-01-06 09:00', 'score': -2}, {'published': '2024-01-07 09:00', 'score': 1}, {'published': '2024-01-08 09:00', 'score': -1}]",
+      "call": "honest_backtest(HP, T1, '2024-01-02', 2)",
+      "expect": "-31.74901573277509",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "T2 = [{'published': '2024-01-01 09:00', 'score': 5}, {'published': '2024-01-02 09:00', 'score': 5}, {'published': '2024-01-03 09:00', 'score': 1}, {'published': '2024-01-04 09:00', 'score': -1}, {'published': '2024-01-05 09:00', 'score': 2}, {'published': '2024-01-06 09:00', 'score': -2}, {'published': '2024-01-07 17:00', 'score': 1}, {'published': '2024-01-08 09:00', 'score': -1}]",
+      "call": "honest_backtest(HP, T2, '2024-01-02', 2)",
+      "expect": "-4.205259864302774",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "T3 = [{'published': '2024-01-01 09:00', 'score': 5}, {'published': '2024-01-02 09:00', 'score': 5}, {'published': '2024-01-03 09:00', 'score': 0.1}, {'published': '2024-01-04 09:00', 'score': 0.2}, {'published': '2024-01-05 09:00', 'score': 0.3}, {'published': '2024-01-06 09:00', 'score': 0.3}, {'published': '2024-01-07 09:00', 'score': 0.6}, {'published': '2024-01-08 09:00', 'score': 0.25}]",
+      "call": "honest_backtest(HP, T3, '2024-01-02', 2)",
+      "expect": "4.205259864302774",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "import numpy\nimport pandas\nfrom llm_apps_ops_l2 import make_market\nM0 = make_market()",
+      "call": "honest_backtest(M0, M0['docs'], M0['cutoff'], 5)",
+      "expect": "0.474983668259648",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "setup": "M2 = make_market(seed=2)",
+      "call": "honest_backtest(M2, M2['docs'], M2['cutoff'], 4)",
+      "expect": "0.09888333516593854",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. Three are eight-day hand cases within relative $10^{-9}$, each built so that one leak changes the answer: days before the cut-off, a document published after the close, and a threshold fitted on later days. Two are the seeded market (seed 0 with 5 folds, seed 2 with 4), each within 0.0005.",
+    "mutants": [
+     {
+      "source": "import bisect\nimport math\n\n\ndef honest_backtest(panel, docs, cutoff, folds, decision_time='16:30'):\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = list(zip(panel['dates'], panel['ret']))\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' ' + decision_time)\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat[:b[k]] if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > mu else -1 if f < mu else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    return m / sd * math.sqrt(252)\n",
+      "test": 1,
+      "symptom": "Uses every date, before the cut-off too."
+     },
+     {
+      "source": "import bisect\nimport math\n\n\ndef honest_backtest(panel, docs, cutoff, folds, decision_time='16:30'):\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = [(d, r) for d, r in zip(panel['dates'], panel['ret']) if d > cutoff]\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' 23:59')\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat[:b[k]] if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > mu else -1 if f < mu else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    return m / sd * math.sqrt(252)\n",
+      "test": 2,
+      "symptom": "Joins on the date, so after-close documents feed the same day."
+     },
+     {
+      "source": "import bisect\nimport math\n\n\ndef honest_backtest(panel, docs, cutoff, folds, decision_time='16:30'):\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = [(d, r) for d, r in zip(panel['dates'], panel['ret']) if d > cutoff]\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' ' + decision_time)\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > mu else -1 if f < mu else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    return m / sd * math.sqrt(252)\n",
+      "test": 3,
+      "symptom": "Fits the threshold on the whole clean window."
+     },
+     {
+      "source": "import bisect\nimport math\n\n\ndef honest_backtest(panel, docs, cutoff, folds, decision_time='16:30'):\n    docs = sorted(docs, key=lambda d: d['published'])\n    times = [d['published'] for d in docs]\n    days = [(d, r) for d, r in zip(panel['dates'], panel['ret']) if d > cutoff]\n    feat = []\n    for d, r in days:\n        i = bisect.bisect_right(times, d + ' ' + decision_time)\n        feat.append(docs[i - 1]['score'] if i > 0 else None)\n    n = len(days)\n    b = [round(i * n / folds) for i in range(folds + 1)]\n    pnl = []\n    for k in range(1, folds):\n        past = [f for f in feat[:b[k]] if f is not None]\n        mu = sum(past) / len(past)\n        for t in range(b[k], b[k + 1]):\n            f = feat[t]\n            pos = 0 if f is None else (1 if f > 0 else -1 if f < 0 else 0)\n            pnl.append(pos * days[t][1])\n    m = sum(pnl) / len(pnl)\n    sd = math.sqrt(sum((x - m) ** 2 for x in pnl) / (len(pnl) - 1))\n    return m / sd * math.sqrt(252)\n",
+      "test": 4,
+      "symptom": "Trades the raw sign without the fitted threshold."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l2.py": "content/data/ai/llm_apps_ops_l2.py"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`bisect.bisect_right(times, day + ' ' + decision_time)` finds the latest document at or before the close."
+    },
+    {
+     "rung": "point",
+     "text": "For fold $k$, average the known features in blocks before it, then trade block $k$."
+    }
+   ],
+   "feedback": {
+    "correct": "Your backtest matches: 0.475 on seed 0 with 5 folds.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Keep only dates after the cut-off: before it, the model may have read the outcomes.",
+     "test-2": "The document from 17:00 on 7 January was not out at that day's close: join on the decision time.",
+     "test-3": "Fit the threshold on the folds before the one being traded, not on all of them.",
+     "test-4": "Trade the sign of the feature minus the earlier folds' mean: the seeded scores drift up in the last year."
+    }
+   },
+   "explain": {
+    "text": "Each of the three hand cases plants one leak; leaving it in moves the answer. The threshold is fitted on past folds only, as a vocabulary or scaler would be."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The desk's review form",
+   "prose": "A portfolio manager asks you to draft the one question the desk's review form must ask of every model-scored signal before any capital is risked.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Design",
+      "Days used",
+      "Sharpe"
+     ],
+     "rows": [
+      [
+       "All dates, as-of join",
+       "2,000",
+       "6.84"
+      ],
+      [
+       "After cut-off, date join",
+       "500",
+       "4.90"
+      ],
+      [
+       "After cut-off, full-sample mean",
+       "400",
+       "0.27"
+      ],
+      [
+       "After cut-off, walk-forward, 5 folds",
+       "400",
+       "0.47"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which question covers the most ground?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "all",
+      "text": "Is it out-of-sample after the cut-off, net, and haircut for all tries?",
+      "correct": true
+     },
+     {
+      "id": "best",
+      "text": "What was the best Sharpe ratio found in testing?",
+      "why": "The best of many is the figure most inflated by selection."
+     },
+     {
+      "id": "model",
+      "text": "Which language model produced the scores?",
+      "why": "Useful, but a famous model leaks as easily as an obscure one."
+     },
+     {
+      "id": "long",
+      "text": "Does the backtest cover at least ten full years?",
+      "why": "Ten years before a recent cut-off is mostly memory; length is not cleanliness."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which question forces every check in this level?"
+    }
+   ],
+   "feedback": {
+    "correct": "Out-of-sample after the cut-off, net of costs, haircut for the trials.",
+    "generic": "Not quite. Which question rules out memory, leaks, costs and selection together?"
+   },
+   "explain": {
+    "text": "That one question forces the clean window, as-of stamps, past-only fitting, costs and the haircut. A signal that cannot answer it is not ready for capital."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "An honest text backtest uses the clean window after the cut-off, as-of stamps, and vocabularies, thresholds and scalers fitted inside walk-forward folds.",
+   "Costs come off the out-of-sample P&L, and every prompt, scoring scheme or model tried is a trial for the haircut $\\sqrt{2\\ln N}/\\sqrt T$.",
+   "A short clean window cannot separate skill from luck: six months needs a Sharpe ratio near 2.8 to clear 1.96 standard errors."
+  ],
+  "formula": {
+   "name": "Haircut",
+   "tex": "\\text{SR}_{\\text{honest}} = \\text{SR}_{\\text{best}} - \\frac{\\sqrt{2\\ln N}}{\\sqrt T}",
+   "note": "$N$ trials, $T$ clean years."
+  },
+  "trap": "Counting twelve prompt wordings as one model."
+ },
+ "quiz": [
+  {
+   "id": "q8-hair",
+   "difficulty": 2,
+   "prose": "A researcher tried 20 scoring schemes on 4 clean years and reports a best Sharpe ratio of 1.6.",
+   "question": "What is the haircut Sharpe ratio? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.38,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "noise",
+      "value": 1.22,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1.6 - \\sqrt{2\\ln 20}/2 = 1.6 - 1.2239 = 0.38$.",
+    "generic": "Not quite. Subtract $\\sqrt{2\\ln 20}/\\sqrt 4$.",
+    "byKey": {
+     "noise": "That is the noise best; subtract it from 1.6."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{2\\ln 20} = 2.4477$, halved is 1.2239, leaving 0.38."
+   }
+  },
+  {
+   "id": "q8-folds",
+   "difficulty": 2,
+   "prose": "A clean window of 600 days is split into 6 walk-forward folds; the first only trains.",
+   "question": "How many out-of-sample days are there?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 500,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 600,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Five folds of 100: 500 days.",
+    "generic": "Not quite. The first fold only trains.",
+    "byKey": {
+     "all": "The first fold has no earlier data to fit on."
+    }
+   },
+   "explain": {
+    "text": "600 days in 6 folds of 100; folds 2 to 6 trade, 500 days."
+   }
+  },
+  {
+   "id": "q8-window",
+   "difficulty": 3,
+   "prose": "A clean window is one year long.",
+   "question": "What Sharpe ratio must it show to be 1.96 standard errors above zero, taking the standard error as $1/\\sqrt T$? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.96,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.98,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1.96/\\sqrt 1 = 1.96$.",
+    "generic": "Not quite. Divide 1.96 by $\\sqrt T$.",
+    "byKey": {
+     "half": "You halved it; with $T = 1$ the root is 1."
+    }
+   },
+   "explain": {
+    "text": "With $T = 1$ the standard error is 1, so the Sharpe ratio must exceed 1.96."
+   }
+  },
+  {
+   "id": "q8-leak-low",
+   "difficulty": 3,
+   "prose": "A leaky design gives a lower Sharpe ratio than the honest one.",
+   "question": "What should be reported?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "honest",
+      "text": "The honest design's figure",
+      "correct": true
+     },
+     {
+      "id": "low",
+      "text": "The lower, leaky figure, to be conservative",
+      "why": "A leaky figure is not a test, whichever way it errs."
+     },
+     {
+      "id": "avg",
+      "text": "The average of the two",
+      "why": "Averaging mixes a valid number with an invalid one."
+     },
+     {
+      "id": "none",
+      "text": "Neither",
+      "why": "The honest figure is valid; report it with its haircut."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The honest design's figure: a leak makes a number meaningless, not merely optimistic.",
+    "generic": "Not quite. Is the leaky number a test of anything?"
+   },
+   "explain": {
+    "text": "A leak can push a backtest up or down; either way it no longer answers the question. Report the honest figure."
+   }
+  }
+ ]
+}

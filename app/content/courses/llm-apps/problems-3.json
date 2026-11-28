@@ -1,0 +1,351 @@
+{
+ "id": "problems-3",
+ "course": "llm-apps",
+ "level": 3,
+ "title": "Reliability, calls and scores",
+ "minutes": 35,
+ "items": [
+  {
+   "id": "p3-reliability",
+   "difficulty": 5,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "A desk's research agent runs tasks of 8 tool steps. Each step succeeds independently with chance 0.96, and the desk plans to judge the agent on 40 planted tasks.",
+   "parts": [
+    {
+     "question": "What is the chance a single task succeeds? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.7214,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "lin",
+        "value": 0.68,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.96^8 = 0.7214$.",
+      "generic": "Not quite. Multiply the 8 step chances.",
+      "byKey": {
+       "lin": "You took 4% off per step. Chances multiply."
+      }
+     },
+     "explain": {
+      "text": "$0.96^8 = 0.7214$."
+     }
+    },
+    {
+     "question": "Using 0.7214 from part 1, how many of the 40 tasks should be expected to fail? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 11.14,
+      "tol": {
+       "abs": 0.01
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "succeed",
+        "value": 28.86,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$40 \\times (1 - 0.7214) = 11.14$.",
+      "generic": "Not quite. Multiply 40 by the chance of failure.",
+      "byKey": {
+       "succeed": "That is the expected number of successes."
+      }
+     },
+     "explain": {
+      "text": "$40 \\times 0.2786 = 11.14$ failed tasks expected."
+     }
+    },
+    {
+     "question": "If the measured success rate is 0.7214, what is its standard error over 40 tasks? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0709,
+      "tol": {
+       "abs": 0.0002
+      },
+      "placeholder": "Decimal",
+      "wrong": [
+       {
+        "id": "var",
+        "value": 0.005,
+        "tol": {
+         "abs": 0.0002
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\sqrt{0.7214 \\times 0.2786/40} = 0.0709$.",
+      "generic": "Not quite. Use $\\sqrt{p(1-p)/n}$.",
+      "byKey": {
+       "var": "That is the variance."
+      }
+     },
+     "explain": {
+      "text": "The standard error is 0.0709."
+     }
+    },
+    {
+     "question": "A new version scores 5 points higher on another 40 tasks. Given the standard error of about 0.07 from part 3, is the gain distinguishable from noise?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "no",
+        "text": "No: 5 points is under one standard error",
+        "correct": true
+       },
+       {
+        "id": "yes",
+        "text": "Yes: 5 points is a real gain",
+        "why": "Each rate is uncertain by about 0.07; a 5-point gap is well inside that."
+       },
+       {
+        "id": "paired",
+        "text": "Yes, because the tasks are planted",
+        "why": "Planted or not, 40 tasks give a wide error bar; pairing on the same tasks would help."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "No: run both on the same tasks, and more of them.",
+      "generic": "Not quite. Compare 0.05 with the standard error."
+     },
+     "explain": {
+      "text": "A gap of 0.05 against standard errors near 0.07 is noise. Pair the versions on the same tasks, and use more tasks, before choosing."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p3-call",
+   "difficulty": 4,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "A scripted model asks get_close for `{\"ticker\": \"HALL\", \"date\": 20240327, \"k\": 3}`. The schema needs a ticker from the enum and a string date, and refuses extra keys.",
+   "parts": [
+    {
+     "question": "How many errors does the validator report?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "one",
+        "value": 1,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "three",
+        "value": 3,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Two: the integer date and the extra 'k'.",
+      "generic": "Not quite. Check the date's type and the extra key.",
+      "byKey": {
+       "one": "The extra key 'k' is an error too.",
+       "three": "The ticker is fine."
+      }
+     },
+     "explain": {
+      "text": "HALL is in the enum; the date is an integer and 'k' is not a field: 2 errors."
+     }
+    },
+    {
+     "question": "Using the 2 errors from part 1, which message should the model receive?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "both",
+        "text": "Both errors, joined in one message",
+        "correct": true
+       },
+       {
+        "id": "first",
+        "text": "The date error only, the first one found",
+        "why": "The model fixes the date and is refused again for 'k'."
+       },
+       {
+        "id": "generic",
+        "text": "invalid input",
+        "why": "It names nothing to fix."
+       },
+       {
+        "id": "raise",
+        "text": "None: the harness raises",
+        "why": "The run would end."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Both errors in one message, so one retry fixes them.",
+      "generic": "Not quite. Which message lets the model fix everything at once?"
+     },
+     "explain": {
+      "text": "Joining the validator's errors with '; ' gives the model every fix in one turn."
+     }
+    },
+    {
+     "question": "After the 2-error message of part 2, the model fixes both and the tool returns a close. How many messages has the run then, counting the question but not the final answer?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 5,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "no-err",
+        "value": 3,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Question, bad call, error, good call, result: 5.",
+      "generic": "Not quite. The error is a tool message too.",
+      "byKey": {
+       "no-err": "The bad call and its error count as two messages."
+      }
+     },
+     "explain": {
+      "text": "1 question + 2 calls + 2 tool messages = 5 before the answer."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p3-score",
+   "difficulty": 3,
+   "skills": [
+    "llm-agents"
+   ],
+   "prose": "A planted task requires get_close. An agent's run: a call with broken JSON, its error, a good get_close call, its result, then an answer that matches the known close.",
+   "parts": [
+    {
+     "question": "How many model calls (steps) did the run make?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "msgs",
+        "value": 5,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Three: two calls and the answer.",
+      "generic": "Not quite. Count the model's replies.",
+      "byKey": {
+       "msgs": "That counts the messages after the question."
+      }
+     },
+     "explain": {
+      "text": "Two tool calls and one answer: 3 steps."
+     }
+    },
+    {
+     "question": "Using the 3 steps from part 1, how many of them were invalid calls?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "zero",
+        "value": 0,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "One: the broken JSON.",
+      "generic": "Not quite. Count the calls that came back as errors.",
+      "byKey": {
+       "zero": "The broken JSON came back as an error."
+      }
+     },
+     "explain": {
+      "text": "1 of the 2 calls failed."
+     }
+    },
+    {
+     "question": "With that 1 invalid call, is the run a success by l12's rule?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "yes",
+        "text": "Yes: right answer, required tool used",
+        "correct": true
+       },
+       {
+        "id": "no",
+        "text": "No: it made an invalid call",
+        "why": "Invalid calls are recorded as a cost; success needs the answer and the required tool."
+       },
+       {
+        "id": "half",
+        "text": "Half, since one call in two failed",
+        "why": "Success is yes or no; the invalid call is reported separately."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Yes: right answer, required tool used.",
+      "generic": "Not quite. What does success require?"
+     },
+     "explain": {
+      "text": "Success needs the right answer and the required tool's result; the invalid call is reported beside it, as a cost."
+     }
+    }
+   ]
+  }
+ ]
+}

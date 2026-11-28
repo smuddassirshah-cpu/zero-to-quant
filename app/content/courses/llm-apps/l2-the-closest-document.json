@@ -1,0 +1,1185 @@
+{
+ "id": "l2-the-closest-document",
+ "course": "llm-apps",
+ "title": "The closest document",
+ "minutes": 14,
+ "objectives": [
+  "Rank documents by cosine similarity to a query and explain what stop words do to it."
+ ],
+ "skills": [
+  "llm-retrieve"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Scoring a note",
+   "prose": "The search turns the question **inflation and rates** into a TF-IDF vector of length 1, using the notes' IDF, and scores each note by its cosine with it (`representations` level 1). The query's vector has 0.6677 on 'and' and 0.5264 on each of 'inflation' and 'rates'. Note 4's has 0.4855 on 'and' and 0.3827 on 'inflation'.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "n1",
+       "label": "Note 1"
+      },
+      {
+       "id": "n2",
+       "label": "Note 2"
+      },
+      {
+       "id": "n3",
+       "label": "Note 3"
+      },
+      {
+       "id": "n4",
+       "label": "Note 4"
+      }
+     ],
+     "yLabel": "Cosine with the query",
+     "yMax": 0.6,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "n1": 0.3919,
+      "n2": 0.1812,
+      "n3": 0.0,
+      "n4": 0.0
+     },
+     "caption": "Note 4's bar is waiting for your answer."
+    }
+   },
+   "question": "What is note 4's cosine with the query? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5256,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sum-weights",
+      "value": 0.8682,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "one-word",
+      "value": 0.2015,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Both vectors have length 1, so the cosine is their dot product."
+    },
+    {
+     "rung": "point",
+     "text": "Only shared words count: 'and' and 'inflation'.",
+     "highlight": [
+      "xn4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.6677 \\times 0.4855 + 0.5264 \\times 0.3827$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.6677 \\times 0.4855 + 0.5264 \\times 0.3827 = 0.5256$: note 4 beats note 1's 0.3919.",
+    "generic": "Not quite. Multiply the matching entries and add.",
+    "byKey": {
+     "sum-weights": "You added note 4's weights. Multiply each by the query's weight for the same word first.",
+     "one-word": "That is the 'inflation' term alone. 'and' is shared too."
+    }
+   },
+   "explain": {
+    "text": "The products are 0.3242 for 'and' and 0.2015 for 'inflation', so the cosine is 0.5256. Note 4 now ranks first, ahead of the note we judged best.",
+    "canvas": {
+     "values": {
+      "n4": 0.5256
+     },
+     "highlight": [
+      "xn4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "title": "Leaving words out",
+   "prose": "Words such as 'and', 'as' and 'on' join a sentence together but say nothing about its subject. Slide to drop them from the notes and the query before fitting TF-IDF.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "n1",
+       "label": "Note 1"
+      },
+      {
+       "id": "n2",
+       "label": "Note 2"
+      },
+      {
+       "id": "n3",
+       "label": "Note 3"
+      },
+      {
+       "id": "n4",
+       "label": "Note 4"
+      }
+     ],
+     "yLabel": "Cosine with the query",
+     "yMax": 0.6,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "n1": 0.3919,
+      "n2": 0.1812,
+      "n3": 0.0,
+      "n4": 0.5256
+     }
+    },
+    "controls": [
+     {
+      "bind": "stop",
+      "label": "Function words",
+      "frames": [
+       {
+        "values": {
+         "n1": 0.3919,
+         "n2": 0.1812,
+         "n3": 0.0,
+         "n4": 0.5256
+        }
+       },
+       {
+        "values": {
+         "n1": 0.5672,
+         "n2": 0.2706,
+         "n3": 0.0,
+         "n4": 0.3096
+        }
+       }
+      ],
+      "frameLabels": [
+       "kept",
+       "left out"
+      ]
+     }
+    ]
+   },
+   "question": "With 'and', 'as' and 'on' left out, which note comes first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "n1",
+      "text": "Note 1",
+      "correct": true
+     },
+     {
+      "id": "n4",
+      "text": "Note 4",
+      "why": "Note 4 led only because of 'and'. Without it, note 4 falls to 0.3096."
+     },
+     {
+      "id": "n2",
+      "text": "Note 2",
+      "why": "Note 2 rises to 0.2706 but stays below note 1's 0.5672."
+     },
+     {
+      "id": "n3",
+      "text": "Note 3",
+      "why": "Note 3 shares no word with the query either way."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Move the slider to 'left out' and read the tallest bar."
+    }
+   ],
+   "feedback": {
+    "correct": "Note 1 now leads at 0.5672, with note 4 at 0.3096.",
+    "generic": "Not quite. Read the bars with the function words left out."
+   },
+   "explain": {
+    "text": "Without 'and', note 4 keeps only its 'inflation' term, so note 1, which matches both content words, comes first.",
+    "canvas": {
+     "values": {
+      "n1": 0.5672,
+      "n2": 0.2706,
+      "n3": 0.0,
+      "n4": 0.3096
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Stop words",
+   "prose": "Words dropped before fitting are **stop words**. With 'and', 'as' and 'on' gone, the query is 'inflation rates', with 0.70711 on each word. Note 1 loses 'as' and has weight 0.40104 on 'inflation' and on 'rates'.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "n1",
+       "label": "Note 1"
+      },
+      {
+       "id": "n2",
+       "label": "Note 2"
+      },
+      {
+       "id": "n3",
+       "label": "Note 3"
+      },
+      {
+       "id": "n4",
+       "label": "Note 4"
+      }
+     ],
+     "yLabel": "Cosine with the query",
+     "yMax": 0.6,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "n1": 0.5672,
+      "n2": 0.2706,
+      "n3": 0.0,
+      "n4": 0.3096
+     }
+    }
+   },
+   "question": "What is note 1's cosine with the query now? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5672,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "one-word",
+      "value": 0.2836,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "old",
+      "value": 0.3919,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two shared words, each a product of two weights."
+    },
+    {
+     "rung": "point",
+     "text": "$2 \\times 0.70711 \\times 0.40104$.",
+     "highlight": [
+      "xn1"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$2 \\times 0.70711 \\times 0.40104 = 0.5672$.",
+    "generic": "Not quite. Add the products for 'inflation' and 'rates'.",
+    "byKey": {
+     "one-word": "That counts one shared word. Note 1 shares both 'inflation' and 'rates'.",
+     "old": "0.3919 is the score with the stop words kept."
+    }
+   },
+   "explain": {
+    "text": "Each shared word adds $0.70711 \\times 0.40104 = 0.2836$, so note 1 scores 0.5672 and ranks first.",
+    "canvas": {
+     "highlight": [
+      "xn1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Cosine by hand",
+   "prose": "Two notes, already scaled to length 1, over the words (yields, rates, oil): $\\mathbf{a} = (0.6, 0.8, 0)$ and $\\mathbf{b} = (0.8, 0, 0.6)$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "yields",
+      "rates",
+      "oil"
+     ],
+     "rows": [
+      [
+       "a",
+       "0.6",
+       "0.8",
+       "0"
+      ],
+      [
+       "b",
+       "0.8",
+       "0",
+       "0.6"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is their cosine? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.48,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "add",
+      "value": 1.4,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Unit vectors: the cosine is the dot product."
+    },
+    {
+     "rung": "point",
+     "text": "Only 'yields' is non-zero in both.",
+     "highlight": [
+      "c1"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$0.6 \\times 0.8 + 0.8 \\times 0 + 0 \\times 0.6 = 0.48$.",
+    "generic": "Not quite. Multiply word by word, then add.",
+    "byKey": {
+     "add": "You added the two notes' weights on 'yields'. Multiply them."
+    }
+   },
+   "explain": {
+    "text": "Only 'yields' appears in both notes, so the cosine is $0.6 \\times 0.8 = 0.48$.",
+    "canvas": {
+     "highlight": [
+      "c1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A note pasted twice",
+   "prose": "A clerk pastes note 4 into the index twice in one file, so every count doubles. The raw TF-IDF vector doubles too, and so does its dot product with the query.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "n1",
+       "label": "Note 1"
+      },
+      {
+       "id": "n2",
+       "label": "Note 2"
+      },
+      {
+       "id": "n3",
+       "label": "Note 3"
+      },
+      {
+       "id": "n4",
+       "label": "Note 4"
+      }
+     ],
+     "yLabel": "Cosine with the query",
+     "yMax": 0.6,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "n1": 0.3919,
+      "n2": 0.1812,
+      "n3": 0.0,
+      "n4": 0.5256
+     }
+    }
+   },
+   "question": "What is the doubled note's cosine with the query, stop words kept? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5256,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "doubled",
+      "value": 1.0512,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The cosine divides by the length. What happens to the length?"
+    },
+    {
+     "rung": "point",
+     "text": "Doubling every count doubles the length as well.",
+     "highlight": [
+      "xn4"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Still 0.5256: the doubled length cancels the doubled counts.",
+    "generic": "Not quite. Cosine divides by both lengths.",
+    "byKey": {
+     "doubled": "You doubled the score. The length doubles too, so the cosine is unchanged."
+    }
+   },
+   "explain": {
+    "text": "The cosine stays 0.5256: doubling a vector does not change its direction, and cosine measures direction only. A raw dot product would let a note win just by being long.",
+    "canvas": {
+     "highlight": [
+      "xn4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "What decided the winner",
+   "prose": "With stop words kept, note 4 beat note 1 by 0.5256 to 0.3919. A colleague says note 4 won because it is more about inflation. The two parts of note 4's score were 0.3242 for 'and' and 0.2015 for 'inflation'.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "n1",
+       "label": "Note 1"
+      },
+      {
+       "id": "n2",
+       "label": "Note 2"
+      },
+      {
+       "id": "n3",
+       "label": "Note 3"
+      },
+      {
+       "id": "n4",
+       "label": "Note 4"
+      }
+     ],
+     "yLabel": "Cosine with the query",
+     "yMax": 0.6,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "n1": 0.3919,
+      "n2": 0.1812,
+      "n3": 0.0,
+      "n4": 0.5256
+     }
+    }
+   },
+   "question": "Without its 'and' term, what would note 4 score? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2015,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "and-part",
+      "value": 0.3241,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "full",
+      "value": 0.5256,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Take the 'and' term out of 0.5256."
+    },
+    {
+     "rung": "point",
+     "text": "What is left is the 'inflation' term.",
+     "highlight": [
+      "xn1",
+      "xn4"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "0.2015, well below note 1's 0.3919: the word 'and' decided the ranking.",
+    "generic": "Not quite. Subtract the 'and' term from note 4's score.",
+    "byKey": {
+     "and-part": "0.3242 is the part from 'and'. The question asks what is left without it.",
+     "full": "0.5256 is the whole score, 'and' included. Take the 'and' term out."
+    }
+   },
+   "explain": {
+    "text": "Note 4's 'inflation' term alone is 0.2015, below note 1's 0.3919. More than half of note 4's score came from 'and', a word with no meaning: in four notes it looked rare, so its IDF was high.",
+    "canvas": {
+     "highlight": [
+      "xn1",
+      "xn4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A query with no known word",
+   "prose": "A trader searches **gilt yields**. Neither word appears in any of the four notes, so the query's TF-IDF vector is all zeros and has length 0.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "n1",
+       "label": "Note 1"
+      },
+      {
+       "id": "n2",
+       "label": "Note 2"
+      },
+      {
+       "id": "n3",
+       "label": "Note 3"
+      },
+      {
+       "id": "n4",
+       "label": "Note 4"
+      }
+     ],
+     "yLabel": "Cosine with the query",
+     "yMax": 0.6,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "n1": 0.0,
+      "n2": 0.0,
+      "n3": 0.0,
+      "n4": 0.0
+     },
+     "caption": "Every product is 0."
+    }
+   },
+   "question": "What should the search return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "No results",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "All four notes in their stored order",
+      "why": "A list ordered by nothing looks like an answer. With no shared word there is nothing to rank."
+     },
+     {
+      "id": "error",
+      "text": "A division error",
+      "why": "The cosine would divide by a zero length, so check for it first and return nothing instead of crashing."
+     },
+     {
+      "id": "note1",
+      "text": "Note 1, the closest by eye",
+      "why": "The search has no basis for that: every score is 0."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The cosine divides by the query's length."
+    },
+    {
+     "rung": "point",
+     "text": "That length is 0."
+    }
+   ],
+   "feedback": {
+    "correct": "No results: the cosine is undefined, and an honest search says it found nothing.",
+    "generic": "Not quite. What does a zero vector share with any note?"
+   },
+   "explain": {
+    "text": "A zero vector has no direction, so its cosine with any note is undefined. Guard for it and return an empty list."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "Cosine ranking",
+   "prose": "What you did: turn the query into a TF-IDF vector with the notes' IDF, then score note $d$ by\n\n$$\\cos(\\mathbf{q}, \\mathbf{d}) = \\frac{\\mathbf{q} \\cdot \\mathbf{d}}{\\lVert\\mathbf{q}\\rVert\\,\\lVert\\mathbf{d}\\rVert},$$\n\nhighest first. Rows of length 1 make it a dot product. A zero query returns nothing.",
+   "question": "Why rank by cosine rather than by the raw dot product?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "length",
+      "text": "A note's length would raise its dot product without making it more relevant",
+      "correct": true
+     },
+     {
+      "id": "speed",
+      "text": "The cosine is faster to compute",
+      "why": "It costs more: two lengths and a division on top of the dot product."
+     },
+     {
+      "id": "negative",
+      "text": "The dot product can be negative for TF-IDF vectors",
+      "why": "TF-IDF weights are never negative, so neither is their dot product."
+     },
+     {
+      "id": "idf",
+      "text": "The dot product ignores the IDF",
+      "why": "Both use the same TF-IDF vectors; only the division by length differs."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Recall the note pasted twice."
+    }
+   ],
+   "feedback": {
+    "correct": "A long note would win on size alone; the cosine divides it out.",
+    "generic": "Not quite. What happened to the dot product when note 4 was doubled?"
+   },
+   "explain": {
+    "text": "Doubling note 4 doubled its dot product but left its cosine at 0.5256. Ranking by cosine compares direction, so length cannot buy a higher place."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "cosine and rank in code",
+   "prose": "Write `cosine(a, b)`, returning 0.0 when either vector has length 0. Then `rank(query, docs, stop_words)`. The level-1 TF-IDF is supplied: `fit_tfidf(docs, stop_words)` returns a dict whose `'X'` holds the rows, and `embed(query, model, stop_words)` gives the query's vector.",
+   "question": "Write `cosine` and `rank`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    # cosine of two vectors; 0.0 if either has length 0\n    ...\n\n\ndef rank(query, docs, stop_words=()):\n    # every note index, highest cosine with the query first,\n    # ties to the lower index; [] if the query has no known word\n    ...\n",
+    "solution": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    a = np.asarray(a, dtype=float)\n    b = np.asarray(b, dtype=float)\n    na, nb = np.linalg.norm(a), np.linalg.norm(b)\n    if na == 0 or nb == 0:\n        return 0.0\n    return float(a @ b / (na * nb))\n\n\ndef rank(query, docs, stop_words=()):\n    model = fit_tfidf(docs, stop_words)\n    q = embed(query, model, stop_words)\n    if not q.any():\n        return []\n    scores = [cosine(q, row) for row in model['X']]\n    return sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n",
+    "examples": [
+     {
+      "call": "cosine([1, 0], [1, 1])",
+      "expect": "0.7071067811865475",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "cosine([0.6, 0.8, 0], [0.8, 0, 0.6])",
+      "expect": "0.48",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "cosine([3, 4], [6, 8])",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "cosine([0, 0, 0], [1, 2, 3])",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "setup": "D4 = ['rates rise as inflation stays high', 'bank shares rise on higher rates', 'oil falls as supply grows', 'inflation falls and bonds rally']",
+      "call": "rank('inflation and rates', D4)",
+      "expect": "[3, 0, 1, 2]"
+     },
+     {
+      "call": "rank('inflation and rates', D4, ['and', 'as', 'on'])",
+      "expect": "[0, 3, 1, 2]"
+     },
+     {
+      "call": "rank('gilt yields', D4)",
+      "expect": "[]"
+     },
+     {
+      "call": "rank('rates', D4)",
+      "expect": "[0, 1, 2, 3]"
+     },
+     {
+      "setup": "import json\nN = [n['text'] for n in json.load(open('llm-apps-notes.json'))['notes']]",
+      "call": "rank('corran refinancing debt', N)[:5]",
+      "expect": "[49, 68, 85, 20, 13]"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests. Three are cosines within absolute $10^{-9}$, one with a zero vector. Five are exact rankings: the four notes with and without stop words, a query with no known word, a one-word query with tied scores, and the first five of the 180-note file.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    a = np.asarray(a, dtype=float)\n    b = np.asarray(b, dtype=float)\n    na, nb = np.linalg.norm(a), np.linalg.norm(b)\n    if na == 0 or nb == 0:\n        return 0.0\n    return float(a @ b)\n\n\ndef rank(query, docs, stop_words=()):\n    model = fit_tfidf(docs, stop_words)\n    q = embed(query, model, stop_words)\n    if not q.any():\n        return []\n    scores = [cosine(q, row) for row in model['X']]\n    return sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n",
+      "test": 2,
+      "symptom": "Returns the dot product without dividing by the lengths."
+     },
+     {
+      "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    a = np.asarray(a, dtype=float)\n    b = np.asarray(b, dtype=float)\n    na, nb = np.linalg.norm(a), np.linalg.norm(b)\n    return float(a @ b / (na * nb))\n\n\ndef rank(query, docs, stop_words=()):\n    model = fit_tfidf(docs, stop_words)\n    q = embed(query, model, stop_words)\n    if not q.any():\n        return []\n    scores = [cosine(q, row) for row in model['X']]\n    return sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n",
+      "test": 3,
+      "symptom": "No zero guard: 0/0 gives NaN."
+     },
+     {
+      "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    a = np.asarray(a, dtype=float)\n    b = np.asarray(b, dtype=float)\n    na, nb = np.linalg.norm(a), np.linalg.norm(b)\n    if na == 0 or nb == 0:\n        return 0.0\n    return float(a @ b / (na * nb))\n\n\ndef rank(query, docs, stop_words=()):\n    model = fit_tfidf(docs)\n    q = embed(query, model)\n    if not q.any():\n        return []\n    scores = [cosine(q, row) for row in model['X']]\n    return sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n",
+      "test": 5,
+      "symptom": "Ignores the stop words."
+     },
+     {
+      "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    a = np.asarray(a, dtype=float)\n    b = np.asarray(b, dtype=float)\n    na, nb = np.linalg.norm(a), np.linalg.norm(b)\n    if na == 0 or nb == 0:\n        return 0.0\n    return float(a @ b / (na * nb))\n\n\ndef rank(query, docs, stop_words=()):\n    model = fit_tfidf(docs, stop_words)\n    q = embed(query, model, stop_words)\n    scores = [cosine(q, row) for row in model['X']]\n    return sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n",
+      "test": 6,
+      "symptom": "Ranks every note for a query with no known word."
+     },
+     {
+      "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef cosine(a, b):\n    a = np.asarray(a, dtype=float)\n    b = np.asarray(b, dtype=float)\n    na, nb = np.linalg.norm(a), np.linalg.norm(b)\n    if na == 0 or nb == 0:\n        return 0.0\n    return float(a @ b / (na * nb))\n\n\ndef rank(query, docs, stop_words=()):\n    model = fit_tfidf(docs, stop_words)\n    q = embed(query, model, stop_words)\n    if not q.any():\n        return []\n    scores = [cosine(q, row) for row in model['X']]\n    return sorted(reversed(range(len(docs))), key=lambda i: -scores[i])\n",
+      "test": 7,
+      "symptom": "Breaks ties towards the higher index."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.linalg.norm` gives a length; test both for 0 before dividing."
+    },
+    {
+     "rung": "point",
+     "text": "Sort the indices by `(-score, index)` so ties go to the lower index."
+    }
+   ],
+   "feedback": {
+    "correct": "Your ranking matches on every test, ties and empty queries included.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "$(3, 4)$ and $(6, 8)$ point the same way, so their cosine is 1: divide by both lengths.",
+     "test-3": "A zero vector has length 0: return 0.0 before dividing.",
+     "test-5": "With 'and', 'as' and 'on' left out, note 1 (index 0) must come first: drop the stop words from the notes and the query.",
+     "test-6": "'gilt yields' shares no word with any note: return an empty list, not a ranking of zeros.",
+     "test-7": "Notes 1 and 2 tie for 'rates': the lower index, 0, must come first."
+    }
+   },
+   "explain": {
+    "text": "The guard returns no results for a zero query; the sort key `(-score, index)` puts the best first and settles ties by position, so the order is the same on every run."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The top k",
+   "prose": "A language model can read only a few passages, so the search hands over its top $k$. Write `top_k(query, docs, k)`: at most $k$ note indices whose cosine is above 0, best first. A query of stop words alone returns no results.",
+   "question": "Write `top_k`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef top_k(query, docs, k):\n    # at most k note indices with a cosine above 0, best first,\n    # ties to the lower index; stop words in STOP are left out\n    ...\n",
+    "solution": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef top_k(query, docs, k):\n    model = fit_tfidf(docs, STOP)\n    q = embed(query, model, STOP)\n    scores = model['X'] @ q\n    order = sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n    return [i for i in order if scores[i] > 0][:k]\n",
+    "prelude": "STOP = ('a', 'and', 'as', 'of', 'on', 'the', 'with', 'for', 'this', 'we')\n",
+    "examples": [
+     {
+      "setup": "D4 = ['rates rise as inflation stays high', 'bank shares rise on higher rates', 'oil falls as supply grows', 'inflation falls and bonds rally']",
+      "call": "top_k('oil supply', D4, 2)",
+      "expect": "[2]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "D4 = ['rates rise as inflation stays high', 'bank shares rise on higher rates', 'oil falls as supply grows', 'inflation falls and bonds rally']",
+      "call": "top_k('oil supply', D4, 0)",
+      "expect": "[]"
+     },
+     {
+      "call": "top_k('inflation and rates', D4, 2)",
+      "expect": "[0, 3]"
+     },
+     {
+      "call": "top_k('inflation and rates', D4, 4)",
+      "expect": "[0, 3, 1]"
+     },
+     {
+      "call": "top_k('and the', D4, 3)",
+      "expect": "[]"
+     },
+     {
+      "setup": "import json\nN = [n['text'] for n in json.load(open('llm-apps-notes.json'))['notes']]",
+      "call": "top_k('the halloran margins profit', N, 3)",
+      "expect": "[76, 152, 178]"
+     },
+     {
+      "call": "top_k('ellery barrels oil', N, 4)",
+      "expect": "[88, 79, 44, 30]"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, each an exact list. They cover $k = 0$, the four notes at $k = 2$ and $k = 4$ (only cosines above 0 are kept), a query of stop words only, and two queries on the 180-note file. `STOP` is defined for you.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef top_k(query, docs, k):\n    model = fit_tfidf(docs, STOP)\n    q = embed(query, model, STOP)\n    scores = model['X'] @ q\n    order = sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n    return order[:k]\n",
+      "test": 3,
+      "symptom": "Keeps notes with a cosine of 0."
+     },
+     {
+      "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef top_k(query, docs, k):\n    model = fit_tfidf(docs)\n    q = embed(query, model)\n    scores = model['X'] @ q\n    order = sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n    return [i for i in order if scores[i] > 0][:k]\n",
+      "test": 2,
+      "symptom": "Forgets the stop words."
+     },
+     {
+      "source": "import numpy as np\nfrom llm_apps_ops_l1 import fit_tfidf, embed\n\n\ndef top_k(query, docs, k):\n    model = fit_tfidf(docs, STOP)\n    q = embed(query, model, STOP)\n    scores = model['X'] @ q\n    order = sorted(range(len(docs)), key=lambda i: (-scores[i], i))\n    return [i for i in order if scores[i] > 0][:k + 1]\n",
+      "test": 1,
+      "symptom": "Returns one note too many."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Rank as before, then keep only scores above 0."
+    },
+    {
+     "rung": "point",
+     "text": "Slice the kept list to `k`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your top k matches on every test.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-3": "Note 3 (index 2) shares no word with the query, so it must not be listed: keep only cosines above 0.",
+     "test-2": "With stop words left out, note 1 (index 0) leads: pass STOP to both `fit_tfidf` and `embed`.",
+     "test-1": "Return at most k notes: with k = 0 the list is empty."
+    }
+   },
+   "explain": {
+    "text": "Filtering out zero scores is what makes 'no results' possible: a query of stop words, or of unknown words, leaves nothing above 0."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Apple, the fruit",
+   "prose": "A news screener for an equity desk scores headlines against **apple results**. The fruit story 'apple harvest results hit by frost' scores 0.5309, above the company story 'apple shares rise after record results' at 0.4523.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "h0",
+       "label": "Headline 1"
+      },
+      {
+       "id": "h1",
+       "label": "Headline 2"
+      },
+      {
+       "id": "h2",
+       "label": "Headline 3"
+      },
+      {
+       "id": "h3",
+       "label": "Headline 4"
+      }
+     ],
+     "yLabel": "Cosine",
+     "yMax": 0.8,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "h0": 0.5309,
+      "h1": 0.4523,
+      "h2": 0.0,
+      "h3": 0.1913
+     }
+    }
+   },
+   "question": "Why does the fruit story score higher than the company story?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "words",
+      "text": "It sees the shared words 'apple' and 'results', not their meaning",
+      "correct": true
+     },
+     {
+      "id": "idf",
+      "text": "The IDF of 'apple' is too low for a company name",
+      "why": "Raising the weight of 'apple' raises both headlines alike; the problem is that the word has two meanings."
+     },
+     {
+      "id": "stop",
+      "text": "'results' should be a stop word and left out",
+      "why": "'results' carries meaning here; dropping it would hide the company story too."
+     },
+     {
+      "id": "frost",
+      "text": "Frost news matters more to a share price than results",
+      "why": "The search knows nothing about prices or frost; it only counts weighted shared words."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which words of the query does each headline share?"
+    },
+    {
+     "rung": "point",
+     "text": "Both contain 'apple' and 'results'."
+    }
+   ],
+   "feedback": {
+    "correct": "Word overlap cannot tell Apple the company from apples the fruit.",
+    "generic": "Not quite. Compare the words each headline shares with the query."
+   },
+   "explain": {
+    "text": "Each headline shares 'apple' and 'results'; the fruit one has fewer other words diluting them, so it wins. A search that matches meaning rather than spelling is the next lesson."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The query becomes a TF-IDF vector with the collection's IDF, and notes are ranked by their cosine with it, highest first.",
+   "Cosine divides out length, so a note cannot rank higher just by repeating itself; a query with no known word returns nothing.",
+   "In a small collection a function word can look rare and decide the ranking; a stop list removes such words before fitting."
+  ],
+  "formula": {
+   "name": "Cosine score",
+   "tex": "\\cos(\\mathbf{q}, \\mathbf{d}) = \\frac{\\mathbf{q} \\cdot \\mathbf{d}}{\\lVert\\mathbf{q}\\rVert\\,\\lVert\\mathbf{d}\\rVert}",
+   "note": "With rows of length 1 it is the dot product."
+  },
+  "trap": "Trusting the top note: here 'and' put note 4 first, not its subject."
+ },
+ "quiz": [
+  {
+   "id": "q-cos-unit",
+   "difficulty": 2,
+   "prose": "Two notes scaled to length 1 have vectors $(0.8, 0.6)$ and $(0.6, 0.8)$ over the words (bonds, gilts).",
+   "question": "What is their cosine? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.96,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.48,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.8 \\times 0.6 + 0.6 \\times 0.8 = 0.96$.",
+    "generic": "Not quite. Multiply entry by entry and add.",
+    "byKey": {
+     "one": "You used one word only. Both words are shared."
+    }
+   },
+   "explain": {
+    "text": "Unit vectors: the cosine is the dot product, $0.48 + 0.48 = 0.96$."
+   }
+  },
+  {
+   "id": "q-dot-double",
+   "difficulty": 3,
+   "prose": "A note's raw TF-IDF vector has dot product 1.8 with a query vector. The note is pasted twice into one file.",
+   "question": "What is the new raw dot product? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.6,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 1.8,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "3.6: every count doubles, so the dot product doubles.",
+    "generic": "Not quite. Each entry of the note doubles.",
+    "byKey": {
+     "same": "1.8 would be right for the cosine, which divides by the length. The raw dot product doubles."
+    }
+   },
+   "explain": {
+    "text": "The raw dot product doubles to 3.6 while the cosine stays put: that is why searches rank by cosine."
+   }
+  },
+  {
+   "id": "q-stop",
+   "difficulty": 3,
+   "prose": "In a corpus of 5 notes, 'and' appears in only one of them.",
+   "question": "What goes wrong if 'and' is kept?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rare",
+      "text": "It gets a high IDF, so a note can rank first just for containing 'and'",
+      "correct": true
+     },
+     {
+      "id": "never",
+      "text": "Nothing: the IDF step removes common words by itself",
+      "why": "IDF lowers a word only when it is common in the corpus. In 5 notes, 'and' looks rare."
+     },
+     {
+      "id": "zero",
+      "text": "Its IDF is 0, so it is ignored",
+      "why": "The smooth IDF is never below 1."
+     },
+     {
+      "id": "crash",
+      "text": "The cosine is undefined",
+      "why": "The cosine is fine; it is just driven by a word with no meaning."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "In a small corpus, a function word can look rare and swing the ranking.",
+    "generic": "Not quite. What is the IDF of a word in one note of five?"
+   },
+   "explain": {
+    "text": "With df = 1 of 5, 'and' gets $\\ln(6/2) + 1 = 2.0986$, a top weight. A stop list removes it before fitting."
+   }
+  },
+  {
+   "id": "q-zero",
+   "difficulty": 2,
+   "prose": "A query's words are all missing from the vocabulary.",
+   "question": "What should `top_k` return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "empty",
+      "text": "An empty list",
+      "correct": true
+     },
+     {
+      "id": "first",
+      "text": "The first k notes",
+      "why": "Those are not results; every score is 0."
+     },
+     {
+      "id": "nan",
+      "text": "A list of NaN scores",
+      "why": "Guard for the zero length and return nothing."
+     },
+     {
+      "id": "all",
+      "text": "Every note",
+      "why": "No note shares a word with the query."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Nothing: no note scores above 0.",
+    "generic": "Not quite. What is the query's vector?"
+   },
+   "explain": {
+    "text": "The query's vector is all zeros, so no note has a cosine above 0 and the list is empty."
+   }
+  }
+ ]
+}

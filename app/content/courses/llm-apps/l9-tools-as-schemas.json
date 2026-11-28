@@ -1,0 +1,944 @@
+{
+ "id": "l9-tools-as-schemas",
+ "course": "llm-apps",
+ "title": "Tools described as schemas",
+ "minutes": 14,
+ "objectives": [
+  "Write tool definitions as JSON schemas and validate arguments against them."
+ ],
+ "skills": [
+  "llm-agents"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The model reads only the label",
+   "prose": "There is no language model in this course's browser, so the agents here run against a **scripted model**: fixed replies, the same every run, built to show real behaviours. Like a real model, it picks a tool by reading the tools' descriptions. Below, three tools are offered with the same vague description, 'Gets data.', for the question about CORR's close.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Vague descriptions",
+     "lines": [
+      "user: [D01] What was CORR's close on 2024-03-08?",
+      "model: call search_notes {\"query\": \"What was CORR's close on 2024-03-08?\"}",
+      "tool: {\"result\": [101, 176, 94]}",
+      "model: answer note 101"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Which tool did the scripted model call?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "search",
+      "text": "search_notes, the first one listed",
+      "correct": true
+     },
+     {
+      "id": "close",
+      "text": "get_close, the price tool",
+      "why": "That is the right tool, but nothing in 'Gets data.' told the model so."
+     },
+     {
+      "id": "pct",
+      "text": "pct_change",
+      "why": "It took the first tool on the list, search_notes."
+     },
+     {
+      "id": "none",
+      "text": "None: it refused",
+      "why": "It called a tool; the trace shows search_notes."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the second line of the trace."
+    }
+   ],
+   "feedback": {
+    "correct": "search_notes: with nothing to choose by, it took the first tool, and answered 'note 101' to a price question.",
+    "generic": "Not quite. Read the model's call in the trace."
+   },
+   "explain": {
+    "text": "A model sees only each tool's name, description and argument schema. With three identical descriptions it guessed, confidently and wrongly.",
+    "canvas": {
+     "highlight": [
+      "l2",
+      "l4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "title": "Fix the description",
+   "prose": "Now the tools carry real descriptions; get_close's says 'Closing price of one share on one trading day.' Tap the line where the model's choice changes.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Clear descriptions",
+     "lines": [
+      "user: [D01] What was CORR's close on 2024-03-08?",
+      "model: call get_close {\"ticker\": \"CORR\", \"date\": \"2024-03-08\"}",
+      "tool: {\"result\": 97.87}",
+      "model: answer 97.87"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Tap the model's tool call.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l2"
+    ],
+    "countWord": "lines"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The model's call is the line after the user's question."
+    }
+   ],
+   "feedback": {
+    "correct": "It called get_close with the ticker and date, and answered 97.87, the right close.",
+    "generic": "Not quite. Tap the line that starts 'model: call'.",
+    "byKey": {
+     "l4": "That is the answer; the choice was made at the call above it.",
+     "l3": "That is the tool's result."
+    }
+   },
+   "explain": {
+    "text": "The same scripted model, the same question: only the descriptions changed. **The description is the interface**: it is all the model knows about what a tool does.",
+    "canvas": {
+     "highlight": [
+      "l2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A schema for get_close",
+   "prose": "Each tool also gets a **JSON schema** for its arguments: their types, which are `required`, allowed values (`enum`), number bounds, and whether other keys are refused. The harness checks every call against it before running the tool.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Field",
+      "Type",
+      "Rule"
+     ],
+     "rows": [
+      [
+       "ticker",
+       "string",
+       "one of CORR, DUNM, ELRY, HALL; required"
+      ],
+      [
+       "date",
+       "string",
+       "'YYYY-MM-DD'; required"
+      ],
+      [
+       "(anything else)",
+       "",
+       "refused"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which arguments pass get_close's schema?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`{\"ticker\": \"CORR\", \"date\": \"2024-03-08\"}`",
+      "correct": true
+     },
+     {
+      "id": "int",
+      "text": "`{\"ticker\": \"CORR\", \"date\": 20240308}`",
+      "why": "The date must be a string; 20240308 is an integer."
+     },
+     {
+      "id": "name",
+      "text": "`{\"ticker\": \"Corran\", \"date\": \"2024-03-08\"}`",
+      "why": "'Corran' is not in the ticker enum."
+     },
+     {
+      "id": "extra",
+      "text": "`{\"ticker\": \"CORR\", \"date\": \"2024-03-08\", \"adj\": true}`",
+      "why": "Extra keys are refused: 'adj' is not a field."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check type, enum and extra keys for each."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the first: right types, a ticker from the enum, no extra keys.",
+    "generic": "Not quite. Check each field against the table."
+   },
+   "explain": {
+    "text": "A schema turns rules into checks a program can run, so a bad call is caught before it reaches the price table."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Count the errors",
+   "prose": "A call arrives with `{\"ticker\": \"Apple Inc.\", \"k\": 5}` for get_close.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Field",
+      "Type",
+      "Rule"
+     ],
+     "rows": [
+      [
+       "ticker",
+       "string",
+       "one of CORR, DUNM, ELRY, HALL; required"
+      ],
+      [
+       "date",
+       "string",
+       "'YYYY-MM-DD'; required"
+      ],
+      [
+       "(anything else)",
+       "",
+       "refused"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many separate errors does the schema report?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check the required fields, then each key given."
+    },
+    {
+     "rung": "point",
+     "text": "date is missing; ticker is not in the enum; k is not a field."
+    }
+   ],
+   "feedback": {
+    "correct": "Three: missing 'date', 'ticker' not one of the four, and unexpected 'k'.",
+    "generic": "Not quite. Check required, enum and extra keys.",
+    "byKey": {
+     "one": "More than one rule is broken: also check the enum and the extra key.",
+     "two": "You missed one: the missing date, the ticker outside the enum, and the extra 'k'."
+    }
+   },
+   "explain": {
+    "text": "All 3 errors, reported at once, let the model fix them in one turn instead of three."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Number bounds",
+   "prose": "search_notes takes `query` (a string) and `k` (an integer from 1 to 10). A model asks for `{\"query\": \"corran debt\", \"k\": 50}`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Field",
+      "Type",
+      "Rule"
+     ],
+     "rows": [
+      [
+       "query",
+       "string",
+       "required"
+      ],
+      [
+       "k",
+       "integer",
+       "1 to 10"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What should the harness do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "refuse",
+      "text": "Refuse the call: k must be at most 10",
+      "correct": true
+     },
+     {
+      "id": "clip",
+      "text": "Quietly use k = 10",
+      "why": "Silently changing a call hides the mistake; the model never learns the limit."
+     },
+     {
+      "id": "run",
+      "text": "Run it with 50",
+      "why": "The schema's maximum is there to stop exactly this."
+     },
+     {
+      "id": "drop",
+      "text": "Drop k and use the default",
+      "why": "That is another silent change."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does `maximum: 10` say?"
+    }
+   ],
+   "feedback": {
+    "correct": "Refuse it, saying why, and let the model ask again.",
+    "generic": "Not quite. What is the schema for?"
+   },
+   "explain": {
+    "text": "The bound is enforced by code, not hoped for. The refusal goes back to the model as a tool result it can act on."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Saying it instead of checking it",
+   "prose": "A colleague's get_close schema has `ticker: {\"type\": \"string\"}` and a description that says 'use the exchange ticker, e.g. CORR'. A model sends `\"ticker\": \"Corran Group\"`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Field",
+      "Type",
+      "Rule"
+     ],
+     "rows": [
+      [
+       "ticker",
+       "string",
+       "one of CORR, DUNM, ELRY, HALL; required"
+      ],
+      [
+       "date",
+       "string",
+       "'YYYY-MM-DD'; required"
+      ],
+      [
+       "(anything else)",
+       "",
+       "refused"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "reaches",
+      "text": "The call passes the schema and reaches the price table, which has no 'Corran Group'",
+      "correct": true
+     },
+     {
+      "id": "blocked",
+      "text": "The description blocks it",
+      "why": "A description is text the model may ignore; nothing in the code checks it."
+     },
+     {
+      "id": "model",
+      "text": "The model never sends names, since the description says not to",
+      "why": "Models often follow descriptions, not always; the rule must be checked."
+     },
+     {
+      "id": "fine",
+      "text": "It works: the table looks names up",
+      "why": "The table is keyed by ticker only."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which of the two, schema or description, is checked by code?"
+    }
+   ],
+   "feedback": {
+    "correct": "Any string passes, so the bad ticker reaches the table and fails there, or worse, matches something wrong.",
+    "generic": "Not quite. What does the schema actually check?",
+    "byKey": {
+     "blocked": "You trusted the description to enforce a rule. Only the schema is checked: add an `enum` of tickers."
+    }
+   },
+   "explain": {
+    "text": "Rules the code must enforce belong in the schema (`enum: [\"CORR\", \"DUNM\", \"ELRY\", \"HALL\"]`); the description helps the model, it does not police it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A tool with no arguments",
+   "prose": "A tool `market_status()` takes no arguments: its schema is `{\"type\": \"object\", \"properties\": {}, \"additionalProperties\": false}`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Arguments",
+      "Passes?"
+     ],
+     "rows": [
+      [
+       "{}",
+       "?"
+      ],
+      [
+       "{\"when\": \"now\"}",
+       "?"
+      ],
+      [
+       "\"\"",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which arguments pass?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "empty",
+      "text": "Only `{}`",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "All three",
+      "why": "'when' is an extra key, refused; and an empty string is not an object."
+     },
+     {
+      "id": "none",
+      "text": "None: a tool must have arguments",
+      "why": "An empty object is valid arguments."
+     },
+     {
+      "id": "str",
+      "text": "`{}` and the empty string",
+      "why": "Arguments must be an object; a string is not."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Arguments are always an object, even an empty one."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the empty object.",
+    "generic": "Not quite. Check the type and the extra key."
+   },
+   "explain": {
+    "text": "A tool with no arguments still gets an object, `{}`; anything inside it is an extra key."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "A tool is a contract",
+   "prose": "What you built: a tool is a name, a description the model reads, and a schema the harness checks,\n\n```text\n{\"name\": \"get_close\",\n \"description\": \"Closing price of one share...\",\n \"input_schema\": {\"type\": \"object\", \"properties\": {...},\n                  \"required\": [...], \"additionalProperties\": false}}\n```\n\nThis is the shape real model APIs use.",
+   "question": "Where does a rule such as 'k is at most 10' belong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "schema",
+      "text": "In the schema, where code checks it",
+      "correct": true
+     },
+     {
+      "id": "desc",
+      "text": "In the description, where the model reads it",
+      "why": "Say it there too if it helps, but only the schema is checked."
+     },
+     {
+      "id": "tool",
+      "text": "Inside the tool, as a crash",
+      "why": "A crash inside the tool is a worse message than a schema error."
+     },
+     {
+      "id": "prompt",
+      "text": "In the system prompt",
+      "why": "Prompts guide; they do not enforce."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which part is checked by code?"
+    }
+   ],
+   "feedback": {
+    "correct": "In the schema; the description may repeat it for the model's sake.",
+    "generic": "Not quite. Which part is enforced?"
+   },
+   "explain": {
+    "text": "Descriptions steer, schemas enforce. Write both: the description for the model, the schema for the harness."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "validate in code",
+   "prose": "Write `validate(args, schema)` for the parts of JSON schema used here: object arguments, `required`, `properties` with a `type` of string, integer, number or boolean, `enum`, `minimum`, `maximum` and `additionalProperties`. No `jsonschema` package: a small validator is enough. `TYPE_NAMES` maps a Python type to its schema name.",
+   "question": "Write `validate`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def validate(args, schema):\n    # list of error strings, any order:\n    #   \"missing required field 'x'\"\n    #   \"unexpected field 'x'\"          (when additionalProperties is false)\n    #   \"field 'x' must be T, got U\"    (T a schema type, U from TYPE_NAMES)\n    #   \"field 'x' must be one of a, b, c\"\n    #   \"field 'x' must be at least m\" / \"... at most m\"\n    # a type error ends the checks for that field; non-dict args give\n    # ['arguments must be an object']\n    ...\n",
+    "solution": "def validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\n",
+    "prelude": "import numpy\nTYPE_NAMES = {str: 'string', bool: 'boolean', int: 'integer', float: 'number', list: 'array', dict: 'object', type(None): 'null'}\n",
+    "examples": [
+     {
+      "setup": "import json\nfrom llm_apps_ops_l3 import SCHEMAS\nGC, SN = SCHEMAS['get_close'], SCHEMAS['search_notes']",
+      "call": "sorted(validate({'date': '2024-03-08'}, GC))",
+      "expect": "[\"missing required field 'ticker'\"]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "import json\nfrom llm_apps_ops_l3 import SCHEMAS\nGC, SN = SCHEMAS['get_close'], SCHEMAS['search_notes']",
+      "call": "sorted(validate({'ticker': 'CORR', 'date': '2024-03-08'}, GC))",
+      "expect": "[]"
+     },
+     {
+      "call": "sorted(validate({'ticker': 'CORR'}, GC))",
+      "expect": "[\"missing required field 'date'\"]"
+     },
+     {
+      "call": "sorted(validate({'ticker': 'CORR', 'date': 20240308}, GC))",
+      "expect": "[\"field 'date' must be string, got integer\"]"
+     },
+     {
+      "call": "sorted(validate({'ticker': 'Apple Inc.', 'date': '2024-03-08', 'k': 5}, GC))",
+      "expect": "[\"field 'ticker' must be one of CORR, DUNM, ELRY, HALL\", \"unexpected field 'k'\"]"
+     },
+     {
+      "call": "sorted(validate({'query': 'debt', 'k': True}, SN))",
+      "expect": "[\"field 'k' must be integer, got boolean\"]"
+     },
+     {
+      "call": "sorted(validate({'query': 'debt', 'k': 50}, SN))",
+      "expect": "[\"field 'k' must be at most 10\"]"
+     },
+     {
+      "call": "sorted(validate({'query': 'debt', 'k': 0}, SN))",
+      "expect": "[\"field 'k' must be at least 1\"]"
+     },
+     {
+      "call": "sorted(validate({'ticker': 7, 'date': '2024-03-08'}, GC))",
+      "expect": "[\"field 'ticker' must be string, got integer\"]"
+     },
+     {
+      "call": "validate([], GC)",
+      "expect": "['arguments must be an object']"
+     },
+     {
+      "call": "sorted(validate({}, {'type': 'object', 'properties': {}, 'additionalProperties': False}))",
+      "expect": "[]"
+     }
+    ],
+    "how": "Submit runs 10 hidden tests, each an exact sorted list. They cover a good call, a missing field, an integer date, a name outside the enum with an extra key, a boolean where an integer is wanted, and k above and below its bounds. The rest are a number where an enum string is wanted, arguments that are not an object, and an empty schema.",
+    "mutants": [
+     {
+      "source": "def validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\n",
+      "test": 2,
+      "symptom": "Never checks required fields."
+     },
+     {
+      "source": "def validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\n",
+      "test": 8,
+      "symptom": "Keeps checking a field after its type error."
+     },
+     {
+      "source": "def validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\n",
+      "test": 4,
+      "symptom": "Lets extra keys through."
+     },
+     {
+      "source": "def validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'minimum' in p and value < p['minimum']:\n            errors.append(f\"field '{key}' must be at least {p['minimum']}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\n",
+      "test": 5,
+      "symptom": "Accepts True as an integer."
+     },
+     {
+      "source": "def validate(args, schema):\n    if not isinstance(args, dict):\n        return ['arguments must be an object']\n    errors = []\n    props = schema.get('properties', {})\n    for name in schema.get('required', []):\n        if name not in args:\n            errors.append(f\"missing required field '{name}'\")\n    for key, value in args.items():\n        if key not in props:\n            if schema.get('additionalProperties') is False:\n                errors.append(f\"unexpected field '{key}'\")\n            continue\n        p = props[key]\n        want = p.get('type')\n        ok = {'string': isinstance(value, str),\n              'integer': isinstance(value, int) and not isinstance(value, bool),\n              'number': isinstance(value, (int, float)) and not isinstance(value, bool),\n              'boolean': isinstance(value, bool)}.get(want, True)\n        if not ok:\n            errors.append(f\"field '{key}' must be {want}, got {TYPE_NAMES[type(value)]}\")\n            continue\n        if 'enum' in p and value not in p['enum']:\n            errors.append(f\"field '{key}' must be one of {', '.join(map(str, p['enum']))}\")\n        if 'maximum' in p and value > p['maximum']:\n            errors.append(f\"field '{key}' must be at most {p['maximum']}\")\n    return errors\n",
+      "test": 7,
+      "symptom": "Checks the maximum but not the minimum."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l3.py": "content/data/ai/llm_apps_ops_l3.py",
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check required names first, then loop over the given keys."
+    },
+    {
+     "rung": "point",
+     "text": "In Python `isinstance(True, int)` is True: rule booleans out of integer and number."
+    }
+   ],
+   "feedback": {
+    "correct": "Your validator matches on every test.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "A call with no date must report \"missing required field 'date'\".",
+     "test-8": "After a type error, skip the field's other checks: a number for the ticker is one error, not two.",
+     "test-4": "'k' is not a get_close field: report \"unexpected field 'k'\".",
+     "test-5": "In Python True is an int; refuse booleans where an integer is wanted.",
+     "test-7": "k = 0 is below the minimum of 1: report it."
+    }
+   },
+   "explain": {
+    "text": "Returning every error as a sentence, not raising on the first, gives the model one message it can fix everything from."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "tool_spec in code",
+   "prose": "Write `tool_spec(fn, description, schema)`, building the record a model is shown. Refuse a blank description, since it is the model's only guide, and a schema that is not an object.",
+   "question": "Write `tool_spec`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def tool_spec(fn, description, schema):\n    # {'name': fn.__name__, 'description': ..., 'input_schema': schema};\n    # ValueError for a blank description or a schema whose type is not 'object'\n    ...\n",
+    "solution": "def tool_spec(fn, description, schema):\n    if not description.strip():\n        raise ValueError('a tool needs a description')\n    if schema.get('type') != 'object':\n        raise ValueError('the input schema must be an object')\n    return {'name': fn.__name__, 'description': description, 'input_schema': schema}\n",
+    "prelude": "import numpy\n",
+    "examples": [
+     {
+      "setup": "from llm_apps_ops_l3 import pct_change, SCHEMAS",
+      "call": "tool_spec(pct_change, 'Change in %.', SCHEMAS['pct_change'])['name']",
+      "expect": "'pct_change'"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "from llm_apps_ops_l3 import get_close, SCHEMAS, DESCRIPTIONS",
+      "call": "tool_spec(get_close, DESCRIPTIONS['get_close'], SCHEMAS['get_close'])['name']",
+      "expect": "'get_close'"
+     },
+     {
+      "call": "sorted(tool_spec(get_close, DESCRIPTIONS['get_close'], SCHEMAS['get_close']))",
+      "expect": "['description', 'input_schema', 'name']"
+     },
+     {
+      "call": "tool_spec(len, 'Length of a list.', {'type': 'object', 'properties': {}})['name']",
+      "expect": "'len'"
+     },
+     {
+      "call": "tool_spec(get_close, '   ', SCHEMAS['get_close'])",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "tool_spec(get_close, 'Price.', {'type': 'string'})",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: the name and the keys of get_close's spec, the name taken from a built-in function, and ValueError for a blank description and for a schema that is not an object.",
+    "mutants": [
+     {
+      "source": "def tool_spec(fn, description, schema):\n    if not description.strip():\n        raise ValueError('a tool needs a description')\n    if schema.get('type') != 'object':\n        raise ValueError('the input schema must be an object')\n    return {'name': fn.__name__, 'description': description, 'parameters': schema}\n",
+      "test": 2,
+      "symptom": "Uses the key 'parameters' instead of 'input_schema'."
+     },
+     {
+      "source": "def tool_spec(fn, description, schema):\n    if not description:\n        raise ValueError('a tool needs a description')\n    if schema.get('type') != 'object':\n        raise ValueError('the input schema must be an object')\n    return {'name': fn.__name__, 'description': description, 'input_schema': schema}\n",
+      "test": 4,
+      "symptom": "Accepts a description of spaces."
+     },
+     {
+      "source": "def tool_spec(fn, description, schema):\n    if not description.strip():\n        raise ValueError('a tool needs a description')\n    if schema.get('type') != 'object':\n        raise ValueError('the input schema must be an object')\n    return {'name': 'get_close', 'description': description, 'input_schema': schema}\n",
+      "test": 3,
+      "symptom": "Hard-codes the name."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l3.py": "content/data/ai/llm_apps_ops_l3.py",
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`fn.__name__` gives the function's name."
+    },
+    {
+     "rung": "point",
+     "text": "Raise `ValueError` before building the record."
+    }
+   ],
+   "feedback": {
+    "correct": "Your spec matches the shape on every test.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "Use the keys name, description and input_schema.",
+     "test-4": "A description of spaces tells the model nothing: refuse it after stripping.",
+     "test-3": "Take the name from the function: `fn.__name__`."
+    }
+   },
+   "explain": {
+    "text": "Refusing a blank description at build time is cheaper than discovering, in a trace, that the model guessed."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "An internal data API",
+   "prose": "A research team wraps its internal fundamentals API as a tool for an assistant. The API takes a company id (an integer from the security master) and a field name from a list of 40.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Field",
+      "Type",
+      "Rule"
+     ],
+     "rows": [
+      [
+       "company_id",
+       "integer",
+       "?"
+      ],
+      [
+       "field",
+       "string",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which schema choice prevents the most bad calls?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "enum",
+      "text": "Make `field` an enum of the 40 names, `company_id` an integer, both required",
+      "correct": true
+     },
+     {
+      "id": "desc",
+      "text": "Describe the 40 fields in the description and accept any string",
+      "why": "The model may still send a near-miss name; only an enum stops it."
+     },
+     {
+      "id": "free",
+      "text": "Accept any arguments and let the API return its errors",
+      "why": "The API's errors may be cryptic; the schema's are written for the model."
+     },
+     {
+      "id": "string",
+      "text": "Make company_id a string so names also work",
+      "why": "Then 'Corran' reaches an API keyed by integers."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which rules can a schema check?"
+    }
+   ],
+   "feedback": {
+    "correct": "An enum and types catch bad calls before they reach the API, with messages the model can act on.",
+    "generic": "Not quite. Which option puts the rules in the schema?"
+   },
+   "explain": {
+    "text": "Put every checkable rule in the schema. The description then explains meaning (what each field is), not validity."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A tool is a name, a description and a JSON schema; the model sees only these, so the description is the interface.",
+   "The harness validates every call against the schema (types, required, enum, bounds, no extra keys) before running anything.",
+   "Rules that matter go in the schema, where code checks them; a description guides the model but enforces nothing."
+  ],
+  "formula": {
+   "name": "Tool record",
+   "tex": "\\{\\text{name}, \\text{description}, \\text{input\\_schema}\\}",
+   "note": "The shape real model APIs use."
+  },
+  "trap": "A ticker typed as any string, with the rule only in the description: 'Corran Group' reaches the price table."
+ },
+ "quiz": [
+  {
+   "id": "q9-count",
+   "difficulty": 2,
+   "prose": "get_close's schema requires ticker and date and refuses extra keys. A call sends `{\"date\": \"2024-03-08\", \"adj\": true}`.",
+   "question": "How many errors should `validate` report?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two: missing 'ticker' and unexpected 'adj'.",
+    "generic": "Not quite. Check required and extra keys.",
+    "byKey": {
+     "one": "Both the missing ticker and the extra key count."
+    }
+   },
+   "explain": {
+    "text": "The missing required field and the extra key are separate errors: 2."
+   }
+  },
+  {
+   "id": "q9-bool",
+   "difficulty": 3,
+   "prose": "A schema says `k` is an integer. In Python, `isinstance(True, int)` is `True`.",
+   "question": "Should `{\"k\": true}` pass?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: refuse booleans for integers",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: True is an int in Python, so it counts",
+      "why": "JSON's true is a boolean; treating it as 1 hides a mistake."
+     },
+     {
+      "id": "one",
+      "text": "Yes, as k = 1",
+      "why": "Silently reading true as 1 hides the model's error."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No: check for bool first.",
+    "generic": "Not quite. Is a JSON boolean an integer?"
+   },
+   "explain": {
+    "text": "`bool` is a subclass of `int` in Python, so test `isinstance(value, bool)` before accepting an integer."
+   }
+  },
+  {
+   "id": "q9-desc",
+   "difficulty": 2,
+   "prose": "Two tools have the same description, 'Gets data.'",
+   "question": "What does a model use to choose between them?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "guess",
+      "text": "Little more than their names and order: it is guessing",
+      "correct": true
+     },
+     {
+      "id": "code",
+      "text": "Their code",
+      "why": "The model never sees the code."
+     },
+     {
+      "id": "schema",
+      "text": "Only their schemas, which are enough",
+      "why": "Schemas show arguments, not purpose."
+     },
+     {
+      "id": "results",
+      "text": "Their past results",
+      "why": "It sees results only after calling."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "It is guessing.",
+    "generic": "Not quite. What does the model see?"
+   },
+   "explain": {
+    "text": "The model sees name, description and schema. With equal descriptions it has little to go on."
+   }
+  }
+ ]
+}

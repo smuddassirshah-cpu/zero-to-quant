@@ -1,0 +1,13 @@
+# llm-apps level 1: performance task
+
+- `homework-1.json`, item `h-retriever`, index 0. Kind `code` (Python, difficulty 5).
+- Matched objective: l1 "Write TF-IDF weights for a small corpus and match scikit-learn." (also l3 "Build a search over embeddings, with documents split into overlapping chunks." and l4 "Code recall at k and mean reciprocal rank, and compare two retrievers on labelled queries.").
+- Task: from a stub holding only the signatures and the `STOP` tuple, `build_index(docs)` cuts each document into windows of 12 words starting every 8 (overlap 4), drops stop words, fits TF-IDF over the windows (scikit-learn's smooth IDF, rows of length 1); `query(index, text, k)` weights the question the same way, scores each document by its best window's cosine and returns at most k document ids with a score above 0, ties to the lower id, `[]` for no known word.
+- 11 hidden tests, 1 example: five queries on a planted three-document case (a breach in the tail of a long document that only chunking finds, a word that only stop-word removal ranks right, a word in one document, a word in two windows of one document, stop words only), exact top-3 lists for three questions and a top-6 list for a fourth on 30 long reports built from the 180-note file, k = 0, and mean recall at 3 of at least 0.5 over 24 hidden labelled questions (model 0.5556; whole reports 0.4514). Five mutants, each first failing its own test with a `byKey` line: whole documents, zero scores kept, stop words kept, a document listed once per matching window, windows with no overlap.
+- Overlapping screens: l1 screens 8 and 9 code `tokenise`, `idf` and `tfidf_matrix`; l2 screens 8 and 9 code `cosine`, `rank` and `top_k` on the supplied `fit_tfidf`; l3 screen 9 codes `chunk` and `search`; l4 screen 9 codes `recall_at_k` (screens counted from 0). The task joins them from nothing, adds the best-window score per document, and is tested on documents no screen uses (the planted three and the 30 reports).
+
+Gates:
+1. `node tools/validate.mjs`: 0 errors.
+2. `VOICE_BASE=app/content/courses/llm-apps python3 docs/reviews/voice-scan.py 35`: 0 over 35 words and 0 lesson ids in code spans.
+3. Numbers script `docs/reports/llm-apps-L1-numbers.py` (venv, strict, through `tools/run-number-scripts.mjs`): exit 0; it reruns the solution and a scikit-learn twin against every test, checks every mutant's first failing test, the gaps at each exact-list cut (no near-tie) and the recall bar's margin.
+4. Playthrough `--set llm-apps/homework-1 --local-cdn <pkgs>`, with and without `--mobile`: all passed, the starter fails. `grade-all.mjs --code --strict-feedback`: 0 failures.

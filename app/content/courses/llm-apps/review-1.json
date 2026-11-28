@@ -1,0 +1,436 @@
+{
+ "id": "review-1",
+ "course": "llm-apps",
+ "level": 1,
+ "pass": 0.8,
+ "items": [
+  {
+   "id": "r-idf",
+   "difficulty": 2,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "A desk's index holds 11 notes, and 'downgrade' appears in 3 of them.",
+   "question": "What is the smooth IDF of 'downgrade'? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.0986,
+    "tol": {
+     "abs": 6e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "no-plus",
+      "value": 1.0986,
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "id": "plain-plus",
+      "value": 2.2993,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln(12/4) + 1 = 2.0986$.",
+    "generic": "Not quite. Use $\\ln\\frac{1+n}{1+\\text{df}} + 1$ with $n = 11$.",
+    "byKey": {
+     "no-plus": "You left out the 1 added after the log.",
+     "plain-plus": "You skipped the 1s inside the log: $(1 + 11)/(1 + 3) = 3$."
+    }
+   },
+   "explain": {
+    "text": "$\\ln\\frac{12}{4} + 1 = \\ln 3 + 1 = 2.0986$."
+   }
+  },
+  {
+   "id": "r-unit",
+   "difficulty": 3,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "A note has just two words left after stop words, with raw TF-IDF weights 3 and 4.",
+   "question": "What is the first word's weight once the note is scaled to length 1? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "by-sum",
+      "value": 0.43,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "by-sq",
+      "value": 0.12,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The length is $\\sqrt{9 + 16} = 5$, so the weight is $3/5 = 0.60$.",
+    "generic": "Not quite. Divide by the length, not the sum.",
+    "byKey": {
+     "by-sum": "You divided by $3 + 4 = 7$. The length is $\\sqrt{3^2 + 4^2} = 5$.",
+     "by-sq": "You divided by the squared length, 25."
+    }
+   },
+   "explain": {
+    "text": "Length $\\sqrt{3^2 + 4^2} = 5$; the weights become 0.6 and 0.8, whose squares add to 1."
+   }
+  },
+  {
+   "id": "r-every",
+   "difficulty": 3,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "In an index of 1,000 filings, every filing contains 'company'.",
+   "question": "What does scikit-learn's smooth IDF do with 'company'?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "It gives it weight 1, the lowest, so it still counts a little",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "It gives it weight 0, removing it",
+      "why": "That is the plain $\\ln(n/\\text{df})$. The smooth formula adds 1 after the log."
+     },
+     {
+      "id": "high",
+      "text": "It gives it a high weight, since it appears so often",
+      "why": "IDF rewards rarity: a word in every filing gets the least weight."
+     },
+     {
+      "id": "error",
+      "text": "It cannot compute a weight when df equals n",
+      "why": "With the 1s added, the fraction is $1001/1001$ and the log is 0, so the weight is 1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln(1001/1001) + 1 = 1$: the floor, but not zero.",
+    "generic": "Not quite. Put df $= n$ into the smooth formula."
+   },
+   "explain": {
+    "text": "The smooth IDF never drops below 1, so 'company' still adds a little to every match. A stop list is how to remove it entirely."
+   }
+  },
+  {
+   "id": "r-cos",
+   "difficulty": 2,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "Two notes, each already scaled to length 1, over (gilts, credit, oil): $(0.6, 0, 0.8)$ and $(0, 0.6, 0.8)$.",
+   "question": "What is their cosine? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.64,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 1.6,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.32,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Only 'oil' is shared: $0.8 \\times 0.8 = 0.64$.",
+    "generic": "Not quite. Multiply word by word and add.",
+    "byKey": {
+     "sum": "You added the two 'oil' weights. Multiply them.",
+     "half": "You halved the product. Unit vectors need no further division."
+    }
+   },
+   "explain": {
+    "text": "The cosine of two unit vectors is their dot product, $0.8 \\times 0.8 = 0.64$."
+   }
+  },
+  {
+   "id": "r-stop",
+   "difficulty": 3,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "A five-note index scores 'margin squeeze at brackley'. The top note shares only 'at' with the query; 'at' appears in no other note.",
+   "question": "What is the best fix?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "stop",
+      "text": "Leave out function words such as 'at' before fitting",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "Add more notes so that 'at' becomes common",
+      "why": "That works in time, but the ranking is wrong today; a stop list fixes it now."
+     },
+     {
+      "id": "dot",
+      "text": "Rank by the raw dot product instead",
+      "why": "The dot product uses the same weights; 'at' would still dominate."
+     },
+     {
+      "id": "k",
+      "text": "Return more results",
+      "why": "The bad note would still be first."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A stop list stops a word with no meaning from deciding the ranking.",
+    "generic": "Not quite. Why did 'at' weigh so much?"
+   },
+   "explain": {
+    "text": "In five notes, 'at' looks rare, so its IDF is high and one match outweighs real content words. Removing function words before fitting fixes it."
+   }
+  },
+  {
+   "id": "r-long",
+   "difficulty": 3,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "Raw TF-IDF vectors: a short note $(2, 0)$, a long note $(6, 3)$ and a query $(1, 0)$.",
+   "question": "Which note has the higher cosine with the query?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "short",
+      "text": "The short note",
+      "correct": true
+     },
+     {
+      "id": "long",
+      "text": "The long note",
+      "why": "Its dot product is larger, 6 against 2, but its direction is further from the query's."
+     },
+     {
+      "id": "tie",
+      "text": "They tie",
+      "why": "The short note points exactly along the query; the long one does not."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The short note's cosine is 1; the long note's is $6/\\sqrt{45} = 0.8944$.",
+    "generic": "Not quite. Divide each dot product by both lengths."
+   },
+   "explain": {
+    "text": "Cosine ignores length: the short note points along the query (cosine 1), the long one at an angle (0.8944), though its dot product is three times larger."
+   }
+  },
+  {
+   "id": "r-chunks",
+   "difficulty": 3,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "A disclosure of 50 words is cut into windows of 12 words with overlap 4.",
+   "question": "How many chunks does it give?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "no-overlap",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "step",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Windows start at 0, 8, 16, 24, 32 and 40; the last reaches word 49. Six chunks.",
+    "generic": "Not quite. Step by $12 - 4 = 8$ and stop once a window reaches the end.",
+    "byKey": {
+     "no-overlap": "Five is the count with no overlap, stepping by 12.",
+     "step": "You started a window at word 48 as well, but the window at 40 already reaches the last word."
+    }
+   },
+   "explain": {
+    "text": "With step 8, the windows start at 0, 8, 16, 24, 32 and 40, and the one at 40 covers words 40 to 49: 6 chunks."
+   }
+  },
+  {
+   "id": "r-fold",
+   "difficulty": 3,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "An LSA map keeps $k = 2$ directions. Its $\\mathbf{V}_k$ has rows $(0.5, 0.1)$ for 'gilts', $(0.2, 0.6)$ for 'credit' and $(0.4, -0.3)$ for 'yields'. A query's TF-IDF vector is $(0.6, 0, 0.8)$ over the same three words.",
+   "question": "What is the first coordinate of the query in LSA space? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.62,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "second",
+      "value": -0.18,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "row",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.6 \\times 0.5 + 0.8 \\times 0.4 = 0.62$.",
+    "generic": "Not quite. Multiply the query by the first column of $\\mathbf{V}_k$.",
+    "byKey": {
+     "second": "That is the second coordinate, from the second column.",
+     "row": "0.5 is one entry of $\\mathbf{V}_k$. Take the whole product $\\mathbf{q}\\mathbf{V}_k$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{q}\\mathbf{V}_k$: the first coordinate is $0.6 \\times 0.5 + 0 \\times 0.2 + 0.8 \\times 0.4 = 0.62$."
+   }
+  },
+  {
+   "id": "r-mrr",
+   "difficulty": 3,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "Two labelled queries. Query A's list is (7, 2, 9) with relevant notes {2, 9}. Query B's list is (4, 5, 6) with relevant note {6}.",
+   "question": "What is the MRR over the two queries? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4167,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "all-hits",
+      "value": 0.5833,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "ranks",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "First hits at ranks 2 and 3: $(1/2 + 1/3)/2 = 0.4167$.",
+    "generic": "Not quite. Use the first relevant note in each list only.",
+    "byKey": {
+     "all-hits": "You added a reciprocal for every relevant note. MRR counts only the first.",
+     "ranks": "2.5 is the mean rank. Average the reciprocals."
+    }
+   },
+   "explain": {
+    "text": "Query A's first relevant note is at rank 2, query B's at rank 3; $(0.5 + 0.3333)/2 = 0.4167$."
+   }
+  },
+  {
+   "id": "r-se",
+   "difficulty": 4,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "prose": "Two retrievers are run on 16 labelled queries. The per-query differences in recall at 3 have mean 0.15 and standard deviation 0.40.",
+   "question": "What is the standard error of the mean difference? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "over-n",
+      "value": 0.03,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.40/\\sqrt{16} = 0.10$; the gap of 0.15 is 1.5 standard errors, suggestive but not decisive.",
+    "generic": "Not quite. Divide the standard deviation by $\\sqrt{16}$.",
+    "byKey": {
+     "sd": "0.40 is the spread of single differences.",
+     "over-n": "You divided by 16. Divide by $\\sqrt{16} = 4$."
+    }
+   },
+   "explain": {
+    "text": "$0.40/4 = 0.10$. A gain of 0.15 is 1.5 standard errors: more labelled queries are needed before trusting it."
+   }
+  }
+ ]
+}
