@@ -2,12 +2,13 @@
 // Hours by stage and topic from js/hours.js (the one workload function, PLAN 2c item 11), quoted in docs/curriculum.md.
 //   node app/tools/curriculum-hours.mjs            print the table
 //   node app/tools/curriculum-hours.mjs --check    exit 1 unless the generated block and every hours figure in the prose of docs/curriculum.md agree
-//   node app/tools/curriculum-hours.mjs --write    rewrite the block between <!-- generated:hours --> and <!-- /generated -->
+//   node app/tools/curriculum-hours.mjs --write    rewrite the block between <!-- generated:hours --> and <!-- /generated -->, and the AI strand block between <!-- generated:ai --> and <!-- /generated -->
+//   node app/tools/curriculum-hours.mjs --ai       print the AI strand tables (hours as H.topicApp and H.topicOut, levels written from the lesson files); nothing when there is no ai course
 // Every figure is two: hours in the app (lesson, level review and homework, topic exam minutes) and hours of outside study (stored hours less in-app,
 // never below 0), in-app first; the stored total is never shown alone (AUTHORING section 14). Months at 15 h a week still come from the stored hours.
 // Hours are topic hours as stored in curriculum.json (a stage is the sum of its topics; a stored stage field is ignored). The quant path
 // leaves out the courses tagged strand "pure", at the hours their topic shares to them by lesson weight (so 1.11's vector calculus is its lesson share, not a hand split of 30 h). Topics that store 0 (3.2 and 3.4) are listed with the figure their lesson minutes would give.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadHours } from './hours-source.mjs';
@@ -48,6 +49,31 @@ const block = [
   })),
 ].join('\n');
 
+// The AI strand section of docs/curriculum.md: per stage its topics with stored, in-app and outside hours, then each course's levels, marked written when every lesson file of the level exists. Empty with no ai topic.
+const aiTopics = cur.stages.flatMap((s) => s.topics.filter((t) => H.aiTopic(t)).map((t) => ({ s, t })));
+const levelWritten = (id, lv) => (lv.lessons ?? []).length > 0 && lv.lessons.every((l) => existsSync(join(APP, 'content', 'courses', id, `${l}.json`)));
+const aiBlock = !aiTopics.length ? '' : (() => {
+  const rowsT = [], rowsC = [];
+  let lvW = 0, lvN = 0;
+  for (const { s, t } of aiTopics) {
+    let cl = 0, lw = 0, mapped = 0, written = 0;
+    for (const id of t.courses ?? []) {
+      const lvs = courses[id]?.levels ?? [], w = lvs.filter((lv) => levelWritten(id, lv));
+      const c = H.courseCounts(id);
+      cl += lvs.length; lw += w.length; mapped += c.mapped; written += c.written; lvN += lvs.length; lvW += w.length;
+      rowsC.push(`| ${t.id} | ${id} | ${courses[id]?.name ?? id} | ${lvs.map((lv) => `${lv.n} ${levelWritten(id, lv) ? 'written' : 'to write'}`).join(', ')} | ${c.written} of ${c.mapped} |`);
+    }
+    rowsT.push(`| ${s.id}. ${s.name} | ${t.id} | ${t.name} | ${f(hours.topicHours(t))} | ${f(Math.round(H.topicApp(t.id)))} | ${f(Math.round(H.topicOut(t.id)))} | ${(t.courses ?? []).length} | ${lw} of ${cl} | ${written} of ${mapped} |`);
+  }
+  return [
+    ...aiLine,
+    '| Stage | Topic | Name | Stored hours | In the app | Outside study | Courses | Levels written | Lessons written |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- |', ...rowsT, '',
+    `Levels written today: ${lvW} of ${lvN}. A level counts as written when every lesson file in its list exists; a later run of the tool updates the marks.`, '',
+    '| Topic | Course | Name | Levels | Lessons written |', '| --- | --- | --- | --- | --- |', ...rowsC,
+  ].join('\n');
+})();
+
+if (process.argv.includes('--ai')) { if (aiBlock) console.log(aiBlock); process.exit(0); }
 if (!process.argv.includes('--check') && !process.argv.includes('--write')) { console.log(block); process.exit(0); }
 
 const text = readFileSync(MD, 'utf8');
@@ -55,11 +81,18 @@ const re = /(<!-- generated:hours -->\n)([\s\S]*?)(\n<!-- \/generated -->)/;
 const errors = [];
 const m = text.match(re);
 if (!m) errors.push('docs/curriculum.md has no <!-- generated:hours --> block');
-if (process.argv.includes('--write') && m) { writeFileSync(MD, text.replace(re, (_, a, __, c) => a + block + c)); console.log('curriculum.md block rewritten'); process.exit(0); }
+const reAi = /(<!-- generated:ai -->\n)([\s\S]*?)(\n<!-- \/generated -->)/;
+const mAi = text.match(reAi);
+if (aiBlock && !mAi) errors.push('docs/curriculum.md has no <!-- generated:ai --> block');
+const WRITE = process.argv.includes('--write') && m;
+let out = WRITE ? text.replace(re, (_, a, __, c) => a + block + c).replace(reAi, (_, a, __, c) => a + aiBlock + c) : text;
 if (m && m[2] !== block) errors.push('the generated:hours block is out of date (run with --write)');
+if (mAi && aiBlock && mAi[2] !== aiBlock) errors.push('the generated:ai block is out of date (run with --write)');
 // Prose figures that must agree: the opening totals, the map table's Hours and Quant path columns, each stage heading.
 const num = (s) => Number(String(s).replace(/,/g, ''));
-const expect = (re2, want, what) => { const x = text.match(re2); if (!x) errors.push(`prose: ${what} not found`); else if (num(x[1]) !== want) errors.push(`prose: ${what} says ${x[1]}, source gives ${f(want)}`); };
+// --write also rewrites the figure each prose pattern captures (group 1), so the prose is regenerated the tool's way, never by hand
+const fix = (re2, want) => { const x = new RegExp(re2.source, re2.flags + 'd').exec(out); if (x && num(x[1]) !== want) { const [a, b] = x.indices[1]; out = out.slice(0, a) + f(want) + out.slice(b); } };
+const expect = (re2, want, what) => { if (WRITE) fix(re2, want); const x = text.match(re2); if (!x) errors.push(`prose: ${what} not found`); else if (num(x[1]) !== want) errors.push(`prose: ${what} says ${x[1]}, source gives ${f(want)}`); };
 expect(/The full path is about ([\d,]+) hours in the app and about [\d,]+ hours of outside study/, tApp, 'opening in-app total');
 expect(/The full path is about [\d,]+ hours in the app and about ([\d,]+) hours of outside study/, tOut, 'opening outside total');
 expect(/Without the pure maths items it is ([\d,]+) hours in the app and [\d,]+ hours of outside study/, qApp, 'opening quant-path in-app total');
@@ -80,5 +113,6 @@ for (const r of rows) {
   expect(new RegExp(`^## Stage ${r.id}: [^(\\n]*\\(about ([\\d,]+) h in the app, about [\\d,]+ h of outside study\\)`, 'm'), r.app, `stage ${r.id} heading in-app`);
   expect(new RegExp(`^## Stage ${r.id}: [^(\\n]*\\(about [\\d,]+ h in the app, about ([\\d,]+) h of outside study\\)`, 'm'), r.out, `stage ${r.id} heading outside`);
 }
+if (WRITE) { writeFileSync(MD, out); console.log('curriculum.md blocks and prose figures rewritten'); process.exit(0); }
 if (errors.length) { console.error(errors.join('\n')); console.error(`FAIL: ${errors.length} problem(s)`); process.exit(1); }
 console.log(`OK: ${rows.length} stages, ${f(tApp)} h in the app and ${f(tOut)} h of outside study (${f(qApp)} and ${f(qOut)} on the quant path), docs/curriculum.md agrees`);

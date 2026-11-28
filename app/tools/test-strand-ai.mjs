@@ -173,6 +173,18 @@ const CONTENT = path.join(MINI, 'content');
   ok(!/AI strand/.test(cBaseAll) && !/AI strand/.test(hBase), 'with no ai course neither tool prints an AI line');
   ok(/^AI strand \(optional/m.test(hAi) && (hAi.match(/^\| 1\. .*$/m) || [''])[0] === (hBase.match(/^\| 1\. .*$/m) || [''])[0], 'curriculum-hours: a stage row is the same, one AI line follows the table');
   ok(hAi.replace(/^AI strand.*\n\n/m, '').split('\n').filter((l) => !/^\| 1\.12|^\| \d/.test(l) || /^\| \d\. /.test(l)).join('\n') === hBase.split('\n').filter((l) => !/^\| 1\.12|^\| \d/.test(l) || /^\| \d\. /.test(l)).join('\n'), 'curriculum-hours: nothing else moves');
+  /* the AI section of docs/curriculum.md: printed by --ai only (the default print above is unchanged), written between its own markers, written marks from the lesson files */
+  const md = path.join(root, 'docs', 'curriculum.md'), runArgs = (a) => { try { return execFileSync('node', [path.join(root, 'app', 'tools', 'curriculum-hours.mjs'), ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { return String(e.stdout) + String(e.stderr); } };
+  const aiOut = runArgs(['--ai']);
+  ok(/^\| 1\. [^|]*\| 1\.12 \|/m.test(aiOut) && /\| 1\.12 \| ai-sample \|/.test(aiOut) && /Levels written today: \d+ of \d+/.test(aiOut), 'curriculum-hours --ai: a topic row, a course row and the written count');
+  ok(!/\| 0\.1 \|/.test(aiOut) && !/Stage hours are the sum/.test(aiOut), 'curriculum-hours --ai: quant topics and the quant table are left out');
+  fs.writeFileSync(md, 'intro\n\n<!-- generated:hours -->\nold\n<!-- /generated -->\n\n## The AI strand\n\n<!-- generated:ai -->\nold\n<!-- /generated -->\nend\n');
+  runArgs(['--write']);
+  const wrote = fs.readFileSync(md, 'utf8');
+  ok(/<!-- generated:ai -->\nAI strand \(optional[\s\S]*\| 1\.12 \|[\s\S]*\n<!-- \/generated -->\nend\n$/.test(wrote) && wrote.startsWith('intro\n') && /<!-- generated:hours -->\n\| Stage \|/.test(wrote), 'curriculum-hours --write: fills the hours block and the ai block, text outside both kept');
+  ok(/has no <!-- generated:ai --> block/.test((fs.writeFileSync(md, '<!-- generated:hours -->\nx\n<!-- /generated -->\n'), runArgs(['--check']))), 'curriculum-hours --check: an ai topic with no ai block in curriculum.md is a problem');
+  clone(true);
+  ok(runArgs(['--ai']) === '', 'curriculum-hours --ai: nothing with no ai course');
   fs.rmSync(root, { recursive: true, force: true });
 }
 

@@ -4,7 +4,7 @@ Oct 5, 2026 · @Muddassir Shah
 
 ## Start here
 
-The full path is about 678 hours in the app and about 3,058 hours of outside study, deliberate work all of it: roughly 4.7 years at 15 hours a week, or about 2.8 years at 25. Without the pure maths items it is 624 hours in the app and 2,891 hours of outside study, about 4.5 years at 15 hours a week. It follows the three tiers of Priyanshu Priyank's Quant Roadmap (Quant Memo, 16 slides), with a Stage 0 added underneath, because the post's Tier 1 already assumes school maths and a working computer setup.
+The full path is about 756 hours in the app and about 2,993 hours of outside study, deliberate work all of it: roughly 4.7 years at 15 hours a week, or about 2.8 years at 25. Without the pure maths items it is 686 hours in the app and 2,837 hours of outside study, about 4.5 years at 15 hours a week. It follows the three tiers of Priyanshu Priyank's Quant Roadmap (Quant Memo, 16 slides), with a Stage 0 added underneath, because the post's Tier 1 already assumes school maths and a working computer setup.
 
 Zero means: you can read English, use a web browser and do arithmetic with a calculator. Nothing else is assumed, including school algebra or ever having written a line of code.
 
@@ -17,52 +17,60 @@ Four things to know before starting:
 
 ## The map
 
-Four stages, 678 hours in the app and 3,058 of outside study (624 and 2,891 on the quant path, without the pure maths items), each closed by a test you can mark yourself.
+Four stages, 756 hours in the app and 2,993 of outside study (686 and 2,837 on the quant path, without the pure maths items), each closed by a test you can mark yourself.
 
 Generated from the source by `node app/tools/curriculum-hours.mjs --write` (check with `--check`). The Learn header, stage cards and census read the same function, `app/js/hours.js`. Never type these figures by hand.
 
 <!-- generated:hours -->
 | Stage | In the app | Outside study | Quant path in the app | Quant path outside study | At 15 h/week |
 | --- | --- | --- | --- | --- | --- |
-| 0. From nothing | 116 | 439 | 108 | 407 | 9 months |
-| 1. Foundations | 317 | 1,333 | 288 | 1,198 | 25 months |
-| 2. Intermediate | 114 | 826 | 114 | 826 | 14 months |
-| 3. Advanced | 131 | 460 | 114 | 460 | 8 months |
-| All stages | 678 | 3,058 | 624 | 2,891 | 57 months |
+| 0. From nothing | 124 | 431 | 114 | 401 | 9 months |
+| 1. Foundations | 348 | 1,302 | 310 | 1,176 | 25 months |
+| 2. Intermediate | 140 | 800 | 140 | 800 | 14 months |
+| 3. Advanced | 144 | 460 | 122 | 460 | 8 months |
+| All stages | 756 | 2,993 | 686 | 2,837 | 57 months |
+
+AI strand (optional, outside every stage figure above and the quant path): 6 topics, 145 h in the app, 805 h of outside study, 950 h stored.
 
 Stage hours are the sum of topic hours; nothing stores them. In the app counts each lesson's minutes, a level review (20 min) and homework (45 min) unless the file states minutes, and the topic exam's minutes. Outside study is the stored hours less that, never below 0; months use the stored hours. Quant path leaves out the courses tagged Pure maths, at their lesson share of a topic's hours. Topic hours:
 
 | Topic | Name | In the app | Outside study | Lessons mapped | Lessons written |
 | --- | --- | --- | --- | --- | --- |
-| 0.1 | Number | 15 | 45 | 32 | 32 |
-| 0.2 | Algebra | 33 | 147 | 54 | 54 |
-| 0.3 | Precalculus | 33 | 167 | 52 | 52 |
+| 0.1 | Number | 20 | 40 | 32 | 32 |
+| 0.2 | Algebra | 34 | 146 | 54 | 54 |
+| 0.3 | Precalculus | 34 | 166 | 52 | 52 |
 | 0.4 | Computer basics | 13 | 27 | 24 | 24 |
 | 0.5 | Mental arithmetic | 7 | 13 | 12 | 12 |
-| 0.6 | Reasoning and proof | 8 | 32 | 15 | 15 |
+| 0.6 | Reasoning and proof | 10 | 30 | 15 | 15 |
 | 0.7 | Getting hired | 8 | 7 | 15 | 15 |
+| 0.8 | AI from nothing | 19 | 21 | 28 | 28 |
 | 1.1 | Python | 22 | 128 | 42 | 42 |
 | 1.2 | Tools | 19 | 21 | 36 | 36 |
 | 1.3 | Calculus | 47 | 153 | 69 | 69 |
-| 1.4 | Linear algebra | 27 | 123 | 53 | 53 |
+| 1.4 | Linear algebra | 37 | 113 | 53 | 53 |
 | 1.5 | Probability | 64 | 186 | 99 | 99 |
-| 1.6 | Statistics | 22 | 98 | 42 | 42 |
+| 1.6 | Statistics | 29 | 91 | 42 | 42 |
 | 1.7 | Finance basics | 28 | 72 | 55 | 55 |
 | 1.8 | Data structures and algorithms | 25 | 225 | 49 | 49 |
 | 1.9 | C++ | 18 | 122 | 35 | 35 |
-| 1.10 | Analysis and proof-based linear algebra | 22 | 108 | 43 | 43 |
-| 1.11 | Complex numbers, vector calculus and differential equations | 23 | 97 | 43 | 43 |
-| 2.1 | Machine learning | 29 | 171 | 55 | 55 |
-| 2.2 | Time series | 20 | 40 | 36 | 36 |
+| 1.10 | Analysis and proof-based linear algebra | 28 | 102 | 43 | 43 |
+| 1.11 | Complex numbers, vector calculus and differential equations | 30 | 90 | 43 | 43 |
+| 1.12 | Neural networks from scratch | 26 | 124 | 40 | 28 |
+| 2.1 | Machine learning | 39 | 161 | 55 | 55 |
+| 2.2 | Time series | 27 | 34 | 36 | 36 |
 | 2.3 | Projects | 26 | 374 | 48 | 48 |
 | 2.4 | Contests | 10 | 130 | 16 | 16 |
-| 2.5 | Numerical methods and optimisation | 19 | 71 | 34 | 34 |
-| 2.6 | Statistical modelling | 10 | 40 | 18 | 18 |
+| 2.5 | Numerical methods and optimisation | 25 | 65 | 34 | 34 |
+| 2.6 | Statistical modelling | 13 | 37 | 18 | 18 |
+| 2.7 | Deep learning | 33 | 207 | 64 | 0 |
+| 2.8 | Reinforcement learning | 13 | 107 | 20 | 12 |
+| 2.9 | Language models | 26 | 174 | 48 | 4 |
 | 3.1 | Research papers | 15 | 135 | 30 | 30 |
-| 3.2 | Stochastic calculus | 24 | 0 (stores 0; its lesson minutes would give about 11 h) | 46 | 46 |
+| 3.2 | Stochastic calculus | 33 | 0 (stores 0; its lesson minutes would give about 11 h) | 46 | 46 |
 | 3.3 | Interview preparation | 44 | 206 | 96 | 96 |
-| 3.4 | Pure mathematics | 17 | 0 (stores 0; its lesson minutes would give about 7 h) | 30 | 30 |
+| 3.4 | Pure mathematics | 21 | 0 (stores 0; its lesson minutes would give about 7 h) | 30 | 30 |
 | 3.5 | Interviews by role | 30 | 120 | 57 | 57 |
+| 3.6 | Frontier AI | 27 | 173 | 52 | 0 |
 <!-- /generated -->
 
 | Stage | Hours | Quant path | At 15 h/week | You leave when |
@@ -74,7 +82,7 @@ Stage hours are the sum of topic hours; nothing stores them. In the app counts e
 
 Two habits run through every stage and are not on the map: 10 minutes of mental arithmetic a day from the first week, and three interview-style probability problems a week from item 1.5 onwards.
 
-## Stage 0: From nothing (about 116 h in the app, about 439 h of outside study)
+## Stage 0: From nothing (about 124 h in the app, about 431 h of outside study)
 
 This stage is everything the post takes for granted: school maths up to the edge of calculus, and enough computer skill to install and run things.
 
@@ -98,7 +106,7 @@ All of it is free except the 0.6 books. Do 0.1 to 0.3 in order; run 0.4 and 0.5 
 - [ ] Five short statements proved, one each by direct proof, contrapositive, contradiction, induction and counterexample, written so a stranger can check every step **[Pure maths]**
 - [ ] You can make a folder, write a ten-line Python script in it and run it from the terminal
 
-## Stage 1: Foundations (about 317 h in the app, about 1,333 h of outside study)
+## Stage 1: Foundations (about 348 h in the app, about 1,302 h of outside study)
 
 This is the post's Tier 1 put into a fixed order, with one resource chosen per topic. Python comes first so that every maths topic after it can be checked in code; C++ comes last of the original nine. Items 1.10 and 1.11 add what a maths degree teaches and the post leaves out: proof-based analysis and linear algebra, complex numbers, vector calculus and differential equations. Start 1.10 after 1.4 and 1.11 after 1.10; finish both before Stage 2.
 
@@ -183,7 +191,7 @@ Pricing models are differential equations, and Fourier methods for option pricin
 - **Cover, differential equations [Quant: desk quant and rates]:** first-order equations, linear second-order equations, systems and phase planes, stability, the Laplace transform, numerical solution with Euler and Runge-Kutta, a mean-reverting equation as the drift of an interest rate model.
 - **Exit:** the 18.03 final at 70%; solve one equation numerically in NumPy and match its closed form to four decimal places.
 
-## Stage 2: Intermediate (about 114 h in the app, about 826 h of outside study)
+## Stage 2: Intermediate (about 140 h in the app, about 800 h of outside study)
 
 This is the post's Tier 2. Choose a track before starting, because the three roles are interviewed differently and the post treats them as one.
 
@@ -244,7 +252,7 @@ Regression in 1.6 assumed normal errors. This item covers the models a statistic
 - **Cover:** generalised linear models (logistic and Poisson), analysis of variance, design of experiments, nonparametric and rank tests, Bayesian inference with conjugate priors, Markov chain Monte Carlo, hierarchical models.
 - **Exit:** fit a logistic and a Poisson model by your own iteratively reweighted least squares and match statsmodels; fit a Bayesian model by Markov chain Monte Carlo and check that the chains have converged.
 
-## Stage 3: Advanced (about 131 h in the app, about 460 h of outside study)
+## Stage 3: Advanced (about 144 h in the app, about 460 h of outside study)
 
 This is the post's Tier 3: papers, then interview preparation, then the interviews of your role. Interview drilling starts here in earnest, but the weekly probability problems since 1.5 mean you are not starting cold.
 
@@ -305,6 +313,45 @@ The books do not train the live formats, so add:
 - **Cover, research:** statistics and linear algebra questions, machine learning questions, the open prediction case, data tasks and take-homes.
 - **Cover, systems:** caches and memory, threads, locks and atomics, processes, sockets and network protocols, low-latency C++.
 - **Exit:** two medium coding problems solved in 60 minutes. Researchers also work an open case aloud in 45 minutes; developers defend a feed handler design aloud.
+
+## The AI strand
+
+The AI strand is optional and outside every quant figure: its hours stay on its topics and courses and never count in a stage, the total, the quant path or a role. It has six topics, one or more per stage, built on the quant path's own lessons (approved plan: `docs/briefs/ai-strand-curriculum.md`). Nothing here gates a stage exam. Figures below are generated by `node app/tools/curriculum-hours.mjs --write` (check with `--check`); never type them by hand, and the written marks follow the content.
+
+<!-- generated:ai -->
+AI strand (optional, outside every stage figure above and the quant path): 6 topics, 145 h in the app, 805 h of outside study, 950 h stored.
+
+| Stage | Topic | Name | Stored hours | In the app | Outside study | Courses | Levels written | Lessons written |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0. From nothing | 0.8 | AI from nothing | 40 | 19 | 21 | 2 | 7 of 7 | 28 of 28 |
+| 1. Foundations | 1.12 | Neural networks from scratch | 150 | 26 | 124 | 3 | 7 of 10 | 28 of 40 |
+| 2. Intermediate | 2.7 | Deep learning | 240 | 33 | 207 | 4 | 0 of 16 | 0 of 64 |
+| 2. Intermediate | 2.8 | Reinforcement learning | 120 | 13 | 107 | 1 | 3 of 5 | 12 of 20 |
+| 2. Intermediate | 2.9 | Language models | 200 | 26 | 174 | 3 | 1 of 12 | 4 of 48 |
+| 3. Advanced | 3.6 | Frontier AI | 200 | 27 | 173 | 4 | 0 of 13 | 0 of 52 |
+
+Levels written today: 18 of 63. A level counts as written when every lesson file in its list exists; a later run of the tool updates the marks.
+
+| Topic | Course | Name | Levels | Lessons written |
+| --- | --- | --- | --- | --- |
+| 0.8 | ai-basics | What AI is | 1 written, 2 written, 3 written, 4 written | 16 of 16 |
+| 0.8 | ai-use | Using AI well | 1 written, 2 written, 3 written | 12 of 12 |
+| 1.12 | info | Information theory | 1 written, 2 written, 3 written | 12 of 12 |
+| 1.12 | backprop | Backpropagation | 1 written, 2 written, 3 written, 4 written | 16 of 16 |
+| 1.12 | makemore | First language models | 1 to write, 2 to write, 3 to write | 0 of 12 |
+| 2.7 | nn-train | Training Networks | 1 to write, 2 to write, 3 to write, 4 to write | 0 of 16 |
+| 2.7 | cnn | Convolutional Networks | 1 to write, 2 to write, 3 to write | 0 of 12 |
+| 2.7 | sequence | Sequences and Attention | 1 to write, 2 to write, 3 to write, 4 to write | 0 of 16 |
+| 2.7 | representations | Embeddings and Generative Models | 1 to write, 2 to write, 3 to write, 4 to write, 5 to write | 0 of 20 |
+| 2.8 | rl | Reinforcement Learning | 1 written, 2 written, 3 written, 4 to write, 5 to write | 12 of 20 |
+| 2.9 | gpt | Build a GPT | 1 written, 2 to write, 3 to write, 4 to write, 5 to write | 4 of 20 |
+| 2.9 | post-train | Base Model to Assistant | 1 to write, 2 to write, 3 to write, 4 to write | 0 of 16 |
+| 2.9 | llm-apps | Language Models at Work | 1 to write, 2 to write, 3 to write | 0 of 12 |
+| 3.6 | interp | Interpretability | 1 to write, 2 to write, 3 to write, 4 to write | 0 of 16 |
+| 3.6 | ai-papers | Reading and Replicating ML Papers | 1 to write, 2 to write, 3 to write | 0 of 12 |
+| 3.6 | ai-safety | Alignment and Safety | 1 to write, 2 to write, 3 to write | 0 of 12 |
+| 3.6 | ml-int | ML Interviews | 1 to write, 2 to write, 3 to write | 0 of 12 |
+<!-- /generated -->
 
 ## Weekly rhythm and rules
 
