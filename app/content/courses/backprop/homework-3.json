@@ -1,0 +1,384 @@
+{
+ "id": "homework-3",
+ "course": "backprop",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-count-forward",
+   "difficulty": 4,
+   "skills": [
+    "bp-networks"
+   ],
+   "prose": "Without the `Value` class: given the layer sizes and every parameter as a flat list in the course order, count and run the network with plain floats.",
+   "question": "Write `mlp_param_count(sizes)` and `mlp_forward_fixed(flat, sizes, x)`, the latter returning the list of outputs.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\ndef mlp_param_count(sizes):\n    # sizes like [2, 3, 1]\n    ...\n\n\ndef mlp_forward_fixed(flat, sizes, x):\n    # flat: every parameter in the course order (layer, neuron, weights then bias)\n    ...\n",
+    "solution": "import math\n\n\ndef mlp_param_count(sizes):\n    return sum((m + 1) * k for m, k in zip(sizes, sizes[1:]))\n\n\ndef mlp_forward_fixed(flat, sizes, x):\n    it = iter(flat)\n    a = list(x)\n    for m, k in zip(sizes, sizes[1:]):\n        out = []\n        for _ in range(k):\n            w = [next(it) for _ in range(m)]\n            b = next(it)\n            out.append(math.tanh(sum(wi * ai for wi, ai in zip(w, a)) + b))\n        a = out\n    return a\n",
+    "examples": [
+     {
+      "setup": "",
+      "call": "mlp_param_count([2, 3, 1])",
+      "expect": "13",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "",
+      "call": "mlp_param_count([2, 3, 1])",
+      "expect": "13",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "mlp_param_count([3, 4, 4, 1])",
+      "expect": "41",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "mlp_param_count([2, 16, 16, 1])",
+      "expect": "337",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "mlp_param_count([5, 1])",
+      "expect": "6",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "mlp_forward_fixed([0.5, -0.25, 0.1, 0.3, 0.8, -0.2, 1.0, -1.5, 0.05], [2, 2, 1], [1.0, 2.0])",
+      "expect": "[-0.8492470209473285]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "",
+      "call": "mlp_forward_fixed([0.0, 0.0, 0.0], [2, 1], [3.0, -4.0])",
+      "expect": "[0.0]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "",
+      "call": "mlp_forward_fixed([1.0, 0.0, -1.0, 0.0, 0.5, 0.5, 0.0], [1, 2, 1], [0.5])",
+      "expect": "[0.0]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: four parameter counts and three forward passes on fixed parameters. Outputs are accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+   },
+   "feedback": {
+    "correct": "The count is $\\sum (m + 1)k$, and the forward pass reads the flat list in draw order.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-5": "Test 5 is a 2-2-1 network on $(1, 2)$: read each neuron's weights, then its bias, from the flat list."
+    }
+   },
+   "explain": {
+    "text": "Each layer from $m$ to $k$ uses $(m + 1)k$ numbers from the list: $m$ weights then a bias per neuron. Reading them in that order rebuilds the course network exactly."
+   }
+  },
+  {
+   "id": "h-hidden-gain",
+   "difficulty": 5,
+   "skills": [
+    "bp-networks"
+   ],
+   "prose": "Six points of a new data set are loaded as `X6`, `Y6`: the target is 1 when $|x_1| > |x_2|$ and $-1$ otherwise, so no single line separates them. Your `Value`, `MLP` and `train` are loaded.",
+   "question": "Write `hidden_layer_gain(seed)`: train `MLP(2, [1], seed=seed)` for 400 steps and `MLP(2, [4, 1], seed=seed)` for 200 steps, both at $\\eta = 0.05$, and return the two final losses as a tuple.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def hidden_layer_gain(seed):\n    # (loss of one neuron after 400 steps, loss of a 2-4-1 network after 200 steps)\n    ...\n",
+    "solution": "def hidden_layer_gain(seed):\n    one = train(MLP(2, [1], seed=seed), X6, Y6, 400, 0.05)[-1]\n    net = train(MLP(2, [4, 1], seed=seed), X6, Y6, 200, 0.05)[-1]\n    return (one, net)\n",
+    "examples": [
+     {
+      "setup": "",
+      "call": "type(gain(42)).__name__",
+      "expect": "'tuple'",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "",
+      "call": "gain(42)[0] > 3.5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "gain(42)[1] < 0.05",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "gain(7)[0] > 3.5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "gain(7)[1] < 0.05",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "type(gain(42)).__name__",
+      "expect": "'tuple'",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests at seeds 42 and 7: the single neuron must stay above 3.5 and the 2-4-1 network must fall below 0.05. These are thresholds with a margin; the four runs take about a second.",
+    "prelude": "import random\nimport math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n\nclass Neuron:\n    def __init__(self, nin, rng):\n        self.w = [Value(rng.uniform(-1, 1)) for _ in range(nin)]\n        self.b = Value(rng.uniform(-1, 1))\n\n    def __call__(self, x):\n        act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)\n        return act.tanh()\n\n    def parameters(self):\n        return self.w + [self.b]\n\n\nclass Layer:\n    def __init__(self, nin, nout, rng):\n        self.neurons = [Neuron(nin, rng) for _ in range(nout)]\n\n    def __call__(self, x):\n        return [n(x) for n in self.neurons]\n\n    def parameters(self):\n        return [p for n in self.neurons for p in n.parameters()]\n\n\nclass MLP:\n    def __init__(self, nin, nouts, seed=42):\n        rng = random.Random(seed)\n        sizes = [nin] + list(nouts)\n        self.layers = [Layer(sizes[i], sizes[i + 1], rng) for i in range(len(nouts))]\n\n    def __call__(self, x):\n        for layer in self.layers:\n            x = layer(x)\n        return x[0] if len(x) == 1 else x\n\n    def parameters(self):\n        return [p for layer in self.layers for p in layer.parameters()]\n\n\ndef total_loss(model, X, Y):\n    return sum(((model(x) - y) ** 2 for x, y in zip(X, Y)), Value(0.0))\n\n\ndef train(model, X, Y, steps, lr):\n    losses = []\n    for k in range(steps + 1):\n        loss = total_loss(model, X, Y)\n        losses.append(loss.data)\n        if k == steps:\n            break\n        for p in model.parameters():\n            p.grad = 0.0\n        loss.backward()\n        for p in model.parameters():\n            p.data -= lr * p.grad\n    return losses\n\nX6 = [[2.0, 0.5], [-2.0, -0.5], [0.5, 2.0], [-0.5, -2.0], [1.5, -0.5], [-0.5, 1.5]]\nY6 = [1.0, 1.0, -1.0, -1.0, 1.0, -1.0]\n",
+    "postlude": "_G = {}\n\n\ndef gain(seed):\n    if seed not in _G:\n        _G[seed] = hidden_layer_gain(seed)\n    return _G[seed]\n",
+    "budget": 6000
+   },
+   "feedback": {
+    "correct": "The single neuron stalls above 4; the hidden layer takes the loss below 0.02.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-2": "Test 2 wants the 2-4-1 loss below 0.05 after 200 steps at 0.05.",
+     "test-1": "Test 1 wants the single neuron above 3.5: train `MLP(2, [1])`, with no hidden layer."
+    }
+   },
+   "explain": {
+    "text": "One tanh neuron splits the plane with one line, so on these six points it stalls near a loss of 4. Four hidden neurons give the output neuron several lines to combine, and the loss falls below 0.02."
+   }
+  },
+  {
+   "id": "h-order-loop",
+   "difficulty": 3,
+   "skills": [
+    "bp-networks"
+   ],
+   "prose": "A training script runs one pass of its loop per step.",
+   "question": "Put the lines of the script in order: the set-up, then one pass. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Build `model = MLP(2, [4, 1], seed=42)` and an empty list `losses`"
+     },
+     {
+      "id": "o2",
+      "text": "Compute `loss`, the sum of squared errors over the points"
+     },
+     {
+      "id": "o3",
+      "text": "Append `loss.data` to `losses`"
+     },
+     {
+      "id": "o4",
+      "text": "Set every `p.grad` to 0.0"
+     },
+     {
+      "id": "o5",
+      "text": "Call `loss.backward()`"
+     },
+     {
+      "id": "o6",
+      "text": "Step every parameter: `p.data -= lr * p.grad`"
+     },
+     {
+      "id": "ox",
+      "text": "Call `loss.backward()` again after the step",
+      "why": "A second backward pass on the old graph adds stale gradients. The next pass builds a fresh loss first."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5",
+     "o6"
+    ],
+    "after": {
+     "o2": [
+      "o1"
+     ],
+     "o3": [
+      "o2"
+     ],
+     "o4": [
+      "o1"
+     ],
+     "o5": [
+      "o2",
+      "o4"
+     ],
+     "o6": [
+      "o5"
+     ]
+    },
+    "distractors": [
+     "ox"
+    ]
+   },
+   "feedback": {
+    "correct": "Set-up, then forward, record, zero, backward, step.",
+    "generic": "Not quite. Each line needs what an earlier line made.",
+    "byKey": {
+     "ox": "That runs `backward()` twice on one graph. Build a fresh loss each pass.",
+     "o5": "`backward()` came before the loss existed or before the reset.",
+     "o6": "The step came before `backward()`."
+    }
+   },
+   "explain": {
+    "text": "The model and list exist first. Each pass builds the loss, records it, clears the gradients, fills them with `backward()` and steps. The record and the reset may swap, as long as both come before `backward()`."
+   }
+  },
+  {
+   "id": "h-loss-went-up",
+   "difficulty": 4,
+   "skills": [
+    "bp-networks",
+    "bp-check"
+   ],
+   "title": "A loss that goes up",
+   "kind": "longform",
+   "prompt": "A colleague's training loss went up after every step. List four distinct causes, and for each say the check that would confirm or rule it out. Say which check you would run first, and why.",
+   "model": "Four causes, each with the check that confirms or rules it out.\n\n1. **The update has the wrong sign.** `p.data += lr * p.grad` climbs. *Check:* read the update line; then take one step with a tiny $\\eta$ and confirm the loss falls.\n2. **The step size is too large.** Each step overshoots the valley (the course network jumps to 8.0 at $\\eta = 2.0$). *Check:* rerun with $\\eta$ ten times smaller; if the loss now falls, the step was the cause.\n3. **The gradients are not reset.** `+=` keeps every past gradient, so steps grow and overshoot. *Check:* print one parameter's `grad` on two passes at the same point; it should be the same, not doubled.\n4. **`backward()` is wrong.** A bad closure (such as $1 - n^2$ in tanh) gives gradients that do not point downhill. *Check:* run a gradient check against central differences at $h = 10^{-6}$; it should pass below $10^{-6}$.\n\nA fifth worth naming: the loss is computed on different data each step, so successive numbers are not comparable. *Check:* fix the batch and see whether the rise persists.\n\n**Order.** Start with the cheapest: read the update sign, then a smaller step, then the reset, then the gradient check.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Names the wrong sign in the update, with a check (read it; one tiny step must lower the loss)"
+    },
+    {
+     "points": 2,
+     "text": "Names too large a step, with a check (rerun with a smaller step size)"
+    },
+    {
+     "points": 2,
+     "text": "Names gradients not reset, with a check (the same point gives the same gradient on two passes)"
+    },
+    {
+     "points": 2,
+     "text": "Names a wrong `backward()`, with a check (gradient check against central differences, relative error below $10^{-6}$)"
+    },
+    {
+     "points": 2,
+     "text": "Orders the checks sensibly, cheapest first, and says why"
+    }
+   ]
+  },
+  {
+   "id": "h-error-factor",
+   "difficulty": 3,
+   "skills": [
+    "bp-check"
+   ],
+   "prose": "A central difference has error $9.42 \\times 10^{-6}$ at $h = 0.01$, well above the rounding floor.",
+   "question": "By what factor does the error fall when $h$ goes from 0.01 to 0.002?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 25,
+    "tol": {
+     "abs": 0.5
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 5,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(0.01/0.002)^2 = 25$, so the error falls to about $3.8 \\times 10^{-7}$.",
+    "generic": "Not quite. The error is about $\\tfrac{f'''}{6}h^2$.",
+    "byKey": {
+     "linear": "That is how a forward difference shrinks. The central error goes like $h^2$."
+    }
+   },
+   "explain": {
+    "text": "$h$ falls by a factor of 5, so an $h^2$ error falls by $5^2 = 25$: from $9.42 \\times 10^{-6}$ to about $3.8 \\times 10^{-7}$."
+   }
+  },
+  {
+   "id": "h-perf-network",
+   "difficulty": 5,
+   "skills": [
+    "bp-networks"
+   ],
+   "prose": "Build and train a network from a stub. The `Value` class with `tanh()` and the six points `X6`, `Y6` are loaded. `MLP(nin, nouts, seed=42)` draws its parameters from one `random.Random(seed)` with `uniform(-1, 1)`: layer by layer, neuron by neuron, weights then bias. `train(model, X, Y, steps, lr)` returns `steps + 1` losses, each the sum of squared errors.",
+   "question": "Write `Neuron`, `Layer`, `MLP` (each with `parameters()`) and `train`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\n\nclass Neuron:\n    def __init__(self, nin, rng):\n        ...\n\n    def __call__(self, x):\n        ...\n\n    def parameters(self):\n        ...\n\n\nclass Layer:\n    def __init__(self, nin, nout, rng):\n        ...\n\n    def __call__(self, x):\n        ...\n\n    def parameters(self):\n        ...\n\n\nclass MLP:\n    def __init__(self, nin, nouts, seed=42):\n        ...\n\n    def __call__(self, x):\n        ...\n\n    def parameters(self):\n        ...\n\n\ndef train(model, X, Y, steps, lr):\n    ...\n",
+    "solution": "import random\n\n\nclass Neuron:\n    def __init__(self, nin, rng):\n        self.w = [Value(rng.uniform(-1, 1)) for _ in range(nin)]\n        self.b = Value(rng.uniform(-1, 1))\n\n    def __call__(self, x):\n        act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)\n        return act.tanh()\n\n    def parameters(self):\n        return self.w + [self.b]\n\n\nclass Layer:\n    def __init__(self, nin, nout, rng):\n        self.neurons = [Neuron(nin, rng) for _ in range(nout)]\n\n    def __call__(self, x):\n        return [n(x) for n in self.neurons]\n\n    def parameters(self):\n        return [p for n in self.neurons for p in n.parameters()]\n\n\nclass MLP:\n    def __init__(self, nin, nouts, seed=42):\n        rng = random.Random(seed)\n        sizes = [nin] + list(nouts)\n        self.layers = [Layer(sizes[i], sizes[i + 1], rng) for i in range(len(nouts))]\n\n    def __call__(self, x):\n        for layer in self.layers:\n            x = layer(x)\n        return x[0] if len(x) == 1 else x\n\n    def parameters(self):\n        return [p for layer in self.layers for p in layer.parameters()]\n\ndef train(model, X, Y, steps, lr):\n    losses = []\n    for k in range(steps + 1):\n        loss = sum(((model(x) - y) ** 2 for x, y in zip(X, Y)), Value(0.0))\n        losses.append(loss.data)\n        if k == steps:\n            break\n        for p in model.parameters():\n            p.grad = 0.0\n        loss.backward()\n        for p in model.parameters():\n            p.data -= lr * p.grad\n    return losses\n",
+    "examples": [
+     {
+      "setup": "",
+      "call": "len(MLP(2, [4, 1]).parameters())",
+      "expect": "17",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "",
+      "call": "len(MLP(2, [4, 1]).parameters())",
+      "expect": "17",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "fixed_forward()",
+      "expect": "-0.8492470209473285",
+      "compare": "isclose"
+     },
+     {
+      "setup": "",
+      "call": "check_gradients(MLP(2, [4, 1], seed=5), X6, Y6, 1e-6) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "train(MLP(2, [4, 1], seed=42), X6, Y6, 200, 0.05)[-1] < 0.05",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "len(train(MLP(2, [4, 1], seed=42), X6, Y6, 10, 0.05))",
+      "expect": "11",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "[round(p.data, 6) for p in MLP(2, [3, 1], seed=42).parameters()[:5]]",
+      "expect": "[0.278854, -0.949978, -0.449941, -0.553579, 0.472942]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. They check a parameter count, an output at fixed parameters (within 1e-9) and a gradient check below $10^{-6}$ at $h = 10^{-6}$. They also check a 200-step run below a loss of 0.05, the length of the loss list and the first five parameters for seed 42.",
+    "prelude": "import math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\nX6 = [[2.0, 0.5], [-2.0, -0.5], [0.5, 2.0], [-0.5, -2.0], [1.5, -0.5], [-0.5, 1.5]]\nY6 = [1.0, 1.0, -1.0, -1.0, 1.0, -1.0]\n",
+    "postlude": "\n\ndef total_loss(model, X, Y):\n    return sum(((model(x) - y) ** 2 for x, y in zip(X, Y)), Value(0.0))\n\n\n\n\ndef check_gradients(model, X, Y, h):\n    params = model.parameters()\n    for p in params:\n        p.grad = 0.0\n    total_loss(model, X, Y).backward()\n    worst = 0.0\n    for p in params:\n        keep = p.data\n        p.data = keep + h\n        up = total_loss(model, X, Y).data\n        p.data = keep - h\n        down = total_loss(model, X, Y).data\n        p.data = keep\n        num = (up - down) / (2 * h)\n        rel = abs(p.grad - num) / max(abs(p.grad), abs(num), 1e-12)\n        worst = max(worst, rel)\n    return worst\n\n\ndef fixed_forward():\n    m = MLP(2, [2, 1])\n    for p, v in zip(m.parameters(), [0.5, -0.25, 0.1, 0.3, 0.8, -0.2, 1.0, -1.5, 0.05]):\n        p.data = v\n    return m([1.0, 2.0]).data\n",
+    "budget": 6000
+   },
+   "feedback": {
+    "correct": "Your network passes its gradient check and learns the six points.",
+    "generic": "Not quite. Check the first failing test."
+   },
+   "explain": {
+    "text": "The classes chain neurons into layers and layers into a network, each listing its parameters. `train` repeats forward, reset, backward and step; the gradient check and the falling loss confirm both halves."
+   },
+   "performance": "code",
+   "title": "A network that learns"
+  }
+ ]
+}

@@ -1,0 +1,1316 @@
+{
+ "id": "l7-a-number-that-remembers",
+ "course": "backprop",
+ "title": "A number that remembers",
+ "minutes": 15,
+ "objectives": [
+  "Write a `Value` class that records how each number was made, with addition and multiplication."
+ ],
+ "skills": [
+  "bp-autograd"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "What a number must remember",
+   "prose": "So far you ran the backward pass by hand, reading the graph off the page. Suppose instead each number knew how it was made. Take $e = ab$ in the course graph.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "e"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "What must the number $e$ keep so that a backward pass can run later? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "data",
+      "text": "Its value, $-3$",
+      "correct": true
+     },
+     {
+      "id": "parents",
+      "text": "Its parents, $a$ and $b$",
+      "correct": true
+     },
+     {
+      "id": "op",
+      "text": "The operation that made it, $\\times$",
+      "correct": true
+     },
+     {
+      "id": "grad",
+      "text": "A slot for its gradient, starting at 0",
+      "correct": true
+     },
+     {
+      "id": "output",
+      "text": "The final output $L$",
+      "why": "$e$ is made before $L$ exists. It only needs to know its own parents."
+     },
+     {
+      "id": "order",
+      "text": "The topological order of the graph",
+      "why": "The order is built later, by a search back from the output."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Think about what $e$'s backward step needs."
+    },
+    {
+     "rung": "point",
+     "text": "It must send $b \\times$ (its gradient) to $a$, and $a \\times$ (its gradient) to $b$.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Value, parents, operation and a gradient slot."
+    }
+   ],
+   "feedback": {
+    "correct": "Its value, its parents, its operation and a gradient slot: everything its backward step needs.",
+    "generic": "Not quite. Keep only what $e$'s own backward step uses."
+   },
+   "explain": {
+    "text": "$e$'s backward step multiplies its gradient by the other parent's value and adds it to each parent. So it needs its value, its parents, how it was made and a slot for its gradient."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Operators are methods",
+   "prose": "A **Value** is a number that remembers: its data, its parents, its operation and a gradient. To make `a + b` and `a * b` work on Values, Python calls methods: `a + b` runs `a.__add__(b)` and `a * b` runs `a.__mul__(b)`. If the left side cannot do it, as in `2 * v`, Python tries `v.__rmul__(2)`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> a = Value(1.5); b = Value(-2.0)",
+      ">>> e = a * b        # runs a.__mul__(b)",
+      ">>> e.data, e._op",
+      "(-3.0, '*')",
+      ">>> [p.data for p in e._prev]",
+      "[1.5, -2.0]"
+     ],
+     "title": "A Value remembers"
+    },
+    "state": {}
+   },
+   "question": "Which call does Python make for `v + 1`, where `v` is a Value?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "add",
+      "text": "`v.__add__(1)`",
+      "correct": true
+     },
+     {
+      "id": "int",
+      "text": "`(1).__add__(v)`",
+      "why": "The left operand goes first, and here `v` is on the left."
+     },
+     {
+      "id": "radd",
+      "text": "`v.__radd__(1)`",
+      "why": "The right-hand version is tried only when the left side cannot add."
+     },
+     {
+      "id": "init",
+      "text": "`Value(1)`, then nothing",
+      "why": "Wrapping 1 may happen inside `__add__`, but Python first calls `v.__add__(1)`."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which operand is on the left?"
+    },
+    {
+     "rung": "point",
+     "text": "Python asks the left operand first.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`v.__add__(1)`."
+    }
+   ],
+   "feedback": {
+    "correct": "`v.__add__(1)`: the left operand is asked first.",
+    "generic": "Not quite. Python asks the left operand first."
+   },
+   "explain": {
+    "text": "For `v + 1` Python calls `v.__add__(1)`. Only when the left side cannot handle it, as `2 * v` with an int on the left, does it call `v.__rmul__(2)`."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A Value that records its parents",
+   "prose": "Write the class in the style of the py-found course: an initialiser that stores the attributes, and one method per operation. Store `data`, `grad = 0.0`, the parents as a tuple `_prev` and the operation's label `_op`. `__add__` and `__mul__` return a new Value whose parents are `(self, other)`.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "Write `__init__`, `__add__` and `__mul__`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        # store data, a gradient of 0.0, the parents as a tuple, the op\n        ...\n\n    def __add__(self, other):\n        ...\n\n    def __mul__(self, other):\n        ...\n",
+    "solution": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n\n    def __add__(self, other):\n        return Value(self.data + other.data, (self, other), \"+\")\n\n    def __mul__(self, other):\n        return Value(self.data * other.data, (self, other), \"*\")\n",
+    "examples": [
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f",
+      "call": "L.data",
+      "expect": "-3.0",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f",
+      "call": "L.data",
+      "expect": "-3.0",
+      "compare": "equal"
+     },
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f",
+      "call": "L._op",
+      "expect": "'*'",
+      "compare": "equal"
+     },
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f",
+      "call": "[p.data for p in L._prev]",
+      "expect": "[1.0, -3.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f",
+      "call": "[p.data for p in L._prev[0]._prev]",
+      "expect": "[-3.0, 4.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "v = Value(2.0)",
+      "call": "(v.grad, v._prev, v._op)",
+      "expect": "(0.0, (), '')",
+      "compare": "equal"
+     },
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f",
+      "call": "L._prev[1] is f",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests that build the course expression and read `data`, `_op`, `_prev` and `grad`. Each result must equal the expected one exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`__init__` stores four attributes, with `grad` starting at `0.0`."
+    },
+    {
+     "rung": "point",
+     "text": "`__add__` returns `Value(self.data + other.data, (self, other), \"+\")`.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`__mul__` is the same with `*` and `\"*\"`."
+    }
+   ],
+   "feedback": {
+    "correct": "Each Value now remembers its parents: `L._prev` is `(d, f)`, and `d._prev` is `(e, c)`.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 reads `L.data`, which should be -3.0. Check both methods compute with `.data`.",
+     "test-3": "Test 3 reads the parents of `L`: `[1.0, -3.0]`, the values of $d$ and $f$, in that order."
+    }
+   },
+   "explain": {
+    "text": "Every operation creates a new Value and records `(self, other)` as its parents. Built this way, `L` carries the whole graph: `L._prev` is $(d, f)$, and so on back to the leaves."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A closure for each operation",
+   "prose": "Each operation also attaches a small function, `out._backward`, that sends `out.grad` back to the parents. It is a closure: it remembers `self`, `other` and `out` from the call that made it. For `+` it is `self.grad += out.grad` and `other.grad += out.grad`.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "e"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "Which closure is right for `out = self * other`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "```python\ndef _backward():\n    self.grad += other.data * out.grad\n    other.grad += self.data * out.grad\n```",
+      "correct": true
+     },
+     {
+      "id": "out",
+      "text": "```python\ndef _backward():\n    self.grad += out.data * out.grad\n    other.grad += out.data * out.grad\n```",
+      "why": "You sent the output's value back. A product passes each parent the other parent's value."
+     },
+     {
+      "id": "eq",
+      "text": "```python\ndef _backward():\n    self.grad = other.data * out.grad\n    other.grad = self.data * out.grad\n```",
+      "why": "With `=` a second contribution would overwrite the first, as in Priya's sum box."
+     },
+     {
+      "id": "own",
+      "text": "```python\ndef _backward():\n    self.grad += self.data * out.grad\n    other.grad += other.data * out.grad\n```",
+      "why": "You passed each parent its own value. A product passes the other one."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A product passes each input the other input, times the gradient arriving."
+    },
+    {
+     "rung": "point",
+     "text": "`self` gets `other.data * out.grad`.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "And always `+=`."
+    }
+   ],
+   "feedback": {
+    "correct": "Each parent gets the other's data times `out.grad`, added with `+=`.",
+    "generic": "Not quite. Check which value each parent receives, and the `+=`."
+   },
+   "explain": {
+    "text": "For a product the local derivative with respect to `self` is `other.data`, and the reverse. Each closure multiplies by `out.grad` and adds with `+=`, so a parent used twice collects both shares."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Calling a closure by hand",
+   "prose": "With the closures in place, run one box by hand. Make $e = ab$ from $a = 1.5$ and $b = -2$, pretend a later box has sent `e.grad = 3`, and call `e._backward()` yourself.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> a = Value(1.5); b = Value(-2.0)",
+      ">>> e = a * b",
+      ">>> e.grad = 3.0",
+      ">>> e._backward()",
+      ">>> a.grad, b.grad",
+      "(?, ?)"
+     ],
+     "title": "One box by hand"
+    },
+    "state": {}
+   },
+   "question": "What is `a.grad` now?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -6,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "own",
+      "value": 4.5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "output",
+      "value": -9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "no-grad",
+      "value": -2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`a` gets `b.data * e.grad`."
+    },
+    {
+     "rung": "point",
+     "text": "$-2 \\times 3$.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-6$; and `b.grad` is $1.5 \\times 3 = 4.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "`a.grad` is $-2 \\times 3 = -6$ and `b.grad` is $1.5 \\times 3 = 4.5$.",
+    "generic": "Not quite. `a` receives the other input times `e.grad`.",
+    "byKey": {
+     "own": "That is `b.grad`: $a \\times 3$. `a` receives $b \\times 3$.",
+     "output": "You used the output $e = -3$. `a` receives `b.data` times 3.",
+     "no-grad": "You forgot to multiply by `e.grad = 3`.",
+     "sign": "You dropped the sign of $b = -2$."
+    }
+   },
+   "explain": {
+    "text": "The closure adds `b.data * e.grad` $= -2 \\times 3 = -6$ to `a.grad`, and `a.data * e.grad` $= 4.5$ to `b.grad`. One call does one box's share of the backward pass.",
+    "canvas": {
+     "lines": [
+      ">>> a = Value(1.5); b = Value(-2.0)",
+      ">>> e = a * b",
+      ">>> e.grad = 3.0",
+      ">>> e._backward()",
+      ">>> a.grad, b.grad",
+      "(-6.0, 4.5)"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "The closure that overwrites",
+   "prose": "Ali's `__add__` closure uses `=`: `self.grad = out.grad` and `other.grad = out.grad`. He tests it on `y = v + v`, so `self` and `other` are the same Value. He sets `y.grad = 1` and calls `y._backward()`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "def _backward():",
+      "    self.grad = out.grad",
+      "    other.grad = out.grad",
+      "",
+      ">>> v = Value(5.0); y = v + v",
+      ">>> y.grad = 1.0; y._backward(); v.grad"
+     ],
+     "title": "Ali's closure"
+    },
+    "state": {
+     "tone": {
+      "l2": "err",
+      "l3": "err"
+     }
+    }
+   },
+   "question": "What should `v.grad` be, since $\\partial y/\\partial v$ for $y = v + v$ is the true answer?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "overwrote",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "value",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$y = 2v$."
+    },
+    {
+     "rung": "point",
+     "text": "Each slot of the sum sends 1, and both slots are $v$.",
+     "highlight": [
+      "l2",
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "With `+=` they add to 2; Ali's `=` leaves 1."
+    }
+   ],
+   "feedback": {
+    "correct": "$y = 2v$, so `v.grad` should be 2. Ali's `=` writes 1 twice and prints 1.",
+    "generic": "Not quite. Count both slots of the sum.",
+    "byKey": {
+     "overwrote": "That is what Ali's code prints: the second `=` overwrote the first. The true gradient is 2.",
+     "value": "You gave $y$ itself. The gradient is a rate."
+    }
+   },
+   "explain": {
+    "text": "Both slots of the sum are $v$, so it should receive $1 + 1 = 2$. Ali's `=` writes 1 and then writes 1 again, losing a share. With `+=` the closure is right however the parents repeat."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Plain numbers on either side",
+   "prose": "Code often mixes Values and plain numbers: `v * 4` or `2 * v`. Inside `__mul__`, the line `other = other if isinstance(other, Value) else Value(other)` wraps a plain number, so `v * 4` works. For `2 * v`, an int is on the left.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> v = Value(3.0)",
+      ">>> (v * 4).data",
+      "12.0",
+      ">>> (2 * v).data",
+      "???"
+     ],
+     "title": "Numbers and Values"
+    },
+    "state": {}
+   },
+   "question": "Without `__rmul__`, what does `2 * v` do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "error",
+      "text": "It raises a TypeError: int cannot multiply a Value, and Value has no right-hand method",
+      "correct": true
+     },
+     {
+      "id": "works",
+      "text": "It returns a Value with data 6.0, exactly as `v * 2` does, through `__mul__`",
+      "why": "That needs Python to call a Value method. With an int on the left it asks `int` first, then `v.__rmul__`."
+     },
+     {
+      "id": "int",
+      "text": "It returns the plain number 6, with no graph attached",
+      "why": "An int does not know how to read a Value's data."
+     },
+     {
+      "id": "wrap",
+      "text": "It wraps 2 in a Value first and then multiplies the two",
+      "why": "The wrapping line sits inside `Value.__mul__`, which is never called when the int is on the left."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which object does Python ask first?"
+    },
+    {
+     "rung": "point",
+     "text": "It asks `int.__mul__`, which returns NotImplemented, then looks for `v.__rmul__`.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "With no `__rmul__`, it raises a TypeError."
+    }
+   ],
+   "feedback": {
+    "correct": "A TypeError. `__rmul__(self, other): return self * other` fixes it, and `__radd__` does the same for `1 + v`.",
+    "generic": "Not quite. Which object is asked first?"
+   },
+   "explain": {
+    "text": "Python asks `int.__mul__` first, which cannot handle a Value, then looks for `v.__rmul__`. Defining `__rmul__` and `__radd__` to call `self * other` and `self + other` makes both orders work."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The class with its closures",
+   "prose": "Finish the class: attach a `_backward` closure in `__add__` and `__mul__`, and write `__radd__` and `__rmul__`. The hidden tests build tiny graphs, set an output's `grad` by hand and call `_backward()` on it, as you did two screens back.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "Complete the `Value` class.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n        # attach out._backward here\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n        # attach out._backward here\n        return out\n\n    def __radd__(self, other):\n        ...\n\n    def __rmul__(self, other):\n        ...\n",
+    "solution": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n",
+    "examples": [
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); e = a * b; e.grad = 1.0; e._backward()",
+      "call": "(a.grad, b.grad)",
+      "expect": "(-2.0, 1.5)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); e = a * b; e.grad = 1.0; e._backward()",
+      "call": "(a.grad, b.grad)",
+      "expect": "(-2.0, 1.5)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(2.0); y = Value(3.0); s = x + y; s.grad = 2.0; s._backward()",
+      "call": "(x.grad, y.grad)",
+      "expect": "(2.0, 2.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(2.0); y = Value(3.0); g = (x + y) * x; g.grad = 1.0; g._backward(); g._prev[0]._backward()",
+      "call": "(x.grad, y.grad)",
+      "expect": "(7.0, 2.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "v = Value(4.0); w = 2 * v; w.grad = 1.0; w._backward()",
+      "call": "(w.data, v.grad)",
+      "expect": "(8.0, 2.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "v = Value(4.0); w = 1 + v",
+      "call": "(w.data, w._op)",
+      "expect": "(5.0, '+')",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(3.0); y = x * x; y.grad = 1.0; y._backward()",
+      "call": "x.grad",
+      "expect": "6.0",
+      "compare": "equal"
+     },
+     {
+      "setup": "v = Value(2.5); w = v * 4; w.grad = 1.0; w._backward()",
+      "call": "v.grad",
+      "expect": "4.0",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: each closure called by hand, a value used twice, both right-hand methods and a plain number on each side. Each result must equal the expected one exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Inside `__add__`, define `def _backward():` that adds `out.grad` to both parents, then set `out._backward = _backward`."
+    },
+    {
+     "rung": "point",
+     "text": "In `__mul__` each parent gets the other's `data` times `out.grad`, with `+=`.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`__radd__` returns `self + other` and `__rmul__` returns `self * other`."
+    }
+   ],
+   "feedback": {
+    "correct": "Every Value now carries its own backward step.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-3": "Test 3 is $g = (x + y)x$: after both boxes `x.grad` must be 7.0. Use `+=` in both closures.",
+     "test-4": "Test 4 is `2 * v`: write `__rmul__`.",
+     "test-5": "Test 5 is `1 + v`: write `__radd__`."
+    }
+   },
+   "explain": {
+    "text": "Each operation builds `out` and attaches a closure that knows `self`, `other` and `out`. `+=` makes repeated parents collect every share, and the right-hand methods let a number sit on the left."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Prices that know their inputs",
+   "prose": "A risk engine builds every price from Values, so each sensitivity comes from one backward call. A desk is long $n = 10$ index futures with multiplier $m = £250$ a point, bought at $F_0 = 4{,}000$. The future is now at $F = 4{,}012$, so the P&L is $nm(F - F_0) = £30{,}000$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 240,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "n",
+       "label": "contracts",
+       "x": 0.08,
+       "y": 0.15,
+       "shape": "pill"
+      },
+      {
+       "id": "m",
+       "label": "multiplier",
+       "x": 0.08,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "F",
+       "label": "F",
+       "x": 0.08,
+       "y": 0.88
+      },
+      {
+       "id": "k",
+       "label": "n·m",
+       "x": 0.4,
+       "y": 0.3,
+       "shape": "rect"
+      },
+      {
+       "id": "dF",
+       "label": "F − F₀",
+       "x": 0.4,
+       "y": 0.85,
+       "shape": "rect"
+      },
+      {
+       "id": "P",
+       "label": "P&L",
+       "x": 0.85,
+       "y": 0.55,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "n",
+       "to": "k"
+      },
+      {
+       "from": "m",
+       "to": "k"
+      },
+      {
+       "from": "F",
+       "to": "dF"
+      },
+      {
+       "from": "k",
+       "to": "P"
+      },
+      {
+       "from": "dF",
+       "to": "P"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "n": "10",
+      "m": "250",
+      "F": "4,012",
+      "k": "2,500",
+      "dF": "12",
+      "P": "30,000"
+     },
+     "values2": {
+      "P": "1"
+     }
+    }
+   },
+   "question": "After `pnl.backward()`, what is `F.grad`, in pounds per index point?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2500,
+    "tol": {
+     "abs": 0.5
+    },
+    "placeholder": "pounds per point",
+    "wrong": [
+     {
+      "id": "pnl",
+      "value": 30000,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "one-contract",
+      "value": 250,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "move",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Walk back from P&L to $F$."
+    },
+    {
+     "rung": "point",
+     "text": "The product passes $F - F_0$ the other input, $nm = 2{,}500$; the difference passes it on.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2{,}500 \\times 1 = 2{,}500$."
+    }
+   ],
+   "feedback": {
+    "correct": "$nm = 2{,}500$ pounds per point: the engine finds it with no bump.",
+    "generic": "Not quite. Multiply back from the P&L to $F$.",
+    "byKey": {
+     "pnl": "That is the P&L itself. `F.grad` is the rate per point.",
+     "one-contract": "You used one contract. The desk holds 10.",
+     "move": "You gave the move in $F$. `F.grad` is the rate."
+    }
+   },
+   "explain": {
+    "text": "The P&L box multiplies $nm$ by $F - F_0$, so it passes the difference $nm = 2{,}500$; the difference box passes it on to $F$. One backward call gives that and every other sensitivity together."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A Value keeps its data, its parents, its operation and a gradient slot.",
+   "Each operation attaches a `_backward` closure that sends its gradient to its parents with `+=`.",
+   "Python turns `a * b` into `a.__mul__(b)`, and `2 * v` into `v.__rmul__(2)` once the int declines."
+  ],
+  "formula": {
+   "name": "The two closures",
+   "tex": "\\text{sum: } \\bar{s} \\mathrel{+}= \\bar{o},\\ \\bar{t} \\mathrel{+}= \\bar{o}; \\quad \\text{product: } \\bar{s} \\mathrel{+}= t\\,\\bar{o},\\ \\bar{t} \\mathrel{+}= s\\,\\bar{o}",
+   "note": "A bar marks a gradient: $\\bar{o}$ is `out.grad`, $s$ and $t$ are the parents' data."
+  },
+  "trap": "An `=` in a closure loses a share when a parent repeats: `v + v` gives 1 where the gradient is 2."
+ },
+ "quiz": [
+  {
+   "id": "q-closure-add",
+   "difficulty": 2,
+   "prose": "`s = x + y`, then a later box sets `s.grad = 2.5`. `x.grad` already holds 1.0 from another path.",
+   "question": "After `s._backward()`, what is `x.grad`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "overwrote",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "ignored",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1.0 + 2.5 = 3.5$.",
+    "generic": "Not quite. The sum adds `s.grad` to what `x.grad` holds.",
+    "byKey": {
+     "overwrote": "You replaced the 1.0. The closure adds with `+=`.",
+     "ignored": "The closure adds `s.grad = 2.5` to it."
+    }
+   },
+   "explain": {
+    "text": "A sum passes its gradient to each parent with `+=`. So `x.grad` goes from 1.0 to $1.0 + 2.5 = 3.5$."
+   }
+  },
+  {
+   "id": "q-rmul-call",
+   "difficulty": 2,
+   "prose": "`v` is a Value.",
+   "question": "Which method finally handles `3 * v`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rmul",
+      "text": "`v.__rmul__(3)`",
+      "correct": true
+     },
+     {
+      "id": "mul",
+      "text": "`v.__mul__(3)`",
+      "why": "Python asks the left operand first, and 3 is on the left. It reaches `v.__rmul__`."
+     },
+     {
+      "id": "int",
+      "text": "`int.__mul__(3, v)`",
+      "why": "Python asks it first, but it cannot handle a Value."
+     },
+     {
+      "id": "init",
+      "text": "`Value.__init__(v, 3)`",
+      "why": "No new Value is made by that call."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`v.__rmul__(3)`, after `int.__mul__` declines.",
+    "generic": "Not quite. The left operand is an int."
+   },
+   "explain": {
+    "text": "Python tries `int.__mul__` first, which cannot handle a Value. It then calls `v.__rmul__(3)`."
+   }
+  },
+  {
+   "id": "q-closure-mul",
+   "difficulty": 3,
+   "prose": "`p = u * w` with `u = Value(0.5)` and `w = Value(-4.0)`. A later box sets `p.grad = 2.0`.",
+   "question": "After `p._backward()`, what is `w.grad`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "own",
+      "value": -8,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "output",
+      "value": -4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`u.data * p.grad` $= 0.5 \\times 2 = 1$.",
+    "generic": "Not quite. `w` receives the other input times `p.grad`.",
+    "byKey": {
+     "own": "You used `w` itself. It receives `u.data` times 2.",
+     "output": "You used the output $p = -2$. It receives `u.data` times 2."
+    }
+   },
+   "explain": {
+    "text": "A product sends each parent the other parent's data times its own gradient. So `w.grad` gets $0.5 \\times 2 = 1$."
+   }
+  }
+ ]
+}

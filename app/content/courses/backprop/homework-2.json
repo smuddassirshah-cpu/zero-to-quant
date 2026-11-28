@@ -1,0 +1,368 @@
+{
+ "id": "homework-2",
+ "course": "backprop",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-zero-grads",
+   "difficulty": 4,
+   "skills": [
+    "bp-autograd"
+   ],
+   "prose": "Training rebuilds a graph and calls `backward()` many times, so it needs a reset. The `Value` class with `backward()` is loaded for you.",
+   "question": "Write `zero_grads(out)`: set `grad` to `0.0` on every node that leads to `out`, `out` included, and on nothing else.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def zero_grads(out):\n    # set grad to 0.0 on every node that leads to out\n    ...\n",
+    "solution": "def zero_grads(out):\n    seen, stack = set(), [out]\n    while stack:\n        v = stack.pop()\n        if v not in seen:\n            seen.add(v)\n            v.grad = 0.0\n            stack.extend(v._prev)\n",
+    "examples": [
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f; L.backward(); zero_grads(L)",
+      "call": "(a.grad, b.grad, c.grad, f.grad, L.grad)",
+      "expect": "(0.0, 0.0, 0.0, 0.0, 0.0)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f; L.backward(); zero_grads(L)",
+      "call": "(a.grad, b.grad, c.grad, f.grad, L.grad)",
+      "expect": "(0.0, 0.0, 0.0, 0.0, 0.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f; L.backward(); zero_grads(L); L.backward()",
+      "call": "(a.grad, b.grad)",
+      "expect": "(6.0, -4.5)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(2.0); g = (x + 1) * x; g.backward(); zero_grads(g)",
+      "call": "(x.grad, g._prev[0].grad)",
+      "expect": "(0.0, 0.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(3.0); y = x * x; y.backward(); zero_grads(y); y.backward()",
+      "call": "x.grad",
+      "expect": "6.0",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(2.0); t = x * 5; y = x + 1; t.backward(); y.backward(); zero_grads(y)",
+      "call": "(x.grad, t.grad)",
+      "expect": "(0.0, 1.0)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: the course expression before and after a second pass, a branch, $x \\cdot x$, and a node outside the graph that must keep its gradient. Each result must equal the expected one exactly.",
+    "prelude": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n"
+   },
+   "feedback": {
+    "correct": "With the reset, a second pass gives 6 again, not 12.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-2": "Test 2 runs a second pass after your reset: `a.grad` must be 6.0 again.",
+     "test-5": "Test 5 has a node `t` that does not lead to `y`. Leave its gradient alone."
+    }
+   },
+   "explain": {
+    "text": "A search from `out` along `_prev` reaches exactly the nodes that lead to it. Setting each one's `grad` to 0.0 makes the next pass start clean."
+   }
+  },
+  {
+   "id": "h-value-more-ops",
+   "difficulty": 5,
+   "skills": [
+    "bp-autograd"
+   ],
+   "prose": "Grow the class. Add `__pow__` for a plain-number exponent, `__neg__`, `__sub__`, `__rsub__` and `exp()`, each with its own closure where it needs one. `__neg__` and both subtractions can be built from `*` and `+`.",
+   "question": "Complete the methods so that `(x ** 2 - y).exp()` backpropagates. For $e^{x^2 - y}$ the gradients are $2xe^{x^2 - y}$ and $-e^{x^2 - y}$.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        # k is a plain number; d(x**k)/dx = k * x**(k - 1)\n        ...\n\n    def __neg__(self):\n        ...\n\n    def __sub__(self, other):\n        ...\n\n    def __rsub__(self, other):\n        ...\n\n    def exp(self):\n        ...\n",
+    "solution": "import math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n",
+    "examples": [
+     {
+      "setup": "x = Value(1.0); y = Value(0.5); z = (x ** 2 - y).exp(); z.backward()",
+      "call": "(z.data, x.grad, y.grad)",
+      "expect": "(1.6487212707001282, 3.2974425414002564, -1.6487212707001282)",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x = Value(1.0); y = Value(0.5); z = (x ** 2 - y).exp(); z.backward()",
+      "call": "(z.data, x.grad, y.grad)",
+      "expect": "(1.6487212707001282, 3.2974425414002564, -1.6487212707001282)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x = Value(-0.5); y = Value(2.0); z = (x ** 2 - y).exp(); z.backward()",
+      "call": "(z.data, x.grad, y.grad)",
+      "expect": "(0.17377394345044514, -0.17377394345044514, -0.17377394345044514)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x = Value(2.0); y = x ** 3; y.backward()",
+      "call": "(y.data, x.grad)",
+      "expect": "(8.0, 12.0)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x = Value(4.0); y = 10 - x; y.backward()",
+      "call": "(y.data, x.grad)",
+      "expect": "(6.0, -1.0)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x = Value(1.5); y = -x * 2; y.backward()",
+      "call": "(y.data, x.grad)",
+      "expect": "(-3.0, -2.0)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x = Value(0.0); y = x.exp() * x.exp(); y.backward()",
+      "call": "(y.data, x.grad)",
+      "expect": "(1.0, 2.0)",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: $e^{x^2 - y}$ at two points, a cube, $10 - x$, $-2x$ and a product of two exponentials. Each value is accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+   },
+   "feedback": {
+    "correct": "Four short methods, and the class now handles $e^{x^2 - y}$.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is $e^{x^2 - y}$ at $(1, 0.5)$: value 1.6487, gradients 3.2974 and $-1.6487$.",
+     "test-4": "Test 4 is `10 - x`, a number on the left: write `__rsub__`."
+    }
+   },
+   "explain": {
+    "text": "`__pow__` and `exp()` need closures: $kx^{k-1}$ and the output itself. Negation is `self * -1`, and the subtractions are a sum with a negation, so their closures come free."
+   }
+  },
+  {
+   "id": "h-order-mul",
+   "difficulty": 3,
+   "skills": [
+    "bp-autograd"
+   ],
+   "prose": "The body of `__mul__` in your class has five lines.",
+   "question": "Put them in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "m1",
+      "text": "`other = other if isinstance(other, Value) else Value(other)`"
+     },
+     {
+      "id": "m2",
+      "text": "`out = Value(self.data * other.data, (self, other), \"*\")`"
+     },
+     {
+      "id": "m3",
+      "text": "`def _backward():` adding `other.data * out.grad` to `self.grad` and `self.data * out.grad` to `other.grad`"
+     },
+     {
+      "id": "m4",
+      "text": "`out._backward = _backward`"
+     },
+     {
+      "id": "m5",
+      "text": "`return out`"
+     },
+     {
+      "id": "mx",
+      "text": "`self.grad = other.data`, set at once when the product is made",
+      "why": "No gradient exists yet when the product is made. The closure waits until `backward()` calls it."
+     }
+    ],
+    "answer": [
+     "m1",
+     "m2",
+     "m3",
+     "m4",
+     "m5"
+    ],
+    "distractors": [
+     "mx"
+    ]
+   },
+   "feedback": {
+    "correct": "Wrap, build `out`, define the closure, attach it, return.",
+    "generic": "Not quite. Each line needs what the lines before it made.",
+    "byKey": {
+     "mx": "That writes a gradient at forward time. The closure must wait for `backward()`."
+    }
+   },
+   "explain": {
+    "text": "`out` needs the wrapped `other`; the closure refers to `out`; it must be attached before `out` is returned. Nothing touches a gradient until `backward()` runs the closure."
+   }
+  },
+  {
+   "id": "h-why-add",
+   "difficulty": 4,
+   "skills": [
+    "bp-backward"
+   ],
+   "title": "Why gradients add at a branch",
+   "kind": "longform",
+   "prompt": "Explain why the gradient of a value used in several places is the sum of one contribution per path. Use $y = x \\cdot x$ at $x = 3$: give each contribution, the total, and a nudge that checks it. Then say what `+=` does in the closures, and what `=` would give.",
+   "model": "**The rule.** A value used in several boxes reaches the output along several paths. A small move in it moves every box that uses it, and each of those moves reaches the output. To first order the effects add, so the gradient is the sum of one contribution per path, each the product of the local derivatives along it.\n\n**The example.** Take $y = x \\cdot x$ at $x = 3$, one product box whose two inputs are both $x$. The box passes each input the other: the first slot receives 3 and the second slot receives 3. Both slots are $x$, so $\\partial y/\\partial x = 3 + 3 = 6$. That is $(x^2)' = 2x$ at $x = 3$.\n\n**A nudge.** Move $x$ to 3.01: $y = 9.0601$, up 0.0601, about $6 \\times 0.01$. Holding one slot still gives $3.01 \\times 3 = 9.03$, up only 0.03: one path alone is half the answer.\n\n**Why `+=`.** In code each box's closure runs once and sends its share. The product's closure sends 3 to `self` and then 3 to `other`, the same object. With `+=` the second share adds to the first and gives 6. With `=` the second write replaces the first and gives 3, a wrong gradient with no error.\n\n**The general case.** The same happens across boxes: in $g = (x + y)x$ at $(2, 3)$ the product sends 5 and the sum sends 2, so $\\partial g/\\partial x = 7$.",
+   "rubric": [
+    {
+     "points": 3,
+     "text": "States the rule: one contribution per path, each a product along the path, and the contributions add"
+    },
+    {
+     "points": 2,
+     "text": "Works $x \\cdot x$ at 3: each slot receives 3, total 6, matching $2x$"
+    },
+    {
+     "points": 2,
+     "text": "Checks by a nudge, about 0.06 for 0.01, and shows one path alone gives half"
+    },
+    {
+     "points": 2,
+     "text": "Explains `+=`: the second share adds; `=` would replace it and give 3"
+    },
+    {
+     "points": 1,
+     "text": "Gives a second example across boxes, such as $g = (x + y)x$ with $5 + 2 = 7$"
+    }
+   ]
+  },
+  {
+   "id": "h-four-shares",
+   "difficulty": 4,
+   "skills": [
+    "bp-backward"
+   ],
+   "prose": "A graph computes $s = x + y$, $p = xy$, then $z = sp$, at $x = 1$, $y = 2$.",
+   "question": "What is $\\partial z/\\partial x$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "sum-path",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "product-path",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Through $s$: $p \\times 1 = 2$. Through $p$: $s \\times y = 6$. Total 8.",
+    "generic": "Not quite. $x$ reaches $z$ along two paths.",
+    "byKey": {
+     "sum-path": "That is the path through $s$ only. The path through $p$ adds $s \\times y = 6$.",
+     "product-path": "That is the path through $p$ only. The path through $s$ adds $p = 2$."
+    }
+   },
+   "explain": {
+    "text": "$z = sp$ passes $s$ the value $p = 2$ and $p$ the value $s = 3$. Back to $x$: $2 \\times 1 + 3 \\times y = 2 + 6 = 8$."
+   }
+  },
+  {
+   "id": "h-perf-value-class",
+   "difficulty": 5,
+   "skills": [
+    "bp-autograd"
+   ],
+   "prose": "Write the class that the rest of this course builds on, from a stub. A `Value` keeps `data`, `grad` (starting at `0.0`), its parents `_prev` and an operation label `_op`. It supports `+` and `*` with a Value or a plain number on either side, and `backward()` fills `grad` on every node that leads to the output.",
+   "question": "Write the `Value` class.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        ...\n\n    def __add__(self, other):\n        ...\n\n    def __mul__(self, other):\n        ...\n\n    def __radd__(self, other):\n        ...\n\n    def __rmul__(self, other):\n        ...\n\n    def backward(self):\n        ...\n",
+    "solution": "class Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n",
+    "examples": [
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f; L.backward()",
+      "call": "(a.grad, b.grad, c.grad, f.grad)",
+      "expect": "(6.0, -4.5, -3.0, 1.0)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x = Value(0.5); y = ((x * 4 + 1) * 3 + 2) * 0.5; y.backward()",
+      "call": "(y.data, x.grad)",
+      "expect": "(5.5, 6.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(3.0); a = x * 2; b = x + 5; z = a * b; z.backward()",
+      "call": "(z.data, x.grad)",
+      "expect": "(48.0, 22.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(-2.0); y = x * x * x; y.backward()",
+      "call": "(y.data, x.grad)",
+      "expect": "(-8.0, 12.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(1.5); y = 1 + 4 * x; y.backward()",
+      "call": "(y.data, x.grad)",
+      "expect": "(7.0, 4.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(2.0); w = Value(-1.0); L = x * w + x; L.backward(); x.grad = 0.0; w.grad = 0.0; L = x * w + x; L.backward()",
+      "call": "(x.grad, w.grad)",
+      "expect": "(0.0, 2.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "a = Value(1.5); b = Value(-2.0); c = Value(4.0); f = Value(-3.0); L = (a * b + c) * f; L.backward()",
+      "call": "(a.grad, b.grad, c.grad, f.grad)",
+      "expect": "(6.0, -4.5, -3.0, 1.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = Value(2.0); t = x * 7; y = x * x; y.backward()",
+      "call": "(x.grad, t.grad)",
+      "expect": "(4.0, 0.0)",
+      "compare": "equal"
+     },
+     {
+      "setup": "u = Value(0.5); v = Value(-4.0); p = u * v; p.backward()",
+      "call": "(p.grad, u.grad, v.grad)",
+      "expect": "(1.0, -4.0, 0.5)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests on fresh expressions: a chain, a diamond, a value used three times, numbers on the left, a pass after a reset, the course expression, an unused node and one product. Each result must equal the expected one exactly."
+   },
+   "feedback": {
+    "correct": "Your class gives every gradient of every expression the hidden tests built.",
+    "generic": "Not quite. Check the first failing test."
+   },
+   "explain": {
+    "text": "Each operation records its parents and attaches a closure that adds its share with `+=`. `backward()` orders the nodes by a search from the output, sets the output to 1 and runs the closures in reverse."
+   },
+   "performance": "code",
+   "title": "A Value class with backward"
+  }
+ ]
+}

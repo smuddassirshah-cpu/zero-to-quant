@@ -1,0 +1,1686 @@
+{
+ "id": "l1-expression-as-graph",
+ "course": "backprop",
+ "title": "An expression as a graph",
+ "minutes": 12,
+ "objectives": [
+  "Draw an expression as a graph of operations and compute its forward values."
+ ],
+ "skills": [
+  "bp-chain"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Which input matters most?",
+   "prose": "A model computes $L = (ab + c)f$ from four inputs. Today $a = 1.5$, $b = -2$, $c = 4$ and $f = -3$, so $L = -3$. Move one slider at a time by one step of 0.5, then put it back.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    },
+    "controls": [
+     {
+      "bind": "va",
+      "min": -4,
+      "max": 4,
+      "step": 0.5,
+      "label": "a",
+      "start": 1.5
+     },
+     {
+      "bind": "vb",
+      "min": -4,
+      "max": 4,
+      "step": 0.5,
+      "label": "b",
+      "start": -2
+     },
+     {
+      "bind": "vc",
+      "min": -4,
+      "max": 4,
+      "step": 0.5,
+      "label": "c",
+      "start": 4
+     },
+     {
+      "bind": "vf",
+      "min": -4,
+      "max": 4,
+      "step": 0.5,
+      "label": "f",
+      "start": -3
+     }
+    ],
+    "derive": {
+     "values.a": "{{round(va, 2)}}",
+     "values.b": "{{round(vb, 2)}}",
+     "values.c": "{{round(vc, 2)}}",
+     "values.f": "{{round(vf, 2)}}",
+     "values.e": "{{round(va * vb, 2)}}",
+     "values.d": "{{round(va * vb + vc, 2)}}",
+     "values.L": "{{round((va * vb + vc) * vf, 2)}}",
+     "caption": "L = {{round((va * vb + vc) * vf, 2)}}"
+    }
+   },
+   "question": "Which input moves $L$ the most for a move of 0.5?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "$a$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$b$",
+      "why": "A step in $b$ moves $L$ by 2.25. A step in $a$ moves it by 3."
+     },
+     {
+      "id": "c",
+      "text": "$c$",
+      "why": "A step in $c$ moves $L$ by 1.5, half as much as a step in $a$."
+     },
+     {
+      "id": "f",
+      "text": "$f$",
+      "why": "A step in $f$ moves $L$ by only 0.5, because $f$ multiplies $ab + c = 1$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put each slider back to its start before you move the next one."
+    },
+    {
+     "rung": "point",
+     "text": "Read the number under $L$ after each move.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A step in $a$ takes $L$ from $-3$ to 0; in $b$ to $-5.25$; in $c$ to $-4.5$; in $f$ to $-2.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "A step of 0.5 in $a$ moves $L$ by 3, more than any other input. This course finds those rates without moving every slider.",
+    "generic": "Not quite. Compare how far $L$ moves for each one-step move."
+   },
+   "explain": {
+    "text": "From $L = -3$, a step in $a$ gives 0, in $b$ gives $-5.25$, in $c$ gives $-4.5$ and in $f$ gives $-2.5$. The biggest move, 3, comes from $a$. The rest of this level explains why."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Draw the graph",
+   "prose": "You worked $L$ out in three steps. Drawn as a **computation graph**, each box is one operation and the leaves $a$, $b$, $c$, $f$ are its inputs. Each arrow carries a value forward into the next box.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 280,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": []
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3"
+     }
+    }
+   },
+   "question": "Drag each value into the box it feeds.",
+   "widget": {
+    "kind": "place",
+    "mode": "assign",
+    "tokens": [
+     {
+      "id": "a",
+      "text": "$a$",
+      "onPlace": {
+       "se": {
+        "edges": {
+         "e-a-e": {
+          "from": "a",
+          "to": "e"
+         }
+        }
+       }
+      }
+     },
+     {
+      "id": "b",
+      "text": "$b$",
+      "onPlace": {
+       "se": {
+        "edges": {
+         "e-b-e": {
+          "from": "b",
+          "to": "e"
+         }
+        }
+       }
+      }
+     },
+     {
+      "id": "c",
+      "text": "$c$",
+      "onPlace": {
+       "sd": {
+        "edges": {
+         "e-c-d": {
+          "from": "c",
+          "to": "d"
+         }
+        }
+       }
+      }
+     },
+     {
+      "id": "e",
+      "text": "$e$",
+      "onPlace": {
+       "sd": {
+        "edges": {
+         "e-e-d": {
+          "from": "e",
+          "to": "d"
+         }
+        }
+       }
+      }
+     },
+     {
+      "id": "d",
+      "text": "$d$",
+      "onPlace": {
+       "sL": {
+        "edges": {
+         "e-d-L": {
+          "from": "d",
+          "to": "L"
+         }
+        }
+       }
+      }
+     },
+     {
+      "id": "f",
+      "text": "$f$",
+      "onPlace": {
+       "sL": {
+        "edges": {
+         "e-f-L": {
+          "from": "f",
+          "to": "L"
+         }
+        }
+       }
+      }
+     }
+    ],
+    "slots": [
+     {
+      "id": "se",
+      "label": "into $e = ab$",
+      "accepts": [
+       "a",
+       "b"
+      ]
+     },
+     {
+      "id": "sd",
+      "label": "into $d = e + c$",
+      "accepts": [
+       "e",
+       "c"
+      ]
+     },
+     {
+      "id": "sL",
+      "label": "into $L = df$",
+      "accepts": [
+       "d",
+       "f"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each box names its own inputs on its label."
+    },
+    {
+     "rung": "point",
+     "text": "The box $d = e + c$ adds two things: the first product and $c$.",
+     "highlight": [
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$a$ and $b$ feed $e$; $e$ and $c$ feed $d$; $d$ and $f$ feed $L$."
+    }
+   ],
+   "feedback": {
+    "correct": "Six arrows: $a, b \\to e$, then $e, c \\to d$, then $d, f \\to L$.",
+    "generic": "Not quite. Read each box: its label names the two values it takes in.",
+    "byKey": {
+     "c": "You fed $c$ into the first product. In $(ab + c)f$, $c$ is added after $ab$ is formed.",
+     "f": "You put $f$ in early. It multiplies the whole bracket, so it meets $d$ in the last box.",
+     "e": "You fed $e$ into the last box. The bracket $ab + c$ needs $e$ first."
+    }
+   },
+   "explain": {
+    "text": "Each box takes the values on its incoming arrows. $a$ and $b$ make $e$, $e$ and $c$ make $d$, and $d$ and $f$ make $L$.",
+    "canvas": {
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 1,
+   "title": "The forward pass",
+   "prose": "Push the numbers forward one box at a time. A box can be worked out once every arrow into it carries a value.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3"
+     }
+    }
+   },
+   "question": "Fill in the value each box computes.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Box",
+     "Computes",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$e$",
+      "$ab$",
+      {
+       "edit": true,
+       "answer": -3,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "sign-e",
+         "value": 3,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$d$",
+      "$e + c$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "carried-sign",
+         "value": 7,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$L$",
+      "$df$",
+      {
+       "edit": true,
+       "answer": -3,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "used-e",
+         "value": 9,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with the box whose inputs are all leaves."
+    },
+    {
+     "rung": "point",
+     "text": "$e = ab = 1.5 \\times (-2)$.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e = -3$, then $d = -3 + 4 = 1$, then $L = 1 \\times (-3)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$e = -3$, $d = 1$, $L = -3$: the value you saw under $L$ on the first screen.",
+    "generic": "Not quite. Work left to right, one box at a time.",
+    "byKey": {
+     "sign-e": "You dropped the minus sign: $1.5 \\times (-2) = -3$.",
+     "carried-sign": "You carried $e = 3$ into the sum. With $e = -3$, $d = -3 + 4 = 1$.",
+     "used-e": "You multiplied $e$ by $f$. The last box multiplies $d$ by $f$: $1 \\times (-3)$."
+    }
+   },
+   "explain": {
+    "text": "Each box waits for its inputs: $e = 1.5 \\times (-2) = -3$, then $d = -3 + 4 = 1$, then $L = 1 \\times (-3) = -3$. This left-to-right sweep is the **forward pass**.",
+    "canvas": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A power and an exponential",
+   "prose": "A second expression, $M = e^{xy} + z^2$, at $x = 0.5$, $y = 2$, $z = -1.5$. The graph gives the exponential and the square a box each.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 280,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.07,
+       "y": 0.2
+      },
+      {
+       "id": "y",
+       "label": "y",
+       "x": 0.07,
+       "y": 0.62
+      },
+      {
+       "id": "p",
+       "label": "p = xy",
+       "x": 0.34,
+       "y": 0.41,
+       "shape": "rect"
+      },
+      {
+       "id": "q",
+       "label": "q = eᵖ",
+       "x": 0.6,
+       "y": 0.41,
+       "shape": "rect"
+      },
+      {
+       "id": "z",
+       "label": "z",
+       "x": 0.34,
+       "y": 0.88
+      },
+      {
+       "id": "s",
+       "label": "s = z²",
+       "x": 0.6,
+       "y": 0.88,
+       "shape": "rect"
+      },
+      {
+       "id": "M",
+       "label": "M = q + s",
+       "x": 0.9,
+       "y": 0.62,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "p"
+      },
+      {
+       "from": "y",
+       "to": "p"
+      },
+      {
+       "from": "p",
+       "to": "q"
+      },
+      {
+       "from": "z",
+       "to": "s"
+      },
+      {
+       "from": "q",
+       "to": "M"
+      },
+      {
+       "from": "s",
+       "to": "M"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x": "0.5",
+      "y": "2",
+      "z": "−1.5"
+     }
+    }
+   },
+   "question": "Run the forward pass. What is $M$, to 3 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.968,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "neg-square",
+      "value": 0.468,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out $p$, then $q$, then $s$, then add."
+    },
+    {
+     "rung": "point",
+     "text": "$p = 0.5 \\times 2 = 1$, so $q = e^1$.",
+     "highlight": [
+      "q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$q = 2.71828$ and $s = (-1.5)^2 = 2.25$, so $M = 4.968$."
+    }
+   ],
+   "feedback": {
+    "correct": "$p = 1$, $q = e = 2.718$, $s = 2.25$, so $M = 4.968$.",
+    "generic": "Not quite. Work one box at a time, left to right.",
+    "byKey": {
+     "neg-square": "You took $s = -2.25$. A square is never negative: $(-1.5)^2 = 2.25$."
+    }
+   },
+   "explain": {
+    "text": "$p = xy = 1$, $q = e^{p} = 2.718282$ and $s = z^2 = 2.25$. The last box adds them: $M = 2.718282 + 2.25 = 4.968282$, which is 4.968.",
+    "canvas": {
+     "values": {
+      "x": "0.5",
+      "y": "2",
+      "z": "−1.5",
+      "p": "1",
+      "q": "2.718",
+      "s": "2.25",
+      "M": "4.968"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "One box too few",
+   "prose": "Sam draws $(ab + c)f$ with two boxes: $d = ab + c$, then $L = df$. Sam says fewer boxes means less work later.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 280,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.07,
+       "y": 0.2
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.07,
+       "y": 0.55
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.07,
+       "y": 0.9
+      },
+      {
+       "id": "d",
+       "label": "d = ab + c",
+       "x": 0.5,
+       "y": 0.55,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.5,
+       "y": 0.12
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.9,
+       "y": 0.4,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "d"
+      },
+      {
+       "from": "b",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "What goes wrong with Sam's graph?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "hides",
+      "text": "The box $d = ab + c$ holds two operations, so its derivative needs the chain rule inside it again",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: two boxes give the same value of $L$ with less drawing and less work later",
+      "why": "You checked the forward value, which agrees. The trouble comes later, when each box must give a simple derivative."
+     },
+     {
+      "id": "value",
+      "text": "It gives a different value of $L$ from the three-box graph",
+      "why": "You expected the value to change. Sam still gets $d = 1$ and $L = -3$."
+     },
+     {
+      "id": "order",
+      "text": "It adds $c$ before it multiplies $a$ by $b$, so the order is wrong",
+      "why": "You read the box as $a(b + c)$. Sam's box still forms $ab$ first, then adds $c$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The forward value is the same. Think about what each box will be asked for next."
+    },
+    {
+     "rung": "point",
+     "text": "Each box will need a derivative for each input.",
+     "highlight": [
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A box with one operation has a one-line derivative. Sam's box hides a product and a sum."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The values agree, but one box with two operations hides a product inside a sum.",
+    "generic": "Not quite. Compare what each box does, not the final value.",
+    "byKey": {
+     "fine": "You checked the forward value, which agrees. The trouble is that Sam's box hides a product inside a sum."
+    }
+   },
+   "explain": {
+    "text": "Sam's graph gives $L = -3$ too. But the box $d = ab + c$ is a product and a sum, so working with it means the chain rule again. One operation per box keeps every step to one simple rule.",
+    "canvas": {
+     "highlight": [
+      "d"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A value used twice",
+   "prose": "Now $K = ab + a$, with $a = 1.5$ and $b = -2$. The value $a$ is used twice. In a graph we draw $a$ once, with an arrow to every box that uses it.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 240,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.08,
+       "y": 0.3
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.08,
+       "y": 0.82
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.45,
+       "y": 0.62,
+       "shape": "rect"
+      },
+      {
+       "id": "K",
+       "label": "K = e + a",
+       "x": 0.88,
+       "y": 0.4,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "K"
+      },
+      {
+       "from": "a",
+       "to": "K"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "e": "−3",
+      "K": "−1.5"
+     }
+    }
+   },
+   "question": "How many arrows leave the leaf $a$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the boxes that use $a$."
+    },
+    {
+     "rung": "point",
+     "text": "$a$ goes into the product and into the sum.",
+     "highlight": [
+      "a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Two boxes use $a$, so two arrows leave it."
+    }
+   ],
+   "feedback": {
+    "correct": "Two arrows leave $a$: one into $e = ab$, one into $K = e + a$. Level 2 shows what this does to gradients.",
+    "generic": "Not quite. Count the boxes that take $a$ in.",
+    "byKey": {
+     "one": "You drew one arrow, as if $a$ were used once. It feeds the product and the sum."
+    }
+   },
+   "explain": {
+    "text": "$a$ is one value, so it is one node. It feeds 2 boxes, so 2 arrows leave it, and $K = -3 + 1.5 = -1.5$.",
+    "canvas": {
+     "highlight": [
+      "a",
+      "e-a-e",
+      "e-a-K"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The forward pass in code",
+   "prose": "Each box of the graph becomes one line of Python. Write `forward_pass(a, b, c, f)` for $L = (ab + c)f$. Return a dict of the three box values, keyed `\"e\"`, `\"d\"` and `\"L\"`.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "Write `forward_pass(a, b, c, f)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def forward_pass(a, b, c, f):\n    # one line per box of the graph\n    ...\n    return {\"e\": e, \"d\": d, \"L\": L}\n",
+    "solution": "def forward_pass(a, b, c, f):\n    e = a * b\n    d = e + c\n    L = d * f\n    return {\"e\": e, \"d\": d, \"L\": L}\n",
+    "examples": [
+     {
+      "call": "forward_pass(1.5, -2, 4, -3)",
+      "expect": "{'e': -3.0, 'd': 1.0, 'L': -3.0}",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "forward_pass(1.5, -2, 4, -3)",
+      "expect": "{'e': -3.0, 'd': 1.0, 'L': -3.0}",
+      "compare": "equal"
+     },
+     {
+      "call": "forward_pass(1, 1, 1, 1)",
+      "expect": "{'e': 1.0, 'd': 2.0, 'L': 2.0}",
+      "compare": "equal"
+     },
+     {
+      "call": "forward_pass(2, 3, -1, 0.5)",
+      "expect": "{'e': 6.0, 'd': 5.0, 'L': 2.5}",
+      "compare": "equal"
+     },
+     {
+      "call": "forward_pass(0, 5, 2, 4)",
+      "expect": "{'e': 0.0, 'd': 2.0, 'L': 8.0}",
+      "compare": "equal"
+     },
+     {
+      "call": "forward_pass(-1, 4, 2, 3)",
+      "expect": "{'e': -4.0, 'd': -2.0, 'L': -6.0}",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: the course inputs and four others. Each dict must equal the expected one exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write one line per box, in the order the forward pass meets them."
+    },
+    {
+     "rung": "point",
+     "text": "The first line is `e = a * b`.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`e = a * b`, then `d = e + c`, then `L = d * f`, then return the dict."
+    }
+   ],
+   "feedback": {
+    "correct": "Three lines, one per box, in the order of the forward pass.",
+    "generic": "Not quite. Compare your dict with the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is the course inputs. It expects `{'e': -3.0, 'd': 1.0, 'L': -3.0}`."
+    }
+   },
+   "explain": {
+    "text": "Each box is one assignment, and the order of the lines is the order of the forward pass. The dict keeps every intermediate value, which the backward pass will need."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "What a graph records",
+   "prose": "A computation graph has one box per operation. Its leaves are the inputs, and its arrows carry values forward. The forward pass computes each box once all its inputs are known: $$e = ab, \\quad d = e + c, \\quad L = df.$$",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "When can the forward pass compute a box?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "inputs",
+      "text": "As soon as every arrow into it carries a value",
+      "correct": true
+     },
+     {
+      "id": "left",
+      "text": "Only when it is the leftmost box not yet done",
+      "why": "You read the drawing's layout as the rule. A box's place on the page does not matter; its inputs do."
+     },
+     {
+      "id": "output",
+      "text": "Only after the output $L$ is known",
+      "why": "You ran it backwards. $L$ is computed last, from the boxes before it."
+     },
+     {
+      "id": "leaves",
+      "text": "Only once every leaf in the whole graph is used",
+      "why": "You waited for the whole graph. A box needs only its own inputs."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did you need before you could compute $d$?"
+    },
+    {
+     "rung": "point",
+     "text": "$d$ needs $e$ and $c$, nothing else.",
+     "highlight": [
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A box is ready once its own inputs have values."
+    }
+   ],
+   "feedback": {
+    "correct": "A box is ready once its own inputs are known.",
+    "generic": "Not quite. Think about what $d$ needed."
+   },
+   "explain": {
+    "text": "$d = e + c$ needed only $e$ and $c$. So any box can be computed once its own inputs have values, and the output comes last."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A P&L as a graph",
+   "prose": "A £500,000 book holds 60% in a share bought at £200 and 40% in one bought at £50. Today they close at $p_1 = 206$ and $p_2 = 49$. The P&L runs prices to returns, returns to a weighted sum, and that sum to pounds.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 240,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "p1",
+       "label": "p₁",
+       "x": 0.07,
+       "y": 0.22
+      },
+      {
+       "id": "p2",
+       "label": "p₂",
+       "x": 0.07,
+       "y": 0.78
+      },
+      {
+       "id": "r1",
+       "label": "r₁",
+       "x": 0.36,
+       "y": 0.22,
+       "shape": "rect"
+      },
+      {
+       "id": "r2",
+       "label": "r₂",
+       "x": 0.36,
+       "y": 0.78,
+       "shape": "rect"
+      },
+      {
+       "id": "R",
+       "label": "R",
+       "x": 0.64,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "P",
+       "label": "P&L",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "p1",
+       "to": "r1"
+      },
+      {
+       "from": "p2",
+       "to": "r2"
+      },
+      {
+       "from": "r1",
+       "to": "R"
+      },
+      {
+       "from": "r2",
+       "to": "R"
+      },
+      {
+       "from": "R",
+       "to": "P"
+      }
+     ]
+    },
+    "state": {
+     "caption": "$r_1 = p_1/200 - 1$, $r_2 = p_2/50 - 1$, $R = 0.6r_1 + 0.4r_2$, P&L $= 500{,}000R$",
+     "values": {
+      "p1": "206",
+      "p2": "49"
+     }
+    }
+   },
+   "question": "Run the forward pass. What is the P&L, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5000,
+    "tol": {
+     "abs": 0.5
+    },
+    "placeholder": "in pounds",
+    "wrong": [
+     {
+      "id": "return-only",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 13000,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with the two returns."
+    },
+    {
+     "rung": "point",
+     "text": "$r_1 = 206/200 - 1 = 0.03$ and $r_2 = 49/50 - 1 = -0.02$.",
+     "highlight": [
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$R = 0.6 \\times 0.03 + 0.4 \\times (-0.02) = 0.01$, and $500{,}000 \\times 0.01$."
+    }
+   ],
+   "feedback": {
+    "correct": "The returns are 0.03 and $-0.02$, so $R = 0.01$ and the P&L is £5,000.",
+    "generic": "Not quite. Work box by box: returns, then $R$, then pounds.",
+    "byKey": {
+     "return-only": "You stopped at $R = 0.01$. The last box turns it into pounds: £5,000.",
+     "sign": "You dropped the minus sign on $r_2$. The second share fell from £50 to £49."
+    }
+   },
+   "explain": {
+    "text": "$r_1 = 0.03$ and $r_2 = -0.02$, so $R = 0.018 - 0.008 = 0.01$. The last box gives $500{,}000 \\times 0.01 = 5{,}000$ pounds.",
+    "canvas": {
+     "values": {
+      "p1": "206",
+      "p2": "49",
+      "r1": "0.03",
+      "r2": "−0.02",
+      "R": "0.01",
+      "P": "£5,000"
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A computation graph has one box per operation, the inputs as leaves, and arrows that carry values forward.",
+   "The forward pass computes each box once its own inputs are known; the output comes last.",
+   "A value used twice is one node with two arrows leaving it."
+  ],
+  "formula": {
+   "name": "The course expression",
+   "tex": "e = ab, \\quad d = e + c, \\quad L = df",
+   "note": "At $a = 1.5$, $b = -2$, $c = 4$, $f = -3$: $e = -3$, $d = 1$, $L = -3$."
+  },
+  "trap": "A box that holds two operations hides a chain rule inside it. Give every operation its own box."
+ },
+ "quiz": [
+  {
+   "id": "q-count-boxes",
+   "difficulty": 2,
+   "prose": "Draw $y = (x - w)^2 + 3x$ as a computation graph, with one box per operation.",
+   "question": "How many boxes does it have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "merged",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Four boxes: $x - w$, its square, $3x$, and the sum.",
+    "generic": "Not quite. List each operation once.",
+    "byKey": {
+     "merged": "You put $(x - w)^2$ in one box. The difference and the square are two operations."
+    }
+   },
+   "explain": {
+    "text": "The operations are $s = x - w$, $t = s^2$, $u = 3x$ and $y = t + u$: 4 boxes. The 3 and $x$ are inputs, not boxes."
+   }
+  },
+  {
+   "id": "q-forward-value",
+   "difficulty": 2,
+   "prose": "A graph computes $s = p + q$, then $g = sr$, at $p = 2$, $q = -5$, $r = 4$.",
+   "question": "What value does the forward pass give for $g$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -12,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "no-sum",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$s = -3$, so $g = -12$.",
+    "generic": "Not quite. Compute $s$ first, then $g$.",
+    "byKey": {
+     "sign": "You lost the sign: $2 + (-5) = -3$, and $-3 \\times 4 = -12$.",
+     "no-sum": "You multiplied $p$ by $r$. The product takes the sum $s$."
+    }
+   },
+   "explain": {
+    "text": "The forward pass computes $s = 2 + (-5) = -3$ first. Then $g = sr = -3 \\times 4 = -12$."
+   }
+  },
+  {
+   "id": "q-arrow-carries",
+   "difficulty": 2,
+   "prose": "In a computation graph the arrows point from inputs towards the output.",
+   "question": "In the forward pass, what does each arrow carry?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "value",
+      "text": "The value of the box it leaves",
+      "correct": true
+     },
+     {
+      "id": "deriv",
+      "text": "A derivative of the box it enters",
+      "why": "You jumped ahead to the backward pass. Forward, an arrow carries a value."
+     },
+     {
+      "id": "output",
+      "text": "The final output",
+      "why": "You sent the output everywhere. Each arrow carries its own box's value."
+     },
+     {
+      "id": "name",
+      "text": "The name of the operation",
+      "why": "You read the label as the message. The arrow carries a number."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each arrow carries the value of the box it leaves.",
+    "generic": "Not quite. Think about $e \\to d$ in the course graph."
+   },
+   "explain": {
+    "text": "In the course graph the arrow $e \\to d$ carries $e = -3$ into the sum. Every arrow carries a value forward like that."
+   }
+  }
+ ]
+}

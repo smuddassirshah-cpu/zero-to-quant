@@ -1,0 +1,1557 @@
+{
+ "id": "l2-local-derivatives",
+ "course": "backprop",
+ "title": "Local derivatives",
+ "minutes": 12,
+ "objectives": [
+  "Compute the derivative of each operation's output with respect to each of its inputs."
+ ],
+ "skills": [
+  "bp-chain"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One box at a time",
+   "prose": "Look at one box: $d = e + c$, with $e = -3$ and $c = 4$, so $d = 1$. Suppose $e$ moves to $-2.99$ while $c$ stays at 4.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "d"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "By how much does $d$ move?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.01,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "times-c",
+      "value": 0.04,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "times-e",
+      "value": -0.03,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Recompute $d$ with the new $e$."
+    },
+    {
+     "rung": "point",
+     "text": "$d = -2.99 + 4$.",
+     "highlight": [
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$d$ goes from 1 to 1.01."
+    }
+   ],
+   "feedback": {
+    "correct": "$d$ goes from 1 to 1.01: it moves exactly as much as $e$.",
+    "generic": "Not quite. Work out the new $d$ and subtract the old one.",
+    "byKey": {
+     "times-c": "You multiplied the move by $c$. A sum adds $c$; it does not scale the move.",
+     "times-e": "You multiplied the move by $e$. A sum passes a move on unchanged."
+    }
+   },
+   "explain": {
+    "text": "$d = -2.99 + 4 = 1.01$, so $d$ moved by 0.01, the same as $e$. A sum passes any small move in $e$ straight through."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The local derivative",
+   "prose": "$d$ moved by exactly as much as $e$. The rate at which one box's output moves with one of its inputs, the other inputs held still, is the **local derivative** $\\dfrac{\\partial d}{\\partial e} = 1$. It is the partial derivative of the box alone.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "d"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "What is $\\dfrac{\\partial d}{\\partial c}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "value-c",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "value-d",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Hold $e$ still and let $c$ move a little."
+    },
+    {
+     "rung": "point",
+     "text": "$d = e + c$, so a move of 0.01 in $c$ moves $d$ by 0.01.",
+     "highlight": [
+      "c"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The rate is 1."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\partial d / \\partial c = 1$: a sum passes 1 to each input.",
+    "generic": "Not quite. Move $c$ by 0.01 and see how far $d$ moves.",
+    "byKey": {
+     "value-c": "You gave the value of $c$. The local derivative is a rate: how far $d$ moves per unit of $c$.",
+     "value-d": "You held $d$ still. Let $c$ move and watch $d$ follow it."
+    }
+   },
+   "explain": {
+    "text": "Holding $e$ still, $d = e + c$ rises by exactly as much as $c$. So $\\partial d/\\partial c = 1$, and a sum passes 1 to each of its inputs."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A product box",
+   "prose": "Now the box $e = ab$, at $a = 1.5$ and $b = -2$. Hold $a$ still and move $b$ from $-2$ to $-1.99$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "e"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "What is $\\dfrac{\\partial e}{\\partial b}$? Divide the move in $e$ by 0.01.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "own-input",
+      "value": -2,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "used-output",
+      "value": -3,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Recompute $e$ with $b = -1.99$."
+    },
+    {
+     "rung": "point",
+     "text": "$e = 1.5 \\times (-1.99) = -2.985$.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e$ moved by 0.015, and $0.015 / 0.01 = 1.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\partial e/\\partial b = 1.5$, which is $a$: a product passes each input the other input.",
+    "generic": "Not quite. Recompute $e$ and divide its move by 0.01.",
+    "byKey": {
+     "own-input": "You gave $b$ itself. Holding $a$ still, $e = ab$ moves $a = 1.5$ times as fast as $b$.",
+     "used-output": "You gave the output $e = -3$. The rate is the other input, $a = 1.5$."
+    }
+   },
+   "explain": {
+    "text": "$e = 1.5 \\times (-1.99) = -2.985$, a move of 0.015 for a move of 0.01. So $\\partial e/\\partial b = 1.5 = a$: a product passes each input the value of the other."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Boxes with one input",
+   "prose": "Powers, exponentials and logs are boxes with one input. Their local derivatives are the rules from the limits course: $(u^n)' = nu^{n-1}$, $(e^u)' = e^u$ and $(\\ln u)' = 1/u$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 240,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "u1",
+       "label": "u",
+       "x": 0.1,
+       "y": 0.15
+      },
+      {
+       "id": "y1",
+       "label": "y = u³",
+       "x": 0.6,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "u2",
+       "label": "u",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "y2",
+       "label": "y = eᵘ",
+       "x": 0.6,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "u3",
+       "label": "u",
+       "x": 0.1,
+       "y": 0.85
+      },
+      {
+       "id": "y3",
+       "label": "y = ln u",
+       "x": 0.6,
+       "y": 0.85,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "u1",
+       "to": "y1"
+      },
+      {
+       "from": "u2",
+       "to": "y2"
+      },
+      {
+       "from": "u3",
+       "to": "y3"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "u1": "2",
+      "u2": "0",
+      "u3": "4"
+     }
+    }
+   },
+   "question": "Give each box's local derivative at the input shown.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Box",
+     "Input",
+     "$\\partial y / \\partial u$"
+    ],
+    "rows": [
+     [
+      "$y = u^3$",
+      "$u = 2$",
+      {
+       "edit": true,
+       "answer": 12,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "no-power-drop",
+         "value": 8,
+         "tol": {
+          "abs": 0
+         }
+        },
+        {
+         "id": "n-times-u",
+         "value": 6,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$y = e^u$",
+      "$u = 0$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "zero",
+         "value": 0,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$y = \\ln u$",
+      "$u = 4$",
+      {
+       "edit": true,
+       "answer": 0.25,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "log-value",
+         "value": 1.386,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Apply each rule at the input shown."
+    },
+    {
+     "rung": "point",
+     "text": "$3u^2$ at $u = 2$.",
+     "highlight": [
+      "y1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$3 \\times 4 = 12$; $e^0 = 1$; $1/4 = 0.25$."
+    }
+   ],
+   "feedback": {
+    "correct": "12, 1 and 0.25.",
+    "generic": "Not quite. Use the rule for each box, then put in the input.",
+    "byKey": {
+     "no-power-drop": "You gave $u^3 = 8$, the value. The derivative is $3u^2 = 12$.",
+     "n-times-u": "You took $3u = 6$. The power drops by one: $3u^2 = 12$.",
+     "zero": "You gave the input. $e^u$ is its own derivative, and $e^0 = 1$.",
+     "log-value": "You gave $\\ln 4$, the value. The derivative is $1/u = 0.25$."
+    }
+   },
+   "explain": {
+    "text": "$3u^2 = 12$ at $u = 2$; $e^u = 1$ at $u = 0$; $1/u = 0.25$ at $u = 4$. Each is the slope of one box at its own input."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The table for the course graph",
+   "prose": "Each box of $L = (ab + c)f$ has two inputs, so two local derivatives. Fill the table at the course values.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "Fill in every local derivative.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Box",
+     "Inputs",
+     "w.r.t. first input",
+     "w.r.t. second input"
+    ],
+    "rows": [
+     [
+      "$e = ab$",
+      "$a, b$",
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "output-e",
+         "value": -3,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      },
+      {
+       "edit": true,
+       "answer": 1.5,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "own-b",
+         "value": -2,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$d = e + c$",
+      "$e, c$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "value-ec",
+         "value": -3,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      },
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "value-ce",
+         "value": 4,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$L = df$",
+      "$d, f$",
+      {
+       "edit": true,
+       "answer": -3,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "own-d",
+         "value": 1,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      },
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "own-f",
+         "value": -3,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A sum passes 1; a product passes the other input."
+    },
+    {
+     "rung": "point",
+     "text": "For $e = ab$: $\\partial e/\\partial a = b$ and $\\partial e/\\partial b = a$.",
+     "highlight": [
+      "e",
+      "d",
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Row by row: $-2, 1.5$; $1, 1$; $f = -3$, $d = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-2$ and 1.5; 1 and 1; $-3$ and 1.",
+    "generic": "Not quite. For a product, use the other input's value.",
+    "byKey": {
+     "output-e": "You used the output $e = -3$. The local derivative of $ab$ with respect to $a$ is $b = -2$.",
+     "own-d": "You used $d$ itself. $\\partial L/\\partial d$ is the other input, $f = -3$.",
+     "value-ec": "You gave the value of $e$. A sum passes 1 to each input.",
+     "value-ce": "You gave the value of $c$. A sum passes 1 to each input, $c$ included.",
+     "own-b": "You used $b$ itself. $\\partial e/\\partial b$ is the other input, $a = 1.5$.",
+     "own-f": "You used $f$ itself. $\\partial L/\\partial f$ is the other input, $d = 1$."
+    }
+   },
+   "explain": {
+    "text": "A product passes each input the other one: $\\partial e/\\partial a = b = -2$, $\\partial e/\\partial b = a = 1.5$, $\\partial L/\\partial d = f = -3$, $\\partial L/\\partial f = d = 1$. The sum passes 1 to both $e$ and $c$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "The output is not the other input",
+   "prose": "Priya fills the first cell and writes $\\dfrac{\\partial e}{\\partial a} = e = -3$, because \"the derivative of a product is the product\".",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "e"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "What is $\\dfrac{\\partial e}{\\partial a}$ at the course values?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "used-output",
+      "value": -3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "own-input",
+      "value": 1.5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Move $a$ by 0.01 and hold $b$ still."
+    },
+    {
+     "rung": "point",
+     "text": "$e = 1.51 \\times (-2) = -3.02$.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e$ moves by $-0.02$ for a move of 0.01: the rate is $-2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\partial e/\\partial a = b = -2$.",
+    "generic": "Not quite. Nudge $a$ and divide the move in $e$ by the nudge.",
+    "byKey": {
+     "used-output": "You used the output $e = -3$, as Priya did. Holding $b$ still, $e = ab$ moves $b$ times as fast as $a$: $-2$.",
+     "own-input": "You used $a$ itself. The rate is the other input, $b = -2$.",
+     "sign": "You dropped the sign of $b = -2$."
+    }
+   },
+   "explain": {
+    "text": "A nudge of 0.01 in $a$ moves $e$ from $-3$ to $-3.02$. So the rate is $-2$, the other input $b$, not the output $e$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A constant input",
+   "prose": "A cost box computes $m = 2.5s$, where 2.5 is a fixed fee multiplier and $s$ is the traded size. The constant is still an input of the box, but nothing upstream of it can change.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 200,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "k",
+       "label": "2.5",
+       "x": 0.1,
+       "y": 0.25,
+       "shape": "pill"
+      },
+      {
+       "id": "s",
+       "label": "s",
+       "x": 0.1,
+       "y": 0.8
+      },
+      {
+       "id": "m",
+       "label": "m = 2.5s",
+       "x": 0.75,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "k",
+       "to": "m"
+      },
+      {
+       "from": "s",
+       "to": "m"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "s": "40"
+     }
+    }
+   },
+   "question": "Which local derivative does a backward pass need from this box?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "s-only",
+      "text": "$\\partial m/\\partial s = 2.5$ only",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "Both $\\partial m/\\partial s = 2.5$ and $\\partial m/\\partial 2.5 = s$",
+      "why": "You treated the constant like a variable. Nothing can move 2.5, so its derivative is never used."
+     },
+     {
+      "id": "none",
+      "text": "None: a constant makes the box fixed",
+      "why": "You froze the whole box. $s$ can still move, and $m$ moves 2.5 times as fast."
+     },
+     {
+      "id": "value",
+      "text": "$\\partial m/\\partial s = 100$",
+      "why": "You gave the output $m = 2.5 \\times 40$. The rate is the multiplier, 2.5."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which of the two inputs can ever move?"
+    },
+    {
+     "rung": "point",
+     "text": "Only $s$ comes from somewhere that can change.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The box needs $\\partial m/\\partial s = 2.5$ and nothing for the constant."
+    }
+   ],
+   "feedback": {
+    "correct": "Only $s$ can move, so only $\\partial m/\\partial s = 2.5$ is needed.",
+    "generic": "Not quite. Ask which input can ever change."
+   },
+   "explain": {
+    "text": "The 2.5 is an input of the box, but nothing feeds it and nothing moves it. So the backward pass needs only $\\partial m/\\partial s = 2.5$."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The rules for each box",
+   "prose": "Every box needs one rule, read at its own inputs: $$\\frac{\\partial (u + v)}{\\partial u} = 1, \\quad \\frac{\\partial (uv)}{\\partial u} = v, \\quad (u^n)' = nu^{n-1}, \\quad (e^u)' = e^u.$$ Nothing about the rest of the graph is needed.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "What does a box need to know to give its local derivatives?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "own",
+      "text": "Only the values of its own inputs",
+      "correct": true
+     },
+     {
+      "id": "output",
+      "text": "The final output $L$",
+      "why": "You reached for the whole graph. A box's slope depends on its own inputs only."
+     },
+     {
+      "id": "all",
+      "text": "Every value in the graph",
+      "why": "You reached for the whole graph. $\\partial e/\\partial a = b$ uses $b$ and nothing else."
+     },
+     {
+      "id": "none",
+      "text": "Nothing: local derivatives are always 1",
+      "why": "You used the sum rule everywhere. A product passes the other input, which is not 1 in general."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did $\\partial e/\\partial a$ use?"
+    },
+    {
+     "rung": "point",
+     "text": "It used $b$ and nothing else.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A box needs only its own inputs."
+    }
+   ],
+   "feedback": {
+    "correct": "A box needs only its own inputs. That is why the rules are local.",
+    "generic": "Not quite. Look at what $\\partial e/\\partial a = b$ used."
+   },
+   "explain": {
+    "text": "$\\partial e/\\partial a = b$ used only $b$, and the sum rule used nothing at all. Each box's rule reads its own inputs, so every local derivative can be found box by box."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A bond as one box",
+   "prose": "In the limits course a 5-year bond paying £4 a year cost $P(0.05) = \\text{£}95.67$ at a 5% yield. Its slope was $P'(0.05) = -420.98$ pounds per unit of yield. Read the price as one box with input $y$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 160,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "y",
+       "label": "y",
+       "x": 0.12,
+       "y": 0.5
+      },
+      {
+       "id": "P",
+       "label": "P(y)",
+       "x": 0.75,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "y",
+       "to": "P"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "y": "0.05",
+      "P": "£95.67"
+     }
+    }
+   },
+   "question": "The yield rises by 0.001 (10 basis points). Using the local derivative, by how much does the price move, in pounds? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.421,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "in pounds",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.421,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "per-point",
+      "value": -4.21,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Change in output is about local derivative times change in input."
+    },
+    {
+     "rung": "point",
+     "text": "$-420.98 \\times 0.001$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is $-0.42098$, so $-0.421$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-420.98 \\times 0.001 = -0.421$: the price falls by about 42p.",
+    "generic": "Not quite. Multiply the slope by the move in yield.",
+    "byKey": {
+     "sign": "You dropped the minus sign. A rise in yield lowers a bond price.",
+     "per-point": "You took 0.01 for the move. Ten basis points is 0.001."
+    }
+   },
+   "explain": {
+    "text": "The local derivative of the box is $P'(0.05) = -420.98$. A move of 0.001 in $y$ moves $P$ by about $-420.98 \\times 0.001 = -0.421$ pounds."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A local derivative is how fast one box's output moves with one of its inputs, the others held still.",
+   "A sum passes 1 to each input; a product passes each input the value of the other one.",
+   "A box needs only its own inputs to give its local derivatives, so every box can be done on its own."
+  ],
+  "formula": {
+   "name": "Local derivatives",
+   "tex": "\\frac{\\partial (u + v)}{\\partial u} = 1, \\quad \\frac{\\partial (uv)}{\\partial u} = v",
+   "note": "Powers, $e^u$ and $\\ln u$ use the standard derivatives, read at the box's input."
+  },
+  "trap": "For $e = ab$, $\\partial e/\\partial a$ is the other input $b$, not the output $e$."
+ },
+ "quiz": [
+  {
+   "id": "q-product-rule-node",
+   "difficulty": 2,
+   "prose": "A box computes $z = uv$ with $u = 3$ and $v = -0.5$.",
+   "question": "What is $\\partial z / \\partial u$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "own",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "output",
+      "value": -1.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\partial z/\\partial u = v = -0.5$.",
+    "generic": "Not quite. A product passes the other input.",
+    "byKey": {
+     "own": "You used $u$ itself. The rate is the other input, $v$.",
+     "output": "You used the output $z = -1.5$. The rate is $v = -0.5$.",
+     "sign": "You dropped the sign of $v = -0.5$."
+    }
+   },
+   "explain": {
+    "text": "Holding $v$ still, $z = uv$ moves $v$ times as fast as $u$. So $\\partial z/\\partial u = v = -0.5$."
+   }
+  },
+  {
+   "id": "q-sum-node",
+   "difficulty": 2,
+   "prose": "A box computes $s = u + v + w$ with $u = 7$, $v = -2$, $w = 0.4$.",
+   "question": "What is $\\partial s / \\partial w$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "value",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "output",
+      "value": 5.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A sum passes 1 to each input.",
+    "generic": "Not quite. Move $w$ by 0.01 and see how far $s$ moves.",
+    "byKey": {
+     "value": "You gave $w$ itself. The sum moves exactly as $w$ does: rate 1.",
+     "output": "You gave the output $s = 5.4$. The rate is 1."
+    }
+   },
+   "explain": {
+    "text": "Holding $u$ and $v$ still, $s$ rises by exactly as much as $w$. So $\\partial s/\\partial w = 1$, whatever the values."
+   }
+  },
+  {
+   "id": "q-exp-node",
+   "difficulty": 3,
+   "prose": "A box computes $y = e^u$. The forward pass gave $u = \\ln 3$, so $y = 3$.",
+   "question": "What is the box's local derivative $\\partial y/\\partial u$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "input",
+      "value": 1.0986,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(e^u)' = e^u = y = 3$.",
+    "generic": "Not quite. The exponential is its own derivative.",
+    "byKey": {
+     "input": "You gave $u = \\ln 3$. The derivative is $e^u$, the box's own output, 3."
+    }
+   },
+   "explain": {
+    "text": "$(e^u)' = e^u$, so the slope equals the box's output. Here that is $e^{\\ln 3} = 3$."
+   }
+  }
+ ]
+}

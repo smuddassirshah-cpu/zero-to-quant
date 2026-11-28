@@ -1,0 +1,1765 @@
+{
+ "id": "l4-every-gradient-by-hand",
+ "course": "backprop",
+ "title": "Every gradient by hand",
+ "minutes": 14,
+ "objectives": [
+  "Derive every gradient of a small expression by hand, working back from the output."
+ ],
+ "skills": [
+  "bp-chain"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A new chain",
+   "prose": "A new expression: $L = (e^{wx + b})^2$ at $w = 2$, $x = 0.5$, $b = -1.5$. It has a product, a sum, an exponential and a square, one box each.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 320,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "w",
+       "label": "w",
+       "x": 0.04,
+       "y": 0.1
+      },
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.04,
+       "y": 0.55
+      },
+      {
+       "id": "p",
+       "label": "p = wx",
+       "x": 0.31,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.31,
+       "y": 0.86
+      },
+      {
+       "id": "s",
+       "label": "s = p + b",
+       "x": 0.53,
+       "y": 0.6,
+       "shape": "rect"
+      },
+      {
+       "id": "q",
+       "label": "q = eˢ",
+       "x": 0.75,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "L",
+       "label": "L = q²",
+       "x": 0.95,
+       "y": 0.6,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "w",
+       "to": "p"
+      },
+      {
+       "from": "x",
+       "to": "p"
+      },
+      {
+       "from": "p",
+       "to": "s"
+      },
+      {
+       "from": "b",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "q"
+      },
+      {
+       "from": "q",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "w": "2",
+      "x": "0.5",
+      "b": "−1.5"
+     }
+    }
+   },
+   "question": "Run the forward pass.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Box",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$p = wx$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "added",
+         "value": 2.5,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$s = p + b$",
+      {
+       "edit": true,
+       "answer": -0.5,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "sign-b",
+         "value": 2.5,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$q = e^s$ (4 places)",
+      {
+       "edit": true,
+       "answer": 0.6065,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "pos-exp",
+         "value": 1.6487,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$L = q^2$ (4 places)",
+      {
+       "edit": true,
+       "answer": 0.3679,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "doubled",
+         "value": 1.2131,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One box at a time, left to right."
+    },
+    {
+     "rung": "point",
+     "text": "$p = 1$ and $s = 1 - 1.5 = -0.5$.",
+     "highlight": [
+      "p",
+      "s"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$q = e^{-0.5} = 0.6065$, and $L = q^2 = 0.3679$."
+    }
+   ],
+   "feedback": {
+    "correct": "$p = 1$, $s = -0.5$, $q = 0.6065$, $L = 0.3679$.",
+    "generic": "Not quite. Work one box at a time.",
+    "byKey": {
+     "pos-exp": "You took $e^{0.5}$. With $s = -0.5$, $q = e^{-0.5} = 0.6065$.",
+     "doubled": "You doubled $q$. The last box squares it.",
+     "added": "You added $w$ and $x$. The first box multiplies."
+    }
+   },
+   "explain": {
+    "text": "$p = 2 \\times 0.5 = 1$, $s = 1 - 1.5 = -0.5$, $q = e^{-0.5} = 0.606531$, $L = q^2 = 0.367879$.",
+    "canvas": {
+     "values": {
+      "w": "2",
+      "x": "0.5",
+      "b": "−1.5",
+      "p": "1",
+      "s": "−0.5",
+      "q": "0.6065",
+      "L": "0.3679"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The local derivatives",
+   "prose": "Next, every box's local derivatives at these values. Keep this table beside you: the backward pass reads from it.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 320,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "w",
+       "label": "w",
+       "x": 0.04,
+       "y": 0.1
+      },
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.04,
+       "y": 0.55
+      },
+      {
+       "id": "p",
+       "label": "p = wx",
+       "x": 0.31,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.31,
+       "y": 0.86
+      },
+      {
+       "id": "s",
+       "label": "s = p + b",
+       "x": 0.53,
+       "y": 0.6,
+       "shape": "rect"
+      },
+      {
+       "id": "q",
+       "label": "q = eˢ",
+       "x": 0.75,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "L",
+       "label": "L = q²",
+       "x": 0.95,
+       "y": 0.6,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "w",
+       "to": "p"
+      },
+      {
+       "from": "x",
+       "to": "p"
+      },
+      {
+       "from": "p",
+       "to": "s"
+      },
+      {
+       "from": "b",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "q"
+      },
+      {
+       "from": "q",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "w": "2",
+      "x": "0.5",
+      "b": "−1.5",
+      "p": "1",
+      "s": "−0.5",
+      "q": "0.6065",
+      "L": "0.3679"
+     }
+    }
+   },
+   "question": "Fill in each local derivative, to 4 places where needed.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Local derivative",
+     "Rule",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$\\partial p/\\partial w$",
+      "other input",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "own-w",
+         "value": 2,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$\\partial p/\\partial x$",
+      "other input",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "own-x",
+         "value": 0.5,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$\\partial s/\\partial p$",
+      "sum",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "$\\partial q/\\partial s$",
+      "$e^s$",
+      {
+       "edit": true,
+       "answer": 0.6065,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "input-s",
+         "value": -0.5,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$\\partial L/\\partial q$",
+      "$2q$",
+      {
+       "edit": true,
+       "answer": 1.2131,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "value-q",
+         "value": 0.3679,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each row uses one rule at the box's own inputs."
+    },
+    {
+     "rung": "point",
+     "text": "$e^s$ at $s = -0.5$ is the box's own output, $q$.",
+     "highlight": [
+      "q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.5, 2, 1, 0.6065 and $2q = 1.2131$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.5, 2, 1, 0.6065 and 1.2131.",
+    "generic": "Not quite. Read each rule at the box's own input.",
+    "byKey": {
+     "own-w": "You used $w$ itself. The product passes the other input, $x = 0.5$.",
+     "input-s": "You gave $s$. The slope of $e^s$ is $e^s = 0.6065$.",
+     "value-q": "You gave $L = q^2$. The slope of $q^2$ is $2q$."
+    }
+   },
+   "explain": {
+    "text": "A product passes the other input; a sum passes 1; $e^s$ is its own slope, 0.6065; and $q^2$ has slope $2q = 1.2131$."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The backward pass, line by line",
+   "prose": "Now the backward pass, from $L$ back to every input. Each line is one step, justified by one rule.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 320,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "w",
+       "label": "w",
+       "x": 0.04,
+       "y": 0.1
+      },
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.04,
+       "y": 0.55
+      },
+      {
+       "id": "p",
+       "label": "p = wx",
+       "x": 0.31,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.31,
+       "y": 0.86
+      },
+      {
+       "id": "s",
+       "label": "s = p + b",
+       "x": 0.53,
+       "y": 0.6,
+       "shape": "rect"
+      },
+      {
+       "id": "q",
+       "label": "q = eˢ",
+       "x": 0.75,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "L",
+       "label": "L = q²",
+       "x": 0.95,
+       "y": 0.6,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "w",
+       "to": "p"
+      },
+      {
+       "from": "x",
+       "to": "p"
+      },
+      {
+       "from": "p",
+       "to": "s"
+      },
+      {
+       "from": "b",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "q"
+      },
+      {
+       "from": "q",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "w": "2",
+      "x": "0.5",
+      "b": "−1.5",
+      "p": "1",
+      "s": "−0.5",
+      "q": "0.6065",
+      "L": "0.3679"
+     },
+     "values2": {
+      "L": "1",
+      "q": "1.2131",
+      "s": "0.7358",
+      "p": "0.7358",
+      "b": "0.7358",
+      "w": "0.3679",
+      "x": "1.4715"
+     }
+    }
+   },
+   "question": "Put the lines in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "k1",
+      "text": "$\\partial L/\\partial L = 1$: start at the output"
+     },
+     {
+      "id": "k2",
+      "text": "$\\partial L/\\partial q = 1 \\times 2q = 1.2131$: the square's local derivative"
+     },
+     {
+      "id": "k3",
+      "text": "$\\partial L/\\partial s = 1.2131 \\times e^{s} = 0.7358$: the exponential's"
+     },
+     {
+      "id": "k4",
+      "text": "$\\partial L/\\partial p = \\partial L/\\partial b = 0.7358 \\times 1$: a sum passes the gradient on"
+     },
+     {
+      "id": "k5",
+      "text": "$\\partial L/\\partial w = 0.7358 \\times x = 0.3679$ and $\\partial L/\\partial x = 0.7358 \\times w = 1.4715$"
+     },
+     {
+      "id": "kx",
+      "text": "$\\partial L/\\partial s = 1.2131 + 0.6065$: add the two local derivatives",
+      "why": "That adds along the path. Rates along a path multiply: $1.2131 \\times 0.6065$."
+     }
+    ],
+    "answer": [
+     "k1",
+     "k2",
+     "k3",
+     "k4",
+     "k5"
+    ],
+    "distractors": [
+     "kx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start at the output and move one box left each line."
+    },
+    {
+     "rung": "point",
+     "text": "The square comes first, then the exponential.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "1, then 1.2131, then 0.7358 at $s$, then $p$ and $b$, then $w$ and $x$."
+    }
+   ],
+   "feedback": {
+    "correct": "Five steps, one box each, from $L$ back to $w$ and $x$.",
+    "generic": "Not quite. Each line needs the gradient the line before it found.",
+    "byKey": {
+     "kx": "That line adds along the path. Rates along a path multiply."
+    }
+   },
+   "explain": {
+    "text": "Each line multiplies the gradient from the line before by one local derivative from your table. The order is forced: a gradient is ready only once the box after it is done."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The gradient at s as a formula",
+   "prose": "The same steps work with letters. Write $L$ as a function of $s$ alone: $L = (e^s)^2$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 320,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "w",
+       "label": "w",
+       "x": 0.04,
+       "y": 0.1
+      },
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.04,
+       "y": 0.55
+      },
+      {
+       "id": "p",
+       "label": "p = wx",
+       "x": 0.31,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.31,
+       "y": 0.86
+      },
+      {
+       "id": "s",
+       "label": "s = p + b",
+       "x": 0.53,
+       "y": 0.6,
+       "shape": "rect"
+      },
+      {
+       "id": "q",
+       "label": "q = eˢ",
+       "x": 0.75,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "L",
+       "label": "L = q²",
+       "x": 0.95,
+       "y": 0.6,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "w",
+       "to": "p"
+      },
+      {
+       "from": "x",
+       "to": "p"
+      },
+      {
+       "from": "p",
+       "to": "s"
+      },
+      {
+       "from": "b",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "q"
+      },
+      {
+       "from": "q",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "w": "2",
+      "x": "0.5",
+      "b": "−1.5",
+      "p": "1",
+      "s": "−0.5",
+      "q": "0.6065",
+      "L": "0.3679"
+     },
+     "values2": {
+      "L": "1",
+      "q": "1.2131",
+      "s": "0.7358",
+      "p": "0.7358",
+      "b": "0.7358",
+      "w": "0.3679",
+      "x": "1.4715"
+     }
+    }
+   },
+   "question": "Give $\\dfrac{\\partial L}{\\partial s}$ as a formula in $s$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "2e^{2s}",
+    "accept": [
+     "2e^(2s)",
+     "2(e^s)^2",
+     "2e^se^s"
+    ],
+    "wrong": [
+     {
+      "id": "no-inner",
+      "tex": "e^{2s}"
+     },
+     {
+      "id": "q-only",
+      "tex": "2e^{s}"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\partial L/\\partial q = 2q$ and $\\partial q/\\partial s = e^s$."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply them and put $q = e^s$.",
+     "highlight": [
+      "s"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2e^s \\times e^s = 2e^{2s}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2e^s \\cdot e^s = 2e^{2s}$. At $s = -0.5$ that is $2e^{-1} = 0.7358$.",
+    "generic": "Not quite. Multiply the two local derivatives on the path from $L$ to $s$.",
+    "byKey": {
+     "no-inner": "You dropped the factor 2 from the square.",
+     "q-only": "You stopped at $\\partial L/\\partial q = 2q$. Multiply by $e^s$ as well."
+    }
+   },
+   "explain": {
+    "text": "$\\partial L/\\partial s = 2q \\cdot e^s = 2e^s e^s = 2e^{2s}$. At $s = -0.5$ it gives $2e^{-1} = 0.7358$, the number in the table."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The gradient at x as a formula",
+   "prose": "Go one step further back. With $s = wx + b$, $\\dfrac{\\partial L}{\\partial s} = 2e^{2(wx + b)}$, and the product box passes $x$ the other input.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 320,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "w",
+       "label": "w",
+       "x": 0.04,
+       "y": 0.1
+      },
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.04,
+       "y": 0.55
+      },
+      {
+       "id": "p",
+       "label": "p = wx",
+       "x": 0.31,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.31,
+       "y": 0.86
+      },
+      {
+       "id": "s",
+       "label": "s = p + b",
+       "x": 0.53,
+       "y": 0.6,
+       "shape": "rect"
+      },
+      {
+       "id": "q",
+       "label": "q = eˢ",
+       "x": 0.75,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "L",
+       "label": "L = q²",
+       "x": 0.95,
+       "y": 0.6,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "w",
+       "to": "p"
+      },
+      {
+       "from": "x",
+       "to": "p"
+      },
+      {
+       "from": "p",
+       "to": "s"
+      },
+      {
+       "from": "b",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "q"
+      },
+      {
+       "from": "q",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "w": "2",
+      "x": "0.5",
+      "b": "−1.5",
+      "p": "1",
+      "s": "−0.5",
+      "q": "0.6065",
+      "L": "0.3679"
+     },
+     "values2": {
+      "L": "1",
+      "q": "1.2131",
+      "s": "0.7358",
+      "p": "0.7358",
+      "b": "0.7358",
+      "w": "0.3679",
+      "x": "1.4715"
+     }
+    }
+   },
+   "question": "Give $\\dfrac{\\partial L}{\\partial x}$ as a formula in $w$, $x$ and $b$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "2we^{2(wx+b)}",
+    "accept": [
+     "2w e^(2(wx+b))",
+     "2we^{2wx+2b}"
+    ],
+    "wrong": [
+     {
+      "id": "swapped",
+      "tex": "2xe^{2(wx+b)}"
+     },
+     {
+      "id": "no-product",
+      "tex": "2e^{2(wx+b)}"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply $\\partial L/\\partial s$ by $\\partial s/\\partial p$ and $\\partial p/\\partial x$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\partial s/\\partial p = 1$ and $\\partial p/\\partial x = w$.",
+     "highlight": [
+      "x"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2e^{2(wx+b)} \\times 1 \\times w$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2we^{2(wx + b)}$: at the course values $2 \\times 2 \\times e^{-1} = 1.4715$.",
+    "generic": "Not quite. Two more local derivatives: 1 for the sum, then the product's.",
+    "byKey": {
+     "swapped": "You multiplied by $x$. Into $x$, the product box passes the other input, $w$.",
+     "no-product": "You stopped at $s$. Multiply by $\\partial p/\\partial x = w$ too."
+    }
+   },
+   "explain": {
+    "text": "$\\partial L/\\partial x = 2e^{2(wx+b)} \\times 1 \\times w$. At $w = 2$, $x = 0.5$, $b = -1.5$ it gives $4e^{-1} = 1.4715$, as the table said."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Losing your place",
+   "prose": "Ali computes $\\partial L/\\partial w$ working forwards from $w$: \"$\\partial p/\\partial w = 0.5$, then $\\partial L/\\partial q = 1.2131$, so $0.5 \\times 1 \\times 1.2131 = 0.6065$.\"",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 320,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "w",
+       "label": "w",
+       "x": 0.04,
+       "y": 0.1
+      },
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.04,
+       "y": 0.55
+      },
+      {
+       "id": "p",
+       "label": "p = wx",
+       "x": 0.31,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.31,
+       "y": 0.86
+      },
+      {
+       "id": "s",
+       "label": "s = p + b",
+       "x": 0.53,
+       "y": 0.6,
+       "shape": "rect"
+      },
+      {
+       "id": "q",
+       "label": "q = eˢ",
+       "x": 0.75,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "L",
+       "label": "L = q²",
+       "x": 0.95,
+       "y": 0.6,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "w",
+       "to": "p"
+      },
+      {
+       "from": "x",
+       "to": "p"
+      },
+      {
+       "from": "p",
+       "to": "s"
+      },
+      {
+       "from": "b",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "q"
+      },
+      {
+       "from": "q",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "w",
+      "p",
+      "s",
+      "q"
+     ],
+     "values": {
+      "w": "2",
+      "x": "0.5",
+      "b": "−1.5",
+      "p": "1",
+      "s": "−0.5",
+      "q": "0.6065",
+      "L": "0.3679"
+     },
+     "values2": {
+      "L": "1",
+      "q": "1.2131",
+      "s": "0.7358",
+      "p": "0.7358",
+      "b": "0.7358",
+      "w": "0.3679",
+      "x": "1.4715"
+     }
+    }
+   },
+   "question": "What is $\\partial L/\\partial w$, to 4 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3679,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "skipped-exp",
+      "value": 0.6065,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "swapped",
+      "value": 1.4715,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "List every box on the path from $w$ to $L$."
+    },
+    {
+     "rung": "point",
+     "text": "The path is $w \\to p \\to s \\to q \\to L$: four arrows, four local derivatives.",
+     "highlight": [
+      "q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.5 \\times 1 \\times 0.6065 \\times 1.2131 = 0.3679$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.5 \\times 1 \\times 0.6065 \\times 1.2131 = 0.3679$.",
+    "generic": "Not quite. Use one local derivative for each arrow on the path.",
+    "byKey": {
+     "skipped-exp": "You skipped the exponential box, as Ali did. The path has four arrows; $\\partial q/\\partial s = 0.6065$ is missing.",
+     "swapped": "You used $\\partial p/\\partial x = 2$. For $w$ the product passes $x = 0.5$."
+    }
+   },
+   "explain": {
+    "text": "Going forwards is fine for scalars, but every arrow needs its factor. The path $w \\to p \\to s \\to q \\to L$ gives $0.5 \\times 1 \\times 0.6065 \\times 1.2131 = 0.3679$. The table keeps your place."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "An input that goes nowhere",
+   "prose": "A colleague adds an input $z = 4$ and a box $t = 3z$ to the same script. Nothing uses $t$: it never reaches $L$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 340,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "w",
+       "label": "w",
+       "x": 0.04,
+       "y": 0.1
+      },
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.04,
+       "y": 0.55
+      },
+      {
+       "id": "p",
+       "label": "p = wx",
+       "x": 0.31,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.31,
+       "y": 0.86
+      },
+      {
+       "id": "s",
+       "label": "s = p + b",
+       "x": 0.53,
+       "y": 0.6,
+       "shape": "rect"
+      },
+      {
+       "id": "q",
+       "label": "q = eˢ",
+       "x": 0.75,
+       "y": 0.28,
+       "shape": "rect"
+      },
+      {
+       "id": "L",
+       "label": "L = q²",
+       "x": 0.95,
+       "y": 0.6,
+       "shape": "rect"
+      },
+      {
+       "id": "z",
+       "label": "z",
+       "x": 0.68,
+       "y": 0.96
+      },
+      {
+       "id": "t",
+       "label": "t = 3z",
+       "x": 0.88,
+       "y": 0.96,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "w",
+       "to": "p"
+      },
+      {
+       "from": "x",
+       "to": "p"
+      },
+      {
+       "from": "p",
+       "to": "s"
+      },
+      {
+       "from": "b",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "q"
+      },
+      {
+       "from": "q",
+       "to": "L"
+      },
+      {
+       "from": "z",
+       "to": "t"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "valueSide": {
+      "z": "left",
+      "t": "right"
+     },
+     "values": {
+      "w": "2",
+      "x": "0.5",
+      "b": "−1.5",
+      "p": "1",
+      "s": "−0.5",
+      "q": "0.6065",
+      "L": "0.3679",
+      "z": "4",
+      "t": "12"
+     },
+     "values2": {
+      "L": "1",
+      "q": "1.2131",
+      "s": "0.7358",
+      "p": "0.7358",
+      "b": "0.7358",
+      "w": "0.3679",
+      "x": "1.4715"
+     }
+    }
+   },
+   "question": "What is $\\partial L/\\partial z$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "local",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is there a path from $z$ to $L$?"
+    },
+    {
+     "rung": "point",
+     "text": "No arrow leaves $t$.",
+     "highlight": [
+      "t"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "With no path there is no product: the gradient is 0."
+    }
+   ],
+   "feedback": {
+    "correct": "No path from $z$ reaches $L$, so $\\partial L/\\partial z = 0$.",
+    "generic": "Not quite. Look for a path from $z$ to $L$.",
+    "byKey": {
+     "local": "You gave $\\partial t/\\partial z = 3$. Moving $z$ moves $t$, but $t$ never reaches $L$."
+    }
+   },
+   "explain": {
+    "text": "Moving $z$ moves $t$, but nothing carries $t$ on to $L$. With no path, $L$ does not move, so $\\partial L/\\partial z = 0$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The backward pass in code",
+   "prose": "Back to $L = (ab + c)f$. Write `all_gradients(a, b, c, f)`: run the forward pass, then walk back from $L$ with one line per arrow. Return the dict of all six gradients, keyed `\"a\"`, `\"b\"`, `\"c\"`, `\"d\"`, `\"e\"`, `\"f\"`.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "f": "1",
+      "e": "−3",
+      "c": "−3",
+      "a": "6",
+      "b": "−4.5"
+     }
+    }
+   },
+   "question": "Write `all_gradients(a, b, c, f)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def all_gradients(a, b, c, f):\n    # forward pass first, then one line per arrow, from L back\n    ...\n",
+    "solution": "def all_gradients(a, b, c, f):\n    e = a * b\n    d = e + c\n    gL = 1.0\n    gd = gL * f\n    gf = gL * d\n    ge = gd * 1\n    gc = gd * 1\n    ga = ge * b\n    gb = ge * a\n    return {\"a\": ga, \"b\": gb, \"c\": gc, \"d\": gd, \"e\": ge, \"f\": gf}\n",
+    "examples": [
+     {
+      "call": "all_gradients(1.5, -2, 4, -3)[\"a\"]",
+      "expect": "6.0",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "all_gradients(1.5, -2, 4, -3)",
+      "expect": "{'a': 6.0, 'b': -4.5, 'c': -3.0, 'd': -3.0, 'e': -3.0, 'f': 1.0}",
+      "compare": "equal"
+     },
+     {
+      "call": "all_gradients(2, 0.5, -1, 4)",
+      "expect": "{'a': 2.0, 'b': 8.0, 'c': 4.0, 'd': 4.0, 'e': 4.0, 'f': 0.0}",
+      "compare": "equal"
+     },
+     {
+      "call": "all_gradients(-1, 3, 2.5, 0.5)",
+      "expect": "{'a': 1.5, 'b': -0.5, 'c': 0.5, 'd': 0.5, 'e': 0.5, 'f': -0.5}",
+      "compare": "equal"
+     },
+     {
+      "call": "all_gradients(0.25, 8, -3, -2)",
+      "expect": "{'a': -16.0, 'b': -0.5, 'c': -2.0, 'd': -2.0, 'e': -2.0, 'f': -1.0}",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests: the course inputs and three others. Each dict must equal the expected one exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute $e$ and $d$ first; the backward pass needs them."
+    },
+    {
+     "rung": "point",
+     "text": "Start with `gd = f` and `gf = d`.",
+     "highlight": [
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then `ge = gc = gd`, `ga = ge * b` and `gb = ge * a`."
+    }
+   ],
+   "feedback": {
+    "correct": "The six lines match the six arrows, walked back from $L$.",
+    "generic": "Not quite. Compare your dict with the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is the course inputs: it expects 6, $-4.5$, $-3$, $-3$, $-3$ and 1."
+    }
+   },
+   "explain": {
+    "text": "The forward pass gives $e$ and $d$; then each arrow is one multiplication, from $L$ back. At the course inputs it returns 6, $-4.5$, $-3$, $-3$, $-3$ and 1."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A risk report for 10,000 inputs",
+   "prose": "A desk values a book whose price depends on 10,000 market inputs. Bumping means revaluing the book once at today's inputs, then once more per bumped input.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Revaluations",
+      "Gives"
+     ],
+     "rows": [
+      [
+       "Bump each input",
+       "?",
+       "one sensitivity per bump"
+      ],
+      [
+       "One backward pass",
+       "about 3 forward passes",
+       "all 10,000 at once"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many full revaluations do one-sided bumps need for all 10,000 sensitivities?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10001,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-base",
+      "value": 10000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two-sided",
+      "value": 20000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the base valuation too."
+    },
+    {
+     "rung": "point",
+     "text": "One base run, then one per input.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 + 10{,}000 = 10{,}001$."
+    }
+   ],
+   "feedback": {
+    "correct": "10,001 revaluations, against one forward and one backward pass.",
+    "generic": "Not quite. One base run, then one per input.",
+    "byKey": {
+     "no-base": "You left out the base valuation that each bump is compared against.",
+     "two-sided": "You bumped each input both ways. One-sided bumps need one run each, plus the base."
+    }
+   },
+   "explain": {
+    "text": "Bumping needs a base run plus one per input: 10,001 revaluations. A backward pass reuses every shared product from the output back, so it costs a few forward passes, whatever the number of inputs."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Forward first: every box value. Then a table of every local derivative at those values.",
+   "The backward pass starts at the output with 1 and multiplies one local derivative per arrow, one box at a time.",
+   "An input with no path to the output has gradient 0."
+  ],
+  "formula": {
+   "name": "One backward step",
+   "tex": "\\frac{\\partial L}{\\partial (\\text{input})} = \\frac{\\partial L}{\\partial (\\text{box})} \\times \\frac{\\partial (\\text{box})}{\\partial (\\text{input})}",
+   "note": "The first factor comes from the box after; the second from your table."
+  },
+  "trap": "Skipping a box on the path, or using the wrong input of a product, gives a plausible but wrong gradient. Keep the table."
+ },
+ "quiz": [
+  {
+   "id": "q-exp-product",
+   "difficulty": 3,
+   "prose": "A graph computes $u = vw$, then $L = e^u$, at $v = 0.5$ and $w = 2$.",
+   "question": "What is $\\partial L/\\partial v$, to 4 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.4366,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "own-v",
+      "value": 1.3591,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-w",
+      "value": 2.7183,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^u \\times w = e \\times 2 = 5.4366$.",
+    "generic": "Not quite. Multiply back: $e^u$, then the other input $w$.",
+    "byKey": {
+     "no-w": "You stopped at $e^u = e$. The product box passes $w = 2$ as well.",
+     "own-v": "You multiplied by $v$. Into $v$ the product passes $w$."
+    }
+   },
+   "explain": {
+    "text": "$u = 1$, so $\\partial L/\\partial u = e^1 = 2.71828$. The product passes $w = 2$, giving $5.4366$."
+   }
+  },
+  {
+   "id": "q-square-sum",
+   "difficulty": 2,
+   "prose": "A graph computes $s = y + z$, then $L = s^2$, at $y = 1$ and $z = 2$.",
+   "question": "What is $\\partial L/\\partial y$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "six",
+      "text": "6",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "3",
+      "why": "You used $s = 3$ for the square's slope. The slope of $s^2$ is $2s$."
+     },
+     {
+      "id": "nine",
+      "text": "9",
+      "why": "You gave $L$ itself, $3^2$. The gradient is a rate."
+     },
+     {
+      "id": "two",
+      "text": "2",
+      "why": "You took $2y$, as if $L = y^2$. The square acts on $s$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2s \\times 1 = 6$.",
+    "generic": "Not quite. The square's slope is $2s$, and the sum passes it on."
+   },
+   "explain": {
+    "text": "$\\partial L/\\partial s = 2s = 6$ and the sum passes it on unchanged. So $\\partial L/\\partial y = 6$."
+   }
+  },
+  {
+   "id": "q-dead-input",
+   "difficulty": 2,
+   "prose": "A script computes $L = (ab + c)f$ and also $t = 3z$, which nothing uses.",
+   "question": "What does backpropagation give for $\\partial L/\\partial z$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "0, since no path joins $z$ to $L$",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "3, the local derivative of $t$",
+      "why": "You stopped at $t$. Nothing carries $t$ on to $L$."
+     },
+     {
+      "id": "error",
+      "text": "It cannot be defined",
+      "why": "You expected an error. Moving $z$ leaves $L$ where it is, which is a rate of 0."
+     },
+     {
+      "id": "one",
+      "text": "1, since every input starts with 1",
+      "why": "You confused inputs with the output. Only $L$ starts with 1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With no path to $L$, the gradient is 0.",
+    "generic": "Not quite. Is there a path from $z$ to $L$?"
+   },
+   "explain": {
+    "text": "$t$ is never used on the way to $L$. So moving $z$ does not move $L$, and $\\partial L/\\partial z = 0$."
+   }
+  }
+ ]
+}

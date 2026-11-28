@@ -1,0 +1,1872 @@
+{
+ "id": "l6-doing-the-work-in-order",
+ "course": "backprop",
+ "title": "Doing the work in order",
+ "minutes": 14,
+ "objectives": [
+  "Order a graph's nodes topologically and run the backward pass in the reverse order."
+ ],
+ "skills": [
+  "bp-backward"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The wrong order",
+   "prose": "Back to $g = (x + y)x$ with every gradient at 0. Sam runs the sum box's backward step first, then the product box's. When the sum box runs, $\\partial g/\\partial s$ is still 0.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x",
+       "x": 0.08,
+       "y": 0.3
+      },
+      {
+       "id": "y",
+       "label": "y",
+       "x": 0.08,
+       "y": 0.85
+      },
+      {
+       "id": "s",
+       "label": "s = x + y",
+       "x": 0.45,
+       "y": 0.65,
+       "shape": "rect"
+      },
+      {
+       "id": "g",
+       "label": "g = sx",
+       "x": 0.88,
+       "y": 0.35,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "s"
+      },
+      {
+       "from": "y",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "g"
+      },
+      {
+       "from": "x",
+       "to": "g"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "s"
+     ],
+     "values": {
+      "x": "2",
+      "y": "3",
+      "s": "5",
+      "g": "10"
+     },
+     "values2": {
+      "g": "1",
+      "s": "0"
+     }
+    }
+   },
+   "question": "What does Sam's run leave in `y.grad`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "right-order",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does the sum box pass on when its own gradient is still 0?"
+    },
+    {
+     "rung": "point",
+     "text": "It passes $0 \\times 1$ to $y$.",
+     "highlight": [
+      "y"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The product box runs later, but nothing sends $y$ anything after that."
+    }
+   ],
+   "feedback": {
+    "correct": "`y.grad` stays 0: the sum box passed on a gradient that was not ready yet.",
+    "generic": "Not quite. What did $s$ hold when its box ran?",
+    "byKey": {
+     "right-order": "That is the right gradient, but Sam's sum box ran while $\\partial g/\\partial s$ was still 0."
+    }
+   },
+   "explain": {
+    "text": "The sum box ran before the product box had sent it anything, so it passed 0 to $y$. A box must wait until every box after it has run."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Topological order",
+   "prose": "A list in which every node comes after the nodes that feed it is in **topological order**. The forward pass runs in such an order. The backward pass runs in the **reverse** order, so each box is done only after every box it feeds.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "Put the seven nodes of the course graph in a topological order. Any valid order is accepted.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$a$"
+     },
+     {
+      "id": "b",
+      "text": "$b$"
+     },
+     {
+      "id": "c",
+      "text": "$c$"
+     },
+     {
+      "id": "f",
+      "text": "$f$"
+     },
+     {
+      "id": "e",
+      "text": "$e$"
+     },
+     {
+      "id": "d",
+      "text": "$d$"
+     },
+     {
+      "id": "L",
+      "text": "$L$"
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "e",
+     "c",
+     "d",
+     "f",
+     "L"
+    ],
+    "after": {
+     "e": [
+      "a",
+      "b"
+     ],
+     "d": [
+      "e",
+      "c"
+     ],
+     "L": [
+      "d",
+      "f"
+     ]
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Leaves first: nothing feeds them."
+    },
+    {
+     "rung": "point",
+     "text": "$e$ needs $a$ and $b$; $d$ needs $e$ and $c$.",
+     "highlight": [
+      "e",
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For example $a, b, e, c, d, f, L$."
+    }
+   ],
+   "feedback": {
+    "correct": "Every node sits after the nodes that feed it. Read backwards, it is the order of the backward pass.",
+    "generic": "Not quite. A node must come after every node with an arrow into it.",
+    "byKey": {
+     "e": "$e$ came before one of its inputs, $a$ or $b$.",
+     "d": "$d$ came before one of its inputs, $e$ or $c$.",
+     "L": "$L$ came before $d$ or $f$."
+    }
+   },
+   "explain": {
+    "text": "Any order with $e$ after $a$ and $b$, $d$ after $e$ and $c$, and $L$ after $d$ and $f$ is topological. The backward pass reads such a list from the end.",
+    "canvas": {
+     "visited": [
+      "a",
+      "b",
+      "e",
+      "c",
+      "d",
+      "f",
+      "L"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 2,
+   "title": "Building the order by search",
+   "prose": "A recursive search builds the order: `build(v)` first builds each parent of `v` not yet visited, then appends `v`. Called on $L$, it reaches the leaves first. The parents of $L$ are $(d, f)$, of $d$ are $(e, c)$, of $e$ are $(a, b)$.\n```python\ndef build(v):\n    if v not in seen:\n        seen.add(v)\n        for p in v._prev:\n            build(p)\n        topo.append(v)\n```",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "graph",
+     "params": {
+      "directed": true,
+      "height": 300,
+      "nodeRadius": 18,
+      "nodes": [
+       {
+        "id": "a",
+        "label": "a",
+        "x": 0.06,
+        "y": 0.12
+       },
+       {
+        "id": "b",
+        "label": "b",
+        "x": 0.06,
+        "y": 0.52
+       },
+       {
+        "id": "e",
+        "label": "e = ab",
+        "x": 0.3,
+        "y": 0.31,
+        "shape": "rect"
+       },
+       {
+        "id": "c",
+        "label": "c",
+        "x": 0.3,
+        "y": 0.8
+       },
+       {
+        "id": "d",
+        "label": "d = e + c",
+        "x": 0.57,
+        "y": 0.57,
+        "shape": "rect"
+       },
+       {
+        "id": "f",
+        "label": "f",
+        "x": 0.57,
+        "y": 0.1
+       },
+       {
+        "id": "L",
+        "label": "L = df",
+        "x": 0.88,
+        "y": 0.33,
+        "shape": "rect"
+       }
+      ],
+      "edges": [
+       {
+        "from": "a",
+        "to": "e"
+       },
+       {
+        "from": "b",
+        "to": "e"
+       },
+       {
+        "from": "e",
+        "to": "d"
+       },
+       {
+        "from": "c",
+        "to": "d"
+       },
+       {
+        "from": "d",
+        "to": "L"
+       },
+       {
+        "from": "f",
+        "to": "L"
+       }
+      ]
+     },
+     "state": {
+      "values": {
+       "a": "1.5",
+       "b": "−2",
+       "c": "4",
+       "f": "−3",
+       "e": "−3",
+       "d": "1",
+       "L": "−3"
+      }
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "a"
+      ]
+     },
+     "state": {}
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "left": {
+         "visited": [
+          "a"
+         ]
+        },
+        "right": {
+         "cells": [
+          "a"
+         ]
+        }
+       },
+       {
+        "left": {
+         "visited": [
+          "a",
+          "b"
+         ]
+        },
+        "right": {
+         "cells": [
+          "a",
+          "b"
+         ]
+        }
+       },
+       {
+        "left": {
+         "visited": [
+          "a",
+          "b",
+          "e"
+         ]
+        },
+        "right": {
+         "cells": [
+          "a",
+          "b",
+          "e"
+         ]
+        }
+       },
+       {
+        "left": {
+         "visited": [
+          "a",
+          "b",
+          "e",
+          "c"
+         ]
+        },
+        "right": {
+         "cells": [
+          "a",
+          "b",
+          "e",
+          "c"
+         ]
+        }
+       },
+       {
+        "left": {
+         "visited": [
+          "a",
+          "b",
+          "e",
+          "c",
+          "d"
+         ]
+        },
+        "right": {
+         "cells": [
+          "a",
+          "b",
+          "e",
+          "c",
+          "d"
+         ]
+        }
+       },
+       {
+        "left": {
+         "visited": [
+          "a",
+          "b",
+          "e",
+          "c",
+          "d",
+          "f"
+         ]
+        },
+        "right": {
+         "cells": [
+          "a",
+          "b",
+          "e",
+          "c",
+          "d",
+          "f"
+         ]
+        }
+       },
+       {
+        "left": {
+         "visited": [
+          "a",
+          "b",
+          "e",
+          "c",
+          "d",
+          "f",
+          "L"
+         ]
+        },
+        "right": {
+         "cells": [
+          "a",
+          "b",
+          "e",
+          "c",
+          "d",
+          "f",
+          "L"
+         ]
+        }
+       }
+      ],
+      "frameLabels": [
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7"
+      ],
+      "label": "Appended",
+      "start": 0
+     }
+    ]
+   },
+   "question": "Slide through the search. Which node is appended fifth?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "d",
+      "text": "$d$",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "$c$",
+      "why": "$c$ is fourth: $d$ visits $e$ first, then $c$, then appends itself."
+     },
+     {
+      "id": "f",
+      "text": "$f$",
+      "why": "$f$ is a parent of $L$, visited after $d$ is finished: it is sixth."
+     },
+     {
+      "id": "L",
+      "text": "$L$",
+      "why": "$L$ is appended last, after both its parents."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Step the slider and read the list."
+    },
+    {
+     "rung": "point",
+     "text": "The list grows $a, b, e, c, \\ldots$",
+     "highlight": [
+      "right:c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Fifth comes $d$, once $e$ and $c$ are in."
+    }
+   ],
+   "feedback": {
+    "correct": "$a, b, e, c, d, f, L$: $d$ is fifth, after both its parents.",
+    "generic": "Not quite. Read the fifth cell of the list."
+   },
+   "explain": {
+    "text": "The search finishes a node only after all its parents, so the list is $a, b, e, c, d, f, L$. Read from the end, it is the backward order.",
+    "canvas": {
+     "left": {
+      "visited": [
+       "a",
+       "b",
+       "e",
+       "c",
+       "d",
+       "f",
+       "L"
+      ]
+     },
+     "right": {
+      "cells": [
+       "a",
+       "b",
+       "e",
+       "c",
+       "d",
+       "f",
+       "L"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Seven nodes, two branches",
+   "prose": "A graph of seven nodes: $k = uv$, $m = k + w$, $n = mu$, $o = n + v$, at $u = 2$, $v = -1$, $w = 3$. Both $u$ and $v$ are used twice. Run the backward pass in reverse topological order: $o, n, m, k$, then the leaves.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 320,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "u",
+       "label": "u",
+       "x": 0.05,
+       "y": 0.15
+      },
+      {
+       "id": "v",
+       "label": "v",
+       "x": 0.05,
+       "y": 0.9
+      },
+      {
+       "id": "w",
+       "label": "w",
+       "x": 0.3,
+       "y": 0.9
+      },
+      {
+       "id": "k",
+       "label": "k = uv",
+       "x": 0.3,
+       "y": 0.45,
+       "shape": "rect"
+      },
+      {
+       "id": "m",
+       "label": "m = k + w",
+       "x": 0.53,
+       "y": 0.65,
+       "shape": "rect"
+      },
+      {
+       "id": "n",
+       "label": "n = mu",
+       "x": 0.74,
+       "y": 0.3,
+       "shape": "rect"
+      },
+      {
+       "id": "o",
+       "label": "o = n + v",
+       "x": 0.94,
+       "y": 0.68,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "u",
+       "to": "k"
+      },
+      {
+       "from": "v",
+       "to": "k"
+      },
+      {
+       "from": "k",
+       "to": "m"
+      },
+      {
+       "from": "w",
+       "to": "m"
+      },
+      {
+       "from": "m",
+       "to": "n"
+      },
+      {
+       "from": "u",
+       "to": "n"
+      },
+      {
+       "from": "n",
+       "to": "o"
+      },
+      {
+       "from": "v",
+       "to": "o"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "u": "2",
+      "v": "−1",
+      "w": "3",
+      "k": "−2",
+      "m": "1",
+      "n": "2",
+      "o": "1"
+     },
+     "values2": {
+      "o": "1"
+     }
+    }
+   },
+   "question": "Fill in each gradient.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Node",
+     "$\\partial o/\\partial(\\cdot)$"
+    ],
+    "rows": [
+     [
+      "$n$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "$m$",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "used-m",
+         "value": 1,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$k$",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "$w$",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "$u$",
+      {
+       "edit": true,
+       "answer": -1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "one-path-u",
+         "value": -2,
+         "tol": {
+          "abs": 0
+         }
+        },
+        {
+         "id": "other-path-u",
+         "value": 1,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$v$",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "one-path-v",
+         "value": 4,
+         "tol": {
+          "abs": 0
+         }
+        },
+        {
+         "id": "direct-v",
+         "value": 1,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work in the order $o, n, m, k$, adding into $u$ and $v$ as you go."
+    },
+    {
+     "rung": "point",
+     "text": "$n$ gets 1; $m$ gets $1 \\times u = 2$; $u$ gets $1 \\times m = 1$ from $n$.",
+     "highlight": [
+      "u",
+      "v"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$k$ and $w$ get 2; then $u$ gets $2 \\times v = -2$ more and $v$ gets $2 \\times u = 4$ more."
+    }
+   ],
+   "feedback": {
+    "correct": "1, 2, 2, 2, then $u$: $1 - 2 = -1$ and $v$: $1 + 4 = 5$.",
+    "generic": "Not quite. Each node adds what every box it feeds sends back.",
+    "byKey": {
+     "one-path-u": "You kept only the path through $k$. The box $n = mu$ also sends $u$ the value $m = 1$.",
+     "other-path-u": "You kept only the path through $n$. The path through $k$ adds $-2$.",
+     "one-path-v": "You kept only the path through $k$. $v$ also goes straight into $o$, which adds 1.",
+     "direct-v": "You kept only the direct arrow into $o$. The path through $k$ adds 4.",
+     "used-m": "You used $m$ itself. The product $n = mu$ passes $m$ the other input, $u = 2$."
+    }
+   },
+   "explain": {
+    "text": "In reverse order: $n$ gets 1, $m$ gets $u = 2$, $k$ and $w$ get 2. $u$ collects $m = 1$ from $n$ and $2v = -2$ from $k$, so $-1$; $v$ collects 1 from $o$ and $2u = 4$ from $k$, so 5.",
+    "canvas": {
+     "values2": {
+      "o": "1",
+      "n": "1",
+      "m": "2",
+      "k": "2",
+      "w": "2",
+      "u": "−1",
+      "v": "5"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Every node ever made",
+   "prose": "Sam keeps a list of every node his script has ever made, and runs the backward pass over it in reverse creation order. An old node $p = 3w$ from an earlier pass still holds `p.grad = 1`. Now he builds $L = 5w$, zeroes `w.grad` and runs his backward pass from $L$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 220,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "w",
+       "label": "w",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "p",
+       "label": "p = 3w (old)",
+       "x": 0.6,
+       "y": 0.15,
+       "shape": "rect",
+       "dashed": true
+      },
+      {
+       "id": "L",
+       "label": "L = 5w (new)",
+       "x": 0.6,
+       "y": 0.85,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "w",
+       "to": "p",
+       "dashed": true
+      },
+      {
+       "from": "w",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "w": "2",
+      "p": "6",
+      "L": "10"
+     },
+     "values2": {
+      "p": "1 (stale)",
+      "L": "1"
+     }
+    }
+   },
+   "question": "What should `w.grad` be after a correct backward pass from $L$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "stale",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "old",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which nodes lie on a path from $w$ to $L$?"
+    },
+    {
+     "rung": "point",
+     "text": "Only the box $L = 5w$. The old node $p$ does not lead to $L$.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So $\\partial L/\\partial w = 5$."
+    }
+   ],
+   "feedback": {
+    "correct": "Only $L = 5w$ lies on the way to $L$, so `w.grad` should be 5. Sam's list adds the stale 3 and gives 8.",
+    "generic": "Not quite. Use only the nodes that lead to $L$.",
+    "byKey": {
+     "stale": "That is what Sam's list gives: the old node $p$ adds its stale $3 \\times 1$. It is not part of this graph.",
+     "old": "That came from the old node $p$, which does not lead to $L$."
+    }
+   },
+   "explain": {
+    "text": "A topological order built from $L$ holds only the nodes that lead to $L$, so `w.grad` should be 5. Sam's list of everything also ran the old $p$, which added a stale 3 into `w.grad`."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A node that does not lead to the output",
+   "prose": "The course script also computes $t = 3z$, which nothing uses. The search `build(L)` starts from $L$ and follows parents only.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 320,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      },
+      {
+       "id": "z",
+       "label": "z",
+       "x": 0.06,
+       "y": 0.92
+      },
+      {
+       "id": "t",
+       "label": "t = 3z",
+       "x": 0.3,
+       "y": 0.98,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      },
+      {
+       "from": "z",
+       "to": "t"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3",
+      "z": "4",
+      "t": "12"
+     }
+    }
+   },
+   "question": "How many nodes does `build(L)` put in the list?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "ops",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The search follows arrows backwards from $L$."
+    },
+    {
+     "rung": "point",
+     "text": "No arrow leads from $t$ or $z$ to $L$.",
+     "highlight": [
+      "t",
+      "z"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It finds $a, b, c, f, e, d, L$."
+    }
+   ],
+   "feedback": {
+    "correct": "Seven: $z$ and $t$ are never reached, so their gradients stay 0.",
+    "generic": "Not quite. Count what the search reaches from $L$.",
+    "byKey": {
+     "all": "You counted $z$ and $t$. The search never reaches them from $L$.",
+     "ops": "You counted the boxes only. The leaves are nodes too."
+    }
+   },
+   "explain": {
+    "text": "Searching back from $L$ reaches the 7 nodes of the course graph and nothing else. $z$ and $t$ are left out, and their gradients stay 0."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Topological order in code",
+   "prose": "A graph arrives as a dict from each node's name to the list of names that feed it: the course graph is `{\"L\": [\"d\", \"f\"], \"d\": [\"e\", \"c\"], \"e\": [\"a\", \"b\"], \"a\": [], ...}`. Write `topo_order(node, parents)`: the nodes that lead to `node`, each after its parents.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     }
+    }
+   },
+   "question": "Write `topo_order(node, parents)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def topo_order(node, parents):\n    # parents: dict from each node name to the list of names that feed it\n    ...\n",
+    "solution": "def topo_order(node, parents):\n    order, seen = [], set()\n\n    def build(v):\n        if v not in seen:\n            seen.add(v)\n            for p in parents[v]:\n                build(p)\n            order.append(v)\n    build(node)\n    return order\n",
+    "examples": [
+     {
+      "call": "is_topo(topo_order(\"L\", COURSE), COURSE, \"L\")",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "is_topo(topo_order(\"L\", COURSE), COURSE, \"L\")",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "is_topo(topo_order(\"top\", DIAMOND), DIAMOND, \"top\")",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "is_topo(topo_order(\"o\", SEVEN), SEVEN, \"o\")",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "is_topo(topo_order(\"L\", EXTRA), EXTRA, \"L\")",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "topo_order(\"x\", DIAMOND)",
+      "expect": "['x']",
+      "compare": "equal"
+     },
+     {
+      "call": "topo_order(\"L\", COURSE)[-1]",
+      "expect": "'L'",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests on four graphs: the course graph, a diamond, the seven-node graph and the course graph with an unused node. A checker accepts any valid order; it must hold exactly the nodes that lead to the root.",
+    "prelude": "def is_topo(order, parents, root):\n    if not isinstance(order, list) or len(order) != len(set(order)):\n        return False\n    need, stack = set(), [root]\n    while stack:\n        v = stack.pop()\n        if v not in need:\n            need.add(v)\n            stack.extend(parents[v])\n    if set(order) != need:\n        return False\n    pos = {v: i for i, v in enumerate(order)}\n    return all(pos[p] < pos[v] for v in order for p in parents[v])\n\nCOURSE = {\"L\": [\"d\", \"f\"], \"d\": [\"e\", \"c\"], \"e\": [\"a\", \"b\"], \"a\": [], \"b\": [], \"c\": [], \"f\": []}\nDIAMOND = {\"top\": [\"left\", \"right\"], \"left\": [\"x\"], \"right\": [\"x\"], \"x\": []}\nSEVEN = {\"o\": [\"n\", \"v\"], \"n\": [\"m\", \"u\"], \"m\": [\"k\", \"w\"], \"k\": [\"u\", \"v\"], \"u\": [], \"v\": [], \"w\": []}\nEXTRA = dict(COURSE, t=[\"z\"], z=[])\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the recursive search from the last screen, with `parents[v]` in place of `v._prev`."
+    },
+    {
+     "rung": "point",
+     "text": "Keep a `seen` set so a node shared by two paths is added once.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Append `v` after the loop over its parents."
+    }
+   ],
+   "feedback": {
+    "correct": "The search appends each node after all its parents, once, and reaches only what leads to the root.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-2": "Test 2 is a diamond: `x` feeds both `left` and `right`. Without a `seen` set, `x` appears twice.",
+     "test-4": "Test 4 has a node `t` that does not lead to `L`. Search from the root only."
+    }
+   },
+   "explain": {
+    "text": "`build(v)` finishes every parent before appending `v`, and `seen` stops a shared node from being added twice. Starting at the root, it never meets a node that does not lead there."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The backward pass in order",
+   "prose": "The backward pass is three steps:\n```python\ntopo = topological order from the output\noutput.grad = 1\nfor v in reversed(topo):\n    v._backward()\n```\nReversed, every box runs after all the boxes it feeds, so its gradient is complete when it passes it on.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.06,
+       "y": 0.12
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.06,
+       "y": 0.52
+      },
+      {
+       "id": "e",
+       "label": "e = ab",
+       "x": 0.3,
+       "y": 0.31,
+       "shape": "rect"
+      },
+      {
+       "id": "c",
+       "label": "c",
+       "x": 0.3,
+       "y": 0.8
+      },
+      {
+       "id": "d",
+       "label": "d = e + c",
+       "x": 0.57,
+       "y": 0.57,
+       "shape": "rect"
+      },
+      {
+       "id": "f",
+       "label": "f",
+       "x": 0.57,
+       "y": 0.1
+      },
+      {
+       "id": "L",
+       "label": "L = df",
+       "x": 0.88,
+       "y": 0.33,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "e"
+      },
+      {
+       "from": "b",
+       "to": "e"
+      },
+      {
+       "from": "e",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "L"
+      },
+      {
+       "from": "f",
+       "to": "L"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "visited": [
+      "a",
+      "b",
+      "e",
+      "c",
+      "d",
+      "f",
+      "L"
+     ],
+     "values": {
+      "a": "1.5",
+      "b": "−2",
+      "c": "4",
+      "f": "−3",
+      "e": "−3",
+      "d": "1",
+      "L": "−3"
+     },
+     "values2": {
+      "L": "1",
+      "d": "−3",
+      "f": "1",
+      "e": "−3",
+      "c": "−3",
+      "a": "6",
+      "b": "−4.5"
+     }
+    }
+   },
+   "question": "Why is the order reversed?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "complete",
+      "text": "A box must collect every contribution before it passes its gradient back",
+      "correct": true
+     },
+     {
+      "id": "leaves",
+      "text": "So the leaves are processed first, before any box",
+      "why": "Reversed, the leaves come last. The output comes first."
+     },
+     {
+      "id": "speed",
+      "text": "Reversed lists run faster in Python than forward ones",
+      "why": "Speed is not the reason. The order decides whether each gradient is complete."
+     },
+     {
+      "id": "forward",
+      "text": "So the forward pass is repeated on the way back",
+      "why": "The forward pass is already done. The backward pass only reads its values."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Remember Sam's first run."
+    },
+    {
+     "rung": "point",
+     "text": "The sum box ran before anything had reached it.",
+     "highlight": [
+      "s"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Reverse order means every later box has already sent its share."
+    }
+   ],
+   "feedback": {
+    "correct": "In reverse order, every box that a node feeds has already run.",
+    "generic": "Not quite. Think of the box that ran too early."
+   },
+   "explain": {
+    "text": "A node's gradient collects a share from every box it feeds. In reverse topological order those boxes have all run, so the gradient is complete before it is passed on."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A pricing library",
+   "prose": "A swap pricer runs its steps in the same kind of order as a build system: nothing runs before its inputs exist. A risk run then walks the same list backwards to get the PV's sensitivity to each quote.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 220,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "q",
+       "label": "quotes",
+       "x": 0.08,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "cv",
+       "label": "curve",
+       "x": 0.35,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "df",
+       "label": "discount",
+       "x": 0.62,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "fw",
+       "label": "forwards",
+       "x": 0.62,
+       "y": 0.82,
+       "shape": "rect"
+      },
+      {
+       "id": "pv",
+       "label": "PV",
+       "x": 0.9,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "q",
+       "to": "cv"
+      },
+      {
+       "from": "cv",
+       "to": "df"
+      },
+      {
+       "from": "cv",
+       "to": "fw"
+      },
+      {
+       "from": "df",
+       "to": "pv"
+      },
+      {
+       "from": "fw",
+       "to": "pv"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put the pricing steps in an order the library can run. Either order of the two middle steps is accepted.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "q",
+      "text": "Market quotes"
+     },
+     {
+      "id": "cv",
+      "text": "Fitted yield curve (needs the quotes)"
+     },
+     {
+      "id": "df",
+      "text": "Discount factors (need the curve)"
+     },
+     {
+      "id": "fw",
+      "text": "Forward rates (need the curve)"
+     },
+     {
+      "id": "pv",
+      "text": "Swap PV (needs discount factors and forward rates)"
+     }
+    ],
+    "answer": [
+     "q",
+     "cv",
+     "df",
+     "fw",
+     "pv"
+    ],
+    "after": {
+     "cv": [
+      "q"
+     ],
+     "df": [
+      "cv"
+     ],
+     "fw": [
+      "cv"
+     ],
+     "pv": [
+      "df",
+      "fw"
+     ]
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with what needs nothing."
+    },
+    {
+     "rung": "point",
+     "text": "The curve needs the quotes; both discount factors and forwards need the curve.",
+     "highlight": [
+      "cv"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Quotes, curve, then the two in either order, then the PV."
+    }
+   ],
+   "feedback": {
+    "correct": "A topological order: each step after what it needs. The risk run reads it backwards.",
+    "generic": "Not quite. Each step must come after every step it needs.",
+    "byKey": {
+     "cv": "The curve came before the quotes it is fitted to.",
+     "df": "Discount factors came before the curve.",
+     "fw": "Forward rates came before the curve.",
+     "pv": "The PV came before one of its inputs."
+    }
+   },
+   "explain": {
+    "text": "The pricer computes in a topological order, like a build system or the forward pass. The risk run walks it backwards, as backpropagation does, so each sensitivity is complete before it is passed on."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "In a topological order every node comes after the nodes that feed it.",
+   "A search from the output that appends each node after its parents builds such an order, and only of nodes that lead to the output.",
+   "The backward pass runs the order reversed, so each gradient is complete before it is passed on."
+  ],
+  "formula": {
+   "name": "Backward pass",
+   "tex": "\\text{topo} = \\text{build(output)},\\quad \\text{output.grad} = 1,\\quad \\text{for } v \\text{ in reversed(topo): } v.\\text{\\_backward()}",
+   "note": "A box runs only after every box it feeds."
+  },
+  "trap": "A list of every node ever made can hold old nodes that do not lead to the output; their stale gradients leak in."
+ },
+ "quiz": [
+  {
+   "id": "q-first-backward",
+   "difficulty": 2,
+   "prose": "A graph's topological order is $p, q, r, s, t$, with $t$ the output.",
+   "question": "Which node does the backward pass process first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "t",
+      "text": "$t$",
+      "correct": true
+     },
+     {
+      "id": "p",
+      "text": "$p$",
+      "why": "You read the list forwards. The backward pass reads it from the end."
+     },
+     {
+      "id": "s",
+      "text": "$s$",
+      "why": "$s$ comes second from the end."
+     },
+     {
+      "id": "any",
+      "text": "Any node with no parents",
+      "why": "Those are leaves; they come last backwards."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The output $t$, with gradient 1.",
+    "generic": "Not quite. The backward pass starts at the output."
+   },
+   "explain": {
+    "text": "The backward pass runs the reversed list, so it starts at the output $t$ with gradient 1."
+   }
+  },
+  {
+   "id": "q-valid-order",
+   "difficulty": 2,
+   "prose": "In a graph, $m$ feeds $n$, $n$ feeds $o$, and $k$ feeds $o$.",
+   "question": "Which list is in topological order?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$k, m, n, o$",
+      "correct": true
+     },
+     {
+      "id": "bad1",
+      "text": "$m, o, n, k$",
+      "why": "$o$ comes before $n$, which feeds it."
+     },
+     {
+      "id": "bad2",
+      "text": "$n, m, k, o$",
+      "why": "$n$ comes before $m$, which feeds it."
+     },
+     {
+      "id": "bad3",
+      "text": "$o, n, m, k$",
+      "why": "That is reversed: the output comes first."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$k, m, n, o$: every node after what feeds it.",
+    "generic": "Not quite. Check each arrow."
+   },
+   "explain": {
+    "text": "$m$ before $n$, $n$ before $o$ and $k$ before $o$ all hold in $k, m, n, o$."
+   }
+  },
+  {
+   "id": "q-unreached",
+   "difficulty": 3,
+   "prose": "A script builds a graph with output $L$, and also a node $u$ that nothing on the way to $L$ uses.",
+   "question": "What happens to $u$ in `L.backward()`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "left",
+      "text": "It is not in the order, and its gradient stays 0",
+      "correct": true
+     },
+     {
+      "id": "error",
+      "text": "The backward pass raises an error",
+      "why": "Nothing breaks: the search simply never reaches $u$."
+     },
+     {
+      "id": "one",
+      "text": "It gets gradient 1, like the output",
+      "why": "Only the output starts at 1."
+     },
+     {
+      "id": "stale",
+      "text": "It keeps whatever gradient it had and passes it on",
+      "why": "It is never processed, so it passes nothing on."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The search from $L$ never reaches $u$.",
+    "generic": "Not quite. Where does the search start?"
+   },
+   "explain": {
+    "text": "The order is built by searching back from $L$. $u$ does not lead to $L$, so it is never added and its gradient stays 0."
+   }
+  }
+ ]
+}
