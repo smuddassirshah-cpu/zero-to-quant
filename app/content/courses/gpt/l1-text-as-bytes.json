@@ -441,7 +441,7 @@
         "generic": "Not quite. Slide to the last string and count the cells in its band."
       },
       "explain": {
-        "text": "UTF-8 is a variable-length code: 1 byte for plain English, 2 for most accented letters, 3 for most other scripts, 4 for emoji. That is why bytes and characters disagree."
+        "text": "UTF-8 is a variable-length code: 1 byte for plain English, 2 for accented Latin, Greek, Cyrillic, Hebrew and Arabic, 3 for Chinese, Japanese and most other scripts, 4 for emoji. That is why bytes and characters disagree."
       }
     },
     {
@@ -689,7 +689,7 @@
         }
       },
       "explain": {
-        "text": "`11000010` is c2 and `10100011` is a3. The second byte happens to equal 163, because 163 is below 192; for `é` (233) it would not."
+        "text": "`11000010` is c2 and `10100011` is a3. The second byte happens to equal 163, because 163 lies between 128 and 191, so its bits already have the form `10xxxxxx`; for `é` (233) it would not."
       }
     },
     {
@@ -809,7 +809,7 @@
       "type": "ladder",
       "difficulty": 2,
       "title": "Count bytes without encoding",
-      "prose": "Write `utf8_length(s)`: the number of bytes UTF-8 uses for the string `s`. Work from `ord` and the table; do not call `.encode`.",
+      "prose": "Write `utf8_length(s)`: the number of bytes UTF-8 uses for the string `s`. Work from `ord` and the table; do not call `.encode`, `bytes` or `bytearray`.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -927,12 +927,12 @@
             "compare": "equal"
           },
           {
-            "call": "'.encode' not in __learner_source__",
+            "call": "all(w not in __learner_source__ for w in ('encode', 'bytes(', 'bytearray'))",
             "expect": "True",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 11 hidden tests: the characters above, the empty string, the four boundaries of the table, a long mixed string checked against Python's encoder, and a check that your code does not call `.encode`.",
+        "how": "Check runs 11 hidden tests: the characters above, the empty string, the four boundaries of the table, and a long mixed string checked against Python's encoder. The last test checks that your code uses none of `.encode`, `bytes(` or `bytearray`.",
         "mutants": [
           {
             "source": "def utf8_length(s):\n    total = 0\n    for ch in s:\n        cp = ord(ch)\n        if cp <= 0x80:\n            total += 1\n        elif cp <= 0x800:\n            total += 2\n        elif cp <= 0x10000:\n            total += 3\n        else:\n            total += 4\n    return total\n",
@@ -948,6 +948,16 @@
             "source": "def utf8_length(s):\n    return len(s.encode('utf-8'))\n",
             "test": 11,
             "symptom": "Calls the encoder the task forbids."
+          },
+          {
+            "source": "def utf8_length(s):\n    return len(bytes(s, 'utf-8'))\n",
+            "test": 11,
+            "symptom": "Uses `bytes(s, 'utf-8')`, the encoder under another name."
+          },
+          {
+            "source": "def utf8_length(s):\n    return len(bytearray(s, 'utf-8'))\n",
+            "test": 11,
+            "symptom": "Uses `bytearray(s, 'utf-8')`, the encoder under another name."
           }
         ]
       },
@@ -976,7 +986,7 @@
         "generic": "Not quite. Check the first failing test.",
         "byKey": {
           "test-9": "Test 9 tries the edge of each row. U+0080 is the first code point that needs 2 bytes, so compare with `<`, not `<=`.",
-          "test-11": "Your code calls `.encode`. Work it out from `ord(ch)` and the table instead."
+          "test-11": "Your code calls `.encode`, `bytes(` or `bytearray`. Work it out from `ord(ch)` and the table instead."
         }
       },
       "explain": {
@@ -1253,7 +1263,7 @@
         "correct": "It passes with `len` 10 but needs 12 bytes, so two bytes are cut off.",
         "generic": "Not quite. For each name, count bytes, not characters.",
         "byKey": {
-          "lloyds": "You checked the name with the most characters. With plain English letters, characters and bytes agree, so it fits.",
+          "lloyds": "`Lloyds plc` fills the field exactly: plain letters are one byte each, so its 10 characters are 10 bytes.",
           "price": "You found the £ and its extra byte, but 9 bytes still fit in 10."
         }
       },
@@ -1690,7 +1700,7 @@
         ]
       },
       "feedback": {
-        "correct": "Twice the bytes, and fewer learned groups, mean more tokens for the same meaning.",
+        "correct": "More bytes, and fewer learned groups, mean more tokens for the same meaning.",
         "generic": "Not quite. Think about bytes per character and which byte groups the tokeniser learned."
       },
       "explain": {

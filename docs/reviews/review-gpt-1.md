@@ -1194,3 +1194,32 @@ def near_duplicates(docs, threshold):
                 pairs.append([i, j])
     return pairs
 ```
+
+## Fix pass
+
+Recomputed before writing: 4.20 / (1.8104 ln 2) = 3.34695 (3.3470 from the shown 1.8104, 3.3469 from the exact 25000 / 13809, so the key's tolerance is 0.0002); no-ln2 4.20 / 1.8104 = 2.3199; per token 4.20 / ln 2 = 6.0593; times 4.20 x 1.8104 / ln 2 = 10.970; bigram add-one 2.45538 validation and 2.42367 training (script now recomputes both); 26 of the 143 non-tag repeats are `3 KING HENRY VI`, 6 are `My lord?` (script, full text). Number script: 275 of 275 default, 279 of 279 with `GPT_FULL_TEXT`.
+
+1. l1 screens[7] byKey.lloyds (error): fixed. Lloyds plc and naïve café both have 10 characters, Société Générale has 16 (19 bytes); the line now says Lloyds plc fills the field exactly.
+2. l4 screens[3] explain (error): fixed. "Most of the other 143 are short speech such as `My lord?`; 26 are the heading `3 KING HENRY VI`."
+3. l3 screens[6] and screens[9] (warning): fixed. The token model is scored on the held-out text at 1.8104 bytes per token: key 3.3470 (was 3.0114, graded answer changed), wrongs 2.3199, 6.0593, 10.970; canvas rows of screens[6] and [9], hints, feedback, explain and the hidden test `bits_per_byte(4.2, 1.8104)` (3.346950493) updated. Numbers script updated.
+4. l1 screens[5] test 11 (warning): fixed. It bans `encode`, `bytes(` and `bytearray`; prose, `how` and byKey say so. Two mutants added (`bytes(s, 'utf-8')`, `bytearray(s, 'utf-8')`, both failing test 11).
+5. GPT-2 regex and special tokens (warning): fixed in l2 screens[5] explain (no new screen); prose now says "Most of the first merges".
+6. l4 0.8 versus 0.80 (warning): fixed. The table shows 0.801 (checked: 0.801 to three places), and "at least 0.8" is used in l4 screens[7] (prose, hint), screens[11] and problems items[2] parts[2].
+7. l4 screens[8] MinHash (warning): fixed with the suggested wording (signatures bucketed so only likely pairs are compared).
+8. homework items[0] decode without `errors='replace'` (warning): fixed. Test 12 decodes `[226, 130]` after `train('bid bids', 2)`; the prose-matching mutant fails test 12.
+9. homework items[0] pair counting without overlaps (warning): fixed. Test 13 trains on `aaaaaa` (merges `[[97, 97], [256, 256]]`); mutant fails test 13.
+10. problems items[0] parts[1] `no-space` 6 (warning): fixed. Replaced by `stop-258` = 9 (row length after merge 258, recomputed 15, 13, 11, 9, 8, 7).
+11. l3 screens[5] "th is the most frequent pair" (note): fixed, "`th` and `he` are its most frequent pairs, twice each."
+12. l1 quiz[2] feedback "Twice the bytes" (note): fixed.
+13. l1 screens[1] explain, byte widths by script (note): fixed with the suggested sentence.
+14. l1 screens[3] explain, 163 (note): fixed, "between 128 and 191, so its bits already have the form `10xxxxxx`".
+15. l2 screens[5] "first merges" (note): fixed, "Most of".
+16. l2 quiz[0] missing pair (note): fixed, `a` then space 1 added (counts sum to 11 pairs).
+17. l2 screens[8] test 7 key order (note): fixed with `[5, 6, 1, 2, 1, 2]`, first-seen `[[5, 6], [6, 1], [1, 2], [2, 1]]`; the sorted-pairs mutant still fails test 7.
+18. l3 quiz[3] "same text" (note): fixed, prose says "On the same validation text".
+19. problems items[2] parts[3] `over-raw` (note): fixed. Added 0.0029 (36 / 12,400, tolerance 0.0001 so it does not meet the 0.0037 band); `over-train` line now names the deduplicated corpus.
+20. homework items[1] repeats and case (note): fixed. Tests 9 (`['abcdeabcde', 'abcdeabcdf']` at 0.9, expect `[]`) and 10 (case-only pair at 0.5, expect `[]`); prose states that shingles form a set and case matters; both appendix mutants added and fail tests 9 and 10.
+21. gpt-L1-numbers.py full-text block (note): fixed. Records the md5 and checks 65 distinct characters in the full-text path, and the 143 split; the default path carries the digest constant. Not checkable without the text in CI: the counts themselves, as before.
+22. gpt-L1-numbers.py claims without `expect` (note): fixed in part. Added expects for problems items[0] parts[2], items[2] parts[0], [1], [3], the new keys, the l4 table, homework 1.44, and the bigram recompute. Left as claims only: review items[2], [4], [8] and the l2 screens[6] bars (all agree with the files; the review's own hand check stands).
+23. docs/reports/gpt-L1.md file name (note): declined. The report name is outside the level 1 content files this pass may touch, and the number script and reviews already cite `gpt-L1`; rename it with the brief's convention in a state-file pass.
+24. "above" and "at least" (note): fixed, see item 6.
