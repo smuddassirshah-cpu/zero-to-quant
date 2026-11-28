@@ -1,0 +1,1433 @@
+{
+ "id": "l5-states-and-rewards",
+ "course": "rl",
+ "title": "States, actions and rewards",
+ "minutes": 14,
+ "objectives": [
+  "Model a problem as a Markov decision process and write the discounted return."
+ ],
+ "skills": [
+  "rl-mdp"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A dice game with no last roll",
+   "prose": "Roll a die and take its pips in pounds, or reroll. There is no limit on rerolls, but each costs time: a prize taken one roll later is worth 0.9 of the same prize now. Try the rule \"keep a 5 or a 6, otherwise reroll\".",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ],
+     "xLabel": "Roll",
+     "yLabel": "Chance",
+     "yMax": 0.3,
+     "showValues": true,
+     "decimals": 3
+    },
+    "state": {
+     "values": {
+      "1": 0.1667,
+      "2": 0.1667,
+      "3": 0.1667,
+      "4": 0.1667,
+      "5": 0.1667,
+      "6": 0.1667
+     },
+     "highlight": [
+      "x5",
+      "x6"
+     ]
+    }
+   },
+   "question": "Call the game's value under this rule $V$. Then a reroll is worth $0.9V$. What is $V$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.5833,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "no-discount",
+      "value": 5.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "mean",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "keep-only",
+      "value": 1.8333,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Condition on the first roll, as in `markov` first-step analysis."
+    },
+    {
+     "rung": "point",
+     "text": "With chance $\\tfrac26$ you keep 5 or 6, worth 5.5 on average; with chance $\\tfrac46$ you get $0.9V$.",
+     "highlight": [
+      "x5",
+      "x6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$V = \\tfrac{5 + 6}{6} + \\tfrac46 \\times 0.9V$, so $0.4V = \\tfrac{11}{6}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$V = \\tfrac{11}{6} + 0.6V$, so $V = \\tfrac{11}{6} / 0.4 = 4.5833$.",
+    "generic": "Not quite. Write one equation for $V$ by conditioning on the first roll.",
+    "byKey": {
+     "no-discount": "That is the average of 5 and 6. A reroll is not free: it is worth $0.9V$, and you reroll two times in three.",
+     "mean": "That is one roll with no choice. Rerolling the low rolls is worth more.",
+     "keep-only": "That is $\\tfrac{11}{6}$, the kept part alone. Add the $\\tfrac46 \\times 0.9V$ from rerolling."
+    }
+   },
+   "explain": {
+    "text": "Keeping 5 or 6 gives $\\tfrac{11}{6}$; the other four rolls give $0.9V$. So $V = \\tfrac{11}{6} + 0.6V$ and $V = \\tfrac{55}{12} = 4.5833$. There is no last roll to work back from: $V$ appears on both sides."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Which rule is best?",
+   "prose": "A rule keeps any roll of at least $k$. Its value is $V_k = \\dfrac{\\tfrac16(k + \\dots + 6)}{1 - \\gamma\\,\\tfrac{k - 1}{6}}$, by the same first-step equation. The bars show $V_k$. Move $\\gamma$, the factor a reroll keeps.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ],
+     "xLabel": "Keep any roll of at least",
+     "yLabel": "Value of the rule (£)",
+     "yMax": 6,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "params": {
+      "gam": 0.9
+     },
+     "values": {
+      "1": 3.5,
+      "2": 3.9216,
+      "3": 4.2857,
+      "4": 4.5455,
+      "5": 4.5833,
+      "6": 4.0
+     }
+    },
+    "derive": {
+     "values.1": "(21 / 6) / (1 - gam * 0 / 6)",
+     "values.2": "(20 / 6) / (1 - gam * 1 / 6)",
+     "values.3": "(18 / 6) / (1 - gam * 2 / 6)",
+     "values.4": "(15 / 6) / (1 - gam * 3 / 6)",
+     "values.5": "(11 / 6) / (1 - gam * 4 / 6)",
+     "values.6": "(6 / 6) / (1 - gam * 5 / 6)"
+    },
+    "controls": [
+     {
+      "bind": "gam",
+      "min": 0.5,
+      "max": 0.99,
+      "step": 0.01,
+      "start": 0.9,
+      "label": "$\\gamma$"
+     }
+    ]
+   },
+   "question": "At $\\gamma = 0.9$, which threshold gives the most valuable rule?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "k5",
+      "text": "Keep 5 or 6",
+      "correct": true
+     },
+     {
+      "id": "k6",
+      "text": "Keep only a 6",
+      "why": "At 0.9 waiting for a 6 costs too much: that rule is worth £4.00."
+     },
+     {
+      "id": "k4",
+      "text": "Keep 4, 5 or 6",
+      "why": "Close, at £4.55, but keeping 4s gives up a little."
+     },
+     {
+      "id": "k1",
+      "text": "Keep anything",
+      "why": "Never rerolling is worth only £3.50, the plain mean."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Keeping 5 or 6 is worth £4.58, the most of the six rules.",
+    "generic": "Set $\\gamma$ to 0.9 and read the tallest bar."
+   },
+   "explain": {
+    "text": "At $\\gamma = 0.9$ the values are 3.50, 3.92, 4.29, 4.55, 4.58 and 4.00. Keep 5 or 6: a 4 is worth less than rerolling, $0.9 \\times 4.5833 = 4.125$. As $\\gamma$ nears 1, waiting for a 6 wins.",
+    "canvas": {
+     "params": {
+      "gam": 0.9
+     },
+     "highlight": [
+      "x5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A Markov decision process",
+   "prose": "That game is a **Markov decision process**: a **state** $s$, an **action** $a$, a **transition** chance $p(s' \\mid s, a)$, a **reward** $r$ and a **discount** $\\gamma$. A **policy** picks an action in each state. The course gridworld is one too: move U, R, D or L; +1 and −1 end the episode; each move costs 0.04.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "+1"
+      ],
+      [
+       "",
+       "",
+       "wall",
+       "",
+       "−1"
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "caption": "Start at row 4, column 1. The wall cannot be entered."
+    }
+   },
+   "question": "How many cells of the gridworld are states where the agent must still choose an action?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 17,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "all",
+      "value": 20,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "with-terms",
+      "value": 19,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "no-wall-only",
+      "value": 18,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the 20 cells, then take away those where no choice is made."
+    },
+    {
+     "rung": "point",
+     "text": "The wall is not a state; the two end cells need no action.",
+     "highlight": [
+      "r2c3",
+      "r1c5",
+      "r2c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$20 - 1 - 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$20 - 1 - 2 = 17$ cells where the agent chooses.",
+    "generic": "Not quite. Leave out the wall and the two end cells.",
+    "byKey": {
+     "all": "You counted every cell, including the wall the agent can never stand in.",
+     "with-terms": "The +1 and −1 cells end the episode, so no action is chosen there.",
+     "no-wall-only": "Leave out both end cells, not one."
+    }
+   },
+   "explain": {
+    "text": "Twenty cells less the wall leaves 19 states, and two of them end the episode. So 17 states call for an action. The **Markov property** holds: where the agent goes next depends only on the cell and the action, not on how it got there.",
+    "canvas": {
+     "highlight": [
+      "r2c3",
+      "r1c5",
+      "r2c5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A slippery floor",
+   "prose": "On the **slippery** grid the intended move happens with chance 0.8; with chance 0.1 each the agent slips to one side instead. A move into the wall or off the grid leaves it where it is. The agent stands at row 3, column 1 and chooses U.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "+1"
+      ],
+      [
+       "",
+       "",
+       "wall",
+       "",
+       "−1"
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r3c1": "up"
+     }
+    }
+   },
+   "question": "Shade every cell the agent can be in after this move.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r2c1",
+     "r3c1",
+     "r3c2"
+    ],
+    "wrong": [
+     {
+      "id": "no-stay",
+      "set": [
+       "r2c1",
+       "r3c2"
+      ]
+     },
+     {
+      "id": "only-up",
+      "set": [
+       "r2c1"
+      ]
+     }
+    ],
+    "only": [
+     "r1c1",
+     "r1c2",
+     "r1c3",
+     "r1c4",
+     "r2c1",
+     "r2c2",
+     "r2c4",
+     "r3c1",
+     "r3c2",
+     "r3c3",
+     "r3c4",
+     "r3c5",
+     "r4c1",
+     "r4c2",
+     "r4c3",
+     "r4c4",
+     "r4c5"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The three possible moves are U, and the side moves L and R."
+    },
+    {
+     "rung": "point",
+     "text": "L from column 1 runs off the grid.",
+     "highlight": [
+      "r3c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "U reaches row 2, R reaches column 2, and L stays put."
+    }
+   ],
+   "feedback": {
+    "correct": "Up with 0.8, right with 0.1, and a slip left bumps the edge: stay with 0.1.",
+    "generic": "Not quite. Follow each of the three moves, including the slips.",
+    "byKey": {
+     "no-stay": "You missed the slip to the left. It hits the edge, so the agent stays in its cell.",
+     "only-up": "The floor is slippery: one move in five goes sideways."
+    }
+   },
+   "explain": {
+    "text": "$p(\\text{r2c1}) = 0.8$, $p(\\text{r3c2}) = 0.1$ and $p(\\text{r3c1}) = 0.1$. A slip into the edge counts as staying. The chances depend only on the cell and the action.",
+    "canvas": {
+     "selected": [
+      "r2c1",
+      "r3c1",
+      "r3c2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The return of one path",
+   "prose": "The **return** from time $t$ is $G_t = R_{t+1} + \\gamma R_{t+2} + \\gamma^2 R_{t+3} + \\dots$ On the **deterministic** grid (no slips) the agent goes from row 1, column 2 right three times to the +1. Each move pays −0.04, and entering +1 pays $1 - 0.04 = 0.96$.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "+1"
+      ],
+      [
+       "",
+       "",
+       "wall",
+       "",
+       "−1"
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "paths": [
+      {
+       "id": "route",
+       "cells": [
+        "r1c2",
+        "r1c3",
+        "r1c4",
+        "r1c5"
+       ],
+       "arrow": true
+      }
+     ]
+    }
+   },
+   "question": "What is the return of this path, with $\\gamma = 0.9$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7016,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "no-discount",
+      "value": 0.88,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "no-step",
+      "value": 0.81,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "disc-first",
+      "value": 0.6314,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Three rewards: −0.04, −0.04, then 0.96."
+    },
+    {
+     "rung": "point",
+     "text": "Discount the second by 0.9 and the third by $0.9^2$.",
+     "highlight": [
+      "route"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.04 - 0.9 \\times 0.04 + 0.81 \\times 0.96$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-0.04 - 0.036 + 0.7776 = 0.7016$.",
+    "generic": "Not quite. Weight the rewards 1, 0.9 and 0.81 in order.",
+    "byKey": {
+     "no-discount": "You added the rewards without discounting. The later ones count for less.",
+     "no-step": "You left out the step costs. Every move pays −0.04, the last one included.",
+     "disc-first": "You discounted the first reward too. It arrives after one step and counts in full."
+    }
+   },
+   "explain": {
+    "text": "$G = -0.04 + 0.9(-0.04) + 0.9^2(0.96) = 0.7016$. Three moves from the goal is the best this cell can do, so 0.7016 will reappear as its value.",
+    "canvas": {
+     "highlight": [
+      "route"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The discount as patience",
+   "prose": "A reward $k$ steps away counts $\\gamma^k$ of its face value now. That is how a desk discounts cash: with interest rate $i$ per step, £1 in $k$ steps is worth $1/(1 + i)^k$ today, so $\\gamma = 1/(1 + i)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      30
+     ],
+     "y": [
+      0,
+      1
+     ],
+     "xLabel": "Steps away, $k$",
+     "yLabel": "Worth now",
+     "height": 240,
+     "functions": [
+      {
+       "id": "g9",
+       "expr": "0.9^x",
+       "label": "$0.9^k$"
+      },
+      {
+       "id": "g99",
+       "expr": "0.99^x",
+       "label": "$0.99^k$"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "k10",
+       "x": 10,
+       "y": 0.3486784401000001,
+       "label": "$k = 10$"
+      }
+     ]
+    }
+   },
+   "question": "With $\\gamma = 0.9$, what is £1 received 10 steps from now worth today? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3487,
+    "tol": {
+     "abs": 0.0002
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 0,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "nine",
+      "value": 0.3874,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "eleven",
+      "value": 0.3138,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each step multiplies by 0.9."
+    },
+    {
+     "rung": "point",
+     "text": "Ten steps multiply by $0.9^{10}$.",
+     "highlight": [
+      "k10"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.9^{10} = 0.3487$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.9^{10} = 0.3487$: about 35p.",
+    "generic": "Not quite. Multiply by 0.9 once for each of the 10 steps.",
+    "byKey": {
+     "linear": "You took 10% off ten times from the original pound. Each step takes 10% of what is left.",
+     "nine": "That is nine steps. Count ten.",
+     "eleven": "That is eleven steps."
+    }
+   },
+   "explain": {
+    "text": "£1 in 10 steps is worth $0.9^{10} = 0.3487$ now. A $\\gamma$ of 0.9 is impatient, like an interest rate of $1/0.9 - 1 = 11\\%$ a step; 0.99 is patient.",
+    "canvas": {
+     "highlight": [
+      "k10"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Two moves from row 2",
+   "prose": "On the deterministic grid the agent at row 2, column 4 moves U, then R into the +1.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "+1"
+      ],
+      [
+       "",
+       "",
+       "wall",
+       "",
+       "−1"
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "paths": [
+      {
+       "id": "route",
+       "cells": [
+        "r2c4",
+        "r1c4",
+        "r1c5"
+       ],
+       "arrow": true
+      }
+     ]
+    }
+   },
+   "question": "What is the return, with $\\gamma = 0.9$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.824,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "no-step",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "disc-first",
+      "value": 0.7416,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 0.92,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two rewards: −0.04 for the first move, then 0.96."
+    },
+    {
+     "rung": "point",
+     "text": "Only the second reward is discounted.",
+     "highlight": [
+      "route"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.04 + 0.9 \\times 0.96$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-0.04 + 0.9 \\times 0.96 = 0.824$.",
+    "generic": "Not quite. The first reward counts in full; the second is multiplied by 0.9.",
+    "byKey": {
+     "no-step": "You left out the step costs: the first move pays −0.04 and the +1 pays $1 - 0.04$.",
+     "disc-first": "You discounted the first reward. $G_t$ starts with $R_{t+1}$ at full weight.",
+     "no-disc": "You added $-0.04 + 0.96$ with no discount on the second reward."
+    }
+   },
+   "explain": {
+    "text": "$G = -0.04 + 0.9 \\times 0.96 = 0.824$. The two usual slips are forgetting the step cost and discounting the first reward. Both change the value of every cell.",
+    "canvas": {
+     "highlight": [
+      "route"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code the pieces",
+   "prose": "Write `discounted_return(rewards, gamma)`. Then `transition(s, a, slip)`: the intended move with chance `1 - 2*slip` and each side move in `SIDES[a]` with `slip`, adding chances that land in the same cell. Then `dice_value(gamma, tol)`, iterating the game's equation from 0.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Returns"
+     ],
+     "rows": [
+      [
+       "`discounted_return([-0.04, -0.04, 0.96], 0.9)`",
+       "0.7016"
+      ],
+      [
+       "`transition('r3c1', 'U', 0.1)`",
+       "{'r2c1': 0.8, 'r3c1': 0.1, 'r3c2': 0.1}"
+      ],
+      [
+       "`dice_value(0.9, 1e-10)`",
+       "4.5833..."
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef discounted_return(rewards, gamma):\n    \"\"\"G = rewards[0] + gamma * rewards[1] + gamma**2 * rewards[2] + ...\"\"\"\n    ...\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}; leave out moves with chance 0.\"\"\"\n    ...\n\ndef dice_value(gamma, tol):\n    \"\"\"Iterate V = E[max(X, gamma * V)] from V = 0 until a step changes V by less than tol.\"\"\"\n    ...\n",
+    "solution": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef discounted_return(rewards, gamma):\n    \"\"\"G = rewards[0] + gamma * rewards[1] + gamma**2 * rewards[2] + ...\"\"\"\n    return sum(gamma ** k * r for k, r in enumerate(rewards))\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}; leave out moves with chance 0.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef dice_value(gamma, tol):\n    \"\"\"Iterate V = E[max(X, gamma * V)] from V = 0 until a step changes V by less than tol.\"\"\"\n    V = 0.0\n    while True:\n        new = sum(max(x, gamma * V) for x in range(1, 7)) / 6\n        if abs(new - V) < tol:\n            return new\n        V = new\n",
+    "examples": [
+     {
+      "call": "discounted_return([-0.04, -0.04, 0.96], 0.9)",
+      "expect": "0.7016",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "discounted_return([-0.04, -0.04, 0.96], 0.9)",
+      "expect": "0.7016",
+      "compare": "isclose"
+     },
+     {
+      "call": "discounted_return([1, 1, 1, 1], 0.5)",
+      "expect": "1.875",
+      "compare": "isclose"
+     },
+     {
+      "call": "discounted_return([], 0.9)",
+      "expect": "0",
+      "compare": "isclose"
+     },
+     {
+      "call": "transition('r3c1', 'U', 0.1)",
+      "expect": "{'r2c1': 0.8, 'r3c1': 0.1, 'r3c2': 0.1}",
+      "compare": "isclose"
+     },
+     {
+      "call": "transition('r1c1', 'U', 0.1)",
+      "expect": "{'r1c1': 0.9, 'r1c2': 0.1}",
+      "compare": "isclose"
+     },
+     {
+      "call": "transition('r2c2', 'R', 0.1)",
+      "expect": "{'r2c2': 0.8, 'r1c2': 0.1, 'r3c2': 0.1}",
+      "compare": "isclose"
+     },
+     {
+      "call": "transition('r1c4', 'R', 0.0)",
+      "expect": "{'r1c5': 1.0}",
+      "compare": "isclose"
+     },
+     {
+      "call": "dice_value(0.9, 1e-10)",
+      "expect": "55 / 12",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "dice_value(0.0, 1e-10)",
+      "expect": "3.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "dice_value(0.5, 1e-10)",
+      "expect": "3.636363636363621",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "how": "Submit runs 10 hidden tests. Values are compared with math.isclose; transition dicts must have the same cells with the same chances."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`move` already handles the wall and the edges."
+    },
+    {
+     "rung": "point",
+     "text": "In `transition`, two moves can land in the same cell: add their chances.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`dice_value` repeats `new = sum(max(x, gamma * V) for x in range(1, 7)) / 6`."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. In the corner, a blocked move and a slip both leave the agent in place: 0.9 in all.",
+    "generic": "Some tests fail. Check the corner case, where two moves stay put, and the stopping rule in `dice_value`."
+   },
+   "explain": {
+    "text": "`transition` builds the model $p(s' \\mid s, a)$ that later lessons sum over. `dice_value` finds the game's value by repeating its own equation, a fixed point; lesson 7 does the same for the grid."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Rewards for ever",
+   "prose": "A quoting rule earns £1 every step for ever, with no end state.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      60
+     ],
+     "y": [
+      0,
+      12
+     ],
+     "xLabel": "Steps counted",
+     "yLabel": "Return so far",
+     "height": 240,
+     "functions": [
+      {
+       "id": "g9",
+       "expr": "(1 - 0.9^x)/(1 - 0.9)",
+       "label": "$\\gamma = 0.9$"
+      },
+      {
+       "id": "g1",
+       "expr": "x",
+       "label": "$\\gamma = 1$",
+       "dashed": true,
+       "domain": [
+        0,
+        12
+       ]
+      }
+     ]
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "lim",
+       "y": 10,
+       "label": "10"
+      }
+     ]
+    }
+   },
+   "question": "With $\\gamma = 0.9$, what is the return $\\sum_{k \\ge 0} 0.9^k \\times 1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "disc-first",
+      "value": 9,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "gamma",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "inverse",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "It is a geometric series."
+    },
+    {
+     "rung": "point",
+     "text": "The sum of $\\gamma^k$ from $k = 0$ is $\\tfrac{1}{1 - \\gamma}$.",
+     "highlight": [
+      "lim"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1}{0.1}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{1}{1 - 0.9} = 10$.",
+    "generic": "Not quite. Sum the geometric series $1 + 0.9 + 0.81 + \\dots$",
+    "byKey": {
+     "disc-first": "You discounted the first pound too. The series starts at $\\gamma^0 = 1$.",
+     "gamma": "That is the second term only.",
+     "inverse": "That is $1 - \\gamma$. The sum is its reciprocal."
+    }
+   },
+   "explain": {
+    "text": "$1 + 0.9 + 0.81 + \\dots = \\tfrac{1}{1 - 0.9} = 10$. With $\\gamma = 1$ and no end state the sum grows without limit, so values are infinite and policies cannot be compared. A discount below 1, or an end the agent reaches, keeps them finite.",
+    "canvas": {
+     "highlight": [
+      "g9",
+      "g1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The pieces of an MDP",
+   "prose": "An MDP is states, actions, transitions $p(s' \\mid s, a)$, rewards and a discount $\\gamma$. A policy $\\pi$ chooses $a = \\pi(s)$. The return $$G_t = \\sum_{k \\ge 0} \\gamma^k R_{t+k+1}$$ counts the first reward in full. Markov means the next state depends on the current state and action only.",
+   "question": "Which of these breaks the Markov property for the gridworld?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "memory",
+      "text": "Slips are more likely right after a slip",
+      "correct": true
+     },
+     {
+      "id": "slip",
+      "text": "Moves slip sideways with chance 0.2",
+      "why": "A larger slip chance is still decided by the cell and the action alone."
+     },
+     {
+      "id": "cost",
+      "text": "The step cost rises to 0.1",
+      "why": "A step cost is a reward. It still depends only on the move made."
+     },
+     {
+      "id": "gamma",
+      "text": "The discount falls to 0.5",
+      "why": "The discount weights rewards. It does not change what the next cell depends on."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "If the last move matters, the cell alone no longer tells you the chances.",
+    "generic": "Ask what the next cell would depend on in each case."
+   },
+   "explain": {
+    "text": "Making slips depend on the previous move means the state must also remember that move. Add it to the state and the process is Markov again."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Selling against a deadline",
+   "prose": "A desk must sell 4 lots within 5 steps. Each step it sells 0, 1 or 2 lots; selling more at once moves the price further, and the impact fades by the next step. Unsold lots at the end are dumped at a poor price.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Piece",
+      "Here"
+     ],
+     "rows": [
+      [
+       "Action",
+       "lots to sell now: 0, 1 or 2"
+      ],
+      [
+       "Reward",
+       "proceeds of this step's sale"
+      ],
+      [
+       "End",
+       "step 5, or no lots left"
+      ],
+      [
+       "State",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which state makes this an MDP?",
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask what the best sale this step depends on."
+    },
+    {
+     "rung": "point",
+     "text": "It depends on how much is left to sell and how long remains."
+    },
+    {
+     "rung": "step",
+     "text": "Impact fades, so past sales matter only through the lots left."
+    }
+   ],
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "Lots left and steps left",
+      "correct": true
+     },
+     {
+      "id": "lots",
+      "text": "Lots left only",
+      "why": "With 3 lots left, one step to go and four steps to go call for different sales. Steps left must be in the state."
+     },
+     {
+      "id": "time",
+      "text": "Steps left only",
+      "why": "The best sale depends on how much is still to sell. Lots left must be in the state."
+     },
+     {
+      "id": "history",
+      "text": "The whole history of past sales",
+      "why": "That works, but it is more than needed: past sales matter only through the lots left, since impact fades."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Lots left and steps left: together they fix what is possible and what comes next.",
+    "generic": "Ask what the best sale this step depends on."
+   },
+   "explain": {
+    "text": "Lots left and steps left give 5 × 6 = 30 states, and the next state depends only on them and the lots sold. If impact lingered, the last sale would have to join the state."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A Markov decision process has states, actions, transition chances $p(s' \\mid s, a)$, rewards and a discount $\\gamma$; a policy picks an action per state.",
+   "The return $G_t = \\sum_k \\gamma^k R_{t+k+1}$ counts the first reward in full and later ones less. With $\\gamma < 1$ a stream of bounded rewards has a finite return.",
+   "With no last roll, a value satisfies its own equation, $V = E[\\max(X, \\gamma V)]$ in the dice game, and is found as a fixed point rather than by working back."
+  ],
+  "formula": {
+   "name": "Discounted return",
+   "tex": "G_t = R_{t+1} + \\gamma R_{t+2} + \\gamma^2 R_{t+3} + \\dots",
+   "note": "Finite for bounded rewards when $\\gamma < 1$, or when every path reaches an end state."
+  },
+  "trap": "Forgetting the step cost, or discounting the first reward. Both shift every value in the grid."
+ },
+ "quiz": [
+  {
+   "id": "q-return-seq",
+   "difficulty": 2,
+   "prose": "Rewards −1, −1, 10 arrive on the next three steps; $\\gamma = 0.5$.",
+   "question": "What is the return?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "no-disc",
+      "value": 8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "disc-first",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-1 - 0.5 + 0.25 \\times 10 = 1$.",
+    "generic": "Not quite. Weight the rewards 1, 0.5 and 0.25.",
+    "byKey": {
+     "no-disc": "You added them without discounting.",
+     "disc-first": "You discounted the first reward too."
+    }
+   },
+   "explain": {
+    "text": "$G = -1 + 0.5(-1) + 0.25(10) = 1$."
+   }
+  },
+  {
+   "id": "q-corner",
+   "difficulty": 2,
+   "prose": "On the slippery grid (0.8 ahead, 0.1 each side) the agent stands in row 4, column 1, the bottom-left corner, and chooses L.",
+   "question": "What is the chance it stays where it is? Give a decimal to 1 place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "ahead",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "slip",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "L hits the edge (0.8) and a slip down hits it too (0.1): 0.9.",
+    "generic": "Not quite. Follow L, U and D from the corner.",
+    "byKey": {
+     "ahead": "A slip down also runs off the grid, so add its 0.1.",
+     "slip": "The intended move L also runs off the grid."
+    }
+   },
+   "explain": {
+    "text": "L and D both run off the grid and leave the agent in place, $0.8 + 0.1 = 0.9$. Only a slip up moves it."
+   }
+  },
+  {
+   "id": "q-dice-rule",
+   "difficulty": 3,
+   "prose": "In the unlimited dice game with $\\gamma = 0.9$, the game is worth £4.58.",
+   "question": "You roll a 4. What should you do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "reroll",
+      "text": "Reroll: a reroll is worth $0.9 \\times 4.5833 \\approx 4.125$, more than 4",
+      "correct": true
+     },
+     {
+      "id": "keep",
+      "text": "Keep it: 4 is above the average roll of 3.5",
+      "why": "The comparison is with what rerolling is worth, $0.9 \\times 4.5833 \\approx 4.125$, not with one roll."
+     },
+     {
+      "id": "equal",
+      "text": "Either: a 4 is worth about the same as the game",
+      "why": "Rerolling is worth 4.125, which beats 4 by 12.5p."
+     },
+     {
+      "id": "stop",
+      "text": "Keep it, because waiting is discounted",
+      "why": "The discount is already in the 4.125. Even after it, rerolling wins."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Reroll: 4.125 beats 4.",
+    "generic": "Not quite. Compare 4 with $0.9V$."
+   },
+   "explain": {
+    "text": "Stop when the roll beats the value of going on, $0.9 \\times 4.5833 = 4.125$. So keep only 5 or 6."
+   }
+  }
+ ]
+}

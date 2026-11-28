@@ -1,0 +1,1641 @@
+{
+ "id": "l8-improving-a-policy",
+ "course": "rl",
+ "title": "Improving a policy",
+ "minutes": 15,
+ "objectives": [
+  "Build policy iteration and check that it reaches value iteration's policy."
+ ],
+ "skills": [
+  "rl-mdp"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Can we do better than always up?",
+   "prose": "On the slippery grid, the policy \"always move U\" has the values shown, all negative: it often bumps the top edge for ever. At the start, row 4 column 1, it scores −0.3686. Use these values to score moving R there instead, for one step, then following \"always U\".",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "−0.3638",
+       "−0.3236",
+       "−0.1985",
+       "0.1505",
+       "+1"
+      ],
+      [
+       "−0.3650",
+       "−0.3361",
+       "wall",
+       "−0.0348",
+       "−1"
+      ],
+      [
+       "−0.3667",
+       "−0.3429",
+       "−0.3102",
+       "−0.1776",
+       "−0.9406"
+      ],
+      [
+       "−0.3686",
+       "−0.3488",
+       "−0.3190",
+       "−0.2699",
+       "−0.8149"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "up",
+      "r1c2": "up",
+      "r1c3": "up",
+      "r1c4": "up",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "up",
+      "r3c4": "up",
+      "r3c5": "up",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "up"
+     },
+     "highlight": [
+      "r4c1",
+      "r4c2",
+      "r3c1"
+     ]
+    }
+   },
+   "question": "What does R score at the start? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.3573,
+    "tol": {
+     "abs": 0.0003
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.3573,
+      "tol": {
+       "abs": 0.0003
+      }
+     },
+     {
+      "id": "no-slip",
+      "value": -0.3539,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "u",
+      "value": -0.3686,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "R reaches row 4 column 2 with 0.8; a slip U reaches row 3 column 1; a slip D bumps the edge."
+    },
+    {
+     "rung": "point",
+     "text": "Score: $-0.04 + 0.9 \\times$ the average landing value.",
+     "highlight": [
+      "r4c2",
+      "r3c1",
+      "r4c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.04 + 0.9(0.8 \\times -0.3488 + 0.1 \\times -0.3667 + 0.1 \\times -0.3686)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-0.04 + 0.9 \\times (-0.3526) = -0.3573$, better than U's −0.3686.",
+    "generic": "Not quite. Average the three landing values, then score the move.",
+    "byKey": {
+     "sign": "Check the sign: every landing value is negative.",
+     "no-slip": "You took R as certain. It slips U or D one time in ten each.",
+     "u": "That is the score of U, the current policy. The question asks about R."
+    }
+   },
+   "explain": {
+    "text": "R scores -0.3573 against U's −0.3686, so switching the start to R, and then following the old policy, is better. Making that switch in every cell at once is **policy improvement**.",
+    "canvas": {
+     "arrows": {
+      "r4c1": "right"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Evaluate, improve, repeat",
+   "prose": "Policy iteration evaluates the policy exactly, as in l6, switches every cell to its best move under those values, and repeats. Slide through the policies, starting from \"always U\".",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "−0.3638",
+       "−0.3236",
+       "−0.1985",
+       "0.1505",
+       "+1"
+      ],
+      [
+       "−0.3650",
+       "−0.3361",
+       "wall",
+       "−0.0348",
+       "−1"
+      ],
+      [
+       "−0.3667",
+       "−0.3429",
+       "−0.3102",
+       "−0.1776",
+       "−0.9406"
+      ],
+      [
+       "−0.3686",
+       "−0.3488",
+       "−0.3190",
+       "−0.2699",
+       "−0.8149"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "up",
+      "r1c2": "up",
+      "r1c3": "up",
+      "r1c4": "up",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "up",
+      "r3c4": "up",
+      "r3c5": "up",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "up"
+     }
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "cells": {
+         "r1c1": "−0.3638",
+         "r1c2": "−0.3236",
+         "r1c3": "−0.1985",
+         "r1c4": "0.1505",
+         "r2c1": "−0.3650",
+         "r2c2": "−0.3361",
+         "r2c4": "−0.0348",
+         "r3c1": "−0.3667",
+         "r3c2": "−0.3429",
+         "r3c3": "−0.3102",
+         "r3c4": "−0.1776",
+         "r3c5": "−0.9406",
+         "r4c1": "−0.3686",
+         "r4c2": "−0.3488",
+         "r4c3": "−0.3190",
+         "r4c4": "−0.2699",
+         "r4c5": "−0.8149"
+        },
+        "arrows": {
+         "r1c1": "up",
+         "r1c2": "up",
+         "r1c3": "up",
+         "r1c4": "up",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "up",
+         "r3c4": "up",
+         "r3c5": "up",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "up"
+        },
+        "caption": "Policy 1: start worth -0.3686."
+       },
+       {
+        "cells": {
+         "r1c1": "0.4481",
+         "r1c2": "0.5798",
+         "r1c3": "0.7323",
+         "r1c4": "0.8896",
+         "r2c1": "0.3372",
+         "r2c2": "0.4481",
+         "r2c4": "0.5500",
+         "r3c1": "0.1581",
+         "r3c2": "0.2224",
+         "r3c3": "0.2906",
+         "r3c4": "0.3968",
+         "r3c5": "0.1633",
+         "r4c1": "0.0845",
+         "r4c2": "0.1425",
+         "r4c3": "0.2079",
+         "r4c4": "0.2820",
+         "r4c5": "0.1953"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "right",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "right",
+         "r3c2": "right",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "right",
+         "r4c2": "right",
+         "r4c3": "right",
+         "r4c4": "up",
+         "r4c5": "left"
+        },
+        "caption": "Policy 2: start worth 0.0845."
+       },
+       {
+        "cells": {
+         "r1c1": "0.4502",
+         "r1c2": "0.5800",
+         "r1c3": "0.7323",
+         "r1c4": "0.8896",
+         "r2c1": "0.3568",
+         "r2c2": "0.4502",
+         "r2c4": "0.5500",
+         "r3c1": "0.2714",
+         "r3c2": "0.3347",
+         "r3c3": "0.2906",
+         "r3c4": "0.3968",
+         "r3c5": "0.1633",
+         "r4c1": "0.1943",
+         "r4c2": "0.2372",
+         "r4c3": "0.2079",
+         "r4c4": "0.2820",
+         "r4c5": "0.1953"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "right",
+         "r4c4": "up",
+         "r4c5": "left"
+        },
+        "caption": "Policy 3: start worth 0.1943."
+       },
+       {
+        "cells": {
+         "r1c1": "0.4502",
+         "r1c2": "0.5800",
+         "r1c3": "0.7323",
+         "r1c4": "0.8896",
+         "r2c1": "0.3568",
+         "r2c2": "0.4502",
+         "r2c4": "0.5500",
+         "r3c1": "0.2714",
+         "r3c2": "0.3348",
+         "r3c3": "0.2915",
+         "r3c4": "0.3969",
+         "r3c5": "0.1634",
+         "r4c1": "0.1944",
+         "r4c2": "0.2381",
+         "r4c3": "0.2168",
+         "r4c4": "0.2830",
+         "r4c5": "0.1961"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "left"
+        },
+        "caption": "Policy 4: start worth 0.1944."
+       }
+      ],
+      "frameLabels": [
+       "evaluation 1",
+       "evaluation 2",
+       "evaluation 3",
+       "evaluation 4"
+      ],
+      "label": "Policy",
+      "start": 0
+     }
+    ]
+   },
+   "question": "How many evaluations does it take before an improvement step changes nothing?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "vi",
+      "value": 25,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the arrows from one policy to the next."
+    },
+    {
+     "rung": "point",
+     "text": "Count the policies until two in a row are the same.",
+     "highlight": [
+      "r4c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The start value goes −0.3686, 0.0845, 0.1943, 0.1944."
+    }
+   ],
+   "feedback": {
+    "correct": "Four: the fourth policy's improvement changes no arrow.",
+    "generic": "Slide to the end and count the policies.",
+    "byKey": {
+     "three": "The third policy still has one cell to change.",
+     "five": "There are only four policies: the fourth is already stable.",
+     "vi": "That is value iteration's sweep count. Policy iteration takes far fewer, bigger steps."
+    }
+   },
+   "explain": {
+    "text": "The policies change 13, 5 and 1 cells, then none. The 4 evaluations reach the same policy value iteration found, against 25 sweeps. Each evaluation costs a linear solve, though.",
+    "canvas": {
+     "cells": {
+      "r1c1": "0.4502",
+      "r1c2": "0.5800",
+      "r1c3": "0.7323",
+      "r1c4": "0.8896",
+      "r2c1": "0.3568",
+      "r2c2": "0.4502",
+      "r2c4": "0.5500",
+      "r3c1": "0.2714",
+      "r3c2": "0.3348",
+      "r3c3": "0.2915",
+      "r3c4": "0.3969",
+      "r3c5": "0.1634",
+      "r4c1": "0.1944",
+      "r4c2": "0.2381",
+      "r4c3": "0.2168",
+      "r4c4": "0.2830",
+      "r4c5": "0.1961"
+     },
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "right",
+      "r3c4": "up",
+      "r3c5": "left",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "left"
+     },
+     "caption": "Policy 4: start worth 0.1944."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Never worse",
+   "prose": "**Policy improvement**: given $v_\\pi$, choose in every state the action with the best one-step score, $\\pi'(s) = \\arg\\max_a \\sum_{s'} p\\,[r + \\gamma v_\\pi(s')]$. The **policy improvement theorem** says $v_{\\pi'}(s) \\ge v_\\pi(s)$ in every state.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.4481",
+       "0.5798",
+       "0.7323",
+       "0.8896",
+       "+1"
+      ],
+      [
+       "0.3372",
+       "0.4481",
+       "wall",
+       "0.5500",
+       "−1"
+      ],
+      [
+       "0.1581",
+       "0.2224",
+       "0.2906",
+       "0.3968",
+       "0.1633"
+      ],
+      [
+       "0.0845",
+       "0.1425",
+       "0.2079",
+       "0.2820",
+       "0.1953"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "right",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "right",
+      "r3c2": "right",
+      "r3c3": "right",
+      "r3c4": "up",
+      "r3c5": "left",
+      "r4c1": "right",
+      "r4c2": "right",
+      "r4c3": "right",
+      "r4c4": "up",
+      "r4c5": "left"
+     }
+    }
+   },
+   "question": "By how much did the first improvement raise the start's value? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.453,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "new",
+      "value": 0.0845,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sum",
+      "value": -0.2841,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one-step",
+      "value": 0.0113,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Before: −0.3686. After: read the start cell."
+    },
+    {
+     "rung": "point",
+     "text": "After the first improvement the start is worth 0.0845.",
+     "highlight": [
+      "r4c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.0845 - (-0.3686)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.0845 + 0.3686 = 0.4531$, about 0.453.",
+    "generic": "Not quite. Subtract the old value from the new one.",
+    "byKey": {
+     "new": "That is the new value. The rise is new minus old.",
+     "sum": "You subtracted 0.3686 instead of adding: the old value is negative.",
+     "one-step": "That is the gain from changing only the start's first move. Every cell changed, and the gains compound."
+    }
+   },
+   "explain": {
+    "text": "The start rose from −0.3686 to 0.0845, by 0.453. Changing one move alone gained only 0.0113; improving every cell at once lets each gain feed the others. The theorem guarantees no cell gets worse."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One pattern, many methods",
+   "prose": "Policy iteration alternates two steps: make the values match the policy, then make the policy greedy for the values. **Generalised policy iteration** is any mix of the two, even rough ones: a few evaluation sweeps, then an improvement. Levels 3 and 4 follow this pattern.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 200,
+     "nodes": [
+      {
+       "id": "E",
+       "label": "evaluate",
+       "shape": "pill",
+       "x": 0.25,
+       "y": 0.5
+      },
+      {
+       "id": "I",
+       "label": "improve",
+       "shape": "pill",
+       "x": 0.75,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "E",
+       "to": "I",
+       "label": "$v_\\pi$",
+       "bend": 0.3
+      },
+      {
+       "from": "I",
+       "to": "E",
+       "label": "$\\pi'$",
+       "bend": 0.3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Value iteration is generalised policy iteration with how much evaluation between improvements?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "One sweep: each backup evaluates once, then maxes",
+      "correct": true
+     },
+     {
+      "id": "full",
+      "text": "A full linear solve of the policy each time",
+      "why": "That is policy iteration. Value iteration never solves for a fixed policy."
+     },
+     {
+      "id": "none",
+      "text": "None at all: each backup only improves",
+      "why": "Each backup looks one step ahead using the current values: that is one sweep of evaluation."
+     },
+     {
+      "id": "until",
+      "text": "Sweeps until the values stop changing at all",
+      "why": "That would be a full evaluation, as in policy iteration."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at the backup: what does the max act on?"
+    },
+    {
+     "rung": "point",
+     "text": "It scores moves with the current values, a one-step evaluation.",
+     "highlight": [
+      "E",
+      "I"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then it takes the best, an improvement."
+    }
+   ],
+   "feedback": {
+    "correct": "One backup per sweep: evaluation and improvement in a single line.",
+    "generic": "Not quite. Ask how much evaluating value iteration does before each max."
+   },
+   "explain": {
+    "text": "Value iteration folds one evaluation sweep and an improvement into each backup. Policy iteration evaluates fully. Both converge to the optimal values; they trade cheap steps against few steps."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Two answers, one optimum",
+   "prose": "On the deterministic grid, policy iteration ends with R at row 2 column 1; value iteration's arg-max, which takes the first best of U, R, D, L, says U there. The two disagree in 7 cells, yet their values agree to $10^{-15}$.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.5914",
+       "0.7016",
+       "0.8240",
+       "0.9600",
+       "+1"
+      ],
+      [
+       "0.4923",
+       "0.5914",
+       "wall",
+       "0.8240",
+       "−1"
+      ],
+      [
+       "0.4031",
+       "0.4923",
+       "0.5914",
+       "0.7016",
+       "0.5914"
+      ],
+      [
+       "0.3228",
+       "0.4031",
+       "0.4923",
+       "0.5914",
+       "0.4923"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "right",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "right",
+      "r3c2": "right",
+      "r3c3": "right",
+      "r3c4": "up",
+      "r3c5": "left",
+      "r4c1": "right",
+      "r4c2": "right",
+      "r4c3": "right",
+      "r4c4": "up",
+      "r4c5": "left"
+     },
+     "highlight": [
+      "r2c1",
+      "r3c1",
+      "r3c2",
+      "r4c1",
+      "r4c2",
+      "r4c3",
+      "r4c5"
+     ]
+    }
+   },
+   "question": "What do you conclude?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "Both are optimal: in those cells U and R tie",
+      "correct": true
+     },
+     {
+      "id": "pi",
+      "text": "Policy iteration is right; value iteration's arg-max is wrong",
+      "why": "The values agree, and U and R score the same in those cells. Neither is wrong."
+     },
+     {
+      "id": "vi",
+      "text": "Value iteration is right, as it is the more precise method",
+      "why": "Both reach the optimal values. The difference is only which tied action each picked."
+     },
+     {
+      "id": "bug",
+      "text": "One of the codes has a bug that needs finding",
+      "why": "Ties are not a bug. Compare policies by whether each action is in the optimal set."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the values the two moves lead to."
+    },
+    {
+     "rung": "point",
+     "text": "From row 2 column 1, U and R both lead to cells worth 0.5914.",
+     "highlight": [
+      "r2c1",
+      "r3c1",
+      "r3c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Equal scores mean either move is optimal."
+    }
+   ],
+   "feedback": {
+    "correct": "They pick different members of the same optimal sets.",
+    "generic": "Not quite. Check whether the two moves score the same.",
+    "byKey": {
+     "pi": "You compared single arg-max choices. In a tie any best action is optimal."
+    }
+   },
+   "explain": {
+    "text": "In the 7 highlighted cells U and R score exactly the same. Policies should be compared by asking whether every chosen action is in the optimal set, not by equality of one arg-max.",
+    "canvas": {
+     "highlight": [
+      "r2c1",
+      "r3c1",
+      "r3c2",
+      "r4c1",
+      "r4c2",
+      "r4c3",
+      "r4c5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code policy iteration",
+   "prose": "`evaluate_policy` from l6 is in the editor. Write `policy_iteration(slip, gamma)` from \"always U\", keeping a cell's action when it ties for best, so the loop cannot flip between tied moves. Then `same_policy`, which accepts two policies when every action of both is a best action.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Returns"
+     ],
+     "rows": [
+      [
+       "`policy_iteration(0.1, 0.9)[2]`",
+       "4"
+      ],
+      [
+       "`policy_iteration(0.0, 0.9)[2]`",
+       "5"
+      ],
+      [
+       "`same_policy(pi_policy, vi_policy, values, 0.0, 0.9)`",
+       "True"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `policy_iteration` and `same_policy`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef q_value(V, s, a, slip, gamma):\n    return sum(p * (reward(t) + gamma * V[t]) for t, p in transition(s, a, slip).items())\n\ndef evaluate_policy(policy, slip, gamma):\n    n = len(CELLS)\n    P, r = np.zeros((n, n)), np.zeros(n)\n    for i, s in enumerate(CELLS):\n        if s not in TERMINAL:\n            for t, p in transition(s, policy[s], slip).items():\n                P[i, CELLS.index(t)] += p\n                r[i] += p * reward(t)\n    v = np.linalg.solve(np.eye(n) - gamma * P, r)\n    return {s: float(v[i]) for i, s in enumerate(CELLS)}\n\ndef policy_iteration(slip, gamma):\n    \"\"\"Start from U everywhere. Improve: keep the current action if it is within 1e-9 of the best,\n    else take the first best in the order U, R, D, L. Stop when nothing changes.\n    Return (values, policy, number of evaluations).\"\"\"\n    ...\n\ndef same_policy(p1, p2, values, slip, gamma):\n    \"\"\"True if, in every non-end cell, both actions are within 1e-9 of the best q_value.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef q_value(V, s, a, slip, gamma):\n    return sum(p * (reward(t) + gamma * V[t]) for t, p in transition(s, a, slip).items())\n\ndef evaluate_policy(policy, slip, gamma):\n    n = len(CELLS)\n    P, r = np.zeros((n, n)), np.zeros(n)\n    for i, s in enumerate(CELLS):\n        if s not in TERMINAL:\n            for t, p in transition(s, policy[s], slip).items():\n                P[i, CELLS.index(t)] += p\n                r[i] += p * reward(t)\n    v = np.linalg.solve(np.eye(n) - gamma * P, r)\n    return {s: float(v[i]) for i, s in enumerate(CELLS)}\n\ndef policy_iteration(slip, gamma):\n    \"\"\"Start from U everywhere. Improve: keep the current action if it is within 1e-9 of the best,\n    else take the first best in the order U, R, D, L. Stop when nothing changes.\n    Return (values, policy, number of evaluations).\"\"\"\n    policy = {s: 'U' for s in CELLS if s not in TERMINAL}\n    evaluations = 0\n    while True:\n        V = evaluate_policy(policy, slip, gamma)\n        evaluations += 1\n        new = {}\n        for s in policy:\n            q = {a: q_value(V, s, a, slip, gamma) for a in 'URDL'}\n            best = max(q.values())\n            if q[policy[s]] > best - 1e-9:\n                new[s] = policy[s]\n            else:\n                new[s] = next(a for a in 'URDL' if q[a] > best - 1e-9)\n        if new == policy:\n            return V, policy, evaluations\n        policy = new\n\ndef same_policy(p1, p2, values, slip, gamma):\n    \"\"\"True if, in every non-end cell, both actions are within 1e-9 of the best q_value.\"\"\"\n    for s in CELLS:\n        if s in TERMINAL:\n            continue\n        q = {a: q_value(values, s, a, slip, gamma) for a in 'URDL'}\n        best = max(q.values())\n        if q[p1[s]] <= best - 1e-9 or q[p2[s]] <= best - 1e-9:\n            return False\n    return True\n",
+    "examples": [
+     {
+      "call": "policy_iteration(0.1, 0.9)[2]",
+      "expect": "4",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "policy_iteration(0.1, 0.9)[2]",
+      "expect": "4",
+      "compare": "equal"
+     },
+     {
+      "call": "policy_iteration(0.0, 0.9)[2]",
+      "expect": "5",
+      "compare": "equal"
+     },
+     {
+      "call": "policy_iteration(0.1, 0.9)[0]['r4c1']",
+      "expect": "0.19435708643804944",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "policy_iteration(0.1, 0.9)[1]['r3c5']",
+      "expect": "'L'",
+      "compare": "equal"
+     },
+     {
+      "call": "policy_iteration(0.0, 0.9)[0]['r4c1']",
+      "expect": "0.32275975999999995",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "vi = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUURULUUUUU'))",
+      "call": "same_policy(policy_iteration(0.0, 0.9)[1], vi, policy_iteration(0.0, 0.9)[0], 0.0, 0.9)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "pd = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRRUURRRULRRRUL'))\nbad = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRRUURRRULDRRUL'))",
+      "call": "same_policy(pd, bad, policy_iteration(0.0, 0.9)[0], 0.0, 0.9)",
+      "expect": "False",
+      "compare": "equal"
+     },
+     {
+      "setup": "vi = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUURULUUUUU'))",
+      "call": "same_policy(vi, vi, policy_iteration(0.0, 0.9)[0], 0.0, 0.9)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "vi = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUURULUUUUU'))",
+      "call": "policy_iteration(0.0, 0.9)[1] == vi",
+      "expect": "False",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests with NumPy. Counts and actions must equal ours; values must match within 1e-6."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop: evaluate, then build a new policy cell by cell."
+    },
+    {
+     "rung": "point",
+     "text": "Keep `policy[s]` if `q[policy[s]] > best - 1e-9`.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Stop when `new == policy`; count every evaluation."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. On the deterministic grid the two methods' policies differ yet `same_policy` accepts them.",
+    "generic": "Some tests fail. Check the tie rule and that the final, unchanged evaluation is counted."
+   },
+   "explain": {
+    "text": "Keeping a tied action stops the loop from swapping U and R for ever on the deterministic grid. `same_policy` asks the right question: is every chosen action optimal under these values?"
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A floor more slippery",
+   "prose": "Raise the slip chance to 0.2 each side, so the intended move succeeds only 6 times in 10. At row 2, column 4, moving U risks a slip R into the pit. Predict what the best action becomes there, then check.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.4502",
+       "0.5800",
+       "0.7323",
+       "0.8896",
+       "+1"
+      ],
+      [
+       "0.3568",
+       "0.4502",
+       "wall",
+       "0.5500",
+       "−1"
+      ],
+      [
+       "0.2714",
+       "0.3348",
+       "0.2915",
+       "0.3969",
+       "0.1634"
+      ],
+      [
+       "0.1944",
+       "0.2381",
+       "0.2168",
+       "0.2830",
+       "0.1961"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "right",
+      "r3c4": "up",
+      "r3c5": "left",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "left"
+     },
+     "highlight": [
+      "r2c4"
+     ],
+     "caption": "Slip 0.1 each side, for comparison."
+    }
+   },
+   "question": "With slip 0.2, what is the best move at row 2, column 4?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "L",
+      "text": "L, into the wall",
+      "correct": true,
+      "canvas": {
+       "cells": {
+        "r1c1": "0.2253",
+        "r1c2": "0.3665",
+        "r1c3": "0.5555",
+        "r1c4": "0.7324",
+        "r2c1": "0.1490",
+        "r2c2": "0.2253",
+        "r2c4": "0.2255",
+        "r3c1": "0.0702",
+        "r3c2": "0.0951",
+        "r3c3": "0.0047",
+        "r3c4": "0.0662",
+        "r3c5": "−0.0915",
+        "r4c1": "−0.0017",
+        "r4c2": "0.0035",
+        "r4c3": "−0.0418",
+        "r4c4": "−0.0274",
+        "r4c5": "−0.0869"
+       },
+       "arrows": {
+        "r1c1": "right",
+        "r1c2": "right",
+        "r1c3": "right",
+        "r1c4": "right",
+        "r2c1": "up",
+        "r2c2": "up",
+        "r2c4": "left",
+        "r3c1": "up",
+        "r3c2": "up",
+        "r3c3": "left",
+        "r3c4": "up",
+        "r3c5": "down",
+        "r4c1": "up",
+        "r4c2": "up",
+        "r4c3": "up",
+        "r4c4": "up",
+        "r4c5": "left"
+       },
+       "caption": "Slip 0.2 each side."
+      }
+     },
+     {
+      "id": "U",
+      "text": "U, still the shortest way to the goal",
+      "why": "U now slips R into the pit with chance 0.2. Each such slip costs −1.04, too much to risk.",
+      "canvas": {
+       "cells": {
+        "r1c1": "0.2253",
+        "r1c2": "0.3665",
+        "r1c3": "0.5555",
+        "r1c4": "0.7324",
+        "r2c1": "0.1490",
+        "r2c2": "0.2253",
+        "r2c4": "0.2255",
+        "r3c1": "0.0702",
+        "r3c2": "0.0951",
+        "r3c3": "0.0047",
+        "r3c4": "0.0662",
+        "r3c5": "−0.0915",
+        "r4c1": "−0.0017",
+        "r4c2": "0.0035",
+        "r4c3": "−0.0418",
+        "r4c4": "−0.0274",
+        "r4c5": "−0.0869"
+       },
+       "arrows": {
+        "r1c1": "right",
+        "r1c2": "right",
+        "r1c3": "right",
+        "r1c4": "right",
+        "r2c1": "up",
+        "r2c2": "up",
+        "r2c4": "left",
+        "r3c1": "up",
+        "r3c2": "up",
+        "r3c3": "left",
+        "r3c4": "up",
+        "r3c5": "down",
+        "r4c1": "up",
+        "r4c2": "up",
+        "r4c3": "up",
+        "r4c4": "up",
+        "r4c5": "left"
+       },
+       "caption": "Slip 0.2 each side."
+      }
+     },
+     {
+      "id": "D",
+      "text": "D, away from the pit",
+      "why": "D's slips go L into the wall or R into the pit, so it risks the pit as often as U."
+     },
+     {
+      "id": "R",
+      "text": "R, straight at the goal column",
+      "why": "R enters the pit 6 times in 10."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which moves can slip into the pit, column 5 of row 2?"
+    },
+    {
+     "rung": "point",
+     "text": "U and D both slip sideways, and one side is the pit.",
+     "highlight": [
+      "r2c4",
+      "r2c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "L bumps the wall; its slips go U and D, away from the pit."
+    }
+   ],
+   "feedback": {
+    "correct": "L: the agent stays put 6 times in 10 and slips U or D otherwise, never into the pit.",
+    "generic": "Not quite. Check each move's slips."
+   },
+   "explain": {
+    "text": "With slip 0.2, L into the wall is worth 0.2255 there: it waits for a safe slip up. U would risk the pit with 0.2. Small changes to the model can flip the policy near danger, so check the policy, not only the values.",
+    "canvas": {
+     "cells": {
+      "r1c1": "0.2253",
+      "r1c2": "0.3665",
+      "r1c3": "0.5555",
+      "r1c4": "0.7324",
+      "r2c1": "0.1490",
+      "r2c2": "0.2253",
+      "r2c4": "0.2255",
+      "r3c1": "0.0702",
+      "r3c2": "0.0951",
+      "r3c3": "0.0047",
+      "r3c4": "0.0662",
+      "r3c5": "−0.0915",
+      "r4c1": "−0.0017",
+      "r4c2": "0.0035",
+      "r4c3": "−0.0418",
+      "r4c4": "−0.0274",
+      "r4c5": "−0.0869"
+     },
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "left",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "left",
+      "r3c4": "up",
+      "r3c5": "down",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "left"
+     },
+     "caption": "Slip 0.2 each side."
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Policy iteration",
+   "prose": "Policy iteration: evaluate $v_\\pi$ by solving $(\\mathbf I - \\gamma\\mathbf P_\\pi)\\mathbf v = \\mathbf r_\\pi$; improve by $\\pi'(s) = \\arg\\max_a \\sum_{s'} p\\,[r + \\gamma v_\\pi(s')]$, keeping ties; stop when the policy repeats. With finitely many states and actions it stops after finitely many steps, at an optimal policy.",
+   "question": "Why must policy iteration stop?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "finite",
+      "text": "Each step improves or stops, and there are finitely many policies",
+      "correct": true
+     },
+     {
+      "id": "gamma",
+      "text": "The values shrink by a factor $\\gamma$ at each step",
+      "why": "That is the contraction behind value iteration. Policy iteration stops because policies never repeat while improving."
+     },
+     {
+      "id": "small",
+      "text": "The grid has only 17 states to choose in",
+      "why": "Size sets how long it takes, not whether it stops."
+     },
+     {
+      "id": "random",
+      "text": "It picks moves at random until one of them works",
+      "why": "Every step is deterministic: evaluate exactly, then take the best moves."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No policy can recur while values strictly improve, and there are only $4^{17}$ policies here.",
+    "generic": "Count the policies, and use the theorem."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Measure, improve, measure again",
+   "prose": "The quoting rule from l6 is worth £61.31 flat and £57.38 at its limit ($\\gamma = 0.95$). At the limit a trader proposes skewing the quotes: earn only £0.50 a step but get back to flat with chance 0.8 instead of 0.5.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "At the limit",
+      "Reward a step",
+      "Chance back to flat"
+     ],
+     "rows": [
+      [
+       "one-sided quotes (now)",
+       "£1.00",
+       "0.5"
+      ],
+      [
+       "skewed quotes",
+       "£0.50",
+       "0.8"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Using the current values, what is the one-step score of skewing at the limit? Give pounds to 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 58.0,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "current",
+      "value": 57.38,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 61.02,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "swapped",
+      "value": 55.76,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Score = reward + 0.95 × the average next value."
+    },
+    {
+     "rung": "point",
+     "text": "Next value: $0.8 \\times 61.31 + 0.2 \\times 57.38$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.5 + 0.95 \\times 60.52$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.5 + 0.95 \\times 60.5246 = 58.00$, above £57.38: skew.",
+    "generic": "Not quite. Score the skew with the values of the current rule.",
+    "byKey": {
+     "current": "That is the current value at the limit, to compare against.",
+     "no-disc": "You left out the discount on the next value.",
+     "swapped": "You swapped the chances: skewing returns to flat with 0.8."
+    }
+   },
+   "explain": {
+    "text": "Skewing scores £58.00 against £57.38 for one-sided quotes, so improvement switches to skewing. Then the desk re-measures the new rule and asks again: that loop is policy iteration."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Policy improvement makes a policy greedy for its own values; by the policy improvement theorem no state gets worse.",
+   "Policy iteration alternates exact evaluation and improvement. On the slippery grid it reached value iteration's policy in 4 evaluations from \"always U\".",
+   "Optimal policies can tie. Compare policies by whether every chosen action is in the optimal set, and keep the current action on a tie so the loop stops."
+  ],
+  "formula": {
+   "name": "Policy improvement",
+   "tex": "\\pi'(s) = \\arg\\max_a \\sum_{s'} p(s' \\mid s, a)\\,[r + \\gamma v_\\pi(s')]",
+   "note": "Then $v_{\\pi'} \\ge v_\\pi$ in every state; equality everywhere means $\\pi$ is optimal."
+  },
+  "trap": "Comparing two policies by one arg-max per cell and reporting a difference where the actions tie."
+ },
+ "quiz": [
+  {
+   "id": "q-improve-cell",
+   "difficulty": 2,
+   "prose": "Under a policy, a state's current action scores 2.0. Its other actions score 2.4, 1.1 and 2.4.",
+   "question": "What does policy improvement do in this state?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "switch",
+      "text": "Switches to one of the two actions scoring 2.4",
+      "correct": true
+     },
+     {
+      "id": "keep",
+      "text": "Keeps the current action",
+      "why": "Keeping is right only when the current action ties for best. It scores 2.0, below 2.4."
+     },
+     {
+      "id": "avg",
+      "text": "Mixes the two best actions at random",
+      "why": "Improvement picks a single best action; either 2.4 will do."
+     },
+     {
+      "id": "stop",
+      "text": "Stops, since two actions tie",
+      "why": "A tie between two better actions is no reason to stop."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Take a best action: either 2.4.",
+    "generic": "Not quite. Compare the current score with the best."
+   },
+   "explain": {
+    "text": "Improvement picks an action with the best score, 2.4. Any rule for choosing between the two tied ones gives an optimal improvement."
+   }
+  },
+  {
+   "id": "q-theorem",
+   "difficulty": 3,
+   "prose": "A policy's improvement leaves every action unchanged.",
+   "question": "What does that tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "opt",
+      "text": "The policy is optimal: its values satisfy the optimality equation",
+      "correct": true
+     },
+     {
+      "id": "local",
+      "text": "It is only a local best, and a random restart could beat it",
+      "why": "For a finite MDP a policy greedy for its own values is optimal; there are no local traps."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing yet: run more evaluations",
+      "why": "Evaluating the same policy again gives the same values and the same greedy step."
+     },
+     {
+      "id": "vi",
+      "text": "Value iteration would find a better one",
+      "why": "Both methods reach the same optimal values."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Greedy for its own values means the Bellman optimality equation holds.",
+    "generic": "Not quite. Think about what the max of the backup equals."
+   },
+   "explain": {
+    "text": "If $\\pi$ is greedy for $v_\\pi$, then $v_\\pi(s) = \\max_a \\sum p[r + \\gamma v_\\pi]$, the optimality equation. So $v_\\pi = V^*$."
+   }
+  },
+  {
+   "id": "q-no-step-cost",
+   "difficulty": 3,
+   "prose": "On the slippery grid (slip 0.1) the step cost is set to 0, so moving is free.",
+   "question": "At row 3, column 5, beside the pit, which move becomes best?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "D",
+      "text": "D, away from the pit: waiting is free",
+      "correct": true
+     },
+     {
+      "id": "L",
+      "text": "L, the same move as before",
+      "why": "With a step cost L is a fair compromise. With free steps, D into the corner risks nothing and costs nothing."
+     },
+     {
+      "id": "U",
+      "text": "U, straight on past the pit",
+      "why": "U enters the pit 8 times in 10."
+     },
+     {
+      "id": "R",
+      "text": "R, into the edge of the grid",
+      "why": "R bumps the edge but slips U into the pit one time in ten."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With free steps, safety wins: D never slips into the pit.",
+    "generic": "Not quite. Which moves can slip into the pit?"
+   },
+   "explain": {
+    "text": "D's slips go L and R, neither into the pit, and waiting costs nothing but discounting. Value iteration with step cost 0 picks D there."
+   }
+  }
+ ]
+}

@@ -1,0 +1,379 @@
+{
+ "id": "homework-2",
+ "course": "rl",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-solve-mdp",
+   "difficulty": 5,
+   "skills": [
+    "rl-mdp"
+   ],
+   "performance": "code",
+   "title": "A solver for any small MDP",
+   "prose": "Write `solve_mdp(P, R, gamma)` for any finite MDP given as arrays: `P[a, s, t]` is the chance that action `a` in state `s` leads to `t`, and `R[a, s, t]` the reward for that move. Use value iteration to a change below $10^{-12}$, then return the values as a list and, for each state, the set of action indices within $10^{-9}$ of the best. An absorbing end state has `P[a, s, s] = 1` and reward 0. The hidden tests use the gridworld, the dice game written as an MDP, and a three-state MDP named `P3`, `R3`.",
+   "question": "Complete `solve_mdp`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef solve_mdp(P, R, gamma):\n    \"\"\"P[a, s, t] and R[a, s, t] as NumPy arrays. Return (values, policy):\n    values[s] optimal, policy[s] the set of best action indices.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef solve_mdp(P, R, gamma):\n    \"\"\"P[a, s, t] and R[a, s, t] as NumPy arrays. Return (values, policy):\n    values[s] optimal, policy[s] the set of best action indices.\"\"\"\n    P, R = np.asarray(P, float), np.asarray(R, float)\n    expected = (P * R).sum(axis=2)          # [a, s]: expected reward of a in s\n    V = np.zeros(P.shape[1])\n    while True:\n        Q = expected + gamma * P @ V        # [a, s]\n        new = Q.max(axis=0)\n        done = np.max(np.abs(new - V)) < 1e-12\n        V = new\n        if done:\n            break\n    Q = expected + gamma * P @ V\n    best = Q.max(axis=0)\n    policy = [set(int(a) for a in np.flatnonzero(Q[:, s] > best[s] - 1e-9)) for s in range(P.shape[1])]\n    return V.tolist(), policy\n",
+    "examples": [
+     {
+      "setup": "P, R = np.array(P3), np.array(R3)",
+      "call": "solve_mdp(P, R, 0.9)[1][0]",
+      "expect": "{1}",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "P, R = np.array(P3), np.array(R3)",
+      "call": "[round(v, 6) for v in solve_mdp(P, R, 0.9)[0]]",
+      "expect": "[20.0, 10.5, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "P, R = np.array(P3), np.array(R3)",
+      "call": "solve_mdp(P, R, 0.9)[1]",
+      "expect": "[{1}, {1}, {0, 1}]",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, R = grid_arrays(0.1)",
+      "call": "solve_mdp(P, R, 0.9)[0][CELLS.index('r4c1')]",
+      "expect": "0.1943570864659813",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "P, R = grid_arrays(0.1)",
+      "call": "solve_mdp(P, R, 0.9)[1][CELLS.index('r3c5')]",
+      "expect": "{3}",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, R = grid_arrays(0.0)",
+      "call": "solve_mdp(P, R, 0.9)[1][CELLS.index('r4c1')]",
+      "expect": "{0, 1}",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, R = grid_arrays(0.0)",
+      "call": "solve_mdp(P, R, 0.9)[0][CELLS.index('r4c1')]",
+      "expect": "0.32275975999999995",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "P, R = dice_arrays()",
+      "call": "sum(solve_mdp(P, R, 0.9)[0][:6]) / 6",
+      "expect": "55 / 12",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "P, R = dice_arrays()",
+      "call": "solve_mdp(P, R, 0.9)[1][:6]",
+      "expect": "[{1}, {1}, {1}, {1}, {0}, {0}]",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, R = np.array(P3), np.array(R3)",
+      "call": "[round(v, 6) for v in solve_mdp(P, R, 0.5)[0]]",
+      "expect": "[4.0, 5.0, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "how": "Submit runs 9 hidden tests with NumPy. Values must match ours within 1e-6 and every set of best actions must be equal.",
+    "prelude": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\nimport numpy as _np\ndef grid_arrays(slip):\n    \"\"\"P[a, s, t] and R[a, s, t] for the gridworld, actions U, R, D, L; end cells absorb with reward 0.\"\"\"\n    n = len(CELLS)\n    P = _np.zeros((4, n, n)); Rw = _np.zeros((4, n, n))\n    for ai, a in enumerate('URDL'):\n        for i, s in enumerate(CELLS):\n            if s in TERMINAL:\n                P[ai, i, i] = 1.0\n                continue\n            for t, p in transition(s, a, slip).items():\n                P[ai, i, CELLS.index(t)] += p\n                Rw[ai, i, CELLS.index(t)] = reward(t)\n    return P, Rw\n\ndef dice_arrays():\n    \"\"\"States 0-5: holding a roll of 1-6; state 6: done. Action 0 keeps (reward the roll), action 1 rerolls.\"\"\"\n    P = _np.zeros((2, 7, 7)); Rw = _np.zeros((2, 7, 7))\n    for s in range(6):\n        P[0, s, 6] = 1.0; Rw[0, s, 6] = s + 1\n        P[1, s, :6] = 1 / 6\n    P[0, 6, 6] = P[1, 6, 6] = 1.0\n    return P, Rw\n\nP3 = [[[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]], [[1.0, 0.0, 0.0], [0.5, 0.0, 0.5], [0.0, 0.0, 1.0]]]\nR3 = [[[0, 1, 0], [0, 0, 5], [0, 0, 0]], [[2, 0, 0], [3, 0, 0], [0, 0, 0]]]\n"
+   },
+   "feedback": {
+    "correct": "All pass. The same thirty lines solve the grid, the dice game and any small MDP.",
+    "generic": "Some tests fail. Check the expected reward $\\sum_t P R$, the stopping rule and that tied actions are all kept."
+   },
+   "explain": {
+    "text": "With arrays, a sweep is one line: $Q = \\bar R + \\gamma P V$ and $V = \\max_a Q$. The dice game's first-roll values average $\\tfrac{55}{12} = 4.5833$, and its policy rerolls 1 to 4."
+   }
+  },
+  {
+   "id": "h-vi-bound",
+   "difficulty": 4,
+   "skills": [
+    "rl-mdp"
+   ],
+   "title": "Stop with a guarantee",
+   "prose": "Value iteration with a sweep cap needs a certificate. If $\\lVert V_1 - V_0 \\rVert$ is the largest change of the first sweep, then after $k$ sweeps $\\lVert V_k - V^* \\rVert \\le \\gamma^k \\lVert V_1 - V_0 \\rVert / (1 - \\gamma)$. Write `vi_with_bound(P, R, gamma, k)`, with arrays as in the solver; `grid_arrays(slip)` and `dice_arrays()` are loaded for the tests.",
+   "question": "Complete `vi_with_bound`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef vi_with_bound(P, R, gamma, k):\n    \"\"\"k sweeps from V = 0. Return (V_k, bound) with bound = gamma**k * max|V_1 - V_0| / (1 - gamma).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef vi_with_bound(P, R, gamma, k):\n    \"\"\"k sweeps from V = 0. Return (V_k, bound) with bound = gamma**k * max|V_1 - V_0| / (1 - gamma).\"\"\"\n    P, R = np.asarray(P, float), np.asarray(R, float)\n    expected = (P * R).sum(axis=2)\n    V = np.zeros(P.shape[1])\n    first = None\n    for i in range(k):\n        new = (expected + gamma * P @ V).max(axis=0)\n        if first is None:\n            first = np.max(np.abs(new - V))\n        V = new\n    return V.tolist(), gamma ** k * (first or 0.0) / (1 - gamma)\n",
+    "examples": [
+     {
+      "setup": "P, R = grid_arrays(0.1)",
+      "call": "vi_with_bound(P, R, 0.9, 1)[1]",
+      "expect": "6.84",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "setup": "P, R = grid_arrays(0.1)",
+      "call": "vi_with_bound(P, R, 0.9, 1)[1]",
+      "expect": "6.84",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "P, R = grid_arrays(0.1)",
+      "call": "vi_with_bound(P, R, 0.9, 10)[1]",
+      "expect": "2.6499561447600013",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "P, R = grid_arrays(0.1)",
+      "call": "vi_with_bound(P, R, 0.9, 10)[0][CELLS.index('r4c1')]",
+      "expect": "0.1523776684297569",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "setup": "P, R = grid_arrays(0.1)\nVSTAR = [0.4502054827116271, 0.5799682242732385, 0.732295264784169, 0.8895584960041923, 0.0, 0.3567763087872616, 0.45020548271162714, 0.5499803484868336, 0.0, 0.2714422498433906, 0.33481672256316564, 0.2915441391658443, 0.39693444789000043, 0.16344027171779374, 0.1943570864659813, 0.2380725421875586, 0.21680404622506008, 0.28295263587800445, 0.19608299152355782]",
+      "call": "max(abs(a - b) for a, b in zip(vi_with_bound(P, R, 0.9, 10)[0], VSTAR)) <= vi_with_bound(P, R, 0.9, 10)[1]",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, R = dice_arrays()",
+      "call": "vi_with_bound(P, R, 0.9, 0)",
+      "expect": "([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 0.0)",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests with NumPy. Bounds and values are compared with math.isclose.",
+    "prelude": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\nimport numpy as _np\ndef grid_arrays(slip):\n    \"\"\"P[a, s, t] and R[a, s, t] for the gridworld, actions U, R, D, L; end cells absorb with reward 0.\"\"\"\n    n = len(CELLS)\n    P = _np.zeros((4, n, n)); Rw = _np.zeros((4, n, n))\n    for ai, a in enumerate('URDL'):\n        for i, s in enumerate(CELLS):\n            if s in TERMINAL:\n                P[ai, i, i] = 1.0\n                continue\n            for t, p in transition(s, a, slip).items():\n                P[ai, i, CELLS.index(t)] += p\n                Rw[ai, i, CELLS.index(t)] = reward(t)\n    return P, Rw\n\ndef dice_arrays():\n    \"\"\"States 0-5: holding a roll of 1-6; state 6: done. Action 0 keeps (reward the roll), action 1 rerolls.\"\"\"\n    P = _np.zeros((2, 7, 7)); Rw = _np.zeros((2, 7, 7))\n    for s in range(6):\n        P[0, s, 6] = 1.0; Rw[0, s, 6] = s + 1\n        P[1, s, :6] = 1 / 6\n    P[0, 6, 6] = P[1, 6, 6] = 1.0\n    return P, Rw\n"
+   },
+   "feedback": {
+    "correct": "All pass. After 10 sweeps on the slippery grid the bound is 2.6500; the true error is 0.0420.",
+    "generic": "Some tests fail. Record the first sweep's largest change, and use $\\gamma^k$ with $k$ the number of sweeps run."
+   },
+   "explain": {
+    "text": "The bound sums the geometric tail $\\gamma^k(1 + \\gamma + \\dots)\\lVert V_1 - V_0\\rVert$. After 10 sweeps it promises 2.6500; the real error is 0.0420. A loose guarantee beats none."
+   }
+  },
+  {
+   "id": "h-contraction-order",
+   "difficulty": 4,
+   "skills": [
+    "rl-mdp"
+   ],
+   "title": "Why one backup contracts",
+   "prose": "Let $T$ be the optimal backup, $(TV)(s) = \\max_a \\sum_{s'} p(s' \\mid s, a)[r + \\gamma V(s')]$, and $V, U$ two value tables. Show that $\\max_s |(TV)(s) - (TU)(s)| \\le \\gamma \\max_s |V(s) - U(s)|$.",
+   "question": "Put the steps in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "c1",
+      "text": "For any numbers, $|\\max_a f(a) - \\max_a g(a)| \\le \\max_a |f(a) - g(a)|$"
+     },
+     {
+      "id": "c2",
+      "text": "So $|(TV)(s) - (TU)(s)| \\le \\max_a \\left|\\sum_{s'} p(s' \\mid s, a)\\,\\gamma\\,[V(s') - U(s')]\\right|$, the rewards cancelling"
+     },
+     {
+      "id": "c3",
+      "text": "The chances are non-negative and sum to 1, so the sum is at most $\\gamma \\max_{s'} |V(s') - U(s')|$"
+     },
+     {
+      "id": "c4",
+      "text": "This holds for every $s$, so take the max over $s$ on the left"
+     },
+     {
+      "id": "x1",
+      "text": "The max of a sum is the sum of the maxes, so $T$ is linear",
+      "why": "The max is not linear: $\\max(f + g) \\le \\max f + \\max g$, with equality only sometimes. The proof needs only the inequality in the first line."
+     }
+    ],
+    "answer": [
+     "c1",
+     "c2",
+     "c3",
+     "c4"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "feedback": {
+    "correct": "Each backup shrinks the largest gap by $\\gamma$; repeated, $\\gamma^k$.",
+    "generic": "Not quite. Each line must follow from the one before.",
+    "byKey": {
+     "x1": "You treated the max as linear. It is not; the proof uses only $|\\max f - \\max g| \\le \\max|f - g|$.",
+     "left-out": "Every correct line is needed."
+    }
+   },
+   "explain": {
+    "text": "The max moves by no more than its arguments do, the rewards cancel, and an average of differences is no larger than the largest. So $T$ is a $\\gamma$-contraction, and Banach's theorem gives a unique fixed point $V^*$."
+   }
+  },
+  {
+   "id": "h-sweeps-cert",
+   "difficulty": 3,
+   "skills": [
+    "rl-mdp"
+   ],
+   "title": "Sweeps for a certificate",
+   "prose": "On the deterministic grid the first sweep of value iteration changes the values by at most 0.96. You want the certificate $\\gamma^k \\times 0.96 / (1 - \\gamma)$ to be below $10^{-4}$, with $\\gamma = 0.9$.",
+   "question": "How many sweeps $k$ are needed?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 109,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "no-tail",
+      "value": 88,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "floor",
+      "value": 108,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "actual",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.9^k \\le 1.0417 \\times 10^{-5}$ needs $k \\ge 108.9$: 109.",
+    "generic": "Not quite. Solve $0.9^k \\times 9.6 \\le 10^{-4}$ and round up.",
+    "byKey": {
+     "no-tail": "You left out the $1/(1 - \\gamma) = 10$ factor.",
+     "floor": "You rounded down.",
+     "actual": "The grid settles after 8 sweeps, but the certificate cannot know that."
+    }
+   },
+   "explain": {
+    "text": "We need $0.9^k \\le 10^{-4} \\times 0.1 / 0.96$, so $k \\ge 108.9$: 109 sweeps. The values settle after 8, but the bound is a guarantee for every MDP with $\\gamma = 0.9$."
+   }
+  },
+  {
+   "id": "h-pi-facts",
+   "difficulty": 4,
+   "skills": [
+    "rl-mdp"
+   ],
+   "title": "Policy iteration facts",
+   "prose": "Policy iteration runs on a finite MDP with $\\gamma < 1$, keeping the current action on ties.",
+   "question": "Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "f1",
+      "text": "Each new policy is at least as good as the last in every state",
+      "correct": true
+     },
+     {
+      "id": "f2",
+      "text": "It stops after finitely many evaluations",
+      "correct": true
+     },
+     {
+      "id": "f3",
+      "text": "It always needs fewer evaluations than value iteration needs sweeps, so it is always faster",
+      "why": "Fewer steps, but each is a linear solve. For large state spaces value iteration's cheap sweeps can win."
+     },
+     {
+      "id": "f4",
+      "text": "Its final policy matches value iteration's arg-max in every cell",
+      "why": "Only up to ties: in tied cells either action is optimal."
+     },
+     {
+      "id": "f5",
+      "text": "Its final values solve the Bellman optimality equation",
+      "correct": true
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Monotone, finite, and optimal at the end.",
+    "generic": "Not quite. Check each claim against the improvement theorem."
+   },
+   "explain": {
+    "text": "Improvement never lowers a value, policies cannot repeat, and a policy greedy for its own values is optimal. Speed depends on the size of the solve, and arg-max choices can differ in ties."
+   }
+  },
+  {
+   "id": "h-gamma-one",
+   "difficulty": 5,
+   "skills": [
+    "rl-mdp"
+   ],
+   "kind": "longform",
+   "title": "Values that keep growing",
+   "prompt": "A colleague values an execution schedule as an MDP with $\\gamma = 1$. The states are \"inventory left\", there is no terminal state, and each step pays the trade's proceeds minus a holding cost. Their value iteration has run for 10,000 sweeps and the numbers keep growing. Write them a note: diagnose the problem, explain it with the Bellman equation, and give two fixes.",
+   "model": "**Diagnosis.** With $\\gamma = 1$ and no terminal state, the value of a state is the sum of rewards over an infinite horizon. If the policy keeps earning on average (or keeps paying), that sum is infinite, so there is nothing for value iteration to converge to. The growing numbers are the partial sums: after $k$ sweeps each value is the best $k$-step total.\n\n**Why the equation fails.** The Bellman equation $v = r_\\pi + \\mathbf P_\\pi v$ needs $\\mathbf I - \\mathbf P_\\pi$ to be invertible. With no exits every row of $\\mathbf P_\\pi$ sums to 1, so $\\mathbf 1$ is an eigenvector with eigenvalue 1 and $\\mathbf I - \\mathbf P_\\pi$ is singular. The contraction argument also fails: it shrinks errors by $\\gamma$ per sweep, and $\\gamma = 1$ shrinks nothing.\n\n**Fix 1: add the end.** An execution schedule has a deadline. Put time left into the state, with a terminal state when the deadline passes or the inventory is gone. Then every path ends, $\\mathbf I - \\mathbf P_\\pi$ is invertible even with $\\gamma = 1$, and backward induction from the deadline gives exact values, as in the dice game with a fixed number of rolls.\n\n**Fix 2: discount.** Use $\\gamma < 1$, for example from the desk's cost of capital per step. Values become finite, bounded by $\\max|r|/(1 - \\gamma)$, and value iteration converges at rate $\\gamma$. Check that the policy does not change for $\\gamma$ close to 1.\n\n**Also.** If the real goal is the long-run average reward per step, solve for that average instead (the average-reward formulation), which subtracts the average from each reward so the sums stay finite.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the infinite sum of rewards has no finite value when $\\gamma = 1$ and nothing ends"
+    },
+    {
+     "points": 2,
+     "text": "Explains it with the equation: $\\mathbf I - \\mathbf P_\\pi$ is singular, or the backup is no longer a contraction"
+    },
+    {
+     "points": 2,
+     "text": "Reads the growing numbers as $k$-step partial sums, not a bug in the sweep code"
+    },
+    {
+     "points": 2,
+     "text": "Fix: add time left and a terminal state at the deadline, then solve by backward induction"
+    },
+    {
+     "points": 2,
+     "text": "Fix: use $\\gamma < 1$ (or an average-reward formulation) and says what it does to convergence"
+    }
+   ]
+  }
+ ]
+}

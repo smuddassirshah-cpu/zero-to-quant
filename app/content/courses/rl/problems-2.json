@@ -1,0 +1,392 @@
+{
+ "id": "problems-2",
+ "course": "rl",
+ "level": 2,
+ "title": "MDPs in steps",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-hold-or-push",
+   "difficulty": 5,
+   "skills": [
+    "rl-mdp"
+   ],
+   "prose": "A trading book is in state A (quiet) or B (active), $\\gamma = 0.9$. In A it can **hold**: earn £1, then move to A or B with chance 0.5 each; or **push**: earn nothing and move to B for sure. In B it earns £4 and moves to A with chance 0.6, else stays in B.",
+   "parts": [
+    {
+     "question": "Under the policy \"hold in A\", what is $v(A)$? Give pounds to 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 22.39,
+      "tol": {
+       "abs": 0.01
+      },
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "b",
+        "value": 25.14,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "one-state",
+        "value": 10,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.55 v_A - 0.45 v_B = 1$ and $-0.54 v_A + 0.64 v_B = 4$ give $v_A = 22.39$, $v_B = 25.14$.",
+      "generic": "Not quite. Write a Bellman equation for each state and solve.",
+      "byKey": {
+       "b": "That is $v(B)$.",
+       "one-state": "You valued £1 for ever. Visits to B add more."
+      }
+     },
+     "explain": {
+      "text": "Determinant $0.55 \\times 0.64 - 0.45 \\times 0.54 = 0.109$; $v_A = 2.44/0.109 = 22.39$ and $v_B = 2.74/0.109 = 25.14$."
+     }
+    },
+    {
+     "question": "Using $v(B) = 25.14$ from part 1, what does pushing score in A for one step? Give pounds to 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 22.63,
+      "tol": {
+       "abs": 0.01
+      },
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "no-disc",
+        "value": 25.14,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "hold",
+        "value": 22.39,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0 + 0.9 \\times 25.14 = 22.63$.",
+      "generic": "Not quite. Push pays 0 now and lands in B.",
+      "byKey": {
+       "no-disc": "B is a step away, so discount its value.",
+       "hold": "That is the value of holding."
+      }
+     },
+     "explain": {
+      "text": "Pushing scores $0.9 \\times 25.14 = 22.63$."
+     }
+    },
+    {
+     "question": "Holding is worth £22.39 in A and pushing scores £22.63. What does policy improvement choose in A?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "push",
+        "text": "Push",
+        "correct": true
+       },
+       {
+        "id": "hold",
+        "text": "Hold",
+        "why": "Hold scores £22.39, below push's £22.63."
+       },
+       {
+        "id": "both",
+        "text": "Either: they are within £0.25",
+        "why": "Improvement picks the strictly better score; they are not tied."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Push scores higher, so the new policy pushes.",
+      "generic": "Compare the two scores."
+     },
+     "explain": {
+      "text": "Policy improvement takes the higher one-step score: push."
+     }
+    },
+    {
+     "question": "Under the new policy \"push in A\", what is $v(A)$? Give pounds to 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 23.38,
+      "tol": {
+       "abs": 0.01
+      },
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "b",
+        "value": 25.97,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "old",
+        "value": 22.39,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "one-step",
+        "value": 22.63,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$v_A = 0.9 v_B$ and $v_B = 4 + 0.9(0.6 v_A + 0.4 v_B)$ give $v_B = 4/0.154 = 25.97$ and $v_A = 23.38$.",
+      "generic": "Not quite. Solve the new pair of equations.",
+      "byKey": {
+       "b": "That is $v(B)$.",
+       "old": "That is the old policy's value.",
+       "one-step": "That is the one-step score, which assumed the old policy afterwards."
+      }
+     },
+     "explain": {
+      "text": "Substituting $v_A = 0.9 v_B$: $v_B(1 - 0.486 - 0.36) = 4$, so $v_B = 25.97$ and $v_A = 23.38$, higher than both earlier figures, as the theorem promises."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-grid-backup",
+   "difficulty": 4,
+   "skills": [
+    "rl-mdp"
+   ],
+   "prose": "On the slippery grid the optimal values are 0.5800 at row 1 column 2, 0.7323 at row 1 column 3 and 0.8896 at row 1 column 4; below row 1 column 3 is the wall. Back up row 1, column 3.",
+   "parts": [
+    {
+     "question": "What does moving R score there? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.7323,
+      "tol": {
+       "abs": 0.0003
+      },
+      "wrong": [
+       {
+        "id": "no-slip",
+        "value": 0.7606,
+        "tol": {
+         "abs": 0.0003
+        }
+       },
+       {
+        "id": "wall-zero",
+        "value": 0.6664,
+        "tol": {
+         "abs": 0.0003
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-0.04 + 0.9(0.8 \\times 0.8896 + 0.2 \\times 0.7323) = 0.7323$.",
+      "generic": "Not quite. Slips U and D both leave the agent in place.",
+      "byKey": {
+       "no-slip": "Slips U and D happen two times in ten.",
+       "wall-zero": "A slip into the wall keeps the agent at its cell, worth 0.7323."
+      }
+     },
+     "explain": {
+      "text": "Slip U hits the edge and slip D hits the wall: both stay, worth 0.7323. So R scores 0.7323, the cell's own value."
+     }
+    },
+    {
+     "question": "Using R's score of 0.7323 from part 1, what does moving L score there instead? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5094,
+      "tol": {
+       "abs": 0.0003
+      },
+      "wrong": [
+       {
+        "id": "r",
+        "value": 0.7323,
+        "tol": {
+         "abs": 0.0003
+        }
+       },
+       {
+        "id": "no-slip",
+        "value": 0.482,
+        "tol": {
+         "abs": 0.0003
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-0.04 + 0.9(0.8 \\times 0.58 + 0.2 \\times 0.7323) = 0.5094$, below R.",
+      "generic": "Not quite. Score L the same way.",
+      "byKey": {
+       "r": "That is R's score.",
+       "no-slip": "Two slips in ten leave the agent in place."
+      }
+     },
+     "explain": {
+      "text": "L scores 0.5094: it heads away from the goal."
+     }
+    },
+    {
+     "question": "The four scores are U 0.6195, R 0.7323, D 0.6195 and L 0.5094. What is the gap between the best and second-best moves? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.1128,
+      "tol": {
+       "abs": 0.0003
+      },
+      "wrong": [
+       {
+        "id": "r-l",
+        "value": 0.2229,
+        "tol": {
+         "abs": 0.0003
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "0.7323 minus the next best 0.6195.",
+      "generic": "Not quite. Subtract the second-best score from the best.",
+      "byKey": {
+       "r-l": "L is not the second best here."
+      }
+     },
+     "explain": {
+      "text": "The gap is 0.1128, as U and D tie for second. A large gap means a small error in the values cannot change the best move here. Cells with tiny gaps are where learned values go wrong first, as level 3 shows."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-impatient-dice",
+   "difficulty": 3,
+   "skills": [
+    "rl-mdp"
+   ],
+   "prose": "In the unlimited dice game a desk applies $\\gamma = 0.8$ per reroll, and considers the rule \"keep 4, 5 or 6\".",
+   "parts": [
+    {
+     "question": "What is the game worth under that rule? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4.1667,
+      "tol": {
+       "abs": 0.0002
+      },
+      "wrong": [
+       {
+        "id": "no-disc",
+        "value": 5,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "kept",
+        "value": 2.5,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$V = 2.5 + 0.5 \\times 0.8V$, so $V = 2.5/0.6 = 4.1667$.",
+      "generic": "Not quite. Condition on the first roll.",
+      "byKey": {
+       "no-disc": "That is the mean of 4, 5 and 6.",
+       "kept": "That is the kept part only; add $0.5 \\times 0.8V$."
+      }
+     },
+     "explain": {
+      "text": "Half the time you keep, worth $\\tfrac{15}{6} = 2.5$ on average overall; half the time you reroll, worth $0.8V$. So $V = 4.1667$."
+     }
+    },
+    {
+     "question": "Using $V = 4.1667$ from part 1, what is a reroll worth? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.3333,
+      "tol": {
+       "abs": 0.0002
+      },
+      "wrong": [
+       {
+        "id": "V",
+        "value": 4.1667,
+        "tol": {
+         "abs": 0.0002
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.8 \\times 4.1667 \\approx 3.3333$.",
+      "generic": "Multiply by 0.8.",
+      "byKey": {
+       "V": "A reroll is worth $0.8V$, not $V$."
+      }
+     },
+     "explain": {
+      "text": "A reroll is worth $0.8V = 3.3333$."
+     }
+    },
+    {
+     "question": "With a reroll worth 3.3333, is \"keep 4, 5 or 6\" the best rule?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "yes",
+        "text": "Yes: 4 beats 3.3333 and 3 does not",
+        "correct": true
+       },
+       {
+        "id": "no5",
+        "text": "No: keep only the 5s and 6s",
+        "why": "A 4 is worth more than a reroll at 3.3333."
+       },
+       {
+        "id": "no3",
+        "text": "No: keep the 3s as well",
+        "why": "3 is less than 3.3333, so reroll it."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The rule keeps exactly the rolls above $0.8V$: it is consistent, so optimal.",
+      "generic": "Compare each roll with 3.3333."
+     },
+     "explain": {
+      "text": "A rule is optimal when it keeps exactly the rolls worth more than continuing. Here 4, 5 and 6 beat 3.3333, and 1, 2 and 3 do not."
+     }
+    }
+   ]
+  }
+ ]
+}
