@@ -1,0 +1,417 @@
+{
+  "id": "homework-4",
+  "course": "gpt",
+  "level": 4,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-scaling-fitter",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "gpt-scale"
+      ],
+      "pace": 1800,
+      "title": "Fit a scaling law and spend a budget",
+      "prose": "From a blank start, write `fit_scaling(runs)` and `best_split(p, C)`. `runs` is a list of `[N, D, L]` training runs. Fit $L = E + A/N^{\\alpha} + B/D^{\\beta}$. Search $\\alpha$ and $\\beta$ on a grid from 0.10 to 0.60 in steps of 0.01. For each pair, $E$, $A$, $B$ follow by linear least squares; keep the pair with the smallest squared error.",
+      "question": "Return the fit as a dict with keys `E`, `A`, `B`, `alpha`, `beta`. Then `best_split(p, C)` returns the compute-optimal `(N, D)` for budget $C = 6ND$ under the fitted law, in closed form.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def fit_scaling(runs):\n    ...\n\n\ndef best_split(p, C):\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef fit_scaling(runs):\n    runs = np.asarray(runs, dtype=float)\n    N, D, L = runs[:, 0], runs[:, 1], runs[:, 2]\n    best = None\n    for alpha in np.round(np.arange(0.10, 0.601, 0.01), 2):\n        for beta in np.round(np.arange(0.10, 0.601, 0.01), 2):\n            X = np.column_stack([np.ones_like(N), N ** -alpha, D ** -beta])\n            coef = np.linalg.lstsq(X, L, rcond=None)[0]\n            sse = float(((X @ coef - L) ** 2).sum())\n            if best is None or sse < best[0]:\n                best = (sse, coef, alpha, beta)\n    _, (E, A, B), alpha, beta = best\n    return {'E': float(E), 'A': float(A), 'B': float(B), 'alpha': float(alpha), 'beta': float(beta)}\n\n\ndef best_split(p, C):\n    a, b = p['alpha'], p['beta']\n    G = (a * p['A'] / (b * p['B'])) ** (1 / (a + b))\n    N = G * (C / 6) ** (b / (a + b))\n    return float(N), float(C / (6 * N))\n",
+        "prelude": "import numpy as np\n\nRUNS1 = [[10000000.0, 1000000000.0, 5.155975032435566], [10000000.0, 3000000000.0, 4.687085603861618], [10000000.0, 10000000000.0, 4.33121575954411], [30000000.0, 1000000000.0, 4.5896595296512555], [30000000.0, 3000000000.0, 4.120770101077308], [30000000.0, 10000000000.0, 3.7649002567597987], [100000000.0, 1000000000.0, 4.174354682498246], [100000000.0, 3000000000.0, 3.705465253924298], [100000000.0, 10000000000.0, 3.349595409606789], [300000000.0, 1000000000.0, 3.921390839423771], [300000000.0, 3000000000.0, 3.4525014108498233], [300000000.0, 10000000000.0, 3.0966315665323143]]\nRUNS2 = [[10000000.0, 1000000000.0, 4.624451345992549], [10000000.0, 3000000000.0, 4.296022604797396], [10000000.0, 10000000000.0, 4.035072808567221], [30000000.0, 1000000000.0, 4.096385250060321], [30000000.0, 3000000000.0, 3.7679565088651668], [30000000.0, 10000000000.0, 3.5070067126349915], [100000000.0, 1000000000.0, 3.7046734073493703], [100000000.0, 3000000000.0, 3.376244666154217], [100000000.0, 10000000000.0, 3.1152948699240417], [300000000.0, 1000000000.0, 3.463300631562713], [300000000.0, 3000000000.0, 3.1348718903675596], [300000000.0, 10000000000.0, 2.8739220941373844]]\nRUNS3 = [[10000000.0, 1000000000.0, 5.145903026183907], [10000000.0, 3000000000.0, 4.6846295028860006], [10000000.0, 10000000000.0, 4.352887641311255], [30000000.0, 1000000000.0, 4.598744300254469], [30000000.0, 3000000000.0, 4.100528516016119], [30000000.0, 10000000000.0, 3.764841487906634], [100000000.0, 1000000000.0, 4.166554303293005], [100000000.0, 3000000000.0, 3.7071178691781452], [100000000.0, 10000000000.0, 3.3334739950114347], [300000000.0, 1000000000.0, 3.9242361172309126], [300000000.0, 3000000000.0, 3.4549402306880483], [300000000.0, 10000000000.0, 3.1113036156254017]]\n",
+        "examples": [
+          {
+            "call": "round(best_split({'E': 1.69, 'A': 406.4, 'B': 410.7, 'alpha': 0.34, 'beta': 0.28}, 5.76e23)[1] / best_split({'E': 1.69, 'A': 406.4, 'B': 410.7, 'alpha': 0.34, 'beta': 0.28}, 5.76e23)[0])",
+            "expect": "93",
+            "compare": "isclose"
+          },
+          {
+            "call": "len(fit_scaling(RUNS1))",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "fit_scaling(RUNS1)['alpha'], fit_scaling(RUNS1)['beta']",
+            "expect": "(0.35, 0.32)",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            },
+            "budget": 10000
+          },
+          {
+            "call": "[fit_scaling(RUNS1)[k] for k in ('E', 'A', 'B')]",
+            "expect": "[1.8, 500.0, 1200.0]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            },
+            "budget": 10000
+          },
+          {
+            "call": "fit_scaling(RUNS2)['alpha'], fit_scaling(RUNS2)['beta']",
+            "expect": "(0.34, 0.28)",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            },
+            "budget": 10000
+          },
+          {
+            "call": "best_split({'E': 1.69, 'A': 406.4, 'B': 410.7, 'alpha': 0.34, 'beta': 0.28}, 5.76e23)",
+            "expect": "(32189859151.368168, 2982305686662.804)",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "best_split(fit_scaling(RUNS1), 1e21)",
+            "expect": "(1408651682.09979, 118316450251.36871)",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            },
+            "budget": 10000
+          },
+          {
+            "call": "abs(fit_scaling(RUNS3)['alpha'] - 0.35) <= 0.03 and abs(fit_scaling(RUNS3)['beta'] - 0.32) <= 0.03",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 10000
+          },
+          {
+            "call": "abs(best_split(fit_scaling(RUNS3), 1e21)[0] / 1408651682.09979 - 1) < 0.5",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 10000
+          },
+          {
+            "call": "6 * best_split({'E': 1.8, 'A': 500.0, 'B': 1200.0, 'alpha': 0.35, 'beta': 0.32}, 1e22)[0] * best_split({'E': 1.8, 'A': 500.0, 'B': 1200.0, 'alpha': 0.35, 'beta': 0.32}, 1e22)[1]",
+            "expect": "1e22",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          }
+        ],
+        "how": "Submit runs 8 hidden tests. Two sets of 12 planted runs without noise must give back their exponents and constants; Chinchilla's published law gives its split exactly. A noisy set must land its exponents within 0.03 and its split within a factor of 1.5. The last checks that the split spends the budget.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef fit_scaling(runs):\n    runs = np.asarray(runs, dtype=float)\n    N, D, L = runs[:, 0], runs[:, 1], runs[:, 2]\n    best = None\n    for alpha in np.round(np.arange(0.10, 0.601, 0.01), 2):\n        for beta in np.round(np.arange(0.10, 0.601, 0.01), 2):\n            X = np.column_stack([np.ones_like(N), N ** -alpha, D ** -beta])\n            coef = np.linalg.lstsq(X, L, rcond=None)[0]\n            sse = float(((X @ coef - L) ** 2).sum())\n            if best is None or sse < best[0]:\n                best = (sse, coef, alpha, beta)\n    _, (E, A, B), alpha, beta = best\n    return {'E': float(E), 'A': float(A), 'B': float(B), 'alpha': float(alpha), 'beta': float(beta)}\n\n\ndef best_split(p, C):\n    a, b = p['alpha'], p['beta']\n    G = (a * p['A'] / (b * p['B'])) ** (1 / (a + b))\n    N = G * (C / 6) ** (a / (a + b))\n    return float(N), float(C / (6 * N))\n",
+            "test": 4,
+            "symptom": "Uses the data's exponent for the model size."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef fit_scaling(runs):\n    runs = np.asarray(runs, dtype=float)\n    N, D, L = runs[:, 0], runs[:, 1], runs[:, 2]\n    best = None\n    for alpha in np.round(np.arange(0.10, 0.601, 0.01), 2):\n        for beta in np.round(np.arange(0.10, 0.601, 0.01), 2):\n            X = np.column_stack([N ** -alpha, D ** -beta])\n            coef = np.linalg.lstsq(X, L, rcond=None)[0]\n            sse = float(((X @ coef - L) ** 2).sum())\n            if best is None or sse < best[0]:\n                best = (sse, coef, alpha, beta)\n    _, (E, A, B), alpha, beta = best\n    return {'E': float(E), 'A': float(A), 'B': float(B), 'alpha': float(alpha), 'beta': float(beta)}\n\n\ndef best_split(p, C):\n    a, b = p['alpha'], p['beta']\n    G = (a * p['A'] / (b * p['B'])) ** (1 / (a + b))\n    N = G * (C / 6) ** (b / (a + b))\n    return float(N), float(C / (6 * N))\n",
+            "test": 1,
+            "symptom": "Leaves out the floor E, so the fit bends the exponents to absorb it."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef fit_scaling(runs):\n    runs = np.asarray(runs, dtype=float)\n    N, D, L = runs[:, 0], runs[:, 1], runs[:, 2]\n    best = None\n    for alpha in np.round(np.arange(0.10, 0.601, 0.01), 2):\n        for beta in np.round(np.arange(0.10, 0.601, 0.01), 2):\n            X = np.column_stack([np.ones_like(N), N ** -alpha, D ** -beta])\n            coef = np.linalg.lstsq(X, L, rcond=None)[0]\n            sse = float(((X @ coef - L) ** 2).sum())\n            if best is None or sse < best[0]:\n                best = (sse, coef, alpha, beta)\n    _, (E, A, B), alpha, beta = best\n    return {'E': float(E), 'A': float(A), 'B': float(B), 'alpha': float(alpha), 'beta': float(beta)}\n\n\ndef best_split(p, C):\n    a, b = p['alpha'], p['beta']\n    G = (a * p['A'] / (b * p['B'])) ** (1 / (a + b))\n    N = G * (C / 6) ** (b / (a + b))\n    return float(N), float(20 * N)\n",
+            "test": 4,
+            "symptom": "Returns 20 tokens per parameter instead of spending the budget."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef fit_scaling(runs):\n    runs = np.asarray(runs, dtype=float)\n    N, D, L = runs[:, 0], runs[:, 1], runs[:, 2]\n    best = None\n    for alpha in np.round(np.arange(0.10, 0.601, 0.05), 2):\n        for beta in np.round(np.arange(0.10, 0.601, 0.05), 2):\n            X = np.column_stack([np.ones_like(N), N ** -alpha, D ** -beta])\n            coef = np.linalg.lstsq(X, L, rcond=None)[0]\n            sse = float(((X @ coef - L) ** 2).sum())\n            if best is None or sse < best[0]:\n                best = (sse, coef, alpha, beta)\n    _, (E, A, B), alpha, beta = best\n    return {'E': float(E), 'A': float(A), 'B': float(B), 'alpha': float(alpha), 'beta': float(beta)}\n\n\ndef best_split(p, C):\n    a, b = p['alpha'], p['beta']\n    G = (a * p['A'] / (b * p['B'])) ** (1 / (a + b))\n    N = G * (C / 6) ** (b / (a + b))\n    return float(N), float(C / (6 * N))\n",
+            "test": 1,
+            "symptom": "Searches exponents in steps of 0.05, too coarse to land on 0.32."
+          }
+        ],
+        "budget": 10000
+      },
+      "feedback": {
+        "correct": "Your fitter recovers every planted law and spends budgets correctly.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: the exponents of RUNS1 are on the grid. Include a column of ones for $E$ and keep the smallest squared error.",
+          "test-4": "Test 4 is the closed form: $N = G(C/6)^{\\beta/(\\alpha+\\beta)}$, $D = C/(6N)$."
+        }
+      },
+      "explain": {
+        "text": "For fixed exponents the law is linear in $E$, $A$, $B$, so a grid over two numbers and a least-squares solve per point fits it with NumPy alone. The split then follows from the closed form."
+      }
+    },
+    {
+      "id": "h-config-costs",
+      "difficulty": 4,
+      "skills": [
+        "gpt-scale"
+      ],
+      "title": "Parameters and FLOPs of any GPT",
+      "prose": "A tied GPT with an MLP four times wider, biases on every linear layer and layer norms with gain and bias.",
+      "question": "Write `config_costs(V, T, d, L, tokens)` returning `{\"params\": N, \"flops\": 6 * N * tokens}`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def config_costs(V, T, d, L, tokens):\n    ...\n",
+        "solution": "def config_costs(V, T, d, L, tokens):\n    m = 4 * d\n    block = 4 * d + 3 * d * d + 3 * d + d * d + d + 2 * d * m + m + d\n    n = V * d + T * d + L * block + 2 * d\n    return {'params': n, 'flops': 6 * n * tokens}\n",
+        "examples": [
+          {
+            "call": "config_costs(65, 32, 32, 1, 1)['params']",
+            "expect": "15872",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "config_costs(50257, 1024, 768, 12, 1e10)",
+            "expect": "{'params': 124439808, 'flops': 7.46638848e+18}",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "config_costs(65, 32, 32, 1, 2560000)",
+            "expect": "{'params': 15872, 'flops': 243793920000}",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "config_costs(32000, 4096, 4096, 32, 2e12)['flops']",
+            "expect": "7.9104147456e+22",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "config_costs(100, 10, 8, 2, 0)['flops']",
+            "expect": "0",
+            "compare": "isclose"
+          },
+          {
+            "call": "config_costs(100, 10, 8, 0, 1)['params']",
+            "expect": "896",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Submit runs 5 hidden tests: GPT-2 small on 10 billion tokens, the tiny GPT's run (tied), a 32-block model of width 4,096, zero tokens and zero blocks.",
+        "mutants": [
+          {
+            "source": "def config_costs(V, T, d, L, tokens):\n    m = 4 * d\n    block = 4 * d + 3 * d * d + 3 * d + d * d + d + 2 * d * m + m + d\n    n = V * d + T * d + L * block + 2 * d\n    return {'params': n, 'flops': 2 * n * tokens}\n",
+            "test": 1,
+            "symptom": "Counts training as 2ND."
+          },
+          {
+            "source": "def config_costs(V, T, d, L, tokens):\n    m = 4 * d\n    block = 4 * d + 3 * d * d + 3 * d + d * d + d + 2 * d * m + m + d\n    n = V * d + T * d + L * block + 2 * d + d * V\n    return {'params': n, 'flops': 6 * n * tokens}\n",
+            "test": 1,
+            "symptom": "Adds an untied head to a tied model."
+          },
+          {
+            "source": "def config_costs(V, T, d, L, tokens):\n    m = 4 * d\n    block = 12 * d * d\n    n = V * d + T * d + L * block + 2 * d\n    return {'params': n, 'flops': 6 * n * tokens}\n",
+            "test": 1,
+            "symptom": "Uses the 12 d squared rule for the block."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Your counts and FLOPs are exact.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is GPT-2 small: 124,439,808 parameters, tied, and $6ND$ FLOPs."
+        }
+      },
+      "explain": {
+        "text": "Count the block, add the tables and the final norm, then multiply by $6D$. Two lines turn any configuration into a budget."
+      }
+    },
+    {
+      "id": "h-6nd-order",
+      "difficulty": 3,
+      "skills": [
+        "gpt-scale"
+      ],
+      "title": "Deriving 6ND",
+      "prose": "Put the steps of the derivation of $C \\approx 6ND$ in order. Leave out the line that does not belong.",
+      "question": "Order the steps.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Almost every parameter is a weight that each token meets in one matrix product"
+          },
+          {
+            "id": "s2",
+            "text": "Each weight costs one multiply and one add, so a forward pass costs about $2N$ per token"
+          },
+          {
+            "id": "s3",
+            "text": "The backward pass needs the gradient of the input and of the weight: two products, $4N$"
+          },
+          {
+            "id": "s4",
+            "text": "So one training token costs about $6N$"
+          },
+          {
+            "id": "s5",
+            "text": "Over $D$ tokens: $C \\approx 6ND$"
+          },
+          {
+            "id": "d1",
+            "text": "The backward pass costs the same as the forward pass, $2N$",
+            "why": "It needs two products per weight matrix, one for the input's gradient and one for the weight's, so twice the forward cost."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Weights, forward $2N$, backward $4N$, $6N$ per token, $6ND$.",
+        "generic": "Not quite. Build from one weight to one token to all tokens.",
+        "byKey": {
+          "d1": "The backward pass does two products per weight, not one.",
+          "left-out": "Every line but one belongs; put the left-out one back."
+        }
+      },
+      "explain": {
+        "text": "Forward $2N$ plus backward $4N$ gives $6N$ per token. Attention adds a term in $T$ that this count leaves out."
+      }
+    },
+    {
+      "id": "h-7b-claim",
+      "difficulty": 4,
+      "skills": [
+        "gpt-scale"
+      ],
+      "title": "A small model that beats a big one",
+      "question": "Write your answer as you would brief a portfolio manager.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A start-up says its 7B model \"beats a 70B model\" on a benchmark, and asks your fund to invest. What do scaling laws, training tokens and contamination tell you to ask before you believe it?",
+        "model": "A claim that a 7B model \"beats a 70B model\" says nothing until we know the benchmark, the tokens and the test set.\n\n**What scaling laws say to expect.** At equal training data, a 70B model should score better: loss falls as a power law in parameters. But size is only one input. A 7B model trained on many more tokens can match a larger model trained on few; Chinchilla showed a 70B model beating the 175B GPT-3 by training on 1.4 trillion tokens instead of 300 billion. So the first question is how many tokens each model saw, and what compute each run used ($6ND$).\n\n**Questions to ask.**\n- Which 70B model, trained on how many tokens, and when? An older, under-trained 70B is an easy target.\n- How much compute did the 7B use? 7B on 15 trillion tokens is about $6.3 \\times 10^{23}$ FLOPs, more than a 70B on 1.4 trillion.\n- Which benchmark, and is it one benchmark or many? A single benchmark can be gamed by choosing the best of many checkpoints.\n- Contamination: were the test questions, or near copies, in the training data? A model that saw the test scores well without the skill (`post-train` L4 treats this in full).\n- Error bars: how many questions, and is the gap larger than the standard error?\n\n**What would convince me.** Several held-out benchmarks, a contamination check against the training corpus, the same prompting for both models, error bars, and the training tokens and compute stated. Then \"a 7B model trained on more data matches an older 70B\" may well be true, and it is what scaling laws predict.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Explains that size alone does not decide: tokens and compute ($6ND$) matter, as Chinchilla against GPT-3 shows",
+            "required": true
+          },
+          {
+            "points": 2,
+            "text": "Asks which 70B model, trained on how many tokens"
+          },
+          {
+            "points": 2,
+            "text": "Asks about contamination of the benchmark in the training data"
+          },
+          {
+            "points": 2,
+            "text": "Asks for several benchmarks, the same prompting and error bars"
+          },
+          {
+            "points": 2,
+            "text": "Says what evidence would convince, and that the claim can be true"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model answer and tick the rubric.",
+        "generic": "Compare your answer with the model answer."
+      }
+    },
+    {
+      "id": "h-chin-days",
+      "difficulty": 4,
+      "skills": [
+        "gpt-scale"
+      ],
+      "title": "Chinchilla on a cluster",
+      "prose": "Chinchilla's training took about $5.88 \\times 10^{23}$ FLOPs. Suppose it ran on 2,048 GPUs of 312 TFLOP/s peak at 45% utilisation.",
+      "question": "How many days would it take? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 23.7,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "peak",
+            "value": 10.7,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "hours",
+            "value": 568.0,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "Days"
+      },
+      "feedback": {
+        "correct": "$5.88 \\times 10^{23} / (2048 \\times 3.12 \\times 10^{14} \\times 0.45) / 86{,}400 \\approx 23.7$ days.",
+        "generic": "Not quite. Divide by the achieved rate, then by 86,400.",
+        "byKey": {
+          "peak": "That ignores the 45% utilisation.",
+          "hours": "That is hours."
+        }
+      },
+      "explain": {
+        "text": "The achieved rate is $2.88 \\times 10^{17}$ FLOP/s, so about 23.7 days."
+      }
+    },
+    {
+      "id": "h-kaplan-chin",
+      "difficulty": 3,
+      "skills": [
+        "gpt-scale"
+      ],
+      "title": "Two allocations",
+      "prose": "Kaplan et al. (2020) advised putting most of a larger budget into model size. Hoffmann et al. (2022) advised growing size and data about equally.",
+      "question": "Which model is the clearest evidence for the second view?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "chin",
+            "text": "Chinchilla, 70B, beating the 280B Gopher",
+            "correct": true
+          },
+          {
+            "id": "gpt3",
+            "text": "GPT-3, 175B on 300B tokens",
+            "why": "GPT-3 followed the first view: a large model on relatively few tokens."
+          },
+          {
+            "id": "tiny",
+            "text": "The tiny GPT, 18,017 parameters on 2.56M tokens",
+            "why": "At 142 tokens per parameter it is data-heavy, but it compares nothing."
+          },
+          {
+            "id": "gpt2",
+            "text": "GPT-2 small, 124M",
+            "why": "A single model cannot compare allocations."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About the same compute, 4 times fewer parameters, over 4 times more tokens, and a better model.",
+        "generic": "Not quite. Which result compared allocations at a fixed budget?"
+      },
+      "explain": {
+        "text": "Chinchilla and Gopher used about the same compute. Spending it on 4 times more data with a 4 times smaller model gave the better model."
+      }
+    }
+  ]
+}

@@ -1,0 +1,375 @@
+{
+  "id": "problems-4",
+  "course": "gpt",
+  "level": 4,
+  "title": "Budgeting a training run",
+  "minutes": 40,
+  "items": [
+    {
+      "id": "p-run-cost",
+      "difficulty": 5,
+      "skills": [
+        "gpt-scale"
+      ],
+      "prose": "A research group plans a tied GPT with vocabulary 50,257, context 2,048, width 2,048, 24 blocks and a 4 times wider MLP, trained on 1 trillion tokens.",
+      "parts": [
+        {
+          "question": "How many parameters does the model have, biases and norms included?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1315723264,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "rule",
+                "value": 1207959552,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "untied",
+                "value": 1418699857,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "label": "Parameters"
+          },
+          "feedback": {
+            "correct": "Tables 107{,}120{,}640, 24 blocks of 50{,}358{,}272, final norm 4,096: 1{,}315{,}723{,}264.",
+            "generic": "Not quite. Add the two embedding tables, 24 blocks and the closing layer norm.",
+            "byKey": {
+              "rule": "That is $12Ld^2$ alone.",
+              "untied": "The model is tied; no separate head."
+            }
+          },
+          "explain": {
+            "text": "1,315,723,264 parameters, about 1.3 billion."
+          }
+        },
+        {
+          "question": "Using the 1,315,723,264 parameters of part 1, what is the training compute, in units of $10^{21}$ FLOPs? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7.89,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "fwd",
+                "value": 2.63,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ],
+            "label": "FLOPs",
+            "scale": 1e+21
+          },
+          "feedback": {
+            "correct": "$6 \\times 1{,}315{,}723{,}264 \\times 10^{12} \\approx 7.89 \\times 10^{21}$.",
+            "generic": "Not quite. Use $6ND$ with $D = 10^{12}$.",
+            "byKey": {
+              "fwd": "That is $2ND$."
+            }
+          },
+          "explain": {
+            "text": "$6ND \\approx 7.89 \\times 10^{21}$ FLOPs."
+          }
+        },
+        {
+          "question": "Taking 7.89 $\\times 10^{21}$ FLOPs, how many days on 64 GPUs of 312 TFLOP/s peak at 45% utilisation? Give 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 10.2,
+            "tol": {
+              "abs": 0.05
+            },
+            "wrong": [
+              {
+                "id": "peak",
+                "value": 4.6,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "hours",
+                "value": 244.0,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ],
+            "label": "Days"
+          },
+          "feedback": {
+            "correct": "Divide by $64 \\times 3.12 \\times 10^{14} \\times 0.45$ FLOP/s and by 86,400: about 10.2 days.",
+            "generic": "Not quite. Divide by the achieved rate, then by the seconds in a day.",
+            "byKey": {
+              "peak": "That ignores utilisation.",
+              "hours": "That is hours."
+            }
+          },
+          "explain": {
+            "text": "Together the 64 GPUs deliver $8.99 \\times 10^{15}$ FLOP/s; the run needs 878,555 seconds of that, 10.2 days."
+          }
+        },
+        {
+          "question": "At £1.80 per GPU-hour, what does a run of 10.2 days on 64 GPUs cost? Give the answer in pounds to the nearest hundred.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 28200.0,
+            "tol": {
+              "abs": 50
+            },
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "days",
+                "value": 1200.0,
+                "tol": {
+                  "abs": 50
+                }
+              },
+              {
+                "id": "one",
+                "value": 440.0,
+                "tol": {
+                  "abs": 5
+                }
+              }
+            ],
+            "label": "Cost"
+          },
+          "feedback": {
+            "correct": "$64 \\times 10.2 \\times 24 \\times 1.80 \\approx$ £28,200.",
+            "generic": "Not quite. GPU-hours times the rate.",
+            "byKey": {
+              "days": "You charged per GPU-day.",
+              "one": "You priced one GPU."
+            }
+          },
+          "explain": {
+            "text": "15,667 GPU-hours at £1.80: about £28,200."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-two-runs",
+      "difficulty": 4,
+      "skills": [
+        "gpt-scale"
+      ],
+      "prose": "A pilot trains two models of a new family: $10^8$ parameters reach a held-out loss of 3.0 and $10^9$ reach 2.6.",
+      "parts": [
+        {
+          "question": "What exponent $\\alpha$ do the two runs give for $L = aN^{-\\alpha}$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0621,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "lin",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "ln",
+                "value": 0.1431,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ],
+            "label": "Exponent"
+          },
+          "feedback": {
+            "correct": "$\\log_{10}(3.0/2.6) \\approx 0.0621$ over one decade.",
+            "generic": "Not quite. Divide the change in log loss by the change in log size.",
+            "byKey": {
+              "lin": "That is the drop in loss on linear axes.",
+              "ln": "You used $\\ln$ for the loss but $\\log_{10}$ for the size: one decade is $\\ln 10$ in natural logs."
+            }
+          },
+          "explain": {
+            "text": "One decade, and the loss ratio 3.0/2.6: $\\alpha = \\log_{10}(1.1538) \\approx 0.0621$."
+          }
+        },
+        {
+          "question": "Using $\\alpha = 0.0621$ from part 1, what loss does the law predict at $10^{10}$ parameters? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.2533,
+            "tol": {
+              "abs": 0.0002
+            },
+            "wrong": [
+              {
+                "id": "lin",
+                "value": 2.2,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ],
+            "label": "Loss"
+          },
+          "feedback": {
+            "correct": "$2.6 \\times 2.6 / 3.0 \\approx 2.2533$.",
+            "generic": "Not quite. Multiply 2.6 by the per-decade factor.",
+            "byKey": {
+              "lin": "You extended the drop of 0.4 linearly. The law multiplies."
+            }
+          },
+          "explain": {
+            "text": "The factor per decade is $2.6/3.0$, so $2.6 \\times 2.6/3.0 \\approx 2.2533$."
+          }
+        },
+        {
+          "question": "Why is that prediction weak evidence?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "two",
+                "text": "Two points always fit; the step leaves the data",
+                "correct": true
+              },
+              {
+                "id": "noise",
+                "text": "Only because the two losses are noisy",
+                "why": "Noise matters, but two points cannot test the law at all."
+              },
+              {
+                "id": "floor",
+                "text": "Because the floor of the law is known",
+                "why": "The floor is unknown here, which makes it worse."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Two points always fit, and $10^{10}$ is outside the pilot.",
+            "generic": "Not quite. Can two points test a power law?"
+          },
+          "explain": {
+            "text": "Fit more sizes, and expect a floor to flatten the curve."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-twenty-rule",
+      "difficulty": 3,
+      "skills": [
+        "gpt-scale"
+      ],
+      "prose": "A team has $10^{22}$ FLOPs and follows the headline rule of 20 tokens per parameter.",
+      "parts": [
+        {
+          "question": "With $D = 20N$ and $C = 6ND$, $C = 120N^2$. How many parameters should the model have, in billions? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 9.13,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "no-twenty",
+                "value": 40.82,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ],
+            "label": "Billions"
+          },
+          "feedback": {
+            "correct": "$N = \\sqrt{10^{22}/120} \\approx 9.13$ billion.",
+            "generic": "Not quite. Solve $120N^2 = 10^{22}$.",
+            "byKey": {
+              "no-twenty": "You solved $6N^2 = C$, leaving out the 20 tokens per parameter."
+            }
+          },
+          "explain": {
+            "text": "$N = \\sqrt{8.33 \\times 10^{19}} \\approx 9.13 \\times 10^9$."
+          }
+        },
+        {
+          "question": "Using the 9.13 billion parameters of part 1, how many tokens, in billions? Give 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 182.6,
+            "tol": {
+              "abs": 0.1
+            },
+            "wrong": [
+              {
+                "id": "n",
+                "value": 9.1,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ],
+            "label": "Billions of tokens"
+          },
+          "feedback": {
+            "correct": "$20 \\times 9.13 \\approx 182.6$ billion tokens.",
+            "generic": "Not quite. Twenty tokens per parameter.",
+            "byKey": {
+              "n": "That is the parameter count."
+            }
+          },
+          "explain": {
+            "text": "182.6 billion tokens; check: $6 \\times 9.13 \\times 10^9 \\times 1.83 \\times 10^{11} \\approx 10^{22}$."
+          }
+        },
+        {
+          "question": "The model will answer millions of queries a day. Which change makes sense?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "small",
+                "text": "A smaller model on more tokens, cheaper to serve",
+                "correct": true
+              },
+              {
+                "id": "big",
+                "text": "A larger model on fewer tokens",
+                "why": "That raises the cost of every query."
+              },
+              {
+                "id": "same",
+                "text": "Keep the 20-tokens split whatever the use",
+                "why": "The rule ignores inference cost."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Serving cost scales with $N$, so heavy use favours a smaller model trained longer.",
+            "generic": "Not quite. Which split is cheaper per query?"
+          },
+          "explain": {
+            "text": "Each query costs about $2N$ FLOPs per token, so a smaller, longer-trained model pays back over many queries."
+          }
+        }
+      ]
+    }
+  ]
+}

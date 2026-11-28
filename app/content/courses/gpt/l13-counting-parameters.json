@@ -1,0 +1,1172 @@
+{
+  "id": "l13-counting-parameters",
+  "course": "gpt",
+  "title": "Counting parameters",
+  "minutes": 14,
+  "objectives": [
+    "Derive the parameter count of a GPT from its width, depth and vocabulary."
+  ],
+  "skills": [
+    "gpt-scale"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One block of GPT-2 small",
+      "prose": "GPT-2 small has width $d = 768$ and an MLP four times wider. A block's weights are `qkv` ($d \\times 3d$), `proj` ($d \\times d$), `fc` ($d \\times 4d$) and `out` ($4d \\times d$).",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Weight",
+            "Shape"
+          ],
+          "rows": [
+            [
+              "qkv",
+              "768 by 2,304"
+            ],
+            [
+              "proj",
+              "768 by 768"
+            ],
+            [
+              "fc",
+              "768 by 3,072"
+            ],
+            [
+              "out",
+              "3,072 by 768"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "How many weights does one block hold, biases and norms left out?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7077888,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "attn",
+            "value": 2359296,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "mlp",
+            "value": 4718592,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Weights"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the four products."
+        },
+        {
+          "rung": "point",
+          "text": "$3d^2 + d^2 + 4d^2 + 4d^2$.",
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$12 \\times 768^2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$12 d^2 = 12 \\times 768^2 = 7{,}077{,}888$.",
+        "generic": "Not quite. Multiply out each shape and add.",
+        "byKey": {
+          "attn": "That is attention alone, $4d^2$. Add the MLP's $8d^2$.",
+          "mlp": "That is the MLP alone. Add attention's $4d^2$."
+        }
+      },
+      "explain": {
+        "text": "Attention holds $4d^2$ and the MLP $8d^2$: $12 d^2 = 7{,}077{,}888$ weights a block. Biases and norms add only $13d$ more.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where the parameters go",
+      "prose": "A 12-block model with GPT-2's vocabulary of 50,257 and context of 1,024. Slide the width and watch the shares of the embeddings, attention and the MLP.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "embeddings",
+            "attention",
+            "MLP",
+            "biases and norms"
+          ],
+          "yLabel": "share",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 1
+        },
+        "state": {
+          "values": {
+            "embeddings": 0.734,
+            "attention": 0.088,
+            "MLP": 0.176,
+            "biases and norms": 0.002
+          },
+          "caption": "Width 128: 8,943,488 parameters."
+        },
+        "controls": [
+          {
+            "bind": "d",
+            "label": "Width",
+            "frames": [
+              {
+                "values": {
+                  "embeddings": 0.734,
+                  "attention": 0.088,
+                  "MLP": 0.176,
+                  "biases and norms": 0.002
+                },
+                "caption": "Width 128: 8,943,488 parameters."
+              },
+              {
+                "values": {
+                  "embeddings": 0.48,
+                  "attention": 0.173,
+                  "MLP": 0.345,
+                  "biases and norms": 0.001
+                },
+                "caption": "Width 384: 40,986,240 parameters."
+              },
+              {
+                "values": {
+                  "embeddings": 0.316,
+                  "attention": 0.228,
+                  "MLP": 0.455,
+                  "biases and norms": 0.001
+                },
+                "caption": "Width 768: 124,439,808 parameters."
+              },
+              {
+                "values": {
+                  "embeddings": 0.182,
+                  "attention": 0.272,
+                  "MLP": 0.545,
+                  "biases and norms": 0.001
+                },
+                "caption": "Width 1600: 450,942,400 parameters."
+              }
+            ],
+            "frameLabels": [
+              "128",
+              "384",
+              "768",
+              "1600"
+            ]
+          }
+        ]
+      },
+      "question": "At width 768, which part holds the most parameters?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "mlp",
+            "text": "The MLP",
+            "correct": true
+          },
+          {
+            "id": "emb",
+            "text": "The embeddings",
+            "why": "At 768 they hold 0.316; at 128 they hold most."
+          },
+          {
+            "id": "att",
+            "text": "Attention",
+            "why": "Attention holds half what the MLP holds: $4d^2$ against $8d^2$."
+          },
+          {
+            "id": "bn",
+            "text": "Biases and norms",
+            "why": "They grow like $d$, so they stay tiny."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide to 768."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the two tallest bars.",
+          "highlight": [
+            "xMLP"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The MLP holds 0.455 of the model at width 768.",
+        "generic": "Not quite. Read the bars at 768."
+      },
+      "explain": {
+        "text": "Blocks grow like $d^2$ and embeddings like $d$. At width 128 the embeddings dominate (0.734); by 768 the blocks do."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The 12 d squared rule",
+      "prose": "The rule **$N \\approx 12 L d^2$** counts only the block weights with a 4 times wider MLP. Our tiny GPT has $L = 1$, $d = 32$; its block holds exactly 12,704 numbers.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Count",
+            "Value"
+          ],
+          "rows": [
+            [
+              "$12 d^2$ at $d = 32$",
+              "12,288"
+            ],
+            [
+              "exact block",
+              "12,704"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many numbers does the rule miss in the tiny block?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 416,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 24992,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "w",
+            "value": 12288,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Numbers"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the rule from the exact count."
+        },
+        {
+          "rung": "point",
+          "text": "$12704 - 12288$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The gap is the biases and layer norms."
+        }
+      ],
+      "feedback": {
+        "correct": "$12{,}704 - 12{,}288 = 416$: the biases (288) and layer norms (128).",
+        "generic": "Not quite. Subtract the rule from the exact count.",
+        "byKey": {
+          "sum": "You added them.",
+          "w": "That is the rule itself."
+        }
+      },
+      "explain": {
+        "text": "The rule misses $13d = 416$ numbers here, 3.3% of the block. At $d = 768$ the same $13d$ is about 0.1%.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "GPT-2 small, counted",
+      "prose": "GPT-2 small: vocabulary 50,257, context 1,024, width 768, 12 blocks, MLP 3,072. Its head is **tied** to `wte` and has no bias, and every linear layer and layer norm has its biases.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "Numbers"
+          ],
+          "rows": [
+            [
+              "wte",
+              "38,597,376"
+            ],
+            [
+              "wpe",
+              "786,432"
+            ],
+            [
+              "one block",
+              "7,087,872"
+            ],
+            [
+              "final layer norm",
+              "1,536"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many parameters does GPT-2 small have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 124439808,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "untied",
+            "value": 163037184,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 46473216,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Twelve blocks."
+        },
+        {
+          "rung": "point",
+          "text": "$12 \\times 7{,}087{,}872 = 85{,}054{,}464$.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add the tables and the final norm."
+        }
+      ],
+      "feedback": {
+        "correct": "$38{,}597{,}376 + 786{,}432 + 85{,}054{,}464 + 1{,}536 = 124{,}439{,}808$.",
+        "generic": "Not quite. Add the tables, twelve blocks and the final norm.",
+        "byKey": {
+          "untied": "You added a separate head. GPT-2 ties it to `wte`.",
+          "one": "You counted one block. There are twelve."
+        }
+      },
+      "explain": {
+        "text": "124,439,808 parameters: the \"124M\" in GPT-2 small's name. The rule $12Ld^2$ gives 84,934,656 for the blocks, close to their exact 85,054,464.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The embeddings' share",
+      "prose": "Of GPT-2 small's 124,439,808 parameters, `wte` and `wpe` hold 39,383,808.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "Numbers"
+          ],
+          "rows": [
+            [
+              "wte and wpe",
+              "39,383,808"
+            ],
+            [
+              "twelve blocks",
+              "85,054,464"
+            ],
+            [
+              "final layer norm",
+              "1,536"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What share of GPT-2 small sits in the embeddings? Give a percentage to one decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3165,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "blocks",
+            "value": 0.6835,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "wte",
+            "value": 0.3102,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Share"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the embeddings by the total."
+        },
+        {
+          "rung": "point",
+          "text": "$39{,}383{,}808 / 124{,}439{,}808$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About a third."
+        }
+      ],
+      "feedback": {
+        "correct": "$39{,}383{,}808 / 124{,}439{,}808 \\approx 31.6\\%$.",
+        "generic": "Not quite. Divide the two tables by the whole count.",
+        "byKey": {
+          "blocks": "That is the blocks' share.",
+          "wte": "That is `wte` alone. Add `wpe`."
+        }
+      },
+      "explain": {
+        "text": "Almost a third, 31.6%, is the embedding table, because the vocabulary is large. Papers on scaling often count only non-embedding parameters for that reason.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Count any GPT",
+      "prose": "Write `gpt_params(V, T, d, L, mlp_ratio, tied)`: biases on every linear layer, layer norms with gain and bias, a final layer norm. A tied head is `wte` with no bias, as in GPT-2; an untied head adds $dV + V$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "Numbers"
+          ],
+          "rows": [
+            [
+              "tables",
+              "$Vd + Td$"
+            ],
+            [
+              "one block",
+              "$4d + 3d^2 + 3d + d^2 + d + 2dm + m + d$"
+            ],
+            [
+              "final norm",
+              "$2d$"
+            ],
+            [
+              "untied head",
+              "$dV + V$"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Write `gpt_params`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def gpt_params(V, T, d, L, mlp_ratio, tied):\n    # Biases on every linear layer, layer norms with gain and bias, a final layer norm.\n    # tied=True: the head is wte and has no bias (GPT-2). tied=False: a head of d by V plus a bias of V.\n    ...\n",
+        "solution": "def gpt_params(V, T, d, L, mlp_ratio, tied):\n    m = mlp_ratio * d\n    block = 4 * d + (3 * d * d + 3 * d) + (d * d + d) + (d * m + m) + (m * d + d)\n    n = V * d + T * d + L * block + 2 * d\n    if not tied:\n        n += d * V + V\n    return n\n",
+        "examples": [
+          {
+            "call": "gpt_params(65, 32, 32, 2, 4, False)",
+            "expect": "30721",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "gpt_params(50257, 1024, 768, 12, 4, True)",
+            "expect": "124439808",
+            "compare": "equal"
+          },
+          {
+            "call": "gpt_params(65, 32, 32, 1, 4, False)",
+            "expect": "18017",
+            "compare": "equal"
+          },
+          {
+            "call": "gpt_params(65, 32, 32, 1, 4, True)",
+            "expect": "15872",
+            "compare": "equal"
+          },
+          {
+            "call": "gpt_params(50257, 1024, 768, 12, 4, False)",
+            "expect": "163087441",
+            "compare": "equal"
+          },
+          {
+            "call": "gpt_params(1000, 128, 64, 3, 2, True)",
+            "expect": "172736",
+            "compare": "equal"
+          },
+          {
+            "call": "gpt_params(50257, 2048, 12288, 96, 4, True)",
+            "expect": "174604259328",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 6 hidden tests: GPT-2 small tied and untied, the tiny GPT untied and tied, a 3-block model with MLP ratio 2, and a GPT-3-sized model. Counts must be exact.",
+        "mutants": [
+          {
+            "source": "def gpt_params(V, T, d, L, mlp_ratio, tied):\n    m = mlp_ratio * d\n    block = 4 * d + (3 * d * d + 3 * d) + (d * d + d) + (d * m + m) + (m * d + d)\n    n = V * d + T * d + L * block + 2 * d\n    if not tied:\n        n += V\n    return n\n",
+            "test": 2,
+            "symptom": "Counts the vocabulary once when the head is untied."
+          },
+          {
+            "source": "def gpt_params(V, T, d, L, mlp_ratio, tied):\n    m = mlp_ratio * d\n    block = 12 * d * d\n    n = V * d + T * d + L * block + 2 * d\n    if not tied:\n        n += d * V + V\n    return n\n",
+            "test": 1,
+            "symptom": "Uses the 12 d squared rule, which leaves out biases, norms and the MLP ratio."
+          },
+          {
+            "source": "def gpt_params(V, T, d, L, mlp_ratio, tied):\n    m = mlp_ratio * d\n    block = 4 * d + (3 * d * d + 3 * d) + (d * d + d) + (d * m + m) + (m * d + d)\n    n = V * d + L * block + 2 * d\n    if not tied:\n        n += d * V + V\n    return n\n",
+            "test": 1,
+            "symptom": "Forgets the position table."
+          },
+          {
+            "source": "def gpt_params(V, T, d, L, mlp_ratio, tied):\n    m = 4 * d\n    block = 4 * d + (3 * d * d + 3 * d) + (d * d + d) + (d * m + m) + (m * d + d)\n    n = V * d + T * d + L * block + 2 * d\n    if not tied:\n        n += d * V + V\n    return n\n",
+            "test": 5,
+            "symptom": "Assumes an MLP four times wider, whatever the ratio."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the block first, with $m = $ `mlp_ratio * d`."
+        },
+        {
+          "rung": "point",
+          "text": "Then the tables, $L$ blocks and the final norm.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add $dV + V$ only when `tied` is False."
+        }
+      ],
+      "feedback": {
+        "correct": "Your counts are exact for every configuration.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is GPT-2 small, 124,439,808.",
+          "test-4": "Test 4 is untied: the head adds its own $d \\times V$ weights and $V$ biases."
+        }
+      },
+      "explain": {
+        "text": "The formula reproduces GPT-2 small exactly and the tiny GPT's 18,017. With $m = 4d$ the block is $12d^2 + 13d$."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "An untied head",
+      "prose": "A colleague trains a 12-block, width-768 model with GPT-2's vocabulary and context, but with an untied head (no bias). They describe it as \"GPT-2 small sized, 124M\".",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "Numbers"
+          ],
+          "rows": [
+            [
+              "tables",
+              "39,383,808"
+            ],
+            [
+              "twelve blocks",
+              "85,054,464"
+            ],
+            [
+              "final norm",
+              "1,536"
+            ],
+            [
+              "head",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many parameters does their model have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 163037184,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "tied",
+            "value": 124439808,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "bias",
+            "value": 163087441,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The head is a second $768 \\times 50{,}257$ table."
+        },
+        {
+          "rung": "point",
+          "text": "That is 38,597,376 more.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$124{,}439{,}808 + 38{,}597{,}376$."
+        }
+      ],
+      "feedback": {
+        "correct": "$124{,}439{,}808 + 38{,}597{,}376 = 163{,}037{,}184$: about 163M, not 124M.",
+        "generic": "Not quite. An untied head is a second vocabulary table.",
+        "byKey": {
+          "tied": "That counts the vocabulary once. Untied, the head is its own 38.6M numbers.",
+          "bias": "This head has no bias."
+        }
+      },
+      "explain": {
+        "text": "Untying adds a second $d \\times V$ table: 163,037,184, 31% more than GPT-2 small. Counting the vocabulary once is the trap.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "GPT-3 by the rule",
+      "prose": "GPT-3 has 96 blocks of width 12,288 with an MLP four times wider.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "$L$",
+              "96"
+            ],
+            [
+              "$d$",
+              "12,288"
+            ],
+            [
+              "vocabulary",
+              "50,257"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What does $12 L d^2$ give, in billions? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 173.9,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "d",
+            "value": 0.0,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "nol",
+            "value": 1.8,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "Billions"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$12 \\times 96 \\times 12288^2$."
+        },
+        {
+          "rung": "point",
+          "text": "$12288^2 \\approx 1.51 \\times 10^8$.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About $1.74 \\times 10^{11}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$12 \\times 96 \\times 12288^2 \\approx 173.9$ billion; the embeddings add about 0.6 billion more.",
+        "generic": "Not quite. Square the width first.",
+        "byKey": {
+          "d": "You did not square the width.",
+          "nol": "You left out the 96 blocks."
+        }
+      },
+      "explain": {
+        "text": "173.9 billion from the rule, plus $50{,}257 \\times 12{,}288 \\approx 0.6$ billion of embeddings: the published 175 billion. At this size the rule is all that matters.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Tied, at the tiny scale",
+      "prose": "Tie the tiny GPT's head to `wte` the GPT-2 way: no head weights and no head bias.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "Untied",
+            "Tied"
+          ],
+          "rows": [
+            [
+              "tables",
+              "3,104",
+              "3,104"
+            ],
+            [
+              "block",
+              "12,704",
+              "12,704"
+            ],
+            [
+              "final norm",
+              "64",
+              "64"
+            ],
+            [
+              "head",
+              "2,145",
+              "0"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "How many parameters does the tied tiny GPT have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15872,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "keepbias",
+            "value": 15937,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "untied",
+            "value": 18017,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Remove the whole head."
+        },
+        {
+          "rung": "point",
+          "text": "$18017 - 2145$.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The head was $32 \\times 65 + 65$."
+        }
+      ],
+      "feedback": {
+        "correct": "$18{,}017 - 2{,}145 = 15{,}872$.",
+        "generic": "Not quite. Remove the head's weights and its bias.",
+        "byKey": {
+          "keepbias": "That keeps the head bias, as l5's quiz did. The GPT-2 way drops it too.",
+          "untied": "That is the untied count."
+        }
+      },
+      "explain": {
+        "text": "Tied, the tiny GPT has 15,872: tying saves 2,145 of 18,017, about 12%; at GPT-2 small it saves 38.6M, about 24% of the untied count. Tying matters most when the vocabulary is large against the width.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The count of a GPT",
+      "prose": "With a 4 times wider MLP and a tied head:\n$$N = L(12d^2 + 13d) + (V + T)d + 2d \\approx 12Ld^2 + Vd$$\nThe first term wins once $12Ld \\gg V$.",
+      "question": "Doubling the width of a deep model multiplies its parameter count by about how much?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "four",
+            "text": "4",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "why": "The blocks grow like $d^2$, and they dominate a deep model."
+          },
+          {
+            "id": "eight",
+            "text": "8",
+            "why": "Width enters squared, not cubed."
+          },
+          {
+            "id": "same",
+            "text": "1, if the depth is fixed",
+            "why": "Width changes every block."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which term dominates for a deep model?"
+        }
+      ],
+      "feedback": {
+        "correct": "$12Ld^2$ dominates, and doubling $d$ quadruples it.",
+        "generic": "Not quite. How does $12Ld^2$ change when $d$ doubles?"
+      },
+      "explain": {
+        "text": "Parameters grow with depth linearly and with width squared. Doubling the depth doubles the count; doubling the width multiplies it by 4."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Checking a release",
+      "prose": "A lab releases a \"7B\" model: 32 blocks of width 4,096, an MLP four times wider, vocabulary 32,000, an untied head, no biases.",
+      "question": "What does $12Ld^2$ plus the two vocabulary tables give, in billions? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6.7,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 6.57,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "blocks",
+            "value": 6.44,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "Billions"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$12 \\times 32 \\times 4096^2$ for the blocks."
+        },
+        {
+          "rung": "point",
+          "text": "Two tables of $32{,}000 \\times 4{,}096$."
+        },
+        {
+          "rung": "step",
+          "text": "6,442,450,944 plus 262,144,000."
+        }
+      ],
+      "feedback": {
+        "correct": "$6{,}442{,}450{,}944 + 262{,}144{,}000 \\approx 6.70$ billion: \"7B\" rounds up.",
+        "generic": "Not quite. Add the blocks and both vocabulary tables.",
+        "byKey": {
+          "one": "You counted one vocabulary table. Untied means two.",
+          "blocks": "You left out the vocabulary tables."
+        }
+      },
+      "explain": {
+        "text": "6.70 billion. A name like \"7B\" is a rounded label; check it against the configuration before comparing models by size."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A block with a 4 times wider MLP holds $12d^2$ weights (attention $4d^2$, MLP $8d^2$) plus $13d$ biases and norms.",
+      "GPT-2 small, tied, counts 124,439,808; the embeddings are 31.6% of it, and an untied head would add 38.6M.",
+      "For large models $N \\approx 12Ld^2$: GPT-3's 96 blocks of 12,288 give about 174 billion."
+    ],
+    "formula": {
+      "name": "Parameters of a GPT",
+      "tex": "N \\approx 12Ld^2 + Vd",
+      "note": "Tied head, MLP $4d$; add $Vd$ for an untied head."
+    },
+    "trap": "Counting the vocabulary once when the head is untied."
+  },
+  "quiz": [
+    {
+      "id": "q-depth",
+      "difficulty": 2,
+      "question": "A model has 24 blocks of width 1,024 and a 4 times wider MLP. What does $12Ld^2$ give?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 301989888,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "d",
+            "value": 294912,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "feedback": {
+        "correct": "$12 \\times 24 \\times 1024^2 = 301{,}989{,}888$.",
+        "generic": "Not quite. Square the width.",
+        "byKey": {
+          "d": "You did not square the width."
+        }
+      },
+      "explain": {
+        "text": "$12 \\times 24 \\times 1{,}048{,}576 = 301{,}989{,}888$, about 302 million."
+      }
+    },
+    {
+      "id": "q-untied",
+      "difficulty": 3,
+      "question": "Untying the head of a model with vocabulary 100,000 and width 2,048 (no head bias) adds how many parameters?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 204800000,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "bias",
+            "value": 204900000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 102400000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "feedback": {
+        "correct": "$100{,}000 \\times 2{,}048 = 204{,}800{,}000$.",
+        "generic": "Not quite. The head is a second $d \\times V$ table.",
+        "byKey": {
+          "bias": "This head has no bias.",
+          "half": "Check the product: $2048 \\times 100000$."
+        }
+      },
+      "explain": {
+        "text": "An untied head repeats the vocabulary table: 204.8 million more numbers."
+      }
+    },
+    {
+      "id": "q-mlp",
+      "difficulty": 2,
+      "question": "With an MLP four times wider, what fraction of a block's weights is in the MLP?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two3",
+            "text": "Two thirds",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "A half",
+            "why": "The MLP has $8d^2$ against attention's $4d^2$."
+          },
+          {
+            "id": "four5",
+            "text": "Four fifths",
+            "why": "That would need a ratio of 4 to 1."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$8d^2 / 12d^2 = 2/3$.",
+        "generic": "Not quite. Compare $8d^2$ with $12d^2$."
+      },
+      "explain": {
+        "text": "The MLP's two matrices hold $8d^2$ of the $12d^2$: two thirds."
+      }
+    }
+  ]
+}
