@@ -4,7 +4,7 @@
  "title": "A tiny transformer at work",
  "minutes": 15,
  "objectives": [
-  "Run a one-block transformer from supplied weights, and train it for a few steps on a toy task."
+  "Run a two-block transformer from supplied weights, and train it for a few steps on a toy task."
  ],
  "skills": [
   "sqn-block"
@@ -341,7 +341,7 @@
     }
    },
    "explain": {
-    "text": "Output $t$ looks at input $7 - t$, so the head copies the mirrored digit. Rows 5 and 6 are less clean: they put 0.71 and 0.70 on the right input and the rest nearby, yet the model still writes the right digit."
+    "text": "Output $t$ looks at input $7 - t$, so the head copies the mirrored digit. Rows 5 and 6 are less clean: they put 0.71 and 0.70 on the right input and most of the rest on the separator or a neighbour, yet the model still writes the right digit."
    }
   },
   {
@@ -612,7 +612,12 @@
    ],
    "feedback": {
     "correct": "Rows 6 to 11 predict 9 5 1 4 1 3: the reversed digits.",
-    "generic": "Not quite. Check each stage against the comment in the starter."
+    "generic": "Not quite. Check each stage against the comment in the starter.",
+    "byKey": {
+     "test-1": "A row of logits differs from the reference. Add the position vectors, and apply the final layer norm before the unembedding.",
+     "test-3": "Add only as many position vectors as there are tokens; one token is a valid input.",
+     "test-5": "Assemble the model from its parts. Calling `lm_logits` skips the point of the exercise."
+    }
    },
    "explain": {
     "text": "Row $t$ of the logits predicts token $t + 1$, so rows 6 to 11 carry the answer. The causal mask makes row 6 depend on the digits and the separator only."
@@ -743,7 +748,12 @@
    ],
    "feedback": {
     "correct": "The shipped model reverses every one of the 1,000 held-out inputs.",
-    "generic": "Not quite. Decode with the model's own digits, and score whole sequences."
+    "generic": "Not quite. Decode with the model's own digits, and score whole sequences.",
+    "byKey": {
+     "test-1": "Read the logits at the last position of the input, where the next digit is predicted, not the first.",
+     "test-2": "Score whole sequences: a sequence counts only when every digit is right.",
+     "test-3": "Feed the model its own digits as it writes them. The true digits give the answer away."
+    }
    },
    "explain": {
     "text": "The model scores 100% on inputs it never trained on, so it has learned reversal, not a list. Greedy decoding feeds back its own digits, so one slip can spoil the rest of a row."
@@ -970,7 +980,10 @@
    ],
    "feedback": {
     "correct": "The loss falls from 2.716 to 1.454 in 10 steps, as the reference does.",
-    "generic": "Not quite. Check the zeroing, the scored rows and the Adam step."
+    "generic": "Not quite. Check the zeroing, the scored rows and the Adam step.",
+    "byKey": {
+     "test-1": "The first steps differ from the reference. Zero the gradients at every step, use Adam with its bias correction, and score only the six output positions."
+    }
    },
    "explain": {
     "text": "The loop is the one from `nn-train` L1; only the model changed. Test 4 trains on the same 32 inputs for 100 steps, which is how the colleague on the last screen got a perfect, useless score."
@@ -1107,7 +1120,7 @@
     "generic": "Not quite. Compare the end of each curve."
    },
    "explain": {
-    "text": "With no identity path, the gradient must pass through all 12 parts and the deep model stalls above 1.8. Without layer norms it starts far higher and recovers slowly. At 2 blocks such runs end close together: depth exposes the difference."
+    "text": "With no identity path, the gradient must pass through all 12 parts and the deep model stalls above 1.8. Without layer norms it starts far higher and recovers slowly. Depth is what exposes the difference."
    }
   },
   {
@@ -1260,7 +1273,7 @@
    "difficulty": 2,
    "title": "Training a transformer",
    "prose": "A trained transformer is the block of l13, stacked, with $$\\text{loss} = -\\frac{1}{n}\\sum_{t \\text{ scored}} \\ln p_\\theta(x_{t+1} \\mid x_{\\le t}),$$ minimised by Adam with a warm-up and a decay, and judged on held-out inputs.",
-   "question": "Which pair of design choices let the 6-block model train at all?",
+   "question": "Which pair of design choices let the 6-block model train well?",
    "widget": {
     "kind": "choice",
     "layout": "stack",
@@ -1284,7 +1297,7 @@
    },
    "feedback": {
     "correct": "Right: without residuals the deep model stalled; without norms it limped.",
-    "generic": "Not quite. Recall what differed between the four curves."
+    "generic": "Not quite. Recall what differed between the three curves."
    },
    "explain": {
     "text": "The identity path carries the gradient through depth, and the norms keep each part's input in range. Both are why the same loop trains a deep stack."
@@ -1375,7 +1388,7 @@
      },
      {
       "id": "seven",
-      "value": 5,
+      "value": 4,
       "tol": {
        "abs": 0
       }

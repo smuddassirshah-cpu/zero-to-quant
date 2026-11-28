@@ -52,7 +52,7 @@
     }
    },
    "explain": {
-    "text": "A block: $4(128^2 + 128) = 66{,}048$, MLP $131{,}072 + 640 = 131{,}712$, norms 512, so 198,272. With the tables, 421{,}697."
+    "text": "A block: $4(128^2 + 128) = 66{,}048$, MLP $131{,}072 + 640 = 131{,}712$, norms 512, so 198,272. With the tables, 421,697."
    }
   },
   {
@@ -85,7 +85,7 @@
      {
       "id": "extra",
       "text": "Add a further layer norm after each MLP",
-      "why": "Post-norm already normalises after each addition; more norms on the main path make it worse, not better."
+      "why": "Post-norm already normalises after each addition; a further norm on the main path still leaves no identity path."
      }
     ]
    },
@@ -171,7 +171,12 @@
    },
    "feedback": {
     "correct": "The test separates row-wise layers from mixing ones in both directions.",
-    "generic": "Not quite. Perturb every row, and ignore the perturbed row itself."
+    "generic": "Not quite. Perturb every row, and ignore the perturbed row itself.",
+    "byKey": {
+     "test-2": "A running mean over earlier rows changes the rows after the perturbed one. Look at the later rows.",
+     "test-3": "A mean over later rows changes the rows before the perturbed one. Perturb every row, not row 0 only, and look at the earlier rows too.",
+     "test-4": "A row-wise layer norm ignores a shift of the whole row. Leave the perturbed row itself out of the comparison."
+    }
    },
    "explain": {
     "text": "A layer is per-position when a change to row $j$ moves no other row. Checking every row catches mixing forward and backward; a layer that ignores its input passes, since nothing spreads."
@@ -283,7 +288,7 @@
     }
    },
    "explain": {
-    "text": "Blocks: $4 \\times 3{,}152{,}384$; embeddings 16,384,000; positions 262,144; norm 1,024; bias 32,000; total 29{,}288{,}704. The one table is 55.9% of the model."
+    "text": "Blocks: $4 \\times 3{,}152{,}384$; embeddings 16,384,000; positions 262,144; norm 1,024; bias 32,000; total 29,288,704. The one table is 55.9% of the model."
    }
   },
   {
@@ -333,7 +338,7 @@
    "widget": {
     "kind": "longform",
     "prompt": "The desk is buying a language model to read filings. Explain to a portfolio manager, in under 300 words: what one transformer block computes, why residual connections let blocks be stacked, and what the model's parameter count says and does not say about its cost.",
-    "model": "**What a block computes.** Text arrives as one vector per token. A block does two things to those vectors. First, attention lets each token gather information from earlier tokens, weighting each by how relevant it looks; a mask stops it reading ahead. Second, a small feed-forward net (the MLP) transforms each token's vector on its own. Before each step the vector is normalised, so both parts see inputs on a steady scale.\n\n**Why blocks stack.** Neither part replaces the token's vector: each adds its output to it. The vector is a running sum, the residual stream, that every later block reads and adds to. Because of these additions, the training signal reaches every block directly, and a block that has nothing useful to add can learn to add almost nothing. That is why 12, 48 or more identical blocks can be trained together; without the additions, a deep stack stalls.\n\n**What the parameter count says.** It is the number of weights stored: memory to hold the model, and roughly how much it can fit. For one block of width $d$ it is about $12d^2$; heads do not change it, and with a large vocabulary the word tables can be most of the count.\n\n**What it does not say.** It does not give the cost of running the model, which also grows with how much text it reads at once, nor its quality, which depends on data and training. Two models of the same size can differ widely on our filings, so we should test the vendor's model on held-out documents of our own.",
+    "model": "**What a block computes.** Text arrives as one vector per token. A block does two things to those vectors. First, attention lets each token gather information from earlier tokens, weighting each by how relevant it looks; a mask stops it reading ahead. Second, a small feed-forward net (the MLP) transforms each token's vector on its own. Before each step the vector is normalised, so both parts see inputs on a steady scale.\n\n**Why blocks stack.** Neither part replaces the token's vector: each adds its output to it. The vector is a running sum, the residual stream, that every later block reads and adds to. Because of these additions, the training signal reaches every block directly, and a block that has nothing useful to add can learn to add almost nothing. That is why 12, 48 or more blocks of the same form, each with its own weights, can be trained together; without the additions, a deep stack stalls.\n\n**What the parameter count says.** It is the number of weights stored: memory to hold the model, and roughly how much it can fit. For one block of width $d$ it is about $12d^2$; heads do not change it, and with a large vocabulary the word tables can be most of the count.\n\n**What it does not say.** It does not give the cost of running the model, which also grows with how much text it reads at once, nor its quality, which depends on data and training. Two models of the same size can differ widely on our filings, so we should test the vendor's model on held-out documents of our own.",
     "rubric": [
      {
       "points": 2,
@@ -482,7 +487,11 @@
    },
    "feedback": {
     "correct": "Your model matches the reference on planted weights and reverses 3 1 4 1 5 9.",
-    "generic": "Not quite. Check the order inside each block, the mask, and the final layer norm."
+    "generic": "Not quite. Check the order inside each block, the mask, and the final layer norm.",
+    "byKey": {
+     "test-1": "The model disagrees with the reference. Check that each block normalises the branch and not the sum, the position vectors, the final layer norm, the causal mask and the head width.",
+     "test-2": "`n_blocks` sets how many blocks run. Do not run every block whatever it says."
+    }
    },
    "explain": {
     "text": "The whole model is the embedding plus positions, the blocks as additions to one stream, a final norm and the unembedding. The leak test and the one-token case pass only with the mask and $\\mathbf P[{:}T]$."

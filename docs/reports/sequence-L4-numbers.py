@@ -344,7 +344,7 @@ E(L14, 'screens[5].canvas', round(fin2 - c2[0], 3)); E(L14, 'screens[5].explain.
 nx = [float(np.linalg.norm(STn[0][6]))] + [float(np.linalg.norm(STn[k + 1][6] - STn[k][6])) for k in range(4)] + [float(np.linalg.norm(STn[4][6]))]
 for v in nx:
     E(L14, 'screens[3].canvas', round(v, 2))
-E(L14, 'screens[3].prose', round(sum(nx[:5]), 2)); E(L14, 'screens[3].prose', round(nx[5], 2))
+E(L14, 'screens[3].prose', round(sum(nx[:5]), 1)); E(L14, 'screens[3].prose', round(nx[5], 2))
 lv.claim(nx[5] < sum(nx[:5]), 'triangle inequality: final length below the sum of lengths')
 ACC = []
 for k in (1, 2, 3, 4):
@@ -381,6 +381,11 @@ TI = mp(65, 32, 64, 256, 1, tied=True)
 two('tied by formula and zeros', TI, count_shapes(65, 32, 64, 256, 1, tied=True))
 E(L15, 'screens[8].widget.answer', TI); E(L15, 'screens[8].widget.wrong[0].value', TI - 65); E(L15, 'screens[8].widget.wrong[1].value', SP - 2 * 4160)
 lv.claim(4160 / 60545 < 0.07 and SP - 4160 - 4160 - 65 == 52160, 'tying saves under 7%; the rest 52,160', covers=[0.07, 52160])
+# hidden tests with an MLP width that is not 4d (they catch a count that ignores d_mlp)
+W15 = [u['widget'] for u in lv.files[[k for k in lv.files if k.startswith(L15)][0]]['screens'] if (u.get('widget') or {}).get('kind') == 'code'][0]
+two('block of width 64, MLP 100, formula and zeros', bp(64, 100), count_shapes(1, 1, 64, 100, 1) - (64 + 64 + 64 + 64 + 1 + 64))
+two('model 11, 12, 32, 96, 2 blocks, formula and zeros', mp(11, 12, 32, 96, 2), count_shapes(11, 12, 32, 96, 2))
+lv.claim(int(W15['tests'][8]['expect']) == bp(64, 100) and int(W15['tests'][9]['expect']) == mp(11, 12, 32, 96, 2) and bp(64, 100) != bp(64, 256), 'l15 tests 9 and 10 expect the counts of an MLP width other than 4d')
 BV = mp(50257, 32, 64, 256, 1)
 two('large vocabulary by formula and zeros', BV, count_shapes(50257, 32, 64, 256, 1))
 emb = 50257 * 64 * 2 + 50257
@@ -485,8 +490,8 @@ lv.claim(all(len(ser[k]) == 12 and max(abs(a - min(b, 4.0)) for a, b in zip(ser[
 lv.claim(VAR['nores'][-1] > 1.8 and VAR['noln'][-1] < 1.8 and VAR['full'][-1] < 0.01 and VAR['noln'][0] > 4, 'only the run without residuals ends above 1.8; as built below 0.01; without norms it starts above 4', covers=[1.8, 0.01, 4])
 hv1 = train(1, steps=300, nb=6, res=False, bs=32)[1]
 lv.claim(float(np.mean(hv1[-25:])) > 1.8, f'second seed: no residuals also ends above 1.8 ({np.mean(hv1[-25:]):.3f})')
-lv.claim(6 * 2 == 12, '12 parts in 6 blocks', covers=[12])
-E(L16, 'quiz[0].widget.answer', 9 - 3); E(L16, 'quiz[1].widget.answer', 993 / 1000); E(L16, 'quiz[1].widget.wrong[0].value', 7 / 1000)
+lv.claim(len([(i, k) for i in range(6) for k in ('attention', 'MLP')]) == 12, '12 parts in 6 blocks: one attention and one MLP each, listed', covers=[12])
+E(L16, 'quiz[0].widget.answer', 9 - 3); E(L16, 'quiz[0].widget.wrong[1].value', 7 - 3); E(L16, 'quiz[1].widget.answer', 993 / 1000); E(L16, 'quiz[1].widget.wrong[0].value', 7 / 1000)
 E(L16, 'quiz[3].widget.answer', round(math.log(5), 3)); E(L16, 'quiz[3].widget.wrong[0].value', round(math.log2(5), 3))
 LIT('10^6', why='the number of six-digit inputs, 10 to the 6')
 LIT('400', why='training steps, a setting'); LIT('300', why='training steps of the deeper runs, a setting')
@@ -660,12 +665,14 @@ for fid, doc in lv.files.items():
 print(f'code widgets {nw}, mutants {nm}')
 
 lv.claim(abs(mlp64 / 16640 - 2) < 0.02 and abs(2 * 2000 * 128 / (2000 * 128) - 2) < 1e-12 and 16 * 4096 * 2 == 2 * 4 * 16384, 'the MLP holds twice what attention holds; a second copy doubles', covers=[2])
-lv.claim(abs(-math.log(1 / 11) - math.log(11)) < 1e-12 and abs(-math.log(1 / 5) - math.log(5)) < 1e-12 and 64 / 8 == 8 and 9 - 3 == 6 and 1 + 0.25 + 9 == 10.25,
-         'uniform chances 1/11 and 1/5; head width 64/8; 9 - t; the squares under the root', covers=[1 / 11, 1 / 5, 8, 9, 10.25])
+U11, U5 = np.full(11, 1 / 11), np.full(5, 1 / 5)
+lv.claim(abs(U11.sum() - 1) < 1e-12 and abs(U5.sum() - 1) < 1e-12 and abs(-np.log(U11[0]) - np.log(11)) < 1e-12 and abs(-np.log(U5[0]) - np.log(5)) < 1e-12
+         and len(np.split(np.zeros(64), 8)[0]) == 8 and [9 - t for t in (1, 2, 3)] == [8, 7, 6] and abs(np.sum(np.array([1, 0.5, 3]) ** 2) - 10.25) < 1e-12,
+         'uniform chances 1/11 and 1/5 (arrays that sum to 1); head width by splitting 64 into 8 heads; 9 - t listed; the squares 1, 0.25, 9 summed', covers=[1 / 11, 1 / 5, 8, 9, 10.25])
 for t_, why in [('64', 'a given width'), ('32', 'a given width, batch or context'), ('65', 'the spike\'s vocabulary, a given'), ('16', 'a given width'), ('11', 'the reversal vocabulary, a given'),
                 ('24', 'writes in a 12-block model, 2 a block (checked as 12 x 2 above)'), ('27', 'makemore\'s symbols, a given'), ('500', 'a given vocabulary'), ('993', 'right answers in a scenario, a given'),
                 ('32,000', 'a given vocabulary'), ('10^-6', 'test tolerances'), ('10^-5', 'the layer-norm epsilon'), ('8', 'given counts of positions and blocks')]:
     LIT(t_, why=why)
-lv.claim(12 * 2 == 24, 'a 12-block model holds 24 writes', covers=[24])
+lv.claim(len([(i, k) for i in range(12) for k in ('attention', 'MLP')]) == 24, 'a 12-block model holds 24 writes, listed', covers=[24])
 lv.check_wrongs()
 lv.report()
