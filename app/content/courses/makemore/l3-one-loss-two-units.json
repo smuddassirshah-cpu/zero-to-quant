@@ -14,7 +14,7 @@
    "type": "problem",
    "difficulty": 1,
    "title": "Is 2.45 good?",
-   "prose": "Add-one counts from all 32,033 names score an average loss of 2.4546 nats a letter on those names. A number alone means little; compare it with the dumbest model.",
+   "prose": "Add-one counts from all 32,033 names score an average loss of 2.4546 nats a letter on those names. Here \"a letter\" means each next symbol, the end mark included, so the average runs over all 228,146 pairs. A number alone means little; compare it with the dumbest model.",
    "canvas": {
     "kind": "number-line",
     "params": {
@@ -404,7 +404,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "Bits saved on new names",
-   "prose": "Counts from the 25,626 training names, add-one smoothed, score 2.4514 nats a letter on the 3,203 dev names they never saw.",
+   "prose": "Counts from the 25,626 training names, add-one smoothed, score 2.4514 nats a letter on the 3,203 dev names they never saw. The average runs over their 22,807 next symbols, the end marks included.",
    "canvas": {
     "kind": "number-line",
     "params": {
@@ -417,12 +417,18 @@
      "points": [
       {
        "id": "m",
-       "x": 2.4546,
+       "x": 2.4514,
        "label": "bigram",
+       "labelPos": "above"
+      },
+      {
+       "id": "u",
+       "x": 3.2958,
+       "label": "equal chances",
        "labelPos": "above"
       }
      ],
-     "caption": "Average loss in nats a letter, add-one counts from all 32,033 names."
+     "caption": "Add-one counts from the training names, scored on the dev names, against equal chances."
     }
    },
    "question": "How many bits a letter does the bigram save on the dev names against equal chances? Give a decimal to 4 places.",
@@ -668,7 +674,7 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 5 hidden tests: equal chances on the dev names, add-one counts from the training names on the train, dev and test names, and the short name jo. `P_train`, `train`, `dev`, `test` and `index` are ready. Each answer must equal the expected tuple, rounded to 4 places.",
+    "how": "Submit runs 5 hidden tests: equal chances on the dev names, add-one counts from the training names on the train, dev and test names, and the short name jo. `P_train`, `train`, `dev`, `test` and `index` are ready. Each answer must equal the expected tuple, rounded to 4 places. Convert before rounding: bits and perplexity come from the unrounded nats.",
     "prelude": "import math\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain = [words[i] for i in perm[:25626]]\ndev = [words[i] for i in perm[25626:28829]]\ntest = [words[i] for i in perm[28829:]]\nindex = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\nindex[\".\"] = 0\nN_train = np.zeros((27, 27), dtype=int)\nfor w in train:\n    cs = \".\" + w + \".\"\n    for a, b in zip(cs, cs[1:]):\n        N_train[index[a], index[b]] += 1\nP_train = (N_train + 1) / (N_train + 1).sum(axis=1, keepdims=True)\n",
     "data": {
      "names.txt": "content/data/ai/names.txt"

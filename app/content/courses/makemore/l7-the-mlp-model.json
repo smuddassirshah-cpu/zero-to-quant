@@ -14,7 +14,7 @@
    "type": "problem",
    "difficulty": 1,
    "title": "How big is the model?",
-   "prose": "A count table over three-symbol contexts would need 531,441 cells. Bengio and colleagues’ network (2003) instead embeds each symbol in 10 numbers, joins the three embeddings, and passes them through one hidden layer of 100 tanh units to 27 outputs.",
+   "prose": "A count table over three-symbol contexts would need 531,441 cells. A network in the style of Bengio and colleagues (2003), who did this for words, instead embeds each symbol in 10 numbers. It joins the three embeddings and passes them through one hidden layer of 100 tanh units to 27 outputs.",
    "canvas": {
     "kind": "graph",
     "params": {
@@ -107,7 +107,7 @@
      "height": 260
     },
     "state": {
-     "caption": "Bengio et al. (2003): embed, join, a tanh layer, then softmax at the output."
+     "caption": "In the style of Bengio et al. (2003): embed, join, a tanh layer, then softmax at the output."
     }
    },
    "question": "Roughly how many weights does that network learn?",
@@ -368,7 +368,7 @@
    "type": "problem",
    "difficulty": 2,
    "title": "Count the weights",
-   "prose": "Name it: the **MLP language model** of Bengio, Ducharme, Vincent and Jauvin (2003): logits $= \\tanh(EW_1 + b_1)W_2 + b_2$, where $E$ joins the context’s embeddings. Count each part.",
+   "prose": "Name it: the **MLP language model** of Bengio, Ducharme, Vincent and Jauvin (2003), here without their direct input-to-output weights: logits $= \\tanh(EW_1 + b_1)W_2 + b_2$, where $E$ joins the context’s embeddings. Count each part.",
    "canvas": {
     "kind": "graph",
     "params": {
@@ -461,7 +461,7 @@
      "height": 260
     },
     "state": {
-     "caption": "Bengio et al. (2003): embed, join, a tanh layer, then softmax at the output."
+     "caption": "In the style of Bengio et al. (2003): embed, join, a tanh layer, then softmax at the output."
     }
    },
    "question": "Fill in the number of weights in each part and the total.",
@@ -836,7 +836,7 @@
     }
    },
    "explain": {
-    "text": "$(EW_1 + b_1)W_2 + b_2 = E(W_1W_2) + (b_1W_2 + b_2)$: one 30 by 27 matrix and one bias. The tanh is what lets the hidden layer combine letters, for example to treat em differently from m."
+    "text": "$(EW_1 + b_1)W_2 + b_2 = E(W_1W_2) + (b_1W_2 + b_2)$: one 30 by 27 matrix and one bias. The tanh lets letters interact: without it each position adds its own fixed vote, so the push from m could not depend on the letter before it."
    }
   },
   {
@@ -1071,9 +1071,14 @@
       "call": "mlp_dev_loss(trained, Xdev, Ydev) < 2.4514",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "call": "round(mlp_dev_loss({**P0, \"b2\": P0[\"b2\"] + 1000}, np.array([[1, 2], [0, 0]]), np.array([1, 2])), 6)",
+      "expect": "0.595828",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 4 hidden tests: the planted model on two rows (to 6 places), then the supplied trained weights on the dev and test rows to 4 places. The last checks the dev loss is below the bigram’s 2.4514. The weights, `trained`, are read from `makemore-mlp.json`. `mlp_forward`, `Xdev`, `Ydev`, `Xtest` and `Ytest` are ready.",
+    "how": "Submit runs 5 hidden tests: the planted model on two rows (to 6 places), then the supplied trained weights on the dev and test rows to 4 places. The fourth checks the dev loss is below the bigram’s 2.4514. The last raises every logit of the planted model by 1,000: the loss must not change. The weights, `trained`, are read from `makemore-mlp.json`. `mlp_forward`, `Xdev`, `Ydev`, `Xtest` and `Ytest` are ready.",
     "prelude": "import json\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ndev = [words[i] for i in perm[25626:28829]]\ntest = [words[i] for i in perm[28829:]]\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef build_dataset(ws, block=3):\n    X, Y = [], []\n    for w in ws:\n        context = [0] * block\n        for ch in w + \".\":\n            X.append(context)\n            Y.append(INDEX[ch])\n            context = context[1:] + [INDEX[ch]]\n    return np.array(X), np.array(Y)\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n\n\ntrained = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\nXdev, Ydev = build_dataset(dev)\nXtest, Ytest = build_dataset(test)\nP0 = {\"C\": np.array([[0.0], [1.0], [-1.0]]), \"W1\": np.array([[0.5, -1.0], [1.0, 0.5]]), \"b1\": np.array([0.0, 0.1]), \"W2\": np.array([[1.0, -1.0, 0.0], [0.5, 0.0, 2.0]]), \"b2\": np.array([0.0, 0.0, 0.2])}\n",
     "data": {
      "names.txt": "content/data/ai/names.txt",
@@ -1095,6 +1100,11 @@
       "source": "import numpy as np\n\n\ndef mlp_dev_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1))\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n",
       "test": 1,
       "symptom": "Drops the row maximum back out of the log-sum-exp."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_dev_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z).sum(axis=1))\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n",
+      "test": 5,
+      "symptom": "No maximum taken out: exp of large logits overflows."
      }
     ]
    },
@@ -1162,7 +1172,7 @@
     "generic": "Not quite. Size each table, then add.",
     "byKey": {
      "onehot": "That counts the categories. Each gets a row of 4 or 2 numbers.",
-     "product": "You multiplied the tables together; they are separate and add."
+     "product": "You gave every sector and exchange pair its own row of 4: $33 \\times 4$. The two tables are separate and add."
     }
    },
    "explain": {
@@ -1172,9 +1182,9 @@
  ],
  "summary": {
   "ideas": [
-   "The MLP of Bengio et al. (2003): embed three symbols in 10 numbers each, join to 30, a tanh layer of 100, then 27 logits and softmax.",
+   "An MLP in the style of Bengio et al. (2003): embed three symbols in 10 numbers each, join to 30, a tanh layer of 100, then 27 logits and softmax.",
    "It has 6,097 weights; with $W_2$ scaled by 0.01 it starts at 3.3010, near $\\ln 27$. Trained, it scores 2.1609 on dev against the bigram’s 2.4514.",
-   "Without the tanh the two layers collapse into one linear map; the nonlinearity is what lets it combine letters."
+   "Without the tanh the two layers collapse into one linear map; the nonlinearity lets letters interact, so what one letter does can depend on another."
   ],
   "formula": {
    "name": "MLP forward pass",

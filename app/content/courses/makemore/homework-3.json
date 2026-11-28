@@ -405,9 +405,14 @@
       "call": "dev_loss(mlp, dev500) < 2.4514",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "call": "round(dev_loss(mlp, dev500[:50]), 4)",
+      "expect": "2.2016",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 7 hidden tests: the planted `toy` model at two seeds and two temperatures, and the trained `mlp` at seed 7 and temperatures 1 and 0.5. Then come a model that never ends (names stop at 20 letters), the loss of `toy` on two names, and the MLP’s loss on the first 500 dev names below the bigram’s 2.4514. Use one generator per call, the rule `searchsorted(cumsum(p), u, side=\"right\")` capped at 26, and chances to the power $1/T$, rescaled.",
+    "how": "Submit runs 8 hidden tests: the planted `toy` model at two seeds and two temperatures, and the trained `mlp` at seed 7 and temperatures 1 and 0.5. Then come a model that never ends (names stop at 20 letters). Next are the loss of `toy` on two names and the MLP’s loss on the first 500 dev names below the bigram’s 2.4514. The last is that loss on the first 50 of them, to 4 places. Use one generator per call, the rule `searchsorted(cumsum(p), u, side=\"right\")` capped at 26, and chances to the power $1/T$, rescaled.",
     "prelude": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n_ROWS = {0: [0, 0.5, 0.3, 0.2], 1: [0.4, 0.1, 0.3, 0.2], 2: [0.3, 0.5, 0.0, 0.2], 3: [0.6, 0.2, 0.2, 0.0]}\n\n\ndef toy(context):\n    # a planted model over ., a, b, c that looks only at the last symbol\n    return np.array(_ROWS[context[-1]] + [0.0] * 23)\n\n\ndef only_a(context):\n    # a model that never ends a name\n    p = np.zeros(27)\n    p[1] = 1.0\n    return p\n\n\ndef tenths(context):\n    # ten letters at 0.1 each: the running total ends at 0.9999999999999999\n    p = np.zeros(27)\n    p[17:27] = 0.1\n    return p\n\n\nclass FixedU:\n    # stands in for a generator: hands out the given u values in turn\n    def __init__(self, us):\n        self.us = list(us)\n\n    def random(self):\n        return self.us.pop(0)\n\nimport json\n_W = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\n\n\ndef mlp_logits(context):\n    e = _W[\"C\"][np.array(context)].reshape(-1)\n    return np.tanh(e @ _W[\"W1\"] + _W[\"b1\"]) @ _W[\"W2\"] + _W[\"b2\"]\n\n\ndef mlp(context):\n    z = mlp_logits(context)\n    p = np.exp(z - z.max())\n    return p / p.sum()\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ndev500 = [words[i] for i in perm[25626:28829]][:500]\n",
     "data": {
      "names.txt": "content/data/ai/names.txt",
@@ -434,6 +439,11 @@
       "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_names(prob_fn, n, seed, T):\n    rng = np.random.default_rng(seed)\n    names = []\n    for _ in range(n):\n        context, name = [0, 0, 0], \"\"\n        while len(name) < 20:\n            p = np.asarray(prob_fn(context), dtype=float) ** (1 / T)\n            p = p / p.sum()\n            u = rng.random()\n            ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n            if ix == 0:\n                break\n            name += SYMBOLS[ix]\n            context = context[1:] + [ix]\n        names.append(name)\n    return names\n\n\ndef dev_loss(prob_fn, words):\n    total, count = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = SYMBOLS.index(ch)\n            total -= math.log2(prob_fn(context)[ix])\n            count += 1\n            context = context[1:] + [ix]\n    return total / count\n",
       "test": 6,
       "symptom": "Logs in base 2."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_names(prob_fn, n, seed, T):\n    rng = np.random.default_rng(seed)\n    names = []\n    for _ in range(n):\n        context, name = [0, 0, 0], \"\"\n        while len(name) < 20:\n            p = np.asarray(prob_fn(context), dtype=float) ** (1 / T)\n            p = p / p.sum()\n            u = rng.random()\n            ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n            if ix == 0:\n                break\n            name += SYMBOLS[ix]\n            context = context[1:] + [ix]\n        names.append(name)\n    return names\n\n\ndef dev_loss(prob_fn, words):\n    total, count = 0.0, 0\n    context = [0, 0, 0]\n    for w in words:\n        for ch in w + \".\":\n            ix = SYMBOLS.index(ch)\n            total -= math.log(prob_fn(context)[ix])\n            count += 1\n            context = context[1:] + [ix]\n    return total / count\n",
+      "test": 8,
+      "symptom": "The context is not reset between names, so the next name starts after the last one's end mark."
      }
     ]
    },

@@ -992,9 +992,14 @@
       "call": "cells(bigram_counts(['zz']))",
       "expect": "[(0, 26, 1), (26, 0, 1), (26, 26, 1)]",
       "compare": "equal"
+     },
+     {
+      "call": "bigram_counts(['ab']).dtype.kind",
+      "expect": "'i'",
+      "compare": "equal"
      }
     ],
-    "how": "Python starts the first time you run code here, which takes a few seconds. Submit runs 6 hidden tests: two short planted lists, the whole names file (the total, n then end, start then a), and a name with a repeated pair. `cells(N)` lists the non-zero cells; each answer must equal the expected value exactly.",
+    "how": "Python starts the first time you run code here, which takes a few seconds. Submit runs 7 hidden tests: two short planted lists, the whole names file (the total, n then end, start then a), and a name with a repeated pair. The last checks that the table holds whole numbers. `cells(N)` lists the non-zero cells; each answer must equal the expected value exactly.",
     "prelude": "import numpy as np\n\nwords = open('names.txt').read().splitlines()\n\n\ndef cells(N):\n    # the non-zero cells of a table as (row, column, count)\n    return [(int(i), int(j), int(N[i, j])) for i, j in zip(*np.nonzero(N))]\n",
     "data": {
      "names.txt": "content/data/ai/names.txt"
@@ -1025,6 +1030,11 @@
       "source": "import numpy as np\n\n\ndef bigram_counts(words):\n    index = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\n    index[\".\"] = 0\n    N = np.zeros((27, 27), dtype=int)\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in set(zip(cs, cs[1:])):\n            N[index[a], index[b]] += 1\n    return N\n",
       "test": 2,
       "symptom": "Each pair counted once per name, not each time it occurs."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef bigram_counts(words):\n    index = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\n    index[\".\"] = 0\n    N = np.zeros((27, 27), dtype=float)\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            N[index[a], index[b]] += 1\n    return N\n",
+      "test": 7,
+      "symptom": "A float table: the counts are whole numbers, so the table should be too."
      }
     ]
    },

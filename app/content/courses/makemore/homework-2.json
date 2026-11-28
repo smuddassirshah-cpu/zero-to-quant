@@ -387,7 +387,7 @@
    "skills": [
     "mk-mlp"
    ],
-   "prose": "From a blank start, write the model of Bengio et al. (2003) for any sizes. `params` holds `C`, `W1`, `b1`, `W2` and `b2`; the supplied trained weights are in `trained` and the dev rows in `Xdev`, `Ydev`.",
+   "prose": "From a blank start, write the MLP language model in the style of Bengio et al. (2003) for any sizes. `params` holds `C`, `W1`, `b1`, `W2` and `b2`; the supplied trained weights are in `trained` and the dev rows in `Xdev`, `Ydev`.",
    "question": "Write `mlp_forward(params, X)` (logits), `mlp_loss(params, X, Y)` (mean cross-entropy in nats) and `n_params(block, emb, hidden, vocab)` (the number of weights).",
    "widget": {
     "kind": "code",
@@ -434,9 +434,17 @@
       "call": "round(mlp_loss(trained, Xdev, Ydev), 4)",
       "expect": "2.1609",
       "compare": "equal"
+     },
+     {
+      "call": "mlp_loss({**Q, \"b2\": Q[\"b2\"] + 1000}, XQ, YQ)",
+      "expect": "3.1301685615687287",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
      }
     ],
-    "how": "Submit runs 6 hidden tests: the parameter count for two sizes, and a planted model of block 2, embedding 3, hidden 4 and 5 symbols (its output shape and its loss within 1e-9). The last two score the supplied trained weights on the dev rows: below the bigram’s 2.4514, and to 4 places.",
+    "how": "Submit runs 7 hidden tests: the parameter count for two sizes, and a planted model of block 2, embedding 3, hidden 4 and 5 symbols (its output shape and its loss within 1e-9). The next two score the supplied trained weights on the dev rows: below the bigram’s 2.4514, and to 4 places. The last one runs the planted model with every logit raised by 1,000: the loss must not change.",
     "prelude": "import json\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ndev = [words[i] for i in perm[25626:28829]]\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\nXd, Yd = [], []\nfor w in dev:\n    ctx = [0, 0, 0]\n    for ch in w + \".\":\n        Xd.append(ctx)\n        Yd.append(INDEX[ch])\n        ctx = ctx[1:] + [INDEX[ch]]\nXdev, Ydev = np.array(Xd), np.array(Yd)\ntrained = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\ng = np.random.default_rng(21)\nQ = {\"C\": g.standard_normal((5, 3)), \"W1\": g.standard_normal((6, 4)), \"b1\": g.standard_normal(4), \"W2\": g.standard_normal((4, 5)), \"b2\": g.standard_normal(5)}\nXQ = np.array([[0, 1], [4, 4], [2, 3]])\nYQ = np.array([2, 0, 4])\n",
     "data": {
      "names.txt": "content/data/ai/names.txt",
@@ -463,6 +471,11 @@
       "source": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n\n\ndef mlp_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0]\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n\n\ndef n_params(block, emb, hidden, vocab):\n    return vocab * emb + block * emb * hidden + hidden * vocab\n",
       "test": 1,
       "symptom": "Leaves out the biases."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n\n\ndef mlp_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z).sum(axis=1))\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n\n\ndef n_params(block, emb, hidden, vocab):\n    return vocab * emb + block * emb * hidden + hidden + hidden * vocab + vocab\n",
+      "test": 7,
+      "symptom": "No maximum taken out: exp of large logits overflows."
      }
     ]
    },
