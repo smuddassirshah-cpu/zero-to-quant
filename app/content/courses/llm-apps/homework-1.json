@@ -1,0 +1,404 @@
+{
+ "id": "homework-1",
+ "course": "llm-apps",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-retriever",
+   "difficulty": 5,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "performance": "code",
+   "title": "A small retriever",
+   "prose": "Build the retrieval half of a research assistant from nothing. Write `build_index(docs)` and `query(index, text, k)`.\n\n- Words: lower-case runs of the letters a to z.\n- Chunks: windows of 12 words starting every 8 words (overlap 4); stop once a window reaches the last word.\n- Weights: drop the `STOP` words from each window, then TF-IDF over all windows (counts times $\\ln\\frac{1+n}{1+\\text{df}} + 1$, $n$ windows), each window scaled to length 1.\n- A query is weighted the same way with the windows' IDF. A document scores its best window's cosine.",
+   "question": "Return the ids of at most $k$ documents with a score above 0, best first, ties to the lower id; no known word gives [].",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport re\n\nSTOP = ('a', 'about', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'in', 'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'we', 'what', 'with')\n\n\ndef build_index(docs):\n    ...\n\n\ndef query(index, text, k):\n    ...\n",
+    "solution": "import math\nimport re\n\nSTOP = ('a', 'about', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'in', 'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'we', 'what', 'with')\n\n\ndef words(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef build_index(docs):\n    chunks, owner = [], []\n    for i, d in enumerate(docs):\n        w = words(d)\n        start = 0\n        while w:\n            chunks.append([t for t in w[start:start + 12] if t not in STOP])\n            owner.append(i)\n            if start + 12 >= len(w):\n                break\n            start += 8\n    vocab = sorted({t for c in chunks for t in c})\n    col = {t: j for j, t in enumerate(vocab)}\n    df = [0] * len(vocab)\n    for c in chunks:\n        for t in set(c):\n            df[col[t]] += 1\n    n = len(chunks)\n    idf = [math.log((1 + n) / (1 + x)) + 1 for x in df]\n    rows = []\n    for c in chunks:\n        r = {}\n        for t in c:\n            r[col[t]] = r.get(col[t], 0.0) + idf[col[t]]\n        length = math.sqrt(sum(v * v for v in r.values()))\n        rows.append({j: v / length for j, v in r.items()} if length > 0 else r)\n    return {\"col\": col, \"idf\": idf, \"rows\": rows, \"owner\": owner}\n\n\ndef query(index, text, k):\n    q = {}\n    for t in words(text):\n        if t in index[\"col\"] and t not in STOP:\n            j = index[\"col\"][t]\n            q[j] = q.get(j, 0.0) + index[\"idf\"][j]\n    length = math.sqrt(sum(v * v for v in q.values()))\n    if length == 0:\n        return []\n    best = {}\n    for row, doc in zip(index[\"rows\"], index[\"owner\"]):\n        s = sum(v * row.get(j, 0.0) for j, v in q.items()) / length\n        if s > 0 and s > best.get(doc, 0.0):\n            best[doc] = s\n    return sorted(best, key=lambda d: (-best[d], d))[:k]\n",
+    "examples": [
+     {
+      "setup": "IE = build_index(['oil prices fall', 'gilts rally'])",
+      "call": "query(IE, 'oil', 2)",
+      "expect": "[0]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "P = ['the board met in june and the auditors signed the accounts while the dividend held and the outlook stayed firm for the year though lenders flagged a covenant breach at corran', 'corran denies breach claim made today', 'a covenant was reset at dunmore']\nIP = build_index(P)",
+      "call": "query(IP, 'corran covenant breach', 3)",
+      "expect": "[0, 1, 2]"
+     },
+     {
+      "call": "query(IP, 'covenant', 1)",
+      "expect": "[2]"
+     },
+     {
+      "call": "query(IP, 'dunmore', 3)",
+      "expect": "[2]"
+     },
+     {
+      "call": "query(IP, 'lenders breach', 3)",
+      "expect": "[0, 1]"
+     },
+     {
+      "call": "query(IP, 'the and of', 3)",
+      "expect": "[]"
+     },
+     {
+      "setup": "import random\nfrom llm_apps_ops_l1 import load_notes, make_reports, COMPANIES, TOPICS\nNOTES = load_notes()['notes']\nREPS = make_reports(NOTES)\nDOCS = [r['text'] for r in REPS]\nWHERE = {i: ri for ri, r in enumerate(REPS) for i in r['ids']}\n_g = random.Random(99)\n_c = [(c, t) for c in COMPANIES for t in TOPICS]\n_g.shuffle(_c)\nHQ = []\nfor c, t in _c[:24]:\n    a, b = _g.sample(TOPICS[t], 2)\n    HQ.append(('what about %s and %s or %s' % (c, a, b), sorted({WHERE[n['id']] for n in NOTES if n['company'] == c and n['topic'] == t})))\nIX = build_index(DOCS)\ndef recall3():\n    return sum(len(set(query(IX, q, 3)) & set(r)) / len(r) for q, r in HQ) / len(HQ)\n",
+      "call": "query(IX, HQ[0][0], 3)",
+      "expect": "[19, 20, 0]"
+     },
+     {
+      "call": "query(IX, HQ[1][0], 3)",
+      "expect": "[28, 21, 12]"
+     },
+     {
+      "call": "query(IX, HQ[2][0], 3)",
+      "expect": "[26, 1, 8]"
+     },
+     {
+      "call": "query(IX, HQ[5][0], 30)[:6]",
+      "expect": "[18, 2, 1, 8, 21, 29]"
+     },
+     {
+      "call": "query(IX, 'dunmore', 0)",
+      "expect": "[]"
+     },
+     {
+      "call": "recall3() >= 0.5",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 11 hidden tests. Ten compare exact lists of document ids: five queries on a planted case of three documents, one of them all stop words, four questions on 30 long reports built from the 180-note file, and $k = 0$. The last needs mean recall at 3 of at least 0.5 over 24 hidden labelled questions on those reports.",
+    "mutants": [
+     {
+      "source": "import math\nimport re\n\nSTOP = ('a', 'about', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'in', 'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'we', 'what', 'with')\n\n\ndef words(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef build_index(docs):\n    chunks, owner = [], []\n    for i, d in enumerate(docs):\n        w = words(d)\n        start = 0\n        while w:\n            chunks.append([t for t in w if t not in STOP])\n            owner.append(i)\n            break\n    vocab = sorted({t for c in chunks for t in c})\n    col = {t: j for j, t in enumerate(vocab)}\n    df = [0] * len(vocab)\n    for c in chunks:\n        for t in set(c):\n            df[col[t]] += 1\n    n = len(chunks)\n    idf = [math.log((1 + n) / (1 + x)) + 1 for x in df]\n    rows = []\n    for c in chunks:\n        r = {}\n        for t in c:\n            r[col[t]] = r.get(col[t], 0.0) + idf[col[t]]\n        length = math.sqrt(sum(v * v for v in r.values()))\n        rows.append({j: v / length for j, v in r.items()} if length > 0 else r)\n    return {\"col\": col, \"idf\": idf, \"rows\": rows, \"owner\": owner}\n\n\ndef query(index, text, k):\n    q = {}\n    for t in words(text):\n        if t in index[\"col\"] and t not in STOP:\n            j = index[\"col\"][t]\n            q[j] = q.get(j, 0.0) + index[\"idf\"][j]\n    length = math.sqrt(sum(v * v for v in q.values()))\n    if length == 0:\n        return []\n    best = {}\n    for row, doc in zip(index[\"rows\"], index[\"owner\"]):\n        s = sum(v * row.get(j, 0.0) for j, v in q.items()) / length\n        if s > 0 and s > best.get(doc, 0.0):\n            best[doc] = s\n    return sorted(best, key=lambda d: (-best[d], d))[:k]\n",
+      "test": 1,
+      "symptom": "Indexes each document whole, with no chunks."
+     },
+     {
+      "source": "import math\nimport re\n\nSTOP = ('a', 'about', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'in', 'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'we', 'what', 'with')\n\n\ndef words(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef build_index(docs):\n    chunks, owner = [], []\n    for i, d in enumerate(docs):\n        w = words(d)\n        start = 0\n        while w:\n            chunks.append([t for t in w[start:start + 12] if t not in STOP])\n            owner.append(i)\n            if start + 12 >= len(w):\n                break\n            start += 8\n    vocab = sorted({t for c in chunks for t in c})\n    col = {t: j for j, t in enumerate(vocab)}\n    df = [0] * len(vocab)\n    for c in chunks:\n        for t in set(c):\n            df[col[t]] += 1\n    n = len(chunks)\n    idf = [math.log((1 + n) / (1 + x)) + 1 for x in df]\n    rows = []\n    for c in chunks:\n        r = {}\n        for t in c:\n            r[col[t]] = r.get(col[t], 0.0) + idf[col[t]]\n        length = math.sqrt(sum(v * v for v in r.values()))\n        rows.append({j: v / length for j, v in r.items()} if length > 0 else r)\n    return {\"col\": col, \"idf\": idf, \"rows\": rows, \"owner\": owner}\n\n\ndef query(index, text, k):\n    q = {}\n    for t in words(text):\n        if t in index[\"col\"] and t not in STOP:\n            j = index[\"col\"][t]\n            q[j] = q.get(j, 0.0) + index[\"idf\"][j]\n    length = math.sqrt(sum(v * v for v in q.values()))\n    if length == 0:\n        return []\n    best = {}\n    for row, doc in zip(index[\"rows\"], index[\"owner\"]):\n        s = sum(v * row.get(j, 0.0) for j, v in q.items()) / length\n        if doc not in best or s > best[doc]:\n            best[doc] = s\n    return sorted(best, key=lambda d: (-best[d], d))[:k]\n",
+      "test": 3,
+      "symptom": "Returns documents whose best score is 0."
+     },
+     {
+      "source": "import math\nimport re\n\nSTOP = ('a', 'about', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'in', 'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'we', 'what', 'with')\n\n\ndef words(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef build_index(docs):\n    chunks, owner = [], []\n    for i, d in enumerate(docs):\n        w = words(d)\n        start = 0\n        while w:\n            chunks.append(list(w[start:start + 12]))\n            owner.append(i)\n            if start + 12 >= len(w):\n                break\n            start += 8\n    vocab = sorted({t for c in chunks for t in c})\n    col = {t: j for j, t in enumerate(vocab)}\n    df = [0] * len(vocab)\n    for c in chunks:\n        for t in set(c):\n            df[col[t]] += 1\n    n = len(chunks)\n    idf = [math.log((1 + n) / (1 + x)) + 1 for x in df]\n    rows = []\n    for c in chunks:\n        r = {}\n        for t in c:\n            r[col[t]] = r.get(col[t], 0.0) + idf[col[t]]\n        length = math.sqrt(sum(v * v for v in r.values()))\n        rows.append({j: v / length for j, v in r.items()} if length > 0 else r)\n    return {\"col\": col, \"idf\": idf, \"rows\": rows, \"owner\": owner}\n\n\ndef query(index, text, k):\n    q = {}\n    for t in words(text):\n        if t in index[\"col\"]:\n            j = index[\"col\"][t]\n            q[j] = q.get(j, 0.0) + index[\"idf\"][j]\n    length = math.sqrt(sum(v * v for v in q.values()))\n    if length == 0:\n        return []\n    best = {}\n    for row, doc in zip(index[\"rows\"], index[\"owner\"]):\n        s = sum(v * row.get(j, 0.0) for j, v in q.items()) / length\n        if s > 0 and s > best.get(doc, 0.0):\n            best[doc] = s\n    return sorted(best, key=lambda d: (-best[d], d))[:k]\n",
+      "test": 2,
+      "symptom": "Keeps stop words."
+     },
+     {
+      "source": "import math\nimport re\n\nSTOP = ('a', 'about', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'in', 'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'we', 'what', 'with')\n\n\ndef words(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef build_index(docs):\n    chunks, owner = [], []\n    for i, d in enumerate(docs):\n        w = words(d)\n        start = 0\n        while w:\n            chunks.append([t for t in w[start:start + 12] if t not in STOP])\n            owner.append(i)\n            if start + 12 >= len(w):\n                break\n            start += 8\n    vocab = sorted({t for c in chunks for t in c})\n    col = {t: j for j, t in enumerate(vocab)}\n    df = [0] * len(vocab)\n    for c in chunks:\n        for t in set(c):\n            df[col[t]] += 1\n    n = len(chunks)\n    idf = [math.log((1 + n) / (1 + x)) + 1 for x in df]\n    rows = []\n    for c in chunks:\n        r = {}\n        for t in c:\n            r[col[t]] = r.get(col[t], 0.0) + idf[col[t]]\n        length = math.sqrt(sum(v * v for v in r.values()))\n        rows.append({j: v / length for j, v in r.items()} if length > 0 else r)\n    return {\"col\": col, \"idf\": idf, \"rows\": rows, \"owner\": owner}\n\n\ndef query(index, text, k):\n    q = {}\n    for t in words(text):\n        if t in index[\"col\"] and t not in STOP:\n            j = index[\"col\"][t]\n            q[j] = q.get(j, 0.0) + index[\"idf\"][j]\n    length = math.sqrt(sum(v * v for v in q.values()))\n    if length == 0:\n        return []\n    hits = []\n    for row, doc in zip(index[\"rows\"], index[\"owner\"]):\n        s = sum(v * row.get(j, 0.0) for j, v in q.items()) / length\n        if s > 0:\n            hits.append((-s, doc))\n    return [d for _, d in sorted(hits)][:k]\n",
+      "test": 4,
+      "symptom": "Lists a document once for every matching window."
+     },
+     {
+      "source": "import math\nimport re\n\nSTOP = ('a', 'about', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'in', 'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'we', 'what', 'with')\n\n\ndef words(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n\ndef build_index(docs):\n    chunks, owner = [], []\n    for i, d in enumerate(docs):\n        w = words(d)\n        start = 0\n        while w:\n            chunks.append([t for t in w[start:start + 12] if t not in STOP])\n            owner.append(i)\n            if start + 12 >= len(w):\n                break\n            start += 12\n    vocab = sorted({t for c in chunks for t in c})\n    col = {t: j for j, t in enumerate(vocab)}\n    df = [0] * len(vocab)\n    for c in chunks:\n        for t in set(c):\n            df[col[t]] += 1\n    n = len(chunks)\n    idf = [math.log((1 + n) / (1 + x)) + 1 for x in df]\n    rows = []\n    for c in chunks:\n        r = {}\n        for t in c:\n            r[col[t]] = r.get(col[t], 0.0) + idf[col[t]]\n        length = math.sqrt(sum(v * v for v in r.values()))\n        rows.append({j: v / length for j, v in r.items()} if length > 0 else r)\n    return {\"col\": col, \"idf\": idf, \"rows\": rows, \"owner\": owner}\n\n\ndef query(index, text, k):\n    q = {}\n    for t in words(text):\n        if t in index[\"col\"] and t not in STOP:\n            j = index[\"col\"][t]\n            q[j] = q.get(j, 0.0) + index[\"idf\"][j]\n    length = math.sqrt(sum(v * v for v in q.values()))\n    if length == 0:\n        return []\n    best = {}\n    for row, doc in zip(index[\"rows\"], index[\"owner\"]):\n        s = sum(v * row.get(j, 0.0) for j, v in q.items()) / length\n        if s > 0 and s > best.get(doc, 0.0):\n            best[doc] = s\n    return sorted(best, key=lambda d: (-best[d], d))[:k]\n",
+      "test": 6,
+      "symptom": "Steps windows by 12, so they do not overlap."
+     }
+    ],
+    "data": {
+     "llm_apps_ops_l1.py": "content/data/ai/llm_apps_ops_l1.py",
+     "llm-apps-notes.json": "content/data/ai/llm-apps-notes.json"
+    }
+   },
+   "feedback": {
+    "correct": "Your retriever matches on every planted case and clears the recall bar on the hidden questions.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "The planted breach sits in the last words of a long document: cut it into windows of 12 so the window holding the breach can win.",
+     "test-3": "Return only documents with a score above 0: 'dunmore' is in one document only.",
+     "test-2": "With STOP words left out, the short third document is the best match for 'covenant': drop STOP words from the windows and the query.",
+     "test-4": "List each document once, scored by its best window.",
+     "test-6": "Windows start every 8 words, so neighbours share 4: your second window starts at word 12."
+    }
+   },
+   "explain": {
+    "text": "Chunking lets a passage, not its whole document, win; stop words and the per-document best score keep the list honest. The same steps sit under any retrieval-augmented tool."
+   }
+  },
+  {
+   "id": "h-mrr-gap",
+   "difficulty": 4,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "title": "Reciprocal rank and a paired gap",
+   "prose": "A research lead wants two measures in the team's evaluation script. `reciprocal_rank(ranked, relevant)` scores one query. `paired_gap(scores_a, scores_b)` compares two retrievers' per-query scores, where `None` marks a query with nothing to find.",
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\ndef reciprocal_rank(ranked, relevant):\n    # 1 / rank of the first relevant id in ranked, 0.0 if none\n    ...\n\n\ndef paired_gap(scores_a, scores_b):\n    # (mean, standard error) of a - b over pairs where neither is None\n    ...\n",
+    "solution": "import math\n\n\ndef reciprocal_rank(ranked, relevant):\n    rel = set(relevant)\n    for i, d in enumerate(ranked):\n        if d in rel:\n            return 1 / (i + 1)\n    return 0.0\n\n\ndef paired_gap(scores_a, scores_b):\n    d = [a - b for a, b in zip(scores_a, scores_b) if a is not None and b is not None]\n    n = len(d)\n    m = sum(d) / n\n    sd = math.sqrt(sum((x - m) ** 2 for x in d) / (n - 1))\n    return m, sd / math.sqrt(n)\n",
+    "examples": [
+     {
+      "call": "reciprocal_rank([4, 9], [9])",
+      "expect": "0.5",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "reciprocal_rank([8, 3, 5], [5, 3])",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "reciprocal_rank([8, 3, 5], [1])",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "reciprocal_rank([2, 4], [2])",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "paired_gap([1, 0.5, 1, 0], [0.5, 0.5, 0, 0])",
+      "expect": "[0.375, 0.23935677693908453]",
+      "compare": "isclose"
+     },
+     {
+      "call": "paired_gap([1, None, 0.5], [0, 1, 0])",
+      "expect": "[0.75, 0.25]",
+      "compare": "isclose"
+     },
+     {
+      "call": "paired_gap([0.2, 0.4, 0.9], [0.4, 0.4, 0.4])[0]",
+      "expect": "0.09999999999999999",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests within relative $10^{-9}$. Three are reciprocal ranks: two relevant ids, none found, and a first hit at rank 1. Three are paired gaps: four pairs, pairs with a missing score, and a negative difference.",
+    "mutants": [
+     {
+      "source": "import math\n\n\ndef reciprocal_rank(ranked, relevant):\n    rel = set(relevant)\n    for i, d in enumerate(ranked):\n        if d in rel:\n            return 1 / i if i else 0.0\n    return 0.0\n\n\ndef paired_gap(scores_a, scores_b):\n    d = [a - b for a, b in zip(scores_a, scores_b) if a is not None and b is not None]\n    n = len(d)\n    m = sum(d) / n\n    sd = math.sqrt(sum((x - m) ** 2 for x in d) / (n - 1))\n    return m, sd / math.sqrt(n)\n",
+      "test": 1,
+      "symptom": "Uses the zero-based index as the rank."
+     },
+     {
+      "source": "import math\n\n\ndef reciprocal_rank(ranked, relevant):\n    rel = set(relevant)\n    for i, d in enumerate(ranked):\n        if d in rel:\n            return 1 / (i + 1)\n    return 0.0\n\n\ndef paired_gap(scores_a, scores_b):\n    d = [a - b for a, b in zip(scores_a, scores_b) if a is not None and b is not None]\n    n = len(d)\n    m = sum(d) / n\n    sd = math.sqrt(sum((x - m) ** 2 for x in d) / (n - 1))\n    return m, sd\n",
+      "test": 4,
+      "symptom": "Returns the standard deviation, not the standard error."
+     },
+     {
+      "source": "import math\n\n\ndef reciprocal_rank(ranked, relevant):\n    rel = set(relevant)\n    for i, d in enumerate(ranked):\n        if d in rel:\n            return 1 / (i + 1)\n    return 0.0\n\n\ndef paired_gap(scores_a, scores_b):\n    d = [(a or 0) - (b or 0) for a, b in zip(scores_a, scores_b)]\n    n = len(d)\n    m = sum(d) / n\n    sd = math.sqrt(sum((x - m) ** 2 for x in d) / (n - 1))\n    return m, sd / math.sqrt(n)\n",
+      "test": 5,
+      "symptom": "Treats a missing score as 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Both match on every test.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Ranks start at 1: the first relevant id here is at rank 2, so the answer is 0.5.",
+     "test-4": "The standard error divides the standard deviation by $\\sqrt n$.",
+     "test-5": "A pair with a missing score has no difference: leave it out rather than count it as 0."
+    }
+   },
+   "explain": {
+    "text": "A reciprocal rank uses the first hit only; the paired gap's standard error is the $n - 1$ standard deviation of the differences over $\\sqrt n$, with missing pairs left out."
+   }
+  },
+  {
+   "id": "h-pipeline",
+   "difficulty": 3,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "title": "From question to passages",
+   "prose": "A retrieval tool must be built once and then answer questions. Two of the steps below do not belong.",
+   "question": "Put the steps in order and leave out the two that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Cut each document into overlapping chunks"
+     },
+     {
+      "id": "s2",
+      "text": "Fit the IDF on the chunks, with stop words left out"
+     },
+     {
+      "id": "s3",
+      "text": "Store each chunk's TF-IDF vector, scaled to length 1"
+     },
+     {
+      "id": "s4",
+      "text": "Turn the question into a vector with the stored IDF"
+     },
+     {
+      "id": "s5",
+      "text": "Score every chunk by its cosine with the question"
+     },
+     {
+      "id": "s6",
+      "text": "Return the top $k$ chunks' passages, best first"
+     },
+     {
+      "id": "d1",
+      "text": "Fit a fresh IDF on the question's own words",
+      "why": "The question's own df is 1 for every word, which would weigh them all alike. The IDF comes from the chunks."
+     },
+     {
+      "id": "d2",
+      "text": "Rank chunks by their raw dot product",
+      "why": "The raw dot product rewards long chunks; rank by cosine."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Index first (chunks, IDF, vectors), then per question: vector, scores, top $k$.",
+    "generic": "Not quite. Build the index before any question arrives.",
+    "byKey": {
+     "d1": "The question's own words cannot give an IDF: every df is 1. Reuse the chunks' IDF.",
+     "d2": "The dot product favours long chunks; use the cosine."
+    }
+   },
+   "explain": {
+    "text": "The index is built once: chunk, fit IDF, store unit vectors. Each question then reuses that IDF, is scored by cosine and returns the top $k$."
+   }
+  },
+  {
+   "id": "h-confident",
+   "difficulty": 4,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "title": "A confident wrong answer",
+   "kind": "longform",
+   "prompt": "An analyst asks the desk's research assistant, a language model fed the top 3 passages from a TF-IDF search over 4,000 broker notes, whether a company's lenders have waived a covenant. It answers 'no' with confidence and cites two notes from last year; a waiver note from last month exists. Explain how much of the failure may be retrieval, how you would measure it, and what you would change.",
+   "model": "**Retrieval or reading.** The model can only use what it is handed. If the waiver note was not in the top 3, the failure is retrieval; if it was there and the model ignored it, the failure is reading. Check first: run the same query and see where the waiver note ranks.\n\n**Likely retrieval causes.** The note may say 'lenders agreed to relax the leverage test' without the word 'waive', and word overlap misses synonyms. A long note indexed as one vector may bury the passage. Old notes that share more words can outrank a newer one.\n\n**Measure.** Build labelled queries: 50 to 100 real questions with the passages that answer them, written by analysts and kept apart from any tuning. Report recall at 3 (the model reads 3) and MRR, with a standard error. Compare any change against the current search by per-query differences, not two headline numbers.\n\n**Change.** Chunk notes into overlapping windows. Add an embedding search (LSA or a trained model) alongside TF-IDF so synonyms match. Add a date filter or recency boost when the question is about now, and return 'nothing found' when no score clears a floor. Re-measure on the held-out queries after each change.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Separates retrieval failure (the note not in the top 3) from reading failure (in the top 3 but ignored), and says how to tell which"
+    },
+    {
+     "points": 2,
+     "text": "Names at least two plausible retrieval causes, such as synonyms, a whole note as one vector, or recency"
+    },
+    {
+     "points": 2,
+     "text": "Proposes labelled queries kept apart from tuning, and recall at the number of passages read (3)"
+    },
+    {
+     "points": 2,
+     "text": "Compares changes by per-query differences with a standard error, not two headline numbers"
+    },
+    {
+     "points": 2,
+     "text": "Proposes concrete changes: chunking, an embedding search, a date filter or a 'nothing found' floor, each re-measured"
+    }
+   ]
+  },
+  {
+   "id": "h-log",
+   "difficulty": 3,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "title": "Reading a search log",
+   "prose": "A search tool's log covers 40 questions, one needed note each. The note was first at rank 1 for 18 questions, at rank 2 for 10 and at rank 3 for 4. For the other 8 it was outside the top 3 or never found.",
+   "question": "What is recall at 3 over the 40 questions? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "top1",
+      "value": 0.45,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "missed",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(18 + 10 + 4)/40 = 0.80$.",
+    "generic": "Not quite. Count questions whose note is in the top 3.",
+    "byKey": {
+     "top1": "0.45 is recall at 1.",
+     "missed": "0.2 is the share missed."
+    }
+   },
+   "explain": {
+    "text": "$18 + 10 + 4 = 32$ of 40 questions have their note in the top 3, so recall at 3 is 0.80."
+   }
+  },
+  {
+   "id": "h-chunk-size",
+   "difficulty": 4,
+   "skills": [
+    "llm-retrieve"
+   ],
+   "title": "Choosing a chunk size",
+   "prose": "A language model reads 4 chunks per question. Annual reports are 30,000 words; most answers sit in one paragraph of about 150 words. Labelled questions show recall at 4 of 0.81 with 300-word chunks and 0.62 with 3,000-word chunks.",
+   "question": "Which choice is best supported?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "300",
+      "text": "300-word chunks with some overlap, re-checked on held-out questions",
+      "correct": true
+     },
+     {
+      "id": "3000",
+      "text": "3,000-word chunks, since the model then sees more text",
+      "why": "Longer chunks dilute the paragraph's words, which is why recall fell to 0.62."
+     },
+     {
+      "id": "whole",
+      "text": "One vector per report, so nothing is cut",
+      "why": "A paragraph in 30,000 words is a sliver of the vector; it would rarely rank."
+     },
+     {
+      "id": "30",
+      "text": "30-word chunks, the shorter the better",
+      "why": "Too short loses the context around an answer and cuts paragraphs apart; it needs measuring too."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Chunks near the size of an answer score best, and the figure should hold on fresh questions.",
+    "generic": "Not quite. Which size matched the answers, and which recall was higher?"
+   },
+   "explain": {
+    "text": "300-word chunks sit near the 150-word answers and gave recall 0.81 against 0.62. Overlap protects answers on a boundary; held-out questions guard against having tuned the size to these ones."
+   }
+  }
+ ]
+}
