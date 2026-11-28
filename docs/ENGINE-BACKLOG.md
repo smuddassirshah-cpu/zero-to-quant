@@ -3018,3 +3018,11 @@ Status block (engine pass AK):
 - 1239: done. `load_digits()` loads offline in Pyodide (scikit-learn 1.6.1, 1,797 by 64); credit line in `content/data/ai/README.md`.
 - 1240: done, nothing added. The drill form already supports timed from-scratch NumPy tasks; the recipe and limits are in AUTHORING section 5 (no `budget` on a drill, `pattern` optional, no ML slug in `PATTERNS`).
 - 1241: done. `params.length` on `series`, documented in README-B.
+
+### Engine pass AK (reachable feedback): `docs/reports/engine-pass-ak-reachable.md`
+Source: finding class in `docs/reviews/review-exam-2.8.md`, `review-nn-train-4.md`, `review-exam-1.12.md` (SESSION PROTOCOL 6).
+
+1269. [Must] Feedback no learner can see: `grade-all.mjs --code` warns for a `byKey["test-N"]` line no mutant first fails and for a test a mutant first fails with no line (`--strict-feedback` fails them); validator check for slips on numeric and choice widgets only if cheap and precise; AUTHORING section 9.
+
+Status block (engine pass AK, reachable):
+- 1269: done. See the report.
