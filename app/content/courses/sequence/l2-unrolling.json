@@ -1,0 +1,1237 @@
+{
+ "id": "l2-unrolling",
+ "course": "sequence",
+ "title": "Backprop through time",
+ "minutes": 14,
+ "objectives": [
+  "Unroll a recurrent net and compute its gradient through time with the array autograd."
+ ],
+ "skills": [
+  "sqn-rnn"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The loop, laid out",
+   "prose": "Lay the loop of lesson 1 out in time and it becomes a chain: $h_0 \\to h_1 \\to h_2 \\to h_3 \\to h_4$, each arrow the same weight $w$. Take $h_t = w\\,h_{t-1} + x_t$ with $w = 0.5$, $h_0 = 2$ and inputs $1, 1, 0, -1$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 240,
+     "nodes": [
+      {
+       "id": "h0",
+       "label": "$h_0$",
+       "x": 0.08,
+       "y": 0.72
+      },
+      {
+       "id": "h1",
+       "label": "$h_1$",
+       "x": 0.29,
+       "y": 0.72
+      },
+      {
+       "id": "h2",
+       "label": "$h_2$",
+       "x": 0.5,
+       "y": 0.72
+      },
+      {
+       "id": "h3",
+       "label": "$h_3$",
+       "x": 0.71,
+       "y": 0.72
+      },
+      {
+       "id": "h4",
+       "label": "$h_4$",
+       "x": 0.9199999999999999,
+       "y": 0.72
+      },
+      {
+       "id": "x1",
+       "label": "$x_1 = 1$",
+       "shape": "pill",
+       "x": 0.29,
+       "y": 0.12
+      },
+      {
+       "id": "x2",
+       "label": "$x_2 = 1$",
+       "shape": "pill",
+       "x": 0.5,
+       "y": 0.12
+      },
+      {
+       "id": "x3",
+       "label": "$x_3 = 0$",
+       "shape": "pill",
+       "x": 0.71,
+       "y": 0.12
+      },
+      {
+       "id": "x4",
+       "label": "$x_4 = −1$",
+       "shape": "pill",
+       "x": 0.9199999999999999,
+       "y": 0.12
+      }
+     ],
+     "edges": [
+      {
+       "from": "h0",
+       "to": "h1",
+       "label": "$w$"
+      },
+      {
+       "from": "h1",
+       "to": "h2",
+       "label": "$w$"
+      },
+      {
+       "from": "h2",
+       "to": "h3",
+       "label": "$w$"
+      },
+      {
+       "from": "h3",
+       "to": "h4",
+       "label": "$w$"
+      },
+      {
+       "from": "x1",
+       "to": "h1"
+      },
+      {
+       "from": "x2",
+       "to": "h2"
+      },
+      {
+       "from": "x3",
+       "to": "h3"
+      },
+      {
+       "from": "x4",
+       "to": "h4"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "h",
+       "colour": 3
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "h0": "2"
+     }
+    }
+   },
+   "question": "Fill in the forward values $h_1$ to $h_4$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "state",
+     "value"
+    ],
+    "rows": [
+     [
+      "$h_1$",
+      {
+       "edit": true,
+       "answer": 2.0,
+       "tol": {
+        "abs": 0.001
+       },
+       "bind": "values.h1"
+      }
+     ],
+     [
+      "$h_2$",
+      {
+       "edit": true,
+       "answer": 2.0,
+       "tol": {
+        "abs": 0.001
+       },
+       "bind": "values.h2"
+      }
+     ],
+     [
+      "$h_3$",
+      {
+       "edit": true,
+       "answer": 1.0,
+       "tol": {
+        "abs": 0.001
+       },
+       "bind": "values.h3"
+      }
+     ],
+     [
+      "$h_4$",
+      {
+       "edit": true,
+       "answer": -0.5,
+       "tol": {
+        "abs": 0.001
+       },
+       "bind": "values.h4",
+       "wrong": [
+        {
+         "id": "nowt4",
+         "value": 0.0,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each state halves the one before and adds its input."
+    },
+    {
+     "rung": "point",
+     "text": "$h_1 = 0.5 \\times 2 + 1$.",
+     "highlight": [
+      "h1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then $h_2 = 0.5 \\times 2 + 1$, $h_3 = 0.5 \\times 2 + 0$, $h_4 = 0.5 \\times 1 - 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$h_1 = 2$, $h_2 = 2$, $h_3 = 1$, $h_4 = -0.5$.",
+    "generic": "Not quite. Halve the state on the left, then add the input below.",
+    "byKey": {
+     "nowt4": "You added $h_3$ in full: $1 - 1 = 0$. Halve it first: $0.5 - 1 = -0.5$."
+    }
+   },
+   "explain": {
+    "text": "The chain is the loop run four times: $2, 2, 1, -0.5$. It is a four-layer network whose layers all share $w$.",
+    "canvas": {
+     "values": {
+      "h0": "2",
+      "h1": "2",
+      "h2": "2",
+      "h3": "1",
+      "h4": "−0.5"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "One term from every step",
+   "prose": "$w$ acts at all four arrows, so $h_4$ depends on it four times. Nudge the $w$ of arrow $k$ alone: $h_k$ moves by $h_{k-1}$, and that change is carried to $h_4$ by the later arrows, $w^{4-k}$. The table gives the four terms.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "arrow $k$",
+      "$h_{k-1}$",
+      "$w^{4-k}$",
+      "term"
+     ],
+     "rows": [
+      [
+       "1",
+       "2",
+       "0.125",
+       "0.25"
+      ],
+      [
+       "2",
+       "2",
+       "0.25",
+       "0.5"
+      ],
+      [
+       "3",
+       "2",
+       "0.5",
+       "1"
+      ],
+      [
+       "4",
+       "1",
+       "1",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "What is $\\partial h_4/\\partial w$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.75,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "last",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nopow",
+      "value": 7.0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add a term for every arrow, not just the last."
+    },
+    {
+     "rung": "point",
+     "text": "The last term is $h_3 \\times 1 = 1$.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.25 + 0.5 + 1 + 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.25 + 0.5 + 1 + 1 = 2.75$.",
+    "generic": "Not quite. Add the four terms.",
+    "byKey": {
+     "last": "You kept only the last arrow's term, $h_3 = 1$. $w$ also acts at the three earlier arrows.",
+     "nopow": "You added the $h_{k-1}$ without carrying them forward. Each earlier change shrinks by $w$ per arrow."
+    }
+   },
+   "explain": {
+    "text": "The gradient collects one term per step, $\\sum_k w^{4-k}\\,h_{k-1} = 0.25 + 0.5 + 1 + 1 = 2.75$. A shared weight's gradient is the sum of its gradients at each use, as gradients add at a branch in backprop L2. Running that sum backwards through time is **backprop through time**."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "How far back a change reaches",
+   "prose": "Now move $h_0$ itself. Each arrow multiplies a change by $w$, so for this linear net $\\partial h_T/\\partial h_0 = w^T$. The lower line under each node is $\\partial h_4/\\partial h_t$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 240,
+     "nodes": [
+      {
+       "id": "h0",
+       "label": "$h_0$",
+       "x": 0.08,
+       "y": 0.72
+      },
+      {
+       "id": "h1",
+       "label": "$h_1$",
+       "x": 0.29,
+       "y": 0.72
+      },
+      {
+       "id": "h2",
+       "label": "$h_2$",
+       "x": 0.5,
+       "y": 0.72
+      },
+      {
+       "id": "h3",
+       "label": "$h_3$",
+       "x": 0.71,
+       "y": 0.72
+      },
+      {
+       "id": "h4",
+       "label": "$h_4$",
+       "x": 0.9199999999999999,
+       "y": 0.72
+      },
+      {
+       "id": "x1",
+       "label": "$x_1 = 1$",
+       "shape": "pill",
+       "x": 0.29,
+       "y": 0.12
+      },
+      {
+       "id": "x2",
+       "label": "$x_2 = 1$",
+       "shape": "pill",
+       "x": 0.5,
+       "y": 0.12
+      },
+      {
+       "id": "x3",
+       "label": "$x_3 = 0$",
+       "shape": "pill",
+       "x": 0.71,
+       "y": 0.12
+      },
+      {
+       "id": "x4",
+       "label": "$x_4 = −1$",
+       "shape": "pill",
+       "x": 0.9199999999999999,
+       "y": 0.12
+      }
+     ],
+     "edges": [
+      {
+       "from": "h0",
+       "to": "h1",
+       "label": "$w$"
+      },
+      {
+       "from": "h1",
+       "to": "h2",
+       "label": "$w$"
+      },
+      {
+       "from": "h2",
+       "to": "h3",
+       "label": "$w$"
+      },
+      {
+       "from": "h3",
+       "to": "h4",
+       "label": "$w$"
+      },
+      {
+       "from": "x1",
+       "to": "h1"
+      },
+      {
+       "from": "x2",
+       "to": "h2"
+      },
+      {
+       "from": "x3",
+       "to": "h3"
+      },
+      {
+       "from": "x4",
+       "to": "h4"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "h",
+       "colour": 3
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "h0": "2",
+      "h1": "2",
+      "h2": "2",
+      "h3": "1",
+      "h4": "−0.5"
+     },
+     "values2": {
+      "h4": "1",
+      "h3": "0.5",
+      "h2": "0.25",
+      "h1": "0.125",
+      "h0": "?"
+     }
+    }
+   },
+   "question": "What is $\\partial h_4/\\partial h_0$ here?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0625,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 2.0,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the lower line from right to left."
+    },
+    {
+     "rung": "point",
+     "text": "Each step left halves it.",
+     "highlight": [
+      "h1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.5^4$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.5^4 = 0.0625$: a change in $h_0$ reaches $h_4$ at a sixteenth of its size.",
+    "generic": "Not quite. Multiply by $w$ once per arrow.",
+    "byKey": {
+     "linear": "You multiplied $4 \\times 0.5$. The factors multiply, they do not add.",
+     "one": "That is one arrow. There are four."
+    }
+   },
+   "explain": {
+    "text": "Four arrows, four factors of $w$: $0.5^4 = 0.0625$. The same product, $w^T$, decides how far back a gradient reaches. Lesson 3 is about what that does as $T$ grows.",
+    "canvas": {
+     "values2": {
+      "h4": "1",
+      "h3": "0.5",
+      "h2": "0.25",
+      "h1": "0.125",
+      "h0": "0.0625"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The autograd unrolls it for you",
+   "prose": "Write `unroll(x, params)`: from $h_0 = 0$, run $h_t = \\tanh(w\\,h_{t-1} + u\\,x_t)$, forecast $x_{t+1}$ by $v\\,h_t$, and return the mean squared error as a number. Build it from `Tensor`s in a loop, so `bptt_grad(x, params)` can call `backward()` once and read each gradient.",
+   "question": "Complete `unroll` and `bptt_grad`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\n\n\ndef unroll(x, params):\n    # h_0 = 0; h_t = tanh(w h_{t-1} + u x_t); forecast x_{t+1} by v h_t\n    # loss = mean of the squared errors of the len(x) - 1 forecasts, built from Tensors\n    ...\n\n\ndef bptt_grad(x, params):\n    # one backward() through the unrolled graph; return {'w': ..., 'u': ..., 'v': ...}\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\n\n\ndef _graph(x, params):\n    p = {k: Tensor(v) for k, v in params.items()}\n    h = Tensor(0.0)\n    err = []\n    for t in range(len(x) - 1):\n        h = (p['w'] * h + p['u'] * x[t]).tanh()\n        err.append((p['v'] * h - x[t + 1]) ** 2)\n    loss = err[0]\n    for e in err[1:]:\n        loss = loss + e\n    return loss / len(err), p\n\n\ndef unroll(x, params):\n    loss, _ = _graph(x, params)\n    return loss.item()\n\n\ndef bptt_grad(x, params):\n    loss, p = _graph(x, params)\n    loss.backward()\n    return {k: float(t.grad) for k, t in p.items()}\n",
+    "prelude": "import numpy as np\nfrom autograd import Tensor\n\nx_plant = [0.5, -1.0, 0.8, 0.3, -0.4, 1.2]\np_plant = {'w': 0.7, 'u': 1.1, 'v': 0.9}\n\n\ndef num_grad(f, params, eps=1e-6):\n    out = {}\n    for k in params:\n        up = dict(params); up[k] = params[k] + eps\n        dn = dict(params); dn[k] = params[k] - eps\n        out[k] = (f(up) - f(dn)) / (2 * eps)\n    return out\n\n\ndef rel_err(a, b):\n    worst = max(abs(a[k] - b[k]) for k in a)\n    scale = max(1e-12, max(abs(v) for v in list(a.values()) + list(b.values())))\n    return worst / scale\n\n\ndef ar_series(n, seed):\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = 0.8 * x[t - 1] + e[t]\n    return x.tolist()\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py"
+    },
+    "examples": [
+     {
+      "call": "unroll(x_plant, p_plant)",
+      "compare": "isclose",
+      "expect": "1.2703133441883718"
+     }
+    ],
+    "tests": [
+     {
+      "call": "unroll(x_plant, p_plant)",
+      "compare": "isclose",
+      "expect": "1.2703133441883718"
+     },
+     {
+      "call": "unroll([1.0, 0.0], {\"w\": 0.3, \"u\": 2.0, \"v\": 1.0})",
+      "compare": "isclose",
+      "expect": "0.9293491751468356"
+     },
+     {
+      "call": "bptt_grad(x_plant, p_plant)",
+      "compare": "isclose",
+      "expect": "{'w': -0.40170482377259437, 'u': 0.6058779298408007, 'v': 0.8741793681544523}"
+     },
+     {
+      "call": "rel_err(bptt_grad(x_plant, p_plant), num_grad(lambda q: unroll(x_plant, q), p_plant)) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "xs = ar_series(40, 3)",
+      "call": "bptt_grad(xs, {\"w\": 0.5, \"u\": 0.8, \"v\": 1.2})",
+      "compare": "isclose",
+      "expect": "{'w': 0.11985964438634218, 'u': -0.130294706762628, 'v': -0.09711616558696817}"
+     },
+     {
+      "call": "bptt_grad([2.0, 1.0], {\"w\": 0.9, \"u\": 0.5, \"v\": 1.0})",
+      "compare": "isclose",
+      "expect": "{'w': 0.0, 'u': -0.4004973495576554, 'v': -0.363136995139582}"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, compared to $10^{-9}$. Test 4 compares your gradients with central differences of your own `unroll` (relative error under $10^{-6}$); test 6 is a series of two days, one forecast.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef _graph(x, params):\n    p = {k: Tensor(v) for k, v in params.items()}\n    h = Tensor(0.0)\n    err = []\n    for t in range(len(x) - 1):\n        h = (p['w'] * h + p['u'] * x[t]).tanh()\n        err.append((p['v'] * h - x[t + 1]) ** 2)\n    return err[-1], p\n\n\ndef unroll(x, params):\n    loss, _ = _graph(x, params)\n    return loss.item()\n\n\ndef bptt_grad(x, params):\n    loss, p = _graph(x, params)\n    loss.backward()\n    return {k: float(t.grad) for k, t in p.items()}\n",
+      "test": 1,
+      "symptom": "Scores only the last forecast, so the gradient sees one step."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef _graph(x, params):\n    p = {k: Tensor(v) for k, v in params.items()}\n    h = Tensor(0.0)\n    err = []\n    for t in range(len(x) - 1):\n        h = (p['w'] * Tensor(h.data) + p['u'] * x[t]).tanh()\n        err.append((p['v'] * h - x[t + 1]) ** 2)\n    loss = err[0]\n    for e in err[1:]:\n        loss = loss + e\n    return loss / len(err), p\n\n\ndef unroll(x, params):\n    loss, _ = _graph(x, params)\n    return loss.item()\n\n\ndef bptt_grad(x, params):\n    loss, p = _graph(x, params)\n    loss.backward()\n    return {k: float(t.grad) for k, t in p.items()}\n",
+      "test": 3,
+      "symptom": "Rebuilds the state as a fresh Tensor each step, cutting the graph between steps."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef _graph(x, params):\n    p = {k: Tensor(v) for k, v in params.items()}\n    h = Tensor(0.0)\n    err = []\n    for t in range(len(x) - 1):\n        h = (p['w'] * h + p['u'] * x[t]).tanh()\n        err.append((p['v'] * h - x[t]) ** 2)\n    loss = err[0]\n    for e in err[1:]:\n        loss = loss + e\n    return loss / len(err), p\n\n\ndef unroll(x, params):\n    loss, _ = _graph(x, params)\n    return loss.item()\n\n\ndef bptt_grad(x, params):\n    loss, p = _graph(x, params)\n    loss.backward()\n    return {k: float(t.grad) for k, t in p.items()}\n",
+      "test": 1,
+      "symptom": "Forecasts today instead of tomorrow."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Make `w`, `u` and `v` Tensors once, outside the loop."
+    },
+    {
+     "rung": "point",
+     "text": "In the loop, keep `h` a Tensor: each new `h` is built from the old one, so the graph is the unrolled chain."
+    },
+    {
+     "rung": "step",
+     "text": "Add the squared errors into one Tensor, divide by their number, call `backward()`, and read `.grad` of each parameter."
+    }
+   ],
+   "feedback": {
+    "correct": "One `backward()` runs back through every step and adds each use of $w$ into its gradient.",
+    "generic": "Not yet. Keep the state a Tensor that every step builds on.",
+    "byKey": {
+     "test-1": "The loss is the mean over all forecasts of tomorrow, not today and not the last one alone.",
+     "test-3": "The gradient is wrong while the loss is right. Do not rebuild `h` from `h.data`: that cuts the chain."
+    }
+   },
+   "explain": {
+    "text": "The loop builds the unrolled chain as a graph. `backward()` visits it from the loss to $h_1$, so each use of $w$ adds its share, the sum you formed by hand. Test 4 checks it against central differences."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Check the gradient by nudging",
+   "prose": "Never trust a backward pass you have not checked. On the planted series of the code screen, the loss is 1.274330 at $w = 0.69$ and 1.266296 at $w = 0.71$, with $u$ and $v$ held fixed.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$w$",
+      "loss"
+     ],
+     "rows": [
+      [
+       "0.69",
+       "1.274330"
+      ],
+      [
+       "0.70",
+       "?"
+      ],
+      [
+       "0.71",
+       "1.266296"
+      ]
+     ]
+    }
+   },
+   "question": "What is the central-difference estimate of $\\partial L/\\partial w$ at $w = 0.7$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.4017,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.4017,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "one",
+      "value": -0.2008,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The slope between the two nudged points."
+    },
+    {
+     "rung": "point",
+     "text": "Rise over run: the change in loss over 0.02.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(1.266296 - 1.274330)/0.02$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(1.266296 - 1.274330)/0.02 = -0.4017$, matching `bptt_grad` to 4 places.",
+    "generic": "Not quite. Divide the change in loss by the change in $w$.",
+    "byKey": {
+     "sign": "You subtracted the wrong way round. The loss falls as $w$ rises, so the slope is negative.",
+     "one": "You divided by 0.04. The two points are 0.02 apart."
+    }
+   },
+   "explain": {
+    "text": "$(1.266296 - 1.274330)/0.02 = -0.4017$; the autograd gives $-0.401705$. Two routes agreeing to 4 places is the evidence that the backward pass is right. `autograd.grad_check` does the same with a nudge of $10^-5$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Cutting the chain",
+   "prose": "A series of a million steps makes a graph of a million steps. **Truncated backprop through time** cuts it every $K$ steps: the state carries on forward, but the backward pass stops at each cut. Write `truncated_bptt(x, params, K)`: replace `h` by `Tensor(h.data)` before step $K$, $2K$, and so on.",
+   "question": "Complete `truncated_bptt`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\n\n\ndef truncated_bptt(x, params, K):\n    # as bptt_grad, but before every K-th step (t = K, 2K, ...) replace h by Tensor(h.data):\n    # the forward values are unchanged, the backward pass stops there\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\n\n\ndef truncated_bptt(x, params, K):\n    p = {k: Tensor(v) for k, v in params.items()}\n    h = Tensor(0.0)\n    err = []\n    for t in range(len(x) - 1):\n        if t > 0 and t % K == 0:\n            h = Tensor(h.data)\n        h = (p['w'] * h + p['u'] * x[t]).tanh()\n        err.append((p['v'] * h - x[t + 1]) ** 2)\n    loss = err[0]\n    for e in err[1:]:\n        loss = loss + e\n    (loss / len(err)).backward()\n    return {k: float(t.grad) for k, t in p.items()}\n",
+    "prelude": "import numpy as np\nfrom autograd import Tensor\n\nx_plant = [0.5, -1.0, 0.8, 0.3, -0.4, 1.2]\np_plant = {'w': 0.7, 'u': 1.1, 'v': 0.9}\n\n\ndef num_grad(f, params, eps=1e-6):\n    out = {}\n    for k in params:\n        up = dict(params); up[k] = params[k] + eps\n        dn = dict(params); dn[k] = params[k] - eps\n        out[k] = (f(up) - f(dn)) / (2 * eps)\n    return out\n\n\ndef rel_err(a, b):\n    worst = max(abs(a[k] - b[k]) for k in a)\n    scale = max(1e-12, max(abs(v) for v in list(a.values()) + list(b.values())))\n    return worst / scale\n\n\ndef ar_series(n, seed):\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = 0.8 * x[t - 1] + e[t]\n    return x.tolist()\n\n\n\n\ndef _graph(x, params):\n    p = {k: Tensor(v) for k, v in params.items()}\n    h = Tensor(0.0)\n    err = []\n    for t in range(len(x) - 1):\n        h = (p['w'] * h + p['u'] * x[t]).tanh()\n        err.append((p['v'] * h - x[t + 1]) ** 2)\n    loss = err[0]\n    for e in err[1:]:\n        loss = loss + e\n    return loss / len(err), p\n\n\ndef bptt_grad(x, params):\n    loss, p = _graph(x, params)\n    loss.backward()\n    return {k: float(t.grad) for k, t in p.items()}\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py"
+    },
+    "examples": [
+     {
+      "call": "truncated_bptt(x_plant, p_plant, 2)",
+      "compare": "isclose",
+      "expect": "{'w': -0.3978732851357498, 'u': 0.7812510235671256, 'v': 0.8741793681544523}"
+     }
+    ],
+    "tests": [
+     {
+      "call": "truncated_bptt(x_plant, p_plant, 2)",
+      "compare": "isclose",
+      "expect": "{'w': -0.3978732851357498, 'u': 0.7812510235671256, 'v': 0.8741793681544523}"
+     },
+     {
+      "call": "truncated_bptt(x_plant, p_plant, 100)",
+      "compare": "isclose",
+      "expect": "{'w': -0.40170482377259437, 'u': 0.6058779298408007, 'v': 0.8741793681544523}"
+     },
+     {
+      "call": "truncated_bptt(x_plant, p_plant, 1)",
+      "compare": "isclose",
+      "expect": "{'w': -0.31472892173785816, 'u': 0.7537911102087399, 'v': 0.8741793681544523}"
+     },
+     {
+      "setup": "xs = ar_series(40, 3)",
+      "call": "truncated_bptt(xs, {\"w\": 0.5, \"u\": 0.8, \"v\": 1.2}, 10)",
+      "compare": "isclose",
+      "expect": "{'w': 0.09507562536714251, 'u': -0.1397042716240489, 'v': -0.09711616558696817}"
+     },
+     {
+      "call": "truncated_bptt(x_plant, p_plant, 3)",
+      "compare": "isclose",
+      "expect": "{'w': -0.40034733333970124, 'u': 0.6043100910675944, 'v': 0.8741793681544523}"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests, compared to $10^{-9}$. `bptt_grad` (the full version) and `ar_series` are defined for you; test 2 checks that a window longer than the series gives the full gradient.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef truncated_bptt(x, params, K):\n    p = {k: Tensor(v) for k, v in params.items()}\n    h = Tensor(0.0)\n    err = []\n    for t in range(len(x) - 1):\n        h = (p['w'] * h + p['u'] * x[t]).tanh()\n        err.append((p['v'] * h - x[t + 1]) ** 2)\n    loss = err[0]\n    for e in err[1:]:\n        loss = loss + e\n    (loss / len(err)).backward()\n    return {k: float(t.grad) for k, t in p.items()}\n",
+      "test": 1,
+      "symptom": "Never cuts: the full gradient through time."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef truncated_bptt(x, params, K):\n    p = {k: Tensor(v) for k, v in params.items()}\n    h = Tensor(0.0)\n    err = []\n    for t in range(len(x) - 1):\n        if t > 0 and t % K == 0:\n            h = Tensor(0.0)\n        h = (p['w'] * h + p['u'] * x[t]).tanh()\n        err.append((p['v'] * h - x[t + 1]) ** 2)\n    loss = err[0]\n    for e in err[1:]:\n        loss = loss + e\n    (loss / len(err)).backward()\n    return {k: float(t.grad) for k, t in p.items()}\n",
+      "test": 1,
+      "symptom": "Resets the state to 0 at each cut, which changes the forward pass as well."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef truncated_bptt(x, params, K):\n    p = {k: Tensor(v) for k, v in params.items()}\n    h = Tensor(0.0)\n    err = []\n    for t in range(len(x) - 1):\n        if t % K == K - 1:\n            h = Tensor(h.data)\n        h = (p['w'] * h + p['u'] * x[t]).tanh()\n        err.append((p['v'] * h - x[t + 1]) ** 2)\n    loss = err[0]\n    for e in err[1:]:\n        loss = loss + e\n    (loss / len(err)).backward()\n    return {k: float(t.grad) for k, t in p.items()}\n",
+      "test": 1,
+      "symptom": "Cuts one step early in every window."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Copy the loop of `unroll`."
+    },
+    {
+     "rung": "point",
+     "text": "At the top of the loop, when `t > 0` and `t % K == 0`, rebuild `h` from its numbers only."
+    },
+    {
+     "rung": "step",
+     "text": "`h = Tensor(h.data)` keeps the value and drops the history."
+    }
+   ],
+   "feedback": {
+    "correct": "The forward pass is unchanged and each gradient now reaches back at most $K$ steps.",
+    "generic": "Not yet. Cut the graph, not the state.",
+    "byKey": {
+     "test-1": "Keep the state's value at the cut (`Tensor(h.data)`), and cut only before steps $K$, $2K$, and so on."
+    }
+   },
+   "explain": {
+    "text": "`Tensor(h.data)` keeps the number and forgets how it was made, so `backward()` stops there. Memory and time per update now grow with $K$, not with the series. The price: no gradient links two steps more than $K$ apart."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Only the last step",
+   "prose": "Two hand-written backward loops for the shared weight $w$ of a linear net, running $t$ from $T$ down to 1. `d` holds $\\partial L/\\partial h_t$ and `h[t - 1]` the state before step $t$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 240,
+     "nodes": [
+      {
+       "id": "h0",
+       "label": "$h_0$",
+       "x": 0.08,
+       "y": 0.72
+      },
+      {
+       "id": "h1",
+       "label": "$h_1$",
+       "x": 0.29,
+       "y": 0.72
+      },
+      {
+       "id": "h2",
+       "label": "$h_2$",
+       "x": 0.5,
+       "y": 0.72
+      },
+      {
+       "id": "h3",
+       "label": "$h_3$",
+       "x": 0.71,
+       "y": 0.72
+      },
+      {
+       "id": "h4",
+       "label": "$h_4$",
+       "x": 0.9199999999999999,
+       "y": 0.72
+      },
+      {
+       "id": "x1",
+       "label": "$x_1 = 1$",
+       "shape": "pill",
+       "x": 0.29,
+       "y": 0.12
+      },
+      {
+       "id": "x2",
+       "label": "$x_2 = 1$",
+       "shape": "pill",
+       "x": 0.5,
+       "y": 0.12
+      },
+      {
+       "id": "x3",
+       "label": "$x_3 = 0$",
+       "shape": "pill",
+       "x": 0.71,
+       "y": 0.12
+      },
+      {
+       "id": "x4",
+       "label": "$x_4 = −1$",
+       "shape": "pill",
+       "x": 0.9199999999999999,
+       "y": 0.12
+      }
+     ],
+     "edges": [
+      {
+       "from": "h0",
+       "to": "h1",
+       "label": "$w$"
+      },
+      {
+       "from": "h1",
+       "to": "h2",
+       "label": "$w$"
+      },
+      {
+       "from": "h2",
+       "to": "h3",
+       "label": "$w$"
+      },
+      {
+       "from": "h3",
+       "to": "h4",
+       "label": "$w$"
+      },
+      {
+       "from": "x1",
+       "to": "h1"
+      },
+      {
+       "from": "x2",
+       "to": "h2"
+      },
+      {
+       "from": "x3",
+       "to": "h3"
+      },
+      {
+       "from": "x4",
+       "to": "h4"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "h",
+       "colour": 3
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "h0": "2",
+      "h1": "2",
+      "h2": "2",
+      "h3": "1",
+      "h4": "−0.5"
+     },
+     "values2": {
+      "h4": "1",
+      "h3": "0.5",
+      "h2": "0.25",
+      "h1": "0.125",
+      "h0": "0.0625"
+     }
+    }
+   },
+   "question": "Which loop gives the true gradient of $w$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "add",
+      "text": "```python\ngw = 0.0\nfor t in range(T, 0, -1):\n    gw += h[t - 1] * d\n    d = d * w\n```",
+      "correct": true
+     },
+     {
+      "id": "set",
+      "text": "```python\ngw = 0.0\nfor t in range(T, 0, -1):\n    gw = h[t - 1] * d\n    d = d * w\n```",
+      "why": "You overwrite `gw` at every step, so it ends holding only the term from step 1. A shared weight adds its terms."
+     },
+     {
+      "id": "once",
+      "text": "```python\ngw = h[T - 1] * d\nfor t in range(T, 0, -1):\n    d = d * w\n```",
+      "why": "You took the term of the last step only. $w$ acts at every step, so every step adds a term."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many times does $w$ act?"
+    },
+    {
+     "rung": "point",
+     "text": "Once on every arrow of the chain.",
+     "highlight": [
+      "e-h0-h1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each use adds its own term to the gradient."
+    }
+   ],
+   "feedback": {
+    "correct": "`+=` adds a term for each use of $w$.",
+    "generic": "Not quite. Which loop adds a term for every arrow?",
+    "byKey": {
+     "set": "`=` throws away every term but the last one visited. Accumulate with `+=`.",
+     "once": "Summing over the last step only is the commonest bug here: $w$ acts at every step."
+    }
+   },
+   "explain": {
+    "text": "The weight is shared, so its gradient is a sum over every step: `gw += h[t - 1] * d`. A loop that assigns, or one that scores only the last step, gives one term of the sum. In the hook that would be 1 instead of 2.75."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Backprop through time",
+   "prose": "Unrolling turns the loop into a deep net with one weight shared by every layer. Backprop through time runs the backward pass over it, and a shared weight collects one term per step:\n$$\\frac{\\partial L}{\\partial w} = \\sum_{t=1}^{T} \\frac{\\partial L}{\\partial h_t}\\,\\frac{\\partial^{+} h_t}{\\partial w}, \\qquad \\frac{\\partial h_T}{\\partial h_0} = w^T \\text{ (linear net)}.$$\nHere $\\partial^{+}$ is the arrow's own derivative, with $h_{t-1}$ held.",
+   "question": "Edge case: with $T = 1$, what is the unrolled net?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "An ordinary one-layer net: $h_1 = \\tanh(w\\,h_0 + u\\,x_1)$",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "A net with no weights left to learn at all",
+      "why": "Even with one step, $w$ and $u$ are still there to learn."
+     },
+     {
+      "id": "deep",
+      "text": "Still a deep net, of a depth set by the data",
+      "why": "Depth comes from the number of steps. One step is one layer."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One step is one layer, and backprop through time is plain backprop.",
+    "generic": "Not quite. Unroll one step."
+   },
+   "explain": {
+    "text": "With $T = 1$ there is one arrow, so the sum has one term and $w$ acts on the given $h_0$ like any weight. Every longer chain is this layer repeated with shared weights."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A model of a whole trading day",
+   "prose": "A desk trains a recurrent net on one-minute bars of the London session, 08:00 to 16:30: 510 bars a day. Backprop through the whole day keeps 510 states and makes one update a day, so the desk cuts each day into windows of 30 bars and truncates there.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "08:00",
+      "08:30",
+      "09:00",
+      "…",
+      "16:00",
+      "16:30"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         0
+        ],
+        "label": "window 1",
+        "colour": 2
+       },
+       {
+        "range": [
+         4,
+         4
+        ],
+        "label": "window 17",
+        "colour": 3
+       }
+      ]
+     }
+    }
+   },
+   "question": "What can the windowed model no longer learn from its gradients?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "long",
+      "text": "That the first half-hour's move predicts the close",
+      "correct": true
+     },
+     {
+      "id": "short",
+      "text": "That the last five minutes predict the next minute",
+      "why": "Five minutes fit inside one 30-bar window, so a gradient still links them."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing: the state still carries the whole day forward",
+      "why": "The forward state does carry it, but no gradient crosses a cut, so the weights are never pushed to keep it."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How far back can one gradient reach?"
+    },
+    {
+     "rung": "point",
+     "text": "At most 30 bars, back to the last cut.",
+     "highlight": [
+      "c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The open and the close are 17 windows apart."
+    }
+   ],
+   "feedback": {
+    "correct": "No gradient spans 17 windows, so the open-to-close link is never trained.",
+    "generic": "Not quite. How far back does a gradient reach after truncation?"
+   },
+   "explain": {
+    "text": "$510/30 = 17$ windows, and each gradient stops at its window's start. The state may still carry the open forward, but nothing teaches the weights to keep it. Longer windows cost memory; level 2's attention reads far back directly."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Unrolled over $T$ steps, a recurrent net is a $T$-layer net whose layers share one set of weights.",
+   "A shared weight's gradient is the sum of its gradients at each step: 2.75 in the hook, not the last step's 1. For the linear net $\\partial h_T/\\partial h_0 = w^T$.",
+   "Build the chain from Tensors in a loop and call `backward()` once; check it by central differences. Truncating every $K$ steps bounds the cost but no gradient spans more than $K$ steps."
+  ],
+  "formula": {
+   "name": "Backprop through time",
+   "tex": "\\frac{\\partial L}{\\partial w} = \\sum_{t=1}^{T} \\frac{\\partial L}{\\partial h_t}\\,\\frac{\\partial^{+} h_t}{\\partial w}",
+   "note": "One term per step, because $w$ is shared."
+  },
+  "trap": "Summing the gradient over the last step only, or overwriting it in the loop, drops every earlier use of the weight."
+ },
+ "quiz": [
+  {
+   "id": "q-sum",
+   "difficulty": 2,
+   "prose": "A linear net $h_t = w\\,h_{t-1} + x_t$ has $w = 0.5$, $h_0 = 1$ and inputs $x_1 = 1$, $x_2 = 0$.",
+   "question": "What is $\\partial h_2/\\partial w$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.0,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "last",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "first",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$h_1 = 1.5$, so $\\partial h_2/\\partial w = h_1 + w\\,h_0 = 1.5 + 0.5 = 2$.",
+    "generic": "Not quite. Add a term for each step.",
+    "byKey": {
+     "last": "You kept only the last step's term, $h_1 = 1.5$. The first step adds $w\\,h_0 = 0.5$.",
+     "first": "You kept only the first step's term, carried forward: $w\\,h_0 = 0.5$. Add the last step's $h_1$."
+    }
+   },
+   "explain": {
+    "text": "Two steps, two terms: $h_1 + w\\,h_0 = 1.5 + 0.5 = 2$."
+   }
+  },
+  {
+   "id": "q-t1",
+   "difficulty": 2,
+   "prose": "A one-step linear net has $h_1 = w\\,h_0 + x_1$ with $h_0 = 3$.",
+   "question": "What is $\\partial h_1/\\partial w$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "w",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With $T = 1$ it is an ordinary layer: $\\partial h_1/\\partial w = h_0 = 3$.",
+    "generic": "Not quite. Differentiate $w\\,h_0$.",
+    "byKey": {
+     "w": "You differentiated with respect to $h_0$ and set $w = 0$. The derivative in $w$ is $h_0$."
+    }
+   },
+   "explain": {
+    "text": "One step is one layer, so the gradient is the input to the weight, $h_0 = 3$."
+   }
+  },
+  {
+   "id": "q-trunc",
+   "difficulty": 3,
+   "prose": "A net is trained with truncated backprop through time in windows of $K = 20$ steps.",
+   "question": "A return 50 steps back matters for today. What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "miss",
+      "text": "No gradient links them, so the net is never trained to use it",
+      "correct": true
+     },
+     {
+      "id": "slow",
+      "text": "The net learns it, only more slowly",
+      "why": "Slower would need some gradient across the gap. Every gradient stops at the last cut."
+     },
+     {
+      "id": "forget",
+      "text": "The forward state is reset to 0 at each cut",
+      "why": "The state carries on forward unchanged; only the backward pass stops."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The gradient reaches back at most 20 steps, so the 50-step link is never trained.",
+    "generic": "Not quite. How far back does a gradient go?"
+   },
+   "explain": {
+    "text": "Truncation keeps the forward pass and cuts the backward pass at each window. A dependence longer than $K$ gets no gradient."
+   }
+  }
+ ]
+}

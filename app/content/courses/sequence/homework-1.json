@@ -1,0 +1,499 @@
+{
+ "id": "homework-1",
+ "course": "sequence",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-clip",
+   "difficulty": 3,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "prose": "A net has three gradient arrays: $\\begin{pmatrix} 1 & -2 \\\\ 2 & 0 \\end{pmatrix}$ for $\\mathbf W$, $(1)$ for $b$ and $(-3, 1)$ for $\\mathbf v$. They are clipped by norm with $c = 2$.",
+   "question": "What does the $-3$ in $\\mathbf v$'s gradient become? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1.3416,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "each",
+      "value": -1.8974,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "coord",
+      "value": -2,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 1.3416,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The global norm is $\\sqrt{20} = 4.4721$, the factor 0.4472, so $-3$ becomes -1.3416.",
+    "generic": "Not quite. One norm over all three arrays.",
+    "byKey": {
+     "each": "You clipped $\\mathbf v$ by its own norm, $\\sqrt{10}$. The norm is taken over every array together.",
+     "coord": "You capped the entry at 2. Clipping by norm scales the whole gradient.",
+     "sign": "Scaling keeps the minus sign."
+    }
+   },
+   "explain": {
+    "text": "Laid end to end the gradient has squares $1 + 4 + 4 + 0 + 1 + 9 + 1 = 20$, so the norm is 4.4721 and every entry is scaled by 0.4472: $-3$ becomes -1.3416."
+   }
+  },
+  {
+   "id": "h-lingrad",
+   "difficulty": 4,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "title": "A gradient carried forward",
+   "prose": "For the linear net $h_t = w\\,h_{t-1} + x_t$ the derivative obeys its own recursion: $d_t = \\partial h_t/\\partial w = h_{t-1} + w\\,d_{t-1}$, with $d_0 = 0$. Write `linear_bptt(x, w, h0)` returning $(h_T, d_T)$, carrying $d$ forward beside $h$.",
+   "question": "Complete `linear_bptt`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def linear_bptt(x, w, h0):\n    # h_t = w h_{t-1} + x_t; return (h_T, dh_T/dw), carrying the derivative forward with the state\n    ...\n",
+    "solution": "def linear_bptt(x, w, h0):\n    h, d = h0, 0.0\n    for xt in x:\n        d = h + w * d\n        h = w * h + xt\n    return h, d\n",
+    "examples": [
+     {
+      "call": "linear_bptt([1.0, 1.0, 0.0, -1.0], 0.5, 2.0)",
+      "compare": "isclose",
+      "expect": "['-0.5', '2.75']"
+     }
+    ],
+    "tests": [
+     {
+      "call": "linear_bptt([1.0, 1.0, 0.0, -1.0], 0.5, 2.0)",
+      "compare": "isclose",
+      "expect": "['-0.5', '2.75']"
+     },
+     {
+      "call": "linear_bptt([0.0, 0.0, 0.0], 0.5, 4.0)",
+      "compare": "isclose",
+      "expect": "['0.5', '3.0']"
+     },
+     {
+      "call": "linear_bptt([1.0, 0.0], 0.5, 1.0)",
+      "compare": "isclose",
+      "expect": "['0.75', '2.0']"
+     },
+     {
+      "call": "linear_bptt([3.0], 0.9, 2.0)",
+      "compare": "isclose",
+      "expect": "['4.8', '2.0']"
+     },
+     {
+      "call": "linear_bptt([0.5, -1.0, 0.8, 0.3, -0.4, 1.2, 2.0], 1.1, 0.0)",
+      "compare": "isclose",
+      "expect": "['3.6818505000000004', '3.1792300000000013']"
+     },
+     {
+      "call": "linear_bptt([], 0.7, 1.5)",
+      "compare": "isclose",
+      "expect": "['1.5', '0.0']"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, compared to $10^{-9}$. Test 1 is lesson 2's hook, whose answer was 2.75; test 6 has no steps.",
+    "mutants": [
+     {
+      "source": "def linear_bptt(x, w, h0):\n    h, d = h0, 0.0\n    for xt in x:\n        d = h\n        h = w * h + xt\n    return h, d\n",
+      "test": 1,
+      "symptom": "Keeps only the last step's term of the gradient."
+     },
+     {
+      "source": "def linear_bptt(x, w, h0):\n    h, d = h0, 0.0\n    for xt in x:\n        h = w * h + xt\n        d = h + w * d\n    return h, d\n",
+      "test": 1,
+      "symptom": "Updates the state before the derivative, so each term uses the new state."
+     },
+     {
+      "source": "def linear_bptt(x, w, h0):\n    h, d = h0, 0.0\n    for xt in x:\n        d = d + h\n        h = w * h + xt\n    return h, d\n",
+      "test": 1,
+      "symptom": "Adds the terms without carrying the old ones through w."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The derivative rides along with the state, one term per step.",
+    "generic": "Not yet. Update $d$ from the old $h$, then update $h$.",
+    "byKey": {
+     "test-1": "On lesson 2's hook the derivative is 2.75: each step adds $h_{t-1}$ and carries the old $d$ through $w$."
+    }
+   },
+   "explain": {
+    "text": "Differentiating $h_t = w\\,h_{t-1} + x_t$ in $w$ gives $d_t = h_{t-1} + w\\,d_{t-1}$: the new term is the old state, the old terms pass through $w$. It must use $h_{t-1}$, so $d$ is updated before $h$."
+   }
+  },
+  {
+   "id": "h-eig",
+   "difficulty": 4,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "prose": "A recurrent matrix is $\\mathbf W = \\begin{pmatrix} 0.5 & -0.6 \\\\ 0.6 & 0.5 \\end{pmatrix}$, a turn combined with a shrink. Take the slopes as 1.",
+   "question": "After how many whole steps back does its long-run factor $\\rho^k$ first fall below 1%?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 19,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "entry",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "real",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\rho = \\sqrt{0.5^2 + 0.6^2} = 0.7810$, and $\\ln 0.01/\\ln 0.7810 = 18.63$, so 19 steps.",
+    "generic": "Not quite. Find the size of the complex eigenvalues first.",
+    "byKey": {
+     "entry": "You used the largest entry, 0.6, as the rate. The rate is the eigenvalues' size.",
+     "real": "You used the real part 0.5. The eigenvalues are $0.5 \\pm 0.6i$, of size 0.781."
+    }
+   },
+   "explain": {
+    "text": "The eigenvalues are $0.5 \\pm 0.6i$, of size $\\sqrt{0.61} = 0.7810$. $\\rho^k < 0.01$ needs $k > 18.63$, so 19."
+   }
+  },
+  {
+   "id": "h-order",
+   "difficulty": 4,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "title": "The gradient through time, derived",
+   "prose": "Derive $\\partial\\mathbf h_T/\\partial\\mathbf h_0$ for $\\mathbf h_t = \\tanh(\\mathbf W\\mathbf h_{t-1} + \\mathbf U\\mathbf x_t + \\mathbf b)$, and bound its size. Put the steps in order and leave out the two that do not belong.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Write one step as $\\mathbf h_t = \\tanh(\\mathbf a_t)$ with $\\mathbf a_t = \\mathbf W\\mathbf h_{t-1} + \\mathbf U\\mathbf x_t + \\mathbf b$ (a name for the sum)."
+     },
+     {
+      "id": "s2",
+      "text": "$\\partial\\mathbf a_t/\\partial\\mathbf h_{t-1} = \\mathbf W$, since $\\mathbf U\\mathbf x_t + \\mathbf b$ does not depend on $\\mathbf h_{t-1}$."
+     },
+     {
+      "id": "s3",
+      "text": "$\\partial\\mathbf h_t/\\partial\\mathbf a_t = \\operatorname{diag}(1 - \\mathbf h_t^2)$, since tanh acts entry by entry and $\\tanh' = 1 - \\tanh^2$."
+     },
+     {
+      "id": "s4",
+      "text": "So one step gives $\\partial\\mathbf h_t/\\partial\\mathbf h_{t-1} = \\operatorname{diag}(1 - \\mathbf h_t^2)\\,\\mathbf W$, by the chain rule."
+     },
+     {
+      "id": "s5",
+      "text": "Chaining every step back to $\\mathbf h_0$: $\\partial\\mathbf h_T/\\partial\\mathbf h_0 = \\prod_{t=T}^{1}\\operatorname{diag}(1 - \\mathbf h_t^2)\\,\\mathbf W$, by the chain rule along the unrolled path."
+     },
+     {
+      "id": "s6",
+      "text": "Each slope is at most 1, so the size is at most $\\lVert\\mathbf W\\rVert^T$, since the norm of a product is at most the product of the norms."
+     },
+     {
+      "id": "d1",
+      "text": "One step gives $\\mathbf W\\operatorname{diag}(1 - \\mathbf h_{t-1}^2)$, since the slope belongs to the state that comes in.",
+      "why": "The slope is the tanh's at its own output, $\\mathbf h_t$, and it multiplies on the left of $\\mathbf W$: the order follows the chain rule."
+     },
+     {
+      "id": "d2",
+      "text": "Adding the steps: $\\partial\\mathbf h_T/\\partial\\mathbf h_0 = \\sum_{t=1}^{T}\\operatorname{diag}(1 - \\mathbf h_t^2)\\,\\mathbf W$.",
+      "why": "Along one path the chain rule multiplies the steps; sums appear only where paths meet."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6"
+    ],
+    "same": [
+     [
+      "s2",
+      "s3"
+     ]
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Each line rests on the one before: the two local derivatives, one step, the chain, the bound.",
+    "generic": "Not quite. Build one step before chaining the steps.",
+    "byKey": {
+     "d1": "The tanh's slope is taken at its output $\\mathbf h_t$, and the chain rule puts it on the left.",
+     "d2": "The chain rule multiplies along a path. Nothing is added here.",
+     "left-out": "Every line but the two distractors belongs."
+    }
+   },
+   "explain": {
+    "text": "Name the sum, take its derivative ($\\mathbf W$) and the tanh's (the diagonal of slopes), multiply them for one step, then chain $T$ steps. Since the slopes are at most 1 the size is at most $\\lVert\\mathbf W\\rVert^T$, which is why the eigenvalues of $\\mathbf W$ decide explosion and vanishing."
+   }
+  },
+  {
+   "id": "h-gate",
+   "difficulty": 3,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "prose": "A trained gated unit reads daily news flags. On most days its gate is $z_t = 0.01$; on a day with an earnings release it is $z_t = 0.9$.",
+   "question": "What does this gate do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "write",
+      "text": "It writes the release into the state and then holds it",
+      "correct": true
+     },
+     {
+      "id": "forget",
+      "text": "It forgets the release at once, since $z$ is large that day",
+      "why": "A large $z$ lets the new candidate in. On the quiet days after, $z = 0.01$ keeps it."
+     },
+     {
+      "id": "none",
+      "text": "It ignores the release, since most days $z$ is near 0",
+      "why": "The gate opens on the release day, which is when it matters."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Open on the release, shut afterwards: the release is written once and kept.",
+    "generic": "Not quite. What do $z = 0.9$ and $z = 0.01$ each do?"
+   },
+   "explain": {
+    "text": "With $z = 0.9$ the state takes 90% of the candidate, so the release goes in. With $z = 0.01$ each quiet day keeps 99% of the state, so it lasts, and its gradient does too."
+   }
+  },
+  {
+   "id": "h-trunc",
+   "difficulty": 3,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "prose": "A net is trained on 5,000 steps of minute data by truncated backprop through time with windows of $K = 50$.",
+   "question": "How many separate backward passes does one sweep through the series make?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "k",
+      "value": 50,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$5{,}000/50 = 100$ windows, one backward pass each.",
+    "generic": "Not quite. Divide the series into windows.",
+    "byKey": {
+     "one": "Without truncation it would be one pass through 5,000 steps.",
+     "k": "That is the window length. Count the windows."
+    }
+   },
+   "explain": {
+    "text": "Each window of 50 steps gets its own backward pass: $5{,}000/50 = 100$. Each costs 50 steps of memory, and no gradient crosses a window."
+   }
+  },
+  {
+   "id": "h-long",
+   "difficulty": 4,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "kind": "longform",
+   "title": "A forecaster with a two-week memory",
+   "prompt": "A colleague's recurrent forecaster of daily returns ignores anything older than about two weeks: shuffling days more than ten back changes nothing. Diagnose it with the eigenvalue argument of this level, say how you would confirm it, and propose two fixes with their costs.",
+   "model": "**Diagnosis.** The gradient from $k$ days back is multiplied by $\\prod_t \\operatorname{diag}(1 - \\mathbf h_t^2)\\,\\mathbf W$ over the $k$ steps. Its size goes like $(\\rho\\,s)^k$, with $\\rho$ the spectral radius of $\\mathbf W$ and $s$ a typical tanh slope. If $\\rho\\,s$ is near 0.8, ten trading days (two weeks) give $0.8^{10} \\approx 0.11$ and twenty give 0.012: the lessons from further back arrive too faint to move the weights. That is a vanishing gradient, not a lack of data.\n\n**Check.** Compute `spectral_radius(W)` and the norms $\\lVert\\partial\\mathbf h_T/\\partial\\mathbf h_{T-k}\\rVert$ for $k$ up to 40 on real inputs; plot them on a log scale. A straight fall confirms it; also check the share of saturated units.\n\n**Fix 1: gates (an LSTM or GRU).** The direct path multiplies by $1 - z_t$, near 1 when the gate is shut, so a gradient survives many steps. Cost: about three or four times the weights and compute per step, and more to tune.\n\n**Fix 2: attention over the past window.** Each forecast weights past days directly, so day 30 is one step away, not 30. Cost: work and memory grow with the square of the window, and the model needs positions.\n\n**Not a fix.** Clipping cures explosion; it cannot enlarge a vanished gradient. Rescaling $\\mathbf W$ to $\\rho$ near 1 helps at the start but training can move it, and the tanh slopes still shrink the product.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Writes the gradient over $k$ steps as a product of $\\operatorname{diag}(1 - \\mathbf h_t^2)\\,\\mathbf W$ factors",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Links \"about two weeks\" to a per-step factor below 1, with a worked number (for example $0.8^{10}$)"
+    },
+    {
+     "points": 1,
+     "text": "Names the spectral radius of $\\mathbf W$ and the tanh slopes as what sets the factor"
+    },
+    {
+     "points": 1,
+     "text": "Proposes a check: gradient norms against steps back, or the radius and saturation"
+    },
+    {
+     "points": 2,
+     "text": "First fix with its cost (gates: more weights and compute per step)"
+    },
+    {
+     "points": 1,
+     "text": "Second fix with its cost (attention: cost grows with the window squared; or truncation with longer windows)"
+    },
+    {
+     "points": 1,
+     "text": "Says why clipping does not help a vanished gradient"
+    }
+   ]
+  },
+  {
+   "id": "h-perf",
+   "difficulty": 5,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "performance": "code",
+   "title": "Backprop through time by hand",
+   "prose": "Write `rnn_bptt(x, y, params)` for a tanh recurrent net with a linear readout: $\\mathbf h_t = \\tanh(\\mathbf x_t\\mathbf W_x + \\mathbf h_{t-1}\\mathbf W_h + \\mathbf b)$ from $\\mathbf h_0 = \\mathbf 0$, $\\hat{\\mathbf y}_t = \\mathbf h_t\\mathbf W_y + \\mathbf b_y$, and the loss $\\tfrac{1}{2T}\\sum_t \\lVert\\hat{\\mathbf y}_t - \\mathbf y_t\\rVert^2$. Return the loss and the gradient of every parameter, by your own backward pass through time: no autograd. `planted(T, d, n, k, seed)` makes test data.",
+   "question": "Complete `rnn_bptt`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef rnn_bptt(x, y, params):\n    # x: (T, d), y: (T, k); params: Wx (d, n), Wh (n, n), b (n,), Wy (n, k), by (k,)\n    # h_0 = 0, h_t = tanh(x_t Wx + h_{t-1} Wh + b), yhat_t = h_t Wy + by\n    # loss = 0.5 * sum over t of ||yhat_t - y_t||^2, divided by T\n    # return (loss, {'Wx': ..., 'Wh': ..., 'b': ..., 'Wy': ..., 'by': ...}) by your own backward pass\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef rnn_bptt(x, y, params):\n    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)\n    Wx, Wh, b, Wy, by = (np.asarray(params[k], dtype=float) for k in ('Wx', 'Wh', 'b', 'Wy', 'by'))\n    T, n = x.shape[0], Wh.shape[0]\n    hs = [np.zeros(n)]\n    for t in range(T):\n        hs.append(np.tanh(x[t] @ Wx + hs[-1] @ Wh + b))\n    H = np.array(hs[1:])\n    E = H @ Wy + by - y\n    loss = 0.5 * np.sum(E ** 2) / T\n    dY = E / T\n    g = {'Wx': np.zeros_like(Wx), 'Wh': np.zeros_like(Wh), 'b': np.zeros_like(b), 'Wy': H.T @ dY, 'by': dY.sum(axis=0)}\n    carry = np.zeros(n)\n    for t in reversed(range(T)):\n        dh = dY[t] @ Wy.T + carry\n        da = dh * (1 - H[t] ** 2)\n        g['Wx'] += np.outer(x[t], da)\n        g['Wh'] += np.outer(hs[t], da)\n        g['b'] += da\n        carry = da @ Wh.T\n    return float(loss), g\n",
+    "prelude": "import numpy as np\n\n\ndef planted(T, d, n, k, seed):\n    g = np.random.default_rng(seed)\n    x = g.standard_normal((T, d))\n    y = g.standard_normal((T, k))\n    params = {'Wx': 0.5 * g.standard_normal((d, n)), 'Wh': 0.5 * g.standard_normal((n, n)),\n              'b': 0.1 * g.standard_normal(n), 'Wy': 0.5 * g.standard_normal((n, k)), 'by': 0.1 * g.standard_normal(k)}\n    return x, y, params\n\n\ndef fd_rel_err(x, y, params, eps=1e-6):\n    _, grads = rnn_bptt(x, y, params)\n    worst, scale = 0.0, 1e-12\n    for key, val in params.items():\n        val = np.asarray(val, dtype=float)\n        for i in np.ndindex(val.shape):\n            up = {k: np.array(v, dtype=float) for k, v in params.items()}\n            dn = {k: np.array(v, dtype=float) for k, v in params.items()}\n            up[key][i] += eps\n            dn[key][i] -= eps\n            num = (rnn_bptt(x, y, up)[0] - rnn_bptt(x, y, dn)[0]) / (2 * eps)\n            ana = float(np.asarray(grads[key])[i])\n            worst = max(worst, abs(num - ana))\n            scale = max(scale, abs(num), abs(ana))\n    return worst / scale\n\n\nsmall = planted(3, 1, 2, 1, 0)\nmedium = planted(6, 2, 3, 2, 1)\n",
+    "examples": [
+     {
+      "call": "rnn_bptt(*small)[0]",
+      "compare": "isclose",
+      "expect": "0.16180160849786132"
+     }
+    ],
+    "tests": [
+     {
+      "call": "rnn_bptt(*small)[0]",
+      "compare": "isclose",
+      "expect": "0.16180160849786132"
+     },
+     {
+      "call": "{k: v.tolist() for k, v in rnn_bptt(*small)[1].items()}",
+      "compare": "isclose",
+      "expect": "{'Wx': [[0.1402402383702008, 0.07276264756404811]], 'Wh': [[-0.0065774047247192935, -0.0018705774765085219], [-0.006512308854135114, -0.003775393125588132]], 'b': [0.09343736070039593, 0.02622267511688814], 'Wy': [[-0.120934338511396], [-0.1032888368196633]], 'by': [-0.05789670285673759]}"
+     },
+     {
+      "call": "fd_rel_err(*medium) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "rnn_bptt(*medium)[0]",
+      "compare": "isclose",
+      "expect": "0.447537260627237"
+     },
+     {
+      "call": "rnn_bptt(*medium)[1][\"Wh\"].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.024461969575657157, 0.023774903072090108, 0.07830069453779753], [0.0165548615179961, 0.0726592071053259, 0.0011366386831533418], [0.01712061289256393, 0.02087628180736, 0.017693768725286503]]"
+     },
+     {
+      "call": "rnn_bptt(*medium)[1][\"Wx\"].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.02293548098352816, -0.038304011079926446, 0.02003125745980077], [-0.036704908934540315, 0.048524372999392565, -0.10689078617042852]]"
+     },
+     {
+      "call": "rnn_bptt(*medium)[1][\"Wy\"].tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.15151086541718722, -0.22512858371854505], [0.025051386841909728, 0.0174849785853133], [-0.03603958737391805, 0.011955669758333726]]"
+     },
+     {
+      "setup": "one = planted(1, 2, 3, 1, 2)",
+      "call": "{k: v.tolist() for k, v in rnn_bptt(*one)[1].items()}",
+      "compare": "isclose",
+      "expect": "{'Wx': [[0.005306447554792659, 0.009356506203414251, 0.011626046225245136], [-0.014672772117330478, -0.02587152363601387, -0.03214699196160009]], 'Wh': [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], 'b': [0.028068514323578084, 0.04949134532611841, 0.06149610292579716], 'Wy': [[-0.04019003171755528], [-0.0366966483725631], [0.03592968690962451]], 'by': [0.30386120970693203]}"
+     },
+     {
+      "setup": "long = planted(20, 1, 4, 1, 3)",
+      "call": "rnn_bptt(*long)[1][\"Wh\"].tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.039590754365947764, 0.03113738434010513, 0.0943735617511355, -0.08779768092039718], [0.21972199169808496, 0.15209272062936163, 0.07199199132751799, -0.31861371635415914], [0.09760424382091043, 0.02053711206342876, -0.05625756599536086, 0.009637045303318633], [0.046888161118250206, -0.05591986421263565, -0.16158562482549024, 0.1935772198940618]]"
+     },
+     {
+      "call": "zq_no('autograd', 'Tensor', 'grad_check')",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 10 hidden tests, compared to $10^{-9}$ against the array autograd's values. Test 3 checks your gradients against central differences of your own loss (relative error under $10^{-6}$); test 8 is a series of one step; test 10 checks that no autograd is used.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef rnn_bptt(x, y, params):\n    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)\n    Wx, Wh, b, Wy, by = (np.asarray(params[k], dtype=float) for k in ('Wx', 'Wh', 'b', 'Wy', 'by'))\n    T, n = x.shape[0], Wh.shape[0]\n    hs = [np.zeros(n)]\n    for t in range(T):\n        hs.append(np.tanh(x[t] @ Wx + hs[-1] @ Wh + b))\n    H = np.array(hs[1:])\n    E = H @ Wy + by - y\n    loss = 0.5 * np.sum(E ** 2) / T\n    dY = E / T\n    g = {'Wx': np.zeros_like(Wx), 'Wh': np.zeros_like(Wh), 'b': np.zeros_like(b), 'Wy': H.T @ dY, 'by': dY.sum(axis=0)}\n    carry = np.zeros(n)\n    for t in reversed(range(T)):\n        dh = dY[t] @ Wy.T + carry\n        da = dh\n        g['Wx'] += np.outer(x[t], da)\n        g['Wh'] += np.outer(hs[t], da)\n        g['b'] += da\n        carry = da @ Wh.T\n    return float(loss), g\n",
+      "test": 2,
+      "symptom": "Leaves out the tanh slope."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef rnn_bptt(x, y, params):\n    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)\n    Wx, Wh, b, Wy, by = (np.asarray(params[k], dtype=float) for k in ('Wx', 'Wh', 'b', 'Wy', 'by'))\n    T, n = x.shape[0], Wh.shape[0]\n    hs = [np.zeros(n)]\n    for t in range(T):\n        hs.append(np.tanh(x[t] @ Wx + hs[-1] @ Wh + b))\n    H = np.array(hs[1:])\n    E = H @ Wy + by - y\n    loss = 0.5 * np.sum(E ** 2) / T\n    dY = E / T\n    g = {'Wx': np.zeros_like(Wx), 'Wh': np.zeros_like(Wh), 'b': np.zeros_like(b), 'Wy': H.T @ dY, 'by': dY.sum(axis=0)}\n    carry = np.zeros(n)\n    for t in reversed(range(T)):\n        dh = dY[t] @ Wy.T\n        da = dh * (1 - H[t] ** 2)\n        g['Wx'] += np.outer(x[t], da)\n        g['Wh'] += np.outer(hs[t], da)\n        g['b'] += da\n        carry = da @ Wh.T\n    return float(loss), g\n",
+      "test": 2,
+      "symptom": "Drops the gradient carried back from later steps: each step sees only its own error."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef rnn_bptt(x, y, params):\n    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)\n    Wx, Wh, b, Wy, by = (np.asarray(params[k], dtype=float) for k in ('Wx', 'Wh', 'b', 'Wy', 'by'))\n    T, n = x.shape[0], Wh.shape[0]\n    hs = [np.zeros(n)]\n    for t in range(T):\n        hs.append(np.tanh(x[t] @ Wx + hs[-1] @ Wh + b))\n    H = np.array(hs[1:])\n    E = H @ Wy + by - y\n    loss = 0.5 * np.sum(E ** 2) / T\n    dY = E / T\n    g = {'Wx': np.zeros_like(Wx), 'Wh': np.zeros_like(Wh), 'b': np.zeros_like(b), 'Wy': H.T @ dY, 'by': dY.sum(axis=0)}\n    carry = np.zeros(n)\n    for t in reversed(range(T)):\n        dh = dY[t] @ Wy.T + carry\n        da = dh * (1 - H[t] ** 2)\n        g['Wx'] += np.outer(x[t], da)\n        g['Wh'] += np.outer(hs[t + 1], da)\n        g['b'] += da\n        carry = da @ Wh.T\n    return float(loss), g\n",
+      "test": 2,
+      "symptom": "Pairs each step with its own new state instead of the state it read."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef rnn_bptt(x, y, params):\n    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)\n    Wx, Wh, b, Wy, by = (np.asarray(params[k], dtype=float) for k in ('Wx', 'Wh', 'b', 'Wy', 'by'))\n    T, n = x.shape[0], Wh.shape[0]\n    hs = [np.zeros(n)]\n    for t in range(T):\n        hs.append(np.tanh(x[t] @ Wx + hs[-1] @ Wh + b))\n    H = np.array(hs[1:])\n    E = H @ Wy + by - y\n    loss = 0.5 * np.sum(E ** 2) / T\n    dY = E\n    g = {'Wx': np.zeros_like(Wx), 'Wh': np.zeros_like(Wh), 'b': np.zeros_like(b), 'Wy': H.T @ dY, 'by': dY.sum(axis=0)}\n    carry = np.zeros(n)\n    for t in reversed(range(T)):\n        dh = dY[t] @ Wy.T + carry\n        da = dh * (1 - H[t] ** 2)\n        g['Wx'] += np.outer(x[t], da)\n        g['Wh'] += np.outer(hs[t], da)\n        g['b'] += da\n        carry = da @ Wh.T\n    return float(loss), g\n",
+      "test": 2,
+      "symptom": "Forgets the 1/T of the mean in the backward pass."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your backward pass matches the autograd and central differences, step by step.",
+    "generic": "Not yet. Run the forward pass, keep every state, then walk back from $T$ to 1.",
+    "byKey": {
+     "test-2": "At each step the gradient into $\\mathbf h_t$ is the readout's share plus what flows back from step $t + 1$; multiply by $1 - \\mathbf h_t^2$, and pair it with $\\mathbf h_{t-1}$ for $\\mathbf W_h$.",
+     "test-10": "Write the backward pass yourself, without the autograd."
+    }
+   },
+   "explain": {
+    "text": "Keep the states, then walk back: $\\delta\\mathbf h_t = \\delta\\hat{\\mathbf y}_t\\mathbf W_y^\\top + \\delta\\mathbf a_{t+1}\\mathbf W_h^\\top$ and $\\delta\\mathbf a_t = \\delta\\mathbf h_t \\odot (1 - \\mathbf h_t^2)$. Each shared weight adds a term per step: $\\mathbf h_{t-1}^\\top\\delta\\mathbf a_t$ for $\\mathbf W_h$, $\\mathbf x_t^\\top\\delta\\mathbf a_t$ for $\\mathbf W_x$."
+   }
+  }
+ ]
+}

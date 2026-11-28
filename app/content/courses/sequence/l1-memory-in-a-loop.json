@@ -1,0 +1,1995 @@
+{
+ "id": "l1-memory-in-a-loop",
+ "course": "sequence",
+ "title": "Memory in a loop",
+ "minutes": 14,
+ "objectives": [
+  "Write a linear recurrent net and match it to an AR(1), then add a tanh."
+ ],
+ "skills": [
+  "sqn-rnn"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two lines, one rule",
+   "prose": "The grey line: 60 days of the AR(1) $x_t = 0.6\\,x_{t-1} + \\varepsilon_t$ from seeded shocks (`simulate_ar1(0.6, 60, 7)` of arma l2). The coloured line: a tiny network whose state follows $h_t = w\\,h_{t-1} + \\varepsilon_t$, fed the same shocks. Slide $w$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "ar",
+       "label": "AR(1)",
+       "values": [
+        0.0012,
+        0.2995,
+        -0.0944,
+        -0.9473,
+        -1.023,
+        -1.6055,
+        -0.9031,
+        0.7983,
+        -0.0132,
+        -0.6284,
+        0.1128,
+        0.4246,
+        0.3602,
+        -0.7144,
+        -0.4579,
+        0.4206,
+        -1.0919,
+        -1.1127,
+        -2.5689,
+        -2.8309,
+        -3.5402,
+        -2.3592,
+        -2.683,
+        -1.3385,
+        -0.6464,
+        -0.5748,
+        -2.8616,
+        -2.2557,
+        -1.4019,
+        -0.7278,
+        -1.9668,
+        -1.6579,
+        -1.9732,
+        -1.9928,
+        -0.1348,
+        -0.8884,
+        -0.5656,
+        0.5451,
+        -0.2566,
+        -0.2656,
+        -0.0489,
+        0.0344,
+        -1.2044,
+        -0.6465,
+        0.9709,
+        -0.9646,
+        0.2806,
+        0.2877,
+        -0.4688,
+        1.7191,
+        1.7937,
+        -0.1231,
+        0.0007,
+        0.5771,
+        0.1575,
+        0.7774,
+        0.3999,
+        0.9072,
+        1.9828,
+        0.514
+       ],
+       "colour": "muted"
+      },
+      {
+       "id": "rnn",
+       "label": "RNN state",
+       "values": [
+        0.0012,
+        0.2987,
+        -0.2741,
+        -0.8906,
+        -0.4547,
+        -0.9916,
+        0.0601,
+        1.3402,
+        -0.4922,
+        -0.6205,
+        0.4898,
+        0.3569,
+        0.1054,
+        -0.9305,
+        -0.0293,
+        0.6953,
+        -1.3442,
+        -0.4576,
+        -1.9012,
+        -1.2895,
+        -1.8417,
+        -0.2351,
+        -1.2674,
+        0.2713,
+        0.1568,
+        -0.1869,
+        -2.5168,
+        -0.5387,
+        -0.0485,
+        0.1133,
+        -1.5301,
+        -0.4778,
+        -0.9785,
+        -0.8088,
+        1.0609,
+        -0.8075,
+        -0.0325,
+        0.8844,
+        -0.5836,
+        -0.1117,
+        0.1105,
+        0.0638,
+        -1.2251,
+        0.0761,
+        1.3588,
+        -1.5471,
+        0.8594,
+        0.1194,
+        -0.6415,
+        2.0004,
+        0.7623,
+        -1.1993,
+        0.0745,
+        0.5767,
+        -0.1888,
+        0.6829,
+        -0.0665,
+        0.6672,
+        1.4385,
+        -0.6757
+       ]
+      }
+     ],
+     "y": [
+      -4,
+      4
+     ],
+     "xLabel": "day",
+     "yLabel": "value",
+     "baseline": 0,
+     "height": 260
+    },
+    "state": {
+     "caption": "RNN with $w = 0.0$."
+    },
+    "controls": [
+     {
+      "bind": "w",
+      "label": "$w$",
+      "frames": [
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.2987,
+           -0.2741,
+           -0.8906,
+           -0.4547,
+           -0.9916,
+           0.0601,
+           1.3402,
+           -0.4922,
+           -0.6205,
+           0.4898,
+           0.3569,
+           0.1054,
+           -0.9305,
+           -0.0293,
+           0.6953,
+           -1.3442,
+           -0.4576,
+           -1.9012,
+           -1.2895,
+           -1.8417,
+           -0.2351,
+           -1.2674,
+           0.2713,
+           0.1568,
+           -0.1869,
+           -2.5168,
+           -0.5387,
+           -0.0485,
+           0.1133,
+           -1.5301,
+           -0.4778,
+           -0.9785,
+           -0.8088,
+           1.0609,
+           -0.8075,
+           -0.0325,
+           0.8844,
+           -0.5836,
+           -0.1117,
+           0.1105,
+           0.0638,
+           -1.2251,
+           0.0761,
+           1.3588,
+           -1.5471,
+           0.8594,
+           0.1194,
+           -0.6415,
+           2.0004,
+           0.7623,
+           -1.1993,
+           0.0745,
+           0.5767,
+           -0.1888,
+           0.6829,
+           -0.0665,
+           0.6672,
+           1.4385,
+           -0.6757
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.0$."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.2989,
+           -0.2443,
+           -0.915,
+           -0.5462,
+           -1.0463,
+           -0.0445,
+           1.3358,
+           -0.3586,
+           -0.6563,
+           0.4242,
+           0.3993,
+           0.1453,
+           -0.9159,
+           -0.1208,
+           0.6832,
+           -1.2759,
+           -0.5852,
+           -1.9597,
+           -1.4855,
+           -1.9903,
+           -0.4341,
+           -1.3109,
+           0.1402,
+           0.1708,
+           -0.1699,
+           -2.5337,
+           -0.7921,
+           -0.1277,
+           0.1005,
+           -1.5201,
+           -0.6298,
+           -1.0415,
+           -0.913,
+           0.9696,
+           -0.7106,
+           -0.1036,
+           0.874,
+           -0.4962,
+           -0.1613,
+           0.0943,
+           0.0732,
+           -1.2177,
+           -0.0456,
+           1.3543,
+           -1.4117,
+           0.7182,
+           0.1912,
+           -0.6224,
+           1.9382,
+           0.9561,
+           -1.1037,
+           -0.0359,
+           0.5731,
+           -0.1315,
+           0.6698,
+           0.0005,
+           0.6673,
+           1.5053,
+           -0.5251
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.1$."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.299,
+           -0.2143,
+           -0.9335,
+           -0.6414,
+           -1.1199,
+           -0.1638,
+           1.3074,
+           -0.2307,
+           -0.6666,
+           0.3565,
+           0.4282,
+           0.1911,
+           -0.8923,
+           -0.2077,
+           0.6538,
+           -1.2135,
+           -0.7003,
+           -2.0413,
+           -1.6978,
+           -2.1813,
+           -0.6713,
+           -1.4017,
+           -0.0091,
+           0.1549,
+           -0.1559,
+           -2.5479,
+           -1.0483,
+           -0.2582,
+           0.0617,
+           -1.5178,
+           -0.7813,
+           -1.1348,
+           -1.0358,
+           0.8537,
+           -0.6368,
+           -0.1599,
+           0.8524,
+           -0.4131,
+           -0.1943,
+           0.0716,
+           0.0781,
+           -1.2094,
+           -0.1657,
+           1.3257,
+           -1.282,
+           0.603,
+           0.24,
+           -0.5935,
+           1.8817,
+           1.1386,
+           -0.9716,
+           -0.1198,
+           0.5527,
+           -0.0782,
+           0.6673,
+           0.0669,
+           0.6806,
+           1.5746,
+           -0.3607
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.2$."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.2991,
+           -0.1844,
+           -0.9459,
+           -0.7384,
+           -1.2132,
+           -0.3038,
+           1.2491,
+           -0.1175,
+           -0.6557,
+           0.2931,
+           0.4448,
+           0.2389,
+           -0.8588,
+           -0.2869,
+           0.6092,
+           -1.1614,
+           -0.806,
+           -2.143,
+           -1.9324,
+           -2.4215,
+           -0.9615,
+           -1.5559,
+           -0.1955,
+           0.0981,
+           -0.1575,
+           -2.564,
+           -1.3079,
+           -0.4409,
+           -0.019,
+           -1.5358,
+           -0.9385,
+           -1.2601,
+           -1.1869,
+           0.7048,
+           -0.5961,
+           -0.2113,
+           0.821,
+           -0.3373,
+           -0.2129,
+           0.0466,
+           0.0778,
+           -1.2017,
+           -0.2844,
+           1.2735,
+           -1.1651,
+           0.5099,
+           0.2723,
+           -0.5598,
+           1.8325,
+           1.312,
+           -0.8057,
+           -0.1672,
+           0.5265,
+           -0.0308,
+           0.6737,
+           0.1356,
+           0.7079,
+           1.6509,
+           -0.1804
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.3$."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.2992,
+           -0.1544,
+           -0.9524,
+           -0.8356,
+           -1.3259,
+           -0.4702,
+           1.1521,
+           -0.0314,
+           -0.633,
+           0.2366,
+           0.4515,
+           0.286,
+           -0.8161,
+           -0.3557,
+           0.553,
+           -1.123,
+           -0.9068,
+           -2.2639,
+           -2.1951,
+           -2.7198,
+           -1.323,
+           -1.7966,
+           -0.4474,
+           -0.0222,
+           -0.1958,
+           -2.5951,
+           -1.5767,
+           -0.6792,
+           -0.1584,
+           -1.5935,
+           -1.1151,
+           -1.4246,
+           -1.3787,
+           0.5094,
+           -0.6038,
+           -0.274,
+           0.7748,
+           -0.2737,
+           -0.2212,
+           0.022,
+           0.0726,
+           -1.196,
+           -0.4023,
+           1.1979,
+           -1.068,
+           0.4322,
+           0.2922,
+           -0.5246,
+           1.7906,
+           1.4785,
+           -0.6079,
+           -0.1686,
+           0.5092,
+           0.0149,
+           0.6889,
+           0.209,
+           0.7509,
+           1.7389,
+           0.0199
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.4$."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.2994,
+           -0.1245,
+           -0.9528,
+           -0.9311,
+           -1.4572,
+           -0.6684,
+           1.006,
+           0.0108,
+           -0.6151,
+           0.1823,
+           0.448,
+           0.3294,
+           -0.7658,
+           -0.4121,
+           0.4892,
+           -1.0996,
+           -1.0074,
+           -2.4049,
+           -2.492,
+           -3.0877,
+           -1.779,
+           -2.1569,
+           -0.8072,
+           -0.2468,
+           -0.3104,
+           -2.6719,
+           -1.8747,
+           -0.9858,
+           -0.3796,
+           -1.7199,
+           -1.3377,
+           -1.6474,
+           -1.6325,
+           0.2446,
+           -0.6852,
+           -0.3751,
+           0.6968,
+           -0.2352,
+           -0.2293,
+           -0.0042,
+           0.0617,
+           -1.1942,
+           -0.521,
+           1.0983,
+           -0.998,
+           0.3604,
+           0.2996,
+           -0.4917,
+           1.7546,
+           1.6395,
+           -0.3795,
+           -0.1152,
+           0.5191,
+           0.0708,
+           0.7183,
+           0.2926,
+           0.8136,
+           1.8453,
+           0.247
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.5$."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.2995,
+           -0.0944,
+           -0.9473,
+           -1.023,
+           -1.6055,
+           -0.9031,
+           0.7983,
+           -0.0132,
+           -0.6284,
+           0.1128,
+           0.4246,
+           0.3602,
+           -0.7144,
+           -0.4579,
+           0.4206,
+           -1.0919,
+           -1.1127,
+           -2.5689,
+           -2.8309,
+           -3.5402,
+           -2.3592,
+           -2.683,
+           -1.3385,
+           -0.6464,
+           -0.5748,
+           -2.8616,
+           -2.2557,
+           -1.4019,
+           -0.7278,
+           -1.9668,
+           -1.6579,
+           -1.9732,
+           -1.9928,
+           -0.1348,
+           -0.8884,
+           -0.5656,
+           0.5451,
+           -0.2566,
+           -0.2656,
+           -0.0489,
+           0.0344,
+           -1.2044,
+           -0.6465,
+           0.9709,
+           -0.9646,
+           0.2806,
+           0.2877,
+           -0.4688,
+           1.7191,
+           1.7937,
+           -0.1231,
+           0.0007,
+           0.5771,
+           0.1575,
+           0.7774,
+           0.3999,
+           0.9072,
+           1.9828,
+           0.514
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.6$: the two lines are one."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.2996,
+           -0.0644,
+           -0.9357,
+           -1.1096,
+           -1.7684,
+           -1.1777,
+           0.5158,
+           -0.1311,
+           -0.7123,
+           -0.0088,
+           0.3508,
+           0.3509,
+           -0.6848,
+           -0.5086,
+           0.3393,
+           -1.1067,
+           -1.2323,
+           -2.7638,
+           -3.2242,
+           -4.0987,
+           -3.1042,
+           -3.4404,
+           -2.137,
+           -1.3391,
+           -1.1243,
+           -3.3038,
+           -2.8513,
+           -2.0444,
+           -1.3178,
+           -2.4526,
+           -2.1946,
+           -2.5147,
+           -2.5691,
+           -0.7375,
+           -1.3238,
+           -0.9592,
+           0.213,
+           -0.4345,
+           -0.4159,
+           -0.1806,
+           -0.0627,
+           -1.2689,
+           -0.8121,
+           0.7903,
+           -0.9939,
+           0.1637,
+           0.2339,
+           -0.4777,
+           1.666,
+           1.9285,
+           0.1506,
+           0.18,
+           0.7027,
+           0.3031,
+           0.8951,
+           0.56,
+           1.0593,
+           2.18,
+           0.8503
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.7$."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.2997,
+           -0.0344,
+           -0.9181,
+           -1.1891,
+           -1.943,
+           -1.4942,
+           0.1448,
+           -0.3763,
+           -0.9215,
+           -0.2474,
+           0.159,
+           0.2326,
+           -0.7444,
+           -0.6248,
+           0.1955,
+           -1.1878,
+           -1.4079,
+           -3.0275,
+           -3.7116,
+           -4.811,
+           -4.0839,
+           -4.5345,
+           -3.3564,
+           -2.5283,
+           -2.2096,
+           -4.2844,
+           -3.9663,
+           -3.2215,
+           -2.4639,
+           -3.5012,
+           -3.2788,
+           -3.6015,
+           -3.6901,
+           -1.8911,
+           -2.3205,
+           -1.8889,
+           -0.6267,
+           -1.085,
+           -0.9797,
+           -0.6733,
+           -0.4748,
+           -1.6049,
+           -1.2078,
+           0.3926,
+           -1.2331,
+           -0.1271,
+           0.0177,
+           -0.6273,
+           1.4986,
+           1.9611,
+           0.3696,
+           0.3702,
+           0.8728,
+           0.5095,
+           1.0905,
+           0.8059,
+           1.312,
+           2.4881,
+           1.3148
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.8$."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.2999,
+           -0.0043,
+           -0.8944,
+           -1.2597,
+           -2.1253,
+           -1.8527,
+           -0.3272,
+           -0.7867,
+           -1.3285,
+           -0.7058,
+           -0.2783,
+           -0.1451,
+           -1.061,
+           -0.9842,
+           -0.1905,
+           -1.5156,
+           -1.8217,
+           -3.5407,
+           -4.4762,
+           -5.8703,
+           -5.5184,
+           -6.234,
+           -5.3393,
+           -4.6486,
+           -4.3707,
+           -6.4504,
+           -6.344,
+           -5.7581,
+           -5.069,
+           -6.0923,
+           -5.9608,
+           -6.3432,
+           -6.5177,
+           -4.8051,
+           -5.1321,
+           -4.6514,
+           -3.3019,
+           -3.5553,
+           -3.3115,
+           -2.8699,
+           -2.5191,
+           -3.4922,
+           -3.0669,
+           -1.4014,
+           -2.8084,
+           -1.6681,
+           -1.382,
+           -1.8853,
+           0.3037,
+           1.0356,
+           -0.2673,
+           -0.166,
+           0.4273,
+           0.1958,
+           0.8591,
+           0.7067,
+           1.3032,
+           2.6114,
+           1.6746
+          ]
+         }
+        },
+        "caption": "RNN with $w = 0.9$."
+       },
+       {
+        "series": {
+         "rnn": {
+          "values": [
+           0.0012,
+           0.3,
+           0.0258,
+           -0.8648,
+           -1.3194,
+           -2.3111,
+           -2.2509,
+           -0.9107,
+           -1.4029,
+           -2.0234,
+           -1.5336,
+           -1.1767,
+           -1.0713,
+           -2.0017,
+           -2.031,
+           -1.3357,
+           -2.6799,
+           -3.1375,
+           -5.0387,
+           -6.3283,
+           -8.17,
+           -8.4051,
+           -9.6725,
+           -9.4013,
+           -9.2445,
+           -9.4314,
+           -11.9482,
+           -12.4869,
+           -12.5354,
+           -12.4221,
+           -13.9522,
+           -14.43,
+           -15.4085,
+           -16.2173,
+           -15.1564,
+           -15.964,
+           -15.9965,
+           -15.1121,
+           -15.6957,
+           -15.8074,
+           -15.6969,
+           -15.6332,
+           -16.8582,
+           -16.7821,
+           -15.4233,
+           -16.9704,
+           -16.111,
+           -15.9917,
+           -16.6331,
+           -14.6327,
+           -13.8705,
+           -15.0697,
+           -14.9952,
+           -14.4185,
+           -14.6073,
+           -13.9244,
+           -13.9909,
+           -13.3237,
+           -11.8852,
+           -12.5608
+          ]
+         }
+        },
+        "caption": "RNN with $w = 1.0$."
+       }
+      ],
+      "frameLabels": [
+       "0.0",
+       "0.1",
+       "0.2",
+       "0.3",
+       "0.4",
+       "0.5",
+       "0.6",
+       "0.7",
+       "0.8",
+       "0.9",
+       "1.0"
+      ],
+      "start": 0
+     }
+    ]
+   },
+   "question": "Which $w$ makes the two lines one?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "one-minus",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ],
+    "placeholder": "a number from 0 to 1"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide until the coloured line hides the grey one."
+    },
+    {
+     "rung": "point",
+     "text": "The AR(1) keeps 0.6 of yesterday."
+    },
+    {
+     "rung": "step",
+     "text": "The state keeps $w$ of yesterday, so $w$ must equal $\\phi$."
+    }
+   ],
+   "feedback": {
+    "correct": "At $w = 0.6$ the state is the AR(1), day for day.",
+    "generic": "Not quite. Slide until the lines coincide.",
+    "byKey": {
+     "one-minus": "You took $1 - 0.6$. The weight multiplies yesterday, as $\\phi$ does.",
+     "one": "At $w = 1$ the state never forgets a shock; the grey line forgets 40% a day."
+    }
+   },
+   "explain": {
+    "text": "The state keeps $w$ of yesterday and adds today's shock, exactly as the AR(1) keeps $\\phi$. So $w = 0.6$ reproduces it. This loop is the whole idea of a recurrent network."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A state carried forward",
+   "prose": "That loop is a **recurrent network**: it carries a **state** $h_t$ from step to step, $h_t = w\\,h_{t-1} + u\\,x_t$. With $u = 1$ and $x_t$ the shock, it is the AR(1) of arma l2, and $w$ is $\\phi$. Take $w = 0.5$, $u = 1$ and $h_0 = 0$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 200,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "$x_t$",
+       "x": 0.2,
+       "y": 0.5
+      },
+      {
+       "id": "h",
+       "label": "$h_t$",
+       "x": 0.55,
+       "y": 0.5
+      },
+      {
+       "id": "y",
+       "label": "$\\hat y_t$",
+       "x": 0.88,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "h",
+       "label": "$u$"
+      },
+      {
+       "from": "h",
+       "to": "h",
+       "label": "$w$",
+       "loopAngle": 90
+      },
+      {
+       "from": "h",
+       "to": "y",
+       "label": "$v$"
+      }
+     ]
+    }
+   },
+   "question": "Fill in $h_1$, $h_2$ and $h_3$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "$t$",
+     "$x_t$",
+     "$h_t$"
+    ],
+    "rows": [
+     [
+      "0",
+      "",
+      "0"
+     ],
+     [
+      "1",
+      "1.0",
+      {
+       "edit": true,
+       "answer": 1.0,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "2",
+      "−2.0",
+      {
+       "edit": true,
+       "answer": -1.5,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "nowt2",
+         "value": -1.0,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "3",
+      "0.5",
+      {
+       "edit": true,
+       "answer": -0.25,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "nowt3",
+         "value": -1.0,
+         "tol": {
+          "abs": 0.001
+         }
+        },
+        {
+         "id": "sign3",
+         "value": 0.25,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each row uses the row above."
+    },
+    {
+     "rung": "point",
+     "text": "$h_2 = 0.5 \\times h_1 + x_2$."
+    },
+    {
+     "rung": "step",
+     "text": "$h_1 = 1$, $h_2 = 0.5 - 2 = -1.5$, then $h_3 = 0.5 \\times (-1.5) + 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$h_1 = 1$, $h_2 = -1.5$, $h_3 = -0.25$.",
+    "generic": "Not quite. Halve the state above, then add the input.",
+    "byKey": {
+     "nowt2": "You added $h_1$ in full. Halve it first: $0.5 \\times 1 - 2 = -1.5$.",
+     "nowt3": "You added the states in full. Each step keeps only half of yesterday.",
+     "sign3": "Check the sign: $0.5 \\times (-1.5) = -0.75$, and $-0.75 + 0.5 = -0.25$."
+    }
+   },
+   "explain": {
+    "text": "Each step keeps half the state and adds the input: $1$, then $0.5 - 2 = -1.5$, then $-0.75 + 0.5 = -0.25$. The 1.0 from day 1 is still in $h_3$, shrunk to a quarter. That shrinking memory is the AR(1)'s fading shock."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Learning the weight",
+   "prose": "To learn $w$ from data, forecast each day from the one before, $\\hat x_t = w\\,x_{t-1}$, and take the mean squared error $L(w)$. On the three days $1.0, 0.5, 0.4$ there are two forecasts. Slide $w$ and watch the slope.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.2,
+      1.2
+     ],
+     "y": [
+      0,
+      0.3
+     ],
+     "xLabel": "$w$",
+     "yLabel": "loss",
+     "functions": [
+      {
+       "id": "L",
+       "expr": "((0.5 - x)^2 + (0.4 - 0.5*x)^2) / 2",
+       "label": "$L(w)$",
+       "labelAt": 1.0
+      }
+     ],
+     "params": {
+      "w": 0
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0,
+       "y": 0.205,
+       "on": "L",
+       "label": ""
+      }
+     ]
+    },
+    "derive": {
+     "P.x": "w",
+     "P.y": "(pow(0.5 - w, 2) + pow(0.4 - 0.5*w, 2)) / 2",
+     "caption": "$w$ = {{fixed(w, 2)}}: loss {{fixed((pow(0.5 - w, 2) + pow(0.4 - 0.5*w, 2)) / 2, 4)}}, slope {{fixed(-((0.5 - w) + 0.5*(0.4 - 0.5*w)), 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "w",
+      "min": -0.2,
+      "max": 1.2,
+      "step": 0.01,
+      "start": 0,
+      "label": "$w$",
+      "decimals": 2
+     }
+    ],
+    "maxHeight": 260
+   },
+   "question": "Which $w$ makes the slope 0? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.56,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 0.65,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "allsq",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The slope is 0 at the bottom of the curve."
+    },
+    {
+     "rung": "point",
+     "text": "Setting the derivative to 0 gives $w = \\sum x_{t-1}x_t / \\sum x_{t-1}^2$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\sum x_{t-1}x_t = 1 \\times 0.5 + 0.5 \\times 0.4 = 0.7$ and $\\sum x_{t-1}^2 = 1.25$."
+    }
+   ],
+   "feedback": {
+    "correct": "$w = 0.7/1.25 = 0.56$: least squares through the origin.",
+    "generic": "Not quite. Find the bottom of the curve.",
+    "byKey": {
+     "ratio": "You averaged the two ratios $0.5/1$ and $0.4/0.5$. Least squares weighs each pair by $x_{t-1}^2$.",
+     "allsq": "You divided by the squares of all three days. Divide by the squares of the days you forecast from, $1 + 0.25$."
+    }
+   },
+   "explain": {
+    "text": "With two pairs, $L'(w) = -\\sum x_{t-1}(x_t - w\\,x_{t-1})$, which is 0 at $w = 0.7/1.25 = 0.56$. This is the least-squares $\\hat\\phi$ of arma l7, fitted through the origin. Gradient descent on $L$ walks to the same place.",
+    "canvas": {
+     "params": {
+      "w": 0.56
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Fitting w in code",
+   "prose": "Write `fit_w(x, lr, steps)`: start at $w = 0$ and take `steps` gradient-descent steps on $L(w) = \\text{mean}\\,(x_t - w\\,x_{t-1})^2$, with $L'(w) = -2\\,\\text{mean}\\,x_{t-1}(x_t - w\\,x_{t-1})$. On `simulate_ar1(0.6, 500, 5)`, 200 steps of size 0.1 land on the least-squares 0.6315, the 0.6315 of arma l7.",
+   "question": "Complete `fit_w`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef fit_w(x, lr, steps):\n    # forecast x[t] by w * x[t - 1]; loss = mean squared error over the pairs\n    # start at w = 0 and take `steps` gradient-descent steps of size lr\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef fit_w(x, lr, steps):\n    x = np.asarray(x, dtype=float)\n    prev, now = x[:-1], x[1:]\n    w = 0.0\n    for _ in range(steps):\n        grad = -2 * np.mean(prev * (now - w * prev))\n        w = w - lr * grad\n    return w\n",
+    "prelude": "import numpy as np\n\n\ndef simulate_ar1(phi, n, seed):\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = phi * x[t - 1] + e[t]\n    return x\n",
+    "examples": [
+     {
+      "call": "fit_w([1.0, 0.5, 0.4], 0.1, 1)",
+      "compare": "isclose",
+      "expect": "0.06999999999999999"
+     }
+    ],
+    "tests": [
+     {
+      "call": "fit_w([1.0, 0.5, 0.4], 0.1, 1)",
+      "compare": "isclose",
+      "expect": "0.06999999999999999"
+     },
+     {
+      "call": "fit_w([1.0, 0.5, 0.4], 0.1, 3)",
+      "compare": "isclose",
+      "expect": "0.18484375000000003"
+     },
+     {
+      "call": "fit_w(simulate_ar1(0.6, 50, 3), 0.1, 5)",
+      "compare": "isclose",
+      "expect": "0.374793210426023"
+     },
+     {
+      "call": "fit_w([2.0, -1.0, 0.5, 0.25], 0.05, 4)",
+      "compare": "isclose",
+      "expect": "-0.24281529947916666"
+     },
+     {
+      "call": "fit_w(simulate_ar1(0.6, 500, 5), 0.1, 200)",
+      "expect": "0.6314898305544295",
+      "tol": {
+       "rel": 0,
+       "abs": 1e-06
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "fit_w([1.0, 0.5], 0.1, 0)",
+      "compare": "equal",
+      "expect": "0.0"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Tests 1 to 4 compare $w$ after a few steps to $10^{-9}$, test 5 compares 200 steps on `simulate_ar1(0.6, 500, 5)` with the least-squares value within $10^{-6}$, and test 6 takes no steps.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef fit_w(x, lr, steps):\n    x = np.asarray(x, dtype=float)\n    prev, now = x[:-1], x[1:]\n    w = 0.0\n    for _ in range(steps):\n        grad = -2 * np.mean(prev * (now - w * prev))\n        w = w + lr * grad\n    return w\n",
+      "test": 1,
+      "symptom": "Steps up the slope: the sign of the step is flipped."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef fit_w(x, lr, steps):\n    x = np.asarray(x, dtype=float)\n    prev, now = x[:-1], x[1:]\n    w = 0.0\n    for _ in range(steps):\n        grad = -np.mean(prev * (now - w * prev))\n        w = w - lr * grad\n    return w\n",
+      "test": 1,
+      "symptom": "Drops the 2 of the derivative, so each step is half as long."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef fit_w(x, lr, steps):\n    x = np.asarray(x, dtype=float)\n    prev, now = x[:-1], x[1:]\n    w = 0.0\n    for _ in range(steps):\n        grad = -2 * np.mean(now * (now - w * prev))\n        w = w - lr * grad\n    return w\n",
+      "test": 1,
+      "symptom": "Multiplies the error by today, not by the day the forecast is made from."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Pair each day with the one before: `x[:-1]` and `x[1:]`."
+    },
+    {
+     "rung": "point",
+     "text": "Inside the loop: work out the gradient at the current $w$, then step against it."
+    },
+    {
+     "rung": "step",
+     "text": "`grad = -2 * np.mean(prev * (now - w * prev))`, then `w = w - lr * grad`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your loop reaches the least-squares weight: the network and the regression minimise the same loss.",
+    "generic": "Not yet. Check the gradient and the sign of the step.",
+    "byKey": {
+     "test-1": "After one step from 0 with step 0.1 the weight should be 0.07. Check the sign of the step and the factor 2.",
+     "test-5": "After 200 steps the weight should sit on the least-squares value."
+    }
+   },
+   "explain": {
+    "text": "The loss is the regression's squared error, so its minimum is the least-squares slope through the origin. Gradient descent gets there step by step; arma l7 solved for it in one go."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A bend and a readout",
+   "prose": "A real recurrent net bends the sum and reads a forecast off the state: $h_t = \\tanh(w\\,h_{t-1} + u\\,x_t + b)$ and $\\hat y_t = v\\,h_t$. Take $w = 0.5$, $u = 1$, $b = 0$, $v = 2$, yesterday's state $h_{t-1} = 0.8$ and today's input $x_t = 0.2$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 200,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "$x_t$",
+       "x": 0.2,
+       "y": 0.5
+      },
+      {
+       "id": "h",
+       "label": "$h_t$",
+       "x": 0.55,
+       "y": 0.5
+      },
+      {
+       "id": "y",
+       "label": "$\\hat y_t$",
+       "x": 0.88,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "h",
+       "label": "$u$"
+      },
+      {
+       "from": "h",
+       "to": "h",
+       "label": "$w$",
+       "loopAngle": 90
+      },
+      {
+       "from": "h",
+       "to": "y",
+       "label": "$v$"
+      }
+     ]
+    }
+   },
+   "question": "What is the forecast $\\hat y_t$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.0741,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "notanh",
+      "value": 1.2,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "nov",
+      "value": 0.537,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First the sum inside the tanh."
+    },
+    {
+     "rung": "point",
+     "text": "$0.5 \\times 0.8 + 0.2 = 0.6$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tanh(0.6) = 0.5370$, then multiply by $v = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tanh(0.6) = 0.53705$ and $\\hat y_t = 2 \\times 0.53705 \\approx 1.0741$.",
+    "generic": "Not quite. Sum, bend, then read out.",
+    "byKey": {
+     "notanh": "You skipped the tanh: $2 \\times 0.6 = 1.2$. The state is the bent sum.",
+     "nov": "That is the state $h_t$. The forecast multiplies it by $v = 2$."
+    }
+   },
+   "explain": {
+    "text": "The sum is $0.5 \\times 0.8 + 0.2 = 0.6$, the state is $\\tanh(0.6) = 0.5370$, and the forecast is $1.0741$. The tanh keeps the state between $-1$ and 1. The readout $v$ turns the state into a forecast in the data's units."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One set of weights for every day",
+   "prose": "A net with 16 state units reads one number a day: $\\mathbf h_t = \\tanh(\\mathbf W\\mathbf h_{t-1} + \\mathbf u\\,x_t + \\mathbf b)$ and $\\hat y_t = \\mathbf v^\\top\\mathbf h_t + c$, with $\\mathbf W$ 16 by 16. It runs over 250 trading days. The same weights act at every step, as one kernel slides over every position in a convolution.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "part",
+      "shape"
+     ],
+     "rows": [
+      [
+       "$\\mathbf W$",
+       "16 by 16"
+      ],
+      [
+       "$\\mathbf u$",
+       "16"
+      ],
+      [
+       "$\\mathbf b$",
+       "16"
+      ],
+      [
+       "$\\mathbf v$",
+       "16"
+      ],
+      [
+       "$c$",
+       "1"
+      ]
+     ]
+    }
+   },
+   "question": "How many numbers does the net learn in all?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 305,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "perday",
+      "value": 76250,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nowh",
+      "value": 49,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the sizes of the five parts."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathbf W$ alone holds $16 \\times 16 = 256$."
+    },
+    {
+     "rung": "step",
+     "text": "$256 + 16 + 16 + 16 + 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$256 + 16 + 16 + 16 + 1 = 305$, whatever the number of days.",
+    "generic": "Not quite. Count each part once.",
+    "byKey": {
+     "perday": "You gave each day its own copy, $305 \\times 250$. One set is shared by every step.",
+     "nowh": "You left out $\\mathbf W$, the 256 weights from state to state."
+    }
+   },
+   "explain": {
+    "text": "The parts hold $256 + 16 + 16 + 16 + 1 = 305$ numbers. They are the same at every step, so a longer series adds no weights. This **weight sharing over time** is what lets one net read a series of any length."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "What step t can see",
+   "prose": "A desk analyst says: \"Our recurrent net forecasts tomorrow from the last 250 days, so it looks at all 250 returns at once.\"",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 200,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "$x_t$",
+       "x": 0.2,
+       "y": 0.5
+      },
+      {
+       "id": "h",
+       "label": "$h_t$",
+       "x": 0.55,
+       "y": 0.5
+      },
+      {
+       "id": "y",
+       "label": "$\\hat y_t$",
+       "x": 0.88,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "h",
+       "label": "$u$"
+      },
+      {
+       "from": "h",
+       "to": "h",
+       "label": "$w$",
+       "loopAngle": 90
+      },
+      {
+       "from": "h",
+       "to": "y",
+       "label": "$v$"
+      }
+     ]
+    }
+   },
+   "question": "What does the update at step $t$ actually read?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "state",
+      "text": "Yesterday's state $h_{t-1}$ and today's input $x_t$",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "Every input $x_1, \\dots, x_t$ directly",
+      "why": "You read the history as inputs. The update has only two arguments; the past reaches it through the state."
+     },
+     {
+      "id": "last",
+      "text": "Today's input alone",
+      "why": "That is the net with $w = 0$. With $w \\ne 0$ the state carries the past in."
+     },
+     {
+      "id": "window",
+      "text": "The last few inputs, through a sliding window",
+      "why": "A window is a different model, an AR($p$). The recurrent net keeps no window, only a state."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at the arrows into $h_t$."
+    },
+    {
+     "rung": "point",
+     "text": "Two arrows arrive: one from $x_t$, one from the state itself."
+    },
+    {
+     "rung": "step",
+     "text": "Whatever the net knows about day 1 must survive inside $h_{t-1}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Only $h_{t-1}$ and $x_t$. The state must summarise the whole past.",
+    "generic": "Not quite. Count the arrows into $h_t$.",
+    "byKey": {
+     "all": "The net never sees old inputs again. The past reaches step $t$ only through $h_{t-1}$."
+    }
+   },
+   "explain": {
+    "text": "The update reads two things: the state and today's input. Everything the net remembers of day 1 has passed through 249 updates. That bottleneck is where gradients and memory get lost in the next lessons."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The recurrent net in code",
+   "prose": "Write `rnn_linear(x, w, u, h0)`, returning the states $h_1, \\dots, h_T$ of $h_t = w\\,h_{t-1} + u\\,x_t$, and `rnn_tanh(x, w, u, b, h0)` for $h_t = \\tanh(w\\,h_{t-1} + u\\,x_t + b)$. Fed the hook's shocks with $w = 0.6$, `rnn_linear` must give `simulate_ar1(0.6, 60, 7)` exactly.",
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef rnn_linear(x, w, u, h0):\n    # h_t = w * h_{t-1} + u * x_t from h0; return the array of h_1, ..., h_T\n    ...\n\n\ndef rnn_tanh(x, w, u, b, h0):\n    # h_t = tanh(w * h_{t-1} + u * x_t + b) from h0; return h_1, ..., h_T\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef rnn_linear(x, w, u, h0):\n    h, out = h0, []\n    for xt in x:\n        h = w * h + u * xt\n        out.append(h)\n    return np.array(out)\n\n\ndef rnn_tanh(x, w, u, b, h0):\n    h, out = h0, []\n    for xt in x:\n        h = np.tanh(w * h + u * xt + b)\n        out.append(h)\n    return np.array(out)\n",
+    "prelude": "import numpy as np\n\n\ndef simulate_ar1(phi, n, seed):\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = phi * x[t - 1] + e[t]\n    return x\n\n\ndef shocks(n, seed):\n    return np.random.default_rng(seed).standard_normal(n)\n",
+    "examples": [
+     {
+      "call": "rnn_linear([1.0, -2.0, 0.5], 0.5, 1.0, 0.0).tolist()",
+      "compare": "isclose",
+      "expect": "[1.0, -1.5, -0.25]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "rnn_linear([1.0, -2.0, 0.5], 0.5, 1.0, 0.0).tolist()",
+      "compare": "isclose",
+      "expect": "[1.0, -1.5, -0.25]"
+     },
+     {
+      "call": "rnn_linear(shocks(60, 7), 0.6, 1.0, 0.0).tolist() == simulate_ar1(0.6, 60, 7).tolist()",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "rnn_linear([1.0, 1.0], 0.5, 2.0, 4.0).tolist()",
+      "compare": "isclose",
+      "expect": "[4.0, 4.0]"
+     },
+     {
+      "call": "rnn_linear([3.0, -1.0, 2.0], 0.0, 1.0, 5.0).tolist()",
+      "compare": "isclose",
+      "expect": "[3.0, -1.0, 2.0]"
+     },
+     {
+      "call": "rnn_tanh([0.2], 0.5, 1.0, 0.0, 0.8).tolist()",
+      "compare": "isclose",
+      "expect": "[0.5370495669980353]"
+     },
+     {
+      "call": "rnn_tanh([1.0, -0.5, 0.3, 0.0], 0.9, 0.7, 0.1, 0.0).tolist()",
+      "compare": "isclose",
+      "expect": "[0.6640367702678489, 0.33427478090209056, 0.5447232620807702, 0.5300760592799895]"
+     },
+     {
+      "call": "len(rnn_tanh(shocks(50, 2), 1.2, 1.0, -0.3, 0.0))",
+      "compare": "equal",
+      "expect": "50"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests, compared to $10^{-9}$. Test 2 checks `rnn_linear` on the hook's shocks against `simulate_ar1` (both are in the working directory, with `shocks(n, seed)`). Tests 5 to 7 check `rnn_tanh`.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef rnn_linear(x, w, u, h0):\n    h, out = h0, []\n    for xt in x:\n        out.append(h)\n        h = w * h + u * xt\n    return np.array(out)\n\n\ndef rnn_tanh(x, w, u, b, h0):\n    h, out = h0, []\n    for xt in x:\n        h = np.tanh(w * h + u * xt + b)\n        out.append(h)\n    return np.array(out)\n",
+      "test": 1,
+      "symptom": "Records the state before updating it, so the list starts at h0 and stops one step short."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef rnn_linear(x, w, u, h0):\n    h, out = h0, []\n    for xt in x:\n        h = w * h0 + u * xt\n        out.append(h)\n    return np.array(out)\n\n\ndef rnn_tanh(x, w, u, b, h0):\n    h, out = h0, []\n    for xt in x:\n        h = np.tanh(w * h + u * xt + b)\n        out.append(h)\n    return np.array(out)\n",
+      "test": 1,
+      "symptom": "Uses the starting state every step: the net forgets its own state."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef rnn_linear(x, w, u, h0):\n    h, out = h0, []\n    for xt in x:\n        h = w * h + u * xt\n        out.append(h)\n    return np.array(out)\n\n\ndef rnn_tanh(x, w, u, b, h0):\n    h, out = h0, []\n    for xt in x:\n        h = np.tanh(w * h + u * xt) + b\n        out.append(h)\n    return np.array(out)\n",
+      "test": 6,
+      "symptom": "Adds the bias after the tanh."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One loop over the inputs, carrying `h`."
+    },
+    {
+     "rung": "point",
+     "text": "Update `h` first, then append it."
+    },
+    {
+     "rung": "step",
+     "text": "Start with `h = h0`; the tanh wraps the whole sum, bias included."
+    }
+   ],
+   "feedback": {
+    "correct": "Both loops carry the state forward, and the linear one is the AR(1) to the last digit.",
+    "generic": "Not yet. Carry the state from step to step.",
+    "byKey": {
+     "test-1": "The first state is $h_1 = w h_0 + u x_1$. Update before you append.",
+     "test-6": "The bias goes inside the tanh, with the rest of the sum."
+    }
+   },
+   "explain": {
+    "text": "Each function is one loop that keeps `h` between steps. Fed the same shocks, `rnn_linear` with $w = \\phi$ and $u = 1$ is `simulate_ar1`, value for value."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The recurrence",
+   "prose": "You found the rule on every screen. A recurrent net applies one update at every step, with the same weights:\n$$\\mathbf h_t = \\tanh(\\mathbf W\\mathbf h_{t-1} + \\mathbf U\\mathbf x_t + \\mathbf b), \\qquad \\hat{\\mathbf y}_t = \\mathbf V\\mathbf h_t + \\mathbf c.$$\nWith one unit, no tanh and $u = 1$ it is the AR(1), $w = \\phi$.",
+   "question": "Edge case: what does the net remember when $\\mathbf W = \\mathbf 0$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "Nothing: $\\mathbf h_t$ is a function of today's input alone",
+      "correct": true
+     },
+     {
+      "id": "last",
+      "text": "Exactly yesterday's input and nothing older",
+      "why": "With $\\mathbf W = \\mathbf 0$ yesterday never enters; the state is rebuilt from $\\mathbf x_t$ each day."
+     },
+     {
+      "id": "all",
+      "text": "Everything it has read, with equal weight on each day",
+      "why": "Equal weight on the past is $w = 1$ in one unit, not $\\mathbf W = \\mathbf 0$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With $\\mathbf W = \\mathbf 0$ the loop is cut and the net has no memory.",
+    "generic": "Not quite. Set $\\mathbf W = \\mathbf 0$ in the update."
+   },
+   "explain": {
+    "text": "The term $\\mathbf W\\mathbf h_{t-1}$ is the only way the past enters. With $\\mathbf W = \\mathbf 0$ each state is $\\tanh(\\mathbf U\\mathbf x_t + \\mathbf b)$: an ordinary one-layer net applied to each day on its own."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A volatility estimate is a recurrent net",
+   "prose": "A risk desk updates its daily variance each evening: $\\sigma_t^2 = 0.94\\,\\sigma_{t-1}^2 + 0.06\\,r_t^2$, an exponentially weighted variance (garch builds on it). That is a linear recurrent net with $w = 0.94$, $u = 0.06$ and input $r_t^2$. Yesterday's volatility was 1% a day and today the stock returned 2%.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "value"
+     ],
+     "rows": [
+      [
+       "$\\sigma_{t-1}$",
+       "1%"
+      ],
+      [
+       "$\\sigma_{t-1}^2$",
+       "0.0001"
+      ],
+      [
+       "$r_t$",
+       "2%"
+      ],
+      [
+       "$r_t^2$",
+       "0.0004"
+      ]
+     ]
+    }
+   },
+   "question": "What is today's volatility $\\sigma_t$? Give a percentage to 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.010863,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "noroot",
+      "value": 0.000118,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "swap",
+      "value": 0.019545,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ],
+    "unit": "%"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work in variances, then take the root."
+    },
+    {
+     "rung": "point",
+     "text": "$0.94 \\times 0.0001 + 0.06 \\times 0.0004$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.000094 + 0.000024 = 0.000118$; its square root is the volatility."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{0.000118} = 0.010863$, about 1.09% a day.",
+    "generic": "Not quite. Update the variance, then take its square root.",
+    "byKey": {
+     "noroot": "That is the variance, 0.000118. The volatility is its square root.",
+     "swap": "You swapped the weights: yesterday keeps 0.94, today adds 0.06."
+    }
+   },
+   "explain": {
+    "text": "The state is the variance: $0.94 \\times 0.0001 + 0.06 \\times 0.0004 = 0.000118$, so $\\sigma_t = 0.0109$, or 1.09%. One big day moves it a little, and the memory fades like $0.94^h$. A recurrent net learns its own $w$ and $u$ instead of fixing them."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A recurrent net carries a state, $h_t = w\\,h_{t-1} + u\\,x_t$. With $u = 1$ and the shocks as input it is the AR(1), and $w$ is $\\phi$.",
+   "Fitting $w$ by gradient descent on the one-step squared error lands on the least-squares $\\hat\\phi$ through the origin (0.6315 on seed 5).",
+   "A tanh bends the state and a readout $v\\,h_t$ makes the forecast. The same weights act at every step: 16 units hold 305 numbers for any length of series."
+  ],
+  "formula": {
+   "name": "The recurrent update",
+   "tex": "\\mathbf h_t = \\tanh(\\mathbf W\\mathbf h_{t-1} + \\mathbf U\\mathbf x_t + \\mathbf b), \\quad \\hat{\\mathbf y}_t = \\mathbf V\\mathbf h_t + \\mathbf c",
+   "note": "One update, shared by every step."
+  },
+  "trap": "The net never sees the old inputs again: everything it knows of the past must fit in $h_{t-1}$."
+ },
+ "quiz": [
+  {
+   "id": "q-zigzag",
+   "difficulty": 2,
+   "prose": "A one-unit linear net has $w = -0.5$, $u = 1$ and $h_0 = 2$. Its inputs are $x_1 = 0$ and $x_2 = 0$.",
+   "question": "What is $h_2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": -1.0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$h_1 = -1$, $h_2 = 0.5$: a negative weight flips the sign each day.",
+    "generic": "Not quite. Multiply by $-0.5$ twice.",
+    "byKey": {
+     "sign": "You multiplied by $-0.5$ once. Two steps flip the sign twice.",
+     "one": "That is $h_1$. Take one more step."
+    }
+   },
+   "explain": {
+    "text": "$h_1 = -0.5 \\times 2 = -1$ and $h_2 = -0.5 \\times (-1) = 0.5$. As with a negative $\\phi$, the memory zigzags."
+   }
+  },
+  {
+   "id": "q-share",
+   "difficulty": 3,
+   "prose": "The 16-unit net of this lesson is run over 500 days instead of 250.",
+   "question": "How many numbers does it learn now?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 305,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "double",
+      "value": 610,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Still 305: the weights are shared by every step.",
+    "generic": "Not quite. Does a longer series add weights?",
+    "byKey": {
+     "double": "You doubled the weights for twice the days. The same weights act at every step."
+    }
+   },
+   "explain": {
+    "text": "The count depends on the sizes of $\\mathbf W$, $\\mathbf u$, $\\mathbf b$, $\\mathbf v$ and $c$, not on the length of the series: 305."
+   }
+  },
+  {
+   "id": "q-see",
+   "difficulty": 2,
+   "prose": "A recurrent net with $w = 0.9$ reads 100 days of returns, one a day.",
+   "question": "How does day 1's return reach the forecast on day 100?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "state",
+      "text": "Through the state, updated 99 more times",
+      "correct": true
+     },
+     {
+      "id": "direct",
+      "text": "Directly, as one of 100 inputs to the last step",
+      "why": "The last step reads only $h_{99}$ and $x_{100}$."
+     },
+     {
+      "id": "never",
+      "text": "It cannot reach it at all",
+      "why": "It can, through the state; with $w = 0.9$ it has shrunk to $0.9^{99}$ of its size."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Through the state: the past enters only through $h_{t-1}$.",
+    "generic": "Not quite. What does each step read?"
+   },
+   "explain": {
+    "text": "Each update reads the state and today's input. Day 1 survives only inside the state, scaled by $w$ at every step."
+   }
+  }
+ ]
+}
