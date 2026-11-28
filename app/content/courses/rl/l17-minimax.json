@@ -1,0 +1,1062 @@
+{
+ "id": "l17-minimax",
+ "course": "rl",
+ "title": "Minimax on a game tree",
+ "minutes": 15,
+ "objectives": [
+  "Code minimax and find the value of a small game."
+ ],
+ "skills": [
+  "rl-search"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Twenty-one sticks",
+   "prose": "Two players take turns removing 1, 2 or 3 sticks from a pile. Whoever takes the last stick wins. A position is the number of sticks left when it is your turn. With 0 left, the player before you took the last one.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 1,
+     "cols": 13,
+     "cells": [
+      [
+       "0",
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7",
+       "8",
+       "9",
+       "10",
+       "11",
+       "12"
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Tap every pile size from 0 to 12 where the player to move loses against best play.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r1c1",
+     "r1c5",
+     "r1c9",
+     "r1c13"
+    ],
+    "wrong": [
+     {
+      "id": "odd",
+      "set": [
+       "r1c2",
+       "r1c6",
+       "r1c10"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With 0 sticks you have already lost. With 1, 2 or 3 you take them all."
+    },
+    {
+     "rung": "point",
+     "text": "With 4, every move leaves 1, 2 or 3 for your opponent.",
+     "highlight": [
+      "r1c1",
+      "r1c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A losing pile is one where every move hands the opponent a winning pile."
+    }
+   ],
+   "feedback": {
+    "correct": "Piles 0, 4, 8 and 12 lose: every move leaves the opponent a pile that wins.",
+    "generic": "Not quite. Work up from 0: a pile wins if some move reaches a losing pile.",
+    "byKey": {
+     "odd": "You marked 1, 5 and 9. From those, taking 1 leaves 0, 4 or 8, which lose for the opponent."
+    }
+   },
+   "explain": {
+    "text": "From a multiple of 4, any take of 1 to 3 leaves a pile that is not a multiple of 4. From any other pile, you can take the remainder and hand back a multiple of 4.",
+    "canvas": {
+     "shade": {
+      "lose": [
+       "r1c1",
+       "r1c5",
+       "r1c9",
+       "r1c13"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The first move from 21",
+   "prose": "The pattern goes on: the losing piles are the multiples of 4. The game starts with 21 sticks and you move first.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 1,
+     "cols": 13,
+     "cells": [
+      [
+       "0",
+       "1",
+       "2",
+       "3",
+       "4",
+       "5",
+       "6",
+       "7",
+       "8",
+       "9",
+       "10",
+       "11",
+       "12"
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "How many sticks should you take?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which multiple of 4 is just below 21?"
+    },
+    {
+     "rung": "point",
+     "text": "20.",
+     "highlight": [
+      "r1c13"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "21 − 20."
+    }
+   ],
+   "feedback": {
+    "correct": "Take 1 and leave 20, a multiple of 4; then always take 4 minus what they took.",
+    "generic": "Not quite. Leave your opponent a multiple of 4.",
+    "byKey": {
+     "three": "That leaves 18, which is not a multiple of 4: they take 2 and leave you 16.",
+     "two": "That leaves 19: they take 3 and leave you 16."
+    }
+   },
+   "explain": {
+    "text": "Take 1: leaving 20 means every reply leaves 17, 18 or 19, and you restore a multiple of 4. The first player wins with best play."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Backing up a tree",
+   "prose": "Name the steps we used. At a **max** node you pick the largest child value; at a **min** node your opponent picks the smallest. Leaves are **terminal values**, here your payoff. Values passed up are **backed-up values**: this is **minimax**.",
+   "canvas": {
+    "kind": "tree",
+    "maxHeight": 360,
+    "params": {
+     "levels": [
+      {
+       "label": "You (max)",
+       "branches": [
+        {
+         "id": "a",
+         "label": "a"
+        },
+        {
+         "id": "b",
+         "label": "b"
+        },
+        {
+         "id": "c",
+         "label": "c"
+        }
+       ]
+      },
+      {
+       "label": "Opponent (min)",
+       "branches": [
+        {
+         "id": "1",
+         "label": "1"
+        },
+        {
+         "id": "2",
+         "label": "2"
+        },
+        {
+         "id": "3",
+         "label": "3"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "a-1": "3",
+      "a-2": "9",
+      "a-3": "6",
+      "b-1": "2",
+      "b-2": "5",
+      "b-3": "1",
+      "c-1": "4",
+      "c-2": "7",
+      "c-3": "8"
+     }
+    },
+    "state": {
+     "show": "none"
+    }
+   },
+   "question": "You move first (branch a, b or c), then your opponent picks 1, 2 or 3. What is the value at the root?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "helps",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "worst",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Back up each min node first."
+    },
+    {
+     "rung": "point",
+     "text": "Branch a gives min(3, 9, 6) = 3; do b and c.",
+     "highlight": [
+      "c"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The root takes the largest of 3, 1 and 4."
+    }
+   ],
+   "feedback": {
+    "correct": "Min nodes give 3, 1 and 4; you take c, worth 4.",
+    "generic": "Not quite. Your opponent picks the smallest leaf under each branch.",
+    "byKey": {
+     "helps": "You took the best leaf anywhere, as if your opponent helped you. Under c they choose 4.",
+     "worst": "That is the smallest leaf overall. You choose the branch, so take the best of the minima."
+    }
+   },
+   "explain": {
+    "text": "Each min node takes its smallest leaf: 3, 1 and 4. The root takes the largest of those, so branch c is worth 4.",
+    "canvas": {
+     "values": {
+      "a": "3",
+      "b": "1",
+      "c": "4",
+      "root": "4"
+     },
+     "highlight": [
+      "c-1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The value of tic-tac-toe",
+   "prose": "Run minimax from the empty tic-tac-toe board, with X maximising (1 win, 0 draw, −1 loss) and O minimising. Our memoised minimax gives the same value after each of X's nine first moves.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 3,
+     "cells": [
+      [
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false
+    },
+    "state": {}
+   },
+   "question": "What is the value of the game?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "draw",
+      "text": "0: a draw with best play, whatever X plays first",
+      "correct": true
+     },
+     {
+      "id": "xwins",
+      "text": "1: X wins by taking the centre first",
+      "why": "O can always hold the centre opening to a draw; the value after X's centre move is 0."
+     },
+     {
+      "id": "corner",
+      "text": "1 for a corner opening, 0 for the others",
+      "why": "Every first move has value 0 under best replies."
+     },
+     {
+      "id": "owins",
+      "text": "−1: the second player wins",
+      "why": "Moving first never hurts in tic-tac-toe; the value is 0."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check the values after each first move."
+    },
+    {
+     "rung": "point",
+     "text": "All nine are 0."
+    },
+    {
+     "rung": "step",
+     "text": "So the root is 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Tic-tac-toe is a draw with best play, and every first move keeps the draw.",
+    "generic": "Not quite. Best play from both sides."
+   },
+   "explain": {
+    "text": "All nine first moves have minimax value 0, so the game value is 0. Mistakes decide real games, not the opening."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "How big is the tree?",
+   "prose": "The full game tree from the empty board has 549,946 nodes, root included, and 255,168 complete games. Yet only 5,478 different boards can arise in play (of the $3^9 = 19{,}683$ ways to fill nine cells). We checked 5,478 by search and by counting legal boards.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Count",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Nodes in the full tree",
+       "549,946"
+      ],
+      [
+       "Complete games",
+       "255,168"
+      ],
+      [
+       "Legal positions",
+       "5,478"
+      ],
+      [
+       "$3^9$ fillings",
+       "19,683"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "About how many times does the full tree visit each position? Give the nearest whole number.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100,
+    "tol": {
+     "abs": 0.5
+    },
+    "wrong": [
+     {
+      "id": "games",
+      "value": 47,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "cells",
+      "value": 28,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide nodes by positions."
+    },
+    {
+     "rung": "point",
+     "text": "$549{,}946 / 5{,}478$."
+    },
+    {
+     "rung": "step",
+     "text": "That is about 100.4."
+    }
+   ],
+   "feedback": {
+    "correct": "$549{,}946/5{,}478 \\approx 100$.",
+    "generic": "Not quite. Divide the nodes by the positions.",
+    "byKey": {
+     "games": "You divided the games by the positions. Count every node of the tree.",
+     "cells": "You divided by $3^9$. Only 5,478 boards are legal."
+    }
+   },
+   "explain": {
+    "text": "Each position is reached about 100 times by different move orders, so remembering values (a table, as `lru_cache` keeps) turns 549,946 visits into 5,478 evaluations."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code minimax",
+   "prose": "Write `nim_losing(n)`, then `minimax(board, player)` with `lru_cache` as the table of seen positions, and `count_positions()`. Boards are strings like `'XX.OO....'`, read row by row.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 3,
+     "cells": [
+      [
+       "X",
+       "X",
+       ""
+      ],
+      [
+       "O",
+       "O",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef nim_losing(n):\n    \"\"\"True when the player to move with n sticks loses\n    against best play (take 1, 2 or 3; last stick wins).\"\"\"\n    ...\n\n@lru_cache(maxsize=None)\ndef minimax(board, player):\n    \"\"\"Value for X with best play: 1 X wins, -1 O wins, 0 draw.\n    board is a 9-character string of 'X', 'O' and '.'.\"\"\"\n    ...\n\ndef count_positions():\n    \"\"\"Boards reachable from the empty board, play stopping at a\n    win or a full board, the empty board included.\"\"\"\n    ...\n",
+    "solution": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef nim_losing(n):\n    \"\"\"True when the player to move with n sticks loses\n    against best play (take 1, 2 or 3; last stick wins).\"\"\"\n    # every move leaves the opponent in a winning position\n    return all(not nim_losing(n - k) for k in (1, 2, 3) if k <= n)\n\n@lru_cache(maxsize=None)\ndef minimax(board, player):\n    \"\"\"Value for X with best play: 1 X wins, -1 O wins, 0 draw.\n    board is a 9-character string of 'X', 'O' and '.'.\"\"\"\n    w = winner(board)\n    if w:\n        return 1 if w == 'X' else -1\n    if '.' not in board:\n        return 0\n    vals = [minimax(board[:i] + player + board[i + 1:], other(player))\n            for i in range(9) if board[i] == '.']\n    return max(vals) if player == 'X' else min(vals)\n\ndef count_positions():\n    \"\"\"Boards reachable from the empty board, play stopping at a\n    win or a full board, the empty board included.\"\"\"\n    seen, stack = set(), [('.' * 9, 'X')]\n    while stack:\n        board, player = stack.pop()\n        if board in seen:\n            continue\n        seen.add(board)\n        if winner(board) or '.' not in board:\n            continue\n        for i in range(9):\n            if board[i] == '.':\n                stack.append((board[:i] + player + board[i + 1:], other(player)))\n    return len(seen)\n",
+    "examples": [
+     {
+      "call": "nim_losing(4)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "minimax('XX.OO....', 'X')",
+      "expect": "1",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[n for n in range(30) if nim_losing(n)]",
+      "expect": "[0, 4, 8, 12, 16, 20, 24, 28]",
+      "compare": "equal"
+     },
+     {
+      "call": "nim_losing(21)",
+      "expect": "False",
+      "compare": "equal"
+     },
+     {
+      "call": "minimax('.........', 'X')",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "minimax('XX.OO....', 'X')",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "minimax('XX.OO....', 'O')",
+      "expect": "-1",
+      "compare": "equal"
+     },
+     {
+      "call": "[minimax('.........'[:i] + 'X' + '.........'[i + 1:], 'O') for i in range(9)]",
+      "expect": "[0] * 9",
+      "compare": "equal"
+     },
+     {
+      "call": "minimax('XOXOXO...', 'X')",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "count_positions()",
+      "expect": "5478",
+      "compare": "equal",
+      "budget": 4000
+     }
+    ],
+    "how": "Submit runs 8 hidden tests: the losing Nim positions below 30, planted boards with known values, every first move of tic-tac-toe, and the 5,478 positions.",
+    "mutants": [
+     {
+      "source": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef nim_losing(n):\n    \"\"\"True when the player to move with n sticks loses\n    against best play (take 1, 2 or 3; last stick wins).\"\"\"\n    # every move leaves the opponent in a winning position\n    return any(nim_losing(n - k) is False for k in (1, 2, 3) if k <= n)\n\n@lru_cache(maxsize=None)\ndef minimax(board, player):\n    \"\"\"Value for X with best play: 1 X wins, -1 O wins, 0 draw.\n    board is a 9-character string of 'X', 'O' and '.'.\"\"\"\n    w = winner(board)\n    if w:\n        return 1 if w == 'X' else -1\n    if '.' not in board:\n        return 0\n    vals = [minimax(board[:i] + player + board[i + 1:], other(player))\n            for i in range(9) if board[i] == '.']\n    return max(vals) if player == 'X' else min(vals)\n\ndef count_positions():\n    \"\"\"Boards reachable from the empty board, play stopping at a\n    win or a full board, the empty board included.\"\"\"\n    seen, stack = set(), [('.' * 9, 'X')]\n    while stack:\n        board, player = stack.pop()\n        if board in seen:\n            continue\n        seen.add(board)\n        if winner(board) or '.' not in board:\n            continue\n        for i in range(9):\n            if board[i] == '.':\n                stack.append((board[:i] + player + board[i + 1:], other(player)))\n    return len(seen)\n",
+      "test": 1,
+      "symptom": "A position counts as losing when any move leads to a win for the opponent."
+     },
+     {
+      "source": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef nim_losing(n):\n    \"\"\"True when the player to move with n sticks loses\n    against best play (take 1, 2 or 3; last stick wins).\"\"\"\n    # every move leaves the opponent in a winning position\n    return all(not nim_losing(n - k) for k in (1, 2, 3) if k <= n)\n\n@lru_cache(maxsize=None)\ndef minimax(board, player):\n    \"\"\"Value for X with best play: 1 X wins, -1 O wins, 0 draw.\n    board is a 9-character string of 'X', 'O' and '.'.\"\"\"\n    w = winner(board)\n    if w:\n        return 1 if w == 'X' else -1\n    if '.' not in board:\n        return 0\n    vals = [minimax(board[:i] + player + board[i + 1:], other(player))\n            for i in range(9) if board[i] == '.']\n    return max(vals)\n\ndef count_positions():\n    \"\"\"Boards reachable from the empty board, play stopping at a\n    win or a full board, the empty board included.\"\"\"\n    seen, stack = set(), [('.' * 9, 'X')]\n    while stack:\n        board, player = stack.pop()\n        if board in seen:\n            continue\n        seen.add(board)\n        if winner(board) or '.' not in board:\n            continue\n        for i in range(9):\n            if board[i] == '.':\n                stack.append((board[:i] + player + board[i + 1:], other(player)))\n    return len(seen)\n",
+      "test": 3,
+      "symptom": "The min node is scored as a max: the opponent helps you."
+     },
+     {
+      "source": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    \"\"\"'X' or 'O' if a line is full of one mark, else None.\"\"\"\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\ndef other(player):\n    return 'O' if player == 'X' else 'X'\n\ndef nim_losing(n):\n    \"\"\"True when the player to move with n sticks loses\n    against best play (take 1, 2 or 3; last stick wins).\"\"\"\n    # every move leaves the opponent in a winning position\n    return all(not nim_losing(n - k) for k in (1, 2, 3) if k <= n)\n\n@lru_cache(maxsize=None)\ndef minimax(board, player):\n    \"\"\"Value for X with best play: 1 X wins, -1 O wins, 0 draw.\n    board is a 9-character string of 'X', 'O' and '.'.\"\"\"\n    w = winner(board)\n    if w:\n        return 1 if w == 'X' else -1\n    if '.' not in board:\n        return 0\n    vals = [minimax(board[:i] + player + board[i + 1:], other(player))\n            for i in range(9) if board[i] == '.']\n    return max(vals) if player == 'X' else min(vals)\n\ndef count_positions():\n    \"\"\"Boards reachable from the empty board, play stopping at a\n    win or a full board, the empty board included.\"\"\"\n    seen, stack = set(), [('.' * 9, 'X')]\n    while stack:\n        board, player = stack.pop()\n        seen.add((board, len(seen)))\n        if winner(board) or '.' not in board:\n            continue\n        for i in range(9):\n            if board[i] == '.':\n                stack.append((board[:i] + player + board[i + 1:], other(player)))\n    return len(seen)\n",
+      "test": 8,
+      "symptom": "Counts every visit, not distinct boards: no table of seen positions."
+     }
+    ],
+    "budget": 4000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A Nim pile loses when every move leaves a winning pile."
+    },
+    {
+     "rung": "point",
+     "text": "Return 1, −1 or 0 at the end of a game; otherwise max for X and min for O."
+    },
+    {
+     "rung": "step",
+     "text": "Count boards with a set, stopping at wins and full boards."
+    }
+   ],
+   "feedback": {
+    "correct": "All hidden tests pass.",
+    "generic": "Some tests fail. Read the first failing row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The opponent is not on your side",
+   "prose": "O to move on this board. A colleague backs up the min level with a max, \"since we want X to win\", and reports that X wins.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 3,
+     "cells": [
+      [
+       "X",
+       "X",
+       ""
+      ],
+      [
+       "O",
+       "O",
+       ""
+      ],
+      [
+       "",
+       "",
+       ""
+      ]
+     ],
+     "rowHeads": false,
+     "colHeads": false
+    },
+    "state": {
+     "mark": {
+      "r2c3": {
+       "text": "?",
+       "pos": "centre"
+      }
+     }
+    }
+   },
+   "question": "What is the board's true value?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "owins",
+      "text": "−1: O completes the middle row",
+      "correct": true
+     },
+     {
+      "id": "xwins",
+      "text": "1: X wins on the top row",
+      "why": "Only if O lets it. O moves first here and wins at once."
+     },
+     {
+      "id": "draw",
+      "text": "0: a draw",
+      "why": "O has a win in one move; best play takes it."
+     },
+     {
+      "id": "either",
+      "text": "It depends on who is lucky",
+      "why": "With best play there is no luck: the value is fixed."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Whose turn is it?"
+    },
+    {
+     "rung": "point",
+     "text": "O plays the right cell of the middle row.",
+     "highlight": [
+      "r2c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That ends the game: O wins."
+    }
+   ],
+   "feedback": {
+    "correct": "O wins at once: the value is −1.",
+    "generic": "Not quite. Let O play its best move.",
+    "byKey": {
+     "xwins": "You scored O's move as if O wanted X to win. A min node takes the smallest value."
+    }
+   },
+   "explain": {
+    "text": "A min node takes the worst outcome for you, because your opponent chooses it. Treating it as a max credits you with a win the opponent will never allow."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Prefer the quicker win",
+   "prose": "Two moves both win for X: one wins now, one wins three moves later. Plain minimax scores both 1, so it may dawdle. Scoring a win as $10 - \\text{depth}$ (depth in moves from now) prefers the short one.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Line",
+      "Depth",
+      "Score"
+     ],
+     "rows": [
+      [
+       "Win now",
+       "1",
+       "9"
+      ],
+      [
+       "Win later",
+       "3",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does a win found at depth 3 score?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "plain",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "add",
+      "value": 13,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $10 - \\text{depth}$."
+    },
+    {
+     "rung": "point",
+     "text": "Depth 3."
+    },
+    {
+     "rung": "step",
+     "text": "$10 - 3$."
+    }
+   ],
+   "feedback": {
+    "correct": "$10 - 3 = 7$, below the immediate win's 9.",
+    "generic": "Not quite. Subtract the depth from 10.",
+    "byKey": {
+     "plain": "That ignores the depth.",
+     "add": "You added the depth. Later wins must score less."
+    }
+   },
+   "explain": {
+    "text": "An immediate win (depth 1) scores 9 and this one 7, so the search takes the win now. A loss is scored $-(10 - \\text{depth})$, so a forced loss is put off as long as possible."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Minimax",
+   "prose": "For a two-player, zero-sum game of perfect information: $$V(s) = \\begin{cases} \\text{payoff} & s \\text{ terminal} \\\\ \\max_a V(s') & \\text{you to move} \\\\ \\min_a V(s') & \\text{opponent to move} \\end{cases}$$ It is `graphs-dp` l17's backward induction with an opponent who minimises. Games with hidden information or mixed strategies come in `game-theory` l5.",
+   "question": "What does memoising minimax change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "work",
+      "text": "The work: each position is valued once",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "The value: it finds better moves",
+      "why": "The value is the same; it is only computed once per position."
+     },
+     {
+      "id": "depth",
+      "text": "The depth of the tree",
+      "why": "The tree is the same; repeats are looked up."
+     },
+     {
+      "id": "rules",
+      "text": "Which moves are legal",
+      "why": "Legality is unchanged."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Same values, far less work: 5,478 positions instead of 549,946 nodes.",
+    "generic": "Think about repeated positions."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Alternating offers",
+   "prose": "Two desks negotiate a block trade in alternating moves. You open with offer a or b; they respond with 1 or 2. Your profit in £k at each end is shown.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "levels": [
+      {
+       "label": "You",
+       "branches": [
+        {
+         "id": "a",
+         "label": "a"
+        },
+        {
+         "id": "b",
+         "label": "b"
+        }
+       ]
+      },
+      {
+       "label": "They",
+       "branches": [
+        {
+         "id": "1",
+         "label": "1"
+        },
+        {
+         "id": "2",
+         "label": "2"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "a-1": "8",
+      "a-2": "3",
+      "b-1": "5",
+      "b-2": "6"
+     }
+    },
+    "state": {
+     "show": "none"
+    }
+   },
+   "question": "With both sides playing best, what profit do you lock in, in £k?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "greedy",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "avg",
+      "value": 5.5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "They pick the end worse for you."
+    },
+    {
+     "rung": "point",
+     "text": "a gives 3, b gives 5.",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Choose b."
+    }
+   ],
+   "feedback": {
+    "correct": "Offer b: they hold you to 5, better than the 3 after a.",
+    "generic": "Not quite. Back up their choice first.",
+    "byKey": {
+     "greedy": "You aimed at the 8 under a. They answer with 2 and leave you 3.",
+     "avg": "You averaged. A rival does not choose at random."
+    }
+   },
+   "explain": {
+    "text": "Backing up their replies gives 3 after a and 5 after b, so you offer b and lock in £5k. Bargaining games with hidden values need the tools of `game-theory`.",
+    "canvas": {
+     "values": {
+      "a": "3",
+      "b": "5",
+      "root": "5"
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Minimax backs values up a game tree: max at your moves, min at your opponent's, payoffs at the leaves.",
+   "In 21-stick Nim the losing piles are the multiples of 4, so the first player takes 1; tic-tac-toe is a draw (value 0) after every first move.",
+   "The full tic-tac-toe tree has 549,946 nodes and 255,168 games but only 5,478 positions; a table of seen positions values each once."
+  ],
+  "formula": {
+   "name": "Minimax",
+   "tex": "V(s) = \\max_a V(s') \\text{ (you)}, \\quad V(s) = \\min_a V(s') \\text{ (opponent)}",
+   "note": "Payoffs at terminal positions; two players, zero-sum, perfect information."
+  },
+  "trap": "Scoring a min node as if the opponent helps you: it takes the worst outcome for you."
+ },
+ "quiz": [
+  {
+   "id": "q-nim-17",
+   "difficulty": 2,
+   "prose": "Nim with 17 sticks, take 1 to 3, last stick wins. You move.",
+   "question": "How many sticks should you take?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Leave 16, a multiple of 4.",
+    "generic": "Not quite. Leave a multiple of 4.",
+    "byKey": {
+     "three": "That leaves 14.",
+     "four": "You may take at most 3."
+    }
+   },
+   "explain": {
+    "text": "From 17, taking 1 leaves 16, a losing pile for your opponent."
+   }
+  },
+  {
+   "id": "q-backup",
+   "difficulty": 3,
+   "prose": "A max root has two min children. The first has leaves 2 and 8; the second has leaves 5 and 4.",
+   "question": "What is the root's value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "max",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "min",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Min nodes give 2 and 4; the root takes 4.",
+    "generic": "Not quite. Back up the min nodes first.",
+    "byKey": {
+     "max": "Your opponent will not let you reach 8.",
+     "min": "You choose the branch: take the better minimum."
+    }
+   },
+   "explain": {
+    "text": "The min nodes are 2 and 4, and the root takes the larger, 4."
+   }
+  },
+  {
+   "id": "q-memo",
+   "difficulty": 3,
+   "question": "Why does a table of seen positions help so much in tic-tac-toe?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "repeat",
+      "text": "The same board recurs by many move orders",
+      "correct": true
+     },
+     {
+      "id": "prune",
+      "text": "It prunes the moves that cannot matter",
+      "why": "That is alpha-beta, the next lesson."
+     },
+     {
+      "id": "heur",
+      "text": "It replaces search with a rule of thumb",
+      "why": "The table stores exact values."
+     },
+     {
+      "id": "first",
+      "text": "It plays the first legal move",
+      "why": "It stores values; it does not choose blindly."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Transpositions: 549,946 visits for 5,478 boards.",
+    "generic": "Not quite. Count nodes against positions."
+   },
+   "explain": {
+    "text": "The full tree has about 100 nodes for every legal board, so storing each board's value removes almost all the work."
+   }
+  }
+ ]
+}

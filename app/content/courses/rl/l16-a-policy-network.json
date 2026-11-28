@@ -1,0 +1,911 @@
+{
+ "id": "l16-a-policy-network",
+ "course": "rl",
+ "title": "A policy network",
+ "minutes": 15,
+ "objectives": [
+  "Build a policy network with the array autograd and train it with REINFORCE and a baseline."
+ ],
+ "skills": [
+  "rl-pg"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Selling four lots",
+   "prose": "You must sell 4 lots within 5 steps, 0, 1 or 2 lots a step. Selling $k$ at once fills at $10 - k$ each, so 2 at once pays £16, not £18. Each lot still held after a step costs £0.50. Lots left after step 5 are dumped at £5 each.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Lots sold at once",
+      "0",
+      "1",
+      "2"
+     ],
+     "rows": [
+      [
+       "Proceeds (£)",
+       "0",
+       "9",
+       "16"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the schedule 2, 2, 0, 0, 0 earn, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 31,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "nohold",
+      "value": 32,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "noimpact",
+      "value": 35,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ],
+    "unit": "£"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Step 1 sells 2 for £16 and holds 2."
+    },
+    {
+     "rung": "point",
+     "text": "Holding 2 lots costs $2 \\times 0.50$."
+    },
+    {
+     "rung": "step",
+     "text": "$16 - 1 + 16$."
+    }
+   ],
+   "feedback": {
+    "correct": "$16 - 1 + 16 = 31$.",
+    "generic": "Not quite. Count the proceeds and the holding cost of each step.",
+    "byKey": {
+     "nohold": "You left out the £1 for the 2 lots held after step 1.",
+     "noimpact": "You paid £9 a lot. Two at once fill at £8 each."
+    }
+   },
+   "explain": {
+    "text": "Step 1 earns $16 - 2 \\times 0.50 = 15$ and step 2 earns 16, so 31 in all. Selling fast pays impact; selling slowly pays the holding cost."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Watch a network learn to sell",
+   "prose": "This loop trains a small softmax policy network with REINFORCE and a baseline, using your `autograd.py` from `backprop` level 4. Each point is the mean proceeds of a batch of 32 episodes. Press Run; we build each line in this lesson.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "loss",
+       "label": "Mean proceeds",
+       "values": []
+      }
+     ],
+     "y": [
+      24,
+      34
+     ],
+     "length": 200,
+     "xLabel": "Batch",
+     "yLabel": "Proceeds (£)"
+    }
+   },
+   "widget": {
+    "kind": "trainer",
+    "starter": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\nparams = ops.init_policy(0)\nrng = np.random.default_rng(1000)\nfor step in range(200):\n    X, A, G, totals = ops.run_batch(params, 32, rng)\n    adv = (G - G.mean(axis=0)).reshape(-1)\n    lp = ops.log_softmax(ops.policy_logits(params, X))\n    loss = -(lp[(np.arange(len(A)), A)] * adv).sum() / len(A)\n    for p in params:\n        p.zero_grad()\n    loss.backward()\n    sgd_step(params, 0.5)\n    report(step, totals.mean())\nprint('expected proceeds', round(ops.network_value(params), 3))\n",
+    "steps": 200,
+    "maxSeconds": 60,
+    "series": [
+     "loss"
+    ],
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "rl_ops_l4.py": "content/data/ai/rl_ops_l4.py"
+    },
+    "how": "Not graded. About 2 s on a desktop; a phone may take longer."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The check: dynamic programming",
+   "prose": "Level 2's backward induction solves this exactly, from the last step back: in each state, take the sale that maximises the step's reward plus the best value after it.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Lots sold at once",
+      "0",
+      "1",
+      "2"
+     ],
+     "rows": [
+      [
+       "Proceeds (£)",
+       "0",
+       "9",
+       "16"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the best schedule worth, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 33,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "nohold",
+      "value": 36,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "two",
+      "value": 32.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "fast",
+      "value": 31,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ],
+    "unit": "£"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Try one lot a step."
+    },
+    {
+     "rung": "point",
+     "text": "1, 1, 1, 1, 0 earns $4 \\times 9$ less holding costs."
+    },
+    {
+     "rung": "step",
+     "text": "Holding costs $0.50 \\times (3 + 2 + 1)$."
+    }
+   ],
+   "feedback": {
+    "correct": "One lot a step for four steps: $36 - 3 = 33$.",
+    "generic": "Not quite. Weigh impact against the holding cost.",
+    "byKey": {
+     "nohold": "That is the proceeds alone; take off £3 of holding costs.",
+     "two": "That is 2, 1, 1, 0, 0. Splitting the first 2 saves more impact than the extra holding costs.",
+     "fast": "That is 2, 2, 0, 0, 0 from the first screen."
+    }
+   },
+   "explain": {
+    "text": "Backward induction gives £33 for 1, 1, 1, 1, 0. The network's curve should flatten just below it; that is the check on whatever it learns."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The loss whose gradient is REINFORCE",
+   "prose": "With logits $z$ from the network, the loss $L = -\\frac1n \\sum_i A_i \\log \\pi(a_i \\mid s_i)$ has gradient $-\\frac1n \\sum_i A_i \\nabla \\log \\pi$, so one step of gradient descent on $L$ is a REINFORCE step. Two rows: $\\pi(a_1) = 0.5$ with $A_1 = 2$; $\\pi(a_2) = 0.5$ with $A_2 = -1$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Row",
+      "$\\pi(a_i)$",
+      "$A_i$",
+      "$-A_i \\log \\pi(a_i)$"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.5",
+       "2",
+       "?"
+      ],
+      [
+       "2",
+       "0.5",
+       "−1",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $L$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3466,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 0.6931,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sign",
+      "value": -0.3466,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\log 0.5 = -0.6931$."
+    },
+    {
+     "rung": "point",
+     "text": "Row 1: $-2 \\times (-0.6931)$; row 2: $1 \\times (-0.6931)$."
+    },
+    {
+     "rung": "step",
+     "text": "Add and divide by 2."
+    }
+   ],
+   "feedback": {
+    "correct": "$(1.3863 - 0.6931)/2 = 0.3466$.",
+    "generic": "Not quite. Multiply each log-chance by minus its advantage, then average.",
+    "byKey": {
+     "sum": "You added the rows. Divide by $n = 2$.",
+     "sign": "You left out the minus sign in front of the sum."
+    }
+   },
+   "explain": {
+    "text": "Row 1 gives $1.3863$, row 2 gives $-0.6931$, and the mean is 0.3466. The cross-entropy of `backprop` level 4 is this loss with every $A_i = 1$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code the policy loss and the trainer",
+   "prose": "Write `policy_loss` with `ops.log_softmax` and indexing, then fill the loop of `train_policy`: advantages are the reward-to-go minus the batch's mean at the same step. `autograd.py` and `rl_ops_l4.py` are in the working directory.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Lots sold at once",
+      "0",
+      "1",
+      "2"
+     ],
+     "rows": [
+      [
+       "Proceeds (£)",
+       "0",
+       "9",
+       "16"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the two functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\ndef policy_loss(logits, actions, advantages):\n    \"\"\"-(1/n) sum_i A_i log pi(a_i | s_i): a Tensor of shape ().\"\"\"\n    ...\n\ndef train_policy(episodes, seed, batch=32, lr=0.5):\n    \"\"\"REINFORCE; baseline = the batch's mean reward-to-go\n    at the same step.\"\"\"\n    params = ops.init_policy(seed)\n    rng = np.random.default_rng(seed + 1000)\n    for _ in range(episodes // batch):\n        X, A, G, totals = ops.run_batch(params, batch, rng)\n        ...\n    return params\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\ndef policy_loss(logits, actions, advantages):\n    \"\"\"-(1/n) sum_i A_i log pi(a_i | s_i): a Tensor of shape ().\"\"\"\n    n = len(actions)\n    lp = ops.log_softmax(logits)\n    picked = lp[(np.arange(n), np.asarray(actions))]\n    return -(picked * np.asarray(advantages, dtype=float)).sum() / n\n\ndef train_policy(episodes, seed, batch=32, lr=0.5):\n    \"\"\"REINFORCE; baseline = the batch's mean reward-to-go\n    at the same step.\"\"\"\n    params = ops.init_policy(seed)\n    rng = np.random.default_rng(seed + 1000)\n    for _ in range(episodes // batch):\n        X, A, G, totals = ops.run_batch(params, batch, rng)\n        adv = (G - G.mean(axis=0)).reshape(-1)\n        for p in params:\n            p.zero_grad()\n        loss = policy_loss(ops.policy_logits(params, X), A, adv)\n        loss.backward()\n        sgd_step(params, lr)\n    return params\n",
+    "examples": [
+     {
+      "call": "policy_loss(z, [0, 2], [1.0, -0.5]).item()",
+      "expect": "0.7157134161146151",
+      "compare": "isclose",
+      "setup": "z = Tensor(np.array([[1.0, 2.0, 0.5], [0.0, -1.0, 3.0]]))"
+     }
+    ],
+    "tests": [
+     {
+      "call": "policy_loss(z, [0, 2], [1.0, -0.5]).item()",
+      "expect": "0.7157134161146151",
+      "compare": "isclose",
+      "setup": "z = Tensor(np.array([[1.0, 2.0, 0.5], [0.0, -1.0, 3.0]]))"
+     },
+     {
+      "call": "z.grad.tolist()",
+      "expect": "[[-0.3843880511889255, 0.3142658596058812, 0.07012219158304424], [-0.011653155644493473, -0.004286956386380097, 0.01594011203087356]]",
+      "compare": "isclose",
+      "setup": "z = Tensor(np.array([[1.0, 2.0, 0.5], [0.0, -1.0, 3.0]])); policy_loss(z, [0, 2], [1.0, -0.5]).backward()"
+     },
+     {
+      "call": "policy_loss(z, [1, 1], [0.0, 0.0]).item()",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      },
+      "setup": "z = Tensor(np.array([[1.0, 2.0, 0.5], [0.0, -1.0, 3.0]]))"
+     },
+     {
+      "call": "policy_loss(z, [0, 2], [1.0, -0.5]).shape",
+      "expect": "()",
+      "compare": "equal",
+      "setup": "z = Tensor(np.array([[1.0, 2.0, 0.5], [0.0, -1.0, 3.0]]))"
+     },
+     {
+      "call": "grad_check(lambda: policy_loss(ops.policy_logits(P, X), [1, 0, 2], [0.7, -1.2, 0.4]), P) < 1e-6",
+      "expect": "True",
+      "compare": "equal",
+      "setup": "from autograd import grad_check; P = ops.init_policy(3); X = np.stack([ops.features(4, 5), ops.features(2, 3), ops.features(1, 1)])"
+     },
+     {
+      "call": "ops.network_value(train_policy(960, 0)) > 32.5",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 10000
+     },
+     {
+      "call": "all(ops.network_value(train_policy(960, s)) > 32.5 for s in (1, 2))",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 10000
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. The loss and its gradient are compared with a NumPy reference, and with central differences below $10^{-6}$ through a network. Then 960 training episodes on seeds 0, 1 and 2 must each give a policy worth more than £32.50, against the optimum £33 (a few seconds).",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\ndef policy_loss(logits, actions, advantages):\n    \"\"\"-(1/n) sum_i A_i log pi(a_i | s_i): a Tensor of shape ().\"\"\"\n    n = len(actions)\n    lp = ops.log_softmax(logits)\n    picked = lp[(np.arange(n), np.asarray(actions))]\n    return (picked * np.asarray(advantages, dtype=float)).sum() / n\n\ndef train_policy(episodes, seed, batch=32, lr=0.5):\n    \"\"\"REINFORCE; baseline = the batch's mean reward-to-go\n    at the same step.\"\"\"\n    params = ops.init_policy(seed)\n    rng = np.random.default_rng(seed + 1000)\n    for _ in range(episodes // batch):\n        X, A, G, totals = ops.run_batch(params, batch, rng)\n        adv = (G - G.mean(axis=0)).reshape(-1)\n        for p in params:\n            p.zero_grad()\n        loss = policy_loss(ops.policy_logits(params, X), A, adv)\n        loss.backward()\n        sgd_step(params, lr)\n    return params\n",
+      "test": 1,
+      "symptom": "The minus sign is missing: gradient descent on the return."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\ndef policy_loss(logits, actions, advantages):\n    \"\"\"-(1/n) sum_i A_i log pi(a_i | s_i): a Tensor of shape ().\"\"\"\n    n = len(actions)\n    lp = ops.log_softmax(logits)\n    picked = lp[(np.arange(n), np.asarray(actions))]\n    return -picked.sum() / n\n\ndef train_policy(episodes, seed, batch=32, lr=0.5):\n    \"\"\"REINFORCE; baseline = the batch's mean reward-to-go\n    at the same step.\"\"\"\n    params = ops.init_policy(seed)\n    rng = np.random.default_rng(seed + 1000)\n    for _ in range(episodes // batch):\n        X, A, G, totals = ops.run_batch(params, batch, rng)\n        adv = (G - G.mean(axis=0)).reshape(-1)\n        for p in params:\n            p.zero_grad()\n        loss = policy_loss(ops.policy_logits(params, X), A, adv)\n        loss.backward()\n        sgd_step(params, lr)\n    return params\n",
+      "test": 1,
+      "symptom": "The advantages are ignored: plain cross-entropy on its own actions."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nimport rl_ops_l4 as ops\n\ndef policy_loss(logits, actions, advantages):\n    \"\"\"-(1/n) sum_i A_i log pi(a_i | s_i): a Tensor of shape ().\"\"\"\n    n = len(actions)\n    lp = ops.log_softmax(logits)\n    picked = lp[(np.arange(n), np.asarray(actions))]\n    return -(picked * np.asarray(advantages, dtype=float)).sum()\n\ndef train_policy(episodes, seed, batch=32, lr=0.5):\n    \"\"\"REINFORCE; baseline = the batch's mean reward-to-go\n    at the same step.\"\"\"\n    params = ops.init_policy(seed)\n    rng = np.random.default_rng(seed + 1000)\n    for _ in range(episodes // batch):\n        X, A, G, totals = ops.run_batch(params, batch, rng)\n        adv = (G - G.mean(axis=0)).reshape(-1)\n        for p in params:\n            p.zero_grad()\n        loss = policy_loss(ops.policy_logits(params, X), A, adv)\n        loss.backward()\n        sgd_step(params, lr)\n    return params\n",
+      "test": 1,
+      "symptom": "A sum where the mean is asked for."
+     }
+    ],
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "rl_ops_l4.py": "content/data/ai/rl_ops_l4.py"
+    },
+    "budget": 10000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`lp[(np.arange(n), actions)]` picks each row's log-chance."
+    },
+    {
+     "rung": "point",
+     "text": "Zero the gradients before `backward`."
+    },
+    {
+     "rung": "step",
+     "text": "Advantages: `G - G.mean(axis=0)`, flattened row by row."
+    }
+   ],
+   "feedback": {
+    "correct": "All hidden tests pass.",
+    "generic": "Some tests fail. Read the first failing row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Rewards in pence",
+   "prose": "A colleague reruns `train_policy` with every reward multiplied by 100 (pence instead of pounds) and the same learning rate 0.5. On 3 of 10 seeds the policy jumps to a fixed schedule worth £31 and never leaves it.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Lots sold at once",
+      "0",
+      "1",
+      "2"
+     ],
+     "rows": [
+      [
+       "Proceeds (£)",
+       "0",
+       "9",
+       "16"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What went wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "step",
+      "text": "Each step grew 100 times, so the policy collapsed early",
+      "correct": true
+     },
+     {
+      "id": "problem",
+      "text": "Pence make it a harder problem to solve well",
+      "why": "The best schedule is the same in pence: 3,300p."
+     },
+     {
+      "id": "seed",
+      "text": "Those three seeds were simply unlucky ones",
+      "why": "In pounds the same seeds reach about £32.9; only the scale changed."
+     },
+     {
+      "id": "baseline",
+      "text": "The baseline stops working once rewards are in pence",
+      "why": "The baseline scales with the rewards; the gradient's size is what grew."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does multiplying every $A_i$ by 100 do to the gradient?"
+    },
+    {
+     "rung": "point",
+     "text": "It multiplies it by 100."
+    },
+    {
+     "rung": "step",
+     "text": "So 0.5 now acts like 50."
+    }
+   ],
+   "feedback": {
+    "correct": "One learning rate does not suit every scale of reward. Too large a step pushes a softmax to one action, and its gradient there is near 0.",
+    "generic": "Not quite. Compare the size of each step.",
+    "byKey": {
+     "problem": "You blamed the units. The optimum is unchanged; the step size grew a hundredfold."
+    }
+   },
+   "explain": {
+    "text": "A softmax pushed to one action has scores near 0, so it stops learning: the collapse. An entropy bonus, a small reward for keeping the chances spread, is one guard; scaling the step is another."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Normalise the advantages",
+   "prose": "Dividing the advantages by their standard deviation makes the step size independent of the reward's units. A batch has advantages $300, -100, -200$ (mean 0, population sd 216.02).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Lots sold at once",
+      "0",
+      "1",
+      "2"
+     ],
+     "rows": [
+      [
+       "Proceeds (£)",
+       "0",
+       "9",
+       "16"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the first normalised advantage? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.3887,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "max",
+      "value": 1,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "var",
+      "value": 0.0064,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide 300 by 216.02."
+    },
+    {
+     "rung": "point",
+     "text": "$216.02 = \\sqrt{(300^2 + 100^2 + 200^2)/3}$."
+    },
+    {
+     "rung": "step",
+     "text": "$300/216.02$."
+    }
+   ],
+   "feedback": {
+    "correct": "$300/216.0247 = 1.3887$, the same as for $3, -1, -2$.",
+    "generic": "Not quite. Divide by the standard deviation.",
+    "byKey": {
+     "max": "You divided by the largest value. Divide by the standard deviation.",
+     "var": "You divided by the variance. Use its square root."
+    }
+   },
+   "explain": {
+    "text": "The first becomes 1.3887. The pence batch $300, -100, -200$ and the pounds batch $3, -1, -2$ normalise to the same numbers, so our pence and pounds runs learned identically on all 10 seeds."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A leash on each step",
+   "prose": "Large policy steps can wreck a policy that was fine. One fix adds a penalty on the KL divergence from a reference policy, $\\mathrm{KL}(\\pi \\| \\pi_{\\text{ref}}) = \\sum_a \\pi(a) \\ln \\frac{\\pi(a)}{\\pi_{\\text{ref}}(a)}$, which keeps the new policy close to the old one.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "a",
+      "b"
+     ],
+     "groups": [
+      {
+       "id": "ref",
+       "label": "Reference"
+      },
+      {
+       "id": "new",
+       "label": "New"
+      }
+     ],
+     "yLabel": "chance",
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "ref": {
+       "a": 0.5,
+       "b": 0.5
+      },
+      "new": {
+       "a": 0.6,
+       "b": 0.4
+      }
+     }
+    }
+   },
+   "question": "With $\\pi_{\\text{ref}} = (0.5, 0.5)$ and $\\pi = (0.6, 0.4)$, what is the KL divergence? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0201,
+    "tol": {
+     "abs": 6e-05
+    },
+    "wrong": [
+     {
+      "id": "rev",
+      "value": 0.0204,
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "id": "abs",
+      "value": 0.2,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two terms: $0.6 \\ln(0.6/0.5)$ and $0.4 \\ln(0.4/0.5)$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\ln 1.2 = 0.1823$, $\\ln 0.8 = -0.2231$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.1094 - 0.0893$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.6 \\ln 1.2 + 0.4 \\ln 0.8 = 0.0201$.",
+    "generic": "Not quite. Weight each log-ratio by the new policy's chance.",
+    "byKey": {
+     "rev": "You weighted by the reference policy: that is $\\mathrm{KL}(\\pi_{\\text{ref}} \\| \\pi)$.",
+     "abs": "That is the summed absolute difference of the chances, not the KL divergence."
+    }
+   },
+   "explain": {
+    "text": "Here it is 0.0201. It is 0 only when the policies agree, and it grows as they part. Subtracting a multiple of it from the objective keeps each update small; training language models from feedback uses exactly this leash."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Policy gradients with a network",
+   "prose": "A network maps a state to logits; a softmax turns them into $\\pi_\\theta(a \\mid s)$. Act, record $(s_t, a_t, G_t)$, set $A_t = G_t - b(s_t)$, and minimise $$L(\\theta) = -\\frac1n \\sum_i A_i \\log \\pi_\\theta(a_i \\mid s_i).$$ The autograd does the rest.",
+   "question": "Why does minimising $L$ climb the expected return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "grad",
+      "text": "Its gradient is minus the REINFORCE estimate of $\\nabla J$",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "Its value equals $-J$",
+      "why": "Its value is not $J$; only its gradient matches the estimate."
+     },
+     {
+      "id": "ce",
+      "text": "It is a cross-entropy, which always lowers error",
+      "why": "With advantages it is a weighted cross-entropy, used here for its gradient."
+     },
+     {
+      "id": "dp",
+      "text": "It reproduces dynamic programming",
+      "why": "It never sees the model; dynamic programming needs it."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Descent on $L$ is ascent on the sampled $J$.",
+    "generic": "Compare $\\nabla L$ with the REINFORCE step."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Where learning earns its keep",
+   "prose": "An execution desk knows its impact model: proceeds $k(10 - k)$ and a holding cost. Dynamic programming gives the best schedule in microseconds, with no noise.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Lots sold at once",
+      "0",
+      "1",
+      "2"
+     ],
+     "rows": [
+      [
+       "Proceeds (£)",
+       "0",
+       "9",
+       "16"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "When is a learned policy worth its noise?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "unknown",
+      "text": "When the impact is unknown and must be learned from fills",
+      "correct": true
+     },
+     {
+      "id": "always",
+      "text": "Always: a trained network beats any formula",
+      "why": "Here the formula is exact; the network only gets close to £33."
+     },
+     {
+      "id": "never",
+      "text": "Never: dynamic programming is always better",
+      "why": "Dynamic programming needs the model; without one it cannot start."
+     },
+     {
+      "id": "small",
+      "text": "When the problem is small enough to sample",
+      "why": "Small problems with known models are where dynamic programming shines."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does dynamic programming need that REINFORCE does not?"
+    },
+    {
+     "rung": "point",
+     "text": "The transition and reward model."
+    },
+    {
+     "rung": "step",
+     "text": "Without a model, only sampled episodes remain."
+    }
+   ],
+   "feedback": {
+    "correct": "Use the formula where the model is known; learn where it is not.",
+    "generic": "Not quite. Ask what each method needs.",
+    "byKey": {
+     "always": "You trusted the network over an exact answer. With a known model, dynamic programming is exact and fast."
+    }
+   },
+   "explain": {
+    "text": "With a known model the schedule is a solve, and desks use it. Policy gradients need only episodes, so they help when impact must be learned from fills."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A policy network maps a state to logits; minimising $-\\frac1n \\sum A_i \\log \\pi(a_i \\mid s_i)$ with the autograd is a REINFORCE step.",
+   "On the toy execution task, 960 seeded episodes took the network from £28.21 (seed 0, untrained) to above £32.88 on seeds 0 to 9. The dynamic-programming optimum is £33 (1, 1, 1, 1, 0).",
+   "One learning rate does not fit every reward scale: normalise the advantages; a KL penalty keeps each step close to a reference policy."
+  ],
+  "formula": {
+   "name": "Policy loss",
+   "tex": "L(\\theta) = -\\dfrac1n \\sum_i A_i \\log \\pi_\\theta(a_i \\mid s_i)",
+   "note": "$A_i = G_i - b(s_i)$; its gradient is minus the REINFORCE estimate."
+  },
+  "trap": "Keeping one learning rate when the rewards change scale: in pence the same rate made 3 of 10 seeded runs collapse to one schedule."
+ },
+ "quiz": [
+  {
+   "id": "q-loss-row",
+   "difficulty": 2,
+   "prose": "One row: $\\pi(a) = 0.25$, advantage $A = 2$.",
+   "question": "What is the policy loss? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.7726,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -2.7726,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "nolog",
+      "value": 0.5,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-2 \\ln 0.25 = 2.7726$.",
+    "generic": "Not quite. Use $-A \\log \\pi(a)$.",
+    "byKey": {
+     "sign": "Include the minus sign: the loss is $-A \\log \\pi$.",
+     "nolog": "You multiplied the chance itself. Use its log."
+    }
+   },
+   "explain": {
+    "text": "With $n = 1$ the loss is $-2 \\ln 0.25 = 2.7726$."
+   }
+  },
+  {
+   "id": "q-norm",
+   "difficulty": 2,
+   "prose": "A batch of two advantages, $4$ and $-4$.",
+   "question": "What is the first advantage after dividing by the population standard deviation?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "raw",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The sd is 4, so $4/4 = 1$.",
+    "generic": "Not quite. Divide by the standard deviation.",
+    "byKey": {
+     "var": "You divided by the variance, 16.",
+     "raw": "Divide by the standard deviation, 4."
+    }
+   },
+   "explain": {
+    "text": "The population sd of $4, -4$ is 4, so the advantages become 1 and $-1$, whatever the units."
+   }
+  },
+  {
+   "id": "q-kl",
+   "difficulty": 3,
+   "question": "What does a KL penalty from a reference policy do in a policy-gradient update?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "leash",
+      "text": "It keeps each update close to the reference policy",
+      "correct": true
+     },
+     {
+      "id": "explore",
+      "text": "It forces the policy to be uniform",
+      "why": "It pulls towards the reference, which need not be uniform."
+     },
+     {
+      "id": "bias",
+      "text": "It removes the variance of the gradient",
+      "why": "That is the baseline's job."
+     },
+     {
+      "id": "speed",
+      "text": "It makes learning faster",
+      "why": "It usually slows each step, on purpose."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "It is a leash: divergence from the reference is penalised.",
+    "generic": "Not quite. What does the KL divergence measure?"
+   },
+   "explain": {
+    "text": "The KL divergence is 0 only when the policies agree, so penalising it limits how far one update can move the policy."
+   }
+  }
+ ]
+}

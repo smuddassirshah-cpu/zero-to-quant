@@ -1,0 +1,377 @@
+{
+ "id": "homework-5",
+ "course": "rl",
+ "level": 5,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h5-best-move",
+   "difficulty": 5,
+   "skills": [
+    "rl-search"
+   ],
+   "performance": "code",
+   "title": "A tic-tac-toe player that never loses",
+   "prose": "A board is a 9-character string of `X`, `O` and `.`, read row by row; X moves first, so X is to move when the counts are equal. Search with a table of seen positions (alpha-beta optional). Prefer a quicker win, as in l17: score a win by how early it comes. Return the cell to play.",
+   "question": "Write `best_move(board)` from a blank start.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def best_move(board):\n    ...\n",
+    "solution": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\n@lru_cache(maxsize=None)\ndef value(board, player):\n    \"\"\"Score for the player to move: a win is worth 1 + the empty\n    cells left when it happens (quicker is better), a loss minus that.\"\"\"\n    if winner(board):\n        return -(1 + board.count('.'))   # the previous mover won\n    if '.' not in board:\n        return 0\n    other = 'O' if player == 'X' else 'X'\n    return max(-value(board[:i] + player + board[i + 1:], other)\n               for i in range(9) if board[i] == '.')\n\ndef best_move(board):\n    player = 'X' if board.count('X') == board.count('O') else 'O'\n    other = 'O' if player == 'X' else 'X'\n    empty = [i for i in range(9) if board[i] == '.']\n    return max(empty, key=lambda i: -value(board[:i] + player + board[i + 1:], other))\n",
+    "examples": [
+     {
+      "call": "best_move('XX.OO....')",
+      "expect": "2",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "best_move('XX.OO....')",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "best_move('.....XOOX')",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "best_move('OO.X....X')",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "best_move('.....XO..')",
+      "expect": "8",
+      "compare": "equal"
+     },
+     {
+      "call": "_after('.........', best_move('.........'))",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "best_move('XOXXOOO.X')",
+      "expect": "7",
+      "compare": "equal"
+     },
+     {
+      "call": "all(_play(s, True) != 'L' for s in range(10))",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 5000
+     },
+     {
+      "call": "all(_play(s, False) != 'L' for s in range(10))",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 5000
+     },
+     {
+      "call": "best_move('XX.OO.X..')",
+      "expect": "5",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. Planted boards: a win in one, a quicker win over a slower one, a block, a fork, the opening and a forced move. Then 20 seeded games against a random player (10 first, 10 second), none lost, and a win for O when O is to move.",
+    "mutants": [
+     {
+      "source": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\n@lru_cache(maxsize=None)\ndef value(board, player):\n    \"\"\"Score for the player to move: a win is worth 1 + the empty\n    cells left when it happens (quicker is better), a loss minus that.\"\"\"\n    if winner(board):\n        return -1\n    if '.' not in board:\n        return 0\n    other = 'O' if player == 'X' else 'X'\n    return max(-value(board[:i] + player + board[i + 1:], other)\n               for i in range(9) if board[i] == '.')\n\ndef best_move(board):\n    player = 'X' if board.count('X') == board.count('O') else 'O'\n    other = 'O' if player == 'X' else 'X'\n    empty = [i for i in range(9) if board[i] == '.']\n    return max(empty, key=lambda i: -value(board[:i] + player + board[i + 1:], other))\n",
+      "test": 2,
+      "symptom": "Every win scores the same: no preference for the quicker one."
+     },
+     {
+      "source": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\n@lru_cache(maxsize=None)\ndef value(board, player):\n    \"\"\"Score for the player to move: a win is worth 1 + the empty\n    cells left when it happens (quicker is better), a loss minus that.\"\"\"\n    if winner(board):\n        return -(1 + board.count('.'))   # the previous mover won\n    if '.' not in board:\n        return 0\n    other = 'O' if player == 'X' else 'X'\n    return max(-value(board[:i] + player + board[i + 1:], other)\n               for i in range(9) if board[i] == '.')\n\ndef best_move(board):\n    player = 'X' if board.count('X') == board.count('O') else 'O'\n    other = 'O' if player == 'X' else 'X'\n    empty = [i for i in range(9) if board[i] == '.']\n    return max(empty, key=lambda i: value(board[:i] + player + board[i + 1:], other))\n",
+      "test": 1,
+      "symptom": "Scores the child as the mover's own value: the opponent helps."
+     },
+     {
+      "source": "from functools import lru_cache\n\nLINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6),\n         (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\n\ndef winner(board):\n    for a, b, c in LINES:\n        if board[a] != '.' and board[a] == board[b] == board[c]:\n            return board[a]\n    return None\n\n@lru_cache(maxsize=None)\ndef value(board, player):\n    \"\"\"Score for the player to move: a win is worth 1 + the empty\n    cells left when it happens (quicker is better), a loss minus that.\"\"\"\n    if winner(board):\n        return -(1 + board.count('.'))   # the previous mover won\n    if '.' not in board:\n        return 0\n    other = 'O' if player == 'X' else 'X'\n    return max(-value(board[:i] + player + board[i + 1:], other)\n               for i in range(9) if board[i] == '.')\n\ndef best_move(board):\n    player = 'X'\n    other = 'O' if player == 'X' else 'X'\n    empty = [i for i in range(9) if board[i] == '.']\n    return max(empty, key=lambda i: -value(board[:i] + player + board[i + 1:], other))\n",
+      "test": 9,
+      "symptom": "Always plays as X."
+     }
+    ],
+    "prelude": "import random as _r\nfrom functools import lru_cache as _lc\n_L = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]\ndef _win(b):\n    for a, c, d in _L:\n        if b[a] != '.' and b[a] == b[c] == b[d]:\n            return b[a]\n    return None\n@_lc(maxsize=None)\ndef _v(b, p):\n    w = _win(b)\n    if w:\n        return 1 if w == 'X' else -1\n    if '.' not in b:\n        return 0\n    vs = [_v(b[:i] + p + b[i + 1:], 'O' if p == 'X' else 'X') for i in range(9) if b[i] == '.']\n    return max(vs) if p == 'X' else min(vs)\ndef _after(b, i):\n    p = 'X' if b.count('X') == b.count('O') else 'O'\n    return _v(b[:i] + p + b[i + 1:], 'O' if p == 'X' else 'X')\ndef _play(seed, agent_first):\n    rng, b, agent = _r.Random(seed), '.' * 9, agent_first\n    while not _win(b) and '.' in b:\n        p = 'X' if b.count('X') == b.count('O') else 'O'\n        i = best_move(b) if agent else rng.choice([j for j in range(9) if b[j] == '.'])\n        b = b[:i] + p + b[i + 1:]\n        agent = not agent\n    w = _win(b)\n    me = 'X' if agent_first else 'O'\n    return 'D' if w is None else ('W' if w == me else 'L')\n",
+    "budget": 5000
+   },
+   "explain": {
+    "text": "The table makes the full search cheap: 5,478 positions at most, each valued once. Scoring wins by the empty cells left makes the player take a win at once rather than a slower one."
+   },
+   "feedback": {
+    "correct": "Your player takes wins, blocks, forks and never loses to a random opponent.",
+    "generic": "Some tests fail. Read the first failing row."
+   }
+  },
+  {
+   "id": "h5-mcts-nim",
+   "difficulty": 4,
+   "skills": [
+    "rl-search"
+   ],
+   "title": "MCTS on Nim",
+   "prose": "Nim, take 1 to 3, the last stick wins. Keep visits $N$ and wins $W$ (for the player who took) on each edge (pile, take). Each iteration: from $n$, while every take at the current pile has been tried, choose by UCT ($c = \\sqrt 2$); otherwise add the smallest untried take and stop. Then play random takes to the end and back up a win to every edge taken by the player who took the last stick.",
+   "question": "Write `mcts_nim(n, iterations, seed)`, returning the take from $n$ with the most visits.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport random\n\ndef mcts_nim(n, iterations, seed, c=math.sqrt(2)):\n    ...\n",
+    "solution": "import math\nimport random\n\ndef mcts_nim(n, iterations, seed, c=math.sqrt(2)):\n    \"\"\"Nim, take 1 to 3, last stick wins. Edges (pile, take) keep\n    visits N and wins W for the player who took. Return the take\n    from n with the most visits.\"\"\"\n    rng = random.Random(seed)\n    N, W = {}, {}\n    for _ in range(iterations):\n        path, pile = [], n\n        while pile > 0:                                   # select / expand\n            takes = [k for k in (1, 2, 3) if k <= pile]\n            new = [k for k in takes if (pile, k) not in N]\n            if new:\n                N[(pile, new[0])], W[(pile, new[0])] = 0, 0.0\n                path.append((pile, new[0]))\n                pile -= new[0]\n                break\n            total = sum(N[(pile, k)] for k in takes)\n            k = max(takes, key=lambda j: W[(pile, j)] / N[(pile, j)]\n                    + c * math.sqrt(math.log(total) / N[(pile, j)]))\n            path.append((pile, k))\n            pile -= k\n        last = len(path) - 1                              # index of the last taker\n        while pile > 0:                                   # random playout\n            pile -= rng.choice([k for k in (1, 2, 3) if k <= pile])\n            last += 1\n        for i, edge in enumerate(path):                   # back up\n            N[edge] += 1\n            if (last - i) % 2 == 0:\n                W[edge] += 1.0\n    takes = [k for k in (1, 2, 3) if k <= n]\n    return max(takes, key=lambda k: N.get((n, k), 0))\n",
+    "examples": [
+     {
+      "call": "mcts_nim(3, 50, 0)",
+      "expect": "3",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "mcts_nim(3, 50, 0)",
+      "expect": "3",
+      "compare": "equal"
+     },
+     {
+      "call": "[mcts_nim(5, 1000, s) for s in range(3)]",
+      "expect": "[1, 1, 1]",
+      "compare": "equal",
+      "budget": 3000
+     },
+     {
+      "call": "[mcts_nim(6, 1000, s) for s in range(3)]",
+      "expect": "[2, 2, 2]",
+      "compare": "equal",
+      "budget": 3000
+     },
+     {
+      "call": "[mcts_nim(7, 1000, s) for s in range(3)]",
+      "expect": "[3, 3, 3]",
+      "compare": "equal",
+      "budget": 3000
+     },
+     {
+      "call": "[mcts_nim(9, 2000, s) for s in range(3)]",
+      "expect": "[1, 1, 1]",
+      "compare": "equal",
+      "budget": 3000
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: seeded searches from piles 3, 5, 6, 7 and 9, where the right take is $n \\bmod 4$.",
+    "mutants": [
+     {
+      "source": "import math\nimport random\n\ndef mcts_nim(n, iterations, seed, c=math.sqrt(2)):\n    \"\"\"Nim, take 1 to 3, last stick wins. Edges (pile, take) keep\n    visits N and wins W for the player who took. Return the take\n    from n with the most visits.\"\"\"\n    rng = random.Random(seed)\n    N, W = {}, {}\n    for _ in range(iterations):\n        path, pile = [], n\n        while pile > 0:                                   # select / expand\n            takes = [k for k in (1, 2, 3) if k <= pile]\n            new = [k for k in takes if (pile, k) not in N]\n            if new:\n                N[(pile, new[0])], W[(pile, new[0])] = 0, 0.0\n                path.append((pile, new[0]))\n                pile -= new[0]\n                break\n            total = sum(N[(pile, k)] for k in takes)\n            k = max(takes, key=lambda j: W[(pile, j)] / N[(pile, j)]\n                    + c * math.sqrt(math.log(total) / N[(pile, j)]))\n            path.append((pile, k))\n            pile -= k\n        last = len(path) - 1                              # index of the last taker\n        while pile > 0:                                   # random playout\n            pile -= rng.choice([k for k in (1, 2, 3) if k <= pile])\n            last += 1\n        for i, edge in enumerate(path):                   # back up\n            N[edge] += 1\n            if (last - i) % 2 == 1:\n                W[edge] += 1.0\n    takes = [k for k in (1, 2, 3) if k <= n]\n    return max(takes, key=lambda k: N.get((n, k), 0))\n",
+      "test": 1,
+      "symptom": "Credits the result to the wrong player at every edge."
+     },
+     {
+      "source": "import math\nimport random\n\ndef mcts_nim(n, iterations, seed, c=math.sqrt(2)):\n    \"\"\"Nim, take 1 to 3, last stick wins. Edges (pile, take) keep\n    visits N and wins W for the player who took. Return the take\n    from n with the most visits.\"\"\"\n    rng = random.Random(seed)\n    N, W = {}, {}\n    for _ in range(iterations):\n        path, pile = [], n\n        while pile > 0:                                   # select / expand\n            takes = [k for k in (1, 2, 3) if k <= pile]\n            new = [k for k in takes if (pile, k) not in N]\n            if new:\n                N[(pile, new[0])], W[(pile, new[0])] = 0, 0.0\n                path.append((pile, new[0]))\n                pile -= new[0]\n                break\n            total = sum(N[(pile, k)] for k in takes)\n            k = max(takes, key=lambda j: W[(pile, j)] / N[(pile, j)])\n            path.append((pile, k))\n            pile -= k\n        last = len(path) - 1                              # index of the last taker\n        while pile > 0:                                   # random playout\n            pile -= rng.choice([k for k in (1, 2, 3) if k <= pile])\n            last += 1\n        for i, edge in enumerate(path):                   # back up\n            N[edge] += 1\n            if (last - i) % 2 == 0:\n                W[edge] += 1.0\n    takes = [k for k in (1, 2, 3) if k <= n]\n    return max(takes, key=lambda k: N.get((n, k), 0))\n",
+      "test": 3,
+      "symptom": "No exploration bonus: greedy on the averages inside the tree."
+     }
+    ],
+    "budget": 3000
+   },
+   "explain": {
+    "text": "Nim is impartial, so a (pile, take) edge means the same for either player and one table serves both. With enough iterations the visits concentrate on the take that leaves a multiple of 4."
+   },
+   "feedback": {
+    "correct": "Your search finds the winning take.",
+    "generic": "Some tests fail. Check whose win each edge records."
+   }
+  },
+  {
+   "id": "h5-iteration",
+   "difficulty": 4,
+   "skills": [
+    "rl-search"
+   ],
+   "title": "One MCTS iteration",
+   "question": "Put the steps of one iteration in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "m1",
+      "text": "Start at the root."
+     },
+     {
+      "id": "m2",
+      "text": "Select: while the node has no untried move, step to the child with the largest UCT score."
+     },
+     {
+      "id": "m3",
+      "text": "Expand: add one child for an untried move."
+     },
+     {
+      "id": "m4",
+      "text": "Simulate: play random moves from the new child to the end of the game."
+     },
+     {
+      "id": "m5",
+      "text": "Back up: add a visit, and the result for the player who moved, to every node on the path."
+     },
+     {
+      "id": "mx",
+      "text": "Store every position of the random playout as a new node.",
+      "why": "Only one node is added per iteration; playout positions are thrown away, which keeps the tree small."
+     }
+    ],
+    "answer": [
+     "m1",
+     "m2",
+     "m3",
+     "m4",
+     "m5"
+    ],
+    "distractors": [
+     "mx"
+    ]
+   },
+   "feedback": {
+    "correct": "Select, expand, simulate, back up.",
+    "generic": "Not quite. The tree grows by one node per iteration.",
+    "byKey": {
+     "mx": "You stored the whole playout. MCTS adds one node an iteration and keeps only the result."
+    }
+   },
+   "explain": {
+    "text": "Selection walks known nodes, expansion adds one, the random playout estimates its value, and the result is backed up along the path. Repeat, then play the most visited child."
+   }
+  },
+  {
+   "id": "h5-minimal",
+   "difficulty": 3,
+   "skills": [
+    "rl-search"
+   ],
+   "prose": "A game tree has 3 moves at every node and depth 4, so $3^4 = 81$ leaves. With perfect move order alpha-beta reads only $b^{\\lceil d/2 \\rceil} + b^{\\lfloor d/2 \\rfloor} - 1$ leaves (Knuth and Moore, 1975).",
+   "question": "How many leaves is that here?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 17,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "half",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 81,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$9 + 9 - 1 = 17$.",
+    "generic": "Not quite. Put $b = 3$, $d = 4$ into the formula.",
+    "byKey": {
+     "half": "That is $3^2$ once. The formula adds two such terms and subtracts 1.",
+     "all": "That is the full tree. Perfect ordering reads far fewer."
+    }
+   },
+   "explain": {
+    "text": "With $b = 3$ and $d = 4$: $3^2 + 3^2 - 1 = 17$ leaves out of 81, about the square root of the work. The worst order reads all 81."
+   }
+  },
+  {
+   "id": "h5-mcts-true",
+   "difficulty": 4,
+   "skills": [
+    "rl-search"
+   ],
+   "question": "Which statements about plain MCTS are true? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "noeval",
+      "text": "It needs no evaluation function, only the rules",
+      "correct": true
+     },
+     {
+      "id": "visits",
+      "text": "It plays the root child with the most visits",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "It adds one node to the tree per iteration",
+      "correct": true
+     },
+     {
+      "id": "exact",
+      "text": "It returns the exact minimax value after any number of iterations",
+      "why": "It converges towards the minimax move with many iterations; a short search can be wrong."
+     },
+     {
+      "id": "prune",
+      "text": "It prunes with alpha and beta",
+      "why": "It spends visits unevenly instead of cutting branches."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Rules, playouts, one node an iteration, most visits.",
+    "generic": "Not quite. Check each against the four steps."
+   },
+   "explain": {
+    "text": "Plain MCTS needs only a simulator of the rules, grows its tree one node an iteration, and plays the most visited move. It is an estimate that improves with iterations, not an exact search."
+   }
+  },
+  {
+   "id": "h5-alphazero",
+   "difficulty": 5,
+   "skills": [
+    "rl-search"
+   ],
+   "title": "What AlphaZero adds",
+   "question": "Write your answer, then mark it against the rubric.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "Explain what AlphaZero's two networks replace in plain MCTS, how self-play trains them, and why a self-play agent must be evaluated against fixed opponents. About 200 words.",
+    "model": "Plain MCTS selects with UCT, treating every untried move alike, and estimates a new node's value by a random playout. AlphaZero keeps the search but adds two learned parts. The **policy network** gives prior chances for each move, and the selection bonus is weighted by them, so the search tries promising moves first (this level's policy idea). The **value network** estimates who will win from a position, replacing the random playout (level 3's value idea). Random playouts are noisy and weak in long games such as Go; a learned value is far better.\n\nSelf-play trains both: the agent plays itself with the search, the policy network is trained towards the search's visit counts, and the value network towards the final results. Better networks make a better search, which makes better training targets.\n\nA win rate against its own latest version says nothing: two copies split their games whatever their strength, and an agent can drift into habits that only work against itself. Progress must be measured against opponents that do not change: earlier versions, a random player, fixed programs or people. In Nim our table went from 0.43 to 1.0 against a random player. AlphaGo was judged in matches against Lee Sedol (reading: Silver et al. 2016, 2018).",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "The policy network gives move priors that weight selection",
+      "required": true
+     },
+     {
+      "points": 2,
+      "text": "The value network replaces the random playout",
+      "required": true
+     },
+     {
+      "points": 2,
+      "text": "Self-play trains the policy towards visit counts and the value towards game results"
+     },
+     {
+      "points": 2,
+      "text": "A win rate against itself is uninformative (about half at any skill)",
+      "required": true
+     },
+     {
+      "points": 1,
+      "text": "Names fixed opponents: earlier versions, a random player, fixed programs"
+     },
+     {
+      "points": 1,
+      "text": "Notes that self-play can drift into habits that only work against itself"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Marked.",
+    "generic": "Compare your answer with the model."
+   }
+  }
+ ]
+}

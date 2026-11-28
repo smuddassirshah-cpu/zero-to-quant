@@ -1,0 +1,374 @@
+{
+ "id": "homework-4",
+ "course": "rl",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h4-train-corridor",
+   "difficulty": 5,
+   "skills": [
+    "rl-pg"
+   ],
+   "performance": "code",
+   "title": "REINFORCE with a learned baseline",
+   "prose": "The short corridor: S = 0, B = 1, C = 2, G = 3. Right moves S to B, B to S, C to G; left keeps S at S, moves B to C and C to B. Reward $-1$ a move. Dials $\\theta = (\\theta_L, \\theta_R)$ start at 0; $p$ is the softmax chance of right. Per episode: fix $p$; from S, each move draws one `rng.random()` and goes right when it is below $p$. Then for each step $t$ in order, with $G_t = -(T - t)$ and score $s_t = [\\text{right}] - p$: add $G_t s_t$ to the plain estimate and $(G_t - b)s_t$ to the baselined one, then set $b \\leftarrow b + 0.1(G_t - b)$ ($b$ starts at 0 and carries over). Finally $\\theta_R$ += $0.001 \\times$ baselined, $\\theta_L$ −= the same.",
+   "question": "Write `train_corridor(episodes, seed)` with `rng = random.Random(seed)`, returning the final $p$ and the population variance of the baselined estimates divided by that of the plain ones.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def train_corridor(episodes, seed):\n    ...\n",
+    "solution": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            gb += (G - b) * score\n            b += 0.1 * (G - b)\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gb, theta[1] + 0.001 * gb]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
+    "examples": [
+     {
+      "call": "train_corridor(2, 0)",
+      "expect": "[0.5021564438419619, 8.675143755027447]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "train_corridor(2, 0)",
+      "expect": "[0.5021564438419619, 8.675143755027447]",
+      "compare": "isclose"
+     },
+     {
+      "call": "train_corridor(2, 1)",
+      "expect": "[0.49950837166377204, 0.35470478456780624]",
+      "compare": "isclose"
+     },
+     {
+      "call": "train_corridor(5, 3)",
+      "expect": "[0.5126644382148203, 0.02108817289432163]",
+      "compare": "isclose"
+     },
+     {
+      "call": "all(train_corridor(1000, s)[1] < 0.5 for s in range(5))",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 5000
+     },
+     {
+      "call": "0.53 < sum(train_corridor(1000, s)[0] for s in range(10)) / 10 < 0.64",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 5000
+     },
+     {
+      "call": "len(train_corridor(3, 4))",
+      "expect": "2",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Three short seeded runs are compared exactly (`math.isclose`), so follow the order of draws and updates in the prompt. Over seeds 0 to 4 the variance ratio after 1,000 episodes must be below 0.5. The mean final $p$ over seeds 0 to 9 must lie between 0.53 and 0.64.",
+    "mutants": [
+     {
+      "source": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            b += 0.1 * (G - b)\n            gb += (G - b) * score\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gb, theta[1] + 0.001 * gb]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
+      "test": 1,
+      "symptom": "The baseline is updated before it is used, so it has seen this step's return."
+     },
+     {
+      "source": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            gb += (G - b) * score\n            b += 0.1 * (G - b)\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gp, theta[1] + 0.001 * gp]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
+      "test": 1,
+      "symptom": "The update uses the plain estimate: the baseline is measured but never used."
+     },
+     {
+      "source": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            gb += (G - b) * score\n            b += 0.1 * (G - b)\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gb, theta[1] + 0.001 * gb]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(plain) / statistics.pvariance(based)\n    return e[1] / (e[0] + e[1]), ratio\n",
+      "test": 1,
+      "symptom": "The ratio is upside down: plain over baselined."
+     },
+     {
+      "source": "import math\nimport random\nimport statistics\n\ndef train_corridor(episodes, seed):\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]          # dials for left and right\n    b = 0.0                     # the learned baseline\n    plain, based = [], []\n    for _ in range(episodes):\n        m = max(theta)\n        e = [math.exp(t - m) for t in theta]\n        p = e[1] / (e[0] + e[1])\n        s, acts = 0, []         # S = 0, B = 1, C = 2, G = 3\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            if s == 0:\n                s = 1 if a else 0\n            elif s == 1:\n                s = 0 if a else 2\n            else:\n                s = 3 if a else 1\n        gp = gb = 0.0\n        for t, a in enumerate(acts):\n            G = -len(acts)\n            score = (1.0 if a == 1 else 0.0) - p   # right dial\n            gp += G * score\n            gb += (G - b) * score\n            b += 0.1 * (G - b)\n        plain.append(gp)\n        based.append(gb)\n        theta = [theta[0] - 0.001 * gb, theta[1] + 0.001 * gb]\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return e[1] / (e[0] + e[1]), ratio\n",
+      "test": 1,
+      "symptom": "The whole return weights every move instead of the reward-to-go."
+     }
+    ],
+    "budget": 5000
+   },
+   "explain": {
+    "text": "Each episode gives two estimates from the same moves; only the baselined one steps the dials. The running mean $b$ tracks the typical reward-to-go, so $G_t - b$ is small and the ratio falls to between 0.17 and 0.33 on seeds 0 to 19 after 1,000 episodes."
+   },
+   "feedback": {
+    "correct": "Your agent learns the corridor and its baseline removes most of the gradient's variance.",
+    "generic": "Some tests fail. Check the order: estimate first, then the baseline update."
+   }
+  },
+  {
+   "id": "h4-best-baseline",
+   "difficulty": 4,
+   "skills": [
+    "rl-pg"
+   ],
+   "title": "The best baseline from samples",
+   "prose": "From sampled pairs of a score entry $s_i$ and a return $G_i$, the constant baseline that minimises the mean square of $(G - b)s$ is $b^* = \\sum s_i^2 G_i / \\sum s_i^2$. Since the score has mean 0 in expectation, that is also the variance there.",
+   "question": "Write `best_baseline(scores, returns)` and `variance_with(scores, returns, b)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def best_baseline(scores, returns):\n    \"\"\"b* = sum(s^2 G) / sum(s^2) over the samples.\"\"\"\n    ...\n\ndef variance_with(scores, returns, b):\n    \"\"\"Population variance of (G - b) * s over the samples.\"\"\"\n    ...\n",
+    "solution": "def best_baseline(scores, returns):\n    \"\"\"b* = sum(s^2 G) / sum(s^2) over the samples.\"\"\"\n    num = sum(s * s * g for s, g in zip(scores, returns))\n    den = sum(s * s for s in scores)\n    return num / den\n\ndef variance_with(scores, returns, b):\n    \"\"\"Population variance of (G - b) * s over the samples.\"\"\"\n    xs = [(g - b) * s for s, g in zip(scores, returns)]\n    m = sum(xs) / len(xs)\n    return sum((x - m) ** 2 for x in xs) / len(xs)\n",
+    "examples": [
+     {
+      "call": "best_baseline([0.5, -0.5], [4.0, 8.0])",
+      "expect": "6.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "best_baseline([0.5, -0.5], [4.0, 8.0])",
+      "expect": "6.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "best_baseline([0.8, -0.2, -0.2, -0.2, -0.2], [10.0, 11.0, 11.0, 11.0, 11.0])",
+      "expect": "10.2",
+      "compare": "isclose"
+     },
+     {
+      "call": "best_baseline([0.4, -0.6, 0.4, 0.4, -0.6, -0.2, 0.8], [5.0, 15.0, 6.0, 4.0, 14.0, 9.0, 3.0])",
+      "expect": "8.042553191489361",
+      "compare": "isclose"
+     },
+     {
+      "call": "variance_with([0.5, -0.5], [10.0, 11.0], 0.0)",
+      "expect": "27.5625",
+      "compare": "isclose"
+     },
+     {
+      "call": "variance_with([0.5, -0.5], [10.0, 11.0], 10.5)",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "variance_with([0.4, -0.6, 0.4, 0.4, -0.6, -0.2, 0.8], [5.0, 15.0, 6.0, 4.0, 14.0, 9.0, 3.0], best_baseline([0.4, -0.6, 0.4, 0.4, -0.6, -0.2, 0.8], [5.0, 15.0, 6.0, 4.0, 14.0, 9.0, 3.0])) < variance_with([0.4, -0.6, 0.4, 0.4, -0.6, -0.2, 0.8], [5.0, 15.0, 6.0, 4.0, 14.0, 9.0, 3.0], sum([5.0, 15.0, 6.0, 4.0, 14.0, 9.0, 3.0]) / 7)",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, compared with `math.isclose`; the last checks that $b^*$ gives a smaller variance than the mean return on a sample of seven.",
+    "mutants": [
+     {
+      "source": "def best_baseline(scores, returns):\n    \"\"\"b* = sum(s^2 G) / sum(s^2) over the samples.\"\"\"\n    return sum(returns) / len(returns)\n\ndef variance_with(scores, returns, b):\n    \"\"\"Population variance of (G - b) * s over the samples.\"\"\"\n    xs = [(g - b) * s for s, g in zip(scores, returns)]\n    m = sum(xs) / len(xs)\n    return sum((x - m) ** 2 for x in xs) / len(xs)\n",
+      "test": 2,
+      "symptom": "The mean return, not the s-squared weighted one."
+     },
+     {
+      "source": "def best_baseline(scores, returns):\n    \"\"\"b* = sum(s^2 G) / sum(s^2) over the samples.\"\"\"\n    num = sum(s * g for s, g in zip(scores, returns))\n    den = sum(s for s in scores)\n    return num / den\n\ndef variance_with(scores, returns, b):\n    \"\"\"Population variance of (G - b) * s over the samples.\"\"\"\n    xs = [(g - b) * s for s, g in zip(scores, returns)]\n    m = sum(xs) / len(xs)\n    return sum((x - m) ** 2 for x in xs) / len(xs)\n",
+      "test": 1,
+      "symptom": "Weights by s, not s squared."
+     },
+     {
+      "source": "def best_baseline(scores, returns):\n    \"\"\"b* = sum(s^2 G) / sum(s^2) over the samples.\"\"\"\n    num = sum(s * s * g for s, g in zip(scores, returns))\n    den = sum(s * s for s in scores)\n    return num / den\n\ndef variance_with(scores, returns, b):\n    \"\"\"Population variance of (G - b) * s over the samples.\"\"\"\n    xs = [(g - b) * s for s, g in zip(scores, returns)]\n    m = sum(xs) / len(xs)\n    return sum(x * x for x in xs) / len(xs)\n",
+      "test": 4,
+      "symptom": "Variance without centring: the mean square."
+     }
+    ]
+   },
+   "explain": {
+    "text": "Setting the derivative of the mean square in $b$ to zero gives $\\sum s_i^2 (G_i - b) = 0$, which is $b^*$. Rare moves carry large scores, so their returns weigh more than in the plain mean."
+   },
+   "feedback": {
+    "correct": "Both functions pass.",
+    "generic": "Some tests fail. Weight by $s^2$, and centre before squaring."
+   }
+  },
+  {
+   "id": "h4-unbiased",
+   "difficulty": 4,
+   "skills": [
+    "rl-pg"
+   ],
+   "title": "Why a baseline is unbiased",
+   "prose": "Show that a baseline $b$ that does not depend on the action leaves the policy gradient unchanged in expectation.",
+   "question": "Put the steps in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "u1",
+      "text": "$E[b\\,\\nabla \\log \\pi(a)] = b \\sum_a \\pi(a)\\, \\nabla \\log \\pi(a)$ ($b$ does not depend on $a$, so it comes out of the sum)"
+     },
+     {
+      "id": "u2",
+      "text": "$= b \\sum_a \\nabla \\pi(a)$ (because $\\pi\\, \\nabla \\log \\pi = \\nabla \\pi$)"
+     },
+     {
+      "id": "u3",
+      "text": "$= b\\, \\nabla \\sum_a \\pi(a)$ (the gradient of a finite sum is the sum of gradients)"
+     },
+     {
+      "id": "u4",
+      "text": "$= b\\, \\nabla 1 = 0$ (the chances sum to 1 for every $\\theta$)"
+     },
+     {
+      "id": "u5",
+      "text": "So $E[(G - b)\\nabla \\log \\pi(a)] = E[G\\, \\nabla \\log \\pi(a)]$ (subtract a term whose mean is 0)"
+     },
+     {
+      "id": "ux",
+      "text": "$E[b(a)\\, \\nabla \\log \\pi(a)] = E[b(a)]\\, E[\\nabla \\log \\pi(a)] = 0$ for a baseline that depends on $a$",
+      "why": "A baseline that depends on the action is not independent of the score, so the expectation does not split. The peeking baseline $b(a) = r(a)$ is biased."
+     }
+    ],
+    "answer": [
+     "u1",
+     "u2",
+     "u3",
+     "u4",
+     "u5"
+    ],
+    "distractors": [
+     "ux"
+    ]
+   },
+   "feedback": {
+    "correct": "The extra term has mean $b \\times 0$, so the gradient is unchanged.",
+    "generic": "Not quite. Pull $b$ out first, then turn $\\pi \\nabla \\log \\pi$ into $\\nabla \\pi$.",
+    "byKey": {
+     "ux": "You split the expectation of a product of two things that both depend on $a$. That only works when $b$ ignores the action."
+    }
+   },
+   "explain": {
+    "text": "Pull out $b$, use $\\pi \\nabla \\log \\pi = \\nabla \\pi$, swap the sum and the gradient, and the chances sum to 1. The term has mean 0, so subtracting it changes only the variance."
+   }
+  },
+  {
+   "id": "h4-three-arm-var",
+   "difficulty": 3,
+   "skills": [
+    "rl-pg"
+   ],
+   "prose": "Three arms with $\\boldsymbol\\pi = (0.5, 0.25, 0.25)$ pay a fixed 4, 0 and 8. No baseline.",
+   "question": "What is the variance of the one-pull estimate for the first arm's dial?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 2.4495,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "unw",
+      "value": 6.6667,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Estimates 2, 0 and $-4$; mean 0; variance 6.",
+    "generic": "Not quite. Find the three estimates and weight them by their chances.",
+    "byKey": {
+     "sd": "That is the standard deviation.",
+     "unw": "You averaged the squares without the chances."
+    }
+   },
+   "explain": {
+    "text": "The estimates are $4 \\times 0.5 = 2$, $0$ and $8 \\times (-0.5) = -4$. Their mean is 0 (the true gradient: arm 1 pays exactly the average) and $E[X^2] = 0.5 \\times 4 + 0.25 \\times 16 = 6$, so the variance is 6."
+   }
+  },
+  {
+   "id": "h4-which-baselines",
+   "difficulty": 4,
+   "skills": [
+    "rl-pg"
+   ],
+   "question": "Which baselines leave the policy gradient unbiased? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "const",
+      "text": "A constant, such as 10",
+      "correct": true
+     },
+     {
+      "id": "vs",
+      "text": "A learned value $V(s)$ of the state",
+      "correct": true
+     },
+     {
+      "id": "past",
+      "text": "The mean return of the previous 100 episodes",
+      "correct": true
+     },
+     {
+      "id": "ra",
+      "text": "The reward of the action just taken",
+      "why": "It depends on the action, so it does not average out: the estimate is biased."
+     },
+     {
+      "id": "g",
+      "text": "The episode's own return $G$",
+      "why": "Then $G - b = 0$ always: zero variance and zero gradient, a biased estimate."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each of the three is fixed before the action is drawn.",
+    "generic": "Not quite. Ask whether the baseline is known before the action is drawn."
+   },
+   "explain": {
+    "text": "Unbiasedness needs $E[b\\,s] = 0$, which holds when $b$ is fixed before the action: a constant, a function of the state, or a summary of earlier episodes. A baseline built from this action or its outcome is biased."
+   }
+  },
+  {
+   "id": "h4-noisy-pnl",
+   "difficulty": 5,
+   "skills": [
+    "rl-pg"
+   ],
+   "title": "A noisy policy gradient",
+   "question": "Write your answer, then mark it against the rubric.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "A colleague tunes an order-placement policy by REINFORCE on daily P&L. The P&L is around £50,000 a day with a spread of £20,000, and the gradient estimates swing wildly. Explain why, explain how a baseline helps in the language of control variates, and say what else to try. About 200 words.",
+    "model": "The REINFORCE estimate is $G\\,\\nabla \\log \\pi(a)$. When every day earns about £50,000, $G$ is large and positive whatever the policy did. So each day pushes up whatever action was taken, and the push is mostly noise. The signal is the small difference between good and bad days.\n\nA baseline subtracts $b\\,\\nabla \\log \\pi(a)$. The score $\\nabla \\log \\pi(a)$ has mean 0 under the policy, so this is a control variate with a known mean of 0, as in `numerics`. The estimate stays unbiased, and its variance falls as $b$ tracks $G$. With $b \\approx £50{,}000$ the estimate is driven by $G - b$, the surprise, about £20,000 instead of £50,000. The best constant is $b^* = E[s^2 G]/E[s^2]$; in practice the mean recent P&L, or a learned $V(s)$ for the day's state, is used.\n\nThe baseline must not depend on the action taken that day, or the estimate is biased.\n\nAlso try reward-to-go (only P&L after each decision) and normalised advantages, so the step does not depend on the P&L's scale. Average over a batch of days, use a smaller learning rate, and add a KL penalty or entropy bonus so the policy does not collapse. Check any result on seeded or replayed runs against a simple benchmark.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Explains that a large, always-positive $G$ makes each estimate mostly noise",
+      "required": true
+     },
+     {
+      "points": 2,
+      "text": "States that the score has mean 0, so subtracting $b$ times it is a control variate that keeps the estimate unbiased",
+      "required": true
+     },
+     {
+      "points": 2,
+      "text": "Says the variance falls as $b$ tracks $G$, and names a sensible $b$ (recent mean P&L, $V(s)$ or $b^*$)"
+     },
+     {
+      "points": 1,
+      "text": "Warns that a baseline depending on the action taken is biased"
+     },
+     {
+      "points": 2,
+      "text": "Names two further remedies (reward-to-go, normalised advantages, batching, smaller step, KL or entropy)"
+     },
+     {
+      "points": 1,
+      "text": "Suggests checking on seeded or replayed runs against a benchmark"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Marked.",
+    "generic": "Compare your answer with the model."
+   }
+  }
+ ]
+}
