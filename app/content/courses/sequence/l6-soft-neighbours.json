@@ -889,9 +889,14 @@
       "call": "best_tau(Xtr[:50], ytr[:50], Xte[:30], yte[:30], [0.1, 1.0, 10.0])",
       "compare": "isclose",
       "expect": "1.0"
+     },
+     {
+      "call": "stable_softmax(np.array([[1.0, -1000.0], [0.0, -1001.0]]), axis=0).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.7310585786300049, 0.7310585786300049], [0.2689414213699951, 0.2689414213699951]]"
      }
     ],
-    "how": "Submit runs 8 hidden tests, compared to $10^{-9}$. Test 2 has scores near 1,000, test 3 takes the softmax down columns, and tests 5 and 6 are the hot and cold ends. Tests 7 and 8 use `make_knn(300, 11)` split 200 and 100 (`Xtr`, `ytr`, `Xte`, `yte` are defined).",
+    "how": "Submit runs 9 hidden tests, compared to $10^{-9}$. Test 2 has scores near 1,000, test 3 takes the softmax down columns, test 9 down columns on very different scales, and tests 5 and 6 are the hot and cold ends. Tests 7 and 8 use `make_knn(300, 11)` split 200 and 100 (`Xtr`, `ytr`, `Xte`, `yte` are defined).",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef stable_softmax(s, axis=-1):\n    s = np.asarray(s, dtype=float)\n    z = np.exp(s)\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef soft_lookup(q, K, V, tau):\n    K, q = np.asarray(K, dtype=float), np.asarray(q, dtype=float)\n    scores = -((K - q) ** 2).sum(axis=1) / tau\n    return float(stable_softmax(scores) @ np.asarray(V, dtype=float))\n\n\ndef best_tau(K_tr, V_tr, K_val, V_val, taus):\n    errs = []\n    for tau in taus:\n        pred = np.array([soft_lookup(q, K_tr, V_tr, tau) for q in K_val])\n        errs.append(np.mean((pred - np.asarray(V_val)) ** 2))\n    return taus[int(np.argmin(errs))]\n",
@@ -912,6 +917,11 @@
       "source": "import numpy as np\n\n\ndef stable_softmax(s, axis=-1):\n    s = np.asarray(s, dtype=float)\n    z = np.exp(s - s.max())\n    return z / z.sum()\n\n\ndef soft_lookup(q, K, V, tau):\n    K, q = np.asarray(K, dtype=float), np.asarray(q, dtype=float)\n    scores = -((K - q) ** 2).sum(axis=1) / tau\n    return float(stable_softmax(scores) @ np.asarray(V, dtype=float))\n\n\ndef best_tau(K_tr, V_tr, K_val, V_val, taus):\n    errs = []\n    for tau in taus:\n        pred = np.array([soft_lookup(q, K_tr, V_tr, tau) for q in K_val])\n        errs.append(np.mean((pred - np.asarray(V_val)) ** 2))\n    return taus[int(np.argmin(errs))]\n",
       "test": 3,
       "symptom": "Ignores the axis and normalises over the whole array."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef stable_softmax(s, axis=-1):\n    s = np.asarray(s, dtype=float)\n    z = np.exp(s - s.max())\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef soft_lookup(q, K, V, tau):\n    K, q = np.asarray(K, dtype=float), np.asarray(q, dtype=float)\n    scores = -((K - q) ** 2).sum(axis=1) / tau\n    return float(stable_softmax(scores) @ np.asarray(V, dtype=float))\n\n\ndef best_tau(K_tr, V_tr, K_val, V_val, taus):\n    errs = []\n    for tau in taus:\n        pred = np.array([soft_lookup(q, K_tr, V_tr, tau) for q in K_val])\n        errs.append(np.mean((pred - np.asarray(V_val)) ** 2))\n    return taus[int(np.argmin(errs))]\n",
+      "test": 9,
+      "symptom": "Subtracts the global maximum, so a column far below it underflows to 0 / 0."
      }
     ]
    },
@@ -935,7 +945,9 @@
     "byKey": {
      "test-2": "Subtract the largest score before exponentiating: scores near 1,000 overflow otherwise.",
      "test-3": "Normalise along the axis you are given, not over the whole array.",
-     "test-4": "The score is minus the squared distance over $\\tau$: near keys score higher."
+     "test-4": "The score is minus the squared distance over $\\tau$: near keys score higher.",
+     "test-7": "Score each $\\tau$ on the held-out rows only.",
+     "test-9": "Subtract each slice's own maximum: `keepdims=True` along `axis`."
     }
    },
    "explain": {

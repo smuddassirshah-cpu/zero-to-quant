@@ -14,7 +14,7 @@
    "type": "explore",
    "difficulty": 1,
    "title": "Too good to be true",
-   "prose": "The self-attention layer of lesson 1, given token and position embeddings and a readout over the 27 symbols of makemore, is trained to predict the next symbol of names at every position. The dashed line is the bigram's dev loss, 2.4514 nats a letter. Switch between the two training runs.",
+   "prose": "The self-attention layer of lesson 9, given token and position embeddings and a readout over the 27 symbols of makemore, is trained to predict the next symbol of names at every position. The dashed line is the bigram's dev loss, 2.4514 nats a letter. Switch between the two training runs.",
    "canvas": {
     "kind": "series",
     "params": {
@@ -688,7 +688,7 @@
     }
    ],
    "feedback": {
-    "correct": "$2.2737/\\ln 2 = 3.2802$ bits, against the bigram's 3.5366.",
+    "correct": "$2.273664/\\ln 2 = 3.2802$ bits, against the bigram's 3.5366.",
     "generic": "Not quite. Divide the nats by $\\ln 2$.",
     "byKey": {
      "nats": "That is the loss in nats. Divide by $\\ln 2$.",
@@ -917,7 +917,7 @@
     "language": "python",
     "starter": "import numpy as np\n\n\ndef causal_mask(T):\n    # T by T: 0 where key j <= query i, -inf where j > i\n    ...\n\n\ndef masked_attention(Q, K, V, mask):\n    # softmax(Q K^T / sqrt(d) + mask) V, the softmax along each row\n    ...\n\n\ndef leak_test(f, x, t):\n    # f maps a token list to one row of outputs per position. Change each token after position t\n    # (0-based) to another symbol, one at a time; return True if any of the outputs 0..t moves\n    ...\n",
     "solution": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef masked_attention(Q, K, V, mask):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T / np.sqrt(Q.shape[-1]) + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef leak_test(f, x, t):\n    base = f(list(x))\n    for j in range(t + 1, len(x)):\n        y = list(x)\n        y[j] = (y[j] + 1) % 27\n        if not np.allclose(f(y)[:t + 1], base[:t + 1]):\n            return True\n    return False\n",
-    "prelude": "import json\nimport numpy as np\n\nwith open('sequence-attn-names.json') as f:\n    _W = json.load(f)\nMODEL = {k: np.array(v) for k, v in _W['h1'].items()}\nVOCAB = _W['vocab']\n\n\ndef logits_of(model, X, mask=True):\n    X = np.atleast_2d(np.asarray(X))\n    B, T = X.shape\n    x = model['E'][X] + model['P'][:T]\n    q, k, v = x @ model['Wq'], x @ model['Wk'], x @ model['Wv']\n    S = q @ np.swapaxes(k, -1, -2) / np.sqrt(q.shape[-1])\n    if mask:\n        S = S + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(-1, keepdims=True)\n    return (A @ v) @ model['Wo'] @ model['U'] + model['c']\n\n\ndef model_fn(tokens):\n    return logits_of(MODEL, [tokens])[0]\n\n\ndef leaky_fn(tokens):\n    return logits_of(MODEL, [tokens], mask=False)[0]\n\n\ng = np.random.default_rng(2)\nQr, Kr, Vr = g.standard_normal((5, 4)), g.standard_normal((5, 4)), g.standard_normal((5, 3))\nNAME = [0, 13, 1, 18, 9, 1, 14, 14]\n",
+    "prelude": "import json\nimport numpy as np\n\nwith open('sequence-attn-names.json') as f:\n    _W = json.load(f)\nMODEL = {k: np.array(v) for k, v in _W['h1'].items()}\nVOCAB = _W['vocab']\n\n\ndef logits_of(model, X, mask=True, lead=1):\n    X = np.atleast_2d(np.asarray(X))\n    B, T = X.shape\n    x = model['E'][X] + model['P'][:T]\n    q, k, v = x @ model['Wq'], x @ model['Wk'], x @ model['Wv']\n    S = q @ np.swapaxes(k, -1, -2) / np.sqrt(q.shape[-1])\n    if mask:\n        S = S + np.triu(np.full((T, T), -np.inf), lead)\n    S = S - S.max(-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(-1, keepdims=True)\n    return (A @ v) @ model['Wo'] @ model['U'] + model['c']\n\n\ndef model_fn(tokens):\n    return logits_of(MODEL, [tokens])[0]\n\n\ndef leaky_fn(tokens):\n    return logits_of(MODEL, [tokens], mask=False)[0]\n\n\ndef leaky1_fn(tokens):\n    return logits_of(MODEL, [tokens], lead=2)[0]\n\n\ng = np.random.default_rng(2)\nQr, Kr, Vr = g.standard_normal((5, 4)), g.standard_normal((5, 4)), g.standard_normal((5, 3))\nNAME = [0, 13, 1, 18, 9, 1, 14, 14]\n",
     "data": {
      "sequence-attn-names.json": "content/data/ai/sequence-attn-names.json"
     },
@@ -973,9 +973,14 @@
       "call": "leak_test(model_fn, NAME, 7)",
       "compare": "equal",
       "expect": "False"
+     },
+     {
+      "call": "leak_test(leaky1_fn, NAME, 3)",
+      "compare": "equal",
+      "expect": "True"
      }
     ],
-    "how": "Submit runs 9 hidden tests, compared to $10^{-9}$. Test 4 checks that the first position returns its own value. Tests 6 to 9 run your leak test on the name `NAME`, with the supplied model (`model_fn`) and with the same weights unmasked (`leaky_fn`).",
+    "how": "Submit runs 10 hidden tests, compared to $10^{-9}$. Test 4 checks that the first position returns its own value. Tests 6 to 10 run your leak test on the name `NAME`. They use the supplied model (`model_fn`), the same weights unmasked (`leaky_fn`), and a mask that leaks one step ahead (`leaky1_fn`).",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.tril(np.full((T, T), -np.inf), -1)\n\n\ndef masked_attention(Q, K, V, mask):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T / np.sqrt(Q.shape[-1]) + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef leak_test(f, x, t):\n    base = f(list(x))\n    for j in range(t + 1, len(x)):\n        y = list(x)\n        y[j] = (y[j] + 1) % 27\n        if not np.allclose(f(y)[:t + 1], base[:t + 1]):\n            return True\n    return False\n",
@@ -996,6 +1001,11 @@
       "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef masked_attention(Q, K, V, mask):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T / np.sqrt(Q.shape[-1]) + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef leak_test(f, x, t):\n    base = f(list(x))\n    for j in range(t, len(x)):\n        y = list(x)\n        y[j] = (y[j] + 1) % 27\n        if not np.allclose(f(y)[:t + 1], base[:t + 1]):\n            return True\n    return False\n",
       "test": 6,
       "symptom": "Also changes token t itself, which its own output may see."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef causal_mask(T):\n    return np.triu(np.full((T, T), -np.inf), 1)\n\n\ndef masked_attention(Q, K, V, mask):\n    Q, K, V = (np.asarray(a, dtype=float) for a in (Q, K, V))\n    S = Q @ K.T / np.sqrt(Q.shape[-1]) + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef leak_test(f, x, t):\n    if t + 1 >= len(x):\n        return False\n    base = f(list(x))\n    y = list(x)\n    y[-1] = (y[-1] + 1) % 27\n    return not np.allclose(f(y)[:t + 1], base[:t + 1])\n",
+      "test": 10,
+      "symptom": "Changes only the last token, so a mask that leaks one step ahead goes unseen."
      }
     ]
    },
@@ -1019,7 +1029,8 @@
     "byKey": {
      "test-1": "Keep the diagonal: $-\\infty$ strictly above it, 0 on and below.",
      "test-3": "Add the mask to the scores before the softmax.",
-     "test-6": "Change only tokens after position $t$; token $t$ is visible to output $t$."
+     "test-6": "Change only tokens after position $t$; token $t$ is visible to output $t$.",
+     "test-10": "A leak can reach only one step back. Try every token after $t$, not just the last."
     }
    },
    "explain": {
@@ -1126,7 +1137,7 @@
     "correct": "Your dev loss is 2.2737 nats, below the bigram's 2.4514, and ten steps lower the training loss from 3.38.",
     "generic": "Not yet. Check the average and the order of the loop.",
     "byKey": {
-     "test-1": "Average over scored positions only: divide by the number of $Y \\ge 0$.",
+     "test-1": "Average over scored positions only: divide by the number of $Y \\ge 0$, and take the loss in nats (natural log).",
      "test-4": "Zero the gradients each step, and record the loss before you step."
     }
    },

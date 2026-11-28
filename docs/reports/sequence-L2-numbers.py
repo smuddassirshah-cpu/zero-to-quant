@@ -90,7 +90,8 @@ two('tie distances', math.hypot(0.25 - 0.5, -0.5), math.hypot(0.25, -0.5 + 1)); 
 E(L5, 'screens[5].widget.answer', 0.4); E(L5, 'screens[5].widget.wrong[1].value', 0.05)
 E(L5, 'screens[3].widget.wrong[0].value', 0.2)
 lv.claim(round(math.hypot(1.2, 0.5), 2) == 1.3 and round(math.hypot(0.8, 0.5), 3) == 0.943 and round(math.hypot(1.2, 2.5), 2) == 2.77, 'quiz distances 1.3, 0.94, 2.77', covers=[1.3, 0.94, 2.77, 0.64, 0.25])
-lv.claim(0 / 0.002 == 0, 'flat slope 0/0.002', covers=[0.002, 0.001])
+LIT('0.002', why='the width 2h of the central difference in the flat-slope quiz, a given')
+LIT('0.001', why='the step h of the central difference in the flat-slope quiz, a given')
 
 # ---------------- l6 ----------------
 L6 = 'l6-'
@@ -159,7 +160,7 @@ E(L7, 'screens[2].widget.wrong[2].value', 5.5)
 rw, cw = sm([[1.0, 0.0], [3.0, 0.0]], 1), sm([[1.0, 0.0], [3.0, 0.0]], 0)
 E(L7, 'screens[4].widget.answer', round(float(rw[0, 0]), 4)); E(L7, 'screens[4].widget.wrong[0].value', round(float(cw[0, 0]), 4)); E(L7, 'screens[4].explain.text', round(float(rw[0, 1]), 4))
 two('column slip', float(cw[0, 0]), 1 / (1 + e ** 2))
-lv.claim(abs(math.exp(0.7) / math.exp(0.7) - 1) < 1e-15, 'one key: weight 1', covers=[0.7])
+lv.claim(abs(float(sm([0.7])[0]) - 1) < 1e-15, 'one key: weight 1 whatever the score', covers=[0.7])
 
 # ---------------- l8 ----------------
 L8 = 'l8-'
