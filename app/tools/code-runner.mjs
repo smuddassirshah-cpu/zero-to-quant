@@ -2,7 +2,7 @@
    The widget's own source (js/engine/widgets/code.js, through its `casePlan`) builds the harness; the page's worker grader (the GRADER
    string of js/screens/drill-worker.js) runs it in Pyodide inside a worker thread. The page's time limits apply per case: a case that
    passes its limit kills the thread and a fresh one loads, as the page does, and the case reports "Stopped after N s" as on the page.
-   Needs the local Pyodide: <pkgs>/pyodide-0.27.7/package (the same --local-cdn folder as the playthrough), packages included.
+   Needs the local Pyodide: <pkgs>/pyodide-0.27.7/package or <dir>/pyodide (fetch-vendor.sh layout; the same --local-cdn folder as the playthrough), packages included.
    Exports: makeRunner({ pkgs, root, jobs }) -> { grade(spec, src, which, opts), close() }.
      grade resolves to { ok, key, rows, error, printed, ms } for `which` = 'tests' or 'examples' (key as the page gives: null, test-N, error). */
 import fs from 'node:fs';
@@ -65,7 +65,7 @@ const loadPlan = (root) => {
 };
 
 export const makeRunner = ({ pkgs, root, jobs = 2 }) => {
-  const indexDir = path.join(pkgs, 'pyodide-0.27.7', 'package');
+  const indexDir = [path.join(pkgs, 'pyodide-0.27.7', 'package'), path.join(pkgs, 'pyodide')].find((d) => fs.existsSync(path.join(d, 'pyodide.mjs'))) || path.join(pkgs, 'pyodide-0.27.7', 'package');   // the pkgs layout, else fetch-vendor.sh's
   if (!fs.existsSync(path.join(indexDir, 'pyodide.mjs'))) throw new Error(`no Pyodide at ${indexDir} (give --local-cdn <pkgs>)`);
   const P = loadPlan(root);
   const workerSrc = fs.readFileSync(path.join(root, 'js/screens/drill-worker.js'), 'utf8');

@@ -19,8 +19,9 @@
    tools/code-runner.mjs (the page's own harness and worker grader, the page's per-case time limits): the solution must pass the hidden tests and the
    examples, the starter must fail one, and each `mutants` entry ({ source, test: N, timeout?, factor? }) must first fail test N (see the checks listed
    at checkCodeWidget in tools/code-runner.mjs; kinds solution-fails, examples-fail, starter-passes, mutant-passes, mutant-wrong-test,
-   mutant-thin-margin). A named file needs no other flag; without --file it runs all content (about an hour for the whole course set: use --shard).
-     node tools/grade-all.mjs [--local-cdn <pkgs>] [--file <json path>]... [--jobs 4] [--shard i/n] [--fluency-seeds 2] [--root <app dir>] [--quiet] [--code]
+   mutant-thin-margin). A named file needs no other flag; without --file it runs all content (about an hour for the whole course set: use --shard or --strand ai).
+   --strand <s> keeps only the files of courses whose course.json has that strand. --local-cdn takes the pkgs layout (<dir>/pyodide-0.27.7/package) or fetch-vendor.sh's (<dir>/pyodide, <dir>/compute-engine).
+     node tools/grade-all.mjs [--local-cdn <pkgs>] [--file <json path>]... [--jobs 4] [--shard i/n] [--strand ai] [--fluency-seeds 2] [--root <app dir>] [--quiet] [--code]
    The Compute Engine comes from --local-cdn (or ZQ_LOCAL_CDN) if given, else from ZQ_CE_URL or the CDN the app itself uses (cached in the temp
    folder), so CI needs no local copy. Output: one line per failure "file#path: kind: detail", then a count per kind. Exit 0 none, 1 failures, 2 setup. */
 import fs from 'node:fs';
@@ -44,7 +45,7 @@ const cdnDir = arg('--local-cdn') ? path.resolve(arg('--local-cdn')) : process.e
 /* ---------- the Compute Engine source: a local copy, else the network (cached) ---------- */
 const ceSource = async () => {
   if (cdnDir) {
-    const f = path.join(cdnDir, `cortex-js-compute-engine-${CE_VER}`, 'package', 'dist', 'compute-engine.min.umd.js');
+    const f = [path.join(cdnDir, `cortex-js-compute-engine-${CE_VER}`, 'package', 'dist', 'compute-engine.min.umd.js'), path.join(cdnDir, 'compute-engine', 'compute-engine.min.umd.js')].find((x) => fs.existsSync(x)) || path.join(cdnDir, `cortex-js-compute-engine-${CE_VER}`, 'package', 'dist', 'compute-engine.min.umd.js');   // the pkgs layout, else fetch-vendor.sh's
     if (!fs.existsSync(f)) die(`${f} does not exist (give --local-cdn <pkgs> with the local Compute Engine, or leave it out to load from the network)`);
     return f;
   }
@@ -207,9 +208,19 @@ const gradeable = (v) => {
   if (v.kind === 'table') return Array.isArray(v.rows);
   return false;
 };
+/* --strand <s>: keep only files of courses whose course.json has that strand (ENGINE-BACKLOG 1264); a file outside courses/<id>/ is dropped */
+const strandOf = {};
+const byStrand = (files) => {
+  const want = arg('--strand'); if (!want) return files;
+  return files.filter((f) => {
+    const m = /(?:^|[\\/])courses[\\/]([^\\/]+)[\\/]/.exec(f); if (!m) return false;
+    if (!(m[1] in strandOf)) { try { strandOf[m[1]] = JSON.parse(fs.readFileSync(path.join(CONTENT, 'courses', m[1], 'course.json'), 'utf8')).strand || null; } catch { strandOf[m[1]] = null; } }
+    return strandOf[m[1]] === want;
+  });
+};
 const collect = (only, seeds) => {
   const jobs = [], skipped = { carry: 0, template: 0 };
-  let files = only.length ? only.map((f) => path.resolve(f)) : walk(CONTENT).sort();
+  let files = byStrand(only.length ? only.map((f) => path.resolve(f)) : walk(CONTENT).sort());
   const sh = /^(\d+)\/(\d+)$/.exec(arg('--shard', ''));
   if (arg('--shard') && (!sh || +sh[1] < 1 || +sh[1] > +sh[2])) die('--shard needs i/n with 1 <= i <= n');
   if (sh) files = files.filter((_, i) => i % +sh[2] === +sh[1] - 1);   // every n-th file, so shards 1/n to n/n cover each file once
@@ -244,7 +255,7 @@ const collect = (only, seeds) => {
 
 /* ---------- Python code widgets (--code) ---------- */
 const collectCode = (only) => {
-  let files = only.length ? only.map((f) => path.resolve(f)) : walk(CONTENT).sort();
+  let files = byStrand(only.length ? only.map((f) => path.resolve(f)) : walk(CONTENT).sort());
   const sh = /^(\d+)\/(\d+)$/.exec(arg('--shard', ''));
   if (sh) files = files.filter((_, i) => i % +sh[2] === +sh[1] - 1);
   const jobs = []; let cpp = 0;
@@ -263,7 +274,7 @@ const collectCode = (only) => {
   return { jobs, cpp };
 };
 const codePhase = async (only, nJobs, ce) => {
-  if (!cdnDir) die('--code needs --local-cdn <pkgs> (or ZQ_LOCAL_CDN) holding pyodide-0.27.7');
+  if (!cdnDir) die('--code needs --local-cdn <pkgs> (or ZQ_LOCAL_CDN) holding pyodide-0.27.7 or pyodide/');
   const { makeRunner, checkCodeWidget } = await import('./code-runner.mjs');
   const { jobs, cpp } = collectCode(only);
   const runner = makeRunner({ pkgs: cdnDir, root: ROOT, jobs: nJobs });
