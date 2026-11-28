@@ -10,3 +10,5 @@ Set by the main session, session AK, 27 Nov 2026. A brief that disagrees with th
 - **Number scripts.** Run with the venv `/tmp/claude-0/-home-user-zero-to-quant/b2245dfe-6f55-570e-8d22-d9384c33129b/scratchpad/venv/bin/python` (Python 3.12, the CI pins: NumPy 2.0.2, scikit-learn 1.6.1, SciPy 1.18.1). Figures from any other scikit-learn version are recomputed.
 - **Playthrough.** `--local-cdn /tmp/claude-0/-home-user-zero-to-quant/b2245dfe-6f55-570e-8d22-d9384c33129b/scratchpad/aitiming/pkgs` (jsDelivr is blocked in the sandbox).
 - **Drills.** `ml-int` L2 uses the drill recipe in `docs/AUTHORING.md` (no new engine pattern).
+
+- **"Pending engine A3" in any brief is done.** `graph` `params.valueLines`, `state.values2` and `params.edgeWidth` (1227); `matrix` `heat` (1228); `grid` `state.arrows` (1229); the ungraded `trainer` widget (1237); data in `content/data/ai/` (1238 to 1241). Use them as AUTHORING and the canvas READMEs document them. Shared modules ship by path through a widget's `data` map or inline through `files`; either way the shipped text is byte-identical to the file.
