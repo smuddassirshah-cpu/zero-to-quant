@@ -148,12 +148,13 @@ export const makeRunner = ({ pkgs, root, jobs = 2 }) => {
    mutant-wrong-test  a `mutants` source first fails another test than the one it names (the byKey line would not show it)
    mutant-thin-margin a `mutants` entry marked timeout: true finishes within `factor` (default 5) times the case's time limit, or the solution
                       takes more than 1/factor of that limit on it (a faster or slower browser could flip the verdict)
+   In ai-strand files (grade-all passes the parent's byKey) also feedback-unreachable and feedback-missing, see below.
    A mutant is { "source": "<Python>", "test": N (1-based, the first failing hidden test), "symptom": "<optional sentence>", "timeout": true, "factor": 5 }.
    spec.mutants is read here only; the page ignores it. */
 export const MUTANT_FACTOR = 5;
 const firstFail = (r) => (r.error ? `error (${String(r.error).split('\n').slice(-1)[0].slice(0, 80)})` : `test ${r.rows.findIndex((x) => !x.ok) + 1}`);
-export const checkCodeWidget = async (runner, spec) => {
-  const fails = [], add = (k, d) => fails.push([k, d]);
+export const checkCodeWidget = async (runner, spec, byKey = null) => {
+  const fails = [], add = (k, d) => fails.push([k, d]), reached = new Set();
   if (!Array.isArray(spec.tests) || !spec.tests.length) return fails;
   let sol = null;
   if (typeof spec.solution === 'string' && spec.solution.trim()) {
@@ -180,12 +181,18 @@ export const checkCodeWidget = async (runner, spec) => {
     if (r.ok) { add('mutant-passes', `${at} passes every hidden test`); continue; }
     const got = r.rows.findIndex((x) => !x.ok) + 1;
     if (r.error) { add('mutant-wrong-test', `${at} stops before the tests (${firstFail(r)}); it should first fail test ${m.test}`); continue; }
+    reached.add(got);
     if (got !== m.test) { add('mutant-wrong-test', `${at} first fails test ${got}, not test ${m.test}`); continue; }
     if (timed) {
       if (r.timeoutAt !== m.test - 1) add('mutant-thin-margin', `${at} is marked timeout but test ${m.test} failed on its answer, or finished within ${F} times the limit (${(limit * F / 1000).toFixed(1)} s)`);
       const ms = sol && sol.times[m.test - 1];
       if (ms != null && ms > limit / F) add('mutant-thin-margin', `${at}: the solution takes ${Math.round(ms)} ms on test ${m.test}, more than 1/${F} of its ${limit / 1000} s limit`);
     } else if (r.timeoutAt === m.test - 1) add('mutant-wrong-test', `${at} fails test ${m.test} by running out of time; mark it "timeout": true so its margin is checked`);
+  }
+  /* ENGINE-BACKLOG 1269: byKey is the parent's feedback.byKey (null: not checked). A test-N line no mutant first fails is never seen; a test a mutant first fails with no line shows only the generic line. */
+  if (byKey && typeof byKey === 'object') {
+    for (const k of Object.keys(byKey)) { const n = /^test-(\d+)$/.exec(k); if (n && !reached.has(+n[1])) add('feedback-unreachable', `byKey "${k}" is reached by no mutant: no recorded mistake fails test ${n[1]} first`); }
+    for (const n of [...reached].sort((a, b) => a - b)) if (!(`test-${n}` in byKey)) add('feedback-missing', `a mutant first fails test ${n} but feedback.byKey has no "test-${n}" line`);
   }
   return fails;
 };

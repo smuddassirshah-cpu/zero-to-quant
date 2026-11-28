@@ -15,9 +15,9 @@ if (!cdnDir || !fs.existsSync(path.join(cdnDir, 'pyodide-0.27.7', 'package', 'py
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-grade-code-'));
 let pass = 0, fail = 0;
 const say = (ok, name, extra = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${ok ? '' : ' | ' + extra}`); ok ? pass++ : fail++; };
-const run = (name, widget) => {
-  const f = path.join(tmp, name + '.json'); fs.writeFileSync(f, JSON.stringify({ screens: [{ widget: { kind: 'code', ...widget } }] }));
-  const r = spawnSync('node', [path.join(HERE, 'grade-all.mjs'), '--local-cdn', cdnDir, '--jobs', '1', '--file', f, '--code'], { encoding: 'utf8', timeout: 170000 });
+const run = (name, widget, feedback = null, extra = []) => {
+  const f = path.join(tmp, name + '.json'); fs.writeFileSync(f, JSON.stringify({ screens: [{ widget: { kind: 'code', ...widget }, ...(feedback ? { feedback } : {}) }] }));
+  const r = spawnSync('node', [path.join(HERE, 'grade-all.mjs'), '--local-cdn', cdnDir, '--jobs', '1', '--file', f, '--code', ...extra], { encoding: 'utf8', timeout: 170000 });
   return (r.stdout || '') + (r.stderr || '');
 };
 const base = { solution: 'def f(x):\n    return 2 * x', starter: 'def f(x):\n    pass', tests: [{ call: 'f(1)', expect: '2' }, { call: 'f(3)', expect: '6' }, { call: 'f(0)', expect: '0' }], examples: [{ call: 'f(2)', expect: '4' }] };
@@ -92,6 +92,30 @@ say(/grade-all: 0 failures/.test(o), 'a fraction expect evaluates without the le
   o = go(cdnDir, []);
   say(/cb\/l1-x/.test(o) && /2 Python code widgets run/.test(o), 'without --strand both courses run', o);
   if (fs.existsSync(ce)) { o = go(vend, ['--strand', 'ai']); say(/ca\/l1-x\.json#.*solution-fails/.test(o) && /1 Python code widgets run/.test(o), '--local-cdn takes the fetch-vendor.sh layout', o); }
+}
+
+/* ENGINE-BACKLOG 1269: byKey lines no mutant reaches, and tests a mutant fails with no line. Only in a strand-ai course (a temporary content root). */
+{
+  const root = path.join(tmp, 'fbroot'), cd = path.join(root, 'content', 'courses', 'cai');
+  fs.mkdirSync(cd, { recursive: true });
+  for (const d of fs.readdirSync(path.join(HERE, '..'))) if (d !== 'content') fs.symlinkSync(path.join(HERE, '..', d), path.join(root, d));
+  fs.writeFileSync(path.join(cd, 'course.json'), JSON.stringify({ id: 'cai', strand: 'ai' }));
+  const w = { kind: 'code', ...base, mutants: [{ source: 'def f(x):\n    return x + x + 1', test: 1 }, { source: 'def f(x):\n    return 2 * x if x else 1', test: 3 }] };
+  const go = (name, feedback, extra = []) => {
+    fs.writeFileSync(path.join(cd, name + '.json'), JSON.stringify({ screens: [{ widget: w, feedback }] }));
+    const r = spawnSync('node', [path.join(HERE, 'grade-all.mjs'), '--local-cdn', cdnDir, '--root', root, '--jobs', '1', '--file', path.join(cd, name + '.json'), '--code', ...extra], { encoding: 'utf8', timeout: 170000 });
+    fs.unlinkSync(path.join(cd, name + '.json')); return { out: (r.stdout || '') + (r.stderr || ''), code: r.status };
+  };
+  let r = go('ok', { byKey: { 'test-1': 'a', 'test-3': 'b' } });
+  say(r.code === 0 && !/feedback/.test(r.out), 'lines for every reached test pass', r.out);
+  r = go('unreach', { byKey: { 'test-1': 'a', 'test-3': 'b', 'test-2': 'c' } });
+  say(r.code === 0 && /warning feedback-unreachable: byKey "test-2"/.test(r.out) && /cai unreachable 1/.test(r.out), 'a test-2 line no mutant reaches warns and the run passes', r.out);
+  r = go('unreach', { byKey: { 'test-1': 'a', 'test-3': 'b', 'test-2': 'c' } }, ['--strict-feedback']);
+  say(r.code === 1 && /feedback-unreachable/.test(r.out), '--strict-feedback fails an unreachable line', r.out);
+  r = go('missing', { byKey: { 'test-1': 'a' } });
+  say(r.code === 0 && /warning feedback-missing: a mutant first fails test 3/.test(r.out), 'a mutant failing test 3 with no line warns', r.out);
+  r = go('missing', { byKey: { 'test-1': 'a' } }, ['--strict-feedback']);
+  say(r.code === 1 && /feedback-missing/.test(r.out), '--strict-feedback fails a missing line', r.out);
 }
 
 console.log(`test-grade-code: ${pass} passed, ${fail} failed`);
