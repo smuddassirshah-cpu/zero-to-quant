@@ -1,0 +1,485 @@
+{
+ "id": "problems-2",
+ "course": "nn-train",
+ "level": 2,
+ "title": "Signal and normalisation problems",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p2-deep",
+   "difficulty": 5,
+   "skills": [
+    "nt-signal"
+   ],
+   "prose": "A deep linear net has layers with 256 inputs per unit. Every weight is drawn with sd 0.1, independent of the inputs, which have variance 1 and mean 0.",
+   "parts": [
+    {
+     "question": "What is the variance of one unit's output after the first layer? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.56,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "sd",
+        "value": 25.6,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "one",
+        "value": 1,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$256 \\times 0.01 \\times 1 = 2.56$.",
+      "generic": "Not quite. Use $n\\operatorname{Var}(w)\\operatorname{Var}(x)$.",
+      "byKey": {
+       "sd": "You used the sd 0.1 in place of the variance 0.01.",
+       "one": "That would need sd $1/16$."
+      }
+     },
+     "explain": {
+      "text": "$n\\operatorname{Var}(w) = 256 \\times 0.01 = 2.56$."
+     }
+    },
+    {
+     "question": "Each layer multiplies the variance by the factor 2.56 from part 1. What is the variance after five layers? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 110.0,
+      "tol": {
+       "abs": 0.05
+      },
+      "wrong": [
+       {
+        "id": "lin",
+        "value": 12.8,
+        "tol": {
+         "abs": 0.05
+        }
+       },
+       {
+        "id": "four",
+        "value": 42.9,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2.56^5 = 110.0$.",
+      "generic": "Not quite. Raise the factor to the fifth power.",
+      "byKey": {
+       "lin": "The factors multiply; you added them.",
+       "four": "That is four layers."
+      }
+     },
+     "explain": {
+      "text": "$2.56^5 = 110.0$, an sd of about 10.5 after five layers."
+     }
+    },
+    {
+     "question": "What weight sd keeps the variance unchanged through each of these layers? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0625,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "var",
+        "value": 0.0039,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "he",
+        "value": 0.0884,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1/\\sqrt{256} = 1/16 = 0.0625$.",
+      "generic": "Not quite. Make $n\\operatorname{Var}(w) = 1$.",
+      "byKey": {
+       "var": "That is the variance, $1/256$.",
+       "he": "That is the He sd, for ReLU layers."
+      }
+     },
+     "explain": {
+      "text": "$\\operatorname{Var}(w) = 1/256$, so the sd is $1/16 = 0.0625$."
+     }
+    },
+    {
+     "question": "The layers become ReLU layers, which pass on half the variance. What weight sd now keeps it steady? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0884,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "lecun",
+        "value": 0.0625,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "half",
+        "value": 0.0442,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\sqrt{2/256} = 0.0884$.",
+      "generic": "Not quite. Double the variance of part 3's weights.",
+      "byKey": {
+       "lecun": "That is part 3's answer; ReLU halves the variance, so double it back.",
+       "half": "You halved the weight variance instead of doubling it."
+      }
+     },
+     "explain": {
+      "text": "ReLU keeps half the variance, so $\\operatorname{Var}(w) = 2/256$ and the sd is 0.0884."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p2-chain",
+   "difficulty": 4,
+   "skills": [
+    "nt-signal"
+   ],
+   "prose": "A gradient runs back down a chain of sigmoid units, one per layer, with every weight on the path equal to 1.",
+   "parts": [
+    {
+     "question": "What is the sigmoid's slope at a pre-activation of 1? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.1966,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "val",
+        "value": 0.7311,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "peak",
+        "value": 0.25,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\sigma(1) = 0.7311$, so the slope is $0.7311 \\times 0.2689 = 0.1966$.",
+      "generic": "Not quite. Use $\\sigma(z)(1 - \\sigma(z))$.",
+      "byKey": {
+       "val": "That is $\\sigma(1)$ itself.",
+       "peak": "0.25 is the slope at 0."
+      }
+     },
+     "explain": {
+      "text": "$\\sigma(1)(1 - \\sigma(1)) = 0.1966$."
+     }
+    },
+    {
+     "question": "Eight layers sit at their steepest, slope 0.25. What factor do they apply? Give it in units of $10^{-5}$, to 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.53,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "seven",
+        "value": 6.1,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "lin",
+        "value": 2.0,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ],
+      "scale": 1e-05
+     },
+     "feedback": {
+      "correct": "$0.25^8 = 1/65{,}536 \\approx 1.53 \\times 10^{-5}$.",
+      "generic": "Not quite. Raise 0.25 to the eighth.",
+      "byKey": {
+       "seven": "That is seven layers.",
+       "lin": "You multiplied by 8."
+      }
+     },
+     "explain": {
+      "text": "$4^8 = 65{,}536$, so the factor is $1.53 \\times 10^{-5}$."
+     }
+    },
+    {
+     "question": "The same eight layers, but each at a pre-activation of 1, with the slope from part 1. What factor do they apply? Give it in units of $10^{-6}$, to 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.23,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "steep",
+        "value": 15.26,
+        "tol": {
+         "abs": 0.05
+        }
+       },
+       {
+        "id": "seven",
+        "value": 11.36,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ],
+      "scale": 1e-06
+     },
+     "feedback": {
+      "correct": "$0.1966^8 = 2.23 \\times 10^{-6}$.",
+      "generic": "Not quite. Raise part 1's slope to the eighth.",
+      "byKey": {
+       "steep": "That is part 2's factor, at slope 0.25.",
+       "seven": "That is seven layers."
+      }
+     },
+     "explain": {
+      "text": "$0.1966^8 = 2.23 \\times 10^{-6}$, about seven times smaller than at the steepest point."
+     }
+    },
+    {
+     "question": "Replace every sigmoid with ReLU, each unit on (pre-activation above 0). What factor do the eight slopes apply?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "zero",
+        "value": 0,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "quarter",
+        "value": 0.25,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Each live ReLU has slope 1, so the factor is $1^8 = 1$.",
+      "generic": "Not quite. What is ReLU's slope when the unit is on?",
+      "byKey": {
+       "zero": "That is the slope of a unit that is off.",
+       "quarter": "That is the sigmoid's best."
+      }
+     },
+     "explain": {
+      "text": "ReLU's slope is 1 on its positive side, so a path of live units passes the gradient unchanged."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p2-norms",
+   "difficulty": 3,
+   "skills": [
+    "nt-signal"
+   ],
+   "prose": "Four numbers, 1, 3, 5 and 7, are one feature over a batch of four rows, with $\\epsilon = 10^{-5}$.",
+   "parts": [
+    {
+     "question": "Batch norm, before $\\gamma$ and $\\beta$: what does the 7 become? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.3416,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "ddof",
+        "value": 1.1619,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "nosqrt",
+        "value": 0.6,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Mean 4, variance 5, so $3/\\sqrt 5 = 1.3416$.",
+      "generic": "Not quite. Use the batch mean and variance.",
+      "byKey": {
+       "ddof": "You divided by 3; use the batch size, 4.",
+       "nosqrt": "You divided by the variance."
+      }
+     },
+     "explain": {
+      "text": "$\\mu = 4$, $\\sigma^2 = (9 + 1 + 1 + 9)/4 = 5$, so $\\hat x = 1.3416$."
+     }
+    },
+    {
+     "question": "Using the normalised value 1.3416 from part 1, with $\\gamma = 0.5$ and $\\beta = 2$, what is the output for that row? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.6708,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "swap",
+        "value": 3.1833,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "nob",
+        "value": 0.6708,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.5 \\times 1.3416 + 2 = 2.6708$.",
+      "generic": "Not quite. Scale by $\\gamma$, then add $\\beta$.",
+      "byKey": {
+       "swap": "You swapped $\\gamma$ and $\\beta$.",
+       "nob": "You left out $\\beta$."
+      }
+     },
+     "explain": {
+      "text": "$\\gamma\\hat x + \\beta = 0.6708 + 2 = 2.6708$."
+     }
+    },
+    {
+     "question": "The running mean starts at 0 and moves a share 0.1 towards this batch's mean of 4. What is it now? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.4,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "batch",
+        "value": 4,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "keep",
+        "value": 3.6,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.9 \\times 0 + 0.1 \\times 4 = 0.4$.",
+      "generic": "Not quite. Keep 0.9 of the old value and add 0.1 of the new.",
+      "byKey": {
+       "batch": "That is the batch mean.",
+       "keep": "You kept 0.9 of the new value."
+      }
+     },
+     "explain": {
+      "text": "$0.1 \\times 4 = 0.4$: the running mean moves a tenth of the way."
+     }
+    },
+    {
+     "question": "Now treat the four numbers of part 1 as the four features of one example and apply layer norm, before $\\gamma$ and $\\beta$. What does the 7 become? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.3416,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "bnout",
+        "value": 2.6708,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "ddof",
+        "value": 1.1619,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The same numbers in one row give the same mean and variance: 1.3416 again.",
+      "generic": "Not quite. Normalise the four features of the one example.",
+      "byKey": {
+       "bnout": "That is part 2's output, with $\\gamma$ and $\\beta$.",
+       "ddof": "Divide by the 4 features."
+      }
+     },
+     "explain": {
+      "text": "The row has the same mean and variance as the column did, so the 7 becomes 1.3416 again. On a real batch the two norms differ."
+     }
+    }
+   ]
+  }
+ ]
+}

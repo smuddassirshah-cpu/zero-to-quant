@@ -1,0 +1,380 @@
+{
+ "id": "homework-2",
+ "course": "nn-train",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h2-ln-backward",
+   "difficulty": 5,
+   "skills": [
+    "nt-signal"
+   ],
+   "title": "Performance task: the backward pass of layer norm",
+   "performance": "code",
+   "prose": "From a blank start, write `layernorm_backward(x, gamma, dout, eps)` in NumPy. Layer norm normalises over the last axis of `x` (any leading shape) and outputs $\\gamma\\hat x + \\beta$; `dout` is $\\partial L/\\partial y$. Return the gradients for `x`, `gamma` and `beta`, in that order.",
+   "question": "Write `layernorm_backward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef layernorm_backward(x, gamma, dout, eps):\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    d = x.shape[-1]\n    mu = x.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xhat = (x - mu) * inv\n    lead = tuple(range(x.ndim - 1))\n    dgamma = (dout * xhat).sum(axis=lead)\n    dbeta = dout.sum(axis=lead)\n    dxh = dout * gamma\n    dx = inv / d * (d * dxh - dxh.sum(axis=-1, keepdims=True) - xhat * (dxh * xhat).sum(axis=-1, keepdims=True))\n    return dx, dgamma, dbeta\n",
+    "prelude": "import numpy as np\n\n\ndef ln_forward(x, gamma, beta, eps=1e-5):\n    mu = x.mean(axis=-1, keepdims=True)\n    return gamma * (x - mu) / np.sqrt(x.var(axis=-1, keepdims=True) + eps) + beta\n\n\ndef rel_err_dx(x, gamma, dout, eps, dx, h=1e-6):\n    num = np.zeros_like(x)\n    for i in np.ndindex(x.shape):\n        xp, xm = x.copy(), x.copy()\n        xp[i] += h\n        xm[i] -= h\n        num[i] = ((ln_forward(xp, gamma, 0.0, eps) - ln_forward(xm, gamma, 0.0, eps)) * dout).sum() / (2 * h)\n    return float(np.abs(num - dx).max() / max(np.abs(num).max(), np.abs(dx).max(), 1e-12))\n\n\n_g = np.random.default_rng(12)\nX1 = _g.standard_normal((3, 5))\nG1 = _g.standard_normal(5)\nD1 = _g.standard_normal((3, 5))\nX3 = _g.standard_normal((2, 2, 4))\nG3 = _g.standard_normal(4)\nD3 = _g.standard_normal((2, 2, 4))\n",
+    "examples": [
+     {
+      "call": "[a.tolist() for a in layernorm_backward(np.array([[0.0, 2.0]]), np.ones(2), np.array([[1.0, 0.0]]), 1e-5)]",
+      "compare": "isclose",
+      "expect": "[[[4.999925000854692e-06, -4.999925000854692e-06]], [-0.9999950000374997, 0.0], [1.0, 0.0]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "layernorm_backward(X1, G1, D1, 1e-5)[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.7346469625379063, -0.19752817632780645, -1.0531967364176478, -0.1756703833322753, 0.6917483335398235], [-0.5323287339734363, 0.4173872691594696, -0.10217564386436956, 0.6614076277664171, -0.44429051908808104], [1.475520429873872, -0.9937324018186682, -0.26156969447081846, -0.16541982669495253, -0.05479850688943262]]"
+     },
+     {
+      "call": "[a.tolist() for a in layernorm_backward(X1, G1, D1, 1e-5)[1:]]",
+      "compare": "isclose",
+      "expect": "[[-0.11348274075649084, -0.7594227232238122, 1.7505940753343672, -0.5772039124636736, -3.5735511330019696], [0.8871128731653385, -1.2533445122829716, -1.771729718373419, -0.6992921393272593, -2.3457804619948384]]"
+     },
+     {
+      "call": "rel_err_dx(X1, G1, D1, 1e-5, layernorm_backward(X1, G1, D1, 1e-5)[0]) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "rel_err_dx(X3, G3, D3, 1e-5, layernorm_backward(X3, G3, D3, 1e-5)[0]) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "[a.tolist() for a in layernorm_backward(X3, G3, D3, 1e-5)[1:]]",
+      "compare": "isclose",
+      "expect": "[[2.208292349916865, -0.6602961320414737, -4.821247764170293, 0.5138760227277688], [3.4412017443636778, -1.8246286343312648, -1.597924757690029, 1.7563268601987194]]"
+     },
+     {
+      "call": "[a.tolist() for a in layernorm_backward(np.array([0.5, -1.0, 2.0]), np.array([1.0, 2.0, 3.0]), np.array([0.3, 0.1, -0.2]), 1e-5)]",
+      "compare": "isclose",
+      "expect": "[[0.2721646197620215, -0.13608013257856796, -0.13608448718345353], [0.0, -0.12247407889290968, -0.24494815778581935], [0.3, 0.1, -0.2]]"
+     },
+     {
+      "call": "layernorm_backward(np.full((1, 4), 3.0), np.ones(4), np.array([[1.0, -2.0, 0.5, 0.5]]), 1e-5)[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[316.2277660168379, -632.4555320336758, 158.11388300841895, 158.11388300841895]]"
+     },
+     {
+      "call": "float(np.abs(layernorm_backward(X1, np.ones(5), np.ones((3, 5)), 1e-5)[0]).max())",
+      "expect": "0.0",
+      "tol": {
+       "rel": 0,
+       "abs": 1e-09
+      },
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests. `ln_forward` and `rel_err_dx` (central differences, $h = 10^{-6}$) are loaded. Tests 1 and 2 compare all three gradients on a seeded (3, 5) batch to $10^{-9}$. Tests 3 and 4 need a central-difference error below $10^{-6}$ on that batch and on a (2, 2, 4) array. Tests 5 to 8 check the 3-D sums, a single vector, equal features and a case whose $\\partial L/\\partial \\mathbf{x}$ is exactly 0.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    d = x.shape[-1]\n    mu = x.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xhat = (x - mu) * inv\n    lead = tuple(range(x.ndim - 1))\n    dgamma = (dout * xhat).sum(axis=lead)\n    dbeta = dout.sum(axis=lead)\n    dxh = dout * gamma\n    dx = dxh * inv\n    return dx, dgamma, dbeta\n",
+      "test": 1,
+      "symptom": "Treats the mean and the scale as constants."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    d = x.shape[-1]\n    mu = x.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xhat = (x - mu) * inv\n    lead = tuple(range(x.ndim - 1))\n    dgamma = (dout * xhat).sum(axis=lead)\n    dbeta = dout.sum(axis=lead)\n    dxh = dout * gamma\n    dx = inv / d * (d * dxh - dxh.sum(axis=-1, keepdims=True))\n    return dx, dgamma, dbeta\n",
+      "test": 1,
+      "symptom": "Keeps the mean's path and drops the scale's."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    d = x.shape[-1]\n    mu = x.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xhat = (x - mu) * inv\n    lead = tuple(range(x.ndim - 1))\n    dgamma = (dout * xhat).sum(axis=0)\n    dbeta = dout.sum(axis=lead)\n    dxh = dout * gamma\n    dx = inv / d * (d * dxh - dxh.sum(axis=-1, keepdims=True) - xhat * (dxh * xhat).sum(axis=-1, keepdims=True))\n    return dx, dgamma, dbeta\n",
+      "test": 5,
+      "symptom": "Sums the gamma gradient over the first axis only."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    d = x.shape[-1]\n    mu = x.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.var(axis=-1, keepdims=True, ddof=1) + eps)\n    xhat = (x - mu) * inv\n    lead = tuple(range(x.ndim - 1))\n    dgamma = (dout * xhat).sum(axis=lead)\n    dbeta = dout.sum(axis=lead)\n    dxh = dout * gamma\n    dx = inv / d * (d * dxh - dxh.sum(axis=-1, keepdims=True) - xhat * (dxh * xhat).sum(axis=-1, keepdims=True))\n    return dx, dgamma, dbeta\n",
+      "test": 1,
+      "symptom": "Divides the variance by D - 1."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef layernorm_backward(x, gamma, dout, eps):\n    x = np.asarray(x, dtype=float)\n    d = x.shape[-1]\n    mu = x.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.var(axis=-1, keepdims=True) + eps)\n    xhat = (x - mu) * inv\n    lead = tuple(range(x.ndim - 1))\n    dgamma = (dout * xhat).sum(axis=lead)\n    dbeta = dout.sum(axis=lead)\n    dxh = dout * gamma\n    dx = inv / d * (d * dxh - dxh.sum(axis=0, keepdims=True) - xhat * (dxh * xhat).sum(axis=0, keepdims=True))\n    return dx, dgamma, dbeta\n",
+      "test": 1,
+      "symptom": "Sums over the batch axis instead of the features."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your backward matches central differences and every hidden case.",
+    "generic": "Not quite. Read the first failing test in the results."
+   },
+   "explain": {
+    "text": "With $d = \\gamma \\cdot \\partial L/\\partial y$, the input gradient is $\\tfrac1s(d - \\bar d - \\hat x\\,\\overline{d\\hat x})$ over the last axis. The $\\gamma$ and $\\beta$ gradients sum over every leading axis."
+   }
+  },
+  {
+   "id": "h2-fold",
+   "difficulty": 4,
+   "skills": [
+    "nt-signal"
+   ],
+   "title": "Folding batch norm into a layer",
+   "prose": "At inference a batch-norm layer is a fixed affine map, so it can be folded into the dense layer before it. Write `fold_bn(W, b, gamma, beta, mean, var, eps)` returning `(W2, b2)` with `x @ W2 + b2` equal to inference-mode batch norm of `x @ W + b`, for `W` of shape (inputs, units).",
+   "question": "Write `fold_bn`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef fold_bn(W, b, gamma, beta, mean, var, eps):\n    # (W2, b2) with x @ W2 + b2 equal to inference-mode batch norm of x @ W + b\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef fold_bn(W, b, gamma, beta, mean, var, eps):\n    s = np.asarray(gamma) / np.sqrt(np.asarray(var) + eps)\n    return np.asarray(W) * s, (np.asarray(b) - mean) * s + beta\n",
+    "prelude": "import numpy as np\n_g = np.random.default_rng(13)\nW = _g.standard_normal((4, 3))\nb = _g.standard_normal(3)\ngam = _g.standard_normal(3)\nbet = _g.standard_normal(3)\nmean = _g.standard_normal(3)\nvar = _g.random(3) + 0.5\nXq = _g.standard_normal((6, 4))\n",
+    "examples": [
+     {
+      "call": "[a.tolist() for a in fold_bn(np.eye(1), np.zeros(1), np.ones(1), np.zeros(1), np.zeros(1), np.ones(1), 0.0)]",
+      "compare": "isclose",
+      "expect": "[[[1.0]], [0.0]]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "W2, b2 = fold_bn(W, b, gam, bet, mean, var, 1e-5)",
+      "call": "float(np.abs(Xq @ W2 + b2 - (gam * (Xq @ W + b - mean) / np.sqrt(var + 1e-5) + bet)).max())",
+      "expect": "0.0",
+      "tol": {
+       "rel": 0,
+       "abs": 1e-09
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "[list(a.shape) for a in fold_bn(W, b, gam, bet, mean, var, 1e-5)]",
+      "compare": "equal",
+      "expect": "[[4, 3], [3]]"
+     },
+     {
+      "call": "[a.tolist() for a in fold_bn(np.array([[1.0, 2.0], [3.0, 4.0]]), np.zeros(2), np.array([2.0, 1.0]), np.array([0.5, 0.0]), np.array([1.0, -1.0]), np.array([4.0, 1.0]), 0.0)]",
+      "compare": "isclose",
+      "expect": "[[[1.0, 2.0], [3.0, 4.0]], [-0.5, 1.0]]"
+     },
+     {
+      "call": "[a.tolist() for a in fold_bn(W, b, gam, bet, mean, var, 1e-5)]",
+      "compare": "isclose",
+      "expect": "[[[-1.2392403295051144, 1.079764082616632, -1.4290322908489366], [-0.047240701275698876, -0.4623929678614983, -0.5751981754307242], [-1.2395809235762276, -0.01113452739315084, 0.7699992533681812], [-0.3937910178959745, -0.15156697923931156, 0.5322556504755201]], [2.130175641318036, 0.20522582632816397, 2.5794590832387883]]"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. The folded layer must match inference-mode batch norm on 6 seeded rows to $10^{-9}$ and keep the shapes. It must also give the exact weights on a 2 by 2 case and on the seeded layer.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef fold_bn(W, b, gamma, beta, mean, var, eps):\n    s = np.asarray(gamma) / np.sqrt(np.asarray(var) + eps)\n    return np.asarray(W) * s[:, None], (np.asarray(b) - mean) * s + beta\n",
+      "test": 1,
+      "symptom": "Scales the rows of W instead of its columns."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef fold_bn(W, b, gamma, beta, mean, var, eps):\n    s = np.asarray(gamma) / np.sqrt(np.asarray(var) + eps)\n    return np.asarray(W) * s, np.asarray(b) * s + beta\n",
+      "test": 1,
+      "symptom": "Leaves the running mean out of the new bias."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef fold_bn(W, b, gamma, beta, mean, var, eps):\n    s = np.asarray(gamma) / np.sqrt(np.asarray(var) + eps)\n    return np.asarray(W) * s, (np.asarray(b) - mean) * s\n",
+      "test": 1,
+      "symptom": "Forgets beta."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Folded: one matrix product now does the work of two layers.",
+    "generic": "Not quite. Read the first failing test in the results."
+   },
+   "explain": {
+    "text": "Each unit is scaled by $s = \\gamma/\\sqrt{\\sigma^2 + \\epsilon}$, so each column of $\\mathbf{W}$ is multiplied by its $s$. The bias becomes $(b - \\mu)s + \\beta$."
+   }
+  },
+  {
+   "id": "h2-relu-order",
+   "difficulty": 4,
+   "skills": [
+    "nt-signal"
+   ],
+   "title": "Why ReLU halves the variance",
+   "prose": "Let $z$ have a distribution symmetric about 0, with variance $\\sigma^2$ and $P(z = 0) = 0$, and $h = \\max(0, z)$. The next layer's variance is $n\\operatorname{Var}(w)E[h^2]$ for independent zero-mean weights.",
+   "question": "Put the derivation of He's scale in order. Leave out the two lines that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "h1",
+      "text": "$E[h^2] = E[z^2\\,\\mathbf 1\\{z > 0\\}]$, since $h = z$ when $z > 0$ and 0 otherwise"
+     },
+     {
+      "id": "h2",
+      "text": "$E[z^2\\,\\mathbf 1\\{z > 0\\}] = E[z^2\\,\\mathbf 1\\{z < 0\\}]$, by symmetry about 0"
+     },
+     {
+      "id": "h3",
+      "text": "The two add up to $E[z^2] = \\sigma^2$, since $P(z = 0) = 0$ and the mean is 0"
+     },
+     {
+      "id": "h4",
+      "text": "So $E[h^2] = \\sigma^2/2$: the next layer sees half the second moment"
+     },
+     {
+      "id": "h5",
+      "text": "Setting $n\\operatorname{Var}(w)\\,\\sigma^2/2 = \\sigma^2$ gives $\\operatorname{Var}(w) = 2/n$, sd $\\sqrt{2/n}$"
+     },
+     {
+      "id": "x1",
+      "text": "$\\operatorname{Var}(h) = \\sigma^2/2$, so the variance of $h$ halves",
+      "why": "The second moment halves; $h$ has a positive mean, so its variance is smaller than $\\sigma^2/2$."
+     },
+     {
+      "id": "x2",
+      "text": "$E[h^2] = \\sigma^2/4$, since half the values are zeroed and the rest are halved",
+      "why": "ReLU keeps the positive values whole; it does not halve them."
+     }
+    ],
+    "answer": [
+     "h1",
+     "h2",
+     "h3",
+     "h4",
+     "h5"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "Split $E[z^2]$ into its positive and negative halves, use symmetry, then solve for $\\operatorname{Var}(w)$.",
+    "generic": "Not quite. Each line follows from the one above.",
+    "byKey": {
+     "x1": "It is $E[h^2]$ that halves; the variance of $h$ is smaller, because $h$ has a positive mean.",
+     "x2": "ReLU passes the positive values unchanged."
+    }
+   },
+   "explain": {
+    "text": "Symmetry splits $E[z^2]$ evenly between the positive and negative sides, and ReLU keeps only the positive side. So $E[h^2] = \\sigma^2/2$, and the weights need twice the variance, $2/n$."
+   }
+  },
+  {
+   "id": "h2-six",
+   "difficulty": 3,
+   "skills": [
+    "nt-signal"
+   ],
+   "title": "Six layers at sd 0.12",
+   "prose": "Six linear layers of 100 inputs per unit start with weight sd 0.12, fed inputs of variance 1.",
+   "question": "By what factor has the variance grown after the six layers? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8.92,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 2.99,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "one",
+      "value": 1.44,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each layer multiplies by $100 \\times 0.0144 = 1.44$, so $1.44^6 = 8.92$.",
+    "generic": "Not quite. Find the factor per layer first.",
+    "byKey": {
+     "sd": "That is the growth of the sd, $1.2^6$.",
+     "one": "That is one layer."
+    }
+   },
+   "explain": {
+    "text": "$n\\operatorname{Var}(w) = 1.44$ a layer, so six layers give $1.44^6 = 8.92$: a small excess compounds."
+   }
+  },
+  {
+   "id": "h2-small-batch",
+   "difficulty": 3,
+   "skills": [
+    "nt-signal"
+   ],
+   "title": "Batches of two",
+   "prose": "A model trains on batches of only 2 rows (the rows are large images) and is scored one row at a time.",
+   "question": "Which normalisation fits, and why?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "ln",
+      "text": "Layer norm: its statistics come from each row alone, so batch size does not matter",
+      "correct": true
+     },
+     {
+      "id": "bn",
+      "text": "Batch norm: it was designed for deep nets",
+      "why": "With 2 rows a batch mean and variance are very noisy, and a batch of one gives $\\beta$ in training mode."
+     },
+     {
+      "id": "none",
+      "text": "No normalisation can work with batches of 2",
+      "why": "Layer norm never looks at the other row."
+     },
+     {
+      "id": "bn1",
+      "text": "Batch norm in training mode at scoring time, to match training",
+      "why": "Training mode at scoring time makes a score depend on its batch; a batch of one outputs $\\beta$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Layer norm: each row is normalised by its own features, in training and in use.",
+    "generic": "Not quite. Which statistic survives a batch of 2?"
+   },
+   "explain": {
+    "text": "Batch norm needs a batch large enough for stable statistics, and running averages for scoring. Layer norm needs neither, so tiny batches and single-row scoring are fine."
+   }
+  },
+  {
+   "id": "h2-time-of-day",
+   "difficulty": 5,
+   "skills": [
+    "nt-signal"
+   ],
+   "title": "Different scores for the same trade",
+   "kind": "longform",
+   "prompt": "A production model gives different scores to the same trade depending on the time of day it is scored. Trades are scored in batches of whatever arrived in the last second: large batches at the open, single trades at lunch. The model has batch-norm layers. Explain what is happening, how you would confirm it, and how you would fix it.",
+   "model": "What is happening: the batch-norm layers are being run in training mode, so each feature is normalised by the mean and variance of the batch the trade arrives in. At the open a batch holds many trades, and a trade's normalised features depend on the others in it. At lunch a batch may hold one trade: then $x - \\mu_B = 0$ for every feature and each layer outputs $\\beta$, so the input is erased and every such trade gets the same score.\n\nHow to confirm: score one stored trade on its own and inside a stored batch of 100; in training mode the scores differ, in inference mode they match. Check the code path: in our autograd it is the `mode` argument (`\"train\"` against `\"eval\"`), in a framework the train or eval switch. Log the batch sizes beside the scores: the odd scores should cluster at batch size 1.\n\nThe fix: run batch norm in inference mode at scoring, using the running mean and variance saved from training. Then each trade's score depends on that trade alone. Check that the running averages were saved with the weights and that they match the training data (if they were collected over few steps, they may lag). If batches are tiny in training too, or the data drift a lot, consider layer norm instead, which needs no batch statistics at all. Add a test that scores a trade alone and in a batch and fails if the scores differ.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Names training mode: batch statistics make a score depend on the other trades in the batch"
+    },
+    {
+     "points": 2,
+     "text": "Explains the batch of one: every output is $\\beta$, so single trades lose their inputs"
+    },
+    {
+     "points": 2,
+     "text": "Confirms by scoring one trade alone and in a batch, or by logging batch sizes beside the scores"
+    },
+    {
+     "points": 2,
+     "text": "Fixes with inference mode and the saved running averages"
+    },
+    {
+     "points": 1,
+     "text": "Mentions layer norm as an alternative when batches are tiny or data drift"
+    },
+    {
+     "points": 1,
+     "text": "Adds a regression test (alone against in a batch)"
+    }
+   ]
+  }
+ ]
+}
