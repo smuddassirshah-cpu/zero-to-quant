@@ -489,7 +489,11 @@ def zq_uses(*names, loops=False, attrs=(), ops=()):
             for _a in _n.names:
                 if _a.name.split('.')[0] == 'numpy':
                     _np.add(_a.asname or 'numpy')
-        elif isinstance(_n, _ast.ImportFrom) and _n.module and _n.module.split('.')[0] == 'numpy':
+                if _a.name.split('.')[0] in names:
+                    _found.add(_a.name.split('.')[0])
+        elif isinstance(_n, _ast.ImportFrom) and _n.module:
+            if _n.module.split('.')[0] in names:
+                _found.add(_n.module.split('.')[0])
             for _a in _n.names:
                 if _a.name in names:
                     _found.add(_a.name)
