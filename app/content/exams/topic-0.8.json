@@ -185,7 +185,7 @@
    "pace": 60,
    "title": "A draw of 0.52",
    "prose": "A next-move row has chances hold 0.45, buy 0.3 and sell 0.25, in that order. A draw gives $u = 0.52$.",
-   "question": "Which move does the picker write, using the rule of the lessons?",
+   "question": "Which move is written, taking the first move whose running total is above $u$?",
    "widget": {
     "kind": "choice",
     "layout": "stack",
@@ -696,7 +696,7 @@
     "generic": "Work out the sum at all four corners for each option."
    },
    "explain": {
-    "text": "At (0, 0) the sum is the bias alone, so the bias must be above 0. Each input of 1 must pull the sum to 0 or below, so each weight is negative and at least as large as the bias. $(-2, -2, 1)$ gives 1, $-1$, $-1$ and $-3$."
+    "text": "At (0, 0) the sum is the bias alone, so the bias must be above 0. Each input of 1 must pull the sum to 0 or below, so each weight must be negative enough to bring the sum to 0 or below: $w + b \\le 0$. $(-2, -2, 1)$ gives 1, $-1$, $-1$ and $-3$."
    }
   },
   {
@@ -828,7 +828,7 @@
    ],
    "pace": 75,
    "title": "Labels from the text",
-   "prose": "Pretraining reads two separate documents, of 12 and 30 tokens. At each place, the tokens so far are the input and the next token is the label.",
+   "prose": "Pretraining reads two separate documents, of 12 and 30 tokens. At each place, the tokens so far are the input and the next token is the label. An example needs at least one token as its input, and there is no start token.",
    "question": "How many (input, label) training examples do the two documents give?",
    "widget": {
     "kind": "numeric",
@@ -945,8 +945,8 @@
       "correct": true
      },
      {
-      "id": "premise",
-      "text": "A question built on something false, such as why a fund closed when it never did",
+      "id": "language",
+      "text": "A question asked in a language rarely written online",
       "correct": true
      },
      {
@@ -962,11 +962,11 @@
     ]
    },
    "feedback": {
-    "correct": "Rare facts, later events and false premises all leave the likely answer apart from the true one.",
+    "correct": "Rare facts, later events and a language rarely written online all leave the likely answer apart from the true one.",
     "generic": "Ask when the most likely text and the true answer come apart."
    },
    "explain": {
-    "text": "The model writes what is likely given the text it saw. Rare facts and later events leave little to make the true answer likely, and a false premise invites a likely-sounding reason. A fact written everywhere is the safe case."
+    "text": "The model writes what is likely given the text it saw. Rare facts, later events and a language rarely written online leave little to make the true answer likely. A fact written everywhere is the safe case."
    }
   },
   {
@@ -1645,7 +1645,7 @@
    ],
    "pace": 300,
    "title": "A pension reply",
-   "prose": "A chatbot's reply about a pension has three lines. The reply and its source are invented. Line 1: \"Paying in £250 a month for 3 years adds £7,500.\" Line 2: \"A pot of £9,000 left to grow at 4% a year, compounded, for 10 years becomes £12,600.\" Line 3: \"Fees average 0.75% a year, says the 2023 Pension Costs Review, page 14.\"",
+   "prose": "A chatbot's reply about a pension has three lines. The pension, the figures and the review are made up for this question. Line 1: \"Paying in £250 a month for 3 years adds £7,500.\" Line 2: \"A pot of £9,000 left to grow at 4% a year, compounded, for 10 years becomes £12,600.\" Line 3: \"Fees average 0.75% a year, says the 2023 Pension Costs Review, page 14.\"",
    "question": "Check each line before you use it.",
    "parts": [
     {
@@ -2087,7 +2087,7 @@
        {
         "id": "below",
         "text": "Any bias of $-4$ or less",
-        "why": "You kept the singles quiet but forgot the pairs. Below $-5$, (1, 1, 0) no longer fires."
+        "why": "You kept the singles quiet but forgot the pairs. At $-5$ or below, (1, 1, 0) no longer fires."
        },
        {
         "id": "open",
@@ -2171,9 +2171,14 @@
       "call": "list(fit_halving([2, 4, 6], [3, 4, 7]))",
       "expect": "[1.0, 0.625, 0.223958]",
       "compare": "isclose"
+     },
+     {
+      "call": "list(fit_halving([0, 1, 2], [-2, 5, 0]))",
+      "expect": "[1.0, 0.0, 8.0]",
+      "compare": "isclose"
      }
     ],
-    "how": "Submit runs 7 hidden tests. Each answer is accepted when it is equal up to a tiny rounding difference.",
+    "how": "Submit runs 8 hidden tests. Each answer is accepted when it is equal up to a tiny rounding difference.",
     "mutants": [
      {
       "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef fit_halving(xs, ys):\n    w, b = 0.0, 0.0\n    for step in [1]:\n        while True:\n            old = (w, b)\n            best = mse(w, b, xs, ys)\n            up, down = mse(w + step, b, xs, ys), mse(w - step, b, xs, ys)\n            if up < best and up <= down:\n                w, best = w + step, up\n            elif down < best:\n                w, best = w - step, down\n            up, down = mse(w, b + step, xs, ys), mse(w, b - step, xs, ys)\n            if up < best and up <= down:\n                b, best = b + step, up\n            elif down < best:\n                b, best = b - step, down\n            if (w, b) == old:\n                break\n    return (w, b, round(mse(w, b, xs, ys), 6))\n",
@@ -2196,6 +2201,16 @@
       "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef fit_halving(xs, ys):\n    w, b = 0.0, 0.0\n    for step in [1, 0.5, 0.25, 0.125]:\n        while True:\n            old = (w, b)\n            best = mse(w, b, xs, ys)\n            up, down = mse(w + step, b, xs, ys), mse(w - step, b, xs, ys)\n            if up < best and up <= down:\n                w, best = w + step, up\n            elif down < best:\n                w, best = w - step, down\n            up, down = mse(w, b + step, xs, ys), mse(w, b - step, xs, ys)\n            if up < best and up <= down:\n                b, best = b + step, up\n            elif down < best:\n                b, best = b - step, down\n            if w == old[0]:\n                break\n    return (w, b, round(mse(w, b, xs, ys), 6))\n",
       "test": 3,
       "symptom": "Stops a step when w settles, even if b is still moving."
+     },
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef fit_halving(xs, ys):\n    w, b = 0.0, 0.0\n    for step in [1, 0.5, 0.25, 0.125]:\n        while True:\n            old = (w, b)\n            best = mse(w, b, xs, ys)\n            best0 = best\n            up, down = mse(w + step, b, xs, ys), mse(w - step, b, xs, ys)\n            if up < best and up <= down:\n                w, best = w + step, up\n            elif down < best:\n                w, best = w - step, down\n            best = best0\n            up, down = mse(w, b + step, xs, ys), mse(w, b - step, xs, ys)\n            if up < best and up <= down:\n                b, best = b + step, up\n            elif down < best:\n                b, best = b - step, down\n            if (w, b) == old:\n                break\n    return (w, b, round(mse(w, b, xs, ys), 6))\n",
+      "test": 8,
+      "symptom": "Scores each b trial against the error from before the w nudge, not after it."
+     },
+     {
+      "source": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef fit_halving(xs, ys):\n    w, b = 0.0, 0.0\n    for step in [1, 0.5, 0.25, 0.125]:\n        while True:\n            old = (w, b)\n            best = mse(w, b, xs, ys)\n            up, down = mse(w, b + step, xs, ys), mse(w, b - step, xs, ys)\n            if up < best and up <= down:\n                b, best = b + step, up\n            elif down < best:\n                b, best = b - step, down\n            up, down = mse(w + step, b, xs, ys), mse(w - step, b, xs, ys)\n            if up < best and up <= down:\n                w, best = w + step, up\n            elif down < best:\n                w, best = w - step, down\n            if (w, b) == old:\n                break\n    return (w, b, round(mse(w, b, xs, ys), 6))\n",
+      "test": 8,
+      "symptom": "Nudges b before w, against the stated order."
      }
     ]
    },
@@ -2205,7 +2220,8 @@
     "byKey": {
      "test-2": "On these points step 1 settles at a line that the finer steps still improve. Check the step halves after each settle.",
      "test-3": "Nudge $b$ from the new $w$, and compare each $b$ trial with the error after the $w$ nudge. End a step only when neither $w$ nor $b$ moved in a round.",
-     "test-5": "Both points have $x = 0$, so changing $w$ never changes the error. Keep a nudge only when it lowers the error, and stop a step only when neither $w$ nor $b$ moved."
+     "test-5": "Both points have $x = 0$, so changing $w$ never changes the error. Keep a nudge only when it lowers the error, and stop a step only when neither $w$ nor $b$ moved.",
+     "test-8": "Nudge $w$ first, then $b$ from the new $w$, and compare each $b$ trial with the error after the $w$ nudge. End a step only when neither $w$ nor $b$ moved in a round."
     }
    },
    "explain": {
@@ -2283,9 +2299,14 @@
       "call": "sample_name(['max', 'mia', 'mo'], [0.5, 0.1, 0.8, 0.3, 0.5])",
       "expect": "'max'",
       "compare": "equal"
+     },
+     {
+      "call": "sample_name(['anan', 'na'], [0.1, 0.4, 0.4])",
+      "expect": "'ana'",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 8 hidden tests. Each result must equal the expected text exactly.",
+    "how": "Submit runs 9 hidden tests. Each result must equal the expected text exactly.",
     "mutants": [
      {
       "source": "def sample_name(names, us):\n    counts = {}\n    for name in names:\n        marked = '.' + name + '.'\n        for i in range(len(marked) - 1):\n            row = counts.setdefault(marked[i], {})\n            row[marked[i + 1]] = row.get(marked[i + 1], 0) + 1\n    letter, out = '.', ''\n    for u in us:\n        row = counts[letter]\n        total = sum(row.values())\n        running = 0\n        for nxt in row:\n            running = running + row[nxt]\n            if running > u * total:\n                break\n        if nxt == '.':\n            break\n        out += nxt\n        letter = nxt\n    return out\n",
@@ -2306,6 +2327,11 @@
       "source": "def sample_name(names, us):\n    counts = {}\n    for name in names:\n        marked = '.' + name + '.'\n        for i in range(len(marked) - 1):\n            row = counts.setdefault(marked[i], {})\n            row[marked[i + 1]] = row.get(marked[i + 1], 0) + 1\n    letter, out = '.', ''\n    for u in us:\n        row = counts[letter]\n        total = sum(row.values())\n        running = 0\n        for nxt in sorted(row):\n            running = running + row[nxt]\n            if running > u * total:\n                break\n        out += nxt\n        if nxt == '.':\n            break\n        letter = nxt\n    return out\n",
       "test": 1,
       "symptom": "Writes the end mark into the name."
+     },
+     {
+      "source": "def sample_name(names, us):\n    counts = {}\n    for name in names:\n        marked = '.' + name + '.'\n        seen = set()\n        for i in range(len(marked) - 1):\n            if marked[i:i + 2] in seen:\n                continue\n            seen.add(marked[i:i + 2])\n            row = counts.setdefault(marked[i], {})\n            row[marked[i + 1]] = row.get(marked[i + 1], 0) + 1\n    letter, out = '.', ''\n    for u in us:\n        row = counts[letter]\n        total = sum(row.values())\n        running = 0\n        for nxt in sorted(row):\n            running = running + row[nxt]\n            if running > u * total:\n                break\n        if nxt == '.':\n            break\n        out += nxt\n        letter = nxt\n    return out\n",
+      "test": 9,
+      "symptom": "Counts each pair at most once per name, so a repeated pair is under-weighted."
      }
     ]
    },
@@ -2315,7 +2341,8 @@
     "byKey": {
      "test-1": "Mark both ends of each name, and stop without writing \".\" when it is picked.",
      "test-2": "List each row's next letters in alphabetical order, with \".\" first, not in the order you first meet them.",
-     "test-4": "A running total equal to $u$ is not above it, so walk on to the next letter."
+     "test-4": "A running total equal to $u$ is not above it, so walk on to the next letter.",
+     "test-9": "Count a pair every time it occurs, including twice in one name, before you turn counts into running totals."
     }
    },
    "explain": {
