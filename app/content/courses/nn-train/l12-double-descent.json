@@ -1,0 +1,951 @@
+{
+ "id": "l12-double-descent",
+ "course": "nn-train",
+ "title": "More parameters than data",
+ "minutes": 15,
+ "objectives": [
+  "Explain the second fall in test error once parameters outnumber data points."
+ ],
+ "skills": [
+  "nt-general"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "More features than points",
+   "prose": "We fit 40 noisy points (10 inputs, a linear signal plus noise) by least squares on $p$ random ReLU features, for $p$ from 5 to 200. When $p > 40$ there are many exact fits, and we take the one with the smallest weights.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "mn",
+       "label": "least squares, minimum norm",
+       "values": [
+        1.0784,
+        0.8735,
+        0.9522,
+        0.6582,
+        0.7672,
+        1.3501,
+        5.2695,
+        2.5207,
+        10.9858,
+        4.0602,
+        1.7253,
+        1.2356,
+        0.8631,
+        0.9674,
+        0.6765,
+        0.5313,
+        0.4591,
+        0.4216,
+        0.3877
+       ]
+      },
+      {
+       "id": "rg",
+       "label": "ridge, $\\lambda = 0.1$",
+       "values": [
+        1.0732,
+        0.7828,
+        0.8459,
+        0.6211,
+        0.6778,
+        0.8559,
+        0.879,
+        0.8802,
+        0.9132,
+        0.7433,
+        0.7672,
+        0.564,
+        0.7481,
+        0.6537,
+        0.5794,
+        0.4644,
+        0.4332,
+        0.4017,
+        0.3798
+       ],
+       "dashed": true
+      }
+     ],
+     "xValues": [
+      5,
+      10,
+      15,
+      20,
+      25,
+      30,
+      35,
+      38,
+      40,
+      42,
+      45,
+      50,
+      60,
+      70,
+      80,
+      100,
+      120,
+      150,
+      200
+     ],
+     "yScale": "log",
+     "y": [
+      0.1,
+      100
+     ],
+     "xLabel": "Number of random features $p$",
+     "yLabel": "Test error (MSE)",
+     "vlines": [
+      {
+       "id": "n",
+       "i": 8,
+       "label": "$p = n = 40$"
+      }
+     ]
+    },
+    "state": {
+     "hide": [
+      "mn",
+      "rg"
+     ],
+     "caption": "40 noisy training points, 10 inputs, `default_rng(0)`."
+    },
+    "controls": [
+     {
+      "bind": "frame",
+      "label": "Show",
+      "frames": [
+       {
+        "hide": [
+         "mn",
+         "rg"
+        ]
+       },
+       {
+        "hide": [
+         "rg"
+        ]
+       },
+       {
+        "hide": []
+       }
+      ],
+      "frameLabels": [
+       "nothing yet",
+       "least squares",
+       "with ridge"
+      ]
+     }
+    ],
+    "controlsAfter": "correct",
+    "maxHeight": 300
+   },
+   "question": "Predict the test error as $p$ grows, then reveal the chart.",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "dd",
+      "text": "It rises to a peak near $p = 40$, then falls again",
+      "correct": true,
+      "canvas": {
+       "hide": [
+        "rg"
+       ]
+      }
+     },
+     {
+      "id": "up",
+      "text": "It keeps rising: more parameters, more overfitting",
+      "why": "Past the peak it falls: 0.388 at $p = 200$ against 11.0 at 40."
+     },
+     {
+      "id": "down",
+      "text": "It keeps falling: bigger models always do better",
+      "why": "At $p = 40$ it spikes to 11.0."
+     },
+     {
+      "id": "u",
+      "text": "A single U with its bottom near $p = 40$",
+      "why": "The bottom of the first U is well below 40; 40 is the worst point."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At $p = 40$ there are as many features as points."
+    },
+    {
+     "rung": "point",
+     "text": "One exact fit, forced through every noisy point.",
+     "highlight": [
+      "n"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Past 40 the smallest-weight fit is gentler."
+    }
+   ],
+   "feedback": {
+    "correct": "Double descent: 0.874 at $p = 10$, 11.0 at 40, 0.388 at 200 on this seed.",
+    "generic": "Not quite. Reveal both curves and read the peak.",
+    "byKey": {
+     "up": "That is the half-truth: the peak is real, but the error falls again past it.",
+     "down": "That is the mirror half-truth: the peak shows bigger is not always better."
+    }
+   },
+   "explain": {
+    "text": "The error peaks at $p = n$, then falls as $p$ grows: **double descent**. With a small ridge penalty (dashed) the peak is gone: 0.913 at 40.",
+    "canvas": {
+     "hide": []
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Which exact fit?",
+   "prose": "Name it: past the **interpolation threshold** $p = n$, the equations $\\mathbf{F}\\mathbf{w} = \\mathbf{y}$ have infinitely many solutions. The **minimum-norm** one, $\\mathbf{w} = \\mathbf{F}^+\\mathbf{y}$ (`eigen` l17's pseudoinverse), picks the one with the smallest $\\lVert\\mathbf{w}\\rVert$. A one-row example: $w_1 + w_2 = 2$.",
+   "question": "What is $w_1$ in the minimum-norm solution?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 2,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every solution has $w_2 = 2 - w_1$."
+    },
+    {
+     "rung": "point",
+     "text": "Minimise $w_1^2 + (2 - w_1)^2$."
+    },
+    {
+     "rung": "step",
+     "text": "The minimum is at $w_1 = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$w = (1, 1)$, with norm $\\sqrt 2$; any other solution, such as $(2, 0)$, is longer.",
+    "generic": "Not quite. Minimise the length along the line $w_1 + w_2 = 2$.",
+    "byKey": {
+     "one": "$(2, 0)$ is a solution, but its norm is 2; $(1, 1)$ has norm $\\sqrt 2$.",
+     "zero": "$(0, 2)$ is a solution with norm 2."
+    }
+   },
+   "explain": {
+    "text": "The shortest point on the line $w_1 + w_2 = 2$ is its foot from the origin, $(1, 1)$, which is $\\mathbf{F}^+\\mathbf{y}$ for $\\mathbf{F} = (1, 1)$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A small penalty removes the peak",
+   "prose": "The dashed curve adds a ridge penalty $\\lambda = 0.1$. At $p = n$ the matrix $\\mathbf{F}$ is square and badly conditioned (`numerics` l3, if you have it), so the exact fit swings wildly; the penalty refuses those large weights.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "mn",
+       "label": "least squares, minimum norm",
+       "values": [
+        1.0784,
+        0.8735,
+        0.9522,
+        0.6582,
+        0.7672,
+        1.3501,
+        5.2695,
+        2.5207,
+        10.9858,
+        4.0602,
+        1.7253,
+        1.2356,
+        0.8631,
+        0.9674,
+        0.6765,
+        0.5313,
+        0.4591,
+        0.4216,
+        0.3877
+       ]
+      },
+      {
+       "id": "rg",
+       "label": "ridge, $\\lambda = 0.1$",
+       "values": [
+        1.0732,
+        0.7828,
+        0.8459,
+        0.6211,
+        0.6778,
+        0.8559,
+        0.879,
+        0.8802,
+        0.9132,
+        0.7433,
+        0.7672,
+        0.564,
+        0.7481,
+        0.6537,
+        0.5794,
+        0.4644,
+        0.4332,
+        0.4017,
+        0.3798
+       ],
+       "dashed": true
+      }
+     ],
+     "xValues": [
+      5,
+      10,
+      15,
+      20,
+      25,
+      30,
+      35,
+      38,
+      40,
+      42,
+      45,
+      50,
+      60,
+      70,
+      80,
+      100,
+      120,
+      150,
+      200
+     ],
+     "yScale": "log",
+     "y": [
+      0.1,
+      100
+     ],
+     "xLabel": "Number of random features $p$",
+     "yLabel": "Test error (MSE)",
+     "vlines": [
+      {
+       "id": "n",
+       "i": 8,
+       "label": "$p = n = 40$"
+      }
+     ]
+    },
+    "state": {
+     "hide": [
+      "mn",
+      "rg"
+     ],
+     "caption": "40 noisy training points, 10 inputs, `default_rng(0)`."
+    },
+    "controls": [
+     {
+      "bind": "frame",
+      "label": "Show",
+      "frames": [
+       {
+        "hide": [
+         "mn",
+         "rg"
+        ]
+       },
+       {
+        "hide": [
+         "rg"
+        ]
+       },
+       {
+        "hide": []
+       }
+      ],
+      "frameLabels": [
+       "nothing yet",
+       "least squares",
+       "with ridge"
+      ]
+     }
+    ],
+    "controlsAfter": "correct",
+    "maxHeight": 300
+   },
+   "question": "What is the ridge test error at $p = 40$ on this seed? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.913,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "mn",
+      "value": 10.986,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "end",
+      "value": 0.38,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the dashed curve at the vertical line."
+    },
+    {
+     "rung": "point",
+     "text": "It sits near 0.91.",
+     "highlight": [
+      "rg"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compare with the solid curve's spike."
+    }
+   ],
+   "feedback": {
+    "correct": "0.913, against 11.0 for the exact minimum-norm fit.",
+    "generic": "Not quite. Read the dashed curve at $p = 40$.",
+    "byKey": {
+     "mn": "That is the solid curve, with no penalty.",
+     "end": "That is the ridge curve at $p = 200$."
+    }
+   },
+   "explain": {
+    "text": "The penalty caps the weights where $\\mathbf{F}$ is nearly singular, so the error at $p = 40$ drops from 11.0 to 0.913. The peak moves and shrinks with the noise and the penalty."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Square and badly conditioned",
+   "prose": "The condition number of $\\mathbf{F}$, its largest singular value over its smallest, measures how much the fit can amplify noise in $\\mathbf{y}$. The table gives it for five feature counts.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "features $p$",
+      "10",
+      "30",
+      "40",
+      "50",
+      "200"
+     ],
+     "rows": [
+      [
+       "condition number of $\\mathbf{F}$",
+       "10",
+       "71",
+       "4,095",
+       "115",
+       "30"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Largest over smallest singular value of the 40-row feature matrix, seed 0."
+    }
+   },
+   "question": "At which $p$ is $\\mathbf{F}$ worst conditioned?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 40,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "few",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "many",
+      "value": 200,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the largest number in the table."
+    },
+    {
+     "rung": "point",
+     "text": "At $p = 40$ it is 4,095.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is where $\\mathbf{F}$ is square."
+    }
+   ],
+   "feedback": {
+    "correct": "At $p = 40$: 4,095, against 71 at 30 and 115 at 50. A square random matrix almost always has some tiny singular value.",
+    "generic": "Not quite. Read the largest condition number.",
+    "byKey": {
+     "few": "With 10 features the fit has room to spare and the matrix is well conditioned.",
+     "many": "With 200 features there are many directions to share the fit."
+    }
+   },
+   "explain": {
+    "text": "At $p = n = 40$ the smallest singular value is tiny, so the condition number is 4,095 and the exact fit amplifies the noise: the spike in the error. Past it, the extra features add room and the number falls."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Bigger is always better?",
+   "prose": "Una reads the chart and concludes the opposite of the textbook: since the error falls past $p = 40$, bigger models are always better and regularisation is unnecessary.",
+   "question": "What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "peak",
+      "text": "The peak is real and moves; a penalty stays the safer default",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "Nothing: past the threshold more features always help",
+      "why": "At $p = 40$ more features made it far worse, and other seeds peak at slightly different $p$."
+     },
+     {
+      "id": "fluke",
+      "text": "The fall past 40 is a fluke of one seed",
+      "why": "All five seeds peak near 40 and fall again; the fall is not luck."
+     },
+     {
+      "id": "textbook",
+      "text": "The textbook is right: more parameters always overfit more",
+      "why": "The fall past the peak contradicts that."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is the curve monotone anywhere?"
+    },
+    {
+     "rung": "point",
+     "text": "It rises, peaks, then falls."
+    },
+    {
+     "rung": "step",
+     "text": "Neither \"always worse\" nor \"always better\" fits."
+    }
+   ],
+   "feedback": {
+    "correct": "Both slogans fail: the error peaks at the threshold, and a small penalty removes the peak at little cost.",
+    "generic": "Not quite. Describe the whole curve.",
+    "byKey": {
+     "right": "That is the mirror misconception: the peak shows that more is not always better.",
+     "textbook": "That is the classical half: it misses the second fall."
+    }
+   },
+   "explain": {
+    "text": "Double descent licenses neither slogan. Near $p = n$ the minimum-norm fit is dangerous; a small ridge penalty gives low error at every $p$."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Small weights by default",
+   "prose": "Among all exact fits, the minimum-norm one is the gentlest. Gradient descent on least squares from zero weights converges to exactly that fit, $\\mathbf{w}_\\infty = \\mathbf{F}^+\\mathbf{y}$; for big nets trained from small weights, a similar pull towards small-norm fits is an observed tendency, not a theorem.",
+   "question": "Gradient descent from $\\mathbf{w} = \\mathbf{0}$ on an underdetermined least-squares problem converges to which solution?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "mn",
+      "text": "The minimum-norm solution $\\mathbf{F}^+\\mathbf{y}$",
+      "correct": true
+     },
+     {
+      "id": "any",
+      "text": "Some exact solution, depending on the step size",
+      "why": "From zero, every step lies in the row space of $\\mathbf{F}$, so the limit is the minimum-norm one."
+     },
+     {
+      "id": "zero",
+      "text": "None: it diverges when there are many solutions",
+      "why": "With a small enough step it converges."
+     },
+     {
+      "id": "ridge",
+      "text": "A ridge solution",
+      "why": "It fits exactly; ridge does not."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each gradient is a combination of the rows of $\\mathbf{F}$."
+    },
+    {
+     "rung": "point",
+     "text": "So the weights stay in the row space."
+    },
+    {
+     "rung": "step",
+     "text": "The only exact fit there is $\\mathbf{F}^+\\mathbf{y}$."
+    }
+   ],
+   "feedback": {
+    "correct": "The minimum-norm solution: steps from zero never leave the row space of $\\mathbf{F}$.",
+    "generic": "Not quite. Where do the gradient steps point?"
+   },
+   "explain": {
+    "text": "Every gradient $\\mathbf{F}^T(\\mathbf{F}\\mathbf{w} - \\mathbf{y})$ is in the row space, and the one exact fit inside it is $\\mathbf{F}^+\\mathbf{y}$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Double descent in code",
+   "prose": "Write `random_relu_features(X, p, seed)`, `min_norm_fit(F, y)` and `double_descent_curve(ps, n, noise, seed)` as the starter's comments say. The number script checks five seeds; the hidden tests check the shape on two of them.",
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef random_relu_features(X, p, seed):\n    # X (n, d); W = default_rng(seed).standard_normal((d, p)) / sqrt(d); return max(0, X @ W)\n    ...\n\n\ndef min_norm_fit(F, y):\n    ...\n\n\ndef double_descent_curve(ps, n, noise, seed):\n    # g = default_rng(seed): beta = g.standard_normal(10), divided by its norm; Xa = g.standard_normal((n, 10));\n    # ya = Xa @ beta + noise * g.standard_normal(n); Xs = g.standard_normal((2000, 10)); ys = Xs @ beta.\n    # For each p: features of Xa and Xs stacked, seed + 1000; minimum-norm fit on the n rows; test MSE on the 2000.\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef random_relu_features(X, p, seed):\n    X = np.asarray(X, dtype=float)\n    W = np.random.default_rng(seed).standard_normal((X.shape[1], p)) / np.sqrt(X.shape[1])\n    return np.maximum(X @ W, 0)\n\n\ndef min_norm_fit(F, y):\n    return np.linalg.pinv(np.asarray(F, dtype=float)) @ np.asarray(y, dtype=float)\n\n\ndef double_descent_curve(ps, n, noise, seed):\n    g = np.random.default_rng(seed)\n    beta = g.standard_normal(10)\n    beta /= np.linalg.norm(beta)\n    Xa = g.standard_normal((n, 10))\n    ya = Xa @ beta + noise * g.standard_normal(n)\n    Xs = g.standard_normal((2000, 10))\n    ys = Xs @ beta\n    out = []\n    for p in ps:\n        F = random_relu_features(np.vstack([Xa, Xs]), p, seed + 1000)\n        w = min_norm_fit(F[:n], ya)\n        out.append(float(np.mean((F[n:] @ w - ys) ** 2)))\n    return out\n",
+    "prelude": "import numpy as np\n_g = np.random.default_rng(41)\nFw = _g.standard_normal((6, 9))\nyw = _g.standard_normal(6)\nFt = _g.standard_normal((9, 4))\nyt = _g.standard_normal(9)\n",
+    "examples": [
+     {
+      "call": "min_norm_fit(np.array([[1.0, 1.0]]), np.array([2.0])).tolist()",
+      "compare": "isclose",
+      "expect": "[0.9999999999999996, 0.9999999999999998]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "random_relu_features(np.array([[1.0, -1.0], [0.5, 2.0]]), 3, 4).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.0, 1.0370993754279474, 1.1801097797157425], [0.7017327154559222, 0.0, 0.580856731407176]]"
+     },
+     {
+      "call": "min_norm_fit(Fw, yw).tolist()",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 1e-10
+      },
+      "compare": "isclose",
+      "expect": "[-0.2296531364403674, 0.39758525159483404, -0.02553277183378437, -0.9931806418058338, 0.03414551026759338, -0.2808747831298655, 0.009964165905677058, -0.4539886690793228, 0.45486575835587817]"
+     },
+     {
+      "call": "float(np.abs(Fw @ min_norm_fit(Fw, yw) - yw).max())",
+      "expect": "0.0",
+      "tol": {
+       "rel": 0,
+       "abs": 1e-09
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "min_norm_fit(Ft, yt).tolist()",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 1e-10
+      },
+      "compare": "isclose",
+      "expect": "[-0.15740935557473149, 0.2937550842553929, 0.40423601831602074, -0.5911983831544236]"
+     },
+     {
+      "call": "double_descent_curve([10, 40, 200], 40, 0.5, 0)",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "compare": "isclose",
+      "expect": "[0.8735036018505647, 10.985782346405365, 0.38767068152098716]"
+     },
+     {
+      "setup": "c = double_descent_curve([10, 40, 200], 40, 0.5, 3)",
+      "call": "c[1] > c[0] and c[1] > c[2]",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "c = double_descent_curve([10, 40, 200], 40, 0.5, 4)",
+      "call": "c[1] > c[0] and c[1] > c[2]",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. They check the features exactly on a seed, and the minimum-norm fit against the pseudoinverse on a wide and a tall matrix (it must fit the wide one exactly). The curve on seed 0 is compared to $10^{-6}$, and on seeds 3 and 4 the error at $p = 40$ must top both $p = 10$ and $p = 200$.",
+    "budget": 2000,
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef random_relu_features(X, p, seed):\n    X = np.asarray(X, dtype=float)\n    W = np.random.default_rng(seed).standard_normal((X.shape[1], p))\n    return np.maximum(X @ W, 0)\n\n\ndef min_norm_fit(F, y):\n    return np.linalg.pinv(np.asarray(F, dtype=float)) @ np.asarray(y, dtype=float)\n\n\ndef double_descent_curve(ps, n, noise, seed):\n    g = np.random.default_rng(seed)\n    beta = g.standard_normal(10)\n    beta /= np.linalg.norm(beta)\n    Xa = g.standard_normal((n, 10))\n    ya = Xa @ beta + noise * g.standard_normal(n)\n    Xs = g.standard_normal((2000, 10))\n    ys = Xs @ beta\n    out = []\n    for p in ps:\n        F = random_relu_features(np.vstack([Xa, Xs]), p, seed + 1000)\n        w = min_norm_fit(F[:n], ya)\n        out.append(float(np.mean((F[n:] @ w - ys) ** 2)))\n    return out\n",
+      "test": 1,
+      "symptom": "Leaves out the 1/sqrt(d) scale."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef random_relu_features(X, p, seed):\n    X = np.asarray(X, dtype=float)\n    W = np.random.default_rng(seed).standard_normal((X.shape[1], p)) / np.sqrt(X.shape[1])\n    return np.maximum(X @ W, 0)\n\n\ndef min_norm_fit(F, y):\n    F = np.asarray(F, dtype=float)\n    return np.linalg.solve(F.T @ F + 1e-3 * np.eye(F.shape[1]), F.T @ y)\n\n\ndef double_descent_curve(ps, n, noise, seed):\n    g = np.random.default_rng(seed)\n    beta = g.standard_normal(10)\n    beta /= np.linalg.norm(beta)\n    Xa = g.standard_normal((n, 10))\n    ya = Xa @ beta + noise * g.standard_normal(n)\n    Xs = g.standard_normal((2000, 10))\n    ys = Xs @ beta\n    out = []\n    for p in ps:\n        F = random_relu_features(np.vstack([Xa, Xs]), p, seed + 1000)\n        w = min_norm_fit(F[:n], ya)\n        out.append(float(np.mean((F[n:] @ w - ys) ** 2)))\n    return out\n",
+      "test": 2,
+      "symptom": "Uses a ridge fit with a small penalty, which is not exact."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef random_relu_features(X, p, seed):\n    X = np.asarray(X, dtype=float)\n    W = np.random.default_rng(seed).standard_normal((X.shape[1], p)) / np.sqrt(X.shape[1])\n    return np.maximum(X @ W, 0)\n\n\ndef min_norm_fit(F, y):\n    return np.linalg.pinv(np.asarray(F, dtype=float)) @ np.asarray(y, dtype=float)\n\n\ndef double_descent_curve(ps, n, noise, seed):\n    g = np.random.default_rng(seed)\n    beta = g.standard_normal(10)\n    beta /= np.linalg.norm(beta)\n    Xa = g.standard_normal((n, 10))\n    ya = Xa @ beta + noise * g.standard_normal(n)\n    Xs = g.standard_normal((2000, 10))\n    ys = Xs @ beta\n    out = []\n    for p in ps:\n        F = random_relu_features(np.vstack([Xa, Xs]), p, seed + 1000 + p)\n        w = min_norm_fit(F[:n], ya)\n        out.append(float(np.mean((F[n:] @ w - ys) ** 2)))\n    return out\n",
+      "test": 5,
+      "symptom": "Draws a new feature seed for every p."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef random_relu_features(X, p, seed):\n    X = np.asarray(X, dtype=float)\n    W = np.random.default_rng(seed).standard_normal((X.shape[1], p)) / np.sqrt(X.shape[1])\n    return np.maximum(X @ W, 0)\n\n\ndef min_norm_fit(F, y):\n    return np.linalg.pinv(np.asarray(F, dtype=float)) @ np.asarray(y, dtype=float)\n\n\ndef double_descent_curve(ps, n, noise, seed):\n    g = np.random.default_rng(seed)\n    beta = g.standard_normal(10)\n    beta /= np.linalg.norm(beta)\n    Xa = g.standard_normal((n, 10))\n    ya = Xa @ beta + noise * g.standard_normal(n)\n    Xs = g.standard_normal((2000, 10))\n    ys = Xs @ beta\n    out = []\n    for p in ps:\n        F = random_relu_features(np.vstack([Xa, Xs]), p, seed + 1000)\n        w = min_norm_fit(F[:n], ya)\n        out.append(float(np.mean((F[:n] @ w - ya) ** 2)))\n    return out\n",
+      "test": 5,
+      "symptom": "Reports the training error, which is 0 past the threshold."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Scale the random weights by $1/\\sqrt d$."
+    },
+    {
+     "rung": "point",
+     "text": "`np.linalg.pinv(F) @ y` is the minimum-norm least-squares fit."
+    },
+    {
+     "rung": "step",
+     "text": "Draw the features of training and test rows together, with one seed."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. Seed 0 gives 0.874, 10.99 and 0.388 at $p$ = 10, 40 and 200.",
+    "generic": "Not quite. Read the first failing test in the results."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 2,
+   "title": "More factors than months",
+   "prose": "A quant has 120 candidate factors and 60 months of returns. A minimum-norm least-squares fit can match every month exactly and still predict sensibly; double descent says it is not automatically a disaster.",
+   "question": "What is the safer default, and why?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "ridge",
+      "text": "A ridge penalty chosen on validation months",
+      "correct": true
+     },
+     {
+      "id": "mn",
+      "text": "The minimum-norm fit: past the threshold it is always fine",
+      "why": "Fine on average past the peak, but near $p = n$ it swings wildly, and the peak moves with the noise."
+     },
+     {
+      "id": "cut",
+      "text": "Cut to 59 factors, just below the threshold",
+      "why": "Just below the threshold is where the error is worst."
+     },
+     {
+      "id": "all",
+      "text": "Use all 120 with plain least squares",
+      "why": "Plain least squares has no unique answer here; some rule must pick one."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where is the danger in the curve?"
+    },
+    {
+     "rung": "point",
+     "text": "Near $p = n$."
+    },
+    {
+     "rung": "step",
+     "text": "Ridge flattened the peak."
+    }
+   ],
+   "feedback": {
+    "correct": "A ridge penalty, chosen on validation months, is low at every number of factors.",
+    "generic": "Not quite. Which fit was safe across the whole curve?"
+   },
+   "explain": {
+    "text": "The minimum-norm fit can be good past the peak but is dangerous near it, and the peak moves. Ridge removed it at every $p$ in our runs."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Test error against the number of random features rises to a peak at $p = n$ and falls again: double descent (11.0 at 40, 0.388 at 200 on seed 0).",
+   "Past the threshold there are infinitely many exact fits; the pseudoinverse picks the minimum-norm one, which gradient descent from zero also finds.",
+   "A small ridge penalty removes the peak (0.913 at 40); neither \"bigger always overfits\" nor \"bigger is always better\" holds."
+  ],
+  "formula": {
+   "name": "Minimum-norm fit",
+   "tex": "\\mathbf{w} = \\mathbf{F}^+\\mathbf{y} = \\arg\\min\\{\\lVert\\mathbf{w}\\rVert : \\mathbf{F}\\mathbf{w} = \\mathbf{y}\\}",
+   "note": "For $p \\ge n$ with $\\mathbf{F}$ of full row rank."
+  },
+  "trap": "The peak at $p = n$ is real and moves with the noise: a penalty is still the safe default."
+ },
+ "quiz": [
+  {
+   "id": "q12-peak",
+   "difficulty": 2,
+   "prose": "Random-feature regression on $n = 60$ noisy points.",
+   "question": "Near which number of features does the double-descent peak sit?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 60,
+    "tol": {
+     "abs": 5
+    },
+    "wrong": [
+     {
+      "id": "half",
+      "value": 30,
+      "tol": {
+       "abs": 2
+      }
+     },
+     {
+      "id": "double",
+      "value": 120,
+      "tol": {
+       "abs": 5
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Near $p = n = 60$, where the feature matrix is square.",
+    "generic": "Not quite. The peak sits at the interpolation threshold.",
+    "byKey": {
+     "half": "That is half the data.",
+     "double": "That is twice the data, past the peak."
+    }
+   },
+   "explain": {
+    "text": "At $p = n = 60$ the exact fit is unique and forced through the noise, so the error peaks there."
+   }
+  },
+  {
+   "id": "q12-count",
+   "difficulty": 2,
+   "prose": "A least-squares problem has 30 rows and 50 features, with $\\mathbf{F}$ of full row rank.",
+   "question": "How many weight vectors fit every row exactly?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "inf",
+      "text": "Infinitely many",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "Exactly one",
+      "why": "With more unknowns than equations, a whole family fits."
+     },
+     {
+      "id": "none",
+      "text": "None",
+      "why": "Full row rank means every target can be met."
+     },
+     {
+      "id": "twenty",
+      "text": "20, one per extra feature",
+      "why": "The solutions form a 20-dimensional family, infinitely many points."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Infinitely many: a 20-dimensional family of exact fits.",
+    "generic": "Not quite. Compare equations and unknowns."
+   },
+   "explain": {
+    "text": "Thirty equations in fifty unknowns leave 20 free directions, so infinitely many fits; the pseudoinverse picks the shortest."
+   }
+  },
+  {
+   "id": "q12-norm",
+   "difficulty": 3,
+   "prose": "The equation $3w_1 + 4w_2 = 25$.",
+   "question": "What is the norm of its minimum-norm solution?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "sq",
+      "value": 25,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathbf{w} = 25(3, 4)/25 = (3, 4)$, with norm 5.",
+    "generic": "Not quite. The shortest solution points along $(3, 4)$.",
+    "byKey": {
+     "sq": "That is the right-hand side, not the norm.",
+     "ratio": "That would be the length of the unit vector."
+    }
+   },
+   "explain": {
+    "text": "The shortest solution is a multiple of $(3, 4)$: $t(9 + 16) = 25$ gives $t = 1$, so $(3, 4)$, of norm 5."
+   }
+  }
+ ]
+}

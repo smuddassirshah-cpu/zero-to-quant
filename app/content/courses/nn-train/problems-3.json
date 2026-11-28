@@ -1,0 +1,483 @@
+{
+ "id": "problems-3",
+ "course": "nn-train",
+ "level": 3,
+ "title": "Generalisation problems",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p3-decay-ridge",
+   "difficulty": 5,
+   "skills": [
+    "nt-general"
+   ],
+   "prose": "A one-weight linear model $\\hat y = wx$ is fitted with weight decay. On its data, $\\tfrac1n\\sum x^2 = 2$ and $\\tfrac1n\\sum xy = 3$, so plain least squares gives $w = 1.5$.",
+   "parts": [
+    {
+     "question": "With $\\eta = 0.2$ and $\\lambda = 0.1$, what factor $1 - \\eta\\lambda$ multiplies $w$ each step? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.98,
+      "tol": {
+       "abs": 5e-05
+      },
+      "wrong": [
+       {
+        "id": "lam",
+        "value": 0.9,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "prod",
+        "value": 0.02,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1 - 0.2 \\times 0.1 = 0.98$.",
+      "generic": "Not quite. Subtract $\\eta\\lambda$ from 1.",
+      "byKey": {
+       "lam": "You used $1 - \\lambda$.",
+       "prod": "That is the share removed."
+      }
+     },
+     "explain": {
+      "text": "$\\eta\\lambda = 0.02$, so the factor is 0.98."
+     }
+    },
+    {
+     "question": "Using the factor 0.98 from part 1, if the data gradient were 0 for three steps, what would be left of $w = 1$? Give 6 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.941192,
+      "tol": {
+       "abs": 5e-07
+      },
+      "wrong": [
+       {
+        "id": "lin",
+        "value": 0.94,
+        "tol": {
+         "abs": 5e-07
+        }
+       },
+       {
+        "id": "two",
+        "value": 0.9604,
+        "tol": {
+         "abs": 5e-07
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.98^3 = 0.941192$.",
+      "generic": "Not quite. Multiply by 0.98 three times.",
+      "byKey": {
+       "lin": "You subtracted 0.02 three times; the factor compounds.",
+       "two": "That is two steps."
+      }
+     },
+     "explain": {
+      "text": "$0.98^3 = 0.941192$."
+     }
+    },
+    {
+     "question": "Decayed descent on this loss settles at the ridge solution $w = \\frac{3}{2 + \\lambda}$. What is it for $\\lambda = 0.1$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.4286,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "ls",
+        "value": 1.5,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "sub",
+        "value": 1.4,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$3/2.1 = 1.4286$, shrunk from 1.5.",
+      "generic": "Not quite. Put $\\lambda = 0.1$ in the denominator.",
+      "byKey": {
+       "ls": "That is plain least squares.",
+       "sub": "Ridge divides; it does not subtract $\\lambda$."
+      }
+     },
+     "explain": {
+      "text": "Setting the decayed gradient to 0: $(2 + \\lambda)w = 3$, so $w = 3/2.1 = 1.4286$."
+     }
+    },
+    {
+     "question": "Using the ridge weight 1.4286 from part 3, what does the model predict at $x = 2$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.8571,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "ls",
+        "value": 3.0,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "half",
+        "value": 1.4286,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2 \\times 3/2.1 = 2.8571$, against 3 for least squares.",
+      "generic": "Not quite. Multiply the weight by $x$.",
+      "byKey": {
+       "ls": "That is the unpenalised prediction.",
+       "half": "That is the weight, not the prediction at 2."
+      }
+     },
+     "explain": {
+      "text": "$\\hat y = 2w = 2.8571$: the penalty pulls the prediction towards 0, from 3."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p3-dropout",
+   "difficulty": 4,
+   "skills": [
+    "nt-general"
+   ],
+   "prose": "A hidden layer uses inverted dropout with $p = 0.2$. One unit outputs 5.",
+   "parts": [
+    {
+     "question": "If the unit survives, what does it pass on? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 6.25,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "raw",
+        "value": 5,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "mult",
+        "value": 4,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$5/0.8 = 6.25$.",
+      "generic": "Not quite. Scale by $1/(1 - p)$.",
+      "byKey": {
+       "raw": "Inverted dropout scales survivors up.",
+       "mult": "You multiplied by 0.8."
+      }
+     },
+     "explain": {
+      "text": "Survivors are scaled by $1/0.8 = 1.25$, so 5 becomes 6.25."
+     }
+    },
+    {
+     "question": "Using 6.25 from part 1 for a survivor, what does the unit pass on in expectation?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 5,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "surv",
+        "value": 6.25,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "keep",
+        "value": 4,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.8 \\times 6.25 = 5$: the expected value is unchanged.",
+      "generic": "Not quite. Weight 6.25 by the keep chance.",
+      "byKey": {
+       "surv": "That is a survivor's value, not the average.",
+       "keep": "$0.8 \\times 5$ leaves out the scale."
+      }
+     },
+     "explain": {
+      "text": "It passes 6.25 with chance 0.8 and 0 otherwise: $0.8 \\times 6.25 = 5$."
+     }
+    },
+    {
+     "question": "The layer has 2 units, dropped independently with $p = 0.2$. What is the chance both are dropped on one step? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.04,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "one",
+        "value": 0.2,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "both",
+        "value": 0.64,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.2^2 = 0.04$.",
+      "generic": "Not quite. Multiply the two drop chances.",
+      "byKey": {
+       "one": "That is one unit.",
+       "both": "That is the chance both survive."
+      }
+     },
+     "explain": {
+      "text": "Independent drops multiply: $0.2 \\times 0.2 = 0.04$."
+     }
+    },
+    {
+     "question": "At inference, what does the unit with output 5 from part 1 pass on?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 5,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "scaled",
+        "value": 6.25,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "double",
+        "value": 4,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "5: inference drops nothing and scales nothing.",
+      "generic": "Not quite. Inverted dropout did its scaling in training.",
+      "byKey": {
+       "scaled": "That is a training survivor's value.",
+       "double": "Multiplying by 0.8 at inference is the double-scaling bug."
+      }
+     },
+     "explain": {
+      "text": "With inverted dropout the scale lives in training, so at inference the unit passes on 5 as it is."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p3-minnorm",
+   "difficulty": 3,
+   "skills": [
+    "nt-general"
+   ],
+   "prose": "A tiny least-squares problem has one equation in two weights: $2w_1 + w_2 = 10$.",
+   "parts": [
+    {
+     "question": "What is $w_1$ in the minimum-norm solution?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4,
+      "tol": {
+       "abs": 0.0005
+      },
+      "wrong": [
+       {
+        "id": "five",
+        "value": 5,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "zero",
+        "value": 0,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Scale the coefficients: $\\mathbf{w} = t(2, 1)$ with $5t = 10$, so $t = 2$ and $\\mathbf{w} = (4, 2)$.",
+      "generic": "Not quite. Try $\\mathbf{w} = t(2, 1)$ and solve for $t$.",
+      "byKey": {
+       "five": "$(5, 0)$ solves it, with norm 5.",
+       "zero": "$(0, 10)$ solves it, with norm 10."
+      }
+     },
+     "explain": {
+      "text": "Any other solution adds a step along $(1, -2)$, at right angles to $(2, 1)$, which only lengthens it; so $(4, 2)$ is the minimum-norm one."
+     }
+    },
+    {
+     "question": "Using $\\mathbf{w} = (4, 2)$ from part 1, what is its norm? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4.4721,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "sq",
+        "value": 20,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "five",
+        "value": 5,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\sqrt{16 + 4} = \\sqrt{20} = 4.4721$.",
+      "generic": "Not quite. Take the root of the sum of squares.",
+      "byKey": {
+       "sq": "That is the squared norm.",
+       "five": "That is the norm of $(5, 0)$, a longer solution."
+      }
+     },
+     "explain": {
+      "text": "$\\lVert(4, 2)\\rVert = \\sqrt{20} = 4.4721$, shorter than $(5, 0)$ at 5."
+     }
+    },
+    {
+     "question": "A random-feature fit has 30 rows and 45 features, with full row rank. How many free directions does the family of exact fits have?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 15,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "rows",
+        "value": 30,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "feat",
+        "value": 45,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$45 - 30 = 15$ free directions.",
+      "generic": "Not quite. Each independent equation removes one direction.",
+      "byKey": {
+       "rows": "That counts the equations.",
+       "feat": "That counts the unknowns."
+      }
+     },
+     "explain": {
+      "text": "Each independent row pins down one direction of $\\mathbf{w}$: $45 - 30 = 15$ stay free."
+     }
+    },
+    {
+     "question": "For this problem with 30 rows, near which number of features would you expect the test-error peak?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 30,
+      "tol": {
+       "abs": 2
+      },
+      "wrong": [
+       {
+        "id": "feat",
+        "value": 45,
+        "tol": {
+         "abs": 2
+        }
+       },
+       {
+        "id": "half",
+        "value": 15,
+        "tol": {
+         "abs": 2
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Near 30 features, where the 30-row matrix turns square.",
+      "generic": "Not quite. Where does the feature matrix become square?",
+      "byKey": {
+       "feat": "45 is beyond that point, on the second descent.",
+       "half": "15 is well short of it."
+      }
+     },
+     "explain": {
+      "text": "With 30 rows the matrix is square at 30 features, the worst place for an exact fit; by 45 the error is falling again."
+     }
+    }
+   ]
+  }
+ ]
+}
