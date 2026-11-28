@@ -1,0 +1,387 @@
+{
+ "id": "homework-3",
+ "course": "info",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-cond-proof",
+   "difficulty": 4,
+   "skills": [
+    "if-mutual"
+   ],
+   "prose": "Show that knowing $X$ never raises the doubt about $Y$ on average: $H(Y \\mid X) \\le H(Y)$.",
+   "question": "Put the steps in order. Leave out the two that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "$I(X; Y) = \\sum p(x, y) \\log_2 \\tfrac{p(x, y)}{p(x)\\,p(y)}$: mutual information as a KL divergence."
+     },
+     {
+      "id": "s2",
+      "text": "$= \\sum p(x, y) \\log_2 \\tfrac{p(y \\mid x)}{p(y)}$: $p(x, y) / p(x) = p(y \\mid x)$ where $p(x) > 0$."
+     },
+     {
+      "id": "s3",
+      "text": "$= -\\sum_y p(y) \\log_2 p(y) + \\sum p(x, y) \\log_2 p(y \\mid x)$: split the log; adding $p(x, y)$ over $x$ gives $p(y)$."
+     },
+     {
+      "id": "s4",
+      "text": "$= H(Y) - H(Y \\mid X)$: the second sum is minus the average entropy of the rows."
+     },
+     {
+      "id": "s5",
+      "text": "A KL divergence is never negative, so $H(Y \\mid X) \\le H(Y)$."
+     },
+     {
+      "id": "d1",
+      "text": "$= \\sum p(y) \\log_2 \\tfrac{p(y \\mid x)}{p(y)}$: weigh by the column total.",
+      "why": "The weights stay $p(x, y)$; the margin alone cannot weigh a term that depends on $x$."
+     },
+     {
+      "id": "d2",
+      "text": "So $H(Y \\mid X = x) \\le H(Y)$ for every single $x$.",
+      "why": "Only the average is bounded. One row can hold more doubt than $Y$ as a whole."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Mutual information is a KL divergence and equals $H(Y) - H(Y \\mid X)$, so the conditional entropy is at most $H(Y)$.",
+    "generic": "Not quite. Start from the KL form and turn the quotient into a conditional chance.",
+    "byKey": {
+     "d1": "You weighed by a margin. The weights are the joint chances.",
+     "d2": "You bounded each row. Only the weighted average is bounded.",
+     "left-out": "A step that belongs was left out. There are five."
+    }
+   },
+   "explain": {
+    "text": "Since $I(X; Y) = D(p_{XY} \\| p_X p_Y) \\ge 0$ and $I(X; Y) = H(Y) - H(Y \\mid X)$, conditioning lowers entropy on average. A single row may still be more uncertain than $Y$."
+   }
+  },
+  {
+   "id": "h-null-quantile",
+   "difficulty": 5,
+   "skills": [
+    "if-mutual"
+   ],
+   "prose": "How large can a useless signal look? Simulate it. Draw `runs` samples of `n` days. Each day has an independent uniform state from `k_x` signal states and one from `k_y` outcomes. Find the plug-in mutual information of each sample. Return the value at position `int(q * runs)` of the sorted list (the last one if that runs past the end).",
+   "question": "Write `null_mi_quantile(n, k_x, k_y, runs, q, seed)`, drawing with `random.Random(seed)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\nimport math\nfrom collections import Counter\n\ndef null_mi_quantile(n, k_x, k_y, runs, q, seed):\n    \"\"\"The q-quantile of plug-in MI (bits) over runs samples of n days from\n    independent uniform states; use random.Random(seed).\"\"\"\n    ...\n",
+    "solution": "import random\nimport math\nfrom collections import Counter\n\ndef plug_in(xs, ys):\n    n = len(xs)\n    cx, cy, cxy = Counter(xs), Counter(ys), Counter(zip(xs, ys))\n    return sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n\ndef null_mi_quantile(n, k_x, k_y, runs, q, seed):\n    \"\"\"The q-quantile of plug-in MI (bits) over runs samples of n days from\n    independent uniform states; use random.Random(seed).\"\"\"\n    r = random.Random(seed)\n    values = []\n    for _ in range(runs):\n        xs = [r.randrange(k_x) for _ in range(n)]\n        ys = [r.randrange(k_y) for _ in range(n)]\n        values.append(plug_in(xs, ys))\n    values.sort()\n    return values[min(int(q * runs), runs - 1)]\n",
+    "examples": [
+     {
+      "call": "0.002 < null_mi_quantile(250, 3, 2, 200, 0.5, 1) < 0.007",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "0.002 < null_mi_quantile(250, 3, 2, 200, 0.5, 1) < 0.007",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "0.011 < null_mi_quantile(250, 3, 2, 200, 0.95, 1) < 0.027",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "null_mi_quantile(250, 3, 2, 200, 0.95, 1) > null_mi_quantile(250, 3, 2, 200, 0.5, 1)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "0.0005 < null_mi_quantile(1000, 3, 2, 200, 0.5, 2) < 0.002",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "0.006 < null_mi_quantile(500, 4, 2, 200, 0.95, 3) < 0.018",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "null_mi_quantile(250, 3, 2, 50, 0.9, 7) == null_mi_quantile(250, 3, 2, 50, 0.9, 7)",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests with thresholds, since draws may be made in any order. They check the median and 95th percentile on 250 days, the median on 1,000 days and a four-state signal. The last checks that one seed gives one answer.",
+    "budget": 3000
+   },
+   "feedback": {
+    "correct": "Your simulation shows how much information noise invents.",
+    "generic": "Some tests failed. Read the first failing row.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that the sorted list is indexed inside its length.",
+     "test-4": "Test 4 uses 1,000 days. The median should be about a quarter of the 250-day one.",
+     "test-6": "Test 6 runs the same seed twice. Make every draw from `random.Random(seed)`."
+    }
+   },
+   "explain": {
+    "text": "On 250 days the useless three-state signal has a median of about 0.004 bits. Its 95th percentile is about 0.018. A real signal must beat the 95th percentile, not 0, before it means anything.\n\n```python\nvalues.sort()\nreturn values[min(int(q * runs), runs - 1)]\n```"
+   },
+   "pace": 1500
+  },
+  {
+   "id": "h-fifty-signals",
+   "difficulty": 5,
+   "skills": [
+    "if-mutual"
+   ],
+   "question": "Review a colleague's method.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "A colleague ranks 50 candidate signals by their plug-in mutual information with the next day's sign on one year of data (250 days). He trades the top one. What goes wrong, and what would you do instead?",
+    "model": "**Bias.** The plug-in estimate is biased upwards by about $\\tfrac{(k_X - 1)(k_Y - 1)}{2n \\ln 2}$: 0.0058 bits for a three-state signal on 250 days, often more than a real signal carries. Signals with more states get a larger bias, so the ranking favours them.\n\n**Selection.** Even after correcting, each estimate is noisy. On 250 days a useless three-state signal's plug-in figure has a 95th percentile near 0.018 bits. The best of 50 useless signals is near the top of that spread, so the winner is likely to be luck.\n\n**Instead.** Correct each estimate for its own number of states. Compare each with a null threshold from simulation (or a permutation test), adjusted for 50 tries. Keep a second, later year to test only the chosen signal. Prefer longer samples: the bias falls as $1/n$. Report information in bits with its sample size, and only then think about trading.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Names the upward bias of the plug-in estimate on short samples, with the formula or the 250-day size."
+     },
+     {
+      "points": 2,
+      "text": "Notes that the bias grows with the number of states, so ranking by plug-in favours many-state signals."
+     },
+     {
+      "points": 2,
+      "text": "Explains selection: the best of 50 noisy estimates is likely luck (multiple testing)."
+     },
+     {
+      "points": 2,
+      "text": "Proposes a null threshold from simulation or permutation, adjusted for the 50 tries."
+     },
+     {
+      "points": 1,
+      "text": "Proposes testing the chosen signal on fresh, held-out data."
+     },
+     {
+      "points": 1,
+      "text": "Mentions correcting each estimate, or longer samples, since the bias falls as $1/n$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your answer with the model and tick each rubric row you met.",
+    "generic": "Compare your answer with the model and tick each rubric row you met."
+   },
+   "explain": {
+    "text": "Bias and selection both push the top plug-in figure up. Correct, compare with a null, and confirm on new data."
+   }
+  },
+  {
+   "id": "h-signal-information",
+   "difficulty": 5,
+   "skills": [
+    "if-mutual"
+   ],
+   "prose": "A signal takes a few discrete states, one per day. `returns` holds the next day's return for each day. Turn each return into a sign, with a return of exactly 0 counting as down. Then estimate the mutual information in bits from the joint counts. If `corrected` is true, subtract $\\tfrac{(k_X - 1)(k_Y - 1)}{2n \\ln 2}$, counting the states seen in each list.",
+   "question": "Write `signal_information(signal, returns, corrected=True)` from the stub.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def signal_information(signal, returns, corrected=True):\n    \"\"\"Bits the signal carries about each return's sign.\"\"\"\n    ...\n",
+    "solution": "import math\nfrom collections import Counter\n\ndef signal_information(signal, returns, corrected=True):\n    \"\"\"Bits the signal carries about each return's sign.\"\"\"\n    signs = [1 if r > 0 else 0 for r in returns]          # a return of exactly 0 counts as down\n    n = len(signal)\n    cx, cy, cxy = Counter(signal), Counter(signs), Counter(zip(signal, signs))\n    info = sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n    if corrected:\n        info -= (len(cx) - 1) * (len(cy) - 1) / (2 * n * math.log(2))\n    return info\n",
+    "examples": [
+     {
+      "call": "signal_information([0, 1, 0, 1], [0.01, -0.02, 0.03, -0.01], corrected=False)",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "signal_information([0, 1, 0, 1], [0.01, -0.02, 0.03, -0.01], corrected=False)",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "signal_information([1, 1, 0, 0], [0.0, 0.0, 0.02, 0.01], corrected=False)",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "signal_information([0, 1, 2, 0, 1, 2, 0, 1, 2, 0], [0.01, 0.02, -0.01, -0.03, 0.005, 0.0, 0.02, -0.01, -0.02, 0.01], corrected=False)",
+      "expect": "0.39999999999999997",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "signal_information([0, 1, 2, 0, 1, 2, 0, 1, 2, 0], [0.01, 0.02, -0.01, -0.03, 0.005, 0.0, 0.02, -0.01, -0.02, 0.01], corrected=False) - signal_information([0, 1, 2, 0, 1, 2, 0, 1, 2, 0], [0.01, 0.02, -0.01, -0.03, 0.005, 0.0, 0.02, -0.01, -0.02, 0.01])",
+      "expect": "0.14426950408889633",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "signal_information([3, 3, 3, 3, 3], [0.01, -0.01, 0.02, 0.0, -0.02])",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "abs(signal_information(sig, ret)) < 0.008",
+      "expect": "True",
+      "compare": "equal",
+      "setup": "import random; r = random.Random(5); sig = [r.randrange(3) for _ in range(500)]; ret = [r.gauss(0, 0.01) for _ in range(500)]"
+     },
+     {
+      "call": "signal_information([0, 1, 0, 1], [0.01, -0.02, 0.03, -0.01])",
+      "expect": "0.8196631198888795",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Planted samples are exact to 1e-9, and in one a zero return must count as down. Others check the correction's size, a constant signal and the default corrected=True. The last is a seeded useless sample of 500 days: its corrected estimate must lie within 0.008 bits of 0."
+   },
+   "feedback": {
+    "correct": "Your estimator turns returns into signs and corrects the bias.",
+    "generic": "Some tests failed. Read the first failing row.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that the stub is replaced.",
+     "test-2": "Test 2 has returns of exactly 0. They count as down.",
+     "test-5": "Test 5 has a constant signal. One state seen gives 0 for both the estimate and the correction.",
+     "test-7": "Test 7 leaves `corrected` out, so the default, True, applies."
+    }
+   },
+   "explain": {
+    "text": "Signs first, with 0 as down; then the plug-in count; then the bias with the states seen. The seeded useless sample shows 0.0030 bits plug-in and 0.0001 corrected.\n\n```python\nsigns = [1 if r > 0 else 0 for r in returns]\n```"
+   },
+   "performance": "code",
+   "pace": 1500
+  },
+  {
+   "id": "h-two-flips",
+   "difficulty": 4,
+   "skills": [
+    "if-mutual"
+   ],
+   "prose": "A fair bit $X$ is copied to $Y$ with flip chance 0.2, and $Y$ to $Z$ with flip chance 0.1.",
+   "question": "What is $I(X; Z)$, in bits? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.173,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "bits",
+    "label": "Mutual information",
+    "accept": "0.173, from $1 - H(0.26, 0.74)$.",
+    "wrong": [
+     {
+      "id": "first",
+      "value": 0.278,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "flip-sum",
+      "value": 0.119,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "left",
+      "value": 0.827,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$Z$ differs from $X$ with chance $0.2 \\times 0.9 + 0.8 \\times 0.1 = 0.26$, so $I = 1 - H(0.26) \\approx 0.173$ bits.",
+    "generic": "Not quite. Find the chance that $Z$ differs from $X$ first.",
+    "byKey": {
+     "first": "That is $I(X; Y)$. The second copy loses more.",
+     "flip-sum": "You added the flips to 0.3. Two flips cancel, so the chance is 0.26.",
+     "left": "That is the doubt left."
+    }
+   },
+   "explain": {
+    "text": "Exactly one flip happens with chance 0.26, so $I(X; Z) = 1 - 0.827 \\approx 0.173 < I(X; Y) \\approx 0.278$, as the data processing inequality says."
+   }
+  },
+  {
+   "id": "h-fresh-table",
+   "difficulty": 3,
+   "skills": [
+    "if-mutual"
+   ],
+   "prose": "A joint table of a momentum flag and the next sign has cells 0.2, 0.1 (flag on: up, down) and 0.1, 0.6 (flag off: up, down).",
+   "question": "What is $I(X; Y)$, in bits? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.192,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "bits",
+    "label": "Mutual information",
+    "accept": "0.192, from $H(X) + H(Y) - H(X, Y)$.",
+    "wrong": [
+     {
+      "id": "joint",
+      "value": 1.571,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nats",
+      "value": 0.133,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.881 + 0.881 - 1.571 \\approx 0.192$ bits.",
+    "generic": "Not quite. Use $H(X) + H(Y) - H(X, Y)$.",
+    "byKey": {
+     "joint": "That is $H(X, Y)$.",
+     "nats": "You worked in nats."
+    }
+   },
+   "explain": {
+    "text": "Both margins are $(0.3, 0.7)$, with entropy 0.881. The four cells have entropy 1.571, so $I \\approx 0.192$ bits."
+   }
+  }
+ ]
+}

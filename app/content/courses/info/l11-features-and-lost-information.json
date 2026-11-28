@@ -1,0 +1,1076 @@
+{
+ "id": "l11-features-and-lost-information",
+ "course": "info",
+ "title": "A feature, a label and lost information",
+ "minutes": 15,
+ "objectives": [
+  "Measure what a feature tells us about a label, and see why processing a feature can never add information."
+ ],
+ "skills": [
+  "if-mutual"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "A filter sees 150 emails, 75 of them spam: 1 bit of doubt about each label. Three features are counted against the label.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Feature",
+      "Value",
+      "Not spam",
+      "Spam"
+     ],
+     "rows": [
+      [
+       "Links",
+       "0 to 1",
+       "40",
+       "5"
+      ],
+      [
+       "",
+       "2 to 4",
+       "30",
+       "25"
+      ],
+      [
+       "",
+       "5 or more",
+       "5",
+       "45"
+      ],
+      [
+       "In contacts",
+       "yes",
+       "55",
+       "20"
+      ],
+      [
+       "",
+       "no",
+       "20",
+       "55"
+      ],
+      [
+       "Attachment",
+       "yes",
+       "25",
+       "30"
+      ],
+      [
+       "",
+       "no",
+       "50",
+       "45"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which feature tells us most about whether an email is spam?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "links",
+      "text": "The number of links",
+      "correct": true
+     },
+     {
+      "id": "contacts",
+      "text": "Whether the sender is in contacts",
+      "why": "It helps: 55 against 20 each way. But the links rows are more lopsided, 40 to 5 and 5 to 45."
+     },
+     {
+      "id": "attach",
+      "text": "Whether there is an attachment",
+      "why": "Its rows, 25 to 30 and 50 to 45, are nearly the same as the label's 50 to 50."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A useless feature has rows that split 50 to 50 like the label."
+    },
+    {
+     "rung": "point",
+     "text": "Look for rows far from 50 to 50.",
+     "highlight": [
+      "r0",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Links rows run 40 to 5 and 5 to 45."
+    }
+   ],
+   "feedback": {
+    "correct": "Links: its rows are the most lopsided.",
+    "generic": "Not quite. Which feature's rows look least like a 50 to 50 split?"
+   },
+   "explain": {
+    "text": "The features carry 0.328, 0.163 and 0.003 bits about the label, out of 1. A feature informs when its rows split the label unevenly.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "For links, the label's entropy in each row is 0.503, 0.994 and 0.469 bits. The rows hold 45, 55 and 50 emails. Their weighted average is $H(\\text{label} \\mid \\text{links})$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Not spam",
+      "Spam",
+      "Total"
+     ],
+     "rows": [
+      [
+       "0 to 1 links",
+       "40",
+       "5",
+       "45"
+      ],
+      [
+       "2 to 4 links",
+       "30",
+       "25",
+       "55"
+      ],
+      [
+       "5 or more",
+       "5",
+       "45",
+       "50"
+      ],
+      [
+       "Total",
+       "75",
+       "75",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $I(\\text{links}; \\text{label})$, in bits? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.328,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "bits",
+    "label": "Mutual information",
+    "accept": "0.328, from $1 - (0.3 \\times 0.503 + 0.367 \\times 0.994 + 0.333 \\times 0.469)$.",
+    "wrong": [
+     {
+      "id": "left",
+      "value": 0.672,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "unweighted",
+      "value": 0.345,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nats",
+      "value": 0.2275,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Row shares are $45/150$, $55/150$ and $50/150$."
+    },
+    {
+     "rung": "point",
+     "text": "The weighted average of the row entropies is about 0.672.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Subtract from $H(\\text{label}) = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$H(\\text{label} \\mid \\text{links}) \\approx 0.672$, so $I \\approx 1 - 0.672 = 0.328$ bits.",
+    "generic": "Not quite. Weigh the row entropies by the row shares, then subtract from 1.",
+    "byKey": {
+     "left": "That is the doubt left. The information is $1 - 0.672$.",
+     "unweighted": "You averaged the three rows equally. Weigh them by 45, 55 and 50 out of 150.",
+     "nats": "You worked in nats: 0.227."
+    }
+   },
+   "explain": {
+    "text": "$0.3 \\times 0.503 + 0.367 \\times 0.994 + 0.333 \\times 0.469 \\approx 0.672$ bits are left, so the links feature removes 0.328 of the label's 1 bit.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "An engineer simplifies the links feature to two values: \"0 to 4 links\" and \"5 or more\". The first two rows merge into one row of 70 and 30.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Not spam",
+      "Spam",
+      "Total"
+     ],
+     "rows": [
+      [
+       "0 to 1 links",
+       "40",
+       "5",
+       "45"
+      ],
+      [
+       "2 to 4 links",
+       "30",
+       "25",
+       "55"
+      ],
+      [
+       "5 or more",
+       "5",
+       "45",
+       "50"
+      ],
+      [
+       "Total",
+       "75",
+       "75",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the mutual information of the merged feature with the label? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.256,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "bits",
+    "label": "Mutual information",
+    "accept": "0.256, from $1 - (\\tfrac23 H(0.7) + \\tfrac13 H(0.1))$.",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 0.328,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nats",
+      "value": 0.178,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The merged row is 70 not spam, 30 spam."
+    },
+    {
+     "rung": "point",
+     "text": "$H(0.7, 0.3) \\approx 0.881$; $H(0.1, 0.9) \\approx 0.469$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Weigh by $\\tfrac23$ and $\\tfrac13$, then subtract from 1."
+    }
+   ],
+   "feedback": {
+    "correct": "About 0.256 bits: merging lost 0.072 bits about spam.",
+    "generic": "Not quite. The new rows are 70 to 30 (100 emails) and 5 to 45 (50 emails).",
+    "byKey": {
+     "same": "Merging changed the feature, and the rows 40 to 5 and 30 to 25 were not alike. Something was lost.",
+     "nats": "You worked in nats."
+    }
+   },
+   "explain": {
+    "text": "Rows 70 to 30 and 5 to 45 have entropies 0.881 and 0.469, so $1 - (\\tfrac23 \\times 0.881 + \\tfrac13 \\times 0.469) \\approx 0.256$ bits. The merge threw away the difference between 0 to 1 and 2 to 4 links.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "A fair bit $X$ is copied to $Y$, but the copy flips with chance 0.1. Then $Y$ is copied to $Z$ the same way.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 160,
+     "nodes": [
+      {
+       "id": "X",
+       "label": "X",
+       "x": 0.12,
+       "y": 0.5
+      },
+      {
+       "id": "Y",
+       "label": "Y",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "Z",
+       "label": "Z",
+       "x": 0.88,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "X",
+       "to": "Y",
+       "label": "flip 0.1"
+      },
+      {
+       "from": "Y",
+       "to": "Z",
+       "label": "flip 0.1"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $I(X; Y)$, in bits? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.531,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "bits",
+    "label": "Mutual information",
+    "accept": "0.531, from $1 - H(0.1, 0.9)$.",
+    "wrong": [
+     {
+      "id": "left",
+      "value": 0.469,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "rate",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nats",
+      "value": 0.368,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$I(X; Y) = H(Y) - H(Y \\mid X)$."
+    },
+    {
+     "rung": "point",
+     "text": "Given $X$, the flip leaves $H(0.1, 0.9)$ of doubt.",
+     "highlight": [
+      "e-X-Y"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Work out $1 - 0.469$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - H(0.1, 0.9) = 1 - 0.469 = 0.531$ bits.",
+    "generic": "Not quite. Given $X$, $Y$ is right with 0.9 and flipped with 0.1.",
+    "byKey": {
+     "left": "That is the doubt left about $Y$. Subtract it from 1.",
+     "rate": "That is the chance the copy is right.",
+     "nats": "You worked in nats."
+    }
+   },
+   "explain": {
+    "text": "$H(Y) = 1$ and $H(Y \\mid X) = H(0.1, 0.9) \\approx 0.469$, so $I(X; Y) \\approx 0.531$ bits.",
+    "canvas": {
+     "highlight": [
+      "e-X-Y"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "$Z$ differs from $X$ when exactly one of the two copies flips: $0.1 \\times 0.9 + 0.9 \\times 0.1 = 0.18$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 160,
+     "nodes": [
+      {
+       "id": "X",
+       "label": "X",
+       "x": 0.12,
+       "y": 0.5
+      },
+      {
+       "id": "Y",
+       "label": "Y",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "Z",
+       "label": "Z",
+       "x": 0.88,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "X",
+       "to": "Y",
+       "label": "flip 0.1"
+      },
+      {
+       "from": "Y",
+       "to": "Z",
+       "label": "flip 0.1"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $I(X; Z)$, in bits? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.32,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "bits",
+    "label": "Mutual information",
+    "accept": "0.320, from $1 - H(0.18, 0.82)$.",
+    "wrong": [
+     {
+      "id": "squared",
+      "value": 0.282,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "same",
+      "value": 0.531,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Given $X$, $Z$ is flipped with chance 0.18."
+    },
+    {
+     "rung": "point",
+     "text": "$H(0.18, 0.82) \\approx 0.680$.",
+     "highlight": [
+      "e-Y-Z"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Work out $1 - 0.680$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - H(0.18, 0.82) \\approx 1 - 0.680 = 0.320$ bits: less than 0.531.",
+    "generic": "Not quite. Work out $1 - H(0.18, 0.82)$.",
+    "byKey": {
+     "squared": "You squared the step's 0.531 bits. Information does not multiply along a chain; work from the 0.18 flip.",
+     "same": "The second copy adds noise, so $Z$ knows less about $X$ than $Y$ does."
+    }
+   },
+   "explain": {
+    "text": "$H(0.18, 0.82) \\approx 0.680$, so $I(X; Z) \\approx 0.320 < I(X; Y) \\approx 0.531$. Each noisy copy can only lose information about $X$.",
+    "canvas": {
+     "highlight": [
+      "e-Y-Z"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "Every time, a step that used only the previous variable lost information. This is the **data processing inequality**: if $Z$ is computed from $Y$ alone, with or without noise, then $$I(X; Z) \\le I(X; Y).$$ Merging buckets and noisy copying are both such steps.",
+   "question": "A feature $Y$ carries 0.3 bits about a label $X$. A model turns $Y$ into a score $Z$ using only $Y$. What can $I(X; Z)$ be?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "le",
+      "text": "Anything from 0 up to 0.3 bits",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "More than 0.3 bits, if the model is clever",
+      "why": "The model sees only $Y$, so $Z$ cannot know more about $X$ than $Y$ does."
+     },
+     {
+      "id": "exact",
+      "text": "Exactly 0.3 bits",
+      "why": "A one-to-one score keeps 0.3; a merge or noise loses some. So 0.3 is the ceiling, not a rule."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Processing keeps at most the 0.3 bits that $Y$ had.",
+    "generic": "Not quite. Can $Z$ know more than its only input?"
+   },
+   "explain": {
+    "text": "$Z$ depends on $X$ only through $Y$, so $I(X; Z) \\le I(X; Y) = 0.3$. A one-to-one score keeps all 0.3 bits."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "A colleague builds features from the links count: its square, its log, and a flag for \"more than 3\". He says the new features add information about spam.",
+   "question": "Can they hold more information about the label than the links count itself?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: each is computed from the count alone",
+      "correct": true
+     },
+     {
+      "id": "yes-many",
+      "text": "Yes: three new features must add up to more",
+      "why": "Each is a function of the same count. None can hold more than the count holds."
+     },
+     {
+      "id": "yes-log",
+      "text": "Yes: the log spreads the values out",
+      "why": "Spreading values is one-to-one: it keeps the information, it does not add any."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where does each new feature get its value?"
+    },
+    {
+     "rung": "point",
+     "text": "Only from the links count."
+    },
+    {
+     "rung": "step",
+     "text": "So each is processing of the count."
+    }
+   ],
+   "feedback": {
+    "correct": "Processing can make a feature easier to use, never more informative.",
+    "generic": "Not quite. What does each new feature depend on?",
+    "byKey": {
+     "yes-many": "You counted features, not information. All three are processed from one count."
+    }
+   },
+   "explain": {
+    "text": "By the data processing inequality, $I(\\text{label}; f(\\text{links})) \\le I(\\text{label}; \\text{links})$ for every $f$. A model may still find a transformed feature easier to use."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "The links feature's three values are renamed: \"0 to 1\" becomes A, \"2 to 4\" becomes B and \"5 or more\" becomes C. Nothing else changes.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Not spam",
+      "Spam",
+      "Total"
+     ],
+     "rows": [
+      [
+       "0 to 1 links",
+       "40",
+       "5",
+       "45"
+      ],
+      [
+       "2 to 4 links",
+       "30",
+       "25",
+       "55"
+      ],
+      [
+       "5 or more",
+       "5",
+       "45",
+       "50"
+      ],
+      [
+       "Total",
+       "75",
+       "75",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the mutual information of the renamed feature with the label?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "0.328 bits, as before",
+      "correct": true
+     },
+     {
+      "id": "less",
+      "text": "Less: renaming is processing, which loses information",
+      "why": "Renaming one to one can be undone, so nothing is lost: the inequality holds both ways."
+     },
+     {
+      "id": "zero",
+      "text": "0: the letters mean nothing",
+      "why": "Mutual information sees only which emails share a value, not the names of the values."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does the renaming merge any rows?"
+    },
+    {
+     "rung": "point",
+     "text": "No: three values stay three values.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The same rows give the same entropies."
+    }
+   ],
+   "feedback": {
+    "correct": "A one-to-one relabelling keeps every bit.",
+    "generic": "Not quite. Can the renaming be undone?"
+   },
+   "explain": {
+    "text": "Renaming is processing, so $I$ cannot rise; it can be undone, so $I$ cannot fall either. The table's rows are the same, only their labels change.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "`columns` maps each feature's name to its list of values, one per email; `labels` holds the labels in the same order. Count the pairs with `Counter` to get mutual information.",
+   "question": "Complete `rank_features(columns, labels)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nfrom collections import Counter\n\ndef rank_features(columns, labels):\n    \"\"\"Feature names by mutual information with labels, highest first; ties by name.\"\"\"\n    ...\n",
+    "solution": "import math\nfrom collections import Counter\n\ndef mi(xs, ys):\n    n = len(xs)\n    cx, cy, cxy = Counter(xs), Counter(ys), Counter(zip(xs, ys))\n    return sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n\ndef rank_features(columns, labels):\n    \"\"\"Feature names by mutual information with labels, highest first; ties by name.\"\"\"\n    return sorted(columns, key=lambda name: (-mi(columns[name], labels), name))\n",
+    "examples": [
+     {
+      "call": "rank_features({'copy': [0, 0, 1, 1, 0, 1, 1, 0], 'const': [1] * 8}, [0, 0, 1, 1, 0, 1, 1, 0])",
+      "expect": "['copy', 'const']",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "rank_features({'copy': [0, 0, 1, 1, 0, 1, 1, 0], 'const': [1] * 8, 'partial': [0, 0, 1, 1, 1, 1, 1, 0]}, [0, 0, 1, 1, 0, 1, 1, 0])",
+      "expect": "['copy', 'partial', 'const']",
+      "compare": "equal"
+     },
+     {
+      "call": "rank_features({'b': [0, 0, 1, 1, 0, 1, 1, 0], 'a': [0, 0, 1, 1, 0, 1, 1, 0], 'c': [1] * 8}, [0, 0, 1, 1, 0, 1, 1, 0])",
+      "expect": "['a', 'b', 'c']",
+      "compare": "equal"
+     },
+     {
+      "call": "rank_features({'links': links, 'merged': [0] * 100 + [1] * 50}, labels)",
+      "expect": "['links', 'merged']",
+      "compare": "equal",
+      "setup": "import itertools; links = [0] * 45 + [1] * 55 + [2] * 50; labels = [0] * 40 + [1] * 5 + [0] * 30 + [1] * 25 + [0] * 5 + [1] * 45; c0, c1, a0, a1 = (itertools.count() for _ in range(4)); contacts = [int(next(c0) < 55) if y == 0 else int(next(c1) < 20) for y in labels]; attach = [int(next(a0) < 25) if y == 0 else int(next(a1) < 30) for y in labels]"
+     },
+     {
+      "call": "rank_features({'only': ['x', 'y', 'x', 'y']}, [1, 0, 1, 0])",
+      "expect": "['only']",
+      "compare": "equal"
+     },
+     {
+      "call": "rank_features({'attach': attach, 'links': links, 'contacts': contacts}, labels)",
+      "expect": "['links', 'contacts', 'attach']",
+      "compare": "equal",
+      "setup": "import itertools; links = [0] * 45 + [1] * 55 + [2] * 50; labels = [0] * 40 + [1] * 5 + [0] * 30 + [1] * 25 + [0] * 5 + [1] * 45; c0, c1, a0, a1 = (itertools.count() for _ in range(4)); contacts = [int(next(c0) < 55) if y == 0 else int(next(c1) < 20) for y in labels]; attach = [int(next(a0) < 25) if y == 0 else int(next(a1) < 30) for y in labels]"
+     }
+    ],
+    "how": "Check runs 5 hidden tests on planted columns, the merged links feature, the three email features and a tie. Each result must equal the expected list exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write a helper `mi(xs, ys)` from `Counter(xs)`, `Counter(ys)` and `Counter(zip(xs, ys))`."
+    },
+    {
+     "rung": "point",
+     "text": "Each pair adds $\\tfrac{c}{n}\\log_2 \\tfrac{c\\,n}{c_x c_y}$."
+    },
+    {
+     "rung": "step",
+     "text": "Sort names with `key=lambda name: (-mi(...), name)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your ranking puts the most informative feature first and breaks ties by name.",
+    "generic": "Some tests failed. Read the first failing row.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that every value is counted with its label.",
+     "test-2": "Test 2 has two equal columns. Break the tie by name: \"a\" before \"b\".",
+     "test-3": "Test 3 compares links with its merged version. Merging cannot add information."
+    }
+   },
+   "explain": {
+    "text": "Sort on the pair (minus the information, name): the minus puts the largest first and the name breaks ties.\n\n```python\nreturn sorted(columns, key=lambda name: (-mi(columns[name], labels), name))\n```"
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A quant buckets a continuous signal into four bins and counts next-day signs. The four bins carry 0.0131 bits about the sign. She wants two bins: low against high, or extreme against middle.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Up days",
+      "Down days",
+      "Total"
+     ],
+     "rows": [
+      [
+       "Very low",
+       "30",
+       "45",
+       "75"
+      ],
+      [
+       "Low",
+       "48",
+       "52",
+       "100"
+      ],
+      [
+       "High",
+       "52",
+       "48",
+       "100"
+      ],
+      [
+       "Very high",
+       "45",
+       "30",
+       "75"
+      ],
+      [
+       "Total",
+       "175",
+       "175",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many bits does the low-against-high binning keep? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0085,
+    "tol": {
+     "abs": 0.0001
+    },
+    "unit": "bits",
+    "label": "Mutual information",
+    "accept": "0.0085, from the rows 78 to 97 and 97 to 78.",
+    "wrong": [
+     {
+      "id": "four",
+      "value": 0.0131,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "extreme",
+      "value": 0,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "nats",
+      "value": 0.0059,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Low bins: $30 + 48 = 78$ up, $45 + 52 = 97$ down."
+    },
+    {
+     "rung": "point",
+     "text": "High bins: 97 up, 78 down.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Work out $I$ of the 2 by 2 table of counts."
+    }
+   ],
+   "feedback": {
+    "correct": "About 0.0085 bits; the extreme-against-middle binning keeps 0, since its rows are both 50 to 50.",
+    "generic": "Not quite. Merge very low with low, and high with very high, then work out $I$.",
+    "byKey": {
+     "four": "That is the four-bin figure. Merging can only lose information.",
+     "extreme": "That is the other binning: extremes 75 to 75, middles 100 to 100.",
+     "nats": "You worked in nats."
+    }
+   },
+   "explain": {
+    "text": "Low against high gives rows 78 to 97 and 97 to 78: about 0.0085 bits. Extreme against middle gives 75 to 75 and 100 to 100: 0 bits about the sign. Binning always loses some; choose bins that keep what matters.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A feature's information about a label is $I = H(\\text{label}) - H(\\text{label} \\mid \\text{feature})$: links carry 0.328 of the spam label's 1 bit.",
+   "Data processing inequality: if $Z$ is computed from $Y$ alone, $I(X; Z) \\le I(X; Y)$. Merging buckets and noisy copies lose information.",
+   "A one-to-one relabelling keeps every bit; how a signal is binned decides how much of its information survives."
+  ],
+  "formula": {
+   "name": "Data processing inequality",
+   "tex": "X \\to Y \\to Z \\implies I(X; Z) \\le I(X; Y)",
+   "note": "$Z$ depends on $X$ only through $Y$."
+  },
+  "trap": "Believing a clever transformation of a feature can create information about the label."
+ },
+ "quiz": [
+  {
+   "id": "q-dpi",
+   "difficulty": 2,
+   "prose": "A label $X$, a feature $Y$ with $I(X; Y) = 0.2$ bits, and a rounded version $Z$ of $Y$.",
+   "question": "Which is possible?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "le",
+      "text": "$I(X; Z) = 0.15$ bits",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "$I(X; Z) = 0.25$ bits",
+      "why": "Rounding is processing of $Y$, so $Z$ cannot know more than 0.2 bits."
+     },
+     {
+      "id": "neg",
+      "text": "$I(X; Z) = -0.05$ bits",
+      "why": "Mutual information is never negative."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Processing can only lose: $I(X; Z) \\le 0.2$.",
+    "generic": "Not quite. Recall the data processing inequality."
+   },
+   "explain": {
+    "text": "$Z$ is computed from $Y$ alone, so $0 \\le I(X; Z) \\le 0.2$ bits."
+   }
+  },
+  {
+   "id": "q-flip",
+   "difficulty": 3,
+   "prose": "A fair bit is copied with a flip chance of 0.2.",
+   "question": "How much information does the copy keep, in bits? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.278,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "bits",
+    "label": "Mutual information",
+    "accept": "0.278, from $1 - H(0.2, 0.8)$.",
+    "wrong": [
+     {
+      "id": "left",
+      "value": 0.722,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "rate",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - H(0.2, 0.8) \\approx 0.278$ bits.",
+    "generic": "Not quite. Work out $1 - H(0.2, 0.8)$.",
+    "byKey": {
+     "left": "That is the doubt left.",
+     "rate": "That is the chance the copy is right."
+    }
+   },
+   "explain": {
+    "text": "$H(0.2, 0.8) \\approx 0.722$, so the copy keeps about 0.278 of the 1 bit."
+   }
+  },
+  {
+   "id": "q-relabel",
+   "difficulty": 3,
+   "prose": "A three-bucket feature carries 0.12 bits about a label. Its buckets are renamed 1, 2, 3 to 3, 1, 2.",
+   "question": "How much does the renamed feature carry?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "same",
+      "text": "0.12 bits",
+      "correct": true
+     },
+     {
+      "id": "less",
+      "text": "Less than 0.12 bits",
+      "why": "A renaming merges nothing and can be undone, so nothing is lost."
+     },
+     {
+      "id": "zero",
+      "text": "0 bits",
+      "why": "The buckets still split the emails the same way."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One-to-one relabelling keeps mutual information.",
+    "generic": "Not quite. Does renaming merge any buckets?"
+   },
+   "explain": {
+    "text": "The rows of the table are only reordered, so every entropy, and $I$, is unchanged."
+   }
+  }
+ ]
+}
