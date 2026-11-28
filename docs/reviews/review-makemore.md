@@ -2030,3 +2030,35 @@ def dev_loss(prob_fn, words):
             context = context[1:] + [ix]
     return total / count
 ```
+
+## Fix pass
+
+Edits are targeted, by script, to `app/content/courses/makemore/` only; `makemore-mlp.json` and `autograd.py` untouched. Number scripts: L1 376, L2 212, L3 163 checks, all pass.
+
+- l3 "nats a letter" (warning): fixed, with a deviation. The definition is in l3 s0 (first use), not s2: "each next symbol, the end mark included ... all 228,146 pairs"; l3 s4 adds the 22,807 dev symbols. Later uses unchanged.
+- l2 s3 derive (note): declined. It is an ordering exercise that applies the info l8 split row by row; cutting lines would change the graded order and remove steps the exercise tests.
+- l3 s4 canvas (note): fixed. Point at 2.4514, a second point at 3.2958 (equal chances), caption names training counts scored on dev.
+- l3 s8 widget.how (note): fixed, added "Convert before rounding".
+- l1 s9 float table (note, real gap): fixed. Test 7 `bigram_counts(['ab']).dtype.kind` equals `'i'`; float table added as a mutant failing test 7; `how` updated.
+- homework-1 h5 Gibbs (note): fixed, "By Jensen (info l6)".
+- l6 s1 turn and a flip (error): fixed. Now "place the letters differently, yet in both the vowels gather", with mean distances 1.1 and 1.2 (vowels), 1.8 and 2.1 (consonants), recomputed in `makemore-L2-numbers.py`, which also checks that the best rotation or reflection leaves 0.94 of the spread. Run 2 caption "The picture turns" changed to "The layout differs". The 0.44 correlation is not stated: my recompute over the 27 plotted points gave 0.36.
+- l7 s6 tanh example, summary.ideas[2], review-2 r-tanh (error): fixed. The tanh lets letters interact; without it each position adds its own fixed vote.
+- Bengio sizes (warning): fixed in l7 s0, s2 (here without direct input-to-output weights), both captions, summary.ideas[0] and homework-2 h-perf as "in the style of". The 10, 100 and 27 are now this course's version.
+- l5 s3 wrong `pads` (warning): fixed by keeping 233,783 and changing the why to $L + 3$ a name (the pads and letters). No number changed.
+- l7 s11 wrong `product` (warning): fixed by keeping 132 and changing the why to "every sector and exchange pair its own row of 4: 33 x 4".
+- l8 s6 and review-2 r-batch-noise (warning): fixed. "Five batches in a row range over 0.39 nats" (2.6831 to 2.2918); review-2 "range from 2.29 to 2.68; a gap of 0.24 is well inside that".
+- l7 s10 and homework-2 h-perf no-maximum log-sum-exp (warning, real gap): fixed. New test with every logit raised by 1,000 (loss must not change); the no-maximum loss added as a mutant failing it in each widget (test 5 and test 7); `how` updated. Correct alternatives are unaffected: the test only adds overflow.
+- l5 s7 explain (note): fixed, "level 1's bigram pairs".
+- l6 s5 options[0] (note): fixed, "reads repeats before writing; the last write wins" (kept under the key-length ratio).
+- l8 quiz[2] (note): fixed, "by 1 the steps overshoot".
+- `representations` L1 2D table (note): declined. A new data file lies outside the course files; the 2D tables remain in the l6 canvas frames, which the `representations` author can read.
+- homework-3 h-perf `dev_loss` context (warning, real gap): fixed. Test 8 `round(dev_loss(mlp, dev500[:50]), 4)` equals 2.2016 (the unreset version gives 2.3568); that variant added as a mutant failing test 8; `how` updated.
+- l11 s1 feedback and s250 why (note): fixed, "trends upward" and "falls at first; its lowest point is at step 2,000".
+- l11 s6 (note): fixed, "about 0.002 apart".
+- l11 quiz[2] explain, review-3 r-cure (note): fixed. r-cure's text did not contain the quoted wording; changed to "all 25,626 training names, far more data for its size".
+- l10 s2 (note): fixed, one sentence that test losses were quoted as figures only.
+- l10 s3 (note): fixed, "This is what the whole course set out to show".
+- l9 s4 canvas (note): fixed, caption added to the console state.
+- l9 quiz[2] options[2] why (note): fixed, "at or above".
+- l12 s8 hints[1] (note): fixed, "a chance of 1% becomes about 0.01%".
+- Whole course strict coverage (note): deferred. Predates the rule; to be done before the next level.

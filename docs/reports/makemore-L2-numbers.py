@@ -191,6 +191,12 @@ for run, seed, cap in ((0, 0, 'dev loss 2.32'), (1, 3, 'dev loss 2.33')):
     V = [IX[c] for c in 'aeiou']; K = [i for i in range(1, 27) if i not in V]
     md = lambda A: np.mean([np.linalg.norm(shown[i] - shown[j]) for i, j in itertools.combinations(A, 2)])  # noqa: E731
     lv.claim(md(V) < 0.75 * md(K), f'2D run {run + 1}: vowels sit closer together ({md(V):.2f}) than consonants ({md(K):.2f})')
+    lv.claim((round(md(V), 1), round(md(K), 1)) == ((1.1, 1.8), (1.2, 2.1))[run], f'2D run {run + 1}: mean distances stated on l6 s1, vowels about {md(V):.1f} apart, consonants {md(K):.1f}')
+_A, _B = [np.array([[F(L6)['screens'][1]['canvas']['controls'][0]['frames'][r]['points'][f'p{i}'][a] for a in 'xy'] for i in range(27)]) for r in (0, 1)]
+_A, _B = _A - _A.mean(0), _B - _B.mean(0)
+_u, _s, _vt = np.linalg.svd(_B.T @ _A)
+_res = np.linalg.norm(_B @ (_u @ _vt) - _A) / np.linalg.norm(_A)
+lv.claim(_res > 0.9, f'the two 2D runs are not a turn and a flip of each other: best rotation or reflection leaves {_res:.2f} of the spread')
 TC = np.array([[0.5, -1.0], [2.0, 0.3], [-0.4, 1.1], [1.0, 1.0]])
 E(L6, 'screens[2].widget.answer', TC[[2, 0, 2]].reshape(-1)[2])
 dC = np.zeros(3); np.add.at(dC, [1, 2, 1], [0.5, -0.2, 0.3]); dC2 = np.zeros(3); dC2[[1, 2, 1]] += [0.5, -0.2, 0.3]
