@@ -19,7 +19,7 @@
     "language": "python",
     "starter": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    ...\n",
     "solution": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    base = {r[\"seed\"]: r[\"val\"] for r in results if r[\"config\"] == baseline}\n    m = len(changes)\n    out = {}\n    for c in changes:\n        d = [r[\"val\"] - base[r[\"seed\"]] for r in results if r[\"config\"] == c and r[\"seed\"] in base]\n        n = len(d)\n        mean = sum(d) / n\n        se = math.sqrt(sum((x - mean) ** 2 for x in d) / (n - 1)) / math.sqrt(n)\n        half = t_quantile(0.975, n - 1) * se\n        crit = t_quantile(1 - 0.05 / (2 * m), n - 1)\n        out[c] = {\"mean_diff\": mean, \"ci\": [mean - half, mean + half], \"survives\": abs(mean / se) > crit}\n    return out\n",
-    "prelude": "import json, random\nfrom nt_ops_l4 import t_quantile\nRUNS = [r for r in json.load(open(\"nn-train-seeds.json\"))[\"runs\"] if r[\"split_seed\"] == 0]\n\n\ndef plant(seed, effects, n=10, noise=0.01):\n    g = random.Random(seed)\n    runs = []\n    for s in range(n):\n        base = 0.2 + 0.05 * g.gauss(0, 1)\n        runs.append({\"config\": \"base\", \"seed\": s, \"val\": base})\n        for name, eff in effects.items():\n            runs.append({\"config\": name, \"seed\": s, \"val\": base + eff + noise * g.gauss(0, 1)})\n    return runs\n\n\nP1 = plant(1, {\"real-down\": -0.03, \"null-1\": 0.0, \"real-up\": 0.02, \"null-2\": 0.0})\nEDGE = [{\"config\": \"base\", \"seed\": s, \"val\": 0.3} for s in range(10)] + [{\"config\": \"x\", \"seed\": s, \"val\": 0.3 + d} for s, d in enumerate([-0.012, 0.004, -0.009, -0.002, -0.015, 0.001, -0.006, -0.011, 0.003, -0.008])]\nEDGE2 = [{\"config\": \"x\", \"seed\": s, \"val\": 0.3 + d} for s, d in enumerate([-0.0112, 0.0028, -0.0085, -0.0025, -0.0138, 0.0002, -0.0059, -0.0103, 0.0019, -0.0077])]\n",
+    "prelude": "import json, random\nfrom nt_ops_l4 import t_quantile\nRUNS = [r for r in json.load(open(\"nn-train-seeds.json\"))[\"runs\"] if r[\"split_seed\"] == 0]\n\n\ndef plant(seed, effects, n=10, noise=0.01):\n    g = random.Random(seed)\n    runs = []\n    for s in range(n):\n        base = 0.2 + 0.05 * g.gauss(0, 1)\n        runs.append({\"config\": \"base\", \"seed\": s, \"val\": base})\n        for name, eff in effects.items():\n            runs.append({\"config\": name, \"seed\": s, \"val\": base + eff + noise * g.gauss(0, 1)})\n    return runs\n\n\nP1 = plant(1, {\"real-down\": -0.03, \"null-1\": 0.0, \"real-up\": 0.02, \"null-2\": 0.0})\nEDGE = [{\"config\": \"base\", \"seed\": s, \"val\": 0.3} for s in range(10)] + [{\"config\": \"x\", \"seed\": s, \"val\": 0.3 + d} for s, d in enumerate([-0.012, 0.004, -0.009, -0.002, -0.015, 0.001, -0.006, -0.011, 0.003, -0.008])]\ndef nulls(names, seed=5, noise=0.01):\n    g = random.Random(seed)\n    return [{\"config\": c, \"seed\": s, \"val\": 0.3 + noise * g.gauss(0, 1)} for c in names for s in range(10)]\n\n\nEDGE2 = [{\"config\": \"x\", \"seed\": s, \"val\": 0.3 + d} for s, d in enumerate([-0.0112, 0.0028, -0.0085, -0.0025, -0.0138, 0.0002, -0.0059, -0.0103, 0.0019, -0.0077])]\n",
     "data": {
      "autograd.py": "content/data/ai/autograd.py",
      "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
@@ -52,7 +52,7 @@
       "expect": "True"
      },
      {
-      "call": "experiment_report(EDGE + [r for r in plant(5, {\"y\": 0.0, \"z\": 0.0, \"w\": 0.0, \"v\": 0.0}) if r[\"config\"] != \"base\"], \"base\", [\"x\", \"y\", \"z\", \"w\", \"v\"])[\"x\"][\"survives\"]",
+      "call": "experiment_report(EDGE + nulls([\"y\", \"z\", \"w\", \"v\"]), \"base\", [\"x\", \"y\", \"z\", \"w\", \"v\"])[\"x\"][\"survives\"]",
       "compare": "equal",
       "expect": "False"
      },
@@ -73,12 +73,17 @@
       "expect": "{'real': {'mean_diff': -0.0181844574986041, 'ci': [-0.026713708299649183, -0.009655206697559015], 'survives': True}, 'null': {'mean_diff': 0.0011277523377782224, 'ci': [-0.007784354210757173, 0.010039858886313618], 'survives': False}}"
      },
      {
-      "call": "experiment_report(EDGE[:10] + EDGE2 + [r for r in plant(5, {\"y\": 0.0, \"z\": 0.0, \"w\": 0.0, \"v\": 0.0}) if r[\"config\"] != \"base\"], \"base\", [\"x\", \"y\", \"z\", \"w\", \"v\"])[\"x\"][\"survives\"]",
+      "call": "experiment_report(EDGE[:10] + EDGE2 + nulls([\"y\", \"z\", \"w\", \"v\"]), \"base\", [\"x\", \"y\", \"z\", \"w\", \"v\"])[\"x\"][\"survives\"]",
       "compare": "equal",
       "expect": "False"
+     },
+     {
+      "call": "experiment_report(EDGE + nulls([\"y\", \"z\", \"w\", \"v\"]), \"base\", [\"x\"])[\"x\"][\"survives\"]",
+      "compare": "equal",
+      "expect": "True"
      }
     ],
-    "how": "`RUNS` holds the runs of `nn-train-seeds.json` on split 0, `plant(seed, effects)` makes planted seed results with known real and null effects, and `t_quantile` comes from `nt_ops_l4.py`. Submit runs 8 hidden tests: a planted report with two real and two null effects, and its verdicts. Then a borderline effect alone and among five changes, our ablation, missing seeds out of order, six seeds, and a second borderline effect. Values within relative $10^{-9}$.",
+    "how": "`RUNS` holds the runs of `nn-train-seeds.json` on split 0, `plant(seed, effects)` makes planted seed results with known real and null effects, and `t_quantile` comes from `nt_ops_l4.py`. Submit runs 9 hidden tests: a planted report with two real and two null effects, and its verdicts. Then a borderline effect alone and among five changes, our ablation, missing seeds out of order, six seeds and a second borderline effect. The last test hands over unasked configs in the results beside that borderline effect. Values within relative $10^{-9}$.",
     "budget": 2000,
     "mutants": [
      {
@@ -100,6 +105,11 @@
       "source": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    base = {r[\"seed\"]: r[\"val\"] for r in results if r[\"config\"] == baseline}\n    m = len(changes)\n    out = {}\n    for c in changes:\n        bl = [r[\"val\"] for r in results if r[\"config\"] == baseline]\n        d = [r[\"val\"] - bl[i] for i, r in enumerate(x for x in results if x[\"config\"] == c)]\n        n = len(d)\n        mean = sum(d) / n\n        se = math.sqrt(sum((x - mean) ** 2 for x in d) / (n - 1)) / math.sqrt(n)\n        half = t_quantile(0.975, n - 1) * se\n        crit = t_quantile(1 - 0.05 / (2 * m), n - 1)\n        out[c] = {\"mean_diff\": mean, \"ci\": [mean - half, mean + half], \"survives\": abs(mean / se) > crit}\n    return out\n",
       "test": 6,
       "symptom": "Pairs by position, so missing seeds shift every pair."
+     },
+     {
+      "source": "import math\nfrom nt_ops_l4 import t_quantile\n\n\ndef experiment_report(results, baseline, changes):\n    base = {r[\"seed\"]: r[\"val\"] for r in results if r[\"config\"] == baseline}\n    m = len({r[\"config\"] for r in results}) - 1\n    out = {}\n    for c in changes:\n        d = [r[\"val\"] - base[r[\"seed\"]] for r in results if r[\"config\"] == c and r[\"seed\"] in base]\n        n = len(d)\n        mean = sum(d) / n\n        se = math.sqrt(sum((x - mean) ** 2 for x in d) / (n - 1)) / math.sqrt(n)\n        half = t_quantile(0.975, n - 1) * se\n        crit = t_quantile(1 - 0.05 / (2 * m), n - 1)\n        out[c] = {\"mean_diff\": mean, \"ci\": [mean - half, mean + half], \"survives\": abs(mean / se) > crit}\n    return out\n",
+      "test": 9,
+      "symptom": "Counts the Bonferroni tests from the configs in the results, not from the changes asked about."
      }
     ]
    },
@@ -167,9 +177,15 @@
       "call": "log_diff(L6, LOG1)",
       "compare": "equal",
       "expect": "['code']"
+     },
+     {
+      "setup": "L7 = copy.deepcopy(LOG1)\nL7[\"code\"] = None\nL8 = copy.deepcopy(LOG1)\ndel L8[\"code\"]",
+      "call": "log_diff(L7, L8)",
+      "compare": "equal",
+      "expect": "['code']"
      }
     ],
-    "how": "`LOG1` is set-up A's log and `LOG2` the colleague's rerun on split 1. Submit runs 6 hidden tests on planted pairs of logs. Each list must match exactly.",
+    "how": "`LOG1` is set-up A's log and `LOG2` the colleague's rerun on split 1. Submit runs 7 hidden tests on planted pairs of logs. Each list must match exactly.",
     "budget": 1000,
     "mutants": [
      {
@@ -186,6 +202,11 @@
       "source": "def log_diff(log_a, log_b):\n    out = []\n    for k in log_a:\n        if k in (\"run\", \"events\"):\n            continue\n        a, b = log_a.get(k, \"<missing>\"), log_b.get(k, \"<missing>\")\n        if isinstance(a, dict) and isinstance(b, dict):\n            for j in set(a) | set(b):\n                if a.get(j, \"<missing>\") != b.get(j, \"<missing>\"):\n                    out.append(k + \".\" + j)\n        elif a != b:\n            out.append(k)\n    return sorted(out)\n",
       "test": 4,
       "symptom": "Misses a field that only the second log has."
+     },
+     {
+      "source": "def log_diff(log_a, log_b):\n    out = []\n    for k in set(log_a) | set(log_b):\n        if k in (\"run\", \"events\"):\n            continue\n        a, b = log_a.get(k), log_b.get(k)\n        if isinstance(a, dict) and isinstance(b, dict):\n            for j in set(a) | set(b):\n                if a.get(j) != b.get(j):\n                    out.append(k + \".\" + j)\n        elif a != b:\n            out.append(k)\n    return sorted(out)\n",
+      "test": 7,
+      "symptom": "Reads an absent field as None, so a field set to None in one log matches one missing from the other."
      }
     ]
    },
@@ -486,7 +507,7 @@
     }
    },
    "explain": {
-    "text": "The half-width is $2.201 \\times 0.010/\\sqrt{12} = 0.0064$, so the interval is -0.0144 to -0.0016: the new set-up is better on these seeds, by a little."
+    "text": "The half-width is $2.201 \\times 0.010/\\sqrt{12} = 0.0064$, so the interval is -0.0144 to -0.0016: the new set-up is better on average across seeds, by a little."
    }
   }
  ]
