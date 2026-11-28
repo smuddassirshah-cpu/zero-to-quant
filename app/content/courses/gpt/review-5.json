@@ -1,0 +1,417 @@
+{
+  "id": "review-5",
+  "course": "gpt",
+  "level": 5,
+  "pass": 0.8,
+  "items": [
+    {
+      "id": "r-intensity-512",
+      "difficulty": 2,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "What is the arithmetic intensity of a 512 by 512 by 512 matmul in fp16, in FLOPs per byte? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 170.7,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "per-number",
+            "value": 341.3,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "inputs",
+            "value": 256,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "FLOPs per byte"
+      },
+      "feedback": {
+        "correct": "$2 \\times 512^3 / (3 \\times 512^2 \\times 2) = 512/3 \\approx 170.7$.",
+        "generic": "Not quite. Divide $2n^3$ FLOPs by $6n^2$ bytes.",
+        "byKey": {
+          "per-number": "That is FLOPs per number; fp16 is 2 bytes a number.",
+          "inputs": "You left out the result's bytes."
+        }
+      },
+      "explain": {
+        "text": "A square fp16 matmul has intensity $n/3$: 170.7 at 512."
+      }
+    },
+    {
+      "id": "r-verdict",
+      "difficulty": 2,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "A chip peaks at 600 TFLOP/s and moves 2 TB/s. An operation does 120 FLOPs per byte. What limits it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mem",
+            "text": "Memory bandwidth",
+            "correct": true
+          },
+          {
+            "id": "comp",
+            "text": "Arithmetic",
+            "why": "The ridge is $600/2 = 300$; 120 is below it."
+          },
+          {
+            "id": "neither",
+            "text": "Neither: it sits at the ridge",
+            "why": "The ridge is 300, not 120."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Below the ridge of 300 FLOPs per byte: memory-bound, at most 240 TFLOP/s.",
+        "generic": "Not quite. Compare 120 with peak over bandwidth."
+      },
+      "explain": {
+        "text": "Ridge $= 600/2 = 300$. At 120 the chip reaches at most $120 \\times 2 = 240$ TFLOP/s."
+      }
+    },
+    {
+      "id": "r-batch",
+      "difficulty": 3,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "A server decodes for 64 users at once instead of one, reading each weight matrix once per step. Roughly how do the weight bytes read per generated token change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sixty-four",
+            "text": "About 64 times fewer",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "They stay the same",
+            "why": "One read now serves 64 tokens."
+          },
+          {
+            "id": "more",
+            "text": "About 64 times more",
+            "why": "The weights are read once per step, not once per user."
+          },
+          {
+            "id": "eight",
+            "text": "About 8 times fewer",
+            "why": "There is no square root: one read serves all 64."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One read of the weights serves all 64 tokens of the step.",
+        "generic": "Not quite. How many tokens share one read of the weights?"
+      },
+      "explain": {
+        "text": "Batching divides the weight traffic per token by the batch, which is why serving many users is cheaper per token than serving one."
+      }
+    },
+    {
+      "id": "r-bf16-e",
+      "difficulty": 3,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "Round 2.718 to bf16. Between 2 and 4 the bf16 numbers are $2^{-6} = 0.015625$ apart. Give the decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.71875,
+        "tol": {
+          "abs": 1e-09
+        },
+        "wrong": [
+          {
+            "id": "down",
+            "value": 2.703125,
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "label": "bf16 value"
+      },
+      "feedback": {
+        "correct": "$2.718 / 0.015625 \\approx 173.95$, so $174 \\times 0.015625 = 2.71875$.",
+        "generic": "Not quite. Find the nearest multiple of 0.015625.",
+        "byKey": {
+          "down": "That rounds down; 2.718 is nearer 2.71875."
+        }
+      },
+      "explain": {
+        "text": "$174 \\times 0.015625 = 2.71875$."
+      }
+    },
+    {
+      "id": "r-fp16-overflow",
+      "difficulty": 2,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "What does 65,520 become in fp16, whose largest number is 65,504?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "inf",
+            "text": "Infinity",
+            "correct": true
+          },
+          {
+            "id": "max",
+            "text": "65,504",
+            "why": "Rounding does not clamp. 65,520 is a tie between 65,504 and 65,536, and 65,536 overflows."
+          },
+          {
+            "id": "same",
+            "text": "65,520",
+            "why": "fp16 holds nothing above 65,504."
+          },
+          {
+            "id": "nan",
+            "text": "NaN",
+            "why": "Overflow gives infinity; NaN comes later, from infinity minus infinity."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Infinity: 65,520 rounds to 65,536, past fp16's range.",
+        "generic": "Not quite. Where does rounding send 65,520?"
+      },
+      "explain": {
+        "text": "From 65,520 up, fp16 rounds to infinity. bf16, with float32's range, would hold it."
+      }
+    },
+    {
+      "id": "r-master",
+      "difficulty": 3,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "A weight of 0.5 is stored in bf16, where the numbers from 0.5 to 1 are $2^{-8} = 0.00390625$ apart. An update of $+0.0015$ is applied in bf16. What is the weight after it?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 1e-09
+        },
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 0.5015,
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "id": "up",
+            "value": 0.50390625,
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "label": "Weight"
+      },
+      "feedback": {
+        "correct": "0.5: the update is under half a gap, 0.001953125, so it rounds away.",
+        "generic": "Not quite. Is 0.0015 more than half the gap?",
+        "byKey": {
+          "exact": "That is the exact sum; bf16 cannot hold it.",
+          "up": "That is the next bf16 number. 0.5015 is nearer 0.5."
+        }
+      },
+      "explain": {
+        "text": "0.5015 rounds back to 0.5: the update is lost. A float32 master copy keeps it."
+      }
+    },
+    {
+      "id": "r-13b-train",
+      "difficulty": 2,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "How many GB does training a 13-billion-parameter model with Adam in mixed precision take, before activations?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 208,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "weights",
+            "value": 26,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-master",
+            "value": 156,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "GB"
+      },
+      "feedback": {
+        "correct": "$13 \\times 10^9 \\times 16 = 208$ GB.",
+        "generic": "Not quite. 16 bytes per parameter.",
+        "byKey": {
+          "weights": "That is the bf16 weights alone.",
+          "no-master": "That leaves out the 4-byte master copy."
+        }
+      },
+      "explain": {
+        "text": "16 bytes per parameter: 208 GB."
+      }
+    },
+    {
+      "id": "r-quant",
+      "difficulty": 3,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "Can a 70B model be served from one chip of 80 GB?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "int8",
+            "text": "Yes in 8 bits, about 10 GB spare; not in bf16",
+            "correct": true
+          },
+          {
+            "id": "bf16",
+            "text": "Yes, even in bf16, with room to spare",
+            "why": "bf16 weights are 140 GB."
+          },
+          {
+            "id": "never",
+            "text": "No, not at any precision we can store",
+            "why": "At 8 bits the weights are 70 GB, and at 4 bits 35 GB."
+          },
+          {
+            "id": "train",
+            "text": "Only if it is trained on that same chip",
+            "why": "Training needs 1,120 GB, far more."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "8-bit weights are 70 GB, under 80; bf16 is 140 GB.",
+        "generic": "Not quite. Work out the weights at 2 bytes and at 1."
+      },
+      "explain": {
+        "text": "70 GB at 8 bits leaves about 10 GB for the KV cache; at 4 bits, 35 GB leaves 45. Measure the accuracy each costs."
+      }
+    },
+    {
+      "id": "r-kv-24",
+      "difficulty": 3,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "A model has 24 layers of width 2,048. How many GiB is its bf16 KV cache for 8 sequences of 2,048 tokens? (1 GiB is $2^{30}$ bytes.)",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "keys",
+            "value": 1.5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.375,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "GiB"
+      },
+      "feedback": {
+        "correct": "$2 \\times 24 \\times 2{,}048 \\times 2{,}048 \\times 2 \\times 8 = 3 \\times 2^{30}$ bytes, 3 GiB.",
+        "generic": "Not quite. Use $2LdTbB$.",
+        "byKey": {
+          "keys": "That counts the keys only.",
+          "one": "That is one sequence; there are 8."
+        }
+      },
+      "explain": {
+        "text": "3 GiB for the batch, 0.375 GiB a sequence."
+      }
+    },
+    {
+      "id": "r-decode-20b",
+      "difficulty": 4,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "question": "A 20-billion-parameter model is served in bf16 at a batch of 1 on a chip that moves 3.3 TB/s. Ignoring the cache, at most how many tokens a second? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 82.5,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "ms",
+            "value": 12.1,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "fp32",
+            "value": 41.3,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "Tokens per second"
+      },
+      "feedback": {
+        "correct": "$4 \\times 10^{10} / 3.3 \\times 10^{12} \\approx 12.12$ ms a token, about 82.5 a second.",
+        "generic": "Not quite. Bytes read per token over bandwidth, then invert.",
+        "byKey": {
+          "ms": "That is milliseconds per token. Invert it.",
+          "fp32": "That uses 4 bytes a weight; bf16 is 2."
+        }
+      },
+      "explain": {
+        "text": "40 GB per token at 3.3 TB/s: 12.12 ms, 82.5 tokens a second."
+      }
+    }
+  ]
+}

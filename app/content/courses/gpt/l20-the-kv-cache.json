@@ -1,0 +1,1468 @@
+{
+  "id": "l20-the-kv-cache",
+  "course": "gpt",
+  "title": "The KV cache",
+  "minutes": 15,
+  "objectives": [
+    "Code a KV cache for the tiny GPT and compute its size for a large model."
+  ],
+  "skills": [
+    "gpt-hardware"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Work done twice",
+      "prose": "Level 2's sampler runs the whole window through the model for every new character. Generating 32 characters, step 1 runs 1 position, step 2 runs 2, and so on up to 32.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Step",
+            "Positions run"
+          ],
+          "rows": [
+            [
+              "1",
+              "1"
+            ],
+            [
+              "2",
+              "2"
+            ],
+            [
+              "...",
+              "..."
+            ],
+            [
+              "32",
+              "32"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "How many positions does it run in all?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 528,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "square",
+            "value": 1024,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "once",
+            "value": 32,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Positions"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add $1 + 2 + \\cdots + 32$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\tfrac{32 \\times 33}{2}$."
+        },
+        {
+          "rung": "step",
+          "text": "528."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 + 2 + \\cdots + 32 = 528$ positions, though only 32 are new.",
+        "generic": "Not quite. Add the positions run at each step.",
+        "byKey": {
+          "square": "That is $32^2$. Step $k$ runs $k$ positions, not 32.",
+          "once": "That is the number of new positions. Without a cache each step reruns the old ones too."
+        }
+      },
+      "explain": {
+        "text": "528 position passes for 32 characters: 496 of them repeat work already done. A cache keeps what does not change.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "What changes when a token arrives",
+      "prose": "In a causal model a position attends only to itself and earlier ones, so a later token never changes an earlier position's keys and values. Step through six tokens arriving.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "cellWidth": 44
+        },
+        "state": {
+          "cells": [
+            "K V",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "pointers": [
+            {
+              "id": "new",
+              "at": 0,
+              "label": "new"
+            }
+          ],
+          "caption": "Token 1 arrives at position 0.",
+          "highlight": {
+            "range": [
+              0,
+              0
+            ],
+            "label": "new row"
+          }
+        },
+        "controls": [
+          {
+            "bind": "step",
+            "label": "Token",
+            "frames": [
+              {
+                "cells": [
+                  "K V",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "pointers": [
+                  {
+                    "id": "new",
+                    "at": 0,
+                    "label": "new"
+                  }
+                ],
+                "caption": "Token 1 arrives at position 0.",
+                "highlight": {
+                  "range": [
+                    0,
+                    0
+                  ],
+                  "label": "new row"
+                }
+              },
+              {
+                "cells": [
+                  "K V",
+                  "K V",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "pointers": [
+                  {
+                    "id": "new",
+                    "at": 1,
+                    "label": "new"
+                  }
+                ],
+                "caption": "Token 2 arrives at position 1.",
+                "highlight": {
+                  "range": [
+                    0,
+                    0
+                  ],
+                  "label": "cached"
+                }
+              },
+              {
+                "cells": [
+                  "K V",
+                  "K V",
+                  "K V",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "pointers": [
+                  {
+                    "id": "new",
+                    "at": 2,
+                    "label": "new"
+                  }
+                ],
+                "caption": "Token 3 arrives at position 2.",
+                "highlight": {
+                  "range": [
+                    0,
+                    1
+                  ],
+                  "label": "cached"
+                }
+              },
+              {
+                "cells": [
+                  "K V",
+                  "K V",
+                  "K V",
+                  "K V",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "pointers": [
+                  {
+                    "id": "new",
+                    "at": 3,
+                    "label": "new"
+                  }
+                ],
+                "caption": "Token 4 arrives at position 3.",
+                "highlight": {
+                  "range": [
+                    0,
+                    2
+                  ],
+                  "label": "cached"
+                }
+              },
+              {
+                "cells": [
+                  "K V",
+                  "K V",
+                  "K V",
+                  "K V",
+                  "K V",
+                  "",
+                  "",
+                  ""
+                ],
+                "pointers": [
+                  {
+                    "id": "new",
+                    "at": 4,
+                    "label": "new"
+                  }
+                ],
+                "caption": "Token 5 arrives at position 4.",
+                "highlight": {
+                  "range": [
+                    0,
+                    3
+                  ],
+                  "label": "cached"
+                }
+              },
+              {
+                "cells": [
+                  "K V",
+                  "K V",
+                  "K V",
+                  "K V",
+                  "K V",
+                  "K V",
+                  "",
+                  ""
+                ],
+                "pointers": [
+                  {
+                    "id": "new",
+                    "at": 5,
+                    "label": "new"
+                  }
+                ],
+                "caption": "Token 6 arrives at position 5.",
+                "highlight": {
+                  "range": [
+                    0,
+                    4
+                  ],
+                  "label": "cached"
+                }
+              }
+            ],
+            "frameLabels": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ]
+          }
+        ]
+      },
+      "question": "When the 6th token arrives, how many of the 5 cached key and value rows must be recomputed?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "all",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Rows"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does an earlier position ever see a later token?"
+        }
+      ],
+      "feedback": {
+        "correct": "None: the 5 rows stay as they were, and the new token adds one row.",
+        "generic": "Not quite. Can a later token change an earlier position's keys?",
+        "byKey": {
+          "all": "They do not depend on the new token: the mask stops earlier positions from seeing it.",
+          "one": "Only the new row is computed, and it was not cached before."
+        }
+      },
+      "explain": {
+        "text": "Earlier keys and values never change, so we store them: the **KV cache**. Each new token computes one row and reads the rest.",
+        "canvas": {
+          "cells": [
+            "K V",
+            "K V",
+            "K V",
+            "K V",
+            "K V",
+            "K V",
+            "",
+            ""
+          ],
+          "pointers": [
+            {
+              "id": "new",
+              "at": 5,
+              "label": "new"
+            }
+          ],
+          "caption": "Token 6 arrives at position 5.",
+          "highlight": {
+            "range": [
+              0,
+              4
+            ],
+            "label": "cached"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Why the cache is exact",
+      "prose": "With the cache, a new token computes its own query, key and value, appends the key and value, and attends over all cached rows.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Array",
+            "Depends on later tokens?"
+          ],
+          "rows": [
+            [
+              "earlier keys",
+              "no"
+            ],
+            [
+              "earlier values",
+              "no"
+            ],
+            [
+              "new query",
+              "only on the new token and the cache"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Why does the cached run give exactly the same logits as the full forward pass?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mask",
+            "text": "No position sees a later one, so its keys and values never change",
+            "correct": true
+          },
+          {
+            "id": "frozen",
+            "text": "Because the weights stay frozen during generation",
+            "why": "Frozen weights are needed too, but the reason is the mask: each earlier position's inputs never change."
+          },
+          {
+            "id": "avg",
+            "text": "Because attention averages out the small differences",
+            "why": "There are no differences to average: every cached row is exactly what the full pass computes."
+          },
+          {
+            "id": "approx",
+            "text": "It does not: the cache is only an approximation",
+            "why": "It is exact. It changes the order of the work, not the arithmetic of each position."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What can position 3 attend to?"
+        },
+        {
+          "rung": "point",
+          "text": "Only positions 0 to 3."
+        },
+        {
+          "rung": "step",
+          "text": "So nothing later changes its keys."
+        }
+      ],
+      "feedback": {
+        "correct": "Each position's keys and values depend only on tokens up to it, so caching them changes no number.",
+        "generic": "Not quite. What does the causal mask forbid?",
+        "byKey": {
+          "approx": "In exact arithmetic the two are equal; in float64 they agree to about $10^{-14}$, the order of the sums."
+        }
+      },
+      "explain": {
+        "text": "The cache is exact because of the causal mask. In float64 the logits agree with the full pass to about $10^{-14}$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Add a cache to the sampler",
+      "prose": "Write `decode_step(W, cache, token)` for the tiny GPT (one block, 4 heads of 8) and `generate_cached(W, prompt, n, seed)`. `G` is `gpt_ops_l2`, loaded for you. Use only your `decode_step`: no `G.forward_logits` or `G.sample_text`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Check",
+            "Against"
+          ],
+          "rows": [
+            [
+              "each position's logits",
+              "`G.forward_logits`, to $10^{-10}$"
+            ],
+            [
+              "generated text",
+              "`G.sample_text`, exactly"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Write the cached decoder.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n# Given: W (the tiny GPT's weights), ln(x, g, b), encode, decode.\n\n\ndef new_cache():\n    # Keys and values of every position so far, (heads 4, t, 8) each.\n    return {\"k\": np.zeros((4, 0, 8)), \"v\": np.zeros((4, 0, 8)), \"pos\": 0}\n\n\ndef decode_step(W, cache, token):\n    # Embed token at position cache[\"pos\"]; in block h0, append its key\n    # and value to the cache, attend with its query over every cached\n    # key; finish the block and the head; return the 65 logits.\n    ...\n\n\ndef generate_cached(W, prompt, n, seed):\n    # Feed the prompt, then draw n characters as G.sample_text does:\n    # rng = np.random.default_rng(seed), rng.choice(65, p=softmax(z)).\n    # Past 32 ids, sample_text runs only the last 32, at new positions.\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef new_cache():\n    return {\"k\": np.zeros((4, 0, 8)), \"v\": np.zeros((4, 0, 8)), \"pos\": 0}\n\n\ndef decode_step(W, cache, token):\n    x = W[\"wte\"][token] + W[\"wpe\"][cache[\"pos\"]]\n    qkv = ln(x, W[\"h0.ln1_g\"], W[\"h0.ln1_b\"]) @ W[\"h0.qkv_w\"] + W[\"h0.qkv_b\"]\n    q, k, v = (qkv[j * 32:(j + 1) * 32].reshape(4, 1, 8) for j in range(3))\n    cache[\"k\"] = np.concatenate([cache[\"k\"], k], axis=1)\n    cache[\"v\"] = np.concatenate([cache[\"v\"], v], axis=1)\n    s = q @ cache[\"k\"].transpose(0, 2, 1) / np.sqrt(8)\n    a = np.exp(s - s.max(-1, keepdims=True))\n    a = a / a.sum(-1, keepdims=True)\n    x = x + (a @ cache[\"v\"]).reshape(32) @ W[\"h0.proj_w\"] + W[\"h0.proj_b\"]\n    h = np.maximum(ln(x, W[\"h0.ln2_g\"], W[\"h0.ln2_b\"]) @ W[\"h0.fc_w\"] + W[\"h0.fc_b\"], 0)\n    x = x + h @ W[\"h0.out_w\"] + W[\"h0.out_b\"]\n    cache[\"pos\"] += 1\n    return ln(x, W[\"lnf_g\"], W[\"lnf_b\"]) @ W[\"head_w\"] + W[\"head_b\"]\n\n\ndef generate_cached(W, prompt, n, seed):\n    rng = np.random.default_rng(seed)\n    ids = encode(prompt)\n    cache = new_cache()\n    for t in ids[-32:]:\n        z = decode_step(W, cache, t)\n    for _ in range(n):\n        p = np.exp(z - z.max())\n        ids.append(int(rng.choice(65, p=p / p.sum())))\n        if cache[\"pos\"] == 32:\n            cache = new_cache()\n            for t in ids[-32:]:\n                z = decode_step(W, cache, t)\n        else:\n            z = decode_step(W, cache, ids[-1])\n    return decode(ids)\n",
+        "prelude": "import numpy as np\n\nimport gpt_ops_l2 as G\n\nW = G.read_weights('gpt-w-embed.json', 'gpt-w-block0.json')\nencode, decode = G.encode, G.decode\n\n\ndef ln(x, g, b):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + 1e-5) + b\n\n\ndef _logits_match(text):\n    ids = encode(text)\n    full = G.forward_logits(W, np.array(ids))\n    c = new_cache()\n    return max(float(np.abs(decode_step(W, c, t) - full[i]).max()) for i, t in enumerate(ids)) < 1e-10\n",
+        "data": {
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json"
+        },
+        "examples": [
+          {
+            "call": "new_cache()['k'].shape",
+            "expect": "(4, 0, 8)",
+            "compare": "equal"
+          },
+          {
+            "call": "len(generate_cached(W, 'A', 3, 0))",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "_logits_match('First Citizen:')",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "_c = new_cache()\nfor _t in encode('ROMEO'):\n    decode_step(W, _c, _t)",
+            "call": "(_c['k'].shape, _c['v'].shape, _c['pos'])",
+            "expect": "((4, 5, 8), (4, 5, 8), 5)",
+            "compare": "equal"
+          },
+          {
+            "call": "generate_cached(W, 'First Citizen:\\n', 12, 0)",
+            "expect": "'First Citizen:\\nShaintor:\\nU '",
+            "compare": "equal"
+          },
+          {
+            "call": "generate_cached(W, 'ROMEO:\\n', 25, 3)",
+            "expect": "'ROMEO:\\nAgfore breand, where\\nwint'",
+            "compare": "equal"
+          },
+          {
+            "call": "generate_cached(W, 'First Citizen:\\n', 20, 1)",
+            "expect": "'First Citizen:\\nNo your nath the han'",
+            "compare": "equal"
+          },
+          {
+            "call": "generate_cached(W, 'Before we proceed any further, hear me speak.\\n', 4, 7)",
+            "expect": "'Before we proceed any further, hear me speak.\\n\\nSec'",
+            "compare": "equal"
+          },
+          {
+            "call": "zq_no('sample_text', 'forward_logits', 'forward_cache', attrs=('.sample_text', '.forward_logits', '.forward_cache'))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 7 hidden tests. Each prompt position's logits must match `G.forward_logits` to $10^{-10}$, and the cache must hold 5 rows after 5 tokens. Four generations must equal `G.sample_text` character for character, two of them past the 32-position window. The last checks that you call neither `G.sample_text` nor the forward pass.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef new_cache():\n    return {\"k\": np.zeros((4, 0, 8)), \"v\": np.zeros((4, 0, 8)), \"pos\": 0}\n\n\ndef decode_step(W, cache, token):\n    x = W[\"wte\"][token]\n    qkv = ln(x, W[\"h0.ln1_g\"], W[\"h0.ln1_b\"]) @ W[\"h0.qkv_w\"] + W[\"h0.qkv_b\"]\n    q, k, v = (qkv[j * 32:(j + 1) * 32].reshape(4, 1, 8) for j in range(3))\n    cache[\"k\"] = np.concatenate([cache[\"k\"], k], axis=1)\n    cache[\"v\"] = np.concatenate([cache[\"v\"], v], axis=1)\n    s = q @ cache[\"k\"].transpose(0, 2, 1) / np.sqrt(8)\n    a = np.exp(s - s.max(-1, keepdims=True))\n    a = a / a.sum(-1, keepdims=True)\n    x = x + (a @ cache[\"v\"]).reshape(32) @ W[\"h0.proj_w\"] + W[\"h0.proj_b\"]\n    h = np.maximum(ln(x, W[\"h0.ln2_g\"], W[\"h0.ln2_b\"]) @ W[\"h0.fc_w\"] + W[\"h0.fc_b\"], 0)\n    x = x + h @ W[\"h0.out_w\"] + W[\"h0.out_b\"]\n    cache[\"pos\"] += 1\n    return ln(x, W[\"lnf_g\"], W[\"lnf_b\"]) @ W[\"head_w\"] + W[\"head_b\"]\n\n\ndef generate_cached(W, prompt, n, seed):\n    rng = np.random.default_rng(seed)\n    ids = encode(prompt)\n    cache = new_cache()\n    for t in ids[-32:]:\n        z = decode_step(W, cache, t)\n    for _ in range(n):\n        p = np.exp(z - z.max())\n        ids.append(int(rng.choice(65, p=p / p.sum())))\n        if cache[\"pos\"] == 32:\n            cache = new_cache()\n            for t in ids[-32:]:\n                z = decode_step(W, cache, t)\n        else:\n            z = decode_step(W, cache, ids[-1])\n    return decode(ids)\n",
+            "test": 1,
+            "symptom": "Leaves out the position embedding, so every logit after the first is wrong."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef new_cache():\n    return {\"k\": np.zeros((4, 0, 8)), \"v\": np.zeros((4, 0, 8)), \"pos\": 0}\n\n\ndef decode_step(W, cache, token):\n    x = W[\"wte\"][token] + W[\"wpe\"][cache[\"pos\"]]\n    qkv = ln(x, W[\"h0.ln1_g\"], W[\"h0.ln1_b\"]) @ W[\"h0.qkv_w\"] + W[\"h0.qkv_b\"]\n    q, k, v = (qkv[j * 32:(j + 1) * 32].reshape(4, 1, 8) for j in range(3))\n    cache[\"k\"] = np.concatenate([cache[\"k\"], k], axis=1)\n    cache[\"v\"] = np.concatenate([cache[\"v\"], v], axis=1)\n    s = q @ k.transpose(0, 2, 1) / np.sqrt(8)\n    a = np.exp(s - s.max(-1, keepdims=True))\n    a = a / a.sum(-1, keepdims=True)\n    x = x + (a @ v).reshape(32) @ W[\"h0.proj_w\"] + W[\"h0.proj_b\"]\n    h = np.maximum(ln(x, W[\"h0.ln2_g\"], W[\"h0.ln2_b\"]) @ W[\"h0.fc_w\"] + W[\"h0.fc_b\"], 0)\n    x = x + h @ W[\"h0.out_w\"] + W[\"h0.out_b\"]\n    cache[\"pos\"] += 1\n    return ln(x, W[\"lnf_g\"], W[\"lnf_b\"]) @ W[\"head_w\"] + W[\"head_b\"]\n\n\ndef generate_cached(W, prompt, n, seed):\n    rng = np.random.default_rng(seed)\n    ids = encode(prompt)\n    cache = new_cache()\n    for t in ids[-32:]:\n        z = decode_step(W, cache, t)\n    for _ in range(n):\n        p = np.exp(z - z.max())\n        ids.append(int(rng.choice(65, p=p / p.sum())))\n        if cache[\"pos\"] == 32:\n            cache = new_cache()\n            for t in ids[-32:]:\n                z = decode_step(W, cache, t)\n        else:\n            z = decode_step(W, cache, ids[-1])\n    return decode(ids)\n",
+            "test": 1,
+            "symptom": "Attends only to the new token's own key, ignoring the cache."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef new_cache():\n    return {\"k\": np.zeros((4, 0, 8)), \"v\": np.zeros((4, 0, 8)), \"pos\": 0}\n\n\ndef decode_step(W, cache, token):\n    x = W[\"wte\"][token] + W[\"wpe\"][cache[\"pos\"]]\n    qkv = ln(x, W[\"h0.ln1_g\"], W[\"h0.ln1_b\"]) @ W[\"h0.qkv_w\"] + W[\"h0.qkv_b\"]\n    q, k, v = (qkv[j * 32:(j + 1) * 32].reshape(4, 1, 8) for j in range(3))\n    cache[\"k\"] = np.concatenate([cache[\"k\"], k], axis=1)\n    cache[\"v\"] = np.concatenate([cache[\"v\"], v], axis=1)\n    s = q @ cache[\"k\"].transpose(0, 2, 1) / np.sqrt(8)\n    a = np.exp(s - s.max(-1, keepdims=True))\n    a = a / a.sum(-1, keepdims=True)\n    x = x + (a @ cache[\"v\"]).reshape(32) @ W[\"h0.proj_w\"] + W[\"h0.proj_b\"]\n    h = np.maximum(ln(x, W[\"h0.ln2_g\"], W[\"h0.ln2_b\"]) @ W[\"h0.fc_w\"] + W[\"h0.fc_b\"], 0)\n    x = x + h @ W[\"h0.out_w\"] + W[\"h0.out_b\"]\n    cache[\"pos\"] += 1\n    return ln(x, W[\"lnf_g\"], W[\"lnf_b\"]) @ W[\"head_w\"] + W[\"head_b\"]\n\n\ndef generate_cached(W, prompt, n, seed):\n    rng = np.random.default_rng(seed)\n    ids = encode(prompt)\n    cache = new_cache()\n    for t in ids[-32:]:\n        z = decode_step(W, cache, t)\n    for _ in range(n):\n        p = np.exp(z - z.max())\n        ids.append(int(rng.choice(65, p=p / p.sum())))\n        z = decode_step(W, cache, ids[-1])\n    return decode(ids)\n",
+            "test": 5,
+            "symptom": "Keeps appending past the window, so position 32 has no embedding."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef new_cache():\n    return {\"k\": np.zeros((4, 0, 8)), \"v\": np.zeros((4, 0, 8)), \"pos\": 0}\n\n\ndef decode_step(W, cache, token):\n    x = W[\"wte\"][token] + W[\"wpe\"][cache[\"pos\"]]\n    qkv = ln(x, W[\"h0.ln1_g\"], W[\"h0.ln1_b\"]) @ W[\"h0.qkv_w\"] + W[\"h0.qkv_b\"]\n    q, k, v = (qkv[j * 32:(j + 1) * 32].reshape(4, 1, 8) for j in range(3))\n    cache[\"k\"] = np.concatenate([cache[\"k\"], k], axis=1)\n    cache[\"v\"] = np.concatenate([cache[\"v\"], v], axis=1)\n    s = q @ cache[\"k\"].transpose(0, 2, 1) / np.sqrt(8)\n    a = np.exp(s - s.max(-1, keepdims=True))\n    a = a / a.sum(-1, keepdims=True)\n    x = x + (a @ cache[\"v\"]).reshape(32) @ W[\"h0.proj_w\"] + W[\"h0.proj_b\"]\n    h = np.maximum(ln(x, W[\"h0.ln2_g\"], W[\"h0.ln2_b\"]) @ W[\"h0.fc_w\"] + W[\"h0.fc_b\"], 0)\n    x = x + h @ W[\"h0.out_w\"] + W[\"h0.out_b\"]\n    cache[\"pos\"] += 1\n    return ln(x, W[\"lnf_g\"], W[\"lnf_b\"]) @ W[\"head_w\"] + W[\"head_b\"]\n\n\ndef generate_cached(W, prompt, n, seed):\n    rng = np.random.default_rng(seed)\n    ids = encode(prompt)\n    cache = new_cache()\n    for t in ids:\n        z = decode_step(W, cache, t)\n    for _ in range(n):\n        p = np.exp(z - z.max())\n        ids.append(int(rng.choice(65, p=p / p.sum())))\n        if cache[\"pos\"] == 32:\n            cache = new_cache()\n            for t in ids[-32:]:\n                z = decode_step(W, cache, t)\n        else:\n            z = decode_step(W, cache, ids[-1])\n    return decode(ids)\n",
+            "test": 6,
+            "symptom": "Feeds the whole prompt, so a prompt longer than 32 runs off the positions."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef new_cache():\n    return {\"k\": np.zeros((4, 0, 8)), \"v\": np.zeros((4, 0, 8)), \"pos\": 0}\n\n\ndef decode_step(W, cache, token):\n    x = W[\"wte\"][token] + W[\"wpe\"][cache[\"pos\"]]\n    qkv = ln(x, W[\"h0.ln1_g\"], W[\"h0.ln1_b\"]) @ W[\"h0.qkv_w\"] + W[\"h0.qkv_b\"]\n    q, k, v = (qkv[j * 32:(j + 1) * 32].reshape(4, 1, 8) for j in range(3))\n    cache[\"k\"] = np.concatenate([cache[\"k\"], k], axis=1)\n    cache[\"v\"] = np.concatenate([cache[\"v\"], v], axis=1)\n    s = q @ cache[\"k\"].transpose(0, 2, 1) / np.sqrt(8)\n    a = np.exp(s - s.max(-1, keepdims=True))\n    a = a / a.sum(-1, keepdims=True)\n    x = x + (a @ cache[\"v\"]).reshape(32) @ W[\"h0.proj_w\"] + W[\"h0.proj_b\"]\n    h = np.maximum(ln(x, W[\"h0.ln2_g\"], W[\"h0.ln2_b\"]) @ W[\"h0.fc_w\"] + W[\"h0.fc_b\"], 0)\n    x = x + h @ W[\"h0.out_w\"] + W[\"h0.out_b\"]\n    cache[\"pos\"] += 1\n    return ln(x, W[\"lnf_g\"], W[\"lnf_b\"]) @ W[\"head_w\"] + W[\"head_b\"]\n\n\ndef generate_cached(W, prompt, n, seed):\n    return G.sample_text(W, prompt, n, seed=seed)\n",
+            "test": 7,
+            "symptom": "Calls the uncached sampler instead of the cache."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Position: `W['wpe'][cache['pos']]`."
+        },
+        {
+          "rung": "point",
+          "text": "Append the new key and value before attending."
+        },
+        {
+          "rung": "step",
+          "text": "At 32 positions, start a fresh cache on the last 32 ids."
+        }
+      ],
+      "feedback": {
+        "correct": "Your cached decoder gives the full pass's logits and the same text, inside and past the window.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 compares each position's logits: add the position embedding, append the key and value first, and attend over the whole cache.",
+          "test-5": "Test 5 runs past 32 positions. The learned positions shift, so start a fresh cache on the last 32 ids.",
+          "test-6": "Test 6's prompt is 46 characters: feed only its last 32.",
+          "test-7": "Test 7: generate with your cache, not with `G.sample_text` or the forward pass."
+        }
+      },
+      "explain": {
+        "text": "Each step now costs one position through the block, not the whole window. Past the window the learned positions shift, which the next screens take up."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Cache the queries too",
+      "prose": "A colleague adds the queries to the cache \"to be safe\": every step stores the new token's query beside its key and value.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Array",
+            "Read by later tokens?"
+          ],
+          "rows": [
+            [
+              "keys",
+              "yes, by every later query"
+            ],
+            [
+              "values",
+              "yes, weighted by attention"
+            ],
+            [
+              "queries",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "What does caching the queries buy?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "none",
+            "text": "Nothing: a query is used once, by its own position",
+            "correct": true
+          },
+          {
+            "id": "speed",
+            "text": "A faster next step, since fewer arrays are recomputed",
+            "why": "No later step uses an old query, so nothing is saved."
+          },
+          {
+            "id": "exact",
+            "text": "Exact logits, which the KV cache alone does not give",
+            "why": "The KV cache is already exact."
+          },
+          {
+            "id": "needed",
+            "text": "It is needed, or attention cannot be computed",
+            "why": "A new token needs only its own query, against the cached keys."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which arrays does a later token read?"
+        },
+        {
+          "rung": "point",
+          "text": "Its own query meets the earlier keys and values."
+        },
+        {
+          "rung": "step",
+          "text": "An old query is never read again."
+        }
+      ],
+      "feedback": {
+        "correct": "Old queries are never read: caching them only spends memory.",
+        "generic": "Not quite. Which arrays do later tokens read?",
+        "byKey": {
+          "speed": "That is the trap: nothing later reads an old query, so storing it saves no work and costs memory."
+        }
+      },
+      "explain": {
+        "text": "The cache holds keys and values because later tokens read them; a query is used once and thrown away.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Past the window",
+      "prose": "The tiny GPT learns one position embedding for each of 32 positions. Once 32 ids are in the window, the next character is predicted from the last 32 ids, each one place earlier than before.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "c0",
+            "c1",
+            "c2",
+            "...",
+            "c31",
+            "c32"
+          ],
+          "showIndex": false
+        },
+        "state": {
+          "highlight": {
+            "ranges": [
+              {
+                "range": [
+                  1,
+                  5
+                ],
+                "label": "new window: positions 0 to 31"
+              }
+            ]
+          },
+          "pointers": [
+            {
+              "id": "drop",
+              "at": 0,
+              "label": "dropped"
+            }
+          ]
+        }
+      },
+      "question": "What happens to the cached keys and values when the window slides?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stale",
+            "text": "Computed at the old positions, they are stale: re-run the window",
+            "correct": true
+          },
+          {
+            "id": "drop",
+            "text": "Drop the oldest row and keep the other 31 rows",
+            "why": "Every kept row carries its old position embedding, one place out. The result no longer matches the model."
+          },
+          {
+            "id": "keep",
+            "text": "Keep every row and let the cache grow past 32",
+            "why": "There is no embedding for position 32: the model has a hard limit of 32 positions."
+          },
+          {
+            "id": "same",
+            "text": "Nothing: keys and values do not depend on position",
+            "why": "They depend on the input, which includes the position embedding."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each row was computed with its position's embedding."
+        },
+        {
+          "rung": "point",
+          "text": "After the slide every id has a new position."
+        },
+        {
+          "rung": "step",
+          "text": "So every row is stale."
+        }
+      ],
+      "feedback": {
+        "correct": "With learned absolute positions every row goes stale when the window slides, so the tiny GPT re-runs the last 32 ids.",
+        "generic": "Not quite. What does each cached row depend on?",
+        "byKey": {
+          "drop": "That keeps rows whose position embeddings are one place out, so the logits change. Models with relative positions can slide a cache; this one cannot."
+        }
+      },
+      "explain": {
+        "text": "Past the window the tiny GPT gains nothing from the cache. Models whose positions are relative can keep a sliding cache; every model still has a limit past which the cache is cropped."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "GPT-2 small's cache",
+      "prose": "Each layer caches a key and a value of width $d$ for every position. GPT-2 small has 12 layers of width 768 and a context of 1,024; store the cache in bf16.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Factor",
+            "Value"
+          ],
+          "rows": [
+            [
+              "key and value",
+              "2"
+            ],
+            [
+              "layers",
+              "12"
+            ],
+            [
+              "width",
+              "768"
+            ],
+            [
+              "positions",
+              "1,024"
+            ],
+            [
+              "bytes",
+              "2"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many MiB is the cache for one full sequence? (1 MiB is $2^{20}$ bytes.)",
+      "widget": {
+        "kind": "numeric",
+        "answer": 36,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "keys",
+            "value": 18,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "mb",
+            "value": 37.7,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "MiB"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the five factors."
+        },
+        {
+          "rung": "point",
+          "text": "37,748,736 bytes.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by 1,048,576."
+        }
+      ],
+      "feedback": {
+        "correct": "$2 \\times 12 \\times 768 \\times 1{,}024 \\times 2 = 37{,}748{,}736$ bytes $= 36$ MiB.",
+        "generic": "Not quite. Multiply all five factors, then divide by $2^{20}$.",
+        "byKey": {
+          "keys": "That counts the keys only. Values are cached too.",
+          "mb": "That is millions of bytes. A MiB is $2^{20}$."
+        }
+      },
+      "explain": {
+        "text": "36 MiB a sequence: small beside GPT-2's weights, but it is per sequence, and grows with the length.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A 7B-like model's cache",
+      "prose": "A 7B-like model has 32 layers of width 4,096 and serves sequences of 4,096 tokens in bf16. One sequence's cache is $2 \\times 32 \\times 4{,}096 \\times 4{,}096 \\times 2$ bytes $= 2$ GiB.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Batch",
+            "Cache"
+          ],
+          "rows": [
+            [
+              "1",
+              "2 GiB"
+            ],
+            [
+              "16",
+              "?"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "How many GiB is the cache for a batch of 16 sequences?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 32,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "weights",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "GiB"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each sequence has its own cache."
+        },
+        {
+          "rung": "point",
+          "text": "$16 \\times 2$ GiB."
+        },
+        {
+          "rung": "step",
+          "text": "32 GiB."
+        }
+      ],
+      "feedback": {
+        "correct": "$16 \\times 2 = 32$ GiB, more than the 14 GB of weights.",
+        "generic": "Not quite. Each of the 16 sequences has a 2 GiB cache.",
+        "byKey": {
+          "one": "That is one sequence.",
+          "weights": "That is the weights. The cache is separate, per sequence."
+        }
+      },
+      "explain": {
+        "text": "32 GiB of cache against 14 GB of weights: at long contexts and large batches the cache, not the model, fills the memory.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The cache rule",
+      "prose": "A model with $L$ layers of width $d$, serving $B$ sequences of $T$ tokens at $b$ bytes a number, holds\n$$\\text{KV cache} = 2 \\times L \\times d \\times T \\times b \\times B \\text{ bytes}.$$\nEach new token reads the whole cache and all the weights.",
+      "question": "Double the context $T$. What happens to the cache?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "two",
+            "text": "It doubles",
+            "correct": true
+          },
+          {
+            "id": "four",
+            "text": "It quadruples",
+            "why": "The cache holds $T$ rows; the $T^2$ is the attention scores, never stored."
+          },
+          {
+            "id": "same",
+            "text": "It stays the same",
+            "why": "Every position adds a key and a value."
+          },
+          {
+            "id": "half",
+            "text": "It halves",
+            "why": "More positions means more rows."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One row per position."
+        }
+      ],
+      "feedback": {
+        "correct": "Linear in $T$: twice the context, twice the cache.",
+        "generic": "Not quite. How many rows does the cache hold?"
+      },
+      "explain": {
+        "text": "The cache grows linearly with layers, width, length and batch; the attention it serves costs $O(T)$ per new token."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Size it in code",
+      "prose": "Write `kv_cache_bytes(layers, d, T, bytes_per, batch)`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "Bytes"
+          ],
+          "rows": [
+            [
+              "tiny GPT, float64, 32 tokens",
+              "16,384"
+            ],
+            [
+              "GPT-2 small, bf16, 1,024 tokens",
+              "37,748,736"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "Write the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def kv_cache_bytes(layers, d, T, bytes_per, batch):\n    # A key and a value of width d per layer, per position, per sequence.\n    ...\n",
+        "solution": "def kv_cache_bytes(layers, d, T, bytes_per, batch):\n    return 2 * layers * d * T * bytes_per * batch\n",
+        "examples": [
+          {
+            "call": "kv_cache_bytes(1, 1, 1, 1, 1)",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "kv_cache_bytes(1, 32, 32, 8, 1)",
+            "expect": "16384",
+            "compare": "equal"
+          },
+          {
+            "call": "kv_cache_bytes(12, 768, 1024, 2, 1)",
+            "expect": "37748736",
+            "compare": "equal"
+          },
+          {
+            "call": "kv_cache_bytes(32, 4096, 4096, 2, 1)",
+            "expect": "2**31",
+            "compare": "equal"
+          },
+          {
+            "call": "kv_cache_bytes(32, 4096, 4096, 2, 16)",
+            "expect": "2**35",
+            "compare": "equal"
+          },
+          {
+            "call": "kv_cache_bytes(24, 2048, 2048, 2, 8)",
+            "expect": "3 * 2**30",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 5 hidden tests, compared exactly: the tiny GPT in float64, GPT-2 small, the 7B-like model at batches of 1 and 16, and a 24-layer model at a batch of 8.",
+        "mutants": [
+          {
+            "source": "def kv_cache_bytes(layers, d, T, bytes_per, batch):\n    return layers * d * T * bytes_per * batch\n",
+            "test": 1,
+            "symptom": "Counts the keys and forgets the values."
+          },
+          {
+            "source": "def kv_cache_bytes(layers, d, T, bytes_per, batch):\n    return 2 * layers * d * T * bytes_per\n",
+            "test": 4,
+            "symptom": "Sizes one sequence whatever the batch."
+          },
+          {
+            "source": "def kv_cache_bytes(layers, d, T, bytes_per, batch):\n    return 2 * layers * d * T * T * bytes_per * batch\n",
+            "test": 1,
+            "symptom": "Counts a T by T attention matrix instead of T rows."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two arrays per layer."
+        },
+        {
+          "rung": "point",
+          "text": "Each $T$ by $d$."
+        },
+        {
+          "rung": "step",
+          "text": "Times bytes and batch."
+        }
+      ],
+      "feedback": {
+        "correct": "Your sizes match the five tests.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is the tiny GPT: $2 \\times 1 \\times 32 \\times 32 \\times 8 = 16{,}384$. Count keys and values, $T$ rows each.",
+          "test-4": "Test 4 has a batch of 16: every sequence has its own cache."
+        }
+      },
+      "explain": {
+        "text": "One line of arithmetic, but it decides how many users a machine can serve at once."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Decoding at a batch of 1",
+      "prose": "Each new token of the 7B-like model reads all 14 GB of weights and its whole cache. At 4,096 tokens the cache is 2 GiB, $2{,}147{,}483{,}648$ bytes. Take the chip that moves 3.3 TB/s.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Read per token",
+            "Bytes"
+          ],
+          "rows": [
+            [
+              "weights",
+              "$1.4 \\times 10^{10}$"
+            ],
+            [
+              "cache at 4,096 tokens",
+              "2,147,483,648"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many tokens a second can it generate at most? Give the nearest whole number.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 204,
+        "tol": {
+          "abs": 0.5
+        },
+        "wrong": [
+          {
+            "id": "weights",
+            "value": 236,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "ms",
+            "value": 4.9,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ],
+        "label": "Tokens per second"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Time per token: bytes over bandwidth."
+        },
+        {
+          "rung": "point",
+          "text": "$(1.4 \\times 10^{10} + 2.15 \\times 10^9) / 3.3 \\times 10^{12}$ s."
+        },
+        {
+          "rung": "step",
+          "text": "About 4.89 ms a token."
+        }
+      ],
+      "feedback": {
+        "correct": "$16{,}147{,}483{,}648 / 3.3 \\times 10^{12} \\approx 4.89$ ms a token: about 204 tokens a second.",
+        "generic": "Not quite. Divide the bytes read by the bandwidth, then invert.",
+        "byKey": {
+          "weights": "That reads the weights alone, 4.24 ms a token. The cache is read too.",
+          "ms": "That is milliseconds per token. Invert it for tokens per second."
+        }
+      },
+      "explain": {
+        "text": "At a batch of 1 the speed is bytes over bandwidth: 236 tokens a second for the weights alone, 204 with a 2 GiB cache. The arithmetic barely matters.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A long research conversation",
+      "prose": "An analyst keeps one long conversation with the 7B-like model. At 32,768 tokens of context its cache is 16 GiB, $17{,}179{,}869{,}184$ bytes, read with the 14 GB of weights for every new token.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Context",
+            "Read per token"
+          ],
+          "rows": [
+            [
+              "near 0",
+              "14 GB"
+            ],
+            [
+              "32,768 tokens",
+              "14 GB + 16 GiB"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many times longer does each new token take at 32,768 tokens than at the start? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.23,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "cache",
+            "value": 1.23,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "same",
+            "value": 1,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "Times longer"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Time is proportional to bytes read."
+        },
+        {
+          "rung": "point",
+          "text": "$(14 + 17.18) / 14$."
+        },
+        {
+          "rung": "step",
+          "text": "About 2.23."
+        }
+      ],
+      "feedback": {
+        "correct": "$(1.4 \\times 10^{10} + 1.718 \\times 10^{10}) / 1.4 \\times 10^{10} \\approx 2.23$ times as long.",
+        "generic": "Not quite. Compare the bytes read per token.",
+        "byKey": {
+          "cache": "That is the cache over the weights. Add the weights to the cache first.",
+          "same": "The weights are the same, but the cache is read too."
+        }
+      },
+      "explain": {
+        "text": "Each token takes about 2.23 times as long: late in a long conversation every answer reads a 16 GiB cache as well as the weights, so it costs more too. Starting a fresh conversation with a summary resets it.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A causal model never changes an earlier position's keys and values, so a cache of them is exact: each new token computes one row and reads the rest.",
+      "The cache holds $2LdTbB$ bytes: 36 MiB for GPT-2 small at 1,024 tokens in bf16, 2 GiB per sequence for a 7B-like model at 4,096.",
+      "At a batch of 1 each token reads all the weights and the whole cache, so bandwidth sets the speed: 14 GB at 3.3 TB/s is 4.24 ms, about 236 tokens a second."
+    ],
+    "formula": {
+      "name": "KV cache size",
+      "tex": "2 \\times L \\times d \\times T \\times b \\times B",
+      "note": "Layers, width, tokens, bytes a number, batch."
+    },
+    "trap": "Caching the queries: no later token reads them."
+  },
+  "quiz": [
+    {
+      "id": "q-tiny-cache",
+      "difficulty": 2,
+      "question": "The tiny GPT has 1 layer of width 32 and a context of 32, and computes in float64. How many bytes is its full KV cache?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16384,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "keys",
+            "value": 8192,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Bytes"
+      },
+      "feedback": {
+        "correct": "$2 \\times 1 \\times 32 \\times 32 \\times 8 = 16{,}384$ bytes.",
+        "generic": "Not quite. Use $2LdTb$.",
+        "byKey": {
+          "keys": "That counts the keys only."
+        }
+      },
+      "explain": {
+        "text": "$2 \\times 1 \\times 32 \\times 32 \\times 8 = 16{,}384$ bytes: about a ninth of its 144,136 bytes of weights."
+      }
+    },
+    {
+      "id": "q-per-token",
+      "difficulty": 3,
+      "question": "How many bytes does each token add to GPT-2 small's cache (12 layers, width 768) in bf16?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 36864,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "keys",
+            "value": 18432,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "fp32",
+            "value": 73728,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Bytes"
+      },
+      "feedback": {
+        "correct": "$2 \\times 12 \\times 768 \\times 2 = 36{,}864$ bytes a token.",
+        "generic": "Not quite. Use $2Ldb$ for one position.",
+        "byKey": {
+          "keys": "That counts keys only.",
+          "fp32": "That is float32, 4 bytes a number."
+        }
+      },
+      "explain": {
+        "text": "$36{,}864$ bytes a token; times 1,024 tokens it is the 36 MiB of the lesson."
+      }
+    },
+    {
+      "id": "q-cost",
+      "difficulty": 3,
+      "question": "Why does each answer cost more late in a long conversation with a model, at a batch of 1?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cache",
+            "text": "Each token reads the whole cache, which grows with the context",
+            "correct": true
+          },
+          {
+            "id": "weights",
+            "text": "The weights grow as the conversation goes on",
+            "why": "The weights are fixed; the cache grows."
+          },
+          {
+            "id": "recompute",
+            "text": "The model recomputes every earlier token's keys each step",
+            "why": "With a cache it does not; it reads them."
+          },
+          {
+            "id": "flops",
+            "text": "The weight products get larger as the context grows",
+            "why": "The weight products are the same size for every token."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The cache grows with every token and is read for every new one.",
+        "generic": "Not quite. What grows as the conversation goes on?"
+      },
+      "explain": {
+        "text": "Time per token is bytes read over bandwidth, and the bytes read include a cache that grows linearly with the context."
+      }
+    }
+  ]
+}

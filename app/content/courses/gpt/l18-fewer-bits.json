@@ -1,0 +1,1204 @@
+{
+  "id": "l18-fewer-bits",
+  "course": "gpt",
+  "title": "Fewer bits per number",
+  "minutes": 15,
+  "objectives": [
+    "Write bf16 rounding and explain where low precision loses information."
+  ],
+  "skills": [
+    "gpt-hardware"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A total that stops",
+      "prose": "**bf16** is a 16-bit float that keeps 8 significant bits. A loop adds 1 to a total a thousand times, rounding the total to bf16 after every add.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> total = 0.0",
+            ">>> for _ in range(1000):",
+            "...     total = to_bf16(total + 1)",
+            ">>> total",
+            "?"
+          ]
+        }
+      },
+      "question": "What is the total at the end?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 256,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "max",
+            "value": 255,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Total"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "8 significant bits: up to what whole number is every integer stored?"
+        },
+        {
+          "rung": "point",
+          "text": "$2^8 = 256$. Above it the gap is 2.",
+          "highlight": [
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$256 + 1$ sits halfway between 256 and 258."
+        }
+      ],
+      "feedback": {
+        "correct": "The total reaches 256 and stays: $256 + 1$ rounds back to 256.",
+        "generic": "Not quite. Think about the gap between bf16 numbers near 256.",
+        "byKey": {
+          "exact": "That is the exact sum. Each add is rounded to bf16, and above 256 adding 1 is lost.",
+          "max": "255 is stored exactly, and so is 256. The stall comes one step later."
+        }
+      },
+      "explain": {
+        "text": "From 256 on, bf16 numbers are 2 apart. $256 + 1$ is a tie and goes to the even neighbour, 256, so every later add is lost.",
+        "canvas": {
+          "lines": [
+            ">>> total = 0.0",
+            ">>> for _ in range(1000):",
+            "...     total = to_bf16(total + 1)",
+            ">>> total",
+            "256.0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The gaps near 256",
+      "prose": "The dots are the bf16 numbers between 248 and 266: one apart below 256, two apart above it. The blue handle is the exact $256 + 1$. Drag it to where rounding puts it.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 248,
+          "max": 266,
+          "step": 2,
+          "snap": 1,
+          "labels": true
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b248",
+              "x": 248
+            },
+            {
+              "id": "b249",
+              "x": 249
+            },
+            {
+              "id": "b250",
+              "x": 250
+            },
+            {
+              "id": "b251",
+              "x": 251
+            },
+            {
+              "id": "b252",
+              "x": 252
+            },
+            {
+              "id": "b253",
+              "x": 253
+            },
+            {
+              "id": "b254",
+              "x": 254
+            },
+            {
+              "id": "b255",
+              "x": 255
+            },
+            {
+              "id": "b256",
+              "x": 256
+            },
+            {
+              "id": "b258",
+              "x": 258
+            },
+            {
+              "id": "b260",
+              "x": 260
+            },
+            {
+              "id": "b262",
+              "x": 262
+            },
+            {
+              "id": "b264",
+              "x": 264
+            },
+            {
+              "id": "b266",
+              "x": 266
+            },
+            {
+              "id": "s",
+              "x": 257,
+              "label": "256 + 1",
+              "drag": true
+            }
+          ]
+        }
+      },
+      "question": "Drag the handle to the bf16 number that $256 + 1$ rounds to.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "s",
+            "target": 256,
+            "tol": 0.4
+          }
+        ],
+        "wrong": [
+          {
+            "id": "up",
+            "region": {
+              "x": [
+                257.6,
+                258.4
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "257 is exactly halfway between 256 and 258."
+        },
+        {
+          "rung": "point",
+          "text": "A tie goes to the neighbour whose last kept bit is 0, the even one."
+        }
+      ],
+      "feedback": {
+        "correct": "256: the even neighbour. The tie rule is **round to nearest, ties to even**.",
+        "generic": "Not quite. 257 is a tie; which neighbour is even?",
+        "byKey": {
+          "up": "258 is as near as 256, but its last kept bit is 1. Ties go to the even neighbour, 256."
+        }
+      },
+      "explain": {
+        "text": "Rounding takes the nearest stored number and breaks a tie towards the one whose last bit is 0. So 257 becomes 256, and a total of 256 never grows by 1.",
+        "canvas": {
+          "points": {
+            "s": {
+              "x": 256
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Three formats",
+      "prose": "A float stores a sign, an exponent and a mantissa, as `numerics` level 1 showed for the double. Each format below keeps one more significant bit than it stores, the leading 1.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Format",
+            "Sign",
+            "Exponent",
+            "Mantissa",
+            "Gap above 1",
+            "Largest"
+          ],
+          "rows": [
+            [
+              "float32",
+              "1",
+              "8",
+              "23",
+              "$2^{-23}$",
+              "$3.40 \\times 10^{38}$"
+            ],
+            [
+              "bf16",
+              "1",
+              "8",
+              "7",
+              "?",
+              "$3.39 \\times 10^{38}$"
+            ],
+            [
+              "fp16",
+              "1",
+              "5",
+              "10",
+              "$2^{-10}$",
+              "65,504"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What is bf16's machine epsilon, the gap from 1 to the next bf16 number? Give the decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0078125,
+        "tol": {
+          "abs": 1e-09
+        },
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.00390625,
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "id": "fp16",
+            "value": 0.0009765625,
+            "tol": {
+              "abs": 1e-10
+            }
+          }
+        ],
+        "label": "Epsilon"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Seven stored mantissa bits."
+        },
+        {
+          "rung": "point",
+          "text": "The last one is worth $2^{-7}$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2^{-7} = 1/128$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2^{-7} = 0.0078125$: bf16 keeps 8 significant bits, 7 of them stored.",
+        "generic": "Not quite. The last of 7 mantissa bits is worth $2^{-7}$.",
+        "byKey": {
+          "half": "That is half the gap, the most rounding can move a number near 1. The gap itself is $2^{-7}$.",
+          "fp16": "That is fp16's gap, with 10 mantissa bits."
+        }
+      },
+      "explain": {
+        "text": "bf16 has float32's 8 exponent bits and only 7 mantissa bits: $\\epsilon = 2^{-7} = 0.0078125$. fp16 trades exponent for mantissa: $\\epsilon = 2^{-10} \\approx 0.000977$, but its largest number is 65,504.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Round a number near 1",
+      "prose": "Near 1 the bf16 numbers are $1$, $1.0078125$, $1.015625$ and so on. Round $1 + 3 \\times 2^{-8} = 1.01171875$, the orange dot.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0.9921875,
+          "max": 1.03125,
+          "step": 0.0078125,
+          "labels": false
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a",
+              "x": 1,
+              "label": "1"
+            },
+            {
+              "id": "b",
+              "x": 1.0078125,
+              "label": "1.0078125"
+            },
+            {
+              "id": "c",
+              "x": 1.015625,
+              "label": "1.015625"
+            },
+            {
+              "id": "d",
+              "x": 1.0234375,
+              "label": "1.0234375"
+            },
+            {
+              "id": "x",
+              "x": 1.01171875,
+              "label": "?",
+              "colour": 2,
+              "labelPos": "below"
+            }
+          ]
+        }
+      },
+      "question": "What is $1.01171875$ in bf16?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.015625,
+        "tol": {
+          "abs": 1e-09
+        },
+        "wrong": [
+          {
+            "id": "down",
+            "value": 1.0078125,
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "id": "kept",
+            "value": 1.01171875,
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "label": "bf16 value"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does it sit between its neighbours?"
+        },
+        {
+          "rung": "point",
+          "text": "Exactly halfway between 1.0078125 and 1.015625.",
+          "highlight": [
+            "b",
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Which neighbour's last bit is 0?"
+        }
+      ],
+      "feedback": {
+        "correct": "It is a tie, and 1.015625 is the even neighbour ($1 + 2 \\times 2^{-7}$).",
+        "generic": "Not quite. It is a tie: pick the even neighbour.",
+        "byKey": {
+          "down": "That cuts the extra bit off. A tie goes to the even neighbour, which here is above.",
+          "kept": "bf16 cannot hold that: it needs 9 significant bits."
+        }
+      },
+      "explain": {
+        "text": "$1.01171875$ sits halfway; $1.0078125$ ends in an odd bit, $1.015625$ in an even one, so it rounds up. Ties to even rounds half of all ties up and half down, so sums do not drift.",
+        "canvas": {
+          "points": {
+            "x": {
+              "x": 1.015625
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write bf16 rounding",
+      "prose": "bf16 is the top 16 bits of a float32. Read the float32 bits with `np.array(x, dtype=np.float32).view(np.uint32)`. To round, add `0x7FFF` plus the lowest bit you keep, then clear the low 16 bits. Then write the stalled sum and its fix.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Call",
+            "Expect"
+          ],
+          "rows": [
+            [
+              "`to_bf16(1 + 2**-8)`",
+              "1.0"
+            ],
+            [
+              "`to_bf16(3.14159)`",
+              "3.140625"
+            ],
+            [
+              "`bf16_sum([1.0] * 1000)`",
+              "256.0"
+            ],
+            [
+              "`fp32_sum_to_bf16([1.0] * 1000)`",
+              "1000.0"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "Write `to_bf16`, `bf16_sum` and `fp32_sum_to_bf16`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef to_bf16(x):\n    # bits = x's float32 bits as a whole number. Round to the top 16:\n    # add 0x7FFF plus the lowest bit you keep (bit 16), clear the low 16\n    # bits, and return the float32 those bits make, as a Python float.\n    ...\n\n\ndef bf16_sum(xs):\n    # A running total kept in bf16: round after every add.\n    ...\n\n\ndef fp32_sum_to_bf16(xs):\n    # A float32 running total, rounded to bf16 once at the end.\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef to_bf16(x):\n    bits = int(np.array(x, dtype=np.float32).view(np.uint32))\n    bits = (bits + 0x7FFF + ((bits >> 16) & 1)) & 0xFFFF0000\n    return float(np.array(bits, dtype=np.uint32).view(np.float32))\n\n\ndef bf16_sum(xs):\n    total = 0.0\n    for x in xs:\n        total = to_bf16(total + x)\n    return total\n\n\ndef fp32_sum_to_bf16(xs):\n    total = np.float32(0.0)\n    for x in xs:\n        total = np.float32(total + np.float32(x))\n    return to_bf16(float(total))\n",
+        "examples": [
+          {
+            "call": "to_bf16(1.0)",
+            "expect": "1.0",
+            "compare": "equal"
+          },
+          {
+            "call": "to_bf16(1 + 2**-7)",
+            "expect": "1.0078125",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "to_bf16(1 + 2**-7)",
+            "expect": "1.0078125",
+            "compare": "equal"
+          },
+          {
+            "call": "to_bf16(1 + 2**-8)",
+            "expect": "1.0",
+            "compare": "equal"
+          },
+          {
+            "call": "to_bf16(1 + 3 * 2**-8)",
+            "expect": "1.015625",
+            "compare": "equal"
+          },
+          {
+            "call": "[to_bf16(v) for v in (257, 0.1, 3.14159, 1000.3)]",
+            "expect": "[256.0, 0.10009765625, 3.140625, 1000.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "to_bf16(-3.14159)",
+            "expect": "-3.140625",
+            "compare": "equal"
+          },
+          {
+            "call": "bf16_sum([1.0] * 1000)",
+            "expect": "256.0",
+            "compare": "equal"
+          },
+          {
+            "call": "bf16_sum([0.5] * 10)",
+            "expect": "5.0",
+            "compare": "equal"
+          },
+          {
+            "call": "fp32_sum_to_bf16([1.0] * 1000)",
+            "expect": "1000.0",
+            "compare": "equal"
+          },
+          {
+            "call": "fp32_sum_to_bf16([0.25] * 4000)",
+            "expect": "1000.0",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 9 hidden tests, compared exactly. First bf16 values near 1 (two of them ties), four more values and a negative. Then the bf16 running total of a thousand 1s and of ten halves, and the float32 total of a thousand 1s and of four thousand quarters.",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef to_bf16(x):\n    bits = int(np.array(x, dtype=np.float32).view(np.uint32))\n    bits = (bits + 0x8000) & 0xFFFF0000\n    return float(np.array(bits, dtype=np.uint32).view(np.float32))\n\n\ndef bf16_sum(xs):\n    total = 0.0\n    for x in xs:\n        total = to_bf16(total + x)\n    return total\n\n\ndef fp32_sum_to_bf16(xs):\n    total = np.float32(0.0)\n    for x in xs:\n        total = np.float32(total + np.float32(x))\n    return to_bf16(float(total))\n",
+            "test": 2,
+            "symptom": "Rounds every tie up, so 1 + 2^-8 becomes 1.0078125."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef to_bf16(x):\n    bits = int(np.array(x, dtype=np.float32).view(np.uint32))\n    bits = bits & 0xFFFF0000\n    return float(np.array(bits, dtype=np.uint32).view(np.float32))\n\n\ndef bf16_sum(xs):\n    total = 0.0\n    for x in xs:\n        total = to_bf16(total + x)\n    return total\n\n\ndef fp32_sum_to_bf16(xs):\n    total = np.float32(0.0)\n    for x in xs:\n        total = np.float32(total + np.float32(x))\n    return to_bf16(float(total))\n",
+            "test": 3,
+            "symptom": "Cuts the low bits without rounding, so 1 + 3 x 2^-8 drops to 1.0078125."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef to_bf16(x):\n    bits = int(np.array(x, dtype=np.float32).view(np.uint32))\n    bits = (bits + 0x7FFF + ((bits >> 16) & 1)) & 0xFFFF0000\n    return float(np.array(bits, dtype=np.uint32).view(np.float32))\n\n\ndef bf16_sum(xs):\n    total = 0.0\n    for x in xs:\n        total = total + x\n    return total\n\n\ndef fp32_sum_to_bf16(xs):\n    total = np.float32(0.0)\n    for x in xs:\n        total = np.float32(total + np.float32(x))\n    return to_bf16(float(total))\n",
+            "test": 6,
+            "symptom": "Never rounds the running total, so it reaches 1,000."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef to_bf16(x):\n    bits = int(np.array(x, dtype=np.float32).view(np.uint32))\n    bits = (bits + 0x7FFF + ((bits >> 16) & 1)) & 0xFFFF0000\n    return float(np.array(bits, dtype=np.uint32).view(np.float32))\n\n\ndef bf16_sum(xs):\n    total = 0.0\n    for x in xs:\n        total = to_bf16(total + x)\n    return total\n\n\ndef fp32_sum_to_bf16(xs):\n    total = np.float32(0.0)\n    for x in xs:\n        total = to_bf16(float(total) + x)\n    return total\n",
+            "test": 8,
+            "symptom": "Rounds the float32 total to bf16 at every step, so it stalls at 256 again."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Adding 0x7FFF rounds up anything past half."
+        },
+        {
+          "rung": "point",
+          "text": "The lowest kept bit, `(bits >> 16) & 1`, breaks the tie."
+        },
+        {
+          "rung": "step",
+          "text": "The fix keeps the running total in float32."
+        }
+      ],
+      "feedback": {
+        "correct": "Your rounding matches bf16 on every test, ties included, and the float32 total reaches 1,000.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is the tie $1 + 2^{-8}$. Adding a flat half rounds every tie up; add 0x7FFF plus bit 16 instead.",
+          "test-3": "Test 3 is a tie that rounds up. Clearing the low bits alone truncates; add 0x7FFF plus bit 16 first.",
+          "test-6": "Test 6 must stall at 256: round the total to bf16 after every add.",
+          "test-8": "Test 8 keeps the total in float32 and rounds once at the end, so it reaches 1,000."
+        }
+      },
+      "explain": {
+        "text": "Adding 0x7FFF carries into bit 16 exactly when the dropped half is more than half; adding the kept bit as well breaks ties towards even. A float32 accumulator fixes the stalled sum."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Range against precision",
+      "prose": "An activation of 70,000 appears in a forward pass. fp16's largest number is 65,504; bf16 has float32's exponent range, with gaps of 512 near 70,000.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Format",
+            "Largest",
+            "Smallest normal",
+            "70,000 stored as"
+          ],
+          "rows": [
+            [
+              "fp16",
+              "65,504",
+              "$6.10 \\times 10^{-5}$",
+              "?"
+            ],
+            [
+              "bf16",
+              "$3.39 \\times 10^{38}$",
+              "$1.18 \\times 10^{-38}$",
+              "70,144"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What does 70,000 become in fp16?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "inf",
+            "text": "Infinity: it overflows",
+            "correct": true
+          },
+          {
+            "id": "max",
+            "text": "65,504, the largest number",
+            "why": "Rounding to nearest sends anything from 65,520 up to infinity, not to the largest number."
+          },
+          {
+            "id": "same",
+            "text": "70,000, stored exactly",
+            "why": "fp16 cannot hold any number above 65,504."
+          },
+          {
+            "id": "bf",
+            "text": "70,144, as in bf16",
+            "why": "That is bf16's rounding. fp16's five exponent bits stop at 65,504."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare 70,000 with fp16's largest."
+        },
+        {
+          "rung": "point",
+          "text": "70,000 is past 65,504."
+        },
+        {
+          "rung": "step",
+          "text": "Past the last half-gap, fp16 rounds to infinity."
+        }
+      ],
+      "feedback": {
+        "correct": "Infinity. fp16 overflows; bf16 stores 70,144, off by 0.2%.",
+        "generic": "Not quite. Compare 70,000 with 65,504.",
+        "byKey": {
+          "max": "IEEE rounding does not clamp: from 65,520 up the result is infinity, and one infinity makes the loss NaN."
+        }
+      },
+      "explain": {
+        "text": "fp16 runs out of range at 65,504, and below $6.10 \\times 10^{-5}$ it loses bits as subnormals; bf16 has float32's range with coarse gaps. That is why bf16 trains without the care fp16 needs.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Just a less accurate float32",
+      "prose": "A colleague says: \"bf16 is just float32 with less accuracy, so anything that works in float32 works in bf16, a little noisier.\"",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "float32",
+            "bf16"
+          ],
+          "rows": [
+            [
+              "exponent bits",
+              "8",
+              "8"
+            ],
+            [
+              "mantissa bits",
+              "23",
+              "7"
+            ],
+            [
+              "range",
+              "same",
+              "same"
+            ],
+            [
+              "$256 + 1$",
+              "257",
+              "256"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What is wrong with the claim?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "prec",
+            "text": "Same range; it is precision that is lost, and small adds vanish",
+            "correct": true
+          },
+          {
+            "id": "range",
+            "text": "bf16 has a much smaller range than float32",
+            "why": "Both have 8 exponent bits, so the range is the same. fp16 is the one with the small range."
+          },
+          {
+            "id": "noise",
+            "text": "Nothing: rounding errors average out over a training run",
+            "why": "Errors average out only when each step is not lost: adding 1 to 256 loses all of it, every time."
+          },
+          {
+            "id": "same",
+            "text": "bf16 and fp16 are the same format under two names",
+            "why": "fp16 has 5 exponent bits and 10 mantissa bits; bf16 has 8 and 7."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the exponents, then the mantissas."
+        },
+        {
+          "rung": "point",
+          "text": "Same range, fewer bits of precision."
+        },
+        {
+          "rung": "step",
+          "text": "Look at $256 + 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "bf16 keeps float32's range and only 8 significant bits, so a small term added to a large one can vanish rather than add noise.",
+        "generic": "Not quite. Compare what the two formats keep.",
+        "byKey": {
+          "noise": "That is the trap: a lost add is not noise that averages out. The total stuck at 256 never moves again.",
+          "range": "The range is float32's. The precision is what is lost."
+        }
+      },
+      "explain": {
+        "text": "Errors in bf16 are not always small noise: an update below half a gap is lost entirely, every step. Sums and updates need float32 accumulators.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Updates that vanish",
+      "prose": "A weight of 1.0 stored in bf16 gets a thousand updates of $+0.001$ (learning rate times gradient), each rounded to bf16. Half the gap above 1 is $2^{-8} \\approx 0.0039$.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0.9921875,
+          "max": 1.03125,
+          "step": 0.0078125,
+          "labels": false
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a",
+              "x": 1,
+              "label": "1"
+            },
+            {
+              "id": "b",
+              "x": 1.0078125,
+              "label": "1.0078125"
+            },
+            {
+              "id": "u",
+              "x": 1.001,
+              "label": "1.001",
+              "colour": 2,
+              "labelPos": "below"
+            }
+          ]
+        }
+      },
+      "question": "What is the weight after the thousand updates?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Weight"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does $1 + 0.001$ round?"
+        },
+        {
+          "rung": "point",
+          "text": "0.001 is under half the gap."
+        },
+        {
+          "rung": "step",
+          "text": "So each update is lost."
+        }
+      ],
+      "feedback": {
+        "correct": "Still 1.0: each $1 + 0.001$ rounds back to 1.",
+        "generic": "Not quite. Round $1 + 0.001$ to bf16, then repeat.",
+        "byKey": {
+          "exact": "That is the exact sum, which a float32 master copy keeps (about 2.0). In bf16 each update rounds away."
+        }
+      },
+      "explain": {
+        "text": "Every update below half a gap vanishes, so the weight stays at 1. Mixed precision keeps a float32 **master copy** of the weights, applies the update there, and rounds to bf16 only for the next forward pass.",
+        "canvas": {
+          "points": {
+            "u": {
+              "x": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Loss scaling for fp16",
+      "prose": "fp16's smallest positive number is $2^{-24} \\approx 5.96 \\times 10^{-8}$, so a gradient of $2 \\times 10^{-8}$ rounds to 0. Training in fp16 multiplies the loss by a scale $S$ before the backward pass, then divides the gradients by $S$ in float32.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Gradient",
+            "In fp16"
+          ],
+          "rows": [
+            [
+              "$2 \\times 10^{-8}$",
+              "0"
+            ],
+            [
+              "$2 \\times 10^{-8} \\times 4{,}096$",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "With $S = 4{,}096$, what is the scaled gradient, in units of $10^{-5}$? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8.192,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "lost",
+            "value": 0,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Scaled gradient",
+        "scale": 1e-05
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply."
+        },
+        {
+          "rung": "point",
+          "text": "$2 \\times 10^{-8} \\times 4{,}096$."
+        },
+        {
+          "rung": "step",
+          "text": "$8.192 \\times 10^{-5}$, above fp16's smallest normal $6.10 \\times 10^{-5}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$8.192 \\times 10^{-5}$: a normal fp16 number, so the gradient survives.",
+        "generic": "Not quite. Multiply the gradient by the scale.",
+        "byKey": {
+          "lost": "That is the unscaled gradient in fp16. Scaling lifts it into range first."
+        }
+      },
+      "explain": {
+        "text": "Scaling by 4,096 lifts the gradient to $8.192 \\times 10^{-5}$, inside fp16's normal range; the update divides by 4,096 again in float32. bf16 needs none of this: its range is float32's.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Mixed precision",
+      "prose": "The recipe: keep float32 master weights and float32 accumulators; round to bf16 for the matmuls, whose matrix units multiply bf16 and add in float32; apply each update to the master copy. Rounding to $p$ significant bits moves $x$ by at most\n$$|\\mathrm{fl}(x) - x| \\le 2^{-p}|x|.$$",
+      "question": "Why is the master copy kept in float32?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "upd",
+            "text": "So updates smaller than half a bf16 gap are not lost",
+            "correct": true
+          },
+          {
+            "id": "range",
+            "text": "Because bf16 cannot hold weights above 65,504",
+            "why": "That is fp16's limit. bf16 has float32's range."
+          },
+          {
+            "id": "speed",
+            "text": "Because float32 matmuls are faster",
+            "why": "Matrix units are faster in bf16; float32 is kept for accuracy, not speed."
+          },
+          {
+            "id": "mem",
+            "text": "Because it saves memory",
+            "why": "It costs 4 more bytes per parameter. It is kept for accuracy."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Think back to the weight of 1.0 and its updates of 0.001."
+        }
+      ],
+      "feedback": {
+        "correct": "Near 1, a float32 weight keeps updates down to about $2^{-24}$; a bf16 weight loses every update up to $2^{-8}$.",
+        "generic": "Not quite. What happened to the updates of 0.001?"
+      },
+      "explain": {
+        "text": "Low precision is safe for products that a float32 accumulator adds up. It is unsafe for a running total or a weight that takes small updates."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Pennies in float32",
+      "prose": "A risk system keeps a running notional of £12,345,678.91 in float32. It lies between $2^{23}$ and $2^{24}$, where float32 numbers are 1 apart (`numerics` level 1 met the same gap problem near 20,000).",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Store",
+            "Value"
+          ],
+          "rows": [
+            [
+              "exact",
+              "£12,345,678.91"
+            ],
+            [
+              "float32",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "By how many pence does the float32 value differ from the exact one?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "down",
+            "value": 91,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "gap",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Pence"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What are the float32 numbers near it?"
+        },
+        {
+          "rung": "point",
+          "text": "Whole pounds only: 12,345,678 and 12,345,679."
+        },
+        {
+          "rung": "step",
+          "text": "Which is nearer?"
+        }
+      ],
+      "feedback": {
+        "correct": "It is stored as £12,345,679, 9p too high.",
+        "generic": "Not quite. Round to the nearest whole pound.",
+        "byKey": {
+          "down": "That rounds down. 12,345,679 is nearer, 9p away.",
+          "gap": "That is the gap. Rounding moves it at most half a gap, here 9p."
+        }
+      },
+      "explain": {
+        "text": "Above $2^{23}$ float32 holds whole numbers only, so pennies vanish: £12,345,679, 9p from the exact value. A tick price of £101.37 survives in float32, but in bf16, with gaps of 0.5 there, it becomes £101.50."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "bf16 keeps float32's 8 exponent bits and 7 mantissa bits ($\\epsilon = 2^{-7}$); fp16 has 5 and 10 ($\\epsilon = 2^{-10}$, largest 65,504).",
+      "Rounding goes to the nearest number, ties to the even neighbour; an add below half a gap is lost, so a bf16 total of 1s stalls at 256 and fp16 at 2,048.",
+      "Mixed precision keeps float32 master weights and accumulators and rounds to bf16 for the matmuls; fp16 also needs loss scaling."
+    ],
+    "formula": {
+      "name": "Rounding to p significant bits",
+      "tex": "|\\mathrm{fl}(x) - x| \\le 2^{-p}|x|",
+      "note": "bf16: $p = 8$; fp16: $p = 11$; float32: $p = 24$."
+    },
+    "trap": "Treating bf16 as a noisier float32: a small update to a large number is not noise, it is lost."
+  },
+  "quiz": [
+    {
+      "id": "q-fp16-eps",
+      "difficulty": 2,
+      "question": "fp16 stores 10 mantissa bits. What is its machine epsilon? Give the decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0009765625,
+        "tol": {
+          "abs": 1e-10
+        },
+        "wrong": [
+          {
+            "id": "bf",
+            "value": 0.0078125,
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "label": "Epsilon"
+      },
+      "feedback": {
+        "correct": "$2^{-10} = 0.0009765625$.",
+        "generic": "Not quite. The last mantissa bit is worth $2^{-10}$.",
+        "byKey": {
+          "bf": "That is bf16's, with 7 mantissa bits."
+        }
+      },
+      "explain": {
+        "text": "For fp16, $\\epsilon = 2^{-10} = 0.0009765625$, about a thousandth."
+      }
+    },
+    {
+      "id": "q-pi",
+      "difficulty": 3,
+      "question": "Round 3.14159 to bf16. Between 2 and 4 the bf16 numbers are $2^{-6} = 0.015625$ apart. Give the decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.140625,
+        "tol": {
+          "abs": 1e-09
+        },
+        "wrong": [
+          {
+            "id": "up",
+            "value": 3.15625,
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "label": "bf16 value"
+      },
+      "feedback": {
+        "correct": "$3.14159 / 0.015625 \\approx 201.06$, so $201 \\times 0.015625 = 3.140625$.",
+        "generic": "Not quite. Find the nearest multiple of 0.015625.",
+        "byKey": {
+          "up": "That rounds up. 3.14159 is nearer 3.140625."
+        }
+      },
+      "explain": {
+        "text": "$201 \\times 0.015625 = 3.140625$, the nearest bf16 number."
+      }
+    },
+    {
+      "id": "q-fp16-stall",
+      "difficulty": 3,
+      "question": "A counter adds 1 at a time to a total stored in fp16 (11 significant bits). Where does it stop growing?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2048,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "bf",
+            "value": 256,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "max",
+            "value": 65504,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Total"
+      },
+      "feedback": {
+        "correct": "$2^{11} = 2{,}048$: above it fp16 numbers are 2 apart, and $2{,}048 + 1$ rounds back.",
+        "generic": "Not quite. Where does the gap between fp16 numbers become 2?",
+        "byKey": {
+          "bf": "That is bf16, with 8 significant bits.",
+          "max": "That is fp16's largest number. The total stalls long before, once the gap reaches 2."
+        }
+      },
+      "explain": {
+        "text": "With 11 significant bits every integer up to 2,048 is stored; $2{,}049$ is a tie and goes to 2,048."
+      }
+    }
+  ]
+}

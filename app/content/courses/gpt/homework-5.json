@@ -1,0 +1,437 @@
+{
+  "id": "homework-5",
+  "course": "gpt",
+  "level": 5,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-memory-plan",
+      "difficulty": 5,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "title": "A memory plan for any GPT",
+      "prose": "From a blank start, write `memory_plan(config, mode)` for `mode` `'train'` or `'infer'`. `config` holds `V`, `T`, `d`, `n_layer`, `mlp`, `tied`, `bytes` (each weight and gradient), `adam_bytes` (each of Adam's two moments), `master` (bytes of a master copy, 0 for none), `batch` and `context`. Count parameters as in level 4: $Vd + Td$, then $4d^2 + 2d \\cdot \\text{mlp} + 9d + \\text{mlp}$ per block, $2d$ for the final norm, and an untied head $dV + V$.",
+      "question": "Return a dict with the keys `weights`, `grads`, `optimizer` and `kv_cache`, each in bytes. Training holds weights, gradients and optimiser state, no cache; inference holds weights and the cache only.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def memory_plan(config, mode):\n    ...\n",
+        "solution": "def n_params(c):\n    V, T, d, L, m = c[\"V\"], c[\"T\"], c[\"d\"], c[\"n_layer\"], c[\"mlp\"]\n    n = V * d + T * d + L * (4 * d * d + 2 * d * m + 9 * d + m) + 2 * d\n    return n if c[\"tied\"] else n + d * V + V\n\n\ndef memory_plan(config, mode):\n    N, b = n_params(config), config[\"bytes\"]\n    if mode == \"train\":\n        opt = N * (2 * config[\"adam_bytes\"] + config[\"master\"])\n        return {\"weights\": N * b, \"grads\": N * b, \"optimizer\": opt, \"kv_cache\": 0}\n    L, d = config[\"n_layer\"], config[\"d\"]\n    kv = 2 * L * d * config[\"context\"] * b * config[\"batch\"]\n    return {\"weights\": N * b, \"grads\": 0, \"optimizer\": 0, \"kv_cache\": kv}\n",
+        "prelude": "TINY = {'V': 65, 'T': 32, 'd': 32, 'n_layer': 1, 'mlp': 128, 'tied': False, 'bytes': 8, 'adam_bytes': 8, 'master': 0, 'batch': 1, 'context': 32}\nGPT2 = {'V': 50257, 'T': 1024, 'd': 768, 'n_layer': 12, 'mlp': 3072, 'tied': True, 'bytes': 2, 'adam_bytes': 4, 'master': 4, 'batch': 1, 'context': 1024}\nSEVEN = {'V': 32000, 'T': 4096, 'd': 4096, 'n_layer': 32, 'mlp': 16384, 'tied': False, 'bytes': 2, 'adam_bytes': 4, 'master': 4, 'batch': 1, 'context': 4096}\n",
+        "examples": [
+          {
+            "call": "memory_plan(TINY, 'train')['weights']",
+            "expect": "144136",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(memory_plan(GPT2, 'infer'))",
+            "expect": "['grads', 'kv_cache', 'optimizer', 'weights']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "memory_plan(TINY, 'train')",
+            "expect": "{'weights': 144136, 'grads': 144136, 'optimizer': 288272, 'kv_cache': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "memory_plan(TINY, 'infer')",
+            "expect": "{'weights': 144136, 'grads': 0, 'optimizer': 0, 'kv_cache': 16384}",
+            "compare": "equal"
+          },
+          {
+            "call": "memory_plan(SEVEN, 'train')",
+            "expect": "{'weights': 13446232576, 'grads': 13446232576, 'optimizer': 80677395456, 'kv_cache': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "memory_plan(SEVEN, 'infer')",
+            "expect": "{'weights': 13446232576, 'grads': 0, 'optimizer': 0, 'kv_cache': 2147483648}",
+            "compare": "equal"
+          },
+          {
+            "call": "memory_plan(GPT2, 'infer')",
+            "expect": "{'weights': 248879616, 'grads': 0, 'optimizer': 0, 'kv_cache': 37748736}",
+            "compare": "equal"
+          },
+          {
+            "call": "memory_plan(GPT2, 'train')",
+            "expect": "{'weights': 248879616, 'grads': 248879616, 'optimizer': 1493277696, 'kv_cache': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "memory_plan({**SEVEN, 'batch': 16}, 'infer')['kv_cache']",
+            "expect": "34359738368",
+            "compare": "equal"
+          },
+          {
+            "call": "memory_plan({**GPT2, 'tied': False}, 'train')['weights']",
+            "expect": "326174882",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 8 hidden tests, compared exactly. Six are training and inference plans for the tiny GPT, the 7B-like model and GPT-2 small (`TINY`, `SEVEN`, `GPT2` are defined for you). Then the 7B-like cache at a batch of 16, and GPT-2 with an untied head.",
+        "mutants": [
+          {
+            "source": "def n_params(c):\n    V, T, d, L, m = c[\"V\"], c[\"T\"], c[\"d\"], c[\"n_layer\"], c[\"mlp\"]\n    n = V * d + T * d + L * (4 * d * d + 2 * d * m + 9 * d + m) + 2 * d\n    return n if c[\"tied\"] else n + d * V + V\n\n\ndef memory_plan(config, mode):\n    N, b = n_params(config), config[\"bytes\"]\n    if mode == \"train\":\n        opt = N * (2 * config[\"adam_bytes\"] + config[\"master\"])\n        return {\"weights\": N * b, \"grads\": N * b, \"optimizer\": opt, \"kv_cache\": 2 * config[\"n_layer\"] * config[\"d\"] * config[\"context\"] * b}\n    L, d = config[\"n_layer\"], config[\"d\"]\n    kv = 2 * L * d * config[\"context\"] * b * config[\"batch\"]\n    return {\"weights\": N * b, \"grads\": 0, \"optimizer\": 0, \"kv_cache\": kv}\n",
+            "test": 1,
+            "symptom": "Counts a KV cache in training, where none is kept."
+          },
+          {
+            "source": "def n_params(c):\n    V, T, d, L, m = c[\"V\"], c[\"T\"], c[\"d\"], c[\"n_layer\"], c[\"mlp\"]\n    n = V * d + T * d + L * (4 * d * d + 2 * d * m + 9 * d + m) + 2 * d\n    return n if c[\"tied\"] else n + d * V + V\n\n\ndef memory_plan(config, mode):\n    N, b = n_params(config), config[\"bytes\"]\n    if mode == \"train\":\n        opt = N * (2 * config[\"adam_bytes\"] + config[\"master\"])\n        return {\"weights\": N * b, \"grads\": N * b, \"optimizer\": opt, \"kv_cache\": 0}\n    L, d = config[\"n_layer\"], config[\"d\"]\n    kv = L * d * config[\"context\"] * b * config[\"batch\"]\n    return {\"weights\": N * b, \"grads\": 0, \"optimizer\": 0, \"kv_cache\": kv}\n",
+            "test": 2,
+            "symptom": "Caches keys and forgets the values."
+          },
+          {
+            "source": "def n_params(c):\n    V, T, d, L, m = c[\"V\"], c[\"T\"], c[\"d\"], c[\"n_layer\"], c[\"mlp\"]\n    n = V * d + T * d + L * (4 * d * d + 2 * d * m + 9 * d + m) + 2 * d\n    return n if c[\"tied\"] else n + d * V + V\n\n\ndef memory_plan(config, mode):\n    N, b = n_params(config), config[\"bytes\"]\n    if mode == \"train\":\n        opt = N * 2 * config[\"adam_bytes\"]\n        return {\"weights\": N * b, \"grads\": N * b, \"optimizer\": opt, \"kv_cache\": 0}\n    L, d = config[\"n_layer\"], config[\"d\"]\n    kv = 2 * L * d * config[\"context\"] * b * config[\"batch\"]\n    return {\"weights\": N * b, \"grads\": 0, \"optimizer\": 0, \"kv_cache\": kv}\n",
+            "test": 3,
+            "symptom": "Leaves out the float32 master copy."
+          },
+          {
+            "source": "def n_params(c):\n    V, T, d, L, m = c[\"V\"], c[\"T\"], c[\"d\"], c[\"n_layer\"], c[\"mlp\"]\n    n = V * d + T * d + L * (4 * d * d + 2 * d * m + 9 * d + m) + 2 * d\n    return n + d * V + V if c[\"tied\"] else n\n\n\ndef memory_plan(config, mode):\n    N, b = n_params(config), config[\"bytes\"]\n    if mode == \"train\":\n        opt = N * (2 * config[\"adam_bytes\"] + config[\"master\"])\n        return {\"weights\": N * b, \"grads\": N * b, \"optimizer\": opt, \"kv_cache\": 0}\n    L, d = config[\"n_layer\"], config[\"d\"]\n    kv = 2 * L * d * config[\"context\"] * b * config[\"batch\"]\n    return {\"weights\": N * b, \"grads\": 0, \"optimizer\": 0, \"kv_cache\": kv}\n",
+            "test": 1,
+            "symptom": "Swaps tied and untied: counts the head only when it is shared."
+          },
+          {
+            "source": "def n_params(c):\n    V, T, d, L, m = c[\"V\"], c[\"T\"], c[\"d\"], c[\"n_layer\"], c[\"mlp\"]\n    n = V * d + T * d + L * (4 * d * d + 2 * d * m + 9 * d + m) + 2 * d\n    return n + V if c[\"tied\"] else n + d * V + V\n\n\ndef memory_plan(config, mode):\n    N, b = n_params(config), config[\"bytes\"]\n    if mode == \"train\":\n        opt = N * (2 * config[\"adam_bytes\"] + config[\"master\"])\n        return {\"weights\": N * b, \"grads\": N * b, \"optimizer\": opt, \"kv_cache\": 0}\n    L, d = config[\"n_layer\"], config[\"d\"]\n    kv = 2 * L * d * config[\"context\"] * b * config[\"batch\"]\n    return {\"weights\": N * b, \"grads\": 0, \"optimizer\": 0, \"kv_cache\": kv}\n",
+            "test": 5,
+            "symptom": "Gives a tied head its own bias."
+          },
+          {
+            "source": "def n_params(c):\n    V, T, d, L, m = c[\"V\"], c[\"T\"], c[\"d\"], c[\"n_layer\"], c[\"mlp\"]\n    n = V * d + T * d + L * (4 * d * d + 2 * d * m + 9 * d + m) + 2 * d\n    return n if c[\"tied\"] else n + d * V + V\n\n\ndef memory_plan(config, mode):\n    N, b = n_params(config), config[\"bytes\"]\n    if mode == \"train\":\n        opt = N * (2 * config[\"adam_bytes\"] + config[\"master\"])\n        return {\"weights\": N * b, \"grads\": N * b, \"optimizer\": opt, \"kv_cache\": 0}\n    L, d = config[\"n_layer\"], config[\"d\"]\n    kv = 2 * L * d * config[\"context\"] * b\n    return {\"weights\": N * b, \"grads\": 0, \"optimizer\": 0, \"kv_cache\": kv}\n",
+            "test": 7,
+            "symptom": "Sizes one sequence's cache whatever the batch."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Your plans match every configuration in both modes.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 trains the tiny GPT, whose head is untied: count the head ($dV + V$), and keep no KV cache in training.",
+          "test-2": "Test 2 is the tiny GPT serving: its cache is $2 \\times 1 \\times 32 \\times 32 \\times 8$ bytes, keys and values.",
+          "test-3": "Test 3 trains the untied 7B-like model: count its head ($dV + V$), and add the 4-byte master copy to Adam's two moments.",
+          "test-5": "Test 5 serves the tied GPT-2: a tied head reuses the embedding and has no bias of its own.",
+          "test-7": "Test 7 has a batch of 16: every sequence has its own cache."
+        }
+      },
+      "explain": {
+        "text": "The plan is the level in one function: count the parameters, multiply by the bytes each part keeps, and add the cache for serving."
+      },
+      "performance": "code",
+      "pace": 1500
+    },
+    {
+      "id": "h-round-fp16",
+      "difficulty": 4,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "title": "Rounding to bf16 and fp16",
+      "prose": "Use `math.frexp`, not float bits, so one function serves both formats: bf16 is 8 significant bits with exponents up to 127, fp16 11 bits up to 15. Inputs are 0 or at least $2^{-14}$ in size, so subnormals never arise.",
+      "question": "Write `round_float(x, bits, emax)`, then test it as bf16 and fp16.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\ndef round_float(x, bits, emax):\n    # x rounded to `bits` significant bits, ties to even; infinity once\n    # the result reaches 2 ** (emax + 1). math.frexp(abs(x)) gives\n    # (m, e) with abs(x) = m * 2**e and 0.5 <= m < 1.\n    ...\n\n\ndef to_bf16(x):\n    return round_float(x, 8, 127)\n\n\ndef to_fp16(x):\n    return round_float(x, 11, 15)\n",
+        "solution": "import math\n\n\ndef round_float(x, bits, emax):\n    if x == 0 or not math.isfinite(x):\n        return float(x)\n    m, e = math.frexp(abs(x))\n    q = m * 2 ** bits\n    r = math.floor(q)\n    f = q - r\n    if f > 0.5 or (f == 0.5 and r % 2 == 1):\n        r += 1\n    y = math.ldexp(r, e - bits)\n    if y >= 2.0 ** (emax + 1):\n        y = math.inf\n    return math.copysign(y, x)\n\n\ndef to_bf16(x):\n    return round_float(x, 8, 127)\n\n\ndef to_fp16(x):\n    return round_float(x, 11, 15)\n",
+        "examples": [
+          {
+            "call": "to_bf16(1.0)",
+            "expect": "1.0",
+            "compare": "equal"
+          },
+          {
+            "call": "to_fp16(1 + 2**-10)",
+            "expect": "1.0009765625",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round_float(1 + 2**-8, 8, 127)",
+            "expect": "1.0",
+            "compare": "equal"
+          },
+          {
+            "call": "round_float(1 + 3 * 2**-8, 8, 127)",
+            "expect": "1.015625",
+            "compare": "equal"
+          },
+          {
+            "call": "to_fp16(2049)",
+            "expect": "2048.0",
+            "compare": "equal"
+          },
+          {
+            "call": "to_fp16(2051)",
+            "expect": "2052.0",
+            "compare": "equal"
+          },
+          {
+            "call": "to_fp16(65519)",
+            "expect": "65504.0",
+            "compare": "equal"
+          },
+          {
+            "call": "to_fp16(65520) == math.inf",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "to_bf16(-0.1)",
+            "expect": "-0.10009765625",
+            "compare": "equal"
+          },
+          {
+            "call": "[to_fp16(v) for v in (0.1, 3.14159, 1000.3)]",
+            "expect": "[0.0999755859375, 3.140625, 1000.5]",
+            "compare": "equal"
+          },
+          {
+            "call": "to_bf16(0.0)",
+            "expect": "0.0",
+            "compare": "equal"
+          },
+          {
+            "call": "[to_bf16(v) for v in (257.0, 1000.3, 3e38)]",
+            "expect": "[256.0, 1000.0, 3.00405527047391e+38]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 10 hidden tests, compared exactly. Six test ties: two in bf16 near 1, two in fp16 near 2,048, the largest fp16 and the tie that overflows. Then a negative, three fp16 values, zero, and three bf16 values up to $3 \\times 10^{38}$.",
+        "mutants": [
+          {
+            "source": "import math\n\n\ndef round_float(x, bits, emax):\n    if x == 0 or not math.isfinite(x):\n        return float(x)\n    m, e = math.frexp(abs(x))\n    q = m * 2 ** bits\n    r = math.floor(q)\n    f = q - r\n    if f >= 0.5:\n        r += 1\n    y = math.ldexp(r, e - bits)\n    if y >= 2.0 ** (emax + 1):\n        y = math.inf\n    return math.copysign(y, x)\n\n\ndef to_bf16(x):\n    return round_float(x, 8, 127)\n\n\ndef to_fp16(x):\n    return round_float(x, 11, 15)\n",
+            "test": 1,
+            "symptom": "Rounds every tie up."
+          },
+          {
+            "source": "import math\n\n\ndef round_float(x, bits, emax):\n    if x == 0 or not math.isfinite(x):\n        return float(x)\n    m, e = math.frexp(abs(x))\n    q = m * 2 ** bits\n    r = math.floor(q)\n    f = q - r\n    y = math.ldexp(r, e - bits)\n    if y >= 2.0 ** (emax + 1):\n        y = math.inf\n    return math.copysign(y, x)\n\n\ndef to_bf16(x):\n    return round_float(x, 8, 127)\n\n\ndef to_fp16(x):\n    return round_float(x, 11, 15)\n",
+            "test": 2,
+            "symptom": "Truncates instead of rounding."
+          },
+          {
+            "source": "import math\n\n\ndef round_float(x, bits, emax):\n    if x == 0 or not math.isfinite(x):\n        return float(x)\n    m, e = math.frexp(abs(x))\n    q = m * 2 ** bits\n    r = math.floor(q)\n    f = q - r\n    if f > 0.5 or (f == 0.5 and r % 2 == 1):\n        r += 1\n    y = math.ldexp(r, e - bits)\n    return math.copysign(y, x)\n\n\ndef to_bf16(x):\n    return round_float(x, 8, 127)\n\n\ndef to_fp16(x):\n    return round_float(x, 11, 15)\n",
+            "test": 6,
+            "symptom": "Never overflows, so 65,520 becomes 65,536 in fp16."
+          },
+          {
+            "source": "import math\n\n\ndef round_float(x, bits, emax):\n    if x == 0 or not math.isfinite(x):\n        return float(x)\n    m, e = math.frexp(abs(x))\n    q = m * 2 ** bits\n    r = math.floor(q)\n    f = q - r\n    if f > 0.5 or (f == 0.5 and r % 2 == 1):\n        r += 1\n    y = math.ldexp(r, e - bits)\n    if y >= 2.0 ** (emax + 1):\n        y = math.inf\n    return y\n\n\ndef to_bf16(x):\n    return round_float(x, 8, 127)\n\n\ndef to_fp16(x):\n    return round_float(x, 11, 15)\n",
+            "test": 7,
+            "symptom": "Drops the sign."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Your rounding matches NumPy's fp16 and the bit-trick bf16 on every tie.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is a tie: $1 + 2^{-8}$ goes to the even neighbour, 1.",
+          "test-2": "Test 2 is a tie that rounds up, to 1.015625. Round, do not cut.",
+          "test-6": "Test 6: 65,520 is a tie whose even neighbour, 65,536, is past fp16's range, so the answer is infinity.",
+          "test-7": "Test 7 is negative: round the size and put the sign back."
+        }
+      },
+      "explain": {
+        "text": "frexp gives the significand and exponent, so rounding to $p$ bits is rounding $m \\cdot 2^p$ to a whole number, ties to even. The overflow check turns a result past the top exponent into infinity, as fp16 hardware does."
+      }
+    },
+    {
+      "id": "h-intensity-order",
+      "difficulty": 3,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "title": "Deriving a matmul's intensity",
+      "prose": "Put the derivation of a square bf16 matmul's arithmetic intensity in order. Leave out the line that does not belong.",
+      "question": "Order the steps.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "An $n$ by $n$ times $n$ by $n$ product has $n^2$ outputs, each $n$ multiplies and $n$ adds: $2n^3$ FLOPs"
+          },
+          {
+            "id": "s2",
+            "text": "At best it reads two $n$ by $n$ matrices and writes one: $3n^2$ numbers"
+          },
+          {
+            "id": "s3",
+            "text": "In bf16 each number is 2 bytes: $6n^2$ bytes"
+          },
+          {
+            "id": "s4",
+            "text": "Intensity is FLOPs over bytes: $2n^3 / 6n^2 = n/3$"
+          },
+          {
+            "id": "s5",
+            "text": "At $n = 4{,}096$ that is about 1,365, past a ridge of 303: compute-bound"
+          },
+          {
+            "id": "d1",
+            "text": "Each output reads a whole row and column, so the bytes are $2n^3 \\times 2$",
+            "why": "That counts every reuse as a fresh read. A good schedule keeps tiles on the chip and reads each input about once."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "FLOPs, numbers moved, bytes, the ratio, then the verdict.",
+        "generic": "Not quite. Build from FLOPs and bytes to their ratio.",
+        "byKey": {
+          "d1": "That counts every reuse of an input as a new read; with tiles kept on the chip each input is read about once.",
+          "left-out": "Every line but one belongs; put the left-out one back."
+        }
+      },
+      "explain": {
+        "text": "$2n^3$ FLOPs over $6n^2$ bytes is $n/3$. The distractor's count would make every matmul memory-bound, which large ones are not."
+      }
+    },
+    {
+      "id": "h-70b-machine",
+      "difficulty": 4,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "title": "A 70B model on one machine",
+      "question": "Write your answer as you would brief the head of research.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A team wants to run a 70B model for research summaries on one machine with two chips, each with 80 GB of memory and 3.3 TB/s of bandwidth (round, hypothetical figures). The model has 80 layers of width 8,192. What do memory, bandwidth and precision say about the plan, and what should the team try?",
+        "model": "The plan can work, but only at reduced precision, and memory bandwidth will set the speed.\n\n**Memory.** 70 billion parameters in bf16 are 140 GB. The machine's two chips hold 160 GB, leaving about 20 GB for the KV cache and working space. With 80 layers of width 8,192 the cache adds $2 \\times 80 \\times 8{,}192 \\times 2 = 2{,}621{,}440$ bytes per token in bf16. So 20 GB holds about 7,600 tokens in all: one long document, or a few short ones.\n\n**Bandwidth.** At a batch of 1 every token reads all the weights. Split over two chips that each move 3.3 TB/s, 140 GB take about 21 ms: about 47 tokens a second at best. A summary of 1,300 tokens then takes about 28 s, plus the time to read the document in.\n\n**Precision.** In 8 bits the weights are 70 GB: twice the room for the cache and about twice the speed, near 94 tokens a second. In 4 bits, 35 GB fits on one chip. Each step down costs some accuracy, which we must measure on our own summaries, not assume.\n\n**What to try.**\n- Quantise to 8 bits, then 4, and score the summaries against the bf16 model on a fixed set of research documents.\n- Batch the documents: the weights are read once per step for every document in the batch, so throughput rises while each token's latency hardly changes.\n- Cap the context, or summarise long documents in chunks, to keep the cache small.\n- Compare with a smaller model fine-tuned for summaries; it may be good enough and several times faster.\n- Do not train it there: training would need about 1,120 GB.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Sizes the weights (140 GB in bf16) against the 160 GB and what is left for the cache",
+            "required": true
+          },
+          {
+            "points": 2,
+            "text": "Sizes the KV cache per token and the context it allows"
+          },
+          {
+            "points": 2,
+            "text": "Explains that bandwidth sets the speed at a batch of 1 and estimates tokens a second",
+            "required": true
+          },
+          {
+            "points": 2,
+            "text": "Weighs 8-bit or 4-bit weights, with accuracy measured on the team's own summaries"
+          },
+          {
+            "points": 2,
+            "text": "Proposes batching, a capped context or a smaller model, and rules out training on the machine"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model answer and tick the rubric.",
+        "generic": "Compare your answer with the model answer."
+      },
+      "explain": {
+        "text": "Memory decides whether it fits, bandwidth how fast it runs, precision what both cost in accuracy."
+      }
+    },
+    {
+      "id": "h-vanish",
+      "difficulty": 3,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "title": "An update that vanishes",
+      "prose": "A weight of 4.0 is stored in bf16 and takes one update of learning rate times gradient, $+0.01$, rounded to bf16. Between 4 and 8, bf16 numbers are $2^{-5}$ apart.",
+      "question": "What is the weight after the update?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 4.01,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "up",
+            "value": 4.03125,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Weight"
+      },
+      "feedback": {
+        "correct": "Still 4: the update 0.01 is under half the gap, 0.015625.",
+        "generic": "Not quite. Compare the update with half the gap.",
+        "byKey": {
+          "exact": "That is the exact sum, which bf16 cannot hold.",
+          "up": "That is the next bf16 number up; 4.01 is nearer 4."
+        }
+      },
+      "explain": {
+        "text": "Between 4 and 8 the bf16 numbers are $2^{-5} = 0.03125$ apart, so updates under 0.015625 vanish. A float32 master copy keeps them."
+      }
+    },
+    {
+      "id": "h-faster-decode",
+      "difficulty": 3,
+      "skills": [
+        "gpt-hardware"
+      ],
+      "title": "Faster decoding",
+      "question": "Which change most speeds up decoding a 70B model at a batch of 1?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bytes",
+            "text": "Storing the weights in 8 bits on a chip with the same bandwidth",
+            "correct": true
+          },
+          {
+            "id": "flops",
+            "text": "A chip with twice the FLOP/s and the same bandwidth",
+            "why": "Decoding at a batch of 1 is memory-bound: extra FLOP/s go unused."
+          },
+          {
+            "id": "master",
+            "text": "Keeping a float32 master copy of the weights",
+            "why": "That is for training, and it adds bytes rather than removing them."
+          },
+          {
+            "id": "context",
+            "text": "A longer context window",
+            "why": "That grows the cache, so each token reads more."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Half the bytes per token: about twice the tokens a second.",
+        "generic": "Not quite. What sets the time per token at a batch of 1?"
+      },
+      "explain": {
+        "text": "Time per token is the bytes read over the bandwidth, so halving the bytes nearly halves it."
+      }
+    }
+  ]
+}

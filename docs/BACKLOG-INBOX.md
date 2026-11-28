@@ -289,3 +289,7 @@ Raised later (gpt level 2):
 
 Raised later (gpt level 3):
 - `plane` canvas with `yScale: "log"`: a `y` range of 1e-11 to 1 was drawn only from about 1e-9 up (the axis showed the same decades as the `x` range, 1e-9 to 0.1), so the bottom of the float64 error V at 2e-10 was cut off (`gpt/l10-checking-gradients` screens[1]). Workaround: plot log10 of the error on a linear y axis. Ask: honour a log `y` range independently of the x range, or say in the README how the log range is chosen.
+
+Raised later (gpt level 5):
+- `drag-point` on a `plane` with `xScale: "log"`: the target's `tol` is in linear data units, so the roofline's ridge at 303 (`gpt/l17-waiting-for-memory` screens[1]) needs `tol: 40` while a target at 3 on the same axis would need 0.4; a relative tolerance (`tolRel`, or `tol` read in log space on a log axis) would match what the learner sees. Workaround: a hand-sized absolute tolerance.
+- `plane` with log axes: a point label placed automatically sat beside the wrong point, next to a `vlines` label near the ridge (`gpt/l17-waiting-for-memory` screens[3], the 128 matmul's label landed by the 1,024 point). Workaround: `labelPos: "se"` set by hand on two points; points near a reference line could avoid its label as they avoid curves.

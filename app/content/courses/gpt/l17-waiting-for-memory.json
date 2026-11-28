@@ -1,0 +1,1119 @@
+{
+  "id": "l17-waiting-for-memory",
+  "course": "gpt",
+  "title": "Waiting for memory",
+  "minutes": 14,
+  "objectives": [
+    "Compute arithmetic intensity and decide whether an operation is limited by bandwidth or by arithmetic."
+  ],
+  "skills": [
+    "gpt-hardware"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Reading against computing",
+      "prose": "Take a chip that does 1,000 TFLOP/s in bf16 and moves 3.3 TB/s from its memory. It multiplies a 4,096 by 4,096 bf16 matrix by one vector. That is $2 \\times 4{,}096^2 = 33{,}554{,}432$ FLOPs, and the matrix alone is 33,554,432 bytes.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "FLOPs",
+              "33,554,432"
+            ],
+            [
+              "bytes of the matrix",
+              "33,554,432"
+            ],
+            [
+              "peak arithmetic",
+              "$10^{15}$ FLOP/s"
+            ],
+            [
+              "memory bandwidth",
+              "$3.3 \\times 10^{12}$ bytes/s"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many microseconds does reading the matrix take? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10.2,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "arith",
+            "value": 0.03,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "fp32",
+            "value": 20.3,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "Microseconds"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the bytes by the bytes per second."
+        },
+        {
+          "rung": "point",
+          "text": "$33{,}554{,}432 / 3.3 \\times 10^{12}$ seconds.",
+          "highlight": [
+            "r1",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About $1.017 \\times 10^{-5}$ s."
+        }
+      ],
+      "feedback": {
+        "correct": "$33{,}554{,}432 / 3.3 \\times 10^{12} \\approx 10.2$ microseconds. The arithmetic needs only 0.034.",
+        "generic": "Not quite. Divide the bytes by the bandwidth.",
+        "byKey": {
+          "arith": "That is the arithmetic time, FLOPs over $10^{15}$. The question asks how long the reading takes.",
+          "fp32": "You used 4 bytes a number. bf16 takes 2, and the table already gives the bytes."
+        }
+      },
+      "explain": {
+        "text": "Reading takes 10.2 microseconds and the arithmetic 0.034: the chip waits about 300 times longer for memory than it computes.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The roof",
+      "prose": "Plot what the chip can achieve against **arithmetic intensity**, the FLOPs an operation does per byte it moves. Below some intensity the bandwidth limits it: $3.3 \\times 10^{12}$ bytes/s times the intensity. Above it, the 1,000 TFLOP/s peak does. Drag the point along the roof.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.1,
+            10000
+          ],
+          "y": [
+            0.1,
+            2000
+          ],
+          "xScale": "log",
+          "yScale": "log",
+          "height": 320,
+          "xLabel": "Arithmetic intensity (FLOPs per byte)",
+          "yLabel": "TFLOP/s",
+          "functions": [
+            {
+              "id": "roof",
+              "expr": "min(1000, 3.3*x)",
+              "label": "roof",
+              "labelAt": 2000
+            }
+          ],
+          "vlines": [
+            {
+              "id": "ridge",
+              "x": 303,
+              "label": "ridge 303"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "op",
+              "x": 10,
+              "y": 33,
+              "drag": true,
+              "on": "roof",
+              "label": "op"
+            }
+          ],
+          "caption": "Drag the point."
+        },
+        "derive": {
+          "caption": "Intensity {{fixed(op.x, 1)}} FLOPs per byte: at most {{fixed(min(1000, 3.3 * op.x), 1)}} TFLOP/s."
+        }
+      },
+      "question": "Drag the point to where the roof stops rising.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "op",
+            "target": {
+              "on": "roof",
+              "x": 303
+            },
+            "tol": 40
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The sloped part ends where it meets the flat part."
+        }
+      ],
+      "feedback": {
+        "correct": "The corner is at $1{,}000 / 3.3 \\approx 303$ FLOPs per byte: the **ridge point**.",
+        "generic": "Not quite. Find the corner where slope meets flat."
+      },
+      "explain": {
+        "text": "Below 303 FLOPs per byte, memory sets the speed; above it, arithmetic does. The ridge is peak FLOP/s over bandwidth.",
+        "canvas": {
+          "points": {
+            "op": {
+              "x": 303,
+              "y": 1000
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A matrix product's intensity",
+      "prose": "An $n$ by $n$ times $n$ by $n$ product does $2n^3$ FLOPs: $n^2$ outputs, each $n$ multiplies and $n$ adds. It reads two matrices and writes one, $3n^2$ numbers, 2 bytes each in bf16.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$n$",
+            "FLOPs",
+            "Bytes moved",
+            "Intensity"
+          ],
+          "rows": [
+            [
+              "128",
+              "4,194,304",
+              "98,304",
+              "42.7"
+            ],
+            [
+              "1,024",
+              "2,147,483,648",
+              "6,291,456",
+              "?"
+            ]
+          ],
+          "align": [
+            "right",
+            "right",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the arithmetic intensity at $n = 1{,}024$, in FLOPs per byte? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 341.3,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "no-two",
+            "value": 170.7,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "per-number",
+            "value": 682.7,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "inputs",
+            "value": 512,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "FLOPs per byte"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide FLOPs by bytes."
+        },
+        {
+          "rung": "point",
+          "text": "$2n^3 / (3n^2 \\times 2) = n/3$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1{,}024 / 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2{,}147{,}483{,}648 / 6{,}291{,}456 = 1{,}024/3 \\approx 341.3$ FLOPs per byte.",
+        "generic": "Not quite. Divide the FLOPs by the bytes moved.",
+        "byKey": {
+          "no-two": "You counted one FLOP per multiply-add. A multiply and an add are two.",
+          "per-number": "That is FLOPs per number. Each bf16 number is 2 bytes.",
+          "inputs": "You counted only the two inputs. The result is written back too."
+        }
+      },
+      "explain": {
+        "text": "The intensity of a square matmul is $n/3$ in bf16: 341.3 at 1,024. It grows with $n$, because the work grows as $n^3$ and the data as $n^2$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Place them on the roof",
+      "prose": "Four bf16 operations: a matrix-vector product at 4,096 (intensity 0.9995) and square matmuls at 128 (42.7), 1,024 (341.3) and 4,096 (1,365.3). Each point sits at the most the chip allows.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.1,
+            10000
+          ],
+          "y": [
+            0.1,
+            2000
+          ],
+          "xScale": "log",
+          "yScale": "log",
+          "height": 320,
+          "xLabel": "Arithmetic intensity (FLOPs per byte)",
+          "yLabel": "TFLOP/s",
+          "functions": [
+            {
+              "id": "roof",
+              "expr": "min(1000, 3.3*x)",
+              "label": "roof",
+              "labelAt": 2000
+            }
+          ],
+          "vlines": [
+            {
+              "id": "ridge",
+              "x": 303,
+              "label": "ridge 303"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "mv",
+              "x": 0.9995,
+              "y": 3.298,
+              "label": "mat-vec",
+              "labelPos": "se"
+            },
+            {
+              "id": "m128",
+              "x": 42.67,
+              "y": 140.8,
+              "label": "128",
+              "labelPos": "se"
+            },
+            {
+              "id": "m1024",
+              "x": 341.3,
+              "y": 1000,
+              "label": "1,024"
+            },
+            {
+              "id": "m4096",
+              "x": 1365.3,
+              "y": 1000,
+              "label": "4,096"
+            }
+          ]
+        }
+      },
+      "question": "Select all that apply: which operations are memory-bound on this chip?",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "mv",
+          "m128"
+        ],
+        "wrong": [
+          {
+            "id": "only-mv",
+            "set": [
+              "mv"
+            ]
+          },
+          {
+            "id": "all",
+            "set": [
+              "mv",
+              "m128",
+              "m1024",
+              "m4096"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each intensity with the ridge, 303."
+        },
+        {
+          "rung": "point",
+          "text": "Left of the ridge line is memory-bound.",
+          "highlight": [
+            "ridge"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.9995 and 42.7 are below 303."
+        }
+      ],
+      "feedback": {
+        "correct": "The matrix-vector product and the 128 matmul sit on the slope: memory-bound.",
+        "generic": "Not quite. Points left of the ridge are memory-bound.",
+        "byKey": {
+          "only-mv": "The 128 matmul is below 303 too: at 42.7 FLOPs per byte it reaches at most 140.8 TFLOP/s.",
+          "all": "The 1,024 and 4,096 matmuls are past the ridge; they can reach the full 1,000 TFLOP/s."
+        }
+      },
+      "explain": {
+        "text": "Below the ridge an operation reaches only bandwidth times intensity: 3.3 TFLOP/s for the matrix-vector product, 140.8 for the 128 matmul. Large matmuls, the bulk of training, reach the peak.",
+        "canvas": {
+          "highlight": [
+            "mv",
+            "m128"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Batching raises intensity",
+      "prose": "Decoding one token multiplies one vector by each weight matrix: intensity about 1. Serving a batch of $B$ sequences multiplies a $B$ by 4,096 block by the same 4,096 by 4,096 weights, read once.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Batch $B$",
+            "FLOPs",
+            "Bytes moved",
+            "Intensity"
+          ],
+          "rows": [
+            [
+              "1",
+              "$2 \\times 4{,}096^2$",
+              "$(4{,}096^2 + 2 \\times 4{,}096) \\times 2$",
+              "0.9995"
+            ],
+            [
+              "64",
+              "$2 \\times 64 \\times 4{,}096^2$",
+              "$(4{,}096^2 + 2 \\times 64 \\times 4{,}096) \\times 2$",
+              "?"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the intensity at a batch of 64? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 62.1,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "weights-only",
+            "value": 64,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "FLOPs per byte"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "FLOPs over bytes."
+        },
+        {
+          "rung": "point",
+          "text": "It simplifies to $64 \\times 4{,}096 / (4{,}096 + 128)$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$262{,}144 / 4{,}224$."
+        }
+      ],
+      "feedback": {
+        "correct": "$262{,}144 / 4{,}224 \\approx 62.1$ FLOPs per byte, about 62 times the batch of one.",
+        "generic": "Not quite. Divide the FLOPs by the bytes moved.",
+        "byKey": {
+          "weights-only": "You counted only the weights. The 64 input and 64 output rows move too, so a little under 64.",
+          "one": "That is the batch of one. The weights are read once for all 64 rows."
+        }
+      },
+      "explain": {
+        "text": "The weights are read once and used 64 times, so the intensity is about 62.1. On this chip it takes a batch of about 356 to reach the ridge of 303.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the three tools",
+      "prose": "Write `matmul_intensity(m, n, k, bytes_per)` for an $m$ by $k$ times $k$ by $n$ product, and `bound(intensity, peak_flops, bandwidth)`. Then `measure_gflops(n)` times NumPy on your own browser. Its speed is never graded.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Function",
+            "Returns"
+          ],
+          "rows": [
+            [
+              "`matmul_intensity`",
+              "$2mnk / ((mk + kn + mn) \\times \\text{bytes})$"
+            ],
+            [
+              "`bound`",
+              "\"memory\" below the ridge, else \"compute\""
+            ],
+            [
+              "`measure_gflops`",
+              "your browser's GFLOP/s at $n$"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Write the three functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import time\n\nimport numpy as np\n\n\ndef matmul_intensity(m, n, k, bytes_per):\n    # FLOPs of an (m by k) times (k by n) product, over the bytes of\n    # both inputs and the (m by n) result, each number bytes_per bytes.\n    ...\n\n\ndef bound(intensity, peak_flops, bandwidth):\n    # \"memory\" below the ridge peak_flops / bandwidth, else \"compute\".\n    ...\n\n\ndef measure_gflops(n):\n    # Time n by n float64 products for at least 0.05 s; return GFLOP/s.\n    ...\n",
+        "solution": "import time\n\nimport numpy as np\n\n\ndef matmul_intensity(m, n, k, bytes_per):\n    flops = 2 * m * n * k\n    moved = (m * k + k * n + m * n) * bytes_per\n    return flops / moved\n\n\ndef bound(intensity, peak_flops, bandwidth):\n    return \"memory\" if intensity < peak_flops / bandwidth else \"compute\"\n\n\ndef measure_gflops(n):\n    rng = np.random.default_rng(0)\n    a, b = rng.random((n, n)), rng.random((n, n))\n    reps, t0 = 0, time.perf_counter()\n    while True:\n        a @ b\n        reps += 1\n        t = time.perf_counter() - t0\n        if t >= 0.05:\n            return 2 * n ** 3 * reps / t / 1e9\n",
+        "examples": [
+          {
+            "call": "matmul_intensity(2, 2, 2, 1)",
+            "expect": "4 / 3",
+            "compare": "isclose"
+          },
+          {
+            "call": "bound(1.0, 1e15, 3.3e12)",
+            "expect": "'memory'",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "matmul_intensity(1024, 1024, 1024, 2)",
+            "expect": "1024 / 3",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "matmul_intensity(4096, 1, 4096, 2)",
+            "expect": "4096 / 4098",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "matmul_intensity(128, 128, 128, 2)",
+            "expect": "128 / 3",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "matmul_intensity(64, 4096, 4096, 2)",
+            "expect": "262144 / 4224",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "bound(1.0, 1e15, 3.3e12)",
+            "expect": "'memory'",
+            "compare": "equal"
+          },
+          {
+            "call": "bound(1365.3, 1e15, 3.3e12)",
+            "expect": "'compute'",
+            "compare": "equal"
+          },
+          {
+            "call": "bound(200, 4e14, 2e12)",
+            "expect": "'compute'",
+            "compare": "equal"
+          },
+          {
+            "call": "measure_gflops(128) > 0",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "isinstance(measure_gflops(64), float)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 9 hidden tests. Four intensities (cubes of 1,024 and 128, a matrix-vector product, a batch of 64), compared to a relative $10^{-12}$; three verdicts, one exactly at the ridge; then that `measure_gflops` returns a positive float. Its speed is never graded.",
+        "mutants": [
+          {
+            "source": "import time\n\nimport numpy as np\n\n\ndef matmul_intensity(m, n, k, bytes_per):\n    flops = m * n * k\n    moved = (m * k + k * n + m * n) * bytes_per\n    return flops / moved\n\n\ndef bound(intensity, peak_flops, bandwidth):\n    return \"memory\" if intensity < peak_flops / bandwidth else \"compute\"\n\n\ndef measure_gflops(n):\n    rng = np.random.default_rng(0)\n    a, b = rng.random((n, n)), rng.random((n, n))\n    reps, t0 = 0, time.perf_counter()\n    while True:\n        a @ b\n        reps += 1\n        t = time.perf_counter() - t0\n        if t >= 0.05:\n            return 2 * n ** 3 * reps / t / 1e9\n",
+            "test": 1,
+            "symptom": "Counts one FLOP per multiply-add, halving every intensity."
+          },
+          {
+            "source": "import time\n\nimport numpy as np\n\n\ndef matmul_intensity(m, n, k, bytes_per):\n    flops = 2 * m * n * k\n    moved = (m * k + k * n) * bytes_per\n    return flops / moved\n\n\ndef bound(intensity, peak_flops, bandwidth):\n    return \"memory\" if intensity < peak_flops / bandwidth else \"compute\"\n\n\ndef measure_gflops(n):\n    rng = np.random.default_rng(0)\n    a, b = rng.random((n, n)), rng.random((n, n))\n    reps, t0 = 0, time.perf_counter()\n    while True:\n        a @ b\n        reps += 1\n        t = time.perf_counter() - t0\n        if t >= 0.05:\n            return 2 * n ** 3 * reps / t / 1e9\n",
+            "test": 1,
+            "symptom": "Leaves out the bytes of the result."
+          },
+          {
+            "source": "import time\n\nimport numpy as np\n\n\ndef matmul_intensity(m, n, k, bytes_per):\n    flops = 2 * m * n * k\n    moved = (m * k + k * n + m * n) * bytes_per\n    return flops / moved\n\n\ndef bound(intensity, peak_flops, bandwidth):\n    return \"memory\" if intensity < bandwidth / peak_flops else \"compute\"\n\n\ndef measure_gflops(n):\n    rng = np.random.default_rng(0)\n    a, b = rng.random((n, n)), rng.random((n, n))\n    reps, t0 = 0, time.perf_counter()\n    while True:\n        a @ b\n        reps += 1\n        t = time.perf_counter() - t0\n        if t >= 0.05:\n            return 2 * n ** 3 * reps / t / 1e9\n",
+            "test": 5,
+            "symptom": "Puts the ridge at bandwidth over peak, so nearly everything reads as compute-bound."
+          },
+          {
+            "source": "import time\n\nimport numpy as np\n\n\ndef matmul_intensity(m, n, k, bytes_per):\n    flops = 2 * m * n * k\n    moved = (m * k + k * n + m * n) * bytes_per\n    return flops / moved\n\n\ndef bound(intensity, peak_flops, bandwidth):\n    return \"memory\" if intensity <= peak_flops / bandwidth else \"compute\"\n\n\ndef measure_gflops(n):\n    rng = np.random.default_rng(0)\n    a, b = rng.random((n, n)), rng.random((n, n))\n    reps, t0 = 0, time.perf_counter()\n    while True:\n        a @ b\n        reps += 1\n        t = time.perf_counter() - t0\n        if t >= 0.05:\n            return 2 * n ** 3 * reps / t / 1e9\n",
+            "test": 7,
+            "symptom": "Calls an operation exactly at the ridge memory-bound."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "FLOPs: two per multiply-add."
+        },
+        {
+          "rung": "point",
+          "text": "Bytes: both inputs and the result."
+        },
+        {
+          "rung": "step",
+          "text": "Ridge: peak over bandwidth; at it, compute."
+        }
+      ],
+      "feedback": {
+        "correct": "Your intensities and verdicts match. Try `measure_gflops(256)` and `measure_gflops(512)`: the timing spike measured 2.1 and 0.7 GFLOP/s.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is a cube of 1,024 in bf16: two FLOPs per multiply-add, and the bytes of both inputs and the result. It should be $1{,}024/3$.",
+          "test-5": "Test 5 has intensity 1 on the chip of this lesson. The ridge is the peak over the bandwidth, about 303.",
+          "test-7": "Test 7 sits exactly on the ridge, 200. At the ridge the chip reaches its peak, so call it compute-bound."
+        }
+      },
+      "explain": {
+        "text": "The spike measured 2.1 GFLOP/s at 256 and 0.7 at 512: Pyodide's NumPy has no tuned matrix library and one thread. The slow browser and the fast chip obey the same arithmetic."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A faster chip for decoding",
+      "prose": "A 7-billion-parameter model in bf16 has 14 GB of weights, and decoding one token at a batch of 1 reads all of them. A second chip doubles the peak to 2,000 TFLOP/s but keeps 3.3 TB/s.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Chip",
+            "Peak",
+            "Bandwidth"
+          ],
+          "rows": [
+            [
+              "first",
+              "1,000 TFLOP/s",
+              "3.3 TB/s"
+            ],
+            [
+              "second",
+              "2,000 TFLOP/s",
+              "3.3 TB/s"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "How does the time per token change on the second chip?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "It stays about 4.24 ms: the bandwidth sets it",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "It halves, to about 2.12 ms",
+            "why": "That would need twice the bandwidth. Each token's time is the 14 GB read at 3.3 TB/s."
+          },
+          {
+            "id": "quarter",
+            "text": "It falls to a quarter",
+            "why": "Neither the bytes nor the bandwidth changed."
+          },
+          {
+            "id": "worse",
+            "text": "It rises, because the bigger chip runs hotter",
+            "why": "Nothing in the arithmetic says so; the bytes and the bandwidth are the same."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What limits a batch-1 token: FLOPs or bytes?"
+        },
+        {
+          "rung": "point",
+          "text": "Its intensity is about 1, far below the ridge."
+        },
+        {
+          "rung": "step",
+          "text": "$14 \\times 10^9 / 3.3 \\times 10^{12}$ s."
+        }
+      ],
+      "feedback": {
+        "correct": "$14 \\times 10^9 / 3.3 \\times 10^{12} \\approx 4.24$ ms on both chips. Only more bandwidth, fewer bytes or a larger batch help.",
+        "generic": "Not quite. Work out what limits one token's time.",
+        "byKey": {
+          "half": "That is the trap: more FLOP/s does not help a memory-bound operation. The 14 GB still take 4.24 ms to read."
+        }
+      },
+      "explain": {
+        "text": "Decoding at a batch of 1 is memory-bound, so the peak hardly matters: 4.24 ms a token on either chip, about 236 tokens a second.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Too small for either line",
+      "prose": "Suppose the chip takes about 5 microseconds to start any operation (a round, hypothetical figure). A 4 by 4 bf16 matmul does 128 FLOPs and moves 96 bytes: 0.000128 nanoseconds of arithmetic and 0.029 of reading.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Cost",
+            "Time"
+          ],
+          "rows": [
+            [
+              "arithmetic",
+              "0.000128 ns"
+            ],
+            [
+              "reading",
+              "0.029 ns"
+            ],
+            [
+              "starting the operation",
+              "5,000 ns"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What sets the time of the 4 by 4 matmul?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "over",
+            "text": "The fixed cost of starting it",
+            "correct": true
+          },
+          {
+            "id": "mem",
+            "text": "The bandwidth, since its intensity is 1.33",
+            "why": "Reading takes 0.029 ns, far less than the 5,000 ns start."
+          },
+          {
+            "id": "comp",
+            "text": "The peak FLOP/s",
+            "why": "The arithmetic takes 0.000128 ns."
+          },
+          {
+            "id": "both",
+            "text": "The two lines together, as the roof says",
+            "why": "The roof models arithmetic and memory only. Here a third cost dominates."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the three times."
+        },
+        {
+          "rung": "point",
+          "text": "Which is largest by far?"
+        },
+        {
+          "rung": "step",
+          "text": "5,000 ns against fractions of a nanosecond."
+        }
+      ],
+      "feedback": {
+        "correct": "The start-up cost dwarfs both: a tiny operation sits under neither line of the roof.",
+        "generic": "Not quite. Compare the three times in the table.",
+        "byKey": {
+          "mem": "Its intensity is low, but the reading takes 0.029 ns. The fixed start-up cost is far larger."
+        }
+      },
+      "explain": {
+        "text": "The roof assumes an operation large enough to hide fixed costs. Tiny operations are bound by overheads, which is why work is fused into larger kernels and batched.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The roofline rule",
+      "prose": "An operation that does $F$ FLOPs and moves $B$ bytes takes at least\n$$t = \\max\\left(\\frac{F}{\\text{peak}}, \\frac{B}{\\text{bandwidth}}\\right).$$\nWith intensity $I = F/B$, it reaches at most $\\min(\\text{peak}, I \\times \\text{bandwidth})$. The ridge is $\\text{peak}/\\text{bandwidth}$.",
+      "question": "On the chip of this lesson, what is the most an operation of intensity 50 can reach?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "165 TFLOP/s",
+            "correct": true
+          },
+          {
+            "id": "peak",
+            "text": "1,000 TFLOP/s",
+            "why": "50 is below the ridge of 303, so bandwidth caps it."
+          },
+          {
+            "id": "div",
+            "text": "6.06 TFLOP/s",
+            "why": "You divided 1,000 by 165. Multiply the intensity by the bandwidth."
+          },
+          {
+            "id": "fifty",
+            "text": "50 TFLOP/s",
+            "why": "That is the intensity itself, in FLOPs per byte."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\min(1{,}000, 50 \\times 3.3)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$50 \\times 3.3 = 165$ TFLOP/s, under the peak.",
+        "generic": "Not quite. Take the smaller of the peak and intensity times bandwidth."
+      },
+      "explain": {
+        "text": "Intensity 50 is on the slope: $50 \\times 3.3 = 165$ TFLOP/s at most."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A signal over a billion returns",
+      "prose": "A research laptop multiplies each of $10^9$ float64 returns by a float64 weight and sums: 2 FLOPs and 16 bytes per return. Assume it reads memory at 50 GB/s and computes at 100 GFLOP/s (round, hypothetical figures).",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "FLOPs",
+              "$2 \\times 10^9$"
+            ],
+            [
+              "bytes",
+              "$1.6 \\times 10^{10}$"
+            ],
+            [
+              "bandwidth",
+              "50 GB/s"
+            ],
+            [
+              "arithmetic",
+              "100 GFLOP/s"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "At least how many seconds does the pass take? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.32,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "arith",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.16,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "Seconds"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out both times."
+        },
+        {
+          "rung": "point",
+          "text": "Reading: $1.6 \\times 10^{10} / 5 \\times 10^{10}$."
+        },
+        {
+          "rung": "step",
+          "text": "Arithmetic: $2 \\times 10^9 / 10^{11} = 0.02$ s."
+        }
+      ],
+      "feedback": {
+        "correct": "Reading takes $1.6 \\times 10^{10} / 5 \\times 10^{10} = 0.32$ s and the arithmetic 0.02 s: memory sets it.",
+        "generic": "Not quite. Take the larger of the two times.",
+        "byKey": {
+          "arith": "That is the arithmetic time. The pass also has to read 16 GB.",
+          "half": "That would be float32, 8 bytes a pair. These are float64."
+        }
+      },
+      "explain": {
+        "text": "At 0.125 FLOPs per byte the pass is memory-bound: 0.32 s. Storing the returns as float32 nearly halves it; a faster core does nothing. A Python loop over a list is slower still: on 64-bit CPython each number is a 24-byte object behind an 8-byte pointer, 32 bytes against an array's 8."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "An operation's time is at least the larger of FLOPs over peak and bytes over bandwidth; its **arithmetic intensity** is FLOPs per byte.",
+      "Below the ridge (peak over bandwidth, 303 FLOPs per byte for the chip here) an operation is memory-bound: decoding one token, intensity about 1. A square bf16 matmul has intensity $n/3$.",
+      "Batching reuses each weight read, so the intensity rises about in proportion to the batch; a faster peak does nothing for a memory-bound operation."
+    ],
+    "formula": {
+      "name": "Roofline",
+      "tex": "\\text{attainable} = \\min(\\text{peak},\\ I \\times \\text{bandwidth}), \\quad I = \\frac{\\text{FLOPs}}{\\text{bytes}}",
+      "note": "Ridge at $I = \\text{peak}/\\text{bandwidth}$."
+    },
+    "trap": "Buying more FLOP/s to speed up decoding at a batch of 1: only bandwidth, fewer bytes or batching help."
+  },
+  "quiz": [
+    {
+      "id": "q-intensity-2048",
+      "difficulty": 2,
+      "question": "What is the arithmetic intensity of a 2,048 by 2,048 by 2,048 matmul in bf16, in FLOPs per byte? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 682.7,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "fp32",
+            "value": 341.3,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "FLOPs per byte"
+      },
+      "feedback": {
+        "correct": "$2{,}048/3 \\approx 682.7$.",
+        "generic": "Not quite. Use $n/3$ for a square bf16 matmul.",
+        "byKey": {
+          "fp32": "That is $n/6$, for 4-byte numbers. bf16 is 2 bytes."
+        }
+      },
+      "explain": {
+        "text": "$2n^3 / (6n^2) = n/3 = 682.7$ FLOPs per byte."
+      }
+    },
+    {
+      "id": "q-ridge",
+      "difficulty": 2,
+      "question": "A chip peaks at 400 TFLOP/s and moves 2 TB/s. Where is its ridge point, in FLOPs per byte?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 200,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "inv",
+            "value": 0.005,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "FLOPs per byte"
+      },
+      "feedback": {
+        "correct": "$400 / 2 = 200$ FLOPs per byte.",
+        "generic": "Not quite. Divide the peak by the bandwidth.",
+        "byKey": {
+          "inv": "You divided the bandwidth by the peak."
+        }
+      },
+      "explain": {
+        "text": "The ridge is peak over bandwidth: 200 FLOPs per byte."
+      }
+    },
+    {
+      "id": "q-browser",
+      "difficulty": 3,
+      "question": "The timing spike measured 2.1 GFLOP/s for matmuls in the browser. At that rate, how many milliseconds does a 128 by 128 by 128 matmul take? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.0,
+        "tol": {
+          "abs": 0.05
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ],
+        "label": "Milliseconds"
+      },
+      "feedback": {
+        "correct": "$2 \\times 128^3 = 4{,}194{,}304$ FLOPs, over $2.1 \\times 10^9$: about 2.0 ms.",
+        "generic": "Not quite. Count $2n^3$ FLOPs and divide by the rate.",
+        "byKey": {
+          "one": "You counted $n^3$ FLOPs. A multiply and an add are two."
+        }
+      },
+      "explain": {
+        "text": "$4{,}194{,}304 / 2.1 \\times 10^9 \\approx 2.0$ ms."
+      }
+    }
+  ]
+}
