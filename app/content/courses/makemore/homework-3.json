@@ -1,0 +1,451 @@
+{
+ "id": "homework-3",
+ "course": "makemore",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-choose",
+   "difficulty": 5,
+   "skills": [
+    "mk-eval"
+   ],
+   "prose": "An honest comparison in code. Each model is a `prob_fn(context)` returning 27 chances; the loss is the course’s average $-\\ln p$ over every next symbol with a context of three. `toy`, `flat` (equal chances), `bigram` (add-one counts from the training names) and `mlp` (the supplied weights) are ready.",
+   "question": "Write `avg_loss(prob_fn, words)` and `evaluate_and_choose(models, dev, test)`: choose by dev loss, then score only the chosen model, once, on test.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef avg_loss(prob_fn, words):\n    # average -ln p of every next symbol, context of 3, as in the course\n    ...\n\n\ndef evaluate_and_choose(models, dev, test):\n    # models: name -> prob_fn. Choose the least dev loss, then score that model\n    # once on test. Return (name, test loss rounded to 4 places), or (name, None)\n    # when test is empty.\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef avg_loss(prob_fn, words):\n    total, n = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = INDEX[ch]\n            total -= math.log(prob_fn(context)[ix])\n            n += 1\n            context = context[1:] + [ix]\n    return total / n\n\n\ndef evaluate_and_choose(models, dev, test):\n    best = min(models, key=lambda name: avg_loss(models[name], dev))\n    if not test:\n        return (best, None)\n    return (best, round(avg_loss(models[best], test), 4))\n",
+    "examples": [
+     {
+      "call": "evaluate_and_choose({'flat': flat}, ['ab'], ['ab'])",
+      "expect": "('flat', 3.2958)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "evaluate_and_choose({'toy': toy, 'flat': flat}, ['ab', 'ca'], ['ba'])",
+      "expect": "('toy', 0.9378)",
+      "compare": "equal"
+     },
+     {
+      "call": "evaluate_and_choose({'flat': flat, 'bigram': bigram}, dev500, test500)",
+      "expect": "('bigram', 2.4552)",
+      "compare": "equal"
+     },
+     {
+      "call": "evaluate_and_choose({'bigram': bigram, 'mlp': mlp}, dev500, test500)",
+      "expect": "('mlp', 2.1521)",
+      "compare": "equal"
+     },
+     {
+      "call": "test_calls({'bigram': bigram, 'mlp': mlp}, dev500[:50], test500[:20])",
+      "expect": "[0, 140]",
+      "compare": "equal"
+     },
+     {
+      "call": "evaluate_and_choose({'bigram': bigram, 'mlp': mlp}, dev500, [])",
+      "expect": "('mlp', None)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. Three compare models: the planted `toy` against equal chances, equal chances against the add-one `bigram`, and the `bigram` against the trained `mlp` on the first 500 dev and 500 test names (`dev500`, `test500`). One counts how many test contexts each model is asked about (only the chosen one may be), and the last passes an empty test list.",
+    "prelude": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n_ROWS = {0: [0, 0.5, 0.3, 0.2], 1: [0.4, 0.1, 0.3, 0.2], 2: [0.3, 0.5, 0.0, 0.2], 3: [0.6, 0.2, 0.2, 0.0]}\n\n\ndef toy(context):\n    # a planted model over ., a, b, c that looks only at the last symbol\n    return np.array(_ROWS[context[-1]] + [0.0] * 23)\n\n\ndef only_a(context):\n    # a model that never ends a name\n    p = np.zeros(27)\n    p[1] = 1.0\n    return p\n\n\ndef tenths(context):\n    # ten letters at 0.1 each: the running total ends at 0.9999999999999999\n    p = np.zeros(27)\n    p[17:27] = 0.1\n    return p\n\n\nclass FixedU:\n    # stands in for a generator: hands out the given u values in turn\n    def __init__(self, us):\n        self.us = list(us)\n\n    def random(self):\n        return self.us.pop(0)\n\nimport json\n_W = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\n\n\ndef mlp_logits(context):\n    e = _W[\"C\"][np.array(context)].reshape(-1)\n    return np.tanh(e @ _W[\"W1\"] + _W[\"b1\"]) @ _W[\"W2\"] + _W[\"b2\"]\n\n\ndef mlp(context):\n    z = mlp_logits(context)\n    p = np.exp(z - z.max())\n    return p / p.sum()\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain = [words[i] for i in perm[:25626]]\ndev500 = [words[i] for i in perm[25626:28829]][:500]\ntest500 = [words[i] for i in perm[28829:]][:500]\n_N = np.zeros((27, 27))\nfor _w in train:\n    _s = \".\" + _w + \".\"\n    for _a, _b in zip(_s, _s[1:]):\n        _N[SYMBOLS.index(_a), SYMBOLS.index(_b)] += 1\n_P = (_N + 1) / (_N + 1).sum(axis=1, keepdims=True)\n\n\ndef bigram(context):\n    return _P[context[-1]]\n\n\ndef flat(context):\n    return np.full(27, 1 / 27)\n\n\nclass Counted:\n    # wraps a model and counts how many contexts it is asked about\n    def __init__(self, fn):\n        self.fn, self.calls = fn, 0\n\n    def __call__(self, context):\n        self.calls += 1\n        return self.fn(context)\n\n\n\ndef test_calls(models, dev, test):\n    # contexts each model is asked about on the test names alone\n    a = {k: Counted(v) for k, v in models.items()}\n    evaluate_and_choose(a, dev, [])\n    b = {k: Counted(v) for k, v in models.items()}\n    evaluate_and_choose(b, dev, test)\n    return sorted(b[k].calls - a[k].calls for k in models)\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt",
+     "makemore-mlp.json": "content/data/ai/makemore-mlp.json"
+    },
+    "budget": 8000,
+    "mutants": [
+     {
+      "source": "import math\nimport numpy as np\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef avg_loss(prob_fn, words):\n    total, n = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = INDEX[ch]\n            total -= math.log(prob_fn(context)[ix])\n            n += 1\n            context = context[1:] + [ix]\n    return total / n\n\n\ndef evaluate_and_choose(models, dev, test):\n    best = min(models, key=lambda name: avg_loss(models[name], test or dev))\n    if not test:\n        return (best, None)\n    return (best, round(avg_loss(models[best], test), 4))\n",
+      "test": 4,
+      "symptom": "Chooses on the test names: the hold-out is no longer held out."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef avg_loss(prob_fn, words):\n    total, n = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = INDEX[ch]\n            total -= math.log(prob_fn(context)[ix])\n            n += 1\n            context = context[1:] + [ix]\n    return total / n\n\n\ndef evaluate_and_choose(models, dev, test):\n    best = max(models, key=lambda name: avg_loss(models[name], dev))\n    if not test:\n        return (best, None)\n    return (best, round(avg_loss(models[best], test), 4))\n",
+      "test": 1,
+      "symptom": "Keeps the model with the largest dev loss."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef avg_loss(prob_fn, words):\n    total, n = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = INDEX[ch]\n            total -= math.log(prob_fn(context)[ix])\n            n += 1\n            context = context[1:] + [ix]\n    return total / n\n\n\ndef evaluate_and_choose(models, dev, test):\n    best = min(models, key=lambda name: avg_loss(models[name], dev))\n    if not test:\n        return (best, None)\n    scores = {k: avg_loss(f, test) for k, f in models.items()}\n    return (best, round(scores[best], 4))\n",
+      "test": 4,
+      "symptom": "Scores every model on test, not just the chosen one."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef avg_loss(prob_fn, words):\n    total, n = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = INDEX[ch]\n            total -= math.log2(prob_fn(context)[ix])\n            n += 1\n            context = context[1:] + [ix]\n    return total / n\n\n\ndef evaluate_and_choose(models, dev, test):\n    best = min(models, key=lambda name: avg_loss(models[name], dev))\n    if not test:\n        return (best, None)\n    return (best, round(avg_loss(models[best], test), 4))\n",
+      "test": 1,
+      "symptom": "Logs in base 2: bits, not nats."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your comparison chooses on dev and touches test once.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-4": "Only the chosen model may see the test names: score the others on dev only."
+    }
+   },
+   "explain": {
+    "text": "Compute every dev loss, keep the least, and only then score that one model on test. On 500 dev and 500 test names the MLP wins and its test loss is reported once."
+   },
+   "title": "Choose on dev, report on test"
+  },
+  {
+   "id": "h-temps",
+   "difficulty": 4,
+   "skills": [
+    "mk-eval"
+   ],
+   "prose": "The supplied MLP’s logits on all 22,807 dev rows come from `batch_logits(Xdev)`.",
+   "question": "Write `dev_losses_at(temps)`: the dev loss with the logits divided by each temperature, rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef dev_losses_at(temps):\n    # the dev loss of the trained MLP with its logits divided by each T,\n    # each rounded to 4 places; batch_logits, Xdev and Ydev are ready\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef dev_losses_at(temps):\n    Z = batch_logits(Xdev)\n    out = []\n    for T in temps:\n        z = Z / T\n        m = z.max(axis=1, keepdims=True)\n        lse = np.log(np.exp(z - m).sum(axis=1)) + m[:, 0]\n        out.append(round(float((lse - z[np.arange(len(Ydev)), Ydev]).mean()), 4))\n    return out\n",
+    "examples": [
+     {
+      "call": "len(dev_losses_at([1, 2]))",
+      "expect": "2",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "dev_losses_at([1])",
+      "expect": "[2.1609]",
+      "compare": "equal"
+     },
+     {
+      "call": "dev_losses_at([0.5, 1, 1.5])",
+      "expect": "[2.5456, 2.1609, 2.2392]",
+      "compare": "equal"
+     },
+     {
+      "call": "dev_losses_at([100])",
+      "expect": "[3.2674]",
+      "compare": "equal"
+     },
+     {
+      "call": "dev_losses_at([0.9, 1.1])",
+      "expect": "[2.1694, 2.165]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests: $T = 1$, the three temperatures 0.5, 1 and 1.5, a very large $T$, and 0.9 and 1.1, each dev loss rounded to 4 places.",
+    "prelude": "import json\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n_W = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\n\n\ndef mlp_logits(context):\n    e = _W[\"C\"][np.array(context)].reshape(-1)\n    return np.tanh(e @ _W[\"W1\"] + _W[\"b1\"]) @ _W[\"W2\"] + _W[\"b2\"]\n\n\ndef mlp(context):\n    z = mlp_logits(context)\n    p = np.exp(z - z.max())\n    return p / p.sum()\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ndev = [words[i] for i in perm[25626:28829]]\nXd, Yd = [], []\nfor w in dev:\n    c = [0, 0, 0]\n    for ch in w + \".\":\n        Xd.append(c)\n        Yd.append(SYMBOLS.index(ch))\n        c = c[1:] + [SYMBOLS.index(ch)]\nXdev, Ydev = np.array(Xd), np.array(Yd)\n\n\ndef batch_logits(X):\n    E = _W[\"C\"][X].reshape(len(X), -1)\n    return np.tanh(E @ _W[\"W1\"] + _W[\"b1\"]) @ _W[\"W2\"] + _W[\"b2\"]\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt",
+     "makemore-mlp.json": "content/data/ai/makemore-mlp.json"
+    },
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef dev_losses_at(temps):\n    Z = batch_logits(Xdev)\n    out = []\n    for T in temps:\n        z = Z * T\n        m = z.max(axis=1, keepdims=True)\n        lse = np.log(np.exp(z - m).sum(axis=1)) + m[:, 0]\n        out.append(round(float((lse - z[np.arange(len(Ydev)), Ydev]).mean()), 4))\n    return out\n",
+      "test": 2,
+      "symptom": "Multiplies the logits by T."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef dev_losses_at(temps):\n    Z = batch_logits(Xdev)\n    out = []\n    for T in temps:\n        z = Z / T\n        m = z.max(axis=1, keepdims=True)\n        lse = np.log(np.exp(z - m).sum(axis=1)) + m[:, 0]\n        out.append(round(float((lse - Z[np.arange(len(Ydev)), Ydev]).mean()), 4))\n    return out\n",
+      "test": 2,
+      "symptom": "Scales the log-sum-exp but not the true logit."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef dev_losses_at(temps):\n    Z = batch_logits(Xdev)\n    out = []\n    for T in temps:\n        z = Z\n        m = z.max(axis=1, keepdims=True)\n        lse = np.log(np.exp(z - m).sum(axis=1)) + m[:, 0]\n        out.append(round(float((lse - z[np.arange(len(Ydev)), Ydev]).mean()), 4))\n    return out\n",
+      "test": 2,
+      "symptom": "Ignores T."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your losses match: least at $T = 1$ of those asked.",
+    "generic": "Not quite. Read the first failing test."
+   },
+   "explain": {
+    "text": "Divide the logits by $T$ before the log-sum-exp and before picking the true logit. The dev loss is 2.5456 at 0.5, 2.1609 at 1 and 2.2392 at 1.5."
+   },
+   "title": "Dev loss and temperature"
+  },
+  {
+   "id": "h-honest",
+   "difficulty": 4,
+   "skills": [
+    "mk-eval"
+   ],
+   "prose": "You compare the bigram and the MLP and want a number you can defend.",
+   "question": "Put the steps of an honest comparison in order, and leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Split the names once, with a fixed seed, into train, dev and test."
+     },
+     {
+      "id": "o2",
+      "text": "Fit each candidate model on the training names only."
+     },
+     {
+      "id": "o3",
+      "text": "Score every candidate and setting on the dev names, and choose."
+     },
+     {
+      "id": "o4",
+      "text": "Score the chosen model once on the test names."
+     },
+     {
+      "id": "o5",
+      "text": "Report that test loss, with what was tried and how many settings."
+     },
+     {
+      "id": "ox",
+      "text": "If the test loss disappoints, adjust the model and score test again.",
+      "why": "Then the test set chooses too, and it is no longer held out."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ],
+    "distractors": [
+     "ox"
+    ]
+   },
+   "feedback": {
+    "correct": "Split, fit on train, choose on dev, test once, report everything.",
+    "generic": "Not quite. Test comes once, last.",
+    "byKey": {
+     "ox": "Re-scoring test after an adjustment makes test a second dev set."
+    }
+   },
+   "explain": {
+    "text": "The test set must play no part in any choice, so it comes after every decision and is scored once. Reporting what was tried lets a reader judge how much choosing went on."
+   },
+   "title": "An honest comparison"
+  },
+  {
+   "id": "h-t2",
+   "difficulty": 3,
+   "skills": [
+    "mk-eval"
+   ],
+   "prose": "Chances 0.64 and 0.36.",
+   "question": "What does the first become at $T = 2$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5714,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "square",
+      "value": 0.7596,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "noscale",
+      "value": 0.8,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.8 / (0.8 + 0.6) = 0.5714$.",
+    "generic": "Not quite. Take square roots, then rescale.",
+    "byKey": {
+     "square": "You squared: that is $T = \\tfrac12$. $T = 2$ takes square roots.",
+     "noscale": "You took the root without rescaling."
+    }
+   },
+   "explain": {
+    "text": "$T = 2$ raises each chance to the power $\\tfrac12$: 0.8 and 0.6, which rescale to 0.5714 and 0.4286. A higher temperature pulls the two together."
+   },
+   "title": "Temperature 2 by hand"
+  },
+  {
+   "id": "h-ckpt-test",
+   "difficulty": 4,
+   "skills": [
+    "mk-eval",
+    "mk-train"
+   ],
+   "prose": "A run saves checkpoints every 1,000 steps. Someone proposes keeping the checkpoint with the least test loss, “to be safe”.",
+   "question": "What should you do instead?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "dev",
+      "text": "Keep the least dev loss, and score only that checkpoint on test, once",
+      "correct": true
+     },
+     {
+      "id": "avg",
+      "text": "Average the dev and test losses and keep the least",
+      "why": "Any use of test in the choice spends the hold-out."
+     },
+     {
+      "id": "last",
+      "text": "Keep the last checkpoint",
+      "why": "The last may be overfitted; the dev loss picks the best."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Choose on dev, test once.",
+    "generic": "Not quite."
+   },
+   "explain": {
+    "text": "Choosing a checkpoint is a setting like any other: dev decides. The test loss of the chosen checkpoint, measured once, is the figure to report."
+   },
+   "title": "Which checkpoint?"
+  },
+  {
+   "id": "h-forty",
+   "difficulty": 5,
+   "skills": [
+    "mk-eval"
+   ],
+   "title": "Forty settings on the test set",
+   "kind": "longform",
+   "prompt": "A colleague reports a test loss of 1.9 nats a letter on names, after trying 40 settings (sizes, step sizes, seeds) and scoring each on the test set. Explain what went wrong, why 1.9 is likely too low, and how you would get an honest number. Say what you would report.",
+   "model": "The test set was used to choose. Each of the 40 test scores is the model's true loss on new names plus noise from which 3,204 names happen to be in the test set. Picking the least of 40 picks the most favourable noise, so 1.9 is biased low: the test set is no longer held out, in the words of testing level 3.\n\nHow large is the bias? Our own bigram scored 2.4514 on dev and 2.4702 on test with no change at all, and five batch seeds of one MLP run span 0.016 nats. With 40 draws the best can easily sit a few hundredths below the truth, and more if the settings differ more.\n\nAn honest number: start again from the split. Fit every setting on the training names, score all 40 on the dev names, and choose the best there. Then score the chosen model once on test names that played no part in any choice. If the original test set has already been looked at, it has become a second dev set, so use fresh names, or re-split with names the colleague never scored.\n\nReport that single test loss, say that 40 settings were tried and chosen on dev, and give the dev loss beside it. For scale, our MLP scores 2.1609 on dev and 2.1742 on test; a figure of 1.9 on the same names would need a much better model, not a better choice of seed.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the test set chose the model, so it is no longer held out"
+    },
+    {
+     "points": 2,
+     "text": "Explains the bias: the least of 40 noisy scores is too low"
+    },
+    {
+     "points": 1,
+     "text": "Gives a sense of the noise (dev against test, or seeds)"
+    },
+    {
+     "points": 2,
+     "text": "Choose on dev, then score the chosen model once on test"
+    },
+    {
+     "points": 2,
+     "text": "Notes the used test set is spent: fresh names or a new split are needed"
+    },
+    {
+     "points": 1,
+     "text": "Reports one test loss with the number of settings tried"
+    }
+   ]
+  },
+  {
+   "id": "h-perf",
+   "difficulty": 4,
+   "skills": [
+    "mk-eval"
+   ],
+   "prose": "From a blank start, write the sampler and the loss for any `prob_fn(context)` that returns 27 chances. `toy`, `only_a`, `mlp` and the first 500 dev names `dev500` are ready.",
+   "question": "Write `sample_names(prob_fn, n, seed, T)`, returning `n` names drawn with one `np.random.default_rng(seed)`, and `dev_loss(prob_fn, words)`, the average loss in nats.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef sample_names(prob_fn, n, seed, T):\n    ...\n\n\ndef dev_loss(prob_fn, words):\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_names(prob_fn, n, seed, T):\n    rng = np.random.default_rng(seed)\n    names = []\n    for _ in range(n):\n        context, name = [0, 0, 0], \"\"\n        while len(name) < 20:\n            p = np.asarray(prob_fn(context), dtype=float) ** (1 / T)\n            p = p / p.sum()\n            u = rng.random()\n            ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n            if ix == 0:\n                break\n            name += SYMBOLS[ix]\n            context = context[1:] + [ix]\n        names.append(name)\n    return names\n\n\ndef dev_loss(prob_fn, words):\n    total, count = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = SYMBOLS.index(ch)\n            total -= math.log(prob_fn(context)[ix])\n            count += 1\n            context = context[1:] + [ix]\n    return total / count\n",
+    "examples": [
+     {
+      "call": "len(sample_names(toy, 3, 0, 1.0))",
+      "expect": "3",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "sample_names(toy, 4, 1, 1.0)",
+      "expect": "['bc', 'c', 'ac', 'b']",
+      "compare": "equal"
+     },
+     {
+      "call": "sample_names(toy, 4, 2, 0.5)",
+      "expect": "['a', 'b', 'ab', 'a']",
+      "compare": "equal"
+     },
+     {
+      "call": "sample_names(mlp, 3, 7, 1.0)",
+      "expect": "['mora', 'sarlee', 'daniyahsa']",
+      "compare": "equal"
+     },
+     {
+      "call": "sample_names(mlp, 3, 7, 0.5)",
+      "expect": "['ken', 'arah', 'halee']",
+      "compare": "equal"
+     },
+     {
+      "call": "sample_names(only_a, 2, 0, 1.0)",
+      "expect": "['aaaaaaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaaaaaa']",
+      "compare": "equal"
+     },
+     {
+      "call": "round(dev_loss(toy, [\"ab\", \"ca\"]), 6)",
+      "expect": "1.206043",
+      "compare": "equal"
+     },
+     {
+      "call": "dev_loss(mlp, dev500) < 2.4514",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: the planted `toy` model at two seeds and two temperatures, and the trained `mlp` at seed 7 and temperatures 1 and 0.5. Then come a model that never ends (names stop at 20 letters), the loss of `toy` on two names, and the MLP’s loss on the first 500 dev names below the bigram’s 2.4514. Use one generator per call, the rule `searchsorted(cumsum(p), u, side=\"right\")` capped at 26, and chances to the power $1/T$, rescaled.",
+    "prelude": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n_ROWS = {0: [0, 0.5, 0.3, 0.2], 1: [0.4, 0.1, 0.3, 0.2], 2: [0.3, 0.5, 0.0, 0.2], 3: [0.6, 0.2, 0.2, 0.0]}\n\n\ndef toy(context):\n    # a planted model over ., a, b, c that looks only at the last symbol\n    return np.array(_ROWS[context[-1]] + [0.0] * 23)\n\n\ndef only_a(context):\n    # a model that never ends a name\n    p = np.zeros(27)\n    p[1] = 1.0\n    return p\n\n\ndef tenths(context):\n    # ten letters at 0.1 each: the running total ends at 0.9999999999999999\n    p = np.zeros(27)\n    p[17:27] = 0.1\n    return p\n\n\nclass FixedU:\n    # stands in for a generator: hands out the given u values in turn\n    def __init__(self, us):\n        self.us = list(us)\n\n    def random(self):\n        return self.us.pop(0)\n\nimport json\n_W = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\n\n\ndef mlp_logits(context):\n    e = _W[\"C\"][np.array(context)].reshape(-1)\n    return np.tanh(e @ _W[\"W1\"] + _W[\"b1\"]) @ _W[\"W2\"] + _W[\"b2\"]\n\n\ndef mlp(context):\n    z = mlp_logits(context)\n    p = np.exp(z - z.max())\n    return p / p.sum()\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ndev500 = [words[i] for i in perm[25626:28829]][:500]\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt",
+     "makemore-mlp.json": "content/data/ai/makemore-mlp.json"
+    },
+    "budget": 8000,
+    "mutants": [
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_names(prob_fn, n, seed, T):\n    rng = np.random.default_rng(seed)\n    names = []\n    for _ in range(n):\n        context, name = [0, 0, 0], \"\"\n        while len(name) < 20:\n            p = np.asarray(prob_fn(context), dtype=float) ** T\n            p = p / p.sum()\n            u = rng.random()\n            ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n            if ix == 0:\n                break\n            name += SYMBOLS[ix]\n            context = context[1:] + [ix]\n        names.append(name)\n    return names\n\n\ndef dev_loss(prob_fn, words):\n    total, count = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = SYMBOLS.index(ch)\n            total -= math.log(prob_fn(context)[ix])\n            count += 1\n            context = context[1:] + [ix]\n    return total / count\n",
+      "test": 2,
+      "symptom": "Raises the chances to the power T instead of 1/T."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_names(prob_fn, n, seed, T):\n    names = []\n    for _ in range(n):\n        rng = np.random.default_rng(seed)\n        context, name = [0, 0, 0], \"\"\n        while len(name) < 20:\n            p = np.asarray(prob_fn(context), dtype=float) ** (1 / T)\n            p = p / p.sum()\n            u = rng.random()\n            ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n            if ix == 0:\n                break\n            name += SYMBOLS[ix]\n            context = context[1:] + [ix]\n        names.append(name)\n    return names\n\n\ndef dev_loss(prob_fn, words):\n    total, count = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = SYMBOLS.index(ch)\n            total -= math.log(prob_fn(context)[ix])\n            count += 1\n            context = context[1:] + [ix]\n    return total / count\n",
+      "test": 1,
+      "symptom": "A fresh generator for every name, so every name repeats."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_names(prob_fn, n, seed, T):\n    rng = np.random.default_rng(seed)\n    names = []\n    for _ in range(n):\n        context, name = [0, 0, 0], \"\"\n        while len(name) < 1000:\n            p = np.asarray(prob_fn(context), dtype=float) ** (1 / T)\n            p = p / p.sum()\n            u = rng.random()\n            ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n            if ix == 0:\n                break\n            name += SYMBOLS[ix]\n            context = context[1:] + [ix]\n        names.append(name)\n    return names\n\n\ndef dev_loss(prob_fn, words):\n    total, count = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = SYMBOLS.index(ch)\n            total -= math.log(prob_fn(context)[ix])\n            count += 1\n            context = context[1:] + [ix]\n    return total / count\n",
+      "test": 5,
+      "symptom": "No cap at 20 letters."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_names(prob_fn, n, seed, T):\n    rng = np.random.default_rng(seed)\n    names = []\n    for _ in range(n):\n        context, name = [0, 0, 0], \"\"\n        while len(name) < 20:\n            p = np.asarray(prob_fn(context), dtype=float) ** (1 / T)\n            p = p / p.sum()\n            u = rng.random()\n            ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n            if ix == 0:\n                break\n            name += SYMBOLS[ix]\n            context = context[1:] + [ix]\n        names.append(name)\n    return names\n\n\ndef dev_loss(prob_fn, words):\n    total, count = 0.0, 0\n    for w in words:\n        context = [0, 0, 0]\n        for ch in w + \".\":\n            ix = SYMBOLS.index(ch)\n            total -= math.log2(prob_fn(context)[ix])\n            count += 1\n            context = context[1:] + [ix]\n    return total / count\n",
+      "test": 6,
+      "symptom": "Logs in base 2."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your sampler and loss pass every hidden test.",
+    "generic": "Not quite. Read the first failing test."
+   },
+   "explain": {
+    "text": "For each name start from `[0, 0, 0]`, raise the chances to the power $1/T$ and rescale, draw with the course rule, stop at the end mark or 20 letters. The loss averages $-\\ln p$ of every next symbol."
+   },
+   "title": "Performance task: a sampler",
+   "performance": "code"
+  }
+ ]
+}

@@ -1,0 +1,851 @@
+{
+ "id": "l12-temperature",
+ "course": "makemore",
+ "title": "Temperature",
+ "minutes": 14,
+ "objectives": [
+  "Divide the logits by a temperature and see the trade between safe and varied samples."
+ ],
+ "skills": [
+  "mk-eval"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Three lists",
+   "prose": "The same trained MLP wrote all three lists, with seed 7. Only one setting changed between them.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "MLP samples, seed 7",
+     "lines": [
+      "A: muradu, stie, emjlzonza, mabheuncha, claj",
+      "B: ken, arah, halee, kyris, ana",
+      "C: mora, sarlee, daniyahsa, lacierah, dakole"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Which list was drawn most cautiously, sticking to the likeliest letters?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "B",
+      "text": "B: ken, arah, halee, kyris, ana",
+      "correct": true
+     },
+     {
+      "id": "A",
+      "text": "A, with emjlzonza and mabheuncha",
+      "why": "Those are bold draws: unlikely letters getting their way."
+     },
+     {
+      "id": "C",
+      "text": "C, with daniyahsa and lacierah",
+      "why": "C is the model as trained; B is safer still."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which names are short and common?"
+    },
+    {
+     "rung": "step",
+     "text": "ken, arah, ana: B."
+    }
+   ],
+   "feedback": {
+    "correct": "B: short, common names, the likeliest letters every time.",
+    "generic": "Not quite. Look for the plainest names."
+   },
+   "explain": {
+    "text": "List B keeps to the likeliest letters (ken, ana); list A lets rare letters through (emjlzonza); list C is the model as trained. The setting that moved is the temperature."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Turning the dial",
+   "prose": "Before softmax, divide the logits by a **temperature** $T$. The bars show the model’s first-letter chances after `...` at three temperatures.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "a",
+      "k",
+      "m",
+      "s",
+      "j"
+     ],
+     "yLabel": "Chance",
+     "xLabel": "First letter, context `...`",
+     "yMax": 0.4,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "a": 0.1502,
+      "k": 0.0992,
+      "m": 0.0811,
+      "s": 0.0722,
+      "j": 0.0702
+     },
+     "caption": "T = 1: the five likeliest first letters."
+    },
+    "controls": [
+     {
+      "bind": "temp",
+      "min": 0,
+      "max": 2,
+      "step": 1,
+      "label": "Temperature",
+      "frames": [
+       {
+        "values": {
+         "a": 0.3342,
+         "k": 0.1457,
+         "m": 0.0973,
+         "s": 0.0772,
+         "j": 0.073
+        },
+        "caption": "T = 0.5: the five likeliest first letters."
+       },
+       {
+        "values": {
+         "a": 0.1502,
+         "k": 0.0992,
+         "m": 0.0811,
+         "s": 0.0722,
+         "j": 0.0702
+        },
+        "caption": "T = 1: the five likeliest first letters."
+       },
+       {
+        "values": {
+         "a": 0.0831,
+         "k": 0.0675,
+         "m": 0.061,
+         "s": 0.0576,
+         "j": 0.0568
+        },
+        "caption": "T = 2: the five likeliest first letters."
+       }
+      ],
+      "frameLabels": [
+       "0.5",
+       "1",
+       "2"
+      ],
+      "start": 1
+     }
+    ]
+   },
+   "question": "At $T = 0.5$, what chance does a get? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3342,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Chance of a",
+    "wrong": [
+     {
+      "id": "t1",
+      "value": 0.1502,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "t2",
+      "value": 0.0831,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set the slider to 0.5."
+    },
+    {
+     "rung": "step",
+     "text": "Read the bar for a: 0.3342."
+    }
+   ],
+   "feedback": {
+    "correct": "0.3342: more than double its 0.1502 at $T = 1$.",
+    "generic": "Not quite. Move the slider to 0.5 and read a.",
+    "byKey": {
+     "t1": "That is at $T = 1$. Move the slider to 0.5.",
+     "t2": "That is at $T = 2$."
+    }
+   },
+   "explain": {
+    "text": "Halving the temperature doubles every logit, so the favourite pulls away: a goes from 0.1502 to 0.3342. At $T = 2$ the bars level out and a drops to 0.0831.",
+    "canvas": {
+     "temp": 0
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Temperature as a power",
+   "prose": "Name it: sampling at temperature $T$ uses $\\operatorname{softmax}(z/T)$, which is each chance raised to the power $1/T$ and rescaled. $T < 1$ sharpens, $T > 1$ flattens. If you met AI basics, its “temperature 1/2 squares the chances” is $T = \\tfrac12$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "a",
+      "k",
+      "m",
+      "s",
+      "j"
+     ],
+     "yLabel": "Chance",
+     "xLabel": "First letter, context `...`",
+     "yMax": 0.4,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "a": 0.1502,
+      "k": 0.0992,
+      "m": 0.0811,
+      "s": 0.0722,
+      "j": 0.0702
+     }
+    }
+   },
+   "question": "Chances 0.5, 0.3 and 0.2 at $T = \\tfrac12$: what does the first become? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6579,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "noscale",
+      "value": 0.25,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "root",
+      "value": 0.4154,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Square each chance, then divide by their sum."
+    },
+    {
+     "rung": "step",
+     "text": "$0.25 / (0.25 + 0.09 + 0.04)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.25 / 0.38 = 0.6579$.",
+    "generic": "Not quite. Power $1/T = 2$, then rescale.",
+    "byKey": {
+     "noscale": "You squared but did not rescale: the chances must add to 1.",
+     "root": "That is $T = 2$: square roots flatten. $T = \\tfrac12$ squares."
+    }
+   },
+   "explain": {
+    "text": "$e^{z/T} = (e^{z})^{1/T}$, so dividing logits by $\\tfrac12$ squares the chances: 0.25, 0.09 and 0.04, which rescale to 0.6579, 0.2368 and 0.1053."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The two limits",
+   "prose": "As $T \\to 0$ the largest logit takes all the chance: sampling becomes argmax. As $T$ grows, every logit over $T$ shrinks toward 0. At $T = 100$ the MLP’s dev loss is 3.2674.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "T",
+      "Dev loss"
+     ],
+     "rows": [
+      [
+       "0.5",
+       "2.5456"
+      ],
+      [
+       "0.9",
+       "2.1694"
+      ],
+      [
+       "1",
+       "2.1609"
+      ],
+      [
+       "1.1",
+       "2.1650"
+      ],
+      [
+       "1.5",
+       "2.2392"
+      ],
+      [
+       "2",
+       "2.3630"
+      ],
+      [
+       "100",
+       "3.2674"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "The supplied MLP on the dev names with its logits divided by T."
+    }
+   },
+   "question": "What loss does a very large $T$ approach?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ln27",
+      "text": "$\\ln 27 = 3.2958$: equal chances",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "0: perfect",
+      "why": "Large $T$ throws away what the model knows; 0 needs every chance to be 1."
+     },
+     {
+      "id": "same",
+      "text": "The model’s own loss, 2.1609",
+      "why": "Only $T = 1$ keeps the model as trained."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What are the chances when every logit is near 0?"
+    },
+    {
+     "rung": "step",
+     "text": "All equal, $\\tfrac{1}{27}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln 27$: at $T = 100$ it is already 3.2674.",
+    "generic": "Not quite. Picture all logits divided by a huge number."
+   },
+   "explain": {
+    "text": "Huge $T$ makes all logits near 0, so every symbol gets $\\tfrac{1}{27}$ and the loss tends to $\\ln 27 = 3.2958$; at $T = 100$ it is 3.2674. Tiny $T$ gives argmax, the one-name sampler of l9."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Which T fits best?",
+   "prose": "Divide the trained MLP’s logits by $T$ and score the dev names. The table gives the dev loss for several $T$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "T",
+      "Dev loss"
+     ],
+     "rows": [
+      [
+       "0.5",
+       "2.5456"
+      ],
+      [
+       "0.9",
+       "2.1694"
+      ],
+      [
+       "1",
+       "2.1609"
+      ],
+      [
+       "1.1",
+       "2.1650"
+      ],
+      [
+       "1.5",
+       "2.2392"
+      ],
+      [
+       "2",
+       "2.3630"
+      ],
+      [
+       "100",
+       "3.2674"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "The supplied MLP on the dev names with its logits divided by T."
+    }
+   },
+   "question": "Which temperature gives the least dev loss among those listed?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "1",
+      "text": "$T = 1$",
+      "correct": true
+     },
+     {
+      "id": "09",
+      "text": "$T = 0.9$",
+      "why": "Sharper than trained: 2.1694, above $T = 1$."
+     },
+     {
+      "id": "11",
+      "text": "$T = 1.1$",
+      "why": "Flatter than trained: 2.165, above $T = 1$."
+     },
+     {
+      "id": "05",
+      "text": "$T = 0.5$",
+      "why": "Far too sharp: 2.5456."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the least loss."
+    },
+    {
+     "rung": "step",
+     "text": "$T = 1$ gives 2.1609."
+    }
+   ],
+   "feedback": {
+    "correct": "$T = 1$, 2.1609; a finer search finds the least at 1.01, only 0.00007 lower.",
+    "generic": "Not quite. Pick the least dev loss."
+   },
+   "explain": {
+    "text": "The trained model minimised cross-entropy on training names, so $T = 1$ is close to best on dev too: 2.1609. A grid in steps of 0.01 puts the least at 1.01, a difference of 0.00007 nats, within noise."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A different model?",
+   "prose": "A learner says: “at $T = 0.5$ the model writes better names, so it has become a better model.”",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "MLP samples, seed 7",
+     "lines": [
+      "A: muradu, stie, emjlzonza, mabheuncha, claj",
+      "B: ken, arah, halee, kyris, ana",
+      "C: mora, sarlee, daniyahsa, lacierah, dakole"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "What is wrong with that?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sampling",
+      "text": "Only the sampling changed",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "Nothing: the names look better",
+      "why": "Plainer, not better: on dev the loss rises from 2.1609 to 2.5456."
+     },
+     {
+      "id": "retrain",
+      "text": "It is right only if the model is retrained at 0.5",
+      "why": "Temperature is applied at sampling time; no training is involved."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What changed between the lists?"
+    },
+    {
+     "rung": "step",
+     "text": "Only the division by $T$ before softmax; the weights did not move."
+    }
+   ],
+   "feedback": {
+    "correct": "The weights are unchanged; as a model of names it is worse: 2.5456 against 2.1609.",
+    "generic": "Not quite. Ask what $T$ touches.",
+    "byKey": {
+     "right": "You judged by a handful of samples. The dev loss says the model at $T = 0.5$ predicts names worse."
+    }
+   },
+   "explain": {
+    "text": "$T$ divides the logits after the network has run; the weights do not change. Safer names come at a cost: at $T = 0.5$ the dev loss is 2.5456, because real names include the rarer letters it now starves."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Temperature 1",
+   "prose": "At $T = 1$, $z/T$ is just $z$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "a",
+      "k",
+      "m",
+      "s",
+      "j"
+     ],
+     "yLabel": "Chance",
+     "xLabel": "First letter, context `...`",
+     "yMax": 0.4,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "a": 0.1502,
+      "k": 0.0992,
+      "m": 0.0811,
+      "s": 0.0722,
+      "j": 0.0702
+     }
+    }
+   },
+   "question": "At $T = 1$, what chance does the model give a as a first letter? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1502,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Chance of a",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.3342,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Temperature 1 changes nothing."
+    },
+    {
+     "rung": "step",
+     "text": "The model’s own chance: 0.1502."
+    }
+   ],
+   "feedback": {
+    "correct": "0.1502: the model exactly as trained.",
+    "generic": "Not quite. At $T = 1$ the logits are unchanged.",
+    "byKey": {
+     "half": "That is at $T = 0.5$."
+    }
+   },
+   "explain": {
+    "text": "Dividing by 1 changes no logit, so the chances are the model’s own: a 0.1502. Every loss in this course was measured at $T = 1$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "softmax_t() in code",
+   "prose": "Write `softmax_t(logits, T)`: the softmax of `logits / T` along the last axis, with the largest value taken out first so that logits near 1,000 do not overflow. It must work on one row or on many.",
+   "question": "Write `softmax_t`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef softmax_t(logits, T):\n    # softmax of logits / T along the last axis, safe for large logits\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef softmax_t(logits, T):\n    z = np.asarray(logits, dtype=float) / T\n    z = z - z.max(axis=-1, keepdims=True)\n    e = np.exp(z)\n    return e / e.sum(axis=-1, keepdims=True)\n",
+    "examples": [
+     {
+      "call": "np.round(softmax_t([0.0, 0.0], 3), 6).tolist()",
+      "expect": "[0.5, 0.5]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(softmax_t([2.0, 1.0, 0.0], 1), 6).tolist()",
+      "expect": "[0.665241, 0.244728, 0.090031]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(softmax_t([2.0, 1.0, 0.0], 0.5), 6).tolist()",
+      "expect": "[0.866813, 0.11731, 0.015876]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(softmax_t([[2000.0, 1999.0], [0.0, 3.0]], 2), 6).tolist()",
+      "expect": "[[0.622459, 0.377541], [0.182426, 0.817574]]",
+      "compare": "equal"
+     },
+     {
+      "call": "float(softmax_t([3.0, 1.0, 0.5], 0.01)[0]) > 0.999999",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(np.allclose(softmax_t(np.arange(27.0), 1e6), 1 / 27, atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(np.allclose(softmax_t(np.random.default_rng(4).standard_normal((5, 27)) * 3, 0.7).sum(axis=-1), 1))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: T = 1 and T = 0.5 on three logits (rounded to 6 places), and two rows with logits near 2,000 at T = 2. Then a tiny T (nearly one-hot), a huge T (nearly 1/27 each), and rows of 27 that add to 1.",
+    "prelude": "import numpy as np\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef softmax_t(logits, T):\n    z = np.asarray(logits, dtype=float) * T\n    z = z - z.max(axis=-1, keepdims=True)\n    e = np.exp(z)\n    return e / e.sum(axis=-1, keepdims=True)\n",
+      "test": 2,
+      "symptom": "Multiplies by T, so a low temperature flattens instead of sharpening."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef softmax_t(logits, T):\n    z = np.asarray(logits, dtype=float) / T\n    e = np.exp(z)\n    return e / e.sum(axis=-1, keepdims=True)\n",
+      "test": 3,
+      "symptom": "No maximum taken out: exp(500) overflows."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef softmax_t(logits, T):\n    z = np.asarray(logits, dtype=float) / T\n    z = z - z.max(axis=-1, keepdims=True)\n    e = np.exp(z)\n    return e / e.sum()\n",
+      "test": 3,
+      "symptom": "Normalises over the whole array, not each row."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef softmax_t(logits, T):\n    z = np.asarray(logits, dtype=float)\n    z = z - z.max(axis=-1, keepdims=True)\n    e = np.exp(z)\n    return e / e.sum(axis=-1, keepdims=True)\n",
+      "test": 2,
+      "symptom": "Ignores T."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide by `T` first, then subtract each row’s maximum."
+    },
+    {
+     "rung": "step",
+     "text": "`z.max(axis=-1, keepdims=True)` and `e.sum(axis=-1, keepdims=True)` keep it row by row."
+    }
+   ],
+   "feedback": {
+    "correct": "Your softmax handles every temperature, both limits and huge logits.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "At $T = 0.5$ the chances sharpen: divide the logits by T, do not multiply.",
+     "test-3": "Subtract each row’s maximum before `exp`: 2,000 over 2 is 1,000, and `exp(1000)` overflows."
+    }
+   },
+   "explain": {
+    "text": "Divide by $T$, subtract each row’s maximum, exponentiate and normalise each row. The subtraction changes nothing mathematically and keeps `exp` finite."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Scenarios for a risk report",
+   "prose": "A risk team samples 1,000 market scenarios from a generative model of daily moves to fill a report on tail losses. To make the scenarios look “realistic”, someone sets the temperature to 0.5.",
+   "question": "What does that do to the report?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tails",
+      "text": "It hides the tails",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "It makes the report more accurate",
+      "why": "More typical scenarios, but a tail report needs the rare ones at their true chance."
+     },
+     {
+      "id": "none",
+      "text": "Nothing: the model is the same",
+      "why": "The model is the same, but the samples are not drawn from it any more."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What happens to small chances at $T = 0.5$?"
+    },
+    {
+     "rung": "step",
+     "text": "They are squared: a 1% move becomes about 0.01%, before rescaling."
+    }
+   ],
+   "feedback": {
+    "correct": "It starves the tails, so the report understates tail risk.",
+    "generic": "Not quite. Ask what $T < 1$ does to rare outcomes.",
+    "byKey": {
+     "better": "You preferred typical scenarios. A tail-loss report is about the rare ones, which $T = 0.5$ suppresses."
+    }
+   },
+   "explain": {
+    "text": "$T = \\tfrac12$ squares every chance before rescaling, so a rare crash day becomes far rarer still. A report on tail losses needs $T = 1$, the model’s own chances."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Sampling at temperature $T$ uses $\\operatorname{softmax}(z/T)$: each chance to the power $1/T$, rescaled. $T < 1$ sharpens, $T > 1$ flattens.",
+   "$T \\to 0$ is argmax; very large $T$ tends to equal chances and a loss of $\\ln 27$. The MLP’s dev loss is least near $T = 1$ (2.1609).",
+   "Temperature changes how we sample, not the model: low $T$ writes safe, plain names and starves rare outcomes."
+  ],
+  "formula": {
+   "name": "Temperature",
+   "tex": "p_i(T) = \\dfrac{e^{z_i / T}}{\\sum_j e^{z_j / T}}",
+   "note": "$T = 1$ is the model as trained."
+  },
+  "trap": "Thinking a low temperature makes a better model, or choosing $T$ by how a few samples look."
+ },
+ "quiz": [
+  {
+   "id": "q-sharpen",
+   "difficulty": 2,
+   "question": "What does a temperature below 1 do to the chances?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sharp",
+      "text": "Sharpens them: likely symbols gain, rare ones lose",
+      "correct": true
+     },
+     {
+      "id": "flat",
+      "text": "Flattens them toward equal chances",
+      "why": "That is $T > 1$."
+     },
+     {
+      "id": "none",
+      "text": "Nothing, unless the model is retrained",
+      "why": "It acts at sampling time, on the logits."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "It sharpens the chances.",
+    "generic": "Not quite."
+   },
+   "explain": {
+    "text": "Dividing logits by $T < 1$ stretches their differences, so the favourite gains."
+   }
+  },
+  {
+   "id": "q-square",
+   "difficulty": 3,
+   "prose": "Chances 0.6 and 0.4.",
+   "question": "What does the first become at $T = \\tfrac12$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6923,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "noscale",
+      "value": 0.36,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.36 / (0.36 + 0.16) = 0.6923$.",
+    "generic": "Not quite. Square, then rescale.",
+    "byKey": {
+     "noscale": "You squared without rescaling."
+    }
+   },
+   "explain": {
+    "text": "Squares 0.36 and 0.16 add to 0.52, so the first becomes $0.36 / 0.52 = 0.6923$."
+   }
+  },
+  {
+   "id": "q-pick-t",
+   "difficulty": 3,
+   "question": "How should a temperature be chosen for a model that will be judged on dev loss?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "dev",
+      "text": "By the dev loss",
+      "correct": true
+     },
+     {
+      "id": "look",
+      "text": "By how good a few samples look",
+      "why": "A few samples are noise, and looking good favours plain names, not true chances."
+     },
+     {
+      "id": "low",
+      "text": "As low as possible, for the safest names",
+      "why": "Low $T$ raises the dev loss: 2.5456 at 0.5."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "By the dev loss.",
+    "generic": "Not quite."
+   },
+   "explain": {
+    "text": "The dev loss rewards true chances; for the supplied MLP it is least near $T = 1$ (2.1609)."
+   }
+  }
+ ]
+}
