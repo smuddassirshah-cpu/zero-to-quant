@@ -131,3 +131,8 @@ Raised later (audit trig):
 Raised later (session AK, strand ai):
 - (engine-pass-ak, open) Learn and Review list AI topics as ordinary rows; group them under the strand badge or a strand heading.
 - (engine-pass-ak, open) A stage exam's `draw` sources are not checked for ai origin; add a validator error if a stage exam draws from an `ai` course.
+Raised later (ai-use level 1):
+- `array` canvas: a `highlight.range` band `label` is plain text, so KaTeX shows raw (`chance $\tfrac16$`); `ai-use/l4-confident-and-wrong` `screens[1]` writes "chance 1/6" instead. Render band labels like captions.
+- No chat-transcript canvas: every chatbot reply in ai-use is a `console` with "You:" and "Chatbot:" prefixes (monospace, `wrap: true`). A `chat` canvas (speaker bubbles, tappable turns, a "made-up example" tag) would read better for the whole AI strand.
+- Ladder canvas-kind warning fires between `array` (a token row) and `console` (a transcript), and between `table` and `graph`, though the screens show the same text; add `array` and `console` to the natural neighbours (`l1-reading-the-internet` `screens[4]`, `l4` `screens[3]`).
+- `tap-regions` in a part needs the canvas on the part; an item-level stem canvas does not count, so a transcript that later parts refer to is drawn inside part 1 only (`ai-use/homework-1` `h3-six-claims`, `problems-1` `p3-best-fund`).

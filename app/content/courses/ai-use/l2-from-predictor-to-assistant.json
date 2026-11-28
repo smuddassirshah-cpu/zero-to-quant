@@ -1,0 +1,1079 @@
+{
+ "id": "l2-from-predictor-to-assistant",
+ "course": "ai-use",
+ "title": "From predictor to assistant",
+ "minutes": 13,
+ "objectives": [
+  "Explain how fine-tuning on example conversations turns a text predictor into an assistant."
+ ],
+ "skills": [
+  "au-making"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "The same request goes to two models. One has only been pretrained; the other was trained further. Both replies are invented examples.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "tap": "sides",
+    "leftLabel": "Model A",
+    "rightLabel": "Model B",
+    "left": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "You: Write a polite email asking for a refund.",
+       "Model A: Write a polite email asking for a discount. Write a polite email asking for a meeting. Write a short note thanking a colleague."
+      ],
+      "wrap": true,
+      "title": "Model A (an invented example)"
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "You: Write a polite email asking for a refund.",
+       "Model B: Dear Customer Services, I bought a kettle from you on 3 March. It stopped working after a week. Please could you refund the £35 I paid? Thank you for your help. Yours faithfully, Sam"
+      ],
+      "wrap": true,
+      "title": "Model B (an invented example)"
+     },
+     "state": {}
+    }
+   },
+   "question": "Tap the reply that does what was asked.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "right"
+    ],
+    "countWord": "replies"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which reply is an email?"
+    },
+    {
+     "rung": "point",
+     "text": "One reply starts \"Dear\".",
+     "highlight": [
+      "right"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Model B writes the email. Model A writes more lines like yours."
+    }
+   ],
+   "feedback": {
+    "correct": "Model B wrote the email. Model A treated your request as the first line of a list of tasks.",
+    "generic": "Not quite right. Find the reply that is an email asking for a refund.",
+    "byKey": {
+     "left": "Model A continued a list of writing tasks, which is likely text after such a line. It never wrote the email."
+    }
+   },
+   "explain": {
+    "text": "Model A is a base model: a line like yours often opens a list of writing tasks, so it wrote more tasks. Model B was trained further on example conversations, so a helpful reply is its likely next text."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Here is how Model B was made. Slide to add the second stage to the first.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "nodes": [
+      {
+       "id": "web",
+       "label": "Web text",
+       "x": 0.12,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "pre",
+       "label": "Pretraining",
+       "x": 0.5,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "base",
+       "label": "Base model",
+       "x": 0.88,
+       "y": 0.15,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "web",
+       "to": "pre"
+      },
+      {
+       "from": "pre",
+       "to": "base"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Stage 1: pretraining turns web text into a base model."
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "caption": "Stage 1: pretraining turns web text into a base model."
+       },
+       {
+        "nodes": {
+         "ex": {
+          "label": "Example chats",
+          "x": 0.12,
+          "y": 0.5,
+          "shape": "rect"
+         },
+         "ft": {
+          "label": "Fine-tuning",
+          "x": 0.5,
+          "y": 0.5,
+          "shape": "rect"
+         },
+         "asst": {
+          "label": "Assistant",
+          "x": 0.88,
+          "y": 0.5,
+          "shape": "rect"
+         }
+        },
+        "edges": {
+         "e-base-ft": {
+          "from": "base",
+          "to": "ft"
+         },
+         "e-ex-ft": {
+          "from": "ex",
+          "to": "ft"
+         },
+         "e-ft-asst": {
+          "from": "ft",
+          "to": "asst"
+         }
+        },
+        "caption": "Stage 2: fine-tuning on example chats turns the base model into an assistant."
+       }
+      ],
+      "frameLabels": [
+       "Stage 1",
+       "Stage 2"
+      ],
+      "label": "Stages",
+      "start": 0
+     }
+    ]
+   },
+   "question": "What does the second stage train the base model on?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "chats",
+      "text": "Many example conversations written by people",
+      "correct": true
+     },
+     {
+      "id": "web",
+      "text": "More web text of the same kind as before",
+      "why": "Slide to stage 2. The new input is example chats, not more web text."
+     },
+     {
+      "id": "facts",
+      "text": "A list of true facts to learn by heart",
+      "why": "There is no list of facts in either stage."
+     },
+     {
+      "id": "users",
+      "text": "The emails of the people who later use it",
+      "why": "The example chats are written for training, before anyone uses the assistant."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to stage 2. What new box feeds fine-tuning?"
+    },
+    {
+     "rung": "point",
+     "text": "Look at the box on the left of stage 2.",
+     "highlight": [
+      "ex",
+      "ft"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Example chats and the base model both feed fine-tuning."
+    }
+   ],
+   "feedback": {
+    "correct": "Example chats: each shows a request and the kind of reply wanted.",
+    "generic": "Not quite right. Slide to stage 2 and read the box that feeds fine-tuning."
+   },
+   "explain": {
+    "text": "Stage 2 starts from the base model and trains it further on example chats. Each chat shows a request followed by a good reply, written by a person.",
+    "canvas": {
+     "nodes": {
+      "ex": {
+       "label": "Example chats",
+       "x": 0.12,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      "ft": {
+       "label": "Fine-tuning",
+       "x": 0.5,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      "asst": {
+       "label": "Assistant",
+       "x": 0.88,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     },
+     "edges": {
+      "e-base-ft": {
+       "from": "base",
+       "to": "ft"
+      },
+      "e-ex-ft": {
+       "from": "ex",
+       "to": "ft"
+      },
+      "e-ft-asst": {
+       "from": "ft",
+       "to": "asst"
+      }
+     },
+     "caption": "Stage 2: fine-tuning on example chats turns the base model into an assistant."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Here is one example chat. People write a great many like it, each a request and a good reply. Training the base model further on them is **fine-tuning**, and its result is an **assistant**.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Turn",
+      "Text"
+     ],
+     "rows": [
+      [
+       "Request",
+       "Can you explain what a bond is?"
+      ],
+      [
+       "Reply written by a person",
+       "A bond is a loan you make to a government or a firm. They pay you interest, then repay the loan on a set date."
+      ]
+     ],
+     "align": "left"
+    },
+    "state": {}
+   },
+   "question": "After fine-tuning on many such chats, what is the likely next text after a request?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "reply",
+      "text": "A helpful reply in the style of the examples",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "More requests, as in a list of requests",
+      "why": "That was the base model's habit. Fine-tuning made a reply the likely next text."
+     },
+     {
+      "id": "copy",
+      "text": "An exact copy of one example reply",
+      "why": "It learns the pattern of replies, not one reply to copy; your request differs from every example."
+     },
+     {
+      "id": "web",
+      "text": "Whatever came next in the web text",
+      "why": "Fine-tuning moved it on from the web text: after a request, a reply is now likely."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "In the examples, what always follows a request?"
+    },
+    {
+     "rung": "point",
+     "text": "Read the second row.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Every example has a reply after the request, so a reply becomes the likely next text."
+    }
+   ],
+   "feedback": {
+    "correct": "A reply in the style of the examples is now the likely next text.",
+    "generic": "Not quite right. Ask what always follows a request in the examples."
+   },
+   "explain": {
+    "text": "Fine-tuning uses the same training as pretraining: predict the next token, lower the error. Only the text changes: now it is requests followed by good replies. So a good reply becomes the likely next text.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Put the making of an assistant in order. The example chats can be written at any time before they are used.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "nodes": [
+      {
+       "id": "web",
+       "label": "Web text",
+       "x": 0.12,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "pre",
+       "label": "Pretraining",
+       "x": 0.5,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "base",
+       "label": "Base model",
+       "x": 0.88,
+       "y": 0.15,
+       "shape": "rect"
+      },
+      {
+       "id": "ex",
+       "label": "Example chats",
+       "x": 0.12,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "ft",
+       "label": "Fine-tuning",
+       "x": 0.5,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "asst",
+       "label": "Assistant",
+       "x": 0.88,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "web",
+       "to": "pre"
+      },
+      {
+       "from": "pre",
+       "to": "base"
+      },
+      {
+       "from": "base",
+       "to": "ft"
+      },
+      {
+       "from": "ex",
+       "to": "ft"
+      },
+      {
+       "from": "ft",
+       "to": "asst"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put the steps in the order they happen.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "w1",
+      "text": "Gather a huge body of text from the web"
+     },
+     {
+      "id": "w2",
+      "text": "Pretrain: predict the next token, over and over"
+     },
+     {
+      "id": "w3",
+      "text": "Get a base model that continues text"
+     },
+     {
+      "id": "w4",
+      "text": "People write many example chats"
+     },
+     {
+      "id": "w5",
+      "text": "Fine-tune the base model on the example chats"
+     },
+     {
+      "id": "w6",
+      "text": "Get an assistant that replies to requests"
+     }
+    ],
+    "answer": [
+     "w1",
+     "w2",
+     "w3",
+     "w4",
+     "w5",
+     "w6"
+    ],
+    "after": {
+     "w2": [
+      "w1"
+     ],
+     "w3": [
+      "w2"
+     ],
+     "w5": [
+      "w3",
+      "w4"
+     ],
+     "w6": [
+      "w5"
+     ]
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What has to exist before anything can be pretrained?"
+    },
+    {
+     "rung": "point",
+     "text": "Follow the arrows in the diagram.",
+     "highlight": [
+      "web",
+      "pre",
+      "base"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Text, pretraining, base model; then fine-tuning needs the base model and the chats; the assistant comes last."
+    }
+   ],
+   "feedback": {
+    "correct": "Text, pretraining, base model; then fine-tuning on the chats gives the assistant.",
+    "generic": "Not quite right. Follow the arrows: each step needs the steps that feed it.",
+    "byKey": {
+     "w2": "Pretraining needs the text first. Gather the web text before you pretrain.",
+     "w3": "The base model is what pretraining produces, so it comes after pretraining.",
+     "w5": "Fine-tuning needs both the base model and the example chats, so it comes after both.",
+     "w6": "The assistant is the result of fine-tuning, so it comes last."
+    }
+   },
+   "explain": {
+    "text": "Each step needs what feeds it: text before pretraining, a base model before fine-tuning, and the chats before they are used. The assistant is the last thing made."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "A team is choosing example chats. They want the assistant to say it does not know when it cannot know.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Example",
+      "Request",
+      "Reply"
+     ],
+     "rows": [
+      [
+       "A",
+       "What will the FTSE 100 close at tomorrow?",
+       "It will close at 8,412."
+      ],
+      [
+       "B",
+       "What will the FTSE 100 close at tomorrow?",
+       "I cannot know tomorrow's close. I can explain what moves the index."
+      ],
+      [
+       "C",
+       "What is 15% of £200?",
+       "£30."
+      ]
+     ],
+     "align": "left",
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "Tap the example that would teach the assistant to say it does not know when it should.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r1"
+    ],
+    "countWord": "examples"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which request has no answer anyone could know today?"
+    },
+    {
+     "rung": "point",
+     "text": "Two examples ask about tomorrow.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Of the two, pick the reply that admits it cannot know."
+    }
+   ],
+   "feedback": {
+    "correct": "Example B shows a question with no knowable answer and a reply that says so.",
+    "generic": "Not quite right. Find the reply that admits it cannot know.",
+    "byKey": {
+     "r0": "Example A answers a question no one can answer, and sounds sure. Training on it teaches guessing.",
+     "r2": "Example C is a good reply, but its question has an answer. It teaches nothing about doubt."
+    }
+   },
+   "explain": {
+    "text": "Example B pairs an unknowable question with a reply that says so. Fine-tuning copies the habits in its examples, so chats like B are how an assistant learns to admit doubt.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Another team fine-tunes on examples where every reply is confident. None says \"I am not sure\", even where no one could know.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Example",
+      "Request",
+      "Reply"
+     ],
+     "rows": [
+      [
+       "A",
+       "Will this share rise next week?",
+       "Yes, it will rise."
+      ],
+      [
+       "B",
+       "What was the firm's profit last year?",
+       "£2.1 million."
+      ],
+      [
+       "C",
+       "Which fund is best for me?",
+       "Fund K is the best for you."
+      ]
+     ],
+     "align": "left",
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "What habit does this assistant most likely learn?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sure",
+      "text": "To answer confidently even when it cannot know",
+      "correct": true
+     },
+     {
+      "id": "doubt",
+      "text": "To admit doubt on hard questions",
+      "why": "None of the examples shows doubt, so nothing teaches it."
+     },
+     {
+      "id": "future",
+      "text": "To refuse questions about the future",
+      "why": "Example A answers a question about the future. That is the habit it copies."
+     },
+     {
+      "id": "check",
+      "text": "To check its answers before replying",
+      "why": "Nothing in the examples shows checking. Fine-tuning copies what the examples show."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does any example reply show doubt?"
+    },
+    {
+     "rung": "point",
+     "text": "Example A answers a question about next week.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Every reply sounds sure, so sounding sure is the habit learned."
+    }
+   ],
+   "feedback": {
+    "correct": "It learns to sound sure every time, because every example did.",
+    "generic": "Not quite right. Ask what all three replies have in common."
+   },
+   "explain": {
+    "text": "All three replies sound sure, including one about the future that no one can know. Fine-tuning copies that habit. An assistant trained this way states guesses as if they were facts.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "A team fine-tunes a base model on a large set of polite example chats about many topics. A colleague says: \"Now it knows far more facts.\"",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Stage",
+      "Text it learns from",
+      "How much text"
+     ],
+     "rows": [
+      [
+       "Pretraining",
+       "A huge body of web text",
+       "enormous"
+      ],
+      [
+       "Fine-tuning",
+       "Example chats",
+       "small by comparison"
+      ]
+     ],
+     "align": "left"
+    },
+    "state": {}
+   },
+   "question": "What does fine-tuning mostly change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "style",
+      "text": "How it replies: its style and its habits",
+      "correct": true
+     },
+     {
+      "id": "facts",
+      "text": "The facts it knows, which grow a great deal",
+      "why": "You gave fine-tuning the job of teaching facts. Next to the web text the chats are small, so they mostly teach how to reply."
+     },
+     {
+      "id": "size",
+      "text": "The size of the network, which grows",
+      "why": "Fine-tuning trains the same network further; it does not make it bigger."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing, since it is the same network",
+      "why": "It is the same network, but its replies change a lot, as Model B showed."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which stage reads far more text?"
+    },
+    {
+     "rung": "point",
+     "text": "Compare the last column.",
+     "highlight": [
+      "r0c2",
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The facts it can use come mostly from the enormous web text. The chats mostly teach how to reply."
+    }
+   ],
+   "feedback": {
+    "correct": "Fine-tuning mostly changes the style and the habits. Most of what it knows came from pretraining.",
+    "generic": "Not quite right. Compare how much text each stage learns from.",
+    "byKey": {
+     "facts": "You expected the chats to add knowledge. Next to the web text they are small, so they mostly change the style and habits; the facts come mostly from pretraining."
+    }
+   },
+   "explain": {
+    "text": "Pretraining reads an enormous body of text, the source of most of what the model can say. Fine-tuning's chats are few by comparison. They change how it replies, not mainly what it knows.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "The two stages together: $$\\text{base model} \\xrightarrow{\\text{example chats}} \\text{assistant}$$ Pretraining supplies most of what it can say. Fine-tuning shapes how it replies, good habits and bad.",
+   "question": "A new assistant replies in a cheerful style and uses many facts. Where does each mostly come from?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "The style from fine-tuning, most facts from pretraining",
+      "correct": true
+     },
+     {
+      "id": "both-ft",
+      "text": "Both the style and the facts from fine-tuning",
+      "why": "The chats are small next to the web text, so they give the style more than the facts."
+     },
+     {
+      "id": "swapped",
+      "text": "The style from pretraining, the facts from fine-tuning",
+      "why": "That is the wrong way round. Web text gives most facts; the chats give the style."
+     },
+     {
+      "id": "user",
+      "text": "Both from the request the user typed",
+      "why": "The request is one line. The style and facts were learned in training."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The style from the example chats, most facts from the web text.",
+    "generic": "Not quite right. Recall which stage reads the huge body of text."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A bank fine-tunes a model on years of its agents' chats with customers. Since then, its late-payment fee has changed from £12 to £15. The bank and chats are invented.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Customer",
+      "Agent's reply"
+     ],
+     "rows": [
+      [
+       "How do I reset my card PIN?",
+       "I can help with that. You can reset it in the app, under card settings."
+      ],
+      [
+       "What is the fee for a late payment?",
+       "The late fee is £12."
+      ],
+      [
+       "Can you lend me £5,000 now?",
+       "I am sorry, I cannot approve loans in a chat. I can tell you how to apply."
+      ]
+     ],
+     "align": "left"
+    },
+    "state": {}
+   },
+   "question": "Select all that apply: what is the new assistant likely to copy from the chats?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tone",
+      "text": "The agents' polite, helpful tone",
+      "correct": true
+     },
+     {
+      "id": "loans",
+      "text": "Saying it cannot approve loans in a chat",
+      "correct": true
+     },
+     {
+      "id": "old-fee",
+      "text": "The old £12 fee, which is now out of date",
+      "correct": true
+     },
+     {
+      "id": "new-fee",
+      "text": "The new £15 fee",
+      "why": "The chats were written before the change. Fine-tuning copies what its examples say, out of date or not."
+     },
+     {
+      "id": "accounts",
+      "text": "A view of each customer's account",
+      "why": "Training on chats gives it habits of text, not a link to the bank's systems."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Fine-tuning copies what the examples show. What do they show?"
+    },
+    {
+     "rung": "point",
+     "text": "Read the reply about the fee.",
+     "highlight": [
+      "r1c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Tone, the honest answer about loans and the £12 fee are all in the chats. The £15 fee is not."
+    }
+   ],
+   "feedback": {
+    "correct": "It copies the habits in the chats, good and bad: the tone, the honest loan answer and the old fee.",
+    "generic": "Not quite right. Pick only what appears in the example chats."
+   },
+   "explain": {
+    "text": "Fine-tuning copies the habits in its examples, good and bad. The tone and the honest \"I cannot approve loans\" carry over, and so does the old fee. The bank has to check its examples, not just collect them.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Fine-tuning trains a base model further on example chats written by people: a request, then a good reply.",
+   "It is the same training as pretraining, on different text, so a helpful reply becomes the likely next text. The result is an assistant.",
+   "Fine-tuning mostly changes style and habits, good and bad; most of what the model can say comes from pretraining."
+  ],
+  "formula": {
+   "name": "Fine-tuning",
+   "tex": "\\text{base model} \\xrightarrow{\\text{example chats}} \\text{assistant}",
+   "note": "It copies the habits in its examples."
+  },
+  "trap": "Fine-tuning does not mainly add facts. It changes how the model replies."
+ },
+ "quiz": [
+  {
+   "id": "q-ft-data",
+   "difficulty": 2,
+   "question": "What does fine-tuning train a base model on?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "chats",
+      "text": "Example conversations written by people",
+      "correct": true
+     },
+     {
+      "id": "web",
+      "text": "More of the same web text",
+      "why": "More web text would only make a better base model. Fine-tuning uses example chats."
+     },
+     {
+      "id": "ranks",
+      "text": "People's rankings of pairs of replies",
+      "why": "Rankings are used in the next stage, in l3."
+     },
+     {
+      "id": "facts",
+      "text": "A list of checked facts",
+      "why": "Neither stage uses a list of facts."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Example conversations: a request, then a good reply.",
+    "generic": "Not quite right. Recall the box that feeds fine-tuning."
+   },
+   "explain": {
+    "text": "Fine-tuning trains the base model further on example conversations that people wrote. Each shows a request and a good reply, so a reply becomes the likely next text."
+   }
+  },
+  {
+   "id": "q-list",
+   "difficulty": 2,
+   "question": "Why does a base model often answer a request by writing more requests?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "lists",
+      "text": "In web text, lines like that often come in lists",
+      "correct": true
+     },
+     {
+      "id": "rude",
+      "text": "It was trained to ignore requests",
+      "why": "Nothing trained it to ignore anything. It writes likely text."
+     },
+     {
+      "id": "broken",
+      "text": "It is broken and needs repair",
+      "why": "It works as trained: it continues text."
+     },
+     {
+      "id": "unclear",
+      "text": "The request was not clear enough",
+      "why": "A clear request gets the same treatment: it is continued, not answered."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A request often opens a list, so more list lines are likely text.",
+    "generic": "Not quite right. Ask what a base model does with any text."
+   },
+   "explain": {
+    "text": "A base model continues text. On the web, a line like a request often opens a list of such lines. So more of them is the likely continuation."
+   }
+  },
+  {
+   "id": "q-doubt",
+   "difficulty": 3,
+   "question": "You want an assistant to say \"I am not sure\" when it should. What do you add to its fine-tuning examples?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "doubt",
+      "text": "Examples where the good reply admits doubt",
+      "correct": true
+     },
+     {
+      "id": "web",
+      "text": "More web text about uncertainty",
+      "why": "Web text changes the base model. The habit of a reply is taught by example chats."
+     },
+     {
+      "id": "sure",
+      "text": "More examples of confident replies",
+      "why": "Confident examples teach confidence, the opposite of what you want."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing: it will learn doubt by itself",
+      "why": "Fine-tuning copies what the examples show. Doubt must be in them."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Examples that show doubt teach the habit of doubt.",
+    "generic": "Not quite right. Fine-tuning copies the habits in its examples."
+   },
+   "explain": {
+    "text": "Fine-tuning copies habits from its examples. To get an honest \"I am not sure\", put examples in which the good reply says so."
+   }
+  },
+  {
+   "id": "q-kind-tone",
+   "difficulty": 3,
+   "question": "A model is fine-tuned on a small set of medical chats written in a kind tone. What mostly changes?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tone",
+      "text": "Its replies sound kinder; its medical knowledge grows little",
+      "correct": true
+     },
+     {
+      "id": "doctor",
+      "text": "It now knows as much as a doctor",
+      "why": "A small set of chats teaches a style. Knowledge comes mostly from pretraining."
+     },
+     {
+      "id": "none",
+      "text": "Nothing changes at all",
+      "why": "The tone of its replies changes, as the examples teach."
+     },
+     {
+      "id": "facts-only",
+      "text": "It learns the facts in the chats and keeps its old tone",
+      "why": "It is the other way round: the style is what a small set of chats mostly changes."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Mostly the tone. The knowledge came mostly from pretraining.",
+    "generic": "Not quite right. Recall what fine-tuning mostly changes."
+   },
+   "explain": {
+    "text": "A small set of chats mostly teaches how to reply. Its tone becomes kinder, while what it can say about medicine comes mostly from pretraining."
+   }
+  }
+ ]
+}

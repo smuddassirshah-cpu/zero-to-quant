@@ -1,0 +1,400 @@
+{
+ "id": "problems-1",
+ "course": "ai-use",
+ "level": 1,
+ "title": "How a chatbot is made",
+ "minutes": 25,
+ "items": [
+  {
+   "id": "p1-gold",
+   "difficulty": 4,
+   "skills": [
+    "au-making",
+    "au-limits"
+   ],
+   "prose": "A tiny model learns from this 15-token text: \"the fund bought gold . the bank sold bonds . the fund sold gold .\" Its table counts which token follows which.",
+   "parts": [
+    {
+     "question": "How many times does \"fund\" come straight after \"the\"?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "all-the",
+        "value": 3,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "\"the fund\" appears twice: in the first and third sentences.",
+      "generic": "Not quite right. Find each \"the\" and read the token after it.",
+      "byKey": {
+       "all-the": "You counted every \"the\". One of the three is followed by \"bank\", not \"fund\"."
+      }
+     },
+     "explain": {
+      "text": "The three uses of \"the\" are followed by fund, bank and fund. So \"fund\" follows \"the\" 2 times."
+     }
+    },
+    {
+     "question": "\"the\" appears 3 times, each followed by a token. Using the count from part 1, what is the chance \"fund\" comes after \"the\"? Give a fraction, or a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6667,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "fraction or decimal",
+      "wrong": [
+       {
+        "id": "whole-text",
+        "value": 0.1333,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "distinct",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "2 of the 3 times, so $\\tfrac23$, about 0.6667.",
+      "generic": "Not quite right. Divide by the number of times \"the\" appears.",
+      "byKey": {
+       "whole-text": "You divided by all 15 tokens. The chance counts only the places after \"the\": 3 of them.",
+       "distinct": "You divided by the 2 different tokens after \"the\". Count every time \"the\" appears: 3 times."
+      }
+     },
+     "explain": {
+      "text": "Count over the row for \"the\": 2 of its 3 next tokens are \"fund\". So the chance is $\\tfrac23$, about 0.6667."
+     }
+    },
+    {
+     "question": "The text never says \"the bank sold gold .\" Given that \"bank\" follows \"the\" with chance $\\tfrac13$, what is the chance of that sentence after \"the\"? Give a fraction, or a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.1667,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "fraction or decimal",
+      "wrong": [
+       {
+        "id": "zero",
+        "value": 0,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "missed-half",
+        "value": 0.3333,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac13 \\times 1 \\times \\tfrac12 \\times 1 = \\tfrac16$, about 0.1667.",
+      "generic": "Not quite right. Find the chance of each pair and multiply.",
+      "byKey": {
+       "zero": "A chance of 0 needs a pair the text never contains. Here bank then sold, sold then gold, and gold then the full stop all appear in the text.",
+       "missed-half": "You left out \"gold\" after \"sold\". \"sold\" is followed by bonds once and gold once, so that chance is $\\tfrac12$."
+      }
+     },
+     "explain": {
+      "text": "\"sold\" always follows \"bank\", \"gold\" follows \"sold\" 1 time in 2, and \".\" always follows \"gold\". So the chance is $\\tfrac13 \\times 1 \\times \\tfrac12 \\times 1 = \\tfrac16$, about 0.1667."
+     }
+    },
+    {
+     "question": "In part 3 the table can write \"the bank sold gold .\", which the text never says. What is this, and why does it matter for a chatbot?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "halluc",
+        "text": "A hallucination: true pairs join into a claim nothing supports, and it reads as fluently as a true one",
+        "correct": true
+       },
+       {
+        "id": "memory",
+        "text": "A memory: the bank did sell gold, and the table remembered it from somewhere else",
+        "why": "The text says the bank sold bonds. Nothing it saw says the bank sold gold."
+       },
+       {
+        "id": "bug",
+        "text": "A bug: a correctly built table could never write a sentence that is not in its text",
+        "why": "A correct table joins likely pairs, so it can write sentences its text never says."
+       },
+       {
+        "id": "harmless",
+        "text": "Harmless: a sentence with a chance as small as this is never written in practice",
+        "why": "One run in six is not rare. A chatbot writes a great many sentences, and some of these get through."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "A hallucination. A chatbot does the same at scale, so its fluent claims need checking.",
+      "generic": "Not quite right. Compare the sentence with what the text says."
+     },
+     "explain": {
+      "text": "The table joined three true pairs into a false claim about the bank. A chatbot is a far larger predictor of likely text, so it can do the same, fluently. That is why its specific claims are checked."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p2-tax-bot",
+   "difficulty": 3,
+   "skills": [
+    "au-making"
+   ],
+   "prose": "A start-up makes a tax chatbot from a base model. Its tax advisers write the example chats, and in every reply they cite a rule number. There is no ranking stage.",
+   "parts": [
+    {
+     "question": "What habit will the new assistant pick up from these chats?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "cite",
+        "text": "Citing a rule number in its replies, as the advisers did",
+        "correct": true
+       },
+       {
+        "id": "law",
+        "text": "Knowing every current tax rule by heart",
+        "why": "A set of chats gives a way of replying. It is not a full, up-to-date copy of the rules."
+       },
+       {
+        "id": "refuse",
+        "text": "Refusing to answer tax questions at all",
+        "why": "Every example reply answers, so answering is what it imitates."
+       },
+       {
+        "id": "nothing",
+        "text": "No habit, because no ranking stage was run",
+        "why": "The habit comes from the example chats. Rankings would only shape it further."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "It imitates the advisers: a rule number in every reply.",
+      "generic": "Not quite right. Ask what every example reply has in common."
+     },
+     "explain": {
+      "text": "The assistant learns to reply the way the example replies were written. Every one cited a rule number, so it will too."
+     }
+    },
+    {
+     "question": "A user asks about a rule that changed after the web text was gathered. Given the habit from part 1, what is the danger?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "confident-old",
+        "text": "A rule number that looks right but is out of date or invented",
+        "correct": true
+       },
+       {
+        "id": "silence",
+        "text": "It stays silent, since it has never seen the new rule",
+        "why": "It has learned to answer with a rule number, so silence is the unlikely reply."
+       },
+       {
+        "id": "new",
+        "text": "It somehow cites the new rule correctly",
+        "why": "Nothing it learned from contains the new rule."
+       },
+       {
+        "id": "warns",
+        "text": "It warns that the rule may have changed",
+        "why": "None of the advisers' chats showed that warning, so nothing taught it."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "It answers in its usual way, with a likely-looking rule number that may be old or made up.",
+      "generic": "Not quite right. Combine the habit with what it has never seen."
+     },
+     "explain": {
+      "text": "It never read the new rule, yet it has learned to cite a number every time. So it writes a likely-looking number, old or invented, as fluently as a true one."
+     }
+    },
+    {
+     "question": "Using parts 1 and 2, put these fixes in the order of the stage each one changes, earliest stage first.",
+     "widget": {
+      "kind": "order",
+      "lines": [
+       {
+        "id": "f1",
+        "text": "Add newer text, including the new rule, before training starts"
+       },
+       {
+        "id": "f2",
+        "text": "Add adviser chats that say \"check the current rule on the official site\""
+       },
+       {
+        "id": "f3",
+        "text": "Run a ranking stage where raters prefer replies that point to the official source"
+       }
+      ],
+      "answer": [
+       "f1",
+       "f2",
+       "f3"
+      ]
+     },
+     "feedback": {
+      "correct": "Pretraining text first, then example chats, then rankings.",
+      "generic": "Not quite right. Match each fix to its stage: text, chats or rankings.",
+      "byKey": {
+       "f2": "New text changes the base model, the earliest stage. Chats come after it.",
+       "f3": "Rankings are the last stage, after the example chats."
+      }
+     },
+     "explain": {
+      "text": "Newer text belongs to pretraining, the first stage. Chats that point to the official site belong to fine-tuning, and a preference for such replies belongs to the ranking stage, which comes last."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p3-best-fund",
+   "difficulty": 5,
+   "skills": [
+    "au-limits",
+    "au-making"
+   ],
+   "prose": "A client asks a firm's chatbot about funds. The reply below is an invented example, and every name in it is invented.",
+   "parts": [
+    {
+     "canvas": {
+      "kind": "console",
+      "params": {
+       "lines": [
+        "You: Which UK fund had the best return last year, and why?",
+        "Chatbot: The Harbourline Value Fund returned 31.4% last year, the best of any UK fund.",
+        "Chatbot: Its manager, quoted in a 2023 profile, said: \"Patience is our only edge.\"",
+        "Chatbot: Funds charge fees, which reduce what investors keep.",
+        "Chatbot: I am confident all of this is accurate."
+       ],
+       "wrap": true,
+       "title": "An invented example"
+      },
+      "state": {}
+     },
+     "question": "Which lines would you have to verify before quoting them to another client? Tap them.",
+     "widget": {
+      "kind": "tap-regions",
+      "answer": [
+       "l2",
+       "l3"
+      ],
+      "countWord": "lines"
+     },
+     "feedback": {
+      "correct": "The 31.4% and the quote are specific claims to check.",
+      "generic": "Not quite right. Look for a specific figure or a quote.",
+      "byKey": {
+       "l4": "That fees reduce what investors keep is general and widely known.",
+       "l5": "That line claims confidence; it states no fact about funds.",
+       "l1": "That is the client's question."
+      }
+     },
+     "explain": {
+      "text": "A precise return and a quote from a profile are exactly what a model can invent. The fees line is general; line 5 states no fact at all."
+     }
+    },
+    {
+     "question": "Line 5 says the chatbot is confident. Using what you tapped in part 1, what does line 5 add to those two claims?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "nothing",
+        "text": "Nothing: \"I am confident\" is likely text, not a check",
+        "correct": true
+       },
+       {
+        "id": "proof",
+        "text": "Proof that both claims are right",
+        "why": "It is written the same way as the claims: as likely text."
+       },
+       {
+        "id": "half",
+        "text": "Proof for the figure but not the quote",
+        "why": "It checks neither. Both still need a source."
+       },
+       {
+        "id": "doubt",
+        "text": "A sign that both claims are wrong",
+        "why": "Confident answers are often right. It tells you nothing either way."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Nothing. Both claims still need a source.",
+      "generic": "Not quite right. Ask how line 5 was written."
+     },
+     "explain": {
+      "text": "Line 5 is likely text after a confident answer. It tells you nothing about the 31.4% or the quote, which still need checking."
+     }
+    },
+    {
+     "question": "The chatbot named a \"best fund\" instead of saying it might not know. Which explanation from training fits best?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "rewarded",
+        "text": "It was trained to give helpful-sounding answers, and confident ones were preferred",
+        "correct": true
+       },
+       {
+        "id": "searched",
+        "text": "It searched every UK fund's results and found the best one",
+        "why": "A model on its own searches nothing. It predicted a likely answer."
+       },
+       {
+        "id": "list",
+        "text": "It looked the winner up in a list of facts it keeps",
+        "why": "There is no list of facts inside it. It writes likely text."
+       },
+       {
+        "id": "makers",
+        "text": "Its makers told it which fund was best last year",
+        "why": "Nothing suggests that. Training rewarded answering, which is enough."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Fine-tuning and feedback rewarded helpful, confident answers over \"I do not know\".",
+      "generic": "Not quite right. Recall what the later stages of training reward."
+     },
+     "explain": {
+      "text": "Example chats and raters tend to reward a helpful answer over \"I do not know\". That holds unless they were built to teach doubt. So the chatbot names a best fund, sure-sounding, whether or not it knows."
+     }
+    }
+   ]
+  }
+ ]
+}
