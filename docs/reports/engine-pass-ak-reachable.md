@@ -6,3 +6,5 @@
 Current AI content, 471 warnings, 300 widgets: ai-basics 35 (15 unreachable, 20 missing), ai-use 2, backprop 72 (13, 59), cnn 24 (8, 16), gpt 24 (11, 13), info 46 (20, 26), makemore 38 (2, 36), nn-train 89 (0, 89), representations 26 (15, 11), rl 83 (0, 83), sequence 32 (6, 26).
 CI stays at warn (count is not 0).
 Checks: validate 0 errors; ci-coverage 0 problems; grade-all --code --strand ai 0 failures.
+
+Follow-up: `--strand ai` also takes an exam whose curriculum topic has only ai courses (`examStrand` in `grade-all.mjs`, as `hours.js` aiTopic). AI code widgets 300 to 306; feedback warnings topic-0.8 0, topic-1.12 0, topic-2.8 1 (unreachable test-7 at items[29]); total 472.

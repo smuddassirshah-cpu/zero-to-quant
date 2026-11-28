@@ -210,7 +210,18 @@ const gradeable = (v) => {
 };
 /* --strand <s>: keep only files of courses whose course.json has that strand (ENGINE-BACKLOG 1264); a file outside courses/<id>/ is dropped */
 const strandOf = {};
+/* An exam whose `topic` is an AI topic (every course of the curriculum topic has strand ai, as js/hours.js aiTopic) counts as strand ai (1269 follow-up) */
+let curTopics = null;
+const examStrand = (f) => {
+  if (!/(?:^|[\\/])exams[\\/][^\\/]+\.json$/.test(f)) return null;
+  try {
+    if (!curTopics) { curTopics = {}; for (const st of JSON.parse(fs.readFileSync(path.join(CONTENT, 'curriculum.json'), 'utf8')).stages || []) for (const t of st.topics || []) curTopics[t.id] = t.courses || []; }
+    const tid = JSON.parse(fs.readFileSync(f, 'utf8')).topic, cs = curTopics[tid] || [];
+    return cs.length && cs.every((c) => strandFor(path.join(CONTENT, 'courses', c, 'x.json')) === 'ai') ? 'ai' : null;
+  } catch { return null; }
+};
 const strandFor = (f) => {
+  if (/(?:^|[\\/])exams[\\/]/.test(f)) return examStrand(f);
   const m = /(?:^|[\\/])courses[\\/]([^\\/]+)[\\/]/.exec(f); if (!m) return null;
   if (!(m[1] in strandOf)) { try { strandOf[m[1]] = JSON.parse(fs.readFileSync(path.join(CONTENT, 'courses', m[1], 'course.json'), 'utf8')).strand || null; } catch { strandOf[m[1]] = null; } }
   return strandOf[m[1]];
