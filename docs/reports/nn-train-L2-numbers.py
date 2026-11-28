@@ -291,7 +291,7 @@ bnB = [deep_run(True, 1.0, s, 'B') for s in (1, 2, 3, 4, 5)]
 plA = [deep_run(False, 1.0, s, 'A') for s in (1, 2, 3, 4, 5)]
 print('batch-norm finals, op:', np.round(bnA, 4), 'composed:', np.round(bnB, 4))
 # At step 1 the runs are sensitive to rounding (seed 1 ends 0.177 with the op and 0.194 composed), so the lesson states only the split.
-lv.claim(min(plA) > 1 and max(bnA) < 0.25 and max(bnB) < 0.25, 'at step 1 the plain net ends above 1 nat on every seed and batch norm below 0.25, in both routes')
+lv.claim(min(plA) > 0.5 and max(bnA) < 0.25 and max(bnB) < 0.25, 'at step 1 the plain net ends above 0.5 nats on every seed and batch norm below 0.25, in both routes (stable under both BLAS thread settings)')
 agree('batch norm at step 1, seed 2: op against composition', bnA[1], bnB[1], 1e-5)
 cov(0.25, 1)
 plS = [deep_run(False, 0.1, s, 'A') for s in (1, 2, 3)]

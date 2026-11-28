@@ -436,8 +436,13 @@ asw = {lr: [final_b('adam', 300, s, lr) for s in SEEDS] for lr in AST + (0.5,)}
 for lr in AST:
     E(L3, f'screens[5].canvas.state.values.a{str(lr).replace(".", "")}', round(float(np.mean(asw[lr])), 4))
 lv.claim(min(AST, key=lambda k: np.mean(asw[k])) == 0.1, 'Adam\'s sweep is lowest at 0.1')
-a05 = [train_a('adam', 300, s, 0.5) for s in SEEDS]
-lv.claim(min(asw[0.5]) > 0.2 and min(a05) > 0.2, 'Adam at 0.5 ends above 0.2 nats on every seed, in both routes')
+# A 300-step Adam run at 0.5 is chaotic: the final loss depends on summation order, so only the threshold is stated
+# (route B's minimum is above 0.3 under both thread settings), and the routes are compared on a short run instead.
+lv.claim(min(asw[0.5]) > 0.2, 'Adam at 0.5 ends above 0.2 nats on every seed (route B; threshold only, stable across BLAS thread settings)')
+a05 = [train_a('adam', 5, s, 0.5) for s in SEEDS]
+b05 = [final_b('adam', 5, s, 0.5) for s in SEEDS]
+for s, (x, y) in enumerate(zip(a05, b05)):
+    agree(f'Adam at 0.5, 5 steps, seed {s + 1}: autograd against the hand backward', x, y, 1e-9)
 cov(*[float(np.mean(asw[k])) for k in AST], 0.2)
 E(L3, 'screens[9].widget.answer', 1200 / 0.4)
 cov(0.4 / 1200)
