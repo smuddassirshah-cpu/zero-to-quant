@@ -241,14 +241,14 @@
     ]
    },
    "feedback": {
-    "correct": "p: its neighbours are t, c, g, b and k, letters that stop the sound much as p does.",
+    "correct": "p: its neighbours are t, c, g, b and k, other consonants.",
     "generic": "Not quite. Slide to each query and check its five letters.",
     "byKey": {
      "a": "a's list starts with three vowels."
     }
    },
    "explain": {
-    "text": "Vowels find vowels and p finds the other stopping letters t, c, g, b and k. The table learned these groups from names alone, which is why its neighbours are worth reading.",
+    "text": "Vowels find vowels and p finds the other consonants t, c, g, b and k. These neighbours come from names alone and from one training run, so read them as leads to check, not as facts about letters.",
     "canvas": {
      "query": 3
     }
@@ -652,7 +652,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "Recall at k",
-   "prose": "Suppose we know which pairs should be neighbours: here, every pair of different vowels, 20 ordered pairs. **Recall at $k$** is the share of known pairs whose second item is in the first item's top $k$. The table lists each vowel's top 3 in makemore's table.",
+   "prose": "Suppose we know which pairs should be neighbours: here, every pair of different vowels, 20 ordered pairs. **Recall at $k$** is the share of known pairs whose second item is in the first item's top $k$. Tools usually average this share over queries; with equal partner counts, as here, the two agree. The table lists each vowel's top 3 in makemore's table.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -792,7 +792,7 @@
    "type": "ladder",
    "difficulty": 3,
    "title": "Many dimensions",
-   "prose": "Draw 40 random directions and look at the cosines of all 780 pairs. Switch the width from 2 to 300. The statistics course warned that distances bunch together in many dimensions; cosines do too.",
+   "prose": "Draw 40 random directions and look at the cosines of all 780 pairs. Switch the width from 2 to 300. The statistics course warned that distances bunch together in many dimensions; cosines do too, with a spread of about $1/\\sqrt d$ in $d$ dimensions.",
    "canvas": {
     "kind": "bars",
     "params": {
@@ -3172,7 +3172,7 @@
      }
     ]
    },
-   "question": "In 300 dimensions, what is the standard deviation of a random pair's cosine, to 2 places?",
+   "question": "In 300 dimensions, what is the standard deviation of a random pair's cosine, to 3 places?",
    "widget": {
     "kind": "numeric",
     "answer": 0.0577,
@@ -3217,7 +3217,7 @@
     }
    ],
    "explain": {
-    "text": "Random cosines spread about $1/\\sqrt d$: 0.70 in 2 dimensions, 0.33 in 10 and 0.057 in 300. In a wide table even unrelated items sit near 0, so compare a similarity with that background, not with 1.",
+    "text": "Random cosines spread about $1/\\sqrt d$: 0.70 in 2 dimensions, 0.33 in 10 and 0.057 in 300. Trained tables are not random, so read a similarity against the rest of the table, not against 1.",
     "canvas": {
      "params": {
       "dim": 2
@@ -3332,9 +3332,20 @@
       "call": "top_k(E, 7, 4)",
       "compare": "equal",
       "expect": "[29, 15, 6, 1]"
+     },
+     {
+      "call": "top_k([[1, 0], [0, 1], [1, 0]], 2, 1)",
+      "compare": "equal",
+      "expect": "[0]"
+     },
+     {
+      "setup": "E = [[1, 0]] * 20",
+      "call": "top_k(E, 3, 6)",
+      "compare": "equal",
+      "expect": "[0, 1, 2, 4, 5, 6]"
      }
     ],
-    "how": "Submit runs 7 hidden tests. Small tables have a long row, a tie, a zero row and an opposite row. Then come p in makemore's table, recall at 3 for the vowels, recall on a small table and a seeded table of 30 rows.",
+    "how": "Submit runs 9 hidden tests. Small tables have a long row, a tie, a zero row and an opposite row. Then come p in makemore's table, recall at 3 for the vowels, recall on a small table and a seeded table of 30 rows. The last two are a copy of the query that comes earlier and a table of 20 equal rows.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef top_k(E, i, k):\n    E = np.asarray(E, dtype=float)\n    n = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    U = np.where(n > 0, E / np.where(n > 0, n, 1.0), 0.0)\n    s = U @ U[i]\n    order = np.argsort(-s, kind=\"stable\")\n    return [int(j) for j in order[:k]]\n\n\ndef recall_at_k(E, pairs, k):\n    hits = sum(1 for i, j in pairs if j in top_k(E, i, k))\n    return hits / len(pairs)\n",
@@ -3355,6 +3366,16 @@
       "source": "import numpy as np\n\n\ndef top_k(E, i, k):\n    E = np.asarray(E, dtype=float)\n    n = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    U = np.where(n > 0, E / np.where(n > 0, n, 1.0), 0.0)\n    s = U @ U[i]\n    s[i] = -np.inf\n    order = np.argsort(-s, kind=\"stable\")\n    return [int(j) for j in order[:k]]\n\n\ndef recall_at_k(E, pairs, k):\n    hits = sum(1 for i, j in pairs if j in top_k(E, i, k))\n    return hits / (k * len(set(i for i, _ in pairs)))\n",
       "test": 5,
       "symptom": "Divides by k times the number of queries instead of the number of known pairs."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef top_k(E, i, k):\n    E = np.asarray(E, dtype=float)\n    n = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    U = np.where(n > 0, E / np.where(n > 0, n, 1.0), 0.0)\n    s = U @ U[i]\n    order = np.argsort(-s, kind=\"stable\")\n    return [int(j) for j in order[1:k + 1]]\n\n\ndef recall_at_k(E, pairs, k):\n    hits = sum(1 for i, j in pairs if j in top_k(E, i, k))\n    return hits / len(pairs)\n",
+      "test": 8,
+      "symptom": "Sorts, then drops the first entry as if it were row i, so a copy of the query that comes earlier is dropped and the query itself is returned."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef top_k(E, i, k):\n    E = np.asarray(E, dtype=float)\n    n = np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    U = np.where(n > 0, E / np.where(n > 0, n, 1.0), 0.0)\n    s = U @ U[i]\n    s[i] = -np.inf\n    order = np.argsort(-s)\n    return [int(j) for j in order[:k]]\n\n\ndef recall_at_k(E, pairs, k):\n    hits = sum(1 for i, j in pairs if j in top_k(E, i, k))\n    return hits / len(pairs)\n",
+      "test": 9,
+      "symptom": "Uses NumPy's default sort, which does not keep index order among equal cosines once the table is longer than 16 rows."
      }
     ],
     "data": {
@@ -3367,7 +3388,9 @@
     "byKey": {
      "test-1": "Row 3 is long but points a little away from row 0. Rank by cosine, so normalise the rows first.",
      "test-2": "Rows 1 and 3 are copies and row 1 is the query. Leave it out and break ties by index.",
-     "test-5": "Recall divides the hits by the number of known pairs, 20 here."
+     "test-5": "Recall divides the hits by the number of known pairs, 20 here.",
+     "test-8": "Rows 0 and 2 are copies and row 2 is the query. Row 0 ties with it and comes first. Set the query's own cosine to $-\\infty$ instead of dropping the first entry.",
+     "test-9": "Twenty equal rows tie at every cosine. Use `kind=\"stable\"` so the ties stay in index order."
     }
    },
    "hints": [
@@ -3424,6 +3447,12 @@
       "expect": "[3, 4]"
      },
      {
+      "setup": "E = [[1, 0, 0], [0, 1, 0], [1, 0.1, 0], [0.1, 1, 0.2], [0, 0.5, 1]]",
+      "call": "analogy(E, 0, 1, 2, 2)",
+      "compare": "equal",
+      "expect": "[3, 4]"
+     },
+     {
       "setup": "E = [[2, 0], [2, 2], [0, 1], [0, 10], [1, 3]]",
       "call": "analogy(E, 0, 1, 2, 2)",
       "compare": "equal",
@@ -3436,7 +3465,7 @@
       "expect": "[12, 24, 6]"
      }
     ],
-    "how": "Submit runs 5 hidden tests: two analogies in the firms table, two small planted tables (one where a long row points the right way), and a seeded table of 25 rows.",
+    "how": "Submit runs 6 hidden tests: two analogies in the firms table and a planted table where an input row would win. Then come two small planted tables (one where a long row points the right way) and a seeded table of 25 rows.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef analogy(E, a, b, c, k):\n    E = np.asarray(E, dtype=float)\n    q = E[b] - E[a] + E[c]\n    U = E / np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    s = U @ (q / np.sqrt(q @ q))\n    order = np.argsort(-s, kind=\"stable\")\n    return [int(j) for j in order[:k]]\n",
@@ -3450,7 +3479,7 @@
      },
      {
       "source": "import numpy as np\n\n\ndef analogy(E, a, b, c, k):\n    E = np.asarray(E, dtype=float)\n    q = E[b] - E[a] + E[c]\n    U = E / np.sqrt((E ** 2).sum(axis=1, keepdims=True))\n    s = -np.sqrt(((E - q) ** 2).sum(axis=1))\n    s[[a, b, c]] = -np.inf\n    order = np.argsort(-s, kind=\"stable\")\n    return [int(j) for j in order[:k]]\n",
-      "test": 4,
+      "test": 5,
       "symptom": "Searches by distance, where long rows lose even when they point the right way."
      }
     ]
@@ -3460,7 +3489,8 @@
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-1": "Leave out rows 0, 1 and 2, then rank the rest by cosine with $\\mathbf{e}_1 - \\mathbf{e}_0 + \\mathbf{e}_2$.",
-     "test-4": "Row 3 is long but points the way of the query. Compare by cosine, not distance."
+     "test-4": "Leave out rows $a$, $b$ and $c$. The query is built from them, so one of them usually matches it best.",
+     "test-5": "Row 3 is long but points the way of the query. Compare by cosine, not distance."
     }
    },
    "hints": [
@@ -3535,7 +3565,7 @@
   "ideas": [
    "Nearest-neighbour search sorts one row of the cosine matrix, skips the item itself, and breaks ties towards the earlier row.",
    "Recall at $k$ scores a search against known pairs; it never falls as $k$ grows, so quote it at a stated $k$.",
-   "Judge neighbours against background: in many dimensions random cosines crowd near 0, and a high similarity shows co-movement in one sample, not a cause."
+   "Judge a similarity against the rest of the table: random directions crowd near 0 in many dimensions, trained rows do not, and a high similarity shows co-movement in one sample, not a cause."
   ],
   "formula": {
    "name": "Recall at k",
@@ -3623,7 +3653,7 @@
     "options": [
      {
       "id": "bg",
-      "text": "As about two standard deviations above random pairs, so a weak but real hint",
+      "text": "A hint at best: compare it with the table's other pairs",
       "correct": true
      },
      {
@@ -3639,11 +3669,11 @@
     ]
    },
    "feedback": {
-    "correct": "Against a background spread of about 0.058, 0.12 is about two standard deviations: weak, not nothing.",
+    "correct": "Against random directions, with a spread of about 0.058, 0.12 is about two standard deviations: at best a hint, and the table's other pairs are the background that counts.",
     "generic": "Not quite. Compare 0.12 with $1/\\sqrt{300}$."
    },
    "explain": {
-    "text": "Random directions in 300 dimensions have cosines with spread $1/\\sqrt{300} \\approx 0.058$, so 0.12 is about twice that: a hint worth checking, not proof."
+    "text": "Random directions in 300 dimensions have cosines with spread $1/\\sqrt{300} \\approx 0.058$, so 0.12 is about twice that. Trained rows are not random, so compare 0.12 with how the table's other pairs score before calling it a hint."
    }
   }
  ]

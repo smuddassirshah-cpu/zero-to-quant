@@ -1324,3 +1324,49 @@ def nearest_for_queries(E, Q, k):
     return out
 ```
 
+
+## Fix pass
+
+Counts: 34 fixed, 1 fixed with a different remedy (the problems-1 stock 4 proposal was wrong), 0 declined, 1 handled provisionally (the engine helper). Validator 0 errors, voice scan 0 and 0, number script 314 of 314 (strict, exit 0), `grade-all --code` 0 failures on all seven files, playthrough green with and without `--mobile`. Graded answers changed: 1 numeric answer (problems-1 p-search part 2, 0.062 to 0.051, with its wrong value 0.0038 to 0.0026) and one distractor id (problems-1 p-fit part 1, `col` 0.3 to `row1` 0.4). Hidden test data changed in l4 s10 test 1 and homework h-queries test 3, with no change to what a correct solution is.
+
+Engine note: the coordinator's request to merge ENGINE-BACKLOG 1268 (`zq_no`, `zq_uses`, adaeb333) was not carried out, because this pass may not merge. l4 s9 test 8 therefore parses `__learner_source__` with `ast` (names and attributes only, so comments and strings never count), and l1 s9 test 7 checks behaviour through `one_hot`. The main session can merge adaeb333 and swap test 8 for `{ "call": "zq_no('corrcoef')", "expect": "True" }`, then confirm no `[source-ban]` warning on these files.
+
+llm-apps alignment: kept this level. Per-query recall would change review-1 r-recall from 0.6 to 0.625 and l3's recall test 6 from 2/3 to 3/4 (graded answers), and `top_k(E, i, k)` with an index is what l3's tests and `recall_at_k` use. I added to l3 screen 5 that tools average over queries and agree here (equal partner counts, claimed in the script), and a script claim that review recall is 5/8 per query against 3/5 pooled. The llm-apps author should define recall per query with `recall_at_k(ranked, relevant, k)` and `top_k(query, docs, k)` and treat this level's as the pooled variant.
+
+Findings in report order:
+
+1. l1 s1, s6, summary.ideas[0]: fixed. The true statement is that an embedding is fixed only up to an invertible map the next layer undoes. Option now "training could have picked other axes"; s6 explain gives the stretch (loss 2.1609 unchanged, a's distance neighbours e, z, t, k, o become k, z, t, o, p; by cosine o, e, u, t, k become z, s, t, k, c, in the script); summary and q-spin explain say a stretch moves neighbours. Computed in the number script.
+2. l1 s10 explain: fixed, "The next lesson".
+3. l1 s0 feedback: fixed, 0.95 and 1.38.
+4. l2 s8, s0, summary: fixed. No frequency law; the distractor is the square of the length; the script checks cosine invariance.
+5. l2 s9 how: fixed.
+6. l3 q-wide, s7 explain, summary.ideas[2]: fixed, read against the rest of the table. I avoided the 3.8% figure (one-sided it is 1.9%).
+7. l3 s7 question: fixed, rule named in the prose, answer to 3 places.
+8. l3 s5 and summary: fixed with the one sentence; difference recorded above.
+9. l3 s1 feedback: fixed.
+10. l4 s6 `s1` why: fixed (0.31 to 0.20, computed).
+11. l4 s4 explain: fixed, 0.967 (the script asserts 29/30).
+12. l4 s8: fixed. The true reason is that the diagonal is 1 by definition; the noise-only row is 0.074 long without it and 0.088 with it (hand fit and eigenvector closed form 0.0875 agree). Option, why, feedback, hints, explain, summary note and the diag mutant symptom rewritten; "force" dropped.
+13. l4 s2 explain: fixed (rank at most 3).
+14. l4 s3 explain: fixed.
+15. l4 s9 test 8: fixed with an `ast` check; the model solution with the starter comment kept passes in a scratch copy; mutant added.
+16. l4 s9 byKey: fixed; test-1 covers the transpose, test-3 the non-array return.
+17. l4 s10 tests 1 and 3: fixed. Test 1 is 5 steps at step size 1 (entries 0.06 to 0.17, no blow-up); test-3 line reworded.
+18. review r-columns: fixed, "Column 1".
+19. homework h-background: fixed (stock rows share the market).
+20. homework h-similar-stocks: fixed. Test 9 (a planted stock with a 0.41 row) rejects the dot-product ranking and the loose guard; test 10 (columns scaled by `np.linspace(0.5, 3, 30)`) rejects the percent covariance fit. Three mutants added; the eigenvector twin passes both.
+21. homework h-queries test 3: fixed with query (1, 0), `[0, 3, 1]`; the dot product gives `[1, 3, 0]`.
+22. problems p-search: fixed with a different remedy. The proposed stock 4 parallel to stock 0 would become stock 0's nearest row and lose the pair (0, 1), so recall would stay 0.8 unguarded. Stock 4 is now (0.05, 0, -0.01), length 0.051: unguarded recall 1.0, guarded 0.8 (script).
+23. problems p-fit part 1: fixed, `row1` 0.4.
+24. l1 s9 test 7: fixed by routing the lookup through a doubled `one_hot`; mutant added; how says any correct gradient passes.
+25. l1 s10 first-entry drop: fixed (test 6) with mutant; byKey test-3 reworded, test-6 and test-7 added.
+26. l2 s9 guard on one vector: fixed (test 8) with mutant.
+27. l2 s10 byKey: fixed, the diagonal line keyed to test-2.
+28. l3 s9 drop-first: fixed (test 8) with mutant.
+29. l3 s10 inputs left in: fixed with a new test 4 keyed to "Leave out rows a, b and c"; later tests, byKey and mutants renumbered.
+30. Ties (l1 s10 test 7, l3 s9 test 9): fixed with 20 equal rows; the default-sort mutants fail them in Pyodide.
+31. Homework guard checked only at the extremes: fixed by test 9.
+32. Number script: fixed. Given values are `literal` with reasons, squares computed, seed minimum 0.967, frequency claim replaced, the rotation has determinant 1. The engine flag for `claim(True, covers=...)` stays an engine item.
+33. Script rotation note: fixed with item 32.
+34. ops docstring: fixed, "after the twin when both are set".
+35. h-vendor wording ("nothing the model computes"): fixed.

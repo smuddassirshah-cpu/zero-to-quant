@@ -106,6 +106,9 @@ def mlp_loss(C, W1):
 
 
 Q, _ = np.linalg.qr(np.random.default_rng(5).standard_normal((10, 10)))
+if np.linalg.det(Q) < 0:                      # a reflection is not a spin: flip one column to make a rotation
+    Q[:, 0] = -Q[:, 0]
+lv.claim(close(np.linalg.det(Q), 1.0) and np.allclose(Q @ Q.T, np.eye(10)), 'Q is a rotation: orthogonal with determinant 1')
 Bd = np.zeros((30, 30))
 for k in range(3):
     Bd[10 * k:10 * k + 10, 10 * k:10 * k + 10] = Q.T
@@ -113,6 +116,23 @@ l0, lr_ = mlp_loss(Pm['C'], Pm['W1']), mlp_loss(Pm['C'] @ Q, Bd @ Pm['W1'])
 lv.claim(round(l0, 4) == 2.1609 and abs(l0 - lr_) < 1e-9, f'dev loss {l0:.6f} before and {lr_:.6f} after a rotation of the table', covers=[2.1609])
 lv.expect('l1', 'screens[6].question', 2.1609)
 lv.claim(len(X) == 22807, 'dev set of 22,807 rows (makemore L2)')
+# the stretch: column 0 of the table times 5, the matching rows of W1 divided by 5 (an invertible map the first layer undoes)
+Sx = np.diag([5.0] + [1.0] * 9)
+Bs = np.zeros((30, 30))
+for k in range(3):
+    Bs[10 * k:10 * k + 10, 10 * k:10 * k + 10] = np.linalg.inv(Sx)
+Cs = Pm['C'] @ Sx
+ls_ = mlp_loss(Cs, Bs @ Pm['W1'])
+lv.claim(abs(ls_ - l0) < 1e-9 and round(ls_, 4) == 2.1609, f'dev loss {ls_:.6f} after a stretch of column 0 by 5 undone in W1 (unchanged from {l0:.6f})', covers=[2.1609, 5, 0])
+dAs = [pdist(Cs[1], Cs[j]) for j in range(27)]
+nbS = [SYM[j] for j in rank_by(dAs, 1, largest=False)[:5]]
+nbE0 = [SYM[j] for j in rank_by([pdist(CL[1], CL[j]) for j in range(27)], 1, largest=False)[:5]]
+lv.claim(nbE0 == ['e', 'z', 't', 'k', 'o'] and nbS == ['k', 'z', 't', 'o', 'p'], f'stretch moves a\'s five nearest rows by distance from {nbE0} to {nbS}')
+lv.stated('l1', 'screens[6].explain', 'to k, z, t, o, p', nbS == ['k', 'z', 't', 'o', 'p'])
+lv.stated('l1', 'screens[6].explain', 'from e, z, t, k, o', nbE0 == ['e', 'z', 't', 'k', 'o'])
+cosC = [pcos(CL[1], CL[j]) for j in range(27)]
+cosS = [pcos(Cs[1], Cs[j]) for j in range(27)]
+lv.claim([SYM[j] for j in rank_by(cosC, 1)[:5]] == ['o', 'e', 'u', 't', 'k'] and [SYM[j] for j in rank_by(cosS, 1)[:5]] == ['z', 's', 't', 'k', 'c'], 'the same stretch moves a\'s five nearest rows by cosine from o, e, u, t, k to z, s, t, k, c')
 # nearest rows by distance in the letter table
 dA = [pdist(CL[1], CL[j]) for j in range(27)]
 nbE = [SYM[j] for j in rank_by(dA, 1, largest=False)[:5]]
@@ -203,6 +223,8 @@ def topk_i(i, k):
 recs = {k: Fr(sum(j in topk_i(i, k) for i in vow for j in vow if j != i), 20) for k in (1, 3, 5)}
 lv.claim(recs == {1: Fr(1, 5), 3: Fr(1, 2), 5: Fr(3, 5)}, 'vowel recall at 1, 3, 5: 0.2, 0.5, 0.6', covers=[0.2, 0.5, 0.6, 10, 20])
 lv.expect('l3', 'screens[5].widget.answer', 0.5)
+pq = [sum(j in topk_i(i, 3) for j in vow if j != i) / 4 for i in vow]
+lv.claim(len({len([j for j in vow if j != i]) for i in vow}) == 1 and close(sum(pq) / 5, 0.5), 'vowels: every query has 4 partners, so the mean of per-query recall equals the pooled recall (0.5)', covers=[4, 5])
 lv.claim(round(10 / 15, 4) == 0.6667, 'slip: 10 of 15 slots', covers=[0.6667])
 names = ["Big Bank", "Small Bank", "Big Tech", "Small Tech", "Big Oil", "Small Oil"]
 EA = [[float(x) for x in row] for row in lv.files['l3-nearest-in-the-space']['screens'][4]['canvas']['params']['matrices'][0]['rows']]
@@ -231,7 +253,7 @@ lv.expect('l3', 'screens[7].widget.answer', round(1 / math.sqrt(300), 4))
 lv.claim(round(0.12 / (1 / math.sqrt(300)), 1) == 2.1, 'quiz: 0.12 is about two spreads', covers=[0.12])
 lv.expect('l3', 'quiz[1].widget.answer', 0.75)
 lv.claim(Fr(6, 8) == Fr(3, 4) and 6 / 5 == 1.2, 'quiz: recall 6/8 = 0.75; slip 6/5 = 1.2', covers=[1.2, 0.75])
-lv.claim(True, 'quiz row values', covers=[0.10, 0.75, 0.20, 1.00, 0.55])
+lv.literal('0.10, 0.75, 0.20, 1.00, 0.55', why='the quiz gives one row of a cosine matrix as its data; the answer is a sort of it, checked above by rank_by')
 
 
 # ------------------------------------------------------------------ l4: fits by a hand gradient (route B) against the autograd (route A, generator)
@@ -286,7 +308,7 @@ for s in range(7, 17):
     Es, Ls = fit_b(corr_b(Rs), trace=True)
     nns = nn_loop(Es)
     rec_seeds.append(sum(ss[nns[i]] == ss[i] for i in range(30)) / 30); rms_seeds.append(math.sqrt(Ls[-1]))
-lv.claim(min(rec_seeds) >= 0.96 and max(rms_seeds) < 0.02, f'seeds 7 to 16: recovery from {min(rec_seeds):.3f}, typical error at most {max(rms_seeds):.4f}', covers=[round(min(rec_seeds), 2)])
+lv.claim(abs(min(rec_seeds) - 29 / 30) < 1e-12 and max(rms_seeds) < 0.02, f'seeds 7 to 16: recovery from {min(rec_seeds):.3f}, typical error at most {max(rms_seeds):.4f}', covers=[round(min(rec_seeds), 3)])
 lv.claim(max(rms_seeds) < 0.03 / 1.5, 'threshold 0.03 on the fit error holds with margin on 10 seeds', covers=[0.03])
 lv.claim(min(rec_seeds) >= 0.9 + 0.05, 'threshold 0.9 on recovery holds with margin on 10 seeds', covers=[0.9])
 from sklearn.cluster import KMeans
@@ -319,10 +341,27 @@ lv.claim(top == 27, 'lone stock: top cosine with stock 27')
 for vv, dp in ((lensL[30], 2), (lensL[:30].min(), 2), (lensL[:30].max(), 2), (sLc[top], 2), (CLn[30, 27], 2)):
     lv.expect('l4', 'screens[7]', round(float(vv), dp))
 lv.claim(lensL[30] < 0.1 < 0.25 < lensL[:30].min(), 'lone row below the 0.25 guard; every other row above it', covers=[0.25])
+
+
+def fit_diag(C, dim=3, steps=300, lr=10.0, seed=0):         # the same fit with the diagonal kept (mask of ones)
+    n = len(C); E = 0.1 * np.random.default_rng(seed).standard_normal((n, dim))
+    for _ in range(steps):
+        E = E - lr * 4 * (E @ E.T - C) @ E / (n * (n - 1))
+    return E
+
+
+ELd = fit_diag(CLn)
+lensLd = np.linalg.norm(ELd, axis=1)
+wL, VL = np.linalg.eigh(CLn)
+eigL = np.linalg.norm(VL[:, -3:] * np.sqrt(wL[-3:]), axis=1)
+lv.claim(abs(lensL[30] - 0.0736) < 5e-5 and abs(lensLd[30] - 0.0875) < 5e-5 and abs(eigL[30] - lensLd[30]) < 5e-4, f'diagonal kept: noise-only row {lensLd[30]:.4f} long against {lensL[30]:.4f} without it; the eigenvector closed form gives {eigL[30]:.4f}')
+lv.expect('l4', 'screens[8]', round(float(lensL[30]), 3), fmt='{:.3f}')
+lv.expect('l4', 'screens[8]', round(float(lensLd[30]), 3), fmt='{:.3f}')
+lv.claim(lensLd[:30].min() > 0.25 and lensLd[:30].max() < 1, 'with the diagonal kept the other rows stay between 0.67 and 0.85, nowhere near forced to 1')
 blk = lv.files['l4-embedding-stocks']['screens'][0]['canvas']['params']['matrices'][0]
 order = [int(x[1:]) for x in blk['rowLabels']]
 lv.claim(blk['rows'] == [[round(float(C7[a, b]), 1) for b in order] for a in order], '12 by 12 block equals np.corrcoef rounded to 1 place', covers=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1])
-lv.claim(True, '3 blocks of 4 stocks', covers=[3, 4, 12])
+lv.claim(len(order) == 12 == 3 * 4 and len({sec7[a] for a in order}) == 3, '3 blocks of 4 stocks', covers=[3, 4, 12])
 e3 = [Fr(8, 10), Fr(7, 10), Fr(3, 10)]; C3 = [[1, Fr(6, 10), Fr(2, 10)], [Fr(6, 10), 1, Fr(3, 10)], [Fr(2, 10), Fr(3, 10), 1]]
 errs = [e3[i] * e3[j] - C3[i][j] for i, j in ((0, 1), (0, 2), (1, 2))]
 sq = sum(e * e for e in errs)
@@ -330,10 +369,10 @@ lv.claim(sq == Fr(113, 10000), '3 by 3: squares add to 0.0113', covers=[0.0113, 
 lv.expect('l4', 'screens[2].widget.answer', round(float(sq / 3), 4))
 diag = sum((e3[i] * e3[j] - C3[i][j]) ** 2 for i in range(3) for j in range(3)) / 9
 lv.expect('l4', 'screens[2].widget.wrong[1].value', round(float(diag), 4))
-lv.claim(True, 'diagonal of E E^T: 0.64, 0.49, 0.09', covers=[0.64, 0.49, 0.09])
+lv.claim(all(close(float(e * e), v) for e, v in zip(e3, (0.64, 0.49, 0.09))), 'diagonal of E E^T: 0.8^2, 0.7^2, 0.3^2 = 0.64, 0.49, 0.09', covers=[0.64, 0.49, 0.09])
 lv.claim(30 * 3 == 90 and 30 * 29 // 2 == 435, '90 numbers fit 435 pairs', covers=[90, 435])
 lv.claim(close(0.6 * 0.5 + 0.2 * 0.5, 0.4) and close((0.4 - 0.5) ** 2, 0.01), 'l4 quiz: 0.4 fitted, error 0.1, squared 0.01', covers=[0.4, 0.1, 0.01])
-lv.claim(True, 'l4 quiz: lengths 0.05 and 0.8 are given values', covers=[0.05, 0.8])
+lv.literal('0.05, 0.8', why='the quiz gives two row lengths as its scenario; the cosine question built on them does not depend on a computed value')
 
 # ------------------------------------------------------------------ review
 lv.claim(close(pcos((2, 0, 1), (1, 2, 2)), 4 / (3 * math.sqrt(5))), 'review cosine 4/(3 sqrt 5)', covers=[round(4 / (3 * math.sqrt(5)), 4), round(4 / 9, 4)])
@@ -348,11 +387,15 @@ lv.claim(rank_by([1, 0.3, 0.7, 0.7, -0.2], 0)[0] == 2, 'review: tie at 0.7 goes 
 lists = {0: (3, 1), 1: (0, 2), 2: (4, 0), 3: (1, 4)}
 kp = [(0, 1), (1, 2), (2, 3), (3, 0), (3, 4)]
 lv.claim(Fr(sum(j in lists[i] for i, j in kp), 5) == Fr(3, 5), 'review recall at 2 = 3/5', covers=[0.6, 0.375])
+rq = {}
+for i, j in kp:
+    rq.setdefault(i, []).append(j in lists[i])
+lv.claim(sum(Fr(sum(v), len(v)) for v in rq.values()) / len(rq) == Fr(5, 8), 'llm-apps alignment: the per-query mean of review recall at 2 is 5/8 = 0.625, not the pooled 3/5, so the pooled definition stays here', covers=[0.625])
 lv.claim(close(0.6 * 0.5 + 0.3 * -0.2, 0.24) and close((0.24 - 0.35) ** 2, 0.0121), 'review pair: 0.24 fitted, squared error 0.0121', covers=[0.24, 0.0121, 0.11, 0.35, 0.30, 0.06])
 lv.expect('review', 'items[6].widget.answer', 0.0121)
 lv.claim(Fr(9, 10) == Fr(9, 10) and close((3 / math.sqrt(10)) ** 2, 0.9), 'review column scaling: row 1 entry 9/10', covers=[0.9])
 lv.expect('review', 'items[9].widget.answer', 0.9)
-lv.claim(True, 'review short-row figures are given values', covers=[0.06, 0.91, 0.6, 0.9])
+lv.literal('0.06, 0.91, 0.6', why='given figures in the review item setup; the answer built from them is checked in the claim above')
 
 # ------------------------------------------------------------------ homework
 lv.expect('homework', 'items[4].widget.answer', 5000 * 32 + 32 * 128)
@@ -396,18 +439,20 @@ E4p = [(0.7, 0.3), (0.6, 0.4), (0.1, 0.8), (0.2, -0.1)]
 lv.claim(close(E4p[0][0] * E4p[1][0] + E4p[0][1] * E4p[1][1], 0.54) and close((0.54 - 0.55) ** 2, 0.0001), 'problem 2: 0.54 and squared error 0.0001', covers=[0.54, 0.0001, 0.01, 0.55, 0.42, 0.12, 0.8, 0.3, 0.1])
 lv.expect('problems', 'items[1].parts[3].question', round(math.hypot(*E4p[3]), 2))
 lv.claim(min(math.hypot(*e) for e in E4p[:3]) > 0.7, 'other rows above 0.7', covers=[0.7, 0.75])
-E5 = [(1.0, 0.2, 0.0), (0.9, 0.3, 0.1), (0.1, 1.0, 0.2), (0.0, 0.9, 0.4), (0.05, 0.02, 0.03)]
+E5 = [(1.0, 0.2, 0.0), (0.9, 0.3, 0.1), (0.1, 1.0, 0.2), (0.0, 0.9, 0.4), (0.05, 0.0, -0.01)]
 lv.expect('problems', 'items[2].parts[0].widget.answer', round(pcos(E5[0], E5[1]), 3))
 lv.claim(close(sum(a * b for a, b in zip(E5[0], E5[1])), 0.96), 'problem 3: dot 0.96, squared lengths 1.04 and 0.91', covers=[0.96, 1.04, 0.91, 0.9, 0.06])
 l4n = math.sqrt(sum(x * x for x in E5[4]))
 lv.expect('problems', 'items[2].parts[1].widget.answer', round(l4n, 3))
-lv.claim(close(sum(x * x for x in E5[4]), 0.0038), 'stock 4 squared length 0.0038', covers=[0.0038, 0.0025, 0.0004, 0.0009])
+lv.claim(close(sum(x * x for x in E5[4]), 0.0026), 'stock 4 squared length 0.0025 + 0 + 0.0001 = 0.0026', covers=[0.0026, 0.0025, 0.0001])
 nnp = []
 for i in range(5):
     s = [pcos(E5[i], E5[j]) if j != i else -2 for j in range(5)]
     nnp.append(max(range(5), key=lambda j: (s[j], -j)))
 found = sum(nnp[i] == j for i, j in [(0, 1), (1, 0), (2, 3), (3, 2)])
 lv.claim(found == 4 and nnp[:4] == [1, 0, 3, 2], 'problem 3: stocks 0, 1 and 2, 3 are mutual nearest; recall at 1 is 4/5', covers=[0.8, 4])
+lv.claim(nnp == [1, 0, 3, 2, 0] and sum(nnp[i] == j for i, j in [(0, 1), (1, 0), (2, 3), (3, 2), (4, 0)]) == 5, 'problem 3: without the guard stock 4\'s nearest is stock 0 and recall at 1 is 5/5 = 1, so the guard is what loses the pair (4, 0)', covers=[1, 5])
+lv.claim(min(math.sqrt(sum(x * x for x in E5[i])) for i in range(4)) > 0.25 > math.sqrt(sum(x * x for x in E5[4])), 'problem 3 guard: only stock 4 is shorter than 0.25', covers=[0.25])
 
 # ------------------------------------------------------------------ code widgets: rerun every hidden test with the solution and with a loop-based twin
 TWINS = {
@@ -588,16 +633,16 @@ lv.claim(n_code == 10, 'ten code widgets in the level')
 # exact short runs: the 5-step and 3-step fits (l4) by hand gradient, compared with the stored expect
 fw = lv.files['l4-embedding-stocks']['screens'][10]['widget']
 C4m = [[1, 0.6, 0.2, 0.1], [0.6, 1, 0.3, 0.2], [0.2, 0.3, 1, 0.5], [0.1, 0.2, 0.5, 1]]
-e5 = np.round(fit_b(np.array(C4m), 2, 5, 10.0, 0), 6).tolist()
-lv.claim(e5 == eval(fw['tests'][0]['expect']), 'exact short run: 5 steps of the 4-stock fit match to 6 places by hand gradient')
+e5 = np.round(fit_b(np.array(C4m), 2, 5, 1.0, 0), 6).tolist()
+lv.claim(e5 == eval(fw['tests'][0]['expect']), 'exact short run: 5 steps of size 1 of the 4-stock fit match to 6 places by hand gradient')
 # timing note values in the how lines and thresholds
-lv.claim(True, 'how lines: test counts and tolerances', covers=[6, 15, 4, 0.85, 1e-12, 0.0577])
+lv.literal('6, 15, 4, 0.85, 1e-12, 0.0577', why='test counts, table sizes and tolerances named in how lines are settings of the hidden tests, which this script runs')
 # sizes of the data sets, checked against the data itself
 lv.claim(len(CL) == 27, "makemore's table has 27 rows", covers=[27])
 lv.claim(R7.shape[1] == 30 and R7.shape[0] == 500 and R7[:250].shape[0] == 250, '30 stocks, 500 days, halves of 250', covers=[30, 500, 250])
 lv.claim(abs(math.cos(math.pi) + 1) < 1e-12, 'cosine -1 is an angle of 180 degrees', covers=[180])
 lv.claim('standard_normal((40, 6))' in lv.files['l1-a-table-of-vectors']['screens'][10]['widget']['tests'][4]['setup'], 'l1 code: seeded table of 40 rows', covers=[40])
-lv.claim(10 ** 2 == 100, 'a row 10 times as long comes from about 100 times as many uses (the question states both)', covers=[100, 10])
+lv.claim(10 ** 2 == 100 and close(pcos([10 * x for x in CL[1]], CL[15]), pcos(CL[1], CL[15])), 'a row 10 times as long has a squared length 100 times as large (a distractor), and the same cosines', covers=[100, 10])
 lv.literal("150", why="fund Y's holdings in the transfer prompt are given amounts; the cosine built from them is checked")
 lv.literal("200", why="the trap's universe size is a scenario figure, not a computed result")
 lv.literal("5,000", why="the homework universe size is given; the weight count built from it is checked")
