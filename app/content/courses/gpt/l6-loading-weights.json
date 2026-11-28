@@ -1,0 +1,1193 @@
+{
+  "id": "l6-loading-weights",
+  "course": "gpt",
+  "title": "Loading the weights",
+  "minutes": 14,
+  "objectives": [
+    "Write a loader for supplied weights and check it with the loss of an untrained model."
+  ],
+  "skills": [
+    "gpt-forward"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Weights as text",
+      "prose": "The weights ship as text. Each array is stored as float32, 4 bytes a number. The bytes are written in base64, which spends 4 characters on every 3 bytes.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "gpt-w-embed.json (start)",
+          "lines": [
+            "{\"wte\": {\"shape\": [65, 32], \"b64\": \"wVYavgn8...",
+            " \"wpe\": {\"shape\": [32, 32], \"b64\": \"...\"}, ...}"
+          ]
+        }
+      },
+      "question": "How many base64 characters does `wpe`, 1,024 float32 numbers, take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5464,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "bytes",
+            "value": 4096,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "f64",
+            "value": 10924,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "per-number",
+            "value": 1366,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Characters"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First the bytes: 4 a number."
+        },
+        {
+          "rung": "point",
+          "text": "4,096 bytes make 1,366 groups of 3, the last group short.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$4 \\times 1366$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1{,}024 \\times 4 = 4{,}096$ bytes, which is 1,366 groups of 3, so $4 \\times 1366 = 5{,}464$ characters.",
+        "generic": "Not quite. Turn numbers into bytes, then bytes into characters.",
+        "byKey": {
+          "bytes": "That is the bytes. Base64 writes every 3 bytes as 4 characters.",
+          "f64": "You used 8 bytes a number, float64. The file stores float32.",
+          "per-number": "That is the number of 3-byte groups. Each group takes 4 characters."
+        }
+      },
+      "explain": {
+        "text": "4,096 bytes need $\\lceil 4096 / 3 \\rceil = 1{,}366$ groups of 4 characters: 5,464. The length depends only on how many numbers there are."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "From characters to numbers",
+      "prose": "Slide through the three readings of one short entry: the base64 text, the bytes it stands for, and those bytes read as little-endian float32.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "A",
+            "A",
+            "D",
+            "A",
+            "P",
+            "w",
+            "A",
+            "A",
+            "A",
+            "M",
+            "A",
+            "A",
+            "A",
+            "I",
+            "A",
+            "+"
+          ],
+          "wrap": 8
+        },
+        "controls": [
+          {
+            "bind": "view",
+            "label": "Reading",
+            "frames": [
+              {
+                "cells": [
+                  "A",
+                  "A",
+                  "D",
+                  "A",
+                  "P",
+                  "w",
+                  "A",
+                  "A",
+                  "A",
+                  "M",
+                  "A",
+                  "A",
+                  "A",
+                  "I",
+                  "A",
+                  "+"
+                ],
+                "caption": "16 base64 characters."
+              },
+              {
+                "cells": [
+                  "00",
+                  "00",
+                  "c0",
+                  "3f",
+                  "00",
+                  "00",
+                  "00",
+                  "c0",
+                  "00",
+                  "00",
+                  "80",
+                  "3e"
+                ],
+                "caption": "The same entry as bytes, in hex."
+              },
+              {
+                "cells": [
+                  "1.5",
+                  "-2",
+                  "0.25"
+                ],
+                "caption": "Each 4 bytes, read as little-endian float32."
+              }
+            ],
+            "frameLabels": [
+              "text",
+              "bytes",
+              "float32"
+            ]
+          }
+        ]
+      },
+      "question": "How many bytes do these 16 characters carry?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "chars",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "numbers",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Bytes"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the second reading."
+        },
+        {
+          "rung": "point",
+          "text": "Every 4 characters carry 3 bytes.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$16 / 4 \\times 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "12 bytes: 4 characters for every 3 bytes. Read as float32 they are 1.5, −2 and 0.25.",
+        "generic": "Not quite. Count the cells in the bytes reading.",
+        "byKey": {
+          "chars": "That is the characters. They carry 3 bytes for every 4.",
+          "numbers": "That is the numbers. Each float32 takes 4 bytes."
+        }
+      },
+      "explain": {
+        "text": "16 characters are 12 bytes, and 12 bytes are 3 float32 numbers. Reading them takes the right byte order and the right width."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two files, one model",
+      "prose": "The model ships in two files: `gpt-w-block0.json` holds the block's 12 arrays and `gpt-w-embed.json` holds the other 6. A deeper model adds one file a block, so no file passes the 256 KB limit.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "File",
+            "Arrays",
+            "Bytes"
+          ],
+          "rows": [
+            [
+              "gpt-w-embed.json",
+              "wte, wpe, lnf_g, lnf_b, head_w, head_b",
+              "28,580"
+            ],
+            [
+              "gpt-w-block0.json",
+              "h0.ln1_g ... h0.out_b",
+              "68,271"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many numbers does `gpt-w-embed.json` hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5313,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "emb-only",
+            "value": 3104,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 18017,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-head",
+            "value": 3168,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Numbers"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count its six arrays from the shapes of l5."
+        },
+        {
+          "rung": "point",
+          "text": "$2080 + 1024 + 32 + 32 + 2080 + 65$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The head is $32 \\times 65 + 65$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2{,}080 + 1{,}024 + 64 + 2{,}145 = 5{,}313$ numbers.",
+        "generic": "Not quite. Add the six arrays of the embed file.",
+        "byKey": {
+          "emb-only": "You counted only `wte` and `wpe`. The file also holds `lnf` and the head.",
+          "all": "That is the whole model. The block sits in the other file.",
+          "no-head": "You left out the head, the largest array in this file after `wte`."
+        }
+      },
+      "explain": {
+        "text": "The embed file holds 5,313 numbers and the block file 12,704: 18,017 together. Merging the two loaded dicts gives the whole model.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the loader",
+      "prose": "Write `load_weights(json_text)`: decode each entry's base64, read the bytes as little-endian float32 (`'<f4'`), reshape and convert to float64. Then `check_shapes(weights, config)`: the names of arrays that are missing or misshapen. `SMALL`, `EMBED` and `BLOCK0` hold file texts.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Step",
+            "NumPy"
+          ],
+          "rows": [
+            [
+              "text to bytes",
+              "base64.b64decode(s)"
+            ],
+            [
+              "bytes to float32",
+              "np.frombuffer(b, dtype='<f4')"
+            ],
+            [
+              "shape, then float64",
+              ".reshape(shape).astype(np.float64)"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Write `load_weights` and `check_shapes`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import base64\nimport json\n\nimport numpy as np\n\n\ndef load_weights(json_text):\n    # Each entry is {\"shape\": [...], \"b64\": \"...\"}: base64 of little-endian float32 bytes.\n    # Return {name: float64 array of that shape}.\n    ...\n\n\ndef check_shapes(weights, config):\n    # The names whose array is missing or has the wrong shape, sorted. expected_shapes(config) is defined for you.\n    ...\n",
+        "solution": "import base64\nimport json\n\nimport numpy as np\n\n\ndef load_weights(json_text):\n    out = {}\n    for name, entry in json.loads(json_text).items():\n        raw = np.frombuffer(base64.b64decode(entry['b64']), dtype='<f4')\n        out[name] = raw.reshape(entry['shape']).astype(np.float64)\n    return out\n\n\ndef check_shapes(weights, config):\n    bad = []\n    for name, shape in expected_shapes(config).items():\n        if name not in weights or tuple(weights[name].shape) != tuple(shape):\n            bad.append(name)\n    return sorted(bad)\n",
+        "prelude": "import numpy as np\n\ndef expected_shapes(config):\n    V, T, d, m = config['V'], config['T'], config['d'], config['mlp']\n    out = {'wte': (V, d), 'wpe': (T, d)}\n    for i in range(config['n_layer']):\n        p = f'h{i}.'\n        out.update({p + 'ln1_g': (d,), p + 'ln1_b': (d,), p + 'qkv_w': (d, 3 * d), p + 'qkv_b': (3 * d,),\n                    p + 'proj_w': (d, d), p + 'proj_b': (d,), p + 'ln2_g': (d,), p + 'ln2_b': (d,),\n                    p + 'fc_w': (d, m), p + 'fc_b': (m,), p + 'out_w': (m, d), p + 'out_b': (d,)})\n    out.update({'lnf_g': (d,), 'lnf_b': (d,), 'head_w': (d, V), 'head_b': (V,)})\n    return out\n\n\nCFG = {'V': 65, 'T': 32, 'd': 32, 'n_head': 4, 'n_layer': 1, 'mlp': 128}\nSMALL = '{\"a\": {\"shape\": [2, 3], \"b64\": \"AADAPwAAAMAAAIA+AABAQAAAAAAAAAC+\"}, \"b\": {\"shape\": [3], \"b64\": \"zczMPc3MTD6amZk+\"}}'\nEMBED = open(\"gpt-w-embed.json\").read()\nBLOCK0 = open(\"gpt-w-block0.json\").read()\n",
+        "data": {
+          "gpt-w-embed.json": "content/data/ai/gpt-w-embed.json",
+          "gpt-w-block0.json": "content/data/ai/gpt-w-block0.json"
+        },
+        "examples": [
+          {
+            "call": "load_weights(SMALL)['a'].shape",
+            "expect": "(2, 3)",
+            "compare": "equal"
+          },
+          {
+            "call": "len(load_weights(BLOCK0))",
+            "expect": "12",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "sorted(load_weights(SMALL))",
+            "expect": "['a', 'b']",
+            "compare": "equal"
+          },
+          {
+            "call": "load_weights(SMALL)['a'].tolist()",
+            "expect": "[[1.5, -2.0, 0.25], [3.0, 0.0, -0.125]]",
+            "compare": "equal"
+          },
+          {
+            "call": "load_weights(SMALL)['b'].tolist()",
+            "expect": "[0.10000000149011612, 0.20000000298023224, 0.30000001192092896]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "load_weights(SMALL)['b'].dtype == np.float64",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "len({**load_weights(EMBED), **load_weights(BLOCK0)})",
+            "expect": "18",
+            "compare": "equal"
+          },
+          {
+            "call": "load_weights(EMBED)['head_b'][:3].tolist()",
+            "expect": "[0.06739651411771774, 0.12724269926548004, -0.16431644558906555]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-12
+            }
+          },
+          {
+            "call": "check_shapes({**load_weights(EMBED), **load_weights(BLOCK0)}, CFG)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "check_shapes(dict(load_weights(EMBED), head_w=np.zeros((65, 32)), **load_weights(BLOCK0)), CFG)",
+            "expect": "['head_w']",
+            "compare": "equal"
+          },
+          {
+            "call": "check_shapes({k: v for k, v in {**load_weights(EMBED), **load_weights(BLOCK0)}.items() if k != 'lnf_b'}, CFG)",
+            "expect": "['lnf_b']",
+            "compare": "equal"
+          },
+          {
+            "call": "check_shapes(load_weights(EMBED), CFG)[:2]",
+            "expect": "['h0.fc_b', 'h0.fc_w']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 10 hidden tests. First a planted two-array file: names, values, the float32 values of 0.1, 0.2 and 0.3, and float64 output. Then the two model files merged, and `check_shapes` on the whole model, a transposed head, a missing `lnf_b` and the embed file alone.",
+        "mutants": [
+          {
+            "source": "import base64\nimport json\n\nimport numpy as np\n\n\ndef load_weights(json_text):\n    out = {}\n    for name, entry in json.loads(json_text).items():\n        raw = np.frombuffer(base64.b64decode(entry['b64']), dtype='<f8')\n        out[name] = raw.reshape(entry['shape']).astype(np.float64)\n    return out\n\n\ndef check_shapes(weights, config):\n    bad = []\n    for name, shape in expected_shapes(config).items():\n        if name not in weights or tuple(weights[name].shape) != tuple(shape):\n            bad.append(name)\n    return sorted(bad)\n",
+            "test": 1,
+            "symptom": "Reads the float32 bytes as float64, so the byte count no longer fits."
+          },
+          {
+            "source": "import base64\nimport json\n\nimport numpy as np\n\n\ndef load_weights(json_text):\n    out = {}\n    for name, entry in json.loads(json_text).items():\n        raw = np.frombuffer(base64.b64decode(entry['b64']), dtype='>f4')\n        out[name] = raw.reshape(entry['shape']).astype(np.float64)\n    return out\n\n\ndef check_shapes(weights, config):\n    bad = []\n    for name, shape in expected_shapes(config).items():\n        if name not in weights or tuple(weights[name].shape) != tuple(shape):\n            bad.append(name)\n    return sorted(bad)\n",
+            "test": 2,
+            "symptom": "Reads the bytes big-endian, so every number is garbage."
+          },
+          {
+            "source": "import base64\nimport json\n\nimport numpy as np\n\n\ndef load_weights(json_text):\n    out = {}\n    for name, entry in json.loads(json_text).items():\n        raw = np.frombuffer(base64.b64decode(entry['b64']), dtype='<f4')\n        out[name] = raw.reshape(entry['shape'])\n    return out\n\n\ndef check_shapes(weights, config):\n    bad = []\n    for name, shape in expected_shapes(config).items():\n        if name not in weights or tuple(weights[name].shape) != tuple(shape):\n            bad.append(name)\n    return sorted(bad)\n",
+            "test": 4,
+            "symptom": "Keeps float32 instead of converting to float64."
+          },
+          {
+            "source": "import base64\nimport json\n\nimport numpy as np\n\n\ndef load_weights(json_text):\n    out = {}\n    for name, entry in json.loads(json_text).items():\n        raw = np.frombuffer(base64.b64decode(entry['b64']), dtype='<f4')\n        out[name] = raw.reshape(entry['shape']).astype(np.float64)\n    return out\n\n\ndef check_shapes(weights, config):\n    bad = []\n    for name, shape in expected_shapes(config).items():\n        if name not in weights or weights[name].size != int(np.prod(shape)):\n            bad.append(name)\n    return sorted(bad)\n",
+            "test": 8,
+            "symptom": "Compares sizes, so a transposed head passes."
+          },
+          {
+            "source": "import base64\nimport json\n\nimport numpy as np\n\n\ndef load_weights(json_text):\n    out = {}\n    for name, entry in json.loads(json_text).items():\n        raw = np.frombuffer(base64.b64decode(entry['b64']), dtype='<f4')\n        out[name] = raw.reshape(entry['shape']).astype(np.float64)\n    return out\n\n\ndef check_shapes(weights, config):\n    bad = []\n    for name, shape in expected_shapes(config).items():\n        if tuple(weights[name].shape) != tuple(shape):\n            bad.append(name)\n    return sorted(bad)\n",
+            "test": 9,
+            "symptom": "Assumes every array is present, so a missing one raises."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`json.loads` gives a dict of entries."
+        },
+        {
+          "rung": "point",
+          "text": "Decode, then `np.frombuffer(..., dtype='<f4')`.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For the check, compare `tuple(w.shape)` with each expected shape, and treat a missing name as bad."
+        }
+      ],
+      "feedback": {
+        "correct": "Your loader reads both files exactly, and the check catches the planted faults.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 failed: if the bytes did not divide, check the dtype. The file stores 4-byte float32.",
+          "test-8": "Test 8 transposes the head to (65, 32). Compare shapes, not sizes: both hold 2,080 numbers."
+        }
+      },
+      "explain": {
+        "text": "A loaded array is the float32 value widened to float64, so 0.1 comes back as 0.10000000149011612. The shape check catches every misfit whose shape differs."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Read as float64",
+      "prose": "A colleague's loader uses `np.frombuffer(b, dtype=np.float64)` on `wpe`'s 4,096 bytes, then reshapes to (32, 32).",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> raw = np.frombuffer(b, dtype=np.float64)",
+            ">>> raw.reshape(32, 32)"
+          ]
+        }
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "error",
+            "text": "An error: the 4,096 bytes give 512 numbers, too few for 1,024 places",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "It works, and every number gains the extra precision of float64",
+            "why": "The bytes are float32 numbers. Reading 8 at a time joins two of them into one meaningless number."
+          },
+          {
+            "id": "half",
+            "text": "It works, but every number comes out halved in size",
+            "why": "Nothing is scaled. The bytes of two float32 numbers become the bits of one float64."
+          },
+          {
+            "id": "pad",
+            "text": "NumPy pads the 512 numbers with zeros to fill the shape",
+            "why": "NumPy never pads a reshape; a size that does not fit raises."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many bytes does a float64 take?"
+        },
+        {
+          "rung": "point",
+          "text": "4,096 bytes at 8 a number is 512 numbers.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A (32, 32) array needs 1,024."
+        }
+      ],
+      "feedback": {
+        "correct": "512 numbers cannot fill (32, 32), so `reshape` raises. On a file whose sizes happened to fit, the values would be garbage.",
+        "generic": "Not quite. Count the numbers 4,096 bytes give at 8 bytes each.",
+        "byKey": {
+          "fine": "That is the trap: float64 sounds more precise, but the bytes were written as float32. Read them with the width they were written in."
+        }
+      },
+      "explain": {
+        "text": "Reading float32 bytes as float64 halves the count and scrambles every value. Here the shape check fails loudly; check the length before trusting any value."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A mistake the shapes miss",
+      "prose": "`check_shapes` compares every array with the shape it should have. Some arrays are square: `wpe` is (32, 32), and so is `proj_w`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Array",
+            "Shape",
+            "Square?"
+          ],
+          "rows": [
+            [
+              "wte",
+              "(65, 32)",
+              "no"
+            ],
+            [
+              "wpe",
+              "(32, 32)",
+              "yes"
+            ],
+            [
+              "h0.proj_w",
+              "(32, 32)",
+              "yes"
+            ],
+            [
+              "head_w",
+              "(32, 65)",
+              "no"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "Which loading mistake passes `check_shapes`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "proj",
+            "text": "Storing `proj_w` transposed",
+            "correct": true
+          },
+          {
+            "id": "head",
+            "text": "Storing `head_w` transposed",
+            "why": "A transposed head is (65, 32), which the check flags."
+          },
+          {
+            "id": "missing",
+            "text": "Leaving out `lnf_b`",
+            "why": "A missing name is flagged."
+          },
+          {
+            "id": "f64",
+            "text": "Reading `wte` as float64",
+            "why": "That halves the count, so the reshape fails before any check."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which arrays keep their shape when transposed?"
+        },
+        {
+          "rung": "point",
+          "text": "A square array transposed has the same shape.",
+          "highlight": [
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The check sees (32, 32) either way."
+        }
+      ],
+      "feedback": {
+        "correct": "A square weight transposed keeps its shape, so only the numbers say something is wrong.",
+        "generic": "Not quite. Find the mistake that leaves every shape the same."
+      },
+      "explain": {
+        "text": "`proj_w` and `wpe` are square, so a transpose still multiplies and the check passes. The loss on known text catches it: the next screens are that check.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The loss of an untrained model",
+      "prose": "Start with small random weights. Every logit is then close to 0. So the model gives each of the 65 characters about the same chance.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "a",
+            "e",
+            "h",
+            "o",
+            "t",
+            "each other"
+          ],
+          "yLabel": "chance",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 0.03
+        },
+        "state": {
+          "values": {
+            "a": 0.0154,
+            "e": 0.0154,
+            "h": 0.0154,
+            "o": 0.0154,
+            "t": 0.0154,
+            "each other": 0.0154
+          },
+          "caption": "Each character: about 1/65."
+        }
+      },
+      "question": "What is the loss, in nats, of a model that gives every character chance 1/65? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.1744,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "bits",
+            "value": 6.0224,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "chance",
+            "value": 0.0154,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Loss in nats"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The loss at one position is $-\\ln p$."
+        },
+        {
+          "rung": "point",
+          "text": "Here $p = 1/65$ at every position.",
+          "highlight": [
+            "xa"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-\\ln(1/65) = \\ln 65$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\ln 65 \\approx 4.1744$ nats at every position, so on average too.",
+        "generic": "Not quite. Take $-\\ln$ of the chance of the right character.",
+        "byKey": {
+          "bits": "That is $\\log_2 65$, the loss in bits. The question asks for nats.",
+          "chance": "That is the chance, $1/65$. The loss is $-\\ln$ of it."
+        }
+      },
+      "explain": {
+        "text": "A uniform guess costs $\\ln 65 \\approx 4.1744$ nats a character. An untrained model whose loss is far from this has a bug before training starts."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Check it on random weights",
+      "prose": "Write `init_loss(seed)`. Build small random weights in the order of `expected_shapes(CFG)` from `np.random.default_rng(seed)`: gains 1, other vectors 0, matrices $N(0, 0.02^2)$. Return `model_loss(weights, XB, YB)` on 16 validation windows.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "a",
+            "e",
+            "h",
+            "o",
+            "t",
+            "each other"
+          ],
+          "yLabel": "chance",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 0.03
+        },
+        "state": {
+          "values": {
+            "a": 0.0154,
+            "e": 0.0154,
+            "h": 0.0154,
+            "o": 0.0154,
+            "t": 0.0154,
+            "each other": 0.0154
+          }
+        }
+      },
+      "question": "Write `init_loss`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef init_loss(seed):\n    # Small random weights, in the order of expected_shapes(CFG), from np.random.default_rng(seed):\n    # gains (names ending \"_g\") 1, other vectors 0, every matrix N(0, 0.02^2).\n    # Return model_loss(weights, XB, YB).\n    ...\n",
+        "solution": "import numpy as np\n\n\ndef init_loss(seed):\n    rng = np.random.default_rng(seed)\n    w = {}\n    for name, shape in expected_shapes(CFG).items():\n        if name.endswith('_g'):\n            w[name] = np.ones(shape)\n        elif len(shape) == 1:\n            w[name] = np.zeros(shape)\n        else:\n            w[name] = rng.standard_normal(shape) * 0.02\n    return model_loss(w, XB, YB)\n",
+        "prelude": "import numpy as np\nfrom gpt_ops_l2 import encode, mean_loss as model_loss, shapes as _sh\n\nCFG = {'V': 65, 'T': 32, 'd': 32, 'n_head': 4, 'n_layer': 1, 'mlp': 128}\n\n\ndef expected_shapes(config):\n    return dict(_sh(config))\n\n\n_v = np.array(encode(open('tiny-shakespeare.txt').read()[225000:]))\nXB = _v[:512].reshape(16, 32)\nYB = _v[1:513].reshape(16, 32)\n",
+        "data": {
+          "gpt_ops_l2.py": "content/data/ai/gpt_ops_l2.py",
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "examples": [
+          {
+            "call": "round(init_loss(0), 1)",
+            "expect": "4.2",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "abs(init_loss(0) - np.log(65)) < 0.05",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "init_loss(0)",
+            "expect": "4.176727140226875",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "init_loss(3)",
+            "expect": "4.180357235247525",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "abs(init_loss(1) - np.log(65)) < 0.05",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 4 hidden tests. Tests 1 and 4 need the loss within 0.05 of $\\ln 65$ for seeds 0 and 1. Tests 2 and 3 compare seeds 0 and 3 with the reference to $10^{-9}$ (relative).",
+        "mutants": [
+          {
+            "source": "import numpy as np\n\n\ndef init_loss(seed):\n    rng = np.random.default_rng(seed)\n    w = {}\n    for name, shape in expected_shapes(CFG).items():\n        if name.endswith('_g'):\n            w[name] = np.ones(shape)\n        elif len(shape) == 1:\n            w[name] = np.zeros(shape)\n        else:\n            w[name] = rng.standard_normal(shape)\n    return model_loss(w, XB, YB)\n",
+            "test": 1,
+            "symptom": "Draws weights of size 1, so the logits are far from 0 and the loss is far above ln 65."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef init_loss(seed):\n    rng = np.random.default_rng(seed)\n    w = {}\n    for name, shape in expected_shapes(CFG).items():\n        if name.endswith('_g'):\n            w[name] = np.zeros(shape)\n        elif len(shape) == 1:\n            w[name] = np.zeros(shape)\n        else:\n            w[name] = rng.standard_normal(shape) * 0.02\n    return model_loss(w, XB, YB)\n",
+            "test": 2,
+            "symptom": "Sets the gains to 0: every logit is 0 and the loss is exactly ln 65, not the run's value."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef init_loss(seed):\n    rng = np.random.default_rng(0)\n    w = {}\n    for name, shape in expected_shapes(CFG).items():\n        if name.endswith('_g'):\n            w[name] = np.ones(shape)\n        elif len(shape) == 1:\n            w[name] = np.zeros(shape)\n        else:\n            w[name] = rng.standard_normal(shape) * 0.02\n    return model_loss(w, XB, YB)\n",
+            "test": 3,
+            "symptom": "Ignores the seed."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop over `expected_shapes(CFG).items()` in order."
+        },
+        {
+          "rung": "point",
+          "text": "Matrices have two sizes in their shape; vectors have one.",
+          "highlight": [
+            "xa"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Draw each matrix with `rng.standard_normal(shape) * 0.02`."
+        }
+      ],
+      "feedback": {
+        "correct": "The loss of your random model is 4.1767, close to $\\ln 65$.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is far from $\\ln 65$. Check the scale of the matrices: 0.02, not 1.",
+          "test-2": "Test 2 compares the exact run. Check the order of the draws and that gains are 1."
+        }
+      },
+      "explain": {
+        "text": "Seed 0 gives 4.1767, just above $\\ln 65 \\approx 4.1744$: small weights make small, unequal logits. That is the first check on any new model."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The trained loss",
+      "prose": "Now the supplied weights. Below is their mean loss on the 781 validation windows of 32 characters. The model never trained on this text.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> W = {**load_weights(EMBED), **load_weights(BLOCK0)}",
+            ">>> model_loss(W, XV, YV)",
+            "1.7933"
+          ]
+        }
+      },
+      "question": "What is that loss in bits per character? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5872,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "times",
+            "value": 1.243,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "uniform",
+            "value": 6.0224,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Bits per character"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One bit is $\\ln 2$ nats."
+        },
+        {
+          "rung": "point",
+          "text": "Divide nats by $\\ln 2$.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.7933 / \\ln 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.7933 / \\ln 2 \\approx 2.5872$ bits per character.",
+        "generic": "Not quite. Convert nats to bits.",
+        "byKey": {
+          "times": "You multiplied by $\\ln 2$. Bits are nats divided by $\\ln 2$.",
+          "uniform": "That is the uniform model in bits. Convert the trained loss."
+        }
+      },
+      "explain": {
+        "text": "1.7933 nats is 2.5872 bits per character, against $\\log_2 65 \\approx 6.0224$ for a uniform guess. A loss this far below uniform says the weights loaded the right way round."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Trust, then check",
+      "prose": "Before using supplied weights:\n- every array is present with the right shape;\n- small random weights give a loss near $\\ln V$;\n- the loaded weights give the loss their supplier states, on the same text.",
+      "question": "Your loaded weights give 4.18 nats on validation text, where the supplier states 1.79. What is the most likely cause?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "load",
+            "text": "The weights in use are not the trained ones",
+            "correct": true
+          },
+          {
+            "id": "text",
+            "text": "Your validation text is harder than theirs",
+            "why": "A harder text moves the loss a little; 4.18 is the loss of a model that knows nothing."
+          },
+          {
+            "id": "good",
+            "text": "Nothing: 4.18 is a good loss here",
+            "why": "It is about $\\ln 65$, the loss of a uniform guess."
+          },
+          {
+            "id": "more",
+            "text": "The model needs more training first",
+            "why": "The supplier trained it; the loss says your copy does not match theirs."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare 4.18 with $\\ln 65$."
+        }
+      ],
+      "feedback": {
+        "correct": "4.18 is about $\\ln 65$: the numbers in use are not the trained ones.",
+        "generic": "Not quite. Compare the loss with that of a uniform guess."
+      },
+      "explain": {
+        "text": "A loss near $\\ln V$ means the model is guessing. The shapes passed, so look for a transposed square array or a mixed-up file."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A vendor's checkpoint",
+      "prose": "A vendor sends a checkpoint of a character model for broker chat, with vocabulary 96 and a stated validation loss of 1.20 nats. Before any work you run three checks: shapes pass, random weights give 4.57, and the checkpoint gives 1.21 on your own held-out chat.",
+      "question": "What do the checks show?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "The checkpoint loads as trained and roughly matches its claim on your text",
+            "correct": true
+          },
+          {
+            "id": "bad",
+            "text": "The checkpoint is broken, since 4.57 is far above 1.20",
+            "why": "The 4.57 is your random baseline, close to $\\ln 96 \\approx 4.56$. It checks your code, not the vendor's weights."
+          },
+          {
+            "id": "leak",
+            "text": "The vendor trained on your held-out chat",
+            "why": "Matching a stated loss is expected for an honest claim. A leak would show as a loss far below it."
+          },
+          {
+            "id": "none",
+            "text": "Nothing until it is retrained",
+            "why": "Retraining is not needed to check a checkpoint; the loss on known text is the check."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare 4.57 with $\\ln 96$."
+        },
+        {
+          "rung": "point",
+          "text": "Compare 1.21 with the stated 1.20."
+        },
+        {
+          "rung": "step",
+          "text": "Both checks pass."
+        }
+      ],
+      "feedback": {
+        "correct": "Random weights give about $\\ln 96$ and the checkpoint matches its claim: it loaded as trained.",
+        "generic": "Not quite. Compare each loss with what it should be.",
+        "byKey": {
+          "bad": "4.57 is the random-weights check, and it matches $\\ln 96$. It is meant to be high."
+        }
+      },
+      "explain": {
+        "text": "$\\ln 96 \\approx 4.56$, so the random check passes, and 1.21 is close to the stated 1.20. A researcher runs these checks before trusting any number the model gives."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Weights ship as base64 text of little-endian float32, one file for the embeddings and head and one a block; read with `np.frombuffer(..., '<f4')`.",
+      "Check shapes, then losses: small random weights give about $\\ln V$, and the loaded weights give their stated loss on the same text.",
+      "The supplied tiny GPT scores 1.7933 nats (2.5872 bits) a character on validation text; a uniform guess scores $\\ln 65 \\approx 4.1744$."
+    ],
+    "formula": {
+      "name": "Loss of a uniform guess",
+      "tex": "-\\ln \\tfrac{1}{V} = \\ln V",
+      "note": "$\\ln 65 \\approx 4.1744$ nats."
+    },
+    "trap": "Reading float32 bytes as float64, or a transposed square weight that passes every shape check."
+  },
+  "quiz": [
+    {
+      "id": "q-fixed",
+      "difficulty": 2,
+      "question": "A colleague retrains the tiny GPT and the new `gpt-w-block0.json` has exactly the old size, 68,271 bytes. Does that show the weights did not change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the size depends only on the shapes",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: new numbers would change the size",
+            "why": "Base64 of float32 is 4 characters a 3 bytes whatever the values."
+          },
+          {
+            "id": "maybe",
+            "text": "Only if the loss also stayed the same",
+            "why": "The size says nothing about the values, whatever the loss."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every float32 is 4 bytes and base64 length follows the byte count, so any values give the same size.",
+        "generic": "Not quite. What decides the length of the text?"
+      },
+      "explain": {
+        "text": "The file length is fixed by the shapes. Compare the numbers, or the loss, to see a change."
+      }
+    },
+    {
+      "id": "q-bytes",
+      "difficulty": 2,
+      "question": "How many bytes of float32 do all 18,017 parameters take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 72068,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "f64",
+            "value": 144136,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "chars",
+            "value": 96092,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Bytes"
+      },
+      "feedback": {
+        "correct": "$18{,}017 \\times 4 = 72{,}068$ bytes.",
+        "generic": "Not quite. A float32 is 4 bytes.",
+        "byKey": {
+          "f64": "That is float64, 8 bytes a number.",
+          "chars": "That is close to the base64 length. The question asks for the bytes."
+        }
+      },
+      "explain": {
+        "text": "$18{,}017 \\times 4 = 72{,}068$ bytes before base64."
+      }
+    },
+    {
+      "id": "q-uniform",
+      "difficulty": 3,
+      "question": "A character model has a vocabulary of 27 symbols. What loss in nats should small random weights give? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.2958,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "bits",
+            "value": 4.7549,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "v65",
+            "value": 4.1744,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Loss in nats"
+      },
+      "feedback": {
+        "correct": "$\\ln 27 \\approx 3.2958$.",
+        "generic": "Not quite. A uniform guess over $V$ symbols costs $\\ln V$.",
+        "byKey": {
+          "bits": "That is bits. Use the natural log.",
+          "v65": "That is for 65 characters. This model has 27."
+        }
+      },
+      "explain": {
+        "text": "Small weights give near-uniform chances, so the loss is about $\\ln 27 \\approx 3.2958$ nats."
+      }
+    }
+  ]
+}

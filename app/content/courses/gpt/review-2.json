@@ -1,0 +1,426 @@
+{
+  "id": "review-2",
+  "course": "gpt",
+  "level": 2,
+  "pass": 0.8,
+  "items": [
+    {
+      "id": "r-small-count",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "A narrower tiny GPT has $V = 65$, $T = 32$, width 16, one block and MLP 64, with every bias, layer-norm gain and bias, and an untied head with a bias. How many parameters does it have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5969,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "no-pos",
+            "value": 5457,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "tied",
+            "value": 4929,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Parameters"
+      },
+      "feedback": {
+        "correct": "Embeddings $1{,}040 + 512$, block 3,280, final norm 32, head 1,105: 5{,}969.",
+        "generic": "Not quite. Count the embeddings, the block, the final norm and the head.",
+        "byKey": {
+          "no-pos": "You left out `wpe`, 32 rows of 16.",
+          "tied": "You tied the head. It is untied here, so its $16 \\times 65$ weights count."
+        }
+      },
+      "explain": {
+        "text": "A block at $d = 16$, $m = 64$ holds $4 \\cdot 256 + 2 \\cdot 16 \\cdot 64 + 9 \\cdot 16 + 64 = 3{,}280$. Adding the rest gives 5,969."
+      }
+    },
+    {
+      "id": "r-qkv-shape",
+      "difficulty": 2,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "A batch of 8 windows of 16 characters goes through the tiny GPT, width 32. What is the shape of the `qkv` output in the block?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "(8, 16, 96)",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "(8, 16, 32)",
+            "why": "That is the input to `qkv`. It makes queries, keys and values together, 96 wide."
+          },
+          {
+            "id": "heads",
+            "text": "(8, 4, 16, 8)",
+            "why": "That is one of q, k or v after the split into heads."
+          },
+          {
+            "id": "ctx",
+            "text": "(8, 32, 96)",
+            "why": "The windows are 16 long; 32 is only the most the model can read."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "(8, 16, 96): queries, keys and values side by side for every position.",
+        "generic": "Not quite. `qkv_w` is (32, 96)."
+      },
+      "explain": {
+        "text": "A (32, 96) weight maps each 32-wide row to 96 numbers, so (8, 16, 32) becomes (8, 16, 96)."
+      }
+    },
+    {
+      "id": "r-b64-wte",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "`wte` holds 2,080 float32 numbers. How many base64 characters does it take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11096,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "bytes",
+            "value": 8320,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "f64",
+            "value": 22188,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Characters"
+      },
+      "feedback": {
+        "correct": "$2{,}080 \\times 4 = 8{,}320$ bytes, which is 2,774 groups of 3, so 11,096 characters.",
+        "generic": "Not quite. Bytes first, then 4 characters for each 3 bytes.",
+        "byKey": {
+          "bytes": "That is the bytes. Base64 spends 4 characters on every 3.",
+          "f64": "You used 8 bytes a number. The file stores float32."
+        }
+      },
+      "explain": {
+        "text": "$\\lceil 8320 / 3 \\rceil = 2{,}774$ groups of 4 characters: 11,096."
+      }
+    },
+    {
+      "id": "r-uniform-gpt2",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "GPT-2's tokeniser has 50,257 tokens. What loss in nats should an untrained GPT-2 with small weights give? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10.8249,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "bits",
+            "value": 15.617,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "log10",
+            "value": 4.7012,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Loss"
+      },
+      "feedback": {
+        "correct": "$\\ln 50{,}257 \\approx 10.8249$ nats.",
+        "generic": "Not quite. Small weights give a near-uniform guess over every token.",
+        "byKey": {
+          "bits": "That is bits; use the natural log.",
+          "log10": "That is $\\log_{10}$; use the natural log."
+        }
+      },
+      "explain": {
+        "text": "Near-zero logits give each token about $1/50{,}257$, so the loss is about $\\ln 50{,}257 \\approx 10.8249$."
+      }
+    },
+    {
+      "id": "r-square",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "Your loader passes every shape check, but the supplied weights give 4.17 nats on validation text, where the supplier states 1.79. Which fault fits?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "square",
+            "text": "A square array, such as `proj_w`, stored transposed",
+            "correct": true
+          },
+          {
+            "id": "head",
+            "text": "The head stored transposed",
+            "why": "A transposed head is (65, 32), which the shape check would flag."
+          },
+          {
+            "id": "f64",
+            "text": "The bytes read as float64",
+            "why": "That halves every array's length, so loading would fail before any loss."
+          },
+          {
+            "id": "text",
+            "text": "A validation text with unusual words",
+            "why": "Unusual words move the loss a little; 4.17 is about $\\ln 65$, a model that knows nothing."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Shapes pass and the loss is about $\\ln 65$: a square array in the wrong orientation fits.",
+        "generic": "Not quite. Which faults survive a shape check?"
+      },
+      "explain": {
+        "text": "Only square arrays keep their shape when transposed. The loss check is what catches them."
+      }
+    },
+    {
+      "id": "r-mask-count",
+      "difficulty": 2,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "One head reads 8 positions under the causal mask. How many of its 64 attention weights can be nonzero?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 36,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "all",
+            "value": 64,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "strict",
+            "value": 28,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Weights"
+      },
+      "feedback": {
+        "correct": "Row $i$ reads positions 0 to $i$: $1 + 2 + \\dots + 8 = 36$.",
+        "generic": "Not quite. Count the entries on and below the diagonal.",
+        "byKey": {
+          "all": "The mask zeroes every entry above the diagonal.",
+          "strict": "You left out the diagonal. A position reads itself."
+        }
+      },
+      "explain": {
+        "text": "On and below the diagonal there are $8 \\times 9 / 2 = 36$ entries."
+      }
+    },
+    {
+      "id": "r-mean-loss",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "At three positions the model gives the true next characters chances 0.9, 0.6 and 0.3. What is the mean loss in nats? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6067,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "avgp",
+            "value": 0.5108,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "sum",
+            "value": 1.8202,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Loss"
+      },
+      "feedback": {
+        "correct": "$(-\\ln 0.9 - \\ln 0.6 - \\ln 0.3)/3 \\approx 0.6067$.",
+        "generic": "Not quite. Average $-\\ln p$ over the three positions.",
+        "byKey": {
+          "avgp": "You averaged the chances first, then took the log. Average the losses.",
+          "sum": "That is the sum. Divide by 3."
+        }
+      },
+      "explain": {
+        "text": "The three losses are 0.1054, 0.5108 and 1.2040; their mean is 0.6067."
+      }
+    },
+    {
+      "id": "r-temp",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "Two characters have logits 3 and 1. What is the chance of the first at temperature 0.5? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.982,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "t1",
+            "value": 0.8808,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "times",
+            "value": 0.7311,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Chance"
+      },
+      "feedback": {
+        "correct": "The logits become 6 and 2, so $1 / (1 + e^{-4}) \\approx 0.9820$.",
+        "generic": "Not quite. Divide the logits by 0.5, then take the softmax.",
+        "byKey": {
+          "t1": "That is temperature 1.",
+          "times": "You multiplied by 0.5, which flattens."
+        }
+      },
+      "explain": {
+        "text": "Dividing by 0.5 doubles the gap to 4, so the first gets 0.9820."
+      }
+    },
+    {
+      "id": "r-topk",
+      "difficulty": 3,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "Four characters have logits 1.5, 0.5, 0 and −2. With top-$k$ at $k = 3$ and temperature 1, what is the chance of the first? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6285,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "all",
+            "value": 0.6168,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Chance"
+      },
+      "feedback": {
+        "correct": "Drop the −2, then $e^{1.5} / (e^{1.5} + e^{0.5} + 1) \\approx 0.6285$.",
+        "generic": "Not quite. Keep the three largest logits and take the softmax over them.",
+        "byKey": {
+          "all": "That keeps all four. Top-3 drops the smallest before the softmax."
+        }
+      },
+      "explain": {
+        "text": "Cutting the smallest logit and taking the softmax over three gives 0.6285."
+      }
+    },
+    {
+      "id": "r-window",
+      "difficulty": 2,
+      "skills": [
+        "gpt-forward"
+      ],
+      "question": "A generated text has reached 40 characters and the context is 32. Numbering from 0, what is the index of the oldest character the next prediction reads?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "off",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "start",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Index"
+      },
+      "feedback": {
+        "correct": "The window is the last 32 of 40 characters: indices 8 to 39.",
+        "generic": "Not quite. Take the last 32 characters.",
+        "byKey": {
+          "off": "That window holds 31 characters.",
+          "start": "The first 8 characters have slid out of the window."
+        }
+      },
+      "explain": {
+        "text": "$40 - 32 = 8$, so the window runs from index 8 to 39."
+      }
+    }
+  ]
+}
