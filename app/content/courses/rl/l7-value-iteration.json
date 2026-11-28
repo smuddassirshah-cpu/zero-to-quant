@@ -1,0 +1,1992 @@
+{
+ "id": "l7-value-iteration",
+ "course": "rl",
+ "title": "Value iteration",
+ "minutes": 15,
+ "objectives": [
+  "Code value iteration and bound its error by the discount factor."
+ ],
+ "skills": [
+  "rl-mdp"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One look ahead",
+   "prose": "On the deterministic grid, suppose every cell's value is 0 to begin with. At row 1, column 4 the agent can try each move and score it by reward plus $0.9 \\times$ the value of the cell it lands in.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "+1"
+      ],
+      [
+       "0.0000",
+       "0.0000",
+       "wall",
+       "0.0000",
+       "−1"
+      ],
+      [
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000"
+      ],
+      [
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "highlight": [
+      "r1c4"
+     ]
+    }
+   },
+   "question": "What is the best score among the four moves at row 1, column 4? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.96,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "no-step",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "disc",
+      "value": 0.864,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "bump",
+      "value": -0.04,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "R enters the +1 cell, which ends the episode."
+    },
+    {
+     "rung": "point",
+     "text": "That move pays $1 - 0.04$, and the end cell is worth 0.",
+     "highlight": [
+      "r1c4",
+      "r1c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Every other move pays −0.04 and lands on a 0."
+    }
+   ],
+   "feedback": {
+    "correct": "R scores $-0.04 + 1 + 0.9 \\times 0 = 0.96$; the others score −0.04.",
+    "generic": "Not quite. Score each move by reward plus 0.9 times the landing value.",
+    "byKey": {
+     "no-step": "You left out the step cost of the move into the +1.",
+     "disc": "The +1 is paid on this move, so it is not discounted.",
+     "bump": "That is the score of a move that does not reach the +1."
+    }
+   },
+   "explain": {
+    "text": "Moving R pays 0.96 at once; every other move pays −0.04. Taking the best score as the cell's new value is one **backup**. Do it for every cell and repeat.",
+    "canvas": {
+     "cells": {
+      "r1c4": "0.9600"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Values spread from the goal",
+   "prose": "Each sweep backs up every cell once, using the previous sweep's values. Slide through the sweeps on the deterministic grid. The arrows show the best move under the current values.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "+1"
+      ],
+      [
+       "0.0000",
+       "0.0000",
+       "wall",
+       "0.0000",
+       "−1"
+      ],
+      [
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000"
+      ],
+      [
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ]
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "cells": {
+         "r1c1": "0.0000",
+         "r1c2": "0.0000",
+         "r1c3": "0.0000",
+         "r1c4": "0.0000",
+         "r2c1": "0.0000",
+         "r2c2": "0.0000",
+         "r2c4": "0.0000",
+         "r3c1": "0.0000",
+         "r3c2": "0.0000",
+         "r3c3": "0.0000",
+         "r3c4": "0.0000",
+         "r3c5": "0.0000",
+         "r4c1": "0.0000",
+         "r4c2": "0.0000",
+         "r4c3": "0.0000",
+         "r4c4": "0.0000",
+         "r4c5": "0.0000"
+        },
+        "arrows": null,
+        "caption": "Every value starts at 0."
+       },
+       {
+        "cells": {
+         "r1c1": "−0.0400",
+         "r1c2": "−0.0400",
+         "r1c3": "−0.0400",
+         "r1c4": "0.9600",
+         "r2c1": "−0.0400",
+         "r2c2": "−0.0400",
+         "r2c4": "−0.0400",
+         "r3c1": "−0.0400",
+         "r3c2": "−0.0400",
+         "r3c3": "−0.0400",
+         "r3c4": "−0.0400",
+         "r3c5": "−0.0400",
+         "r4c1": "−0.0400",
+         "r4c2": "−0.0400",
+         "r4c3": "−0.0400",
+         "r4c4": "−0.0400",
+         "r4c5": "−0.0400"
+        },
+        "arrows": {
+         "r1c1": "up",
+         "r1c2": "up",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "up",
+         "r3c4": "up",
+         "r3c5": "right",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "up"
+        },
+        "caption": "After sweep 1."
+       },
+       {
+        "cells": {
+         "r1c1": "−0.0760",
+         "r1c2": "−0.0760",
+         "r1c3": "0.8240",
+         "r1c4": "0.9600",
+         "r2c1": "−0.0760",
+         "r2c2": "−0.0760",
+         "r2c4": "0.8240",
+         "r3c1": "−0.0760",
+         "r3c2": "−0.0760",
+         "r3c3": "−0.0760",
+         "r3c4": "−0.0760",
+         "r3c5": "−0.0760",
+         "r4c1": "−0.0760",
+         "r4c2": "−0.0760",
+         "r4c3": "−0.0760",
+         "r4c4": "−0.0760",
+         "r4c5": "−0.0760"
+        },
+        "arrows": {
+         "r1c1": "up",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "up",
+         "r3c4": "up",
+         "r3c5": "right",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "up"
+        },
+        "caption": "After sweep 2."
+       },
+       {
+        "cells": {
+         "r1c1": "−0.1084",
+         "r1c2": "0.7016",
+         "r1c3": "0.8240",
+         "r1c4": "0.9600",
+         "r2c1": "−0.1084",
+         "r2c2": "−0.1084",
+         "r2c4": "0.8240",
+         "r3c1": "−0.1084",
+         "r3c2": "−0.1084",
+         "r3c3": "−0.1084",
+         "r3c4": "0.7016",
+         "r3c5": "−0.1084",
+         "r4c1": "−0.1084",
+         "r4c2": "−0.1084",
+         "r4c3": "−0.1084",
+         "r4c4": "−0.1084",
+         "r4c5": "−0.1084"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "up"
+        },
+        "caption": "After sweep 3."
+       },
+       {
+        "cells": {
+         "r1c1": "0.5914",
+         "r1c2": "0.7016",
+         "r1c3": "0.8240",
+         "r1c4": "0.9600",
+         "r2c1": "−0.1376",
+         "r2c2": "0.5914",
+         "r2c4": "0.8240",
+         "r3c1": "−0.1376",
+         "r3c2": "−0.1376",
+         "r3c3": "0.5914",
+         "r3c4": "0.7016",
+         "r3c5": "0.5914",
+         "r4c1": "−0.1376",
+         "r4c2": "−0.1376",
+         "r4c3": "−0.1376",
+         "r4c4": "0.5914",
+         "r4c5": "−0.1376"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "up"
+        },
+        "caption": "After sweep 4."
+       },
+       {
+        "cells": {
+         "r1c1": "0.5914",
+         "r1c2": "0.7016",
+         "r1c3": "0.8240",
+         "r1c4": "0.9600",
+         "r2c1": "0.4923",
+         "r2c2": "0.5914",
+         "r2c4": "0.8240",
+         "r3c1": "−0.1638",
+         "r3c2": "0.4923",
+         "r3c3": "0.5914",
+         "r3c4": "0.7016",
+         "r3c5": "0.5914",
+         "r4c1": "−0.1638",
+         "r4c2": "−0.1638",
+         "r4c3": "0.4923",
+         "r4c4": "0.5914",
+         "r4c5": "0.4923"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "up"
+        },
+        "caption": "After sweep 5."
+       },
+       {
+        "cells": {
+         "r1c1": "0.5914",
+         "r1c2": "0.7016",
+         "r1c3": "0.8240",
+         "r1c4": "0.9600",
+         "r2c1": "0.4923",
+         "r2c2": "0.5914",
+         "r2c4": "0.8240",
+         "r3c1": "0.4031",
+         "r3c2": "0.4923",
+         "r3c3": "0.5914",
+         "r3c4": "0.7016",
+         "r3c5": "0.5914",
+         "r4c1": "−0.1874",
+         "r4c2": "0.4031",
+         "r4c3": "0.4923",
+         "r4c4": "0.5914",
+         "r4c5": "0.4923"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "up"
+        },
+        "caption": "After sweep 6."
+       },
+       {
+        "cells": {
+         "r1c1": "0.5914",
+         "r1c2": "0.7016",
+         "r1c3": "0.8240",
+         "r1c4": "0.9600",
+         "r2c1": "0.4923",
+         "r2c2": "0.5914",
+         "r2c4": "0.8240",
+         "r3c1": "0.4031",
+         "r3c2": "0.4923",
+         "r3c3": "0.5914",
+         "r3c4": "0.7016",
+         "r3c5": "0.5914",
+         "r4c1": "0.3228",
+         "r4c2": "0.4031",
+         "r4c3": "0.4923",
+         "r4c4": "0.5914",
+         "r4c5": "0.4923"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "up"
+        },
+        "caption": "After sweep 7."
+       },
+       {
+        "cells": {
+         "r1c1": "0.5914",
+         "r1c2": "0.7016",
+         "r1c3": "0.8240",
+         "r1c4": "0.9600",
+         "r2c1": "0.4923",
+         "r2c2": "0.5914",
+         "r2c4": "0.8240",
+         "r3c1": "0.4031",
+         "r3c2": "0.4923",
+         "r3c3": "0.5914",
+         "r3c4": "0.7016",
+         "r3c5": "0.5914",
+         "r4c1": "0.3228",
+         "r4c2": "0.4031",
+         "r4c3": "0.4923",
+         "r4c4": "0.5914",
+         "r4c5": "0.4923"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "up",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "up",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "up"
+        },
+        "caption": "After sweep 8."
+       }
+      ],
+      "frameLabels": [
+       "sweep 0",
+       "sweep 1",
+       "sweep 2",
+       "sweep 3",
+       "sweep 4",
+       "sweep 5",
+       "sweep 6",
+       "sweep 7",
+       "sweep 8"
+      ],
+      "label": "Sweep",
+      "start": 0
+     }
+    ]
+   },
+   "question": "On which sweep does the start cell, row 4 column 1, first get a positive value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "eight",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A sweep lets news travel one cell further from the goal."
+    },
+    {
+     "rung": "point",
+     "text": "The start is seven moves from the +1.",
+     "highlight": [
+      "r4c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Before the news arrives, the start only sees step costs."
+    }
+   ],
+   "feedback": {
+    "correct": "Sweep 7: the start is seven moves from the goal.",
+    "generic": "Slide until the start cell turns positive.",
+    "byKey": {
+     "six": "After sweep 6 the start is still at −0.1874: the goal is seven moves away.",
+     "eight": "Sweep 8 changes nothing: the values had already settled.",
+     "one": "After sweep 1 only the cells next to the end cells have heard about them."
+    }
+   },
+   "explain": {
+    "text": "Sweep $k$ gives each cell the best return over $k$ moves. The start, seven moves away, turns positive on sweep 7, at 0.3228, and sweep 8 changes nothing. Before that it shows only the step costs, −0.04, −0.076 and so on.",
+    "canvas": {
+     "cells": {
+      "r1c1": "0.5914",
+      "r1c2": "0.7016",
+      "r1c3": "0.8240",
+      "r1c4": "0.9600",
+      "r2c1": "0.4923",
+      "r2c2": "0.5914",
+      "r2c4": "0.8240",
+      "r3c1": "0.4031",
+      "r3c2": "0.4923",
+      "r3c3": "0.5914",
+      "r3c4": "0.7016",
+      "r3c5": "0.5914",
+      "r4c1": "0.3228",
+      "r4c2": "0.4031",
+      "r4c3": "0.4923",
+      "r4c4": "0.5914",
+      "r4c5": "0.4923"
+     },
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "right",
+      "r3c4": "up",
+      "r3c5": "left",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "up"
+     },
+     "caption": "After sweep 7."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Value iteration",
+   "prose": "Repeating the backup $$V(s) \\leftarrow \\max_a \\sum_{s'} p(s' \\mid s, a)\\,[\\,r + \\gamma V(s')\\,]$$ for every cell is **value iteration**. On the slippery grid the intended move succeeds with 0.8 and each side slip has 0.1. Start again from all zeros.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "+1"
+      ],
+      [
+       "0.0000",
+       "0.0000",
+       "wall",
+       "0.0000",
+       "−1"
+      ],
+      [
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000"
+      ],
+      [
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000",
+       "0.0000"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "highlight": [
+      "r1c4"
+     ]
+    }
+   },
+   "question": "After the first sweep on the slippery grid, what is the value at row 1, column 4? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.76,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "det",
+      "value": 0.96,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "no-slip-cost",
+      "value": 0.768,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "slip-pit",
+      "value": 0.66,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "R reaches the +1 with 0.8; a slip U bumps the edge; a slip D reaches row 2."
+    },
+    {
+     "rung": "point",
+     "text": "The two slips each pay −0.04 and land on a 0.",
+     "highlight": [
+      "r1c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.8 \\times 0.96 + 0.1 \\times (-0.04) + 0.1 \\times (-0.04)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.768 - 0.004 - 0.004 = 0.76$.",
+    "generic": "Not quite. Average over the three outcomes of moving R.",
+    "byKey": {
+     "det": "That is the deterministic value. Here R succeeds only 8 times in 10.",
+     "no-slip-cost": "You left out the step cost on the two slips.",
+     "slip-pit": "A slip from row 1 cannot reach the pit: down from column 4 is row 2, column 4."
+    }
+   },
+   "explain": {
+    "text": "Moving R: $0.8 \\times 0.96 + 0.2 \\times (-0.04) = 0.76$. No other move does better. Later sweeps raise it to 0.8896 as the cells around it gain value."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Why walk away from the goal?",
+   "prose": "Value iteration on the slippery grid settles on the values shown. Next to the pit, at row 3 column 5, the best move is L, away from the goal.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.4502",
+       "0.5800",
+       "0.7323",
+       "0.8896",
+       "+1"
+      ],
+      [
+       "0.3568",
+       "0.4502",
+       "wall",
+       "0.5500",
+       "−1"
+      ],
+      [
+       "0.2714",
+       "0.3348",
+       "0.2915",
+       "0.3969",
+       "0.1634"
+      ],
+      [
+       "0.1944",
+       "0.2381",
+       "0.2168",
+       "0.2830",
+       "0.1961"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "right",
+      "r3c4": "up",
+      "r3c5": "left",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "left"
+     },
+     "highlight": [
+      "r3c5"
+     ]
+    }
+   },
+   "question": "Using the values shown, what is the score of moving U at row 3, column 5? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.7896,
+    "tol": {
+     "abs": 0.0003
+    },
+    "wrong": [
+     {
+      "id": "no-slip",
+      "value": -1.04,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.7896,
+      "tol": {
+       "abs": 0.0003
+      }
+     },
+     {
+      "id": "l",
+      "value": 0.1634,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "pit-later",
+      "value": -0.7096,
+      "tol": {
+       "abs": 0.0003
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "U enters the pit with 0.8."
+    },
+    {
+     "rung": "point",
+     "text": "A slip L reaches row 3 column 4; a slip R hits the edge and stays.",
+     "highlight": [
+      "r2c5",
+      "r3c4",
+      "r3c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.8(-1.04) + 0.1(-0.04 + 0.9 \\times 0.3969) + 0.1(-0.04 + 0.9 \\times 0.1634)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-0.832 + 0.0317 + 0.0107 = -0.7896$, far below L's 0.1634.",
+    "generic": "Not quite. Average the three outcomes of moving U.",
+    "byKey": {
+     "no-slip": "You took U as certain. It slips sideways two times in ten.",
+     "l": "That is the score of L, the best move. The question asks about U.",
+     "sign": "Check the sign: falling in the pit 8 times in 10 makes this move's score negative.",
+     "pit-later": "The pit pays $-1 - 0.04$ on entry and then ends: no discount on it."
+    }
+   },
+   "explain": {
+    "text": "U scores -0.7896 because it falls in the pit 8 times in 10. L scores 0.1634: it heads round by row 3, column 4, and risks the pit only on a 0.1 slip. Slips change the best route, not just the values.",
+    "canvas": {
+     "highlight": [
+      "r3c5",
+      "r2c5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "How fast it settles",
+   "prose": "Each backup is a **contraction**: it shrinks the largest gap between any two value tables by at least $\\gamma$. So after $k$ sweeps the error is at most $\\gamma^k$ times the first. The chart shows the largest change made by each slippery sweep, on a log scale, beside that bound.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      26
+     ],
+     "y": [
+      1e-07,
+      1
+     ],
+     "yScale": "log",
+     "xLabel": "Sweep",
+     "yLabel": "Largest change",
+     "height": 300,
+     "xStep": 5,
+     "functions": [
+      {
+       "id": "det",
+       "expr": "0.96*0.9^(x-1)",
+       "domain": [
+        1,
+        26
+       ],
+       "label": "bound $0.96 \\times 0.9^{k-1}$",
+       "dashed": true
+      },
+      {
+       "id": "slip",
+       "points": [
+        [
+         1,
+         0.76
+        ],
+        [
+         2,
+         0.54
+        ],
+        [
+         3,
+         0.38232000000000005
+        ],
+        [
+         4,
+         0.2694384000000001
+        ],
+        [
+         5,
+         0.21562070400000002
+        ],
+        [
+         6,
+         0.171886022784
+        ],
+        [
+         7,
+         0.13651902051840004
+        ],
+        [
+         8,
+         0.09504675182131206
+        ],
+        [
+         9,
+         0.06980927865065385
+        ],
+        [
+         10,
+         0.03842621743939087
+        ],
+        [
+         11,
+         0.02113048726931324
+        ],
+        [
+         12,
+         0.010619189434091791
+        ],
+        [
+         13,
+         0.005320028829349233
+        ],
+        [
+         14,
+         0.002566773809144024
+        ],
+        [
+         15,
+         0.0012371181595886016
+        ],
+        [
+         16,
+         0.0005851164858994284
+        ],
+        [
+         17,
+         0.0002769916251621485
+        ],
+        [
+         18,
+         0.00012970092728070703
+        ],
+        [
+         19,
+         6.086504295935158e-05
+        ],
+        [
+         20,
+         2.8359483280754327e-05
+        ],
+        [
+         21,
+         1.325215533673485e-05
+        ],
+        [
+         22,
+         6.161286159267476e-06
+        ],
+        [
+         23,
+         2.87380317487429e-06
+        ],
+        [
+         24,
+         1.3352933122545707e-06
+        ],
+        [
+         25,
+         6.225001141779707e-07
+        ]
+       ],
+       "label": "slippery",
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "tol",
+       "y": 1e-06,
+       "label": "$10^{-6}$"
+      }
+     ],
+     "points": [
+      {
+       "id": "lab",
+       "x": 12,
+       "y": 0.010619189434091791,
+       "label": "slippery",
+       "labelPos": "sw"
+      },
+      {
+       "id": "d8",
+       "x": 7,
+       "y": 0.51018336,
+       "label": "deterministic",
+       "labelPos": "se"
+      }
+     ]
+    }
+   },
+   "question": "On the slippery grid, on which sweep does the largest change first fall below $10^{-6}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 25,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "det",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "bound",
+      "value": 131,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "ten",
+      "value": 38,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Follow the slippery curve down to the dashed line."
+    },
+    {
+     "rung": "point",
+     "text": "It crosses between sweeps 24 and 25.",
+     "highlight": [
+      "slip",
+      "tol"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Sweep 24 changes by $1.34 \\times 10^{-6}$; sweep 25 by $6.2 \\times 10^{-7}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Sweep 25 is the first to change by less than $10^{-6}$.",
+    "generic": "Not quite. Read where the slippery curve crosses $10^{-6}$.",
+    "byKey": {
+     "det": "The deterministic grid settles after 8 sweeps. Slips make values depend on loops, which take longer.",
+     "bound": "That is the guarantee from $0.9^k$. The real changes fall faster than the bound.",
+     "ten": "That is the count to $10^{-10}$."
+    }
+   },
+   "explain": {
+    "text": "The slippery changes fall by about half a sweep at the end, faster than the guaranteed 0.9, and drop below $10^{-6}$ on sweep 25 (38 to $10^{-10}$). The deterministic changes follow $0.96 \\times 0.9^{k-1}$ exactly, then stop at sweep 8. The bound $\\gamma^k$ never fails, but it can be loose.",
+    "canvas": {
+     "highlight": [
+      "slip",
+      "det"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The dice game, one state",
+   "prose": "The unlimited dice game from l5 is value iteration with a single state: repeat $V \\leftarrow E[\\max(X, 0.9V)]$ from $V = 0$. The first sweep gives 3.5.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      12
+     ],
+     "y": [
+      3,
+      5
+     ],
+     "xLabel": "Sweep",
+     "yLabel": "$V$",
+     "height": 240,
+     "xTicks": "integer",
+     "functions": [
+      {
+       "id": "lim",
+       "expr": "55/12",
+       "dashed": true,
+       "label": "4.5833"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 1,
+       "y": 3.5,
+       "label": "3.5"
+      }
+     ]
+    }
+   },
+   "question": "What does the second sweep give? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.075,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "undisc",
+      "value": 4.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "keep-all",
+      "value": 3.65,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Now $0.9V = 0.9 \\times 3.5 = 3.15$."
+    },
+    {
+     "rung": "point",
+     "text": "Keep 4, 5 or 6; replace 1, 2 and 3 by 3.15.",
+     "highlight": [
+      "p1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(4 + 5 + 6 + 3 \\times 3.15)/6$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(15 + 9.45)/6 = 4.075$.",
+    "generic": "Not quite. Take the larger of each roll and 3.15, then average.",
+    "byKey": {
+     "undisc": "That is the two-roll game with no discount. Here a reroll is worth $0.9 \\times 3.5$.",
+     "mean": "That is the first sweep again.",
+     "keep-all": "You averaged the six rolls and 3.15 as seven numbers."
+    }
+   },
+   "explain": {
+    "text": "$E[\\max(X, 3.15)] = (15 + 3 \\times 3.15)/6 = 4.075$. Further sweeps give 4.334, 4.450, 4.503, and close in on 4.5833 by at least a factor 0.9 each time.",
+    "canvas": {
+     "points": {
+      "p2": {
+       "x": 2,
+       "y": 4.075,
+       "label": "4.075"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Updating in place",
+   "prose": "A colleague's value iteration writes each new value into the table straight away, so later cells in the same sweep use it. You expected every cell to use the previous sweep's table.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Version",
+      "Sweeps to a change below $10^{-6}$ (slippery)"
+     ],
+     "rows": [
+      [
+       "previous sweep's table",
+       "25"
+      ],
+      [
+       "in place, row by row",
+       "17"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What should you tell the colleague?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fine",
+      "text": "It is fine: in-place sweeps reach the same values, here in fewer sweeps",
+      "correct": true
+     },
+     {
+      "id": "bug",
+      "text": "It is a bug: mixing old and new values gives wrong answers",
+      "why": "Each in-place update is still a backup towards the same fixed point. It converges to the same values, often faster."
+     },
+     {
+      "id": "slower",
+      "text": "It works, but always needs more sweeps",
+      "why": "Here it needed 17 sweeps against 25: new values pass on within the sweep."
+     },
+     {
+      "id": "order",
+      "text": "It only works if the cells are swept from the goal outwards",
+      "why": "Any order converges. Sweeping from the goal can be faster still, but it is not needed."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is an in-place update still a backup?"
+    },
+    {
+     "rung": "point",
+     "text": "Every backup moves the table towards the same fixed point.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compare the sweep counts in the table."
+    }
+   ],
+   "feedback": {
+    "correct": "In-place sweeps (Gauss-Seidel) converge to the same values.",
+    "generic": "Not quite. Ask whether the fixed point changes.",
+    "byKey": {
+     "bug": "You took mixing old and new values for an error. The fixed point is the same, so the answer is the same."
+    }
+   },
+   "explain": {
+    "text": "Using fresh values within a sweep is Gauss-Seidel value iteration: same fixed point, here 17 sweeps instead of 25. The other trap is stopping when the arrows stop changing and quoting those values as exact: the policy settles before the values do.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code value iteration",
+   "prose": "Write `value_iteration(slip, gamma, tol)`: sweep from zeros, each new table built from the previous one, and stop after the first sweep whose largest change is below `tol`. Return the values and the number of sweeps. Then `greedy_policy`, returning for each cell every action within $10^{-9}$ of the best.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Sweeps"
+     ],
+     "rows": [
+      [
+       "`value_iteration(0.0, 0.9, 1e-6)`",
+       "8"
+      ],
+      [
+       "`value_iteration(0.1, 0.9, 1e-6)`",
+       "25"
+      ],
+      [
+       "`value_iteration(0.1, 0.9, 1e-10)`",
+       "38"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `value_iteration` and `greedy_policy`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef q_value(V, s, a, slip, gamma):\n    return sum(p * (reward(t) + gamma * V[t]) for t, p in transition(s, a, slip).items())\n\ndef value_iteration(slip, gamma, tol):\n    \"\"\"Sweep from all zeros, each new value from the previous table.\n    Stop after the first sweep whose largest change is below tol. Return (values, sweeps).\"\"\"\n    ...\n\ndef greedy_policy(values, slip, gamma):\n    \"\"\"{cell: set of actions whose q_value is within 1e-9 of the best} for every non-end cell.\"\"\"\n    ...\n",
+    "solution": "ROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef q_value(V, s, a, slip, gamma):\n    return sum(p * (reward(t) + gamma * V[t]) for t, p in transition(s, a, slip).items())\n\ndef value_iteration(slip, gamma, tol):\n    \"\"\"Sweep from all zeros, each new value from the previous table.\n    Stop after the first sweep whose largest change is below tol. Return (values, sweeps).\"\"\"\n    V = {s: 0.0 for s in CELLS}\n    sweeps = 0\n    while True:\n        sweeps += 1\n        new = {s: 0.0 if s in TERMINAL else max(q_value(V, s, a, slip, gamma) for a in 'URDL')\n               for s in CELLS}\n        change = max(abs(new[s] - V[s]) for s in CELLS)\n        V = new\n        if change < tol:\n            return V, sweeps\n\ndef greedy_policy(values, slip, gamma):\n    \"\"\"{cell: set of actions whose q_value is within 1e-9 of the best} for every non-end cell.\"\"\"\n    out = {}\n    for s in CELLS:\n        if s in TERMINAL:\n            continue\n        q = {a: q_value(values, s, a, slip, gamma) for a in 'URDL'}\n        best = max(q.values())\n        out[s] = {a for a in q if q[a] > best - 1e-9}\n    return out\n",
+    "examples": [
+     {
+      "call": "value_iteration(0.0, 0.9, 1e-6)[1]",
+      "expect": "8",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "value_iteration(0.0, 0.9, 1e-6)[1]",
+      "expect": "8",
+      "compare": "equal"
+     },
+     {
+      "call": "value_iteration(0.1, 0.9, 1e-6)[1]",
+      "expect": "25",
+      "compare": "equal"
+     },
+     {
+      "call": "value_iteration(0.1, 0.9, 1e-10)[1]",
+      "expect": "38",
+      "compare": "equal"
+     },
+     {
+      "call": "value_iteration(0.1, 0.9, 1e-10)[0]['r4c1']",
+      "expect": "0.19435708643804944",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "value_iteration(0.1, 0.9, 1e-10)[0]['r3c5']",
+      "expect": "0.1634402716866",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "value_iteration(0.0, 0.9, 1e-10)[0]['r4c1']",
+      "expect": "0.32275975999999995",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "sorted(greedy_policy(value_iteration(0.0, 0.9, 1e-10)[0], 0.0, 0.9)['r4c1'])",
+      "expect": "['R', 'U']",
+      "compare": "equal"
+     },
+     {
+      "call": "sorted(greedy_policy(value_iteration(0.0, 0.9, 1e-10)[0], 0.0, 0.9)['r4c5'])",
+      "expect": "['L', 'U']",
+      "compare": "equal"
+     },
+     {
+      "call": "sorted(greedy_policy(value_iteration(0.1, 0.9, 1e-10)[0], 0.1, 0.9)['r3c5'])",
+      "expect": "['L']",
+      "compare": "equal"
+     },
+     {
+      "call": "sum(len(x) for x in greedy_policy(value_iteration(0.0, 0.9, 1e-10)[0], 0.0, 0.9).values())",
+      "expect": "24",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 10 hidden tests. Sweep counts and action sets must equal ours; values must match within 1e-6."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build the whole new table before replacing the old one."
+    },
+    {
+     "rung": "point",
+     "text": "End cells stay at 0.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compare with `best - 1e-9` so ties keep every best action."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. On the deterministic grid seven cells have two best actions.",
+    "generic": "Some tests fail. Check that each sweep reads only the previous table, and that you count the final sweep."
+   },
+   "explain": {
+    "text": "A synchronous sweep needs a fresh table each time; the count includes the sweep that drops below `tol`. Returning a set per cell keeps tied actions, which lesson 8 needs to compare policies fairly."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "More than one best move",
+   "prose": "On the deterministic grid the start, row 4 column 1, is seven moves from the goal by several routes.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.5914",
+       "0.7016",
+       "0.8240",
+       "0.9600",
+       "+1"
+      ],
+      [
+       "0.4923",
+       "0.5914",
+       "wall",
+       "0.8240",
+       "−1"
+      ],
+      [
+       "0.4031",
+       "0.4923",
+       "0.5914",
+       "0.7016",
+       "0.5914"
+      ],
+      [
+       "0.3228",
+       "0.4031",
+       "0.4923",
+       "0.5914",
+       "0.4923"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "highlight": [
+      "r4c1"
+     ]
+    }
+   },
+   "question": "Select all the moves that are optimal at the start. Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "U",
+      "text": "U",
+      "correct": true
+     },
+     {
+      "id": "R",
+      "text": "R",
+      "correct": true
+     },
+     {
+      "id": "D",
+      "text": "D",
+      "why": "Down runs off the grid: the agent stays and wastes a step."
+     },
+     {
+      "id": "L",
+      "text": "L",
+      "why": "Left runs off the grid: a wasted step."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the cells the moves lead to."
+    },
+    {
+     "rung": "point",
+     "text": "U reaches row 3 column 1, R reaches row 4 column 2.",
+     "highlight": [
+      "r3c1",
+      "r4c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Both show 0.4031."
+    }
+   ],
+   "feedback": {
+    "correct": "U and R both lead to a cell worth 0.4031, so both score $-0.04 + 0.9 \\times 0.4031 = 0.3228$.",
+    "generic": "Not quite. Score each move from the values shown."
+   },
+   "explain": {
+    "text": "U and R tie exactly. Any policy that picks either is optimal, so \"the optimal policy\" is really a set of actions per cell. Comparing two policies by one arg-max would report a false difference here.",
+    "canvas": {
+     "highlight": [
+      "r3c1",
+      "r4c2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The rule",
+   "prose": "Value iteration repeats $$V_{k+1}(s) = \\max_a \\sum_{s'} p(s' \\mid s, a)[r + \\gamma V_k(s')].$$ For $\\gamma < 1$ each sweep is a contraction, so $\\max_s |V_k(s) - V^*(s)| \\le \\gamma^k \\max_s |V_0(s) - V^*(s)|$. The greedy actions of $V^*$ form the optimal policy, ties included.",
+   "question": "Starting 1.0 from $V^*$ at most, with $\\gamma = 0.9$, what does the bound promise after 50 sweeps?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "b",
+      "text": "An error of at most $0.9^{50} \\approx 0.0052$",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "No error at all",
+      "why": "The bound shrinks but is never 0 in finitely many sweeps; the deterministic grid happens to settle exactly."
+     },
+     {
+      "id": "lin",
+      "text": "An error of at most $1 - 50 \\times 0.1$, which is negative",
+      "why": "The error shrinks by a factor each sweep, not by a fixed amount."
+     },
+     {
+      "id": "half",
+      "text": "An error of at most 0.5",
+      "why": "That would be one halving. Fifty sweeps at 0.9 shrink it by $0.9^{50}$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.9^{50} \\approx 0.0052$.",
+    "generic": "Raise 0.9 to the number of sweeps."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "An American put, one node",
+   "prose": "On a binomial tree, an American put with strike £100 sits at a node where the stock is £92. One step on, the put is worth £4.10 if the stock rises and £11.80 if it falls, each with risk-neutral chance 0.5. One step's discount factor is 0.99.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "rootLabel": "S = £92",
+     "levels": [
+      {
+       "label": "Next step",
+       "branches": [
+        {
+         "id": "u",
+         "label": "up: £4.10",
+         "p": "0.5"
+        },
+        {
+         "id": "d",
+         "label": "down: £11.80",
+         "p": "0.5"
+        }
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the put worth at this node, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "cont",
+      "value": 7.87,
+      "tol": {
+       "abs": 0.006
+      }
+     },
+     {
+      "id": "undisc",
+      "value": 7.95,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "down",
+      "value": 11.8,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "There are two actions: exercise now, or hold."
+    },
+    {
+     "rung": "point",
+     "text": "Exercising pays $100 - 92$. Holding is worth $0.99 \\times$ the average next value.",
+     "highlight": [
+      "u",
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Take the larger of 8 and $0.99 \\times 7.95$."
+    }
+   ],
+   "feedback": {
+    "correct": "Exercise pays £8; holding is worth $0.99 \\times 7.95 = 7.8705$. The put is worth £8: exercise.",
+    "generic": "Not quite. Compare exercising now with holding one more step.",
+    "byKey": {
+     "cont": "That is the value of holding. Exercising now pays £8, which is more.",
+     "undisc": "You left out the discount, and exercising still pays more.",
+     "down": "That is the value after a fall only."
+    }
+   },
+   "explain": {
+    "text": "The backup is $\\max(\\text{exercise}, \\text{hold}) = \\max(8, 0.99 \\times 7.95) = 8$. Pricing an American option is this backup run from the last step back, with \"exercise\" as an action, as `graphs-dp` did for the dice game.",
+    "canvas": {
+     "highlight": [
+      "u",
+      "d"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Value iteration repeats the optimal backup $V(s) \\leftarrow \\max_a \\sum_{s'} p\\,[r + \\gamma V(s')]$ for every state, from any start, until the change is small.",
+   "Each sweep is a contraction: for $\\gamma < 1$ the error shrinks by at least $\\gamma$, so $k$ sweeps leave at most $\\gamma^k$ of it. Real changes can fall faster: 25 sweeps to $10^{-6}$ on the slippery grid.",
+   "The greedy actions of the final values are optimal, and ties are common: an optimal policy is a set of actions per state."
+  ],
+  "formula": {
+   "name": "Bellman optimality backup",
+   "tex": "V_{k+1}(s) = \\max_a \\sum_{s'} p(s' \\mid s, a)\\,[r + \\gamma V_k(s')]",
+   "note": "Converges to $V^*$ from any start when $\\gamma < 1$."
+  },
+  "trap": "Calling an in-place update a bug (it converges too), or stopping when the arrows stop changing and quoting those values as exact."
+ },
+ "quiz": [
+  {
+   "id": "q-backup-det",
+   "difficulty": 2,
+   "prose": "Deterministic grid. A cell's four moves lead to cells worth 0.5914, 0.4923, 0.4923 and itself (a bump, worth 0.30 now).",
+   "question": "What is its value after one backup? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4923,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "no-step",
+      "value": 0.5323,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 0.5514,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-0.04 + 0.9 \\times 0.5914 = 0.4923$.",
+    "generic": "Not quite. Score the best move: $-0.04 + 0.9 \\times$ its landing value.",
+    "byKey": {
+     "no-step": "You left out the step cost.",
+     "no-disc": "You left out the discount."
+    }
+   },
+   "explain": {
+    "text": "The best move leads to 0.5914, so the backup gives $-0.04 + 0.9 \\times 0.5914 = 0.4923$."
+   }
+  },
+  {
+   "id": "q-sweeps-bound",
+   "difficulty": 3,
+   "prose": "Value iteration with $\\gamma = 0.5$ starts at most 2.0 from $V^*$.",
+   "question": "How many sweeps guarantee an error below 0.001?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "ten",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "log",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2 \\times 0.5^{11} = 0.00098$, while $2 \\times 0.5^{10} = 0.00195$.",
+    "generic": "Not quite. Find the smallest $k$ with $2 \\times 0.5^k < 0.001$.",
+    "byKey": {
+     "ten": "At 10 sweeps the bound is 0.00195, still above 0.001.",
+     "log": "You counted decimal places. Each sweep only halves the error."
+    }
+   },
+   "explain": {
+    "text": "Need $0.5^k < 0.0005$, so $k > \\log_2 2000 = 10.97$: 11 sweeps."
+   }
+  },
+  {
+   "id": "q-policy-first",
+   "difficulty": 3,
+   "prose": "After a few sweeps of value iteration the greedy arrows stop changing.",
+   "question": "What can you say about the values at that point?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "not",
+      "text": "They may still be some way from $V^*$, even though the policy is already optimal",
+      "correct": true
+     },
+     {
+      "id": "exact",
+      "text": "They equal $V^*$, because the policy is optimal",
+      "why": "The policy often settles first; the values keep moving until the change is tiny."
+     },
+     {
+      "id": "wrong",
+      "text": "The policy must be wrong, since the values are still changing",
+      "why": "A policy can be optimal while the values are still converging."
+     },
+     {
+      "id": "stop",
+      "text": "The run can stop and report those values as exact",
+      "why": "That is the trap: report values only once the change per sweep is below your tolerance."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The arrows settle before the numbers.",
+    "generic": "Not quite. Do the values have to have converged for the arrows to be right?"
+   },
+   "explain": {
+    "text": "Greedy actions depend only on which move scores best, so they settle early. The values converge only at the rate $\\gamma$; quote them once the change is small."
+   }
+  }
+ ]
+}

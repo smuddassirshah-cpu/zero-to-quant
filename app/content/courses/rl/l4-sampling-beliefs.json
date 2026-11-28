@@ -1,0 +1,1492 @@
+{
+ "id": "l4-sampling-beliefs",
+ "course": "rl",
+ "title": "Sampling from your beliefs",
+ "minutes": 15,
+ "objectives": [
+  "Build a Thompson sampling agent from Beta posteriors and compare three agents' regret."
+ ],
+ "skills": [
+  "rl-bandit"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A belief per arm",
+   "prose": "Venue A has filled 7 of 10 orders and venue B 30 of 50. Give each a uniform prior, $\\mathrm{Beta}(1, 1)$. As in `estimation`, $k$ wins in $n$ update it to $\\mathrm{Beta}(1 + k, 1 + n - k)$, with mean $\\tfrac{1 + k}{2 + n}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Venue",
+      "Fills",
+      "Orders",
+      "Posterior"
+     ],
+     "rows": [
+      [
+       "A",
+       "7",
+       "10",
+       "$\\mathrm{Beta}(8, 4)$"
+      ],
+      [
+       "B",
+       "30",
+       "50",
+       "$\\mathrm{Beta}(31, 21)$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the posterior mean of A's fill chance? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6667,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.7,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "b",
+      "value": 0.5962,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "one-side",
+      "value": 0.7273,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A's posterior is $\\mathrm{Beta}(8, 4)$."
+    },
+    {
+     "rung": "point",
+     "text": "A Beta mean is $\\tfrac{a}{a + b}$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{8}{12}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{8}{12} = 0.6667$. B's is $\\tfrac{31}{52} = 0.5962$.",
+    "generic": "Not quite. Divide the first Beta parameter by the sum of both.",
+    "byKey": {
+     "raw": "That is the raw rate 7 of 10. The prior adds one win and one loss.",
+     "b": "That is B's posterior mean. The question asks about A.",
+     "one-side": "You added the prior's win but not its loss: $\\tfrac{8}{11}$. The mean is $\\tfrac{8}{8 + 4}$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathrm{Beta}(8, 4)$ has mean $\\tfrac{8}{12} = 0.6667$, and $\\mathrm{Beta}(31, 21)$ has mean $\\tfrac{31}{52} = 0.5962$. A looks better, but on far less evidence. The next screen shows how much less.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Wide and narrow beliefs",
+   "prose": "The curves are the two posteriors. B's is fixed at $\\mathrm{Beta}(31, 21)$. Slide A's fills out of its 10 orders and watch its curve move.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      7
+     ],
+     "xLabel": "Fill chance $p$",
+     "yLabel": "Density",
+     "height": 300,
+     "grid": false,
+     "functions": [
+      {
+       "id": "A",
+       "expr": "exp((a1-1)*ln(x) + (b1-1)*ln(1-x) - lc1)",
+       "domain": [
+        0.001,
+        0.999
+       ],
+       "label": "A",
+       "colour": 1
+      },
+      {
+       "id": "B",
+       "expr": "exp(30*ln(x) + 20*ln(1-x) - (-35.415740))",
+       "domain": [
+        0.001,
+        0.999
+       ],
+       "label": "B",
+       "colour": 2,
+       "labelSide": "above"
+      }
+     ],
+     "params": {
+      "k": 7,
+      "a1": 8,
+      "b1": 4,
+      "lc1": -7.185387
+     }
+    },
+    "state": {
+     "params": {
+      "k": 7,
+      "a1": 8,
+      "b1": 4,
+      "lc1": -7.185387
+     }
+    },
+    "derive": {
+     "params.a1": "1 + round(k)",
+     "params.b1": "11 - round(k)",
+     "params.lc1": "lgamma(1 + round(k)) + lgamma(11 - round(k)) - lgamma(12)",
+     "caption": "A: {{round(k)}} fills of 10, so Beta({{1 + round(k)}}, {{11 - round(k)}})."
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "start": 7,
+      "label": "A's fills"
+     }
+    ]
+   },
+   "question": "With A at 7 fills of 10, which posterior is wider?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "A's, because it rests on 10 orders against B's 50",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "B's, because its mean is lower than A's",
+      "why": "A lower mean does not widen a curve. The width shrinks with the number of orders, and B has 50."
+     },
+     {
+      "id": "same",
+      "text": "They are the same width at 7 fills",
+      "why": "Compare the spreads: A's curve spans roughly 0.4 to 0.9, B's roughly 0.45 to 0.73."
+     },
+     {
+      "id": "higher",
+      "text": "A's, because its mean is the higher one",
+      "why": "A's mean is higher, but that moves the curve sideways. It is wider because it rests on 10 orders, not 50."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A's curve is wide: 10 orders leave a lot of doubt.",
+    "generic": "Compare how far each curve spreads along the $p$ axis."
+   },
+   "explain": {
+    "text": "A's posterior rests on 10 orders, so it spreads from about 0.4 to 0.9. B's rests on 50 and is much narrower. A plausible draw from A can land below B, or far above it.",
+    "canvas": {
+     "params": {
+      "k": 7,
+      "a1": 8,
+      "b1": 4,
+      "lc1": -7.185387
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Draw, then pull",
+   "prose": "**Thompson sampling** draws one fill chance from each posterior and pulls the arm with the larger draw. So it pulls A with the chance that A's draw beats B's. Numerical integration gives $P(\\text{draw}_A > \\text{draw}_B) = 0.6921$ for these two posteriors.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      7
+     ],
+     "xLabel": "Fill chance $p$",
+     "yLabel": "Density",
+     "height": 260,
+     "grid": false,
+     "functions": [
+      {
+       "id": "A",
+       "expr": "exp(7*ln(x) + 3*ln(1-x) - (-7.185387))",
+       "domain": [
+        0.001,
+        0.999
+       ],
+       "label": "A",
+       "colour": 1
+      },
+      {
+       "id": "B",
+       "expr": "exp(30*ln(x) + 20*ln(1-x) - (-35.415740))",
+       "domain": [
+        0.001,
+        0.999
+       ],
+       "label": "B",
+       "colour": 2,
+       "labelSide": "above"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What share of its next few pulls does Thompson sampling send to A, as a percentage to the nearest whole number?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.69,
+    "tol": {
+     "abs": 0.006
+    },
+    "unit": "%",
+    "accept": "69%, the chance that A is the better venue",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "mean",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.0035
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Thompson pulls A exactly when A's draw is the larger."
+    },
+    {
+     "rung": "point",
+     "text": "That chance is given in the prose.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.6921$ is about 69%."
+    }
+   ],
+   "feedback": {
+    "correct": "About 69%: A gets the pull with the chance that it is the better venue.",
+    "generic": "Not quite. Thompson pulls A whenever A's draw beats B's.",
+    "byKey": {
+     "all": "You pulled A every time because its mean is higher. Thompson pulls it only when its draw is higher.",
+     "half": "The draws are not a coin flip: A's posterior sits mostly to the right of B's.",
+     "mean": "That is A's posterior mean. The pull share is the chance A's draw beats B's, 0.6921."
+    }
+   },
+   "explain": {
+    "text": "A's draw beats B's with chance 0.6921, so A gets about 69% of the pulls. This is **probability matching**: each arm is pulled with the chance that it is the best one."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One more order",
+   "prose": "Thompson sends the next order to A, and it does not fill. Only A's posterior changes: a loss adds 1 to its second parameter.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Venue",
+      "Before",
+      "After a miss at A"
+     ],
+     "rows": [
+      [
+       "A",
+       "$\\mathrm{Beta}(8, 4)$",
+       "?"
+      ],
+      [
+       "B",
+       "$\\mathrm{Beta}(31, 21)$",
+       "$\\mathrm{Beta}(31, 21)$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is A's posterior mean now? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6154,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "win",
+      "value": 0.6923,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "same",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "raw",
+      "value": 0.6364,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A miss turns $\\mathrm{Beta}(8, 4)$ into $\\mathrm{Beta}(8, 5)$."
+    },
+    {
+     "rung": "point",
+     "text": "The mean is $\\tfrac{a}{a + b}$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{8}{13}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathrm{Beta}(8, 5)$ has mean $\\tfrac{8}{13} = 0.6154$.",
+    "generic": "Not quite. Add the miss to A's second parameter, then take the mean.",
+    "byKey": {
+     "win": "You added a win. The order did not fill, so the loss count goes up.",
+     "same": "That is the mean before the order. The miss moves it.",
+     "raw": "That is the raw rate 7 of 11. The prior's win and loss still count."
+    }
+   },
+   "explain": {
+    "text": "A miss makes A's posterior $\\mathrm{Beta}(8, 5)$, mean $\\tfrac{8}{13} = 0.6154$. Its curve shifts left and narrows a little, so A's share of pulls falls. Each pull updates one belief, which steers the next draw.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Check 0.6921 by drawing",
+   "prose": "Write `posterior(wins, losses, a=1, b=1)` returning the Beta parameters. Then estimate the chance that A beats B by drawing: `rng.betavariate(a1, b1)` against `rng.betavariate(a2, b2)`, `draws` times. With 20,000 draws the share lands within 0.01 of 0.6921 with near certainty.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Returns"
+     ],
+     "rows": [
+      [
+       "`posterior(7, 3)`",
+       "(8, 4)"
+      ],
+      [
+       "`prob_a_beats_b(8, 4, 31, 21, 20000, 0)`",
+       "0.6960"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `posterior` and `prob_a_beats_b`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\ndef posterior(wins, losses, a=1, b=1):\n    \"\"\"Beta parameters after wins and losses, from a Beta(a, b) prior.\"\"\"\n    ...\n\ndef prob_a_beats_b(a1, b1, a2, b2, draws, seed):\n    \"\"\"Share of seeded draws in which Beta(a1, b1) exceeds Beta(a2, b2).\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+    "solution": "import random\n\ndef posterior(wins, losses, a=1, b=1):\n    \"\"\"Beta parameters after wins and losses, from a Beta(a, b) prior.\"\"\"\n    return (a + wins, b + losses)\n\ndef prob_a_beats_b(a1, b1, a2, b2, draws, seed):\n    \"\"\"Share of seeded draws in which Beta(a1, b1) exceeds Beta(a2, b2).\"\"\"\n    rng = random.Random(seed)\n    wins = 0\n    for _ in range(draws):\n        if rng.betavariate(a1, b1) > rng.betavariate(a2, b2):\n            wins += 1\n    return wins / draws\n",
+    "examples": [
+     {
+      "call": "posterior(7, 3)",
+      "expect": "(8, 4)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "posterior(7, 3)",
+      "expect": "(8, 4)",
+      "compare": "equal"
+     },
+     {
+      "call": "posterior(30, 20)",
+      "expect": "(31, 21)",
+      "compare": "equal"
+     },
+     {
+      "call": "posterior(0, 0, 50, 10)",
+      "expect": "(50, 10)",
+      "compare": "equal"
+     },
+     {
+      "call": "posterior(45, 55, 50, 10)",
+      "expect": "(95, 65)",
+      "compare": "equal"
+     },
+     {
+      "call": "prob_a_beats_b(8, 4, 31, 21, 20000, 0)",
+      "expect": "0.692",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "prob_a_beats_b(8, 4, 31, 21, 20000, 5)",
+      "expect": "0.692",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "prob_a_beats_b(3, 3, 3, 3, 20000, 1)",
+      "expect": "0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.015
+      }
+     },
+     {
+      "call": "prob_a_beats_b(30, 2, 2, 30, 2000, 2)",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ],
+    "how": "Submit runs 8 hidden tests. Posteriors must match exactly; each share must lie within the stated distance of the exact chance."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The prior adds `a` wins and `b` losses."
+    },
+    {
+     "rung": "point",
+     "text": "Count the draws in which the first Beta draw is larger.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Return `wins / draws`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both pass. Seed 0 gives 0.6960, close to the integral 0.6921.",
+    "generic": "Some tests fail. Check the parameter order in `betavariate` and that you return a share, not a count."
+   },
+   "explain": {
+    "text": "The share of draws estimates $P(\\text{draw}_A > \\text{draw}_B)$ with standard error about $\\sqrt{0.69 \\times 0.31 / 20000} = 0.0033$. Seed 0 gives 0.6960. Thompson sampling makes one such draw per pull."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code Thompson sampling",
+   "prose": "Each pull: draw `rng.betavariate(1 + wins[i], 1 + losses[i])` for every arm in order, pick the first index of the largest draw, then `pull(ps[a], rng)`. Add the result to that arm's wins or losses. Return the total reward and the pulls per arm.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Seed",
+      "Total reward",
+      "Pulls of A, B, C"
+     ],
+     "rows": [
+      [
+       "0",
+       "596",
+       "21, 197, 782"
+      ],
+      [
+       "1",
+       "584",
+       "30, 155, 815"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `run_thompson`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef run_thompson(ps, T, seed):\n    \"\"\"Thompson sampling with Beta(1, 1) priors. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+    "solution": "import random\n\ndef pull(p, rng):\n    return 1 if rng.random() < p else 0\n\ndef run_thompson(ps, T, seed):\n    \"\"\"Thompson sampling with Beta(1, 1) priors. Return (total reward, pulls per arm).\"\"\"\n    rng = random.Random(seed)\n    k = len(ps)\n    wins = [0] * k\n    losses = [0] * k\n    total = 0\n    for _ in range(T):\n        draws = [rng.betavariate(1 + wins[i], 1 + losses[i]) for i in range(k)]\n        a = draws.index(max(draws))\n        r = pull(ps[a], rng)\n        if r:\n            wins[a] += 1\n        else:\n            losses[a] += 1\n        total += r\n    return total, [w + l for w, l in zip(wins, losses)]\n",
+    "examples": [
+     {
+      "call": "run_thompson([0.45, 0.55, 0.6], 1000, 0)",
+      "expect": "(596, [21, 197, 782])",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "run_thompson([0.45, 0.55, 0.6], 1000, 0)",
+      "expect": "(596, [21, 197, 782])",
+      "compare": "equal"
+     },
+     {
+      "call": "run_thompson([0.45, 0.55, 0.6], 1000, 1)",
+      "expect": "(584, [30, 155, 815])",
+      "compare": "equal"
+     },
+     {
+      "call": "run_thompson([0.45, 0.55, 0.6], 1000, 2)",
+      "expect": "(547, [195, 351, 454])",
+      "compare": "equal"
+     },
+     {
+      "call": "run_thompson([0.1, 0.9], 500, 4)",
+      "expect": "(448, [2, 498])",
+      "compare": "equal"
+     },
+     {
+      "call": "run_thompson([0.45, 0.55, 0.6], 0, 0)",
+      "expect": "(0, [0, 0, 0])",
+      "compare": "equal"
+     },
+     {
+      "call": "sum(run_thompson([0.3, 0.5, 0.2, 0.6], 800, 6)[1])",
+      "expect": "800",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Each result must equal ours exactly, so draw the Beta values in arm order before each pull."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Keep win and loss counts per arm; the posteriors are built from them."
+    },
+    {
+     "rung": "point",
+     "text": "Draw for every arm before you pull.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`a = draws.index(max(draws))`, then pull and count."
+    }
+   ],
+   "feedback": {
+    "correct": "It matches. Most pulls go to C, with B checked now and then.",
+    "generic": "Some tests fail. Draw for all arms first, in order, then pull once."
+   },
+   "explain": {
+    "text": "The draws do all the exploring: a wide posterior sometimes throws out a high draw, so an uncertain arm still gets pulls. As an arm's record grows its draws cluster near its mean, and it is chosen only when it really looks best."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Four agents, same seeds",
+   "prose": "We ran four agents on the three venues with seeds 0 to 199, 1,000 pulls each. The lines are the mean regret so far.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "g",
+       "label": "greedy",
+       "values": [
+        0.0,
+        1.25,
+        2.48,
+        3.72,
+        4.95,
+        6.19,
+        7.42,
+        8.66,
+        9.89,
+        11.13,
+        12.36,
+        13.6,
+        14.83,
+        16.07,
+        17.3,
+        18.54,
+        19.77,
+        21.01,
+        22.24,
+        23.48,
+        24.71,
+        25.95,
+        27.18,
+        28.42,
+        29.65,
+        30.89,
+        32.12,
+        33.36,
+        34.59,
+        35.83,
+        37.06,
+        38.3,
+        39.53,
+        40.77,
+        42.0,
+        43.24,
+        44.47,
+        45.71,
+        46.94,
+        48.18,
+        49.41,
+        50.65,
+        51.88,
+        53.12,
+        54.35,
+        55.59,
+        56.82,
+        58.06,
+        59.29,
+        60.53,
+        61.76
+       ]
+      },
+      {
+       "id": "u",
+       "label": "UCB1",
+       "values": [
+        0.0,
+        1.23,
+        2.33,
+        3.31,
+        4.34,
+        5.3,
+        6.22,
+        7.16,
+        8.1,
+        8.97,
+        9.84,
+        10.69,
+        11.49,
+        12.3,
+        13.14,
+        13.94,
+        14.77,
+        15.62,
+        16.42,
+        17.22,
+        18.01,
+        18.78,
+        19.52,
+        20.2,
+        21.01,
+        21.79,
+        22.52,
+        23.26,
+        23.95,
+        24.64,
+        25.36,
+        26.05,
+        26.73,
+        27.37,
+        28.01,
+        28.67,
+        29.3,
+        29.95,
+        30.65,
+        31.32,
+        31.87,
+        32.43,
+        33.02,
+        33.64,
+        34.24,
+        34.88,
+        35.48,
+        36.08,
+        36.66,
+        37.25,
+        37.78
+       ]
+      },
+      {
+       "id": "e",
+       "label": "ε-greedy 0.1",
+       "values": [
+        0.0,
+        1.11,
+        2.08,
+        2.94,
+        3.74,
+        4.5,
+        5.21,
+        5.86,
+        6.48,
+        7.09,
+        7.68,
+        8.26,
+        8.79,
+        9.31,
+        9.82,
+        10.32,
+        10.82,
+        11.31,
+        11.79,
+        12.28,
+        12.76,
+        13.23,
+        13.69,
+        14.15,
+        14.58,
+        15.02,
+        15.45,
+        15.87,
+        16.26,
+        16.66,
+        17.06,
+        17.47,
+        17.87,
+        18.24,
+        18.61,
+        18.98,
+        19.35,
+        19.72,
+        20.09,
+        20.45,
+        20.79,
+        21.11,
+        21.43,
+        21.77,
+        22.09,
+        22.42,
+        22.75,
+        23.07,
+        23.39,
+        23.71,
+        24.03
+       ]
+      },
+      {
+       "id": "t",
+       "label": "Thompson",
+       "values": [
+        0.0,
+        1.11,
+        2.03,
+        2.86,
+        3.66,
+        4.38,
+        5.09,
+        5.75,
+        6.36,
+        6.91,
+        7.43,
+        7.92,
+        8.42,
+        8.9,
+        9.34,
+        9.8,
+        10.25,
+        10.69,
+        11.13,
+        11.56,
+        11.96,
+        12.35,
+        12.74,
+        13.12,
+        13.47,
+        13.82,
+        14.17,
+        14.5,
+        14.84,
+        15.17,
+        15.49,
+        15.8,
+        16.1,
+        16.38,
+        16.67,
+        16.96,
+        17.25,
+        17.54,
+        17.83,
+        18.1,
+        18.36,
+        18.61,
+        18.87,
+        19.12,
+        19.38,
+        19.6,
+        19.84,
+        20.09,
+        20.32,
+        20.55,
+        20.77
+       ]
+      }
+     ],
+     "xValues": [
+      0,
+      20,
+      40,
+      60,
+      80,
+      100,
+      120,
+      140,
+      160,
+      180,
+      200,
+      220,
+      240,
+      260,
+      280,
+      300,
+      320,
+      340,
+      360,
+      380,
+      400,
+      420,
+      440,
+      460,
+      480,
+      500,
+      520,
+      540,
+      560,
+      580,
+      600,
+      620,
+      640,
+      660,
+      680,
+      700,
+      720,
+      740,
+      760,
+      780,
+      800,
+      820,
+      840,
+      860,
+      880,
+      900,
+      920,
+      940,
+      960,
+      980,
+      1000
+     ],
+     "xLabel": "Pulls",
+     "yLabel": "Mean regret",
+     "y": [
+      0,
+      70
+     ],
+     "decimals": 1
+    },
+    "state": {}
+   },
+   "question": "Which agent has the lowest mean regret after 1,000 pulls?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "t",
+      "text": "Thompson sampling, at about 20.8",
+      "correct": true
+     },
+     {
+      "id": "e",
+      "text": "Epsilon-greedy, at about 24.0",
+      "why": "Close, but its line ends above Thompson's. Its random pulls keep costing at the floor rate."
+     },
+     {
+      "id": "u",
+      "text": "UCB1, at about 37.8",
+      "why": "UCB1's worst-case bonus over-explores these close venues. Its line ends well above two others."
+     },
+     {
+      "id": "g",
+      "text": "Greedy, at about 61.8",
+      "why": "Greedy ends highest: it locked onto a worse venue in most seeds."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read where each line ends at 1,000 pulls."
+    },
+    {
+     "rung": "point",
+     "text": "The lowest end point wins.",
+     "highlight": [
+      "t"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Thompson ends at 20.8, epsilon-greedy at 24.0."
+    }
+   ],
+   "feedback": {
+    "correct": "Thompson ends lowest, at 20.8.",
+    "generic": "Not quite. Compare the four end points."
+   },
+   "explain": {
+    "text": "The end points are 61.8 for greedy, 37.8 for UCB1, 24.0 for epsilon-greedy and 20.8 for Thompson. Thompson spends its exploring where the posteriors are still wide. Its curve is also bending flat, unlike epsilon-greedy's.",
+    "canvas": {
+     "highlight": [
+      "t"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Random on purpose",
+   "prose": "A colleague reviews the agent. \"A has the higher posterior mean, yet Thompson sends 31% of orders to B. It is flipping coins. Greedy would never waste an order like that.\"",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "greedy",
+      "ε-greedy 0.1",
+      "UCB1",
+      "Thompson"
+     ],
+     "yLabel": "Mean regret, 1,000 pulls",
+     "yMax": 70,
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "greedy": 61.8,
+      "ε-greedy 0.1": 24.0,
+      "UCB1": 37.8,
+      "Thompson": 20.8
+     }
+    }
+   },
+   "question": "What is wrong with the colleague's argument?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "explore",
+      "text": "The randomness is the exploring, and it is spent where the posteriors are wide",
+      "correct": true
+     },
+     {
+      "id": "agree",
+      "text": "Nothing: removing the randomness would lower regret",
+      "why": "Removing it gives greedy, the worst of the four at 61.8. The draws are what stop a lock-in on a lucky start."
+     },
+     {
+      "id": "luck",
+      "text": "Thompson only did well because the seeds were lucky",
+      "why": "All four agents ran on the same 200 seeds. The gap is not luck."
+     },
+     {
+      "id": "equal",
+      "text": "Nothing much: random and greedy agents do about equally well",
+      "why": "Greedy's 61.8 is three times Thompson's 20.8 on the same seeds."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask what greedy would do with A after one bad run."
+    },
+    {
+     "rung": "point",
+     "text": "B's draws beat A's only when B might really be better.",
+     "highlight": [
+      "xgreedy",
+      "xThompson"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compare greedy's regret with Thompson's on the bars."
+    }
+   ],
+   "feedback": {
+    "correct": "The coin flips are weighted by the evidence: they are exploration with a purpose.",
+    "generic": "Not quite. Ask what the draws do that greedy cannot.",
+    "byKey": {
+     "agree": "You took randomness as waste. Without it you have greedy, which locks onto a worse arm in most seeds."
+    }
+   },
+   "explain": {
+    "text": "Thompson pulls B exactly as often as B might be the better venue. As evidence piles up that chance shrinks and so does B's share. Greedy has no such check and paid 61.8 against 20.8.",
+    "canvas": {
+     "highlight": [
+      "xgreedy",
+      "xThompson"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A stubborn prior",
+   "prose": "Someone seeds venue A with a strong prior, $\\mathrm{Beta}(50, 10)$, from a vendor's brochure. Its mean is 0.8333. A truly fills with chance 0.45. After 100 orders it has filled 45.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      12
+     ],
+     "xLabel": "Fill chance $p$",
+     "yLabel": "Density",
+     "height": 260,
+     "grid": false,
+     "functions": [
+      {
+       "id": "pri",
+       "expr": "exp(49*ln(x) + 9*ln(1-x) - (-27.166257))",
+       "domain": [
+        0.001,
+        0.999
+       ],
+       "label": "prior",
+       "dashed": true
+      },
+      {
+       "id": "post",
+       "expr": "exp(94*ln(x) + 64*ln(1-x) - (-108.980301))",
+       "domain": [
+        0.001,
+        0.999
+       ],
+       "label": "after 100"
+      }
+     ]
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "truth",
+       "x": 0.45,
+       "label": "true 0.45"
+      }
+     ]
+    }
+   },
+   "question": "What is A's posterior mean after the 100 orders? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5938,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "flat",
+      "value": 0.451,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "data",
+      "value": 0.45,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "prior",
+      "value": 0.8333,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add 45 wins and 55 losses to $\\mathrm{Beta}(50, 10)$."
+    },
+    {
+     "rung": "point",
+     "text": "That gives $\\mathrm{Beta}(95, 65)$.",
+     "highlight": [
+      "post"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{95}{160}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathrm{Beta}(95, 65)$ has mean $\\tfrac{95}{160} = 0.5938$, still far above 0.45.",
+    "generic": "Not quite. Add the 100 results to the prior's parameters.",
+    "byKey": {
+     "flat": "That is the mean from a flat prior, $\\tfrac{46}{102}$. This prior counts as 60 orders already seen.",
+     "data": "That is the data alone. The prior still holds 60 pseudo-orders.",
+     "prior": "That is the prior mean. The 100 orders pull it down."
+    }
+   },
+   "explain": {
+    "text": "The prior acts like 60 orders already seen, 50 of them fills. After 100 real orders the mean is $\\tfrac{95}{160} = 0.5938$, still well above 0.45, so Thompson keeps over-sending to A. A strong wrong prior delays learning.",
+    "canvas": {
+     "highlight": [
+      "post",
+      "truth"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Probability matching",
+   "prose": "Thompson sampling keeps a posterior per arm and, each pull, draws one value from each and pulls the largest. So $$P(\\text{pull } a) = P(a \\text{ is best} \\mid \\text{data}).$$ For 0 or 1 rewards with $\\mathrm{Beta}(1, 1)$ priors, arm $a$ draws from $\\mathrm{Beta}(1 + \\text{wins}_a, 1 + \\text{losses}_a)$.",
+   "question": "As an arm's record grows, what happens to the chance that Thompson pulls it, if it is not the best arm?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "falls",
+      "text": "It falls towards 0 as its posterior narrows below the best arm's",
+      "correct": true
+     },
+     {
+      "id": "fixed",
+      "text": "It stays fixed, like epsilon-greedy's random share",
+      "why": "Epsilon-greedy's share is fixed. Thompson's depends on the posteriors, which narrow with evidence."
+     },
+     {
+      "id": "rises",
+      "text": "It rises, because the arm has been tried more",
+      "why": "More trials narrow the posterior around its true mean, below the best arm's, so its draws rarely win."
+     },
+     {
+      "id": "half",
+      "text": "It settles near one half",
+      "why": "One half would mean the arm is as likely to be best as not. Evidence says otherwise."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Its chance of being best shrinks, so its share of pulls does too.",
+    "generic": "Think about how the posterior of a worse arm changes with more data."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Capital for new strategies",
+   "prose": "A fund trials new strategies with small capital and counts winning days. Strategy S has won 12 of 20 days; strategy T, launched later, 5 of 8. Each day the fund backs the strategy whose Thompson draw is larger, from $\\mathrm{Beta}(1, 1)$ priors.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Strategy",
+      "Winning days",
+      "Days",
+      "Posterior"
+     ],
+     "rows": [
+      [
+       "S",
+       "12",
+       "20",
+       "$\\mathrm{Beta}(13, 9)$"
+      ],
+      [
+       "T",
+       "5",
+       "8",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is T's posterior mean? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.625,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "s",
+      "value": 0.5909,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "swap",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "T's posterior is $\\mathrm{Beta}(1 + 5, 1 + 3)$."
+    },
+    {
+     "rung": "point",
+     "text": "That is $\\mathrm{Beta}(6, 4)$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{6}{10}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathrm{Beta}(6, 4)$ has mean 0.6, against S's $\\tfrac{13}{22} = 0.5909$. Integration gives T the next day with chance 0.5276.",
+    "generic": "Not quite. Add T's winning days to the first parameter and its losing days to the second.",
+    "byKey": {
+     "raw": "That is the raw 5 of 8. The prior adds a win and a loss.",
+     "s": "That is S's posterior mean.",
+     "swap": "You swapped wins and losses: $\\tfrac{4}{10}$."
+    }
+   },
+   "explain": {
+    "text": "T's posterior is $\\mathrm{Beta}(6, 4)$, mean 0.6, only a little above S's 0.5909 and much wider. So T wins the draw with chance 0.5276: it gets capital often enough to prove itself, and S is not starved.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Keep a posterior per arm: with 0 or 1 rewards and a $\\mathrm{Beta}(1, 1)$ prior, $\\mathrm{Beta}(1 + \\text{wins}, 1 + \\text{losses})$.",
+   "Thompson sampling draws once from each posterior and pulls the largest draw, so each arm is pulled with the chance that it is the best.",
+   "Its randomness is the exploring, spent where beliefs are wide. On the venues, over seeds 0 to 199, it beat epsilon-greedy, UCB1 and greedy. A strong wrong prior delays it."
+  ],
+  "formula": {
+   "name": "Probability matching",
+   "tex": "P(\\text{pull } a) = P(a \\text{ is best} \\mid \\text{data})",
+   "note": "Each pull draws $\\tilde p_a \\sim \\mathrm{Beta}(1 + w_a, 1 + l_a)$ and plays $\\arg\\max_a \\tilde p_a$."
+  },
+  "trap": "Thinking the random draws make Thompson worse than greedy. Greedy has no randomness and the worst regret; the draws are what keep a worse-looking arm under review."
+ },
+ "quiz": [
+  {
+   "id": "q-beta-update",
+   "difficulty": 2,
+   "prose": "An arm starts at $\\mathrm{Beta}(2, 2)$ and then wins 3 of 5 pulls.",
+   "question": "What is its posterior mean? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5556,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "flat",
+      "value": 0.5714,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathrm{Beta}(5, 4)$ has mean $\\tfrac59 = 0.5556$.",
+    "generic": "Not quite. Add 3 wins and 2 losses to $\\mathrm{Beta}(2, 2)$.",
+    "byKey": {
+     "raw": "That is the raw 3 of 5. The prior counts too.",
+     "flat": "You used a $\\mathrm{Beta}(1, 1)$ prior. This one starts at $\\mathrm{Beta}(2, 2)$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathrm{Beta}(2 + 3, 2 + 2) = \\mathrm{Beta}(5, 4)$, so the mean is $\\tfrac59 = 0.5556$."
+   }
+  },
+  {
+   "id": "q-ts-share",
+   "difficulty": 3,
+   "prose": "Under Thompson sampling with two arms, the chance that arm X's draw beats arm Y's is 0.85.",
+   "question": "What does that tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "share",
+      "text": "X gets about 85% of the next pulls, for now",
+      "correct": true
+     },
+     {
+      "id": "mean",
+      "text": "X's posterior mean is 0.85, its best guess",
+      "why": "0.85 is a chance about two draws, not X's mean. X's mean could be 0.4."
+     },
+     {
+      "id": "always",
+      "text": "X will be pulled on every pull from now on",
+      "why": "Y still wins 15% of the draws, so it keeps getting some pulls."
+     },
+     {
+      "id": "truth",
+      "text": "X's true value is higher, with certainty",
+      "why": "It is the posterior chance that X is better, 0.85, not a certainty."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Probability matching: each arm is pulled with the chance it is best.",
+    "generic": "Not quite. Ask how often X's draw is the larger."
+   },
+   "explain": {
+    "text": "Thompson pulls X whenever its draw is larger, which happens with chance 0.85. So X gets about 85% of pulls while the posteriors stay put."
+   }
+  },
+  {
+   "id": "q-prior-pseudo",
+   "difficulty": 2,
+   "prose": "A prior $\\mathrm{Beta}(30, 10)$ is placed on an arm.",
+   "question": "How many observed pulls is that prior worth?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 40,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "wins",
+      "value": 30,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "extra",
+      "value": 38,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$30 + 10 = 40$ pseudo-pulls, 30 of them wins.",
+    "generic": "Not quite. A $\\mathrm{Beta}(a, b)$ prior counts as $a + b$ pulls.",
+    "byKey": {
+     "wins": "That is the pseudo-wins. Add the 10 pseudo-losses.",
+     "extra": "You took off the uniform prior's 2. Count $a + b$ as in `estimation`."
+    }
+   },
+   "explain": {
+    "text": "A $\\mathrm{Beta}(a, b)$ prior acts like $a + b$ pulls already seen. So $\\mathrm{Beta}(30, 10)$ is worth 40, and real data needs about that many pulls to outweigh it."
+   }
+  }
+ ]
+}

@@ -1,0 +1,338 @@
+{
+ "id": "homework-3",
+ "course": "rl",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-learn-gridworld",
+   "difficulty": 5,
+   "skills": [
+    "rl-td"
+   ],
+   "performance": "code",
+   "title": "Q-learning from scratch",
+   "prose": "Write `learn_gridworld(episodes, seed)` from scratch: Q-learning on the deterministic course gridworld. It is 4 by 5, with a wall at r2c3, +1 at r1c5 and −1 at r2c5. Each move pays −0.04 plus the payoff of the cell entered; a move into the wall or off the grid stays put.\n\n- $\\alpha = 0.1$, $\\gamma = 0.9$, $\\varepsilon = 0.2$, every $Q$ starting at 0, keyed `(cell, action)` for all 19 cells and actions U, R, D, L.\n- Each episode starts in a uniformly random open cell; it ends on entering +1 or −1, where the target is the reward alone.\n- Act epsilon-greedily, with greedy ties broken by the order U, R, D, L.",
+   "question": "Complete `learn_gridworld`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def learn_gridworld(episodes, seed):\n    \"\"\"Q-learning on the deterministic course gridworld. Return Q as {(cell, action): value}.\"\"\"\n    ...\n",
+    "solution": "import random\n\ndef learn_gridworld(episodes, seed):\n    \"\"\"Q-learning on the deterministic course gridworld. Return Q as {(cell, action): value}.\"\"\"\n    wall, ends = 'r2c3', {'r1c5': 1.0, 'r2c5': -1.0}\n    cells = [f'r{r}c{c}' for r in range(1, 5) for c in range(1, 6) if f'r{r}c{c}' != wall]\n    open_cells = [s for s in cells if s not in ends]\n    moves = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\n    def move(s, a):\n        r, c = int(s[1]) + moves[a][0], int(s[3]) + moves[a][1]\n        t = f'r{r}c{c}'\n        return t if 1 <= r <= 4 and 1 <= c <= 5 and t != wall else s\n\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in cells for a in 'URDL'}\n    for _ in range(episodes):\n        s = rng.choice(open_cells)\n        while s not in ends:\n            if rng.random() < 0.2:\n                a = rng.choice('URDL')\n            else:\n                a = max('URDL', key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            r = ends.get(t, 0.0) - 0.04\n            target = r if t in ends else r + 0.9 * max(Q[(t, b)] for b in 'URDL')\n            Q[(s, a)] += 0.1 * (target - Q[(s, a)])\n            s = t\n    return Q\n",
+    "examples": [
+     {
+      "call": "len(learn_gridworld(1, 0))",
+      "expect": "76",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "len(learn_gridworld(1, 0))",
+      "expect": "76",
+      "compare": "equal"
+     },
+     {
+      "setup": "SETS = {'r1c1': {'R'}, 'r1c2': {'R'}, 'r1c3': {'R'}, 'r1c4': {'R'}, 'r2c1': {'U', 'R'}, 'r2c2': {'U'}, 'r2c4': {'U'}, 'r3c1': {'U', 'R'}, 'r3c2': {'U', 'R'}, 'r3c3': {'R'}, 'r3c4': {'U'}, 'r3c5': {'L'}, 'r4c1': {'U', 'R'}, 'r4c2': {'U', 'R'}, 'r4c3': {'U', 'R'}, 'r4c4': {'U'}, 'r4c5': {'U', 'L'}}\nQ = learn_gridworld(500, 0)",
+      "call": "all(max('URDL', key=lambda b: Q[(s, b)]) in SETS[s] for s in SETS)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "SETS = {'r1c1': {'R'}, 'r1c2': {'R'}, 'r1c3': {'R'}, 'r1c4': {'R'}, 'r2c1': {'U', 'R'}, 'r2c2': {'U'}, 'r2c4': {'U'}, 'r3c1': {'U', 'R'}, 'r3c2': {'U', 'R'}, 'r3c3': {'R'}, 'r3c4': {'U'}, 'r3c5': {'L'}, 'r4c1': {'U', 'R'}, 'r4c2': {'U', 'R'}, 'r4c3': {'U', 'R'}, 'r4c4': {'U'}, 'r4c5': {'U', 'L'}}\ndef chk(Q):\n    return all(max('URDL', key=lambda b: Q[(s, b)]) in SETS[s] for s in SETS)",
+      "call": "all(chk(learn_gridworld(500, k)) for k in (1, 2, 3))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "SETS = {'r1c1': {'R'}, 'r1c2': {'R'}, 'r1c3': {'R'}, 'r1c4': {'R'}, 'r2c1': {'U', 'R'}, 'r2c2': {'U'}, 'r2c4': {'U'}, 'r3c1': {'U', 'R'}, 'r3c2': {'U', 'R'}, 'r3c3': {'R'}, 'r3c4': {'U'}, 'r3c5': {'L'}, 'r4c1': {'U', 'R'}, 'r4c2': {'U', 'R'}, 'r4c3': {'U', 'R'}, 'r4c4': {'U'}, 'r4c5': {'U', 'L'}}\nQ = learn_gridworld(500, 7)",
+      "call": "all(max('URDL', key=lambda b: Q[(s, b)]) in SETS[s] for s in SETS)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "Q = learn_gridworld(2000, 0)",
+      "call": "abs(max(Q[('r4c1', a)] for a in 'URDL') - 0.3228) < 0.05",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "Q = learn_gridworld(2000, 5)",
+      "call": "abs(max(Q[('r4c1', a)] for a in 'URDL') - 0.3228) < 0.05",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "Q = learn_gridworld(300, 2)",
+      "call": "[Q[('r1c5', a)] for a in 'URDL']",
+      "expect": "[0.0, 0.0, 0.0, 0.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "Q = learn_gridworld(1000, 4)",
+      "call": "abs(max(Q[('r1c4', a)] for a in 'URDL') - 0.96) < 0.02",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests. The greedy policy must lie in the optimal sets for the named seeds, and the learned values must land within the stated distances."
+   },
+   "feedback": {
+    "correct": "All pass: from nothing, the agent's greedy policy matches value iteration on every seed tested.",
+    "generic": "Some tests fail. Check the reward on entering an end cell, the terminal target and the tie order."
+   },
+   "explain": {
+    "text": "After 500 episodes the greedy policy is optimal on seeds 0 to 49 in our runs; after 2,000 the start's largest $Q$ is within $10^{-4}$ of 0.3228. Q-table, epsilon-greedy acting and a max target are all it takes."
+   }
+  },
+  {
+   "id": "h-td-decaying",
+   "difficulty": 4,
+   "skills": [
+    "rl-td"
+   ],
+   "title": "A step that shrinks",
+   "prose": "A constant step leaves a band of noise. Write `td0_decaying(episodes, seed)`: TD(0) on the random walk from $V = 0.5$ with $\\gamma = 1$, where the $n$-th update of a state uses step $1/n$. Update after each step in order; `walk_once`, the episode generator from l9, is given.",
+   "question": "Complete `td0_decaying`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\ndef walk_once(rng):\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n\ndef td0_decaying(episodes, seed):\n    \"\"\"TD(0) on the random walk from V = 0.5, gamma 1, step 1/n on a state's n-th update. Return [V['A'], ..., V['E']].\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+    "solution": "import random\n\ndef walk_once(rng):\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n\ndef td0_decaying(episodes, seed):\n    \"\"\"TD(0) on the random walk from V = 0.5, gamma 1, step 1/n on a state's n-th update. Return [V['A'], ..., V['E']].\"\"\"\n    rng = random.Random(seed)\n    V = {s: 0.5 for s in 'ABCDE'}\n    n = {s: 0 for s in 'ABCDE'}\n    for _ in range(episodes):\n        states, rewards = walk_once(rng)\n        for i, s in enumerate(states):\n            n[s] += 1\n            last = i == len(states) - 1\n            target = rewards[i] if last else rewards[i] + V[states[i + 1]]\n            V[s] += (target - V[s]) / n[s]\n    return [V[s] for s in 'ABCDE']\n",
+    "examples": [
+     {
+      "call": "td0_decaying(0, 0)",
+      "expect": "[0.5, 0.5, 0.5, 0.5, 0.5]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "td0_decaying(0, 0)",
+      "expect": "[0.5, 0.5, 0.5, 0.5, 0.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "td0_decaying(2000, 0)",
+      "expect": "[0.15444431837474037, 0.31562245040565684, 0.472069661497681, 0.6377867769771824, 0.8142700415142851]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "td0_decaying(1, 7)",
+      "expect": "[0.5, 0.5, 0.5, 0.5, 0.6666666666666666]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "setup": "import math",
+      "call": "sum(math.sqrt(sum((v - (i + 1) / 6) ** 2 for i, v in enumerate(td0_decaying(1000, s))) / 5) for s in range(10)) / 10 < 0.045",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. Seeded values must match ours within 1e-9; over seeds 0 to 9 the mean RMS error after 1,000 episodes must be below 0.045."
+   },
+   "feedback": {
+    "correct": "All pass. Over seeds 0 to 9 the mean RMS error after 1,000 episodes is 0.0305.",
+    "generic": "Some tests fail. Count updates per state, and add before you divide."
+   },
+   "explain": {
+    "text": "Steps $1/n$ satisfy $\\sum \\alpha = \\infty$ and $\\sum \\alpha^2 < \\infty$, so the noise band shrinks to 0. Early targets lean on poor estimates, though, so it converges slowly: 0.0305 after 1,000 episodes."
+   }
+  },
+  {
+   "id": "h-td-target-order",
+   "difficulty": 4,
+   "skills": [
+    "rl-td"
+   ],
+   "title": "Where the TD target comes from",
+   "prose": "Start from the Bellman equation for a fixed policy and arrive at the TD(0) update.",
+   "question": "Put the steps in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "t1",
+      "text": "Bellman: $v_\\pi(s) = E[\\,R_{t+1} + \\gamma v_\\pi(S_{t+1}) \\mid S_t = s\\,]$"
+     },
+     {
+      "id": "t2",
+      "text": "With no model, replace the expectation by one sampled step: $r + \\gamma v_\\pi(s')$"
+     },
+     {
+      "id": "t3",
+      "text": "The true $v_\\pi(s')$ is unknown, so use the current estimate: target $r + \\gamma V(s')$"
+     },
+     {
+      "id": "t4",
+      "text": "A noisy target needs averaging: move a step $\\alpha$ towards it, $V(s) \\leftarrow V(s) + \\alpha[r + \\gamma V(s') - V(s)]$"
+     },
+     {
+      "id": "x1",
+      "text": "Replace $v_\\pi(s')$ by the return that follows, observed at the end of the episode",
+      "why": "That gives the Monte Carlo target, not TD's. TD uses its estimate, so it can update at once."
+     }
+    ],
+    "answer": [
+     "t1",
+     "t2",
+     "t3",
+     "t4"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "feedback": {
+    "correct": "Sample the expectation, bootstrap the next value, average with a step.",
+    "generic": "Not quite. Each line must follow from the one before.",
+    "byKey": {
+     "x1": "Using the observed return is Monte Carlo. TD uses $V(s')$, its own estimate.",
+     "left-out": "Every correct line is needed."
+    }
+   },
+   "explain": {
+    "text": "Two replacements turn the Bellman equation into TD: a sample for the expectation and an estimate for the unknown value. A step size then averages the noisy targets."
+   }
+  },
+  {
+   "id": "h-two-updates",
+   "difficulty": 3,
+   "skills": [
+    "rl-td"
+   ],
+   "title": "Two updates in a row",
+   "prose": "Q-learning, $\\alpha = 0.5$, $\\gamma = 0.9$, deterministic grid, all $Q$ at 0. The agent at r2c4 moves U to r1c4, then R into the +1.",
+   "question": "After both steps, what is $Q(\\text{r1c4}, R)$? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.48,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "full",
+      "value": 0.96,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "first",
+      "value": -0.02,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "step",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Its target is 0.96, so $0 + 0.5 \\times 0.96 = 0.48$.",
+    "generic": "Not quite. The second step ends the episode, so its target is the reward.",
+    "byKey": {
+     "full": "Move half way, not all the way.",
+     "first": "That is $Q(\\text{r2c4}, U)$ after the first step.",
+     "step": "The reward is $1 - 0.04$."
+    }
+   },
+   "explain": {
+    "text": "The first step sets $Q(\\text{r2c4}, U) = 0.5(-0.04 + 0) = -0.02$, as every value at r1c4 was 0. The second sets $Q(\\text{r1c4}, R) = 0.48$. News travels back one step per visit."
+   }
+  },
+  {
+   "id": "h-td-facts",
+   "difficulty": 4,
+   "skills": [
+    "rl-td"
+   ],
+   "title": "Which statements hold?",
+   "prose": "Think about Monte Carlo, TD(0), Q-learning and SARSA as taught in this level.",
+   "question": "Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "f1",
+      "text": "TD(0) can update before an episode ends",
+      "correct": true
+     },
+     {
+      "id": "f2",
+      "text": "Monte Carlo targets are unbiased but noisier than TD's",
+      "correct": true
+     },
+     {
+      "id": "f3",
+      "text": "Q-learning needs the transition chances to compute its target",
+      "why": "Its target uses a sampled next state and the max of its own estimates."
+     },
+     {
+      "id": "f4",
+      "text": "SARSA and Q-learning learn the same values while exploring continues",
+      "why": "SARSA learns the exploring policy's values; Q-learning the greedy one's."
+     },
+     {
+      "id": "f5",
+      "text": "A cell never visited keeps its initial Q values",
+      "correct": true
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Three are true.",
+    "generic": "Check each against the targets."
+   },
+   "explain": {
+    "text": "TD bootstraps and updates each step; MC waits for returns, unbiased but noisy. Q-learning and SARSA are both model-free but value different policies, and only visited pairs change."
+   }
+  },
+  {
+   "id": "h-slippery-longform",
+   "difficulty": 5,
+   "skills": [
+    "rl-td"
+   ],
+   "kind": "longform",
+   "title": "Why the slippery grid resists",
+   "prompt": "On the slippery gridworld (intended move 0.8, each side 0.1), Q-learning used a constant step $\\alpha = 0.1$ and $\\varepsilon = 0.1$. It matched value iteration's policy on 8 of 10 seeds, after 4,400 to 15,250 episodes, and failed within 20,000 on the other 2. On the deterministic grid every seed succeeded within 200. Explain why, and give two fixes.",
+   "model": "**What differs.** On the deterministic grid each target $r + \\gamma\\max Q(s', \\cdot)$ is a fixed number once the next values settle, so a constant step converges. On the slippery grid the next cell is random: the target for $Q(s, a)$ jumps between, say, the value of row 3 column 4 and the value of row 3 column 5. Each update moves $Q$ a tenth of the way towards the latest draw.\n\n**Why it never settles.** With a constant $\\alpha$ the estimate is a weighted average of roughly the last $1/\\alpha = 10$ targets. Its noise does not shrink however long we run: the estimates keep jiggling in a band. Stochastic approximation needs $\\sum \\alpha_t = \\infty$ and $\\sum \\alpha_t^2 < \\infty$ to converge, and a constant step breaks the second condition.\n\n**Why small gaps matter.** Value iteration's best move beats the next best by only 0.0073 at row 4 column 3 and 0.0077 at row 2 column 1. A band of noise wider than that keeps swapping the arg-max, so the greedy policy keeps flickering away from the optimum even when the values are nearly right.\n\n**Fix 1: shrinking steps.** Use a per-pair step $\\alpha = 1/n(s, a)$, or $1/n^{0.6}$ to learn faster early. The noise then averages out and the estimates converge, given enough visits.\n\n**Fix 2: average or use the model.** Keep exploring but report the greedy policy of a running average of the Q-table, or, if the slip model is known, plan with value iteration as in level 2. Lowering $\\alpha$ over time, or more episodes with a smaller fixed $\\alpha$, also narrows the band.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the slippery target is random because the next cell is random, while the deterministic target settles"
+    },
+    {
+     "points": 2,
+     "text": "Explains that a constant step averages only about $1/\\alpha$ targets, leaving a noise band that never shrinks"
+    },
+    {
+     "points": 2,
+     "text": "Connects the failure to the tiny action gaps (under 0.01), so noise swaps the arg-max"
+    },
+    {
+     "points": 2,
+     "text": "Fix: a decreasing step size meeting the step-size conditions, with the conditions or their intent stated"
+    },
+    {
+     "points": 2,
+     "text": "Second fix: averaging the Q-table, planning with the known model, or a smaller step with more episodes, with a reason"
+    }
+   ]
+  }
+ ]
+}

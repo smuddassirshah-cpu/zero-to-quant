@@ -1,0 +1,1429 @@
+{
+ "id": "l6-what-a-policy-is-worth",
+ "course": "rl",
+ "title": "What a policy is worth",
+ "minutes": 15,
+ "objectives": [
+  "Derive a fixed policy's Bellman equation and solve it as a linear system."
+ ],
+ "skills": [
+  "rl-mdp"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "What is a quiet day worth?",
+   "prose": "A market maker's fixed quoting rule earns £1 a step when the market is Calm and £3 when it is Busy. From Calm the next step is Calm with chance 0.8; from Busy it is Calm with chance 0.4. Rewards are discounted by $\\gamma = 0.9$ a step.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 220,
+     "nodes": [
+      {
+       "id": "C",
+       "label": "Calm",
+       "x": 0.25,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "Busy",
+       "x": 0.75,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "C",
+       "to": "C",
+       "label": "0.8",
+       "loopAngle": 180
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "label": "0.2"
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "label": "0.4"
+      },
+      {
+       "from": "B",
+       "to": "B",
+       "label": "0.6",
+       "loopAngle": 0
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "C": "£1 a step",
+      "B": "£3 a step"
+     }
+    }
+   },
+   "question": "Condition on the next step, as in `markov` first-step analysis. What is $v(\\text{Calm})$, the discounted value of starting Calm? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 15.625,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "busy",
+      "value": 18.75,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "gamma-reward",
+      "value": 14.0625,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one-state",
+      "value": 10,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$v_C = 1 + 0.9(0.8 v_C + 0.2 v_B)$ and $v_B = 3 + 0.9(0.4 v_C + 0.6 v_B)$."
+    },
+    {
+     "rung": "point",
+     "text": "Rearranged: $0.28 v_C - 0.18 v_B = 1$ and $-0.36 v_C + 0.46 v_B = 3$.",
+     "highlight": [
+      "C",
+      "B"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The determinant is $0.28 \\times 0.46 - 0.18 \\times 0.36 = 0.064$; then $v_C = (0.46 + 0.18 \\times 3)/0.064$."
+    }
+   ],
+   "feedback": {
+    "correct": "$v_C = 1/0.064 = 15.625$ and $v_B = 1.2/0.064 = 18.75$.",
+    "generic": "Not quite. Write one equation per state, then solve the pair.",
+    "byKey": {
+     "busy": "That is $v(\\text{Busy})$. The question asks about Calm.",
+     "gamma-reward": "You discounted the reward of this step too. Only the future value carries the 0.9.",
+     "one-state": "You treated Calm as if it stayed Calm for ever: $1/(1 - 0.9) = 10$. Busy steps add value."
+    }
+   },
+   "explain": {
+    "text": "The two equations are $0.28 v_C - 0.18 v_B = 1$ and $-0.36 v_C + 0.46 v_B = 3$. Solving gives $v_C = 15.625$ and $v_B = 18.75$. A Calm start is worth less because Busy, the richer state, is a step or more away."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Turning up the patience",
+   "prose": "The same two equations hold for any $\\gamma$. Slide it and watch both values.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 220,
+     "nodes": [
+      {
+       "id": "C",
+       "label": "Calm",
+       "x": 0.25,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "Busy",
+       "x": 0.75,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "C",
+       "to": "C",
+       "label": "0.8",
+       "loopAngle": 180
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "label": "0.2"
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "label": "0.4"
+      },
+      {
+       "from": "B",
+       "to": "B",
+       "label": "0.6",
+       "loopAngle": 0
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "g": 0.9
+     },
+     "values": {
+      "C": "15.63",
+      "B": "18.75"
+     }
+    },
+    "derive": {
+     "let": {
+      "det": "(1 - 0.8*g)*(1 - 0.6*g) - 0.08*g*g"
+     },
+     "values.C": "\"£\" + fixed(((1 - 0.6*g) + 0.6*g)/det, 2)",
+     "values.B": "\"£\" + fixed((0.4*g + 3*(1 - 0.8*g))/det, 2)",
+     "caption": "With $\\gamma$ = {{fixed(g, 2)}}: Calm £{{fixed(((1 - 0.6*g) + 0.6*g)/det, 2)}}, Busy £{{fixed((0.4*g + 3*(1 - 0.8*g))/det, 2)}}."
+    },
+    "controls": [
+     {
+      "bind": "g",
+      "min": 0.5,
+      "max": 0.99,
+      "step": 0.01,
+      "start": 0.9,
+      "label": "$\\gamma$"
+     }
+    ]
+   },
+   "question": "What happens to both values as $\\gamma$ approaches 1?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "grow",
+      "text": "Both grow without limit, roughly like $1/(1 - \\gamma)$",
+      "correct": true
+     },
+     {
+      "id": "busy",
+      "text": "They converge to the Busy reward, £3",
+      "why": "Slide to 0.99: both values pass £160. They add up rewards over the whole future."
+     },
+     {
+      "id": "same",
+      "text": "They stay near £15 and £19",
+      "why": "Those are the values at 0.9. Slide right and both climb fast."
+     },
+     {
+      "id": "meet",
+      "text": "They move apart without limit",
+      "why": "Their gap stays small while both grow: the start state matters less and less."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With no end state and $\\gamma$ near 1, the sum of rewards blows up.",
+    "generic": "Slide $\\gamma$ to 0.99 and read the caption."
+   },
+   "explain": {
+    "text": "At $\\gamma = 0.99$ the values are £165.56 and £168.87: about the long-run average, £1.67 a step, over an effective horizon of $1/(1 - \\gamma) = 100$ steps. The gap between them stays near £3.",
+    "canvas": {
+     "params": {
+      "g": 0.99
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The Bellman equation",
+   "prose": "What you just solved is the **Bellman equation** for a fixed policy $\\pi$: $$v_\\pi(s) = \\sum_{s'} p(s' \\mid s, \\pi(s))\\,[\\,r + \\gamma v_\\pi(s')\\,].$$ On the slippery grid, cell r1c4 chooses R. The cells show this policy's values; an end cell has value 0.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.4502",
+       "0.5800",
+       "0.7323",
+       "0.8896",
+       "+1"
+      ],
+      [
+       "0.3568",
+       "0.4502",
+       "wall",
+       "0.5500",
+       "−1"
+      ],
+      [
+       "0.2714",
+       "0.3348",
+       "0.2915",
+       "0.3969",
+       "0.1634"
+      ],
+      [
+       "0.1944",
+       "0.2381",
+       "0.2168",
+       "0.2830",
+       "0.1961"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "right",
+      "r3c4": "up",
+      "r3c5": "left",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "left"
+     },
+     "highlight": [
+      "r1c4"
+     ]
+    }
+   },
+   "question": "Using the values shown for r1c4 and r2c4, work out the right side of the equation at r1c4. Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8896,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "no-slip",
+      "value": 0.96,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 0.904,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "goal-value",
+      "value": 1.6096,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "R reaches the +1 with 0.8; a slip U bumps the edge, a slip D reaches r2c4."
+    },
+    {
+     "rung": "point",
+     "text": "Entering +1 pays 0.96 and ends the episode, value 0.",
+     "highlight": [
+      "r1c4",
+      "r2c4",
+      "r1c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.8 \\times 0.96 + 0.1(-0.04 + 0.9 \\times 0.8896) + 0.1(-0.04 + 0.9 \\times 0.55)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.768 + 0.0761 + 0.0455 = 0.8896$: the value shown at r1c4, as the equation says.",
+    "generic": "Not quite. Sum over the three possible next cells: chance times (reward plus 0.9 times the next value).",
+    "byKey": {
+     "no-slip": "You took the move as certain. Slips send the agent up (into the edge) or down with 0.1 each.",
+     "no-disc": "You left out $\\gamma$ on the next values.",
+     "goal-value": "You gave the +1 cell a value of 1 after entering it. The episode ends there, so its value is 0."
+    }
+   },
+   "explain": {
+    "text": "The three terms are $0.768$, $0.1 \\times 0.7606$ and $0.1 \\times 0.455$, adding to 0.8896. The value at r1c4 reappears on the right: the values are a fixed point of the equation. This is `markov`'s first-step equation with rewards and a discount.",
+    "canvas": {
+     "highlight": [
+      "r1c4",
+      "r2c4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Up, then right",
+   "prose": "On the deterministic grid, take the policy \"go up; in row 1 go right\". From the start, row 4 column 1, it climbs three cells and then walks right to the +1.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "+1"
+      ],
+      [
+       "",
+       "",
+       "wall",
+       "",
+       "−1"
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "up",
+      "r3c4": "up",
+      "r3c5": "up",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "up"
+     },
+     "paths": [
+      {
+       "id": "route",
+       "cells": [
+        "r4c1",
+        "r3c1",
+        "r2c1",
+        "r1c1",
+        "r1c2",
+        "r1c3",
+        "r1c4",
+        "r1c5"
+       ],
+       "arrow": true
+      }
+     ]
+    }
+   },
+   "question": "What is the start cell's value under this policy? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3228,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "no-disc",
+      "value": 0.72,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "six",
+      "value": 0.4031,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "no-step",
+      "value": 0.5314,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The policy is deterministic, so there is one path: seven moves."
+    },
+    {
+     "rung": "point",
+     "text": "Six moves pay −0.04 and the seventh pays 0.96.",
+     "highlight": [
+      "route"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.04(1 + 0.9 + \\dots + 0.9^5) + 0.9^6 \\times 0.96$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-0.04 \\times \\tfrac{1 - 0.9^6}{0.1} + 0.9^6 \\times 0.96 = 0.3228$.",
+    "generic": "Not quite. Add the discounted rewards of the seven moves.",
+    "byKey": {
+     "no-disc": "You added the rewards without discounting.",
+     "six": "That is six moves from the goal. The start is seven away.",
+     "no-step": "You left out the step costs."
+    }
+   },
+   "explain": {
+    "text": "One path, seven moves: $-0.04 \\tfrac{1 - 0.9^6}{0.1} + 0.9^6 \\times 0.96 = 0.3228$. No route from the start is shorter, so this matches the best value there. Most cells are not so simple: a slip, or a loop, needs the equations.",
+    "canvas": {
+     "highlight": [
+      "route"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A policy that never arrives",
+   "prose": "The same policy at row 3, column 3 says U, into the wall. The agent stays put, pays 0.04, and tries again, for ever.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.5914",
+       "0.7016",
+       "0.8240",
+       "0.9600",
+       "+1"
+      ],
+      [
+       "0.4923",
+       "0.5914",
+       "wall",
+       "0.8240",
+       "−1"
+      ],
+      [
+       "0.4031",
+       "0.4923",
+       "−0.4000",
+       "0.7016",
+       "−1.0400"
+      ],
+      [
+       "0.3228",
+       "0.4031",
+       "−0.4000",
+       "0.5914",
+       "−0.9760"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "up",
+      "r3c4": "up",
+      "r3c5": "up",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "up"
+     },
+     "highlight": [
+      "r3c3",
+      "r4c3"
+     ]
+    }
+   },
+   "question": "What is the value of r3c3 under this policy? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.4,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one-step",
+      "value": -0.04,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "disc-first",
+      "value": -0.36,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The equation at r3c3 has itself on the right: $v = -0.04 + 0.9v$."
+    },
+    {
+     "rung": "point",
+     "text": "Solve for $v$.",
+     "highlight": [
+      "r3c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.1v = -0.04$."
+    }
+   ],
+   "feedback": {
+    "correct": "$v = -0.04 + 0.9v$ gives $v = -0.04/0.1 = -0.4$.",
+    "generic": "Not quite. Solve $v = -0.04 + 0.9v$.",
+    "byKey": {
+     "sign": "Every step costs, so the value is negative.",
+     "one-step": "That is one step. The agent repeats it for ever: $-0.04(1 + 0.9 + 0.81 + \\dots)$.",
+     "disc-first": "You discounted the first step cost."
+    }
+   },
+   "explain": {
+    "text": "$v = -0.04/(1 - 0.9) = -0.4$. Row 4, column 3 walks into this loop and is worth −0.4 too. With $\\gamma = 1$ the loop's value would be $-\\infty$: the equations would have no solution.",
+    "canvas": {
+     "highlight": [
+      "r3c3",
+      "r4c3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Solving by repetition",
+   "prose": "In matrix form the Bellman equation is $$(\\mathbf I - \\gamma \\mathbf P_\\pi)\\,\\mathbf v = \\mathbf r_\\pi,$$ one row per state; an end state's row of $\\mathbf P_\\pi$ is zero. Instead of solving it, we can repeat $\\mathbf v \\leftarrow \\mathbf r_\\pi + \\gamma \\mathbf P_\\pi \\mathbf v$. Each sweep shrinks the largest error by at least the factor $\\gamma$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      150
+     ],
+     "y": [
+      1e-07,
+      1
+     ],
+     "yScale": "log",
+     "xLabel": "Sweeps",
+     "yLabel": "Error bound, as a share of the first",
+     "height": 240,
+     "functions": [
+      {
+       "id": "b",
+       "expr": "0.9^x",
+       "label": "$0.9^k$"
+      }
+     ]
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "h",
+       "y": 1e-06,
+       "label": "$10^{-6}$"
+      }
+     ]
+    }
+   },
+   "question": "With $\\gamma = 0.9$, how many sweeps guarantee that the error has shrunk to a millionth of the first error, at most?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 132,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "floor",
+      "value": 131,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "log10",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "ten",
+      "value": 60,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "After $k$ sweeps the error is at most $0.9^k$ times the first."
+    },
+    {
+     "rung": "point",
+     "text": "Solve $0.9^k \\le 10^{-6}$.",
+     "highlight": [
+      "b",
+      "h"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$k \\ge \\ln 10^{-6} / \\ln 0.9 = 131.1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$k \\ge 6 \\ln 10 / \\ln(1/0.9) = 131.1$, so 132 sweeps.",
+    "generic": "Not quite. Solve $0.9^k \\le 10^{-6}$ and round up.",
+    "byKey": {
+     "floor": "You rounded down. At 131 sweeps $0.9^{131}$ is still just above $10^{-6}$.",
+     "log10": "You counted one sweep per decimal place. Each sweep gains only $\\log_{10}(1/0.9) = 0.046$ places.",
+     "ten": "You assumed ten sweeps a decimal place. It takes about 22."
+    }
+   },
+   "explain": {
+    "text": "$0.9^k \\le 10^{-6}$ needs $k \\ge 131.1$, so 132 sweeps. That is a guarantee: real errors often fall faster, but the bound never fails. A direct solve gets the answer in one step for 19 states.",
+    "canvas": {
+     "highlight": [
+      "h"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Where does gamma go?",
+   "prose": "Back to the market maker: £1 a step in Calm, £3 in Busy, Calm to Calm 0.8, Calm to Busy 0.2, $\\gamma = 0.9$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 220,
+     "nodes": [
+      {
+       "id": "C",
+       "label": "Calm",
+       "x": 0.25,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "Busy",
+       "x": 0.75,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "C",
+       "to": "C",
+       "label": "0.8",
+       "loopAngle": 180
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "label": "0.2"
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "label": "0.4"
+      },
+      {
+       "from": "B",
+       "to": "B",
+       "label": "0.6",
+       "loopAngle": 0
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "C": "£1 a step",
+      "B": "£3 a step"
+     }
+    }
+   },
+   "question": "Which is the Bellman equation for the Calm state?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$v_C = 1 + 0.9(0.8 v_C + 0.2 v_B)$",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "$v_C = 0.9(1 + 0.8 v_C + 0.2 v_B)$",
+      "why": "You discounted this step's £1 too. It is paid now; only the value of where you land is discounted."
+     },
+     {
+      "id": "none",
+      "text": "$v_C = 1 + 0.8 v_C + 0.2 v_B$",
+      "why": "With no discount and no end state the two equations have no solution: $\\mathbf I - \\mathbf P$ is singular."
+     },
+     {
+      "id": "swap",
+      "text": "$v_C = 1 + 0.9(0.2 v_C + 0.8 v_B)$",
+      "why": "You swapped the chances. From Calm the next step is Calm with 0.8."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which reward is paid now, and which values arrive a step later?"
+    },
+    {
+     "rung": "point",
+     "text": "Only next-step values carry $\\gamma$.",
+     "highlight": [
+      "C"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Reward now, plus 0.9 times the average next value."
+    }
+   ],
+   "feedback": {
+    "correct": "Reward now, plus $\\gamma$ times the expected next value.",
+    "generic": "Not quite. Check where the 0.9 sits.",
+    "byKey": {
+     "both": "You put $\\gamma$ on the reward as well. That shrinks every value by 0.9: Calm would come out at 14.0625."
+    }
+   },
+   "explain": {
+    "text": "$v_C = 1 + 0.9(0.8 v_C + 0.2 v_B)$ gives 15.625. Discounting the reward too gives 14.0625, and dropping $\\gamma$ with no end state gives no solution at all.",
+    "canvas": {
+     "highlight": [
+      "C"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code the solve",
+   "prose": "The grid helpers from l5 are in the editor. Write `policy_matrix(policy, slip)`: row $i$ of $\\mathbf P$ holds the chances of moving from `CELLS[i]`, and `r[i]` the expected reward of that move. Then `evaluate_policy` solves $(\\mathbf I - \\gamma \\mathbf P)\\mathbf v = \\mathbf r$ with `np.linalg.solve`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Policy",
+      "Grid",
+      "Start value"
+     ],
+     "rows": [
+      [
+       "up, then right",
+       "deterministic",
+       "0.3228"
+      ],
+      [
+       "best (lesson 7)",
+       "slippery",
+       "0.1944"
+      ],
+      [
+       "best (lesson 7)",
+       "deterministic",
+       "0.3228"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `policy_matrix` and `evaluate_policy`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef policy_matrix(policy, slip):\n    \"\"\"P (19 by 19) and r (19) for a policy {cell: action}, in the order of CELLS.\n    An end cell's row of P is zero and its r is 0.\"\"\"\n    ...\n\ndef evaluate_policy(policy, slip, gamma):\n    \"\"\"{cell: value} from solving (I - gamma P) v = r.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef transition(s, a, slip):\n    \"\"\"{next cell: chance}: the intended move with 1 - 2*slip, each side move with slip.\"\"\"\n    out = {}\n    for b, p in ((a, 1 - 2 * slip), (SIDES[a][0], slip), (SIDES[a][1], slip)):\n        if p > 0:\n            t = move(s, b)\n            out[t] = out.get(t, 0) + p\n    return out\n\ndef reward(t):\n    \"\"\"Reward for entering cell t: its payoff plus the step cost.\"\"\"\n    return TERMINAL.get(t, 0.0) + STEP\n\ndef policy_matrix(policy, slip):\n    \"\"\"P (19 by 19) and r (19) for a policy {cell: action}, in the order of CELLS.\n    An end cell's row of P is zero and its r is 0.\"\"\"\n    n = len(CELLS)\n    P = np.zeros((n, n))\n    r = np.zeros(n)\n    for i, s in enumerate(CELLS):\n        if s in TERMINAL:\n            continue\n        for t, p in transition(s, policy[s], slip).items():\n            P[i, CELLS.index(t)] += p\n            r[i] += p * reward(t)\n    return P, r\n\ndef evaluate_policy(policy, slip, gamma):\n    \"\"\"{cell: value} from solving (I - gamma P) v = r.\"\"\"\n    P, r = policy_matrix(policy, slip)\n    v = np.linalg.solve(np.eye(len(CELLS)) - gamma * P, r)\n    return {s: float(v[i]) for i, s in enumerate(CELLS)}\n",
+    "examples": [
+     {
+      "setup": "upr = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUUUUUUUUUU'))",
+      "call": "evaluate_policy(upr, 0.0, 0.9)['r4c1']",
+      "expect": "0.3227597600000001",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "setup": "upr = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUUUUUUUUUU'))",
+      "call": "np.asarray(policy_matrix(upr, 0.1)[0]).sum(axis=1).round(9).tolist()",
+      "expect": "[1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "upr = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUUUUUUUUUU'))",
+      "call": "float(np.asarray(policy_matrix(upr, 0.1)[1])[CELLS.index('r1c4')])",
+      "expect": "0.76",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "setup": "upr = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUUUUUUUUUU'))",
+      "call": "float(np.asarray(policy_matrix(upr, 0.1)[0])[CELLS.index('r3c1'), CELLS.index('r3c1')])",
+      "expect": "0.1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "setup": "upr = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUUUUUUUUUU'))",
+      "call": "evaluate_policy(upr, 0.0, 0.9)['r4c1']",
+      "expect": "0.3227597600000001",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "upr = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUUUUUUUUUU'))",
+      "call": "evaluate_policy(upr, 0.0, 0.9)['r3c3']",
+      "expect": "-0.4",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "opt = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUURULUUUUL'))",
+      "call": "evaluate_policy(opt, 0.1, 0.9)['r4c1']",
+      "expect": "0.19435708643804944",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "opt = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUURULUUUUL'))",
+      "call": "evaluate_policy(opt, 0.1, 0.9)['r3c5']",
+      "expect": "0.1634402716866",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "optd = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUURULUUUUU'))",
+      "call": "evaluate_policy(optd, 0.0, 0.9)['r4c1']",
+      "expect": "0.32275975999999995",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "opt = dict(zip([c for c in CELLS if c not in TERMINAL], 'RRRRUUUUURULUUUUL'))",
+      "call": "evaluate_policy(opt, 0.1, 0.9)['r1c5']",
+      "expect": "0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "how": "Submit runs 9 hidden tests with NumPy. Values must match ours within 1e-6."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Leave the end cells' rows at zero; their value comes out 0."
+    },
+    {
+     "rung": "point",
+     "text": "For each next cell `t`, add `p` to `P[i, CELLS.index(t)]` and `p * reward(t)` to `r[i]`.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`np.linalg.solve(np.eye(len(CELLS)) - gamma * P, r)`."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. The best slippery policy is worth 0.1944 at the start.",
+    "generic": "Some tests fail. Check that slips into the same cell add up, and that end rows stay zero."
+   },
+   "explain": {
+    "text": "Each row of $\\mathbf P$ sums to 1, except the end rows, which are 0. With those zero rows $\\mathbf I - \\gamma\\mathbf P$ is invertible even at $\\gamma = 1$, provided every policy path reaches an end."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "One equation per state",
+   "prose": "A fixed policy's values solve $$v_\\pi(s) = \\sum_{s'} p(s' \\mid s, \\pi(s))\\,[\\,r + \\gamma v_\\pi(s')\\,],$$ or $(\\mathbf I - \\gamma\\mathbf P_\\pi)\\mathbf v = \\mathbf r_\\pi$. Solve it directly, or sweep $\\mathbf v \\leftarrow \\mathbf r_\\pi + \\gamma\\mathbf P_\\pi\\mathbf v$; each sweep cuts the error by at least $\\gamma$.",
+   "question": "When is $\\mathbf I - \\gamma\\mathbf P_\\pi$ guaranteed to be invertible?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "g",
+      "text": "Whenever $\\gamma < 1$",
+      "correct": true
+     },
+     {
+      "id": "always",
+      "text": "For every $\\gamma$, including 1",
+      "why": "At $\\gamma = 1$ a loop that never ends, like the wall-walker, makes it singular."
+     },
+     {
+      "id": "det",
+      "text": "Only when $\\mathbf P_\\pi$ is symmetric",
+      "why": "Symmetry plays no part. The rows of $\\gamma\\mathbf P_\\pi$ sum to at most $\\gamma < 1$, which is enough."
+     },
+     {
+      "id": "ends",
+      "text": "Only when the policy has no end states",
+      "why": "End states help: their zero rows make the matrix easier to invert, not harder."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With $\\gamma < 1$ every row of $\\gamma\\mathbf P_\\pi$ sums to less than 1, so the inverse exists.",
+    "generic": "Think about the wall-walking loop at $\\gamma = 1$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Valuing a quoting rule",
+   "prose": "A market maker quotes both sides while flat and earns £4 a step. At its inventory limit it quotes one side only and earns £1. From flat it hits the limit with chance 0.25 a step; from the limit it gets back to flat with chance 0.5. It discounts by $\\gamma = 0.95$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 220,
+     "nodes": [
+      {
+       "id": "F",
+       "label": "Flat",
+       "x": 0.25,
+       "y": 0.5
+      },
+      {
+       "id": "L",
+       "label": "Limit",
+       "x": 0.75,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "F",
+       "to": "F",
+       "label": "0.75",
+       "loopAngle": 180
+      },
+      {
+       "from": "F",
+       "to": "L",
+       "label": "0.25"
+      },
+      {
+       "from": "L",
+       "to": "F",
+       "label": "0.5"
+      },
+      {
+       "from": "L",
+       "to": "L",
+       "label": "0.5",
+       "loopAngle": 0
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "F": "£4 a step",
+      "L": "£1 a step"
+     }
+    }
+   },
+   "question": "What is the rule worth starting flat? Give pounds to 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 61.31,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "limit",
+      "value": 57.38,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "flat-only",
+      "value": 80,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "gamma-r",
+      "value": 58.25,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$v_F = 4 + 0.95(0.75 v_F + 0.25 v_L)$ and $v_L = 1 + 0.95(0.5 v_F + 0.5 v_L)$."
+    },
+    {
+     "rung": "point",
+     "text": "Rearranged: $0.2875 v_F - 0.2375 v_L = 4$ and $-0.475 v_F + 0.525 v_L = 1$.",
+     "highlight": [
+      "F",
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The determinant is 0.038125; $v_F = (0.525 \\times 4 + 0.2375)/0.038125$."
+    }
+   ],
+   "feedback": {
+    "correct": "$v_F = 2.3375/0.038125 = 61.31$, and $v_L = 57.38$.",
+    "generic": "Not quite. Write one Bellman equation per state and solve the pair.",
+    "byKey": {
+     "limit": "That is the value at the limit.",
+     "flat-only": "You valued £4 for ever, $4/0.05$. The limit costs some of that.",
+     "gamma-r": "You discounted the first step's £4 as well."
+    }
+   },
+   "explain": {
+    "text": "Solving gives £61.31 flat and £57.38 at the limit. The limit costs about £4, so a wider limit is worth up to that much to this desk. The same solve values any fixed rule, before deciding whether to change it."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A fixed policy's values satisfy the Bellman equation $v_\\pi(s) = \\sum_{s'} p(s' \\mid s, \\pi(s))[r + \\gamma v_\\pi(s')]$: `markov` first-step analysis with rewards and a discount.",
+   "In matrix form $(\\mathbf I - \\gamma\\mathbf P_\\pi)\\mathbf v = \\mathbf r_\\pi$, with zero rows for end states. Solve it directly, or sweep; each sweep cuts the error by at least $\\gamma$.",
+   "A policy that never reaches an end pays its step cost for ever: $-0.04/(1 - 0.9) = -0.4$ on the grid, and no finite value at $\\gamma = 1$."
+  ],
+  "formula": {
+   "name": "Policy evaluation",
+   "tex": "(\\mathbf I - \\gamma \\mathbf P_\\pi)\\,\\mathbf v_\\pi = \\mathbf r_\\pi",
+   "note": "Invertible when $\\gamma < 1$, or when every path under $\\pi$ reaches an end state."
+  },
+  "trap": "Putting $\\gamma$ on this step's reward as well as on the next value. Only what comes later is discounted."
+ },
+ "quiz": [
+  {
+   "id": "q-loop-value",
+   "difficulty": 2,
+   "prose": "A state pays £2 and returns to itself for ever; $\\gamma = 0.8$.",
+   "question": "What is its value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "disc-first",
+      "value": 8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$v = 2 + 0.8v$, so $v = 10$.",
+    "generic": "Not quite. Solve $v = 2 + 0.8v$.",
+    "byKey": {
+     "disc-first": "You discounted the first £2.",
+     "one": "That is one step only."
+    }
+   },
+   "explain": {
+    "text": "$v = 2/(1 - 0.8) = 10$."
+   }
+  },
+  {
+   "id": "q-backup",
+   "difficulty": 3,
+   "prose": "Under a fixed policy, state A moves to B with chance 0.5 and to C with 0.5, paying reward 1 either way. $v(B) = 4$, $v(C) = 2$, $\\gamma = 0.9$.",
+   "question": "What is $v(A)$? Give a decimal to 1 place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.7,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "no-disc",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "no-r",
+      "value": 2.7,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 + 0.9(0.5 \\times 4 + 0.5 \\times 2) = 3.7$.",
+    "generic": "Not quite. Reward plus 0.9 times the average next value.",
+    "byKey": {
+     "no-disc": "You left out $\\gamma$.",
+     "no-r": "You left out the reward of 1."
+    }
+   },
+   "explain": {
+    "text": "$v(A) = 1 + 0.9 \\times 3 = 3.7$."
+   }
+  },
+  {
+   "id": "q-singular",
+   "difficulty": 3,
+   "prose": "With $\\gamma = 1$, a colleague's solve of $(\\mathbf I - \\mathbf P_\\pi)\\mathbf v = \\mathbf r_\\pi$ for a grid policy fails: the matrix is singular.",
+   "question": "What is the most likely cause?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "loop",
+      "text": "Some state never reaches an end under the policy",
+      "correct": true
+     },
+     {
+      "id": "rewards",
+      "text": "The step cost is negative",
+      "why": "Negative rewards are fine; they only make values negative."
+     },
+     {
+      "id": "slip",
+      "text": "The grid is slippery",
+      "why": "Slips are fine as long as every path still reaches an end."
+     },
+     {
+      "id": "size",
+      "text": "There are too many states to solve",
+      "why": "Nineteen states is tiny. Singularity is about structure, not size."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A closed loop with no exit has rows that sum to 1 among themselves, so the matrix is singular.",
+    "generic": "Not quite. Think of the wall-walker."
+   },
+   "explain": {
+    "text": "A loop that never ends makes those rows of $\\mathbf I - \\mathbf P_\\pi$ dependent. With $\\gamma < 1$, or every path ending, the solve works."
+   }
+  }
+ ]
+}

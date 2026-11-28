@@ -1,0 +1,393 @@
+{
+ "id": "homework-1",
+ "course": "rl",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-bandit-league",
+   "difficulty": 5,
+   "skills": [
+    "rl-bandit"
+   ],
+   "performance": "code",
+   "title": "A league of three agents",
+   "prose": "Write `bandit_league(ps, T, seeds)` from scratch. For each seed, run three agents for `T` pulls, each with its own `random.Random(seed)`, and return the mean expected regret $\\sum_a n_a(q^* - q(a))$ over the seeds as `{\"eps\": ..., \"ucb\": ..., \"thompson\": ...}`. A pull is `1 if rng.random() < p else 0`.\n\n- **eps**: draw `rng.random()`; below 0.1 take `rng.randrange(k)`, else `rng.choice` of the arms tied for the best running mean (start at 0); then pull. Update every running mean with `Q[a] += (r - Q[a]) / n[a]`.\n- **ucb**: for $t = 1, \\dots, T$ take the first index of the largest `Q[a] + math.sqrt(2 * math.log(t) / n[a])` (infinite when `n[a] == 0`); then pull.\n- **thompson**: draw `rng.betavariate(1 + wins, 1 + losses)` for every arm in order, take the first index of the largest draw; then pull.",
+   "question": "Complete `bandit_league`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def bandit_league(ps, T, seeds):\n    \"\"\"Mean regret of epsilon-greedy (0.1), UCB1 and Thompson sampling over the same seeds.\"\"\"\n    ...\n",
+    "solution": "import math\nimport random\n\ndef bandit_league(ps, T, seeds):\n    \"\"\"Mean regret of epsilon-greedy (0.1), UCB1 and Thompson sampling over the same seeds.\"\"\"\n    k = len(ps)\n    best = max(ps)\n\n    def pull(p, rng):\n        return 1 if rng.random() < p else 0\n\n    def league_regret(n):\n        return sum(c * (best - p) for c, p in zip(n, ps))\n\n    def eps_greedy(seed):\n        rng = random.Random(seed)\n        Q, n = [0.0] * k, [0] * k\n        for _ in range(T):\n            if rng.random() < 0.1:\n                a = rng.randrange(k)\n            else:\n                m = max(Q)\n                a = rng.choice([i for i in range(k) if Q[i] == m])\n            r = pull(ps[a], rng)\n            n[a] += 1\n            Q[a] += (r - Q[a]) / n[a]\n        return n\n\n    def ucb(seed):\n        rng = random.Random(seed)\n        Q, n = [0.0] * k, [0] * k\n        for t in range(1, T + 1):\n            s = [math.inf if n[i] == 0 else Q[i] + math.sqrt(2 * math.log(t) / n[i]) for i in range(k)]\n            a = s.index(max(s))\n            r = pull(ps[a], rng)\n            n[a] += 1\n            Q[a] += (r - Q[a]) / n[a]\n        return n\n\n    def thompson(seed):\n        rng = random.Random(seed)\n        w, l = [0] * k, [0] * k\n        for _ in range(T):\n            d = [rng.betavariate(1 + w[i], 1 + l[i]) for i in range(k)]\n            a = d.index(max(d))\n            if pull(ps[a], rng):\n                w[a] += 1\n            else:\n                l[a] += 1\n        return [w[i] + l[i] for i in range(k)]\n\n    out = {}\n    for name, agent in [('eps', eps_greedy), ('ucb', ucb), ('thompson', thompson)]:\n        out[name] = sum(league_regret(agent(s)) for s in seeds) / len(seeds)\n    return out\n",
+    "examples": [
+     {
+      "call": "bandit_league([0.45, 0.55, 0.6], 500, [3])",
+      "expect": "{'eps': 24.599999999999973, 'ucb': 16.549999999999983, 'thompson': 12.449999999999987}",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "bandit_league([0.45, 0.55, 0.6], 500, [3])",
+      "expect": "{'eps': 24.599999999999973, 'ucb': 16.549999999999983, 'thompson': 12.449999999999987}",
+      "compare": "isclose"
+     },
+     {
+      "call": "bandit_league([0.45, 0.55, 0.6], 1000, [0, 1, 2, 3, 4])",
+      "expect": "{'eps': 20.96999999999998, 'ucb': 37.25999999999998, 'thompson': 21.509999999999984}",
+      "compare": "isclose"
+     },
+     {
+      "call": "bandit_league([0.2, 0.5, 0.8], 300, [7, 8])",
+      "expect": "{'eps': 13.350000000000001, 'ucb': 20.550000000000004, 'thompson': 7.2}",
+      "compare": "isclose"
+     },
+     {
+      "call": "sorted(bandit_league([0.5, 0.6], 10, [0]))",
+      "expect": "['eps', 'thompson', 'ucb']",
+      "compare": "equal"
+     },
+     {
+      "call": "bandit_league([0.4, 0.4], 200, [1, 2])",
+      "expect": "{'eps': 0, 'ucb': 0, 'thompson': 0}",
+      "compare": "isclose"
+     },
+     {
+      "setup": "r = bandit_league([0.2, 0.5, 0.8], 2000, range(20))",
+      "call": "r['ucb'] < r['eps'] - 8 and r['thompson'] < r['ucb'] - 20",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 10000
+     },
+     {
+      "setup": "r = bandit_league([0.45, 0.55, 0.6], 2000, range(20))",
+      "call": "r['thompson'] < r['ucb'] - 10 and r['eps'] < r['ucb'] - 10",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 10000
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Seeded means must match ours within math.isclose; the last two check the ordering of the agents with a margin.",
+    "budget": 10000
+   },
+   "feedback": {
+    "correct": "All pass. On close venues UCB1 trails; on wide gaps it beats epsilon-greedy, and Thompson leads both times.",
+    "generic": "Some tests fail. Check each agent's order of random calls, and that regret uses pull counts, not rewards."
+   },
+   "explain": {
+    "text": "Over seeds 0 to 19 at 2,000 pulls, arms 0.2, 0.5, 0.8 give 70.46, 48.84 and 9.09 for epsilon-greedy, UCB1 and Thompson. On the venues 0.45, 0.55, 0.6 they give 35.20, 60.76 and 32.89: UCB1's bound over-explores close arms."
+   }
+  },
+  {
+   "id": "h-drifting-venue",
+   "difficulty": 4,
+   "skills": [
+    "rl-bandit"
+   ],
+   "title": "Two venues swap",
+   "prose": "Two venues fill with chance 0.6 and 0.4 for the first 1,000 orders, then swap to 0.3 and 0.7. Write `run_drift(before, after, switch, T, alpha, seed)`: epsilon-greedy with $\\varepsilon = 0.1$ as in l2, using `before` on pulls 1 to `switch` and `after` from then on. With `alpha=None` update by $\\tfrac1n$; otherwise by the constant `alpha`. Return the reward collected after the switch.",
+   "question": "Complete `run_drift`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\ndef run_drift(before, after, switch, T, alpha, seed):\n    \"\"\"Epsilon-greedy (0.1) on arms that change after pull `switch`; return the reward after it.\"\"\"\n    ...\n",
+    "solution": "import random\n\ndef run_drift(before, after, switch, T, alpha, seed):\n    \"\"\"Epsilon-greedy (0.1) on arms whose win chances are `before` for pulls 1 to switch and `after` from then on.\n    alpha=None uses sample means; otherwise a constant step. Returns the reward collected after the switch.\"\"\"\n    rng = random.Random(seed)\n    k = len(before)\n    Q, n = [0.0] * k, [0] * k\n    late = 0\n    for t in range(1, T + 1):\n        ps = before if t <= switch else after\n        if rng.random() < 0.1:\n            a = rng.randrange(k)\n        else:\n            m = max(Q)\n            a = rng.choice([i for i in range(k) if Q[i] == m])\n        r = 1 if rng.random() < ps[a] else 0\n        n[a] += 1\n        step = 1 / n[a] if alpha is None else alpha\n        Q[a] += step * (r - Q[a])\n        if t > switch:\n            late += r\n    return late\n",
+    "examples": [
+     {
+      "call": "run_drift([0.6, 0.4], [0.3, 0.7], 1000, 2000, 0.1, 0)",
+      "expect": "659",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "run_drift([0.6, 0.4], [0.3, 0.7], 1000, 2000, 0.1, 0)",
+      "expect": "659",
+      "compare": "equal"
+     },
+     {
+      "call": "run_drift([0.6, 0.4], [0.3, 0.7], 1000, 2000, None, 0)",
+      "expect": "381",
+      "compare": "equal"
+     },
+     {
+      "call": "run_drift([0.5, 0.55, 0.6], [0.6, 0.55, 0.5], 300, 800, 0.2, 4)",
+      "expect": "263",
+      "compare": "equal"
+     },
+     {
+      "call": "run_drift([0.6, 0.4], [0.3, 0.7], 2000, 2000, 0.1, 1)",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "sum(run_drift([0.6, 0.4], [0.3, 0.7], 1000, 2000, 0.1, s) - run_drift([0.6, 0.4], [0.3, 0.7], 1000, 2000, None, s) for s in range(10)) / 10 > 100",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. Rewards must equal ours exactly; the last test checks that a constant step earns at least 100 more after the swap, averaged over 10 seeds."
+   },
+   "feedback": {
+    "correct": "All pass. Over seeds 0 to 9 the constant step earns 205.5 more fills after the swap.",
+    "generic": "Some tests fail. Check the order of random calls, and that only rewards after the switch are counted."
+   },
+   "explain": {
+    "text": "After 1,000 pulls the sample mean of the first venue sits near 0.6 and moves by only $\\tfrac1n$ a pull, so the agent keeps sending orders there. With $\\alpha = 0.1$ it notices the swap within dozens of pulls. Averaged over seeds 0 to 9 that is 205.5 more fills."
+   }
+  },
+  {
+   "id": "h-bonus-order",
+   "difficulty": 4,
+   "skills": [
+    "rl-bandit"
+   ],
+   "title": "The bonus from any confidence level",
+   "prose": "An arm has $n$ rewards in $[0, 1]$ with mean $Q$. We want a number $\\varepsilon$ so that the true value lies above $Q + \\varepsilon$ with chance at most $\\delta$, and then a choice of $\\delta$ that shrinks with time.",
+   "question": "Put the derivation in order. Leave out the two lines that do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Hoeffding for the lower tail: $P(\\mu - Q \\ge \\varepsilon) \\le e^{-2n\\varepsilon^2}$"
+     },
+     {
+      "id": "o2",
+      "text": "Ask for the tail to be $\\delta$: $e^{-2n\\varepsilon^2} = \\delta$"
+     },
+     {
+      "id": "o3",
+      "text": "Take logs and solve: $\\varepsilon = \\sqrt{\\ln(1/\\delta)/(2n)}$"
+     },
+     {
+      "id": "o4",
+      "text": "Choose $\\delta = t^{-4}$, so $\\ln(1/\\delta) = 4\\ln t$"
+     },
+     {
+      "id": "o5",
+      "text": "Substitute: $\\varepsilon = \\sqrt{2\\ln t / n}$, the UCB1 bonus"
+     },
+     {
+      "id": "x1",
+      "text": "Take logs and solve: $\\varepsilon = \\ln(1/\\delta)/(2n)$",
+      "why": "Taking logs gives $2n\\varepsilon^2 = \\ln(1/\\delta)$. You still need a square root to get $\\varepsilon$."
+     },
+     {
+      "id": "x2",
+      "text": "Choose $\\delta = 0.05$ for every pull",
+      "why": "A fixed $\\delta$ never shrinks, so on a long run a bad estimate stays likely. Letting $\\delta$ fall with $t$ is what keeps regret growing like $\\ln T$."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "So $\\varepsilon = \\sqrt{\\ln(1/\\delta)/(2n)}$ in general, and $\\delta = t^{-4}$ gives UCB1's bonus.",
+    "generic": "Not quite. Each line must follow from the one before.",
+    "byKey": {
+     "x1": "You dropped the square: $2n\\varepsilon^2 = \\ln(1/\\delta)$ gives $\\varepsilon$ only after a square root.",
+     "x2": "A fixed $\\delta$ does not shrink with time, so the agent can stay wrong for ever with chance $\\delta$.",
+     "left-out": "Every correct line is needed. Two lines are flawed."
+    }
+   },
+   "explain": {
+    "text": "Hoeffding bounds the lower tail by $e^{-2n\\varepsilon^2}$; setting it to $\\delta$ gives $\\varepsilon = \\sqrt{\\ln(1/\\delta)/(2n)}$. With $\\delta = t^{-4}$ that is $\\sqrt{4\\ln t/(2n)} = \\sqrt{2\\ln t/n}$."
+   }
+  },
+  {
+   "id": "h-floor-four",
+   "difficulty": 3,
+   "skills": [
+    "rl-bandit"
+   ],
+   "title": "Four signals",
+   "prose": "A desk funds four signals that hit with chance 0.30, 0.42, 0.50 and 0.58. Its allocator is epsilon-greedy with $\\varepsilon = 0.05$ over 20,000 trades.",
+   "question": "What is the floor on the allocator's regret over the 20,000 trades?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 130.0,
+    "tol": {
+     "abs": 0.01
+    },
+    "wrong": [
+     {
+      "id": "per-trade",
+      "value": 0.0065,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-eps",
+      "value": 2600,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "worst",
+      "value": 280,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\bar q = 0.45$, so the floor is $20000 \\times 0.05 \\times 0.13 = 130$.",
+    "generic": "Not quite. Average the four values, take the gap to 0.58, then scale by $\\varepsilon$ and the trades.",
+    "byKey": {
+     "per-trade": "That is the floor per trade. Multiply by 20,000.",
+     "no-eps": "You charged every trade. Only 1 in 20 is random.",
+     "worst": "You used the worst signal's gap, 0.28. A uniform random pick loses the average gap, 0.13."
+    }
+   },
+   "explain": {
+    "text": "The mean value is 0.45, so a random trade loses 0.13 on average. About 1,000 trades are random, so the floor is $1000 \\times 0.13 = 130$."
+   }
+  },
+  {
+   "id": "h-bonus-gap",
+   "difficulty": 4,
+   "skills": [
+    "rl-bandit"
+   ],
+   "title": "When the bonus fits inside the gap",
+   "prose": "At pull $t = 10{,}000$, UCB1's bonus for an arm is $\\sqrt{2\\ln t / n_a}$. Two venues are 0.05 apart.",
+   "question": "What is the smallest pull count $n_a$ for which the bonus is below 0.05?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7369,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "no-two",
+      "value": 3685,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "no-sq",
+      "value": 369,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "t-not-log",
+      "value": 8000000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$n_a > 2\\ln 10000 / 0.0025 = 7368.3$, so $n_a = 7369$.",
+    "generic": "Not quite. Square both sides: $2\\ln t / n_a < 0.0025$.",
+    "byKey": {
+     "no-two": "You dropped the 2 in $2\\ln t$.",
+     "no-sq": "You divided by 0.05 instead of $0.05^2$.",
+     "t-not-log": "You used $t$ instead of $\\ln t$."
+    }
+   },
+   "explain": {
+    "text": "$2\\ln 10000 = 18.4207$, and $18.4207 / 0.0025 = 7368.3$. So the bonus falls below the gap only after 7369 pulls: a close arm keeps UCB1 busy."
+   }
+  },
+  {
+   "id": "h-regret-growth",
+   "difficulty": 4,
+   "skills": [
+    "rl-bandit"
+   ],
+   "title": "Statements about regret",
+   "prose": "On three venues with fill chances 0.45, 0.55 and 0.60, seeds 0 to 199 gave mean regrets at 1,000 pulls of 61.8 (greedy), 24.0 (epsilon-greedy, 0.1), 37.8 (UCB1) and 20.8 (Thompson).",
+   "question": "Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "t1",
+      "text": "Greedy's high regret comes from runs that lock onto a worse venue after early luck",
+      "correct": true
+     },
+     {
+      "id": "t2",
+      "text": "Epsilon-greedy's regret keeps growing by at least 6.67 per 1,000 pulls",
+      "correct": true
+     },
+     {
+      "id": "t3",
+      "text": "UCB1 explores at random more than epsilon-greedy does",
+      "why": "UCB1 makes no random choices. Its extra pulls of worse venues come from its bonus."
+     },
+     {
+      "id": "t4",
+      "text": "UCB1 will always trail epsilon-greedy on these venues",
+      "why": "Its regret grows like $\\ln T$ against epsilon-greedy's linear floor; on 20 long runs it overtook between 40,000 and 50,000 pulls."
+     },
+     {
+      "id": "t5",
+      "text": "Thompson sampling's pull share of a worse venue shrinks as evidence builds",
+      "correct": true
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Three are true: the lock-ins, the floor and Thompson's shrinking share.",
+    "generic": "Not quite. Check each statement against how the agent chooses."
+   },
+   "explain": {
+    "text": "Greedy locks in; epsilon-greedy pays its floor $0.1 \\times 0.0667$ a pull for ever; Thompson's share of a worse arm falls as its posterior narrows. UCB1 explores by bonus, not at random, and overtakes eventually."
+   }
+  },
+  {
+   "id": "h-stop-after-50",
+   "difficulty": 5,
+   "skills": [
+    "rl-bandit"
+   ],
+   "kind": "longform",
+   "title": "Stop exploring after 50 orders?",
+   "prompt": "A venue-routing desk tests three venues. Its head proposes: \"Send 50 orders to each, then route everything to the venue that looks best.\" The true fill chances, unknown to the desk, are 0.45, 0.55 and 0.60, and the desk will route 100,000 orders. Write a short note to the head: what the plan costs and risks, using regret and a tail bound, and what you would do instead.",
+   "model": "**What the plan costs for sure.** The 150 test orders lose $50 \\times 0.15 + 50 \\times 0.05 = 10$ fills against always using the best venue. That part is cheap.\n\n**What it risks.** After 50 orders each, the estimates of B and C each have a standard error of about $\\sqrt{0.25/50} = 0.07$, larger than the 0.05 gap between them. Hoeffding bounds the chance that B's mean beats its truth by 0.025 at $e^{-2 \\times 50 \\times 0.025^2} = 0.94$, which says nothing useful: the test cannot separate B from C reliably. If B wins the test, all 100,000 orders go to it and the desk loses $100000 \\times 0.05 = 5{,}000$ fills, for good.\n\n**The regret picture.** A test-then-commit plan has a fixed cost plus a chance of a linear loss. Expected regret is about $10 + P(\\text{wrong pick}) \\times 5000$ or more; even a 25% chance of picking B makes it over 1,000 fills.\n\n**What to do instead.** Keep learning while routing: Thompson sampling from Beta posteriors shifts flow to C as the evidence comes in, and keeps sending B a small and falling share. On seeds 0 to 199 it averaged 20.8 fills of regret over 1,000 orders on these venues. If the head wants a fixed rule, keep at least a small exploration share, and check for drift, since venues change.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Works out the fixed cost of the 150 test orders as about 10 fills of regret"
+    },
+    {
+     "points": 2,
+     "text": "Says 50 orders give a standard error near 0.07, larger than the 0.05 gap, so B and C cannot be told apart reliably"
+    },
+    {
+     "points": 2,
+     "text": "Uses a tail bound (Hoeffding or Chebyshev) and says what it implies, for example that the bound is near 1 at this sample size"
+    },
+    {
+     "points": 2,
+     "text": "Shows that a wrong commit costs regret linear in the 100,000 orders (5,000 fills if B is chosen)"
+    },
+    {
+     "points": 2,
+     "text": "Proposes an adaptive rule (Thompson, UCB or a falling epsilon) and says why it limits regret"
+    }
+   ]
+  }
+ ]
+}

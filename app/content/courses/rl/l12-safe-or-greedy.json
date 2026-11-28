@@ -1,0 +1,1454 @@
+{
+ "id": "l12-safe-or-greedy",
+ "course": "rl",
+ "title": "The safe path and the greedy path",
+ "minutes": 15,
+ "objectives": [
+  "Compare SARSA and Q-learning on a cliff, and explain on-policy against off-policy learning."
+ ],
+ "skills": [
+  "rl-td"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The edge of a cliff",
+   "prose": "A 4 by 8 grid. Start at S, bottom left; reach G, bottom right. Each move costs 1. Stepping into the cliff between them costs 100 and sends the agent back to S. Two routes are drawn: one along the edge, one higher up.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 8,
+     "rowHeads": false,
+     "colHeads": false,
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "S",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "G"
+      ]
+     ],
+     "compact": true
+    },
+    "state": {
+     "shade": {
+      "cliff": {
+       "ids": [
+        "r4c2",
+        "r4c3",
+        "r4c4",
+        "r4c5",
+        "r4c6",
+        "r4c7"
+       ],
+       "colour": 6
+      },
+      "goal": {
+       "ids": [
+        "r4c8"
+       ],
+       "colour": 3
+      }
+     },
+     "paths": [
+      {
+       "id": "safe",
+       "cells": [
+        "r4c1",
+        "r3c1",
+        "r2c1",
+        "r2c2",
+        "r2c3",
+        "r1c3",
+        "r1c4",
+        "r1c5",
+        "r2c5",
+        "r2c6",
+        "r2c7",
+        "r2c8",
+        "r3c8",
+        "r4c8"
+       ],
+       "colour": 3,
+       "arrow": true
+      },
+      {
+       "id": "edge",
+       "cells": [
+        "r4c1",
+        "r3c1",
+        "r3c2",
+        "r3c3",
+        "r3c4",
+        "r3c5",
+        "r3c6",
+        "r3c7",
+        "r3c8",
+        "r4c8"
+       ],
+       "colour": 1,
+       "arrow": true
+      }
+     ],
+     "caption": "Blue: along the edge. Green: the higher route."
+    }
+   },
+   "question": "An agent that never makes a random move takes the edge route. What is its return, with no discount?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -9,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "safe",
+      "value": -13,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "cliff",
+      "value": -100,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the moves on the edge route."
+    },
+    {
+     "rung": "point",
+     "text": "Up 1, right 7, down 1.",
+     "highlight": [
+      "edge"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Nine moves at −1 each."
+    }
+   ],
+   "feedback": {
+    "correct": "Nine moves, each −1: −9.",
+    "generic": "Not quite. Count the moves on the blue route.",
+    "byKey": {
+     "sign": "Each move costs 1, so the return is negative.",
+     "safe": "That is the higher route, 13 moves.",
+     "cliff": "The edge route never enters the cliff if no move is random."
+    }
+   },
+   "explain": {
+    "text": "The edge route takes 9 moves, −9; the higher route takes 13, −13. With perfect control the edge is best. With random moves it is a different story.",
+    "canvas": {
+     "highlight": [
+      "edge"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two learners on the cliff",
+   "prose": "Two agents learn this task with $\\alpha = 0.5$, acting at random with chance $\\varepsilon = 0.1$, over 500 episodes and seeds 0 to 19. Q-learning you know; SARSA is new. Each point is the mean reward per episode over 10 episodes. Slide to draw them.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "sarsa",
+       "label": "SARSA",
+       "values": [
+        -195.6,
+        -54.2,
+        -34.5,
+        -26.6,
+        -20.5,
+        -20.9,
+        -21.3,
+        -25.7,
+        -21.5,
+        -23.7,
+        -19.4,
+        -24.7,
+        -24.4,
+        -23.6,
+        -17.7,
+        -19.6,
+        -26.2,
+        -21.1,
+        -18.9,
+        -21.3,
+        -22.4,
+        -23.0,
+        -24.0,
+        -22.4,
+        -21.1,
+        -21.0,
+        -17.6,
+        -17.8,
+        -17.5,
+        -22.6,
+        -19.7,
+        -21.4,
+        -19.6,
+        -21.6,
+        -19.9,
+        -24.1,
+        -20.1,
+        -18.6,
+        -18.0,
+        -19.0,
+        -19.8,
+        -19.4,
+        -17.7,
+        -18.8,
+        -23.5,
+        -22.8,
+        -21.1,
+        -20.0,
+        -17.8,
+        -19.4
+       ]
+      },
+      {
+       "id": "q",
+       "label": "Q-learning",
+       "values": [
+        -190.4,
+        -46.3,
+        -27.6,
+        -35.5,
+        -29.5,
+        -25.3,
+        -34.2,
+        -29.6,
+        -30.4,
+        -26.4,
+        -30.5,
+        -29.5,
+        -32.0,
+        -32.1,
+        -32.1,
+        -27.4,
+        -38.2,
+        -32.6,
+        -31.3,
+        -28.7,
+        -34.8,
+        -38.2,
+        -35.6,
+        -33.8,
+        -33.9,
+        -26.8,
+        -29.2,
+        -36.5,
+        -28.1,
+        -36.4,
+        -27.6,
+        -33.7,
+        -28.8,
+        -35.6,
+        -28.1,
+        -34.1,
+        -30.7,
+        -27.8,
+        -36.7,
+        -33.1,
+        -38.2,
+        -32.4,
+        -28.9,
+        -29.9,
+        -30.4,
+        -30.9,
+        -31.1,
+        -34.0,
+        -25.2,
+        -32.2
+       ]
+      }
+     ],
+     "xValues": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200,
+      210,
+      220,
+      230,
+      240,
+      250,
+      260,
+      270,
+      280,
+      290,
+      300,
+      310,
+      320,
+      330,
+      340,
+      350,
+      360,
+      370,
+      380,
+      390,
+      400,
+      410,
+      420,
+      430,
+      440,
+      450,
+      460,
+      470,
+      480,
+      490,
+      500
+     ],
+     "xLabel": "Episodes",
+     "yLabel": "Reward per episode",
+     "y": [
+      -80,
+      0
+     ],
+     "decimals": 1
+    },
+    "state": {
+     "reveal": 0.3
+    },
+    "controls": [
+     {
+      "bind": "reveal",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "start": 0.3,
+      "label": "Drawn",
+      "format": "percent"
+     }
+    ]
+   },
+   "question": "Once both have settled, which agent collects more reward per episode?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sarsa",
+      "text": "SARSA, about -20 against -31",
+      "correct": true
+     },
+     {
+      "id": "q",
+      "text": "Q-learning, about -31 against -20",
+      "why": "Read the lines after 100 episodes: Q-learning's sits lower."
+     },
+     {
+      "id": "same",
+      "text": "They earn the same once both have learned",
+      "why": "The gap stays about 11 per episode to the end."
+     },
+     {
+      "id": "neither",
+      "text": "Neither settles",
+      "why": "Both flatten after about 50 episodes; they settle at different levels."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "SARSA averages -20.0 over the last 100 episodes; Q-learning -31.3.",
+    "generic": "Slide to the end and compare the two lines."
+   },
+   "explain": {
+    "text": "Over the last 100 episodes SARSA averaged -20.0 and Q-learning -31.3, and SARSA was ahead on all 20 seeds. Sutton and Barto's Example 6.6 shows the same on a 4 by 12 cliff.",
+    "canvas": {
+     "reveal": 1
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "SARSA",
+   "prose": "**SARSA** updates from $(s, a, r, s', a')$: its target is $r + \\gamma Q(s', a')$, using the action $a'$ the agent actually takes next. In one step $Q(s, a) = -10$ and the reward is −1. In $s'$ the agent picks $a'$ with $Q(s', a') = -12$, though its best value there is −9. $\\alpha = 0.5$, $\\gamma = 1$.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 8,
+     "rowHeads": false,
+     "colHeads": false,
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "S",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "G"
+      ]
+     ],
+     "compact": true
+    },
+    "state": {
+     "shade": {
+      "cliff": {
+       "ids": [
+        "r4c2",
+        "r4c3",
+        "r4c4",
+        "r4c5",
+        "r4c6",
+        "r4c7"
+       ],
+       "colour": 6
+      },
+      "goal": {
+       "ids": [
+        "r4c8"
+       ],
+       "colour": 3
+      }
+     }
+    }
+   },
+   "question": "What is SARSA's new $Q(s, a)$? Give a decimal to 1 place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -11.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "max",
+      "value": -10,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "target",
+      "value": -13,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 11.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "SARSA's target uses −12, the action taken."
+    },
+    {
+     "rung": "point",
+     "text": "Target $-1 - 12 = -13$; error $-13 - (-10) = -3$.",
+     "highlight": [
+      "r4c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-10 + 0.5 \\times (-3)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-10 + 0.5(-1 - 12 + 10) = -11.5$.",
+    "generic": "Not quite. Use the value of the action actually taken next.",
+    "byKey": {
+     "max": "That is Q-learning's update, with the best next value −9. SARSA uses the −12 of the action taken.",
+     "target": "That is the target; move half way.",
+     "sign": "Every value here is negative."
+    }
+   },
+   "explain": {
+    "text": "SARSA's target is $-1 + (-12) = -13$, so $Q$ moves half way, to −11.5. Q-learning would use −9 and stay at −10. SARSA learns the value of the policy it follows, random moves included: it is **on-policy**."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The price of the edge",
+   "prose": "On the edge route the agent walks six cells right along the cliff. On each, with chance 0.1 it moves at random, and one random move in four is down, into the cliff.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 8,
+     "rowHeads": false,
+     "colHeads": false,
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "S",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "G"
+      ]
+     ],
+     "compact": true
+    },
+    "state": {
+     "shade": {
+      "cliff": {
+       "ids": [
+        "r4c2",
+        "r4c3",
+        "r4c4",
+        "r4c5",
+        "r4c6",
+        "r4c7"
+       ],
+       "colour": 6
+      },
+      "goal": {
+       "ids": [
+        "r4c8"
+       ],
+       "colour": 3
+      }
+     },
+     "paths": [
+      {
+       "id": "edge",
+       "cells": [
+        "r4c1",
+        "r3c1",
+        "r3c2",
+        "r3c3",
+        "r3c4",
+        "r3c5",
+        "r3c6",
+        "r3c7",
+        "r3c8",
+        "r4c8"
+       ],
+       "colour": 1,
+       "arrow": true
+      }
+     ],
+     "highlight": [
+      "r3c2",
+      "r3c3",
+      "r3c4",
+      "r3c5",
+      "r3c6",
+      "r3c7"
+     ]
+    }
+   },
+   "question": "What is the chance of falling at least once in one walk along those six cells? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1409,
+    "tol": {
+     "abs": 0.0003
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.025,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sum",
+      "value": 0.15,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "eps",
+      "value": 0.4686,
+      "tol": {
+       "abs": 0.0003
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each cell: fall with chance $0.1 \\times \\tfrac14 = 0.025$."
+    },
+    {
+     "rung": "point",
+     "text": "Surviving six cells: $0.975^6$.",
+     "highlight": [
+      "r3c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 0.975^6$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - 0.975^6 = 0.1409$.",
+    "generic": "Not quite. Take one minus the chance of surviving all six cells.",
+    "byKey": {
+     "one": "That is one cell. There are six.",
+     "sum": "Adding six chances overcounts; use $1 - 0.975^6$.",
+     "eps": "That uses 0.1 per cell; only a quarter of random moves go down."
+    }
+   },
+   "explain": {
+    "text": "About one walk in seven (0.1409) falls at least once, costing 100 and a restart. SARSA's values include those falls, so it prefers the higher route; Q-learning's max ignores them and keeps to the edge.",
+    "canvas": {
+     "highlight": [
+      "r3c2",
+      "r3c3",
+      "r3c4",
+      "r3c5",
+      "r3c6",
+      "r3c7"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code SARSA on the cliff",
+   "prose": "Write `sarsa_update`, then `cliff_run(agent, episodes, seed)`. Choose $a$ before each step, epsilon-greedily as in l11. After each step choose $a'$ in the new cell; SARSA updates with $Q(s', a')$, Q-learning with the max. Reaching G ends the episode with target $r$. Return the mean reward of the last 100 episodes.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Seeds 0 to 19, last 100 episodes",
+      "Mean reward"
+     ],
+     "rows": [
+      [
+       "SARSA",
+       "-20.03"
+      ],
+      [
+       "Q-learning",
+       "-31.34"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `sarsa_update` and `cliff_run`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\nSTART, GOAL = (4, 1), (4, 8)\nCLIFF = {(4, c) for c in range(2, 8)}\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\ndef cliff_step(s, a):\n    \"\"\"Move on the 4 by 8 grid; off the edge stays put; the cliff costs 100 and sends you to START.\"\"\"\n    r = min(max(s[0] + MOVES[a][0], 1), 4)\n    c = min(max(s[1] + MOVES[a][1], 1), 8)\n    if (r, c) in CLIFF:\n        return START, -100\n    return (r, c), -1\n\ndef sarsa_update(Q, s, a, r, s2, a2, alpha, gamma, terminal):\n    \"\"\"One SARSA update of Q[(s, a)], in place; return the new value.\"\"\"\n    ...\n\ndef cliff_run(agent, episodes, seed, alpha=0.5, eps=0.1):\n    \"\"\"agent 'sarsa' or 'q'. Mean reward of the last 100 episodes.\"\"\"\n    rng = random.Random(seed)\n    Q = {((r, c), a): 0.0 for r in range(1, 5) for c in range(1, 9) for a in 'URDL'}\n    ...\n",
+    "solution": "import random\n\nSTART, GOAL = (4, 1), (4, 8)\nCLIFF = {(4, c) for c in range(2, 8)}\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\n\ndef cliff_step(s, a):\n    \"\"\"Move on the 4 by 8 grid; off the edge stays put; the cliff costs 100 and sends you to START.\"\"\"\n    r = min(max(s[0] + MOVES[a][0], 1), 4)\n    c = min(max(s[1] + MOVES[a][1], 1), 8)\n    if (r, c) in CLIFF:\n        return START, -100\n    return (r, c), -1\n\ndef sarsa_update(Q, s, a, r, s2, a2, alpha, gamma, terminal):\n    \"\"\"One SARSA update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + gamma * Q[(s2, a2)]\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef cliff_run(agent, episodes, seed, alpha=0.5, eps=0.1):\n    \"\"\"agent 'sarsa' or 'q'. Mean reward of the last 100 episodes.\"\"\"\n    rng = random.Random(seed)\n    Q = {((r, c), a): 0.0 for r in range(1, 5) for c in range(1, 9) for a in 'URDL'}\n\n    def choose(s):\n        if rng.random() < eps:\n            return rng.choice('URDL')\n        return max('URDL', key=lambda b: Q[(s, b)])\n\n    totals = []\n    for _ in range(episodes):\n        s, a, total = START, choose(START), 0\n        while s != GOAL:\n            s2, r = cliff_step(s, a)\n            total += r\n            if s2 == GOAL:\n                Q[(s, a)] += alpha * (r - Q[(s, a)])\n                break\n            a2 = choose(s2)\n            if agent == 'sarsa':\n                sarsa_update(Q, s, a, r, s2, a2, alpha, 1.0, False)\n            else:\n                best = max(Q[(s2, b)] for b in 'URDL')\n                Q[(s, a)] += alpha * (r + best - Q[(s, a)])\n            s, a = s2, a2\n        totals.append(total)\n    return sum(totals[-100:]) / len(totals[-100:])\n",
+    "examples": [
+     {
+      "setup": "Q = {('s', 'a'): -10.0, ('t', 'b'): -12.0}",
+      "call": "sarsa_update(Q, 's', 'a', -1, 't', 'b', 0.5, 1.0, False)",
+      "expect": "-11.5",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "Q = {('s', 'a'): -10.0, ('t', 'b'): -12.0}",
+      "call": "sarsa_update(Q, 's', 'a', -1, 't', 'b', 0.5, 1.0, False)",
+      "expect": "-11.5",
+      "compare": "isclose"
+     },
+     {
+      "setup": "Q = {('s', 'a'): -10.0}",
+      "call": "sarsa_update(Q, 's', 'a', -1, None, None, 0.5, 1.0, True)",
+      "expect": "-5.5",
+      "compare": "isclose"
+     },
+     {
+      "setup": "Q = {('s', 'a'): 1.0, ('t', 'b'): 3.0}",
+      "call": "sarsa_update(Q, 's', 'a', 2, 't', 'b', 0.1, 0.9, False)",
+      "expect": "1.37",
+      "compare": "isclose"
+     },
+     {
+      "call": "sum(cliff_run('sarsa', 500, s) for s in range(5)) / 5 > sum(cliff_run('q', 500, s) for s in range(5)) / 5 + 4",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 8000
+     },
+     {
+      "call": "-35 < sum(cliff_run('sarsa', 500, s) for s in range(5)) / 5 < -12",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 8000
+     },
+     {
+      "call": "cliff_run('sarsa', 300, 3, eps=0.0)",
+      "expect": "-9",
+      "compare": "isclose"
+     },
+     {
+      "call": "cliff_run('q', 300, 3, eps=0.0)",
+      "expect": "-9",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Updates are compared with math.isclose; over seeds 0 to 4, SARSA must beat Q-learning by more than 4 a episode.",
+    "budget": 8000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Pick the next action before updating: SARSA needs it."
+    },
+    {
+     "rung": "point",
+     "text": "For Q-learning, use `max(Q[(s2, b)] for b in \"URDL\")`.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Keep the chosen `a2` as the next step's action."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass: SARSA earns more on the cliff, and with no exploring both walk the 9-step edge.",
+    "generic": "Some tests fail. Check that SARSA uses the action it then takes."
+   },
+   "explain": {
+    "text": "The only difference between the two agents is one line of the target. That line decides whether the agent values the policy it follows or the greedy one."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The better path, the worse agent",
+   "prose": "After training, Q-learning's greedy route is the 9-step edge; SARSA's is the 13-step higher route. A colleague concludes that Q-learning is the better agent, since it found the shorter path.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 8,
+     "rowHeads": false,
+     "colHeads": false,
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "S",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "G"
+      ]
+     ],
+     "compact": true
+    },
+    "state": {
+     "shade": {
+      "cliff": {
+       "ids": [
+        "r4c2",
+        "r4c3",
+        "r4c4",
+        "r4c5",
+        "r4c6",
+        "r4c7"
+       ],
+       "colour": 6
+      },
+      "goal": {
+       "ids": [
+        "r4c8"
+       ],
+       "colour": 3
+      }
+     },
+     "paths": [
+      {
+       "id": "safe",
+       "cells": [
+        "r4c1",
+        "r3c1",
+        "r2c1",
+        "r2c2",
+        "r2c3",
+        "r1c3",
+        "r1c4",
+        "r1c5",
+        "r2c5",
+        "r2c6",
+        "r2c7",
+        "r2c8",
+        "r3c8",
+        "r4c8"
+       ],
+       "colour": 3,
+       "arrow": true
+      },
+      {
+       "id": "edge",
+       "cells": [
+        "r4c1",
+        "r3c1",
+        "r3c2",
+        "r3c3",
+        "r3c4",
+        "r3c5",
+        "r3c6",
+        "r3c7",
+        "r3c8",
+        "r4c8"
+       ],
+       "colour": 1,
+       "arrow": true
+      }
+     ]
+    }
+   },
+   "question": "What is wrong with that conclusion?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "acting",
+      "text": "The edge is best only for an agent with no random moves",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "Nothing: the shorter path is always the better choice",
+      "why": "Only for an agent that never slips. With $\\varepsilon = 0.1$ Q-learning averaged -31.3 against SARSA's -20.0."
+     },
+     {
+      "id": "sarsa-wrong",
+      "text": "SARSA has not finished learning",
+      "why": "Both settled long before episode 500; SARSA's route is the best for an agent that keeps exploring."
+     },
+     {
+      "id": "luck",
+      "text": "Q-learning was lucky with its seeds",
+      "why": "SARSA beat it on all 20 seeds."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which policy is actually acting during learning?"
+    },
+    {
+     "rung": "point",
+     "text": "An epsilon-greedy one, with random moves.",
+     "highlight": [
+      "edge",
+      "safe"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "SARSA values that policy; Q-learning values the greedy one."
+    }
+   ],
+   "feedback": {
+    "correct": "Q-learning is optimal for the greedy policy, not for the policy that is acting.",
+    "generic": "Not quite. Ask which policy is doing the walking.",
+    "byKey": {
+     "right": "You judged the path, not the agent. An exploring agent pays for falls on the edge path."
+    }
+   },
+   "explain": {
+    "text": "Q-learning learns the values of a policy it never follows while exploring, so it walks the edge and falls about one walk in seven. SARSA builds the falls into its values and takes the higher route."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "When exploring stops",
+   "prose": "Run both agents with $\\varepsilon = 0$: no random moves at all. Zero starting values still make untried moves look best, so they find the goal. On seeds 0 to 4, after 500 episodes, both agents walked the same route every episode.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 8,
+     "rowHeads": false,
+     "colHeads": false,
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "S",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "−100",
+       "G"
+      ]
+     ],
+     "compact": true
+    },
+    "state": {
+     "shade": {
+      "cliff": {
+       "ids": [
+        "r4c2",
+        "r4c3",
+        "r4c4",
+        "r4c5",
+        "r4c6",
+        "r4c7"
+       ],
+       "colour": 6
+      },
+      "goal": {
+       "ids": [
+        "r4c8"
+       ],
+       "colour": 3
+      }
+     },
+     "paths": [
+      {
+       "id": "edge",
+       "cells": [
+        "r4c1",
+        "r3c1",
+        "r3c2",
+        "r3c3",
+        "r3c4",
+        "r3c5",
+        "r3c6",
+        "r3c7",
+        "r3c8",
+        "r4c8"
+       ],
+       "colour": 1,
+       "arrow": true
+      }
+     ]
+    }
+   },
+   "question": "What reward per episode did both agents settle on?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -9,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "safe",
+      "value": -13,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "mean",
+      "value": -20,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With no random moves, the edge cannot be fallen from."
+    },
+    {
+     "rung": "point",
+     "text": "Both agents then take the shortest route.",
+     "highlight": [
+      "edge"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Nine moves."
+    }
+   ],
+   "feedback": {
+    "correct": "−9 for both: with no exploring, SARSA's target equals Q-learning's.",
+    "generic": "Not quite. Count the shortest route.",
+    "byKey": {
+     "sign": "Each move costs 1.",
+     "safe": "With no random moves there is no reason to keep away from the edge.",
+     "mean": "That is SARSA with exploring."
+    }
+   },
+   "explain": {
+    "text": "With $\\varepsilon = 0$ the next action is the greedy one, so SARSA's target is Q-learning's and both settle on −9. Shrinking $\\varepsilon$ over time makes SARSA approach the optimal policy too."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "On-policy and off-policy",
+   "prose": "SARSA: $Q(s, a) \\leftarrow Q(s, a) + \\alpha[r + \\gamma Q(s', a') - Q(s, a)]$, evaluating the policy it follows, exploring included: **on-policy**. Q-learning puts $\\max_{a'} Q(s', a')$ in the target and evaluates the greedy policy whatever it does: **off-policy**. With exploring that never stops, they learn different values.",
+   "question": "An agent must keep exploring while it earns, for example a live trading rule that keeps testing. Which values does it want?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "on",
+      "text": "The values of the exploring policy it really runs: on-policy",
+      "correct": true
+     },
+     {
+      "id": "off",
+      "text": "The greedy policy's values, since greedy is optimal",
+      "why": "Greedy is optimal only if it is what runs. While exploring continues, those values overstate what it earns."
+     },
+     {
+      "id": "none",
+      "text": "Neither: values do not matter while exploring",
+      "why": "The values decide which route it takes while exploring."
+     },
+     {
+      "id": "avg",
+      "text": "The average of the two",
+      "why": "Averaging the two targets has no clear meaning."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "If exploring never stops, value what actually runs.",
+    "generic": "Ask which policy earns the money."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Tuned for the best case",
+   "prose": "Two versions of an execution rule were tuned in a simulator. Version E trades aggressively near a price limit: perfect execution earns £9 a day, but each day has chance 0.14 of a slippage error costing £60. Version S stays back: £6 a day, with no such errors.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Version",
+      "Perfect-execution P&L",
+      "Error chance",
+      "Error cost"
+     ],
+     "rows": [
+      [
+       "E",
+       "£9",
+       "0.14",
+       "£60"
+      ],
+      [
+       "S",
+       "£6",
+       "0",
+       "–"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is version E's expected daily P&L as it is actually traded, in pounds? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5999999999999996,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "best",
+      "value": 9,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "cost-only",
+      "value": -8.4,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "scaled",
+      "value": 7.74,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from £9 and subtract the expected error cost."
+    },
+    {
+     "rung": "point",
+     "text": "Expected cost: $0.14 \\times 60$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$9 - 8.40$."
+    }
+   ],
+   "feedback": {
+    "correct": "$9 - 0.14 \\times 60 = 0.60$: far below S's £6.",
+    "generic": "Not quite. Subtract the expected cost of errors.",
+    "byKey": {
+     "best": "That is the perfect-execution figure, the Q-learning view.",
+     "cost-only": "That is the expected error cost alone.",
+     "scaled": "You scaled £9 by the no-error chance 0.86 but left out the £60 cost of each error."
+    }
+   },
+   "explain": {
+    "text": "Valued as traded, E earns £0.60 a day against S's £6. Tuning for the best case is Q-learning's view; tuning for how the rule is really run, errors included, is SARSA's."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "SARSA's target is $r + \\gamma Q(s', a')$, with the action actually taken; it values the policy it follows, exploring included: on-policy.",
+   "Q-learning's max target values the greedy policy whatever it does: off-policy. On a 4 by 8 cliff with $\\varepsilon = 0.1$ it walks the edge and earns less than SARSA.",
+   "When exploring stops, the two targets agree and both find the shortest route."
+  ],
+  "formula": {
+   "name": "SARSA",
+   "tex": "Q(s, a) \\leftarrow Q(s, a) + \\alpha\\,[\\,r + \\gamma Q(s', a') - Q(s, a)\\,]",
+   "note": "$a'$ is the action the agent then takes; at a terminal step the target is $r$."
+  },
+  "trap": "Calling Q-learning the better agent because it found the shorter path: it is optimal for the greedy policy, not for the policy that is acting."
+ },
+ "quiz": [
+  {
+   "id": "q-sarsa-target",
+   "difficulty": 2,
+   "prose": "Reward −1; next action taken has $Q = -4$; the best next action has $Q = -2$; $\\gamma = 1$.",
+   "question": "What is SARSA's target?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -5,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "max",
+      "value": -3,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-1 + (-4) = -5$.",
+    "generic": "Not quite. Use the action actually taken.",
+    "byKey": {
+     "max": "That is Q-learning's target.",
+     "sign": "Both terms are negative."
+    }
+   },
+   "explain": {
+    "text": "SARSA uses $Q(s', a') = -4$, the action taken: $-1 - 4 = -5$. Q-learning would use $-2$."
+   }
+  },
+  {
+   "id": "q-on-off",
+   "difficulty": 3,
+   "prose": "An agent explores with $\\varepsilon = 0.1$ for ever near a hazard.",
+   "question": "Which agent's learned route keeps further from the hazard?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sarsa",
+      "text": "SARSA's",
+      "correct": true
+     },
+     {
+      "id": "q",
+      "text": "Q-learning's",
+      "why": "Q-learning values the greedy route and ignores the cost of random moves near the hazard."
+     },
+     {
+      "id": "same",
+      "text": "Both the same",
+      "why": "Only when exploring stops do they agree."
+     },
+     {
+      "id": "neither",
+      "text": "Neither, both ignore hazards",
+      "why": "SARSA's values include the random moves, hazards and all."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "SARSA prices in its own random moves.",
+    "generic": "Which target includes the action actually taken?"
+   },
+   "explain": {
+    "text": "SARSA evaluates the exploring policy, so the risk of random moves near the hazard lowers those cells' values and it keeps away."
+   }
+  },
+  {
+   "id": "q-fall",
+   "difficulty": 3,
+   "prose": "An agent walks 4 cells along a cliff. On each, a random move happens with chance 0.2, and one random move in four goes over the edge.",
+   "question": "What is the chance of falling at least once? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1855,
+    "tol": {
+     "abs": 0.0003
+    },
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - 0.95^4 = 0.1855$.",
+    "generic": "Not quite. Each cell is safe with chance 0.95.",
+    "byKey": {
+     "sum": "Adding four 0.05s overcounts.",
+     "one": "That is one cell."
+    }
+   },
+   "explain": {
+    "text": "Each cell: $0.2 \\times \\tfrac14 = 0.05$ to fall. Over four, $1 - 0.95^4 = 0.1855$."
+   }
+  }
+ ]
+}

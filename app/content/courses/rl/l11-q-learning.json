@@ -1,0 +1,1732 @@
+{
+ "id": "l11-q-learning",
+ "course": "rl",
+ "title": "Q-learning",
+ "minutes": 15,
+ "objectives": [
+  "Build a Q-learning agent whose greedy policy matches value iteration on a gridworld."
+ ],
+ "skills": [
+  "rl-td"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Learn the value of a move",
+   "prose": "Level 2 needed the slip chances. Now the agent only acts and watches, on the deterministic grid. It keeps a value $Q(s, a)$ for each cell and move, all 0 at first. At row 1, column 4 it moves R into the +1, receiving 0.96, and the episode ends. It moves $Q$ a tenth of the way towards what it saw.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "+1"
+      ],
+      [
+       "",
+       "",
+       "wall",
+       "",
+       "−1"
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "highlight": [
+      "r1c4"
+     ],
+     "arrows": {
+      "r1c4": "right"
+     }
+    }
+   },
+   "question": "What is $Q(\\text{r1c4}, R)$ after this update? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.096,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "full",
+      "value": 0.96,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-step",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "disc",
+      "value": 0.0864,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The episode ends, so the target is the reward, 0.96."
+    },
+    {
+     "rung": "point",
+     "text": "Move a tenth of the way from 0.",
+     "highlight": [
+      "r1c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0 + 0.1 \\times 0.96$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0 + 0.1(0.96 - 0) = 0.096$.",
+    "generic": "Not quite. Move a tenth of the way from 0 towards 0.96.",
+    "byKey": {
+     "full": "You jumped all the way; the step is 0.1.",
+     "no-step": "The reward is $1 - 0.04$, not 1.",
+     "disc": "The reward arrives on this step, so it is not discounted."
+    }
+   },
+   "explain": {
+    "text": "One update: $Q \\leftarrow 0 + 0.1 \\times 0.96 = 0.096$. Repeated visits pull it towards 0.96, the true value of moving R there, with no model in sight."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Watching it learn",
+   "prose": "One run, seed 0: Q-learning with $\\alpha = 0.1$, acting at random with chance $\\varepsilon = 0.2$, each episode starting in a random cell. Each cell shows its largest $Q$ and the move with that $Q$. Slide through the episodes.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "+1"
+      ],
+      [
+       "",
+       "",
+       "wall",
+       "",
+       "−1"
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ]
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "cells": {
+         "r1c1": "0.0000",
+         "r1c2": "0.0000",
+         "r1c3": "0.0000",
+         "r1c4": "0.0000",
+         "r2c1": "0.0000",
+         "r2c2": "0.0000",
+         "r2c4": "0.0000",
+         "r3c1": "0.0000",
+         "r3c2": "0.0000",
+         "r3c3": "0.0000",
+         "r3c4": "0.0000",
+         "r3c5": "0.0000",
+         "r4c1": "0.0000",
+         "r4c2": "0.0000",
+         "r4c3": "0.0000",
+         "r4c4": "0.0000",
+         "r4c5": "0.0000"
+        },
+        "arrows": null,
+        "caption": "Seed 0 after 0 episodes: max Q per cell and the greedy move."
+       },
+       {
+        "cells": {
+         "r1c1": "0.0286",
+         "r1c2": "0.2738",
+         "r1c3": "0.6583",
+         "r1c4": "0.9525",
+         "r2c1": "−0.0352",
+         "r2c2": "0.0322",
+         "r2c4": "0.6850",
+         "r3c1": "−0.0442",
+         "r3c2": "−0.0345",
+         "r3c3": "0.0394",
+         "r3c4": "0.3788",
+         "r3c5": "0.0185",
+         "r4c1": "−0.0486",
+         "r4c2": "−0.0419",
+         "r4c3": "−0.0316",
+         "r4c4": "0.0321",
+         "r4c5": "−0.0287"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "right",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "left",
+         "r4c2": "down",
+         "r4c3": "left",
+         "r4c4": "up",
+         "r4c5": "left"
+        },
+        "caption": "Seed 0 after 50 episodes: max Q per cell and the greedy move."
+       },
+       {
+        "cells": {
+         "r1c1": "0.5131",
+         "r1c2": "0.7014",
+         "r1c3": "0.8240",
+         "r1c4": "0.9600",
+         "r2c1": "0.4266",
+         "r2c2": "0.5893",
+         "r2c4": "0.8239",
+         "r3c1": "0.0810",
+         "r3c2": "0.4240",
+         "r3c3": "0.4563",
+         "r3c4": "0.6985",
+         "r3c5": "0.3663",
+         "r4c1": "−0.0280",
+         "r4c2": "0.1567",
+         "r4c3": "0.1064",
+         "r4c4": "0.4885",
+         "r4c5": "0.1361"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "right",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "right",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "left"
+        },
+        "caption": "Seed 0 after 200 episodes: max Q per cell and the greedy move."
+       },
+       {
+        "cells": {
+         "r1c1": "0.5845",
+         "r1c2": "0.7016",
+         "r1c3": "0.8240",
+         "r1c4": "0.9600",
+         "r2c1": "0.4921",
+         "r2c2": "0.5914",
+         "r2c4": "0.8240",
+         "r3c1": "0.3850",
+         "r3c2": "0.4922",
+         "r3c3": "0.5887",
+         "r3c4": "0.7016",
+         "r3c5": "0.5691",
+         "r4c1": "0.2489",
+         "r4c2": "0.3961",
+         "r4c3": "0.4516",
+         "r4c4": "0.5870",
+         "r4c5": "0.3178"
+        },
+        "arrows": {
+         "r1c1": "right",
+         "r1c2": "right",
+         "r1c3": "right",
+         "r1c4": "right",
+         "r2c1": "right",
+         "r2c2": "up",
+         "r2c4": "up",
+         "r3c1": "up",
+         "r3c2": "up",
+         "r3c3": "right",
+         "r3c4": "up",
+         "r3c5": "left",
+         "r4c1": "right",
+         "r4c2": "up",
+         "r4c3": "up",
+         "r4c4": "up",
+         "r4c5": "left"
+        },
+        "caption": "Seed 0 after 500 episodes: max Q per cell and the greedy move."
+       }
+      ],
+      "frameLabels": [
+       "0 episodes",
+       "50 episodes",
+       "200 episodes",
+       "500 episodes"
+      ],
+      "label": "Episodes",
+      "start": 0
+     }
+    ]
+   },
+   "question": "After 50 episodes, how many cells have a greedy move that is not optimal?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "none",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "row",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 17,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare with level 2: every move should head to the +1 by a shortest safe route."
+    },
+    {
+     "rung": "point",
+     "text": "Look along the bottom row.",
+     "highlight": [
+      "r4c1",
+      "r4c2",
+      "r4c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Three cells there still point away from the goal."
+    }
+   ],
+   "feedback": {
+    "correct": "Three: row 4, columns 1 to 3, the cells furthest from the goal.",
+    "generic": "Slide to 50 episodes and check each arrow against a shortest route.",
+    "byKey": {
+     "none": "Look along the bottom row at 50 episodes: three arrows point the wrong way.",
+     "row": "Columns 4 and 5 of the bottom row are already right.",
+     "all": "Most cells near the goal have learned already."
+    }
+   },
+   "explain": {
+    "text": "At 50 episodes 3 cells, those furthest from the goal, still point wrongly; by 200 every arrow is optimal. The values lag behind the arrows: the start shows 0.2489 at 500 episodes against 0.3228.",
+    "canvas": {
+     "cells": {
+      "r1c1": "0.0286",
+      "r1c2": "0.2738",
+      "r1c3": "0.6583",
+      "r1c4": "0.9525",
+      "r2c1": "−0.0352",
+      "r2c2": "0.0322",
+      "r2c4": "0.6850",
+      "r3c1": "−0.0442",
+      "r3c2": "−0.0345",
+      "r3c3": "0.0394",
+      "r3c4": "0.3788",
+      "r3c5": "0.0185",
+      "r4c1": "−0.0486",
+      "r4c2": "−0.0419",
+      "r4c3": "−0.0316",
+      "r4c4": "0.0321",
+      "r4c5": "−0.0287"
+     },
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "right",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "right",
+      "r3c4": "up",
+      "r3c5": "left",
+      "r4c1": "left",
+      "r4c2": "down",
+      "r4c3": "left",
+      "r4c4": "up",
+      "r4c5": "left"
+     },
+     "caption": "Seed 0 after 50 episodes: max Q per cell and the greedy move."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The Q-learning update",
+   "prose": "**Q-learning** moves $Q(s, a)$ towards $r + \\gamma \\max_{a'} Q(s', a')$: the reward plus the best value of the next cell, whatever move it will actually take next. At row 2, column 4, $Q(\\text{r2c4}, U) = 0.2$. Moving U reaches row 1, column 4, whose largest $Q$ is 0.5.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "+1"
+      ],
+      [
+       "",
+       "",
+       "wall",
+       "",
+       "−1"
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "highlight": [
+      "r2c4",
+      "r1c4"
+     ],
+     "arrows": {
+      "r2c4": "up"
+     }
+    }
+   },
+   "question": "With $\\alpha = 0.1$ and $\\gamma = 0.9$, what is the new $Q(\\text{r2c4}, U)$? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.221,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "target",
+      "value": 0.41,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-step",
+      "value": 0.225,
+      "tol": {
+       "abs": 0.0004
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 0.226,
+      "tol": {
+       "abs": 0.0004
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Target: $-0.04 + 0.9 \\times 0.5 = 0.41$."
+    },
+    {
+     "rung": "point",
+     "text": "Error: $0.41 - 0.2 = 0.21$.",
+     "highlight": [
+      "r2c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.2 + 0.1 \\times 0.21$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.2 + 0.1(0.41 - 0.2) = 0.221$.",
+    "generic": "Not quite. Build the target, then move a tenth of the way.",
+    "byKey": {
+     "target": "That is the target. Move only a tenth of the way to it.",
+     "no-step": "You left out the step cost of −0.04.",
+     "no-disc": "You left out $\\gamma$ on the next value."
+    }
+   },
+   "explain": {
+    "text": "Target $-0.04 + 0.9 \\times 0.5 = 0.41$, so $Q$ rises to 0.221. Because the target takes the max, Q-learning learns the greedy policy's values while it acts epsilon-greedily: it is **off-policy**."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Reading the Q-table",
+   "prose": "The Q-table after 50 episodes of seed 0, bottom row, shaded by value. Each row is a cell; each column a move.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "Q",
+       "rows": [
+        [
+         -0.0514,
+         -0.0487,
+         -0.049,
+         -0.0486
+        ],
+        [
+         -0.0436,
+         -0.0434,
+         -0.0419,
+         -0.0443
+        ],
+        [
+         -0.0337,
+         -0.0337,
+         -0.0346,
+         -0.0316
+        ],
+        [
+         0.0321,
+         -0.0271,
+         -0.0234,
+         -0.0217
+        ],
+        [
+         -0.0303,
+         -0.0308,
+         -0.0342,
+         -0.0287
+        ]
+       ],
+       "rowLabels": [
+        "r4c1",
+        "r4c2",
+        "r4c3",
+        "r4c4",
+        "r4c5"
+       ],
+       "colLabels": [
+        "U",
+        "R",
+        "D",
+        "L"
+       ],
+       "heat": {
+        "mode": "div",
+        "decimals": 3
+       }
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which move does row 4, column 4 prefer after 50 episodes?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "U",
+      "text": "U",
+      "correct": true
+     },
+     {
+      "id": "R",
+      "text": "R",
+      "why": "In the r4c4 row R scores −0.027, below U's 0.032."
+     },
+     {
+      "id": "D",
+      "text": "D",
+      "why": "D bumps the edge; its value is negative."
+     },
+     {
+      "id": "L",
+      "text": "L",
+      "why": "L heads away from the goal."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the r4c4 row."
+    },
+    {
+     "rung": "point",
+     "text": "Only one entry in it is positive.",
+     "highlight": [
+      "Q-r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That entry is in the U column."
+    }
+   ],
+   "feedback": {
+    "correct": "U, at 0.032: the only positive value in that row.",
+    "generic": "Read the r4c4 row and pick the largest entry."
+   },
+   "explain": {
+    "text": "Row r4c4 holds 0.032 for U and negatives elsewhere: U leads towards the goal in 4 moves. Along the rest of the bottom row the values are all near −0.04: those cells have not yet heard from the goal.",
+    "canvas": {
+     "highlight": {
+      "Q": {
+       "rows": [
+        3
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Cells it never visits",
+   "prose": "Suppose every episode starts at row 4, column 1 instead of a random cell. After one episode of seed 0, the cells below show \"0\" where all four $Q$ values are still exactly 0.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "·",
+       "·",
+       "·",
+       "·",
+       "+1"
+      ],
+      [
+       "·",
+       "0",
+       "wall",
+       "0",
+       "−1"
+      ],
+      [
+       "·",
+       "0",
+       "0",
+       "0",
+       "0"
+      ],
+      [
+       "·",
+       "0",
+       "0",
+       "0",
+       "0"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "highlight": [
+      "r2c2",
+      "r2c4",
+      "r3c2",
+      "r3c3",
+      "r3c4",
+      "r3c5",
+      "r4c2",
+      "r4c3",
+      "r4c4",
+      "r4c5"
+     ]
+    }
+   },
+   "question": "How many cells still hold all-zero $Q$ values?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "none",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "visited",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 17,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A cell's Q values change only when the agent acts in that cell."
+    },
+    {
+     "rung": "point",
+     "text": "Count the cells marked 0.",
+     "highlight": [
+      "r2c2",
+      "r2c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Ten of the 17 cells are still untouched."
+    }
+   ],
+   "feedback": {
+    "correct": "Ten cells have never been acted in, so their values are still the starting zeros.",
+    "generic": "Count the 0 marks.",
+    "byKey": {
+     "none": "Count the cells marked 0: the first episode did not pass through them.",
+     "visited": "That is the number of cells visited.",
+     "all": "The start cell and its route have changed."
+    }
+   },
+   "explain": {
+    "text": "The 10 cells the agent never visited keep their initial values, whatever is learned elsewhere. Random starts, or enough exploring, reach every cell; with a fixed start it took 4 episodes here.",
+    "canvas": {
+     "highlight": [
+      "r2c2",
+      "r2c4",
+      "r3c2",
+      "r3c3",
+      "r3c4",
+      "r3c5",
+      "r4c2",
+      "r4c3",
+      "r4c4",
+      "r4c5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code Q-learning",
+   "prose": "Write `q_update`, `q_learning` and `greedy_matches`. A step that enters an end cell has target `r` alone. Compare with level 2 by optimal sets, not by one arg-max, because the deterministic grid has ties. Over seeds 0 to 49 our runs were optimal everywhere after 200 episodes and after 500.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Check",
+      "Ours"
+     ],
+     "rows": [
+      [
+       "Seeds optimal after 500 episodes",
+       "50 of 50"
+      ],
+      [
+       "Steps in a 500-episode run, mean",
+       "2,934"
+      ],
+      [
+       "Largest $Q$ at the start after 2,000 episodes, seed 0",
+       "0.3228"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef reward(t):\n    return TERMINAL.get(t, 0.0) + STEP\n\nACTIONS = 'URDL'\nOPEN = [s for s in CELLS if s not in TERMINAL]\n\ndef q_update(Q, s, a, r, s2, alpha, gamma, terminal):\n    \"\"\"One Q-learning update of Q[(s, a)], in place; return the new value.\"\"\"\n    ...\n\ndef q_learning(episodes, alpha, eps, seed, gamma=0.9):\n    \"\"\"Deterministic grid. Each episode starts at rng.choice(OPEN). Each step: if rng.random() < eps,\n    a = rng.choice(ACTIONS), else the first best action in the order U, R, D, L. Return Q.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\n    ...\n\ndef greedy_matches(Q, optimal_sets):\n    \"\"\"True if every open cell's first-best action lies in its optimal set.\"\"\"\n    ...\n",
+    "solution": "import random\n\nROWS, COLS = 4, 5\nWALL = {'r2c3'}\nTERMINAL = {'r1c5': 1.0, 'r2c5': -1.0}\nSTEP = -0.04\nMOVES = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}\nSIDES = {'U': 'LR', 'D': 'LR', 'L': 'UD', 'R': 'UD'}\nCELLS = [f'r{r}c{c}' for r in range(1, ROWS + 1) for c in range(1, COLS + 1)\n         if f'r{r}c{c}' not in WALL]\n\ndef move(s, a):\n    \"\"\"The cell reached from s by action a; a wall or the edge leaves the agent at s.\"\"\"\n    r, c = map(int, s[1:].split('c'))\n    dr, dc = MOVES[a]\n    t = f'r{r + dr}c{c + dc}'\n    if not (1 <= r + dr <= ROWS and 1 <= c + dc <= COLS) or t in WALL:\n        return s\n    return t\n\ndef reward(t):\n    return TERMINAL.get(t, 0.0) + STEP\n\nACTIONS = 'URDL'\nOPEN = [s for s in CELLS if s not in TERMINAL]\n\ndef q_update(Q, s, a, r, s2, alpha, gamma, terminal):\n    \"\"\"One Q-learning update of Q[(s, a)], in place; return the new value.\"\"\"\n    target = r if terminal else r + gamma * max(Q[(s2, b)] for b in ACTIONS)\n    Q[(s, a)] += alpha * (target - Q[(s, a)])\n    return Q[(s, a)]\n\ndef q_learning(episodes, alpha, eps, seed, gamma=0.9):\n    \"\"\"Deterministic grid. Each episode starts at rng.choice(OPEN). Each step: if rng.random() < eps,\n    a = rng.choice(ACTIONS), else the first best action in the order U, R, D, L. Return Q.\"\"\"\n    rng = random.Random(seed)\n    Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\n    for _ in range(episodes):\n        s = rng.choice(OPEN)\n        while s not in TERMINAL:\n            if rng.random() < eps:\n                a = rng.choice(ACTIONS)\n            else:\n                a = max(ACTIONS, key=lambda b: Q[(s, b)])\n            t = move(s, a)\n            q_update(Q, s, a, reward(t), t, alpha, gamma, t in TERMINAL)\n            s = t\n    return Q\n\ndef greedy_matches(Q, optimal_sets):\n    \"\"\"True if every open cell's first-best action lies in its optimal set.\"\"\"\n    return all(max(ACTIONS, key=lambda b: Q[(s, b)]) in optimal_sets[s] for s in OPEN)\n",
+    "examples": [
+     {
+      "setup": "Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}",
+      "call": "q_update(Q, 'r1c4', 'R', 0.96, 'r1c5', 0.1, 0.9, True)",
+      "expect": "0.096",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}",
+      "call": "q_update(Q, 'r1c4', 'R', 0.96, 'r1c5', 0.1, 0.9, True)",
+      "expect": "0.096",
+      "compare": "isclose"
+     },
+     {
+      "setup": "Q = {(s, a): 0.0 for s in CELLS for a in ACTIONS}\nQ[('r2c4', 'U')] = 0.2\nQ[('r1c4', 'R')] = 0.5",
+      "call": "q_update(Q, 'r2c4', 'U', -0.04, 'r1c4', 0.1, 0.9, False)",
+      "expect": "0.22100000000000003",
+      "compare": "isclose"
+     },
+     {
+      "setup": "SETS = {'r1c1': {'R'}, 'r1c2': {'R'}, 'r1c3': {'R'}, 'r1c4': {'R'}, 'r2c1': {'R', 'U'}, 'r2c2': {'U'}, 'r2c4': {'U'}, 'r3c1': {'R', 'U'}, 'r3c2': {'R', 'U'}, 'r3c3': {'R'}, 'r3c4': {'U'}, 'r3c5': {'L'}, 'r4c1': {'R', 'U'}, 'r4c2': {'R', 'U'}, 'r4c3': {'R', 'U'}, 'r4c4': {'U'}, 'r4c5': {'U', 'L'}}\ns = 0",
+      "call": "greedy_matches(q_learning(500, 0.1, 0.2, s), SETS)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "SETS = {'r1c1': {'R'}, 'r1c2': {'R'}, 'r1c3': {'R'}, 'r1c4': {'R'}, 'r2c1': {'R', 'U'}, 'r2c2': {'U'}, 'r2c4': {'U'}, 'r3c1': {'R', 'U'}, 'r3c2': {'R', 'U'}, 'r3c3': {'R'}, 'r3c4': {'U'}, 'r3c5': {'L'}, 'r4c1': {'R', 'U'}, 'r4c2': {'R', 'U'}, 'r4c3': {'R', 'U'}, 'r4c4': {'U'}, 'r4c5': {'U', 'L'}}",
+      "call": "all(greedy_matches(q_learning(500, 0.1, 0.2, s), SETS) for s in (1, 2, 3, 4))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "SETS = {'r1c1': {'R'}, 'r1c2': {'R'}, 'r1c3': {'R'}, 'r1c4': {'R'}, 'r2c1': {'R', 'U'}, 'r2c2': {'U'}, 'r2c4': {'U'}, 'r3c1': {'R', 'U'}, 'r3c2': {'R', 'U'}, 'r3c3': {'R'}, 'r3c4': {'U'}, 'r3c5': {'L'}, 'r4c1': {'R', 'U'}, 'r4c2': {'R', 'U'}, 'r4c3': {'R', 'U'}, 'r4c4': {'U'}, 'r4c5': {'U', 'L'}}",
+      "call": "greedy_matches({(s, a): 0.0 for s in CELLS for a in ACTIONS}, SETS)",
+      "expect": "False",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(max(q_learning(2000, 0.1, 0.2, 0)[('r4c1', a)] for a in ACTIONS) - 0.32276) < 0.01",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "q_learning(0, 0.1, 0.2, 0)[('r1c1', 'U')]",
+      "expect": "0",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Updates are compared with math.isclose; after 500 episodes the greedy policy must be optimal for seeds 0 to 4."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`target = r if terminal else r + gamma * max(Q[(s2, b)] for b in ACTIONS)`."
+    },
+    {
+     "rung": "point",
+     "text": "Draw `rng.random()` before choosing, every step.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`greedy_matches` uses `max(ACTIONS, key=...)` per open cell."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass: the learned greedy policy equals value iteration's, ties allowed.",
+    "generic": "Some tests fail. Check the terminal target and the order of random calls."
+   },
+   "explain": {
+    "text": "About 2,934 steps of experience are enough here; in CPython that takes a few milliseconds. After 2,000 episodes the start's largest $Q$ is 0.3228, matching $V = 0.3228$ to 4 places."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A false failure",
+   "prose": "A colleague checks the learned policy by testing `greedy == vi_policy`, cell by cell, where `vi_policy` takes value iteration's first best move in the order U, R, D, L. The check fails at row 4, column 1: Q-learning says R, value iteration says U.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.5914",
+       "0.7016",
+       "0.8240",
+       "0.9600",
+       "+1"
+      ],
+      [
+       "0.4923",
+       "0.5914",
+       "wall",
+       "0.8240",
+       "−1"
+      ],
+      [
+       "0.4031",
+       "0.4923",
+       "0.5914",
+       "0.7016",
+       "0.5914"
+      ],
+      [
+       "0.3228",
+       "0.4031",
+       "0.4923",
+       "0.5914",
+       "0.4923"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "highlight": [
+      "r4c1",
+      "r3c1",
+      "r4c2"
+     ]
+    }
+   },
+   "question": "What should you conclude?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tie",
+      "text": "Nothing is wrong: U and R tie there",
+      "correct": true
+     },
+     {
+      "id": "wrong",
+      "text": "Q-learning has not converged at that cell",
+      "why": "Both moves lead to a cell worth 0.4031; R is as good as U."
+     },
+     {
+      "id": "more",
+      "text": "Run more episodes until it settles on U",
+      "why": "It may never say U, and it need not: the two moves tie."
+     },
+     {
+      "id": "bug",
+      "text": "The Q-learning code must have a bug",
+      "why": "A tie broken the other way is not a bug."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where do U and R lead from the start?"
+    },
+    {
+     "rung": "point",
+     "text": "Row 3 column 1 and row 4 column 2 are both worth 0.4031.",
+     "highlight": [
+      "r3c1",
+      "r4c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Equal next values mean equal moves."
+    }
+   ],
+   "feedback": {
+    "correct": "Check membership in the optimal set, {U, R} here.",
+    "generic": "Not quite. Compare the two moves' values.",
+    "byKey": {
+     "wrong": "You compared one arg-max with another. In a tie both are optimal, as level 2 showed."
+    }
+   },
+   "explain": {
+    "text": "Seven cells of the deterministic grid have two optimal moves. A fair check asks whether each learned move is in its optimal set, as `greedy_matches` does.",
+    "canvas": {
+     "highlight": [
+      "r3c1",
+      "r4c2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Why start at zero?",
+   "prose": "Every $Q$ starts at 0, yet every real move costs 0.04 and most true values below row 1 are under 0.6. Early on, a move the agent has never tried still shows 0, while tried moves have dropped below 0.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.5914",
+       "0.7016",
+       "0.8240",
+       "0.9600",
+       "+1"
+      ],
+      [
+       "0.4923",
+       "0.5914",
+       "wall",
+       "0.8240",
+       "−1"
+      ],
+      [
+       "0.4031",
+       "0.4923",
+       "0.5914",
+       "0.7016",
+       "0.5914"
+      ],
+      [
+       "0.3228",
+       "0.4031",
+       "0.4923",
+       "0.5914",
+       "0.4923"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ]
+    }
+   },
+   "question": "What does that do to the greedy choices early in learning?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "opt",
+      "text": "Untried moves look best, so greedy choices explore them",
+      "correct": true
+     },
+     {
+      "id": "pess",
+      "text": "Untried moves look worst, so they are avoided",
+      "why": "Tried moves fall below 0 from the step cost; untried ones stay at 0 and look better."
+     },
+     {
+      "id": "none",
+      "text": "Nothing: the start values wash out at once",
+      "why": "They wash out only as moves are tried; until then they steer the choices."
+     },
+     {
+      "id": "bias",
+      "text": "It biases the final values upwards",
+      "why": "The final values converge to the true ones; the start only shapes early exploring."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare 0 with a tried move's value early on."
+    },
+    {
+     "rung": "point",
+     "text": "A tried move away from the goal has a value below 0.",
+     "highlight": [
+      "r4c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So an untried move, still at 0, wins the arg-max."
+    }
+   ],
+   "feedback": {
+    "correct": "Zero is optimistic here, as in level 1: it pushes the agent to try each move.",
+    "generic": "Not quite. Compare 0 with values that have taken a step cost."
+   },
+   "explain": {
+    "text": "With a step cost, zero is an optimistic start, like level 1's optimistic estimates. Greedy steps alone then try new moves; the 20% random moves add the rest."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Why not the slippery grid?",
+   "prose": "On the slippery grid, Q-learning with $\\alpha = 0.1$ and $\\varepsilon = 0.1$ needed 4,400 to 15,250 episodes to match value iteration on 8 of 10 seeds, and failed within 20,000 on the other 2. At row 4, column 3, the best move beats the next by only 0.0073.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 5,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "colHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rowLabel": "Row",
+     "colLabel": "Column",
+     "cells": [
+      [
+       "0.4502",
+       "0.5800",
+       "0.7323",
+       "0.8896",
+       "+1"
+      ],
+      [
+       "0.3568",
+       "0.4502",
+       "wall",
+       "0.5500",
+       "−1"
+      ],
+      [
+       "0.2714",
+       "0.3348",
+       "0.2915",
+       "0.3969",
+       "0.1634"
+      ],
+      [
+       "0.1944",
+       "0.2381",
+       "0.2168",
+       "0.2830",
+       "0.1961"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "goal": {
+       "ids": [
+        "r1c5"
+       ],
+       "colour": 3
+      },
+      "pit": {
+       "ids": [
+        "r2c5"
+       ],
+       "colour": 6
+      }
+     },
+     "dim": [
+      "r2c3"
+     ],
+     "arrows": {
+      "r1c1": "right",
+      "r1c2": "right",
+      "r1c3": "right",
+      "r1c4": "right",
+      "r2c1": "up",
+      "r2c2": "up",
+      "r2c4": "up",
+      "r3c1": "up",
+      "r3c2": "up",
+      "r3c3": "right",
+      "r3c4": "up",
+      "r3c5": "left",
+      "r4c1": "up",
+      "r4c2": "up",
+      "r4c3": "up",
+      "r4c4": "up",
+      "r4c5": "left"
+     },
+     "highlight": [
+      "r4c3",
+      "r2c1"
+     ]
+    }
+   },
+   "question": "Why does a constant step struggle here?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "noise",
+      "text": "Noisy targets swamp a gap of 0.007 at a constant step",
+      "correct": true
+     },
+     {
+      "id": "model",
+      "text": "Q-learning needs the slip chances to learn",
+      "why": "It learns from samples; the slips only add noise to the targets."
+     },
+     {
+      "id": "explore",
+      "text": "Ten per cent exploring is not enough to visit every cell",
+      "why": "Every cell is visited thousands of times; the trouble is how precisely."
+     },
+     {
+      "id": "wrong",
+      "text": "The slippery grid has no single optimal policy",
+      "why": "It has one, with no ties; two cells just have tiny gaps."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each target now depends on where the slip lands."
+    },
+    {
+     "rung": "point",
+     "text": "With $\\alpha = 0.1$ an estimate averages roughly the last 10 targets.",
+     "highlight": [
+      "r4c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That noise is far larger than 0.0073."
+    }
+   ],
+   "feedback": {
+    "correct": "Noise in the target plus a constant step leaves a band wider than the gap.",
+    "generic": "Compare the noise with the gap."
+   },
+   "explain": {
+    "text": "Convergence needs steps that shrink, with $\\sum \\alpha_t = \\infty$ and $\\sum \\alpha_t^2 < \\infty$ (Sutton and Barto, section 2.7). With a constant 0.1 the estimates keep jiggling, and two moves 0.007 apart keep swapping. So the exit uses the deterministic grid.",
+    "canvas": {
+     "highlight": [
+      "r4c3",
+      "r2c1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Q-learning",
+   "prose": "Q-learning: $$Q(s, a) \\leftarrow Q(s, a) + \\alpha\\,[\\,r + \\gamma \\max_{a'} Q(s', a') - Q(s, a)\\,],$$ acting epsilon-greedily. It is TD on action values with the greedy target, so it learns the optimal values while acting otherwise. With every pair visited infinitely often and suitably falling steps, it converges to $Q^*$.",
+   "question": "What makes Q-learning off-policy?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "max",
+      "text": "Its target uses the best next action",
+      "correct": true
+     },
+     {
+      "id": "eps",
+      "text": "It explores at random one step in five",
+      "why": "Exploring is how it acts; off-policy refers to what the target assumes."
+     },
+     {
+      "id": "model",
+      "text": "It uses no model of the slip chances",
+      "why": "Model-free and off-policy are different ideas."
+     },
+     {
+      "id": "q",
+      "text": "It stores values of actions, not states",
+      "why": "SARSA stores action values too and is on-policy (lesson 12)."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The max in the target evaluates the greedy policy whatever the agent actually does.",
+    "generic": "Look at the target."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Learning to quote from a simulator",
+   "prose": "A desk trains a quoting rule in an order-flow simulator. In state \"flat, wide market\" it tightens its quote, earns £0.50, and lands in \"long one, quiet\", whose best action is worth £2.00. $Q(\\text{flat wide}, \\text{tighten})$ was £0; $\\alpha = 0.2$, $\\gamma = 0.95$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Value"
+     ],
+     "rows": [
+      [
+       "reward",
+       "£0.50"
+      ],
+      [
+       "best next Q",
+       "£2.00"
+      ],
+      [
+       "old Q",
+       "£0.00"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the updated $Q$, in pounds? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.48,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "target",
+      "value": 2.4,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "reward",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Target $0.50 + 0.95 \\times 2.00 = 2.40$."
+    },
+    {
+     "rung": "point",
+     "text": "Move a fifth of the way from 0.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.2 \\times 2.40$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0 + 0.2 \\times 2.40 = 0.48$.",
+    "generic": "Not quite. Build the target, then move a fifth of the way.",
+    "byKey": {
+     "target": "That is the target; the step is 0.2.",
+     "no-disc": "You took $\\alpha = 0.2$ of 2.50: discount the next value first.",
+     "reward": "You used the reward alone; add the discounted next value."
+    }
+   },
+   "explain": {
+    "text": "The target is £2.40 and a fifth of it gives £0.48. A simulator supplies the samples cheaply; whether the learned rule survives real flow is the question lesson 12 raises."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Q-learning keeps $Q(s, a)$ and moves it towards $r + \\gamma \\max_{a'} Q(s', a')$ after every step, with no model.",
+   "Its max target makes it off-policy: it learns the greedy policy's values while acting epsilon-greedily. On the deterministic grid its greedy policy was optimal for seeds 0 to 49 after 200 episodes.",
+   "Check a learned policy against optimal sets, since moves can tie. Unvisited cells keep their initial values, and noisy targets with a constant step can blur small gaps."
+  ],
+  "formula": {
+   "name": "Q-learning",
+   "tex": "Q(s, a) \\leftarrow Q(s, a) + \\alpha\\,[\\,r + \\gamma \\max_{a'} Q(s', a') - Q(s, a)\\,]",
+   "note": "At a terminal step the target is $r$; converges to $Q^*$ when every pair is tried often and steps shrink suitably."
+  },
+  "trap": "Checking a learned policy by one arg-max against value iteration's: in tied cells both moves are optimal."
+ },
+ "quiz": [
+  {
+   "id": "q-q-target",
+   "difficulty": 2,
+   "prose": "Next state's Q values are 1.0, 3.0 and 2.0. The reward is 0.5 and $\\gamma = 0.8$.",
+   "question": "What is the Q-learning target? Give a decimal to 1 place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.9,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 2.1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.5 + 0.8 \\times 3.0 = 2.9$.",
+    "generic": "Not quite. Use the largest next value.",
+    "byKey": {
+     "mean": "You averaged the next values; Q-learning takes the max.",
+     "no-disc": "You left out $\\gamma$."
+    }
+   },
+   "explain": {
+    "text": "Q-learning's target uses $\\max_{a'} Q = 3.0$: $0.5 + 2.4 = 2.9$."
+   }
+  },
+  {
+   "id": "q-unvisited-q",
+   "difficulty": 2,
+   "prose": "After training, one cell was never visited.",
+   "question": "What are its Q values?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "init",
+      "text": "Whatever they started at",
+      "correct": true
+     },
+     {
+      "id": "opt",
+      "text": "The optimal values, learned from neighbours",
+      "why": "Q-learning only changes $Q(s, a)$ when it acts in $s$."
+     },
+     {
+      "id": "avg",
+      "text": "The average of the neighbours' values",
+      "why": "Nothing is averaged into an unvisited cell."
+     },
+     {
+      "id": "zero",
+      "text": "Always exactly zero",
+      "why": "Only if they started at zero."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Unvisited cells keep their initial values.",
+    "generic": "When does $Q(s, a)$ change?"
+   },
+   "explain": {
+    "text": "Updates happen only for pairs the agent tries, so exploration must reach every cell."
+   }
+  },
+  {
+   "id": "q-off-policy",
+   "difficulty": 3,
+   "prose": "An agent explores with $\\varepsilon = 0.3$ while running Q-learning.",
+   "question": "Which policy's values does its Q-table approach?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "greedy",
+      "text": "The greedy, optimal policy's",
+      "correct": true
+     },
+     {
+      "id": "eps",
+      "text": "The epsilon-greedy policy it follows",
+      "why": "That is SARSA. Q-learning's max targets the greedy policy."
+     },
+     {
+      "id": "random",
+      "text": "The random policy's",
+      "why": "Random actions supply data; the target still takes the max."
+     },
+     {
+      "id": "mix",
+      "text": "A 70-30 blend of the two",
+      "why": "The max in the target ignores how actions are chosen."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Off-policy: it learns the greedy policy's values.",
+    "generic": "Look at the max in the target."
+   },
+   "explain": {
+    "text": "Q-learning's target always uses the best next action, so it converges to $Q^*$ whatever exploring rule supplies the data."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1864 @@
+{
+ "id": "l10-one-step-ahead",
+ "course": "rl",
+ "title": "Learning one step at a time",
+ "minutes": 14,
+ "objectives": [
+  "Code TD(0) and compare its error with Monte Carlo on a random walk."
+ ],
+ "skills": [
+  "rl-td"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Update before the end",
+   "prose": "On the random walk, the estimates are $V(C) = 0.5$ and $V(D) = 0.7$. The agent steps from C to D and receives 0. Instead of waiting for the episode's end, treat $0 + V(D)$ as a stand-in for the return and move $V(C)$ a tenth of the way towards it.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "L",
+       "label": "0",
+       "x": 0.04,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.18,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.33999999999999997,
+       "y": 0.5
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.6599999999999999,
+       "y": 0.5
+      },
+      {
+       "id": "E",
+       "label": "E",
+       "x": 0.8200000000000001,
+       "y": 0.5
+      },
+      {
+       "id": "R",
+       "label": "+1",
+       "x": 0.96,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "L",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "A",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "A",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "E",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "R",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      }
+     ],
+     "height": 200,
+     "show": "none"
+    },
+    "state": {
+     "values": {
+      "C": "0.50",
+      "D": "0.70"
+     },
+     "highlight": [
+      "C",
+      "D"
+     ]
+    }
+   },
+   "question": "What is the new $V(C)$? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.52,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "full",
+      "value": 0.7,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "reward-only",
+      "value": 0.45,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "delta",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The stand-in target is $0 + 0.7 = 0.7$."
+    },
+    {
+     "rung": "point",
+     "text": "Move a tenth of the gap $0.7 - 0.5$.",
+     "highlight": [
+      "C",
+      "D"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.5 + 0.1 \\times 0.2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.5 + 0.1(0 + 0.7 - 0.5) = 0.52$.",
+    "generic": "Not quite. Move a tenth of the way from 0.5 towards 0.7.",
+    "byKey": {
+     "full": "You moved all the way to the target. The step is 0.1.",
+     "reward-only": "You used the reward 0 alone as the target; add $V(D)$.",
+     "delta": "That is the gap, not the new estimate."
+    }
+   },
+   "explain": {
+    "text": "The target $0 + V(D) = 0.7$ uses the next state's estimate in place of the unknown rest of the return. Moving 0.1 of the gap gives 0.52, one step after the move, with no need to finish the episode."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "One step against the whole episode",
+   "prose": "We ran both methods on the random walk for 100 episodes, from all estimates at 0.5, with seeds 0 to 99. Each line is the mean RMS error against the true values $\\tfrac16, \\dots, \\tfrac56$. TD updates after every step; MC after each episode, by a constant step towards the return. Slide to draw them.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "td05",
+       "label": "TD, α = 0.05",
+       "values": [
+        0.2357,
+        0.2288,
+        0.2221,
+        0.2156,
+        0.2091,
+        0.203,
+        0.197,
+        0.1911,
+        0.1854,
+        0.1799,
+        0.1745,
+        0.1693,
+        0.1643,
+        0.1593,
+        0.1546,
+        0.1498,
+        0.1451,
+        0.1409,
+        0.1364,
+        0.1323,
+        0.1283,
+        0.1245,
+        0.1206,
+        0.1166,
+        0.1133,
+        0.1098,
+        0.1064,
+        0.103,
+        0.1004,
+        0.0975,
+        0.0946,
+        0.0918,
+        0.0888,
+        0.0855,
+        0.0827,
+        0.0799,
+        0.0776,
+        0.0753,
+        0.0728,
+        0.0709,
+        0.0688,
+        0.0672,
+        0.0656,
+        0.0636,
+        0.0616,
+        0.06,
+        0.058,
+        0.0564,
+        0.0548,
+        0.0541,
+        0.0521,
+        0.0511,
+        0.0503,
+        0.0491,
+        0.0481,
+        0.0469,
+        0.046,
+        0.0455,
+        0.0443,
+        0.0438,
+        0.043,
+        0.0422,
+        0.0411,
+        0.04,
+        0.0394,
+        0.0395,
+        0.0386,
+        0.0385,
+        0.0384,
+        0.0376,
+        0.0374,
+        0.0376,
+        0.0375,
+        0.0372,
+        0.0368,
+        0.0364,
+        0.0361,
+        0.0357,
+        0.0357,
+        0.0356,
+        0.0357,
+        0.0354,
+        0.0352,
+        0.0351,
+        0.0346,
+        0.0352,
+        0.035,
+        0.0354,
+        0.0353,
+        0.035,
+        0.0349,
+        0.035,
+        0.0349,
+        0.0346,
+        0.0345,
+        0.0353,
+        0.0355,
+        0.0348,
+        0.0355,
+        0.0351,
+        0.0356
+       ]
+      },
+      {
+       "id": "td1",
+       "label": "TD, α = 0.1",
+       "values": [
+        0.2357,
+        0.2222,
+        0.2097,
+        0.1976,
+        0.1855,
+        0.1747,
+        0.1643,
+        0.1544,
+        0.145,
+        0.1366,
+        0.1285,
+        0.1209,
+        0.1138,
+        0.1067,
+        0.101,
+        0.0946,
+        0.0886,
+        0.0841,
+        0.079,
+        0.0753,
+        0.0716,
+        0.0683,
+        0.0651,
+        0.0615,
+        0.0606,
+        0.0581,
+        0.0556,
+        0.0541,
+        0.0534,
+        0.0529,
+        0.0511,
+        0.0495,
+        0.0483,
+        0.0464,
+        0.0437,
+        0.043,
+        0.0436,
+        0.0442,
+        0.0437,
+        0.0449,
+        0.0454,
+        0.0471,
+        0.0472,
+        0.0491,
+        0.0497,
+        0.0492,
+        0.0489,
+        0.0491,
+        0.0503,
+        0.0512,
+        0.0509,
+        0.051,
+        0.0523,
+        0.0515,
+        0.0519,
+        0.052,
+        0.0535,
+        0.0551,
+        0.0554,
+        0.0568,
+        0.0558,
+        0.0565,
+        0.0556,
+        0.0555,
+        0.0563,
+        0.057,
+        0.0551,
+        0.0567,
+        0.0561,
+        0.0555,
+        0.0543,
+        0.0554,
+        0.0553,
+        0.0555,
+        0.0553,
+        0.055,
+        0.0561,
+        0.056,
+        0.0558,
+        0.0565,
+        0.057,
+        0.0562,
+        0.0555,
+        0.0548,
+        0.0546,
+        0.0565,
+        0.0565,
+        0.056,
+        0.0557,
+        0.0551,
+        0.0553,
+        0.0553,
+        0.0558,
+        0.054,
+        0.0531,
+        0.0545,
+        0.0544,
+        0.0531,
+        0.0553,
+        0.0545,
+        0.0553
+       ]
+      },
+      {
+       "id": "mc01",
+       "label": "MC, α = 0.01",
+       "values": [
+        0.2357,
+        0.2335,
+        0.2311,
+        0.2284,
+        0.226,
+        0.2241,
+        0.2217,
+        0.2197,
+        0.2176,
+        0.2156,
+        0.2138,
+        0.2121,
+        0.2099,
+        0.2079,
+        0.2059,
+        0.203,
+        0.2013,
+        0.1997,
+        0.1974,
+        0.1952,
+        0.1934,
+        0.1915,
+        0.1901,
+        0.1887,
+        0.1866,
+        0.1853,
+        0.1837,
+        0.1814,
+        0.1802,
+        0.1783,
+        0.1764,
+        0.1748,
+        0.173,
+        0.1713,
+        0.1691,
+        0.1675,
+        0.1661,
+        0.1642,
+        0.1628,
+        0.1617,
+        0.1599,
+        0.1584,
+        0.1581,
+        0.1569,
+        0.155,
+        0.1533,
+        0.1521,
+        0.1507,
+        0.1493,
+        0.1483,
+        0.1463,
+        0.145,
+        0.1434,
+        0.1416,
+        0.1401,
+        0.139,
+        0.1386,
+        0.1374,
+        0.1368,
+        0.1359,
+        0.1352,
+        0.1341,
+        0.1325,
+        0.1303,
+        0.1292,
+        0.128,
+        0.1268,
+        0.127,
+        0.125,
+        0.1236,
+        0.123,
+        0.1219,
+        0.1214,
+        0.1202,
+        0.1195,
+        0.1193,
+        0.1187,
+        0.1178,
+        0.1163,
+        0.1153,
+        0.1134,
+        0.1127,
+        0.112,
+        0.1104,
+        0.1088,
+        0.1082,
+        0.1074,
+        0.1075,
+        0.1076,
+        0.1069,
+        0.1065,
+        0.1059,
+        0.1058,
+        0.1047,
+        0.1042,
+        0.1044,
+        0.1034,
+        0.1028,
+        0.1031,
+        0.102,
+        0.1014
+       ],
+       "dashed": true
+      },
+      {
+       "id": "mc02",
+       "label": "MC, α = 0.02",
+       "values": [
+        0.2357,
+        0.232,
+        0.2278,
+        0.2229,
+        0.2186,
+        0.2159,
+        0.2117,
+        0.2085,
+        0.2048,
+        0.202,
+        0.1993,
+        0.1969,
+        0.1933,
+        0.19,
+        0.1869,
+        0.182,
+        0.1791,
+        0.1773,
+        0.1736,
+        0.1701,
+        0.1682,
+        0.1653,
+        0.1639,
+        0.1622,
+        0.1598,
+        0.1588,
+        0.1564,
+        0.1532,
+        0.1519,
+        0.15,
+        0.1471,
+        0.1454,
+        0.1427,
+        0.1405,
+        0.1377,
+        0.1359,
+        0.1353,
+        0.1327,
+        0.1311,
+        0.1308,
+        0.1288,
+        0.1263,
+        0.1275,
+        0.1262,
+        0.123,
+        0.1204,
+        0.1191,
+        0.117,
+        0.1157,
+        0.1159,
+        0.1131,
+        0.1118,
+        0.1102,
+        0.1072,
+        0.1061,
+        0.1054,
+        0.1067,
+        0.1057,
+        0.1055,
+        0.1047,
+        0.1035,
+        0.1018,
+        0.0994,
+        0.0956,
+        0.0951,
+        0.0947,
+        0.0927,
+        0.0952,
+        0.0932,
+        0.0923,
+        0.093,
+        0.0923,
+        0.0929,
+        0.0922,
+        0.0917,
+        0.0929,
+        0.093,
+        0.0924,
+        0.0904,
+        0.0902,
+        0.0877,
+        0.0872,
+        0.0869,
+        0.086,
+        0.084,
+        0.0855,
+        0.0838,
+        0.0863,
+        0.0884,
+        0.0883,
+        0.0893,
+        0.0897,
+        0.0904,
+        0.0881,
+        0.0883,
+        0.0912,
+        0.0902,
+        0.0888,
+        0.0905,
+        0.0888,
+        0.0867
+       ],
+       "dashed": true
+      }
+     ],
+     "xLabel": "Episodes",
+     "yLabel": "RMS error",
+     "y": [
+      0,
+      0.25
+     ],
+     "decimals": 3
+    },
+    "state": {
+     "reveal": 0.25
+    },
+    "controls": [
+     {
+      "bind": "reveal",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "start": 0.25,
+      "label": "Drawn",
+      "format": "percent"
+     }
+    ]
+   },
+   "question": "After 25 episodes, which line is lowest?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "td1",
+      "text": "TD with α = 0.1",
+      "correct": true
+     },
+     {
+      "id": "td05",
+      "text": "TD with α = 0.05",
+      "why": "It is below both MC lines, at 0.1098, but α = 0.1 learns faster early: 0.0581."
+     },
+     {
+      "id": "mc02",
+      "text": "MC with α = 0.02",
+      "why": "MC's best line is still at 0.1588 after 25 episodes."
+     },
+     {
+      "id": "mc01",
+      "text": "MC with α = 0.01",
+      "why": "The slowest line of the four."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "TD with α = 0.1 is at 0.0581 after 25 episodes.",
+    "generic": "Slide to a quarter of the way and read the lowest line."
+   },
+   "explain": {
+    "text": "At 25 episodes the errors are 0.0581 and 0.1098 for TD against 0.1588 and 0.1853 for MC. Sutton and Barto's Example 6.2 shows the same shape. Both TD lines stay below MC all the way to 100.",
+    "canvas": {
+     "reveal": 1
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The TD error",
+   "prose": "**TD(0)** updates $$V(s) \\leftarrow V(s) + \\alpha\\,[\\,r + \\gamma V(s') - V(s)\\,],$$ and the bracket, $\\delta$, is the **TD error**: the surprise of one step. Using an estimate inside the target is **bootstrapping**. A step that ends the episode has no $V(s')$ term. Now $V(E) = 0.8$, and the agent leaves E to the right with reward 1.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "L",
+       "label": "0",
+       "x": 0.04,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.18,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.33999999999999997,
+       "y": 0.5
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.6599999999999999,
+       "y": 0.5
+      },
+      {
+       "id": "E",
+       "label": "E",
+       "x": 0.8200000000000001,
+       "y": 0.5
+      },
+      {
+       "id": "R",
+       "label": "+1",
+       "x": 0.96,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "L",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "A",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "A",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "E",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "R",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      }
+     ],
+     "height": 200,
+     "show": "none"
+    },
+    "state": {
+     "values": {
+      "E": "0.80"
+     },
+     "highlight": [
+      "E",
+      "R"
+     ]
+    }
+   },
+   "question": "What is the TD error $\\delta$ of this step? Give a decimal to 1 place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "boot-end",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "update",
+      "value": 0.82,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": -0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The episode ends, so the target is the reward alone."
+    },
+    {
+     "rung": "point",
+     "text": "Target 1, estimate 0.8.",
+     "highlight": [
+      "E"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\delta = 1 - 0.8$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\delta = 1 - 0.8 = 0.2$; with $\\alpha = 0.1$, $V(E)$ becomes 0.82.",
+    "generic": "Not quite. Subtract the estimate from the target.",
+    "byKey": {
+     "boot-end": "You added a next value of 0.8 after the end. A terminal step has none.",
+     "update": "That is the new $V(E)$ with $\\alpha = 0.1$, not $\\delta$.",
+     "sign": "It is target minus estimate: the reward beat the estimate."
+    }
+   },
+   "explain": {
+    "text": "At the end the target is the reward, so $\\delta = 1 - 0.8 = 0.2$. A positive $\\delta$ means things went better than expected, and the estimate rises."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Why TD can win",
+   "prose": "The MC target is the whole return: 1 or 0 by the end of the walk, a coin flip's worth of noise. The TD target from C is $V(B)$ or $V(D)$: one step of noise, then estimates that are already averages. TD's target is biased while those estimates are wrong, but it varies much less.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "L",
+       "label": "0",
+       "x": 0.04,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.18,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.33999999999999997,
+       "y": 0.5
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.6599999999999999,
+       "y": 0.5
+      },
+      {
+       "id": "E",
+       "label": "E",
+       "x": 0.8200000000000001,
+       "y": 0.5
+      },
+      {
+       "id": "R",
+       "label": "+1",
+       "x": 0.96,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "L",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "A",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "A",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "C",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "C",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "D",
+       "to": "E",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "D",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      },
+      {
+       "from": "E",
+       "to": "R",
+       "directed": true,
+       "label": "½",
+       "bend": 0.25
+      }
+     ],
+     "height": 200,
+     "show": "none"
+    },
+    "state": {
+     "values": {
+      "A": "1/6",
+      "B": "2/6",
+      "C": "3/6",
+      "D": "4/6",
+      "E": "5/6"
+     }
+    }
+   },
+   "question": "With the true values in place, what is the variance of TD's target from C? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0278,
+    "tol": {
+     "abs": 0.0002
+    },
+    "wrong": [
+     {
+      "id": "mc",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sd",
+      "value": 0.1667,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "range",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The target is $V(B) = \\tfrac13$ or $V(D) = \\tfrac23$, with chance ½ each."
+    },
+    {
+     "rung": "point",
+     "text": "Both are $\\tfrac16$ from the mean $\\tfrac12$.",
+     "highlight": [
+      "B",
+      "D"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Variance $= (\\tfrac16)^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(\\tfrac16)^2 = 0.0278$, against 0.25 for the MC return.",
+    "generic": "Not quite. Square the distance of each target from $\\tfrac12$ and average.",
+    "byKey": {
+     "mc": "That is the MC return's variance, 1 or 0 with chance ½.",
+     "sd": "That is the standard deviation. Square it.",
+     "range": "That is the gap between the two targets."
+    }
+   },
+   "explain": {
+    "text": "TD's target varies by $\\tfrac16$ either way, a variance of 0.0278, nine times less than MC's 0.25. Less noise per update is why TD learned faster on the chart."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code TD(0)",
+   "prose": "Write `td0_update`, which changes `V[s]` in place and returns $\\delta$; a terminal step uses `r` alone as the target. Then `td0_random_walk(episodes, alpha, seed)`: start every estimate at 0.5 and update after each step of each episode, with $\\gamma = 1$. `random_walk_episode` from l9 is in the editor.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Check",
+      "Ours"
+     ],
+     "rows": [
+      [
+       "$\\delta$ for C to D, from 0.5 and 0.7",
+       "0.2"
+      ],
+      [
+       "$V(C)$ after it, $\\alpha = 0.1$",
+       "0.52"
+      ],
+      [
+       "Mean RMS, seeds 0 to 19, 100 episodes, $\\alpha = 0.1$",
+       "0.0625"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `td0_update` and `td0_random_walk`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n\ndef td0_update(V, s, r, s2, alpha, gamma, terminal):\n    \"\"\"Update V[s] in place by one TD(0) step and return the TD error.\"\"\"\n    ...\n\ndef td0_random_walk(episodes, alpha, seed):\n    \"\"\"TD(0) on the random walk from V = 0.5 everywhere, gamma 1. Return [V['A'], ..., V['E']].\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+    "solution": "import random\n\ndef random_walk_episode(rng):\n    \"\"\"Start at 'C'; step right if rng.random() < 0.5, else left. Return (states, rewards).\"\"\"\n    s, states, rewards = 2, [], []\n    while True:\n        states.append('ABCDE'[s])\n        s += 1 if rng.random() < 0.5 else -1\n        if s == 5:\n            rewards.append(1)\n            return states, rewards\n        rewards.append(0)\n        if s == -1:\n            return states, rewards\n\ndef td0_update(V, s, r, s2, alpha, gamma, terminal):\n    \"\"\"Update V[s] in place by one TD(0) step and return the TD error.\"\"\"\n    target = r if terminal else r + gamma * V[s2]\n    delta = target - V[s]\n    V[s] += alpha * delta\n    return delta\n\ndef td0_random_walk(episodes, alpha, seed):\n    \"\"\"TD(0) on the random walk from V = 0.5 everywhere, gamma 1. Return [V['A'], ..., V['E']].\"\"\"\n    rng = random.Random(seed)\n    V = {s: 0.5 for s in 'ABCDE'}\n    for _ in range(episodes):\n        states, rewards = random_walk_episode(rng)\n        for i, s in enumerate(states):\n            last = i == len(states) - 1\n            td0_update(V, s, rewards[i], None if last else states[i + 1], alpha, 1.0, last)\n    return [V[s] for s in 'ABCDE']\n",
+    "examples": [
+     {
+      "setup": "V = {'C': 0.5, 'D': 0.7}",
+      "call": "td0_update(V, 'C', 0, 'D', 0.1, 1.0, False)",
+      "expect": "0.2",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "V = {'C': 0.5, 'D': 0.7}",
+      "call": "[td0_update(V, 'C', 0, 'D', 0.1, 1.0, False), V['C']]",
+      "expect": "[0.2, 0.52]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "V = {'E': 0.8}",
+      "call": "[td0_update(V, 'E', 1, None, 0.1, 1.0, True), V['E']]",
+      "expect": "[0.2, 0.82]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "V = {'x': 1.0, 'y': 4.0}",
+      "call": "[td0_update(V, 'x', 2, 'y', 0.5, 0.9, False), V['x']]",
+      "expect": "[2 + 0.9 * 4 - 1, 1 + 0.5 * (2 + 0.9 * 4 - 1)]",
+      "compare": "isclose"
+     },
+     {
+      "call": "td0_random_walk(0, 0.1, 0)",
+      "expect": "[0.5, 0.5, 0.5, 0.5, 0.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(td0_random_walk(5, 0.1, 3))",
+      "expect": "5",
+      "compare": "equal"
+     },
+     {
+      "setup": "import math",
+      "call": "sum(math.sqrt(sum((v - (i + 1) / 6) ** 2 for i, v in enumerate(td0_random_walk(100, 0.1, s))) / 5) for s in range(20)) / 20 < 0.09",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "td0_random_walk(2000, 0.02, 1)[2]",
+      "expect": "0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.06
+      }
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Updates are compared with math.isclose; over seeds 0 to 19 the mean RMS error after 100 episodes must be below 0.09."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`target = r if terminal else r + gamma * V[s2]`."
+    },
+    {
+     "rung": "point",
+     "text": "Update `V[s]` by `alpha * delta` before returning `delta`.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "In the walk, the last step of each episode is the terminal one."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass. Over seeds 0 to 19 the mean RMS error after 100 episodes is about 0.063.",
+    "generic": "Some tests fail. Check the terminal step, which has no next value."
+   },
+   "explain": {
+    "text": "Each update needs only $(s, r, s')$, so TD learns during the episode and works when episodes never end. The test checks a threshold, not exact numbers, because any correct random order gives similar errors."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Biased, so worse?",
+   "prose": "A colleague says: \"TD bootstraps from estimates that are wrong at first, so it is biased. Monte Carlo averages true returns, so it is unbiased. Use Monte Carlo.\"",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "RMS error after 25 episodes",
+      "after 100"
+     ],
+     "rows": [
+      [
+       "TD, α = 0.1",
+       "0.0581",
+       "0.0553"
+      ],
+      [
+       "MC, α = 0.02",
+       "0.1588",
+       "0.0867"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is wrong with the argument?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "var",
+      "text": "Error is bias plus variance; TD's smaller variance wins at these sample sizes",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "Nothing: unbiased estimators always have the smaller error",
+      "why": "Error mixes bias and variance. A slightly biased, much less noisy estimate can be closer, as the table shows."
+     },
+     {
+      "id": "nobias",
+      "text": "TD is not biased at all",
+      "why": "Its target uses estimates, so it is biased until they are right. The point is that the bias fades and the variance is small."
+     },
+     {
+      "id": "luck",
+      "text": "The table shows a lucky seed",
+      "why": "Both rows average seeds 0 to 99."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Mean squared error = bias² + variance."
+    },
+    {
+     "rung": "point",
+     "text": "MC's returns are 0 or 1: high variance.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Read the table at 25 episodes."
+    }
+   ],
+   "feedback": {
+    "correct": "Low variance often beats zero bias when data are few.",
+    "generic": "Not quite. Split the error into bias and variance.",
+    "byKey": {
+     "right": "You equated unbiased with accurate. The MC estimates here are further off after 25 and after 100 episodes."
+    }
+   },
+   "explain": {
+    "text": "TD's bias shrinks as its estimates improve, and its targets are far less noisy. On the walk it beats MC at 25 episodes (0.0581 against 0.1588) and at 100. With constant steps neither reaches 0 error."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A step that is too big",
+   "prose": "With $\\alpha = 0.5$ every update moves half of the TD error. Over seeds 0 to 99 the mean RMS error was 0.1382 after 10 episodes and 0.1528 after 100: it stops improving early.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "a5",
+       "label": "α = 0.5",
+       "values": [
+        0.2357,
+        0.1863,
+        0.146,
+        0.1135,
+        0.0859,
+        0.0928,
+        0.1045,
+        0.1127,
+        0.121,
+        0.132,
+        0.1382,
+        0.1387,
+        0.1452,
+        0.1459,
+        0.1532,
+        0.1611,
+        0.1549,
+        0.1575,
+        0.1591,
+        0.1632,
+        0.1617,
+        0.1562,
+        0.1607,
+        0.1672,
+        0.1647,
+        0.1614,
+        0.1568,
+        0.1632,
+        0.1579,
+        0.1598,
+        0.1514,
+        0.1489,
+        0.1473,
+        0.1521,
+        0.1513,
+        0.1561,
+        0.1552,
+        0.157,
+        0.1573,
+        0.1585,
+        0.1592,
+        0.1585,
+        0.157,
+        0.163,
+        0.1643,
+        0.1543,
+        0.1582,
+        0.1596,
+        0.1636,
+        0.1637,
+        0.1634,
+        0.1593,
+        0.1587,
+        0.1555,
+        0.1574,
+        0.1627,
+        0.164,
+        0.1681,
+        0.1635,
+        0.164,
+        0.1613,
+        0.1615,
+        0.1588,
+        0.1596,
+        0.1598,
+        0.1603,
+        0.1509,
+        0.1566,
+        0.1509,
+        0.1543,
+        0.149,
+        0.1546,
+        0.1545,
+        0.1552,
+        0.1561,
+        0.1552,
+        0.1607,
+        0.163,
+        0.1573,
+        0.1627,
+        0.1584,
+        0.1585,
+        0.1579,
+        0.155,
+        0.1579,
+        0.1627,
+        0.1615,
+        0.1551,
+        0.1565,
+        0.1551,
+        0.1564,
+        0.1562,
+        0.1585,
+        0.1491,
+        0.147,
+        0.1473,
+        0.1486,
+        0.15,
+        0.1561,
+        0.1543,
+        0.1528
+       ]
+      },
+      {
+       "id": "a1",
+       "label": "α = 0.1",
+       "values": [
+        0.2357,
+        0.2222,
+        0.2097,
+        0.1976,
+        0.1855,
+        0.1747,
+        0.1643,
+        0.1544,
+        0.145,
+        0.1366,
+        0.1285,
+        0.1209,
+        0.1138,
+        0.1067,
+        0.101,
+        0.0946,
+        0.0886,
+        0.0841,
+        0.079,
+        0.0753,
+        0.0716,
+        0.0683,
+        0.0651,
+        0.0615,
+        0.0606,
+        0.0581,
+        0.0556,
+        0.0541,
+        0.0534,
+        0.0529,
+        0.0511,
+        0.0495,
+        0.0483,
+        0.0464,
+        0.0437,
+        0.043,
+        0.0436,
+        0.0442,
+        0.0437,
+        0.0449,
+        0.0454,
+        0.0471,
+        0.0472,
+        0.0491,
+        0.0497,
+        0.0492,
+        0.0489,
+        0.0491,
+        0.0503,
+        0.0512,
+        0.0509,
+        0.051,
+        0.0523,
+        0.0515,
+        0.0519,
+        0.052,
+        0.0535,
+        0.0551,
+        0.0554,
+        0.0568,
+        0.0558,
+        0.0565,
+        0.0556,
+        0.0555,
+        0.0563,
+        0.057,
+        0.0551,
+        0.0567,
+        0.0561,
+        0.0555,
+        0.0543,
+        0.0554,
+        0.0553,
+        0.0555,
+        0.0553,
+        0.055,
+        0.0561,
+        0.056,
+        0.0558,
+        0.0565,
+        0.057,
+        0.0562,
+        0.0555,
+        0.0548,
+        0.0546,
+        0.0565,
+        0.0565,
+        0.056,
+        0.0557,
+        0.0551,
+        0.0553,
+        0.0553,
+        0.0558,
+        0.054,
+        0.0531,
+        0.0545,
+        0.0544,
+        0.0531,
+        0.0553,
+        0.0545,
+        0.0553
+       ]
+      }
+     ],
+     "xLabel": "Episodes",
+     "yLabel": "RMS error",
+     "y": [
+      0,
+      0.25
+     ],
+     "decimals": 3
+    },
+    "state": {}
+   },
+   "question": "Why does $\\alpha = 0.5$ stall well above the error of $\\alpha = 0.1$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "noise",
+      "text": "It keeps chasing the latest noisy targets",
+      "correct": true
+     },
+     {
+      "id": "bias",
+      "text": "Its estimates are biased towards 0.5 for ever",
+      "why": "The start value 0.5 is forgotten after a few updates at $\\alpha = 0.5$; noise is what remains."
+     },
+     {
+      "id": "slow",
+      "text": "It learns too slowly",
+      "why": "It learns fast: the curve drops quickly, then flattens high."
+     },
+     {
+      "id": "bug",
+      "text": "TD fails for steps above 0.1",
+      "why": "It converges in a band; the band is wide because each update weighs the last target by half."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With a constant step the estimate is a weighted average of recent targets."
+    },
+    {
+     "rung": "point",
+     "text": "At $\\alpha = 0.5$ the last target carries half the weight.",
+     "highlight": [
+      "a5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Averages of few noisy targets stay noisy."
+    }
+   ],
+   "feedback": {
+    "correct": "A large step forgets fast, so the estimate tracks the noise.",
+    "generic": "Ask how many targets an estimate effectively averages."
+   },
+   "explain": {
+    "text": "A constant step $\\alpha$ averages roughly the last $1/\\alpha$ targets: 2 at 0.5, 10 at 0.1. Fewer targets means more noise left over. A falling step, such as $1/n$, removes the band altogether.",
+    "canvas": {
+     "highlight": [
+      "a5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "TD(0)",
+   "prose": "TD(0) replaces the return by a one-step target: $$V(s) \\leftarrow V(s) + \\alpha\\,[\\,r + \\gamma V(s') - V(s)\\,].$$ It is level 1's \"old + step × error\" again, with the TD error as the error. It learns after every step, needs no model, and with suitably falling steps converges to $v_\\pi$.",
+   "question": "What does TD use that Monte Carlo does not?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "boot",
+      "text": "Its own estimate of the next state's value",
+      "correct": true
+     },
+     {
+      "id": "model",
+      "text": "The transition chances",
+      "why": "Neither method uses a model."
+     },
+     {
+      "id": "end",
+      "text": "The final reward of each episode",
+      "why": "MC uses that; TD uses the next reward and the next estimate."
+     },
+     {
+      "id": "policy",
+      "text": "A greedy policy",
+      "why": "Both evaluate whatever policy generates the data."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Bootstrapping: TD builds its target from its own estimates.",
+    "generic": "Compare the two targets."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Fair value, trade by trade",
+   "prose": "A desk estimates where a stock will close. At 14:00 its estimate is £101.20. A trade then prints, and the desk's estimate from the new state is £101.50; no cash changes hands. It updates by TD(0) with $\\alpha = 0.1$ and $\\gamma = 1$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Close estimate"
+     ],
+     "rows": [
+      [
+       "Now",
+       "£101.20"
+      ],
+      [
+       "After the trade",
+       "£101.50"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the updated estimate for the current state, in pounds? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 101.23,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "full",
+      "value": 101.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "delta",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 101.35,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\delta = 0 + 101.50 - 101.20$."
+    },
+    {
+     "rung": "point",
+     "text": "Move a tenth of $\\delta$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$101.20 + 0.1 \\times 0.30$."
+    }
+   ],
+   "feedback": {
+    "correct": "$101.20 + 0.1 \\times 0.30 = 101.23$.",
+    "generic": "Not quite. Move a tenth of the TD error.",
+    "byKey": {
+     "full": "You jumped to the new estimate; the step is 0.1.",
+     "delta": "That is the TD error, not the estimate.",
+     "half": "You moved half the way."
+    }
+   },
+   "explain": {
+    "text": "The TD error is £0.30 and a tenth of it moves the estimate to £101.23. The desk need not wait for the close to learn: each trade nudges the estimate, as TD does after each step."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "TD(0) moves $V(s)$ towards $r + \\gamma V(s')$ after every step: old + step × the TD error $\\delta$. Using its own estimate in the target is bootstrapping.",
+   "TD's target is biased while estimates are wrong but far less noisy than a full return. On the random walk it beat Monte Carlo at 25 and 100 episodes.",
+   "A constant step averages about the last $1/\\alpha$ targets: too large a step leaves the estimates noisy for ever."
+  ],
+  "formula": {
+   "name": "TD(0)",
+   "tex": "V(s) \\leftarrow V(s) + \\alpha\\,[\\,r + \\gamma V(s') - V(s)\\,]",
+   "note": "At a terminal step the target is $r$ alone."
+  },
+  "trap": "\"TD is biased, so it must be worse.\" Error is bias plus variance, and with few samples TD's low variance usually wins."
+ },
+ "quiz": [
+  {
+   "id": "q-td-update",
+   "difficulty": 2,
+   "prose": "$V(s) = 2$, $V(s') = 3$, reward 1, $\\gamma = 0.9$, $\\alpha = 0.5$.",
+   "question": "What is the new $V(s)$? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.85,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "delta",
+      "value": 1.7,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\delta = 1 + 2.7 - 2 = 1.7$, so $2 + 0.85 = 2.85$.",
+    "generic": "Not quite. Compute $\\delta$, then add half of it.",
+    "byKey": {
+     "delta": "That is $\\delta$.",
+     "no-disc": "You left out $\\gamma$."
+    }
+   },
+   "explain": {
+    "text": "$\\delta = 1 + 0.9 \\times 3 - 2 = 1.7$ and $V(s) \\leftarrow 2 + 0.5 \\times 1.7 = 2.85$."
+   }
+  },
+  {
+   "id": "q-td-zero",
+   "difficulty": 2,
+   "prose": "A TD update has $\\delta = 0$.",
+   "question": "What does that mean?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "match",
+      "text": "This step matched the estimate exactly",
+      "correct": true
+     },
+     {
+      "id": "conv",
+      "text": "The values have converged in every state",
+      "why": "One step matching says nothing about other states or steps."
+     },
+     {
+      "id": "zero",
+      "text": "The reward on this step was zero",
+      "why": "$\\delta$ can be zero with any reward."
+     },
+     {
+      "id": "stop",
+      "text": "Learning should stop at this point",
+      "why": "The next step may surprise."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No surprise, no change.",
+    "generic": "Read $\\delta$ as the surprise."
+   },
+   "explain": {
+    "text": "$\\delta = 0$ means $r + \\gamma V(s') = V(s)$: this step agreed with the estimate."
+   }
+  },
+  {
+   "id": "q-td-online",
+   "difficulty": 3,
+   "prose": "A market-making simulation never ends: there are no episodes.",
+   "question": "Which method can evaluate the quoting policy as it stands?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "td",
+      "text": "TD(0), with $\\gamma < 1$",
+      "correct": true
+     },
+     {
+      "id": "mc",
+      "text": "Monte Carlo evaluation",
+      "why": "MC needs complete returns, which never arrive."
+     },
+     {
+      "id": "both",
+      "text": "Both, equally well",
+      "why": "MC must wait for an end that never comes."
+     },
+     {
+      "id": "neither",
+      "text": "Neither of them",
+      "why": "TD updates from each step; it needs no end."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "TD learns from each step.",
+    "generic": "Which method needs episodes to end?"
+   },
+   "explain": {
+    "text": "TD needs only $(s, r, s')$ per step, so it works on continuing tasks, with $\\gamma < 1$ keeping values finite."
+   }
+  }
+ ]
+}

@@ -1,0 +1,477 @@
+{
+ "id": "problems-1",
+ "course": "rl",
+ "level": 1,
+ "title": "Bandits in three steps",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-two-beliefs",
+   "difficulty": 4,
+   "skills": [
+    "rl-bandit"
+   ],
+   "prose": "A market maker tests two quoting rules on live flow. Rule A has been tried once and earned a fill; rule B has not been tried. Both start from $\\mathrm{Beta}(1, 1)$, the uniform prior.",
+   "parts": [
+    {
+     "question": "What is rule A's posterior mean? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6667,
+      "tol": {
+       "abs": 0.0002
+      },
+      "wrong": [
+       {
+        "id": "raw",
+        "value": 1,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "prior",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\mathrm{Beta}(2, 1)$ has mean $\\tfrac23 = 0.6667$.",
+      "generic": "Not quite. Add the win to the first parameter.",
+      "byKey": {
+       "raw": "That is the raw 1 of 1. The prior adds a win and a loss.",
+       "prior": "That is the prior mean before the fill."
+      }
+     },
+     "explain": {
+      "text": "One win turns $\\mathrm{Beta}(1, 1)$ into $\\mathrm{Beta}(2, 1)$, with density $2x$ and mean $\\tfrac23$."
+     }
+    },
+    {
+     "question": "Using A's posterior $\\mathrm{Beta}(2, 1)$ from part 1, with density $2x$, and B's uniform density, what is the chance that a Thompson draw from A beats one from B? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6667,
+      "tol": {
+       "abs": 0.0002
+      },
+      "wrong": [
+       {
+        "id": "half",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "one",
+        "value": 1,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\int_0^1 2x \\cdot x\\,dx = \\tfrac23 = 0.6667$.",
+      "generic": "Not quite. Integrate A's density times the chance that B lands below $x$.",
+      "byKey": {
+       "half": "That would hold if A were also uniform. A's density leans towards 1.",
+       "one": "A's draw can still land below B's."
+      }
+     },
+     "explain": {
+      "text": "$P(A > B) = \\int_0^1 f_A(x) P(B < x)\\,dx = \\int_0^1 2x \\cdot x\\,dx = \\tfrac23 = 0.6667$."
+     }
+    },
+    {
+     "question": "Using the chance $\\tfrac23$ from part 2, and if the posteriors stayed as they are, how many of the next 100 pulls would Thompson give rule A on average? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 66.67,
+      "tol": {
+       "abs": 0.01
+      },
+      "wrong": [
+       {
+        "id": "all",
+        "value": 100,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "half",
+        "value": 50,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$100 \\times \\tfrac23 = 66.67$.",
+      "generic": "Not quite. Each pull goes to A with chance $\\tfrac23$.",
+      "byKey": {
+       "all": "Thompson does not always pull the better-looking rule.",
+       "half": "That treats the rules as equal. A wins the draw two times in three."
+      }
+     },
+     "explain": {
+      "text": "Probability matching sends each pull to A with chance $\\tfrac23$, so $100 \\times \\tfrac23 = 66.67$ pulls on average."
+     }
+    },
+    {
+     "question": "Rule A is tried again and misses, so its posterior becomes $\\mathrm{Beta}(2, 2)$ with density $6x(1 - x)$. B is still untried. What is the chance now that A's draw beats B's? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "old",
+        "value": 0.6667,
+        "tol": {
+         "abs": 0.0002
+        }
+       },
+       {
+        "id": "no-x",
+        "value": 1,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\int_0^1 6x(1 - x) \\cdot x\\,dx = 6(\\tfrac13 - \\tfrac14) = 0.5$.",
+      "generic": "Not quite. Integrate the new density times $x$.",
+      "byKey": {
+       "old": "That is the chance before the miss.",
+       "no-x": "You integrated the density alone, which always gives 1. Multiply it by $P(B < x) = x$ first."
+      }
+     },
+     "explain": {
+      "text": "$\\int_0^1 6x^2(1 - x)\\,dx = 6(\\tfrac13 - \\tfrac14) = \\tfrac12$. One win and one loss leave A symmetric about $\\tfrac12$, so it is level with the untried rule."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-ucb-round",
+   "difficulty": 5,
+   "skills": [
+    "rl-bandit"
+   ],
+   "prose": "An execution desk allocates child orders among three algorithms with UCB1, scoring a child order 1 if it beats arrival price. At child order $t = 50$ the record is: algorithm X 30 orders, mean 0.62; Y 12 orders, mean 0.48; Z 7 orders, mean 0.55. Here $2\\ln 50 = 7.8240$.",
+   "parts": [
+    {
+     "question": "What is Z's bonus $\\sqrt{2\\ln t / n_a}$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.0572,
+      "tol": {
+       "abs": 0.0002
+      },
+      "wrong": [
+       {
+        "id": "no-root",
+        "value": 1.1177,
+        "tol": {
+         "abs": 0.0002
+        }
+       },
+       {
+        "id": "x",
+        "value": 0.5107,
+        "tol": {
+         "abs": 0.0002
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\sqrt{7.8240/7} = 1.0572$.",
+      "generic": "Not quite. Divide 7.8240 by Z's 7 orders and take the square root.",
+      "byKey": {
+       "no-root": "You left out the square root.",
+       "x": "That is X's bonus, from 30 orders."
+      }
+     },
+     "explain": {
+      "text": "$7.8240 / 7 = 1.1177$, and its square root is 1.0572."
+     }
+    },
+    {
+     "question": "Using Z's bonus of 1.0572, what is Z's score? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.6072,
+      "tol": {
+       "abs": 0.0002
+      },
+      "wrong": [
+       {
+        "id": "bonus",
+        "value": 1.0572,
+        "tol": {
+         "abs": 0.0002
+        }
+       },
+       {
+        "id": "mean",
+        "value": 0.55,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.55 + 1.0572 = 1.6072$.",
+      "generic": "Not quite. Add the bonus to Z's mean.",
+      "byKey": {
+       "bonus": "That is the bonus alone. Add the mean 0.55.",
+       "mean": "That is the mean alone. Add the bonus."
+      }
+     },
+     "explain": {
+      "text": "The score is the mean plus the bonus: $0.55 + 1.0572 = 1.6072$."
+     }
+    },
+    {
+     "question": "X scores 1.1307 and Y scores 1.2875. Which algorithm gets child order 50?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "z",
+        "text": "Z",
+        "correct": true
+       },
+       {
+        "id": "x",
+        "text": "X",
+        "why": "X has the best mean, but its score is only 1.1307."
+       },
+       {
+        "id": "y",
+        "text": "Y",
+        "why": "Y scores 1.2875, below Z."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Z's 1.6072 is the largest score.",
+      "generic": "Compare the three scores."
+     },
+     "explain": {
+      "text": "Z scores 1.6072, above Y's 1.2875 and X's 1.1307. Few orders give Z the largest bonus."
+     }
+    },
+    {
+     "question": "Keeping $t = 50$, how many orders must an algorithm have before its bonus falls below 0.07?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1597,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "no-sq",
+        "value": 112,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "no-two",
+        "value": 799,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$n_a > 7.8240 / 0.0049 = 1596.7$, so 1597.",
+      "generic": "Not quite. Square both sides: $7.8240 / n_a < 0.0049$.",
+      "byKey": {
+       "no-sq": "You divided by 0.07, not $0.07^2$.",
+       "no-two": "You dropped the 2 in $2\\ln t$."
+      }
+     },
+     "explain": {
+      "text": "$\\sqrt{7.8240/n_a} < 0.07$ needs $n_a > 7.8240 / 0.0049 = 1596.7$, so 1597 orders: far more than the 50 so far. A 0.07 edge takes many trials to confirm."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-floor-chain",
+   "difficulty": 3,
+   "skills": [
+    "rl-bandit"
+   ],
+   "prose": "A broker routes client orders among four dark pools that fill with chance 0.35, 0.47, 0.52 and 0.58, using epsilon-greedy with $\\varepsilon = 0.08$.",
+   "parts": [
+    {
+     "question": "What is the mean value $\\bar q$ of the four pools? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.48,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "best",
+        "value": 0.58,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "mid",
+        "value": 0.495,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$(0.35 + 0.47 + 0.52 + 0.58)/4 = 0.48$.",
+      "generic": "Not quite. Average the four fill chances.",
+      "byKey": {
+       "best": "That is the best pool.",
+       "mid": "That is the midpoint of the middle two, a median. Take the mean of all four."
+      }
+     },
+     "explain": {
+      "text": "$(0.35 + 0.47 + 0.52 + 0.58)/4 = 1.92/4 = 0.48$."
+     }
+    },
+    {
+     "question": "Using $\\bar q = 0.48$, what is the regret floor per order? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.008,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "no-eps",
+        "value": 0.1,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "worst",
+        "value": 0.0184,
+        "tol": {
+         "abs": 0.0002
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.08 \\times (0.58 - 0.48) = 0.008$.",
+      "generic": "Not quite. Multiply $\\varepsilon$ by the gap from $\\bar q$ to 0.58.",
+      "byKey": {
+       "no-eps": "You charged every order the random loss of 0.10, but the broker explores on only 8% of them.",
+       "worst": "You took the worst pool's gap, 0.23. Exploring spreads orders evenly over the four pools, so the mean gap applies."
+      }
+     },
+     "explain": {
+      "text": "A random order loses $0.58 - 0.48 = 0.10$ on average; 8% of orders are random, so 0.008 a order."
+     }
+    },
+    {
+     "question": "Using the floor of 0.008 per order, what is the floor over 50,000 orders?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 400,
+      "tol": {
+       "abs": 0.01
+      },
+      "wrong": [
+       {
+        "id": "per-k",
+        "value": 8,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "random",
+        "value": 5000,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$50000 \\times 0.008 = 400$ fills.",
+      "generic": "Not quite. Multiply the floor per order by 50,000.",
+      "byKey": {
+       "per-k": "That is per 1,000 orders.",
+       "random": "That is the regret of routing every order at random."
+      }
+     },
+     "explain": {
+      "text": "$50000 \\times 0.008 = 400$ fills, even after the broker knows the best pool."
+     }
+    },
+    {
+     "question": "Routing every order at random would have regret 5,000 over the same orders. What fraction of that is the floor? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.08,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "inverse",
+        "value": 12.5,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "gap",
+        "value": 0.1,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$400 / 5000 = 0.08$, which is $\\varepsilon$.",
+      "generic": "Not quite. Divide the floor by 5,000.",
+      "byKey": {
+       "inverse": "You divided the wrong way round.",
+       "gap": "That is the average gap. The ratio of the two regrets is $\\varepsilon$."
+      }
+     },
+     "explain": {
+      "text": "$400 / 5000 = 0.08$. The floor is exactly the share $\\varepsilon$ of random play's regret, because the random orders are random play."
+     }
+    }
+   ]
+  }
+ ]
+}
