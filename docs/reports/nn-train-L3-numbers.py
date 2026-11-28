@@ -22,7 +22,7 @@ ROOT = os.path.join(HERE, '..', '..')
 APP = os.path.join(ROOT, 'app')
 DATA = os.path.join(APP, 'content', 'data', 'ai')
 sys.path.insert(0, os.path.join(APP, 'tools'))
-from numbers_lib import Level  # noqa: E402
+from numbers_lib import Level, _stated, _text_strings  # noqa: E402
 
 sys.path.insert(0, DATA)
 from autograd import Tensor, grad_check  # noqa: E402
@@ -31,11 +31,31 @@ import nt_ops_l3 as B3  # noqa: E402
 
 lv = Level('nn-train', 3)
 E = lv.expect
-COV = []
+_STATED = []
+_strs = []
+for _fid, _doc in lv.files.items():
+    _text_strings(_doc, '', _fid, _strs)
+for _fid, _path, _text in _strs:
+    for _v, _tol, _pct, _shown, _strong in _stated(_text):
+        _STATED.append((abs(_v), _tol, _pct))
+NCOV = {'matched': 0, 'unstated': 0}
+
+
+def is_stated(x):
+    """True when a figure on screen equals x to its stated precision (the comparison coverage makes by value)"""
+    a = abs(float(x))
+    return any(abs(a - t) <= tol for v, tol, pct in _STATED for t in ((v, v / 100) if pct else (v,)))
 
 
 def cov(*vals):
-    COV.extend(vals)
+    """Computed values, recomputed in this script: each one is compared with the figures the level states, at their stated precision.
+    A value that matches covers them; a value no figure matches covers nothing (it is simply not stated)."""
+    for x in vals:
+        if is_stated(x):
+            lv._cover(float(x))
+            NCOV['matched'] += 1
+        else:
+            NCOV['unstated'] += 1
 
 
 def agree(label, a, b, rel=1e-9):
@@ -153,8 +173,8 @@ def train_b(lam=0.0, p=0.0, steps=2000, lr=0.01, every=0, seed=0):
     return P, hist
 
 
-def train_a(lam=0.0, p=0.0, steps=2000, lr=0.01, seed=0):
-    """route A: autograd, the shipped dropout op and adam_step"""
+def train_a(lam=0.0, p=0.0, steps=2000, lr=0.01, seed=0, every=0, hist=None):
+    """route A: autograd, the shipped dropout op and adam_step; with every > 0, hist gets (step, train error, validation error)"""
     P = init_b(seed)
     m = [np.zeros_like(q) for q in P]
     v = [np.zeros_like(q) for q in P]
@@ -173,6 +193,8 @@ def train_a(lam=0.0, p=0.0, steps=2000, lr=0.01, seed=0):
             loss = loss + 0.5 * lam * (ts[i] ** 2).sum()
         loss.backward()
         P, m, v = adam_step(P, [q.grad for q in ts], m, v, t + 1, lr)
+        if every and (t + 1) % every == 0:
+            hist.append((t + 1, mse_b(P, Xt, Yt), mse_b(P, Xv, Yv)))
     return P
 
 
@@ -191,48 +213,57 @@ for lam in LAMS:
     PB50, _ = train_b(lam=lam, steps=50)
     agree(f'weight decay {lam}: validation error after 50 steps, autograd against the hand backward', mse_b(PA50, Xv, Yv), mse_b(PB50, Xv, Yv), 1e-9)
     E('l9-weight-decay', f'screens[3].canvas.state.values.l{str(lam).replace(".", "")}', round(WD[lam][1], 2))
-    cov(*WD[lam])
+cov(*WD[lam])
 lv.claim(min(WD, key=lambda k: WD[k][1]) == 0.01, 'weight decay 0.01 gives the lowest validation error of the six (route A)')
 lv.claim(WD[0][1] > WD[1e-3][1] and WD[0.1][1] > WD[0.03][1] > WD[0.01][1], 'validation error against lambda is a U')
 lv.claim(round(WD[0.01][1], 2) < round(WD[1e-3][1], 2), 'at 2 places weight decay 0.01 reads below 0.001')
 var_yv = float(Yv.var())
-cov(var_yv, 0.09)
+cov(var_yv)
 P1 = train_a(lam=1.0)
 v1 = mse_b(P1, Xv, Yv)
 cov(v1)
 lv.claim(float(np.ptp(fwd_b(P1, np.linspace(-1, 1, 81)[:, None]))) < 1e-6, 'at lambda 1 the net predicts one constant')
 lv.claim(abs(v1 - (var_yv + (Yv.mean() - Yt.mean()) ** 2)) < 0.01, 'a constant at the training mean scores the variance plus the squared gap of the means')
 E('l9-weight-decay', 'screens[1].widget.answer', 1 - 0.1 * 0.01)
-cov(0.001, 0.999 ** 1000, 0.99, 0.9)
+cov(0.999 ** 1000)
 E('l9-weight-decay', 'screens[2].widget.answer', round(0.999 * 2 - 0.1 * 0.5, 3))
-cov(1.998, 0.05, 0.02, 0.052, 0.002, 1.95, 2 - 0.1 * 0.51, 0.999 * 2 + 0.05)
+cov(2 - 0.1 * 0.51, 0.999 * 2 + 0.05)
 E('l9-weight-decay', 'screens[3].widget.answer', 0.01)
 E('l9-weight-decay', 'screens[4].widget.answer', round(1 - 0.01 * (1 + 0.1 * 1), 3))
-cov(0.99, 0.989, 1 - 0.01 * 0.3, 0.3, 0.2, 0.01)
+cov(1 - 0.01 * 0.3)
 E('l9-weight-decay', 'screens[7].widget.answer', round(0.9999 ** 1000, 4))
-cov(math.exp(-0.1), 1 - 1000 * 0.0001, 0.99 ** 1000, 0.9999)
+cov(math.exp(-0.1), 1 - 1000 * 0.0001, 0.99 ** 1000)
 E('l9-weight-decay', 'quiz[0].widget.answer', round(1 - 0.05 * 0.002, 4))
-cov(0.998)
 # early stopping
 _, ES = train_b(lam=0, steps=3000, every=10)
 best = min(ES, key=lambda r: r[2])
+# route A, recomputed here (not read back from the lesson's series): the 3,000-step run of l10
+HA = []
+train_a(lam=0, steps=3000, every=10, hist=HA)
+bestA = min(HA, key=lambda r: r[2])
 F10 = lv._file('l10-early-stopping')[1]
 shown_v = F10['screens'][0]['canvas']['params']['series'][1]['values']
 shown_t = F10['screens'][0]['canvas']['params']['series'][0]['values']
-ia = int(np.argmin(shown_v))
-lv.claim(abs((ia + 1) * 10 - best[0]) <= 50, f'best step: route A {(ia + 1) * 10}, route B {best[0]} (within 50)')
-agree('best validation error, route A against route B (0.5%)', shown_v[ia], best[2], 0.005)
-agree('final validation error, route A against route B (1%)', shown_v[-1], ES[-1][2], 0.01)
-E('l10-early-stopping', 'screens[0].widget.answer', (ia + 1) * 10)
-cov(shown_v[ia], shown_t[ia], shown_v[-1], shown_t[-1], 3000)
+lv.claim(abs(bestA[0] - best[0]) <= 50, f'best step: route A {bestA[0]}, route B {best[0]} (within 50)')
+agree('best validation error, route A against route B (0.5%)', bestA[2], best[2], 0.005)
+agree('final validation error, route A against route B (1%)', HA[-1][2], ES[-1][2], 0.01)
+lv.claim(bestA[0] == 660 and round(bestA[2], 4) == 0.1029 and round(bestA[1], 4) == 0.0528, f'best step 660 with validation 0.1029 and training 0.0528 (route A: {bestA[0]}, {bestA[2]:.4f}, {bestA[1]:.4f})')
+# the 3,000-step end depends on the BLAS thread count in the third place (validation 0.16667 to 0.16677, training 0.01052 to 0.01058): stated to 3 places
+E('l10-early-stopping', 'screens[0].widget.answer', bestA[0])
+E('l10-early-stopping', 'screens[0].feedback.correct', round(bestA[2], 4))
+E('l10-early-stopping', 'screens[0].feedback.correct', round(bestA[1], 4))
+E('l10-early-stopping', 'screens[0].feedback.correct', round(HA[-1][2], 3))
+E('l10-early-stopping', 'screens[0].feedback.correct', round(HA[-1][1], 3))
+E('l10-early-stopping', 'summary.ideas[0]', round(HA[-1][2], 3))
+lv.claim(round(ES[-1][2], 2) == round(HA[-1][2], 2) and round(ES[-1][1], 3) == round(HA[-1][1], 3), f'route B ends at the same figures to the places stated ({ES[-1][2]:.4f}, {ES[-1][1]:.5f} against {HA[-1][2]:.5f}, {HA[-1][1]:.5f})')
+lv.claim(abs((int(np.argmin(shown_v)) + 1) * 10 - bestA[0]) <= 50, 'the chart marks the best step within 50 of the recomputed one (it is one run)')
+cov(bestA[2], bestA[1], round(HA[-1][2], 3), round(HA[-1][1], 3), HA[-1][0])
 E('l10-early-stopping', 'screens[1].widget.answer', 1 / (0.01 * 400))
-cov(4, 0.0025)
 VL = [0.31, 0.24, 0.20, 0.19, 0.195, 0.21, 0.205, 0.23, 0.25]
 st, bi = B3.early_stop(VL, 3)
 E('l10-early-stopping', 'screens[2].widget.answer', st)
 cov(*VL, 100 * (st - bi))
 E('l10-early-stopping', 'screens[3].widget.answer', B3.early_stop([0.30, 0.22, 0.23, 0.24, 0.20, 0.18, 0.19, 0.21], 2)[0])
-cov(0.30, 0.22, 0.23, 0.24, 0.20, 0.18, 0.19, 0.21)
 gq = np.random.default_rng(21)
 Xp = gq.standard_normal((50, 2)) @ np.array([[1.0, 0.0], [0.8, 0.6]])
 yp = Xp @ np.array([1.0, -0.5]) + 0.3 * gq.standard_normal(50)
@@ -240,12 +271,10 @@ w = np.zeros(2)
 for _ in range(40):
     w = w - 0.1 * Xp.T @ (Xp @ w - yp) / 50
 r40 = np.linalg.solve(Xp.T @ Xp / 50 + 0.25 * np.eye(2), Xp.T @ yp / 50)
-cov(*w.tolist(), *r40.tolist(), 0.25)
+cov(*w.tolist(), *r40.tolist())
 lv.claim(np.linalg.norm(w - r40) / np.linalg.norm(r40) < 0.25, 'step 40 lies within 25% of ridge at 0.25')
 E('l10-early-stopping', 'quiz[0].widget.answer', B3.early_stop([0.40, 0.31, 0.28, 0.29, 0.30, 0.27, 0.33, 0.34, 0.35], 3)[1])
-cov(0.40, 0.31, 0.28, 0.29, 0.30, 0.27, 0.33, 0.34, 0.35)
 E('l10-early-stopping', 'quiz[1].widget.answer', 1 / (0.05 * 200))
-cov(10, 0.00025)
 # dropout
 DP, DPB = {}, {}
 for p in (0.0, 0.1, 0.2, 0.3, 0.5):
@@ -254,15 +283,15 @@ for p in (0.0, 0.1, 0.2, 0.3, 0.5):
     DPB[p] = mse_b(PB, Xv, Yv)
     agree(f'dropout {p}: validation error after 50 steps, autograd against the hand backward', mse_b(train_a(p=p, steps=50), Xv, Yv), mse_b(train_b(p=p, steps=50)[0], Xv, Yv), 1e-9)
     E('l11-dropout', f'screens[3].canvas.state.values.p{str(p).replace(".", "")}', round(DP[p], 3))
-    cov(DP[p])
+cov(DP[p])
 lv.claim(min(DP, key=DP.get) == 0.2, 'the lowest validation error is at p = 0.2 (route A)')
 E('l11-dropout', 'screens[0].widget.answer', 0.2)
 E('l11-dropout', 'screens[1].widget.answer', 1 / (1 - 0.2))
-cov(0.8, 2, 1 / 0.2)
+cov(1 / 0.2)
 E('l11-dropout', 'screens[2].widget.answer', round(8 / 0.75, 3))
-cov(2 / 0.75, 6 / 0.75, 4 / 3, 0.75, 8 * 0.75, 8 / 0.25)
+cov(2 / 0.75, 6 / 0.75, 4 / 3, 8 * 0.75, 8 / 0.25)
 E('l11-dropout', 'screens[3].widget.answer', 0.6 * 3 / 0.6)
-cov(1.8, 5, 3 / 0.6)
+cov(3 / 0.6)
 P02 = train_a(p=0.2)
 
 
@@ -284,7 +313,7 @@ cov(mc05, mc15)
 lv.claim(mc15 / mc05 < 1.2, 'the Monte Carlo spread barely grows outside the data')
 E('l11-dropout', 'quiz[0].widget.answer', round(1 / 0.7, 4))
 E('l11-dropout', 'quiz[1].widget.answer', 0.5 ** 2)
-cov(0.7, 1 / 0.3, 0.99, 0.51, 0.5)
+cov(1 / 0.3)
 # double descent
 PS = [5, 10, 15, 20, 25, 30, 35, 38, 40, 42, 45, 50, 60, 70, 80, 100, 120, 150, 200]
 
@@ -318,12 +347,12 @@ for s in range(5):
 F12 = lv._file('l12-double-descent')[1]
 shown = F12['screens'][0]['canvas']['params']['series'][0]['values']
 lv.claim(all(abs(a - round(b, 4)) <= max(2e-4, 1e-6 * abs(b)) for a, b in zip(shown, DD[0])), 'the minimum-norm curve (pinv, route A) matches lstsq (route B)')
-cov(DD[0][i10], DD[0][i40], DD[0][i200], DDR[i40], 40)
+cov(DD[0][i10], DD[0][i40], DD[0][i200], DDR[i40])
 E('l12-double-descent', 'screens[2].widget.answer', round(DDR[i40], 3))
 cov(DDR[-1], DD[0][i40])
 lv.claim(max(DDR) < 2, 'with ridge 0.1 the curve stays below 2')
 E('l12-double-descent', 'screens[1].widget.answer', 1)
-cov(math.sqrt(2), 2)
+cov(math.sqrt(2))
 gc = np.random.default_rng(0)
 _b = gc.standard_normal(10)
 Xa0 = gc.standard_normal((40, 10))
@@ -339,35 +368,30 @@ lv.claim(max(range(5), key=lambda i: conds[i]) == 2, 'the condition number peaks
 E('l12-double-descent', 'screens[3].widget.answer', 40)
 E('l12-double-descent', 'quiz[0].widget.answer', 60)
 E('l12-double-descent', 'quiz[2].widget.answer', 5)
-cov(25, 120, 30, 9 + 16)
+cov(9 + 16)
 lv.literal('2,000', why='the test-set size of the double-descent runs, a stated choice')
 lv.literal('10,000', why='the transfer scenario\'s weight count')
 # review, problems, homework
 E('review', 'items[0].widget.answer', 1 - 0.2 * 0.005)
 E('review', 'items[1].widget.answer', B3.early_stop([0.62, 0.51, 0.46, 0.44, 0.45, 0.43, 0.46, 0.47, 0.48, 0.50], 3)[0])
-cov(0.62, 0.51, 0.46, 0.44, 0.45, 0.43, 0.47, 0.48, 0.50, 0.995)
 E('review', 'items[2].widget.answer', 1 / 0.4)
 E('review', 'items[4].widget.answer', round(2 - 0.001 * (-1 + 0.01 * 2), 5))
-cov(0.00002, 2.001, 2 - 0.001 * 1.02, 0.02)
+cov(2 - 0.001 * 1.02)
 E('review', 'items[5].widget.answer', 1 / (0.02 * 250))
-cov(5, 0.00008, 0.119, 0.122)
 E('problems', 'items[0].parts[0].widget.answer', 1 - 0.2 * 0.1)
 E('problems', 'items[0].parts[1].widget.answer', round(0.98 ** 3, 6))
 E('problems', 'items[0].parts[2].widget.answer', round(3 / 2.1, 4))
 E('problems', 'items[0].parts[3].widget.answer', round(6 / 2.1, 4))
-cov(0.98 ** 2, 0.94, 1.4, 2.1, 1.5, 3.0)
+cov(0.98 ** 2)
 wr = np.linalg.solve(np.array([[2.0 + 0.1]]), np.array([3.0]))[0]
 agree('ridge weight: closed form against a solve', 3 / 2.1, float(wr), 1e-12)
 E('problems', 'items[1].parts[0].widget.answer', 5 / 0.8)
-cov(1.25, 0.64, 4)
 E('problems', 'items[2].parts[1].widget.answer', round(math.sqrt(20), 4))
 wmn = np.linalg.pinv(np.array([[2.0, 1.0]])) @ np.array([10.0])
 lv.claim(np.allclose(wmn, [4, 2]), 'minimum norm of 2w1 + w2 = 10 is (4, 2)')
-cov(20, 16, 4, 10 / 5, 2)
+cov(10 / 5)
 E('problems', 'items[2].parts[2].widget.answer', 45 - 30)
 E('homework', 'items[3].widget.answer', round((4 - 0.01) - (4 - 0.01 * (1 + 0.05 * 4)), 3))
-cov(3.99, 3.988, 0.7, 0.2, 0.002, 0.05)
-cov(50, 59, 9)
 for lit in ('1,000', '3,000', '5,000', '2 million', '1 million', '10^-8', '10^-9', '10^-6', '10^-7', '200,000', '400', '0.005', '250'):
     lv.literal(lit, why='a stated size, step count, setting or test tolerance')
 # ---------------- code widgets: solution, starter, mutants ----------------
@@ -462,6 +486,14 @@ for fid, doc in lv.files.items():
             lv.claim(got == mu['test'], f'{lab}: mutant "{mu["symptom"][:48]}" first fails test {mu["test"]} (got {got})')
 print(f'code widgets {nw}, mutants {nm}')
 
-lv.claim(True, 'route B values', covers=COV)
+# figures worked by hand in the text, recomputed from their definitions (the settings below are the only literals)
+cov(0.999 * 2, 0.1 * (0.5 + 0.01 * 2), 0.3 ** 2, 0.001 * 0.01 * 2, 4 - 0.01, 4 - 0.01 * (1 + 0.2), 0.01 * 0.2, 2.0 + 0.1, 3 ** 2, 4 ** 2, 60 - 1)
+lv.literal('0.03', why='a lambda of the weight-decay sweep LAMS, a stated setting')
+lv.literal('50', why='a feature count of the sweep grid PS, a stated setting')
+lv.literal('halved', why='the factor one half in the loss definition, a stated convention')
+lv.literal('0.30, 0.22, 0.23, 0.24, 0.20, 0.18, 0.19, 0.21', why='the validation curve given in l10 screens[3], the input of the early_stop call above')
+lv.literal('0.40, 0.31, 0.28, 0.29, 0.30, 0.27, 0.33, 0.34, 0.35', why='the validation curve given in the l10 quiz, the input of the early_stop call above')
+lv.literal('0.62, 0.51, 0.46, 0.44, 0.45, 0.43, 0.46, 0.47, 0.48, 0.50', why='the validation curve given in the review item, the input of the early_stop call above')
+lv.claim(NCOV['matched'] > 0, f'recomputed values compared with the figures the level states: {NCOV["matched"]} equal a stated figure at its stated precision, {NCOV["unstated"]} are not stated')
 lv.check_wrongs()
 lv.report()

@@ -104,7 +104,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "Normalise one example by hand",
-   "prose": "Name it: **layer normalisation** takes each example's feature vector, subtracts its mean, divides by $\\sqrt{\\sigma^2 + \\epsilon}$ (over its own $D$ features), then applies a learned $\\gamma$ and $\\beta$ per feature. It keeps no running statistics, so training and inference agree.",
+   "prose": "Name it: **layer normalisation** (Ba, Kiros and Hinton, 2016) takes each example's feature vector, subtracts its mean, divides by $\\sqrt{\\sigma^2 + \\epsilon}$ (over its own $D$ features), then applies a learned $\\gamma$ and $\\beta$ per feature. It keeps no running statistics, so training and inference agree.",
    "question": "An example has features $(1, 2, 3, 6)$. What does the 6 become, before $\\gamma$ and $\\beta$? Give 4 decimal places.",
    "widget": {
     "kind": "numeric",
@@ -545,9 +545,21 @@
       "call": "[layernorm(x, g, b).data.tolist(), bool(np.isfinite(x.grad).all())]",
       "compare": "isclose",
       "expect": "[[[-0.39836128088991196, 0.18595392958113843, -1.5226704029731744, 2.343232381708724, -0.09402582933360398]], True]"
+     },
+     {
+      "setup": "x, g, b = Tensor(Xl), Tensor(Gl), Tensor(Bl)\nL = (layernorm(x, g, b) * Tensor(Rl)).sum() + (layernorm(x, g, b) * Tensor(Rl[::-1])).sum()\nL.backward()",
+      "call": "[x.grad.tolist(), g.grad.tolist(), b.grad.tolist()]",
+      "compare": "isclose",
+      "expect": "[[[0.4443678139076927, 0.38610536056052347, -0.5558444068676351, 0.7052067563369626, -0.9798355239375438], [4.3670683920002435, 4.390049992268654, -8.742342973652228, 4.845288645422109, -4.8600640560387784], [0.27062251026547907, 0.23681038729942377, 0.09702431874482059, 0.4245489928538306, -1.0290062091635541]], [-0.9650269483575721, -2.03749018606837, -2.773671096805409, 2.208910236740667, 1.892713784970975], [1.4268128253143644, -0.4232149765380298, -4.437986897816101, 0.5302850336960552, -5.978027699119533]]"
+     },
+     {
+      "setup": "x, g, b = Tensor(Xl), Tensor(Gl), Tensor(Bl)\nL = (layernorm(x, g, b) * Tensor(Rl)).sum() + (x * Tensor(Rl)).sum()\nL.backward()",
+      "call": "x.grad.tolist()",
+      "compare": "isclose",
+      "expect": "[[0.22447802911326958, 1.1381839606390896, -1.5116383018245623, 1.2916382155830446, -2.0119328238573537], [2.7287759674954337, 1.1508987569185247, -6.208239595744586, 1.8288767383774511, -3.8939464435185034], [0.46783911905003633, 0.03239321294936594, 0.9054182018453971, 0.14760954844371543, -0.7314204427019446]]"
      }
     ],
-    "how": "`autograd.py` is in the working directory. Submit runs 6 hidden tests. Two check the forward pass and all three gradients on a seeded (3, 5) batch to $10^{-9}$, and two need `grad_check` below $10^{-6}$ on that batch and on a (2, 3, 5) array. The last two use a single vector and a vector of equal features.",
+    "how": "`autograd.py` is in the working directory. Submit runs 8 hidden tests. Two check the forward pass and all three gradients on a seeded (3, 5) batch to $10^{-9}$, and two need `grad_check` below $10^{-6}$ on that batch and on a (2, 3, 5) array. Two more use a single vector and a vector of equal features. The last two use the inputs a second time, in a second call and on a residual path, so the gradients must add.",
     "budget": 2000,
     "mutants": [
      {
@@ -569,6 +581,16 @@
       "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef layernorm(x, gamma, beta, eps=1e-5):\n    d = x.data.shape[-1]\n    mu = x.data.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.data.var(axis=-1, keepdims=True, ddof=1) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"layernorm\")\n\n    def _backward():\n        g = out.grad\n        lead = tuple(range(g.ndim - 1))\n        gamma.grad += (g * xhat).sum(axis=lead) if lead else g * xhat\n        beta.grad += g.sum(axis=lead) if lead else g\n        dx = g * gamma.data\n        x.grad += inv / d * (d * dx - dx.sum(axis=-1, keepdims=True) - xhat * (dx * xhat).sum(axis=-1, keepdims=True))\n    out._backward = _backward\n    return out\n",
       "test": 1,
       "symptom": "Divides the variance by D - 1."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef layernorm(x, gamma, beta, eps=1e-5):\n    d = x.data.shape[-1]\n    mu = x.data.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.data.var(axis=-1, keepdims=True) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"layernorm\")\n\n    def _backward():\n        g = out.grad\n        lead = tuple(range(g.ndim - 1))\n        gamma.grad += (g * xhat).sum(axis=lead) if lead else g * xhat\n        beta.grad += g.sum(axis=lead) if lead else g\n        dx = g * gamma.data\n        x.grad = inv / d * (d * dx - dx.sum(axis=-1, keepdims=True) - xhat * (dx * xhat).sum(axis=-1, keepdims=True))\n    out._backward = _backward\n    return out\n",
+      "test": 7,
+      "symptom": "Assigns the input's gradient instead of adding, so a second use of the input is lost."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef layernorm(x, gamma, beta, eps=1e-5):\n    d = x.data.shape[-1]\n    mu = x.data.mean(axis=-1, keepdims=True)\n    inv = 1 / np.sqrt(x.data.var(axis=-1, keepdims=True) + eps)\n    xhat = (x.data - mu) * inv\n    out = Tensor(gamma.data * xhat + beta.data, (x, gamma, beta), \"layernorm\")\n\n    def _backward():\n        g = out.grad\n        lead = tuple(range(g.ndim - 1))\n        gamma.grad = (g * xhat).sum(axis=lead) if lead else g * xhat\n        beta.grad = g.sum(axis=lead) if lead else g\n        dx = g * gamma.data\n        x.grad = inv / d * (d * dx - dx.sum(axis=-1, keepdims=True) - xhat * (dx * xhat).sum(axis=-1, keepdims=True))\n    out._backward = _backward\n    return out\n",
+      "test": 7,
+      "symptom": "Assigns all three gradients instead of adding, so a second call overwrites the first."
      }
     ]
    },

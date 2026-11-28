@@ -36,7 +36,7 @@ Branch `ai-w4-nn-train`, on top of level 2 (`895d4ff3`). Skill `nt-general` on e
 ## Numbers and their sources (recomputed by the number script)
 
 - l9: validation error 0.1746, 0.1395, 0.1055, 0.1048, 0.1143, 0.2553 at $\lambda$ = 0, 0.0001, 0.001, 0.01, 0.03, 0.1; 0.999; 1.948; AdamW 0.989 against 0.990; $0.9999^{1000} = 0.9048$; 0.9999 in the quiz.
-- l10: best step 660 (validation 0.1029, training 0.0528), 0.1668 at step 3,000; $\lambda \approx 0.25$; patience stops at 6 (best 3) and 3 (two dips); step 40 against ridge 0.25 within 25%.
+- l10: best step 660 (validation 0.1029, training 0.0528), 0.167 at step 3,000 (0.16667 to 0.16677 by BLAS threads; training 0.0528 falls to 0.011); $\lambda \approx 0.25$; patience stops at 6 (best 3) and 3 (two dips); step 40 against ridge 0.25 within 25%.
 - l11: validation 0.1746, 0.1333, 0.1205, 0.1413, 0.1566 at $p$ = 0, 0.1, 0.2, 0.3, 0.5; 1.25; 10.667; 3; Monte Carlo spread 0.119 at $x = 0.5$ and 0.122 at 1.5 (500 passes, `default_rng(1)`).
 - l12: seed 0 errors 0.874, 10.99, 0.388 at $p$ = 10, 40, 200 (minimum norm; `pinv` and `lstsq` agree); ridge 0.913 at 40; condition numbers 10, 71, 4,095, 115, 30 at $p$ = 10, 30, 40, 50, 200.
 - Review, problems, homework: every key and slip at its path.
@@ -57,7 +57,7 @@ None.
 
 Version 1.0, 2,851 bytes, SHA-256 `52c79ff41ccd14b5eb6e09a23fbc9399c80116f939b704b778426939ee468c7f`; imports NumPy and `autograd` (v1.0). `from nt_ops_l3 import ...`
 - `decayed_sgd_step(w, g, lr, lam) -> ndarray`: $(1 - \eta\lambda)w - \eta g$.
-- `adamw_step(params, grads, m, v, t, lr, lam, b1=0.9, b2=0.999, eps=1e-8) -> (params, m, v)`: Adam with the decay $\eta\lambda p$ outside the rescaling; `t` from 1.
+- `adamw_step(params, grads, m, v, t, lr, lam, b1=0.9, b2=0.999, eps=1e-8) -> (params, m, v)`: Adam with the decay $\eta\lambda p$ outside the rescaling; `t` from 1. It decays every array it is given, biases and norm gains included: pass the weights alone, or the others with `lam = 0` in a second call (the module is frozen; l9 says so on screen 4).
 - `early_stop(val_losses, patience) -> (stop index, best index)`: stops at the first index `patience` evaluations past the best; only a strictly lower loss is a new best; never stopping returns the last index.
 - `dropout(x, p, mode="train", rng=None) -> (Tensor, mask)`: inverted dropout as a `Tensor` op; mask entries 0 or $1/(1 - p)$, drawn as `rng.random(shape) >= p`; backward multiplies by the mask; `mode="eval"` or `p = 0` returns `x` and `None`; `p` must be in $[0, 1)$.
 - `random_relu_features(X, p, seed) -> ndarray`: $\max(0, \mathbf{X}\mathbf{W})$ with $\mathbf{W}$ of shape $(d, p)$ drawn $N(0, 1/d)$ from `default_rng(seed)`; a 1-D `X` is one input.

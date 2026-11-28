@@ -27,7 +27,7 @@ Branch `ai-w4-nn-train`, on top of level 1 (`648914a5`). Skill `nt-signal` on ev
 
 ## Decisions a reader should know
 
-- **The batch-norm hook states only the split.** At step 1 the deep net (2-64-64-64-64-2, tanh) blows up without batch norm on all five seeds (above 1 nat) and trains with it (below 0.25). The exact figures depend on rounding: seed 1 ends at 0.177 with `nt_ops_l2.batchnorm` and at 0.194 with batch norm composed from autograd primitives. The lesson therefore states the split, which holds in both routes, and labels the chart as one run.
+- **The batch-norm hook states only the split.** At step 1 the deep net (2-64-64-64-64-2, tanh) blows up without batch norm on all five seeds (above 1 nat) and trains with it (below 0.25). The exact figures depend on rounding: seed 1 ends at 0.177 with `nt_ops_l2.batchnorm` and at 0.194 with batch norm composed from autograd primitives (default threads; under one BLAS thread, as in CI, they read 0.190 and 0.177: fix pass for the second reader's note). The lesson therefore states the split, which holds in both routes, and labels the chart as one run.
 - **Notation.** As in `backprop` L4 and `makemore`, layers are `X @ W + b` with `W` of shape (fan_in, fan_out); `stat-learning` l17 stored `W` transposed.
 - **Ops shipped by path.** The l5 code ships `nt_ops_l2.py` (it uses `sigmoid`); the l7 and l8 op screens ship only `autograd.py`, since the op is the exercise. The homework does not ship `nt_ops_l2.py`.
 - **Running averages** move a share 0.1 towards each batch, from mean 0 and variance 1, and use the batch variance divided by $N$ (PyTorch keeps $N - 1$ for its running variance; stated in the module's docstring as divided by $N$).

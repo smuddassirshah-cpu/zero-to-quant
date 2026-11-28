@@ -25,18 +25,38 @@ ROOT = os.path.join(HERE, '..', '..')
 APP = os.path.join(ROOT, 'app')
 DATA = os.path.join(APP, 'content', 'data', 'ai')
 sys.path.insert(0, os.path.join(APP, 'tools'))
-from numbers_lib import Level  # noqa: E402
+from numbers_lib import Level, _stated, _text_strings  # noqa: E402
 
 sys.path.insert(0, DATA)
 import nt_ops_l1 as A  # noqa: E402
 
 lv = Level('nn-train', 1)
 E = lv.expect
-COV = []
+_STATED = []
+_strs = []
+for _fid, _doc in lv.files.items():
+    _text_strings(_doc, '', _fid, _strs)
+for _fid, _path, _text in _strs:
+    for _v, _tol, _pct, _shown, _strong in _stated(_text):
+        _STATED.append((abs(_v), _tol, _pct))
+NCOV = {'matched': 0, 'unstated': 0}
+
+
+def is_stated(x):
+    """True when a figure on screen equals x to its stated precision (the comparison coverage makes by value)"""
+    a = abs(float(x))
+    return any(abs(a - t) <= tol for v, tol, pct in _STATED for t in ((v, v / 100) if pct else (v,)))
 
 
 def cov(*vals):
-    COV.extend(vals)
+    """Computed values, recomputed in this script: each one is compared with the figures the level states, at their stated precision.
+    A value that matches covers them; a value no figure matches covers nothing (it is simply not stated)."""
+    for x in vals:
+        if is_stated(x):
+            lv._cover(float(x))
+            NCOV['matched'] += 1
+        else:
+            NCOV['unstated'] += 1
 
 
 def agree(label, a, b, rel=1e-9):
@@ -208,7 +228,7 @@ E(L1, 'screens[1].widget.wrong[1].value', round(sig / math.sqrt(8), 4))
 E(L1, 'screens[1].widget.wrong[2].value', round(sig / 16, 4))
 lv.claim(abs(sd128 - pred) < 0.15 * pred and abs(sd8 - sig / math.sqrt(8)) < 0.15 * sig / math.sqrt(8), 'the measured sds sit near sigma/sqrt(B)')
 lv.claim(3.0 < sd8 / sd128 < 5.0, f'ratio of the spreads is about 4 ({sd8 / sd128:.2f})')
-cov(sig, gfull, sd8, sd128, pred, sd8 / sd128, math.sqrt(128), 128 / 8, 0.25, 4, 16)
+cov(sig, gfull, sd8, sd128, pred, sd8 / sd128, math.sqrt(128), 128 / 8)
 # one step by hand
 x3, y3 = np.array([1.0, 2.0, 3.0]), np.array([2.0, 3.0, 5.0])
 gr = float(np.mean((1.0 * x3 - y3) * x3))
@@ -216,7 +236,7 @@ E(L1, 'screens[2].widget.answer', 1 - 0.1 * gr)
 E(L1, 'screens[2].widget.wrong[0].value', 1 - 0.1 * float(np.sum((x3 - y3) * x3)))
 E(L1, 'screens[2].widget.wrong[1].value', 1 + 0.1 * gr)
 E(L1, 'screens[2].widget.wrong[2].value', 1 - 0.1 * float((1 - 2) * 1))
-cov(gr, -9, 0.3)
+cov(gr)
 
 
 # per epoch, full batch against batch 32, 8 and 128
@@ -242,7 +262,9 @@ lv.claim(np.allclose(F1['screens'][6]['canvas']['params']['series'][0]['values']
 E(L1, 'screens[3].widget.answer', 20 * math.ceil(400 / 32))
 lv.claim(len(range(0, 400, 32)) == 13 and len(range(0, 400, 128)) == 4 and len(range(0, 400, 8)) == 50, '13, 4 and 50 batches an epoch')
 lv.claim(e8[1] < e128[1] and e8[20] < e128[20], 'batch 8 is ahead of batch 128 per epoch at epochs 1 and 20')
-cov(e32[20], gd[20], e8[1], e128[1], e8[20], e128[20], 8000, 384, 250, 13)
+lv.claim(all(e32[k] > e32[k - 1] and e32[k + 1] < e32[k] for k in (15, 19)) and e32[15] > 3 * e32[14] and e32[19] > 3 * e32[18],
+         f'batch 32 at 0.5 spikes at epochs 15 and 19 ({e32[15]:.4f}, {e32[19]:.4f}) and recovers the next epoch ({e32[16]:.4f}, {e32[20]:.4f})')
+cov(e32[20], gd[20], e8[1], e128[1], e8[20], e128[20])
 # the band on least squares
 gl = np.random.default_rng(7)
 Xr = gl.standard_normal((1000, 3))
@@ -283,7 +305,7 @@ E(L1, 'screens[7].widget.wrong[1].value', 0.05 / 8)
 sig_r = float(np.std(-yr * Xr[:, 0]))
 cov(sig_r, sig_r / 8)
 E(L1, 'screens[9].widget.answer', (0.8 / 0.01) ** 2)
-cov(80, 6400 / 1e6, 0.0064, 0.64)
+cov(6400 / 1e6)
 E(L1, 'quiz[0].widget.answer', 0.02 / math.sqrt(64 / 16))
 E(L1, 'quiz[2].widget.answer', math.ceil(50000 / 64))
 cov(50000 / 64, 781 * 64)
@@ -335,14 +357,13 @@ E(L2, 'screens[1].widget.answer', sum(0.9 ** k for k in range(5000)))
 cov(1 / (1 - 0.99), 1 / 1.9)
 E(L2, 'screens[2].widget.answer', hb_b(0.1, 0.5, 2)[2, 0])
 lv.claim(np.allclose(hb_b(0.1, 0.5, 2), [[10, 1], [9, 0], [7.6, -0.5]]), 'two hand steps: (9, 0) then (7.6, -0.5)')
-cov(8.1, 8.5, 7.1, -1.4, -0.5, 0.9)
 sk = math.sqrt(10)
 bhb, shb = ((sk - 1) / (sk + 1)) ** 2, 4 / (1 + sk) ** 2
 M = lambda lam: np.array([[1 + bhb - shb * lam, -bhb], [1, 0]])  # noqa: E731
 rate = max(max(abs(np.linalg.eigvals(M(1)))), max(abs(np.linalg.eigvals(M(10)))))
 agree('heavy-ball rate: sqrt(beta) against the iteration matrix eigenvalues', math.sqrt(bhb), rate, 1e-6)
 E(L2, 'screens[3].widget.answer', round(bhb, 3))
-cov(bhb, shb, math.sqrt(bhb), (sk - 1), (sk + 1), sk, math.sqrt(bhb) ** 20, (9 / 11) ** 20)
+cov(bhb, shb, math.sqrt(bhb), sk - 1, sk + 1, sk, math.sqrt(bhb) ** 20, (9 / 11) ** 20)
 hbrel = float(np.linalg.norm(hb_b(shb, bhb, 20)[-1]) / math.sqrt(101))
 cov(hbrel)
 lv.claim(hbrel > math.sqrt(bhb) ** 20, 'the measured heavy-ball iterates lag the asymptotic factor')
@@ -363,7 +384,7 @@ n2 = math.ceil(math.log(1000) / math.log(1 / r2))
 E(L2, 'screens[8].widget.answer', n2)
 lv.claim(n2 == next(k for k in range(1, 200) if r2 ** k <= 1e-3), 'heavy-ball count by direct search')
 lv.claim(math.ceil(math.log(1000) / math.log(1 / 0.9)) == 66, 'plain descent needs 66 steps at rate 0.9')
-cov(k2, r2, math.sqrt(19), math.log(1000), math.log(1 / r2), math.log(1000) / math.log(1 / r2), 0.9, 66)
+cov(k2, r2, math.sqrt(19), math.log(1000), math.log(1 / r2), math.log(1000) / math.log(1 / r2))
 E(L2, 'quiz[0].widget.answer', 1 / (1 - 0.8))
 E(L2, 'quiz[2].widget.answer', round(9 / 11, 3))
 cov(99 / 101, (9 / 11) ** 2)
@@ -411,7 +432,7 @@ for t in range(1, 4):
     wa, ma, va = A.adam_step(wa, [2 * wa[0]], ma, va, t, 0.1)
 agree('three Adam steps: hand loop against the module', ws[3], float(wa[0]), 1e-12)
 E(L3, 'screens[2].widget.answer', round(ws[2], 4))
-cov(ws[1], ws[2], ws[3], mh2, math.sqrt(vh2), 0.1 * mh2 / math.sqrt(vh2), mh2 / math.sqrt(vh2), 0.36, 0.007236, 0.19, 0.001999, 3.24, 0.004, 0.2, 4, 0.72)
+cov(ws[1], ws[2], ws[3], mh2, math.sqrt(vh2), 0.1 * mh2 / math.sqrt(vh2), mh2 / math.sqrt(vh2))
 fac = {t: (1 - 0.9 ** t) / math.sqrt(1 - 0.999 ** t) for t in (1, 10, 100, 1000)}
 
 
@@ -443,13 +464,13 @@ a05 = [train_a('adam', 5, s, 0.5) for s in SEEDS]
 b05 = [final_b('adam', 5, s, 0.5) for s in SEEDS]
 for s, (x, y) in enumerate(zip(a05, b05)):
     agree(f'Adam at 0.5, 5 steps, seed {s + 1}: autograd against the hand backward', x, y, 1e-9)
-cov(*[float(np.mean(asw[k])) for k in AST], 0.2)
+cov(*[float(np.mean(asw[k])) for k in AST])
 E(L3, 'screens[9].widget.answer', 1200 / 0.4)
 cov(0.4 / 1200)
 lv.literal('1,200', why='the transfer\'s price level and gradient, a stated scenario')
 E(L3, 'quiz[0].widget.answer', 1 - 0.9 ** 2)
 E(L3, 'quiz[2].widget.answer', 0.003)
-cov(0.003 * 0.02, 0.81, 2 * 0.003 * 0.02 / 40 * 0.025)
+cov(0.003 * 0.02, 2 * 0.003 * 0.02 / 40 * 0.025)
 
 # ================= l4-schedules =================
 L4 = 'l4-schedules'
@@ -475,7 +496,8 @@ def ls_run(f, seed):
     return h
 
 
-SCH = {'const': lambda t: 0.2, 'step': lambda t: 0.2 if t < 180 else 0.02, 'cos': lambda t: wc_b(t, 0.2, 0, 300)}
+STEP_AT = 180
+SCH = {'const': lambda t: 0.2, 'step': lambda t: 0.2 if t < STEP_AT else 0.02, 'cos': lambda t: wc_b(t, 0.2, 0, 300)}
 fin = {k: float(np.mean([ls_run(f, s)[-1] for s in range(11, 21)])) for k, f in SCH.items()}
 fin_each = {k: [ls_run(f, s)[-1] for s in range(11, 21)] for k, f in SCH.items()}
 lv.claim(all(fin_each['step'][i] < fin_each['const'][i] and fin_each['cos'][i] < fin_each['const'][i] for i in range(10)), 'both decays end below the constant rate on all ten seeds')
@@ -485,23 +507,28 @@ E(L4, 'screens[3].widget.answer', round(fin['const'] / 10, 5))
 r11 = {k: ls_run(f, 11) for k, f in SCH.items()}
 cov(r11['const'][150], r11['cos'][150], r11['const'][-1], r11['cos'][-1])
 lv.claim(r11['const'][150] < r11['cos'][150] and r11['const'][-1] > r11['cos'][-1], 'trap: the constant run is lower at step 150 and higher at step 300 (seed 11)')
+at150 = {k: float(np.mean([ls_run(f, sd)[150] for sd in range(11, 21)])) for k, f in SCH.items()}
+lv.claim(at150['cos'] < at150['const'], f'trap: over ten seeds the cosine is already below the constant rate at step 150 ({at150["cos"]:.4f} against {at150["const"]:.4f}); seed 11 alone says the opposite')
+E(L4, 'screens[6].explain.text', round(at150['cos'], 4))
+E(L4, 'screens[6].explain.text', round(at150['const'], 4))
+lv.claim(abs(wc_b(150, 0.2, 0, 300) - 0.1) < 1e-12, 'the cosine runs at half the starting rate at step 150')
+cov(at150['const'], at150['cos'])
 E(L4, 'screens[1].widget.answer', round(wc_b(75, 0.2, 0, 300), 4))
-cov(math.cos(math.pi / 4), 1 + math.cos(math.pi / 4), 0.1 * (1 + math.cos(75 / 300)), 0.85)
+cov(math.cos(math.pi / 4), 1 + math.cos(math.pi / 4), 0.1 * (1 + math.cos(75 / 300)))
 E(L4, 'screens[2].widget.rows[0][1].answer', wc_b(5, 0.1, 20, 300))
 E(L4, 'screens[2].widget.rows[1][1].answer', wc_b(160, 0.1, 20, 300))
 E(L4, 'screens[2].widget.rows[2][1].answer', round(wc_b(230, 0.1, 20, 300), 4))
-cov(round(0.1 * (1 + math.cos(math.pi * 160 / 300)) / 2, 4), 0.05 * (1 + math.sin(0.75 * math.pi)), 0.75, -0.7071, 210, 280)
+cov(round(0.1 * (1 + math.cos(math.pi * 160 / 300)) / 2, 4), 0.05 * (1 + math.sin(0.75 * math.pi)))
 E(L4, 'screens[4].widget.answer', 0.1 / (0.1 * 1 / 20))
 spw = {k: [final_b('adam', 300, s, 0, f) for s in SEEDS] for k, f in (('cos', lambda t: wc_b(t, 0.1, 0, 300)), ('wcos', lambda t: wc_b(t, 0.1, 15, 300)))}
 cov(float(np.mean(spw['cos'])), float(np.mean(spw['wcos'])), min(spw['wcos']), max(spw['wcos']))
 lv.claim(max(spw['wcos']) < 0.03, 'warm-up and cosine end below 0.03 on all five seeds (the l4 test threshold)')
 E(L4, 'screens[5].widget.answer', 0.1 * (1 + math.cos(math.pi * 450 / 300)))
-cov(1.5, 600)
 E(L4, 'screens[9].widget.answer', round(wc_b(1050, 0.003, 100, 2000), 6))
-cov(round(0.0015 * (1 + math.cos(math.pi * 1050 / 2000)), 6), 1900, 950, (1050 - 100) / 1900)
+cov(round(0.0015 * (1 + math.cos(math.pi * 1050 / 2000)), 6), (1050 - 100) / 1900)
 E(L4, 'quiz[0].widget.answer', round(0.2 * (1 + math.cos(math.pi / 4)), 4))
 E(L4, 'quiz[1].widget.answer', 0.002 * 30 / 100)
-cov(0.002 * 70 / 100, 0.7071)
+cov(0.002 * 70 / 100)
 lv.literal('2,000', why='the monthly retrain\'s run length, a stated scenario')
 lv.literal('550', why='a schedule length stated in a review item')
 
@@ -511,25 +538,25 @@ E('review', 'items[3].widget.answer', round(((2 - 1) / (2 + 1)) ** 2, 3))
 E('review', 'items[5].widget.answer', round((1 - 0.81) / math.sqrt(1 - 0.999 ** 2), 2))
 E('review', 'items[6].widget.answer', round(0.025 * (1 + math.cos(3 * math.pi / 4)), 4))
 E('review', 'items[7].widget.answer', wc_b(300, 0.01, 50, 550))
-cov(-1.25, -2.5, 0.0447, math.sqrt(1 - 0.999 ** 2), 0.2929, 0.998001, 1 / 3)
+cov(math.sqrt(1 - 0.999 ** 2), 1 / 3)
 ev = np.linalg.eigvalsh(np.array([[4.25, 3.75], [3.75, 4.25]]))
 E('problems', 'items[0].parts[0].widget.answer', float(ev.max()))
 E('problems', 'items[0].parts[1].widget.answer', round((16 - 1) / (16 + 1), 4))
 E('problems', 'items[0].parts[3].widget.answer', next(k for k in range(1, 100) if 0.6 ** k <= 1e-3))
 sb = 2 / (ev.min() + ev.max())
 E('problems', 'items[0].parts[4].widget.answer', next(B for B in range(1, 10 ** 6) if sb * 2 / math.sqrt(B) <= 0.01))
-cov(sb, sb * 200, (sb * 200) ** 2, 0.6 ** 13, 0.6 ** 14, 6.908 / 0.511, math.log(1 / 0.6), next(k for k in range(1, 100) if (15 / 17) ** k <= 1e-3), 8.5)
+cov(sb, sb * 200, (sb * 200) ** 2, 0.6 ** 13, 0.6 ** 14, 6.908 / 0.511, math.log(1 / 0.6), next(k for k in range(1, 100) if (15 / 17) ** k <= 1e-3))
 mm, vv = 0.9 * 0.4 + 0.1 * (-2), 0.999 * 0.016 + 0.001 * 4
 E('problems', 'items[1].parts[0].widget.answer', mm)
 mh, vh = mm / 0.19, vv / (1 - 0.999 ** 2)
 E('problems', 'items[1].parts[1].widget.answer', round(mh, 4))
 E('problems', 'items[1].parts[2].widget.answer', round(0.01 * mh / (math.sqrt(vh) + 1e-8), 6))
 E('problems', 'items[1].parts[3].widget.answer', round(0.002 * mh / (math.sqrt(vh) + 1e-8), 6))
-cov(vv, vh, math.sqrt(vh), mh / math.sqrt(vh), 0.36, -0.2)
+cov(vv, vh, math.sqrt(vh), mh / math.sqrt(vh))
 E('problems', 'items[2].parts[1].widget.answer', round(wc_b(1200, 0.08, 0, 4000), 4))
 E('problems', 'items[2].parts[2].widget.answer', round(1.5 / math.sqrt(50), 4))
 E('problems', 'items[2].parts[3].widget.answer', round(wc_b(1200, 0.08, 0, 4000) * 1.5 / math.sqrt(50), 4))
-cov(math.cos(0.3 * math.pi), 1 + math.cos(0.3 * math.pi), math.sqrt(50), 2.25 / 50, 1.5)
+cov(math.cos(0.3 * math.pi), 1 + math.cos(0.3 * math.pi), math.sqrt(50), 2.25 / 50)
 lv.literal('20,000', why='the problem\'s data set size, a stated scenario')
 f5 = (1 - 0.9 ** 5) / math.sqrt(1 - 0.999 ** 5)
 E('homework', 'items[3].widget.answer', round(f5, 2))
@@ -637,8 +664,35 @@ lv.literal('0.31', why='a stated minibatch loss in a review scenario')
 for lit in ('10^-3', '10^-4', '10^-6'):
     lv.literal(lit, why='a tolerance or target stated in a question, hint or how line')
 lv.literal('0.99', why='a stated momentum setting')
-cov(32, 128, 50, 30, 160, 230, 180, 450, 1050, 500, 99, 101, 10, 8, 2, 0.02 * math.sqrt(8), 512 / 64, 0.001 * 4 ** 2, 1.5 ** 2,
-    float(f'{hbrel:.1e}'), 70 / 100, float(f'{math.sqrt(bhb) ** 20:.1e}'))
-lv.claim(True, 'route B values', covers=COV)
+cov(0.02 * math.sqrt(8), 512 / 64, 0.001 * 4 ** 2, 1.5 ** 2, float(f'{hbrel:.1e}'), 70 / 100, float(f'{math.sqrt(bhb) ** 20:.1e}'))
+# figures worked by hand in the text, recomputed from their definitions (the settings below are the only literals)
+cov(math.sqrt(128 / 8), math.sqrt(8 / 128), (0.02 / 0.01) ** 2, len(range(0, 400, 8)), (400 // 32) * 32, 20 * 400, 0.4 / 0.2, max(STEADY), 0.8 ** 2)
+cov(100 - 1, 100 + 1, 1 / (1 - 0.9), 75 / 300, 300 - 20, 5 / 20, (230 - 20) / 280, 450 / 300, 1050 - 100, 550 - 50, 1 - 0.999 ** 2)
+cov(float(np.mean([(0.5 * 2 - 1) * 2, (0.5 * 1 - 3) * 1])), 0.999 ** 2, 1 + math.cos(3 * math.pi / 4))
+v1h = -0.1 * Hd * np.array([10.0, 1.0])
+x1h = np.array([10.0, 1.0]) + v1h
+v2h = 0.5 * v1h - 0.1 * Hd * x1h
+cov(*v2h.tolist())
+lv.claim(np.allclose(v2h, [-1.4, -0.5]) and np.allclose(x1h + v2h, [7.6, -0.5]), 'heavy-ball hand steps: v2 = (-1.4, -0.5), x2 = (7.6, -0.5)')
+g2h = 2 * ws[1]
+m2raw, v2raw = 0.9 * 0.2 + 0.1 * g2h, 0.999 * 0.004 + 0.001 * g2h * g2h
+cov(1 - 0.9 ** 2, 1 - 0.999 ** 2, m2raw, v2raw)
+lv.claim(abs(m2raw / (1 - 0.9 ** 2) - mh2) < 1e-12 and abs(v2raw / (1 - 0.999 ** 2) - vh2) < 1e-12, 'step 2 of Adam by hand: the raw moments divided by 0.19 and 0.001999 give the corrected ones')
+lv.literal('128', why='the large minibatch size of the comparison, a stated setting')
+lv.literal('32', why='the minibatch size of every run in this level, a stated setting')
+lv.literal('160', why='the step at which the question asks for the schedule, an input of the E() call above')
+lv.literal('230', why='the step at which the question asks for the schedule, an input of the E() call above')
+lv.literal('450', why='the step at which the question asks for the schedule, an input of the E() call above')
+lv.literal('1050', why='the step at which the question asks for the schedule, an input of the E() call above')
+lv.literal('180', why="the step schedule's drop point, the setting STEP_AT used by SCH")
+lv.literal('30', why='the number of warm-up steps taken in a quiz item, an input of its E() call')
+lv.literal('50', why='the warm-up length of a review item, an input of its E() call')
+lv.literal('1.5', why='the per-row gradient sd given in a problem')
+lv.literal('ten times', why='a rounding word for the measured ratio 0.226/0.0194 = 11.7 (l3 screens[5]), checked by the claim below')
+lv.claim(8 < float(np.mean(asw[0.003])) / float(np.mean(asw[0.1])) < 15, 'Adam at 0.003 ends about ten times above Adam at 0.1')
+lv.literal('a quarter', why='a rounding word for 15 steps of 66 (0.23, l2 screens[8]), checked by the claim below')
+lv.claim(0.2 < 15 / 66 < 0.25, 'the heavy ball needs a little under a quarter of plain descent\'s steps')
+lv.literal('1/4', why='the step 1/lambda for the quiz\'s bowl with both eigenvalues 4, a given')
+lv.claim(NCOV['matched'] > 0, f'recomputed values compared with the figures the level states: {NCOV["matched"]} equal a stated figure at its stated precision, {NCOV["unstated"]} are not stated')
 lv.check_wrongs()
 lv.report()
