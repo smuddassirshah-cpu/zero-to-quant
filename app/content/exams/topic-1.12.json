@@ -1,0 +1,2886 @@
+{
+ "id": "topic-1.12",
+ "topic": "1.12",
+ "name": "Neural networks from scratch",
+ "minutes": 100,
+ "pass": 0.7,
+ "skills": {
+  "if-surprise": "Surprise and entropy",
+  "if-codes": "Codes and compression",
+  "if-cross": "Cross-entropy and KL divergence",
+  "if-likelihood": "Perplexity and likelihood",
+  "if-mutual": "Mutual information",
+  "bp-chain": "The chain rule on a graph",
+  "bp-backward": "The backward pass",
+  "bp-autograd": "Writing an autograd",
+  "bp-networks": "Neurons, layers and training",
+  "bp-check": "Gradient checks",
+  "bp-arrays": "Gradients for arrays",
+  "mk-bigram": "Bigram models",
+  "mk-loss": "Likelihood losses",
+  "mk-mlp": "Embeddings and the MLP model",
+  "mk-train": "Training and tuning",
+  "mk-eval": "Sampling and held-out evaluation"
+ },
+ "items": [
+  {
+   "id": "e-tail-move-bits",
+   "difficulty": 2,
+   "skills": [
+    "if-surprise"
+   ],
+   "tags": [
+    "surprise"
+   ],
+   "pace": 60,
+   "title": "A rare move",
+   "prose": "A risk model gives a one-day move of three standard deviations a chance of 0.0125.",
+   "question": "How many bits of surprise does such a day carry? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.3219,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "label": "Surprise (bits)",
+    "wrong": [
+     {
+      "id": "nats",
+      "value": 4.382,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "log10",
+      "value": 1.9031,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "reciprocal",
+      "value": 80,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-\\log_2 0.0125 = \\log_2 80 \\approx 6.32$ bits.",
+    "generic": "Take minus the log of the chance, in base 2.",
+    "byKey": {
+     "nats": "That is the surprise in nats, from $\\ln$. Divide by $\\ln 2$ to get bits.",
+     "log10": "You used the base 10 log. Bits need the base 2 log.",
+     "reciprocal": "That is one over the chance. The surprise is its log in base 2."
+    }
+   },
+   "explain": {
+    "text": "An outcome of chance $p$ carries $-\\log_2 p$ bits. Here $1/0.0125 = 80$, and $\\log_2 80 \\approx 6.32$. That is a little more than the 6 bits of a 1 in 64 event."
+   }
+  },
+  {
+   "id": "e-ticker-pairs",
+   "difficulty": 2,
+   "skills": [
+    "mk-bigram"
+   ],
+   "tags": [
+    "bigram-counts"
+   ],
+   "pace": 60,
+   "title": "Pairs from tickers",
+   "prose": "A desk builds a bigram table from 400 ticker symbols holding 1,530 letters between them. Each ticker is wrapped in a start mark and an end mark before its pairs are counted.",
+   "question": "How many pairs does the table count in all?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1930,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "Pairs",
+    "wrong": [
+     {
+      "id": "no-end",
+      "value": 1530,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "marks-twice",
+      "value": 2330,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "inside-only",
+      "value": 1130,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A ticker of $n$ letters gives $n + 1$ pairs, so the table counts $1{,}530 + 400 = 1{,}930$.",
+    "generic": "Count the pairs of one wrapped ticker, then add over all 400.",
+    "byKey": {
+     "no-end": "You counted one pair per letter. The pair that ends at the end mark adds one more per ticker.",
+     "marks-twice": "You added two pairs per ticker, one for each mark. Wrapping adds one symbol to the pairs, not two.",
+     "inside-only": "You counted only the pairs between two letters. The pairs that start or stop at a mark count too."
+    }
+   },
+   "explain": {
+    "text": "Wrapped as `.ibm.`, a ticker of 3 letters gives the 4 pairs `.i`, `ib`, `bm` and `m.`: one more than its letters. Over 400 tickers that is $1{,}530 + 400 = 1{,}930$ pairs."
+   }
+  },
+  {
+   "id": "e-slippage-grad",
+   "difficulty": 2,
+   "skills": [
+    "bp-chain"
+   ],
+   "tags": [
+    "path-gradient"
+   ],
+   "pace": 75,
+   "title": "A cost with two boxes",
+   "prose": "A desk draws its slippage cost as two boxes: $s = p - m$, then $C = qs$. Today $q = 400$ shares, the fill price $p$ is £50.30 and the mid $m$ is £50.25, so the cost $C$ is £20.",
+   "question": "What is $\\partial C/\\partial m$, in pounds per pound of the mid?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -400,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "Gradient",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 400,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "other-input",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "value",
+      "value": 20,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The product box passes $s$ its other input, 400, and the subtraction box multiplies by $-1$: $-400$.",
+    "generic": "Walk back from $C$ with 1, multiplying one local derivative per arrow.",
+    "byKey": {
+     "sign": "The subtraction box passes $-1$ to $m$, not 1. A higher mid lowers the cost.",
+     "other-input": "That is $s = p - m$, the product box's gift to $q$. The path to $m$ goes through $s$.",
+     "value": "That is the cost itself, £20. The gradient is a rate, not a value."
+    }
+   },
+   "explain": {
+    "text": "Walking back from $C$ starts with 1. The product box sends $s$ the other input, $q = 400$, and the subtraction box multiplies by $\\partial s/\\partial m = -1$. So $\\partial C/\\partial m = 400 \\times (-1) = -400$."
+   }
+  },
+  {
+   "id": "e-perplexity-sixteen",
+   "difficulty": 2,
+   "skills": [
+    "if-likelihood"
+   ],
+   "tags": [
+    "perplexity"
+   ],
+   "pace": 60,
+   "title": "From perplexity back to a loss",
+   "prose": "A vendor reports that its character model has a perplexity of 16 on held-out text.",
+   "question": "What is the model's average loss, in nats per character? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.7726,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a number",
+    "label": "Loss (nats)",
+    "wrong": [
+     {
+      "id": "bits",
+      "value": 4,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "log10",
+      "value": 1.2041,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "inverse",
+      "value": 0.0625,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Perplexity is $e^{H}$ for a loss $H$ in nats, so $H = \\ln 16 \\approx 2.7726$.",
+    "generic": "Undo the exponential that turned the loss into a perplexity.",
+    "byKey": {
+     "bits": "That is the loss in bits, $\\log_2 16$. Multiply by $\\ln 2$ for nats.",
+     "log10": "You used the base 10 log. Nats use $\\ln$.",
+     "inverse": "That is one over the perplexity. Take its log instead."
+    }
+   },
+   "explain": {
+    "text": "Perplexity undoes the log of an average loss: $16 = e^{H}$ in nats and $16 = 2^{H}$ in bits. So the loss is $\\ln 16 \\approx 2.7726$ nats, which is the same as $\\log_2 16 = 4$ bits."
+   }
+  },
+  {
+   "id": "e-count-six-ten-three",
+   "difficulty": 2,
+   "skills": [
+    "bp-networks"
+   ],
+   "tags": [
+    "parameter-count"
+   ],
+   "pace": 60,
+   "title": "Sizing a small network",
+   "prose": "A desk's classifier is a 6-10-3 network: six inputs, one hidden layer of ten tanh neurons and three outputs. Every neuron has a bias.",
+   "question": "How many parameters does it have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 103,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "Parameters",
+    "wrong": [
+     {
+      "id": "edges",
+      "value": 90,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one-bias",
+      "value": 91,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "hidden-only",
+      "value": 70,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$7 \\times 10 + 11 \\times 3 = 70 + 33 = 103$.",
+    "generic": "Count each layer's weights and biases, then add the layers.",
+    "byKey": {
+     "edges": "You counted the weights only. Each of the 13 neurons has a bias as well.",
+     "one-bias": "You gave the network one bias. Each neuron has its own.",
+     "hidden-only": "That is the hidden layer alone. Add the output layer's $11 \\times 3$."
+    }
+   },
+   "explain": {
+    "text": "A layer from $m$ inputs to $k$ neurons holds $(m + 1)k$ parameters. Here that is $7 \\times 10 = 70$ for the hidden layer and $11 \\times 3 = 33$ for the outputs, 103 in all."
+   }
+  },
+  {
+   "id": "e-draw-on-a-total",
+   "difficulty": 2,
+   "skills": [
+    "mk-eval"
+   ],
+   "tags": [
+    "sampling-rule"
+   ],
+   "pace": 60,
+   "title": "A draw on a running total",
+   "prose": "After the context `ma`, a trained model gives the next symbol these chances, in this order: end 0.25, r 0.35, x 0.15 and y 0.25. The sampler draws $u = 0.6$.",
+   "question": "Which symbol does the course's sampling rule pick?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "x",
+      "text": "x",
+      "correct": true
+     },
+     {
+      "id": "r",
+      "text": "r",
+      "why": "The running total after r is exactly 0.6, not above it. The rule wants a total strictly above $u$."
+     },
+     {
+      "id": "y",
+      "text": "y",
+      "why": "The total after x is already 0.75, above 0.6. The draw stops there."
+     },
+     {
+      "id": "end",
+      "text": "The end mark",
+      "why": "The end mark's total is 0.25, below 0.6, so the draw goes on."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The running totals are 0.25, 0.6, 0.75 and 1, and the first strictly above 0.6 is x's.",
+    "generic": "Lay the chances end to end and take the first running total strictly above $u$."
+   },
+   "explain": {
+    "text": "The running totals are 0.25, 0.6, 0.75 and 1. A $u$ that equals r's total belongs to the next symbol, as `searchsorted(..., side=\"right\")` gives, so the draw writes x."
+   }
+  },
+  {
+   "id": "e-order-kinds-entropy",
+   "difficulty": 3,
+   "skills": [
+    "if-surprise"
+   ],
+   "tags": [
+    "entropy"
+   ],
+   "pace": 90,
+   "title": "Five kinds of order",
+   "prose": "An exchange logs five kinds of order message with chances $\\tfrac12, \\tfrac14, \\tfrac18, \\tfrac1{16}$ and $\\tfrac1{16}$.",
+   "question": "What is the entropy of the message kind, in bits? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.875,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "label": "Entropy (bits)",
+    "wrong": [
+     {
+      "id": "equal",
+      "value": 2.3219,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "nats",
+      "value": 1.2997,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sum",
+      "value": 14,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": 2.8,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.5 + 0.5 + 0.375 + 0.25 + 0.25 = 1.875$ bits.",
+    "generic": "Weigh each kind's surprise by its chance, then add.",
+    "byKey": {
+     "equal": "That is the entropy of five equal chances, the most five kinds can carry. These chances are unequal.",
+     "nats": "That is the entropy in nats. Use $\\log_2$ for bits.",
+     "sum": "You added the five surprises without weighing them by their chances.",
+     "mean": "You averaged the five surprises equally. Weigh each one by its own chance."
+    }
+   },
+   "explain": {
+    "text": "The surprises are 1, 2, 3, 4 and 4 bits. Weighed by their chances they give $0.5 + 0.5 + 0.375 + 0.25 + 0.25 = 1.875$ bits, below the $\\log_2 5 \\approx 2.322$ of five equal chances."
+   }
+  },
+  {
+   "id": "e-huffman-five-types",
+   "difficulty": 3,
+   "skills": [
+    "if-codes"
+   ],
+   "tags": [
+    "huffman"
+   ],
+   "pace": 120,
+   "title": "Huffman on five message types",
+   "prose": "A feed's five message types have chances 0.4, 0.25, 0.2, 0.1 and 0.05. Huffman's method merges 0.05 with 0.1, then 0.15 with 0.2, then 0.25 with 0.35, and last 0.4 with 0.6.",
+   "question": "How many bits does Huffman's code spend per message on average? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.1,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "label": "Average length (bits)",
+    "wrong": [
+     {
+      "id": "entropy",
+      "value": 2.0414,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "fixed",
+      "value": 3,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "unweighted",
+      "value": 2.8,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The word lengths are 1, 2, 3, 4 and 4, so the average is $0.4 + 0.5 + 0.6 + 0.4 + 0.2 = 2.1$ bits.",
+    "generic": "Find each type's depth from the merges, then weigh the depths by the chances.",
+    "byKey": {
+     "entropy": "That is the entropy, the floor no prefix code beats. Huffman's code sits a little above it.",
+     "fixed": "That is a fixed code of 3 bits for five types. Huffman gives the common types shorter words.",
+     "unweighted": "You averaged the five word lengths equally. Weigh each by its type's chance."
+    }
+   },
+   "explain": {
+    "text": "Each merge puts one more bit on every type inside it, so 0.05 and 0.1 end 4 deep, 0.2 three deep, 0.25 two deep and 0.4 one deep. Weighed by the chances, that is $0.4 \\times 1 + 0.25 \\times 2 + 0.2 \\times 3 + 0.15 \\times 4 = 2.1$ bits, within one bit of the entropy, 2.04."
+   }
+  },
+  {
+   "id": "e-zlib-on-ticks",
+   "difficulty": 3,
+   "skills": [
+    "if-codes"
+   ],
+   "tags": [
+    "compression"
+   ],
+   "pace": 90,
+   "title": "zlib against a model",
+   "prose": "A tick log holds 600,000 symbols. A model of the log spends 3.2 bits per symbol, and zlib packs the whole log into 260,000 bytes.",
+   "question": "How many bits per symbol does zlib spend? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.4667,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "label": "Bits per symbol",
+    "wrong": [
+     {
+      "id": "bytes",
+      "value": 0.4333,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "inverse",
+      "value": 0.2885,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "model",
+      "value": 3.2,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$260{,}000 \\times 8 = 2{,}080{,}000$ bits over 600,000 symbols is about 3.47 bits a symbol.",
+    "generic": "Turn the bytes into bits, then share them over the symbols.",
+    "byKey": {
+     "bytes": "That is bytes per symbol. A byte is 8 bits.",
+     "inverse": "You divided the wrong way round: that is symbols per bit.",
+     "model": "That is the model's cost, not zlib's. Work zlib's out from its 260,000 bytes."
+    }
+   },
+   "explain": {
+    "text": "zlib spends $2{,}080{,}000 / 600{,}000 \\approx 3.47$ bits a symbol. A code built on the model would need $600{,}000 \\times 3.2 / 8 = 240{,}000$ bytes, so the model's code is the shorter one."
+   }
+  },
+  {
+   "id": "e-fixed-forecast-gap",
+   "difficulty": 3,
+   "skills": [
+    "if-likelihood",
+    "if-cross"
+   ],
+   "tags": [
+    "likelihood-gap"
+   ],
+   "pace": 120,
+   "title": "A fixed forecast's extra loss",
+   "prose": "Over 100 days a share fell 20 times, held flat 30 times and rose 50 times. A desk's fixed forecast gives fall, flat and rise the chances 0.2, 0.4 and 0.4.",
+   "question": "How many nats a day does the forecast's average negative log-likelihood sit above the least that any forecast reaches? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.025267,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a number",
+    "label": "Gap (nats)",
+    "wrong": [
+     {
+      "id": "bits",
+      "value": 0.036453,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "reverse",
+      "value": 0.025815,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "total",
+      "value": 2.5267,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "floor",
+      "value": 1.0297,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The data's shares are (0.2, 0.3, 0.5), and the gap is $0.3\\ln\\tfrac{0.3}{0.4} + 0.5\\ln\\tfrac{0.5}{0.4} \\approx 0.0253$ nats.",
+    "generic": "Split the average loss into the data's entropy plus a divergence.",
+    "byKey": {
+     "bits": "That is the gap in bits. The question asks for nats, with $\\ln$.",
+     "reverse": "You weighed by the forecast's chances, $D(q \\| \\hat p)$. The days come from the data's shares, so weigh by those.",
+     "total": "That is the gap over all 100 days. The question asks for it per day.",
+     "floor": "That is the least loss itself, $H(\\hat p)$ in nats. The question asks how far above it the forecast sits."
+    }
+   },
+   "explain": {
+    "text": "The average negative log-likelihood is $H(\\hat p) + D(\\hat p \\| q)$, and the least is $H(\\hat p)$, reached at $q = \\hat p$. So the gap is $D(\\hat p \\| q) \\approx 0.0253$ nats a day. The fall term drops out, since both give a fall 0.2."
+   }
+  },
+  {
+   "id": "e-flag-table-mi",
+   "difficulty": 3,
+   "skills": [
+    "if-mutual"
+   ],
+   "tags": [
+    "mutual-information"
+   ],
+   "pace": 150,
+   "title": "A news flag and the next day",
+   "prose": "A news flag and the next day's sign have these joint chances. Flag on: up 0.3, down 0.1. Flag off: up 0.2, down 0.4.",
+   "question": "What is the mutual information between the flag and the sign, in bits? Give a decimal to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.12451,
+    "tol": {
+     "abs": 0.0006
+    },
+    "placeholder": "a number",
+    "label": "Information (bits)",
+    "wrong": [
+     {
+      "id": "cond",
+      "value": 0.8755,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "nats",
+      "value": 0.0863,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "joint",
+      "value": 1.8464,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The margins are (0.4, 0.6) and (0.5, 0.5), and $\\sum p \\log_2 \\tfrac{p}{p_X p_Y}$ over the four cells is about 0.125 bits.",
+    "generic": "Compare each cell with its row total times its column total.",
+    "byKey": {
+     "cond": "That is the doubt about the sign left after reading the flag, $H(Y \\mid X)$. Subtract it from $H(Y) = 1$.",
+     "nats": "That is the information in nats. Use $\\log_2$ for bits.",
+     "joint": "That is the joint entropy $H(X, Y)$. Mutual information is $H(X) + H(Y) - H(X, Y)$."
+    }
+   },
+   "explain": {
+    "text": "Mutual information is the KL divergence of the joint table from the product of its margins. Each product is a row total times 0.5, so the four ratios are 1.5, 0.5, $\\tfrac23$ and $\\tfrac43$. Weighed by the cells and added, they give about 0.125 bits a day."
+   }
+  },
+  {
+   "id": "e-five-state-bias",
+   "difficulty": 3,
+   "skills": [
+    "if-mutual"
+   ],
+   "tags": [
+    "plug-in-bias"
+   ],
+   "pace": 90,
+   "title": "A five-state signal on 500 days",
+   "prose": "A signal with 5 states is scored against the next day's move, fall, flat or rise, on 500 days. Read straight off the sample's table, the signal shows 0.015 bits of mutual information.",
+   "question": "How many bits are left once the plug-in bias is taken off? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.003458,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a number",
+    "label": "Corrected (bits)",
+    "wrong": [
+     {
+      "id": "no-ln2",
+      "value": 0.007,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-minus-one",
+      "value": -0.00664,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "bias",
+      "value": 0.011542,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "two-outcomes",
+      "value": 0.009229,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The bias is $\\tfrac{4 \\times 2}{1000 \\ln 2} \\approx 0.0115$ bits, which leaves about 0.0035.",
+    "generic": "Subtract $\\tfrac{(k_X - 1)(k_Y - 1)}{2n \\ln 2}$ from the plug-in figure.",
+    "byKey": {
+     "no-ln2": "You left out the $\\ln 2$. The correction in bits divides by $2n\\ln 2$.",
+     "no-minus-one": "You used $5 \\times 3$. The correction uses one less than each count of states: $4 \\times 2$.",
+     "bias": "That is the bias itself. Subtract it from 0.015.",
+     "two-outcomes": "You counted two outcomes. The move has three: fall, flat and rise."
+    }
+   },
+   "explain": {
+    "text": "The plug-in bias is $\\tfrac{(k_X - 1)(k_Y - 1)}{2n\\ln 2} = \\tfrac{8}{1000 \\ln 2} \\approx 0.0115$ bits. Subtracting it leaves about $0.015 - 0.0115 = 0.0035$ bits, so most of the plug-in figure was the sample's own noise."
+   }
+  },
+  {
+   "id": "e-smooth-payoff-grad",
+   "difficulty": 3,
+   "skills": [
+    "bp-chain"
+   ],
+   "tags": [
+    "path-gradient"
+   ],
+   "pace": 120,
+   "title": "A smooth payoff",
+   "prose": "A smoothed payoff is drawn as four boxes: $u = wx$, $v = e^u$, $s = 1 + v$, then $L = \\ln s$. Take $w = 0.5$ and $x = 2$.",
+   "question": "What is $\\partial L/\\partial w$? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.462117,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a number",
+    "label": "Gradient",
+    "wrong": [
+     {
+      "id": "no-x",
+      "value": 0.731059,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "used-w",
+      "value": 0.365529,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-log",
+      "value": 5.436564,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac1s \\times 1 \\times e^{u} \\times x = \\tfrac{2.7183}{3.7183} \\times 2 \\approx 1.4621$.",
+    "generic": "Multiply the four local derivatives on the path from $L$ back to $w$.",
+    "byKey": {
+     "no-x": "You stopped at $u$. The product box $u = wx$ passes $w$ the other input, $x = 2$.",
+     "used-w": "The product box passes $w$ the other input, $x$, not $w$ itself.",
+     "no-log": "You left out the log box. Its local derivative is $1/s$."
+    }
+   },
+   "explain": {
+    "text": "Along the one path the local derivatives are $\\tfrac1s$, 1, $e^u$ and $x$. At $u = 1$ and $s = 1 + e \\approx 3.7183$ their product is $\\tfrac{2.7183}{3.7183} \\times 2 \\approx 1.4621$."
+   }
+  },
+  {
+   "id": "e-two-uses-of-x",
+   "difficulty": 3,
+   "skills": [
+    "bp-backward"
+   ],
+   "tags": [
+    "branch-gradient"
+   ],
+   "pace": 120,
+   "title": "A value used twice",
+   "prose": "A graph computes $p = xy$, $q = p + 1$, then $z = qx$, at $x = -2$ and $y = 3$.",
+   "question": "What is $\\partial z/\\partial x$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -11.0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "Gradient",
+    "wrong": [
+     {
+      "id": "direct",
+      "value": -5.0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "through-p",
+      "value": -6.0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 11.0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The direct arrow gives $q = -5$ and the path through $p$ gives $x \\times y = -6$: $-11$ in all.",
+    "generic": "The value $x$ feeds two boxes. Add the contributions of both paths.",
+    "byKey": {
+     "direct": "That is the direct arrow into $z = qx$ only. The path through $p$ and $q$ adds $x \\times y$.",
+     "through-p": "That is the path through $p$ only. The product $z = qx$ also sends $x$ the value $q$ directly.",
+     "sign": "Both contributions are negative here: $q = -5$ and $xy = -6$."
+    }
+   },
+   "explain": {
+    "text": "Because $x$ feeds two boxes, its gradient is the sum of two paths. The product $z = qx$ sends $q = -5$ straight back, and the path through $p$ gives $\\partial z/\\partial q \\times y = -2 \\times 3 = -6$. Together they make $-11$, which matches $z = x^2y + x$ and $2xy + 1 = -11$."
+   }
+  },
+  {
+   "id": "e-no-seen-set",
+   "difficulty": 3,
+   "skills": [
+    "bp-autograd"
+   ],
+   "tags": [
+    "autograd-bug"
+   ],
+   "pace": 120,
+   "title": "A search with no memory",
+   "prose": "Ali's `backward()` builds its order with `build(v)`, which builds each parent of `v` and then appends `v`, but it keeps no `seen` set. He runs `x = Value(2.0)`, `e = x * 3`, `y = e * e` and then `y.backward()`, with every gradient at 0.",
+   "question": "What does `x.grad` show afterwards?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 72.0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "x.grad",
+    "wrong": [
+     {
+      "id": "true",
+      "value": 36.0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "e-grad",
+      "value": 12.0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The order lists $e$ twice, so its closure runs twice and adds $3 \\times 12 = 36$ each time: 72.",
+    "generic": "Write out the order `build(y)` makes. How many times does $e$ appear?",
+    "byKey": {
+     "true": "That is the true $\\partial y/\\partial x$. Without `seen`, $e$ enters the order once per arrow into $y$, and its closure runs each time.",
+     "e-grad": "That is `e.grad` after $y$'s closure. $e$'s own closure then passes it back to $x$, times 3."
+    }
+   },
+   "explain": {
+    "text": "Without `seen`, `build(e)` runs once for each of the two arrows from $e$ into $y$, so $e$ appears twice in the order. Each run of $e$'s closure adds $3 \\times 12 = 36$ to `x.grad`, giving 72 instead of $\\partial y/\\partial x = 2e \\times 3 = 36$. The `seen` set makes each node appear once."
+   }
+  },
+  {
+   "id": "e-neuron-one-step",
+   "difficulty": 3,
+   "skills": [
+    "bp-networks"
+   ],
+   "tags": [
+    "gradient-step"
+   ],
+   "pace": 150,
+   "title": "One step for a neuron",
+   "prose": "A neuron computes $o = \\tanh(wx + b)$ with $w = 0.2$ and $b = 0.2$, on one point $x = 1.5$ with target 1. The loss is $L = (o - 1)^2$ and the step size is 0.1.",
+   "question": "What is $w$ after one gradient-descent step? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.326905,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a number",
+    "label": "New w",
+    "wrong": [
+     {
+      "id": "uphill",
+      "value": 0.073095,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-x",
+      "value": 0.284603,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "slope-of-n",
+      "value": 0.321024,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-two",
+      "value": 0.263453,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$o = \\tanh 0.5 \\approx 0.4621$, so $\\partial L/\\partial w = 2(o - 1)(1 - o^2)x \\approx -1.2691$ and $w$ becomes about 0.3269.",
+    "generic": "Find $o$, then multiply $2(o - 1)$, the tanh slope $1 - o^2$ and $x$. Step against the gradient.",
+    "byKey": {
+     "uphill": "You stepped up the gradient. Gradient descent subtracts the step size times the gradient.",
+     "no-x": "You left out the product box: $\\partial n/\\partial w = x = 1.5$.",
+     "slope-of-n": "You used $1 - n^2$ for the tanh slope. The slope is $1 - o^2$, from the output.",
+     "no-two": "You left out the 2 from the square: $\\partial L/\\partial o = 2(o - 1)$."
+    }
+   },
+   "explain": {
+    "text": "The forward pass gives $n = 0.5$ and $o \\approx 0.4621$. The gradient is $2(o - 1)(1 - o^2)x \\approx -1.0758 \\times 0.7864 \\times 1.5 \\approx -1.2691$. One step gives $0.2 - 0.1 \\times (-1.2691) \\approx 0.3269$."
+   }
+  },
+  {
+   "id": "e-check-by-bumps",
+   "difficulty": 3,
+   "skills": [
+    "bp-check"
+   ],
+   "tags": [
+    "gradient-check"
+   ],
+   "pace": 120,
+   "title": "A check by bumps",
+   "prose": "Backpropagation gives one weight a gradient of 0.7503. Bumping that weight by $h = 0.001$ gives losses of 0.693649 above and 0.692149 below. The loss at the weight itself is 0.692898.",
+   "question": "What is the relative error between backpropagation and the central difference? Give 2 significant figures.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0004,
+    "tol": {
+     "abs": 5e-06
+    },
+    "placeholder": "a number",
+    "label": "Relative error",
+    "wrong": [
+     {
+      "id": "absolute",
+      "value": 0.0003,
+      "tol": {
+       "abs": 5e-06
+      }
+     },
+     {
+      "id": "forward",
+      "value": 0.000932,
+      "tol": {
+       "abs": 5e-06
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The central difference is $\\tfrac{0.693649 - 0.692149}{0.002} = 0.75$, and $\\tfrac{0.0003}{0.7503} \\approx 0.00040$.",
+    "generic": "Form the central difference first, then divide the gap by the larger of the two gradients.",
+    "byKey": {
+     "absolute": "That is the absolute gap. A relative error divides it by the larger gradient, 0.7503.",
+     "forward": "You used the forward difference from the loss at the weight. A check uses the central difference."
+    }
+   },
+   "explain": {
+    "text": "The central difference is $\\tfrac{0.693649 - 0.692149}{0.002} = 0.75$. The relative error is $\\tfrac{|0.7503 - 0.75|}{0.7503} \\approx 0.00040$, far above the course's $10^{-6}$ bar, so this gradient needs a closer look."
+   }
+  },
+  {
+   "id": "e-input-gradient-entry",
+   "difficulty": 3,
+   "skills": [
+    "bp-arrays"
+   ],
+   "tags": [
+    "matmul-backward"
+   ],
+   "pace": 150,
+   "title": "The gradient for an input",
+   "prose": "A layer computes $\\mathbf{Y} = \\mathbf{X}\\mathbf{W}$, with $\\mathbf{X}$ of shape 2 by 3 and $$\\mathbf{W} = \\begin{pmatrix} 1 & -2 \\\\ 0.5 & 3 \\\\ -1 & 4 \\end{pmatrix}.$$ The incoming gradient is $$\\mathbf{G} = \\frac{\\partial L}{\\partial \\mathbf{Y}} = \\begin{pmatrix} 2 & 1 \\\\ -1 & 0.5 \\end{pmatrix}.$$",
+   "question": "What is $\\partial L/\\partial X_{23}$, the entry in row 2, column 3?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "Gradient",
+    "wrong": [
+     {
+      "id": "row-1",
+      "value": 2.0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "w-row-1",
+      "value": -2.0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": -3.0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$G_{21}W_{31} + G_{22}W_{32} = (-1)(-1) + 0.5 \\times 4 = 3$.",
+    "generic": "$\\partial L/\\partial \\mathbf{X} = \\mathbf{G}\\mathbf{W}^T$. Pair a row of $\\mathbf{G}$ with a row of $\\mathbf{W}$.",
+    "byKey": {
+     "row-1": "You used row 1 of $\\mathbf{G}$. Row 2 of the gradient comes from row 2 of $\\mathbf{G}$.",
+     "w-row-1": "You paired row 2 of $\\mathbf{G}$ with row 1 of $\\mathbf{W}$. Column 3 of $\\mathbf{X}$ meets row 3 of $\\mathbf{W}$.",
+     "sign": "Check the signs: $(-1)(-1)$ is $+1$."
+    }
+   },
+   "explain": {
+    "text": "$\\partial L/\\partial \\mathbf{X} = \\mathbf{G}\\mathbf{W}^T$ has the shape of $\\mathbf{X}$, 2 by 3. Its row 2, column 3 pairs row 2 of $\\mathbf{G}$ with row 3 of $\\mathbf{W}$: $1 + 2 = 3$."
+   }
+  },
+  {
+   "id": "e-dev-total-in-bits",
+   "difficulty": 3,
+   "skills": [
+    "mk-loss"
+   ],
+   "tags": [
+    "nats-bits"
+   ],
+   "pace": 90,
+   "title": "A total on the dev names",
+   "prose": "Summed over the 3,203 dev names, a name model's negative log-likelihood comes to 50,000 nats. Those names hold 22,807 next symbols, the end marks included.",
+   "question": "What is the average loss in bits per symbol? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.162834,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a number",
+    "label": "Loss (bits)",
+    "wrong": [
+     {
+      "id": "nats",
+      "value": 2.192309,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "per-name",
+      "value": 15.6104,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-ends",
+      "value": 3.679594,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "times-ln2",
+      "value": 1.519593,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$50{,}000 / 22{,}807 \\approx 2.1923$ nats a symbol, and $2.1923 / \\ln 2 \\approx 3.1628$ bits.",
+    "generic": "Share the total over the symbols, then turn nats into bits.",
+    "byKey": {
+     "nats": "That is the loss in nats. Divide by $\\ln 2$ for bits.",
+     "per-name": "You shared the total over the names. The loss is per next symbol.",
+     "no-ends": "You left out the end marks. The model predicts each one, so each counts as a symbol.",
+     "times-ln2": "You multiplied by $\\ln 2$. A bit is smaller than a nat, so the figure in bits is larger."
+    }
+   },
+   "explain": {
+    "text": "Per symbol the loss is $50{,}000 / 22{,}807 \\approx 2.1923$ nats. Dividing by $\\ln 2$ gives about 3.1628 bits. The end marks count because the model predicts them too."
+   }
+  },
+  {
+   "id": "e-mlp-size-four",
+   "difficulty": 3,
+   "skills": [
+    "mk-mlp"
+   ],
+   "tags": [
+    "mlp-size"
+   ],
+   "pace": 90,
+   "title": "A wider context",
+   "prose": "An MLP language model reads 4 symbols of context from 27, embeds each symbol in 6 numbers and has 80 tanh units.",
+   "question": "How many numbers does it learn, counting the embedding table, both weight matrices and both biases?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4349,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "label": "Numbers",
+    "wrong": [
+     {
+      "id": "no-table",
+      "value": 4187,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one-symbol",
+      "value": 2909,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "table-each",
+      "value": 4835,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$162 + 1{,}920 + 80 + 2{,}160 + 27 = 4{,}349$.",
+    "generic": "Count the table, then $W_1$ from the joined context, then $W_2$, then the biases.",
+    "byKey": {
+     "no-table": "You left out the embedding table, $27 \\times 6 = 162$. It is learned with the rest.",
+     "one-symbol": "You sized $W_1$ for one symbol's 6 numbers. It reads all 4 joined, 24 numbers.",
+     "table-each": "You gave each context place its own table. The 4 places share one table."
+    }
+   },
+   "explain": {
+    "text": "The table holds $27 \\times 6 = 162$, $W_1$ takes the 24 joined numbers to 80 units, $24 \\times 80 = 1{,}920$, and $W_2$ is $80 \\times 27 = 2{,}160$. With the biases of 80 and 27 the total is 4,349."
+   }
+  },
+  {
+   "id": "e-epochs-at-48",
+   "difficulty": 3,
+   "skills": [
+    "mk-train"
+   ],
+   "tags": [
+    "epochs"
+   ],
+   "pace": 90,
+   "title": "Epochs at a batch of 48",
+   "prose": "The course MLP trains on 182,531 rows. A colleague runs 30,000 minibatch steps of 48 rows each.",
+   "question": "How many epochs is that? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7.889071,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "label": "Epochs",
+    "wrong": [
+     {
+      "id": "steps",
+      "value": 3803,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "batch-32",
+      "value": 5.259381,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "inverse",
+      "value": 0.126758,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$30{,}000 \\times 48 = 1{,}440{,}000$ rows, and $1{,}440{,}000 / 182{,}531 \\approx 7.89$ epochs.",
+    "generic": "One epoch is as many rows as the training set. Count the rows the steps use.",
+    "byKey": {
+     "steps": "That is the number of steps in one epoch. Divide the 30,000 steps by it.",
+     "batch-32": "You used the course's batch of 32. This run takes 48 rows a step.",
+     "inverse": "You divided the wrong way round: that is the share of an epoch per run."
+    }
+   },
+   "explain": {
+    "text": "One epoch is $182{,}531 / 48 \\approx 3{,}803$ steps of 48. So 30,000 steps make $30{,}000 \\times 48 / 182{,}531 \\approx 7.89$ epochs."
+   }
+  },
+  {
+   "id": "e-pair-in-bits",
+   "difficulty": 4,
+   "skills": [
+    "if-cross",
+    "if-surprise"
+   ],
+   "tags": [
+    "kl-divergence"
+   ],
+   "pace": 300,
+   "title": "Entropy and KL for a pair",
+   "prose": "A venue fills an order fully, partly or not at all, with true chances $p = (0.45, 0.35, 0.2)$. A routing model assumes $q = (0.25, 0.5, 0.25)$.",
+   "question": "Work in bits throughout.",
+   "parts": [
+    {
+     "question": "What is the entropy $H(p)$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.512888,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "H(p)",
+      "wrong": [
+       {
+        "id": "nats",
+        "value": 1.048654,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "model",
+        "value": 1.5,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "equal",
+        "value": 1.584963,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.45 \\times 1.1520 + 0.35 \\times 1.5146 + 0.2 \\times 2.3219 \\approx 1.5129$ bits.",
+      "generic": "Weigh each outcome's surprise $-\\log_2 p_i$ by its true chance.",
+      "byKey": {
+       "nats": "That is the entropy in nats. Use $\\log_2$ for bits.",
+       "model": "That is the entropy of the model's chances $q$. The question asks about the truth $p$.",
+       "equal": "That is the entropy of three equal chances. These chances are unequal."
+      }
+     }
+    },
+    {
+     "question": "What is the cross-entropy $H(p, q)$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.65,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "H(p, q)",
+      "wrong": [
+       {
+        "id": "swapped",
+        "value": 1.625769,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "nats",
+        "value": 1.143693,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The model's words cost 2, 1 and 2 bits, so $0.45 \\times 2 + 0.35 \\times 1 + 0.2 \\times 2 = 1.65$ bits.",
+      "generic": "Weigh the model's word lengths $-\\log_2 q_i$ by the true chances $p_i$.",
+      "byKey": {
+       "swapped": "You weighed the truth's word lengths by the model's chances: that is $H(q, p)$.",
+       "nats": "That is the cross-entropy in nats. Use $\\log_2$ for bits."
+      }
+     }
+    },
+    {
+     "question": "Using parts 1 and 2, what is $D(p \\| q)$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.137112,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "D(p || q)",
+      "wrong": [
+       {
+        "id": "reverse",
+        "value": 0.125769,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "added",
+        "value": 3.162888,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "nats",
+        "value": 0.095039,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$D(p \\| q) = H(p, q) - H(p) = 1.65 - 1.5129 = 0.1371$ bits.",
+      "generic": "The KL divergence is the extra cost of the wrong code over the right one.",
+      "byKey": {
+       "reverse": "That is $D(q \\| p)$, with the roles swapped. Here the outcomes come from $p$.",
+       "added": "You added the two figures. The divergence is the cross-entropy minus the entropy.",
+       "nats": "That is the divergence in nats. Stay in bits."
+      }
+     }
+    },
+    {
+     "question": "Now the roles swap: outcomes come from $q$ and the code is built for $p$. What is $D(q \\| p)$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.125769,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "D(q || p)",
+      "wrong": [
+       {
+        "id": "symmetric",
+        "value": 0.137112,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "nats",
+        "value": 0.087177,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$H(q, p) \\approx 1.6258$ and $H(q) = 1.5$, so $D(q \\| p) \\approx 0.1258$ bits.",
+      "generic": "Repeat parts 1 to 3 with the roles of $p$ and $q$ swapped.",
+      "byKey": {
+       "symmetric": "That is $D(p \\| q)$ again. KL is not symmetric: weigh by $q$ now.",
+       "nats": "That is the divergence in nats. Stay in bits."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "$H(p) \\approx 1.5129$ bits, and the code built for $q$ costs $H(p, q) = 1.65$ bits, so $D(p \\| q) \\approx 0.1371$ bits is the price of the wrong model. With the roles swapped, $D(q \\| p) \\approx 0.1258$ bits. The two differ because KL is not symmetric."
+   }
+  },
+  {
+   "id": "e-volume-buckets",
+   "difficulty": 4,
+   "skills": [
+    "if-mutual"
+   ],
+   "tags": [
+    "mutual-information",
+    "plug-in-bias"
+   ],
+   "pace": 300,
+   "title": "Three buckets, then two",
+   "prose": "Over 400 days a desk files the day's volume as low, mid or high and records the next day's sign. Low: 60 up, 60 down. Mid: 70 up, 50 down. High: 110 up, 50 down.",
+   "question": "Work in bits.",
+   "parts": [
+    {
+     "question": "How many bits of doubt does the next day's sign hold, from its 240 up days and 160 down days? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.970951,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "a number",
+      "label": "H(sign)",
+      "wrong": [
+       {
+        "id": "fair",
+        "value": 1,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "nats",
+        "value": 0.673012,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$H(0.6, 0.4) \\approx 0.971$ bits.",
+      "generic": "Use the sign's shares over all 400 days.",
+      "byKey": {
+       "fair": "That would hold for equally many up and down days. Here 0.6 of the days rose.",
+       "nats": "That is the entropy in nats. Use $\\log_2$ for bits."
+      }
+     }
+    },
+    {
+     "question": "What is the plug-in mutual information between the volume bucket and the sign? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.018575,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a number",
+      "label": "I",
+      "wrong": [
+       {
+        "id": "cond",
+        "value": 0.952376,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "nats",
+        "value": 0.012875,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The rows have sign entropies 1, 0.9799 and 0.8960 bits, weighted 0.3, 0.3 and 0.4, so $I \\approx 0.9710 - 0.9524 = 0.0186$.",
+      "generic": "Take $H(\\text{sign})$ minus the average entropy of the sign within each bucket.",
+      "byKey": {
+       "cond": "That is the doubt left within the buckets, $H(Y \\mid X)$. Subtract it from $H(Y)$.",
+       "nats": "That is the information in nats. Use $\\log_2$ for bits."
+      }
+     }
+    },
+    {
+     "question": "An engineer merges low and mid into one bucket of 130 up and 110 down. What is the plug-in mutual information now? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.015544,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a number",
+      "label": "I merged",
+      "wrong": [
+       {
+        "id": "unchanged",
+        "value": 0.018575,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "cond",
+        "value": 0.955406,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The merged row has entropy 0.9950, so $H(Y \\mid X) \\approx 0.9554$ and $I \\approx 0.0155$ bits.",
+      "generic": "Recompute the weighted row entropies with the merged row in place of the two.",
+      "byKey": {
+       "unchanged": "Merging keeps the information only when the two rows have the same split. Low splits 50:50 and mid 58:42.",
+       "cond": "That is the doubt left after reading the merged bucket. Subtract it from $H(Y)$."
+      }
+     }
+    },
+    {
+     "question": "Correct both plug-in figures for their bias, with $n = 400$. By how many bits does the three-bucket feature still lead the merged one? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.001227,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a number",
+      "label": "Lead (bits)",
+      "wrong": [
+       {
+        "id": "plug-in",
+        "value": 0.00303,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "no-ln2",
+        "value": 0.00178,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The biases are $\\tfrac{2}{800\\ln 2} \\approx 0.0036$ and $\\tfrac{1}{800\\ln 2} \\approx 0.0018$, so the lead shrinks to about 0.0012 bits.",
+      "generic": "Each table loses $\\tfrac{(k_X - 1)(k_Y - 1)}{2n\\ln 2}$, and the two tables have different $k_X$.",
+      "byKey": {
+       "plug-in": "That is the lead before correcting. The three-bucket table carries the larger bias, so it loses more.",
+       "no-ln2": "You left out the $\\ln 2$ in the corrections. In bits each divides by $2n\\ln 2$."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "The three buckets carry about 0.0186 bits about the sign, and merging low with mid loses some, leaving 0.0155, because their splits differ. The plug-in bias is twice as large for three buckets as for two, so after correcting the lead falls to about 0.0012 bits."
+   }
+  },
+  {
+   "id": "e-node-two-consumers",
+   "difficulty": 4,
+   "skills": [
+    "bp-backward",
+    "bp-autograd"
+   ],
+   "tags": [
+    "branch-gradient",
+    "autograd-bug"
+   ],
+   "pace": 300,
+   "title": "A node with two consumers",
+   "prose": "A graph computes $k = uv$, $m = k + u$, then $n = mk$, at $u = 2$ and $v = 1.5$. The node $k$ feeds two boxes, and so does $u$.",
+   "question": "Work back from $n$.",
+   "parts": [
+    {
+     "question": "What does the forward pass give for $n$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 15.0,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a number",
+      "label": "n",
+      "wrong": [
+       {
+        "id": "m-only",
+        "value": 5.0,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "k-squared",
+        "value": 9.0,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$k = 3$, $m = 5$ and $n = 5 \\times 3 = 15$.",
+      "generic": "Compute $k$, then $m$, then $n$, each from values already found.",
+      "byKey": {
+       "m-only": "That is $m$. The last box multiplies it by $k$.",
+       "k-squared": "You used $k$ for both inputs of the last box. Its inputs are $m = 5$ and $k = 3$."
+      }
+     }
+    },
+    {
+     "question": "What is $\\partial n/\\partial k$, adding every path?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 8.0,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a number",
+      "label": "dn/dk",
+      "wrong": [
+       {
+        "id": "direct",
+        "value": 5.0,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "through-m",
+        "value": 3.0,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The product passes $k$ the other input, $m = 5$, and the path through $m$ adds $k \\times 1 = 3$: 8.",
+      "generic": "$k$ reaches $n$ directly and through $m$. Add both.",
+      "byKey": {
+       "direct": "That is the direct arrow only. The path through $m$ adds $\\partial n/\\partial m = k = 3$.",
+       "through-m": "That is the path through $m$ only. The product $n = mk$ also passes $k$ the value $m$."
+      }
+     }
+    },
+    {
+     "question": "Using $\\partial n/\\partial k = 8$, what is $\\partial n/\\partial u$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 15.0,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a number",
+      "label": "dn/du",
+      "wrong": [
+       {
+        "id": "m-path",
+        "value": 3.0,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "k-path",
+        "value": 12.0,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "direct-k",
+        "value": 10.5,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Through $m$: $3 \\times 1 = 3$. Through $k$: $8 \\times v = 12$. Together 15.",
+      "generic": "$u$ feeds $m$ and $k$. Add both contributions.",
+      "byKey": {
+       "m-path": "That is the path through $m$ only. The path through $k$ adds $8 \\times 1.5 = 12$.",
+       "k-path": "That is the path through $k$ only. $u$ also feeds $m$ directly.",
+       "direct-k": "You used $\\partial n/\\partial k = 5$, the direct arrow only. With both paths it is 8."
+      }
+     }
+    },
+    {
+     "question": "Priya's closures use `=` where they need `+=`. Her loop runs the closures of $n$, then $m$, then $k$. What does it leave in `u.grad`?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4.5,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a number",
+      "label": "u.grad",
+      "wrong": [
+       {
+        "id": "true",
+        "value": 15.0,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "m-closure",
+        "value": 3,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "k-path",
+        "value": 12.0,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$n$ sets `k.grad` to 5, then $m$ overwrites it with 3 and sets `u.grad` to 3, then $k$ overwrites `u.grad` with $1.5 \\times 3 = 4.5$.",
+      "generic": "Run the three closures in turn, replacing each gradient instead of adding to it.",
+      "byKey": {
+       "true": "That is the true gradient. With `=`, each closure throws away what an earlier one sent.",
+       "m-closure": "That is `u.grad` after $m$'s closure. $k$'s closure runs next and overwrites it.",
+       "k-path": "That would need `k.grad` to keep the 8 from both paths. $m$'s closure overwrote the direct 5 with 3."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "The node $k$ feeds $m$ and $n$, so its gradient adds $5 + 3 = 8$, and $u$ then collects $3 + 8 \\times 1.5 = 15$. This matches $n = u^2v^2 + u^2v$, whose slope in $u$ is $9 + 6 = 15$. With `=` each closure overwrites the last, and Priya's run ends with 4.5."
+   }
+  },
+  {
+   "id": "e-temperature-same-u",
+   "difficulty": 4,
+   "skills": [
+    "mk-eval"
+   ],
+   "tags": [
+    "temperature",
+    "sampling-rule"
+   ],
+   "pace": 270,
+   "title": "The same draw at two temperatures",
+   "prose": "After the context `jo`, a model gives the next symbol these chances, in this order: end 0.1, a 0.5, e 0.3 and n 0.1. The sampler draws $u = 0.58$.",
+   "question": "Use the course's sampling rule: the first running total strictly above $u$.",
+   "parts": [
+    {
+     "question": "At $T = 1$, which symbol does $u = 0.58$ pick?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "a",
+        "text": "a",
+        "correct": true
+       },
+       {
+        "id": "e",
+        "text": "e",
+        "why": "a's running total is 0.6, already above 0.58, so the draw stops at a."
+       },
+       {
+        "id": "n",
+        "text": "n",
+        "why": "The draw stops at the first total above 0.58, and a's 0.6 comes first."
+       },
+       {
+        "id": "end",
+        "text": "The end mark",
+        "why": "The end mark's total is 0.1, far below 0.58."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The totals are 0.1, 0.6, 0.9 and 1, and 0.6 is the first above 0.58.",
+      "generic": "Add the chances in order until the total passes $u$."
+     }
+    },
+    {
+     "question": "Now take $T = 2$. What is a's new chance? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.374669,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Chance of a",
+      "wrong": [
+       {
+        "id": "colder",
+        "value": 0.694444,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "unscaled",
+        "value": 0.707107,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "unchanged",
+        "value": 0.5,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Square roots give 0.3162, 0.7071, 0.5477 and 0.3162, which add to 1.8873, so a gets $0.7071 / 1.8873 \\approx 0.3747$.",
+      "generic": "At $T = 2$ each chance is raised to the power $\\tfrac12$, then rescaled to add to 1.",
+      "byKey": {
+       "colder": "You squared the chances, which is $T = \\tfrac12$. Dividing the logits by 2 halves them, so the chances are square-rooted.",
+       "unscaled": "You took the square root but did not rescale. The roots do not add to 1.",
+       "unchanged": "Temperature changes the chances. Only $T = 1$ leaves them as they are."
+      }
+     }
+    },
+    {
+     "question": "At $T = 2$, which symbol does the same $u = 0.58$ pick?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "e",
+        "text": "e",
+        "correct": true
+       },
+       {
+        "id": "a",
+        "text": "a",
+        "why": "That was the pick at $T = 1$. a's running total is now 0.5422, below 0.58."
+       },
+       {
+        "id": "n",
+        "text": "n",
+        "why": "The total after e, 0.8324, is already above 0.58."
+       },
+       {
+        "id": "end",
+        "text": "The end mark",
+        "why": "The end mark's total is now about 0.1676, below 0.58."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The totals become 0.1676, 0.5422, 0.8324 and 1, and 0.8324 is the first above 0.58.",
+      "generic": "Rebuild the running totals from the flattened chances."
+     }
+    },
+    {
+     "question": "The dev names show a after `jo` here. How many more nats does that pair cost at $T = 2$ than at $T = 1$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.288566,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a number",
+      "label": "Extra cost (nats)",
+      "wrong": [
+       {
+        "id": "bits",
+        "value": 0.416312,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "sign",
+        "value": -0.288566,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "chances",
+        "value": 0.125331,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "a's chance falls from 0.5 to about 0.3747, so the cost rises by $\\ln(0.5/0.3747) \\approx 0.2886$ nats.",
+      "generic": "Compare $-\\ln$ of a's chance at the two temperatures.",
+      "byKey": {
+       "bits": "That is the extra cost in bits. The question asks for nats.",
+       "sign": "a's chance falls at $T = 2$, so its cost goes up, not down.",
+       "chances": "That is the drop in a's chance. The cost is $-\\ln$ of the chance."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "Dividing the logits by 2 takes the square root of each chance before rescaling, so a's 0.5 becomes about 0.3747. Its running total falls to 0.5422, below $u = 0.58$, so the same draw writes e instead of a. On a dev pair that ends in a the flatter chances cost about 0.2886 nats more, which is why $T$ is chosen by dev loss."
+   }
+  },
+  {
+   "id": "e-bigram-of-weeks",
+   "difficulty": 4,
+   "skills": [
+    "mk-bigram",
+    "mk-loss"
+   ],
+   "tags": [
+    "bigram-counts",
+    "nats-bits"
+   ],
+   "pace": 300,
+   "title": "A bigram of trading weeks",
+   "prose": "A desk writes each week's daily signs as a word: u for up, d for down. Each word is wrapped in the marks `.`, as names were. Its four training weeks are uud, udd, uu and dud. The symbols are `.`, u and d.",
+   "question": "Build the bigram table from the four weeks.",
+   "parts": [
+    {
+     "question": "How many pairs does the table count in all?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 15.0,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a number",
+      "label": "Pairs",
+      "wrong": [
+       {
+        "id": "letters",
+        "value": 11,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "two-marks",
+        "value": 19,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The weeks hold 11 letters, and each adds one pair for its end mark: $11 + 4 = 15$.",
+      "generic": "A wrapped week of $n$ letters gives $n + 1$ pairs.",
+      "byKey": {
+       "letters": "You counted one pair per letter. Each week also gives the pair that ends at its end mark.",
+       "two-marks": "You counted two extra pairs per week. Wrapping adds one pair, not two."
+      }
+     }
+    },
+    {
+     "question": "With add-one smoothing over the three symbols, what chance does the end mark get straight after u? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.222222,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Chance",
+      "wrong": [
+       {
+        "id": "raw",
+        "value": 0.166667,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "plus-one",
+        "value": 0.285714,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "twenty-seven",
+        "value": 0.060606,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Row u holds 6 pairs, one of them u then the end. Smoothed: $\\tfrac{1 + 1}{6 + 3} \\approx 0.2222$.",
+      "generic": "Add 1 to each of row u's three counts, then divide by the new row total.",
+      "byKey": {
+       "raw": "That is the raw share, $\\tfrac16$. Smoothing adds 1 to every count of the row first.",
+       "plus-one": "You added 1 to the row total once. Each of the three cells gets 1, so the total rises by 3.",
+       "twenty-seven": "You smoothed over 27 symbols. This table has three."
+      }
+     }
+    },
+    {
+     "question": "A held-out week reads ud. Under the add-one table, what is its average loss per pair, in nats? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.687898,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Loss (nats)",
+      "wrong": [
+       {
+        "id": "total",
+        "value": 2.063693,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "bits",
+        "value": 0.992427,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "no-end",
+        "value": 0.685273,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The pairs cost $-\\ln\\tfrac47$, $-\\ln\\tfrac49$ and $-\\ln\\tfrac12$, about 0.5596, 0.8109 and 0.6931, which average about 0.6879.",
+      "generic": "Wrap the week as `.ud.`, look up its three pairs in the smoothed table and average their costs.",
+      "byKey": {
+       "total": "That is the total over the three pairs. Divide by 3 for the average.",
+       "bits": "That is the loss in bits. The question asks for nats.",
+       "no-end": "You left out the pair that ends at the end mark. The model must predict the end too."
+      }
+     }
+    },
+    {
+     "question": "What is that average loss in bits? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.992427,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Loss (bits)",
+      "wrong": [
+       {
+        "id": "times",
+        "value": 0.476814,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "perplexity",
+        "value": 1.989529,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.6879 / \\ln 2 \\approx 0.9924$ bits.",
+      "generic": "Divide a loss in nats by $\\ln 2$ to get bits.",
+      "byKey": {
+       "times": "You multiplied by $\\ln 2$. A bit is smaller than a nat, so the figure in bits is larger.",
+       "perplexity": "That is the perplexity, $e^{0.6879}$. The question asks for the loss in bits."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "The table counts 15 pairs, and row u, with 6 of them, gives the end mark $\\tfrac{1 + 1}{6 + 3} = \\tfrac29 \\approx 0.2222$ once smoothed. The held-out week `.ud.` costs about 0.6879 nats a pair, or 0.9924 bits. The end pair counts, as it does for names."
+   }
+  },
+  {
+   "id": "e-bigram-net-four-pairs",
+   "difficulty": 4,
+   "skills": [
+    "bp-arrays",
+    "mk-train"
+   ],
+   "tags": [
+    "bigram-network",
+    "softmax-gradient"
+   ],
+   "pace": 300,
+   "title": "The same counts by descent",
+   "prose": "A one-layer network reads one symbol, `.` (0), u (1) or d (2), and outputs 3 logits, row $x$ of a 3 by 3 matrix $W$. It trains on four pairs: u then u, u then d, u then d, and d then the end. $W$ starts at zero and the loss is the mean cross-entropy.",
+   "question": "Work in nats.",
+   "parts": [
+    {
+     "question": "What is the mean loss at the start? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.098612,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Loss",
+      "wrong": [
+       {
+        "id": "bits",
+        "value": 1.584963,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "zero",
+        "value": 0,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Every chance is $\\tfrac13$, so every pair costs $\\ln 3 \\approx 1.0986$.",
+      "generic": "With all logits 0 the softmax gives equal chances.",
+      "byKey": {
+       "bits": "That is $\\log_2 3$, in bits. The course's cross-entropy uses $\\ln$.",
+       "zero": "Zero weights give equal chances, not certainty. Each pair costs $\\ln 3$."
+      }
+     }
+    },
+    {
+     "question": "Find $\\partial L/\\partial W_{1,2}$ for the weight from u to d, where $L$ is the mean loss. Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.25,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Gradient",
+      "wrong": [
+       {
+        "id": "no-mean",
+        "value": -1.0,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "one-row",
+        "value": -0.166667,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.25,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The three u rows give $\\tfrac13 - 0$, $\\tfrac13 - 1$ and $\\tfrac13 - 1$, which add to $-1$. Over 4 pairs that is $-0.25$.",
+      "generic": "Each row that reads u adds $p_d - y_d$ to that weight. Divide by the 4 pairs of the mean.",
+      "byKey": {
+       "no-mean": "You added the rows without dividing by 4. The loss is a mean.",
+       "one-row": "You used one u then d row only. Every row that reads u adds to row u of $W$.",
+       "sign": "Check the signs: two of the three rows have $y_d = 1$, so the sum is negative."
+      }
+     }
+    },
+    {
+     "question": "Using $-0.25$ from part 2, what is $W_{1,2}$ after one step of size 2? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "New weight",
+      "wrong": [
+       {
+        "id": "uphill",
+        "value": -0.5,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "unit-step",
+        "value": 0.25,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0 - 2 \\times (-0.25) = 0.5$.",
+      "generic": "Subtract the step size times the gradient.",
+      "byKey": {
+       "uphill": "You stepped up the gradient. Descent subtracts the step size times the gradient.",
+       "unit-step": "You took a step of size 1. The step size is 2."
+      }
+     }
+    },
+    {
+     "question": "After many steps, what mean loss does training approach on these four pairs? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.477386,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Loss",
+      "wrong": [
+       {
+        "id": "u-row",
+        "value": 0.636514,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "zero",
+        "value": 0,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "bits",
+        "value": 0.688722,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The rows settle on the counts: u gives u $\\tfrac13$ and d $\\tfrac23$, and d gives the end 1. The mean is $\\tfrac{\\ln 3 + 2\\ln 1.5 + 0}{4} \\approx 0.4774$.",
+      "generic": "Descent can do no better than the count table on its own training pairs.",
+      "byKey": {
+       "u-row": "That is the average over the three u pairs only. The d pair costs 0 and still counts in the mean of 4.",
+       "zero": "Row u sees u once and d twice, so no logits can make both certain. The counts' loss is the floor.",
+       "bits": "That is the floor in bits. Stay in nats."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "The softmax gradient is $(\\mathbf{p} - \\mathbf{y})/n$, and the three u rows add into row u of $W$: $-1/4 = -0.25$, so one step of 2 gives 0.5. Training drives the rows towards the counts, the best a one-symbol model can do, so the loss falls towards about 0.4774 and no lower."
+   }
+  },
+  {
+   "id": "e-planted-forward-back",
+   "difficulty": 5,
+   "skills": [
+    "mk-mlp",
+    "bp-arrays"
+   ],
+   "tags": [
+    "mlp-forward",
+    "softmax-gradient"
+   ],
+   "pace": 360,
+   "title": "A planted model, forward and back",
+   "prose": "A planted MLP language model has three symbols, `.`, a and b, a block of 2 and one number a symbol: $C = (0.5, -1, 2)$. Its weights are $$W_1 = \\begin{pmatrix} 0.5 & -0.25 \\\\ 1 & 0.5 \\end{pmatrix}, \\quad \\mathbf{b}_1 = (0.25, 0.3),$$ $$W_2 = \\begin{pmatrix} 1 & 0 & -1 \\\\ 2 & -1 & 0.5 \\end{pmatrix}, \\quad \\mathbf{b}_2 = (0, 0.2, 0).$$ The context is b then a, and the true next symbol is a.",
+   "question": "Run the model forward, then start the backward pass.",
+   "parts": [
+    {
+     "question": "The joined embedding is $(2, -1)$. What is the second hidden unit, $\\tanh$ of $(2, -1)W_1 + \\mathbf{b}_1$ in place 2? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.604368,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a number",
+      "label": "Hidden unit 2",
+      "wrong": [
+       {
+        "id": "no-tanh",
+        "value": -0.7,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "first-unit",
+        "value": 0.244919,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.604368,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2 \\times (-0.25) + (-1) \\times 0.5 + 0.3 = -0.7$, and $\\tanh(-0.7) \\approx -0.6044$.",
+      "generic": "Take column 2 of $W_1$, add the bias, then apply tanh.",
+      "byKey": {
+       "no-tanh": "That is the input to the unit. Apply tanh to it.",
+       "first-unit": "That is the first hidden unit, from column 1 of $W_1$.",
+       "sign": "Check the sign: the sum before tanh is $-0.7$."
+      }
+     }
+    },
+    {
+     "question": "The hidden values are $\\mathbf{h} = (0.2449, -0.6044)$. What is the logit for a, place 2 of $\\mathbf{h}W_2 + \\mathbf{b}_2$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.804368,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a number",
+      "label": "Logit for a",
+      "wrong": [
+       {
+        "id": "no-bias",
+        "value": 0.604368,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "first-logit",
+        "value": -0.963817,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.2449 \\times 0 + (-0.6044) \\times (-1) + 0.2 = 0.8044$.",
+      "generic": "Pair $\\mathbf{h}$ with column 2 of $W_2$, then add 0.2.",
+      "byKey": {
+       "no-bias": "You left out the bias $b_{2,2} = 0.2$.",
+       "first-logit": "That is the logit for `.`, from column 1 of $W_2$."
+      }
+     }
+    },
+    {
+     "question": "The three logits are about $(-0.9638, 0.8044, -0.5471)$. What is the loss in nats? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.357326,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a number",
+      "label": "Loss",
+      "wrong": [
+       {
+        "id": "bits",
+        "value": 0.515512,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "chance",
+        "value": 0.699544,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "no-logit",
+        "value": 1.161694,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$e^{-0.9638} + e^{0.8044} + e^{-0.5471} \\approx 0.3814 + 2.2353 + 0.5786 = 3.1953$, so $p_a \\approx 0.6995$ and the loss is about 0.3573.",
+      "generic": "Softmax the logits, then take $-\\ln$ of a's chance.",
+      "byKey": {
+       "bits": "That is the loss in bits. The question asks for nats.",
+       "chance": "That is a's chance. The loss is $-\\ln$ of it.",
+       "no-logit": "That is the log-sum-exp alone. Subtract a's logit from it."
+      }
+     }
+    },
+    {
+     "question": "What is $\\partial L/\\partial z_a$, the gradient for a's logit? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.300456,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a number",
+      "label": "Gradient",
+      "wrong": [
+       {
+        "id": "chance",
+        "value": 0.699544,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.300456,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$p_a - 1 \\approx 0.6995 - 1 = -0.3005$.",
+      "generic": "The gradient of softmax with cross-entropy is $\\mathbf{p} - \\mathbf{y}$.",
+      "byKey": {
+       "chance": "That is $p_a$. For the true class, subtract 1.",
+       "sign": "For the true class, $p - 1$ is negative: raising a's logit lowers the loss."
+      }
+     }
+    },
+    {
+     "question": "Using $\\mathbf{p} - \\mathbf{y} \\approx (0.11937, -0.30046, 0.18108)$, what is $\\partial L/\\partial h_2$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.629741,
+      "tol": {
+       "abs": 0.0002
+      },
+      "placeholder": "a number",
+      "label": "Gradient",
+      "wrong": [
+       {
+        "id": "first-row",
+        "value": -0.061712,
+        "tol": {
+         "abs": 0.0002
+        }
+       },
+       {
+        "id": "a-only",
+        "value": 0.300456,
+        "tol": {
+         "abs": 0.0002
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Row 2 of $W_2$ is $(2, -1, 0.5)$, so $2 \\times 0.11937 + 0.30046 + 0.5 \\times 0.18108 \\approx 0.6297$.",
+      "generic": "$\\partial L/\\partial \\mathbf{h} = (\\mathbf{p} - \\mathbf{y})W_2^T$. Pair it with row 2 of $W_2$.",
+      "byKey": {
+       "first-row": "You used row 1 of $W_2$, which belongs to $h_1$.",
+       "a-only": "You used a's logit only. All three logits read $h_2$, so all three gradients flow back."
+      }
+     }
+    }
+   ],
+   "explain": {
+    "text": "Forward, the context gives $\\mathbf{h} \\approx (0.2449, -0.6044)$, logits about $(-0.9638, 0.8044, -0.5471)$ and a loss of about 0.3573 nats. Backward, the logits get $\\mathbf{p} - \\mathbf{y}$, and $h_2$ collects $(\\mathbf{p} - \\mathbf{y})$ times row 2 of $W_2$, about 0.6297. Every logit reads $h_2$, so every class sends a share back."
+   }
+  },
+  {
+   "id": "e-backward-by-hand",
+   "difficulty": 5,
+   "skills": [
+    "bp-arrays",
+    "bp-check",
+    "bp-networks"
+   ],
+   "tags": [
+    "manual-backward",
+    "gradient-check"
+   ],
+   "pace": 720,
+   "title": "A backward pass by hand, then checked",
+   "prose": "A two-layer network scores $K$ classes: $\\mathbf{A} = \\mathbf{X}\\mathbf{W}_1 + \\mathbf{b}_1$, $\\mathbf{H} = \\tanh \\mathbf{A}$ and $\\mathbf{Z} = \\mathbf{H}\\mathbf{W}_2 + \\mathbf{b}_2$. The loss is the mean cross-entropy of the rows of $\\mathbf{Z}$ against the classes `y`, in nats. `loss_fn(P, X, y)` computes it for a dict `P` of float64 arrays, and `make_case(seed)` builds a seeded case `(P, X, y)`. No autograd is loaded.",
+   "question": "Write `mlp_grads(P, X, y)`: the gradients of the loss for `W1`, `b1`, `W2` and `b2`, by hand, as a dict with those keys and each array's shape. Then write `grad_error(G, P, X, y, h=1e-5)`. Bump every entry of every array by $+h$ and $-h$, then put it back. Return the global relative error between `G` and the central differences: the largest gap over the largest entry of either.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    # forward: A = X W1 + b1, H = tanh(A), Z = H W2 + b2\n    # backward: start from the mean cross-entropy's gradient for Z\n    ...\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    # bump each entry of each array in P by +h and -h, and put it back\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    n = len(y)\n    A = X @ P[\"W1\"] + P[\"b1\"]\n    Hd = np.tanh(A)\n    Z = Hd @ P[\"W2\"] + P[\"b2\"]\n    E = np.exp(Z - Z.max(axis=1, keepdims=True))\n    dZ = E / E.sum(axis=1, keepdims=True)\n    dZ[np.arange(n), y] -= 1.0\n    dZ /= n\n    dA = (dZ @ P[\"W2\"].T) * (1.0 - Hd ** 2)\n    return {\"W1\": X.T @ dA, \"b1\": dA.sum(axis=0), \"W2\": Hd.T @ dZ, \"b2\": dZ.sum(axis=0)}\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    worst, scale = 0.0, 1e-12\n    for key, W in P.items():\n        for i in np.ndindex(W.shape):\n            keep = W[i]\n            W[i] = keep + h\n            up = loss_fn(P, X, y)\n            W[i] = keep - h\n            down = loss_fn(P, X, y)\n            W[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(G[key][i] - num))\n            scale = max(scale, abs(G[key][i]), abs(num))\n    return worst / scale\n",
+    "prelude": "import numpy as np\n\n\ndef loss_fn(P, X, y):\n    \"\"\"Mean cross-entropy, in nats, of softmax(tanh(X W1 + b1) W2 + b2) against the classes y.\"\"\"\n    Z = np.tanh(X @ P[\"W1\"] + P[\"b1\"]) @ P[\"W2\"] + P[\"b2\"]\n    m = Z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(Z - m).sum(axis=1))\n    return float((lse - Z[np.arange(len(y)), y]).mean())\n\n\ndef make_case(seed, n=5, d=4, hid=3, k=4, shift=0.0):\n    \"\"\"A fresh seeded case (P, X, y); shift adds a large spread to the output biases.\"\"\"\n    rng = np.random.default_rng(seed)\n    P = {\"W1\": rng.standard_normal((d, hid)), \"b1\": rng.standard_normal(hid),\n         \"W2\": rng.standard_normal((hid, k)), \"b2\": rng.standard_normal(k) + shift * np.arange(k)}\n    X = rng.standard_normal((n, d))\n    y = rng.integers(0, k, n)\n    return P, X, y\n",
+    "examples": [
+     {
+      "setup": "P, X, y = make_case(2, n=2, d=2, hid=2, k=2)",
+      "call": "sorted(mlp_grads(P, X, y))",
+      "expect": "['W1', 'W2', 'b1', 'b2']",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, X, y = make_case(2, n=2, d=2, hid=2, k=2)",
+      "call": "mlp_grads(P, X, y)['b2']",
+      "expect": "[0.7281999927725544, -0.7281999927725545]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 1e-10
+      }
+     }
+    ],
+    "tests": [
+     {
+      "setup": "P, X, y = make_case(7)",
+      "call": "mlp_grads(P, X, y)['W2']",
+      "expect": "[[-0.04305854179725604, 0.17013565363625802, -0.09821195571323181, -0.028865156125770158], [0.0946001001397884, -0.052237577514485566, 0.03654810877056616, -0.07891063139586894], [-0.11657964730147394, 0.06634785492532388, 0.08983984278941246, -0.039608050413262395]]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 1e-10
+      }
+     },
+     {
+      "setup": "P, X, y = make_case(7)",
+      "call": "mlp_grads(P, X, y)['b1'].shape",
+      "expect": "(3,)",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, X, y = make_case(7)",
+      "call": "mlp_grads(P, X, y)['W1']",
+      "expect": "[[0.24193160211695353, -0.025831981560476086, 0.05248136208632925], [0.2118326308992252, 0.00428810296118088, -0.19872080792373417], [0.05147523751443423, 0.03551699774319946, 0.16831896499569254], [-0.13001283113380438, 0.009893637208833114, -0.08751388334023767]]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 1e-10
+      }
+     },
+     {
+      "setup": "P, X, y = make_case(8, n=6, d=2, hid=5, k=3)",
+      "call": "[mlp_grads(P, X, y)[k_] for k_ in ('b2', 'b1', 'W1')]",
+      "expect": "[[-0.2025780389587258, -0.19756991742726074, 0.40014795638598655], [0.011725907249516066, 0.019892726749620393, 0.2800467894850103, 0.0066389310378833465, 0.2781598936730114], [[-0.0014600085461663676, -0.029069512518852543, 0.10945008164471712, -0.0012822900364929902, -0.2078873042786486], [-0.008287326699728535, -0.009878620101062817, 0.08168323472799048, -0.0017690118151418332, -0.38232147496642105]]]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 1e-10
+      }
+     },
+     {
+      "setup": "P, X, y = make_case(9, shift=1000.0)",
+      "call": "mlp_grads(P, X, y)['W2']",
+      "expect": "[[0.06496582078818053, -0.24615518261452057, 0.19749050794351097, -0.01630114611717094], [-0.19790666637666499, -0.39819806391489637, -0.19254289576729172, 0.7886476260588531], [0.03409111368147828, -0.30712564643089474, 0.18850582467521537, 0.08452870807420111]]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-07,
+       "abs": 1e-10
+      }
+     },
+     {
+      "setup": "P, X, y = make_case(7)",
+      "call": "grad_error(mlp_grads(P, X, y), P, X, y) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, X, y = make_case(11)\n_A = X @ P['W1'] + P['b1']; _H = np.tanh(_A); _Z = _H @ P['W2'] + P['b2']\n_E = np.exp(_Z - _Z.max(axis=1, keepdims=True)); _D = _E / _E.sum(axis=1, keepdims=True)\n_D[np.arange(len(y)), y] -= 1; _D /= len(y); _dA = (_D @ P['W2'].T) * (1 - _H ** 2)\nREF = {'W1': X.T @ _dA, 'b1': _dA.sum(axis=0), 'W2': _H.T @ _D, 'b2': _D.sum(axis=0)}\nBAD = {k_: v.copy() for k_, v in REF.items()}; BAD['b2'] = BAD['b2'] * 1.01",
+      "call": "grad_error(BAD, P, X, y)",
+      "expect": "0.004461541329309666",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0.0001,
+       "abs": 0
+      }
+     },
+     {
+      "setup": "P, X, y = make_case(11)\n_A = X @ P['W1'] + P['b1']; _H = np.tanh(_A); _Z = _H @ P['W2'] + P['b2']\n_E = np.exp(_Z - _Z.max(axis=1, keepdims=True)); _D = _E / _E.sum(axis=1, keepdims=True)\n_D[np.arange(len(y)), y] -= 1; _D /= len(y); _dA = (_D @ P['W2'].T) * (1 - _H ** 2)\nREF = {'W1': X.T @ _dA, 'b1': _dA.sum(axis=0), 'W2': _H.T @ _D, 'b2': _D.sum(axis=0)}",
+      "call": "grad_error(REF, P, X, y, h=1e-3) < 1e-5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, X, y = make_case(11)\n_A = X @ P['W1'] + P['b1']; _H = np.tanh(_A); _Z = _H @ P['W2'] + P['b2']\n_E = np.exp(_Z - _Z.max(axis=1, keepdims=True)); _D = _E / _E.sum(axis=1, keepdims=True)\n_D[np.arange(len(y)), y] -= 1; _D /= len(y); _dA = (_D @ P['W2'].T) * (1 - _H ** 2)\nREF = {'W1': X.T @ _dA, 'b1': _dA.sum(axis=0), 'W2': _H.T @ _D, 'b2': _D.sum(axis=0)}\nP0 = {k_: v.copy() for k_, v in P.items()}\n_e = grad_error(REF, P, X, y, h=0.01)",
+      "call": "float(_e) < 1 and all(np.allclose(P[k_], P0[k_], rtol=0, atol=1e-12) for k_ in P)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, X, y = make_case(12, n=3, d=3, hid=6, k=5)",
+      "call": "grad_error(mlp_grads(P, X, y), P, X, y) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "P, X, y = make_case(11)\n_A = X @ P['W1'] + P['b1']; _H = np.tanh(_A); _Z = _H @ P['W2'] + P['b2']\n_E = np.exp(_Z - _Z.max(axis=1, keepdims=True)); _D = _E / _E.sum(axis=1, keepdims=True)\n_D[np.arange(len(y)), y] -= 1; _D /= len(y); _dA = (_D @ P['W2'].T) * (1 - _H ** 2)\nREF = {'W1': X.T @ _dA, 'b1': _dA.sum(axis=0), 'W2': _H.T @ _D, 'b2': _D.sum(axis=0)}\nHALF = {k_: v / 2 for k_, v in REF.items()}",
+      "call": "grad_error(HALF, P, X, y)",
+      "expect": "0.4999999999796274",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0.0001,
+       "abs": 0
+      }
+     }
+    ],
+    "how": "Submit runs 11 hidden tests. Four compare your gradients with ours within a relative $10^{-7}$, on cases that are not square. One of those has logits 1,000 apart, and one more test checks the shape of `b1`'s gradient. Two need `grad_error` of your gradients below $10^{-6}$, the exit's bar. The others give `grad_error` planted gradients, a step of $h = 0.001$, and check that `P` is put back.",
+    "budget": 3000,
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    n = len(y)\n    A = X @ P[\"W1\"] + P[\"b1\"]\n    Hd = np.tanh(A)\n    Z = Hd @ P[\"W2\"] + P[\"b2\"]\n    E = np.exp(Z - Z.max(axis=1, keepdims=True))\n    dZ = E / E.sum(axis=1, keepdims=True)\n    dZ[np.arange(n), y] -= 1.0\n    dA = (dZ @ P[\"W2\"].T) * (1.0 - Hd ** 2)\n    return {\"W1\": X.T @ dA, \"b1\": dA.sum(axis=0), \"W2\": Hd.T @ dZ, \"b2\": dZ.sum(axis=0)}\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    worst, scale = 0.0, 1e-12\n    for key, W in P.items():\n        for i in np.ndindex(W.shape):\n            keep = W[i]\n            W[i] = keep + h\n            up = loss_fn(P, X, y)\n            W[i] = keep - h\n            down = loss_fn(P, X, y)\n            W[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(G[key][i] - num))\n            scale = max(scale, abs(G[key][i]), abs(num))\n    return worst / scale\n",
+      "test": 1,
+      "symptom": "Leaves out the division by n, so every gradient is n times too large."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    n = len(y)\n    A = X @ P[\"W1\"] + P[\"b1\"]\n    Hd = np.tanh(A)\n    Z = Hd @ P[\"W2\"] + P[\"b2\"]\n    E = np.exp(Z - Z.max(axis=1, keepdims=True))\n    dZ = E / E.sum(axis=1, keepdims=True)\n    dZ[np.arange(n), y] -= 1.0\n    dZ /= n\n    dA = (dZ @ P[\"W2\"].T) * (1.0 - Hd ** 2)\n    return {\"W1\": X.T @ dA, \"b1\": dA, \"W2\": Hd.T @ dZ, \"b2\": dZ.sum(axis=0)}\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    worst, scale = 0.0, 1e-12\n    for key, W in P.items():\n        for i in np.ndindex(W.shape):\n            keep = W[i]\n            W[i] = keep + h\n            up = loss_fn(P, X, y)\n            W[i] = keep - h\n            down = loss_fn(P, X, y)\n            W[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(G[key][i] - num))\n            scale = max(scale, abs(G[key][i]), abs(num))\n    return worst / scale\n",
+      "test": 2,
+      "symptom": "Keeps one bias gradient per row instead of summing down the rows."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    n = len(y)\n    A = X @ P[\"W1\"] + P[\"b1\"]\n    Hd = np.tanh(A)\n    Z = Hd @ P[\"W2\"] + P[\"b2\"]\n    E = np.exp(Z - Z.max(axis=1, keepdims=True))\n    dZ = E / E.sum(axis=1, keepdims=True)\n    dZ[np.arange(n), y] -= 1.0\n    dZ /= n\n    dA = (dZ @ P[\"W2\"].T) * (1.0 - A ** 2)\n    return {\"W1\": X.T @ dA, \"b1\": dA.sum(axis=0), \"W2\": Hd.T @ dZ, \"b2\": dZ.sum(axis=0)}\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    worst, scale = 0.0, 1e-12\n    for key, W in P.items():\n        for i in np.ndindex(W.shape):\n            keep = W[i]\n            W[i] = keep + h\n            up = loss_fn(P, X, y)\n            W[i] = keep - h\n            down = loss_fn(P, X, y)\n            W[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(G[key][i] - num))\n            scale = max(scale, abs(G[key][i]), abs(num))\n    return worst / scale\n",
+      "test": 3,
+      "symptom": "Uses 1 - A**2 for the tanh slope, from the input instead of the output."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    n = len(y)\n    A = X @ P[\"W1\"] + P[\"b1\"]\n    Hd = np.tanh(A)\n    Z = Hd @ P[\"W2\"] + P[\"b2\"]\n    E = np.exp(Z)\n    dZ = E / E.sum(axis=1, keepdims=True)\n    dZ[np.arange(n), y] -= 1.0\n    dZ /= n\n    dA = (dZ @ P[\"W2\"].T) * (1.0 - Hd ** 2)\n    return {\"W1\": X.T @ dA, \"b1\": dA.sum(axis=0), \"W2\": Hd.T @ dZ, \"b2\": dZ.sum(axis=0)}\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    worst, scale = 0.0, 1e-12\n    for key, W in P.items():\n        for i in np.ndindex(W.shape):\n            keep = W[i]\n            W[i] = keep + h\n            up = loss_fn(P, X, y)\n            W[i] = keep - h\n            down = loss_fn(P, X, y)\n            W[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(G[key][i] - num))\n            scale = max(scale, abs(G[key][i]), abs(num))\n    return worst / scale\n",
+      "test": 5,
+      "symptom": "Exponentiates the logits without taking the row maximum out, so logits near 1,000 overflow."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    n = len(y)\n    A = X @ P[\"W1\"] + P[\"b1\"]\n    Hd = np.tanh(A)\n    Z = Hd @ P[\"W2\"] + P[\"b2\"]\n    E = np.exp(Z - Z.max(axis=1, keepdims=True))\n    dZ = E / E.sum(axis=1, keepdims=True)\n    dZ[np.arange(n), y] -= 1.0\n    dZ /= n\n    dA = (dZ @ P[\"W2\"].T) * (1.0 - Hd ** 2)\n    return {\"W1\": X.T @ dA, \"b1\": dA.sum(axis=0), \"W2\": Hd.T @ dZ, \"b2\": dZ.sum(axis=0)}\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    worst, scale = 0.0, 1e-12\n    for key, W in P.items():\n        for i in np.ndindex(W.shape):\n            keep = W[i]\n            W[i] = keep + h\n            up = loss_fn(P, X, y)\n            W[i] = keep\n            down = loss_fn(P, X, y)\n            num = (up - down) / h\n            worst = max(worst, abs(G[key][i] - num))\n            scale = max(scale, abs(G[key][i]), abs(num))\n    return worst / scale\n",
+      "test": 6,
+      "symptom": "Uses the forward difference, whose error of order h fails the 1e-6 bar."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    n = len(y)\n    A = X @ P[\"W1\"] + P[\"b1\"]\n    Hd = np.tanh(A)\n    Z = Hd @ P[\"W2\"] + P[\"b2\"]\n    E = np.exp(Z - Z.max(axis=1, keepdims=True))\n    dZ = E / E.sum(axis=1, keepdims=True)\n    dZ[np.arange(n), y] -= 1.0\n    dZ /= n\n    dA = (dZ @ P[\"W2\"].T) * (1.0 - Hd ** 2)\n    return {\"W1\": X.T @ dA, \"b1\": dA.sum(axis=0), \"W2\": Hd.T @ dZ, \"b2\": dZ.sum(axis=0)}\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    worst, scale = 0.0, 1e-12\n    for key, W in P.items():\n        for i in np.ndindex(W.shape):\n            keep = W[i]\n            W[i] = keep + h\n            up = loss_fn(P, X, y)\n            W[i] = keep - h\n            down = loss_fn(P, X, y)\n            W[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(G[key][i] - num) / max(abs(G[key][i]), abs(num), 1e-12))\n    return worst\n",
+      "test": 7,
+      "symptom": "Takes the worst relative error entry by entry instead of the largest gap over the largest entry."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    n = len(y)\n    A = X @ P[\"W1\"] + P[\"b1\"]\n    Hd = np.tanh(A)\n    Z = Hd @ P[\"W2\"] + P[\"b2\"]\n    E = np.exp(Z - Z.max(axis=1, keepdims=True))\n    dZ = E / E.sum(axis=1, keepdims=True)\n    dZ[np.arange(n), y] -= 1.0\n    dZ /= n\n    dA = (dZ @ P[\"W2\"].T) * (1.0 - Hd ** 2)\n    return {\"W1\": X.T @ dA, \"b1\": dA.sum(axis=0), \"W2\": Hd.T @ dZ, \"b2\": dZ.sum(axis=0)}\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    worst, scale = 0.0, 1e-12\n    for key, W in P.items():\n        for i in np.ndindex(W.shape):\n            keep = W[i]\n            W[i] = keep + h\n            up = loss_fn(P, X, y)\n            W[i] = keep - h\n            down = loss_fn(P, X, y)\n            W[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(G[key][i] - num))\n            scale = max(scale, abs(G[key][i]))\n    return worst / scale\n",
+      "test": 11,
+      "symptom": "Scales by the largest entry of G only, so gradients that are too small read as twice as wrong."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_grads(P, X, y):\n    \"\"\"Gradients of loss_fn(P, X, y) for W1, b1, W2 and b2, by hand.\"\"\"\n    n = len(y)\n    A = X @ P[\"W1\"] + P[\"b1\"]\n    Hd = np.tanh(A)\n    Z = Hd @ P[\"W2\"] + P[\"b2\"]\n    E = np.exp(Z - Z.max(axis=1, keepdims=True))\n    dZ = E / E.sum(axis=1, keepdims=True)\n    dZ[np.arange(n), y] -= 1.0\n    dZ /= n\n    dA = (dZ @ P[\"W2\"].T) * (1.0 - Hd ** 2)\n    return {\"W1\": X.T @ dA, \"b1\": dA.sum(axis=0), \"W2\": Hd.T @ dZ, \"b2\": dZ.sum(axis=0)}\n\n\ndef grad_error(G, P, X, y, h=1e-5):\n    \"\"\"Global relative error between G and central differences of loss_fn.\"\"\"\n    worst, scale = 0.0, 1e-12\n    for key, W in P.items():\n        for i in np.ndindex(W.shape):\n            keep = W[i]\n            W[i] = keep + h\n            up = loss_fn(P, X, y)\n            W[i] = keep - h\n            down = loss_fn(P, X, y)\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(G[key][i] - num))\n            scale = max(scale, abs(G[key][i]), abs(num))\n    return worst / scale\n",
+      "test": 6,
+      "symptom": "Leaves each entry at keep - h instead of putting it back, so the later bumps start from the wrong place."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your backward pass matches central differences to the exit's $10^{-6}$, and your check catches a planted 1% error.",
+    "generic": "Read the first failing test.",
+    "byKey": {
+     "test-1": "Start from $(\\mathbf{P} - \\mathbf{Y})/n$ for $\\mathbf{Z}$: the loss is a mean over the $n$ rows. Then $\\partial L/\\partial \\mathbf{W}_2 = \\mathbf{H}^T(\\partial L/\\partial \\mathbf{Z})$.",
+     "test-2": "The bias was broadcast down the rows, so its gradient is summed down them: `dA.sum(axis=0)` has shape `(3,)`.",
+     "test-3": "The tanh slope is $1 - \\mathbf{H}^2$, from the output, and $\\partial L/\\partial \\mathbf{W}_1 = \\mathbf{X}^T(\\partial L/\\partial \\mathbf{A})$.",
+     "test-5": "Take each row's largest logit out before `np.exp`. Logits 1,000 apart overflow otherwise.",
+     "test-6": "Use the central difference $\\tfrac{f(w + h) - f(w - h)}{2h}$, and put each entry back to its kept value after its two bumps.",
+     "test-7": "Divide the largest gap over all entries by the largest entry of either, as the course's global relative error does.",
+     "test-11": "Scale by the largest entry of either `G` or the central differences. Here the differences hold the larger entries."
+    }
+   },
+   "explain": {
+    "text": "Backward from the mean cross-entropy, $\\partial L/\\partial \\mathbf{Z} = (\\mathbf{P} - \\mathbf{Y})/n$, the products pass $\\mathbf{H}^T$ and $\\mathbf{W}_2^T$, the tanh multiplies by $1 - \\mathbf{H}^2$, and each bias sums its gradient down the rows. Central differences in float64 agree with it to far better than $10^{-6}$, while a forward difference or a slip in any line misses that bar."
+   }
+  },
+  {
+   "id": "e-beat-the-bigram",
+   "difficulty": 5,
+   "skills": [
+    "mk-eval",
+    "mk-loss",
+    "mk-bigram",
+    "mk-mlp"
+   ],
+   "tags": [
+    "dev-loss",
+    "bigram-baseline"
+   ],
+   "pace": 600,
+   "title": "Does the network beat the counts?",
+   "prose": "The course split is loaded: `train_names` (25,626) and `dev_names` (3,203), with `INDEX` (`.` is 0, a to z are 1 to 26). So are `build_dataset(words)` (block 3), `mlp_logits(params, X)` and `trained`, the MLP's supplied weights. `planted(seed)` makes a small seeded MLP for testing.",
+   "question": "Write `dev_report(train_words, dev_words, params, alpha)`. Count the bigram table of `train_words`, add `alpha` to every cell and divide each row by its own total. Return a dict of three numbers. `bigram` is its average $-\\ln P$ over every pair of `dev_words`, end marks included. `mlp` is the mean cross-entropy of the MLP's logits on `dev_words`, by log-sum-exp. `saved_bits` is the bigram's loss minus the MLP's, in bits.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef dev_report(train_words, dev_words, params, alpha):\n    \"\"\"Dev losses, in nats per next symbol, of the add-alpha bigram and of the MLP, and the bits saved.\"\"\"\n    # bigram: counts from train_words with alpha added, each row divided by its total,\n    #         then the average -ln P[a, b] over every pair of dev_words, end marks included\n    # MLP: build_dataset(dev_words), mlp_logits(params, X), mean cross-entropy by log-sum-exp\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\n\ndef dev_report(train_words, dev_words, params, alpha):\n    \"\"\"Dev losses, in nats per next symbol, of the add-alpha bigram and of the MLP, and the bits saved.\"\"\"\n    N = np.zeros((27, 27))\n    for w in train_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            N[a, b] += 1\n    P = (N + alpha) / (N + alpha).sum(axis=1, keepdims=True)\n    cost, count = 0.0, 0\n    for w in dev_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            cost -= math.log(P[a, b])\n            count += 1\n    bigram = cost / count\n    X, Y = build_dataset(dev_words)\n    Z = mlp_logits(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(Z - m).sum(axis=1))\n    mlp = float((lse - Z[np.arange(len(Y)), Y]).mean())\n    return {\"bigram\": bigram, \"mlp\": mlp, \"saved_bits\": (bigram - mlp) / math.log(2)}\n",
+    "prelude": "import json\nimport math\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain_names = [words[i] for i in perm[:25626]]\ndev_names = [words[i] for i in perm[25626:28829]]\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef build_dataset(ws, block=3):\n    \"\"\"Rows of (block indices of context, next index), each name padded with block start marks.\"\"\"\n    X, Y = [], []\n    for w in ws:\n        context = [0] * block\n        for ch in w + \".\":\n            X.append(context)\n            Y.append(INDEX[ch])\n            context = context[1:] + [INDEX[ch]]\n    return np.array(X, dtype=int).reshape(-1, block), np.array(Y, dtype=int)\n\n\ndef mlp_logits(params, X):\n    \"\"\"Logits of the MLP language model: look up and join, tanh layer, output layer.\"\"\"\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    return np.tanh(E @ params[\"W1\"] + params[\"b1\"]) @ params[\"W2\"] + params[\"b2\"]\n\n\ntrained = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\n\n\ndef planted(seed, shift=0.0):\n    \"\"\"A small seeded MLP over the 27 symbols, block 3, 2 numbers a symbol, 4 hidden units.\"\"\"\n    rng = np.random.default_rng(seed)\n    return {\"C\": rng.standard_normal((27, 2)), \"W1\": rng.standard_normal((6, 4)), \"b1\": rng.standard_normal(4),\n            \"W2\": rng.standard_normal((4, 27)), \"b2\": rng.standard_normal(27) + shift}\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt",
+     "makemore-mlp.json": "content/data/ai/makemore-mlp.json"
+    },
+    "examples": [
+     {
+      "setup": "Q = planted(5)",
+      "call": "sorted(dev_report(['ab'], ['ab'], Q, 1))",
+      "expect": "['bigram', 'mlp', 'saved_bits']",
+      "compare": "equal"
+     },
+     {
+      "setup": "Q = planted(5)",
+      "call": "dev_report(['ab'], ['ab'], Q, 1)['bigram']",
+      "expect": "2.639057329615259",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0,
+       "abs": 0.0002
+      }
+     }
+    ],
+    "tests": [
+     {
+      "setup": "Q = planted(5)",
+      "call": "dev_report(['ab', 'ba', 'abb'], ['ab', 'bab'], Q, 1)",
+      "expect": "{'bigram': 2.432485047949089, 'mlp': 4.2913184769913775, 'saved_bits': -2.6817297699179368}",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0,
+       "abs": 0.0002
+      }
+     },
+     {
+      "setup": "Q = planted(5)",
+      "call": "dev_report(['emma', 'ava', 'mae'], ['eva', 'am'], Q, 0.5)",
+      "expect": "{'bigram': 2.7851752947730657, 'mlp': 4.307236960570057, 'saved_bits': -2.195870817172514}",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0,
+       "abs": 0.0002
+      }
+     },
+     {
+      "setup": "Q = planted(6, shift=1000.0)",
+      "call": "dev_report(['ab', 'ba'], ['ab', 'ba'], Q, 1)['mlp']",
+      "expect": "5.141805753647266",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0,
+       "abs": 0.0002
+      }
+     },
+     {
+      "call": "dev_report(train_names, dev_names, trained, 1)",
+      "expect": "{'bigram': 2.4514134798414875, 'mlp': 2.1609415557487277, 'saved_bits': 0.4190624044061}",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0,
+       "abs": 0.0002
+      }
+     },
+     {
+      "setup": "R5 = dev_report(train_names, dev_names, trained, 1)",
+      "call": "R5['mlp'] < R5['bigram']",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "Q = planted(3)",
+      "call": "dev_report(train_names[:300], dev_names[:40], Q, 0.1)",
+      "expect": "{'bigram': 2.554859339023488, 'mlp': 5.570651921921762, 'saved_bits': -4.350869003697058}",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0,
+       "abs": 0.0002
+      }
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, each within 0.0002 of ours, so rounding to 4 places is fine. Three use tiny word lists and planted models, one of them with logits near 1,000. One scores the supplied weights on the course split, one checks that the MLP's dev loss is below the bigram's, and one uses $\\alpha = 0.1$ on part of the split. Names and weights: Andrej Karpathy's makemore names list (MIT licence).",
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef dev_report(train_words, dev_words, params, alpha):\n    \"\"\"Dev losses, in nats per next symbol, of the add-alpha bigram and of the MLP, and the bits saved.\"\"\"\n    N = np.zeros((27, 27))\n    for w in train_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            N[a, b] += 1\n    P = (N + alpha) / (N + alpha).sum()\n    cost, count = 0.0, 0\n    for w in dev_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            cost -= math.log(P[a, b])\n            count += 1\n    bigram = cost / count\n    X, Y = build_dataset(dev_words)\n    Z = mlp_logits(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(Z - m).sum(axis=1))\n    mlp = float((lse - Z[np.arange(len(Y)), Y]).mean())\n    return {\"bigram\": bigram, \"mlp\": mlp, \"saved_bits\": (bigram - mlp) / math.log(2)}\n",
+      "test": 1,
+      "symptom": "Divides every count by the table's total, so the rows no longer add to 1."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef dev_report(train_words, dev_words, params, alpha):\n    \"\"\"Dev losses, in nats per next symbol, of the add-alpha bigram and of the MLP, and the bits saved.\"\"\"\n    N = np.zeros((27, 27))\n    for w in train_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            N[a, b] += 1\n    P = (N + alpha) / (N + alpha).sum(axis=1, keepdims=True)\n    cost, count = 0.0, 0\n    for w in dev_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            cost -= math.log(P[a, b])\n            count += 1\n    bigram = cost / count\n    X, Y = build_dataset(dev_words)\n    Z = mlp_logits(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(Z - m).sum(axis=1))\n    mlp = float((lse - Z[np.arange(len(Y)), Y]).mean())\n    return {\"bigram\": bigram, \"mlp\": mlp, \"saved_bits\": bigram - mlp}\n",
+      "test": 1,
+      "symptom": "Reports the saving in nats, not bits."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef dev_report(train_words, dev_words, params, alpha):\n    \"\"\"Dev losses, in nats per next symbol, of the add-alpha bigram and of the MLP, and the bits saved.\"\"\"\n    N = np.zeros((27, 27))\n    for w in train_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            N[a, b] += 1\n    P = (N + alpha) / (N + alpha).sum(axis=1, keepdims=True)\n    cost, count = 0.0, 0\n    for w in dev_words:\n        cs = [0] + [INDEX[c] for c in w]\n        for a, b in zip(cs, cs[1:]):\n            cost -= math.log(P[a, b])\n            count += 1\n    bigram = cost / count\n    X, Y = build_dataset(dev_words)\n    Z = mlp_logits(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(Z - m).sum(axis=1))\n    mlp = float((lse - Z[np.arange(len(Y)), Y]).mean())\n    return {\"bigram\": bigram, \"mlp\": mlp, \"saved_bits\": (bigram - mlp) / math.log(2)}\n",
+      "test": 1,
+      "symptom": "Leaves out each dev name's end pair."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef dev_report(train_words, dev_words, params, alpha):\n    \"\"\"Dev losses, in nats per next symbol, of the add-alpha bigram and of the MLP, and the bits saved.\"\"\"\n    N = np.zeros((27, 27))\n    for w in train_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            N[a, b] += 1\n    P = (N + alpha) / (N + alpha).sum(axis=1, keepdims=True)\n    cost, count = 0.0, 0\n    for w in dev_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            cost -= math.log(P[a, b])\n        count += 1\n    bigram = cost / count\n    X, Y = build_dataset(dev_words)\n    Z = mlp_logits(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(Z - m).sum(axis=1))\n    mlp = float((lse - Z[np.arange(len(Y)), Y]).mean())\n    return {\"bigram\": bigram, \"mlp\": mlp, \"saved_bits\": (bigram - mlp) / math.log(2)}\n",
+      "test": 1,
+      "symptom": "Averages the cost over names instead of over next symbols."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef dev_report(train_words, dev_words, params, alpha):\n    \"\"\"Dev losses, in nats per next symbol, of the add-alpha bigram and of the MLP, and the bits saved.\"\"\"\n    N = np.zeros((27, 27))\n    for w in train_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            N[a, b] += 1\n    P = (N + alpha) / (N + alpha).sum(axis=1, keepdims=True)\n    cost, count = 0.0, 0\n    for w in dev_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            cost -= math.log(P[a, b])\n            count += 1\n    bigram = cost / count\n    X, Y = build_dataset([\".\".join(dev_words)])\n    X, Y = X[:-1], Y[:-1]\n    Z = mlp_logits(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(Z - m).sum(axis=1))\n    mlp = float((lse - Z[np.arange(len(Y)), Y]).mean())\n    return {\"bigram\": bigram, \"mlp\": mlp, \"saved_bits\": (bigram - mlp) / math.log(2)}\n",
+      "test": 1,
+      "symptom": "Joins the dev names into one string, so a name's context runs on from the name before."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef dev_report(train_words, dev_words, params, alpha):\n    \"\"\"Dev losses, in nats per next symbol, of the add-alpha bigram and of the MLP, and the bits saved.\"\"\"\n    N = np.zeros((27, 27))\n    for w in train_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            N[a, b] += 1\n    P = (N + 1) / (N + 1).sum(axis=1, keepdims=True)\n    cost, count = 0.0, 0\n    for w in dev_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            cost -= math.log(P[a, b])\n            count += 1\n    bigram = cost / count\n    X, Y = build_dataset(dev_words)\n    Z = mlp_logits(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(Z - m).sum(axis=1))\n    mlp = float((lse - Z[np.arange(len(Y)), Y]).mean())\n    return {\"bigram\": bigram, \"mlp\": mlp, \"saved_bits\": (bigram - mlp) / math.log(2)}\n",
+      "test": 2,
+      "symptom": "Always adds 1, whatever alpha is."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\n\ndef dev_report(train_words, dev_words, params, alpha):\n    \"\"\"Dev losses, in nats per next symbol, of the add-alpha bigram and of the MLP, and the bits saved.\"\"\"\n    N = np.zeros((27, 27))\n    for w in train_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            N[a, b] += 1\n    P = (N + alpha) / (N + alpha).sum(axis=1, keepdims=True)\n    cost, count = 0.0, 0\n    for w in dev_words:\n        cs = [0] + [INDEX[c] for c in w] + [0]\n        for a, b in zip(cs, cs[1:]):\n            cost -= math.log(P[a, b])\n            count += 1\n    bigram = cost / count\n    X, Y = build_dataset(dev_words)\n    Z = mlp_logits(params, X)\n    lse = np.log(np.exp(Z).sum(axis=1))\n    mlp = float((lse - Z[np.arange(len(Y)), Y]).mean())\n    return {\"bigram\": bigram, \"mlp\": mlp, \"saved_bits\": (bigram - mlp) / math.log(2)}\n",
+      "test": 3,
+      "symptom": "Takes no maximum out before np.exp, so logits near 1,000 overflow."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "On the dev names the MLP scores 2.1609 nats a symbol against the bigram's 2.4514, a saving of 0.4191 bits.",
+    "generic": "Read the first failing test.",
+    "byKey": {
+     "test-1": "Divide each row by its own total, and average over every next symbol of the dev words, end marks included. Build the dev rows name by name, and divide the saving by $\\ln 2$.",
+     "test-2": "Add `alpha` to every cell, not 1.",
+     "test-3": "Take each row's largest logit out before `np.exp`, as log-sum-exp does."
+    }
+   },
+   "explain": {
+    "text": "Both models are scored the same way, by the average cost of each next symbol of names neither model was fitted to. The bigram from add-one counts scores 2.4514 nats and the MLP 2.1609, so three letters of context save about 0.4191 bits a symbol. That held-out gap, not the training loss, is the evidence that the network is the better model."
+   }
+  }
+ ]
+}
