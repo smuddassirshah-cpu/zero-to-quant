@@ -67,9 +67,15 @@
             "call": "digit_report(cnn, mlp, X_te, _yf)['exit']",
             "expect": "False",
             "compare": "equal"
+          },
+          {
+            "setup": "_mb = [0.7 * p + 0.3 * q for p, q in zip(mlp, load_weights('cnn-w-mlp-aug.json'))]",
+            "call": "digit_report(cnn, _mb, X_te, y_te)['exit']",
+            "expect": "False",
+            "compare": "equal"
           }
         ],
-        "how": "Submit runs 8 hidden tests. Tests 1 to 4 check the keys, both held-out accuracies and both lists of shifted accuracies for the supplied CNN and MLP, to $10^{-9}$. Tests 5 to 8 check the exit on four planted cases: the supplied pair (met), an MLP trained on shifted copies (margin not met), and the 8-filter net (held-out bar not met). The last case relabels six test digits, so held-out accuracy falls below 0.98 while the margin still holds. About two seconds in all.",
+        "how": "Submit runs 9 hidden tests. Tests 1 to 4 check the keys, both held-out accuracies and both lists of shifted accuracies for the supplied CNN and MLP, to $10^{-9}$. Tests 5 to 9 check the exit on five planted cases: the supplied pair (met), an MLP trained on shifted copies (margin not met), the 8-filter net (both parts fail), a relabelled set where only the 0.98 bar fails, and an MLP part way to the augmented one, which trails the CNN by 0.08, above 0.05 and below 0.10. The relabelled case changes six test digits, so held-out accuracy falls below 0.98 while the margin still holds. About two seconds in all.",
         "budget": 3000,
         "data": {
           "autograd.py": "content/data/ai/autograd.py",
@@ -102,6 +108,16 @@
             "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef digit_report(params_cnn, params_mlp, X_test, y_test):\n    def score(fn, params, X):\n        return float((predict(fn, params, X) == y_test).mean())\n    rep = {'cnn': score(cnn_logits, params_cnn, X_test), 'mlp': score(mlp_logits, params_mlp, X_test)}\n    rep['cnn_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    rep['mlp_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    gap = np.mean(rep['cnn_shifted']) - np.mean(rep['mlp_shifted'])\n    rep['exit'] = bool(rep['cnn'] >= 0.98 and gap >= 0.10)\n    return rep\n",
             "test": 4,
             "symptom": "The MLP’s shifted scores are computed with the CNN."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef digit_report(params_cnn, params_mlp, X_test, y_test):\n    def score(fn, params, X):\n        return float((predict(fn, params, X) == y_test).mean())\n    rep = {'cnn': score(cnn_logits, params_cnn, X_test), 'mlp': score(mlp_logits, params_mlp, X_test)}\n    rep['cnn_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    rep['mlp_shifted'] = [score(mlp_logits, params_mlp, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    gap = np.mean(rep['cnn_shifted']) - np.mean(rep['mlp_shifted'])\n    rep['exit'] = bool(rep['cnn'] >= 0.98 and gap > 0)\n    return rep\n",
+            "test": 9,
+            "symptom": "Any lead counts as the margin, so an MLP that trails by 0.08 still lets the CNN pass."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef digit_report(params_cnn, params_mlp, X_test, y_test):\n    def score(fn, params, X):\n        return float((predict(fn, params, X) == y_test).mean())\n    rep = {'cnn': score(cnn_logits, params_cnn, X_test), 'mlp': score(mlp_logits, params_mlp, X_test)}\n    rep['cnn_shifted'] = [score(cnn_logits, params_cnn, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    rep['mlp_shifted'] = [score(mlp_logits, params_mlp, shift_images(X_test, dx, dy)) for dx, dy in SHIFTS]\n    gap = np.mean(rep['cnn_shifted']) - np.mean(rep['mlp_shifted'])\n    rep['exit'] = bool(rep['cnn'] >= 0.98 and gap >= 0.05)\n    return rep\n",
+            "test": 9,
+            "symptom": "The rule is set at 0.05 instead of 0.10, so a gap of 0.08 passes."
           }
         ]
       },
@@ -112,7 +128,8 @@
           "test-3": "Report the shifts in the order right, left, down, up.",
           "test-4": "Score the MLP’s shifted digits with the MLP.",
           "test-6": "The margin is one-sided: the CNN must beat the MLP by 0.10.",
-          "test-8": "Check both parts of the exit: held-out accuracy of at least 0.98 and the margin."
+          "test-8": "Check both parts of the exit: held-out accuracy of at least 0.98 and the margin.",
+          "test-9": "The margin is a gap of at least 0.10, not any lead and not 0.05: a partly trained MLP can trail the CNN by less than that."
         }
       },
       "explain": {
@@ -163,9 +180,9 @@
             }
           },
           {
-            "setup": "from autograd import cross_entropy as _ce; _P = fine_tune(cnn, X_aug[::50], y_aug[::50], 2, 0.01, 6)",
+            "setup": "from autograd import cross_entropy as _ce; _P = fine_tune(cnn, X_aug[::50], y_aug[::50], 2, 0.02, 6)",
             "call": "_ce(cnn_logits(_P, X_aug[::50]), y_aug[::50]).item()",
-            "expect": "0.6314950223715697",
+            "expect": "0.4566970672338245",
             "compare": "isclose",
             "tol": {
               "rel": 1e-07
@@ -184,7 +201,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Submit runs 6 hidden tests. Test 1 checks the shapes and test 2 that the weights passed in are left unchanged. Tests 3 and 4 fine-tune on every 50th augmented image (101 images, 4 and 8 steps) and compare the loss to $10^{-7}$ of the model run. Test 5 fine-tunes one epoch on all 5,025 images (158 steps, about a second on a desktop, 4 s extra) and needs a mean shifted accuracy on validation of at least 0.85. Test 6 checks you did not call `fit`.",
+        "how": "Submit runs 6 hidden tests. Test 1 checks the shapes and test 2 that the weights passed in are left unchanged. Tests 3 and 4 fine-tune on every 50th augmented image (101 images, 4 and 8 steps, at rates 0.01 and 0.02) and compare the loss to $10^{-7}$ of the model run. Test 5 fine-tunes one epoch on all 5,025 images (158 steps, about a second on a desktop, 4 s extra) and needs a mean shifted accuracy on validation of at least 0.85. Test 6 checks you did not call `fit`.",
         "budget": 1000,
         "data": {
           "autograd.py": "content/data/ai/autograd.py",
@@ -209,6 +226,11 @@
             "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits, shift_images, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]\nX_aug = np.concatenate([X_tr] + [shift_images(X_tr, dx, dy) for dx, dy in SHIFTS])   # 5,025 images\ny_aug = np.concatenate([y_tr] * 5)\n\n\ndef fine_tune(params, X, y, epochs, lr, seed):\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t = 0\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X[idx]), y[idx])\n            loss.backward()\n            t += 1\n            new, m, v = adam_step(params, [p.grad for p in ts], m, v, t, lr)\n            for p, q in zip(params, new):\n                p[...] = q\n    return params\n",
             "test": 2,
             "symptom": "The update is written into the arrays passed in, so the supplied weights change under the caller."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits, shift_images, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]\nX_aug = np.concatenate([X_tr] + [shift_images(X_tr, dx, dy) for dx, dy in SHIFTS])   # 5,025 images\ny_aug = np.concatenate([y_tr] * 5)\n\n\ndef fine_tune(params, X, y, epochs, lr, seed):\n    params = [np.array(p, dtype=float) for p in params]\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t = 0\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X[idx]), y[idx])\n            loss.backward()\n            t += 1\n            params, m, v = adam_step(params, [p.grad for p in ts], m, v, t, 0.01)\n    return params\n",
+            "test": 4,
+            "symptom": "The rate is fixed at 0.01 and `lr` is ignored, so a run at 0.02 does not match."
           }
         ]
       },
@@ -218,7 +240,7 @@
         "byKey": {
           "test-2": "Work on copies; leave the arrays passed in unchanged.",
           "test-3": "Count Adam steps from 1 and add 1 at every step.",
-          "test-4": "Shuffle with `seed + epoch`.",
+          "test-4": "Shuffle with `seed + epoch`, and step with the `lr` you are given: this test uses 0.02.",
           "test-6": "Write the loop; do not call `fit`."
         }
       },
@@ -432,7 +454,7 @@
           {
             "id": "c",
             "text": "Augmentation makes the choice of architecture irrelevant",
-            "why": "The gap shrinks, but it does not vanish, and it reappears for shifts the copies did not cover."
+            "why": "The gap shrinks, but it does not vanish: at two pixels, which the copies never showed, it returns (l12)."
           },
           {
             "id": "d",

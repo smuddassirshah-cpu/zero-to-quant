@@ -99,7 +99,7 @@
           {
             "id": "c",
             "text": "0.001",
-            "why": "It is still climbing after 10 epochs: too slow for this budget."
+            "why": "It ends lowest, at 0.889, and has not risen since epoch 7: too slow for 10 epochs."
           },
           {
             "id": "d",
@@ -130,7 +130,7 @@
         "generic": "Not quite. Compare where each curve ends."
       },
       "explain": {
-        "text": "Too small a rate is still learning after 10 epochs (0.889); too large a rate wobbles (0.917). So we choose rate 0.01, on validation and never on test."
+        "text": "Too small a rate ends lowest (0.889); too large a rate wobbles (0.917). So we choose rate 0.01, on validation and never on test."
       }
     },
     {
@@ -432,8 +432,8 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, init_cnn, cnn_logits, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\n\n\ndef train_cnn(X_tr, y_tr, X_va, y_va, epochs, lr, seed):\n    params = init_cnn(8, seed)          # He start, 8 filters\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t, curve = 0, []\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X_tr), 32, seed + epoch):\n            ...                          # one Adam step on this batch\n        ...                              # validation accuracy of this epoch\n    return params, curve\n",
-        "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, init_cnn, cnn_logits, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\n\n\ndef train_cnn(X_tr, y_tr, X_va, y_va, epochs, lr, seed):\n    params = init_cnn(8, seed)\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t, curve = 0, []\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X_tr), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X_tr[idx]), y_tr[idx])\n            loss.backward()\n            t += 1\n            params, m, v = adam_step(params, [p.grad for p in ts], m, v, t, lr)\n        curve.append(accuracy(cnn_logits, params, X_va, y_va))\n    return params, curve\n",
+        "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, init_cnn, cnn_logits, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, _, _ = load_split()\n\n\ndef train_cnn(X_tr, y_tr, X_va, y_va, epochs, lr, seed):\n    params = init_cnn(8, seed)          # He start, 8 filters\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t, curve = 0, []\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X_tr), 32, seed + epoch):\n            ...                          # one Adam step on this batch\n        ...                              # validation accuracy of this epoch\n    return params, curve\n",
+        "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, init_cnn, cnn_logits, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, _, _ = load_split()\n\n\ndef train_cnn(X_tr, y_tr, X_va, y_va, epochs, lr, seed):\n    params = init_cnn(8, seed)\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t, curve = 0, []\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X_tr), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X_tr[idx]), y_tr[idx])\n            loss.backward()\n            t += 1\n            params, m, v = adam_step(params, [p.grad for p in ts], m, v, t, lr)\n        curve.append(accuracy(cnn_logits, params, X_va, y_va))\n    return params, curve\n",
         "examples": [
           {
             "call": "[p.shape for p in train_cnn(X_tr[:64], y_tr[:64], X_va, y_va, 1, 0.01, 0)[0]]",
@@ -457,9 +457,9 @@
             }
           },
           {
-            "setup": "from autograd import cross_entropy as _ce; from cnn_ops_l3 import cnn_logits as _cl; _P = train_cnn(X_tr[:96], y_tr[:96], X_va, y_va, 2, 0.01, 4)[0]",
+            "setup": "from autograd import cross_entropy as _ce; from cnn_ops_l3 import cnn_logits as _cl; _P = train_cnn(X_tr[:96], y_tr[:96], X_va, y_va, 2, 0.02, 4)[0]",
             "call": "_ce(_cl(_P, X_tr[:96]), y_tr[:96]).item()",
-            "expect": "1.7500431545973398",
+            "expect": "1.309602203294493",
             "compare": "isclose",
             "tol": {
               "rel": 1e-07
@@ -478,12 +478,12 @@
             "budget": 4000
           },
           {
-            "call": "zq_no('fit')",
+            "call": "zq_no('fit', 'X_te', 'y_te')",
             "expect": "True",
             "compare": "equal"
           }
         ],
-        "how": "Submit runs 6 hidden tests. Test 1 checks the shapes after one epoch. Tests 2 and 3 train on the first 96 digits for one epoch (3 steps) and two epochs (6 steps) and compare the training loss to $10^{-7}$ of the model run. Test 4 checks one validation accuracy per epoch, measured on the validation split. Test 5 trains 10 epochs on all 1,005 digits and needs a final validation accuracy of at least 0.90. That takes about a second on a desktop and a few on a phone (it has 4 s extra). Test 6 checks you did not call the module’s `fit`.",
+        "how": "Submit runs 6 hidden tests. Test 1 checks the shapes after one epoch. Test 2 trains on the first 96 digits for one epoch (3 steps) at rate 0.01 and test 3 for two epochs (6 steps) at rate 0.02; both compare the training loss to $10^{-7}$ of the model run. Test 4 checks one validation accuracy per epoch, measured on the validation split. Test 5 trains 10 epochs on all 1,005 digits and needs a final validation accuracy of at least 0.90. That takes about a second on a desktop and a few on a phone (it has 4 s extra). Test 6 checks you did not call the module’s `fit` and did not touch the test split.",
         "budget": 1000,
         "data": {
           "autograd.py": "content/data/ai/autograd.py",
@@ -512,6 +512,16 @@
             "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, init_cnn, cnn_logits, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\n\n\ndef train_cnn(X_tr, y_tr, X_va, y_va, epochs, lr, seed):\n    params = init_cnn(8, seed)\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t, curve = 0, []\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X_tr), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X_tr[idx]), y_tr[idx])\n            loss.backward()\n            t += 1\n            params, m, v = adam_step(params, [p.grad for p in ts], m, v, t, lr)\n        curve.append(accuracy(cnn_logits, params, X_tr, y_tr))\n    return params, curve\n",
             "test": 4,
             "symptom": "The curve is measured on the training digits, which says nothing about digits the net has not seen."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, init_cnn, cnn_logits, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\n\n\ndef train_cnn(X_tr, y_tr, X_va, y_va, epochs, lr, seed):\n    params = init_cnn(8, seed)\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t, curve = 0, []\n    best, keep = -1.0, None\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X_tr), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X_tr[idx]), y_tr[idx])\n            loss.backward()\n            t += 1\n            params, m, v = adam_step(params, [p.grad for p in ts], m, v, t, lr)\n        curve.append(accuracy(cnn_logits, params, X_va, y_va))\n        te = accuracy(cnn_logits, params, X_te, y_te)\n        if te > best:\n            best, keep = te, params\n    return keep, curve\n",
+            "test": 6,
+            "symptom": "It keeps the epoch with the best test accuracy: early stopping on the test split, so the test score is no longer held out."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom cnn_ops_l3 import load_split, init_cnn, cnn_logits, accuracy\nfrom nt_ops_l1 import adam_step, minibatch_indices\n\nX_tr, y_tr, X_va, y_va, _, _ = load_split()\n\n\ndef train_cnn(X_tr, y_tr, X_va, y_va, epochs, lr, seed):\n    params = init_cnn(8, seed)\n    m = [np.zeros_like(p) for p in params]\n    v = [np.zeros_like(p) for p in params]\n    t, curve = 0, []\n    for epoch in range(epochs):\n        for idx in minibatch_indices(len(X_tr), 32, seed + epoch):\n            ts = [Tensor(p) for p in params]\n            loss = cross_entropy(cnn_logits(ts, X_tr[idx]), y_tr[idx])\n            loss.backward()\n            t += 1\n            params, m, v = adam_step(params, [p.grad for p in ts], m, v, t, 0.01)\n        curve.append(accuracy(cnn_logits, params, X_va, y_va))\n    return params, curve\n",
+            "test": 3,
+            "symptom": "The rate is fixed at 0.01 and `lr` is ignored, so a run at 0.02 does not match."
           }
         ]
       },
@@ -534,14 +544,14 @@
         "generic": "Not quite. Check the step order and what restarts each epoch.",
         "byKey": {
           "test-2": "One epoch already differs. Wrap the parameters in fresh Tensors at every step, so gradients start at zero.",
-          "test-3": "The second epoch differs. Keep Adam’s `m`, `v` and `t` across epochs, and shuffle with `seed + epoch`.",
+          "test-3": "The second epoch differs. Keep Adam’s `m`, `v` and `t` across epochs, shuffle with `seed + epoch`, and step with the `lr` you are given: this test uses 0.02.",
           "test-4": "Measure each epoch’s accuracy on the validation split, `X_va` and `y_va`.",
-          "test-5": "Ten epochs at rate 0.01 should reach 0.90 on validation. Check the update uses `lr`.",
-          "test-6": "Write the loop yourself; do not call the module’s `fit`."
+          "test-5": "Ten epochs at rate 0.01 should reach 0.90 on validation. Check the update and the shuffle.",
+          "test-6": "Write the loop yourself, not the module’s `fit`, and train and choose on the training and validation splits only: the test split is not for this function."
         }
       },
       "explain": {
-        "text": "Two exact short runs pin the loop down: fresh gradients each step, Adam’s memory kept across epochs, a new shuffle each epoch. The 10-epoch run then checks it learns."
+        "text": "Two exact short runs pin the loop down: fresh gradients each step, Adam’s memory kept across epochs, a new shuffle each epoch, and the rate you pass. The 10-epoch run then checks it learns."
       }
     },
     {
@@ -901,9 +911,15 @@
             "call": "exit_check(exit_params, X_te[_ok], _y)",
             "expect": "True",
             "compare": "equal"
+          },
+          {
+            "setup": "_yf = y_te.copy(); _ok = np.flatnonzero(cnn_logits(exit_params, X_te).data.argmax(axis=1) == y_te)[:6]; _yf[_ok] = (_yf[_ok] + 1) % 10",
+            "call": "exit_check(exit_params, X_te, _yf)",
+            "expect": "False",
+            "compare": "equal"
           }
         ],
-        "how": "Submit runs 5 hidden tests on the supplied weights. Three check the accuracy of both nets on the held-out digits and of the exit net on validation, to $10^{-9}$. Two check the exit: for both nets, and on a planted set of 50 digits where the exit net scores exactly 0.98.",
+        "how": "Submit runs 6 hidden tests on the supplied weights. Three check the accuracy of both nets on the held-out digits and of the exit net on validation, to $10^{-9}$. Three check the exit: for both nets, on a planted set of 50 digits where the exit net scores exactly 0.98, and on the test digits with six labels changed, where the exit net falls to 0.9741, below the bar but above 0.97.",
         "budget": 1000,
         "data": {
           "autograd.py": "content/data/ai/autograd.py",
@@ -929,6 +945,21 @@
             "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nexit_params = load_weights('cnn-w-exit.json')     # 16 filters, the exit run\nsmall_params = load_weights('cnn-w-small.json')   # 8 filters, 10 epochs\n\n\ndef evaluate(params, X, y):\n    pred = cnn_logits(params, X).data.argmax(axis=0)\n    return float((pred == y).mean())\n\n\ndef exit_check(params, X_test, y_test):\n    return evaluate(params, X_test, y_test) >= 0.98\n",
             "test": 1,
             "symptom": "The largest score is taken down each column, across images, not across the ten classes of one image."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nexit_params = load_weights('cnn-w-exit.json')     # 16 filters, the exit run\nsmall_params = load_weights('cnn-w-small.json')   # 8 filters, 10 epochs\n\n\ndef evaluate(params, X, y):\n    pred = cnn_logits(params, X).data.argmax(axis=1)\n    return float((pred == y).mean())\n\n\ndef exit_check(params, X_test, y_test):\n    return evaluate(params, X_va, y_va) >= 0.98\n",
+            "test": 6,
+            "symptom": "It scores the validation split and ignores the test images it is given, so validation is reported as test."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nexit_params = load_weights('cnn-w-exit.json')     # 16 filters, the exit run\nsmall_params = load_weights('cnn-w-small.json')   # 8 filters, 10 epochs\n\n\ndef evaluate(params, X, y):\n    pred = cnn_logits(params, X).data.argmax(axis=1)\n    return float((pred == y).mean())\n\n\ndef exit_check(params, X_test, y_test):\n    return evaluate(params, X_test, y_test) >= 0.95\n",
+            "test": 6,
+            "symptom": "The bar is 0.95, so a net at 0.9741 passes an exit it does not meet."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, cnn_logits\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nexit_params = load_weights('cnn-w-exit.json')     # 16 filters, the exit run\nsmall_params = load_weights('cnn-w-small.json')   # 8 filters, 10 epochs\n\n\ndef evaluate(params, X, y):\n    pred = cnn_logits(params, X).data.argmax(axis=1)\n    return float((pred == y).mean())\n\n\ndef exit_check(params, X_test, y_test):\n    return evaluate(params, X_test, y_test) >= 0.97\n",
+            "test": 6,
+            "symptom": "The bar is 0.97, so a net at 0.9741 passes an exit it does not meet."
           }
         ]
       },
@@ -951,7 +982,8 @@
         "generic": "Not quite. Compare predictions with labels row by row.",
         "byKey": {
           "test-1": "Return the share of right answers: the argmax across the ten classes of each image, compared with the labels, then the mean.",
-          "test-5": "At exactly 0.98 the net meets the exit: use `>=`."
+          "test-5": "At exactly 0.98 the net meets the exit: use `>=`.",
+          "test-6": "Score the test images you are given, against a bar of 0.98."
         }
       },
       "explain": {

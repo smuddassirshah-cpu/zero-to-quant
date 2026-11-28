@@ -919,7 +919,7 @@
         "generic": "Not quite. Compare how each first layer is tied to positions."
       },
       "explain": {
-        "text": "The MLP learned \"ink at pixel 37 means 2\" pixel by pixel. The CNN learned shapes, wherever they sit, and pooling absorbs part of the move."
+        "text": "The MLP learned \"ink at pixel 37 means 2\" pixel by pixel. The CNN’s filters learned strokes wherever they sit, and pooling absorbs part of the move."
       }
     },
     {
@@ -1058,7 +1058,7 @@
       "type": "ladder",
       "difficulty": 3,
       "title": "Why the CNN still drops",
-      "prose": "Equivariance holds up to the pool. After it, the dense layer has one weight for each of the 256 pooled positions, just as the MLP has one for each pixel.",
+      "prose": "Equivariance holds up to the pool. After it, the dense layer has its own 10 weights for each of the 256 pooled values, just as the MLP has its own 40 for each pixel.",
       "canvas": {
         "kind": "grid",
         "params": {
@@ -1243,7 +1243,7 @@
         "generic": "Not quite. Compare the augmented MLP with the augmented CNN."
       },
       "explain": {
-        "text": "Shifted copies teach the MLP what convolution builds in: its shifted accuracy rises from 0.45 to 0.95. The CNN keeps a small edge, a gap under 0.05, against 0.17 before."
+        "text": "Shifted copies teach the MLP these four shifts: its shifted accuracy rises from 0.45 to 0.95. The gap falls under 0.05, against 0.17 before. At two pixels, which the copies never showed, the gap returns to between 0.06 and 0.10 on the validation digits."
       }
     },
     {
@@ -1578,13 +1578,13 @@
       "type": "ladder",
       "difficulty": 3,
       "title": "The margin in code",
-      "prose": "Write `shifted_accuracy(predict_fn, X, y, shifts)` and `margin(cnn_acc, mlp_acc)`. The number script’s rule: the CNN’s mean accuracy over the four one-pixel shifts beats the MLP’s by 0.10 or more.",
+      "prose": "Write `shifted_accuracy(predict_fn, X, y, shifts)` and `margin(cnn_acc, mlp_acc)`. The number script’s rule: the CNN’s mean accuracy over the four one-pixel shifts beats the MLP’s by 0.10 or more. A gap of exactly 0.10 on paper can come out a hair below it in floating point, so allow $10^{-9}$.",
       "question": "Write both functions.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\ncnn_predict = lambda X: predict(cnn_logits, cnn, X)\nmlp_predict = lambda X: predict(mlp_logits, mlp, X)\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef shifted_accuracy(predict_fn, X, y, shifts):\n    # one accuracy per (dx, dy) in shifts\n    ...\n\n\ndef margin(cnn_acc, mlp_acc):\n    # the clear-margin rule on mean shifted accuracies\n    ...\n",
-        "solution": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\ncnn_predict = lambda X: predict(cnn_logits, cnn, X)\nmlp_predict = lambda X: predict(mlp_logits, mlp, X)\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef shifted_accuracy(predict_fn, X, y, shifts):\n    return [float((predict_fn(shift_images(X, dx, dy)) == y).mean()) for dx, dy in shifts]\n\n\ndef margin(cnn_acc, mlp_acc):\n    return cnn_acc - mlp_acc >= 0.10\n",
+        "starter": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\ncnn_predict = lambda X: predict(cnn_logits, cnn, X)\nmlp_predict = lambda X: predict(mlp_logits, mlp, X)\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef shifted_accuracy(predict_fn, X, y, shifts):\n    # one accuracy per (dx, dy) in shifts\n    ...\n\n\ndef margin(cnn_acc, mlp_acc):\n    # the clear-margin rule on mean shifted accuracies (allow 1e-9 for rounding)\n    ...\n",
+        "solution": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\ncnn_predict = lambda X: predict(cnn_logits, cnn, X)\nmlp_predict = lambda X: predict(mlp_logits, mlp, X)\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef shifted_accuracy(predict_fn, X, y, shifts):\n    return [float((predict_fn(shift_images(X, dx, dy)) == y).mean()) for dx, dy in shifts]\n\n\ndef margin(cnn_acc, mlp_acc):\n    return cnn_acc - mlp_acc >= 0.10 - 1e-9\n",
         "examples": [
           {
             "call": "shifted_accuracy(cnn_predict, X_te, y_te, SHIFTS)",
@@ -1623,9 +1623,14 @@
             "call": "(margin(0.62, 0.53), margin(0.40, 0.62))",
             "expect": "(False, False)",
             "compare": "equal"
+          },
+          {
+            "call": "margin(0.57, 0.47)",
+            "expect": "True",
+            "compare": "equal"
           }
         ],
-        "how": "Submit runs 6 hidden tests on the supplied weights. Three check accuracies to $10^{-9}$: the four one-pixel shifts for the CNN and for the MLP, then a no-shift and a two-pixel case. Three check the margin: against the MLP (met), against an MLP trained on shifted copies (not met), and two planted pairs. The 540 images take about a second in all.",
+        "how": "Submit runs 7 hidden tests on the supplied weights. Three check accuracies to $10^{-9}$: the four one-pixel shifts for the CNN and for the MLP, then a no-shift and a two-pixel case. Four check the margin: against the MLP (met), against an MLP trained on shifted copies (not met), two planted pairs, and a pair whose gap is exactly 0.10 on paper. The 540 images take about a second in all.",
         "budget": 2000,
         "data": {
           "autograd.py": "content/data/ai/autograd.py",
@@ -1652,6 +1657,16 @@
             "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\ncnn_predict = lambda X: predict(cnn_logits, cnn, X)\nmlp_predict = lambda X: predict(mlp_logits, mlp, X)\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef shifted_accuracy(predict_fn, X, y, shifts):\n    return [float((predict_fn(shift_images(X, dx, dy)) == y).mean()) for dx, dy in shifts]\n\n\ndef margin(cnn_acc, mlp_acc):\n    return cnn_acc / mlp_acc >= 1.10\n",
             "test": 6,
             "symptom": "A ratio of 1.10 is not the rule: 0.62 against 0.53 passes a ratio but not a gap of 0.10."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\ncnn_predict = lambda X: predict(cnn_logits, cnn, X)\nmlp_predict = lambda X: predict(mlp_logits, mlp, X)\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef shifted_accuracy(predict_fn, X, y, shifts):\n    return [float((predict_fn(shift_images(X, dx, dy)) == y).mean()) for dx, dy in shifts]\n\n\ndef margin(cnn_acc, mlp_acc):\n    return cnn_acc - mlp_acc > 0.10\n",
+            "test": 7,
+            "symptom": "A strict inequality rejects a gap that is exactly 0.10."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import load_split, load_weights, predict, cnn_logits, mlp_logits, shift_images\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\ncnn = load_weights('cnn-w-exit.json')\nmlp = load_weights('cnn-w-mlp.json')\ncnn_predict = lambda X: predict(cnn_logits, cnn, X)\nmlp_predict = lambda X: predict(mlp_logits, mlp, X)\nSHIFTS = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # right, left, down, up\n\n\ndef shifted_accuracy(predict_fn, X, y, shifts):\n    return [float((predict_fn(shift_images(X, dx, dy)) == y).mean()) for dx, dy in shifts]\n\n\ndef margin(cnn_acc, mlp_acc):\n    return cnn_acc - mlp_acc >= 0.10\n",
+            "test": 7,
+            "symptom": "With no tolerance, 0.57 - 0.47 comes out as 0.0999... in floating point and a gap of exactly 0.10 is rejected."
           }
         ]
       },
@@ -1666,7 +1681,7 @@
         },
         {
           "rung": "step",
-          "text": "The rule is a difference: `cnn_acc - mlp_acc >= 0.10`."
+          "text": "The rule is a difference: `cnn_acc - mlp_acc >= 0.10 - 1e-9`."
         }
       ],
       "feedback": {
@@ -1675,18 +1690,19 @@
         "byKey": {
           "test-1": "Shift by both `dx` and `dy`.",
           "test-5": "The rule is one-sided: the CNN must beat the MLP.",
-          "test-6": "The rule is a difference of at least 0.10, not a ratio."
+          "test-6": "The rule is a difference of at least 0.10, not a ratio.",
+          "test-7": "A gap of exactly 0.10 meets the rule: use `>=`, and allow $10^{-9}$ because floating-point subtraction can land a hair below."
         }
       },
       "explain": {
-        "text": "The CNN beats the MLP by 0.171; on the three seeds the gap is never below 0.15, so a rule of 0.10 leaves room. Against an MLP trained on shifted copies the rule fails."
+        "text": "The CNN beats the MLP by 0.171. On the shifted validation digits the gap is never below 0.17 on three seeds, so a rule of 0.10 leaves room. Against an MLP trained on shifted copies the rule fails."
       }
     },
     {
       "type": "generalise",
       "difficulty": 2,
       "title": "The rule",
-      "prose": "Mean accuracy over the four one-pixel shifts, zero fill: $$\\bar a = \\tfrac{1}{4}\\sum_{(dx, dy)} a(dx, dy), \\qquad \\text{margin met when } \\bar a_{\\text{CNN}} - \\bar a_{\\text{MLP}} \\ge 0.10.$$ The number script set 0.10 below the smallest gap of its three seeds.",
+      "prose": "Mean accuracy over the four one-pixel shifts, zero fill: $$\\bar a = \\tfrac{1}{4}\\sum_{(dx, dy)} a(dx, dy), \\qquad \\text{margin met when } \\bar a_{\\text{CNN}} - \\bar a_{\\text{MLP}} \\ge 0.10.$$ The number script set 0.10 on the shifted validation digits, not the test digits: there the CNN led the MLP by at least 0.17 on every pair of three seeds, and by under 0.03 once the MLP trained on shifted copies.",
       "question": "A CNN scores 0.71 and an MLP 0.63 on the four one-pixel shifts. Is the margin met?",
       "widget": {
         "kind": "choice",
