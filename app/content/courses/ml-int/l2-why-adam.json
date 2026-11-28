@@ -1,0 +1,1219 @@
+{
+ "id": "l2-why-adam",
+ "course": "ml-int",
+ "title": "Why Adam",
+ "minutes": 15,
+ "objectives": [
+  "Explain Adam's two moving averages and its bias correction, and when SGD with momentum is preferred."
+ ],
+ "skills": [
+  "mi-theory"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which moved furthest?",
+   "tags": [
+    "optimisers"
+   ],
+   "pace": 180,
+   "prose": "This lesson takes about fifteen minutes; interview pace is three minutes a question, reasoning aloud first. Adam came up in `nn-train` level 1. Three parameters start a model with gradients $10^{-4}$, $1$ and $100$. Adam takes one step: learning rate $0.001$, $\\beta_1 = 0.9$, $\\beta_2 = 0.999$, $\\epsilon = 10^{-8}$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "g1",
+       "label": "g = 0.0001"
+      },
+      {
+       "id": "g2",
+       "label": "g = 1"
+      },
+      {
+       "id": "g3",
+       "label": "g = 100"
+      }
+     ],
+     "yScale": "log",
+     "yLabel": "|gradient|",
+     "showValues": true,
+     "height": 240
+    },
+    "state": {
+     "values": {
+      "g1": 0.0001,
+      "g2": 1,
+      "g3": 100
+     }
+    }
+   },
+   "question": "After the step, which parameter has moved furthest?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "All three moved the same distance, 0.001.",
+      "correct": true
+     },
+     {
+      "id": "big",
+      "text": "The one with gradient 100, by far.",
+      "why": "That is plain gradient descent, where the step is the learning rate times the gradient. Adam divides by the gradient's own scale."
+     },
+     {
+      "id": "small",
+      "text": "The one with gradient $10^{-4}$, since Adam boosts small gradients.",
+      "why": "Adam rescales every coordinate to the same size on the first step; it does not favour small ones."
+     },
+     {
+      "id": "none",
+      "text": "None of them: the moving averages start at 0, so the first step is 0.",
+      "why": "The bias correction undoes the zero start, so the first step is full size."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write $m_1$ and $v_1$ for one gradient $g$."
+    },
+    {
+     "rung": "point",
+     "text": "$m_1 = 0.1g$ and $v_1 = 0.001g^2$; the correction divides them by $0.1$ and $0.001$.",
+     "highlight": [
+      "g1",
+      "g2",
+      "g3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The step is $0.001 \\times g / |g| = 0.001$ for any $g$, give or take $\\epsilon$."
+    }
+   ],
+   "feedback": {
+    "correct": "Each moved $0.001$: the first step is the learning rate times the sign of $g$.",
+    "generic": "Not quite. Work out $\\hat{m}_1 / \\sqrt{\\hat{v}_1}$ for one gradient.",
+    "byKey": {
+     "big": "That is plain gradient descent. Adam divides by $\\sqrt{\\hat{v}}$, the gradient's own size."
+    }
+   },
+   "explain": {
+    "text": "After correction $\\hat{m}_1 = g$ and $\\hat{v}_1 = g^2$, so the step is $0.001 \\times g/|g|$. The gradient's size cancels; only its sign is left.",
+    "canvas": {
+     "values": {
+      "g1": 0.001,
+      "g2": 0.001,
+      "g3": 0.001
+     },
+     "caption": "Step sizes after one Adam step"
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two averages and their correction",
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "Adam keeps $m_t = \\beta_1 m_{t-1} + (1 - \\beta_1) g_t$ and $v_t = \\beta_2 v_{t-1} + (1 - \\beta_2) g_t^2$, both from 0. The curves show the factors $1/(1 - \\beta^t)$ that undo the zero start. Slide through the steps.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "cm",
+       "label": "1/(1 − 0.9ᵗ) for m",
+       "values": [
+        10.0,
+        5.2632,
+        3.69,
+        2.9078,
+        2.4419,
+        2.1342,
+        1.9168,
+        1.7558,
+        1.6324,
+        1.5353,
+        1.4573,
+        1.3936,
+        1.3408,
+        1.2966,
+        1.2593,
+        1.2274,
+        1.2002,
+        1.1766,
+        1.1562,
+        1.1384,
+        1.1229,
+        1.1092,
+        1.0972,
+        1.0867,
+        1.0773,
+        1.0691,
+        1.0617,
+        1.0552,
+        1.0494,
+        1.0443,
+        1.0397,
+        1.0356,
+        1.0319,
+        1.0286,
+        1.0257,
+        1.023,
+        1.0207,
+        1.0186,
+        1.0167,
+        1.015
+       ]
+      },
+      {
+       "id": "cv",
+       "label": "1/(1 − 0.999ᵗ) for v",
+       "values": [
+        1000.0,
+        500.2501,
+        333.6669,
+        250.3753,
+        200.4004,
+        167.0838,
+        143.2863,
+        125.4382,
+        111.5563,
+        100.4508,
+        91.3645,
+        83.7927,
+        77.3857,
+        71.894,
+        67.1346,
+        62.9701,
+        59.2955,
+        56.0293,
+        53.1068,
+        50.4767,
+        48.097,
+        45.9336,
+        43.9584,
+        42.1478,
+        40.4821,
+        38.9445,
+        37.5208,
+        36.1988,
+        34.9679,
+        33.8192,
+        32.7445,
+        31.737,
+        30.7906,
+        29.8999,
+        29.0601,
+        28.2669,
+        27.5166,
+        26.8058,
+        26.1315,
+        25.4908
+       ]
+      }
+     ],
+     "yScale": "log",
+     "x": "index",
+     "xValues": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40
+     ],
+     "xLabel": "step t",
+     "yLabel": "correction factor",
+     "decimals": 1,
+     "height": 260
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "m1",
+       "i": 0,
+       "label": "t = 1"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "markers.m1.i",
+      "frames": [
+       {
+        "markers": [
+         {
+          "id": "m1",
+          "i": 0,
+          "label": "t = 1"
+         }
+        ]
+       },
+       {
+        "markers": [
+         {
+          "id": "m1",
+          "i": 1,
+          "label": "t = 2"
+         }
+        ]
+       },
+       {
+        "markers": [
+         {
+          "id": "m1",
+          "i": 4,
+          "label": "t = 5"
+         }
+        ]
+       },
+       {
+        "markers": [
+         {
+          "id": "m1",
+          "i": 9,
+          "label": "t = 10"
+         }
+        ]
+       },
+       {
+        "markers": [
+         {
+          "id": "m1",
+          "i": 39,
+          "label": "t = 40"
+         }
+        ]
+       }
+      ],
+      "frameLabels": [
+       "1",
+       "2",
+       "5",
+       "10",
+       "40"
+      ],
+      "label": "Step",
+      "start": 0
+     }
+    ]
+   },
+   "question": "At step 1, by what factor does the correction multiply $v$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1000,
+    "tol": {
+     "abs": 0.5
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "m-factor",
+      "value": 10,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the lower curve at $t = 1$, or compute it."
+    },
+    {
+     "rung": "point",
+     "text": "It is $1/(1 - 0.999)$.",
+     "highlight": [
+      "cv"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1/0.001 = 1000$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1/(1 - 0.999) = 1000$: the zero start shrank $v_1$ a thousandfold.",
+    "generic": "Not quite. Compute $1/(1 - \\beta_2)$.",
+    "byKey": {
+     "m-factor": "That is the factor for $m$, $1/(1 - 0.9) = 10$. The one for $v$ uses $\\beta_2 = 0.999$."
+    }
+   },
+   "explain": {
+    "text": "With $\\beta_2 = 0.999$, $v_1$ holds only a thousandth of $g^2$, so the correction multiplies by 1000. By step 40 the factor for $m$ is almost 1, while the one for $v$ is still about 25."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The first step, corrected",
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "Take the parameter with $g = 100$. After one step $m_1 = 0.1g = 10$ and $v_1 = 0.001g^2 = 10$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "g1",
+       "label": "g = 0.0001"
+      },
+      {
+       "id": "g2",
+       "label": "g = 1"
+      },
+      {
+       "id": "g3",
+       "label": "g = 100"
+      }
+     ],
+     "yScale": "log",
+     "yLabel": "|gradient|",
+     "showValues": true,
+     "height": 220
+    },
+    "state": {
+     "values": {
+      "g1": 0.0001,
+      "g2": 1,
+      "g3": 100
+     },
+     "highlight": [
+      "g3"
+     ]
+    }
+   },
+   "question": "How far does it move, $0.001 \\times \\hat{m}_1 / (\\sqrt{\\hat{v}_1} + \\epsilon)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.001,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sgd",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "m-only",
+      "value": 0.0316,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Correct both: $\\hat{m}_1 = 10/0.1$ and $\\hat{v}_1 = 10/0.001$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\hat{m}_1 = 100$ and $\\sqrt{\\hat{v}_1} = 100$.",
+     "highlight": [
+      "g3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.001 \\times 100/100 = 0.001$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.001 \\times 100 / 100 = 0.001$.",
+    "generic": "Not quite. Correct both averages, then divide.",
+    "byKey": {
+     "sgd": "That is the learning rate times the gradient, plain gradient descent.",
+     "m-only": "You corrected $m$ but not $v$: $0.001 \\times 100 / \\sqrt{10} = 0.0316$."
+    }
+   },
+   "explain": {
+    "text": "Corrected, $\\hat{m}_1 = 100$ and $\\hat{v}_1 = 10{,}000$, so the step is $0.001 \\times 100/100 = 0.001$. The same sum gives 0.001 for $g = 1$ and, to four places, for $g = 10^{-4}$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Without the correction",
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "Early versions skip the correction and use $m_1$ and $v_1$ as they are.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "c",
+       "label": "corrected"
+      },
+      {
+       "id": "u",
+       "label": "uncorrected"
+      }
+     ],
+     "yLabel": "first step",
+     "showValues": true,
+     "decimals": 4,
+     "height": 220
+    },
+    "state": {
+     "values": {
+      "c": 0.001
+     }
+    }
+   },
+   "question": "How many times larger is the uncorrected first step? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.1623,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "no-root",
+      "value": 100,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "v-only",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Uncorrected, the step is $0.001 \\times 0.1g / \\sqrt{0.001 g^2}$."
+    },
+    {
+     "rung": "point",
+     "text": "The $g$ cancels, leaving $0.1/\\sqrt{0.001}$.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.1/0.031623 = 3.1623$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.1/\\sqrt{0.001} = 3.1623$ times larger.",
+    "generic": "Not quite. Write the step with $m_1 = 0.1g$ and $v_1 = 0.001g^2$.",
+    "byKey": {
+     "no-root": "You divided by $v_1$, not by $\\sqrt{v_1}$: $0.1/0.001 = 100$.",
+     "v-only": "That is $m_1$ uncorrected over $\\sqrt{\\hat{v}_1}$ corrected: only half the change."
+    }
+   },
+   "explain": {
+    "text": "Uncorrected, $m_1$ is ten times too small but $\\sqrt{v_1}$ is $\\sqrt{1000}$ times too small. The net step is $0.1/\\sqrt{0.001} = 3.1623$ times too large, so the first steps would overshoot.",
+    "canvas": {
+     "values": {
+      "c": 0.001,
+      "u": 0.0032
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "When the gradient is noisy",
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "Now one parameter sees $g_1 = 1$ then $g_2 = -1$. After two steps $m_2 = -0.01$ and $v_2 = 0.001999$; the corrections divide by $1 - 0.9^2 = 0.19$ and $1 - 0.999^2 = 0.001999$.",
+   "question": "What is $|\\hat{m}_2| / \\sqrt{\\hat{v}_2}$, the step as a fraction of the learning rate? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0526,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "always-lr",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "cancel",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Correct each average first."
+    },
+    {
+     "rung": "point",
+     "text": "$\\hat{m}_2 = -0.01/0.19$ and $\\hat{v}_2 = 0.001999/0.001999 = 1$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.01/0.19 = 0.0526$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.01/0.19 = 0.0526$: about a nineteenth of the learning rate.",
+    "generic": "Not quite. Correct both averages, then divide.",
+    "byKey": {
+     "always-lr": "Only the first step is the full learning rate. Here $\\hat{m}$ averages $+1$ and $-1$ and is small.",
+     "cancel": "Close, but $m$ weights recent gradients more: $m_2 = 0.9 \\times 0.1 - 0.1 = -0.01$, not 0."
+    }
+   },
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "m",
+       "label": "|m̂₂|"
+      },
+      {
+       "id": "v",
+       "label": "√v̂₂"
+      }
+     ],
+     "yLabel": "after two steps",
+     "showValues": true,
+     "decimals": 4,
+     "height": 200
+    },
+    "state": {
+     "values": {
+      "m": 0.0526,
+      "v": 1
+     }
+    }
+   },
+   "explain": {
+    "text": "The average gradient nearly cancels, $|\\hat{m}_2| = 0.0526$, while $\\sqrt{\\hat{v}_2}$ stays at 1. Adam's step is a signal-to-noise ratio, so a parameter whose gradient flips sign barely moves."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Proportional to the gradient?",
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "A candidate says: \"Adam is gradient descent with momentum, so a gradient 100 times larger gives a step 100 times larger.\"",
+   "question": "What is the right reply?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "snr",
+      "text": "No. The step is $\\eta\\,\\hat{m}/\\sqrt{\\hat{v}}$, which ignores the scale of $g$.",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes, as with momentum: the step is the learning rate times the moving average.",
+      "why": "That is momentum. Adam divides by $\\sqrt{\\hat{v}}$, so scaling every gradient by 100 changes nothing."
+     },
+     {
+      "id": "inverse",
+      "text": "No, it is the reverse: larger gradients take smaller steps.",
+      "why": "Scaling $g$ by 100 scales $\\hat{m}$ and $\\sqrt{\\hat{v}}$ by 100 alike. The step stays the same; it does not shrink."
+     },
+     {
+      "id": "first",
+      "text": "Only after the first step; the first step is proportional to $g$.",
+      "why": "The first step is the one that is exactly the learning rate in size, whatever $g$ is."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply every gradient by 100. What happens to $\\hat{m}$ and to $\\sqrt{\\hat{v}}$?"
+    },
+    {
+     "rung": "point",
+     "text": "Both grow by 100."
+    },
+    {
+     "rung": "step",
+     "text": "Their ratio is unchanged, so the step is too."
+    }
+   ],
+   "feedback": {
+    "correct": "Adam's step is invariant to the gradient's scale.",
+    "generic": "Not quite. Scale every gradient by 100 and follow $\\hat{m}$ and $\\sqrt{\\hat{v}}$.",
+    "byKey": {
+     "yes": "You read Adam as momentum. The division by $\\sqrt{\\hat{v}}$ cancels the gradient's scale."
+    }
+   },
+   "explain": {
+    "text": "Multiplying every gradient by 100 multiplies $\\hat{m}$ and $\\sqrt{\\hat{v}}$ by 100, so the step does not change. That is why one learning rate suits layers whose gradients differ by orders of magnitude."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A parameter almost never updated",
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "An embedding row for a rare token gets a gradient of $10^{-8}$ on its first update. Now $\\epsilon = 10^{-8}$ is as large as $\\sqrt{\\hat{v}_1}$.",
+   "question": "How far does it move on that first step, with learning rate $0.001$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0005,
+    "tol": {
+     "abs": 2e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "ignore-eps",
+      "value": 0.001,
+      "tol": {
+       "abs": 2e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The step is $0.001 \\times g/(|g| + \\epsilon)$."
+    },
+    {
+     "rung": "point",
+     "text": "Here $|g| = \\epsilon = 10^{-8}$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.001 \\times 10^{-8} / (2 \\times 10^{-8}) = 0.0005$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.001 \\times \\tfrac{1}{2} = 0.0005$: $\\epsilon$ halves the step.",
+    "generic": "Not quite. Keep $\\epsilon$ in the denominator.",
+    "byKey": {
+     "ignore-eps": "You dropped $\\epsilon$. When $\\sqrt{\\hat{v}}$ is as small as $\\epsilon$, it matters: the step halves."
+    }
+   },
+   "explain": {
+    "text": "The step is $0.0005$, half the rate, because $\\epsilon$ is a floor under $\\sqrt{\\hat{v}}$. For a parameter with tiny or rare gradients it sets the step, which is why some models raise it."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "AdamW: decay outside the ratio",
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "An L2 penalty adds $\\lambda w$ to the gradient, so inside Adam it is divided by $\\sqrt{\\hat{v}}$. AdamW (Loshchilov and Hutter) decays the weight directly: $$w \\leftarrow w - \\eta\\Big(\\frac{\\hat{m}}{\\sqrt{\\hat{v}} + \\epsilon} + \\lambda w\\Big)$$ with $\\hat{m}$, $\\hat{v}$ built from the loss gradient alone.",
+   "question": "With L2 inside Adam, which weights are decayed least?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "big",
+      "text": "Weights with large gradients, whose $\\sqrt{\\hat{v}}$ is large.",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "Weights whose gradients are small.",
+      "why": "Small gradients give a small $\\sqrt{\\hat{v}}$, which enlarges the decay term, not shrinks it."
+     },
+     {
+      "id": "all",
+      "text": "All weights equally, each at the same rate $\\lambda$.",
+      "why": "That is what AdamW does. Inside Adam the decay passes through the division."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Large-gradient weights get the weakest decay; AdamW fixes that.",
+    "generic": "Not quite. Follow $\\lambda w$ through the division by $\\sqrt{\\hat{v}}$."
+   },
+   "explain": {
+    "text": "Inside Adam, $\\lambda w$ is divided by $\\sqrt{\\hat{v}}$, so a weight with large gradients is barely decayed. AdamW decays every weight by the same factor. On SGD with momentum, say it is reported to generalise better on some vision tasks; a tuned schedule matters more."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Retrained every morning",
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "A fund fine-tunes its return model each morning: yesterday's weights, 50 Adam steps on the new day's data. A junior researcher saves only the weights.",
+   "question": "What should be saved and restored each morning?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "all",
+      "text": "The weights with $m$, $v$ and the step count $t$, so today continues yesterday's run.",
+      "correct": true
+     },
+     {
+      "id": "reset",
+      "text": "Only the weights: yesterday's moments are stale and would bias today.",
+      "why": "With fresh moments the first step is the full rate in every coordinate. That jolts a settled model."
+     },
+     {
+      "id": "t1",
+      "text": "The weights, $m$ and $v$, with $t$ reset to 1.",
+      "why": "At $t = 1$ the correction divides warm moments by $0.1$ and $0.001$ again, inflating the steps."
+     },
+     {
+      "id": "same",
+      "text": "Nothing more: the bias correction makes a reset harmless.",
+      "why": "The correction rescales the zero start, but that is what makes every first step full size."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the first step after a reset?"
+    },
+    {
+     "rung": "point",
+     "text": "It is the learning rate times the sign of $g$, in every coordinate."
+    },
+    {
+     "rung": "step",
+     "text": "Restore $m$, $v$ and $t$ so the steps keep their recent scale."
+    }
+   ],
+   "feedback": {
+    "correct": "Restore the optimiser state with the weights.",
+    "generic": "Not quite. Ask what the first Adam step looks like after each choice.",
+    "byKey": {
+     "reset": "A reset makes the first step the full learning rate in every coordinate, however settled the model was.",
+     "t1": "With $t = 1$ the correction divides warm averages by $0.1$ and $0.001$ again: steps far too large."
+    }
+   },
+   "explain": {
+    "text": "The optimiser state is part of the model. A reset turns the next step into a full learning-rate step in every coordinate; restoring $m$, $v$ and $t$ keeps each coordinate's scale."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "optimisers"
+   ],
+   "pace": 120,
+   "prose": "The interviewer goes on: \"Why does weight decay differ in Adam? Write AdamW's update for one weight.\"",
+   "question": "Order the steps of one AdamW update. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a1",
+      "text": "$m \\leftarrow \\beta_1 m + (1 - \\beta_1) g$, with $g$ the loss gradient alone."
+     },
+     {
+      "id": "a2",
+      "text": "$v \\leftarrow \\beta_2 v + (1 - \\beta_2) g^2$."
+     },
+     {
+      "id": "a3",
+      "text": "$\\hat{m} = m/(1 - \\beta_1^t)$ and $\\hat{v} = v/(1 - \\beta_2^t)$."
+     },
+     {
+      "id": "a4",
+      "text": "$w \\leftarrow w - \\eta\\,\\hat{m}/(\\sqrt{\\hat{v}} + \\epsilon)$."
+     },
+     {
+      "id": "a5",
+      "text": "$w \\leftarrow w - \\eta \\lambda w$, the decay applied to the weight directly."
+     },
+     {
+      "id": "ax",
+      "text": "$g \\leftarrow g + \\lambda w$ before the averages.",
+      "why": "That is L2 inside Adam, the version whose decay is divided by $\\sqrt{\\hat{v}}$."
+     }
+    ],
+    "answer": [
+     "a1",
+     "a2",
+     "a3",
+     "a4",
+     "a5"
+    ],
+    "distractors": [
+     "ax"
+    ],
+    "after": {
+     "a3": [
+      "a1",
+      "a2"
+     ],
+     "a4": [
+      "a3"
+     ]
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The averages come before the correction."
+    },
+    {
+     "rung": "point",
+     "text": "The decay never enters $g$."
+    },
+    {
+     "rung": "step",
+     "text": "Averages, correction, the Adam step, and the decay on the weight."
+    }
+   ],
+   "feedback": {
+    "correct": "Decoupled: the decay never passes through $\\sqrt{\\hat{v}}$.",
+    "generic": "Not quite. Keep the decay out of the gradient.",
+    "byKey": {
+     "ax": "Adding $\\lambda w$ to $g$ is L2 inside Adam. AdamW keeps it out."
+    }
+   },
+   "explain": {
+    "text": "The two averages may come in either order, then the correction, then the step. The decay is applied to $w$ itself, so every weight shrinks by the same factor $1 - \\eta\\lambda$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The first step in code",
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "Write `adam_first_step(g, lr, beta1, beta2, eps, corrected)`: the amount Adam subtracts from a parameter on its first step. `g` is a float or an array; apply the bias correction when `corrected` is true.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef adam_first_step(g, lr, beta1, beta2, eps, corrected):\n    # the amount subtracted from the parameter on Adam's first step,\n    # with or without the bias correction\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef adam_first_step(g, lr, beta1, beta2, eps, corrected):\n    g = np.asarray(g, dtype=float)\n    m = (1 - beta1) * g\n    v = (1 - beta2) * g * g\n    if corrected:\n        m = m / (1 - beta1)\n        v = v / (1 - beta2)\n    return lr * m / (np.sqrt(v) + eps)\n",
+    "examples": [
+     {
+      "call": "float(adam_first_step(100.0, 0.001, 0.9, 0.999, 1e-8, True))",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "expect": "0.0009999999999000002"
+     }
+    ],
+    "tests": [
+     {
+      "call": "float(adam_first_step(1.0, 0.001, 0.9, 0.999, 1e-8, True))",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "expect": "0.0009999999900000003"
+     },
+     {
+      "call": "float(adam_first_step(1e-4, 0.001, 0.9, 0.999, 1e-8, True))",
+      "compare": "isclose",
+      "expect": "0.000999900009999"
+     },
+     {
+      "call": "float(adam_first_step(1.0, 0.001, 0.9, 0.999, 1e-8, False))",
+      "compare": "isclose",
+      "expect": "0.0031622766601686935"
+     },
+     {
+      "call": "float(adam_first_step(0.0, 0.001, 0.9, 0.999, 1e-8, True))",
+      "compare": "isclose",
+      "expect": "0.0"
+     },
+     {
+      "call": "adam_first_step(np.array([-100.0, 1e-4, 1.0]), 0.001, 0.9, 0.999, 1e-8, True).tolist()",
+      "compare": "isclose",
+      "expect": "[-0.0009999999999000002, 0.000999900009999, 0.0009999999900000003]"
+     },
+     {
+      "call": "float(adam_first_step(2.0, 0.01, 0.8, 0.99, 1e-8, False))",
+      "compare": "isclose",
+      "expect": "0.019999999000000036"
+     },
+     {
+      "call": "float(adam_first_step(100.0, 0.001, 0.9, 0.999, 1e-8, False) / adam_first_step(100.0, 0.001, 0.9, 0.999, 1e-8, True))",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "expect": "3.1622776504846044"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Tests 1 and 2 take the corrected step for $g = 1$ and $g = 10^{-4}$, where $\\epsilon$ matters; test 3 the uncorrected step. Test 4 gives a zero gradient, test 5 an array with a negative entry, test 6 other betas, and test 7 the ratio of the two steps for $g = 100$. Numbers are compared to $10^{-9}$ relative ($10^{-6}$ in tests 1 and 7).",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef adam_first_step(g, lr, beta1, beta2, eps, corrected):\n    g = np.asarray(g, dtype=float)\n    m = (1 - beta1) * g\n    v = (1 - beta2) * g * g\n    return lr * m / (np.sqrt(v) + eps)\n",
+      "test": 1,
+      "symptom": "Never applies the bias correction, so the corrected step is 3.1623 times too large."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef adam_first_step(g, lr, beta1, beta2, eps, corrected):\n    g = np.asarray(g, dtype=float)\n    m = (1 - beta1) * g\n    v = (1 - beta2) * g * g\n    if corrected:\n        m = m / (1 - beta1)\n    return lr * m / (np.sqrt(v) + eps)\n",
+      "test": 1,
+      "symptom": "Corrects m but not v."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef adam_first_step(g, lr, beta1, beta2, eps, corrected):\n    g = np.asarray(g, dtype=float)\n    m = (1 - beta1) * g\n    v = (1 - beta2) * g * g\n    if corrected:\n        m = m / (1 - beta1)\n        v = v / (1 - beta2)\n    return lr * m / (np.sqrt(v + eps))\n",
+      "test": 2,
+      "symptom": "Puts epsilon inside the square root."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef adam_first_step(g, lr, beta1, beta2, eps, corrected):\n    g = np.asarray(g, dtype=float)\n    m = (1 - beta1) * g\n    v = (1 - beta2) * g * g\n    if corrected:\n        m = m / (1 - beta1)\n        v = v / (1 - beta2)\n    return lr * m / (np.sqrt(v))\n",
+      "test": 2,
+      "symptom": "Leaves epsilon out of the denominator."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef adam_first_step(g, lr, beta1, beta2, eps, corrected):\n    g = np.asarray(g, dtype=float)\n    m = (1 - beta1) * g\n    v = (1 - beta2) * g * g\n    if corrected:\n        m = m / (1 - beta1)\n        v = v / (1 - beta2)\n    return lr * np.abs(m) / (np.sqrt(v) + eps)\n",
+      "test": 5,
+      "symptom": "Returns the size without its sign."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from $m_1 = (1 - \\beta_1)g$ and $v_1 = (1 - \\beta_2)g^2$."
+    },
+    {
+     "rung": "point",
+     "text": "When `corrected`, divide $m_1$ by $1 - \\beta_1$ and $v_1$ by $1 - \\beta_2$."
+    },
+    {
+     "rung": "step",
+     "text": "Return `lr * m / (np.sqrt(v) + eps)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Corrected, every coordinate moves the learning rate; uncorrected, $3.1623$ times that.",
+    "generic": "Not yet. Check the averages, the correction and where $\\epsilon$ goes.",
+    "byKey": {
+     "test-1": "The corrected step for $g = 1$ should be the learning rate, $0.001$. Divide $m_1$ by $1 - \\beta_1$ and $v_1$ by $1 - \\beta_2$ when `corrected` is true.",
+     "test-2": "Off for $g = 10^{-4}$, where $\\epsilon$ matters. It is added to $\\sqrt{\\hat{v}}$, outside the square root.",
+     "test-5": "The array case has a negative gradient. Keep the sign: the step is negative there."
+    }
+   },
+   "explain": {
+    "text": "The function is the update with the gradient's scale cancelled out. Only $\\epsilon$ and the correction make the numbers differ from the learning rate."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Adam divides a moving average of gradients by the root of a moving average of squares, so each step ignores the gradient's scale.",
+   "The bias correction undoes the zero start: without it the first step is $0.1/\\sqrt{0.001} = 3.1623$ times too large.",
+   "AdamW applies weight decay to the weights directly; L2 inside Adam is divided by $\\sqrt{\\hat{v}}$."
+  ],
+  "formula": {
+   "name": "Adam's step",
+   "tex": "w \\leftarrow w - \\eta\\,\\frac{\\hat{m}_t}{\\sqrt{\\hat{v}_t} + \\epsilon}, \\quad \\hat{m}_t = \\frac{m_t}{1 - \\beta_1^t}, \\; \\hat{v}_t = \\frac{v_t}{1 - \\beta_2^t}",
+   "note": "The first corrected step is $\\eta$ times the sign of $g$."
+  },
+  "trap": "Adam's step is not proportional to the gradient: scaling every gradient by 100 leaves it unchanged."
+ },
+ "quiz": [
+  {
+   "id": "q1-negative",
+   "difficulty": 2,
+   "tags": [
+    "optimisers"
+   ],
+   "prose": "A parameter at $w = 0.5$ gets gradient $g = -3$ on Adam's first step, learning rate $0.01$.",
+   "question": "What is $w$ after the step?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.51,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.49,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sgd",
+      "value": 0.53,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The step is $0.01$ against the gradient: $0.5 + 0.01 = 0.51$.",
+    "generic": "Not quite. The first step is the learning rate times the sign of $g$.",
+    "byKey": {
+     "sign": "You moved along the gradient. Adam subtracts, so a negative gradient raises $w$.",
+     "sgd": "You took $0.01 \\times 3$, the gradient descent step."
+    }
+   },
+   "explain": {
+    "text": "Corrected, the first step is $0.01 \\times g/|g| = -0.01$. Subtracting it gives $0.5 + 0.01 = 0.51$."
+   }
+  },
+  {
+   "id": "q2-step2-factor",
+   "difficulty": 3,
+   "tags": [
+    "optimisers"
+   ],
+   "question": "At step 2, by what factor does the correction multiply $v$ when $\\beta_2 = 0.999$? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 500.25,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "step1",
+      "value": 1000,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "m",
+      "value": 5.26,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/(1 - 0.999^2) = 500.25$.",
+    "generic": "Not quite. Use $1/(1 - \\beta_2^t)$ with $t = 2$.",
+    "byKey": {
+     "step1": "That is the factor at step 1. At step 2 it roughly halves.",
+     "m": "That is the factor for $m$, with $\\beta_1 = 0.9$."
+    }
+   },
+   "explain": {
+    "text": "$1 - 0.999^2 = 0.001999$, so the factor is $500.25$. It falls towards 1 only after a few thousand steps."
+   }
+  },
+  {
+   "id": "q3-adamw",
+   "difficulty": 2,
+   "tags": [
+    "optimisers"
+   ],
+   "question": "What does AdamW change compared with Adam plus an L2 penalty?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "decouple",
+      "text": "It decays the weights directly, outside the gradient.",
+      "correct": true
+     },
+     {
+      "id": "bias",
+      "text": "It removes the bias correction from both averages.",
+      "why": "AdamW keeps the correction; only the decay moves."
+     },
+     {
+      "id": "eps",
+      "text": "It moves $\\epsilon$ inside the square root of $\\hat{v}$.",
+      "why": "Where $\\epsilon$ sits is not the change; the decay is."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Decoupled weight decay.",
+    "generic": "Not quite. Ask where $\\lambda w$ goes."
+   },
+   "explain": {
+    "text": "Adam with L2 adds $\\lambda w$ to $g$, so it is divided by $\\sqrt{\\hat{v}}$. AdamW subtracts $\\eta\\lambda w$ from the weight after the Adam step."
+   }
+  }
+ ]
+}
