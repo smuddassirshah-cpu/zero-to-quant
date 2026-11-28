@@ -1,0 +1,495 @@
+{
+ "id": "problems-1",
+ "course": "cnn",
+ "level": 1,
+ "title": "Convolution as a sliding dot product",
+ "minutes": 35,
+ "items": [
+  {
+   "id": "p-grid-output",
+   "difficulty": 3,
+   "skills": [
+    "cnn-conv"
+   ],
+   "prose": "A 4 by 4 image $\\mathbf{X} = \\begin{pmatrix} 0 & 1 & 2 & 1 \\\\ 1 & 3 & 1 & 0 \\\\ 2 & 1 & 0 & 1 \\\\ 0 & 1 & 1 & 3 \\end{pmatrix}$ meets the kernel $\\mathbf{K} = \\begin{pmatrix} 1 & -1 \\\\ 0 & 2 \\end{pmatrix}$, slid with no flip over valid positions. Rows and columns count from 0.",
+   "parts": [
+    {
+     "question": "What is $Y_{00}$, the output for the top-left window?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 5,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "flipped",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "matmul",
+        "value": 8,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0 \\times 1 + 1 \\times (-1) + 1 \\times 0 + 3 \\times 2 = 5$.",
+      "generic": "Not quite. Pair each pixel of the window with the weight in the same place.",
+      "byKey": {
+       "flipped": "You reversed the kernel in both directions. The slide keeps it as written.",
+       "matmul": "You added up the matrix product of the window and the kernel. Multiply matching entries instead."
+      }
+     },
+     "explain": {
+      "text": "The window is $\\begin{pmatrix} 0 & 1 \\\\ 1 & 3 \\end{pmatrix}$: $0 - 1 + 0 + 6 = 5$."
+     }
+    },
+    {
+     "question": "Using $Y_{00} = 5$ from part 1, what is the sum of the whole first row $Y_{00} + Y_{01} + Y_{02}$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 7,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "one-more",
+        "value": 6,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "first-only",
+        "value": 5,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$5 + 1 + 1 = 7$.",
+      "generic": "Not quite. Slide the window right one column at a time.",
+      "byKey": {
+       "one-more": "Check $Y_{02}$: window $\\begin{pmatrix} 2 & 1 \\\\ 1 & 0 \\end{pmatrix}$ gives 1.",
+       "first-only": "That is only $Y_{00}$. The row has three outputs."
+      }
+     },
+     "explain": {
+      "text": "$Y_{01} = 1 - 2 + 0 + 2 = 1$ and $Y_{02} = 2 - 1 + 0 + 0 = 1$, so the row adds to 7."
+     }
+    },
+    {
+     "question": "The loss sends back $\\partial L/\\partial Y_{ij} = 1$ on the first row of outputs and 0 elsewhere. What is $\\partial L / \\partial K_{11}$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "corner",
+        "value": 3,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "all",
+        "value": 7,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$K_{11}$ meets $X_{1, j+1}$ along the first row of windows: $3 + 1 + 0 = 4$.",
+      "generic": "Not quite. Which pixel does $K_{11}$ meet in each of the three windows?",
+      "byKey": {
+       "corner": "That adds $X_{00} + X_{01} + X_{02}$, the pixels $K_{00}$ meets.",
+       "all": "That is the row of outputs again. The gradient adds pixels, not outputs."
+      }
+     },
+     "explain": {
+      "text": "$\\partial L/\\partial K_{11} = \\sum_j G_{0j} X_{1, j+1} = X_{11} + X_{12} + X_{13} = 4$."
+     }
+    },
+    {
+     "question": "Using $\\partial L / \\partial K_{11} = 4$ from part 3, one gradient step with learning rate 0.1 moves $K_{11}$ from 2 to what? Give a decimal to 1 place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.6,
+      "tol": {
+       "abs": 0.05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "up",
+        "value": 2.4,
+        "tol": {
+         "abs": 0.05
+        }
+       },
+       {
+        "id": "no-rate",
+        "value": -2,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2 - 0.1 \\times 4 = 1.6$.",
+      "generic": "Not quite. Step against the gradient.",
+      "byKey": {
+       "up": "You stepped with the gradient. Descent subtracts it.",
+       "no-rate": "You subtracted the whole gradient. Multiply it by 0.1 first."
+      }
+     },
+     "explain": {
+      "text": "$K_{11} - 0.1 \\times 4 = 1.6$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-weighted-mean",
+   "difficulty": 4,
+   "skills": [
+    "cnn-conv"
+   ],
+   "prose": "Eight closes in £: $100, 102, 101, 104, 103, 105, 107, 106$. A weighted mean uses the kernel $(0.25, 0.25, 0.5)$, oldest weight first, slid with no flip.",
+   "parts": [
+    {
+     "question": "How many valid outputs are there?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 6,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a whole number",
+      "wrong": [
+       {
+        "id": "all",
+        "value": 8,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "n-k",
+        "value": 5,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$8 - 3 + 1 = 6$.",
+      "generic": "Not quite. Count the starts.",
+      "byKey": {
+       "all": "One per close counts windows that are not full.",
+       "n-k": "Starts run from 0 to 5: six."
+      }
+     },
+     "explain": {
+      "text": "Starts 0 to 5: 6 outputs."
+     }
+    },
+    {
+     "question": "Of the 6 outputs from part 1, numbered from 0, what is $y_1$? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 102.75,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "flipped",
+        "value": 102.25,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "first",
+        "value": 101,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.25 \\times 102 + 0.25 \\times 101 + 0.5 \\times 104 = 102.75$.",
+      "generic": "Not quite. The window of $y_1$ starts at the second close.",
+      "byKey": {
+       "flipped": "You put 0.5 on the oldest close of the window. It belongs on the newest, 104.",
+       "first": "That is $y_0$, the first window."
+      }
+     },
+     "explain": {
+      "text": "$25.5 + 25.25 + 52 = 102.75$."
+     }
+    },
+    {
+     "question": "pandas would write the $y_1 = 102.75$ of part 2 on its window’s last row. Counting rows from 0, which row is that?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a row number",
+      "wrong": [
+       {
+        "id": "start",
+        "value": 1,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "centre",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Row $1 + 3 - 1 = 3$.",
+      "generic": "Not quite. Output $t$ covers rows $t$ to $t + 2$.",
+      "byKey": {
+       "start": "That is the window’s first row.",
+       "centre": "That is its middle row."
+      }
+     },
+     "explain": {
+      "text": "Output $t$ sits on row $t + k - 1$: row 3, the close of 104."
+     }
+    },
+    {
+     "question": "Instead of the 6 valid outputs of part 1, a \"same\" output pads with one zero before the first close. What is the first output then? Give a whole number of pounds.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 76,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "a number",
+      "wrong": [
+       {
+        "id": "edge",
+        "value": 101,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "half",
+        "value": 51,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.25 \\times 0 + 0.25 \\times 100 + 0.5 \\times 102 = 76$.",
+      "generic": "Not quite. The first padded window is $(0, 100, 102)$.",
+      "byKey": {
+       "edge": "That is edge padding, which repeats 100. Zero padding puts a 0 there.",
+       "half": "You kept only the newest close, $0.5 \\times 102$. The 100 still gets its 0.25."
+      }
+     },
+     "explain": {
+      "text": "The padded window $(0, 100, 102)$ gives 76, far below every close: zero padding invents a crash at the start."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-one-step",
+   "difficulty": 5,
+   "skills": [
+    "cnn-conv"
+   ],
+   "prose": "A kernel $\\mathbf{k} = (1, 1)$ slides with no flip over the signal $(1, 0, 2, 1)$; the target is $(0.5, 1, 2)$ and the loss is the mean of the squared errors.",
+   "parts": [
+    {
+     "question": "What is the loss? Give a decimal to 2 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.75,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "sum",
+        "value": 2.25,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "no-square",
+        "value": 0.83,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Outputs $(1, 2, 3)$, errors $(0.5, 1, 1)$: $(0.25 + 1 + 1)/3 = 0.75$.",
+      "generic": "Not quite. Outputs first, then errors, then the mean square.",
+      "byKey": {
+       "sum": "That is the sum of squares. The loss is their mean.",
+       "no-square": "You averaged the errors without squaring them."
+      }
+     },
+     "explain": {
+      "text": "$(0.25 + 1 + 1) / 3 = 0.75$."
+     }
+    },
+    {
+     "question": "Using the errors $(0.5, 1, 1)$ from part 1, what is $\\partial L/\\partial k_0$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.6667,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "no-scale",
+        "value": 2.5,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "k1",
+        "value": 2,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac23(0.5 \\times 1 + 1 \\times 0 + 1 \\times 2) = 1.6667$.",
+      "generic": "Not quite. $k_0$ meets $x_0, x_1, x_2$.",
+      "byKey": {
+       "no-scale": "You left out $\\tfrac{2}{m}$.",
+       "k1": "That is $\\partial L/\\partial k_1$, which meets $x_1, x_2, x_3$."
+      }
+     },
+     "explain": {
+      "text": "$\\tfrac23 \\times 2.5 = 1.6667$; likewise $\\partial L/\\partial k_1 = \\tfrac23 \\times 3 = 2$."
+     }
+    },
+    {
+     "question": "With $\\partial L/\\partial k_0 = 1.6667$ from part 2 and $\\partial L/\\partial k_1 = 2$, take one step at learning rate 0.1. What is the new $k_0$? Give a decimal to 4 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8333,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "up",
+        "value": 1.1667,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "no-rate",
+        "value": -0.6667,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1 - 0.1 \\times 1.6667 = 0.8333$.",
+      "generic": "Not quite. Subtract the rate times the gradient.",
+      "byKey": {
+       "up": "You stepped up the gradient.",
+       "no-rate": "You subtracted the whole gradient."
+      }
+     },
+     "explain": {
+      "text": "$k_0 = 1 - 0.16667 = 0.8333$ and $k_1 = 1 - 0.2 = 0.8$."
+     }
+    },
+    {
+     "question": "With the new kernel $(0.8333, 0.8)$ from part 3, what is the loss now? Give a decimal to 3 places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.23,
+      "tol": {
+       "abs": 0.0015
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "old",
+        "value": 0.75,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "sum",
+        "value": 0.689,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Errors $(0.3333, 0.6000, 0.4667)$, mean square $0.230$.",
+      "generic": "Not quite. Recompute the three outputs with the new weights.",
+      "byKey": {
+       "old": "That is the loss before the step.",
+       "sum": "That is the sum of the squared errors; take the mean."
+      }
+     },
+     "explain": {
+      "text": "Outputs $(0.8333, 1.6, 2.4667)$ less the target give errors $(0.3333, 0.6000, 0.4667)$. Their mean square is 0.230, down from 0.75."
+     }
+    }
+   ]
+  }
+ ]
+}

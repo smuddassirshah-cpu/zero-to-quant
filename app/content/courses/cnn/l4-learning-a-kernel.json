@@ -1,0 +1,1377 @@
+{
+ "id": "l4-learning-a-kernel",
+ "course": "cnn",
+ "title": "Learning a kernel",
+ "minutes": 18,
+ "objectives": [
+  "Learn a planted kernel by gradient descent with the array autograd, and check its gradient."
+ ],
+ "skills": [
+  "cnn-conv"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which kernel made this?",
+   "prose": "A signal of 200 values, `np.random.default_rng(20)`, went through a hidden kernel of 3 weights, unflipped, and picked up a little noise. The first 40 days of each are drawn, the output on its window’s last day.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "x",
+       "label": "Input",
+       "values": [
+        -0.36,
+        1.204,
+        1.397,
+        0.317,
+        0.414,
+        -0.49,
+        -0.914,
+        -0.9,
+        -0.998,
+        0.929,
+        -0.056,
+        0.128,
+        -0.64,
+        -1.088,
+        -1.202,
+        -0.842,
+        0.599,
+        0.018,
+        -0.457,
+        -0.239,
+        -1.427,
+        1.231,
+        -1.216,
+        0.042,
+        2.137,
+        -2.551,
+        -1.407,
+        -0.724,
+        0.117,
+        -1.715,
+        -0.235,
+        -0.028,
+        0.171,
+        -2.388,
+        0.646,
+        1.597,
+        0.437,
+        -0.723,
+        -0.613,
+        -2.646
+       ]
+      },
+      {
+       "id": "y",
+       "label": "Output",
+       "values": [
+        null,
+        null,
+        0.877,
+        0.77,
+        0.718,
+        -0.243,
+        -0.515,
+        -0.701,
+        -0.844,
+        0.052,
+        0.052,
+        0.368,
+        -0.322,
+        -0.715,
+        -1.224,
+        -0.968,
+        -0.225,
+        0.021,
+        -0.33,
+        -0.372,
+        -0.892,
+        0.018,
+        -0.461,
+        0.109,
+        0.834,
+        -0.584,
+        -1.087,
+        -1.343,
+        -0.589,
+        -0.918,
+        -0.746,
+        -0.485,
+        -0.036,
+        -1.279,
+        -0.439,
+        0.492,
+        0.92,
+        0.076,
+        -0.32,
+        -1.631
+       ]
+      }
+     ],
+     "height": 230,
+     "baseline": 0
+    },
+    "state": {}
+   },
+   "question": "What kind of kernel was it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "A weighted mean: positive weights that add to about 1",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "A difference: weights that add to 0",
+      "why": "A difference would wander around 0 and jump at every change. The output tracks the input instead."
+     },
+     {
+      "id": "c",
+      "text": "A sign flip: weights that add to about $-1$",
+      "why": "Then the output would move against the input. It moves with it."
+     },
+     {
+      "id": "d",
+      "text": "One weight of 1, the rest 0",
+      "why": "That would copy the input exactly. The output is smoother than the input."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does the output move with the input?"
+    },
+    {
+     "rung": "point",
+     "text": "It follows it, a little smoother."
+    },
+    {
+     "rung": "step",
+     "text": "Positive weights adding to about 1."
+    }
+   ],
+   "feedback": {
+    "correct": "The output follows the input, smoothed: a weighted mean. The hidden weights are $(0.2, 0.3, 0.5)$, the kernel from l1.",
+    "generic": "Not quite. Does the output move with the input, against it, or around 0?"
+   },
+   "explain": {
+    "text": "The output rises and falls with the input but less sharply, so the weights are positive and share the work. Reading the exact weights off a picture is hard; gradient descent does it for us."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A loss you can slide down",
+   "prose": "Treat the three weights as unknowns and score a guess by the mean squared error between its output and the target. Hold the first two weights at their best values and slide the newest weight, $k_2$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.2,
+      1.2
+     ],
+     "y": [
+      0,
+      1.0
+     ],
+     "functions": [
+      {
+       "id": "L",
+       "expr": "1.155491*(x-0.497511)^2+0.010831",
+       "label": "loss"
+      }
+     ],
+     "params": {
+      "w": 0
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0,
+       "y": 0.2968,
+       "label": ""
+      }
+     ]
+    },
+    "derive": {
+     "P.x": "w",
+     "P.y": "1.155491 * (w - 0.497511) ** 2 + 0.010831",
+     "caption": "k₂ = {{fixed(w, 2)}}: loss {{fixed(1.155491 * (w - 0.497511) ** 2 + 0.010831, 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "w",
+      "min": -0.2,
+      "max": 1.2,
+      "step": 0.01,
+      "start": 0,
+      "label": "$k_2$"
+     }
+    ]
+   },
+   "question": "At what value of $k_2$ is the loss lowest? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "start",
+      "value": 0,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the caption’s loss."
+    },
+    {
+     "rung": "point",
+     "text": "It falls, then rises again."
+    },
+    {
+     "rung": "step",
+     "text": "The bottom is near 0.50."
+    }
+   ],
+   "feedback": {
+    "correct": "About 0.50: the bottom of the bowl, close to the hidden 0.5.",
+    "generic": "Not quite. Slide until the point sits at the bottom of the curve.",
+    "byKey": {
+     "start": "That is the starting point, where the loss is high. Slide to the bottom."
+    }
+   },
+   "explain": {
+    "text": "The loss is a parabola in $k_2$ with its bottom at 0.4975, where it reaches 0.0108, the noise left over. The noise moves the bottom a little away from 0.5.",
+    "canvas": {
+     "params": {
+      "w": 0.5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The gradient of a kernel weight",
+   "prose": "A kernel’s weights are **parameters** like any others. With output $\\hat y_t = \\sum_j k_j x_{t+j}$, error $e_t = \\hat y_t - y_t$ and loss $L = \\frac1m \\sum_t e_t^2$ over $m$ outputs, $$\\frac{\\partial L}{\\partial k_j} = \\frac{2}{m}\\sum_t e_t\\, x_{t+j}.$$ Signal $(1, 2, 0, -1, 3)$, kernel $(0.5, 0.5)$, target $(1, 1, 0, 2)$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$t$",
+      "$x_t, x_{t+1}$",
+      "$\\hat y_t$",
+      "$y_t$",
+      "$e_t$"
+     ],
+     "rows": [
+      [
+       "0",
+       "1, 2",
+       "1.5",
+       "1",
+       "?"
+      ],
+      [
+       "1",
+       "2, 0",
+       "1",
+       "1",
+       "?"
+      ],
+      [
+       "2",
+       "0, −1",
+       "−0.5",
+       "0",
+       "?"
+      ],
+      [
+       "3",
+       "−1, 3",
+       "1",
+       "2",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\partial L / \\partial k_0$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.75,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "no-scale",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-two",
+      "value": 0.375,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sum",
+      "value": 3.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Errors first: $\\hat y_t - y_t$."
+    },
+    {
+     "rung": "point",
+     "text": "$(0.5, 0, -0.5, -1)$; $k_0$ meets $x_0, x_1, x_2, x_3$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac24 (0.5 \\times 1 + 0 \\times 2 + (-0.5) \\times 0 + (-1)(-1))$."
+    }
+   ],
+   "feedback": {
+    "correct": "Errors $(0.5, 0, -0.5, -1)$; $\\tfrac{2}{4}(0.5 \\times 1 + 0 + 0 + 1) = 0.75$.",
+    "generic": "Not quite. Find the four errors first, then pair each with $x_t$.",
+    "byKey": {
+     "no-scale": "You added $e_t x_t$ but left out $\\tfrac{2}{m}$.",
+     "no-two": "You divided by $m$ but dropped the 2 from the square.",
+     "sum": "That is the gradient of the summed loss. The loss here is a mean."
+    }
+   },
+   "explain": {
+    "text": "Outputs $(1.5, 1, -0.5, 1)$ give errors $(0.5, 0, -0.5, -1)$. Weight $k_0$ meets $x_0$ to $x_3$, so $\\tfrac24(0.5 + 0 + 0 + 1) = 0.75$: the error slid along the signal."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The op in the shared module",
+   "prose": "`cnn_ops_l1.py` adds `conv1d(x, k)` as a `Tensor` op beside the frozen `autograd.py`. Its backward writes two gradients: the kernel’s, the signal slid against the incoming gradient `g`, and the signal’s. The console shows `grad_check` on a seeded case.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> from autograd import Tensor, grad_check",
+      ">>> from cnn_ops_l1 import conv1d",
+      ">>> f = lambda: ((conv1d(x, k) - t) ** 2).mean()",
+      ">>> grad_check(f, [x, k])",
+      "2.7e-11"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which line is the kernel’s share of the backward?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`k.grad += correlate1d(x.data, g)`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`k.grad = correlate1d(x.data, g)`",
+      "why": "That overwrites. A kernel used twice in one graph would lose its first share; gradients add."
+     },
+     {
+      "id": "c",
+      "text": "`k.grad += np.convolve(x.data, g, 'valid')`",
+      "why": "That flips `g` before sliding, which reverses the kernel’s gradient."
+     },
+     {
+      "id": "d",
+      "text": "`k.grad += correlate1d(g, k.data)`",
+      "why": "That slides the kernel, not the signal. Each weight’s gradient pairs the errors with the inputs it met."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Weight $k_j$ meets $x_{t+j}$ at output $t$."
+    },
+    {
+     "rung": "point",
+     "text": "Sum $g_t x_{t+j}$ over $t$: a sliding dot product of $x$ with $g$."
+    },
+    {
+     "rung": "step",
+     "text": "Gradients add with `+=`."
+    }
+   ],
+   "feedback": {
+    "correct": "The signal slid against `g`, added into `k.grad`.",
+    "generic": "Not quite. Which inputs did weight $k_j$ meet, and how do shares combine?"
+   },
+   "explain": {
+    "text": "Weight $k_j$ met $x_{t+j}$ at every output $t$, so its gradient is $\\sum_t g_t x_{t+j}$: `correlate1d(x.data, g)`. The check agrees to 2.7e-11, far below $10^{-6}$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Gradient descent finds it",
+   "prose": "Start from $\\mathbf{k} = (0, 0, 0)$ and take 100 steps with learning rate 0.1 on the mean squared error. The kernel ends at $(0.203, 0.295, 0.498)$. The hidden noise has standard deviation 0.1.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "L",
+       "label": "Loss",
+       "values": [
+        0.4646,
+        0.2715,
+        0.1607,
+        0.0971,
+        0.0605,
+        0.0395,
+        0.0274,
+        0.0204,
+        0.0164,
+        0.014,
+        0.0127,
+        0.0119,
+        0.0115,
+        0.0112,
+        0.011,
+        0.011,
+        0.0109,
+        0.0109,
+        0.0109,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108,
+        0.0108
+       ]
+      }
+     ],
+     "height": 220,
+     "xLabel": "step",
+     "decimals": 4
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "n",
+       "y": 0.01,
+       "label": "noise variance"
+      }
+     ]
+    }
+   },
+   "question": "Near what value does the loss level off? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.01,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What can no kernel fit?"
+    },
+    {
+     "rung": "point",
+     "text": "The noise, with standard deviation 0.1."
+    },
+    {
+     "rung": "step",
+     "text": "$0.1^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 0.01, the noise variance: the run ends at 0.0108.",
+    "generic": "Not quite. What part of the target can no kernel explain?",
+    "byKey": {
+     "sd": "That is the standard deviation. A squared error levels off at the variance, $0.1^2$.",
+     "zero": "The noise is not a function of the signal, so no kernel can fit it."
+    }
+   },
+   "explain": {
+    "text": "The kernel explains everything but the noise, so the loss falls to about $0.1^2 = 0.01$; the run ends at 0.0108. The weights miss $(0.2, 0.3, 0.5)$ by under 0.01."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The same step on a summed loss",
+   "prose": "A colleague runs the same loop on the **sum** of squared errors instead of the mean, with the same learning rate 0.1. The loss goes 92.0, 198,403, 441,416,103 and then overflows.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "L",
+       "label": "Summed loss",
+       "values": [
+        92.0,
+        198403.3,
+        441416102.7
+       ]
+      }
+     ],
+     "height": 200,
+     "xLabel": "step"
+    },
+    "state": {}
+   },
+   "question": "Why does it blow up?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Each step is 198 times too long",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The learning rate is too small to escape",
+      "why": "A small step would crawl, not explode. The loss grew a thousandfold in one step."
+     },
+     {
+      "id": "c",
+      "text": "Three weights are too many for 200 values",
+      "why": "The mean-loss run fits the same three weights to under 0.01 off."
+     },
+     {
+      "id": "d",
+      "text": "The noise makes the gradient wrong",
+      "why": "The noise only sets the floor of the loss. The gradient is exact for the loss it is given."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many squared errors does the sum add?"
+    },
+    {
+     "rung": "point",
+     "text": "198, one per output."
+    },
+    {
+     "rung": "step",
+     "text": "So its gradient is 198 times the mean’s."
+    }
+   ],
+   "feedback": {
+    "correct": "198 outputs make the summed gradient 198 times the mean’s, so a step of 0.1 overshoots wildly.",
+    "generic": "Not quite. What changed between the two losses?",
+    "byKey": {
+     "b": "You read the blow-up as a step too small. It is far too large: each step overshoots the bottom."
+    }
+   },
+   "explain": {
+    "text": "The summed loss scales with the number of outputs, 198 here, so its gradient does too. The step overshoots and each overshoot is larger. Use the mean, or divide the rate by the length."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A kernel too short for the truth",
+   "prose": "Now the hidden kernel has 5 weights, $(0.1, -0.2, 0.2, 0.3, 0.5)$, on 1,000 seeded values (`default_rng(21)`), and we learn only 3. The learned kernel sees $x_t$ to $x_{t+2}$ and ends at $(0.105, -0.225, 0.206)$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "k0",
+      "k1",
+      "k2",
+      "k3",
+      "k4"
+     ],
+     "yLabel": "weight",
+     "showValues": true,
+     "decimals": 2,
+     "groups": [
+      {
+       "id": "true",
+       "label": "hidden"
+      },
+      {
+       "id": "fit",
+       "label": "learned"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "true": {
+       "k0": 0.1,
+       "k1": -0.2,
+       "k2": 0.2,
+       "k3": 0.3,
+       "k4": 0.5
+      },
+      "fit": {
+       "k0": 0.11,
+       "k1": -0.23,
+       "k2": 0.21,
+       "k3": 0,
+       "k4": 0
+      }
+     }
+    }
+   },
+   "question": "About where does its loss level off? The noise variance is 0.01; give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.35,
+    "tol": {
+     "abs": 0.02
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "noise",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "one-missing",
+      "value": 0.26,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which two weights can the short kernel not reach?"
+    },
+    {
+     "rung": "point",
+     "text": "$0.3$ and $0.5$, on $x_{t+3}$ and $x_{t+4}$."
+    },
+    {
+     "rung": "step",
+     "text": "Their squares join the noise: $0.01 + 0.09 + 0.25$."
+    }
+   ],
+   "feedback": {
+    "correct": "About $0.01 + 0.3^2 + 0.5^2 = 0.35$; the run ends at 0.3454.",
+    "generic": "Not quite. The two weights it cannot reach still move the target.",
+    "byKey": {
+     "noise": "That is the floor for a kernel long enough. The 3-weight kernel cannot reach $x_{t+3}$ or $x_{t+4}$.",
+     "one-missing": "You added one missing weight’s share. Both $0.3^2$ and $0.5^2$ are left over."
+    }
+   },
+   "explain": {
+    "text": "With an input of independent values, the learned weights match the three the kernel can see. The other two act as extra noise, so the floor is $0.01 + 0.3^2 + 0.5^2 = 0.35$. The fit is the best short kernel, not the truth."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Learning a kernel, in one place",
+   "prose": "For $L = \\frac1m \\sum_t e_t^2$: $$\\frac{\\partial L}{\\partial k_j} = \\frac{2}{m}\\sum_t e_t\\, x_{t+j}, \\qquad \\frac{\\partial L}{\\partial x_s} = \\frac{2}{m}\\sum_j e_{s-j}\\, k_j.$$ The kernel’s gradient slides the error along the signal; the signal’s spreads each error back through the kernel. Gradient descent then steps against it.",
+   "question": "The kernel’s gradient is the sliding dot product of the signal with what?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The error $e_t$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The target $y_t$",
+      "why": "The target alone cannot know how wrong the kernel is; the error can."
+     },
+     {
+      "id": "c",
+      "text": "The output $\\hat y_t$",
+      "why": "The output is half of the error; without the target the gradient never reaches 0."
+     },
+     {
+      "id": "d",
+      "text": "The kernel itself",
+      "why": "The kernel’s gradient pairs inputs with errors, not with weights."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Signal slid against the error: zero error, zero gradient.",
+    "generic": "Not quite. What is 0 when the fit is perfect?"
+   },
+   "explain": {
+    "text": "At the best fit the errors are uncorrelated with every lagged input, so every $\\sum_t e_t x_{t+j}$ is 0 and the steps stop."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The backward pass in code",
+   "prose": "Write `conv1d_backward(x, k, dout)` returning `(dx, dk)`, the gradients of $\\sum_t \\text{dout}_t\\, y_t$. Loop over the outputs: output $t$ sends $\\text{dout}_t\\, k$ into `dx[t:t + m]` and $\\text{dout}_t$ times its window into `dk`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> dx, dk = conv1d_backward([1, 2, 0, -1, 3], [0.5, 0.5], [0.5, 0, -0.5, -1])",
+      ">>> dk",
+      "array([ 1.5, -1.5])"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `conv1d_backward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef conv1d_backward(x, k, dout):\n    # forward was y[t] = sum over j of k[j] * x[t + j]\n    # return (dx, dk): the gradients of sum(dout * y)\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef conv1d_backward(x, k, dout):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    m = len(k)\n    dx = np.zeros_like(x)\n    dk = np.zeros_like(k)\n    for t in range(len(dout)):\n        dx[t:t + m] += dout[t] * k\n        dk += dout[t] * x[t:t + m]\n    return dx, dk\n",
+    "examples": [
+     {
+      "call": "np.round(conv1d_backward([1, 2, 0, -1, 3], [0.5, 0.5], [0.5, 0, -0.5, -1])[1], 6).tolist()",
+      "expect": "[1.5, -1.5]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(conv1d_backward([1, 2, 0, -1, 3], [0.5, 0.5], [0.5, 0, -0.5, -1])[1], 6).tolist()",
+      "expect": "[1.5, -1.5]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(conv1d_backward([1, 2, 0, -1, 3], [0.5, 0.5], [0.5, 0, -0.5, -1])[0], 6).tolist()",
+      "expect": "[0.25, 0.25, -0.25, -0.75, -0.5]",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(15); x = r.standard_normal(9); k = r.standard_normal(3); g = r.standard_normal(7)",
+      "call": "bool(np.allclose(conv1d_backward(x, k, g)[1], np.array([(np.correlate(x, k + h, 'valid') @ g - np.correlate(x, k - h, 'valid') @ g) / 2e-6 for h in 1e-6 * np.eye(3)]), atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(15); x = r.standard_normal(9); k = r.standard_normal(3); g = r.standard_normal(7)",
+      "call": "bool(np.allclose(conv1d_backward(x, k, g)[0], np.convolve(g, k)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(15); x = r.standard_normal(9); k = r.standard_normal(3); g = r.standard_normal(7)",
+      "call": "[a.shape for a in conv1d_backward(x, k, g)]",
+      "expect": "[(9,), (3,)]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: the hand example (both gradients, with `dout` the errors and no $\\tfrac{2}{m}$), a seeded case checked against central differences and against `np.convolve`, and the two shapes.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef conv1d_backward(x, k, dout):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    m = len(k)\n    dx = np.zeros_like(x)\n    dk = np.zeros_like(k)\n    for t in range(len(dout)):\n        dx[t:t + m] += dout[t] * k\n        dk += dout[t] * x[t:t + m][::-1]\n    return dx, dk\n",
+      "test": 1,
+      "symptom": "The window is reversed, so the kernel gradient comes out flipped."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv1d_backward(x, k, dout):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    m = len(k)\n    dx = np.zeros_like(x)\n    dk = np.zeros_like(k)\n    for t in range(len(dout)):\n        dx[t:t + m] = dout[t] * k\n        dk += dout[t] * x[t:t + m]\n    return dx, dk\n",
+      "test": 2,
+      "symptom": "The input gradient is overwritten where windows overlap instead of added."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv1d_backward(x, k, dout):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    m = len(k)\n    dx = np.zeros_like(x)\n    dk = np.zeros_like(k)\n    dx = np.convolve(dout, k, \"valid\")\n    for t in range(len(dout)):\n        dk += dout[t] * x[t:t + m]\n    return dx, dk\n",
+      "test": 2,
+      "symptom": "The input gradient uses a valid convolution, so the end inputs get no gradient."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start `dx` and `dk` at zeros."
+    },
+    {
+     "rung": "point",
+     "text": "`dx[t:t + m] += dout[t] * k`."
+    },
+    {
+     "rung": "step",
+     "text": "`dk += dout[t] * x[t:t + m]`."
+    }
+   ],
+   "feedback": {
+    "correct": "Each output adds its share to both gradients; overlapping windows add.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The hand example’s kernel gradient is $(1.5, -1.5)$ before the $\\tfrac24$: the window in its own order, not reversed.",
+     "test-2": "Inputs inside two windows collect from both: add into `dx`, never overwrite, and give the end inputs their share."
+    }
+   },
+   "explain": {
+    "text": "`dk` is the signal slid against `dout` (no flip). `dx` is the full convolution of `dout` with `k`: every input collects from each window it sat in, so the first and last inputs get one share and the middle ones up to $m$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The loop with the autograd",
+   "prose": "Write `learn_kernel(x, y, k_len, lr, steps)` with the shared `Tensor` and the `conv1d` op: start from zeros, then zero the gradient, take the mean squared error, run `backward()` and call `sgd_step` once per step.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Shipped beside your code",
+     "lines": [
+      "autograd.py      Tensor, sgd_step, grad_check, ...",
+      "cnn_ops_l1.py    conv1d(x, k), conv2d(x, k),",
+      "                 correlate1d, correlate2d"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `learn_kernel`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef learn_kernel(x, y, k_len, lr, steps):\n    # k starts at zeros; loss: mean squared error of conv1d(x, k) against y\n    # zero the gradient, forward, backward, step; return k as an array\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef learn_kernel(x, y, k_len, lr, steps):\n    k = Tensor(np.zeros(k_len))\n    xt = Tensor(x)\n    for _ in range(steps):\n        k.zero_grad()\n        loss = ((conv1d(xt, k) - y) ** 2).mean()\n        loss.backward()\n        sgd_step([k], lr)\n    return k.data.copy()\n",
+    "examples": [
+     {
+      "setup": "r = np.random.default_rng(20); x = r.standard_normal(200); y = np.correlate(x, [0.2, 0.3, 0.5], \"valid\") + 0.1 * r.standard_normal(198)",
+      "call": "learn_kernel(x, y, 3, 0.1, 0).tolist()",
+      "expect": "[0.0, 0.0, 0.0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "r = np.random.default_rng(20); x = r.standard_normal(200); y = np.correlate(x, [0.2, 0.3, 0.5], \"valid\") + 0.1 * r.standard_normal(198)",
+      "call": "bool(np.abs(learn_kernel(x, y, 3, 0.1, 100) - np.array([0.2, 0.3, 0.5])).max() < 0.02)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(25); x2 = r.standard_normal(60); y2 = np.correlate(x2, [-1.0, 1.0], \"valid\")",
+      "call": "np.round(learn_kernel(x2, y2, 2, 0.1, 150), 3).tolist()",
+      "expect": "[-1.0, 1.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(20); x = r.standard_normal(200); y = np.correlate(x, [0.2, 0.3, 0.5], \"valid\") + 0.1 * r.standard_normal(198)",
+      "call": "learn_kernel(x, y[1:], 4, 0.1, 5).shape",
+      "expect": "(4,)",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(20); x = r.standard_normal(200); y = np.correlate(x, [0.2, 0.3, 0.5], \"valid\") + 0.1 * r.standard_normal(198)",
+      "call": "learn_kernel(x, y, 3, 0.1, 0).tolist()",
+      "expect": "[0.0, 0.0, 0.0]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. The seeded signal of this lesson must land within 0.02 of $(0.2, 0.3, 0.5)$ after 100 steps, and a noiseless change kernel $(-1, 1)$ to 3 places. Then the shape for 4 weights, and no steps at all. `autograd.py` and `cnn_ops_l1.py` are in the working directory.",
+    "budget": 4000,
+    "files": {
+     "autograd.py": "\"\"\"backprop level 4 autograd: a small array autograd in NumPy, shared by every later AI course.\n\nA Tensor holds a float64 array `data` and a gradient `grad` of the same shape. Each operation\nrecords its parents (`_prev`), a short name (`_op`) and a `_backward` closure that adds the\noperation's share of the gradient into each parent. `backward()` on a size-1 tensor visits the\ngraph in reverse topological order, built with an explicit stack (no recursion).\nShipped verbatim; a later course that needs another op writes it in a module of its own.\n\"\"\"\n__version__ = \"1.0\"\n\nimport numpy as np\n\n\ndef _noop():\n    pass\n\n\ndef _wrap(x):\n    return x if isinstance(x, Tensor) else Tensor(x)\n\n\ndef unbroadcast(grad, shape):\n    \"\"\"Sum `grad` down to `shape`: over the leading axes broadcasting added, then over every axis where `shape` has 1.\"\"\"\n    shape = tuple(shape)\n    grad = np.asarray(grad)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.sum(axis=tuple(range(extra)))\n    axes = tuple(i for i, s in enumerate(shape) if s == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n\n\nclass Tensor:\n    __array_ufunc__ = None  # ndarray (op) Tensor defers to the Tensor's reflected method\n\n    def __init__(self, data, _prev=(), _op=\"\"):\n        if isinstance(data, Tensor):\n            data = data.data\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = _noop\n\n    def __repr__(self):\n        return f\"Tensor(shape={self.data.shape}, op={self._op!r})\"\n\n    @property\n    def shape(self):\n        return self.data.shape\n\n    def item(self):\n        if self.data.size != 1:\n            raise ValueError(f\"item() needs a tensor of size 1, not shape {self.shape}\")\n        return float(self.data.reshape(()))\n\n    def zero_grad(self):\n        if self.grad.shape == self.data.shape:\n            self.grad.fill(0.0)\n        else:\n            self.grad = np.zeros_like(self.data)\n\n    # ---- elementwise binary operations (NumPy broadcasting; backward sums back with unbroadcast) ----\n    def __add__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad += unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return _wrap(other) + self\n\n    def __sub__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data - other.data, (self, other), \"-\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad -= unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rsub__(self, other):\n        return _wrap(other) - self\n\n    def __neg__(self):\n        out = Tensor(-self.data, (self,), \"neg\")\n\n        def _backward():\n            self.grad -= out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmul__(self, other):\n        return _wrap(other) * self\n\n    def __truediv__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data / other.data, (self, other), \"/\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad / other.data, self.shape)\n            other.grad -= unbroadcast(out.grad * self.data / other.data ** 2, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rtruediv__(self, other):\n        return _wrap(other) / self\n\n    def __pow__(self, k):\n        if isinstance(k, Tensor):\n            raise TypeError(\"the power k in a ** k must be a Python number, not a Tensor\")\n        out = Tensor(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    # ---- matrix product: backward G B^T and A^T G (stacks of matrices broadcast as np.matmul does) ----\n    def __matmul__(self, other):\n        other = _wrap(other)\n        if self.data.ndim < 2 or other.data.ndim < 2:\n            raise ValueError(\"@ needs tensors of at least 2 dimensions: reshape a vector to (n, 1) or (1, n) first\")\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad @ np.swapaxes(other.data, -1, -2), self.shape)\n            other.grad += unbroadcast(np.swapaxes(self.data, -1, -2) @ out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmatmul__(self, other):\n        return _wrap(other) @ self\n\n    # ---- reductions ----\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    def mean(self, axis=None, keepdims=False):\n        out = Tensor(self.data.mean(axis=axis, keepdims=keepdims), (self,), \"mean\")\n        n = self.data.size // max(out.data.size, 1)\n\n        def _backward():\n            g = out.grad / n\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    # ---- elementwise functions ----\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1.0 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0.0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad  # slope 0 at exactly 0\n        out._backward = _backward\n        return out\n\n    def exp(self):\n        e = np.exp(self.data)\n        out = Tensor(e, (self,), \"exp\")\n\n        def _backward():\n            self.grad += e * out.grad\n        out._backward = _backward\n        return out\n\n    def log(self):\n        out = Tensor(np.log(self.data), (self,), \"log\")\n\n        def _backward():\n            self.grad += out.grad / self.data\n        out._backward = _backward\n        return out\n\n    # ---- shape operations ----\n    def reshape(self, *shape):\n        out = Tensor(self.data.reshape(*shape), (self,), \"reshape\")\n\n        def _backward():\n            self.grad += out.grad.reshape(self.shape)\n        out._backward = _backward\n        return out\n\n    @property\n    def T(self):\n        out = Tensor(self.data.T, (self,), \"T\")\n\n        def _backward():\n            self.grad += out.grad.T\n        out._backward = _backward\n        return out\n\n    def __getitem__(self, idx):\n        if isinstance(idx, Tensor):\n            raise TypeError(\"index with an integer array or a tuple of them, not a Tensor\")\n        out = Tensor(self.data[idx], (self,), \"index\")\n\n        def _backward():\n            np.add.at(self.grad, idx, out.grad)  # repeated indices add, as in an embedding lookup\n        out._backward = _backward\n        return out\n\n    # ---- the backward pass ----\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(f\"backward() needs a tensor of size 1 (a loss), not shape {self.shape}\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, parents_done = stack.pop()\n            if parents_done:\n                order.append(node)\n                continue\n            if id(node) in seen:\n                continue\n            seen.add(id(node))\n            stack.append((node, True))\n            for p in node._prev:\n                if id(p) not in seen:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n\ndef softmax(x, axis=-1):\n    \"\"\"Softmax of a plain array along `axis`, largest entry subtracted first; no gradient (for sampling and reporting).\"\"\"\n    x = x.data if isinstance(x, Tensor) else np.asarray(x, dtype=np.float64)\n    z = np.exp(x - x.max(axis=axis, keepdims=True))\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef cross_entropy(logits, targets):\n    \"\"\"Mean over the n rows of -log softmax(z_i)[y_i], in nats, by log-sum-exp; backward (softmax(z) - onehot(y)) / n.\"\"\"\n    logits = _wrap(logits)\n    z = logits.data\n    y = np.asarray(targets)\n    if z.ndim != 2:\n        raise ValueError(f\"logits must be 2-D (n, K), not shape {z.shape}\")\n    if y.ndim != 1 or y.shape[0] != z.shape[0]:\n        raise ValueError(f\"targets must be 1-D of length {z.shape[0]}, not shape {y.shape}\")\n    if not np.issubdtype(y.dtype, np.integer):\n        raise TypeError(\"targets must be integer class indices\")\n    n = z.shape[0]\n    rows = np.arange(n)\n    m = z.max(axis=1, keepdims=True)\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    lse = (m + np.log(s))[:, 0]\n    out = Tensor(np.mean(lse - z[rows, y]), (logits,), \"cross_entropy\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1.0\n        logits.grad += p * (out.grad / n)\n    out._backward = _backward\n    return out\n\n\ndef concat(tensors, axis=0):\n    \"\"\"Join tensors along `axis`; backward hands each its own slice of the gradient.\"\"\"\n    tensors = [_wrap(t) for t in tensors]\n    out = Tensor(np.concatenate([t.data for t in tensors], axis=axis), tuple(tensors), \"concat\")\n\n    def _backward():\n        start = 0\n        for t in tensors:\n            size = t.data.shape[axis]\n            cut = [slice(None)] * out.data.ndim\n            cut[axis] = slice(start, start + size)\n            t.grad += out.grad[tuple(cut)]\n            start += size\n    out._backward = _backward\n    return out\n\n\ndef sgd_step(params, lr):\n    \"\"\"One gradient-descent step in place, outside the graph. It does not zero the gradients.\"\"\"\n    for p in params:\n        p.data -= lr * p.grad\n\n\ndef grad_check(f, params, h=1e-5):\n    \"\"\"Global relative error between backprop and central differences of f() over every entry of every parameter.\"\"\"\n    params = list(params)\n    for p in params:\n        p.zero_grad()\n    f().backward()\n    analytic = [p.grad.copy() for p in params]\n    worst, scale = 0.0, 1e-12\n    for p, g in zip(params, analytic):\n        for i in np.ndindex(p.data.shape):\n            keep = p.data[i]\n            p.data[i] = keep + h\n            up = f().item()\n            p.data[i] = keep - h\n            down = f().item()\n            p.data[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(g[i] - num))\n            scale = max(scale, abs(g[i]), abs(num))\n    return worst / scale\n",
+     "cnn_ops_l1.py": "\"\"\"cnn level 1 ops: valid 1-D and 2-D convolution as Tensor ops for the frozen autograd.py (v1.0).\n\nDeep learning's \"convolution\" is the sliding dot product with no flip (cross-correlation), and so are these:\n    conv1d(x, k)[t]     = sum_j k[j] * x[t + j],              t = 0 .. n - m\n    conv2d(x, k)[i, j]  = sum_a sum_b k[a, b] * x[i + a, j + b]  (valid positions only)\nEach op records its parents and a backward closure, as every op in autograd.py does, so loss.backward() reaches the\ninput and the kernel. The plain-array helpers correlate1d and correlate2d do the forward pass alone.\nShipped verbatim beside autograd.py: from cnn_ops_l1 import conv1d, conv2d, correlate1d, correlate2d.\n\"\"\"\n__version__ = \"1.0\"\n\nimport numpy as np\nfrom autograd import Tensor\n\n\ndef _t(x):\n    return x if isinstance(x, Tensor) else Tensor(x)\n\n\ndef correlate1d(x, k):\n    \"\"\"Valid sliding dot product of two 1-D arrays: n - m + 1 outputs (none when the kernel is longer).\"\"\"\n    x = np.asarray(x, dtype=np.float64)\n    k = np.asarray(k, dtype=np.float64)\n    n, m = x.shape[0], k.shape[0]\n    if m > n:\n        return np.zeros(0)\n    return np.array([x[t:t + m] @ k for t in range(n - m + 1)])\n\n\ndef correlate2d(x, k):\n    \"\"\"Valid sliding dot product of a 2-D array with a 2-D kernel: (H - kh + 1, W - kw + 1) outputs.\"\"\"\n    x = np.asarray(x, dtype=np.float64)\n    k = np.asarray(k, dtype=np.float64)\n    oh, ow = x.shape[0] - k.shape[0] + 1, x.shape[1] - k.shape[1] + 1\n    if oh < 1 or ow < 1:\n        return np.zeros((max(oh, 0), max(ow, 0)))\n    win = np.lib.stride_tricks.sliding_window_view(x, k.shape)\n    return np.einsum('ijab,ab->ij', win, k)\n\n\ndef conv1d(x, k):\n    \"\"\"Tensor op: valid 1-D convolution (no flip). Backward: dk = correlate1d(x, g); dx = full np.convolve(g, k).\"\"\"\n    x, k = _t(x), _t(k)\n    if x.data.ndim != 1 or k.data.ndim != 1:\n        raise ValueError(\"conv1d needs a 1-D signal and a 1-D kernel\")\n    if k.shape[0] > x.shape[0]:\n        raise ValueError(\"the kernel is longer than the signal: no valid position\")\n    out = Tensor(correlate1d(x.data, k.data), (x, k), \"conv1d\")\n\n    def _backward():\n        g = out.grad\n        k.grad += correlate1d(x.data, g)\n        x.grad += np.convolve(g, k.data)  # each input entry collects g[t] * k[j] from every window it sits in\n    out._backward = _backward\n    return out\n\n\ndef conv2d(x, k):\n    \"\"\"Tensor op: valid 2-D convolution (no flip) of one 2-D channel. Backward: dk sums window * g; dx adds k[a, b] * g back.\"\"\"\n    x, k = _t(x), _t(k)\n    if x.data.ndim != 2 or k.data.ndim != 2:\n        raise ValueError(\"conv2d needs a 2-D image and a 2-D kernel\")\n    kh, kw = k.shape\n    oh, ow = x.shape[0] - kh + 1, x.shape[1] - kw + 1\n    if oh < 1 or ow < 1:\n        raise ValueError(\"the kernel is larger than the image: no valid position\")\n    out = Tensor(correlate2d(x.data, k.data), (x, k), \"conv2d\")\n\n    def _backward():\n        g = out.grad\n        win = np.lib.stride_tricks.sliding_window_view(x.data, (kh, kw))\n        k.grad += np.einsum('ijab,ij->ab', win, g)\n        for a in range(kh):\n            for b in range(kw):\n                x.grad[a:a + oh, b:b + ow] += k.data[a, b] * g  # overlapping windows add\n    out._backward = _backward\n    return out\n"
+    },
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef learn_kernel(x, y, k_len, lr, steps):\n    k = Tensor(np.zeros(k_len))\n    xt = Tensor(x)\n    for _ in range(steps):\n        k.zero_grad()\n        loss = ((conv1d(xt, k) - y) ** 2).sum()\n        loss.backward()\n        sgd_step([k], lr)\n    return k.data.copy()\n",
+      "test": 1,
+      "symptom": "The summed loss makes every step 198 times too long, and the run overflows."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef learn_kernel(x, y, k_len, lr, steps):\n    k = Tensor(np.zeros(k_len))\n    xt = Tensor(x)\n    for _ in range(steps):\n        loss = ((conv1d(xt, k) - y) ** 2).mean()\n        loss.backward()\n        sgd_step([k], lr)\n    return k.data.copy()\n",
+      "test": 1,
+      "symptom": "The gradient is never zeroed, so old gradients keep pushing and the kernel misses."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef learn_kernel(x, y, k_len, lr, steps):\n    k = Tensor(np.zeros(k_len))\n    xt = Tensor(x)\n    for _ in range(steps):\n        k.zero_grad()\n        loss = ((conv1d(xt, k) - y) ** 2).mean()\n        loss.backward()\n        sgd_step([k], lr)\n    return k.grad.copy()\n",
+      "test": 1,
+      "symptom": "It returns the last gradient instead of the weights."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`k = Tensor(np.zeros(k_len))`."
+    },
+    {
+     "rung": "point",
+     "text": "Each step: `k.zero_grad()`, the mean loss, `loss.backward()`."
+    },
+    {
+     "rung": "step",
+     "text": "`sgd_step([k], lr)`, then return `k.data.copy()`."
+    }
+   ],
+   "feedback": {
+    "correct": "Zero, forward, backward, step, and return `k.data`.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The kernel should land within 0.02 of $(0.2, 0.3, 0.5)$. Use the mean, zero the gradient each step, and return the weights."
+    }
+   },
+   "explain": {
+    "text": "`k.zero_grad()` clears last step’s gradient, since `backward()` adds into it. The mean keeps the step size independent of the signal’s length; 100 steps take tens of milliseconds."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Checking the op yourself",
+   "prose": "Write `kernel_gradient_check(x, k)`: for the loss, the mean of `conv1d(x, k)` squared, compare the kernel’s gradient from `backward()` with central differences at $h = 10^{-5}$. Return $\\max|g - g_{\\text{num}}|$ over the larger of the two largest sizes.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Central difference",
+     "lines": [
+      "g_num[j] = (L(k + h e_j) - L(k - h e_j)) / (2 h)",
+      "error    = max|g - g_num| / max(max|g|, max|g_num|)"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `kernel_gradient_check`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef kernel_gradient_check(x, k):\n    # loss: the mean of conv1d(x, k) squared; compare k.grad from backward()\n    # with central differences (h = 1e-5) and return the largest relative error\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef kernel_gradient_check(x, k):\n    xt = Tensor(x)\n    kt = Tensor(np.array(k, dtype=float))\n    loss = lambda: (conv1d(xt, kt) ** 2).mean()\n    kt.zero_grad()\n    loss().backward()\n    g = kt.grad.copy()\n    num = np.zeros_like(g)\n    h = 1e-5\n    for j in range(len(g)):\n        keep = kt.data[j]\n        kt.data[j] = keep + h\n        up = loss().item()\n        kt.data[j] = keep - h\n        down = loss().item()\n        kt.data[j] = keep\n        num[j] = (up - down) / (2 * h)\n    scale = max(np.abs(g).max(), np.abs(num).max(), 1e-12)\n    return float(np.abs(g - num).max() / scale)\n",
+    "examples": [
+     {
+      "call": "kernel_gradient_check(np.arange(10.0), [1.0, -1.0]) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "r = np.random.default_rng(30); x = r.standard_normal(50); k = r.standard_normal(4)",
+      "call": "kernel_gradient_check(x, k) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(30); x = r.standard_normal(50); k = r.standard_normal(4)",
+      "call": "kernel_gradient_check(x, k) > 0",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "kernel_gradient_check(np.arange(10.0), [1.0, -1.0]) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(30); x = r.standard_normal(50); k = r.standard_normal(4)",
+      "call": "type(kernel_gradient_check(x, k)).__name__",
+      "expect": "'float'",
+      "compare": "equal"
+     },
+     {
+      "call": "'grad_check' not in __learner_source__",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: a seeded signal and kernel (below $10^{-6}$ but not exactly 0), a ramp, the return type, and no call to `grad_check`: write the differences yourself.",
+    "budget": 2000,
+    "files": {
+     "autograd.py": "\"\"\"backprop level 4 autograd: a small array autograd in NumPy, shared by every later AI course.\n\nA Tensor holds a float64 array `data` and a gradient `grad` of the same shape. Each operation\nrecords its parents (`_prev`), a short name (`_op`) and a `_backward` closure that adds the\noperation's share of the gradient into each parent. `backward()` on a size-1 tensor visits the\ngraph in reverse topological order, built with an explicit stack (no recursion).\nShipped verbatim; a later course that needs another op writes it in a module of its own.\n\"\"\"\n__version__ = \"1.0\"\n\nimport numpy as np\n\n\ndef _noop():\n    pass\n\n\ndef _wrap(x):\n    return x if isinstance(x, Tensor) else Tensor(x)\n\n\ndef unbroadcast(grad, shape):\n    \"\"\"Sum `grad` down to `shape`: over the leading axes broadcasting added, then over every axis where `shape` has 1.\"\"\"\n    shape = tuple(shape)\n    grad = np.asarray(grad)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.sum(axis=tuple(range(extra)))\n    axes = tuple(i for i, s in enumerate(shape) if s == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n\n\nclass Tensor:\n    __array_ufunc__ = None  # ndarray (op) Tensor defers to the Tensor's reflected method\n\n    def __init__(self, data, _prev=(), _op=\"\"):\n        if isinstance(data, Tensor):\n            data = data.data\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = _noop\n\n    def __repr__(self):\n        return f\"Tensor(shape={self.data.shape}, op={self._op!r})\"\n\n    @property\n    def shape(self):\n        return self.data.shape\n\n    def item(self):\n        if self.data.size != 1:\n            raise ValueError(f\"item() needs a tensor of size 1, not shape {self.shape}\")\n        return float(self.data.reshape(()))\n\n    def zero_grad(self):\n        if self.grad.shape == self.data.shape:\n            self.grad.fill(0.0)\n        else:\n            self.grad = np.zeros_like(self.data)\n\n    # ---- elementwise binary operations (NumPy broadcasting; backward sums back with unbroadcast) ----\n    def __add__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad += unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return _wrap(other) + self\n\n    def __sub__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data - other.data, (self, other), \"-\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad -= unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rsub__(self, other):\n        return _wrap(other) - self\n\n    def __neg__(self):\n        out = Tensor(-self.data, (self,), \"neg\")\n\n        def _backward():\n            self.grad -= out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmul__(self, other):\n        return _wrap(other) * self\n\n    def __truediv__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data / other.data, (self, other), \"/\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad / other.data, self.shape)\n            other.grad -= unbroadcast(out.grad * self.data / other.data ** 2, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rtruediv__(self, other):\n        return _wrap(other) / self\n\n    def __pow__(self, k):\n        if isinstance(k, Tensor):\n            raise TypeError(\"the power k in a ** k must be a Python number, not a Tensor\")\n        out = Tensor(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    # ---- matrix product: backward G B^T and A^T G (stacks of matrices broadcast as np.matmul does) ----\n    def __matmul__(self, other):\n        other = _wrap(other)\n        if self.data.ndim < 2 or other.data.ndim < 2:\n            raise ValueError(\"@ needs tensors of at least 2 dimensions: reshape a vector to (n, 1) or (1, n) first\")\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad @ np.swapaxes(other.data, -1, -2), self.shape)\n            other.grad += unbroadcast(np.swapaxes(self.data, -1, -2) @ out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmatmul__(self, other):\n        return _wrap(other) @ self\n\n    # ---- reductions ----\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    def mean(self, axis=None, keepdims=False):\n        out = Tensor(self.data.mean(axis=axis, keepdims=keepdims), (self,), \"mean\")\n        n = self.data.size // max(out.data.size, 1)\n\n        def _backward():\n            g = out.grad / n\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    # ---- elementwise functions ----\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1.0 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0.0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad  # slope 0 at exactly 0\n        out._backward = _backward\n        return out\n\n    def exp(self):\n        e = np.exp(self.data)\n        out = Tensor(e, (self,), \"exp\")\n\n        def _backward():\n            self.grad += e * out.grad\n        out._backward = _backward\n        return out\n\n    def log(self):\n        out = Tensor(np.log(self.data), (self,), \"log\")\n\n        def _backward():\n            self.grad += out.grad / self.data\n        out._backward = _backward\n        return out\n\n    # ---- shape operations ----\n    def reshape(self, *shape):\n        out = Tensor(self.data.reshape(*shape), (self,), \"reshape\")\n\n        def _backward():\n            self.grad += out.grad.reshape(self.shape)\n        out._backward = _backward\n        return out\n\n    @property\n    def T(self):\n        out = Tensor(self.data.T, (self,), \"T\")\n\n        def _backward():\n            self.grad += out.grad.T\n        out._backward = _backward\n        return out\n\n    def __getitem__(self, idx):\n        if isinstance(idx, Tensor):\n            raise TypeError(\"index with an integer array or a tuple of them, not a Tensor\")\n        out = Tensor(self.data[idx], (self,), \"index\")\n\n        def _backward():\n            np.add.at(self.grad, idx, out.grad)  # repeated indices add, as in an embedding lookup\n        out._backward = _backward\n        return out\n\n    # ---- the backward pass ----\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(f\"backward() needs a tensor of size 1 (a loss), not shape {self.shape}\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, parents_done = stack.pop()\n            if parents_done:\n                order.append(node)\n                continue\n            if id(node) in seen:\n                continue\n            seen.add(id(node))\n            stack.append((node, True))\n            for p in node._prev:\n                if id(p) not in seen:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n\ndef softmax(x, axis=-1):\n    \"\"\"Softmax of a plain array along `axis`, largest entry subtracted first; no gradient (for sampling and reporting).\"\"\"\n    x = x.data if isinstance(x, Tensor) else np.asarray(x, dtype=np.float64)\n    z = np.exp(x - x.max(axis=axis, keepdims=True))\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef cross_entropy(logits, targets):\n    \"\"\"Mean over the n rows of -log softmax(z_i)[y_i], in nats, by log-sum-exp; backward (softmax(z) - onehot(y)) / n.\"\"\"\n    logits = _wrap(logits)\n    z = logits.data\n    y = np.asarray(targets)\n    if z.ndim != 2:\n        raise ValueError(f\"logits must be 2-D (n, K), not shape {z.shape}\")\n    if y.ndim != 1 or y.shape[0] != z.shape[0]:\n        raise ValueError(f\"targets must be 1-D of length {z.shape[0]}, not shape {y.shape}\")\n    if not np.issubdtype(y.dtype, np.integer):\n        raise TypeError(\"targets must be integer class indices\")\n    n = z.shape[0]\n    rows = np.arange(n)\n    m = z.max(axis=1, keepdims=True)\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    lse = (m + np.log(s))[:, 0]\n    out = Tensor(np.mean(lse - z[rows, y]), (logits,), \"cross_entropy\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1.0\n        logits.grad += p * (out.grad / n)\n    out._backward = _backward\n    return out\n\n\ndef concat(tensors, axis=0):\n    \"\"\"Join tensors along `axis`; backward hands each its own slice of the gradient.\"\"\"\n    tensors = [_wrap(t) for t in tensors]\n    out = Tensor(np.concatenate([t.data for t in tensors], axis=axis), tuple(tensors), \"concat\")\n\n    def _backward():\n        start = 0\n        for t in tensors:\n            size = t.data.shape[axis]\n            cut = [slice(None)] * out.data.ndim\n            cut[axis] = slice(start, start + size)\n            t.grad += out.grad[tuple(cut)]\n            start += size\n    out._backward = _backward\n    return out\n\n\ndef sgd_step(params, lr):\n    \"\"\"One gradient-descent step in place, outside the graph. It does not zero the gradients.\"\"\"\n    for p in params:\n        p.data -= lr * p.grad\n\n\ndef grad_check(f, params, h=1e-5):\n    \"\"\"Global relative error between backprop and central differences of f() over every entry of every parameter.\"\"\"\n    params = list(params)\n    for p in params:\n        p.zero_grad()\n    f().backward()\n    analytic = [p.grad.copy() for p in params]\n    worst, scale = 0.0, 1e-12\n    for p, g in zip(params, analytic):\n        for i in np.ndindex(p.data.shape):\n            keep = p.data[i]\n            p.data[i] = keep + h\n            up = f().item()\n            p.data[i] = keep - h\n            down = f().item()\n            p.data[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(g[i] - num))\n            scale = max(scale, abs(g[i]), abs(num))\n    return worst / scale\n",
+     "cnn_ops_l1.py": "\"\"\"cnn level 1 ops: valid 1-D and 2-D convolution as Tensor ops for the frozen autograd.py (v1.0).\n\nDeep learning's \"convolution\" is the sliding dot product with no flip (cross-correlation), and so are these:\n    conv1d(x, k)[t]     = sum_j k[j] * x[t + j],              t = 0 .. n - m\n    conv2d(x, k)[i, j]  = sum_a sum_b k[a, b] * x[i + a, j + b]  (valid positions only)\nEach op records its parents and a backward closure, as every op in autograd.py does, so loss.backward() reaches the\ninput and the kernel. The plain-array helpers correlate1d and correlate2d do the forward pass alone.\nShipped verbatim beside autograd.py: from cnn_ops_l1 import conv1d, conv2d, correlate1d, correlate2d.\n\"\"\"\n__version__ = \"1.0\"\n\nimport numpy as np\nfrom autograd import Tensor\n\n\ndef _t(x):\n    return x if isinstance(x, Tensor) else Tensor(x)\n\n\ndef correlate1d(x, k):\n    \"\"\"Valid sliding dot product of two 1-D arrays: n - m + 1 outputs (none when the kernel is longer).\"\"\"\n    x = np.asarray(x, dtype=np.float64)\n    k = np.asarray(k, dtype=np.float64)\n    n, m = x.shape[0], k.shape[0]\n    if m > n:\n        return np.zeros(0)\n    return np.array([x[t:t + m] @ k for t in range(n - m + 1)])\n\n\ndef correlate2d(x, k):\n    \"\"\"Valid sliding dot product of a 2-D array with a 2-D kernel: (H - kh + 1, W - kw + 1) outputs.\"\"\"\n    x = np.asarray(x, dtype=np.float64)\n    k = np.asarray(k, dtype=np.float64)\n    oh, ow = x.shape[0] - k.shape[0] + 1, x.shape[1] - k.shape[1] + 1\n    if oh < 1 or ow < 1:\n        return np.zeros((max(oh, 0), max(ow, 0)))\n    win = np.lib.stride_tricks.sliding_window_view(x, k.shape)\n    return np.einsum('ijab,ab->ij', win, k)\n\n\ndef conv1d(x, k):\n    \"\"\"Tensor op: valid 1-D convolution (no flip). Backward: dk = correlate1d(x, g); dx = full np.convolve(g, k).\"\"\"\n    x, k = _t(x), _t(k)\n    if x.data.ndim != 1 or k.data.ndim != 1:\n        raise ValueError(\"conv1d needs a 1-D signal and a 1-D kernel\")\n    if k.shape[0] > x.shape[0]:\n        raise ValueError(\"the kernel is longer than the signal: no valid position\")\n    out = Tensor(correlate1d(x.data, k.data), (x, k), \"conv1d\")\n\n    def _backward():\n        g = out.grad\n        k.grad += correlate1d(x.data, g)\n        x.grad += np.convolve(g, k.data)  # each input entry collects g[t] * k[j] from every window it sits in\n    out._backward = _backward\n    return out\n\n\ndef conv2d(x, k):\n    \"\"\"Tensor op: valid 2-D convolution (no flip) of one 2-D channel. Backward: dk sums window * g; dx adds k[a, b] * g back.\"\"\"\n    x, k = _t(x), _t(k)\n    if x.data.ndim != 2 or k.data.ndim != 2:\n        raise ValueError(\"conv2d needs a 2-D image and a 2-D kernel\")\n    kh, kw = k.shape\n    oh, ow = x.shape[0] - kh + 1, x.shape[1] - kw + 1\n    if oh < 1 or ow < 1:\n        raise ValueError(\"the kernel is larger than the image: no valid position\")\n    out = Tensor(correlate2d(x.data, k.data), (x, k), \"conv2d\")\n\n    def _backward():\n        g = out.grad\n        win = np.lib.stride_tricks.sliding_window_view(x.data, (kh, kw))\n        k.grad += np.einsum('ijab,ij->ab', win, g)\n        for a in range(kh):\n            for b in range(kw):\n                x.grad[a:a + oh, b:b + ow] += k.data[a, b] * g  # overlapping windows add\n    out._backward = _backward\n    return out\n"
+    },
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef kernel_gradient_check(x, k):\n    xt = Tensor(x)\n    kt = Tensor(np.array(k, dtype=float))\n    loss = lambda: (conv1d(xt, kt) ** 2).mean()\n    kt.zero_grad()\n    loss().backward()\n    g = kt.grad.copy()\n    num = np.zeros_like(g)\n    h = 1e-5\n    for j in range(len(g)):\n        keep = kt.data[j]\n        kt.data[j] = keep + h\n        up = loss().item()\n        kt.data[j] = keep\n        down = loss().item()\n        kt.data[j] = keep\n        num[j] = (up - down) / h\n    scale = max(np.abs(g).max(), np.abs(num).max(), 1e-12)\n    return float(np.abs(g - num).max() / scale)\n",
+      "test": 1,
+      "symptom": "A one-sided difference: its error of order h is about 1e-5, above the bar."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef kernel_gradient_check(x, k):\n    xt = Tensor(x)\n    kt = Tensor(np.array(k, dtype=float))\n    loss = lambda: (conv1d(xt, kt) ** 2).mean()\n    kt.zero_grad()\n    loss().backward()\n    g = kt.grad.copy()\n    num = g.copy()\n    h = 1e-5\n    for j in []:\n        keep = kt.data[j]\n        kt.data[j] = keep + h\n        up = loss().item()\n        kt.data[j] = keep - h\n        down = loss().item()\n        kt.data[j] = keep\n        num[j] = (up - down) / (2 * h)\n    scale = max(np.abs(g).max(), np.abs(num).max(), 1e-12)\n    return float(np.abs(g - num).max() / scale)\n",
+      "test": 2,
+      "symptom": "It compares the backward pass with itself and always returns 0."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, sgd_step\nfrom cnn_ops_l1 import conv1d\n\n\ndef kernel_gradient_check(x, k):\n    xt = Tensor(x)\n    kt = Tensor(np.array(k, dtype=float))\n    loss = lambda: (conv1d(xt, kt) ** 2).mean()\n    kt.zero_grad()\n    loss().backward()\n    g = kt.grad.copy()\n    num = np.zeros_like(g)\n    h = 1e-5\n    for j in range(len(g)):\n        keep = kt.data[j]\n        kt.data[j] = keep + h\n        up = loss().item()\n        kt.data[j] = keep - h\n        down = loss().item()\n        num[j] = (up - down) / (2 * h)\n    scale = max(np.abs(g).max(), np.abs(num).max(), 1e-12)\n    return float(np.abs(g - num).max() / scale)\n",
+      "test": 1,
+      "symptom": "The weight is not put back after each nudge, so later differences are taken at the wrong point."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Run `backward()` once and copy `kt.grad`."
+    },
+    {
+     "rung": "point",
+     "text": "For each weight: set it to `keep + h`, then `keep - h`, then back to `keep`."
+    },
+    {
+     "rung": "step",
+     "text": "Divide the largest gap by the largest size."
+    }
+   ],
+   "feedback": {
+    "correct": "Backward once, then nudge each weight up and down, and put it back.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The error should be far below $10^{-6}$. Use $(L(k + h) - L(k - h)) / 2h$ and restore each weight after nudging it.",
+     "test-2": "An error of exactly 0 means the backward pass was compared with itself. Compute the numeric gradient from the loss."
+    }
+   },
+   "explain": {
+    "text": "A central difference has error of order $h^2$, so on this seeded case the two agree to 1e-11. A one-sided difference leaves an error of order $h$, about $10^{-5}$, and fails the bar."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A filter of past returns",
+   "prose": "An AR(5) model predicts tomorrow’s return from the last 5: a kernel learned exactly like this one. Fitted on 250 days of returns, the five weights cut the in-sample squared error by 2% against predicting 0. Returns this noisy carry almost no linear signal.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "in sample",
+      "unseen days"
+     ],
+     "rows": [
+      [
+       "predict 0",
+       "1.000",
+       "1.000"
+      ],
+      [
+       "AR(5) filter",
+       "0.980",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What should you do before trading the filter?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Score it on later days it never saw, against predicting 0",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Trade it: 2% less error is an edge",
+      "why": "Five free weights fitted to 250 noisy days lower the in-sample error even when there is no signal at all."
+     },
+     {
+      "id": "c",
+      "text": "Add more weights until the error falls further",
+      "why": "More weights fit more of the noise. The in-sample error falls whatever the truth."
+     },
+     {
+      "id": "d",
+      "text": "Learn it with the summed loss instead",
+      "why": "The loss only changes the step size, not what the fit can find."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How much would five weights fit on pure noise?"
+    },
+    {
+     "rung": "point",
+     "text": "About $k/n$ of the error."
+    },
+    {
+     "rung": "step",
+     "text": "$5/250 = 2\\%$, the same as the gain."
+    }
+   ],
+   "feedback": {
+    "correct": "Fit on one stretch, score on a later one: a filter fitted in sample can be noise.",
+    "generic": "Not quite. Would five weights lower in-sample error on pure noise?",
+    "byKey": {
+     "b": "You took the in-sample gain as an edge. With $k$ weights and $n$ days, noise alone gives about $k/n = 2\\%$."
+    }
+   },
+   "explain": {
+    "text": "With pure noise, least squares with $k = 5$ weights on $n = 250$ days still cuts the in-sample error by about $k/n = 2\\%$. Only a test on unseen days can tell signal from that."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A kernel’s weights are parameters: with mean squared error, $\\partial L/\\partial k_j = \\tfrac{2}{m}\\sum_t e_t x_{t+j}$, the error slid along the signal.",
+   "`conv1d` in `cnn_ops_l1.py` is a `Tensor` op beside the frozen `autograd.py`; its backward passes a central-difference check far below $10^{-6}$ in float64.",
+   "Gradient descent from zero recovers a planted kernel to the noise floor; a summed loss needs a step divided by the length, and a kernel too short learns the best short fit."
+  ],
+  "formula": {
+   "name": "Gradient of a kernel weight",
+   "tex": "\\frac{\\partial L}{\\partial k_j} = \\frac{2}{m}\\sum_{t} e_t\\, x_{t+j}",
+   "note": "For the mean of squared errors over $m$ outputs."
+  },
+  "trap": "A summed loss grows with the signal’s length, and so does its gradient: the same learning rate then overshoots."
+ },
+ "quiz": [
+  {
+   "id": "q-grad-k1",
+   "difficulty": 3,
+   "prose": "Signal $(2, 1, 0, 3)$, kernel $(1, 1)$, target $(2, 2, 2)$, loss the mean of squared errors.",
+   "question": "What is $\\partial L / \\partial k_1$? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.67,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "no-scale",
+      "value": 4,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "k0",
+      "value": 0.67,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Errors $(1, -1, 1)$; $\\tfrac23(1 \\times 1 + (-1) \\times 0 + 1 \\times 3) = 2.67$.",
+    "generic": "Not quite. $k_1$ meets $x_1$, $x_2$ and $x_3$.",
+    "byKey": {
+     "no-scale": "You left out $\\tfrac{2}{m}$ with $m = 3$.",
+     "k0": "That is $k_0$’s gradient, which meets $x_0$ to $x_2$."
+    }
+   },
+   "explain": {
+    "text": "Outputs $(3, 1, 3)$ give errors $(1, -1, 1)$. Weight $k_1$ meets $(1, 0, 3)$: $\\tfrac23 \\times 4 = 2.67$."
+   }
+  },
+  {
+   "id": "q-mean-sum",
+   "difficulty": 2,
+   "question": "A loop that worked on 100 outputs with the mean loss is moved to 10,000 outputs, still on the mean. What happens to the size of each step?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "About the same",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "About 100 times larger",
+      "why": "That would be the summed loss. The mean divides by the number of outputs."
+     },
+     {
+      "id": "c",
+      "text": "About 100 times smaller",
+      "why": "Dividing by the length keeps the gradient’s size, not shrinks it."
+     },
+     {
+      "id": "d",
+      "text": "It becomes 0",
+      "why": "More outputs average the error; they do not remove it."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The mean’s gradient is an average over outputs, so its size does not scale with their number.",
+    "generic": "Not quite. What does dividing by $m$ do?"
+   },
+   "explain": {
+    "text": "The summed gradient grows with the number of outputs; the mean’s divides by it, so one learning rate works for any length."
+   }
+  },
+  {
+   "id": "q-floor",
+   "difficulty": 3,
+   "prose": "A hidden kernel $(0.4, 0.6)$ plus noise of variance 0.04 makes a target; we fit one weight on $x_t$ only, with independent inputs of variance 1.",
+   "question": "About where does the loss level off? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "noise",
+      "value": 0.04,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "wrong-weight",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.04 + 0.6^2 = 0.40$.",
+    "generic": "Not quite. Which weight can the one-weight kernel not reach?",
+    "byKey": {
+     "noise": "That ignores the second weight, which the short kernel cannot see.",
+     "wrong-weight": "You added $0.4^2$, but the fitted weight takes the 0.4. The missing one is 0.6."
+    }
+   },
+   "explain": {
+    "text": "The fitted weight takes 0.4; the unreached 0.6 acts as noise of variance $0.36$, so the floor is $0.04 + 0.36 = 0.40$."
+   }
+  }
+ ]
+}

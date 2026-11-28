@@ -1,0 +1,448 @@
+{
+ "id": "homework-1",
+ "course": "cnn",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-perf-conv2d",
+   "difficulty": 5,
+   "skills": [
+    "cnn-conv"
+   ],
+   "title": "A full convolutional layer, forward",
+   "performance": "code",
+   "prose": "Write `conv2d(img, kernels, bias)` for an input of $c_{\\text{in}}$ channels: each of the $c_{\\text{out}}$ filters slides over all channels together, adds the products over channels and window, and adds its own bias. No flip, valid positions only.",
+   "question": "Write `conv2d`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef conv2d(img, kernels, bias):\n    # img: (c_in, n, n); kernels: (c_out, c_in, k, k); bias: (c_out,)\n    # return every map, valid positions, no flip: (c_out, n - k + 1, n - k + 1)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef conv2d(img, kernels, bias):\n    img = np.asarray(img, dtype=float)\n    kernels = np.asarray(kernels, dtype=float)\n    c_out, c_in, kh, kw = kernels.shape\n    oh, ow = img.shape[1] - kh + 1, img.shape[2] - kw + 1\n    out = np.zeros((c_out, oh, ow))\n    for o in range(c_out):\n        for i in range(oh):\n            for j in range(ow):\n                out[o, i, j] = np.sum(img[:, i:i + kh, j:j + kw] * kernels[o]) + bias[o]\n    return out\n",
+    "examples": [
+     {
+      "call": "conv2d(np.ones((1, 3, 3)), np.ones((1, 1, 2, 2)), [0.5]).tolist()",
+      "expect": "[[[4.5, 4.5], [4.5, 4.5]]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "r = np.random.default_rng(41); img = r.standard_normal((2, 5, 5)); kernels = r.standard_normal((3, 2, 3, 3)); b = r.standard_normal(3)",
+      "call": "bool(np.allclose(conv2d(img, kernels, b), (np.einsum('cijab,ocab->oij', np.lib.stride_tricks.sliding_window_view(img, kernels.shape[2:], axis=(1, 2)), kernels) + np.asarray(b)[:, None, None])))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(41); img = r.standard_normal((2, 5, 5)); kernels = r.standard_normal((3, 2, 3, 3)); b = r.standard_normal(3)",
+      "call": "conv2d(img, kernels, b).shape",
+      "expect": "(3, 3, 3)",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(42); img = r.standard_normal((3, 6, 6)); kernels = r.standard_normal((2, 3, 2, 2)); b = r.standard_normal(2)",
+      "call": "bool(np.allclose(conv2d(img, kernels, b), (np.einsum('cijab,ocab->oij', np.lib.stride_tricks.sliding_window_view(img, kernels.shape[2:], axis=(1, 2)), kernels) + np.asarray(b)[:, None, None])))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(43); img = r.standard_normal((3, 4, 4)); kernels = r.standard_normal((2, 3, 1, 1)); b = np.array([0.5, -1.0])",
+      "call": "bool(np.allclose(conv2d(img, kernels, b), np.einsum('oc,chw->ohw', kernels[:, :, 0, 0], img) + b[:, None, None]))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "img = np.arange(16.0).reshape(1, 4, 4); kernels = np.ones((1, 1, 4, 4)); b = [2.0]",
+      "call": "conv2d(img, kernels, b).tolist()",
+      "expect": "[[[122.0]]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "img = np.array([[1, 0, 0, 1, 0, 0, 1, 1], [1, 4, 4, 4, 4, 4, 0, 0], [0, 0, 1, 0, 1, 4, 1, 0], [0, 0, 0, 0, 4, 1, 1, 0], [0, 0, 0, 1, 4, 1, 0, 1], [0, 1, 1, 4, 1, 0, 1, 0], [1, 0, 0, 4, 0, 0, 1, 0], [1, 1, 0, 0, 0, 1, 0, 0]], dtype=float); img = img[None]; kernels = np.array([[[[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]]]], dtype=float); b = [0.0]",
+      "call": "conv2d(img, kernels, b)[0, 1].tolist()",
+      "expect": "[4.0, 0.0, 4.0, 5.0, -7.0, -9.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(conv2d(np.ones((2, 3, 3)), np.zeros((2, 2, 2, 2)), [1.5, -0.5]), 6).tolist()",
+      "expect": "[[[1.5, 1.5], [1.5, 1.5]], [[-0.5, -0.5], [-0.5, -0.5]]]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests on planted images. Two seeded multi-channel cases are checked against a loop-free reference, with the shape. Then a 1 by 1 kernel, a kernel the size of the image, the 7 from l3, and a bias alone.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef conv2d(img, kernels, bias):\n    img = np.asarray(img, dtype=float)\n    kernels = np.asarray(kernels, dtype=float)\n    c_out, c_in, kh, kw = kernels.shape\n    oh, ow = img.shape[1] - kh + 1, img.shape[2] - kw + 1\n    out = np.zeros((c_out, oh, ow))\n    for o in range(c_out):\n        for i in range(oh):\n            for j in range(ow):\n                out[o, i, j] = np.sum(img[:, i:i + kh, j:j + kw] * kernels[o])\n    return out\n",
+      "test": 1,
+      "symptom": "The bias is left out."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv2d(img, kernels, bias):\n    img = np.asarray(img, dtype=float)\n    kernels = np.asarray(kernels, dtype=float)\n    c_out, c_in, kh, kw = kernels.shape\n    oh, ow = img.shape[1] - kh + 1, img.shape[2] - kw + 1\n    out = np.zeros((c_out, oh, ow))\n    for o in range(c_out):\n        for i in range(oh):\n            for j in range(ow):\n                out[o, i, j] = np.sum(img[0, i:i + kh, j:j + kw] * kernels[o, 0]) + bias[o]\n    return out\n",
+      "test": 1,
+      "symptom": "Only the first input channel is used; the others are never added."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv2d(img, kernels, bias):\n    img = np.asarray(img, dtype=float)\n    kernels = np.asarray(kernels, dtype=float)\n    c_out, c_in, kh, kw = kernels.shape\n    oh, ow = img.shape[1] - kh + 1, img.shape[2] - kw + 1\n    out = np.zeros((c_out, oh, ow))\n    for o in range(c_out):\n        for i in range(oh):\n            for j in range(ow):\n                out[o, i, j] = np.sum(img[:, i:i + kh, j:j + kw] * kernels[o][:, ::-1, ::-1]) + bias[o]\n    return out\n",
+      "test": 1,
+      "symptom": "The kernels are flipped, the textbook convolution, not the sliding dot product."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv2d(img, kernels, bias):\n    img = np.asarray(img, dtype=float)\n    kernels = np.asarray(kernels, dtype=float)\n    c_out, c_in, kh, kw = kernels.shape\n    oh, ow = img.shape[1] - kh, img.shape[2] - kw\n    out = np.zeros((c_out, oh, ow))\n    for o in range(c_out):\n        for i in range(oh):\n            for j in range(ow):\n                out[o, i, j] = np.sum(img[:, i:i + kh, j:j + kw] * kernels[o]) + bias[o]\n    return out\n",
+      "test": 1,
+      "symptom": "One position short on each side."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Every filter, every position, summed over channels and window, plus its bias.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The seeded case differs from the reference. Sum over every input channel and the whole window, add the filter’s own bias, and do not flip."
+    }
+   },
+   "explain": {
+    "text": "`img[:, i:i + k, j:j + k] * kernels[o]` multiplies a $(c_{\\text{in}}, k, k)$ block by filter $o$, and `np.sum` adds it all. A 1 by 1 filter only mixes channels; a filter the size of the image gives one number."
+   }
+  },
+  {
+   "id": "h-full-convolution",
+   "difficulty": 4,
+   "skills": [
+    "cnn-conv"
+   ],
+   "title": "The textbook convolution from the slide",
+   "prose": "The flip identity says the mathematical convolution is the unflipped slide of the reversed kernel. Write `conv1d_full(x, k)`, equal to `np.convolve(x, k)` (full mode, $n + k - 1$ values), using only padding, a reversed kernel and `conv1d_valid`.",
+   "question": "Write `conv1d_full`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef conv1d_full(x, k):\n    # the textbook convolution, equal to np.convolve(x, k) in full mode;\n    # conv1d_valid(x, k), the unflipped valid slide, is defined for you\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef conv1d_full(x, k):\n    k = np.asarray(k, dtype=float)\n    z = np.zeros(len(k) - 1)\n    xp = np.concatenate([z, np.asarray(x, dtype=float), z])\n    return conv1d_valid(xp, k[::-1])\n",
+    "examples": [
+     {
+      "call": "np.round(conv1d_full([1.0, 2.0, 4.0], [1.0, -1.0]), 6).tolist()",
+      "expect": "[1.0, 1.0, 2.0, -4.0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(conv1d_full([1.0, 2.0, 4.0], [1.0, -1.0]), 6).tolist()",
+      "expect": "[1.0, 1.0, 2.0, -4.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "len(conv1d_full(np.ones(10), np.ones(3)))",
+      "expect": "12",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(44); x = r.standard_normal(12); k = r.standard_normal(4)",
+      "call": "bool(np.allclose(conv1d_full(x, k), np.convolve(x, k)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(conv1d_full([0.0, 0.0, 1.0, 0.0], [0.2, 0.3, 0.5]), 6).tolist()",
+      "expect": "[0.0, 0.0, 0.2, 0.3, 0.5, 0.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "'convolve' not in __learner_source__ and 'correlate' not in __learner_source__",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: the example, the length $n + k - 1$, a seeded match with `np.convolve`, a spike (the kernel comes out in its own order), and no library convolution in your code.",
+    "prelude": "import numpy as np\n\ndef conv1d_valid(x, k):\n    x = np.asarray(x, dtype=float)\n    k = np.asarray(k, dtype=float)\n    n, m = len(x), len(k)\n    return np.array([x[t:t + m] @ k for t in range(n - m + 1)])\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef conv1d_full(x, k):\n    k = np.asarray(k, dtype=float)\n    z = np.zeros(len(k) - 1)\n    xp = np.concatenate([z, np.asarray(x, dtype=float), z])\n    return conv1d_valid(xp, k)\n",
+      "test": 1,
+      "symptom": "No flip: it returns the full cross-correlation."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv1d_full(x, k):\n    k = np.asarray(k, dtype=float)\n    z = np.zeros(len(k) - 1)\n    xp = np.concatenate([z, np.asarray(x, dtype=float)])\n    return conv1d_valid(xp, k[::-1])\n",
+      "test": 1,
+      "symptom": "Padding on the left only, so the last outputs are missing."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Pad $k - 1$ zeros each side, reverse the kernel, slide.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "For $(1, 2, 4)$ and $(1, -1)$ the full convolution is $(1, 1, 2, -4)$: reverse the kernel and pad both ends."
+    }
+   },
+   "explain": {
+    "text": "Full mode keeps every position where the kernel overlaps the signal at all, so it needs $k - 1$ zeros each side. Reversing the kernel turns the slide into the textbook convolution, and a spike then reproduces the kernel in order."
+   }
+  },
+  {
+   "id": "h-order-gradient",
+   "difficulty": 4,
+   "skills": [
+    "cnn-conv"
+   ],
+   "prose": "Derive the gradient of the loss with respect to one kernel weight, for the unflipped slide $\\hat y_t = \\sum_i k_i x_{t+i}$ and $L = \\frac1m \\sum_t e_t^2$ with $e_t = \\hat y_t - y_t$.",
+   "question": "Put the steps in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "g1",
+      "text": "$\\frac{\\partial L}{\\partial k_j} = \\frac1m \\sum_t 2 e_t \\frac{\\partial e_t}{\\partial k_j}$, by the chain rule through the square."
+     },
+     {
+      "id": "g2",
+      "text": "$\\frac{\\partial e_t}{\\partial k_j} = \\frac{\\partial \\hat y_t}{\\partial k_j}$, since $y_t$ does not depend on $k_j$."
+     },
+     {
+      "id": "g3",
+      "text": "$\\frac{\\partial \\hat y_t}{\\partial k_j} = x_{t+j}$, since only the term $i = j$ of the sum holds $k_j$."
+     },
+     {
+      "id": "g4",
+      "text": "So $\\frac{\\partial L}{\\partial k_j} = \\frac{2}{m} \\sum_t e_t\\, x_{t+j}$: the error slid along the signal."
+     },
+     {
+      "id": "x1",
+      "text": "$\\frac{\\partial \\hat y_t}{\\partial k_j} = x_{t-j}$, because a convolution reverses its kernel.",
+      "why": "The forward pass here is the unflipped slide, so $k_j$ multiplies $x_{t+j}$. The reversal belongs to `np.convolve`, not to this layer."
+     }
+    ],
+    "answer": [
+     "g1",
+     "g2",
+     "g3",
+     "g4"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "feedback": {
+    "correct": "Chain rule, the target drops out, one term survives, then collect.",
+    "generic": "Not quite. Start from the square and work inwards.",
+    "byKey": {
+     "x1": "That step flips the kernel. This layer slides it unflipped, so $k_j$ meets $x_{t+j}$.",
+     "left-out": "Every step but the reversed one is needed."
+    }
+   },
+   "explain": {
+    "text": "Differentiate the square, drop the constant target, keep the one term with $k_j$, and collect: $\\frac{2}{m}\\sum_t e_t x_{t+j}$. In code that is `correlate1d(x, e) * 2 / m`."
+   }
+  },
+  {
+   "id": "h-ma-crossover",
+   "difficulty": 4,
+   "skills": [
+    "cnn-conv"
+   ],
+   "title": "Just a moving-average crossover",
+   "kind": "longform",
+   "prompt": "A colleague says: \"A CNN on price data is just a moving-average crossover with more parameters.\" Say what is right in this, what is wrong, and what learned kernels add and what they cost. Use the ideas of this level: kernels as sliding dot products, detection, and learning by gradient descent.",
+   "model": "**What is right.** A moving average is a convolution with a fixed kernel of $\\tfrac1n$s, and a crossover compares two such outputs, which is one convolution with the difference of the two kernels. A CNN's first layer is also a set of sliding dot products along the series, so the two share the same building block, linear and shift-equivariant.\n\n**What is wrong.** A crossover uses one or two kernels that someone chose; a CNN learns many kernels from data, so they can take any shape: differences, bends or a detector for a pattern no one named. A CNN also stacks layers with a nonlinearity between them, so it is not one linear filter. And a kernel learned by gradient descent can fit noise.\n\n**What learned kernels add.** Kernels that respond where the window looks like a shape that predicted returns in the training data, several channels at once, and detectors that combine across layers.\n\n**What they cost.** Parameters to fit: each weight needs data, and five free weights fitted to 250 noisy days cut the in-sample error by about 2% on pure noise. So a learned kernel must be scored on later data it never saw, with the step size set for a mean loss and the gradient checked. A crossover has almost nothing to overfit.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States that a moving average, and a crossover of two, is a convolution with a fixed kernel.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "States that a CNN learns its kernels from data rather than choosing them, so they can take any shape.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Says a CNN stacks layers with nonlinearities, so it is not one linear filter."
+    },
+    {
+     "points": 2,
+     "text": "Names the cost: more weights fit noise in sample (about k/n of the error on pure noise), so the model must be tested on unseen data.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Names one thing learned kernels add, such as detecting an unnamed shape or several channels at once."
+    }
+   ]
+  },
+  {
+   "id": "h-two-channels",
+   "difficulty": 3,
+   "skills": [
+    "cnn-conv"
+   ],
+   "prose": "One filter of a layer sees two input channels. At one position the windows are $\\begin{pmatrix} 1 & 0 & 2 \\\\ 0 & 1 & 0 \\\\ 2 & 0 & 1 \\end{pmatrix}$ and $\\begin{pmatrix} 0 & 1 & 0 \\\\ 1 & 1 & 1 \\\\ 0 & 1 & 0 \\end{pmatrix}$; the filter’s kernels are the identity matrix and $\\begin{pmatrix} 0 & 0 & 0 \\\\ 1 & 1 & 1 \\\\ 0 & 0 & 0 \\end{pmatrix}$, and its bias is $-0.5$.",
+   "question": "What is the output at this position? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.5,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 6,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "one-channel",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$3 + 3 - 0.5 = 5.5$.",
+    "generic": "Not quite. Each channel’s window meets its own kernel; add both, then the bias.",
+    "byKey": {
+     "no-bias": "You left out the bias of $-0.5$.",
+     "one-channel": "You used one channel only. The filter adds the results of both."
+    }
+   },
+   "explain": {
+    "text": "Channel one: the diagonal, $1 + 1 + 1 = 3$. Channel two: the middle row, $1 + 1 + 1 = 3$. Add them and the bias: $5.5$."
+   }
+  },
+  {
+   "id": "h-2d-gradient",
+   "difficulty": 4,
+   "skills": [
+    "cnn-conv"
+   ],
+   "prose": "A 2 by 2 kernel slides over $\\mathbf{X} = \\begin{pmatrix} 1 & 2 & 0 \\\\ 0 & 2 & 3 \\\\ 2 & 1 & 1 \\end{pmatrix}$, giving a 2 by 2 output $\\mathbf{Y}$. The gradient arriving from the loss is $\\partial L / \\partial \\mathbf{Y} = \\begin{pmatrix} 2 & 0 \\\\ 0 & -1 \\end{pmatrix}$. Index from 0.",
+   "question": "What is $\\partial L / \\partial K_{01}$, the gradient of the top-right weight?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "swapped",
+      "value": -1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "corner",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2 \\times X_{01} + (-1) \\times X_{12} = 4 - 3 = 1$.",
+    "generic": "Not quite. $K_{01}$ meets $X_{i, j+1}$ at output $(i, j)$.",
+    "byKey": {
+     "swapped": "You took $K_{10}$, which meets $X_{i+1, j}$. Row offset 0, column offset 1.",
+     "corner": "That is $K_{00}$, which meets the window corners themselves."
+    }
+   },
+   "explain": {
+    "text": "$\\partial L/\\partial K_{ab} = \\sum_{ij} G_{ij} X_{i+a, j+b}$. For $(a, b) = (0, 1)$ only $G_{00} = 2$ and $G_{11} = -1$ count: $2 \\times 2 - 1 \\times 3 = 1$."
+   }
+  },
+  {
+   "id": "h-flip-identity",
+   "difficulty": 3,
+   "skills": [
+    "cnn-conv"
+   ],
+   "prose": "`conv1d_valid(x, k)` is the unflipped valid slide.",
+   "question": "Which expression equals `np.convolve(x, k, 'valid')` for every signal and kernel?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`conv1d_valid(x, k[::-1])`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`conv1d_valid(x[::-1], k)`",
+      "why": "Reversing the signal reverses the order of the outputs as well; it agrees only after reversing them back."
+     },
+     {
+      "id": "c",
+      "text": "`-conv1d_valid(x, k)`",
+      "why": "That matches only an antisymmetric kernel such as $(1, 0, -1)$."
+     },
+     {
+      "id": "d",
+      "text": "`conv1d_valid(x, k)`",
+      "why": "That matches only a symmetric kernel."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Convolution is the slide of the reversed kernel.",
+    "generic": "Not quite. What does `np.convolve` do to the kernel first?"
+   },
+   "explain": {
+    "text": "$(x * k)_t = \\sum_j k_j x_{t-j}$; renaming $j$ as $k - 1 - j$ turns it into the unflipped slide of `k[::-1]`."
+   }
+  },
+  {
+   "id": "h-noise-gain",
+   "difficulty": 4,
+   "skills": [
+    "cnn-conv"
+   ],
+   "prose": "A researcher fits a learned kernel of 10 past returns to predict the next return, by least squares on 500 days, and reports that it cuts the in-sample squared error against predicting 0.",
+   "question": "If returns were pure noise, about what fraction of the in-sample error would the 10 weights remove anyway? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.02,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "n-over-k",
+      "value": 50,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "none",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About $k/n = 10/500 = 0.02$.",
+    "generic": "Not quite. Each free weight fits a little of the noise.",
+    "byKey": {
+     "n-over-k": "You divided the other way. Ten weights on 500 days fit about $10/500$ of the error.",
+     "none": "Least squares always uses its weights to fit some of the noise in sample."
+    }
+   },
+   "explain": {
+    "text": "With $k$ free weights and $n$ noisy points, least squares removes about $k/n$ of the squared error by chance: $10/500 = 0.02$. A gain that size in sample is no evidence of an edge."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1907 @@
+{
+ "id": "l3-convolution-in-2d",
+ "course": "cnn",
+ "title": "Convolution in two dimensions",
+ "minutes": 15,
+ "objectives": [
+  "Write a two-dimensional convolution and apply edge kernels to a small image."
+ ],
+ "skills": [
+  "cnn-conv"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A kernel on a grid",
+   "prose": "An 8 by 8 image of a 7 in grey levels 0 to 4, with faint noise seeded by `np.random.default_rng(8)`. The kernel $\\mathbf{K}$ sits on a 3 by 3 window: multiply each pixel by the weight on top of it and add the nine products. Rows and columns count from 0.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "I",
+       "rows": [
+        [
+         1,
+         0,
+         0,
+         1,
+         0,
+         0,
+         1,
+         1
+        ],
+        [
+         1,
+         4,
+         4,
+         4,
+         4,
+         4,
+         0,
+         0
+        ],
+        [
+         0,
+         0,
+         1,
+         0,
+         1,
+         4,
+         1,
+         0
+        ],
+        [
+         0,
+         0,
+         0,
+         0,
+         4,
+         1,
+         1,
+         0
+        ],
+        [
+         0,
+         0,
+         0,
+         1,
+         4,
+         1,
+         0,
+         1
+        ],
+        [
+         0,
+         1,
+         1,
+         4,
+         1,
+         0,
+         1,
+         0
+        ],
+        [
+         1,
+         0,
+         0,
+         4,
+         0,
+         0,
+         1,
+         0
+        ],
+        [
+         1,
+         1,
+         0,
+         0,
+         0,
+         1,
+         0,
+         0
+        ]
+       ],
+       "label": "Image, 8 by 8"
+      },
+      {
+       "id": "K",
+       "rows": [
+        [
+         -1,
+         0,
+         1
+        ],
+        [
+         -1,
+         0,
+         1
+        ],
+        [
+         -1,
+         0,
+         1
+        ]
+       ],
+       "label": "$\\mathbf{K}$, vertical edge"
+      }
+     ],
+     "ops": [
+      "  "
+     ]
+    },
+    "state": {
+     "highlight": {
+      "I": {
+       "cells": [
+        [
+         1,
+         3
+        ],
+        [
+         1,
+         4
+        ],
+        [
+         1,
+         5
+        ],
+        [
+         2,
+         3
+        ],
+        [
+         2,
+         4
+        ],
+        [
+         2,
+         5
+        ],
+        [
+         3,
+         3
+        ],
+        [
+         3,
+         4
+        ],
+        [
+         3,
+         5
+        ]
+       ]
+      }
+     }
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "highlight": {
+         "I": {
+          "cells": [
+           [
+            1,
+            3
+           ],
+           [
+            1,
+            4
+           ],
+           [
+            1,
+            5
+           ],
+           [
+            2,
+            3
+           ],
+           [
+            2,
+            4
+           ],
+           [
+            2,
+            5
+           ],
+           [
+            3,
+            3
+           ],
+           [
+            3,
+            4
+           ],
+           [
+            3,
+            5
+           ]
+          ]
+         }
+        },
+        "caption": "Window with its top-left corner at row 1, column 3."
+       },
+       {
+        "highlight": {
+         "I": {
+          "cells": [
+           [
+            1,
+            4
+           ],
+           [
+            1,
+            5
+           ],
+           [
+            1,
+            6
+           ],
+           [
+            2,
+            4
+           ],
+           [
+            2,
+            5
+           ],
+           [
+            2,
+            6
+           ],
+           [
+            3,
+            4
+           ],
+           [
+            3,
+            5
+           ],
+           [
+            3,
+            6
+           ]
+          ]
+         }
+        },
+        "caption": "Window with its top-left corner at row 1, column 4."
+       },
+       {
+        "highlight": {
+         "I": {
+          "cells": [
+           [
+            2,
+            3
+           ],
+           [
+            2,
+            4
+           ],
+           [
+            2,
+            5
+           ],
+           [
+            3,
+            3
+           ],
+           [
+            3,
+            4
+           ],
+           [
+            3,
+            5
+           ],
+           [
+            4,
+            3
+           ],
+           [
+            4,
+            4
+           ],
+           [
+            4,
+            5
+           ]
+          ]
+         }
+        },
+        "caption": "Window with its top-left corner at row 2, column 3."
+       }
+      ],
+      "frameLabels": [
+       "(1, 3)",
+       "(1, 4)",
+       "(2, 3)"
+      ],
+      "label": "Window",
+      "start": 0
+     }
+    ]
+   },
+   "question": "Step through the three windows and fill in each output.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "window corner",
+     "output"
+    ],
+    "rows": [
+     [
+      "row 1, column 3",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "flipped",
+         "value": -5,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "row 1, column 4",
+      {
+       "edit": true,
+       "answer": -7,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "flipped",
+         "value": 7,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "row 2, column 3",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "flipped",
+         "value": -5,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The middle column of $\\mathbf{K}$ is all 0."
+    },
+    {
+     "rung": "point",
+     "text": "Each output is (sum of the right column) minus (sum of the left column).",
+     "highlight": [
+      "K"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At (1, 3): right column $4 + 4 + 0$ less left column $4 + 0 + 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "5, -7 and 5: right column minus left column of each window.",
+    "generic": "Not quite. Add the right-hand column of the window and subtract the left-hand column.",
+    "byKey": {
+     "flipped": "You took left minus right. The weight $+1$ is on the right-hand column."
+    }
+   },
+   "explain": {
+    "text": "The middle column has weight 0, so each output is the window’s right column minus its left column. A large value means ink starts to the right: a vertical edge.",
+    "canvas": {
+     "highlight": {
+      "I": {
+       "cells": [
+        [
+         1,
+         3
+        ],
+        [
+         1,
+         4
+        ],
+        [
+         1,
+         5
+        ],
+        [
+         2,
+         3
+        ],
+        [
+         2,
+         4
+        ],
+        [
+         2,
+         5
+        ],
+        [
+         3,
+         3
+        ],
+        [
+         3,
+         4
+        ],
+        [
+         3,
+         5
+        ]
+       ]
+      }
+     },
+     "caption": "Window with its top-left corner at row 1, column 3."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "How big is the output?",
+   "prose": "This is a **2D convolution**: the kernel slides over rows and columns, a dot product at each stop. The window has 6 starting rows and 6 starting columns in the 8 by 8 image, so the output is 6 by 6. In general an $n \\times n$ image and a $k \\times k$ kernel give $(n - k + 1) \\times (n - k + 1)$.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 6,
+     "cols": 6,
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true,
+     "cells": [
+      [
+       "3",
+       "1",
+       "0",
+       "3",
+       "−3",
+       "−7"
+      ],
+      [
+       "4",
+       "0",
+       "4",
+       "5",
+       "−7",
+       "−9"
+      ],
+      [
+       "1",
+       "1",
+       "8",
+       "5",
+       "−7",
+       "−5"
+      ],
+      [
+       "1",
+       "4",
+       "8",
+       "−3",
+       "−7",
+       "−1"
+      ],
+      [
+       "0",
+       "8",
+       "4",
+       "−8",
+       "−3",
+       "0"
+      ],
+      [
+       "−1",
+       "6",
+       "0",
+       "−7",
+       "1",
+       "−1"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "strong": [
+       "r1c6",
+       "r2c4",
+       "r2c5",
+       "r2c6",
+       "r3c3",
+       "r3c4",
+       "r3c5",
+       "r3c6",
+       "r4c3",
+       "r4c5",
+       "r5c2",
+       "r5c4",
+       "r6c2",
+       "r6c4"
+      ]
+     },
+     "caption": "The 6 by 6 output of the vertical-edge kernel on the 7."
+    }
+   },
+   "question": "A 28 by 28 image meets a 5 by 5 kernel. How many outputs are there along each side?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 24,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 28,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "n-k",
+      "value": 23,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Rows and columns work the same way."
+    },
+    {
+     "rung": "point",
+     "text": "Starts run from 0 to $n - k$."
+    },
+    {
+     "rung": "step",
+     "text": "$28 - 5 + 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$28 - 5 + 1 = 24$, so the output is 24 by 24.",
+    "generic": "Not quite. Count the starting rows of a full window.",
+    "byKey": {
+     "same": "That keeps the image size, which needs padding. Valid positions only lose $k - 1$ rows.",
+     "n-k": "You left out the first start: starts run from 0 to 23."
+    }
+   },
+   "explain": {
+    "text": "Starts run from 0 to $28 - 5 = 23$, which is 24 of them, on each axis: a 24 by 24 output, 576 values."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two kernels, two maps",
+   "prose": "The vertical-edge kernel and its transpose, the horizontal-edge kernel (top row $-1$, bottom row $+1$), each make a 6 by 6 map of the same 7. Strong cells are shaded.",
+   "canvas": {
+    "kind": "pair",
+    "left": {
+     "kind": "grid",
+     "params": {
+      "rows": 6,
+      "cols": 6,
+      "rowHeads": false,
+      "colHeads": false,
+      "compact": true,
+      "cells": [
+       [
+        "3",
+        "1",
+        "0",
+        "3",
+        "−3",
+        "−7"
+       ],
+       [
+        "4",
+        "0",
+        "4",
+        "5",
+        "−7",
+        "−9"
+       ],
+       [
+        "1",
+        "1",
+        "8",
+        "5",
+        "−7",
+        "−5"
+       ],
+       [
+        "1",
+        "4",
+        "8",
+        "−3",
+        "−7",
+        "−1"
+       ],
+       [
+        "0",
+        "8",
+        "4",
+        "−8",
+        "−3",
+        "0"
+       ],
+       [
+        "−1",
+        "6",
+        "0",
+        "−7",
+        "1",
+        "−1"
+       ]
+      ]
+     },
+     "state": {
+      "shade": {
+       "strong": [
+        "r1c6",
+        "r2c4",
+        "r2c5",
+        "r2c6",
+        "r3c3",
+        "r3c4",
+        "r3c5",
+        "r3c6",
+        "r4c3",
+        "r4c5",
+        "r5c2",
+        "r5c4",
+        "r6c2",
+        "r6c4"
+       ]
+      },
+      "caption": "Map A"
+     }
+    },
+    "right": {
+     "kind": "grid",
+     "params": {
+      "rows": 6,
+      "cols": 6,
+      "rowHeads": false,
+      "colHeads": false,
+      "compact": true,
+      "cells": [
+       [
+        "0",
+        "0",
+        "1",
+        "4",
+        "5",
+        "3"
+       ],
+       [
+        "−9",
+        "−12",
+        "−8",
+        "−7",
+        "−2",
+        "−2"
+       ],
+       [
+        "−1",
+        "0",
+        "3",
+        "1",
+        "−1",
+        "−3"
+       ],
+       [
+        "2",
+        "6",
+        "2",
+        "0",
+        "−4",
+        "−1"
+       ],
+       [
+        "1",
+        "3",
+        "−1",
+        "−2",
+        "−4",
+        "−1"
+       ],
+       [
+        "0",
+        "−5",
+        "−6",
+        "−4",
+        "−1",
+        "0"
+       ]
+      ]
+     },
+     "state": {
+      "shade": {
+       "strong": [
+        "r2c1",
+        "r2c2",
+        "r2c3",
+        "r2c4",
+        "r4c2",
+        "r6c3"
+       ]
+      },
+      "caption": "Map B"
+     }
+    }
+   },
+   "question": "Which map did the horizontal-edge kernel make?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "b",
+      "text": "Map B, strong along the first rows",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "Map A, strong down the stroke",
+      "why": "Map A is strongest down the slanted stroke, where ink appears from left to right: the vertical-edge kernel."
+     },
+     {
+      "id": "both",
+      "text": "Neither: the two maps are the same",
+      "why": "Transposing the kernel turns it from a column detector into a row detector, so the maps differ."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The top bar of the 7 runs across row 1."
+    },
+    {
+     "rung": "point",
+     "text": "Moving down across it the values jump from 0 or 1 to 4."
+    },
+    {
+     "rung": "step",
+     "text": "The map strong along the first rows is the horizontal one."
+    }
+   ],
+   "feedback": {
+    "correct": "The horizontal-edge map is strongest along the top bar of the 7, where ink starts below empty rows.",
+    "generic": "Not quite. Which map is strong along the bar across the top?",
+    "byKey": {
+     "a": "You picked the map that follows the stroke. The top bar is horizontal, so the horizontal-edge map is strong along the first rows."
+    }
+   },
+   "explain": {
+    "text": "The top bar is a horizontal line, so moving down across it the values jump: the horizontal-edge kernel fires there. The slanted stroke changes both ways and shows in both maps."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Channels out",
+   "prose": "A layer usually holds several kernels. Each one slides over the same image and makes its own map; the maps are stacked as **channels**.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "shape"
+     ],
+     "rows": [
+      [
+       "image",
+       "(8, 8)"
+      ],
+      [
+       "kernels",
+       "(4, 3, 3)"
+      ],
+      [
+       "maps",
+       "(4, ?, ?)"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Four 3 by 3 kernels slide over an 8 by 8 image. How many numbers does the stack of maps hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 144,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "one-map",
+      "value": 36,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "image-size",
+      "value": 256,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How big is one map?"
+    },
+    {
+     "rung": "point",
+     "text": "Each map is $6 \\times 6$."
+    },
+    {
+     "rung": "step",
+     "text": "Times 4 kernels."
+    }
+   ],
+   "feedback": {
+    "correct": "$4 \\times 6 \\times 6 = 144$.",
+    "generic": "Not quite. One 6 by 6 map per kernel.",
+    "byKey": {
+     "one-map": "That is one map. Each of the four kernels makes its own.",
+     "image-size": "That keeps each map 8 by 8. Valid maps are 6 by 6."
+    }
+   },
+   "explain": {
+    "text": "The stack has shape $(4, 6, 6)$: four channels of 6 by 6, which is 144 numbers."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Channels in",
+   "prose": "A colour image has 3 channels, so its input has shape $(3, 8, 8)$. Each filter then has one 3 by 3 kernel per input channel; it slides all three together and adds the three dot products into one output.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "shape"
+     ],
+     "rows": [
+      [
+       "input",
+       "(3, 8, 8)"
+      ],
+      [
+       "one filter",
+       "(3, 3, 3)"
+      ],
+      [
+       "two filters",
+       "(2, 3, 3, 3)"
+      ],
+      [
+       "output",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Two such filters slide over the $(3, 8, 8)$ input. What shape is the output?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$(2, 6, 6)$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$(2, 3, 6, 6)$",
+      "why": "You kept a map per input channel. Each filter adds its three channels into one map."
+     },
+     {
+      "id": "c",
+      "text": "$(3, 6, 6)$",
+      "why": "You made one map per input channel. The number of maps is the number of filters."
+     },
+     {
+      "id": "d",
+      "text": "$(2, 8, 8)$",
+      "why": "Valid positions shrink each side from 8 to 6."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many maps does one filter make?"
+    },
+    {
+     "rung": "point",
+     "text": "One: it adds its three channels together."
+    },
+    {
+     "rung": "step",
+     "text": "Two filters, each 6 by 6."
+    }
+   ],
+   "feedback": {
+    "correct": "One 6 by 6 map per filter: $(2, 6, 6)$.",
+    "generic": "Not quite. How many maps does one filter make?"
+   },
+   "explain": {
+    "text": "Each filter has shape $(3, 3, 3)$ and gives one map, the sum over the three channels. Two filters give two maps: $(2, 6, 6)$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Not a matrix product",
+   "prose": "A colleague computes one output of the vertical-edge kernel on a 3 by 3 patch as `patch @ K`. The patch is shown beside $\\mathbf{K}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "P",
+       "rows": [
+        [
+         1,
+         2,
+         0
+        ],
+        [
+         0,
+         1,
+         3
+        ],
+        [
+         2,
+         0,
+         1
+        ]
+       ],
+       "label": "patch"
+      },
+      {
+       "id": "K",
+       "rows": [
+        [
+         -1,
+         0,
+         1
+        ],
+        [
+         -1,
+         0,
+         1
+        ],
+        [
+         -1,
+         0,
+         1
+        ]
+       ],
+       "label": "$\\mathbf{K}$"
+      }
+     ],
+     "ops": [
+      "  "
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the true output for this patch?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "matmul",
+      "value": -3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "matmul-sum",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": -1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each pixel meets the weight in the same place."
+    },
+    {
+     "rung": "point",
+     "text": "Left column times $-1$, right column times $+1$.",
+     "highlight": [
+      "P-c0",
+      "P-c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(0 + 3 + 1) - (1 + 0 + 2)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1$: multiply matching entries and add, $(0 - 1) + (3 - 0) + (1 - 2)$.",
+    "generic": "Not quite. Pair each pixel with the weight on top of it.",
+    "byKey": {
+     "matmul": "You took the top-left entry of `patch @ K`, a row times a column. The window needs matching entries multiplied and all nine added.",
+     "matmul-sum": "You added up `patch @ K`. A matrix product mixes rows with columns; the output pairs each pixel with its own weight.",
+     "sign": "You took left minus right. The weight $+1$ is on the right-hand column."
+    }
+   },
+   "explain": {
+    "text": "Elementwise: row 1 gives $0 - 1 = -1$, row 2 gives $3 - 0 = 3$, row 3 gives $1 - 2 = -1$, so the output is 1. In NumPy that is `(patch * K).sum()`, not `patch @ K`.",
+    "canvas": {
+     "highlight": {
+      "P": {
+       "cols": [
+        0,
+        2
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A kernel of size 1 by 1",
+   "prose": "A 1 by 1 kernel sees one pixel at a time. On a 3-channel input it holds one weight per channel, here $(0.5, 0.25, 0.25)$, and mixes the channels at each pixel and nothing else.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "channel",
+      "value",
+      "weight"
+     ],
+     "rows": [
+      [
+       "1",
+       "8",
+       "0.5"
+      ],
+      [
+       "2",
+       "4",
+       "0.25"
+      ],
+      [
+       "3",
+       "0",
+       "0.25"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "A pixel has channel values $(8, 4, 0)$. What is its output?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sum",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply each channel value by its weight."
+    },
+    {
+     "rung": "point",
+     "text": "$0.5 \\times 8$, $0.25 \\times 4$, $0.25 \\times 0$."
+    },
+    {
+     "rung": "step",
+     "text": "Add the three."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.5 \\times 8 + 0.25 \\times 4 + 0.25 \\times 0 = 5$.",
+    "generic": "Not quite. One weight per channel, multiplied and added.",
+    "byKey": {
+     "mean": "You averaged the channels. The weights are not equal.",
+     "sum": "You added the channels without their weights."
+    }
+   },
+   "explain": {
+    "text": "$4 + 1 + 0 = 5$. A 1 by 1 kernel never looks at a neighbour, so it cannot find an edge; it only recombines channels, pixel by pixel."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The two-dimensional rule",
+   "prose": "For an image $\\mathbf{X}$ and a $k \\times k$ kernel $\\mathbf{K}$, unflipped: $$Y_{ij} = \\sum_{a=0}^{k-1} \\sum_{b=0}^{k-1} K_{ab}\\, X_{i+a,\\, j+b}.$$ With $c$ input channels, add over them too. The output is $(n - k + 1)$ on each side, one map per filter.",
+   "question": "Sixteen 3 by 3 filters slide over a $(3, 32, 32)$ input. What shape is the output?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$(16, 30, 30)$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$(16, 32, 32)$",
+      "why": "Valid positions lose $k - 1 = 2$ on each side."
+     },
+     {
+      "id": "c",
+      "text": "$(48, 30, 30)$",
+      "why": "Each filter adds its 3 channels into one map, so there are 16 maps, not $16 \\times 3$."
+     },
+     {
+      "id": "d",
+      "text": "$(3, 30, 30)$",
+      "why": "The number of maps is the number of filters, 16."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "16 maps, each $32 - 3 + 1 = 30$ on a side.",
+    "generic": "Not quite. One map per filter, each side $n - k + 1$."
+   },
+   "explain": {
+    "text": "Each filter has shape $(3, 3, 3)$ and makes one 30 by 30 map; sixteen filters stack into $(16, 30, 30)$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Two loops",
+   "prose": "Write `conv2d_valid(img, k)` with a double loop: for every top-left corner, multiply the window by the kernel entry by entry and add. Kernels need not be square.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> conv2d_valid(patch, K)   # the trap’s patch",
+      "array([[1.]])"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `conv2d_valid`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef conv2d_valid(img, k):\n    # Y[i, j] = sum of k * the window of img whose top-left corner is (i, j)\n    img = np.asarray(img, dtype=float)\n    k = np.asarray(k, dtype=float)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef conv2d_valid(img, k):\n    img = np.asarray(img, dtype=float)\n    k = np.asarray(k, dtype=float)\n    kh, kw = k.shape\n    oh, ow = img.shape[0] - kh + 1, img.shape[1] - kw + 1\n    out = np.zeros((oh, ow))\n    for i in range(oh):\n        for j in range(ow):\n            out[i, j] = np.sum(img[i:i + kh, j:j + kw] * k)\n    return out\n",
+    "examples": [
+     {
+      "call": "conv2d_valid([[1, 2, 0], [0, 1, 3], [2, 0, 1]], [[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]]).tolist()",
+      "expect": "[[1.0]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "img = np.array([[1, 0, 0, 1, 0, 0, 1, 1], [1, 4, 4, 4, 4, 4, 0, 0], [0, 0, 1, 0, 1, 4, 1, 0], [0, 0, 0, 0, 4, 1, 1, 0], [0, 0, 0, 1, 4, 1, 0, 1], [0, 1, 1, 4, 1, 0, 1, 0], [1, 0, 0, 4, 0, 0, 1, 0], [1, 1, 0, 0, 0, 1, 0, 0]], dtype=float); kv = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=float)",
+      "call": "conv2d_valid(img, kv)[1].tolist()",
+      "expect": "[4.0, 0.0, 4.0, 5.0, -7.0, -9.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "img = np.array([[1, 0, 0, 1, 0, 0, 1, 1], [1, 4, 4, 4, 4, 4, 0, 0], [0, 0, 1, 0, 1, 4, 1, 0], [0, 0, 0, 0, 4, 1, 1, 0], [0, 0, 0, 1, 4, 1, 0, 1], [0, 1, 1, 4, 1, 0, 1, 0], [1, 0, 0, 4, 0, 0, 1, 0], [1, 1, 0, 0, 0, 1, 0, 0]], dtype=float); kv = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=float)",
+      "call": "conv2d_valid(img, kv).shape",
+      "expect": "(6, 6)",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(12); x = r.standard_normal((7, 9)); k = r.standard_normal((2, 3))",
+      "call": "bool(np.allclose(conv2d_valid(x, k), np.einsum('ijab,ab->ij', np.lib.stride_tricks.sliding_window_view(x, k.shape), k)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(12); x = r.standard_normal((7, 9)); k = r.standard_normal((2, 3))",
+      "call": "conv2d_valid(x, k).shape",
+      "expect": "(6, 7)",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(conv2d_valid([[1, 2], [3, 4]], [[1, 0], [0, -1]]), 6).tolist()",
+      "expect": "[[-3.0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "conv2d_valid([[1, 2, 0], [0, 1, 3], [2, 0, 1]], [[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]]).tolist()",
+      "expect": "[[1.0]]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. They check row 1 of the edge map of the 7 and its shape, then a seeded 7 by 9 image with a 2 by 3 kernel. The last two use kernels the size of the image.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef conv2d_valid(img, k):\n    img = np.asarray(img, dtype=float)\n    k = np.asarray(k, dtype=float)\n    kh, kw = k.shape\n    oh, ow = img.shape[0] - kh + 1, img.shape[1] - kw + 1\n    out = np.zeros((oh, ow))\n    for i in range(oh):\n        for j in range(ow):\n            out[i, j] = np.sum(img[i:i + kh, j:j + kw] * k[::-1, ::-1])\n    return out\n",
+      "test": 1,
+      "symptom": "The kernel is flipped, so the edge map changes sign."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv2d_valid(img, k):\n    img = np.asarray(img, dtype=float)\n    k = np.asarray(k, dtype=float)\n    kh, kw = k.shape\n    oh, ow = img.shape[0] - kh + 1, img.shape[1] - kw + 1\n    out = np.zeros((oh, ow))\n    for i in range(oh):\n        for j in range(ow):\n            out[i, j] = np.sum(img[i:i + kh, j:j + kw] @ k)\n    return out\n",
+      "test": 1,
+      "symptom": "A matrix product of the window and the kernel, not matching entries."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv2d_valid(img, k):\n    img = np.asarray(img, dtype=float)\n    k = np.asarray(k, dtype=float)\n    kh, kw = k.shape\n    oh, ow = img.shape[0] - kh + 1, img.shape[0] - kw + 1\n    out = np.zeros((oh, ow))\n    for i in range(oh):\n        for j in range(ow):\n            out[i, j] = np.sum(img[i:i + kh, j:j + kw] * k)\n    return out\n",
+      "test": 3,
+      "symptom": "The width is taken from the number of rows, which only works for square images."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A window is `img[i:i + kh, j:j + kw]`."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply it by `k` entry by entry and `np.sum` it."
+    },
+    {
+     "rung": "step",
+     "text": "Corners `i` in `range(oh)`, `j` in `range(ow)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Two loops over the corners, one elementwise product and sum per corner.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "Row 1 of the 7’s edge map came out wrong. Use `np.sum(window * k)`, not `window @ k`, and do not flip the kernel.",
+     "test-3": "A 7 by 9 image with a 2 by 3 kernel gives a 6 by 7 map: take the width from the columns."
+    }
+   },
+   "explain": {
+    "text": "`img[i:i + kh, j:j + kw] * k` pairs each pixel with its weight, and `np.sum` adds the nine. The corners run over $n - k + 1$ rows and as many columns as fit."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A stack of feature maps",
+   "prose": "Write `conv2d_multi(img, kernels)`: slide each kernel of a `(c_out, kh, kw)` stack over one image and return the maps with the channel first, shape `(c_out, oh, ow)`. `conv2d_valid` is defined for you.",
+   "canvas": {
+    "kind": "pair",
+    "left": {
+     "kind": "grid",
+     "params": {
+      "rows": 6,
+      "cols": 6,
+      "rowHeads": false,
+      "colHeads": false,
+      "compact": true,
+      "cells": [
+       [
+        "3",
+        "1",
+        "0",
+        "3",
+        "−3",
+        "−7"
+       ],
+       [
+        "4",
+        "0",
+        "4",
+        "5",
+        "−7",
+        "−9"
+       ],
+       [
+        "1",
+        "1",
+        "8",
+        "5",
+        "−7",
+        "−5"
+       ],
+       [
+        "1",
+        "4",
+        "8",
+        "−3",
+        "−7",
+        "−1"
+       ],
+       [
+        "0",
+        "8",
+        "4",
+        "−8",
+        "−3",
+        "0"
+       ],
+       [
+        "−1",
+        "6",
+        "0",
+        "−7",
+        "1",
+        "−1"
+       ]
+      ]
+     },
+     "state": {
+      "shade": {
+       "strong": [
+        "r1c6",
+        "r2c4",
+        "r2c5",
+        "r2c6",
+        "r3c3",
+        "r3c4",
+        "r3c5",
+        "r3c6",
+        "r4c3",
+        "r4c5",
+        "r5c2",
+        "r5c4",
+        "r6c2",
+        "r6c4"
+       ]
+      },
+      "caption": "Channel 0: vertical edges"
+     }
+    },
+    "right": {
+     "kind": "grid",
+     "params": {
+      "rows": 6,
+      "cols": 6,
+      "rowHeads": false,
+      "colHeads": false,
+      "compact": true,
+      "cells": [
+       [
+        "0",
+        "0",
+        "1",
+        "4",
+        "5",
+        "3"
+       ],
+       [
+        "−9",
+        "−12",
+        "−8",
+        "−7",
+        "−2",
+        "−2"
+       ],
+       [
+        "−1",
+        "0",
+        "3",
+        "1",
+        "−1",
+        "−3"
+       ],
+       [
+        "2",
+        "6",
+        "2",
+        "0",
+        "−4",
+        "−1"
+       ],
+       [
+        "1",
+        "3",
+        "−1",
+        "−2",
+        "−4",
+        "−1"
+       ],
+       [
+        "0",
+        "−5",
+        "−6",
+        "−4",
+        "−1",
+        "0"
+       ]
+      ]
+     },
+     "state": {
+      "shade": {
+       "strong": [
+        "r2c1",
+        "r2c2",
+        "r2c3",
+        "r2c4",
+        "r4c2",
+        "r6c3"
+       ]
+      },
+      "caption": "Channel 1: horizontal edges"
+     }
+    }
+   },
+   "question": "Write `conv2d_multi`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef conv2d_multi(img, kernels):\n    # kernels has shape (c_out, kh, kw); return a stack of shape (c_out, oh, ow)\n    # conv2d_valid(img, k) is defined for you\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef conv2d_multi(img, kernels):\n    return np.stack([conv2d_valid(img, k) for k in kernels])\n",
+    "examples": [
+     {
+      "call": "conv2d_multi(np.ones((4, 4)), np.ones((2, 3, 3))).shape",
+      "expect": "(2, 2, 2)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "img = np.array([[1, 0, 0, 1, 0, 0, 1, 1], [1, 4, 4, 4, 4, 4, 0, 0], [0, 0, 1, 0, 1, 4, 1, 0], [0, 0, 0, 0, 4, 1, 1, 0], [0, 0, 0, 1, 4, 1, 0, 1], [0, 1, 1, 4, 1, 0, 1, 0], [1, 0, 0, 4, 0, 0, 1, 0], [1, 1, 0, 0, 0, 1, 0, 0]], dtype=float); ks = np.array([[[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], [[-1, -1, -1], [0, 0, 0], [1, 1, 1]]], dtype=float)",
+      "call": "conv2d_multi(img, ks).shape",
+      "expect": "(2, 6, 6)",
+      "compare": "equal"
+     },
+     {
+      "setup": "img = np.array([[1, 0, 0, 1, 0, 0, 1, 1], [1, 4, 4, 4, 4, 4, 0, 0], [0, 0, 1, 0, 1, 4, 1, 0], [0, 0, 0, 0, 4, 1, 1, 0], [0, 0, 0, 1, 4, 1, 0, 1], [0, 1, 1, 4, 1, 0, 1, 0], [1, 0, 0, 4, 0, 0, 1, 0], [1, 1, 0, 0, 0, 1, 0, 0]], dtype=float); ks = np.array([[[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], [[-1, -1, -1], [0, 0, 0], [1, 1, 1]]], dtype=float)",
+      "call": "conv2d_multi(img, ks)[1, 0].tolist()",
+      "expect": "[0.0, 0.0, 1.0, 4.0, 5.0, 3.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(13); x = r.standard_normal((6, 6)); ks = r.standard_normal((3, 2, 2))",
+      "call": "bool(np.allclose(conv2d_multi(x, ks)[2], conv2d_valid(x, ks[2])))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(13); x = r.standard_normal((6, 6)); ks = r.standard_normal((3, 2, 2))",
+      "call": "conv2d_multi(x, ks).shape",
+      "expect": "(3, 5, 5)",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(13); x = r.standard_normal((6, 6)); ks = r.standard_normal((3, 2, 2))",
+      "call": "conv2d_multi(x, ks[:1]).shape",
+      "expect": "(1, 5, 5)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: the shape and the horizontal-edge row of the 7, three seeded 2 by 2 kernels (the third map and the shape), and a stack of one kernel.",
+    "prelude": "import numpy as np\n\ndef conv2d_valid(img, k):\n    img = np.asarray(img, dtype=float)\n    k = np.asarray(k, dtype=float)\n    kh, kw = k.shape\n    oh, ow = img.shape[0] - kh + 1, img.shape[1] - kw + 1\n    out = np.zeros((oh, ow))\n    for i in range(oh):\n        for j in range(ow):\n            out[i, j] = np.sum(img[i:i + kh, j:j + kw] * k)\n    return out\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef conv2d_multi(img, kernels):\n    return sum(conv2d_valid(img, k) for k in kernels)\n",
+      "test": 1,
+      "symptom": "The maps are added into one, as if the kernels were channels of one filter."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv2d_multi(img, kernels):\n    return np.stack([conv2d_valid(img, k) for k in kernels], axis=-1)\n",
+      "test": 1,
+      "symptom": "The maps are stacked on the last axis, so channels come last."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over the kernels."
+    },
+    {
+     "rung": "point",
+     "text": "Collect `conv2d_valid(img, k)` for each."
+    },
+    {
+     "rung": "step",
+     "text": "`np.stack([...])` puts the channel first."
+    }
+   ],
+   "feedback": {
+    "correct": "One map per kernel, stacked on a new first axis.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The stack of the two edge kernels on the 7 should have shape `(2, 6, 6)`: one map per kernel, channel first."
+    }
+   },
+   "explain": {
+    "text": "`np.stack(maps)` adds a new axis 0, so `out[c]` is the map of kernel `c`. Adding the maps would merge two detectors into one."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Edges in an order book",
+   "prose": "Write `edge_map(img)`: the vertical- and horizontal-edge maps combined into $\\sqrt{g_x^2 + g_y^2}$, the size of the local change. An order book drawn as a grid, price level by time, is an image too, and a 2D kernel looks for a local shape in it.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 6,
+     "cols": 6,
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true,
+     "cells": [
+      [
+       "3",
+       "1",
+       "1",
+       "5",
+       "6",
+       "8"
+      ],
+      [
+       "10",
+       "12",
+       "9",
+       "9",
+       "7",
+       "9"
+      ],
+      [
+       "1",
+       "1",
+       "9",
+       "5",
+       "7",
+       "6"
+      ],
+      [
+       "2",
+       "7",
+       "8",
+       "3",
+       "8",
+       "1"
+      ],
+      [
+       "1",
+       "9",
+       "4",
+       "8",
+       "5",
+       "1"
+      ],
+      [
+       "1",
+       "8",
+       "6",
+       "8",
+       "1",
+       "1"
+      ]
+     ]
+    },
+    "state": {
+     "shade": {
+      "strong": [
+       "r1c5",
+       "r1c6",
+       "r2c1",
+       "r2c2",
+       "r2c3",
+       "r2c4",
+       "r2c5",
+       "r2c6",
+       "r3c3",
+       "r3c5",
+       "r3c6",
+       "r4c2",
+       "r4c3",
+       "r4c5",
+       "r5c2",
+       "r5c4",
+       "r6c2",
+       "r6c3",
+       "r6c4"
+      ]
+     },
+     "caption": "The 7’s edge map, rounded."
+    }
+   },
+   "question": "Write `edge_map`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef edge_map(img):\n    # gx from the vertical-edge kernel, gy from the horizontal-edge kernel,\n    # then the gradient magnitude at each position\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef edge_map(img):\n    kv = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=float)\n    gx = conv2d_valid(img, kv)\n    gy = conv2d_valid(img, kv.T)\n    return np.sqrt(gx ** 2 + gy ** 2)\n",
+    "examples": [
+     {
+      "call": "round(float(edge_map([[0, 0, 3], [0, 0, 3], [0, 0, 3]])[0, 0]), 6)",
+      "expect": "9.0",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "img = np.array([[1, 0, 0, 1, 0, 0, 1, 1], [1, 4, 4, 4, 4, 4, 0, 0], [0, 0, 1, 0, 1, 4, 1, 0], [0, 0, 0, 0, 4, 1, 1, 0], [0, 0, 0, 1, 4, 1, 0, 1], [0, 1, 1, 4, 1, 0, 1, 0], [1, 0, 0, 4, 0, 0, 1, 0], [1, 1, 0, 0, 0, 1, 0, 0]], dtype=float)",
+      "call": "np.round(edge_map(img)[0], 4).tolist()",
+      "expect": "[3.0, 1.0, 1.0, 5.0, 5.831, 7.6158]",
+      "compare": "equal"
+     },
+     {
+      "setup": "img = np.array([[1, 0, 0, 1, 0, 0, 1, 1], [1, 4, 4, 4, 4, 4, 0, 0], [0, 0, 1, 0, 1, 4, 1, 0], [0, 0, 0, 0, 4, 1, 1, 0], [0, 0, 0, 1, 4, 1, 0, 1], [0, 1, 1, 4, 1, 0, 1, 0], [1, 0, 0, 4, 0, 0, 1, 0], [1, 1, 0, 0, 0, 1, 0, 0]], dtype=float)",
+      "call": "edge_map(img).shape",
+      "expect": "(6, 6)",
+      "compare": "equal"
+     },
+     {
+      "call": "float(edge_map(np.full((5, 5), 7.0)).max())",
+      "expect": "0.0",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(edge_map([[0, 0, 3], [0, 0, 3], [0, 0, 3]])[0, 0]), 6)",
+      "expect": "9.0",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(edge_map([[0, 0, 0], [0, 0, 0], [2, 2, 2]])[0, 0]), 6)",
+      "expect": "6.0",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(edge_map([[0, 0, 0], [0, 0, 1], [0, 1, 1]])[0, 0]), 6)",
+      "expect": "2.828427",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. They check row 0 of the 7’s edge map to 4 places and its shape, then a flat image with no edges. The last three are a vertical edge, a horizontal edge and a corner where both are 2.",
+    "prelude": "import numpy as np\n\ndef conv2d_valid(img, k):\n    img = np.asarray(img, dtype=float)\n    k = np.asarray(k, dtype=float)\n    kh, kw = k.shape\n    oh, ow = img.shape[0] - kh + 1, img.shape[1] - kw + 1\n    out = np.zeros((oh, ow))\n    for i in range(oh):\n        for j in range(ow):\n            out[i, j] = np.sum(img[i:i + kh, j:j + kw] * k)\n    return out\n",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef edge_map(img):\n    kv = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=float)\n    return np.abs(conv2d_valid(img, kv)) + np.abs(conv2d_valid(img, kv.T))\n",
+      "test": 1,
+      "symptom": "Adds the sizes of the two edges instead of the length of the gradient."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef edge_map(img):\n    kv = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=float)\n    return conv2d_valid(img, kv) + conv2d_valid(img, kv.T)\n",
+      "test": 1,
+      "symptom": "Adds the signed maps, so opposite edges cancel."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef edge_map(img):\n    kv = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=float)\n    gx = conv2d_valid(img, kv)\n    return np.abs(gx)\n",
+      "test": 1,
+      "symptom": "Only the vertical-edge map: horizontal edges vanish."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`gx` from the vertical-edge kernel, `gy` from its transpose."
+    },
+    {
+     "rung": "point",
+     "text": "Both are 6 by 6."
+    },
+    {
+     "rung": "step",
+     "text": "`np.sqrt(gx ** 2 + gy ** 2)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Two maps, squared, added and square-rooted.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "Row 0 of the 7’s edge map differs. Combine the two maps as $\\sqrt{g_x^2 + g_y^2}$."
+    }
+   },
+   "explain": {
+    "text": "A pure vertical edge gives $g_x = 9$, $g_y = 0$; the corner gives 2 and 2, so $\\sqrt{8} = 2.83$. The size of the change does not depend on its direction."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "In 2D the kernel slides over rows and columns; an $n \\times n$ image and a $k \\times k$ kernel give $(n - k + 1) \\times (n - k + 1)$ valid outputs.",
+   "Each output pairs every pixel of the window with its own weight and adds: `np.sum(window * k)`, never a matrix product.",
+   "Several filters give several maps (channels out); with $c$ input channels each filter has $c$ kernels and adds their results. A 1 by 1 kernel only mixes channels."
+  ],
+  "formula": {
+   "name": "2D convolution (no flip)",
+   "tex": "Y_{ij} = \\sum_{a=0}^{k-1}\\sum_{b=0}^{k-1} K_{ab}\\, X_{i+a,\\, j+b}",
+   "note": "Add over input channels too when there are several."
+  },
+  "trap": "`patch @ K` multiplies rows by columns; the convolution multiplies matching entries."
+ },
+ "quiz": [
+  {
+   "id": "q-size",
+   "difficulty": 2,
+   "question": "A 10 by 10 image meets a 3 by 3 kernel, valid positions only. How many outputs are there in all?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 64,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 100,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "side",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$8 \\times 8 = 64$.",
+    "generic": "Not quite. Find the side, then square it.",
+    "byKey": {
+     "same": "That keeps the image size. Valid outputs are 8 by 8.",
+     "side": "That is one side. The output is 8 by 8."
+    }
+   },
+   "explain": {
+    "text": "Each side has $10 - 3 + 1 = 8$ starts, so there are 64 outputs."
+   }
+  },
+  {
+   "id": "q-cell",
+   "difficulty": 3,
+   "prose": "Patch $\\begin{pmatrix} 2 & 0 & 1 \\\\ 3 & 1 & 0 \\\\ 0 & 2 & 4 \\end{pmatrix}$, horizontal-edge kernel $\\begin{pmatrix} -1 & -1 & -1 \\\\ 0 & 0 & 0 \\\\ 1 & 1 & 1 \\end{pmatrix}$.",
+   "question": "What is the output?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "middle",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(0 + 2 + 4) - (2 + 0 + 1) = 3$.",
+    "generic": "Not quite. Bottom row minus top row.",
+    "byKey": {
+     "sign": "You took top minus bottom. The $+1$ weights are on the bottom row.",
+     "middle": "The middle row has weight 0."
+    }
+   },
+   "explain": {
+    "text": "The middle row is ignored, so the output is the bottom row’s sum less the top row’s: $6 - 3 = 3$."
+   }
+  },
+  {
+   "id": "q-filters",
+   "difficulty": 2,
+   "prose": "An input of shape $(8, 16, 16)$ meets 4 filters of size 5 by 5.",
+   "question": "What is the output shape?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$(4, 12, 12)$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$(32, 12, 12)$",
+      "why": "Each filter adds over the 8 input channels into one map."
+     },
+     {
+      "id": "c",
+      "text": "$(4, 16, 16)$",
+      "why": "Valid positions lose $k - 1 = 4$ per side."
+     },
+     {
+      "id": "d",
+      "text": "$(8, 12, 12)$",
+      "why": "There is one map per filter, not per input channel."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Four maps, each $16 - 5 + 1 = 12$ on a side.",
+    "generic": "Not quite. Maps per filter, side $n - k + 1$."
+   },
+   "explain": {
+    "text": "Each filter is $(8, 5, 5)$ and gives one 12 by 12 map: $(4, 12, 12)$."
+   }
+  }
+ ]
+}
