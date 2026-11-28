@@ -1,0 +1,1076 @@
+{
+ "id": "l5-stable-softmax",
+ "course": "ml-int",
+ "title": "A softmax that cannot overflow",
+ "minutes": 15,
+ "objectives": [
+  "Write a softmax and a cross-entropy from logits that never overflow, and say why aloud."
+ ],
+ "skills": [
+  "mi-code"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Overflow",
+   "tags": [
+    "softmax"
+   ],
+   "pace": 600,
+   "prose": "This lesson takes about fifteen minutes; the drill it leads to has a pace of ten minutes. You met the softmax in `makemore` level 1 and floating point in `numerics` l1. An interviewer types the naive softmax on three large logits.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> import numpy as np",
+      ">>> z = np.array([1000.0, 1001.0, 1002.0])",
+      ">>> np.exp(z)",
+      "array([inf, inf, inf])",
+      ">>> np.exp(z) / np.exp(z).sum()",
+      "array([nan, nan, nan])"
+     ],
+     "title": "Python"
+    },
+    "state": {
+     "tone": {
+      "l4": "err",
+      "l6": "err"
+     }
+    }
+   },
+   "question": "Why is the last line `nan` and not `inf`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "div",
+      "text": "Each entry is inf divided by inf, which has no value, so it is nan.",
+      "correct": true
+     },
+     {
+      "id": "neg",
+      "text": "The exponentials overflowed to negative numbers.",
+      "why": "Overflow in floating point gives inf, not a negative number."
+     },
+     {
+      "id": "sum",
+      "text": "The sum is 0, so each entry divides by zero.",
+      "why": "The sum is inf, not 0; it is the numerator and denominator that are both inf."
+     },
+     {
+      "id": "int",
+      "text": "NumPy switched to integers, which cannot hold the result.",
+      "why": "The array is float64 throughout; the problem is the size of $e^{1000}$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is $e^{1000}$ in float64?"
+    },
+    {
+     "rung": "point",
+     "text": "The largest float64 is about $1.8 \\times 10^{308}$; $e^{1000}$ is far larger, so it becomes inf.",
+     "highlight": [
+      "l4",
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "inf divided by inf is undefined: nan."
+    }
+   ],
+   "feedback": {
+    "correct": "inf over inf is nan.",
+    "generic": "Not quite. Look at what `np.exp(z)` printed first.",
+    "byKey": {
+     "sum": "The sum of three infs is inf, so each entry is inf over inf."
+    }
+   },
+   "explain": {
+    "text": "$e^{1000}$ has 435 digits, far beyond float64's largest number, so every exponential is inf. Their ratio inf over inf is nan, and a nan in a loss spreads to every weight."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Shift every logit",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "The bars are the softmax of $(1, 2, 3) + c$. Slide $c$ from $-5$ to $1000$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "a",
+       "label": "z₁"
+      },
+      {
+       "id": "b",
+       "label": "z₂"
+      },
+      {
+       "id": "c3",
+       "label": "z₃"
+      }
+     ],
+     "showValues": true,
+     "decimals": 4,
+     "yLabel": "softmax",
+     "yMax": 1,
+     "height": 230,
+     "params": {
+      "c": 0
+     }
+    },
+    "state": {
+     "values": {
+      "a": 0.09,
+      "b": 0.2447,
+      "c3": 0.6652
+     }
+    },
+    "derive": {
+     "values.a": "exp(-2) / (1 + exp(-1) + exp(-2))",
+     "values.b": "exp(-1) / (1 + exp(-1) + exp(-2))",
+     "values.c3": "1 / (1 + exp(-1) + exp(-2))",
+     "caption": "logits ({{1 + c}}, {{2 + c}}, {{3 + c}}): the bars do not move"
+    },
+    "controls": [
+     {
+      "bind": "c",
+      "stops": [
+       -5,
+       0,
+       10,
+       100,
+       1000
+      ],
+      "label": "shift c",
+      "start": 0
+     }
+    ]
+   },
+   "question": "What is the largest softmax entry, whatever the shift? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6652,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "uniform",
+      "value": 0.3333,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "raw",
+      "value": 0.7311,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the top and bottom by $e^{3 + c}$."
+    },
+    {
+     "rung": "point",
+     "text": "The entries become $e^{-2}$, $e^{-1}$ and $1$ over their sum.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1/(1 + e^{-1} + e^{-2}) = 0.6652$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.6652$: the shift cancels.",
+    "generic": "Not quite. Divide through by the largest exponential.",
+    "byKey": {
+     "uniform": "The entries are not equal: the gaps between logits stay the same.",
+     "raw": "You left out $e^{-2}$ from the sum."
+    }
+   },
+   "explain": {
+    "text": "The top bar stays at $0.6652$. Adding $c$ to every logit multiplies every exponential by $e^c$, which cancels in the ratio. So any shift is allowed; the row's maximum is the safe one."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The large row by hand",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "Back to $(1000, 1001, 1002)$. Subtract the row's maximum, 1002.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "z₁",
+      "z₂",
+      "z₃"
+     ],
+     "rows": [
+      [
+       "logit",
+       "1000",
+       "1001",
+       "1002"
+      ],
+      [
+       "logit − max",
+       "−2",
+       "−1",
+       "0"
+      ],
+      [
+       "exp",
+       "e⁻²",
+       "e⁻¹",
+       "1"
+      ]
+     ]
+    }
+   },
+   "question": "What is the first softmax entry? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.09,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "uniform",
+      "value": 0.3333,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "unnorm",
+      "value": 0.1353,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add up the exponentials of the shifted row."
+    },
+    {
+     "rung": "point",
+     "text": "$1 + e^{-1} + e^{-2} = 1.5032$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e^{-2}/1.5032 = 0.0900$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.0900$; the others are $0.2447$ and $0.6652$.",
+    "generic": "Not quite. Divide $e^{-2}$ by the sum of the three exponentials.",
+    "byKey": {
+     "unnorm": "That is $e^{-2}$ before dividing by the sum.",
+     "uniform": "The logits differ by 1, so the entries differ."
+    }
+   },
+   "explain": {
+    "text": "After the shift no exponential exceeds 1, so nothing overflows. The row is $(0.0900, 0.2447, 0.6652)$, the same as for $(1, 2, 3)$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Log-sum-exp",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "A loss needs $\\log\\sum_j e^{z_j}$, not the softmax itself. The same shift gives $\\log\\sum_j e^{z_j} = m + \\log\\sum_j e^{z_j - m}$ with $m$ the row's maximum.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "z₁",
+      "z₂",
+      "z₃"
+     ],
+     "rows": [
+      [
+       "logit",
+       "1000",
+       "1001",
+       "1002"
+      ],
+      [
+       "exp(logit − max)",
+       0.1353,
+       0.3679,
+       "1"
+      ]
+     ]
+    }
+   },
+   "question": "What is $\\log\\sum_j e^{z_j}$ for $(1000, 1001, 1002)$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1002.4076,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "no-max",
+      "value": 0.4076,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "max-only",
+      "value": 1002,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute $\\log(1 + e^{-1} + e^{-2})$."
+    },
+    {
+     "rung": "point",
+     "text": "It is $0.4076$."
+    },
+    {
+     "rung": "step",
+     "text": "Add back $m = 1002$: $1002.4076$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1002 + 0.4076 = 1002.4076$.",
+    "generic": "Not quite. Take the log of the shifted sum, then add the maximum back.",
+    "byKey": {
+     "no-max": "You forgot to add the maximum, 1002, back.",
+     "max-only": "The log of the shifted sum, $0.4076$, still has to be added."
+    }
+   },
+   "explain": {
+    "text": "The log-sum-exp is a smooth maximum: $1002.4076$, a little above 1002. Every exponential it takes is at most 1."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The loss for one target",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "Cross-entropy for target $t$ is $\\log\\sum_j e^{z_j} - z_t$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "z₁",
+      "z₂",
+      "z₃"
+     ],
+     "rows": [
+      [
+       "logit",
+       "1000",
+       "1001",
+       "1002"
+      ],
+      [
+       "log-sum-exp",
+       "1002.4076",
+       "",
+       ""
+      ]
+     ]
+    }
+   },
+   "question": "What is the loss when the target is the first class, $z_t = 1000$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.4076,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "last",
+      "value": 0.4076,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sign",
+      "value": -2.4076,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the target logit from the log-sum-exp."
+    },
+    {
+     "rung": "point",
+     "text": "$1002.4076 - 1000$."
+    },
+    {
+     "rung": "step",
+     "text": "$2.4076$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1002.4076 - 1000 = 2.4076$.",
+    "generic": "Not quite. Subtract the target's logit.",
+    "byKey": {
+     "last": "That is the loss for the third class, $z_t = 1002$.",
+     "sign": "Cross-entropy is never negative: log-sum-exp minus the target logit."
+    }
+   },
+   "explain": {
+    "text": "The loss is $2.4076$ for the first class and $0.4076$ for the third. It equals $-\\ln(0.0900)$, computed without ever forming that small probability."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Softmax, then log?",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "A candidate writes the loss as `-np.log(softmax(z)[t])` with a stable softmax. Logits $(0, 800)$, target the first class.",
+   "question": "What does that line return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "inf",
+      "text": "inf: $e^{-800}$ underflows to 0, and $-\\log 0$ is inf.",
+      "correct": true
+     },
+     {
+      "id": "ok",
+      "text": "About 800, since the softmax itself is stable.",
+      "why": "The softmax is finite but its entry $e^{-800}$ rounds to 0 before the log."
+     },
+     {
+      "id": "nan",
+      "text": "nan, from inf divided by inf in the softmax.",
+      "why": "The shift prevents inf; the failure here is underflow to 0."
+     },
+     {
+      "id": "zero",
+      "text": "0, because that softmax entry is exactly 0.",
+      "why": "The loss is minus the log of that 0, which is inf."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute the first softmax entry."
+    },
+    {
+     "rung": "point",
+     "text": "It is $e^{-800}/(1 + e^{-800})$, far below the smallest float64."
+    },
+    {
+     "rung": "step",
+     "text": "It rounds to 0; the log-sum-exp form gives exactly 800."
+    }
+   ],
+   "feedback": {
+    "correct": "inf; the log-sum-exp form gives 800.",
+    "generic": "Not quite. Ask what $e^{-800}$ is in float64.",
+    "byKey": {
+     "ok": "A stable softmax still underflows to 0 here; take logs before exponentiating."
+    }
+   },
+   "explain": {
+    "text": "The smallest float64 is about $10^{-308}$ and $e^{-800}$ is about $10^{-348}$. So the probability is 0 and its log is $-\\infty$, while log-sum-exp minus the logit gives 800 exactly."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Masked entries",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "Attention masks a logit by setting it to $-\\infty$. Row one is $(0, -\\infty, 1)$; row two is all $-\\infty$, a query with nothing to attend to.",
+   "question": "What does the max-shift softmax give?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Row one: a 0 where masked. Row two: nan, which needs a guard.",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Both rows are fine: every masked entry gets 0.",
+      "why": "Row two's maximum is $-\\infty$, and $-\\infty - (-\\infty)$ is nan."
+     },
+     {
+      "id": "both",
+      "text": "Both rows come out as nan in every entry.",
+      "why": "Row one has a finite maximum, 1, so its masked entry is $e^{-\\infty} = 0$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find each row's maximum."
+    },
+    {
+     "rung": "point",
+     "text": "Row one: 1. Row two: $-\\infty$."
+    },
+    {
+     "rung": "step",
+     "text": "Subtracting $-\\infty$ from $-\\infty$ is nan."
+    }
+   ],
+   "feedback": {
+    "correct": "Row one works; row two needs a guard.",
+    "generic": "Not quite. Shift each row by its own maximum and look at row two.",
+    "byKey": {
+     "fine": "Row two's shift is $-\\infty - (-\\infty)$, which is nan."
+    }
+   },
+   "explain": {
+    "text": "A masked entry in a row with a finite maximum becomes exactly 0. A fully masked row has no finite maximum, so return zeros for it or never build it; say which."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Why the shift is free",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "What you used, said in one sentence: softmax is unchanged by adding a constant to every logit. $$\\frac{e^{z_i - m}}{\\sum_j e^{z_j - m}} = \\frac{e^{z_i}}{\\sum_j e^{z_j}}, \\qquad \\log\\sum_j e^{z_j} = m + \\log\\sum_j e^{z_j - m}$$",
+   "question": "Which $m$ makes every exponential at most 1?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "max",
+      "text": "The row's largest logit.",
+      "correct": true
+     },
+     {
+      "id": "mean",
+      "text": "The row's mean logit.",
+      "why": "Logits above the mean still give exponentials above 1, which can overflow."
+     },
+     {
+      "id": "global",
+      "text": "The largest logit in the whole batch.",
+      "why": "That keeps exponentials at most 1, but a row far below it underflows to all zeros."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each row's own maximum.",
+    "generic": "Not quite. Which shift leaves the largest exponential exactly 1?"
+   },
+   "explain": {
+    "text": "With $m$ the row maximum, the largest exponential is $e^0 = 1$ and the sum is at least 1. So neither overflow nor a zero sum can happen."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A loss that turned nan",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "At a lab, a language model's loss prints `nan` at step 40,000 after falling smoothly. Its loss code takes `torch.log(torch.softmax(logits, -1))`.",
+   "question": "What is the most likely cause, and the fix?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "logs",
+      "text": "A probability underflowed to 0; take logs on the logits.",
+      "correct": true
+     },
+     {
+      "id": "lr",
+      "text": "The learning rate has become too low by step 40,000.",
+      "why": "A low rate slows learning; it does not make a loss nan."
+     },
+     {
+      "id": "data",
+      "text": "A corrupt batch of text arrived at step 40,000.",
+      "why": "Possible, but the log of a softmax is the known failure as logits grow."
+     },
+     {
+      "id": "seed",
+      "text": "An unlucky random seed for the initial weights.",
+      "why": "The same code with any seed takes logs of probabilities that can reach 0."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Logits grow during training as the model gets confident."
+    },
+    {
+     "rung": "point",
+     "text": "A tiny probability becomes 0, and its log is $-\\infty$."
+    },
+    {
+     "rung": "step",
+     "text": "Compute log-softmax as $z - \\text{logsumexp}(z)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Take logs on the logits, never of the probabilities.",
+    "generic": "Not quite. Ask what happens to small probabilities as logits grow.",
+    "byKey": {
+     "lr": "The rate does not create infinities; the log of 0 does."
+    }
+   },
+   "explain": {
+    "text": "As the model grows confident, wrong-class probabilities shrink below the smallest float and become 0. Their log is $-\\infty$, and $0 \\times (-\\infty)$ in the gradient is nan."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The shift in code",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "Write `max_shift(z)` for a 2-D array: subtract each row's maximum from that row.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef max_shift(z):\n    # z: a 2-D array of logits; subtract each row's maximum from that row\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef max_shift(z):\n    z = np.asarray(z, dtype=float)\n    return z - z.max(axis=1, keepdims=True)\n",
+    "examples": [
+     {
+      "call": "max_shift([[1.0, 2.0, 3.0]]).tolist()",
+      "compare": "equal",
+      "expect": "[[-2.0, -1.0, 0.0]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "max_shift([[1.0, 2.0, 3.0], [10.0, 0.0, -5.0]]).tolist()",
+      "compare": "equal",
+      "expect": "[[-2.0, -1.0, 0.0], [0.0, -10.0, -15.0]]"
+     },
+     {
+      "call": "max_shift([[1000.0, 1001.0, 1002.0]]).tolist()",
+      "compare": "equal",
+      "expect": "[[-2.0, -1.0, 0.0]]"
+     },
+     {
+      "call": "max_shift([[0.0, float('-inf'), 1.0]]).tolist()",
+      "compare": "equal",
+      "expect": "[[-1.0, float('-inf'), 0.0]]"
+     },
+     {
+      "call": "max_shift([[4.0, 4.0], [-7.0, -7.0]]).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, 0.0], [0.0, 0.0]]"
+     },
+     {
+      "call": "list(max_shift(np.zeros((3, 5))).shape)",
+      "compare": "equal",
+      "expect": "[3, 5]"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: two rows of different scale, the row $(1000, 1001, 1002)$, a row with $-\\infty$, rows of equal entries, and the shape of a 3 by 5 input. Values are compared exactly.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef max_shift(z):\n    z = np.asarray(z, dtype=float)\n    return z - z.max()\n",
+      "test": 1,
+      "symptom": "Subtracts the largest logit of the whole array, not each row's."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef max_shift(z):\n    z = np.asarray(z, dtype=float)\n    return z - z.max(axis=0, keepdims=True)\n",
+      "test": 1,
+      "symptom": "Takes each column's maximum."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef max_shift(z):\n    z = np.asarray(z, dtype=float)\n    return z - z.min(axis=1, keepdims=True)\n",
+      "test": 1,
+      "symptom": "Subtracts each row's minimum, which leaves large positive entries."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use `z.max(axis=1, keepdims=True)`."
+    },
+    {
+     "rung": "point",
+     "text": "`keepdims` keeps a column you can subtract."
+    },
+    {
+     "rung": "step",
+     "text": "`return z - z.max(axis=1, keepdims=True)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Each row now tops out at exactly 0.",
+    "generic": "Not yet. Shift each row by its own maximum.",
+    "byKey": {
+     "test-1": "The second row is off. Subtract each row's own maximum, along `axis=1`, not one number for the whole array or each column's."
+    }
+   },
+   "explain": {
+    "text": "One line, and the axis is the whole point: rows are separate distributions."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Log-sum-exp in code",
+   "tags": [
+    "softmax"
+   ],
+   "prose": "Write `log_sum_exp_rows(z)`: $\\log\\sum_j e^{z_{ij}}$ for each row $i$ of a 2-D array, as a 1-D array, with no overflow or underflow.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef log_sum_exp_rows(z):\n    # z: a 2-D array; return log(sum(exp(z))) for each row, without overflow\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef log_sum_exp_rows(z):\n    z = np.asarray(z, dtype=float)\n    m = z.max(axis=1, keepdims=True)\n    return (m + np.log(np.exp(z - m).sum(axis=1, keepdims=True)))[:, 0]\n",
+    "examples": [
+     {
+      "call": "log_sum_exp_rows([[0.0, 0.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[0.6931471805599453]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "log_sum_exp_rows([[1000.0, 1001.0, 1002.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[1002.4076059644444]"
+     },
+     {
+      "call": "log_sum_exp_rows([[0.0, 0.0], [1.0, 2.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[0.6931471805599453, 2.313261687518223]"
+     },
+     {
+      "call": "log_sum_exp_rows([[0.0, 1.0], [1000.0, 1001.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[1.3132616875182228, 1001.3132616875182]"
+     },
+     {
+      "call": "log_sum_exp_rows([[-1000.0, -1000.0]]).tolist()",
+      "compare": "isclose",
+      "expect": "[-999.3068528194401]"
+     },
+     {
+      "call": "log_sum_exp_rows([[0.0, float('-inf')]]).tolist()",
+      "compare": "isclose",
+      "expect": "[0.0]"
+     },
+     {
+      "call": "list(log_sum_exp_rows(np.zeros((4, 3))).shape)",
+      "compare": "equal",
+      "expect": "[4]"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: the row $(1000, 1001, 1002)$, two small rows, two rows 1,000 apart, a row at $-1000$, a row with $-\\infty$, and the shape (one number a row). Numbers are compared to $10^{-9}$ relative.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef log_sum_exp_rows(z):\n    z = np.asarray(z, dtype=float)\n    return np.log(np.exp(z).sum(axis=1))\n",
+      "test": 1,
+      "symptom": "Exponentiates without the shift, so e to the 1000 overflows."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef log_sum_exp_rows(z):\n    z = np.asarray(z, dtype=float)\n    m = z.max(axis=1, keepdims=True)\n    return (np.log(np.exp(z - m).sum(axis=1, keepdims=True)))[:, 0]\n",
+      "test": 1,
+      "symptom": "Forgets to add the maximum back."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef log_sum_exp_rows(z):\n    z = np.asarray(z, dtype=float)\n    m = z.max()\n    return (m + np.log(np.exp(z - m).sum(axis=1, keepdims=True)))[:, 0]\n",
+      "test": 3,
+      "symptom": "Shifts by the largest logit of the whole batch, so a row 1,000 below it underflows to -inf."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Shift each row by its maximum $m$."
+    },
+    {
+     "rung": "point",
+     "text": "Take the log of the shifted sum."
+    },
+    {
+     "rung": "step",
+     "text": "Add $m$ back: `m + np.log(np.exp(z - m).sum(axis=1, keepdims=True))`."
+    }
+   ],
+   "feedback": {
+    "correct": "Large, small and masked rows all come out finite.",
+    "generic": "Not yet. Shift each row, take the log of the sum, add the shift back.",
+    "byKey": {
+     "test-1": "The row $(1000, 1001, 1002)$ should give $1002.4076$. Shift by the row maximum before exponentiating, then add it back.",
+     "test-3": "Two rows 1,000 apart broke it. Shift each row by its own maximum, not the batch's."
+    }
+   },
+   "explain": {
+    "text": "This is the function every stable cross-entropy is built on. With each row's own maximum, the largest exponential is 1 and the sum is at least 1."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "softmax"
+   ],
+   "pace": 120,
+   "prose": "The interviewer goes on: \"Now in float16.\" Its largest finite number is 65,504. Then sit the drills `#drill/mi-row-softmax` (pace 10 minutes) and `#drill/mi-cross-entropy-logits` (pace 15 minutes).",
+   "question": "Above what logit does $e^z$ overflow in float16? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11.09,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "log10",
+      "value": 4.82,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "f64",
+      "value": 709.78,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $e^z = 65{,}504$."
+    },
+    {
+     "rung": "point",
+     "text": "Take the natural log."
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln 65{,}504 = 11.09$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln 65{,}504 = 11.09$: a logit of 12 already overflows.",
+    "generic": "Not quite. Solve $e^z = 65{,}504$.",
+    "byKey": {
+     "log10": "Use the natural log, since the softmax uses $e$.",
+     "f64": "That is the float64 limit, $\\ln(1.8 \\times 10^{308})$."
+    }
+   },
+   "explain": {
+    "text": "In float16, $e^z$ overflows above $11.09$, so the max shift is not optional. Libraries also run the softmax in float32 inside mixed-precision training, which is worth saying."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Softmax is unchanged by a constant shift, so subtract each row's maximum before exponentiating.",
+   "Compute losses with log-sum-exp minus the target logit: $(1000, 1001, 1002)$ with the first target gives $2.4076$.",
+   "Never take the log of a softmax: small probabilities underflow to 0. A fully masked row needs a guard."
+  ],
+  "formula": {
+   "name": "Log-sum-exp",
+   "tex": "\\log\\sum_j e^{z_j} = m + \\log\\sum_j e^{z_j - m}, \\quad m = \\max_j z_j",
+   "note": "Cross-entropy is this minus the target logit."
+  },
+  "trap": "Taking the log of a stable softmax still gives inf when a probability underflows to 0."
+ },
+ "quiz": [
+  {
+   "id": "q1-lse-neg",
+   "difficulty": 2,
+   "tags": [
+    "softmax"
+   ],
+   "question": "What is $\\log(e^{-1000} + e^{-1000})$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -999.3069,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "naive",
+      "value": -1000,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "ln2",
+      "value": 0.6931,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sign",
+      "value": 999.3069,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-1000 + \\ln 2 = -999.3069$.",
+    "generic": "Not quite. Shift by $-1000$, take the log, add it back.",
+    "byKey": {
+     "naive": "You dropped the $\\ln 2$ from two equal terms.",
+     "ln2": "Add the shift, $-1000$, back.",
+     "sign": "The answer is negative: $-1000$ plus a small $\\ln 2$."
+    }
+   },
+   "explain": {
+    "text": "Shifting by $m = -1000$ leaves $\\log 2$; adding $m$ back gives $-999.3069$. The naive form gives $\\log 0 = -\\infty$."
+   }
+  },
+  {
+   "id": "q2-ce-row",
+   "difficulty": 3,
+   "tags": [
+    "softmax"
+   ],
+   "question": "Logits $(3, 1, 1)$, target the second class. What is the cross-entropy? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.2395,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "first",
+      "value": 0.2395,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$3 + \\ln(1 + 2e^{-2}) - 1 = 2.2395$.",
+    "generic": "Not quite. Log-sum-exp minus the target logit.",
+    "byKey": {
+     "first": "That is the loss for the first class."
+    }
+   },
+   "explain": {
+    "text": "The log-sum-exp is $3 + \\ln(1 + 2e^{-2}) = 3.2395$. Subtracting the target logit 1 gives $2.2395$."
+   }
+  },
+  {
+   "id": "q3-why-max",
+   "difficulty": 2,
+   "tags": [
+    "softmax"
+   ],
+   "question": "Why subtract each row's maximum rather than the batch's?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "row",
+      "text": "A row far below the batch maximum would underflow to all zeros.",
+      "correct": true
+     },
+     {
+      "id": "slow",
+      "text": "The batch maximum is slower to compute.",
+      "why": "Both are one pass over the data; speed is not the reason."
+     },
+     {
+      "id": "wrong",
+      "text": "Shifting by any other number changes the softmax.",
+      "why": "Any constant per row leaves the softmax unchanged in exact arithmetic."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each row is its own distribution with its own scale.",
+    "generic": "Not quite. Think of a row 1,000 below the batch maximum."
+   },
+   "explain": {
+    "text": "Shifting by the batch maximum keeps exponentials at most 1. But a low row's exponentials can all become 0, and its log-sum-exp $-\\infty$."
+   }
+  }
+ ]
+}

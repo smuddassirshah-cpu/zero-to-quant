@@ -1,0 +1,412 @@
+{
+ "id": "homework-2",
+ "course": "ml-int",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h1-mlp-train-step",
+   "difficulty": 5,
+   "skills": [
+    "mi-code"
+   ],
+   "tags": [
+    "backward-pass"
+   ],
+   "performance": "code",
+   "prose": "Write `mlp_train_step(params, x, y, lr)` from scratch for a two-layer ReLU network. Compute the mean softmax cross-entropy stably, the backward pass, and one SGD step. Return a new parameter dict and the loss before the step.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef mlp_train_step(params, x, y, lr):\n    # params: W1 (d, h), b1 (h,), W2 (h, k), b2 (k,); x (B, d); y (B,) labels\n    # hidden = ReLU(x W1 + b1); loss = mean softmax cross-entropy of hidden W2 + b2\n    # return (new params as a new dict after one SGD step, the loss before the step)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef mlp_train_step(params, x, y, lr):\n    W1, b1, W2, b2 = params['W1'], params['b1'], params['W2'], params['b2']\n    B = x.shape[0]\n    z1 = x @ W1 + b1\n    h = np.maximum(z1, 0)\n    z2 = h @ W2 + b2\n    m = z2.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z2 - m).sum(axis=1))\n    loss = float(np.mean(lse - z2[np.arange(B), y]))\n    p = np.exp(z2 - lse[:, None])\n    dz2 = p.copy()\n    dz2[np.arange(B), y] -= 1\n    dz2 /= B\n    dW2 = h.T @ dz2\n    db2 = dz2.sum(axis=0)\n    dz1 = (dz2 @ W2.T) * (z1 > 0)\n    dW1 = x.T @ dz1\n    db1 = dz1.sum(axis=0)\n    new = {'W1': W1 - lr * dW1, 'b1': b1 - lr * db1, 'W2': W2 - lr * dW2, 'b2': b2 - lr * db2}\n    return new, loss\n",
+    "examples": [
+     {
+      "setup": "_r = np.random.default_rng(5)\nX = _r.normal(size=(8, 3)); Y = np.array([0, 1, 2, 1, 0, 2, 2, 1])\nP = {'W1': _r.normal(size=(3, 6)) * 0.5, 'b1': _r.normal(size=6) * 0.1, 'W2': _r.normal(size=(6, 3)) * 0.5, 'b2': np.zeros(3)}\ndef _loss(Q):\n    z = np.maximum(X @ Q['W1'] + Q['b1'], 0) @ Q['W2'] + Q['b2']\n    m = z.max(axis=1, keepdims=True)\n    return float(np.mean(m[:, 0] + np.log(np.exp(z - m).sum(axis=1)) - z[np.arange(8), Y]))\ndef _step_ok(names):\n    new, _ = mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)\n    worst = 0.0\n    for k in names:\n        g = (P[k] - new[k]) / 0.1\n        for i in np.ndindex(P[k].shape):\n            A = {n: v.copy() for n, v in P.items()}; A[k][i] += 1e-6\n            Bq = {n: v.copy() for n, v in P.items()}; Bq[k][i] -= 1e-6\n            n_ = (_loss(A) - _loss(Bq)) / 2e-6\n            worst = max(worst, abs(n_ - g[i]) / max(1e-3, abs(n_)))\n    return worst < 1e-5\ndef _run(n):\n    Q = {k: v.copy() for k, v in P.items()}\n    for _ in range(n):\n        Q, _l = mlp_train_step(Q, X, Y, 0.5)\n    return _loss(Q)",
+      "call": "round(mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)[1], 6)",
+      "compare": "isclose",
+      "expect": "0.974399"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "_r = np.random.default_rng(5)\nX = _r.normal(size=(8, 3)); Y = np.array([0, 1, 2, 1, 0, 2, 2, 1])\nP = {'W1': _r.normal(size=(3, 6)) * 0.5, 'b1': _r.normal(size=6) * 0.1, 'W2': _r.normal(size=(6, 3)) * 0.5, 'b2': np.zeros(3)}\ndef _loss(Q):\n    z = np.maximum(X @ Q['W1'] + Q['b1'], 0) @ Q['W2'] + Q['b2']\n    m = z.max(axis=1, keepdims=True)\n    return float(np.mean(m[:, 0] + np.log(np.exp(z - m).sum(axis=1)) - z[np.arange(8), Y]))\ndef _step_ok(names):\n    new, _ = mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)\n    worst = 0.0\n    for k in names:\n        g = (P[k] - new[k]) / 0.1\n        for i in np.ndindex(P[k].shape):\n            A = {n: v.copy() for n, v in P.items()}; A[k][i] += 1e-6\n            Bq = {n: v.copy() for n, v in P.items()}; Bq[k][i] -= 1e-6\n            n_ = (_loss(A) - _loss(Bq)) / 2e-6\n            worst = max(worst, abs(n_ - g[i]) / max(1e-3, abs(n_)))\n    return worst < 1e-5\ndef _run(n):\n    Q = {k: v.copy() for k, v in P.items()}\n    for _ in range(n):\n        Q, _l = mlp_train_step(Q, X, Y, 0.5)\n    return _loss(Q)",
+      "call": "mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)[1]",
+      "compare": "isclose",
+      "expect": "0.9743989013052676"
+     },
+     {
+      "setup": "_r = np.random.default_rng(5)\nX = _r.normal(size=(8, 3)); Y = np.array([0, 1, 2, 1, 0, 2, 2, 1])\nP = {'W1': _r.normal(size=(3, 6)) * 0.5, 'b1': _r.normal(size=6) * 0.1, 'W2': _r.normal(size=(6, 3)) * 0.5, 'b2': np.zeros(3)}\ndef _loss(Q):\n    z = np.maximum(X @ Q['W1'] + Q['b1'], 0) @ Q['W2'] + Q['b2']\n    m = z.max(axis=1, keepdims=True)\n    return float(np.mean(m[:, 0] + np.log(np.exp(z - m).sum(axis=1)) - z[np.arange(8), Y]))\ndef _step_ok(names):\n    new, _ = mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)\n    worst = 0.0\n    for k in names:\n        g = (P[k] - new[k]) / 0.1\n        for i in np.ndindex(P[k].shape):\n            A = {n: v.copy() for n, v in P.items()}; A[k][i] += 1e-6\n            Bq = {n: v.copy() for n, v in P.items()}; Bq[k][i] -= 1e-6\n            n_ = (_loss(A) - _loss(Bq)) / 2e-6\n            worst = max(worst, abs(n_ - g[i]) / max(1e-3, abs(n_)))\n    return worst < 1e-5\ndef _run(n):\n    Q = {k: v.copy() for k, v in P.items()}\n    for _ in range(n):\n        Q, _l = mlp_train_step(Q, X, Y, 0.5)\n    return _loss(Q)",
+      "call": "_step_ok(['W2', 'b2'])",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "_r = np.random.default_rng(5)\nX = _r.normal(size=(8, 3)); Y = np.array([0, 1, 2, 1, 0, 2, 2, 1])\nP = {'W1': _r.normal(size=(3, 6)) * 0.5, 'b1': _r.normal(size=6) * 0.1, 'W2': _r.normal(size=(6, 3)) * 0.5, 'b2': np.zeros(3)}\ndef _loss(Q):\n    z = np.maximum(X @ Q['W1'] + Q['b1'], 0) @ Q['W2'] + Q['b2']\n    m = z.max(axis=1, keepdims=True)\n    return float(np.mean(m[:, 0] + np.log(np.exp(z - m).sum(axis=1)) - z[np.arange(8), Y]))\ndef _step_ok(names):\n    new, _ = mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)\n    worst = 0.0\n    for k in names:\n        g = (P[k] - new[k]) / 0.1\n        for i in np.ndindex(P[k].shape):\n            A = {n: v.copy() for n, v in P.items()}; A[k][i] += 1e-6\n            Bq = {n: v.copy() for n, v in P.items()}; Bq[k][i] -= 1e-6\n            n_ = (_loss(A) - _loss(Bq)) / 2e-6\n            worst = max(worst, abs(n_ - g[i]) / max(1e-3, abs(n_)))\n    return worst < 1e-5\ndef _run(n):\n    Q = {k: v.copy() for k, v in P.items()}\n    for _ in range(n):\n        Q, _l = mlp_train_step(Q, X, Y, 0.5)\n    return _loss(Q)",
+      "call": "_step_ok(['W1', 'b1'])",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "_r = np.random.default_rng(5)\nX = _r.normal(size=(8, 3)); Y = np.array([0, 1, 2, 1, 0, 2, 2, 1])\nP = {'W1': _r.normal(size=(3, 6)) * 0.5, 'b1': _r.normal(size=6) * 0.1, 'W2': _r.normal(size=(6, 3)) * 0.5, 'b2': np.zeros(3)}\ndef _loss(Q):\n    z = np.maximum(X @ Q['W1'] + Q['b1'], 0) @ Q['W2'] + Q['b2']\n    m = z.max(axis=1, keepdims=True)\n    return float(np.mean(m[:, 0] + np.log(np.exp(z - m).sum(axis=1)) - z[np.arange(8), Y]))\ndef _step_ok(names):\n    new, _ = mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)\n    worst = 0.0\n    for k in names:\n        g = (P[k] - new[k]) / 0.1\n        for i in np.ndindex(P[k].shape):\n            A = {n: v.copy() for n, v in P.items()}; A[k][i] += 1e-6\n            Bq = {n: v.copy() for n, v in P.items()}; Bq[k][i] -= 1e-6\n            n_ = (_loss(A) - _loss(Bq)) / 2e-6\n            worst = max(worst, abs(n_ - g[i]) / max(1e-3, abs(n_)))\n    return worst < 1e-5\ndef _run(n):\n    Q = {k: v.copy() for k, v in P.items()}\n    for _ in range(n):\n        Q, _l = mlp_train_step(Q, X, Y, 0.5)\n    return _loss(Q)",
+      "call": "_run(3)",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09,
+       "abs": 0
+      },
+      "expect": "0.697995354417435"
+     },
+     {
+      "setup": "_r = np.random.default_rng(5)\nX = _r.normal(size=(8, 3)); Y = np.array([0, 1, 2, 1, 0, 2, 2, 1])\nP = {'W1': _r.normal(size=(3, 6)) * 0.5, 'b1': _r.normal(size=6) * 0.1, 'W2': _r.normal(size=(6, 3)) * 0.5, 'b2': np.zeros(3)}\ndef _loss(Q):\n    z = np.maximum(X @ Q['W1'] + Q['b1'], 0) @ Q['W2'] + Q['b2']\n    m = z.max(axis=1, keepdims=True)\n    return float(np.mean(m[:, 0] + np.log(np.exp(z - m).sum(axis=1)) - z[np.arange(8), Y]))\ndef _step_ok(names):\n    new, _ = mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)\n    worst = 0.0\n    for k in names:\n        g = (P[k] - new[k]) / 0.1\n        for i in np.ndindex(P[k].shape):\n            A = {n: v.copy() for n, v in P.items()}; A[k][i] += 1e-6\n            Bq = {n: v.copy() for n, v in P.items()}; Bq[k][i] -= 1e-6\n            n_ = (_loss(A) - _loss(Bq)) / 2e-6\n            worst = max(worst, abs(n_ - g[i]) / max(1e-3, abs(n_)))\n    return worst < 1e-5\ndef _run(n):\n    Q = {k: v.copy() for k, v in P.items()}\n    for _ in range(n):\n        Q, _l = mlp_train_step(Q, X, Y, 0.5)\n    return _loss(Q)",
+      "call": "bool(_run(20) < 0.5 * _loss(P))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "_r = np.random.default_rng(5)\nX = _r.normal(size=(8, 3)); Y = np.array([0, 1, 2, 1, 0, 2, 2, 1])\nP = {'W1': _r.normal(size=(3, 6)) * 0.5, 'b1': _r.normal(size=6) * 0.1, 'W2': _r.normal(size=(6, 3)) * 0.5, 'b2': np.zeros(3)}\ndef _loss(Q):\n    z = np.maximum(X @ Q['W1'] + Q['b1'], 0) @ Q['W2'] + Q['b2']\n    m = z.max(axis=1, keepdims=True)\n    return float(np.mean(m[:, 0] + np.log(np.exp(z - m).sum(axis=1)) - z[np.arange(8), Y]))\ndef _step_ok(names):\n    new, _ = mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)\n    worst = 0.0\n    for k in names:\n        g = (P[k] - new[k]) / 0.1\n        for i in np.ndindex(P[k].shape):\n            A = {n: v.copy() for n, v in P.items()}; A[k][i] += 1e-6\n            Bq = {n: v.copy() for n, v in P.items()}; Bq[k][i] -= 1e-6\n            n_ = (_loss(A) - _loss(Bq)) / 2e-6\n            worst = max(worst, abs(n_ - g[i]) / max(1e-3, abs(n_)))\n    return worst < 1e-5\ndef _run(n):\n    Q = {k: v.copy() for k, v in P.items()}\n    for _ in range(n):\n        Q, _l = mlp_train_step(Q, X, Y, 0.5)\n    return _loss(Q)\n_copy = {k: v.copy() for k, v in P.items()}\n_ = mlp_train_step(P, X, Y, 0.1)",
+      "call": "all(np.array_equal(P[k], _copy[k]) for k in P)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "_r = np.random.default_rng(5)\nX = _r.normal(size=(8, 3)); Y = np.array([0, 1, 2, 1, 0, 2, 2, 1])\nP = {'W1': _r.normal(size=(3, 6)) * 0.5, 'b1': _r.normal(size=6) * 0.1, 'W2': _r.normal(size=(6, 3)) * 0.5, 'b2': np.zeros(3)}\ndef _loss(Q):\n    z = np.maximum(X @ Q['W1'] + Q['b1'], 0) @ Q['W2'] + Q['b2']\n    m = z.max(axis=1, keepdims=True)\n    return float(np.mean(m[:, 0] + np.log(np.exp(z - m).sum(axis=1)) - z[np.arange(8), Y]))\ndef _step_ok(names):\n    new, _ = mlp_train_step({k: v.copy() for k, v in P.items()}, X, Y, 0.1)\n    worst = 0.0\n    for k in names:\n        g = (P[k] - new[k]) / 0.1\n        for i in np.ndindex(P[k].shape):\n            A = {n: v.copy() for n, v in P.items()}; A[k][i] += 1e-6\n            Bq = {n: v.copy() for n, v in P.items()}; Bq[k][i] -= 1e-6\n            n_ = (_loss(A) - _loss(Bq)) / 2e-6\n            worst = max(worst, abs(n_ - g[i]) / max(1e-3, abs(n_)))\n    return worst < 1e-5\ndef _run(n):\n    Q = {k: v.copy() for k, v in P.items()}\n    for _ in range(n):\n        Q, _l = mlp_train_step(Q, X, Y, 0.5)\n    return _loss(Q)",
+      "call": "bool(np.isfinite(mlp_train_step({'W1': P['W1'] * 100, 'b1': P['b1'], 'W2': P['W2'] * 100, 'b2': P['b2']}, X, Y, 0.1)[1]))",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests on a seeded batch of 8 with 3 inputs, 6 hidden units and 3 classes. Test 1 checks the loss before the step. Tests 2 and 3 check that one step at rate 0.1 moves the output and hidden parameters by the central-difference gradient, to a relative error of $10^{-5}$. Test 4 runs 3 steps at rate 0.5 and compares the loss exactly; test 5 needs 20 steps to halve the loss. Test 6 checks the inputs are unchanged and test 7 that the loss stays finite with weights 100 times larger.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef mlp_train_step(params, x, y, lr):\n    W1, b1, W2, b2 = params['W1'], params['b1'], params['W2'], params['b2']\n    B = x.shape[0]\n    z1 = x @ W1 + b1\n    h = np.maximum(z1, 0)\n    z2 = h @ W2 + b2\n    m = z2.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z2 - m).sum(axis=1))\n    loss = float(np.sum(lse - z2[np.arange(B), y]))\n    p = np.exp(z2 - lse[:, None])\n    dz2 = p.copy()\n    dz2[np.arange(B), y] -= 1\n    dz2 /= B\n    dW2 = h.T @ dz2\n    db2 = dz2.sum(axis=0)\n    dz1 = (dz2 @ W2.T) * (z1 > 0)\n    dW1 = x.T @ dz1\n    db1 = dz1.sum(axis=0)\n    new = {'W1': W1 - lr * dW1, 'b1': b1 - lr * db1, 'W2': W2 - lr * dW2, 'b2': b2 - lr * db2}\n    return new, loss\n",
+      "test": 1,
+      "symptom": "Reports the summed loss, not the mean."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_train_step(params, x, y, lr):\n    W1, b1, W2, b2 = params['W1'], params['b1'], params['W2'], params['b2']\n    B = x.shape[0]\n    z1 = x @ W1 + b1\n    h = np.maximum(z1, 0)\n    z2 = h @ W2 + b2\n    m = z2.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z2 - m).sum(axis=1))\n    loss = float(np.mean(lse - z2[np.arange(B), y]))\n    p = np.exp(z2 - lse[:, None])\n    dz2 = p.copy()\n    dz2[np.arange(B), y] -= 1\n    dW2 = h.T @ dz2\n    db2 = dz2.sum(axis=0)\n    dz1 = (dz2 @ W2.T) * (z1 > 0)\n    dW1 = x.T @ dz1\n    db1 = dz1.sum(axis=0)\n    new = {'W1': W1 - lr * dW1, 'b1': b1 - lr * db1, 'W2': W2 - lr * dW2, 'b2': b2 - lr * db2}\n    return new, loss\n",
+      "test": 2,
+      "symptom": "Forgets to divide the output gradient by the batch size."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_train_step(params, x, y, lr):\n    W1, b1, W2, b2 = params['W1'], params['b1'], params['W2'], params['b2']\n    B = x.shape[0]\n    z1 = x @ W1 + b1\n    h = np.maximum(z1, 0)\n    z2 = h @ W2 + b2\n    m = z2.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z2 - m).sum(axis=1))\n    loss = float(np.mean(lse - z2[np.arange(B), y]))\n    p = np.exp(z2 - lse[:, None])\n    dz2 = p.copy()\n    dz2[np.arange(B), y] -= 1\n    dz2 /= B\n    dW2 = h.T @ dz2\n    db2 = dz2.sum(axis=0)\n    dz1 = (dz2 @ W2.T) * (z1 > 0)\n    dW1 = x.T @ dz1\n    db1 = dz1.sum(axis=0)\n    new = {'W1': W1 + lr * dW1, 'b1': b1 + lr * db1, 'W2': W2 + lr * dW2, 'b2': b2 + lr * db2}\n    return new, loss\n",
+      "test": 2,
+      "symptom": "Adds the gradient instead of subtracting it."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_train_step(params, x, y, lr):\n    W1, b1, W2, b2 = params['W1'], params['b1'], params['W2'], params['b2']\n    B = x.shape[0]\n    z1 = x @ W1 + b1\n    h = np.maximum(z1, 0)\n    z2 = h @ W2 + b2\n    m = z2.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z2 - m).sum(axis=1))\n    loss = float(np.mean(lse - z2[np.arange(B), y]))\n    p = np.exp(z2 - lse[:, None])\n    dz2 = p.copy()\n    dz2[np.arange(B), y] -= 1\n    dz2 /= B\n    dW2 = h.T @ dz2\n    db2 = dz2.sum(axis=0)\n    dz1 = dz2 @ W2.T\n    dW1 = x.T @ dz1\n    db1 = dz1.sum(axis=0)\n    new = {'W1': W1 - lr * dW1, 'b1': b1 - lr * db1, 'W2': W2 - lr * dW2, 'b2': b2 - lr * db2}\n    return new, loss\n",
+      "test": 3,
+      "symptom": "Leaves out the ReLU gate in the hidden layer's gradient."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_train_step(params, x, y, lr):\n    W1, b1, W2, b2 = params['W1'], params['b1'], params['W2'], params['b2']\n    B = x.shape[0]\n    z1 = x @ W1 + b1\n    h = np.maximum(z1, 0)\n    z2 = h @ W2 + b2\n    m = z2.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z2 - m).sum(axis=1))\n    loss = float(np.mean(lse - z2[np.arange(B), y]))\n    p = np.exp(z2 - lse[:, None])\n    dz2 = p.copy()\n    dz2[np.arange(B), y] -= 1\n    dz2 /= B\n    dW2 = h.T @ dz2\n    db2 = dz2.sum(axis=0)\n    dz1 = (dz2 @ W2.T) * (z1 > 0)\n    dW1 = x.T @ dz1\n    db1 = dz1.sum(axis=0)\n    W1 -= lr * dW1\n    b1 -= lr * db1\n    W2 -= lr * dW2\n    b2 -= lr * db2\n    return params, loss\n",
+      "test": 6,
+      "symptom": "Updates the caller's arrays in place."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_train_step(params, x, y, lr):\n    W1, b1, W2, b2 = params['W1'], params['b1'], params['W2'], params['b2']\n    B = x.shape[0]\n    z1 = x @ W1 + b1\n    h = np.maximum(z1, 0)\n    z2 = h @ W2 + b2\n    lse = np.log(np.exp(z2).sum(axis=1))\n    loss = float(np.mean(lse - z2[np.arange(B), y]))\n    p = np.exp(z2 - lse[:, None])\n    dz2 = p.copy()\n    dz2[np.arange(B), y] -= 1\n    dz2 /= B\n    dW2 = h.T @ dz2\n    db2 = dz2.sum(axis=0)\n    dz1 = (dz2 @ W2.T) * (z1 > 0)\n    dW1 = x.T @ dz1\n    db1 = dz1.sum(axis=0)\n    new = {'W1': W1 - lr * dW1, 'b1': b1 - lr * db1, 'W2': W2 - lr * dW2, 'b2': b2 - lr * db2}\n    return new, loss\n",
+      "test": 7,
+      "symptom": "Computes the loss without the max shift, so large logits overflow."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Forward, stable loss, backward and step, each checked.",
+    "generic": "Not yet. Check the loss, each gradient, the step's sign and the copies.",
+    "byKey": {
+     "test-1": "The loss before the step is off. Report the mean over the batch, not the sum.",
+     "test-2": "The output layer moved by the wrong amount. Start from softmax minus one-hot, divided by the batch size, and subtract the gradient.",
+     "test-3": "The hidden layer moved by the wrong amount. Gate its gradient with `z1 > 0`.",
+     "test-6": "You changed the caller's arrays. Build new arrays for the new parameters.",
+     "test-7": "Large logits made the loss overflow. Subtract each row's maximum before exponentiating."
+    }
+   },
+   "explain": {
+    "text": "This is l5 and l8 joined: a stable loss on the logits, then the layer backward pass twice. The exact 3-step test catches a step that is merely in the right direction."
+   }
+  },
+  {
+   "id": "h2-top-k",
+   "difficulty": 3,
+   "skills": [
+    "mi-code"
+   ],
+   "tags": [
+    "attention"
+   ],
+   "prose": "Write `top_k_attention_weights(weights, k)`. In each row of an attention weight matrix keep the $k$ largest weights, ties to the lower index. Set the rest to 0 and rescale the row to sum to 1.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef top_k_attention_weights(weights, k):\n    # keep each row's k largest weights (ties to the lower index), zero the rest,\n    # and rescale the row to sum to 1\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef top_k_attention_weights(weights, k):\n    w = np.asarray(weights, dtype=float)\n    out = np.zeros_like(w)\n    idx = np.argsort(-w, axis=1, kind='stable')[:, :k]\n    rows = np.arange(w.shape[0])[:, None]\n    out[rows, idx] = w[rows, idx]\n    return out / out.sum(axis=1, keepdims=True)\n",
+    "examples": [
+     {
+      "call": "top_k_attention_weights([[0.5, 0.3, 0.2]], 1).tolist()",
+      "compare": "isclose",
+      "expect": "[[1.0, 0.0, 0.0]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "top_k_attention_weights([[0.5, 0.3, 0.2]], 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.625, 0.37499999999999994, 0.0]]"
+     },
+     {
+      "call": "top_k_attention_weights([[0.1, 0.2, 0.3, 0.4], [0.4, 0.3, 0.2, 0.1]], 1).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 0.0]]"
+     },
+     {
+      "call": "top_k_attention_weights([[0.25, 0.25, 0.25, 0.25]], 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.5, 0.5, 0.0, 0.0]]"
+     },
+     {
+      "call": "top_k_attention_weights([[0.6, 0.4]], 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.6, 0.4]]"
+     },
+     {
+      "call": "top_k_attention_weights([[0.1, 0.5, 0.4], [0.7, 0.2, 0.1]], 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.0, 0.5555555555555556, 0.4444444444444445], [0.7777777777777778, 0.22222222222222227, 0.0]]"
+     },
+     {
+      "call": "top_k_attention_weights([[1.0, 0.0, 0.0]], 1).tolist()",
+      "compare": "isclose",
+      "expect": "[[1.0, 0.0, 0.0]]"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: one row with $k = 2$, two rows with $k = 1$, a row of ties, $k$ equal to the row length, two rows with $k = 2$, and a one-hot row. Numbers are compared to $10^{-9}$ relative.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef top_k_attention_weights(weights, k):\n    w = np.asarray(weights, dtype=float)\n    out = np.zeros_like(w)\n    idx = np.argsort(-w, axis=1, kind='stable')[:, :k]\n    rows = np.arange(w.shape[0])[:, None]\n    out[rows, idx] = w[rows, idx]\n    return out\n",
+      "test": 1,
+      "symptom": "Keeps the k largest but never rescales the row."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef top_k_attention_weights(weights, k):\n    w = np.asarray(weights, dtype=float)\n    out = np.zeros_like(w)\n    idx = np.argsort(w, axis=1, kind='stable')[:, :k]\n    rows = np.arange(w.shape[0])[:, None]\n    out[rows, idx] = w[rows, idx]\n    return out / out.sum(axis=1, keepdims=True)\n",
+      "test": 1,
+      "symptom": "Keeps the k smallest weights."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef top_k_attention_weights(weights, k):\n    w = np.asarray(weights, dtype=float)\n    out = np.zeros_like(w)\n    idx = np.argsort(-w[:, ::-1], axis=1, kind='stable')[:, :k]\n    rows = np.arange(w.shape[0])[:, None]\n    idx = w.shape[1] - 1 - idx\n    out[rows, idx] = w[rows, idx]\n    return out / out.sum(axis=1, keepdims=True)\n",
+      "test": 3,
+      "symptom": "Breaks ties towards the higher index."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each row keeps its $k$ largest and sums to 1.",
+    "generic": "Not yet. Keep the largest, break ties low, and rescale.",
+    "byKey": {
+     "test-1": "The first row is off: $(0.5, 0.3, 0.2)$ with $k = 2$ gives $(0.625, 0.375, 0)$. Keep the largest weights and divide by their sum.",
+     "test-3": "A row of ties should keep the lowest indices. Sort with a stable order on the negated weights."
+    }
+   },
+   "explain": {
+    "text": "A stable sort of the negated weights puts ties in index order, so the lower index wins. Rescaling keeps each row a distribution."
+   }
+  },
+  {
+   "id": "h3-fifteen-minutes",
+   "difficulty": 4,
+   "skills": [
+    "mi-code"
+   ],
+   "tags": [
+    "softmax"
+   ],
+   "pace": 180,
+   "question": "Order the 15-minute plan for a from-scratch task. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "p1",
+      "text": "Restate the task and fix the input and output shapes."
+     },
+     {
+      "id": "p2",
+      "text": "Say the edge cases aloud: empty, ties, overflow, a single row."
+     },
+     {
+      "id": "p3",
+      "text": "Write the forward computation in the order you said it."
+     },
+     {
+      "id": "p4",
+      "text": "Run it on a hand case you can check."
+     },
+     {
+      "id": "p5",
+      "text": "Handle the edge cases you named."
+     },
+     {
+      "id": "p6",
+      "text": "State the time and memory cost."
+     },
+     {
+      "id": "px",
+      "text": "Write the whole solution first, then think about shapes if it fails.",
+      "why": "Shapes first is what catches a transposed product before it runs."
+     }
+    ],
+    "answer": [
+     "p1",
+     "p2",
+     "p3",
+     "p4",
+     "p5",
+     "p6"
+    ],
+    "distractors": [
+     "px"
+    ]
+   },
+   "feedback": {
+    "correct": "Shapes and edge cases first, cost last.",
+    "generic": "Not quite. Plan before you write.",
+    "byKey": {
+     "px": "Fixing shapes first catches the wrong product before any code runs."
+    }
+   },
+   "explain": {
+    "text": "The plan front-loads what interviewers grade: a clear statement, the edge cases, a check on a hand case. The cost line is the usual follow-up, so say it before you are asked."
+   }
+  },
+  {
+   "id": "h4-layernorm-forward",
+   "difficulty": 4,
+   "skills": [
+    "mi-code"
+   ],
+   "tags": [
+    "layer-norm"
+   ],
+   "pace": 120,
+   "question": "Layer norm with $\\epsilon = 0$ on the row $(1, 2, 4)$. What is the normalised value of the entry 4? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.3363,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sample-var",
+      "value": 1.0911,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "centred",
+      "value": 1.6667,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(4 - 7/3)/\\sqrt{14/9} = 1.3363$.",
+    "generic": "Not quite. Subtract the mean, divide by the sd that divides by $N$.",
+    "byKey": {
+     "sample-var": "You divided by $N - 1$. Layer norm uses the variance over $N$.",
+     "centred": "You subtracted the mean but did not divide by the sd."
+    }
+   },
+   "explain": {
+    "text": "The mean is $7/3$ and the variance $(16 + 1 + 25)/27 = 14/9$. So the entry 4 normalises to $(5/3)/\\sqrt{14/9} = 1.3363$."
+   }
+  },
+  {
+   "id": "h5-attention-cost",
+   "difficulty": 3,
+   "skills": [
+    "mi-code"
+   ],
+   "tags": [
+    "attention"
+   ],
+   "pace": 90,
+   "question": "One attention head works on $T = 2048$ tokens with $d = 1024$. How many multiply-adds do the scores $\\mathbf{Q}\\mathbf{K}^\\top$ take, in billions? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.29,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "billions",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 0.0021,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "tt",
+      "value": 0.0042,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2048^2 \\times 1024 \\approx 4.29$ billion.",
+    "generic": "Not quite. Each of the $T^2$ scores is a dot product of length $d$.",
+    "byKey": {
+     "linear": "That is $T d$, one pass over the tokens. The scores compare every pair.",
+     "tt": "That counts the scores, $T^2$; each takes $d$ multiply-adds."
+    }
+   },
+   "explain": {
+    "text": "There are $T^2$ scores, each a dot product of length $d$: $2048^2 \\times 1024 \\approx 4.29$ billion. Doubling $T$ would make it four times as many."
+   }
+  },
+  {
+   "id": "h6-session-review",
+   "difficulty": 4,
+   "skills": [
+    "mi-code"
+   ],
+   "tags": [
+    "attention"
+   ],
+   "kind": "longform",
+   "prompt": "You finished the attention drill in 24 minutes, past its 20-minute pace, in the session `mi-sixty`. Using your session record, write what you will change in your next attempt and why.",
+   "model": "My record: 24 minutes on attention against a pace of 20, then 22 minutes on the backward pass, both solved; 14 minutes left for checking.\n\nWhere the time went: I wrote the projections and the softmax quickly, then lost about six minutes on the head split. I reshaped straight to (heads, T, d_h), the hidden tests failed on two heads, and I had to debug by printing arrays.\n\nWhat I will change, in order:\n\n1. Write the shapes as a comment before any code: x (T, d), Q (T, d), split (h, T, d_h), scores (h, T, T). That would have caught the bad reshape before running it.\n2. Test a hand case first: two tokens, one head, the 0.3302 and 0.6698 row. It takes a minute and checks the mask and the softmax.\n3. Set a cut-off of 20 minutes per drill. If I pass it, I move on and come back with the spare time.\n\nWhy: the overrun came from one bug that a shape comment catches, not from slow typing. The cut-off protects the second drill, which is worth as much as the first.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Reads the record: minutes per drill against the pace, and what was solved"
+    },
+    {
+     "points": 2,
+     "text": "Names where the time went with a specific step or bug"
+    },
+    {
+     "points": 2,
+     "text": "Proposes a concrete change tied to that cause (shapes first, a hand case)"
+    },
+    {
+     "points": 2,
+     "text": "Sets a time rule for the session, such as a per-drill cut-off"
+    },
+    {
+     "points": 2,
+     "text": "Explains why each change saves time, and keeps to a short, ordered note"
+    }
+   ]
+  }
+ ]
+}

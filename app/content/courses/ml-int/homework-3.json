@@ -1,0 +1,417 @@
+{
+ "id": "homework-3",
+ "course": "ml-int",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h1-case-report",
+   "difficulty": 5,
+   "skills": [
+    "mi-case"
+   ],
+   "tags": [
+    "case-aloud"
+   ],
+   "performance": "code",
+   "prose": "Write `case_report(df)` for the rows of `case.csv`. For each world and seed give each model's $R^2$, the paired $t$ of network minus boosting over days, and the verdict of the rule: network if $t \\le -2$, boosting if $t \\ge 2$, otherwise no change.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nimport pandas as pd\n\n\ndef case_report(df):\n    # df: the rows of case.csv. For each (world, seed): R^2 of 'boost', 'mlp' and 'ridge',\n    # the paired t of network minus boosting daily MSE ('t'), and 'verdict':\n    # 'network' if t <= -2, 'boosting' if t >= 2, else 'no change'.\n    # Return {(world, seed): {...}} with seed as an int.\n    ...\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\n\ndef case_report(df):\n    out = {}\n    for (w, s), g in df.groupby(['world', 'seed']):\n        rep = {m: float(1 - g['mse_' + m].sum() / g['var_y'].sum()) for m in ('boost', 'mlp', 'ridge')}\n        d = (g['mse_mlp'] - g['mse_boost']).to_numpy()\n        t = float(d.mean() / (d.std(ddof=1) / np.sqrt(len(d))))\n        rep['t'] = t\n        rep['verdict'] = 'network' if t <= -2 else ('boosting' if t >= 2 else 'no change')\n        out[(w, int(s))] = rep\n    return out\n",
+    "data": {
+     "case.csv": "content/data/ai/ml-int-case-daily-mse.csv"
+    },
+    "examples": [
+     {
+      "setup": "import pandas as pd\ndf = pd.read_csv('case.csv')",
+      "call": "sorted(case_report(df))",
+      "compare": "equal",
+      "expect": "[['A', 0], ['A', 1], ['B', 0], ['B', 1]]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "import pandas as pd\ndf = pd.read_csv('case.csv')\n_rep = case_report(df)",
+      "call": "{k: v['verdict'] for k, v in _rep.items()}",
+      "compare": "equal",
+      "expect": "{('A', 0): 'boosting', ('A', 1): 'boosting', ('B', 0): 'network', ('B', 1): 'no change'}"
+     },
+     {
+      "call": "[_rep[('A', 0)][m] for m in ('boost', 'mlp', 'ridge')]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "expect": "[0.038553368963066825, 0.02819395198743413, 0.02305005512839109]"
+     },
+     {
+      "call": "[_rep[k]['t'] for k in sorted(_rep)]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "expect": "[5.260692183900434, 5.531972476880427, -3.448379570598814, -1.905162525532528]"
+     },
+     {
+      "call": "[_rep[('B', 1)][m] for m in ('boost', 'mlp', 'ridge')]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "expect": "[0.023132788612540534, 0.025876163300541766, 0.025413973803282586]"
+     },
+     {
+      "call": "sorted(_rep)",
+      "compare": "equal",
+      "expect": "[['A', 0], ['A', 1], ['B', 0], ['B', 1]]"
+     },
+     {
+      "call": "case_report(df[df.world == 'A'].head(150))[('A', 0)]['verdict']",
+      "compare": "equal",
+      "expect": "'boosting'"
+     },
+     {
+      "setup": "_tie = pd.DataFrame({'world': ['C'] * 4, 'seed': [0] * 4, 'day': [1, 2, 3, 4], 'mse_boost': [1.0, 1.2, 0.9, 1.1], 'mse_mlp': [1.1, 1.1, 1.0, 1.0], 'mse_ridge': [1.2, 1.3, 1.1, 1.2], 'var_y': [1.3, 1.3, 1.3, 1.3]})",
+      "call": "case_report(_tie)[('C', 0)]['verdict']",
+      "compare": "equal",
+      "expect": "'no change'"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests on `case.csv`. They check the four verdicts, the three $R^2$ of world A seed 0, the four $t$ values and the $R^2$ of world B seed 1, each to $10^{-6}$. Then the keys, world A seed 0 alone, and a planted tie that must give no change.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nimport pandas as pd\n\n\ndef case_report(df):\n    out = {}\n    for (w, s), g in df.groupby(['world', 'seed']):\n        rep = {m: float(1 - g['mse_' + m].sum() / g['var_y'].sum()) for m in ('boost', 'mlp', 'ridge')}\n        d = (g['mse_mlp'] - g['mse_boost']).to_numpy()\n        t = float(d.mean() / (d.std(ddof=1) / np.sqrt(len(d))))\n        rep['t'] = t\n        rep['verdict'] = 'boosting' if t <= -2 else ('network' if t >= 2 else 'no change')\n        out[(w, int(s))] = rep\n    return out\n",
+      "test": 1,
+      "symptom": "Reads the sign of t the wrong way round."
+     },
+     {
+      "source": "import numpy as np\nimport pandas as pd\n\n\ndef case_report(df):\n    out = {}\n    for (w, s), g in df.groupby(['world', 'seed']):\n        rep = {m: float((1 - g['mse_' + m] / g['var_y']).mean()) for m in ('boost', 'mlp', 'ridge')}\n        d = (g['mse_mlp'] - g['mse_boost']).to_numpy()\n        t = float(d.mean() / (d.std(ddof=1) / np.sqrt(len(d))))\n        rep['t'] = t\n        rep['verdict'] = 'network' if t <= -2 else ('boosting' if t >= 2 else 'no change')\n        out[(w, int(s))] = rep\n    return out\n",
+      "test": 2,
+      "symptom": "Averages a daily R^2 instead of summing errors and variances first."
+     },
+     {
+      "source": "import numpy as np\nimport pandas as pd\n\n\ndef case_report(df):\n    out = {}\n    for (w, s), g in df.groupby(['world', 'seed']):\n        rep = {m: float(1 - g['mse_' + m].sum() / g['var_y'].sum()) for m in ('boost', 'mlp', 'ridge')}\n        d = (g['mse_mlp'] - g['mse_boost']).to_numpy()\n        t = float(d.mean() / (d.std() / np.sqrt(len(d))))\n        rep['t'] = t\n        rep['verdict'] = 'network' if t <= -2 else ('boosting' if t >= 2 else 'no change')\n        out[(w, int(s))] = rep\n    return out\n",
+      "test": 3,
+      "symptom": "Uses the sd that divides by n."
+     },
+     {
+      "source": "import numpy as np\nimport pandas as pd\n\n\ndef case_report(df):\n    out = {}\n    for (w, s), g in df.groupby(['world', 'seed']):\n        rep = {m: float(1 - g['mse_' + m].sum() / g['var_y'].sum()) for m in ('boost', 'mlp', 'ridge')}\n        d = (g['mse_mlp'] - g['mse_boost']).to_numpy()\n        t = float(d.mean() / (d.std(ddof=1) / np.sqrt(len(d))))\n        rep['t'] = t\n        rep['verdict'] = 'network' if t < 0 else 'boosting'\n        out[(w, int(s))] = rep\n    return out\n",
+      "test": 1,
+      "symptom": "Has no no-change band: any sign decides."
+     }
+    ],
+    "budget": 15000
+   },
+   "feedback": {
+    "correct": "The four verdicts: boosting twice, network once, and no change on world B seed 1.",
+    "generic": "Not yet. Check the verdict rule, the $R^2$ and the sd.",
+    "byKey": {
+     "test-1": "The verdicts are off. Negative $t$ means the network's errors are smaller, and $|t| < 2$ means no change.",
+     "test-2": "World A seed 0's $R^2$ is off. Sum the errors and the day variances first, then divide once.",
+     "test-3": "The $t$ values are off. Use the sample sd, `ddof=1`."
+    }
+   },
+   "explain": {
+    "text": "The report is the case's evidence in one table: $R^2$ by model, the paired $t$ and the verdict. It is what the one-page note quotes."
+   }
+  },
+  {
+   "id": "h2-seeds",
+   "difficulty": 3,
+   "skills": [
+    "mi-case"
+   ],
+   "tags": [
+    "case-aloud"
+   ],
+   "prose": "Write `seeds_to_decide(diffs_by_seed)`: the smallest number of seeds $k \\ge 2$ whose first $k$ per-seed differences give $|t| \\ge 2$, or `None` if none do. Treat equal, non-zero differences as decisive.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef seeds_to_decide(diffs_by_seed):\n    # the smallest k >= 2 for which the first k per-seed differences give |t| >= 2,\n    # t = mean / (sd / sqrt(k)) with the sample sd; None if no k does\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef seeds_to_decide(diffs_by_seed):\n    d = np.asarray(diffs_by_seed, dtype=float)\n    for k in range(2, len(d) + 1):\n        x = d[:k]\n        sd = x.std(ddof=1)\n        if sd == 0:\n            if x.mean() != 0:\n                return k\n            continue\n        if abs(x.mean()) / (sd / np.sqrt(k)) >= 2:\n            return k\n    return None\n",
+    "examples": [
+     {
+      "call": "seeds_to_decide([0.01, 0.012, 0.008])",
+      "compare": "equal",
+      "expect": "2"
+     }
+    ],
+    "tests": [
+     {
+      "call": "seeds_to_decide([0.01, 0.012, 0.008])",
+      "compare": "equal",
+      "expect": "2"
+     },
+     {
+      "call": "seeds_to_decide([0.004, -0.002, 0.006, 0.003, 0.005])",
+      "compare": "equal",
+      "expect": "5"
+     },
+     {
+      "call": "seeds_to_decide([0.01, -0.01, 0.01, -0.01])",
+      "compare": "equal",
+      "expect": "None"
+     },
+     {
+      "call": "seeds_to_decide([0.003, 0.003, 0.003])",
+      "compare": "equal",
+      "expect": "2"
+     },
+     {
+      "call": "seeds_to_decide([-0.002, 0.001, -0.004, -0.003, -0.003, -0.002])",
+      "compare": "equal",
+      "expect": "5"
+     },
+     {
+      "call": "seeds_to_decide([0.02])",
+      "compare": "equal",
+      "expect": "None"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests on planted lists: a quick decision, one that needs more seeds, one that never decides, equal differences, a negative effect, and a single seed. Results are compared exactly.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef seeds_to_decide(diffs_by_seed):\n    d = np.asarray(diffs_by_seed, dtype=float)\n    for k in range(2, len(d) + 1):\n        x = d[:k]\n        sd = x.std()\n        if sd == 0:\n            if x.mean() != 0:\n                return k\n            continue\n        if abs(x.mean()) / (sd / np.sqrt(k)) >= 2:\n            return k\n    return None\n",
+      "test": 5,
+      "symptom": "Uses the sd that divides by k, which decides too early."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef seeds_to_decide(diffs_by_seed):\n    d = np.asarray(diffs_by_seed, dtype=float)\n    for k in range(2, len(d) + 1):\n        x = d[:k]\n        sd = x.std(ddof=1)\n        if sd == 0:\n            if x.mean() != 0:\n                return k\n            continue\n        if abs(x.mean()) / sd >= 2:\n            return k\n    return None\n",
+      "test": 2,
+      "symptom": "Forgets the square root of k in the standard error."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef seeds_to_decide(diffs_by_seed):\n    d = np.asarray(diffs_by_seed, dtype=float)\n    for k in range(2, len(d) + 1):\n        x = d[:k]\n        sd = x.std(ddof=1)\n        if sd == 0:\n            if x.mean() != 0:\n                return k\n            continue\n        if x.mean() / (sd / np.sqrt(k)) >= 2:\n            return k\n    return None\n",
+      "test": 5,
+      "symptom": "Tests only a positive effect, missing a negative one."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Seeds added one at a time until the evidence decides.",
+    "generic": "Not yet. Check the sd, the root of $k$ and the sign.",
+    "byKey": {
+     "test-2": "The second list decides at the wrong $k$. Divide the sample sd by $\\sqrt{k}$ for the standard error.",
+     "test-5": "The negative list decides at the wrong $k$. Compare $|t|$ with 2, and use the sample sd, `ddof=1`."
+    }
+   },
+   "explain": {
+    "text": "Adding seeds until $|t| \\ge 2$ is a sequential test, so in practice fix the maximum in advance. The function answers \"how many seeds?\" with the evidence in hand."
+   }
+  },
+  {
+   "id": "h3-case-order",
+   "difficulty": 4,
+   "skills": [
+    "mi-case"
+   ],
+   "tags": [
+    "case-aloud"
+   ],
+   "pace": 180,
+   "question": "Put the steps of the case in the order you would say them. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "c1",
+      "text": "Frame: target, horizon and loss."
+     },
+     {
+      "id": "c2",
+      "text": "Baseline: ridge."
+     },
+     {
+      "id": "c3",
+      "text": "Current model: boosting, with its score."
+     },
+     {
+      "id": "c4",
+      "text": "Candidate: the network."
+     },
+     {
+      "id": "c5",
+      "text": "Fair comparison: purged split, equal budget, seeds."
+     },
+     {
+      "id": "c6",
+      "text": "Result with its interval."
+     },
+     {
+      "id": "c7",
+      "text": "Decision and the condition that would change it."
+     },
+     {
+      "id": "c8",
+      "text": "Next step."
+     },
+     {
+      "id": "cx",
+      "text": "Tune the candidate on the test period until it wins.",
+      "why": "That turns the test period into training data and guarantees a false win."
+     }
+    ],
+    "answer": [
+     "c1",
+     "c2",
+     "c3",
+     "c4",
+     "c5",
+     "c6",
+     "c7",
+     "c8"
+    ],
+    "distractors": [
+     "cx"
+    ]
+   },
+   "feedback": {
+    "correct": "Frame to next step, with a number at each.",
+    "generic": "Not quite. Evidence comes before the decision.",
+    "byKey": {
+     "cx": "Tuning on the test period destroys the test."
+    }
+   },
+   "explain": {
+    "text": "Each step depends on the ones before it: no result without a fair comparison, no decision without a result."
+   }
+  },
+  {
+   "id": "h4-interval",
+   "difficulty": 4,
+   "skills": [
+    "mi-case"
+   ],
+   "tags": [
+    "paired-test"
+   ],
+   "pace": 120,
+   "question": "World B seed 0: the mean daily difference (network minus boosting) is $-0.0233$ with standard error $0.0068$, over 150 days. What is the upper end of the 95% interval, using $t_{0.975, 149} = 1.976$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.0099,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "z",
+      "value": -0.0101,
+      "tol": {
+       "abs": 4e-05
+      }
+     },
+     {
+      "id": "lower",
+      "value": -0.0367,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.0099,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-0.0233 + 1.976 \\times 0.0068 = -0.0099$: still below 0.",
+    "generic": "Not quite. Mean plus the quantile times the standard error.",
+    "byKey": {
+     "lower": "That is the lower end.",
+     "z": "You used 1.96; the question gives the $t$ quantile.",
+     "sign": "The mean is negative; the upper end is negative too."
+    }
+   },
+   "explain": {
+    "text": "The interval is $(-0.0367, -0.0099)$. Its upper end is below 0, so the network's lower error on this seed is settled in sign."
+   }
+  },
+  {
+   "id": "h5-oracle-share",
+   "difficulty": 3,
+   "skills": [
+    "mi-case"
+   ],
+   "tags": [
+    "net-wins"
+   ],
+   "pace": 90,
+   "question": "World B seed 1: the network scores $0.0259$ and the oracle $0.0314$. What share of the oracle does the network reach? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.82,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "inverse",
+      "value": 1.21,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About $0.82$.",
+    "generic": "Not quite. Network over oracle.",
+    "byKey": {
+     "inverse": "You divided the other way round."
+    }
+   },
+   "explain": {
+    "text": "$0.0259/0.0314 \\approx 0.82$: most of the learnable signal, on a seed where the test could not separate it from boosting."
+   }
+  },
+  {
+   "id": "h6-note",
+   "difficulty": 5,
+   "skills": [
+    "mi-case"
+   ],
+   "tags": [
+    "case-aloud"
+   ],
+   "kind": "longform",
+   "prompt": "Write the one-page note to the head of research: should the fund replace its boosted trees with a network? Use the evidence from both simulated worlds, give intervals or $t$ values, and state the condition that would change your recommendation.",
+   "model": "**Recommendation.** Keep the boosted trees for the current return model. Run a network in shadow on the subset of signals that are smooth combinations of many features, and revisit in three months.\n\n**Evidence.** Both models were fitted on the same 350 training days and scored on the same 150 later days, with equal tuning and two seeds, and compared by a paired test over days.\n\n- Where the signal is a threshold on a few features with heavy-tailed noise (world A), the trees win clearly: $R^2$ 0.0386 against 0.0282 on seed 0, paired $t$ = 5.26 and 5.53 on the two seeds. The oracle reaches 0.0411, so the trees capture most of what is learnable.\n- Where the signal is smooth along a combination of all features (world B), the network leads: 0.0386 against 0.0331 on seed 0, $t$ = -3.45, but only $t$ = -1.91 on seed 1, not significant.\n\n**Reading.** Which model wins depends on the shape of the signal. Our production features look more like world A (rank thresholds, many weak inputs), so a switch is not justified now. The network's edge in world B is real on one seed and weak on the other.\n\n**What would change this.** A paired win for the network on fresh data, on at least four seeds, with an interval for the daily difference clear of 0 and a gain that survives costs in net P&L.\n\n**Next step.** Shadow-run the network for three months beside the trees and repeat the paired test on live daily errors and net P&L.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Leads with a clear recommendation"
+    },
+    {
+     "points": 2,
+     "text": "Describes a fair comparison: same split, equal tuning, seeds, paired test over days"
+    },
+    {
+     "points": 2,
+     "text": "Quotes numbers from both worlds, with t values or intervals"
+    },
+    {
+     "points": 2,
+     "text": "Explains that the winner depends on the shape of the signal"
+    },
+    {
+     "points": 2,
+     "text": "States the condition that would change the recommendation, and a next step"
+    }
+   ]
+  }
+ ]
+}

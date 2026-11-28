@@ -1,0 +1,1918 @@
+{
+ "id": "l1-backprop-on-a-whiteboard",
+ "course": "ml-int",
+ "title": "Backprop on a whiteboard",
+ "minutes": 15,
+ "objectives": [
+  "Derive the gradients of a two-layer network by hand and explain each step aloud."
+ ],
+ "skills": [
+  "mi-theory"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The forward pass first",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "pace": 300,
+   "prose": "This lesson takes about fifteen minutes. Interview pace is five minutes for the whole derivation; say each step aloud first. You met this shape in `backprop` level 3. Input $\\mathbf{x} = (1, 2)$, $\\mathbf{W}_1 = [[1, -1], [0.5, 1]]$, ReLU units, $\\mathbf{w}_2 = (2, -1)$, target $y = 1$, loss $L = \\tfrac{1}{2}(\\hat{y} - y)^2$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 340,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.9
+      },
+      {
+       "id": "u1",
+       "label": "unit 1",
+       "x": 0.4,
+       "y": 0.2,
+       "shape": "pill",
+       "valueSide": "above"
+      },
+      {
+       "id": "u2",
+       "label": "unit 2",
+       "x": 0.4,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "yh",
+       "label": "ŷ",
+       "x": 0.7,
+       "y": 0.5
+      },
+      {
+       "id": "L",
+       "label": "L",
+       "x": 0.95,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "u1",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "x2",
+       "to": "u1",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "x1",
+       "to": "u2",
+       "w": 0.5,
+       "label": "0.5"
+      },
+      {
+       "from": "x2",
+       "to": "u2",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "u1",
+       "to": "yh",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "u2",
+       "to": "yh",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "yh",
+       "to": "L",
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x1": "1",
+      "x2": "2"
+     }
+    }
+   },
+   "question": "Fill in the forward pass.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$h_1$",
+      {
+       "edit": true,
+       "answer": -1,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$h_2$",
+      {
+       "edit": true,
+       "answer": 2.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$a_1 = \\max(0, h_1)$",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "no-relu",
+         "value": -1,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$a_2$",
+      {
+       "edit": true,
+       "answer": 2.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$\\hat{y}$",
+      {
+       "edit": true,
+       "answer": -2.5,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "no-relu-out",
+         "value": -4.5,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$L$",
+      {
+       "edit": true,
+       "answer": 6.125,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "no-half",
+         "value": 12.25,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each unit adds its weighted inputs: $h_1 = 1 \\times 1 + (-1) \\times 2$."
+    },
+    {
+     "rung": "point",
+     "text": "The ReLU keeps a positive input and turns a negative one into 0.",
+     "highlight": [
+      "u1",
+      "u2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$h = (-1, 2.5)$, $a = (0, 2.5)$, $\\hat{y} = 2 \\times 0 - 2.5 = -2.5$, $L = \\tfrac{1}{2} \\times 3.5^2 = 6.125$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\hat{y} = -2.5$ and $L = 6.125$: far from the target.",
+    "generic": "Not quite. Work left to right: weighted sums, the ReLU, the output, the loss.",
+    "byKey": {
+     "no-relu": "You passed $h_1 = -1$ straight through. The ReLU turns a negative input into 0.",
+     "no-relu-out": "You used $a_1 = -1$. The ReLU sets it to 0, so $\\hat{y} = -2.5$.",
+     "no-half": "You left out the half in the loss: $\\tfrac{1}{2} \\times 12.25 = 6.125$."
+    }
+   },
+   "explain": {
+    "text": "Unit 1 sums to $-1$ and the ReLU shuts it, so only unit 2 reaches the output. The output is $-1 \\times 2.5 = -2.5$, and the loss is $\\tfrac{1}{2}(-3.5)^2 = 6.125$.",
+    "canvas": {
+     "values": {
+      "x1": "1",
+      "x2": "2",
+      "u1": "h −1, a 0",
+      "u2": "h 2.5, a 2.5",
+      "yh": "−2.5",
+      "L": "6.125"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Backward, in a fixed order",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "Slide through the backward pass. Each node multiplies the gradient arriving from its right by its own local derivative. The order never changes, so it is the order you say aloud.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 340,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.9
+      },
+      {
+       "id": "u1",
+       "label": "unit 1",
+       "x": 0.4,
+       "y": 0.2,
+       "shape": "pill",
+       "valueSide": "above"
+      },
+      {
+       "id": "u2",
+       "label": "unit 2",
+       "x": 0.4,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "yh",
+       "label": "ŷ",
+       "x": 0.7,
+       "y": 0.5
+      },
+      {
+       "id": "L",
+       "label": "L",
+       "x": 0.95,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "u1",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "x2",
+       "to": "u1",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "x1",
+       "to": "u2",
+       "w": 0.5,
+       "label": "0.5"
+      },
+      {
+       "from": "x2",
+       "to": "u2",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "u1",
+       "to": "yh",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "u2",
+       "to": "yh",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "yh",
+       "to": "L",
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x1": "1",
+      "x2": "2",
+      "u1": "h −1, a 0",
+      "u2": "h 2.5, a 2.5",
+      "yh": "−2.5",
+      "L": "6.125"
+     },
+     "caption": "Forward values only."
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "values2": {},
+        "caption": "Forward values only."
+       },
+       {
+        "values2": {
+         "L": "1",
+         "yh": "−3.5"
+        },
+        "caption": "Loss, then output: ∂L/∂ŷ = ŷ − y = −3.5."
+       },
+       {
+        "values2": {
+         "L": "1",
+         "yh": "−3.5"
+        },
+        "caption": "Last weights: ∂L/∂w₂ = −3.5 × a = (0, −8.75)."
+       },
+       {
+        "values2": {
+         "L": "1",
+         "yh": "−3.5",
+         "u1": "a −7",
+         "u2": "a 3.5"
+        },
+        "caption": "Hidden activations: ∂L/∂a = −3.5 × w₂ = (−7, 3.5)."
+       },
+       {
+        "values2": {
+         "L": "1",
+         "yh": "−3.5",
+         "u1": "h 0",
+         "u2": "h 3.5"
+        },
+        "caption": "ReLU gate: unit 1 had h = −1, so its gradient stops."
+       },
+       {
+        "values2": {
+         "L": "1",
+         "yh": "−3.5",
+         "u1": "h 0",
+         "u2": "h 3.5",
+         "x1": "",
+         "x2": ""
+        },
+        "caption": "First weights: ∂L/∂W₁ = δ xᵀ = [[0, 0], [3.5, 7]]."
+       }
+      ],
+      "frameLabels": [
+       "forward",
+       "output",
+       "w₂",
+       "a",
+       "gate",
+       "W₁"
+      ],
+      "label": "Backward",
+      "start": 0
+     }
+    ]
+   },
+   "question": "Put the spoken steps in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "The loss: $\\partial L / \\partial L = 1$."
+     },
+     {
+      "id": "o2",
+      "text": "The output: $\\partial L / \\partial \\hat{y} = \\hat{y} - y$."
+     },
+     {
+      "id": "o3",
+      "text": "The last weights: the output gradient times each hidden activation."
+     },
+     {
+      "id": "o4",
+      "text": "The hidden activations: the output gradient times each outgoing weight."
+     },
+     {
+      "id": "o5",
+      "text": "The ReLU gate: keep a unit's gradient only if its input was positive."
+     },
+     {
+      "id": "o6",
+      "text": "The first weights: each unit's gradient times the input."
+     },
+     {
+      "id": "dx",
+      "text": "Start from the first weights, since the forward pass starts there.",
+      "why": "The backward pass starts at the loss. The first weights need every gradient to their right, so they come last."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5",
+     "o6"
+    ],
+    "distractors": [
+     "dx"
+    ],
+    "same": [
+     [
+      "o3",
+      "o4"
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Loss, output, last weights, activations, gate, first weights.",
+    "generic": "Not quite. Every step needs the gradient from the node to its right.",
+    "byKey": {
+     "dx": "The first weights need every gradient to their right, so they come last."
+    }
+   },
+   "explain": {
+    "text": "Each step reuses the gradient from the step before it, so the order is forced. The last weights and the activations both use the output gradient, so either may come first.",
+    "canvas": {
+     "values2": {
+      "L": "1",
+      "yh": "−3.5",
+      "u1": "h 0",
+      "u2": "h 3.5",
+      "x1": "",
+      "x2": ""
+     },
+     "caption": "First weights: ∂L/∂W₁ = δ xᵀ = [[0, 0], [3.5, 7]]."
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The output gradient",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "Start at the loss. With $L = \\tfrac{1}{2}(\\hat{y} - y)^2$, the half cancels the 2 from the square.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 340,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.9
+      },
+      {
+       "id": "u1",
+       "label": "unit 1",
+       "x": 0.4,
+       "y": 0.2,
+       "shape": "pill",
+       "valueSide": "above"
+      },
+      {
+       "id": "u2",
+       "label": "unit 2",
+       "x": 0.4,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "yh",
+       "label": "ŷ",
+       "x": 0.7,
+       "y": 0.5
+      },
+      {
+       "id": "L",
+       "label": "L",
+       "x": 0.95,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "u1",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "x2",
+       "to": "u1",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "x1",
+       "to": "u2",
+       "w": 0.5,
+       "label": "0.5"
+      },
+      {
+       "from": "x2",
+       "to": "u2",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "u1",
+       "to": "yh",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "u2",
+       "to": "yh",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "yh",
+       "to": "L",
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x1": "1",
+      "x2": "2",
+      "u1": "h −1, a 0",
+      "u2": "h 2.5, a 2.5",
+      "yh": "−2.5",
+      "L": "6.125"
+     },
+     "values2": {
+      "L": "1"
+     }
+    }
+   },
+   "question": "What is $\\partial L / \\partial \\hat{y}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-half",
+      "value": -7,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Differentiate $\\tfrac{1}{2}(\\hat{y} - y)^2$ in $\\hat{y}$."
+    },
+    {
+     "rung": "point",
+     "text": "It is $\\hat{y} - y$.",
+     "highlight": [
+      "yh"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-2.5 - 1 = -3.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\hat{y} - y = -2.5 - 1 = -3.5$.",
+    "generic": "Not quite. Differentiate the loss in $\\hat{y}$.",
+    "byKey": {
+     "sign": "You wrote $y - \\hat{y}$. The derivative in $\\hat{y}$ is $\\hat{y} - y$: negative, since raising $\\hat{y}$ lowers the loss.",
+     "no-half": "You dropped the half: $2(\\hat{y} - y)$ is the gradient of $(\\hat{y} - y)^2$."
+    }
+   },
+   "explain": {
+    "text": "The gradient is $\\hat{y} - y = -3.5$. Negative means raising $\\hat{y}$ would lower the loss.",
+    "canvas": {
+     "values2": {
+      "L": "1",
+      "yh": "−3.5"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The last weights",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "Since $\\hat{y} = w_{2,1} a_1 + w_{2,2} a_2$, each last weight's local derivative is the activation it multiplies.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 340,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.9
+      },
+      {
+       "id": "u1",
+       "label": "unit 1",
+       "x": 0.4,
+       "y": 0.2,
+       "shape": "pill",
+       "valueSide": "above"
+      },
+      {
+       "id": "u2",
+       "label": "unit 2",
+       "x": 0.4,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "yh",
+       "label": "ŷ",
+       "x": 0.7,
+       "y": 0.5
+      },
+      {
+       "id": "L",
+       "label": "L",
+       "x": 0.95,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "u1",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "x2",
+       "to": "u1",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "x1",
+       "to": "u2",
+       "w": 0.5,
+       "label": "0.5"
+      },
+      {
+       "from": "x2",
+       "to": "u2",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "u1",
+       "to": "yh",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "u2",
+       "to": "yh",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "yh",
+       "to": "L",
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x1": "1",
+      "x2": "2",
+      "u1": "h −1, a 0",
+      "u2": "h 2.5, a 2.5",
+      "yh": "−2.5",
+      "L": "6.125"
+     },
+     "values2": {
+      "L": "1",
+      "yh": "−3.5"
+     }
+    }
+   },
+   "question": "Give $\\partial L / \\partial \\mathbf{w}_2$ as a vector $(\\cdot, \\cdot)$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "(0, -8.75)",
+    "accept": [
+     "(0,-8.75)",
+     "[0, -8.75]"
+    ],
+    "wrong": [
+     {
+      "id": "used-h",
+      "tex": "(3.5, -8.75)"
+     },
+     {
+      "id": "used-w",
+      "tex": "(-7, 3.5)"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply $-3.5$ by each activation."
+    },
+    {
+     "rung": "point",
+     "text": "The activations are $a = (0, 2.5)$, not $h$.",
+     "highlight": [
+      "u1",
+      "u2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-3.5 \\times (0, 2.5) = (0, -8.75)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-3.5 \\times (0, 2.5) = (0, -8.75)$.",
+    "generic": "Not quite. Multiply the output gradient by the activations.",
+    "byKey": {
+     "used-h": "You multiplied by $h = (-1, 2.5)$. The weight multiplies the activation after the ReLU, $a_1 = 0$.",
+     "used-w": "That is $\\partial L / \\partial \\mathbf{a}$, the gradient times the weights. For the weights, multiply by the activations."
+    }
+   },
+   "explain": {
+    "text": "Unit 1 sent 0 forward, so its outgoing weight gets no gradient. Unit 2 sent 2.5, so its weight gets $-3.5 \\times 2.5 = -8.75$.",
+    "canvas": {
+     "highlight": [
+      "e-u2-yh"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Through the gate",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "Now the first weights. The activation gradients are $\\partial L / \\partial \\mathbf{a} = -3.5 \\times (2, -1) = (-7, 3.5)$. Then the ReLU gate, then the inputs.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 340,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.9
+      },
+      {
+       "id": "u1",
+       "label": "unit 1",
+       "x": 0.4,
+       "y": 0.2,
+       "shape": "pill",
+       "valueSide": "above"
+      },
+      {
+       "id": "u2",
+       "label": "unit 2",
+       "x": 0.4,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "yh",
+       "label": "ŷ",
+       "x": 0.7,
+       "y": 0.5
+      },
+      {
+       "id": "L",
+       "label": "L",
+       "x": 0.95,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "u1",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "x2",
+       "to": "u1",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "x1",
+       "to": "u2",
+       "w": 0.5,
+       "label": "0.5"
+      },
+      {
+       "from": "x2",
+       "to": "u2",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "u1",
+       "to": "yh",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "u2",
+       "to": "yh",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "yh",
+       "to": "L",
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x1": "1",
+      "x2": "2",
+      "u1": "h −1, a 0",
+      "u2": "h 2.5, a 2.5",
+      "yh": "−2.5",
+      "L": "6.125"
+     },
+     "values2": {
+      "L": "1",
+      "yh": "−3.5",
+      "u1": "a −7",
+      "u2": "a 3.5"
+     }
+    }
+   },
+   "question": "Give $\\partial L / \\partial \\mathbf{W}_1$ as a matrix, row $i$ for unit $i$: type `[[a, b], [c, d]]`.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\begin{pmatrix}0 & 0\\\\3.5 & 7\\end{pmatrix}",
+    "accept": [
+     "[[0, 0], [3.5, 7]]"
+    ],
+    "wrong": [
+     {
+      "id": "no-gate",
+      "tex": "\\begin{pmatrix}-7 & -14\\\\3.5 & 7\\end{pmatrix}"
+     },
+     {
+      "id": "transposed",
+      "tex": "\\begin{pmatrix}0 & 3.5\\\\0 & 7\\end{pmatrix}"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Unit 1's input was $h_1 = -1$."
+    },
+    {
+     "rung": "point",
+     "text": "A ReLU with a negative input passes no gradient: $\\delta_1 = 0$.",
+     "highlight": [
+      "u1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\boldsymbol{\\delta} = (0, 3.5)$, so the rows are $0 \\times (1, 2)$ and $3.5 \\times (1, 2)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\boldsymbol{\\delta} = (0, 3.5)$, so $\\partial L / \\partial \\mathbf{W}_1 = [[0, 0], [3.5, 7]]$.",
+    "generic": "Not quite. Apply the gate, then multiply each unit's gradient by the input.",
+    "byKey": {
+     "no-gate": "You passed $-7$ through unit 1, whose input was $-1$. The ReLU was shut, so its local derivative is 0 and its row is zero.",
+     "transposed": "You put the inputs on the rows. Row $i$ belongs to unit $i$: $\\delta_i$ times $(x_1, x_2)$."
+    }
+   },
+   "explain": {
+    "text": "The gate multiplies by 1 where $h > 0$ and by 0 where $h < 0$, so $\\boldsymbol{\\delta} = (0, 3.5)$. Each row is a unit's $\\delta$ times $\\mathbf{x} = (1, 2)$.",
+    "canvas": {
+     "values2": {
+      "L": "1",
+      "yh": "−3.5",
+      "u1": "h 0",
+      "u2": "h 3.5",
+      "x1": "",
+      "x2": ""
+     },
+     "caption": "First weights: ∂L/∂W₁ = δ xᵀ = [[0, 0], [3.5, 7]]."
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "An input of exactly 0",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "Change one weight so that $h_1 = 0$ exactly. The ReLU has a corner there: its slope is 0 on the left and 1 on the right.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 340,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.9
+      },
+      {
+       "id": "u1",
+       "label": "unit 1",
+       "x": 0.4,
+       "y": 0.2,
+       "shape": "pill",
+       "valueSide": "above"
+      },
+      {
+       "id": "u2",
+       "label": "unit 2",
+       "x": 0.4,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "yh",
+       "label": "ŷ",
+       "x": 0.7,
+       "y": 0.5
+      },
+      {
+       "id": "L",
+       "label": "L",
+       "x": 0.95,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "u1",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "x2",
+       "to": "u1",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "x1",
+       "to": "u2",
+       "w": 0.5,
+       "label": "0.5"
+      },
+      {
+       "from": "x2",
+       "to": "u2",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "u1",
+       "to": "yh",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "u2",
+       "to": "yh",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "yh",
+       "to": "L",
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x1": "1",
+      "x2": "2",
+      "u1": "h 0, a 0",
+      "u2": "h 2.5, a 2.5",
+      "yh": "−2.5",
+      "L": "6.125"
+     }
+    }
+   },
+   "question": "What do you say when the interviewer asks for the gradient at $h_1 = 0$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "conv",
+      "text": "Any slope from 0 to 1 is a subgradient; I use 0 and say so.",
+      "correct": true
+     },
+     {
+      "id": "undef",
+      "text": "The gradient is undefined, so backpropagation cannot run.",
+      "why": "One point of a corner does not stop training. You pick a subgradient and move on."
+     },
+     {
+      "id": "half",
+      "text": "It must be 0.5, the average of the slopes on the two sides.",
+      "why": "0.5 is one valid choice, but not the only one, and not the usual one."
+     },
+     {
+      "id": "one",
+      "text": "It is 1, because the ReLU equals its input at 0.",
+      "why": "The value at 0 matches both sides; the slope does not. Either side, or anything between, is a subgradient."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The left slope is 0 and the right slope is 1."
+    },
+    {
+     "rung": "point",
+     "text": "Any number between them is a subgradient.",
+     "highlight": [
+      "u1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Name a convention: most libraries use 0 at the corner."
+    }
+   ],
+   "feedback": {
+    "correct": "Name the convention, then carry on.",
+    "generic": "Not quite. Think about what a subgradient is at a corner.",
+    "byKey": {
+     "undef": "One corner point does not stop training. Pick a subgradient and say which."
+    }
+   },
+   "explain": {
+    "text": "At a corner any slope between the one-sided slopes is a subgradient. Inputs of exactly 0 are rare in float arithmetic, so the choice almost never matters. Saying which one you use shows you know it is a choice."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "The same steps in matrix form",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "For a hidden layer $\\mathbf{h} = \\mathbf{W}_1 \\mathbf{x}$, $\\mathbf{a} = \\max(0, \\mathbf{h})$ and an output $\\hat{y} = \\mathbf{W}_2 \\mathbf{a}$, the hand steps become three lines.",
+   "question": "Order the derivation. Leave out the line that is wrong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$\\delta_2 = \\partial L / \\partial \\hat{y} = \\hat{y} - y$, from the loss."
+     },
+     {
+      "id": "d2",
+      "text": "$\\partial L / \\partial \\mathbf{a} = \\mathbf{W}_2^\\top \\delta_2$, since each unit feeds the output through its weight."
+     },
+     {
+      "id": "d3",
+      "text": "$\\boldsymbol{\\delta}_1 = (\\mathbf{W}_2^\\top \\delta_2) \\odot \\mathbf{1}[\\mathbf{h} > 0]$, since the ReLU's slope is 1 or 0."
+     },
+     {
+      "id": "d4",
+      "text": "$\\partial L / \\partial \\mathbf{W}_1 = \\boldsymbol{\\delta}_1 \\mathbf{x}^\\top$, since $h_i$ depends on $W_{1,ij}$ through $x_j$."
+     },
+     {
+      "id": "dx",
+      "text": "$\\partial L / \\partial \\mathbf{W}_1 = \\mathbf{x} \\boldsymbol{\\delta}_1^\\top$, the outer product as for a single neuron.",
+      "why": "That puts inputs on the rows. $\\mathbf{W}_1$ has a row per unit, so the gradient must too."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4"
+    ],
+    "distractors": [
+     "dx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start at the output, as before."
+    },
+    {
+     "rung": "point",
+     "text": "The gate comes after the weights carry the gradient back."
+    },
+    {
+     "rung": "step",
+     "text": "Output gradient, back through $\\mathbf{W}_2^\\top$, the gate, then $\\boldsymbol{\\delta}_1 \\mathbf{x}^\\top$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\boldsymbol{\\delta}_1 = (\\mathbf{W}_2^\\top \\delta_2) \\odot \\mathbf{1}[\\mathbf{h} > 0]$, then $\\boldsymbol{\\delta}_1 \\mathbf{x}^\\top$.",
+    "generic": "Not quite. Follow the hand steps from the output back.",
+    "byKey": {
+     "dx": "That puts inputs on the rows. The gradient has the shape of $\\mathbf{W}_1$: a row per unit."
+    }
+   },
+   "explain": {
+    "text": "Here $\\mathbf{W}_2 = (2, -1)$, so $\\mathbf{W}_2^\\top \\delta_2 = (-7, 3.5)$ and the gate gives $(0, 3.5)$. The outer product with $\\mathbf{x} = (1, 2)$ is the matrix you found by hand."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The interviewer changes the loss",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "An interviewer at a fund says: the target is now 1 if a stock beats its sector tomorrow, else 0. Read $\\hat{y}$ as a logit and use log loss, $L = -[y \\ln \\sigma(\\hat{y}) + (1 - y) \\ln(1 - \\sigma(\\hat{y}))]$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 340,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.9
+      },
+      {
+       "id": "u1",
+       "label": "unit 1",
+       "x": 0.4,
+       "y": 0.2,
+       "shape": "pill",
+       "valueSide": "above"
+      },
+      {
+       "id": "u2",
+       "label": "unit 2",
+       "x": 0.4,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "yh",
+       "label": "ŷ",
+       "x": 0.7,
+       "y": 0.5
+      },
+      {
+       "id": "L",
+       "label": "L",
+       "x": 0.95,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "u1",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "x2",
+       "to": "u1",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "x1",
+       "to": "u2",
+       "w": 0.5,
+       "label": "0.5"
+      },
+      {
+       "from": "x2",
+       "to": "u2",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "u1",
+       "to": "yh",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "u2",
+       "to": "yh",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "yh",
+       "to": "L",
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x1": "1",
+      "x2": "2",
+      "u1": "h −1, a 0",
+      "u2": "h 2.5, a 2.5",
+      "yh": "−2.5",
+      "L": "log loss"
+     }
+    }
+   },
+   "question": "With $\\hat{y} = -2.5$ and $y = 1$, what is $\\partial L / \\partial \\hat{y}$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.9241,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "kept-square",
+      "value": -3.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-y",
+      "value": 0.0759,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.9241,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Log loss on a logit has a famously short gradient."
+    },
+    {
+     "rung": "point",
+     "text": "It is $\\sigma(\\hat{y}) - y$.",
+     "highlight": [
+      "yh"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sigma(-2.5) = 0.0759$, so the gradient is $0.0759 - 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sigma(-2.5) - 1 = -0.9241$. Everything left of $\\hat{y}$ is unchanged.",
+    "generic": "Not quite. Differentiate the log loss through the sigmoid.",
+    "byKey": {
+     "kept-square": "That is the squared-loss gradient. The new loss changes only this number.",
+     "no-y": "You stopped at $\\sigma(\\hat{y})$. Subtract the target: $\\sigma(\\hat{y}) - y$.",
+     "sign": "You wrote $y - \\sigma(\\hat{y})$. The gradient in $\\hat{y}$ is $\\sigma(\\hat{y}) - y$."
+    }
+   },
+   "explain": {
+    "text": "Only $\\partial L / \\partial \\hat{y}$ changes, from $-3.5$ to $-0.9241$. The gate and the outer product are the same, so $\\partial L / \\partial \\mathbf{W}_1$ has rows $0$ and $0.9241 \\times (1, 2) = (0.9241, 1.8483)$. Say that aloud: the rest of the network does not care which loss sits on top."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The whiteboard in code",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "Write `two_layer_grads(x, W1, w2, y)` for the network on this lesson's canvas: ReLU hidden units, one linear output, loss $\\tfrac{1}{2}(\\hat{y} - y)^2$. Return the loss, $\\partial L / \\partial \\mathbf{W}_1$ and $\\partial L / \\partial \\mathbf{w}_2$, in that order.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef two_layer_grads(x, W1, w2, y):\n    # h = W1 x, a = ReLU(h), yhat = w2 . a, loss = 0.5 (yhat - y)^2\n    # return (loss, dL/dW1, dL/dw2)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef two_layer_grads(x, W1, w2, y):\n    h = W1 @ x\n    a = np.maximum(h, 0)\n    yhat = w2 @ a\n    loss = 0.5 * (yhat - y) ** 2\n    dy = yhat - y\n    dw2 = dy * a\n    delta = dy * w2 * (h > 0)\n    dW1 = np.outer(delta, x)\n    return loss, dW1, dw2\n",
+    "examples": [
+     {
+      "setup": "xa, W1a, w2a = np.array([1.0, 2.0]), np.array([[1.0, -1.0], [0.5, 1.0]]), np.array([2.0, -1.0])",
+      "call": "float(two_layer_grads(xa, W1a, w2a, 1.0)[0])",
+      "compare": "isclose",
+      "expect": "6.125"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "xa, W1a, w2a = np.array([1.0, 2.0]), np.array([[1.0, -1.0], [0.5, 1.0]]), np.array([2.0, -1.0])",
+      "call": "float(two_layer_grads(xa, W1a, w2a, 1.0)[0])",
+      "compare": "isclose",
+      "expect": "6.125"
+     },
+     {
+      "setup": "xa, W1a, w2a = np.array([1.0, 2.0]), np.array([[1.0, -1.0], [0.5, 1.0]]), np.array([2.0, -1.0])",
+      "call": "two_layer_grads(xa, W1a, w2a, 1.0)[2].tolist()",
+      "compare": "isclose",
+      "expect": "[-0.0, -8.75]"
+     },
+     {
+      "setup": "xa, W1a, w2a = np.array([1.0, 2.0]), np.array([[1.0, -1.0], [0.5, 1.0]]), np.array([2.0, -1.0])",
+      "call": "two_layer_grads(xa, W1a, w2a, 1.0)[1].tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.0, -0.0], [3.5, 7.0]]"
+     },
+     {
+      "setup": "xb, W1b, w2b, yb = np.array([0.5, -1.5]), np.array([[0.3, -0.8], [-1.2, 0.4]]), np.array([1.5, 0.7]), -0.2\ndef _cd(which, e=1e-6):\n    P = [W1b.copy(), w2b.copy()]\n    out = np.zeros_like(P[which])\n    for i in np.ndindex(out.shape):\n        Q = [p.copy() for p in P]; Q[which][i] += e\n        R = [p.copy() for p in P]; R[which][i] -= e\n        out[i] = (two_layer_grads(xb, Q[0], Q[1], yb)[0] - two_layer_grads(xb, R[0], R[1], yb)[0]) / (2 * e)\n    return out",
+      "call": "bool(np.abs(two_layer_grads(xb, W1b, w2b, yb)[1] - _cd(0)).max() < 1e-6)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "xb, W1b, w2b, yb = np.array([0.5, -1.5]), np.array([[0.3, -0.8], [-1.2, 0.4]]), np.array([1.5, 0.7]), -0.2\ndef _cd(which, e=1e-6):\n    P = [W1b.copy(), w2b.copy()]\n    out = np.zeros_like(P[which])\n    for i in np.ndindex(out.shape):\n        Q = [p.copy() for p in P]; Q[which][i] += e\n        R = [p.copy() for p in P]; R[which][i] -= e\n        out[i] = (two_layer_grads(xb, Q[0], Q[1], yb)[0] - two_layer_grads(xb, R[0], R[1], yb)[0]) / (2 * e)\n    return out",
+      "call": "bool(np.abs(two_layer_grads(xb, W1b, w2b, yb)[2] - _cd(1)).max() < 1e-6)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "[g.tolist() for g in two_layer_grads(np.array([1.0, 1.0]), np.array([[-1.0, -1.0], [-2.0, 0.5]]), np.array([2.0, -1.0]), 1.0)[1:]]",
+      "compare": "isclose",
+      "expect": "[[[-0.0, -0.0], [0.0, 0.0]], [-0.0, -0.0]]"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Tests 1 to 3 check the loss, $\\partial L / \\partial \\mathbf{w}_2$ and $\\partial L / \\partial \\mathbf{W}_1$ on this lesson's network. Tests 4 and 5 compare both gradients with central differences on a second network, to $10^{-6}$. Test 6 shuts both units. Numbers are compared to $10^{-9}$ relative.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef two_layer_grads(x, W1, w2, y):\n    h = W1 @ x\n    a = np.maximum(h, 0)\n    yhat = w2 @ a\n    loss = (yhat - y) ** 2\n    dy = 2 * (yhat - y)\n    dw2 = dy * a\n    delta = dy * w2 * (h > 0)\n    dW1 = np.outer(delta, x)\n    return loss, dW1, dw2\n",
+      "test": 1,
+      "symptom": "Drops the half from the loss, so the loss and every gradient double."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef two_layer_grads(x, W1, w2, y):\n    h = W1 @ x\n    a = np.maximum(h, 0)\n    yhat = w2 @ a\n    loss = 0.5 * (yhat - y) ** 2\n    dy = yhat - y\n    dw2 = dy * h\n    delta = dy * w2 * (h > 0)\n    dW1 = np.outer(delta, x)\n    return loss, dW1, dw2\n",
+      "test": 2,
+      "symptom": "Multiplies the output gradient by h instead of the activation a for the last weights."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef two_layer_grads(x, W1, w2, y):\n    h = W1 @ x\n    a = np.maximum(h, 0)\n    yhat = w2 @ a\n    loss = 0.5 * (yhat - y) ** 2\n    dy = yhat - y\n    dw2 = dy * a\n    delta = dy * w2\n    dW1 = np.outer(delta, x)\n    return loss, dW1, dw2\n",
+      "test": 3,
+      "symptom": "Passes gradient through a ReLU whose input was negative."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef two_layer_grads(x, W1, w2, y):\n    h = W1 @ x\n    a = np.maximum(h, 0)\n    yhat = w2 @ a\n    loss = 0.5 * (yhat - y) ** 2\n    dy = yhat - y\n    dw2 = dy * a\n    delta = dy * w2 * (h > 0)\n    dW1 = np.outer(x, delta)\n    return loss, dW1, dw2\n",
+      "test": 3,
+      "symptom": "Builds the first-layer gradient as x times delta, inputs on the rows."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the forward pass first and keep $\\mathbf{h}$."
+    },
+    {
+     "rung": "point",
+     "text": "The gate is `(h > 0)`, multiplied in before the outer product."
+    },
+    {
+     "rung": "step",
+     "text": "`delta = (yhat - y) * w2 * (h > 0)` and `np.outer(delta, x)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Every gradient matches the hand working and central differences.",
+    "generic": "Not yet. Check the forward pass, then each gradient in the spoken order.",
+    "byKey": {
+     "test-1": "The loss is off on the lesson's network: $L = 6.125$ needs the half in $\\tfrac{1}{2}(\\hat{y} - y)^2$.",
+     "test-2": "The last weights' gradient is off. Multiply the output gradient by $\\mathbf{a}$, the activations after the ReLU, not by $\\mathbf{h}$.",
+     "test-3": "The first-layer gradient is off. Apply the gate `(h > 0)` before the outer product, and put units on the rows: `np.outer(delta, x)`."
+    }
+   },
+   "explain": {
+    "text": "The code says the spoken order line by line: output gradient, last weights, gate, outer product. Central differences agree with it everywhere away from a ReLU corner."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "pace": 60,
+   "prose": "The interviewer goes on: \"What changes with tanh instead of ReLU?\" Keep the forward values you would store.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 340,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.9
+      },
+      {
+       "id": "u1",
+       "label": "unit 1",
+       "x": 0.4,
+       "y": 0.2,
+       "shape": "pill",
+       "valueSide": "above"
+      },
+      {
+       "id": "u2",
+       "label": "unit 2",
+       "x": 0.4,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "yh",
+       "label": "ŷ",
+       "x": 0.7,
+       "y": 0.5
+      },
+      {
+       "id": "L",
+       "label": "L",
+       "x": 0.95,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "u1",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "x2",
+       "to": "u1",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "x1",
+       "to": "u2",
+       "w": 0.5,
+       "label": "0.5"
+      },
+      {
+       "from": "x2",
+       "to": "u2",
+       "w": 1,
+       "label": "1"
+      },
+      {
+       "from": "u1",
+       "to": "yh",
+       "w": 2,
+       "label": "2"
+      },
+      {
+       "from": "u2",
+       "to": "yh",
+       "w": -1,
+       "label": "−1"
+      },
+      {
+       "from": "yh",
+       "to": "L",
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "x1": "1",
+      "x2": "2",
+      "u1": "h −1, a 0",
+      "u2": "h 2.5, a 2.5",
+      "yh": "−2.5",
+      "L": "6.125"
+     }
+    }
+   },
+   "question": "Which line replaces the ReLU gate?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Multiply by $1 - a_i^2$, read from the stored activation.",
+      "correct": true
+     },
+     {
+      "id": "h",
+      "text": "Multiply by $1 - h_i^2$, from the input to the unit.",
+      "why": "You squared the input. The derivative of $\\tanh(h)$ is $1 - \\tanh^2(h) = 1 - a^2$."
+     },
+     {
+      "id": "same",
+      "text": "Nothing changes: keep 1 where $h > 0$ and 0 elsewhere.",
+      "why": "That is the ReLU's slope. A tanh unit passes some gradient on both sides of 0."
+     },
+     {
+      "id": "sig",
+      "text": "Multiply by $a_i(1 - a_i)$.",
+      "why": "That is the sigmoid's derivative, $\\sigma(1 - \\sigma)$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Differentiate $\\tanh(h)$."
+    },
+    {
+     "rung": "point",
+     "text": "The derivative can be written with the output.",
+     "highlight": [
+      "u1",
+      "u2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{d}{dh}\\tanh h = 1 - \\tanh^2 h = 1 - a^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "The gate becomes $1 - a^2$: every unit passes some gradient.",
+    "generic": "Not quite. Differentiate $\\tanh(h)$ and write it with the output.",
+    "byKey": {
+     "h": "You used the input. The slope is $1 - \\tanh^2(h)$, which is $1 - a^2$."
+    }
+   },
+   "explain": {
+    "text": "With tanh, unit 1 would pass $1 - \\tanh^2(-1) = 0.42$ of its gradient instead of 0. Every other line of the backward pass stays."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Say the backward pass in a fixed order: loss, output, last weights, activations, gate, first weights.",
+   "A ReLU whose input was negative passes no gradient; at an input of exactly 0, name the subgradient you use.",
+   "Changing the loss changes only $\\partial L / \\partial \\hat{y}$; the rest of the backward pass is the same."
+  ],
+  "formula": {
+   "name": "A hidden layer's backward pass",
+   "tex": "\\boldsymbol{\\delta}_1 = (\\mathbf{W}_2^\\top \\delta_2) \\odot \\mathbf{1}[\\mathbf{h} > 0], \\quad \\frac{\\partial L}{\\partial \\mathbf{W}_1} = \\boldsymbol{\\delta}_1 \\mathbf{x}^\\top",
+   "note": "With tanh the gate is $1 - \\mathbf{a}^2$."
+  },
+  "trap": "Passing gradient through a shut ReLU gives $[[-7, -14], [3.5, 7]]$ instead of $[[0, 0], [3.5, 7]]$."
+ },
+ "quiz": [
+  {
+   "id": "q1-target",
+   "difficulty": 2,
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "Same network and input, but now the target is $y = -2.5$.",
+   "question": "What is $\\partial L / \\partial \\mathbf{W}_1$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "The zero matrix: $\\hat{y}$ already equals $y$.",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "$[[0, 0], [3.5, 7]]$, as before.",
+      "why": "Every gradient scales with $\\hat{y} - y$, which is now 0."
+     },
+     {
+      "id": "half",
+      "text": "$[[0, 0], [1.75, 3.5]]$.",
+      "why": "You halved the old answer. The output gradient is 0, not half of $-3.5$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\hat{y} - y = 0$, so every gradient is 0.",
+    "generic": "Not quite. Start from $\\partial L / \\partial \\hat{y}$."
+   },
+   "explain": {
+    "text": "Every gradient is a product that starts with $\\hat{y} - y$. That factor is $-2.5 - (-2.5) = 0$, so the whole matrix is zero."
+   }
+  },
+  {
+   "id": "q2-gate-opens",
+   "difficulty": 3,
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "prose": "Same weights, target $y = 1$, but the input is now $\\mathbf{x} = (2, 1)$. Then $\\mathbf{h} = (1, 2)$ and $\\hat{y} = 0$.",
+   "question": "What is the top-left entry of $\\partial L / \\partial \\mathbf{W}_1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -4,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "old-gate",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 4,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\delta_1 = (0 - 1) \\times 2 = -2$, times $x_1 = 2$: $-4$.",
+    "generic": "Not quite. Check unit 1's gate first.",
+    "byKey": {
+     "old-gate": "Unit 1's input is now $h_1 = 1 > 0$, so its gate is open.",
+     "sign": "The output gradient is $\\hat{y} - y = -1$, negative."
+    }
+   },
+   "explain": {
+    "text": "Now $h_1 = 1$, so the gate passes. The output gradient is $-1$, unit 1 gets $-1 \\times 2 = -2$, and the entry is $-2 \\times 2 = -4$."
+   }
+  },
+  {
+   "id": "q3-cost",
+   "difficulty": 2,
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "question": "How does the cost of one backward pass compare with one forward pass?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "const",
+      "text": "A small constant multiple of the forward pass, for every gradient at once.",
+      "correct": true
+     },
+     {
+      "id": "per",
+      "text": "One forward pass for each parameter.",
+      "why": "That is the cost of finite differences, which is why we only use them to check."
+     },
+     {
+      "id": "square",
+      "text": "The square of the forward pass, since every weight meets every other.",
+      "why": "Each node is visited once going back, multiplying local derivatives."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One sweep back gives every gradient.",
+    "generic": "Not quite. Count how often each node is visited going back."
+   },
+   "explain": {
+    "text": "The backward pass visits each node once and does about as much work as the forward pass. That is why backpropagation beats finite differences, which need a pass per parameter."
+   }
+  }
+ ]
+}

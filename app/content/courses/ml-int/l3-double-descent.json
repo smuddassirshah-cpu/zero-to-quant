@@ -1,0 +1,1358 @@
+{
+ "id": "l3-double-descent",
+ "course": "ml-int",
+ "title": "Double descent",
+ "minutes": 15,
+ "objectives": [
+  "Explain why test error peaks where parameters equal data points and falls again past it."
+ ],
+ "skills": [
+  "mi-theory"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Past the threshold",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "pace": 240,
+   "prose": "This lesson takes about fifteen minutes; interview pace is four minutes a question. You met the U-shaped picture in `research-int` l6 and the experiment in `nn-train` l12. Here: 40 noisy points in 10 dimensions, least squares on $p$ random ReLU features, median test error over 20 seeds.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "mn",
+       "label": "minimum-norm fit",
+       "values": [
+        0.316,
+        0.249,
+        0.25,
+        0.355,
+        0.77,
+        7.63,
+        null,
+        null,
+        null,
+        null,
+        null
+       ]
+      }
+     ],
+     "x": "index",
+     "xValues": [
+      0.699,
+      1.0,
+      1.301,
+      1.477,
+      1.556,
+      1.602,
+      1.643,
+      1.778,
+      2.0,
+      2.602,
+      3.301
+     ],
+     "xLabel": "log₁₀ of features p (40 training points)",
+     "yLabel": "median test error",
+     "yScale": "log",
+     "decimals": 3,
+     "height": 260
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "pk",
+       "i": 5,
+       "label": "p = 40"
+      }
+     ]
+    }
+   },
+   "question": "What happens to the test error at 100, 400 and 2,000 features?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "falls",
+      "text": "It falls again, below the best error left of the peak.",
+      "correct": true
+     },
+     {
+      "id": "rises",
+      "text": "It keeps rising: more features, more overfitting.",
+      "why": "That is the U-shaped picture, which stops at the threshold. Past it the error falls again."
+     },
+     {
+      "id": "flat",
+      "text": "It stays near the peak, since the fit still passes through every point.",
+      "why": "Every fit past 40 interpolates, but the one chosen is smoother as $p$ grows."
+     },
+     {
+      "id": "back",
+      "text": "It returns to the first minimum and no lower.",
+      "why": "It goes lower: about a quarter of the first minimum by 400 features."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At 40 features there are as many unknowns as points."
+    },
+    {
+     "rung": "point",
+     "text": "Past 40 there are many exact fits; least squares picks the one of smallest norm.",
+     "highlight": [
+      "mn"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The smallest-norm fit gets smoother as $p$ grows, and the error falls again."
+    }
+   ],
+   "feedback": {
+    "correct": "It falls again, to $0.0644$ at 400 features: below $0.249$ at 10.",
+    "generic": "Not quite. Think about which of the many exact fits least squares returns past 40.",
+    "byKey": {
+     "rises": "That is the classical picture. It holds only below the threshold here."
+    }
+   },
+   "explain": {
+    "text": "This is double descent: a first U, a peak of $7.63$ where $p = n = 40$, then a second fall. By 400 features the error is $0.0644$, by 2,000 it is $0.0646$.",
+    "canvas": {
+     "series": {
+      "mn": {
+       "values": [
+        0.316,
+        0.249,
+        0.25,
+        0.355,
+        0.77,
+        7.63,
+        0.589,
+        0.248,
+        0.12,
+        0.0644,
+        0.0646
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Why the peak sits at p = n",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "At $p = n$ the system has exactly one solution, and it must pass through every noisy point. Slide through $p$ and watch the median norm $\\|\\boldsymbol{\\beta}\\|$ of the fitted coefficients.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "nr",
+       "label": "median ‖β‖",
+       "values": [
+        0.78,
+        1.17,
+        1.6,
+        2.03,
+        3.75,
+        10.1,
+        3.4,
+        1.7,
+        0.846,
+        0.341,
+        0.142
+       ]
+      }
+     ],
+     "x": "index",
+     "xValues": [
+      0.699,
+      1.0,
+      1.301,
+      1.477,
+      1.556,
+      1.602,
+      1.643,
+      1.778,
+      2.0,
+      2.602,
+      3.301
+     ],
+     "xLabel": "log₁₀ of features p",
+     "yLabel": "median norm",
+     "yScale": "log",
+     "decimals": 3,
+     "height": 240
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "m",
+       "i": 1,
+       "label": "p = 10: 1.17"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "markers.m.i",
+      "frames": [
+       {
+        "markers": [
+         {
+          "id": "m",
+          "i": 1,
+          "label": "p = 10: 1.17"
+         }
+        ]
+       },
+       {
+        "markers": [
+         {
+          "id": "m",
+          "i": 3,
+          "label": "p = 30: 2.03"
+         }
+        ]
+       },
+       {
+        "markers": [
+         {
+          "id": "m",
+          "i": 5,
+          "label": "p = 40: 10.1"
+         }
+        ]
+       },
+       {
+        "markers": [
+         {
+          "id": "m",
+          "i": 7,
+          "label": "p = 60: 1.7"
+         }
+        ]
+       },
+       {
+        "markers": [
+         {
+          "id": "m",
+          "i": 9,
+          "label": "p = 400: 0.341"
+         }
+        ]
+       }
+      ],
+      "frameLabels": [
+       "10",
+       "30",
+       "40",
+       "60",
+       "400"
+      ],
+      "label": "Features",
+      "start": 0
+     }
+    ]
+   },
+   "question": "How many times larger is the median norm at $p = 40$ than at $p = 10$? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8.7,
+    "tol": {
+     "abs": 0.15
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "inverse",
+      "value": 0.11,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the norm at 10 and at 40 features."
+    },
+    {
+     "rung": "point",
+     "text": "They are $1.17$ and $10.1$.",
+     "highlight": [
+      "nr"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$10.1/1.17 \\approx 8.7$."
+    }
+   ],
+   "feedback": {
+    "correct": "About $8.7$ times: the forced fit needs huge coefficients.",
+    "generic": "Not quite. Divide the norm at 40 by the norm at 10.",
+    "byKey": {
+     "inverse": "You divided the other way round. The norm at 40 is the larger."
+    }
+   },
+   "explain": {
+    "text": "To pass through every noisy point the coefficients blow up, to $10.1$, about $8.7$ times the norm at 10. Past 40 many fits interpolate, and the smallest one shrinks: $0.341$ at 400 features. Large coefficients amplify noise at new points, which is the peak in test error."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Read the peak",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "Back to the test error, now in full.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "mn",
+       "label": "minimum-norm fit",
+       "values": [
+        0.316,
+        0.249,
+        0.25,
+        0.355,
+        0.77,
+        7.63,
+        0.589,
+        0.248,
+        0.12,
+        0.0644,
+        0.0646
+       ]
+      }
+     ],
+     "x": "index",
+     "xValues": [
+      0.699,
+      1.0,
+      1.301,
+      1.477,
+      1.556,
+      1.602,
+      1.643,
+      1.778,
+      2.0,
+      2.602,
+      3.301
+     ],
+     "xLabel": "log₁₀ of features p (40 training points)",
+     "yLabel": "median test error",
+     "yScale": "log",
+     "decimals": 3,
+     "height": 260
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "a",
+       "i": 1,
+       "label": "0.249"
+      },
+      {
+       "id": "pk",
+       "i": 5,
+       "label": "7.63"
+      }
+     ]
+    }
+   },
+   "question": "How many times the error at 10 features is the peak? Give a whole number.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 31,
+    "tol": {
+     "abs": 1
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "inverse",
+      "value": 0.03,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read both marked values."
+    },
+    {
+     "rung": "point",
+     "text": "The peak is $7.63$ and the error at 10 features is $0.249$.",
+     "highlight": [
+      "pk"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$7.63/0.249 \\approx 31$."
+    }
+   ],
+   "feedback": {
+    "correct": "$7.63/0.249 \\approx 31$ times.",
+    "generic": "Not quite. Divide the peak by the error at 10 features.",
+    "byKey": {
+     "inverse": "You divided the other way round."
+    }
+   },
+   "explain": {
+    "text": "The peak is about $31$ times the error at 10 features. In an answer, say the peak is at $p = n$ and that it is large, about $7.63$ against $0.249$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The second descent",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "The first minimum is $0.249$ at 10 features. Past the peak the error falls to $0.0644$ at 400.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "mn",
+       "label": "minimum-norm fit",
+       "values": [
+        0.316,
+        0.249,
+        0.25,
+        0.355,
+        0.77,
+        7.63,
+        0.589,
+        0.248,
+        0.12,
+        0.0644,
+        0.0646
+       ]
+      }
+     ],
+     "x": "index",
+     "xValues": [
+      0.699,
+      1.0,
+      1.301,
+      1.477,
+      1.556,
+      1.602,
+      1.643,
+      1.778,
+      2.0,
+      2.602,
+      3.301
+     ],
+     "xLabel": "log₁₀ of features p (40 training points)",
+     "yLabel": "median test error",
+     "yScale": "log",
+     "decimals": 3,
+     "height": 260
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "a",
+       "i": 1,
+       "label": "0.249"
+      },
+      {
+       "id": "b",
+       "i": 9,
+       "label": "0.0644"
+      }
+     ]
+    }
+   },
+   "question": "What is the error at 400 features as a share of the first minimum? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.26,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "inverse",
+      "value": 3.86,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the later error by the earlier one."
+    },
+    {
+     "rung": "point",
+     "text": "$0.0644/0.249$.",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is about $0.26$, a quarter."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.0644/0.249 \\approx 0.26$: about a quarter.",
+    "generic": "Not quite. Divide the error at 400 by the error at 10.",
+    "byKey": {
+     "inverse": "You divided the other way round: the error at 400 is the smaller."
+    }
+   },
+   "explain": {
+    "text": "The second descent goes well below the first minimum, to about $0.26$ of it. Say that number: it is what makes double descent more than a curiosity."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "What noise does",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "Rerun the experiment with label noise of sd 0.2 instead of 0.1.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "mn",
+       "label": "minimum-norm fit",
+       "values": [
+        0.316,
+        0.249,
+        0.25,
+        0.355,
+        0.77,
+        7.63,
+        0.589,
+        0.248,
+        0.12,
+        0.0644,
+        0.0646
+       ]
+      },
+      {
+       "id": "n2",
+       "label": "noise sd 0.2",
+       "values": [
+        0.32,
+        0.244,
+        0.287,
+        0.475,
+        1.11,
+        8.43,
+        0.926,
+        0.373,
+        0.214,
+        0.125,
+        0.122
+       ]
+      }
+     ],
+     "x": "index",
+     "xValues": [
+      0.699,
+      1.0,
+      1.301,
+      1.477,
+      1.556,
+      1.602,
+      1.643,
+      1.778,
+      2.0,
+      2.602,
+      3.301
+     ],
+     "xLabel": "log₁₀ of features p (40 training points)",
+     "yLabel": "median test error",
+     "yScale": "log",
+     "decimals": 3,
+     "height": 260
+    }
+   },
+   "question": "Which statement fits the two curves?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "The peak rises a little, to $8.43$, and the error at 2,000 features roughly doubles, to $0.122$.",
+      "correct": true
+     },
+     {
+      "id": "peak",
+      "text": "Only the peak moves: it shifts right, to more features.",
+      "why": "The peak stays at $p = n = 40$; noise changes heights, not where the threshold is."
+     },
+     {
+      "id": "none",
+      "text": "Nothing changes past the peak: interpolation removes the noise.",
+      "why": "An interpolating fit passes through the noise, so noise still costs something at 2,000 features."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two curves at 40 and at 2,000."
+    },
+    {
+     "rung": "point",
+     "text": "At 40: $7.63$ and $8.43$.",
+     "highlight": [
+      "n2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At 2,000: $0.0646$ and $0.122$."
+    }
+   ],
+   "feedback": {
+    "correct": "More noise, a higher peak at the same place and a higher floor.",
+    "generic": "Not quite. Read both curves at 40 and at 2,000 features.",
+    "byKey": {
+     "peak": "The threshold is set by $p = n$, not by the noise."
+    }
+   },
+   "explain": {
+    "text": "Noise is what the peak amplifies, so it rises, from $7.63$ to $8.43$. The floor at 2,000 features goes from $0.0646$ to $0.122$. The threshold stays at 40."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "More parameters always overfit?",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "A candidate says: \"More parameters always overfit. That is the bias-variance trade-off.\"",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "mn",
+       "label": "minimum-norm fit",
+       "values": [
+        0.316,
+        0.249,
+        0.25,
+        0.355,
+        0.77,
+        7.63,
+        0.589,
+        0.248,
+        0.12,
+        0.0644,
+        0.0646
+       ]
+      }
+     ],
+     "x": "index",
+     "xValues": [
+      0.699,
+      1.0,
+      1.301,
+      1.477,
+      1.556,
+      1.602,
+      1.643,
+      1.778,
+      2.0,
+      2.602,
+      3.301
+     ],
+     "xLabel": "log₁₀ of features p (40 training points)",
+     "yLabel": "median test error",
+     "yScale": "log",
+     "decimals": 3,
+     "height": 260
+    }
+   },
+   "question": "What do you say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "dd",
+      "text": "Only up to the threshold: past $p = n$ the minimum-norm fit improves as $p$ grows.",
+      "correct": true
+     },
+     {
+      "id": "agree",
+      "text": "Agree: that is the U-shaped curve, which holds for every model size.",
+      "why": "The U is the left half of this chart. The error falls again past $p = n$."
+     },
+     {
+      "id": "never",
+      "text": "Disagree: more parameters never hurt test error, at any size.",
+      "why": "They hurt near $p = n$: the peak is about 31 times the first minimum."
+     },
+     {
+      "id": "data",
+      "text": "Agree, unless you add more data to keep up with the parameters.",
+      "why": "More data moves the threshold, but at fixed data the error still falls again past it."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at the right half of the chart."
+    },
+    {
+     "rung": "point",
+     "text": "The error falls past 40 features.",
+     "highlight": [
+      "mn"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The trade-off picture stops at the interpolation threshold."
+    }
+   ],
+   "feedback": {
+    "correct": "The U-curve is only half the picture for minimum-norm fits.",
+    "generic": "Not quite. Read the error past 40 features.",
+    "byKey": {
+     "agree": "You stopped at the U. Past $p = n$ the error falls again."
+    }
+   },
+   "explain": {
+    "text": "More parameters hurt most at $p = n$, where the error is $7.63$. Past it the implicit preference for small norms takes over, and the error falls to $0.0644$ by 400 features."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Ridge at every p",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "Now pick the best ridge penalty from a grid at each $p$, and compare it with the minimum-norm fit.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "mn",
+       "label": "minimum-norm fit",
+       "values": [
+        0.316,
+        0.249,
+        0.25,
+        0.355,
+        0.77,
+        7.63,
+        0.589,
+        0.248,
+        0.12,
+        0.0644,
+        0.0646
+       ]
+      },
+      {
+       "id": "rt",
+       "label": "best ridge per p",
+       "values": [
+        0.287,
+        0.218,
+        0.153,
+        0.11,
+        0.0942,
+        0.105,
+        0.0989,
+        0.0773,
+        0.0666,
+        0.0463,
+        null
+       ]
+      }
+     ],
+     "x": "index",
+     "xValues": [
+      0.699,
+      1.0,
+      1.301,
+      1.477,
+      1.556,
+      1.602,
+      1.643,
+      1.778,
+      2.0,
+      2.602,
+      3.301
+     ],
+     "xLabel": "log₁₀ of features p (40 training points)",
+     "yLabel": "median test error",
+     "yScale": "log",
+     "decimals": 3,
+     "height": 260
+    }
+   },
+   "question": "What happens to the peak?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "gone",
+      "text": "It almost disappears: $0.105$ at 40 features against $7.63$.",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "It stays: the peak is a property of $p = n$, not of the fit.",
+      "why": "The peak comes from huge coefficients, which a penalty caps."
+     },
+     {
+      "id": "worse",
+      "text": "It grows, since ridge adds bias.",
+      "why": "Ridge trades a little bias for a large cut in variance; at $p = n$ that wins."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two curves at 40."
+    },
+    {
+     "rung": "point",
+     "text": "The ridge curve barely bumps there.",
+     "highlight": [
+      "rt"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.105$ against $7.63$."
+    }
+   ],
+   "feedback": {
+    "correct": "A tuned penalty removes most of the peak.",
+    "generic": "Not quite. Read the ridge curve at 40 features.",
+    "byKey": {
+     "same": "The peak needs huge coefficients; ridge stops them growing."
+    }
+   },
+   "explain": {
+    "text": "With the penalty tuned at each $p$ the error at 40 is $0.105$, a small bump. The curve keeps falling, to $0.0463$ at 400. Double descent is sharpest with no regularisation."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Model-wise and epoch-wise",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "Belkin et al. (2019) named the threshold and the second descent. Nakkiran et al. (2019) found it in deep networks, both as width grows (model-wise) and as training goes on (epoch-wise). The spoken rule: test error peaks where the model can just interpolate the training set, $p \\approx n$, and falls again past it.",
+   "question": "Which is epoch-wise double descent?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "epoch",
+      "text": "Test error rises then falls again as one network trains for longer.",
+      "correct": true
+     },
+     {
+      "id": "model",
+      "text": "Test error rises then falls as the network gets wider.",
+      "why": "That is model-wise double descent, the version on this chart."
+     },
+     {
+      "id": "data",
+      "text": "Test error falls steadily with more training data.",
+      "why": "That is the usual learning curve, with no second descent."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Epoch-wise: the same peak, met over training time.",
+    "generic": "Not quite. Epoch-wise means over training steps."
+   },
+   "explain": {
+    "text": "Training longer lets a large network fit more of the noise, so its effective size grows with epochs. The peak then appears in time instead of in width."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Forty days, two thousand features",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "A colleague reads the chart. She proposes a 2,000-feature minimum-norm regression on the last 40 days of returns, \"since past the peak more features help\".",
+   "question": "What is the strongest objection?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "snr",
+      "text": "It needs a learnable signal; daily returns have an R² of a few per cent.",
+      "correct": true
+     },
+     {
+      "id": "peak",
+      "text": "At 2,000 features the fit sits right on the error peak.",
+      "why": "The peak is at $p = n = 40$; 2,000 is far past it."
+     },
+     {
+      "id": "slow",
+      "text": "A 2,000-feature fit is far too slow to run each day.",
+      "why": "A 40-by-2,000 pseudo-inverse is fast. Speed is not the problem."
+     },
+     {
+      "id": "fine",
+      "text": "No objection: the chart shows that more features help.",
+      "why": "The chart's target is a smooth function with small noise. Returns are mostly noise."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What made the second descent work in our experiment?"
+    },
+    {
+     "rung": "point",
+     "text": "A smooth target, $\\tanh(\\mathbf{x} \\cdot \\mathbf{w})$, with noise sd 0.1."
+    },
+    {
+     "rung": "step",
+     "text": "Returns are nearly all noise, and 40 days is one regime."
+    }
+   ],
+   "feedback": {
+    "correct": "Double descent explains why big models can generalise, not that any big model will.",
+    "generic": "Not quite. Compare the signal in the chart with the signal in returns.",
+    "byKey": {
+     "fine": "The experiment had a strong smooth signal. Daily returns do not."
+    }
+   },
+   "explain": {
+    "text": "Huge networks generalise when there is structure to find and the implicit bias suits it. With a few per cent of signal and 40 days of one regime, the minimum-norm fit interpolates noise."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The curve in code",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "Write `min_norm_test_error(p, seed)`. The supplied `make_data(seed)` is the generator behind every chart in this lesson. Use the first $p$ columns of `W` for ReLU features, the minimum-norm least-squares fit, and the test set.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef min_norm_test_error(p, seed):\n    X, y, Xt, yt, W = make_data(seed)   # supplied: 40 train, 2,000 test, W is 10 by 2,000\n    # features: ReLU of X @ (first p columns of W); fit the minimum-norm least squares\n    # return the mean squared error on the test set\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef min_norm_test_error(p, seed):\n    X, y, Xt, yt, W = make_data(seed)\n    F = np.maximum(X @ W[:, :p], 0)\n    Ft = np.maximum(Xt @ W[:, :p], 0)\n    beta = np.linalg.pinv(F) @ y\n    return float(np.mean((Ft @ beta - yt) ** 2))\n",
+    "prelude": "import numpy as np\nimport math\n\n\ndef make_data(seed, n=40, n_test=2000, d=10, noise=0.1, P=2000):\n    rng = np.random.default_rng(seed)\n    w = rng.normal(size=d) / math.sqrt(d)\n    X = rng.normal(size=(n, d))\n    Xt = rng.normal(size=(n_test, d))\n    y = np.tanh(X @ w) + noise * rng.normal(size=n)\n    yt = np.tanh(Xt @ w)\n    W = rng.normal(size=(d, P)) / math.sqrt(d)\n    return X, y, Xt, yt, W\n",
+    "examples": [
+     {
+      "call": "min_norm_test_error(10, 0)",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "expect": "0.13798090243796696"
+     }
+    ],
+    "tests": [
+     {
+      "call": "min_norm_test_error(10, 0)",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "expect": "0.13798090243796696"
+     },
+     {
+      "call": "min_norm_test_error(400, 3)",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      },
+      "expect": "0.2006083988711011"
+     },
+     {
+      "call": "float(np.median([min_norm_test_error(10, s) for s in range(20)]))",
+      "expect": "0.249",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0.1,
+       "abs": 0
+      }
+     },
+     {
+      "call": "float(np.median([min_norm_test_error(40, s) for s in range(20)]))",
+      "expect": "7.63",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0.1,
+       "abs": 0
+      }
+     },
+     {
+      "call": "float(np.median([min_norm_test_error(400, s) for s in range(20)]))",
+      "expect": "0.0644",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0.1,
+       "abs": 0
+      }
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. Tests 1 and 2 compare one seed at 10 and 400 features to $10^{-6}$. Tests 3 to 5 take the median over 20 seeds at 10, 40 and 400 features and accept it within 10% of $0.249$, $7.63$ and $0.0644$. The 60 fits take about a second in the browser.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef min_norm_test_error(p, seed):\n    X, y, Xt, yt, W = make_data(seed)\n    F = X @ W[:, :p]\n    Ft = Xt @ W[:, :p]\n    beta = np.linalg.pinv(F) @ y\n    return float(np.mean((Ft @ beta - yt) ** 2))\n",
+      "test": 1,
+      "symptom": "Leaves out the ReLU, so the features are linear in x."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef min_norm_test_error(p, seed):\n    X, y, Xt, yt, W = make_data(seed)\n    F = np.maximum(X @ W[:, :p], 0)\n    Ft = np.maximum(Xt @ W[:, :p], 0)\n    beta = np.linalg.pinv(F) @ y\n    return float(np.mean((F @ beta - y) ** 2))\n",
+      "test": 1,
+      "symptom": "Reports the training error, which is 0 past the threshold."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef min_norm_test_error(p, seed):\n    X, y, Xt, yt, W = make_data(seed)\n    W = np.random.default_rng(seed).normal(size=(10, p)) / 10 ** 0.5\n    F = np.maximum(X @ W, 0)\n    Ft = np.maximum(Xt @ W, 0)\n    beta = np.linalg.pinv(F) @ y\n    return float(np.mean((Ft @ beta - yt) ** 2))\n",
+      "test": 1,
+      "symptom": "Draws fresh feature weights instead of the first p columns of the supplied W."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef min_norm_test_error(p, seed):\n    X, y, Xt, yt, W = make_data(seed)\n    F = np.maximum(X @ W[:, :p], 0)\n    Ft = np.maximum(Xt @ W[:, :p], 0)\n    beta = np.linalg.solve(F.T @ F, F.T @ y)\n    return float(np.mean((Ft @ beta - yt) ** 2))\n",
+      "test": 2,
+      "symptom": "Solves the normal equations, which are singular past p = n."
+     }
+    ],
+    "budget": 4000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Features are `np.maximum(X @ W[:, :p], 0)`, the same for the test inputs."
+    },
+    {
+     "rung": "point",
+     "text": "The pseudo-inverse gives the minimum-norm solution for any $p$."
+    },
+    {
+     "rung": "step",
+     "text": "`beta = np.linalg.pinv(F) @ y`, then the mean squared error on `Xt`, `yt`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your medians reproduce the chart.",
+    "generic": "Not yet. Check the features, the fit and which set you score on.",
+    "byKey": {
+     "test-1": "One seed at 10 features is off. Use ReLU features from the first $p$ columns of the supplied `W`. Score on the test set, not the training set.",
+     "test-2": "The fit breaks at 400 features. Past $p = n$ the normal equations are singular; `np.linalg.pinv` gives the minimum-norm solution."
+    }
+   },
+   "explain": {
+    "text": "The pseudo-inverse works on both sides of the threshold: it is the least-squares fit below 40 and the smallest exact fit above. That one line is the whole of double descent here."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "pace": 120,
+   "prose": "The interviewer goes on: \"Where would ridge put the peak?\" The new curve uses one fixed penalty, $\\lambda = 0.01$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "mn",
+       "label": "minimum-norm fit",
+       "values": [
+        0.316,
+        0.249,
+        0.25,
+        0.355,
+        0.77,
+        7.63,
+        0.589,
+        0.248,
+        0.12,
+        0.0644,
+        0.0646
+       ]
+      },
+      {
+       "id": "r1",
+       "label": "ridge λ = 0.01",
+       "values": [
+        0.316,
+        0.248,
+        0.247,
+        0.312,
+        0.398,
+        0.471,
+        0.421,
+        0.209,
+        0.117,
+        0.0643,
+        null
+       ]
+      }
+     ],
+     "x": "index",
+     "xValues": [
+      0.699,
+      1.0,
+      1.301,
+      1.477,
+      1.556,
+      1.602,
+      1.643,
+      1.778,
+      2.0,
+      2.602,
+      3.301
+     ],
+     "xLabel": "log₁₀ of features p (40 training points)",
+     "yLabel": "median test error",
+     "yScale": "log",
+     "decimals": 3,
+     "height": 260
+    }
+   },
+   "question": "What do you answer?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same-place",
+      "text": "Still at $p = n$, but far lower: $0.471$ instead of $7.63$.",
+      "correct": true
+     },
+     {
+      "id": "moves",
+      "text": "It moves to $p = 2n$, since ridge acts like extra data.",
+      "why": "The chart's ridge curve still peaks at 40 features."
+     },
+     {
+      "id": "gone",
+      "text": "Nowhere: any penalty, however small, removes the peak.",
+      "why": "A penalty of $0.001$ still leaves a peak of about 1.64 at 40."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the top of the ridge curve."
+    },
+    {
+     "rung": "point",
+     "text": "It is still at 40 features.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.471$ against $7.63$."
+    }
+   ],
+   "feedback": {
+    "correct": "Same place, much lower.",
+    "generic": "Not quite. Find where the ridge curve peaks.",
+    "byKey": {
+     "moves": "The ridge curve peaks at 40 too; only its height changed."
+    }
+   },
+   "explain": {
+    "text": "The penalty caps the coefficients at $p = n$, so the peak shrinks to $0.471$ but stays at 40. The stronger the penalty, the flatter the bump."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Test error peaks at the interpolation threshold, $p = n$: $7.63$ at 40 features for 40 points, against $0.249$ at 10.",
+   "Past it the minimum-norm fit gets smoother and the error falls again, to $0.0644$ at 400 features.",
+   "A tuned ridge penalty leaves only a bump; double descent does not license huge regressions on noisy returns."
+  ],
+  "formula": {
+   "name": "The minimum-norm fit",
+   "tex": "\\hat{\\boldsymbol{\\beta}} = \\mathbf{F}^{+}\\mathbf{y} = \\arg\\min\\{\\|\\boldsymbol{\\beta}\\| : \\boldsymbol{\\beta} \\text{ minimises } \\|\\mathbf{F}\\boldsymbol{\\beta} - \\mathbf{y}\\|\\}",
+   "note": "The pseudo-inverse works on both sides of $p = n$."
+  },
+  "trap": "\"More parameters always overfit\" describes only the left half of the curve."
+ },
+ "quiz": [
+  {
+   "id": "q1-sixty",
+   "difficulty": 2,
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "question": "Repeat the experiment with 60 training points. Where is the peak in test error now?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "60",
+      "text": "At 60 features.",
+      "correct": true
+     },
+     {
+      "id": "40",
+      "text": "At 40 features, as before.",
+      "why": "The peak sits where features equal training points, now 60."
+     },
+     {
+      "id": "120",
+      "text": "At 120 features.",
+      "why": "You doubled it. The threshold is $p = n$, not $p = 2n$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The threshold is $p = n = 60$.",
+    "generic": "Not quite. The peak sits where the fit can just interpolate."
+   },
+   "explain": {
+    "text": "The peak is at the interpolation threshold, where features equal training points. With 60 points that is 60 features."
+   }
+  },
+  {
+   "id": "q2-norm",
+   "difficulty": 3,
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "question": "Why is the test error so large at $p = n$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "norm",
+      "text": "The one exact fit needs huge coefficients, which amplify noise.",
+      "correct": true
+     },
+     {
+      "id": "few",
+      "text": "There are too few features to fit the signal at all.",
+      "why": "At $p = n$ there are enough to fit every training point exactly."
+     },
+     {
+      "id": "slow",
+      "text": "The fit has not converged after its iterations.",
+      "why": "Least squares here is solved exactly, with no iterations."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Forced interpolation of noise needs large coefficients.",
+    "generic": "Not quite. Think about the size of the one exact solution."
+   },
+   "explain": {
+    "text": "At $p = n$ the median norm is about $10.1$ against $1.17$ at 10 features. Large coefficients turn small input changes into large output errors."
+   }
+  },
+  {
+   "id": "q3-floor",
+   "difficulty": 3,
+   "tags": [
+    "double-descent",
+    "bias-variance"
+   ],
+   "prose": "At 2,000 features the median test error is $0.0646$ with noise sd 0.1 and $0.122$ with sd 0.2.",
+   "question": "What is the second figure as a multiple of the first? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.9,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 4,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.122/0.0646 \\approx 1.9$.",
+    "generic": "Not quite. Divide the two errors.",
+    "byKey": {
+     "var": "You squared the change in sd. The measured floor roughly doubles; it does not quadruple."
+    }
+   },
+   "explain": {
+    "text": "The floor goes from $0.0646$ to $0.122$, about $1.9$ times. The interpolating fit carries part of the noise into its predictions."
+   }
+  }
+ ]
+}

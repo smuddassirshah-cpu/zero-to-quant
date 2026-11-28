@@ -1,0 +1,1330 @@
+{
+ "id": "l8-a-layers-backward-pass",
+ "course": "ml-int",
+ "title": "A layer's backward pass",
+ "minutes": 15,
+ "objectives": [
+  "Write the backward pass of a linear layer and a ReLU, checked by central differences."
+ ],
+ "skills": [
+  "mi-code"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Shapes of the gradients",
+   "tags": [
+    "backward-pass"
+   ],
+   "pace": 1200,
+   "prose": "This lesson takes about fifteen minutes; a two-drill session follows it. You wrote array backward passes in `backprop` level 4. A layer computes $\\mathbf{Z} = \\mathbf{X}\\mathbf{W} + \\mathbf{b}$ for a batch: $\\mathbf{X}$ is $2 \\times 2$, $\\mathbf{W}$ is $2 \\times 3$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "X",
+       "rows": [
+        [
+         1,
+         2
+        ],
+        [
+         3,
+         -1
+        ]
+       ],
+       "label": "$\\mathbf{X}$"
+      },
+      {
+       "id": "W",
+       "rows": [
+        [
+         1,
+         0,
+         -1
+        ],
+        [
+         2,
+         1,
+         0
+        ]
+       ],
+       "label": "$\\mathbf{W}$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Every gradient has the shape of what it is the gradient of. Fill in the shapes.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Gradient",
+     "Rows",
+     "Columns"
+    ],
+    "rows": [
+     [
+      "$\\partial L/\\partial \\mathbf{W}$",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "$\\partial L/\\partial \\mathbf{X}$",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "dout-shape",
+         "value": 3,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$\\partial L/\\partial \\mathbf{b}$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "b-batch",
+         "value": 2,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      },
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A gradient has the shape of the array it belongs to."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathbf{X}$ is $2 \\times 2$, $\\mathbf{W}$ is $2 \\times 3$, $\\mathbf{b}$ has 3 entries.",
+     "highlight": [
+      "X",
+      "W"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2 \\times 3$, $2 \\times 2$, $1 \\times 3$."
+    }
+   ],
+   "feedback": {
+    "correct": "Each gradient matches its array: $2 \\times 3$, $2 \\times 2$, $1 \\times 3$.",
+    "generic": "Not quite. Match each gradient to its array's shape.",
+    "byKey": {
+     "dout-shape": "That is the shape of $\\mathbf{Z}$. The gradient for $\\mathbf{X}$ is shaped like $\\mathbf{X}$.",
+     "b-batch": "The bias is shared by the whole batch, so its gradient has one row, summed over the batch."
+    }
+   },
+   "explain": {
+    "text": "Shapes first is the interview habit: the products then nearly write themselves. Here $\\partial L/\\partial \\mathbf{Z}$ is $2 \\times 3$, like $\\mathbf{Z}$."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Three products",
+   "tags": [
+    "backward-pass"
+   ],
+   "prose": "Take the arriving gradient $d\\mathbf{Z}$ as given, with no ReLU yet. Step through which arrays meet in each product.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "X",
+       "rows": [
+        [
+         1,
+         2
+        ],
+        [
+         3,
+         -1
+        ]
+       ],
+       "label": "$\\mathbf{X}$"
+      },
+      {
+       "id": "W",
+       "rows": [
+        [
+         1,
+         0,
+         -1
+        ],
+        [
+         2,
+         1,
+         0
+        ]
+       ],
+       "label": "$\\mathbf{W}$"
+      },
+      {
+       "id": "D",
+       "rows": [
+        [
+         1,
+         0,
+         2
+        ],
+        [
+         -1,
+         1,
+         0
+        ]
+       ],
+       "label": "$d\\mathbf{Z}$"
+      }
+     ]
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "highlight": {
+         "D": {
+          "rows": [
+           0,
+           1
+          ]
+         }
+        },
+        "caption": "dZ, the gradient arriving from above"
+       },
+       {
+        "highlight": {
+         "D": {
+          "rows": [
+           0
+          ]
+         },
+         "W": {
+          "rows": [
+           0
+          ]
+         }
+        },
+        "caption": "dX = dZ Wᵀ: (2 × 3)(3 × 2)"
+       },
+       {
+        "highlight": {
+         "X": {
+          "cols": [
+           0
+          ]
+         },
+         "D": {
+          "cols": [
+           0
+          ]
+         }
+        },
+        "caption": "dW = Xᵀ dZ: (2 × 2)(2 × 3)"
+       },
+       {
+        "highlight": {
+         "D": {
+          "cols": [
+           0,
+           1,
+           2
+          ]
+         }
+        },
+        "caption": "db = column sums of dZ"
+       }
+      ],
+      "frameLabels": [
+       "dZ",
+       "dX",
+       "dW",
+       "db"
+      ],
+      "label": "Product",
+      "start": 0
+     }
+    ]
+   },
+   "question": "Which product gives $\\partial L/\\partial \\mathbf{W}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "xtd",
+      "text": "$\\mathbf{X}^\\top d\\mathbf{Z}$",
+      "correct": true
+     },
+     {
+      "id": "dxt",
+      "text": "$d\\mathbf{Z}\\,\\mathbf{X}^\\top$",
+      "why": "That is $(2 \\times 3)$ times $(2 \\times 2)$, which does not even multiply here."
+     },
+     {
+      "id": "dwt",
+      "text": "$d\\mathbf{Z}\\,\\mathbf{W}^\\top$",
+      "why": "That is $\\partial L/\\partial \\mathbf{X}$."
+     },
+     {
+      "id": "xd",
+      "text": "$\\mathbf{X}\\,d\\mathbf{Z}$",
+      "why": "Shapes $(2 \\times 2)(2 \\times 3)$ multiply here by luck, but it pairs rows of the batch with features."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathbf{X}^\\top d\\mathbf{Z}$: $(2 \\times 2)(2 \\times 3)$ gives $2 \\times 3$.",
+    "generic": "Not quite. Find the product whose shape is $\\mathbf{W}$'s."
+   },
+   "explain": {
+    "text": "Each weight $W_{jk}$ meets input feature $j$ and output $k$ in every example, so its gradient sums $X_{ij}\\,dZ_{ik}$ over the batch. That sum is $\\mathbf{X}^\\top d\\mathbf{Z}$.",
+    "canvas": {
+     "highlight": {
+      "X": {
+       "cols": [
+        0
+       ]
+      },
+      "D": {
+       "cols": [
+        0
+       ]
+      }
+     },
+     "caption": "dW = Xᵀ dZ: (2 × 2)(2 × 3)"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The linear layer alone",
+   "tags": [
+    "backward-pass"
+   ],
+   "prose": "With $d\\mathbf{Z} = [[1, 0, 2], [-1, 1, 0]]$ arriving and no ReLU, compute $d\\mathbf{X} = d\\mathbf{Z}\\,\\mathbf{W}^\\top$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "D",
+       "rows": [
+        [
+         1,
+         0,
+         2
+        ],
+        [
+         -1,
+         1,
+         0
+        ]
+       ],
+       "label": "$d\\mathbf{Z}$"
+      },
+      {
+       "id": "WT",
+       "rows": [
+        [
+         1,
+         2
+        ],
+        [
+         0,
+         1
+        ],
+        [
+         -1,
+         0
+        ]
+       ],
+       "label": "$\\mathbf{W}^\\top$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Give $d\\mathbf{X}$ as `[[a, b], [c, d]]`.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\begin{pmatrix}-1 & 2\\\\-1 & -1\\end{pmatrix}",
+    "accept": [
+     "[[-1, 2], [-1, -1]]"
+    ],
+    "wrong": [
+     {
+      "id": "no-transpose",
+      "tex": "\\begin{pmatrix}1 & 0\\\\1 & 1\\end{pmatrix}"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Row $i$ of $d\\mathbf{X}$ is row $i$ of $d\\mathbf{Z}$ times $\\mathbf{W}^\\top$."
+    },
+    {
+     "rung": "point",
+     "text": "Row 1: $(1, 0, 2) \\cdot (1, 0, -1) = -1$ and $(1, 0, 2) \\cdot (2, 1, 0) = 2$.",
+     "highlight": [
+      "D-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$[[-1, 2], [-1, -1]]$."
+    }
+   ],
+   "feedback": {
+    "correct": "$d\\mathbf{X} = [[-1, 2], [-1, -1]]$.",
+    "generic": "Not quite. Multiply each row of $d\\mathbf{Z}$ by the columns of $\\mathbf{W}^\\top$.",
+    "byKey": {
+     "no-transpose": "You used $\\mathbf{W}$ cut to fit, not $\\mathbf{W}^\\top$. Each entry dots a row of $d\\mathbf{Z}$ with a row of $\\mathbf{W}$."
+    }
+   },
+   "explain": {
+    "text": "Each entry dots a row of $d\\mathbf{Z}$ with a row of $\\mathbf{W}$. The other two are $d\\mathbf{W} = [[-2, 3, 2], [3, -1, 4]]$ and $d\\mathbf{b} = (0, 1, 2)$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Now with the ReLU",
+   "tags": [
+    "backward-pass"
+   ],
+   "prose": "Add a ReLU: $\\text{out} = \\max(0, \\mathbf{Z})$, with $\\mathbf{Z} = [[5, 3, -1], [1, 0, -3]]$. The gate keeps $d\\text{out}$ where $Z > 0$, giving $d\\mathbf{Z}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "Z",
+       "rows": [
+        [
+         5,
+         3,
+         -1
+        ],
+        [
+         1,
+         0,
+         -3
+        ]
+       ],
+       "label": "$\\mathbf{Z}$"
+      },
+      {
+       "id": "D",
+       "rows": [
+        [
+         1,
+         0,
+         2
+        ],
+        [
+         -1,
+         1,
+         0
+        ]
+       ],
+       "label": "$d\\,\\text{out}$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Give $d\\mathbf{X}$ as `[[a, b], [c, d]]`, using gradient 0 where $Z = 0$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\begin{pmatrix}1 & 2\\\\-1 & -2\\end{pmatrix}",
+    "accept": [
+     "[[1, 2], [-1, -2]]"
+    ],
+    "wrong": [
+     {
+      "id": "no-gate",
+      "tex": "\\begin{pmatrix}-1 & 2\\\\-1 & -1\\end{pmatrix}"
+     },
+     {
+      "id": "ge",
+      "tex": "\\begin{pmatrix}1 & 2\\\\-1 & -1\\end{pmatrix}"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Zero $d\\text{out}$ where $Z \\le 0$."
+    },
+    {
+     "rung": "point",
+     "text": "$d\\mathbf{Z} = [[1, 0, 0], [-1, 0, 0]]$.",
+     "highlight": [
+      "Z-1-1",
+      "Z-0-2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$d\\mathbf{Z}\\,\\mathbf{W}^\\top = [[1, 2], [-1, -2]]$."
+    }
+   ],
+   "feedback": {
+    "correct": "$d\\mathbf{X} = [[1, 2], [-1, -2]]$.",
+    "generic": "Not quite. Gate first, then multiply by $\\mathbf{W}^\\top$.",
+    "byKey": {
+     "no-gate": "That is the linear layer's answer. The ReLU zeroes the gradient where $Z \\le 0$.",
+     "ge": "You let the gradient through at $Z = 0$. The stated convention is gradient 0 there."
+    }
+   },
+   "explain": {
+    "text": "The gate zeroes three entries of $d\\text{out}$, leaving $d\\mathbf{Z} = [[1, 0, 0], [-1, 0, 0]]$. Then $d\\mathbf{W} = [[-2, 0, 0], [3, 0, 0]]$ and $d\\mathbf{b} = (0, 0, 0)$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The kink",
+   "tags": [
+    "backward-pass"
+   ],
+   "prose": "Check $\\partial L/\\partial X_{2,2}$ by central differences, with $L = \\sum d\\text{out} \\odot \\max(0, \\mathbf{Z})$. Nudging $X_{2,2}$ moves $Z_{2,2}$, which sits exactly at 0.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "Z",
+       "rows": [
+        [
+         5,
+         3,
+         -1
+        ],
+        [
+         1,
+         0,
+         -3
+        ]
+       ],
+       "label": "$\\mathbf{Z}$"
+      }
+     ]
+    },
+    "state": {
+     "highlight": {
+      "Z": {
+       "cells": [
+        [
+         1,
+         1
+        ]
+       ]
+      }
+     }
+    }
+   },
+   "question": "What does the central difference give for $\\partial L/\\partial X_{2,2}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "gt",
+      "value": -2,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "ge",
+      "value": -1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$X_{2,2}$ feeds $Z_{2,1}$ with weight 2 and $Z_{2,2}$ with weight 1."
+    },
+    {
+     "rung": "point",
+     "text": "Through $Z_{2,1}$: $-1 \\times 2 = -2$. Through $Z_{2,2}$: the slope is 1 on one side and 0 on the other.",
+     "highlight": [
+      "Z-1-1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The central difference averages: $-2 + \\tfrac{1}{2} = -1.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-1.5$: the average of the two one-sided slopes.",
+    "generic": "Not quite. Work out both one-sided slopes at the kink.",
+    "byKey": {
+     "gt": "That is the analytic value with gradient 0 at the kink. The central difference sees half of the other side.",
+     "ge": "That is the analytic value with gradient 1 at the kink. The central difference averages the two.",
+     "sign": "Both paths carry a negative gradient here: $-1 \\times 2$ and half of $-1$."
+    }
+   },
+   "explain": {
+    "text": "At a kink the central difference averages the slopes, so it gives $-1.5$. The code gives $-2$, or $-1$ with the other convention. A gradient check must use points away from kinks."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "dW = dZ Xᵀ?",
+   "tags": [
+    "backward-pass"
+   ],
+   "prose": "A candidate writes `dW = dZ @ X.T`, by analogy with `dX = dZ @ W.T`.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "D",
+       "rows": [
+        [
+         1,
+         0,
+         0
+        ],
+        [
+         -1,
+         0,
+         0
+        ]
+       ],
+       "label": "$d\\mathbf{Z}$"
+      },
+      {
+       "id": "XT",
+       "rows": [
+        [
+         1,
+         3
+        ],
+        [
+         2,
+         -1
+        ]
+       ],
+       "label": "$\\mathbf{X}^\\top$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What happens with these shapes?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "shape",
+      "text": "It fails: $(2 \\times 3)(2 \\times 2)$ does not multiply.",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "Nothing: a matrix product can be written either way round.",
+      "why": "Matrix products do not commute; here the shapes do not even match."
+     },
+     {
+      "id": "transpose",
+      "text": "It gives $d\\mathbf{W}^\\top$, which is fine.",
+      "why": "With these shapes it gives an error. When it does run, its shape differs from $\\mathbf{W}$'s."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the shapes under each factor."
+    },
+    {
+     "rung": "point",
+     "text": "$d\\mathbf{Z}$ is $2 \\times 3$ and $\\mathbf{X}^\\top$ is $2 \\times 2$.",
+     "highlight": [
+      "D",
+      "XT"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Inner sizes 3 and 2 differ, so it fails."
+    }
+   ],
+   "feedback": {
+    "correct": "Check shapes: $\\mathbf{X}^\\top d\\mathbf{Z}$ is the only product of $\\mathbf{W}$'s shape.",
+    "generic": "Not quite. Write the shapes under the product.",
+    "byKey": {
+     "same": "Order matters in matrix products, and here the shapes clash."
+    }
+   },
+   "explain": {
+    "text": "The shapes catch it: $(2 \\times 3)(2 \\times 2)$ has inner sizes 3 and 2. With a square layer it would run and be silently wrong, which is why we state shapes aloud."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Layer norm's backward pass",
+   "tags": [
+    "backward-pass"
+   ],
+   "prose": "Layer norm on each row: $\\hat{\\mathbf{x}} = (\\mathbf{x} - \\mu)/\\sigma$ with $\\sigma = \\sqrt{\\mathrm{var} + \\epsilon}$, then $\\mathbf{y} = \\boldsymbol{\\gamma} \\odot \\hat{\\mathbf{x}} + \\boldsymbol{\\beta}$. The drill after this lesson needs the result.",
+   "question": "Order the derivation. Leave out the line that is wrong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$d\\boldsymbol{\\beta} = \\sum_{\\text{rows}} d\\mathbf{y}$ and $d\\boldsymbol{\\gamma} = \\sum_{\\text{rows}} d\\mathbf{y} \\odot \\hat{\\mathbf{x}}$, since $\\mathbf{y}$ is linear in each."
+     },
+     {
+      "id": "d2",
+      "text": "$d\\hat{\\mathbf{x}} = d\\mathbf{y} \\odot \\boldsymbol{\\gamma}$, the chain rule through the scale."
+     },
+     {
+      "id": "d3",
+      "text": "Every $\\hat{x}_j$ depends on all of the row through $\\mu$ and $\\sigma$, so each $x_i$ collects three terms."
+     },
+     {
+      "id": "d4",
+      "text": "$d\\mathbf{x} = \\tfrac{1}{\\sigma}\\big(d\\hat{\\mathbf{x}} - \\overline{d\\hat{\\mathbf{x}}} - \\hat{\\mathbf{x}} \\odot \\overline{d\\hat{\\mathbf{x}} \\odot \\hat{\\mathbf{x}}}\\big)$, bars being means over the row."
+     },
+     {
+      "id": "dx",
+      "text": "$d\\mathbf{x} = d\\hat{\\mathbf{x}}/\\sigma$, treating $\\mu$ and $\\sigma$ as constants.",
+      "why": "That ignores that $\\mu$ and $\\sigma$ move with every $x_i$; the row of $d\\mathbf{x}$ would not sum to 0."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4"
+    ],
+    "distractors": [
+     "dx"
+    ],
+    "after": {
+     "d3": [
+      "d2"
+     ],
+     "d4": [
+      "d3"
+     ]
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The parameters' gradients come straight from $\\mathbf{y}$."
+    },
+    {
+     "rung": "point",
+     "text": "Then back through $\\boldsymbol{\\gamma}$ to $d\\hat{\\mathbf{x}}$."
+    },
+    {
+     "rung": "step",
+     "text": "The mean and variance give the two subtracted means."
+    }
+   ],
+   "feedback": {
+    "correct": "Two subtracted means: one from $\\mu$, one from $\\sigma$.",
+    "generic": "Not quite. $\\mu$ and $\\sigma$ depend on the whole row.",
+    "byKey": {
+     "dx": "Holding $\\mu$ and $\\sigma$ fixed drops two terms; the drill's tests catch exactly that."
+    }
+   },
+   "explain": {
+    "text": "The term $-\\overline{d\\hat{\\mathbf{x}}}$ comes through $\\mu$ and $-\\hat{\\mathbf{x}}\\,\\overline{d\\hat{\\mathbf{x}} \\odot \\hat{\\mathbf{x}}}$ through $\\sigma$. Both make each row of $d\\mathbf{x}$ sum to 0, a quick check to say aloud."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The gate in code",
+   "tags": [
+    "backward-pass"
+   ],
+   "prose": "Write `relu_gate(dout, z)`: the gradient after a ReLU, `dout` where the pre-activation `z` is positive and 0 elsewhere, including at exactly 0.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef relu_gate(dout, z):\n    # the gradient after a ReLU: dout where z > 0, else 0 (0 at z == 0 too)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef relu_gate(dout, z):\n    dout = np.asarray(dout, dtype=float)\n    z = np.asarray(z, dtype=float)\n    return dout * (z > 0)\n",
+    "examples": [
+     {
+      "call": "relu_gate([[2.0, 2.0]], [[1.0, -1.0]]).tolist()",
+      "compare": "equal",
+      "expect": "[[2.0, 0.0]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "relu_gate([[1, 0, 2], [-1, 1, 0]], [[5, 3, -1], [1, 0, -3]]).tolist()",
+      "compare": "equal",
+      "expect": "[[1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]]"
+     },
+     {
+      "call": "relu_gate([[4.0, 4.0]], [[0.0, 1e-9]]).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, 4.0]]"
+     },
+     {
+      "call": "relu_gate([[-2.0, 3.0]], [[2.0, 2.0]]).tolist()",
+      "compare": "equal",
+      "expect": "[[-2.0, 3.0]]"
+     },
+     {
+      "call": "relu_gate([[1.0, 1.0, 1.0]], [[-0.5, -2.0, -7.0]]).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0, 0.0, 0.0]]"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests: this lesson's layer, a pre-activation of exactly 0 beside a tiny positive one, negative gradients through open units, and a row of shut units. Values are compared exactly.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef relu_gate(dout, z):\n    dout = np.asarray(dout, dtype=float)\n    z = np.asarray(z, dtype=float)\n    return dout * (z >= 0)\n",
+      "test": 1,
+      "symptom": "Lets the gradient through where the pre-activation is exactly 0."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef relu_gate(dout, z):\n    dout = np.asarray(dout, dtype=float)\n    z = np.asarray(z, dtype=float)\n    return dout * (dout > 0)\n",
+      "test": 1,
+      "symptom": "Gates on the sign of the gradient instead of the pre-activation."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef relu_gate(dout, z):\n    dout = np.asarray(dout, dtype=float)\n    z = np.asarray(z, dtype=float)\n    return np.maximum(dout, 0)\n",
+      "test": 1,
+      "symptom": "Applies a ReLU to the gradient itself."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The gate depends on `z`, not on `dout`."
+    },
+    {
+     "rung": "point",
+     "text": "Use a strict comparison."
+    },
+    {
+     "rung": "step",
+     "text": "`return dout * (z > 0)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Strictly positive pre-activations pass; everything else is 0.",
+    "generic": "Not yet. Gate on `z > 0`, strictly.",
+    "byKey": {
+     "test-1": "This lesson's layer is off. Gate on the pre-activation `z`, strictly `z > 0`, and pass `dout` through unchanged, sign and all."
+    }
+   },
+   "explain": {
+    "text": "The strict inequality is the convention we stated: gradient 0 at the kink. Say it in the interview, because the drill's constraints say it too."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A gradient check",
+   "tags": [
+    "backward-pass"
+   ],
+   "prose": "Write `mi_grad_check(f, x, eps)`: the central-difference gradient of a scalar function `f` at the array `x`, one entry at a time. Leave the caller's `x` unchanged.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef mi_grad_check(f, x, eps=1e-6):\n    # the central-difference gradient of the scalar function f at the array x\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef mi_grad_check(f, x, eps=1e-6):\n    x = np.array(x, dtype=float)\n    g = np.zeros_like(x)\n    for i in np.ndindex(x.shape):\n        old = x[i]\n        x[i] = old + eps\n        up = f(x)\n        x[i] = old - eps\n        down = f(x)\n        x[i] = old\n        g[i] = (up - down) / (2 * eps)\n    return g\n",
+    "examples": [
+     {
+      "call": "mi_grad_check(lambda v: float((v ** 2).sum()), [3.0]).tolist()",
+      "expect": "[6.0]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "mi_grad_check(lambda v: float((v ** 2).sum()), [[1.0, -2.0], [0.5, 3.0]]).tolist()",
+      "expect": "[[2.0, -4.0], [1.0, 6.0]]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "float(mi_grad_check(lambda v: float(np.exp(5 * v).sum()), [1.0], 1e-4)[0])",
+      "expect": "742.065795512883",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 0
+      }
+     },
+     {
+      "setup": "xs = np.array([1.0, 2.0])\n_ = mi_grad_check(lambda v: float(v.sum()), xs)",
+      "call": "xs.tolist()",
+      "compare": "equal",
+      "expect": "[1.0, 2.0]"
+     },
+     {
+      "setup": "Xc = np.array([[1.0, 2.0], [3.0, -1.0]]); Wc = np.array([[1.0, 0.0, -1.0], [2.0, 1.0, 0.0]]); bc = np.array([0.0, 0.5, 0.0]); Dc = np.array([[1.0, 0.0, 2.0], [-1.0, 1.0, 0.0]])",
+      "call": "mi_grad_check(lambda w: float((Dc * np.maximum(Xc @ w + bc, 0)).sum()), Wc).tolist()",
+      "expect": "[[-2.0, 0.0, 0.0], [3.0, 0.0, 0.0]]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-06
+      }
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. Test 1 is the sum of squares, gradient $2x$. Test 2 is $e^{5x}$ at $x = 1$ with a step of $10^{-4}$, where a one-sided difference is off by about 1 part in 4,000. Test 3 checks the input is unchanged. Test 4 is $d\\mathbf{W}$ for this lesson's layer with the middle bias at 0.5, which moves $Z_{2,2}$ off the kink. Values are compared to a relative error of $10^{-6}$.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef mi_grad_check(f, x, eps=1e-6):\n    x = np.array(x, dtype=float)\n    g = np.zeros_like(x)\n    for i in np.ndindex(x.shape):\n        old = x[i]\n        x[i] = old + eps\n        up = f(x)\n        x[i] = old\n        down = f(x)\n        x[i] = old\n        g[i] = (up - down) / eps\n    return g\n",
+      "test": 2,
+      "symptom": "Uses a one-sided difference, whose error is of order eps."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mi_grad_check(f, x, eps=1e-6):\n    x = np.array(x, dtype=float)\n    g = np.zeros_like(x)\n    for i in np.ndindex(x.shape):\n        old = x[i]\n        x[i] = old + eps\n        up = f(x)\n        x[i] = old - eps\n        down = f(x)\n        x[i] = old\n        g[i] = (up - down) / eps\n    return g\n",
+      "test": 1,
+      "symptom": "Divides by eps instead of 2 eps, doubling every entry."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mi_grad_check(f, x, eps=1e-6):\n    x = np.asarray(x, dtype=float)\n    g = np.zeros_like(x)\n    for i in np.ndindex(x.shape):\n        old = x[i]\n        x[i] = old + eps\n        up = f(x)\n        x[i] = old - eps\n        down = f(x)\n        g[i] = (up - down) / (2 * eps)\n    return g\n",
+      "test": 3,
+      "symptom": "Nudges the caller's array in place and never puts it back."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Copy `x` as a float array first."
+    },
+    {
+     "rung": "point",
+     "text": "For each index: $f(x + \\epsilon e_i)$ and $f(x - \\epsilon e_i)$."
+    },
+    {
+     "rung": "step",
+     "text": "Divide their difference by $2\\epsilon$, and restore the entry."
+    }
+   ],
+   "feedback": {
+    "correct": "Central differences, one entry at a time, on a copy.",
+    "generic": "Not yet. Nudge both ways, divide by $2\\epsilon$, and work on a copy.",
+    "byKey": {
+     "test-1": "The sum of squares should give $2x$. Divide the two-sided difference by $2\\epsilon$.",
+     "test-2": "Off by about 1 part in 4,000 on $e^{5x}$. A one-sided difference has error of order $\\epsilon$; use both sides.",
+     "test-3": "You changed the caller's array. Copy it with `np.array(x, dtype=float)` and restore each entry."
+    }
+   },
+   "explain": {
+    "text": "A central difference has error of order $\\epsilon^2$, a one-sided one of order $\\epsilon$. Working on a copy keeps the check from corrupting the very parameters it tests."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "backward-pass"
+   ],
+   "pace": 120,
+   "prose": "The interviewer goes on: \"How would you test your backward pass?\"",
+   "question": "Order your answer. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "t1",
+      "text": "Work in float64."
+     },
+     {
+      "id": "t2",
+      "text": "Pick random inputs away from any kink."
+     },
+     {
+      "id": "t3",
+      "text": "Compare each analytic gradient with a central difference."
+     },
+     {
+      "id": "t4",
+      "text": "Report the relative error and expect it below about $10^{-6}$."
+     },
+     {
+      "id": "tx",
+      "text": "Use float32 with a step of $10^{-8}$ for the finest check.",
+      "why": "In float32, a step of $10^{-8}$ is below the rounding of $x$ itself, so the difference is mostly noise."
+     }
+    ],
+    "answer": [
+     "t1",
+     "t2",
+     "t3",
+     "t4"
+    ],
+    "distractors": [
+     "tx"
+    ],
+    "same": [
+     [
+      "t1",
+      "t2"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Rounding error must stay far below the check's tolerance."
+    },
+    {
+     "rung": "point",
+     "text": "Kinks make central differences disagree honestly."
+    },
+    {
+     "rung": "step",
+     "text": "float64, away from kinks, central differences, relative error."
+    }
+   ],
+   "feedback": {
+    "correct": "float64, away from kinks, central differences, relative error.",
+    "generic": "Not quite. Think about rounding and kinks.",
+    "byKey": {
+     "tx": "float32 has about 7 digits; a step of $10^{-8}$ drowns in rounding."
+    }
+   },
+   "explain": {
+    "text": "Relative error, not absolute, because gradients differ in size. A failure at a kink, as at $Z_{2,2}$, is the check working, not the code failing."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A custom layer at a lab",
+   "tags": [
+    "backward-pass"
+   ],
+   "prose": "A lab interviewer asks for the backward pass of $y = x\\,\\sigma(x)$, the SiLU, elementwise. By the product rule, $\\frac{dy}{dx} = \\sigma(x)\\big(1 + x(1 - \\sigma(x))\\big)$.",
+   "question": "What is $dy/dx$ at $x = 2$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.0908,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sigma",
+      "value": 0.8808,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sig-deriv",
+      "value": 0.105,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sigma(2) = 1/(1 + e^{-2})$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sigma(2) = 0.8808$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.8808 \\times (1 + 2 \\times 0.1192) = 1.0908$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1.0908$: a slope above 1, unlike a ReLU.",
+    "generic": "Not quite. Apply the product rule.",
+    "byKey": {
+     "sigma": "That is $\\sigma(2)$ alone; the product rule adds $x\\,\\sigma'(x)$.",
+     "sig-deriv": "That is $\\sigma'(2)$, one piece of the product rule."
+    }
+   },
+   "explain": {
+    "text": "The derivative is $1.0908$ at $x = 2$. In code, store $\\sigma(x)$ in the forward pass and reuse it, then check it with your `mi_grad_check` at a few points."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Sit the session",
+   "tags": [
+    "backward-pass"
+   ],
+   "pace": 120,
+   "prose": "Now open `#drill/session/mi-sixty`: masked attention, then a layer's backward pass, against one 60-minute clock. Your latest session: {{carry.session.minutes1|none}} minutes on the first drill, {{carry.session.minutes2|none}} on the second, {{carry.session.solved|none}} of 2 solved.",
+   "question": "Each drill's pace is 20 minutes. How do you plan the hour?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "plan",
+      "text": "20 minutes each, leaving 20 to test both on hand cases and edge cases.",
+      "correct": true
+     },
+     {
+      "id": "first",
+      "text": "All the time it takes on attention, then whatever is left.",
+      "why": "An overrun on the first drill leaves the second unstarted; set a cut-off."
+     },
+     {
+      "id": "both",
+      "text": "Start both at once and switch whenever stuck.",
+      "why": "Switching costs time to reload each problem; finish one to a tested state first."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two paces of 20 minutes leave 20 minutes spare."
+    },
+    {
+     "rung": "point",
+     "text": "Checking is part of the task."
+    },
+    {
+     "rung": "step",
+     "text": "Spend the spare 20 on hand cases and the edge cases you named."
+    }
+   ],
+   "feedback": {
+    "correct": "A cut-off per drill and time to test.",
+    "generic": "Not quite. Plan the checking time too."
+   },
+   "explain": {
+    "text": "The session records the minutes on each drill. Compare them with the 20-minute paces after each attempt and change one thing at a time."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Each gradient has its array's shape: $d\\mathbf{X} = d\\mathbf{Z}\\,\\mathbf{W}^\\top$, $d\\mathbf{W} = \\mathbf{X}^\\top d\\mathbf{Z}$, $d\\mathbf{b}$ the column sums.",
+   "The ReLU gate keeps the gradient where $Z > 0$; at exactly 0 state a convention, since central differences average there.",
+   "Test in float64 with central differences, at points away from kinks, by relative error; a layer-norm $d\\mathbf{x}$ row sums to 0."
+  ],
+  "formula": {
+   "name": "A linear layer's backward pass",
+   "tex": "d\\mathbf{X} = d\\mathbf{Z}\\,\\mathbf{W}^\\top, \\quad d\\mathbf{W} = \\mathbf{X}^\\top d\\mathbf{Z}, \\quad d\\mathbf{b} = \\mathbf{1}^\\top d\\mathbf{Z}",
+   "note": "With a ReLU, $d\\mathbf{Z} = d\\,\\text{out} \\odot \\mathbf{1}[\\mathbf{Z} > 0]$."
+  },
+  "trap": "`dW = dZ @ X.T` has the wrong shape; with a square layer it runs and is silently wrong."
+ },
+ "quiz": [
+  {
+   "id": "q1-db",
+   "difficulty": 2,
+   "tags": [
+    "backward-pass"
+   ],
+   "question": "A batch of 3 has $d\\mathbf{Z} = [[1, -2], [0, 4], [2, 1]]$. What is $d\\mathbf{b}$, the bias gradient, for the second output?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "first",
+      "value": -2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-2 + 4 + 1 = 3$.",
+    "generic": "Not quite. Sum the column over the batch.",
+    "byKey": {
+     "mean": "You averaged. The bias gradient sums over the batch.",
+     "first": "That is one example. Sum over all three."
+    }
+   },
+   "explain": {
+    "text": "The bias is added to every example, so its gradient is the column sum: $-2 + 4 + 1 = 3$."
+   }
+  },
+  {
+   "id": "q2-kink",
+   "difficulty": 3,
+   "tags": [
+    "backward-pass"
+   ],
+   "question": "A gradient check passes everywhere except one entry, whose pre-activation is exactly 0. What do you conclude?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "kink",
+      "text": "Nothing is wrong: the check averages two slopes there.",
+      "correct": true
+     },
+     {
+      "id": "bug",
+      "text": "The gate has a bug at exactly that entry.",
+      "why": "At a kink the analytic value follows a convention; the check sees the average."
+     },
+     {
+      "id": "eps",
+      "text": "Make $\\epsilon$ smaller until it agrees.",
+      "why": "At an exact kink the central difference gives the average for every $\\epsilon$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Move the check point away from the kink.",
+    "generic": "Not quite. What does a central difference see at a corner?"
+   },
+   "explain": {
+    "text": "Exactly at a corner the central difference is the mean of the one-sided slopes for any step. Recheck at points away from the kink."
+   }
+  },
+  {
+   "id": "q3-sum-zero",
+   "difficulty": 3,
+   "tags": [
+    "backward-pass"
+   ],
+   "question": "Your layer-norm backward pass returns a row of $d\\mathbf{x}$ equal to $(0.4, -0.1, 0.2)$. What does that tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bug",
+      "text": "A bug: each row of $d\\mathbf{x}$ should sum to 0.",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: rows of $d\\mathbf{x}$ can sum to anything.",
+      "why": "Shifting a row by a constant leaves layer norm's output unchanged, so its gradient sums to 0."
+     },
+     {
+      "id": "gamma",
+      "text": "It depends on $\\boldsymbol{\\gamma}$.",
+      "why": "Whatever $\\boldsymbol{\\gamma}$ is, the row sum of $d\\mathbf{x}$ is 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The row sums to 0.5, so a term is missing.",
+    "generic": "Not quite. Add a constant to a row: does the output change?"
+   },
+   "explain": {
+    "text": "Layer norm ignores a constant added to a row, so the gradient has no component along $(1, 1, 1)$. This row sums to 0.5, so a mean term is missing."
+   }
+  }
+ ]
+}

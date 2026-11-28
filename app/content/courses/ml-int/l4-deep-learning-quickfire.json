@@ -1,0 +1,1035 @@
+{
+ "id": "l4-deep-learning-quickfire",
+ "course": "ml-int",
+ "title": "Deep learning quickfire",
+ "minutes": 15,
+ "objectives": [
+  "Answer short questions on initialisation, normalisation, dropout, attention scaling and the loss at the start."
+ ],
+ "skills": [
+  "mi-theory"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The first number printed",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "pace": 60,
+   "prose": "This lesson takes about fifteen minutes: ten quick questions at interview pace, one minute each. Lessons are not timed, so set your own clock. A character model predicts one of 65 characters, with small random weights and a softmax cross-entropy loss.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ python train.py --vocab 65",
+      "step     0  loss  ?",
+      "step   100  loss  2.9813",
+      "step   200  loss  2.5120"
+     ],
+     "title": "training log"
+    },
+    "state": {
+     "tone": {
+      "l2": "muted"
+     }
+    }
+   },
+   "question": "What should the loss be at step 0? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.1744,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "inverse",
+      "value": 0.0154,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "log10",
+      "value": 1.8129,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At initialisation every character is about equally likely."
+    },
+    {
+     "rung": "point",
+     "text": "The loss is $-\\ln p$ of the right character, with $p = 1/65$.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln 65 = 4.1744$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-\\ln(1/65) = \\ln 65 = 4.1744$.",
+    "generic": "Not quite. Take minus the log of a uniform probability.",
+    "byKey": {
+     "inverse": "That is the probability $1/65$. The loss is minus its log.",
+     "log10": "You used base 10. Cross-entropy uses the natural log."
+    }
+   },
+   "explain": {
+    "text": "Near-uniform predictions give each character $1/65$, so the loss is $\\ln 65 = 4.1744$. A first loss far from this means a bug before any training.",
+    "canvas": {
+     "lines": {
+      "l2": "step     0  loss  4.1744"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Why divide by the root of d",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "prose": "A query and a key each have $d$ independent standard normal entries. Slide $d$ and watch the spread of their dot product, before and after dividing by $\\sqrt{d}$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "raw",
+       "label": "sd of q · k"
+      },
+      {
+       "id": "sc",
+       "label": "sd of q · k / √d"
+      }
+     ],
+     "showValues": true,
+     "decimals": 2,
+     "yLabel": "standard deviation",
+     "yMax": 17,
+     "height": 230,
+     "params": {
+      "d": 4
+     }
+    },
+    "state": {
+     "values": {
+      "raw": 2,
+      "sc": 1
+     }
+    },
+    "derive": {
+     "values.raw": "sqrt(d)",
+     "values.sc": "1",
+     "caption": "d = {{d}}: sd {{fixed(sqrt(d), 2)}} before scaling"
+    },
+    "controls": [
+     {
+      "bind": "d",
+      "stops": [
+       4,
+       16,
+       64,
+       256
+      ],
+      "label": "d",
+      "start": 4
+     }
+    ]
+   },
+   "question": "For $d = 64$, what is the standard deviation of $\\mathbf{q} \\cdot \\mathbf{k}$ before scaling?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 64,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each product $q_i k_i$ has mean 0 and variance 1."
+    },
+    {
+     "rung": "point",
+     "text": "A sum of 64 independent ones has variance 64.",
+     "highlight": [
+      "raw"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The sd is $\\sqrt{64} = 8$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{64} = 8$.",
+    "generic": "Not quite. Add the variances, then take the root.",
+    "byKey": {
+     "var": "That is the variance. The sd is its root."
+    }
+   },
+   "explain": {
+    "text": "The variance adds up to $d$, so the sd is $\\sqrt{d} = 8$; a simulation of 20,000 pairs gives $8.037$. Dividing by $\\sqrt{64}$ brings it to $1.005$, so the softmax does not saturate as $d$ grows."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "He initialisation",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "pace": 60,
+   "prose": "A ReLU layer has fan-in 512. He initialisation keeps the variance of activations steady from layer to layer.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Scheme",
+      "Weight variance"
+     ],
+     "rows": [
+      [
+       "Xavier (tanh)",
+       "1 / fan-in"
+      ],
+      [
+       "He (ReLU)",
+       "2 / fan-in"
+      ]
+     ]
+    }
+   },
+   "question": "What standard deviation do its weights get? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0625,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "xavier",
+      "value": 0.0442,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "variance",
+      "value": 0.0039,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "He initialisation sets the variance to $2/\\text{fan-in}$."
+    },
+    {
+     "rung": "point",
+     "text": "The 2 makes up for the ReLU zeroing half the inputs."
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{2/512} = \\sqrt{1/256} = 0.0625$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{2/512} = 1/16 = 0.0625$.",
+    "generic": "Not quite. Use variance $2/\\text{fan-in}$, then take the root.",
+    "byKey": {
+     "xavier": "That is $\\sqrt{1/512}$, which ignores the ReLU. He doubles the variance to make up for it.",
+     "variance": "That is the variance, $2/512$. The sd is its root."
+    }
+   },
+   "explain": {
+    "text": "A ReLU passes about half the variance, so He uses $2/512$, an sd of $0.0625$. The spoken sentence: variance two over fan-in, because ReLU halves it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Inverted dropout",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "pace": 60,
+   "prose": "Dropout with $p = 0.2$ zeroes each unit with probability 0.2 during training. Inverted dropout rescales the units it keeps.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Phase",
+      "Dropped",
+      "Kept units"
+     ],
+     "rows": [
+      [
+       "training",
+       "20%",
+       "× ?"
+      ],
+      [
+       "test",
+       "none",
+       "× 1"
+      ]
+     ]
+    }
+   },
+   "question": "By what factor are the kept units multiplied during training?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.25,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "keep",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "drop",
+      "value": 5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The expected value of a unit must not change."
+    },
+    {
+     "rung": "point",
+     "text": "A unit survives with probability 0.8."
+    },
+    {
+     "rung": "step",
+     "text": "$1/0.8 = 1.25$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1/0.8 = 1.25$, and nothing at test time.",
+    "generic": "Not quite. Keep the expected value of each unit the same.",
+    "byKey": {
+     "keep": "That is the survival probability. Divide by it to keep the mean.",
+     "drop": "You divided by the drop rate 0.2. Divide by the keep rate 0.8."
+    }
+   },
+   "explain": {
+    "text": "Each unit survives with probability 0.8, so multiplying by $1/0.8 = 1.25$ keeps its mean. At test time every unit is kept and nothing is scaled."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two norms at test time",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "pace": 60,
+   "prose": "Batch norm normalises each feature over the batch. Layer norm normalises each token over its own features.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Norm",
+      "Statistics over",
+      "Depends on the batch"
+     ],
+     "rows": [
+      [
+       "batch norm",
+       "the batch, per feature",
+       "yes"
+      ],
+      [
+       "layer norm",
+       "one token's features",
+       "no"
+      ]
+     ]
+    }
+   },
+   "question": "What does each use at test time?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Batch norm: running averages. Layer norm: nothing stored.",
+      "correct": true
+     },
+     {
+      "id": "batch",
+      "text": "Both use the statistics of the test batch.",
+      "why": "Batch norm's output would then depend on which examples share the batch. It uses running averages."
+     },
+     {
+      "id": "run",
+      "text": "Both use running averages from training.",
+      "why": "Layer norm's statistics come from the token itself, so it computes them fresh every time."
+     },
+     {
+      "id": "none",
+      "text": "Neither of them normalises anything at test time.",
+      "why": "Both still normalise; only where batch norm's statistics come from changes."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which of the two needs other examples to compute its statistics?"
+    },
+    {
+     "rung": "point",
+     "text": "Batch norm does; layer norm uses one token."
+    },
+    {
+     "rung": "step",
+     "text": "So only batch norm needs stored statistics."
+    }
+   ],
+   "feedback": {
+    "correct": "Running statistics for batch norm; nothing stored for layer norm.",
+    "generic": "Not quite. Ask where each one's mean and variance come from.",
+    "byKey": {
+     "batch": "Then one example's prediction would depend on the others in its batch."
+    }
+   },
+   "explain": {
+    "text": "Batch norm keeps running means and variances during training and uses them at test time. Layer norm computes its statistics from each token, so training and test match."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Dropout at test time?",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "pace": 60,
+   "prose": "A candidate says: \"At test time dropout uses the last training mask. That way the network matches what it learned.\"",
+   "question": "What is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "off",
+      "text": "Dropout is off: every unit kept, nothing rescaled.",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "Use the last training mask, as the candidate says.",
+      "why": "A fixed mask throws away a fifth of the network for every prediction, for no reason."
+     },
+     {
+      "id": "scale",
+      "text": "Keep every unit and multiply by 0.8.",
+      "why": "That is the old, non-inverted dropout. Inverted dropout already scaled during training."
+     },
+     {
+      "id": "fresh",
+      "text": "Draw a fresh mask for each test example.",
+      "why": "That makes predictions random. It is a technique for uncertainty, not the default."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does inverted dropout already do during training?"
+    },
+    {
+     "rung": "point",
+     "text": "It divides kept units by 0.8."
+    },
+    {
+     "rung": "step",
+     "text": "So at test time nothing is dropped and nothing is scaled."
+    }
+   ],
+   "feedback": {
+    "correct": "Off at test time; inverted dropout needs no rescaling.",
+    "generic": "Not quite. Think about what the training-time scaling was for.",
+    "byKey": {
+     "same": "A frozen mask removes a fifth of the units from every prediction."
+    }
+   },
+   "explain": {
+    "text": "The training-time division by 0.8 makes each unit's mean match the full network. So at test time we keep everything and scale nothing."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A batch of one",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "pace": 60,
+   "prose": "You train with batch norm, but memory forces a batch size of 1.",
+   "question": "What happens to a batch-norm layer during training?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "Every centred value is 0, so the layer outputs $\\beta$.",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing changes: it normalises the one example as usual.",
+      "why": "With one example the batch mean is the value itself, so every centred value is 0."
+     },
+     {
+      "id": "nan",
+      "text": "It divides by zero and returns NaN.",
+      "why": "The $\\epsilon$ in the denominator prevents that; the output is simply constant."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute the mean of a batch of one value."
+    },
+    {
+     "rung": "point",
+     "text": "The value minus its mean is 0."
+    },
+    {
+     "rung": "step",
+     "text": "So the output is $\\gamma \\times 0 + \\beta = \\beta$, whatever the input."
+    }
+   ],
+   "feedback": {
+    "correct": "The layer outputs $\\beta$ and carries no information; use layer norm.",
+    "generic": "Not quite. Compute a batch mean and variance with one example.",
+    "byKey": {
+     "fine": "With one example the centred value is exactly 0."
+    }
+   },
+   "explain": {
+    "text": "With one example, $x - \\mu = 0$ for every feature, so batch norm outputs $\\beta$ and no gradient reaches the input through it. Layer norm or group norm does not depend on the batch."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "One sentence and its reason",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "prose": "Each quick answer is a fact and a reason, said in one breath: $$\\text{loss}_0 \\approx \\ln V, \\quad \\sigma_{\\text{He}} = \\sqrt{2/n_{\\text{in}}}, \\quad \\text{keep} \\times \\tfrac{1}{1 - p}, \\quad \\frac{\\mathbf{q} \\cdot \\mathbf{k}}{\\sqrt{d}}$$",
+   "question": "Which answers give a correct reason? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The first loss is about $\\ln V$, because untrained predictions are near uniform.",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Attention divides by $\\sqrt{d}$, because the dot product's sd grows as $\\sqrt{d}$.",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "He initialisation doubles the variance, because a ReLU zeroes about half its inputs.",
+      "correct": true
+     },
+     {
+      "id": "d",
+      "text": "Layer norm needs running statistics, because tokens differ in length.",
+      "why": "Layer norm uses each token's own features and stores nothing."
+     },
+     {
+      "id": "e",
+      "text": "Dropout scales by $1 - p$ at test time, because units were dropped in training.",
+      "why": "Inverted dropout scales by $1/(1 - p)$ in training and does nothing at test time."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Three facts, three reasons.",
+    "generic": "Not quite. Check each reason against what the method does."
+   },
+   "explain": {
+    "text": "A good quick answer names the number and the cause. \"Because\" is the word the interviewer is waiting for."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A code review at a lab",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "prose": "You review a colleague's run at a lab. The model has 65 output classes, and the first loss printed is 9.7.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ python train.py --vocab 65",
+      "step     0  loss  9.7012",
+      "step   100  loss  6.1150",
+      "step   200  loss  4.0233"
+     ],
+     "title": "their log"
+    },
+    "state": {
+     "tone": {
+      "l2": "err"
+     }
+    }
+   },
+   "question": "What is the most likely cause?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "scale",
+      "text": "The output weights start too large: confidently wrong.",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the loss falls, so training works.",
+      "why": "It should start near $\\ln 65 = 4.1744$. It wastes steps unlearning a bad start."
+     },
+     {
+      "id": "lr",
+      "text": "The learning rate is set far too high for this model.",
+      "why": "Step 0 is before any update, so the learning rate cannot have caused it."
+     },
+     {
+      "id": "leak",
+      "text": "The labels leak into the inputs of the model.",
+      "why": "A leak makes the loss too low, not too high."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What should step 0 print for 65 classes?"
+    },
+    {
+     "rung": "point",
+     "text": "About $\\ln 65 = 4.1744$.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A higher value means large logits at the start: scale the last layer down."
+    }
+   ],
+   "feedback": {
+    "correct": "Large initial logits; shrink the last layer's weights.",
+    "generic": "Not quite. Compare 9.7 with what step 0 should print.",
+    "byKey": {
+     "fine": "Falling is not enough: it starts more than twice too high."
+    }
+   },
+   "explain": {
+    "text": "Step 0 should print about $4.1744$; 9.7 is $2.32$ times that. Large initial logits put high confidence on wrong classes, so scale the output layer down at initialisation."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "pace": 90,
+   "prose": "The interviewer goes on: \"Your loss starts at 0.01 for 65 classes. What is wrong?\"",
+   "question": "Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "leak",
+      "text": "The labels leak into the inputs.",
+      "correct": true
+     },
+     {
+      "id": "mask",
+      "text": "A causal mask is missing, so each position sees the token it must predict.",
+      "correct": true
+     },
+     {
+      "id": "axis",
+      "text": "The loss is averaged over the wrong axis.",
+      "correct": true
+     },
+     {
+      "id": "good",
+      "text": "Nothing: the model is simply very good at the start.",
+      "why": "An untrained model cannot beat uniform guessing by that much: it should start near $4.1744$."
+     },
+     {
+      "id": "lr",
+      "text": "The learning rate is too low.",
+      "why": "Step 0 is before any update, so the rate plays no part."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A loss of 0.01 means near-certain right answers before training."
+    },
+    {
+     "rung": "point",
+     "text": "Something lets the model see the answer, or the loss is not what it claims."
+    },
+    {
+     "rung": "step",
+     "text": "A leak, a missing mask, or a mean over the wrong axis."
+    }
+   ],
+   "feedback": {
+    "correct": "Each one makes the loss look far too good.",
+    "generic": "Not quite. Ask how an untrained model could look certain.",
+    "byKey": {
+     "good": "An untrained model sits near uniform, about $\\ln 65$."
+    }
+   },
+   "explain": {
+    "text": "A starting loss far below $\\ln V$ means the model can see the answer or the loss is mis-computed. Check the inputs for the target, the mask, and the reduction axis."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The check in code",
+   "tags": [
+    "dl-quickfire"
+   ],
+   "prose": "Write `sanity_checks(logits, targets)`. Return $\\ln V$, the actual mean cross-entropy, and a flag. The flag is true when the two differ by more than half of $\\ln V$. Compute the loss without overflow.",
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef sanity_checks(logits, targets):\n    # logits: (batch, V); targets: (batch,) class indices\n    # return (expected starting loss, actual mean cross-entropy, flag)\n    # flag is True when actual differs from expected by more than half of expected\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef sanity_checks(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets)\n    expected = float(np.log(z.shape[1]))\n    m = z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z - m).sum(axis=1))\n    actual = float(np.mean(lse - z[np.arange(len(t)), t]))\n    flag = abs(actual - expected) > 0.5 * expected\n    return expected, actual, flag\n",
+    "examples": [
+     {
+      "call": "list(sanity_checks(np.zeros((4, 65)), [0, 7, 30, 64]))",
+      "compare": "isclose",
+      "expect": "[4.174387269895637, 4.174387269895637, False]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(sanity_checks(np.zeros((4, 65)), [0, 7, 30, 64]))",
+      "compare": "isclose",
+      "expect": "[4.174387269895637, 4.174387269895637, False]"
+     },
+     {
+      "call": "sanity_checks([[2.0, 0.0, 0.0], [0.0, 1.0, 0.0]], [0, 2])[1]",
+      "compare": "isclose",
+      "expect": "0.8954947400769678"
+     },
+     {
+      "call": "bool(sanity_checks(10 * np.eye(5)[[1, 3, 0, 2]], [1, 3, 0, 2])[2])",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "sanity_checks([[800.0, 0.0, 0.0]], [1])[1]",
+      "compare": "isclose",
+      "expect": "800.0"
+     },
+     {
+      "call": "sanity_checks(np.zeros((2, 27)), [3, 9])[0]",
+      "compare": "isclose",
+      "expect": "3.295836866004329"
+     },
+     {
+      "call": "bool(sanity_checks(0.01 * np.arange(130.0).reshape(2, 65), [5, 60])[2])",
+      "compare": "equal",
+      "expect": "False"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Test 1 uses uniform logits over 65 classes and expects $\\ln 65$ twice and no flag. Test 2 is a small hand case, test 3 a planted leak that must be flagged, test 4 a logit of 800, and test 5 the expected value for 27 classes. Test 6 has nearly uniform logits and no flag. Numbers are compared to $10^{-9}$ relative.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef sanity_checks(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets)\n    expected = float(np.log(len(z)))\n    m = z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z - m).sum(axis=1))\n    actual = float(np.mean(lse - z[np.arange(len(t)), t]))\n    flag = abs(actual - expected) > 0.5 * expected\n    return expected, actual, flag\n",
+      "test": 1,
+      "symptom": "Takes V from the number of rows, the batch size, instead of the number of classes."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef sanity_checks(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets)\n    expected = float(np.log10(z.shape[1]))\n    m = z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z - m).sum(axis=1))\n    actual = float(np.mean(lse - z[np.arange(len(t)), t]))\n    flag = abs(actual - expected) > 0.5 * expected\n    return expected, actual, flag\n",
+      "test": 1,
+      "symptom": "Uses log base 10 for the expected loss."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef sanity_checks(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets)\n    expected = float(np.log(z.shape[1]))\n    m = z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z - m).sum(axis=1))\n    actual = float(np.sum(lse - z[np.arange(len(t)), t]))\n    flag = abs(actual - expected) > 0.5 * expected\n    return expected, actual, flag\n",
+      "test": 1,
+      "symptom": "Sums the per-example losses instead of averaging them."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef sanity_checks(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets)\n    expected = float(np.log(z.shape[1]))\n    m = z.max(axis=1, keepdims=True)\n    lse = m[:, 0] + np.log(np.exp(z - m).sum(axis=1))\n    actual = float(np.mean(lse - z[np.arange(len(t)), t]))\n    flag = actual > 1.5 * expected\n    return expected, actual, flag\n",
+      "test": 3,
+      "symptom": "Flags only a loss that is too high, so a leak passes."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef sanity_checks(logits, targets):\n    z = np.asarray(logits, dtype=float)\n    t = np.asarray(targets)\n    expected = float(np.log(z.shape[1]))\n    lse = np.log(np.exp(z).sum(axis=1))\n    actual = float(np.mean(lse - z[np.arange(len(t)), t]))\n    flag = abs(actual - expected) > 0.5 * expected\n    return expected, actual, flag\n",
+      "test": 4,
+      "symptom": "Exponentiates without subtracting the row maximum, so a logit of 800 overflows."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$V$ is the number of columns of `logits`."
+    },
+    {
+     "rung": "point",
+     "text": "Cross-entropy per row is $\\log\\sum_j e^{z_j} - z_{\\text{target}}$; subtract the row maximum first."
+    },
+    {
+     "rung": "step",
+     "text": "Average over rows, then compare with $\\ln V$."
+    }
+   ],
+   "feedback": {
+    "correct": "Uniform logits give exactly $\\ln V$, and the leak is caught.",
+    "generic": "Not yet. Check $V$, the log, the mean and the flag.",
+    "byKey": {
+     "test-1": "Uniform logits over 65 classes should give $4.1744$ for both numbers. Take $V$ from the number of columns, use the natural log, and average the rows.",
+     "test-3": "A planted leak gives a tiny loss, which must be flagged too. Flag a difference either way.",
+     "test-4": "A logit of 500 overflowed. Subtract each row's maximum before exponentiating."
+    }
+   },
+   "explain": {
+    "text": "Two numbers and a comparison catch most broken pipelines before any training. The log-sum-exp with the maximum subtracted keeps it finite for any logits."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The first loss should be about $\\ln V$: $4.1744$ for 65 classes; far above or below it means a bug.",
+   "He initialisation uses sd $\\sqrt{2/n_{\\text{in}}}$, $0.0625$ for fan-in 512; inverted dropout scales kept units by $1/(1 - p)$ in training only.",
+   "Batch norm uses running statistics at test time and fails with a batch of one; attention divides by $\\sqrt{d}$ to keep the scores' sd near 1."
+  ],
+  "formula": {
+   "name": "Scaled attention scores",
+   "tex": "\\mathrm{sd}(\\mathbf{q} \\cdot \\mathbf{k}) = \\sqrt{d} \\;\\Rightarrow\\; \\mathrm{sd}\\Big(\\frac{\\mathbf{q} \\cdot \\mathbf{k}}{\\sqrt{d}}\\Big) = 1",
+   "note": "For independent standard normal entries."
+  },
+  "trap": "Dropout is off at test time; inverted dropout already scaled during training."
+ },
+ "quiz": [
+  {
+   "id": "q1-names",
+   "difficulty": 2,
+   "tags": [
+    "dl-quickfire"
+   ],
+   "question": "A names model predicts one of 27 characters. What should its loss be at initialisation? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.2958,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "inverse",
+      "value": 0.037,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "log10",
+      "value": 1.4314,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln 27 = 3.2958$.",
+    "generic": "Not quite. Use $\\ln V$.",
+    "byKey": {
+     "inverse": "That is the probability. The loss is minus its log.",
+     "log10": "Use the natural log."
+    }
+   },
+   "explain": {
+    "text": "Uniform guesses over 27 characters give $\\ln 27 = 3.2958$."
+   }
+  },
+  {
+   "id": "q2-dropout-half",
+   "difficulty": 2,
+   "tags": [
+    "dl-quickfire"
+   ],
+   "question": "Inverted dropout with $p = 0.5$: by what factor are kept units multiplied in training?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "keep",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/0.5 = 2$.",
+    "generic": "Not quite. Divide by the keep probability.",
+    "byKey": {
+     "keep": "That is the keep probability. Divide by it."
+    }
+   },
+   "explain": {
+    "text": "Half the units survive, so each kept unit is multiplied by 2 to keep the mean."
+   }
+  },
+  {
+   "id": "q3-he128",
+   "difficulty": 3,
+   "tags": [
+    "dl-quickfire"
+   ],
+   "question": "What is the He initialisation sd for a ReLU layer with fan-in 128? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.125,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "xavier",
+      "value": 0.088,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "variance",
+      "value": 0.016,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{2/128} = 1/8 = 0.125$.",
+    "generic": "Not quite. Variance $2/\\text{fan-in}$, then the root.",
+    "byKey": {
+     "xavier": "That ignores the ReLU: use 2 over fan-in.",
+     "variance": "That is the variance. Take its root."
+    }
+   },
+   "explain": {
+    "text": "$2/128 = 1/64$, whose root is $0.125$."
+   }
+  },
+  {
+   "id": "q4-d16",
+   "difficulty": 2,
+   "tags": [
+    "dl-quickfire"
+   ],
+   "question": "Query and key vectors have 16 independent standard normal entries. What is the sd of their dot product before scaling?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 16,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{16} = 4$.",
+    "generic": "Not quite. The variance is 16.",
+    "byKey": {
+     "var": "That is the variance. Take its root."
+    }
+   },
+   "explain": {
+    "text": "The variance is 16, so the sd is 4, and dividing by $\\sqrt{16}$ brings it to 1."
+   }
+  }
+ ]
+}

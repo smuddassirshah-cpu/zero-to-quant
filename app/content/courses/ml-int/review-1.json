@@ -1,0 +1,368 @@
+{
+ "id": "review-1",
+ "course": "ml-int",
+ "level": 1,
+ "pass": 0.8,
+ "timed": {
+  "seconds": 600,
+  "lockAtZero": true
+ },
+ "items": [
+  {
+   "id": "r1-gate-entry",
+   "difficulty": 3,
+   "skills": [
+    "mi-theory"
+   ],
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "pace": 120,
+   "prose": "A two-layer ReLU network: $\\mathbf{x} = (2, -1)$, $\\mathbf{W}_1 = [[1, 1], [-1, 2]]$, $\\mathbf{w}_2 = (3, 1)$, target $y = 1$, loss $\\tfrac{1}{2}(\\hat{y} - y)^2$.",
+   "question": "What is the entry in row 1, column 1 of $\\partial L / \\partial \\mathbf{W}_1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "no-x",
+      "value": 6,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-half",
+      "value": 24,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\delta_1 = (3 - 1) \\times 3 = 6$, times $x_1 = 2$: 12.",
+    "generic": "Not quite. Forward pass first, then the spoken order.",
+    "byKey": {
+     "no-x": "That is $\\delta_1$. The weight's gradient multiplies it by the input $x_1 = 2$.",
+     "no-half": "You used $2(\\hat{y} - y)$. The half in the loss cancels the 2."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{h} = (1, -4)$, so only unit 1 is open, and $\\hat{y} = 3$. Then $\\delta_1 = 2 \\times 3 = 6$ and the entry is $6 \\times 2 = 12$; row 2 is zero."
+   }
+  },
+  {
+   "id": "r2-tanh-gate",
+   "difficulty": 2,
+   "skills": [
+    "mi-theory"
+   ],
+   "tags": [
+    "backprop-by-hand"
+   ],
+   "pace": 60,
+   "question": "A tanh unit output $a = 0.6$ in the forward pass. What fraction of the arriving gradient does it pass back?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.64,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "one-minus",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sig",
+      "value": 0.24,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - 0.6^2 = 0.64$.",
+    "generic": "Not quite. The tanh gate is $1 - a^2$.",
+    "byKey": {
+     "one-minus": "You used $1 - a$. Square the output first.",
+     "sig": "That is $a(1 - a)$, the sigmoid's gate."
+    }
+   },
+   "explain": {
+    "text": "The derivative of tanh is $1 - \\tanh^2 = 1 - a^2 = 1 - 0.36 = 0.64$."
+   }
+  },
+  {
+   "id": "r3-adam-ratio",
+   "difficulty": 3,
+   "skills": [
+    "mi-theory"
+   ],
+   "tags": [
+    "optimisers"
+   ],
+   "pace": 90,
+   "question": "With $\\beta_1 = 0.8$ and $\\beta_2 = 0.99$, how many times larger is Adam's first step without the bias correction than with it?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "no-root",
+      "value": 20,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "m-only",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.2/\\sqrt{0.01} = 2$.",
+    "generic": "Not quite. Uncorrected, the step is $(1 - \\beta_1)/\\sqrt{1 - \\beta_2}$ times the corrected one.",
+    "byKey": {
+     "no-root": "You divided by $1 - \\beta_2$, not its root.",
+     "m-only": "That is $1 - \\beta_1$ alone; divide by $\\sqrt{1 - \\beta_2}$ too."
+    }
+   },
+   "explain": {
+    "text": "Uncorrected, $m_1 = 0.2g$ and $\\sqrt{v_1} = 0.1|g|$, so the step is 2 times the learning rate. With the defaults the factor is $3.1623$."
+   }
+  },
+  {
+   "id": "r4-adamw",
+   "difficulty": 2,
+   "skills": [
+    "mi-theory"
+   ],
+   "tags": [
+    "optimisers"
+   ],
+   "pace": 60,
+   "question": "A model trained with Adam plus an L2 penalty keeps some large weights that the penalty should have shrunk. Which change fixes it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "adamw",
+      "text": "Switch to AdamW, which decays the weights outside the ratio.",
+      "correct": true
+     },
+     {
+      "id": "l2",
+      "text": "Double the L2 penalty inside the gradient.",
+      "why": "The penalty is still divided by $\\sqrt{\\hat{v}}$, so large-gradient weights stay under-decayed."
+     },
+     {
+      "id": "eps",
+      "text": "Raise $\\epsilon$ to $10^{-3}$ for every weight.",
+      "why": "That damps small-gradient weights, not the decay of large-gradient ones."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "AdamW decays every weight by the same factor.",
+    "generic": "Not quite. Ask where the decay passes through $\\sqrt{\\hat{v}}$."
+   },
+   "explain": {
+    "text": "Inside Adam, $\\lambda w$ is divided by $\\sqrt{\\hat{v}}$, which is large for weights with large gradients. AdamW subtracts $\\eta\\lambda w$ directly."
+   }
+  },
+  {
+   "id": "r5-threshold",
+   "difficulty": 2,
+   "skills": [
+    "mi-theory"
+   ],
+   "tags": [
+    "double-descent"
+   ],
+   "pace": 60,
+   "question": "A minimum-norm least-squares fit on random features has 250 training points. Near what number of features does its test error peak?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 250,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 125,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "double",
+      "value": 500,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "At $p = n = 250$.",
+    "generic": "Not quite. The peak sits at the interpolation threshold.",
+    "byKey": {
+     "double": "You doubled it. The threshold is $p = n$.",
+     "half": "The threshold is $p = n$, not $n/2$."
+    }
+   },
+   "explain": {
+    "text": "The peak sits where features equal training points, $p = 250$, the first size that can fit every point exactly."
+   }
+  },
+  {
+   "id": "r6-ridge-peak",
+   "difficulty": 3,
+   "skills": [
+    "mi-theory"
+   ],
+   "tags": [
+    "double-descent"
+   ],
+   "pace": 90,
+   "question": "You add a small fixed ridge penalty to that fit. What happens to the peak?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "lower",
+      "text": "It stays near 250 features but is much lower.",
+      "correct": true
+     },
+     {
+      "id": "moves",
+      "text": "It moves to 500 features.",
+      "why": "A penalty caps the coefficients; it does not move the threshold."
+     },
+     {
+      "id": "higher",
+      "text": "It gets higher, since ridge adds bias.",
+      "why": "The variance cut at the threshold outweighs the extra bias."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Same place, lower peak.",
+    "generic": "Not quite. A penalty caps the coefficients at the threshold."
+   },
+   "explain": {
+    "text": "The peak comes from huge coefficients at $p = n$. A penalty stops them growing, so the peak shrinks where it is; tuned at each size it nearly vanishes."
+   }
+  },
+  {
+   "id": "r7-vocab",
+   "difficulty": 3,
+   "skills": [
+    "mi-theory"
+   ],
+   "tags": [
+    "dl-quickfire"
+   ],
+   "pace": 60,
+   "question": "A language model has a vocabulary of 50,257 tokens. What loss should it print before training? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.825,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "log10",
+      "value": 4.701,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln 50{,}257 = 10.825$.",
+    "generic": "Not quite. The first loss is $\\ln V$.",
+    "byKey": {
+     "log10": "Use the natural log."
+    }
+   },
+   "explain": {
+    "text": "Near-uniform predictions give $\\ln 50{,}257 = 10.825$."
+   }
+  },
+  {
+   "id": "r8-he-2048",
+   "difficulty": 3,
+   "skills": [
+    "mi-theory"
+   ],
+   "tags": [
+    "dl-quickfire"
+   ],
+   "pace": 60,
+   "prose": "A wide layer of a return model takes 2,048 inputs into ReLU units.",
+   "question": "Which standard deviation does He initialisation give its weights? Give 5 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.03125,
+    "tol": {
+     "abs": 5e-06
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "xavier",
+      "value": 0.0221,
+      "tol": {
+       "abs": 5e-06
+      }
+     },
+     {
+      "id": "variance",
+      "value": 0.00098,
+      "tol": {
+       "abs": 5e-06
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{2/2048} = 1/32 = 0.03125$.",
+    "generic": "Not quite. Variance $2/\\text{fan-in}$, then the root.",
+    "byKey": {
+     "xavier": "That ignores the ReLU: use 2 over fan-in.",
+     "variance": "That is the variance. Take its root."
+    }
+   },
+   "explain": {
+    "text": "$2/2048 = 1/1024$, whose root is $1/32 = 0.03125$."
+   }
+  }
+ ]
+}
