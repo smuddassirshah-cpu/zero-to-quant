@@ -298,7 +298,7 @@ def bigram_py(train_txt, val_txt, alpha):
 BG = two('bigram validation, add-one (NumPy and a counter)', G3.bigram_loss(TR, VA), bigram_py(TXT[:225000], TXT[225000:], 1.0))
 BGT = two('bigram on its training part', G3.bigram_loss(TR, TR), bigram_py(TXT[:225000], TXT[:225000], 1.0))
 BG01 = two('bigram validation, alpha 0.1', G3.bigram_loss(TR, VA, 0.1), bigram_py(TXT[:225000], TXT[225000:], 0.1))
-two('bigram in bits', BG / math.log(2), BG * (1 / math.log(2)), covers=[BG / math.log(2), BG * math.log(2), 4.1744, 6.0224])
+two('bigram in bits (division by ln 2 and log2 of e^loss)', BG / math.log(2), math.log2(math.exp(BG)), covers=[BG / math.log(2), BG * math.log(2), 4.1744, 6.0224])
 GV = two('GPT validation (eval_loss and the windows)', G3.eval_loss(W, VA), VAL)
 GAPB = (BG - GV) / math.log(2)
 two('gap in bits', GAPB, BG / math.log(2) - GV / math.log(2), covers=[GAPB, BG - GV, BG / GV])
@@ -368,7 +368,7 @@ for t_, why in [('4.10', 'a given sweep loss'), ('3.80', 'a given sweep loss'), 
     LIT(t_, why=why)
 two('problems ln 80', math.log(80), math.log2(80) * math.log(2), covers=[math.log(80), math.log2(80), math.log(65), 4.38, 6.32])
 lv.claim(abs(adam_step([np.array([0.05])], [np.array([-0.3])], [np.zeros(1)], [np.zeros(1)], 1, 0.002)[0][0][0] - 0.052) < 1e-6, 'p1 Adam 0.052', covers=[0.052, 0.0506, 0.048])
-two('p1 bits', 1.95 / math.log(2), 1.95 * (1 / math.log(2)), covers=[1.95 / math.log(2), 1.95 * math.log(2), (2.52 - 1.95) / math.log(2), 0.57, 2.52 / math.log(2) - 1.95])
+two('p1 bits (division by ln 2 and log2 of e^loss)', 1.95 / math.log(2), math.log2(math.exp(1.95)), covers=[1.95 / math.log(2), 1.95 * math.log(2), (2.52 - 1.95) / math.log(2), 0.57, 2.52 / math.log(2) - 1.95])
 L = lambda w: w ** 3 - w  # noqa: E731
 lv.claim(abs(3 * 0.16 - 1 + 0.52) < 1e-12 and abs((L(0.5) - L(0.3)) / 0.2 + 0.51) < 1e-9 and abs((L(0.5) - L(0.4)) / 0.1 + 0.39) < 1e-9 and abs(L(0.5) + 0.375) < 1e-12 and abs(L(0.3) + 0.273) < 1e-12,
          'p2: slope -0.52, central -0.51, one-sided -0.39', covers=[0.52, 0.51, 0.39, 0.375, 0.273, 0.336, 0.48, 0.064 - 0.4, 0.01])
@@ -379,7 +379,7 @@ LIT('6.1', why='the run\'s printed first loss, a given')
 # ---------------- givens, counts and the printed forms of computed figures ----------------
 lv.claim(len(L40) == 40 and len(ZE) == 20 and len(LR_) == 5000 and len(VLOG) == 5000 // 250 and NVW == 781 and 32 - 1 == 31, 'run lengths: 40, 20, 5,000 steps, a point every 250; 781 windows; 31 of 32',
          covers=[40, 20, 5000, 250, 781, 31])
-lv.claim(XB.shape == (16, 32) and SMALL['d'] == 16 and 2.0 - 0.01 == 1.99 and 0.3 / 0.02 == 15.000000000000002 or abs(0.3 / 0.02 - 15) < 1e-12, 'batch of 16, width 16, 1.99, scale 15', covers=[16, 1.99, 15, 2])
+lv.claim(XB.shape == (16, 32) and SMALL['d'] == 16 and abs(2.0 - 0.01 - 1.99) < 1e-12 and abs(0.3 / 0.02 - 15) < 1e-12, 'batch of 16, width 16, 1.99, scale 15', covers=[16, 1.99, 15, 2])
 lv.claim(len(v60) == 2 and abs(math.log(2) - 0.6931) < 5e-5 and 65 - 1 == 64, '60-step runs; ln 2; 64 other characters', covers=[60, 0.6931, 64, 65, 80, 96, 200, 2.52, 1e-4 * 3])
 caps = [f_['caption'] for f_ in F('l10')['screens'][1]['canvas']['controls'][0]['frames']]
 
@@ -445,6 +445,7 @@ def first_fail(w, src):
                 exec(ZQ_LIB, ns_)
                 exec((w.get('prelude') or '') + '\n', ns_)
                 exec(src, ns_)
+                exec((w.get('postlude') or '') + '\n', ns_)
         except Exception:
             return -1
         for i, c in enumerate(w['tests']):

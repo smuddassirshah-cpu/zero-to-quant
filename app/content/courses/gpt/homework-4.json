@@ -99,7 +99,7 @@
             }
           }
         ],
-        "how": "Submit runs 8 hidden tests. Two sets of 12 planted runs without noise must give back their exponents and constants; Chinchilla's published law gives its split exactly. A noisy set must land its exponents within 0.03 and its split within a factor of 1.5. The last checks that the split spends the budget.",
+        "how": "Submit runs 8 hidden tests. Two sets of 12 planted runs without noise must give back their exponents and constants; Chinchilla's published law gives its split exactly. A noisy set must land its exponents within 0.03 and its split within 50%. The last checks that the split spends the budget.",
         "mutants": [
           {
             "source": "import numpy as np\n\n\ndef fit_scaling(runs):\n    runs = np.asarray(runs, dtype=float)\n    N, D, L = runs[:, 0], runs[:, 1], runs[:, 2]\n    best = None\n    for alpha in np.round(np.arange(0.10, 0.601, 0.01), 2):\n        for beta in np.round(np.arange(0.10, 0.601, 0.01), 2):\n            X = np.column_stack([np.ones_like(N), N ** -alpha, D ** -beta])\n            coef = np.linalg.lstsq(X, L, rcond=None)[0]\n            sse = float(((X @ coef - L) ** 2).sum())\n            if best is None or sse < best[0]:\n                best = (sse, coef, alpha, beta)\n    _, (E, A, B), alpha, beta = best\n    return {'E': float(E), 'A': float(A), 'B': float(B), 'alpha': float(alpha), 'beta': float(beta)}\n\n\ndef best_split(p, C):\n    a, b = p['alpha'], p['beta']\n    G = (a * p['A'] / (b * p['B'])) ** (1 / (a + b))\n    N = G * (C / 6) ** (a / (a + b))\n    return float(N), float(C / (6 * N))\n",

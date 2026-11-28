@@ -69,3 +69,10 @@ None.
 ## Backlog
 
 Two bullets under "Raised later (gpt level 2)" in `docs/BACKLOG-INBOX.md`.
+
+## Fix pass notes for later authors (frozen module `gpt_ops_l2.py`)
+
+Second reader (`docs/reviews/review-gpt-24.md`) found no module error. Two usage notes for `interp` and `post-train`:
+
+- `sample_text` keeps every logit equal to the $k$-th largest (`z < kth`), so ties keep more than $k$ characters. Harmless on float logits; say "ties are kept" if a lesson ever tests ties.
+- `forward_cache` takes no mask argument and uses a plain NumPy softmax. An ablation must edit the cached arrays or call `seq_ops_l3.attention`, which handles a fully masked row.

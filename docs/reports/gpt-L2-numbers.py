@@ -235,8 +235,26 @@ loopv = np.mean([-logsm(loop_logits(W, XV[i]))[np.arange(32), YV[i]].mean() for 
 vecv = np.mean([-logsm(G.forward_logits(W, XV[i]))[np.arange(32), YV[i]].mean() for i in (0, 300, 780)])
 lv.claim(close(loopv, vecv, 1e-10), 'three validation windows: loop and vectorised losses agree')
 lv.claim(NVW == 781, '781 validation windows', covers=[781])
-two('validation loss in bits', VAL / math.log(2), VAL * (1 / math.log(2)), covers=[VAL, VAL / math.log(2), VAL * math.log(2), 6.0224])
+lv.claim(close(float(-logsm(G.forward_logits(W, XV[:1]) + 1000.0)[0][np.arange(32), YV[0]].mean()), G.mean_loss(W, XV[:1], YV[:1]), 1e-9),
+         'l7 stable log-softmax test: a shift of 1,000 on every logit leaves the loss unchanged', covers=[1000.0])
+two('validation loss in bits (division by ln 2 and log2 of e^loss)', VAL / math.log(2), math.log2(math.exp(VAL)), covers=[VAL, VAL / math.log(2), VAL * math.log(2), 6.0224])
 lv.claim(round(VAL, 2) == 1.79 and abs(4.18 - LN65) < 0.01, 'stated 1.79; 4.18 is about ln 65', covers=[1.79, 4.18])
+
+
+def val_transposed(*names):
+    """Validation loss with the named square arrays stored transposed (shapes still pass the check)."""
+    w2 = dict(W)
+    for k in names:
+        assert w2[k].shape[0] == w2[k].shape[1], k
+        w2[k] = np.ascontiguousarray(w2[k].T)
+    return G.mean_loss(w2, XV, YV)
+
+
+T_PROJ, T_WPE, T_BOTH = val_transposed('h0.proj_w'), val_transposed('wpe'), val_transposed('h0.proj_w', 'wpe')
+lv.claim(round(T_PROJ, 2) == 3.75 and round(T_WPE, 2) == 3.41 and round(T_BOTH, 2) == 3.83 and VAL < T_WPE < T_PROJ < T_BOTH < LN65,
+         'review-2 r-square: transposed proj_w gives 3.75, wpe 3.41, both 3.83, all below ln 65 = 4.17', covers=[3.75, 3.41, 3.83])
+two('transposed proj_w loss (gpt_ops_l2 and seq_ops_l4)', T_PROJ,
+    float(cross_entropy(S4.lm_logits(XV, G.to_model({**W, 'h0.proj_w': W['h0.proj_w'].T.copy()}), 4).reshape(-1, 65), YV.reshape(-1)).item()))
 lv.claim(abs(math.log(96) - 4.56) < 0.005 and abs(4.57 - math.log(96)) < 0.02, 'vendor: random 4.57 near ln 96 = 4.56', covers=[4.57, 4.56, math.log(96)])
 LIT('1.20', why='the vendor\'s stated loss, a given of the scenario')
 LIT('1.21', why='the loss the scenario says the checkpoint gives, a given')
@@ -255,7 +273,7 @@ def chances(prompt):
 
 pt = chances('\nFirst Ci')
 P_T = float(pt[G.encode('t')[0]])
-two('l7 hook loss', -math.log(P_T), -math.log(P_T), covers=[P_T, -math.log(P_T), -math.log10(P_T), -math.log2(P_T)])
+two('l7 hook loss (chances route and per-position loop)', -math.log(P_T), float(-logsm(loop_logits(W, np.array(G.encode('\nFirst Ci'))))[-1][G.encode('t')[0]]), covers=[P_T, -math.log(P_T), -math.log10(P_T), -math.log2(P_T)])
 lv.claim(sorted(np.round(pt, 4).tolist())[-5:][::-1] == [b for b in sorted(F('l7')['screens'][0]['canvas']['state']['values'].values())][::-1], 'hook bars: the top five chances to 4 places')
 tp = {}
 for k in range(2, 9):
@@ -344,7 +362,7 @@ lv.claim(4 * 4 * 64 * 64 == 65536 and 4 * 64 * 64 == 16384 and 64 * 65 // 2 == 2
 ch = [0.5, 0.2, 0.05, 0.8]
 M = two('p3 mean loss', float(np.mean([-math.log(p) for p in ch])), -math.log(0.5 * 0.2 * 0.05 * 0.8) / 4, covers=[-math.log(p) for p in ch])
 M2 = two('p3 new mean', float(np.mean([-math.log(p) for p in [0.5, 0.2, 0.5, 0.8]])), -math.log(0.5 * 0.2 * 0.5 * 0.8) / 4)
-two('ln 80', math.log(80), math.log2(80) * math.log(2), covers=[math.log(80), math.log2(80), M, 4 * M, M / math.log(2), M * math.log(2), M2, M - M2, -math.log(np.mean(ch)), 2.9957, 0.6931])
+two('ln 80', math.log(80), math.log2(80) * math.log(2), covers=[math.log(80), math.log2(80), M, 4 * M, M / math.log(2), 1.3804 / math.log(2), M * math.log(2), M2, M - M2, -math.log(np.mean(ch)), 2.9957, 0.6931])
 
 
 # ---------------- givens and small workings ----------------
@@ -405,6 +423,7 @@ def first_fail(w, src):
                 exec(ZQ_LIB, ns_)
                 exec((w.get('prelude') or '') + '\n', ns_)
                 exec(src, ns_)
+                exec((w.get('postlude') or '') + '\n', ns_)
         except Exception:
             return -1
         for i, c in enumerate(w['tests']):

@@ -642,9 +642,14 @@
             "expect": "False",
             "compare": "equal",
             "budget": 5000
+          },
+          {
+            "call": "bigram_sizes(W, TRAIN, VAL)",
+            "expect": "(225000, 25000)",
+            "compare": "equal"
           }
         ],
-        "how": "Submit runs 6 hidden tests: the whole validation part and two short cuts (65 and 64 characters). Then `beats_bigram` for the supplied weights on all of it and on a hard 65-character stretch, and for scrambled weights. Losses within $10^{-9}$ (relative).",
+        "how": "Submit runs 6 hidden tests: the whole validation part and two short cuts (65 and 64 characters). Then `beats_bigram` for the supplied weights on all of it and on a hard 65-character stretch, and for scrambled weights, and that the bigram is counted on the training part alone. Losses within $10^{-9}$ (relative).",
         "mutants": [
           {
             "source": "import numpy as np\n\n\ndef gpt_val_loss(weights, val):\n    val = np.asarray(val)\n    n = (len(val) - 1) // 32\n    X = val[:n * 32].reshape(n, 32)\n    Y = val[:n * 32].reshape(n, 32)\n    return mean_loss(weights, X, Y)\n\n\ndef beats_bigram(weights, train, val):\n    return bool(gpt_val_loss(weights, val) < bigram_val_loss(train, val, 1.0))\n",
@@ -665,8 +670,14 @@
             "source": "import numpy as np\n\n\ndef gpt_val_loss(weights, val):\n    val = np.asarray(val)\n    n = (len(val) - 1) // 32\n    X = val[:32]\n    Y = val[1:33]\n    return mean_loss(weights, X, Y)\n\n\ndef beats_bigram(weights, train, val):\n    return bool(gpt_val_loss(weights, val) < bigram_val_loss(train, val, 1.0))\n",
             "test": 1,
             "symptom": "Scores only the first window."
+          },
+          {
+            "source": "import numpy as np\n\n\ndef gpt_val_loss(weights, val):\n    val = np.asarray(val)\n    n = (len(val) - 1) // 32\n    X = val[:n * 32].reshape(n, 32)\n    Y = val[1:n * 32 + 1].reshape(n, 32)\n    return mean_loss(weights, X, Y)\n\n\ndef beats_bigram(weights, train, val):\n    return bool(gpt_val_loss(weights, val) < bigram_val_loss(np.concatenate([train, val]), val, 1.0))\n",
+            "test": 7,
+            "symptom": "Counts the bigram on train plus validation text, the leak this level warns about."
           }
-        ]
+        ],
+        "postlude": "\ndef bigram_sizes(weights, train, val):\n    seen = []\n    real = bigram_val_loss\n\n    def spy(t, v, a):\n        seen.append((len(t), len(v)))\n        return real(t, v, a)\n\n    globals()['bigram_val_loss'] = spy\n    try:\n        beats_bigram(weights, train, val)\n    finally:\n        globals()['bigram_val_loss'] = real\n    return seen[-1] if seen else None\n"
       },
       "hints": [
         {
@@ -690,7 +701,9 @@
         "generic": "Not quite. Check the first failing test.",
         "byKey": {
           "test-3": "Test 3 has 64 characters: only one window fits, since its targets need one character more.",
-          "test-5": "Test 5 scores a hard stretch of validation text. Compare with the bigram on that same text, not on the training part."
+          "test-5": "Test 5 scores a hard stretch of validation text. Compare with the bigram on that same text, not on the training part.",
+          "test-1": "Test 1 compares the whole validation part: score targets shifted by one, over every full window, and average.",
+          "test-7": "Test 7 records what the bigram is counted on: the training part only (225,000 characters), never the validation text it is scored on."
         }
       },
       "explain": {
