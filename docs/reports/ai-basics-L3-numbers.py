@@ -13,7 +13,7 @@ import sys
 from fractions import Fraction as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'tools'))
-from numbers_lib import Level
+from numbers_lib import Level, ZQ_LIB
 
 lv = Level("ai-basics", 3)
 C4 = [(0, 0), (0, 1), (1, 0), (1, 1)]
@@ -73,8 +73,11 @@ def run_code(f, path):
             exec(w['prelude'], ns)
         exec(src, ns)
         ns['__learner_source__'] = src
+        exec(ZQ_LIB, ns)
         for t in w['tests']:
             try:
+                if t.get('setup'):
+                    exec(t['setup'], ns)
                 got = eval(t['call'], ns); exp = eval(t['expect'])
                 ok = abs(got - exp) <= 1e-9 * max(1, abs(exp)) if t.get('compare') == 'isclose' else got == exp
             except Exception:

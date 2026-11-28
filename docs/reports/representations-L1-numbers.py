@@ -14,7 +14,7 @@ DATA = os.path.join(APP, 'content', 'data', 'ai')
 sys.path.insert(0, os.path.join(APP, 'tools'))
 sys.path.insert(0, DATA)
 import numpy as np
-from numbers_lib import Level
+from numbers_lib import Level, ZQ_LIB
 from autograd import Tensor, sgd_step
 import representations_ops_l1 as ops
 
@@ -592,11 +592,11 @@ def same(a, b, cmp, tol):
 def run_widget(w, src, label, twin_ok=None):
     cwd = os.getcwd(); os.chdir(DATA)
     try:
-        ns = {'__name__': '__zq__'}; exec('import numpy as np\n', ns); exec(src, ns)
+        ns = {'__name__': '__zq__', '__learner_source__': src}; exec(ZQ_LIB, ns); exec('import numpy as np\n', ns); exec(src, ns)
         ok_all = True
         for k, t in enumerate(w['tests']):
-            if '__learner_source__' in t['call']:
-                continue
+            if '__learner_source__' in t['call'] or ('twin' in label and 'zq_' in t['call']):
+                continue  # a source check judges the learner's code, not a twin's results
             if t.get('setup'):
                 exec(t['setup'], ns)
             got = eval(t['call'], ns)

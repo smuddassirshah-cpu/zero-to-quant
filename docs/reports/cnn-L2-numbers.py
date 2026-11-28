@@ -20,7 +20,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, '..', '..')
 sys.path.insert(0, os.path.join(ROOT, 'app', 'tools'))
-from numbers_lib import Level  # noqa: E402
+from numbers_lib import Level, ZQ_LIB  # noqa: E402
 
 AI = os.path.join(ROOT, 'app', 'content', 'data', 'ai')
 sys.path.insert(0, AI)
@@ -247,6 +247,7 @@ def first_fail(w, src):
         for k, v in (w.get('files') or {}).items():
             open(k, 'w').write(v)
         ns = {'__learner_source__': src}
+        exec(ZQ_LIB, ns)
         try:
             exec((w.get('prelude') or '') + '\n', ns); exec(src, ns); exec((w.get('postlude') or '') + '\n', ns)
         except Exception:  # noqa

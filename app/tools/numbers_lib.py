@@ -261,6 +261,22 @@ def _text_strings(node, path, fid, out, text=False, canvas=False):
                 _text_strings(x, p, fid, out, text or k in _TEXT_KEYS, False)
 
 
+
+def _zq_lib_source():
+    """The Python helpers the code widget defines for hidden tests (zq_no_sort, zq_uses, zq_no; ENGINE-BACKLOG 1268), read from
+    js/engine/widgets/code.js so a number script runs a test exactly as the page does. exec(ZQ_LIB, ns) into the namespace that holds
+    __learner_source__."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    try:
+        with open(os.path.join(here, '..', 'js', 'engine', 'widgets', 'code.js'), encoding='utf8') as f:
+            m = re.search(r'const LIB = `([\s\S]*?)`;', f.read())
+        return m.group(1) if m else ''
+    except OSError:
+        return ''
+
+
+ZQ_LIB = _zq_lib_source()
+
 class Level:
     def __init__(self, course, n, coverage=None):
         self.course, self.n, self.files, self.results, self.coverage = course, n, {}, [], coverage
