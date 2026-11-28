@@ -1,0 +1,889 @@
+{
+ "id": "l3-one-loss-two-units",
+ "course": "makemore",
+ "title": "One loss, two units",
+ "minutes": 14,
+ "objectives": [
+  "Compute the average negative log-likelihood in nats and in bits, and read it as a cross-entropy."
+ ],
+ "skills": [
+  "mk-loss"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Is 2.45 good?",
+   "prose": "Add-one counts from all 32,033 names score an average loss of 2.4546 nats a letter on those names. A number alone means little; compare it with the dumbest model.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 5,
+     "step": 0.5,
+     "labels": true
+    },
+    "state": {
+     "points": [
+      {
+       "id": "m",
+       "x": 2.4546,
+       "label": "bigram",
+       "labelPos": "above"
+      }
+     ],
+     "caption": "Average loss in nats a letter, add-one counts from all 32,033 names."
+    }
+   },
+   "question": "What loss does a model score that gives all 27 symbols equal chances? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.2958,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Loss in nats",
+    "wrong": [
+     {
+      "id": "bits",
+      "value": 4.7549,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "count",
+      "value": 27,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every pair costs the same, $-\\ln \\tfrac{1}{27}$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln 27$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln 27 = 3.2958$ nats: the bigram saves 0.84 nats a letter.",
+    "generic": "Not quite. Each pair has chance $\\tfrac{1}{27}$; what does it cost in nats?",
+    "byKey": {
+     "bits": "That is $\\log_2 27$, the loss in bits. The 2.4546 is in nats.",
+     "count": "That is the number of choices, its perplexity. The loss is the log of it."
+    }
+   },
+   "explain": {
+    "text": "Equal chances cost $-\\ln \\tfrac{1}{27} = \\ln 27 = 3.2958$ nats on every pair. The bigram’s 2.4546 is 0.84 nats lower. The scale runs from 0 (always sure and right) up.",
+    "canvas": {
+     "points": {
+      "u": {
+       "id": "u",
+       "x": 3.2958,
+       "label": "equal chances",
+       "labelPos": "below"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Nats and bits on one line",
+   "prose": "Slide the loss in nats. The bits point and the caption follow, with the perplexity.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 5,
+     "step": 0.5,
+     "labels": true
+    },
+    "state": {
+     "points": [
+      {
+       "id": "n",
+       "x": 2,
+       "label": "nats",
+       "labelPos": "above"
+      },
+      {
+       "id": "b",
+       "x": 2.8854,
+       "label": "bits",
+       "labelPos": "below",
+       "colour": 2
+      }
+     ]
+    },
+    "derive": {
+     "b.x": "n.x / ln(2)",
+     "caption": "{{fixed(n.x, 2)}} nats = {{fixed(n.x / ln(2), 4)}} bits; perplexity {{fixed(exp(n.x), 2)}}"
+    },
+    "controls": [
+     {
+      "bind": "n",
+      "min": 0,
+      "max": 3.3,
+      "step": 0.01,
+      "start": 2,
+      "label": "Loss in nats",
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "What is the bigram’s 2.4546 nats in bits? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.5412,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Bits",
+    "wrong": [
+     {
+      "id": "times",
+      "value": 1.7014,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "log10",
+      "value": 1.066,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A bit is a smaller unit than a nat."
+    },
+    {
+     "rung": "step",
+     "text": "Divide by $\\ln 2 = 0.6931$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2.4546 / \\ln 2 = 3.5412$ bits a letter.",
+    "generic": "Not quite. Bits are nats divided by $\\ln 2$.",
+    "byKey": {
+     "times": "You multiplied by $\\ln 2$. A loss in bits is larger than the same loss in nats.",
+     "log10": "You divided by $\\ln 10$, giving base-10 units."
+    }
+   },
+   "explain": {
+    "text": "One nat is $1/\\ln 2 = 1.4427$ bits, so 2.4546 nats is 3.5412 bits. The perplexity, 11.64, is the same in either unit.",
+    "canvas": {
+     "points": {
+      "n": {
+       "x": 2.45
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "One loss for every model",
+   "prose": "The average negative log-likelihood per symbol, $-\\tfrac{1}{n}\\sum_i \\ln q(x_i \\mid x_{i-1})$, is the **cross-entropy** of the data to the model, from info l8; in nats with `np.log`, in bits after dividing by $\\ln 2$. Its exponential is the **perplexity**, from info l7.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 5,
+     "step": 0.5,
+     "labels": true
+    },
+    "state": {
+     "points": [
+      {
+       "id": "m",
+       "x": 2.4546,
+       "label": "bigram",
+       "labelPos": "above"
+      }
+     ],
+     "caption": "Average loss in nats a letter, add-one counts from all 32,033 names."
+    }
+   },
+   "question": "What is the perplexity of a loss of 2.4546 nats? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11.64,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "label": "Perplexity",
+    "wrong": [
+     {
+      "id": "base2",
+      "value": 5.48,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "bits-e",
+      "value": 34.51,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Undo the natural log."
+    },
+    {
+     "rung": "step",
+     "text": "$e^{2.4546}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$e^{2.4546} = 11.64$: like choosing among about 12 equal letters.",
+    "generic": "Not quite. The perplexity of a loss in nats is $e$ to that loss.",
+    "byKey": {
+     "base2": "You raised 2 to a loss in nats. Use $e^{2.4546}$, or $2^{3.5412}$.",
+     "bits-e": "You raised $e$ to the loss in bits. Match the base to the unit."
+    }
+   },
+   "explain": {
+    "text": "$e^{2.4546} = 2^{3.5412} = 11.64$. The bigram is as unsure as a fair choice among 11.64 symbols, against 27 for equal chances."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One name by hand",
+   "prose": "Score emma under the add-one table from all names: one cost $-\\ln q$ per pair.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "start e",
+      "e m",
+      "m m",
+      "m a",
+      "a end"
+     ],
+     "yLabel": "Chance $q$",
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "start e": 0.0478,
+      "e m": 0.0377,
+      "m m": 0.0253,
+      "m a": 0.3885,
+      "a end": 0.1958
+     }
+    }
+   },
+   "question": "Fill in the missing cost, the total and the average per pair.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Pair",
+     "Chance $q$",
+     "Cost $-\\ln q$"
+    ],
+    "rows": [
+     [
+      "start then e",
+      "0.047785",
+      "3.0410"
+     ],
+     [
+      "e then m",
+      "0.037653",
+      "3.2793"
+     ],
+     [
+      "m then m",
+      "0.025341",
+      "3.6753"
+     ],
+     [
+      "m then a",
+      "0.388514",
+      {
+       "edit": true,
+       "answer": 0.9454,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "log10",
+         "value": 0.4106,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "a then end",
+      "0.195830",
+      "1.6305"
+     ],
+     [
+      "total",
+      "",
+      {
+       "edit": true,
+       "answer": 12.5716,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "average",
+      "",
+      {
+       "edit": true,
+       "answer": 2.5143,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "per-letter",
+         "value": 3.1429,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$-\\ln 0.388514$ is under 1, since the chance is high."
+    },
+    {
+     "rung": "step",
+     "text": "Add the five costs, then divide by 5 pairs."
+    }
+   ],
+   "feedback": {
+    "correct": "Cost 0.9454, total 12.5716 nats, average 2.5143 nats a pair.",
+    "generic": "Not quite. Use the natural log, add the five costs, and divide by the pairs.",
+    "byKey": {
+     "log10": "You used $\\log_{10}$. Nats need the natural log, `np.log`.",
+     "per-letter": "You divided by emma’s 4 letters. There are 5 pairs, one more for the end."
+    }
+   },
+   "explain": {
+    "text": "$-\\ln 0.388514 = 0.9454$. The five costs add to 12.5716 nats, and over 5 pairs that is 2.5143 nats a pair, a little above the file’s 2.4546."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Bits saved on new names",
+   "prose": "Counts from the 25,626 training names, add-one smoothed, score 2.4514 nats a letter on the 3,203 dev names they never saw.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 5,
+     "step": 0.5,
+     "labels": true
+    },
+    "state": {
+     "points": [
+      {
+       "id": "m",
+       "x": 2.4546,
+       "label": "bigram",
+       "labelPos": "above"
+      }
+     ],
+     "caption": "Average loss in nats a letter, add-one counts from all 32,033 names."
+    }
+   },
+   "question": "How many bits a letter does the bigram save on the dev names against equal chances? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.2182,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "label": "Bits saved",
+    "wrong": [
+     {
+      "id": "nats",
+      "value": 0.8444,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the saving in nats first: $3.2958 - 2.4514$."
+    },
+    {
+     "rung": "step",
+     "text": "Then divide by $\\ln 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(3.2958 - 2.4514)/\\ln 2 = 1.2182$ bits a letter.",
+    "generic": "Not quite. Take the difference in nats, then convert.",
+    "byKey": {
+     "nats": "That is the saving in nats. Divide by $\\ln 2$ for bits."
+    }
+   },
+   "explain": {
+    "text": "The saving is $3.2958 - 2.4514 = 0.8444$ nats, which is 1.2182 bits a letter. Over a six-letter name and its end, that is about 8.5 bits."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Bits against nats",
+   "prose": "A rival scores their model on the same 3,203 dev names and reports 3.50. Ours scores 2.4514. Their report says the loss is in bits.",
+   "question": "Which model is better per letter?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "theirs",
+      "text": "Theirs: 3.50 bits is 2.4260 nats",
+      "correct": true
+     },
+     {
+      "id": "ours",
+      "text": "Ours: 2.45 is smaller than 3.50",
+      "why": "You compared bits with nats. Convert first: 3.50 bits is $3.50 \\times \\ln 2 = 2.4260$ nats."
+     },
+     {
+      "id": "unknown",
+      "text": "We cannot tell without the test names",
+      "why": "Both are scored on the same dev names, so they compare once the units match."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put both in one unit."
+    },
+    {
+     "rung": "step",
+     "text": "$3.50 \\times 0.693147 = 2.4260$ nats."
+    }
+   ],
+   "feedback": {
+    "correct": "Theirs: 2.4260 nats beats our 2.4514.",
+    "generic": "Not quite. Convert the bits to nats, then compare.",
+    "byKey": {
+     "ours": "You compared a loss in bits with one in nats. In nats theirs is 2.4260, lower than ours."
+    }
+   },
+   "explain": {
+    "text": "A loss in bits times $\\ln 2$ is the loss in nats: $3.50 \\times 0.693147 = 2.4260$. That is below our 2.4514, so their model is better, by 0.025 nats a letter."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A very short name",
+   "prose": "The name jo has three pairs under the add-one table from all names. Their costs are 2.5826 (start then j), 1.8079 (j then o) and 2.2300 (o then end).",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "start j",
+      "j o",
+      "o end"
+     ],
+     "yLabel": "Cost (nats)",
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "start j": 2.5826,
+      "j o": 1.8079,
+      "o end": 2.23
+     }
+    }
+   },
+   "question": "What share of jo’s total loss comes from its start and end pairs? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.73,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "label": "Share",
+    "wrong": [
+     {
+      "id": "middle",
+      "value": 0.27,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the start and end costs, then divide by all three."
+    },
+    {
+     "rung": "step",
+     "text": "$(2.5826 + 2.2300)/6.6205$."
+    }
+   ],
+   "feedback": {
+    "correct": "$4.8126 / 6.6205 = 0.73$: most of a short name’s loss is how it starts and stops.",
+    "generic": "Not quite. Divide the two mark costs by the total.",
+    "byKey": {
+     "middle": "That is the share of the middle pair, j then o. The question asks about the other two."
+    }
+   },
+   "explain": {
+    "text": "The start and end pairs cost 4.8126 of jo’s 6.6205 nats, a share of 0.73. For emma the share is 0.37: in short names the marks dominate."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 3,
+   "title": "The yardstick",
+   "prose": "Every model in this strand, bigram or network, is judged the same way: give it names it never saw and average the cost of each next symbol.\n\n$$L = -\\frac{1}{n} \\sum_{i=1}^{n} \\ln q(x_i \\mid \\text{context}_i)$$\n\nIn bits it is $L/\\ln 2$, and the perplexity is $e^{L}$.",
+   "question": "A model scores perplexity 1 on a set of names. What does that mean?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sure",
+      "text": "Every next symbol got chance 1",
+      "correct": true
+     },
+     {
+      "id": "guess",
+      "text": "It is no better than guessing",
+      "why": "Guessing among 27 symbols gives perplexity 27, not 1."
+     },
+     {
+      "id": "bad",
+      "text": "It gave every next symbol chance 0",
+      "why": "A chance of 0 costs $-\\ln 0 = \\infty$, so the perplexity would be infinite."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Perplexity 1 means a loss of $\\ln 1$."
+    },
+    {
+     "rung": "step",
+     "text": "A loss of 0 needs every chance to be 1."
+    }
+   ],
+   "feedback": {
+    "correct": "A loss of 0: every next symbol had chance 1.",
+    "generic": "Not quite. What loss gives $e^{L} = 1$?"
+   },
+   "explain": {
+    "text": "$e^{L} = 1$ means $L = 0$, and the average of $-\\ln q$ is 0 only when every $q$ is 1. No model of names gets near it: names are not that predictable."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "loss_report() in code",
+   "prose": "Write `loss_report(P, words)`: the average of $-\\ln P_{ab}$ over every pair of the words, in nats, then the same in bits and the perplexity. Return the three as a tuple, each rounded to 4 places.",
+   "question": "Write `loss_report`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\ndef loss_report(P, words):\n    # average -ln P[a, b] over every pair (nats), then bits and perplexity,\n    # each rounded to 4 places\n    nats = bits = perplexity = 0.0\n    ...\n    return (nats, bits, perplexity)\n",
+    "solution": "import math\n\n\ndef loss_report(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            total -= math.log(P[index[a], index[b]])\n            n += 1\n    nats = total / n\n    bits = nats / math.log(2)\n    perplexity = math.exp(nats)\n    return (round(nats, 4), round(bits, 4), round(perplexity, 4))\n",
+    "examples": [
+     {
+      "call": "loss_report(np.full((27, 27), 1 / 27), ['ab'])",
+      "expect": "(3.2958, 4.7549, 27.0)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "loss_report(np.full((27, 27), 1 / 27), dev)",
+      "expect": "(3.2958, 4.7549, 27.0)",
+      "compare": "equal"
+     },
+     {
+      "call": "loss_report(P_train, train)",
+      "expect": "(2.4536, 3.5398, 11.6304)",
+      "compare": "equal"
+     },
+     {
+      "call": "loss_report(P_train, dev)",
+      "expect": "(2.4514, 3.5366, 11.6047)",
+      "compare": "equal"
+     },
+     {
+      "call": "loss_report(P_train, test)",
+      "expect": "(2.4702, 3.5637, 11.8245)",
+      "compare": "equal"
+     },
+     {
+      "call": "loss_report(P_train, ['jo'])",
+      "expect": "(2.186, 3.1537, 8.8996)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: equal chances on the dev names, add-one counts from the training names on the train, dev and test names, and the short name jo. `P_train`, `train`, `dev`, `test` and `index` are ready. Each answer must equal the expected tuple, rounded to 4 places.",
+    "prelude": "import math\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain = [words[i] for i in perm[:25626]]\ndev = [words[i] for i in perm[25626:28829]]\ntest = [words[i] for i in perm[28829:]]\nindex = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\nindex[\".\"] = 0\nN_train = np.zeros((27, 27), dtype=int)\nfor w in train:\n    cs = \".\" + w + \".\"\n    for a, b in zip(cs, cs[1:]):\n        N_train[index[a], index[b]] += 1\nP_train = (N_train + 1) / (N_train + 1).sum(axis=1, keepdims=True)\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt"
+    },
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import math\n\n\ndef loss_report(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            total -= math.log(P[index[a], index[b]])\n            n += 1\n    nats = total / n\n    bits = nats * math.log(2)\n    perplexity = math.exp(nats)\n    return (round(nats, 4), round(bits, 4), round(perplexity, 4))\n",
+      "test": 1,
+      "symptom": "Multiplies by ln 2 instead of dividing: the bits come out smaller than the nats."
+     },
+     {
+      "source": "import math\n\n\ndef loss_report(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            total -= math.log(P[index[a], index[b]])\n            n += 1\n    nats = total / n\n    bits = nats / math.log(2)\n    perplexity = 2 ** nats\n    return (round(nats, 4), round(bits, 4), round(perplexity, 4))\n",
+      "test": 1,
+      "symptom": "Raises 2 to a loss in nats."
+     },
+     {
+      "source": "import math\n\n\ndef loss_report(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            total -= math.log2(P[index[a], index[b]])\n            n += 1\n    nats = total / n\n    bits = nats / math.log(2)\n    perplexity = math.exp(nats)\n    return (round(nats, 4), round(bits, 4), round(perplexity, 4))\n",
+      "test": 1,
+      "symptom": "Logs in base 2, so the nats are really bits."
+     },
+     {
+      "source": "import math\n\n\ndef loss_report(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            total -= math.log(P[index[a], index[b]])\n            n += 1\n    nats = total / len(words)\n    bits = nats / math.log(2)\n    perplexity = math.exp(nats)\n    return (round(nats, 4), round(bits, 4), round(perplexity, 4))\n",
+      "test": 1,
+      "symptom": "Averages per name instead of per pair."
+     },
+     {
+      "source": "import math\n\n\ndef loss_report(P, words):\n    total, n = 0.0, 0\n    for w in words:\n        cs = \".\" + w + \".\"\n        for a, b in zip(cs, cs[1:]):\n            total -= math.log(P[index[a], index[b]])\n            n += 1\n    nats = total\n    bits = nats / math.log(2)\n    perplexity = math.exp(nats)\n    return (round(nats, 4), round(bits, 4), round(perplexity, 4))\n",
+      "test": 1,
+      "symptom": "Reports the total, not the average."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the pairs as you go: the average divides by them, not by the names."
+    },
+    {
+     "rung": "step",
+     "text": "`bits = nats / math.log(2)` and `perplexity = math.exp(nats)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your report matches: 2.4514 nats, 3.5366 bits and perplexity 11.6047 on the dev names.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Equal chances must give $(3.2958, 4.7549, 27.0)$: $\\ln 27$, $\\log_2 27$ and 27."
+    }
+   },
+   "explain": {
+    "text": "Average $-\\ln P_{ab}$ over the pairs for the nats, divide by $\\ln 2$ for bits, and take $e$ to the nats for the perplexity. The train, dev and test losses are 2.4536, 2.4514 and 2.4702."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A claim of 0.01 nats",
+   "prose": "A vendor says their name model beats ours by 0.01 nats a letter: 2.44 against our 2.45. Their figure is measured on their own set of test names, not ours.",
+   "question": "What can we conclude?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nothing",
+      "text": "Nothing yet: score both models on the same held-out names",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "Theirs is better by 0.01 nats a letter",
+      "why": "Our own split moved the bigram from 2.4514 (dev) to 2.4702 (test): 0.02 nats from the names alone."
+     },
+     {
+      "id": "bits",
+      "text": "Theirs is better by 0.01 bits a letter",
+      "why": "The figures are in nats; and the unit is not what makes the claim weak."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How much did our own loss move between the dev and test names?"
+    },
+    {
+     "rung": "step",
+     "text": "2.4514 against 2.4702: 0.019 nats with no change to the model."
+    }
+   ],
+   "feedback": {
+    "correct": "Nothing yet: different names alone move the loss by more than 0.01.",
+    "generic": "Not quite. Ask whether the two numbers measure the same thing.",
+    "byKey": {
+     "better": "Our bigram scored 2.4514 on dev and 2.4702 on test, a gap of 0.019 nats with the same model. 0.01 on other names is noise."
+    }
+   },
+   "explain": {
+    "text": "The same bigram scores 2.4514 on our dev names and 2.4702 on our test names. A gap of 0.01 on a different set of names cannot be told from that noise. Score both models on one held-out set."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The loss is the average of $-\\ln q$ over every next symbol: the cross-entropy of the data to the model, in nats.",
+   "Bits are nats over $\\ln 2$; perplexity is $e^{L}$ in either unit. The bigram scores 2.4546 nats, 3.5412 bits, perplexity 11.64; equal chances score $\\ln 27 = 3.2958$.",
+   "Compare averages on the same held-out names: dev 2.4514 and test 2.4702 for the same bigram, so 0.01 nats on other names means nothing."
+  ],
+  "formula": {
+   "name": "Average loss",
+   "tex": "L = -\\frac{1}{n}\\sum_{i=1}^{n} \\ln q(x_i \\mid x_{i-1})",
+   "note": "Bits: $L/\\ln 2$. Perplexity: $e^{L}$."
+  },
+  "trap": "Comparing a loss in bits with one in nats; summing instead of averaging; comparing losses on different names."
+ },
+ "quiz": [
+  {
+   "id": "q-test-bits",
+   "difficulty": 2,
+   "prose": "The bigram scores 2.4702 nats a letter on the test names.",
+   "question": "What is that in bits? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.5637,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "times",
+      "value": 1.7122,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2.4702 / \\ln 2 = 3.5637$ bits.",
+    "generic": "Not quite. Divide by $\\ln 2$.",
+    "byKey": {
+     "times": "You multiplied by $\\ln 2$; bits are larger numbers than nats for the same loss."
+    }
+   },
+   "explain": {
+    "text": "Divide by $\\ln 2 = 0.6931$: $2.4702 / 0.693147 = 3.5637$ bits a letter."
+   }
+  },
+  {
+   "id": "q-uniform-pp",
+   "difficulty": 2,
+   "question": "What is the perplexity of the model that gives all 27 symbols equal chances?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 27,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "wrong": [
+     {
+      "id": "loss",
+      "value": 3.2958,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "27: like a fair choice among 27 symbols.",
+    "generic": "Not quite. Take $e$ to the loss $\\ln 27$.",
+    "byKey": {
+     "loss": "That is the loss in nats. The perplexity is $e^{\\ln 27}$."
+    }
+   },
+   "explain": {
+    "text": "The loss is $\\ln 27$, and $e^{\\ln 27} = 27$: a model as unsure as a fair 27-way choice."
+   }
+  },
+  {
+   "id": "q-total",
+   "difficulty": 3,
+   "prose": "Model A scores a total of 55,900 nats on the 22,807 pairs of the dev names. Model B scores a total of 56,300 nats on the 22,808 pairs of the test names.",
+   "question": "Which comparison is fair?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "neither",
+      "text": "Neither: they are scored on different names",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "A is better: its total is lower",
+      "why": "Totals grow with the number of pairs; and these are different names anyway."
+     },
+     {
+      "id": "avg",
+      "text": "Compare averages: A 2.4510, B 2.4684, so A is better",
+      "why": "Averages fix the size, not the names: dev and test names differ."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Neither: the averages are on different names.",
+    "generic": "Not quite. Check what each total was measured on."
+   },
+   "explain": {
+    "text": "Averaging fixes the different sizes, but the two models were scored on different names. Our own bigram moved 0.019 nats between dev and test, so score both on the same names."
+   }
+  }
+ ]
+}

@@ -1,0 +1,480 @@
+{
+ "id": "homework-2",
+ "course": "makemore",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-block4",
+   "difficulty": 5,
+   "skills": [
+    "mk-mlp",
+    "mk-train"
+   ],
+   "prose": "Give the model four letters of context. Everything else follows the course: the same split, embedding 10, hidden 100, the same initialisation rule with $W_1$ now 40 by 100, minibatches of 32.",
+   "question": "Write `contexts(words, block)` and `block4_run(X, Y, steps, lr, seed)`, which trains from the course start and returns the loss on all of `X`, `Y`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef contexts(words, block):\n    # (X, Y) with a context of `block` symbols, as in the lessons\n    ...\n\n\ndef block4_run(X, Y, steps, lr, seed):\n    # init from np.random.default_rng(0): C (27, 10), W1 (40, 100) * (5/3)/sqrt(40), b1 0,\n    # W2 (100, 27) * 0.01, b2 0; minibatches of 32 from np.random.default_rng(seed);\n    # return the loss on all of X, Y after the steps\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef contexts(words, block):\n    X, Y = [], []\n    for w in words:\n        ctx = [0] * block\n        for ch in w + \".\":\n            X.append(ctx)\n            Y.append(INDEX[ch])\n            ctx = ctx[1:] + [INDEX[ch]]\n    return np.array(X), np.array(Y)\n\n\ndef forward(P, X):\n    E = P[\"C\"][X].reshape(len(X), -1)\n    return (E @ P[\"W1\"] + P[\"b1\"]).tanh() @ P[\"W2\"] + P[\"b2\"]\n\n\ndef block4_run(X, Y, steps, lr, seed):\n    g = np.random.default_rng(0)\n    P = {\"C\": Tensor(g.standard_normal((27, 10))),\n         \"W1\": Tensor(g.standard_normal((40, 100)) * (5 / 3) / np.sqrt(40)),\n         \"b1\": Tensor(np.zeros(100)),\n         \"W2\": Tensor(g.standard_normal((100, 27)) * 0.01),\n         \"b2\": Tensor(np.zeros(27))}\n    rng = np.random.default_rng(seed)\n    for _ in range(steps):\n        ix = rng.integers(0, len(X), 32)\n        loss = cross_entropy(forward(P, X[ix]), Y[ix])\n        for t in P.values():\n            t.zero_grad()\n        loss.backward()\n        sgd_step(list(P.values()), lr)\n    return cross_entropy(forward(P, X), Y).item()\n",
+    "examples": [
+     {
+      "call": "contexts(['ab'], 4)[0].shape",
+      "expect": "(3, 4)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[a.tolist() for a in contexts(['emma'], 4)]",
+      "expect": "[[[0, 0, 0, 0], [0, 0, 0, 5], [0, 0, 5, 13], [0, 5, 13, 13], [5, 13, 13, 1]], [5, 13, 13, 1, 0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "[a.tolist() for a in contexts(['ab', 'c'], 4)]",
+      "expect": "[[[0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 2], [0, 0, 0, 0], [0, 0, 0, 3]], [1, 2, 0, 3, 0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "run4()[0]",
+      "expect": "(182531, 4)",
+      "compare": "equal"
+     },
+     {
+      "call": "round(run4()[1], 4)",
+      "expect": "3.2937",
+      "compare": "equal"
+     },
+     {
+      "call": "run4()[2] < 2.65",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "run4()[1] - run4()[2] > 0.6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(block4_run(*contexts(train[:12], 4), 5, 0.1, 1), 6)",
+      "expect": "2.809033",
+      "compare": "equal"
+     }
+    ],
+    "how": "`autograd.py` is in the working directory and `train` is the course’s 25,626 training names. Submit runs 7 hidden tests. Three check the rows of emma and of two short names with a block of 4, and the training set’s shape. Three check the run: the loss at the start to 4 places, the loss after 200 steps of 0.1 (batches from seed 1) below 2.65, and a fall of more than 0.6 nats. The last runs 5 steps on the first 12 training names and compares the loss exactly, to 6 places.",
+    "prelude": "import numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain = [words[i] for i in perm[:25626]]\n",
+    "postlude": "\n_R = {}\n\n\ndef run4():\n    if 'v' not in _R:\n        X, Y = contexts(train, 4)\n        _R['v'] = (X.shape, block4_run(X, Y, 0, 0.1, 1), block4_run(X, Y, 200, 0.1, 1))\n    return _R['v']\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt"
+    },
+    "files": {
+     "autograd.py": "\"\"\"backprop level 4 autograd: a small array autograd in NumPy, shared by every later AI course.\n\nA Tensor holds a float64 array `data` and a gradient `grad` of the same shape. Each operation\nrecords its parents (`_prev`), a short name (`_op`) and a `_backward` closure that adds the\noperation's share of the gradient into each parent. `backward()` on a size-1 tensor visits the\ngraph in reverse topological order, built with an explicit stack (no recursion).\nShipped verbatim; a later course that needs another op writes it in a module of its own.\n\"\"\"\n__version__ = \"1.0\"\n\nimport numpy as np\n\n\ndef _noop():\n    pass\n\n\ndef _wrap(x):\n    return x if isinstance(x, Tensor) else Tensor(x)\n\n\ndef unbroadcast(grad, shape):\n    \"\"\"Sum `grad` down to `shape`: over the leading axes broadcasting added, then over every axis where `shape` has 1.\"\"\"\n    shape = tuple(shape)\n    grad = np.asarray(grad)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.sum(axis=tuple(range(extra)))\n    axes = tuple(i for i, s in enumerate(shape) if s == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n\n\nclass Tensor:\n    __array_ufunc__ = None  # ndarray (op) Tensor defers to the Tensor's reflected method\n\n    def __init__(self, data, _prev=(), _op=\"\"):\n        if isinstance(data, Tensor):\n            data = data.data\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = _noop\n\n    def __repr__(self):\n        return f\"Tensor(shape={self.data.shape}, op={self._op!r})\"\n\n    @property\n    def shape(self):\n        return self.data.shape\n\n    def item(self):\n        if self.data.size != 1:\n            raise ValueError(f\"item() needs a tensor of size 1, not shape {self.shape}\")\n        return float(self.data.reshape(()))\n\n    def zero_grad(self):\n        if self.grad.shape == self.data.shape:\n            self.grad.fill(0.0)\n        else:\n            self.grad = np.zeros_like(self.data)\n\n    # ---- elementwise binary operations (NumPy broadcasting; backward sums back with unbroadcast) ----\n    def __add__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad += unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return _wrap(other) + self\n\n    def __sub__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data - other.data, (self, other), \"-\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad -= unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rsub__(self, other):\n        return _wrap(other) - self\n\n    def __neg__(self):\n        out = Tensor(-self.data, (self,), \"neg\")\n\n        def _backward():\n            self.grad -= out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmul__(self, other):\n        return _wrap(other) * self\n\n    def __truediv__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data / other.data, (self, other), \"/\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad / other.data, self.shape)\n            other.grad -= unbroadcast(out.grad * self.data / other.data ** 2, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rtruediv__(self, other):\n        return _wrap(other) / self\n\n    def __pow__(self, k):\n        if isinstance(k, Tensor):\n            raise TypeError(\"the power k in a ** k must be a Python number, not a Tensor\")\n        out = Tensor(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    # ---- matrix product: backward G B^T and A^T G (stacks of matrices broadcast as np.matmul does) ----\n    def __matmul__(self, other):\n        other = _wrap(other)\n        if self.data.ndim < 2 or other.data.ndim < 2:\n            raise ValueError(\"@ needs tensors of at least 2 dimensions: reshape a vector to (n, 1) or (1, n) first\")\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad @ np.swapaxes(other.data, -1, -2), self.shape)\n            other.grad += unbroadcast(np.swapaxes(self.data, -1, -2) @ out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmatmul__(self, other):\n        return _wrap(other) @ self\n\n    # ---- reductions ----\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    def mean(self, axis=None, keepdims=False):\n        out = Tensor(self.data.mean(axis=axis, keepdims=keepdims), (self,), \"mean\")\n        n = self.data.size // max(out.data.size, 1)\n\n        def _backward():\n            g = out.grad / n\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    # ---- elementwise functions ----\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1.0 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0.0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad  # slope 0 at exactly 0\n        out._backward = _backward\n        return out\n\n    def exp(self):\n        e = np.exp(self.data)\n        out = Tensor(e, (self,), \"exp\")\n\n        def _backward():\n            self.grad += e * out.grad\n        out._backward = _backward\n        return out\n\n    def log(self):\n        out = Tensor(np.log(self.data), (self,), \"log\")\n\n        def _backward():\n            self.grad += out.grad / self.data\n        out._backward = _backward\n        return out\n\n    # ---- shape operations ----\n    def reshape(self, *shape):\n        out = Tensor(self.data.reshape(*shape), (self,), \"reshape\")\n\n        def _backward():\n            self.grad += out.grad.reshape(self.shape)\n        out._backward = _backward\n        return out\n\n    @property\n    def T(self):\n        out = Tensor(self.data.T, (self,), \"T\")\n\n        def _backward():\n            self.grad += out.grad.T\n        out._backward = _backward\n        return out\n\n    def __getitem__(self, idx):\n        if isinstance(idx, Tensor):\n            raise TypeError(\"index with an integer array or a tuple of them, not a Tensor\")\n        out = Tensor(self.data[idx], (self,), \"index\")\n\n        def _backward():\n            np.add.at(self.grad, idx, out.grad)  # repeated indices add, as in an embedding lookup\n        out._backward = _backward\n        return out\n\n    # ---- the backward pass ----\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(f\"backward() needs a tensor of size 1 (a loss), not shape {self.shape}\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, parents_done = stack.pop()\n            if parents_done:\n                order.append(node)\n                continue\n            if id(node) in seen:\n                continue\n            seen.add(id(node))\n            stack.append((node, True))\n            for p in node._prev:\n                if id(p) not in seen:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n\ndef softmax(x, axis=-1):\n    \"\"\"Softmax of a plain array along `axis`, largest entry subtracted first; no gradient (for sampling and reporting).\"\"\"\n    x = x.data if isinstance(x, Tensor) else np.asarray(x, dtype=np.float64)\n    z = np.exp(x - x.max(axis=axis, keepdims=True))\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef cross_entropy(logits, targets):\n    \"\"\"Mean over the n rows of -log softmax(z_i)[y_i], in nats, by log-sum-exp; backward (softmax(z) - onehot(y)) / n.\"\"\"\n    logits = _wrap(logits)\n    z = logits.data\n    y = np.asarray(targets)\n    if z.ndim != 2:\n        raise ValueError(f\"logits must be 2-D (n, K), not shape {z.shape}\")\n    if y.ndim != 1 or y.shape[0] != z.shape[0]:\n        raise ValueError(f\"targets must be 1-D of length {z.shape[0]}, not shape {y.shape}\")\n    if not np.issubdtype(y.dtype, np.integer):\n        raise TypeError(\"targets must be integer class indices\")\n    n = z.shape[0]\n    rows = np.arange(n)\n    m = z.max(axis=1, keepdims=True)\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    lse = (m + np.log(s))[:, 0]\n    out = Tensor(np.mean(lse - z[rows, y]), (logits,), \"cross_entropy\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1.0\n        logits.grad += p * (out.grad / n)\n    out._backward = _backward\n    return out\n\n\ndef concat(tensors, axis=0):\n    \"\"\"Join tensors along `axis`; backward hands each its own slice of the gradient.\"\"\"\n    tensors = [_wrap(t) for t in tensors]\n    out = Tensor(np.concatenate([t.data for t in tensors], axis=axis), tuple(tensors), \"concat\")\n\n    def _backward():\n        start = 0\n        for t in tensors:\n            size = t.data.shape[axis]\n            cut = [slice(None)] * out.data.ndim\n            cut[axis] = slice(start, start + size)\n            t.grad += out.grad[tuple(cut)]\n            start += size\n    out._backward = _backward\n    return out\n\n\ndef sgd_step(params, lr):\n    \"\"\"One gradient-descent step in place, outside the graph. It does not zero the gradients.\"\"\"\n    for p in params:\n        p.data -= lr * p.grad\n\n\ndef grad_check(f, params, h=1e-5):\n    \"\"\"Global relative error between backprop and central differences of f() over every entry of every parameter.\"\"\"\n    params = list(params)\n    for p in params:\n        p.zero_grad()\n    f().backward()\n    analytic = [p.grad.copy() for p in params]\n    worst, scale = 0.0, 1e-12\n    for p, g in zip(params, analytic):\n        for i in np.ndindex(p.data.shape):\n            keep = p.data[i]\n            p.data[i] = keep + h\n            up = f().item()\n            p.data[i] = keep - h\n            down = f().item()\n            p.data[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(g[i] - num))\n            scale = max(scale, abs(g[i]), abs(num))\n    return worst / scale\n"
+    },
+    "budget": 12000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef contexts(words, block):\n    X, Y = [], []\n    for w in words:\n        ctx = [0] * 3\n        for ch in w + \".\":\n            X.append(ctx)\n            Y.append(INDEX[ch])\n            ctx = ctx[1:] + [INDEX[ch]]\n    return np.array(X), np.array(Y)\n\n\ndef forward(P, X):\n    E = P[\"C\"][X].reshape(len(X), -1)\n    return (E @ P[\"W1\"] + P[\"b1\"]).tanh() @ P[\"W2\"] + P[\"b2\"]\n\n\ndef block4_run(X, Y, steps, lr, seed):\n    g = np.random.default_rng(0)\n    P = {\"C\": Tensor(g.standard_normal((27, 10))),\n         \"W1\": Tensor(g.standard_normal((40, 100)) * (5 / 3) / np.sqrt(40)),\n         \"b1\": Tensor(np.zeros(100)),\n         \"W2\": Tensor(g.standard_normal((100, 27)) * 0.01),\n         \"b2\": Tensor(np.zeros(27))}\n    rng = np.random.default_rng(seed)\n    for _ in range(steps):\n        ix = rng.integers(0, len(X), 32)\n        loss = cross_entropy(forward(P, X[ix]), Y[ix])\n        for t in P.values():\n            t.zero_grad()\n        loss.backward()\n        sgd_step(list(P.values()), lr)\n    return cross_entropy(forward(P, X), Y).item()\n",
+      "test": 1,
+      "symptom": "A block of 3 whatever is asked."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef contexts(words, block):\n    X, Y = [], []\n    ctx = [0] * block\n    for w in words:\n        for ch in w + \".\":\n            X.append(ctx)\n            Y.append(INDEX[ch])\n            ctx = ctx[1:] + [INDEX[ch]]\n    return np.array(X), np.array(Y)\n\n\ndef forward(P, X):\n    E = P[\"C\"][X].reshape(len(X), -1)\n    return (E @ P[\"W1\"] + P[\"b1\"]).tanh() @ P[\"W2\"] + P[\"b2\"]\n\n\ndef block4_run(X, Y, steps, lr, seed):\n    g = np.random.default_rng(0)\n    P = {\"C\": Tensor(g.standard_normal((27, 10))),\n         \"W1\": Tensor(g.standard_normal((40, 100)) * (5 / 3) / np.sqrt(40)),\n         \"b1\": Tensor(np.zeros(100)),\n         \"W2\": Tensor(g.standard_normal((100, 27)) * 0.01),\n         \"b2\": Tensor(np.zeros(27))}\n    rng = np.random.default_rng(seed)\n    for _ in range(steps):\n        ix = rng.integers(0, len(X), 32)\n        loss = cross_entropy(forward(P, X[ix]), Y[ix])\n        for t in P.values():\n            t.zero_grad()\n        loss.backward()\n        sgd_step(list(P.values()), lr)\n    return cross_entropy(forward(P, X), Y).item()\n",
+      "test": 2,
+      "symptom": "Contexts run across names."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef contexts(words, block):\n    X, Y = [], []\n    for w in words:\n        ctx = [0] * block\n        for ch in w + \".\":\n            X.append(ctx)\n            Y.append(INDEX[ch])\n            ctx = ctx[1:] + [INDEX[ch]]\n    return np.array(X), np.array(Y)\n\n\ndef forward(P, X):\n    E = P[\"C\"][X].reshape(len(X), -1)\n    return (E @ P[\"W1\"] + P[\"b1\"]) @ P[\"W2\"] + P[\"b2\"]\n\n\ndef block4_run(X, Y, steps, lr, seed):\n    g = np.random.default_rng(0)\n    P = {\"C\": Tensor(g.standard_normal((27, 10))),\n         \"W1\": Tensor(g.standard_normal((40, 100)) * (5 / 3) / np.sqrt(40)),\n         \"b1\": Tensor(np.zeros(100)),\n         \"W2\": Tensor(g.standard_normal((100, 27)) * 0.01),\n         \"b2\": Tensor(np.zeros(27))}\n    rng = np.random.default_rng(seed)\n    for _ in range(steps):\n        ix = rng.integers(0, len(X), 32)\n        loss = cross_entropy(forward(P, X[ix]), Y[ix])\n        for t in P.values():\n            t.zero_grad()\n        loss.backward()\n        sgd_step(list(P.values()), lr)\n    return cross_entropy(forward(P, X), Y).item()\n",
+      "test": 4,
+      "symptom": "No tanh: a linear model, with a different start and a worse end."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef contexts(words, block):\n    X, Y = [], []\n    for w in words:\n        ctx = [0] * block\n        for ch in w + \".\":\n            X.append(ctx)\n            Y.append(INDEX[ch])\n            ctx = ctx[1:] + [INDEX[ch]]\n    return np.array(X), np.array(Y)\n\n\ndef forward(P, X):\n    E = P[\"C\"][X].reshape(len(X), -1)\n    return (E @ P[\"W1\"] + P[\"b1\"]).tanh() @ P[\"W2\"] + P[\"b2\"]\n\n\ndef block4_run(X, Y, steps, lr, seed):\n    g = np.random.default_rng(0)\n    P = {\"C\": Tensor(g.standard_normal((27, 10))),\n         \"W1\": Tensor(g.standard_normal((40, 100)) * (5 / 3) / np.sqrt(40)),\n         \"b1\": Tensor(np.zeros(100)),\n         \"W2\": Tensor(g.standard_normal((100, 27))),\n         \"b2\": Tensor(np.zeros(27))}\n    rng = np.random.default_rng(seed)\n    for _ in range(steps):\n        ix = rng.integers(0, len(X), 32)\n        loss = cross_entropy(forward(P, X[ix]), Y[ix])\n        for t in P.values():\n            t.zero_grad()\n        loss.backward()\n        sgd_step(list(P.values()), lr)\n    return cross_entropy(forward(P, X), Y).item()\n",
+      "test": 4,
+      "symptom": "Leaves out the 0.01 on the output weights."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your block-4 model starts at 3.2937 and drops below 2.65 in 200 steps.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "Each name must start from four zeros: reset the context for every name."
+    }
+   },
+   "explain": {
+    "text": "The dataset keeps 182,531 rows, now 4 wide. From 3.2937 at the start, 200 steps of 0.1 bring the training loss to 2.5619, close to the block-3 run’s 2.5816 at the same point."
+   },
+   "title": "Four letters of context"
+  },
+  {
+   "id": "h-sizes",
+   "difficulty": 4,
+   "skills": [
+    "mk-mlp"
+   ],
+   "prose": "Three sizes of the MLP over 27 symbols.",
+   "question": "Fill in the number of weights of each model.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Block",
+     "Embedding",
+     "Hidden",
+     "Weights"
+    ],
+    "rows": [
+     [
+      "3",
+      "10",
+      "100",
+      {
+       "edit": true,
+       "answer": 6097,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "3",
+      "2",
+      "100",
+      {
+       "edit": true,
+       "answer": 3481,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "block",
+         "value": 3081,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "5",
+      "16",
+      "200",
+      {
+       "edit": true,
+       "answer": 22059,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "nobias",
+         "value": 21832,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "The counts are 6,097, 3,481 and 22,059.",
+    "generic": "Not quite. $W_1$ has block times embedding rows.",
+    "byKey": {
+     "block": "You gave $W_1$ only the embedding’s 2 inputs; the context joins 3 of them, 6 inputs.",
+     "nobias": "You left out the biases, 200 and 27."
+    }
+   },
+   "explain": {
+    "text": "Count $27d + kdH + H + 27H + 27$ for block $k$, embedding $d$ and hidden $H$: 6,097, 3,481 and 22,059. Most weights sit in $W_1$ and $W_2$ once $H$ is large."
+   },
+   "title": "Three model sizes"
+  },
+  {
+   "id": "h-forward-order",
+   "difficulty": 4,
+   "skills": [
+    "mk-mlp"
+   ],
+   "prose": "The forward pass of the course MLP for a batch of $n$ contexts.",
+   "question": "Put the steps in order and leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "f1",
+      "text": "Look up each of the three context symbols in $C$: `C[X]`, shape $(n, 3, 10)$."
+     },
+     {
+      "id": "f2",
+      "text": "Join the three rows of each context: reshape to $(n, 30)$."
+     },
+     {
+      "id": "f3",
+      "text": "Hidden layer: $h = \\tanh(EW_1 + b_1)$, shape $(n, 100)$."
+     },
+     {
+      "id": "f4",
+      "text": "Logits: $z = hW_2 + b_2$, shape $(n, 27)$."
+     },
+     {
+      "id": "f5",
+      "text": "Loss: the mean of $\\ln \\sum_j e^{z_j} - z_y$ over the rows, in nats."
+     },
+     {
+      "id": "fx",
+      "text": "Apply softmax to the hidden layer before $W_2$.",
+      "why": "Softmax belongs at the output only; the hidden layer uses tanh."
+     }
+    ],
+    "answer": [
+     "f1",
+     "f2",
+     "f3",
+     "f4",
+     "f5"
+    ],
+    "distractors": [
+     "fx"
+    ]
+   },
+   "feedback": {
+    "correct": "Look up, join, tanh layer, logits, loss.",
+    "generic": "Not quite. Follow the shapes.",
+    "byKey": {
+     "fx": "Softmax turns the final logits into chances; the hidden layer uses tanh."
+    }
+   },
+   "explain": {
+    "text": "Shapes guide the order: $(n, 3)$ indices, $(n, 3, 10)$ lookups, $(n, 30)$ joined, $(n, 100)$ hidden, $(n, 27)$ logits, then one number, the loss."
+   },
+   "title": "The forward pass in order"
+  },
+  {
+   "id": "h-pp",
+   "difficulty": 3,
+   "skills": [
+    "mk-mlp"
+   ],
+   "prose": "The trained MLP scores 2.1609 nats a letter on the dev names.",
+   "question": "What is its perplexity? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8.68,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "base2",
+      "value": 4.47,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^{2.1609} = 8.68$.",
+    "generic": "Not quite. Take $e$ to the loss.",
+    "byKey": {
+     "base2": "Base 2 goes with a loss in bits; this one is in nats."
+    }
+   },
+   "explain": {
+    "text": "$e^{2.1609} = 8.68$: about 8.7 equally likely choices a letter, against 11.60 for the bigram."
+   },
+   "title": "The MLP’s perplexity"
+  },
+  {
+   "id": "h-rows-grad",
+   "difficulty": 4,
+   "skills": [
+    "mk-mlp"
+   ],
+   "prose": "A batch has two contexts, (2, 2, 5) and (5, 1, 2), and an embedding of one number a symbol. The joined outputs get gradients $(0.2, -0.1, 0.4)$ and $(0.3, 0.05, -0.15)$.",
+   "question": "What gradient does row 2 of the table get? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.05,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "one-ctx",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "last",
+      "value": -0.15,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.2 - 0.1 - 0.15 = -0.05$.",
+    "generic": "Not quite. Add every place where symbol 2 is looked up, in both contexts.",
+    "byKey": {
+     "one-ctx": "You used the first context only; symbol 2 also ends the second.",
+     "last": "You kept only the last use.",
+     "sign": "Check the signs: $0.2 - 0.1 - 0.15$ is below zero."
+    }
+   },
+   "explain": {
+    "text": "Symbol 2 is looked up three times: twice in the first context (0.2 and $-0.1$) and last in the second ($-0.15$). They add to $-0.05$."
+   },
+   "title": "Rows used across a batch"
+  },
+  {
+   "id": "h-is-it-enough",
+   "difficulty": 5,
+   "skills": [
+    "mk-mlp",
+    "mk-train"
+   ],
+   "title": "Is the gap real?",
+   "kind": "longform",
+   "prompt": "The MLP’s dev loss is 2.1609 nats a letter and the bigram’s is 2.4514. Say what that difference means in bits and in perplexity, what it means over a whole name, and whether it is enough to be sure the MLP is better. Say what you would check before reporting it.",
+   "model": "The gap is $2.4514 - 2.1609 = 0.2905$ nats a letter. Dividing by $\\ln 2$ gives 0.4191 bits a letter. In perplexity the bigram is like a fair choice among 11.60 symbols and the MLP among 8.68.\n\nOver a whole name of about 6 letters and its end mark, that is about 7 times 0.42, near 2.9 bits: the MLP makes a typical name about $2^{2.93} \\approx 7.6$ times likelier, relative to the bigram.\n\nIs it enough to be sure? The losses are averages over 22,807 dev rows, so the noise from the names alone is small next to 0.29 nats: our bigram moved only 0.019 nats between the dev and test names. Run-to-run noise is small too: five batch seeds of the 1,000-step run span 2.4160 to 2.4321, about 0.016 nats. So the gap is far larger than either.\n\nBefore reporting I would check that both are scored on the same names (they are: the course dev set). I would check that neither model trained on the dev set: the bigram's counts and the MLP's weights come from the training names only. Then I would report the test losses once: 2.4702 for the bigram and 2.1742 for the MLP.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Converts the gap to bits (about 0.42 a letter), dividing by $\\ln 2$"
+    },
+    {
+     "points": 2,
+     "text": "Gives both perplexities (11.60 and about 8.68)"
+    },
+    {
+     "points": 1,
+     "text": "Scales to a whole name (about 7 symbols, about 2.9 bits)"
+    },
+    {
+     "points": 2,
+     "text": "Compares the gap with the noise: dev against test (0.019) or seeds, and judges it large"
+    },
+    {
+     "points": 2,
+     "text": "Checks the same names, no training on dev, then reports the test losses once"
+    },
+    {
+     "points": 1,
+     "text": "States the conclusion with its condition (on these names, this split)"
+    }
+   ]
+  },
+  {
+   "id": "h-perf",
+   "difficulty": 4,
+   "skills": [
+    "mk-mlp"
+   ],
+   "prose": "From a blank start, write the model of Bengio et al. (2003) for any sizes. `params` holds `C`, `W1`, `b1`, `W2` and `b2`; the supplied trained weights are in `trained` and the dev rows in `Xdev`, `Ydev`.",
+   "question": "Write `mlp_forward(params, X)` (logits), `mlp_loss(params, X, Y)` (mean cross-entropy in nats) and `n_params(block, emb, hidden, vocab)` (the number of weights).",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    ...\n\n\ndef mlp_loss(params, X, Y):\n    ...\n\n\ndef n_params(block, emb, hidden, vocab):\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n\n\ndef mlp_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0]\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n\n\ndef n_params(block, emb, hidden, vocab):\n    return vocab * emb + block * emb * hidden + hidden + hidden * vocab + vocab\n",
+    "examples": [
+     {
+      "call": "n_params(1, 2, 3, 4)",
+      "expect": "33",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "n_params(3, 10, 100, 27)",
+      "expect": "6097",
+      "compare": "equal"
+     },
+     {
+      "call": "n_params(5, 16, 200, 27)",
+      "expect": "22059",
+      "compare": "equal"
+     },
+     {
+      "call": "mlp_forward(Q, XQ).shape",
+      "expect": "(3, 5)",
+      "compare": "equal"
+     },
+     {
+      "call": "mlp_loss(Q, XQ, YQ)",
+      "expect": "3.1301685615687287",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "mlp_loss(trained, Xdev, Ydev) < 2.4514",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(mlp_loss(trained, Xdev, Ydev), 4)",
+      "expect": "2.1609",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: the parameter count for two sizes, and a planted model of block 2, embedding 3, hidden 4 and 5 symbols (its output shape and its loss within 1e-9). The last two score the supplied trained weights on the dev rows: below the bigram’s 2.4514, and to 4 places.",
+    "prelude": "import json\nimport numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ndev = [words[i] for i in perm[25626:28829]]\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\nXd, Yd = [], []\nfor w in dev:\n    ctx = [0, 0, 0]\n    for ch in w + \".\":\n        Xd.append(ctx)\n        Yd.append(INDEX[ch])\n        ctx = ctx[1:] + [INDEX[ch]]\nXdev, Ydev = np.array(Xd), np.array(Yd)\ntrained = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\ng = np.random.default_rng(21)\nQ = {\"C\": g.standard_normal((5, 3)), \"W1\": g.standard_normal((6, 4)), \"b1\": g.standard_normal(4), \"W2\": g.standard_normal((4, 5)), \"b2\": g.standard_normal(5)}\nXQ = np.array([[0, 1], [4, 4], [2, 3]])\nYQ = np.array([2, 0, 4])\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt",
+     "makemore-mlp.json": "content/data/ai/makemore-mlp.json"
+    },
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n\n\ndef mlp_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0]\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n\n\ndef n_params(block, emb, hidden, vocab):\n    return vocab * emb + emb * hidden + hidden + hidden * vocab + vocab\n",
+      "test": 1,
+      "symptom": "Forgets that W1 takes block times emb inputs."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = E @ params[\"W1\"] + params[\"b1\"]\n    return h @ params[\"W2\"] + params[\"b2\"]\n\n\ndef mlp_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0]\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n\n\ndef n_params(block, emb, hidden, vocab):\n    return vocab * emb + block * emb * hidden + hidden + hidden * vocab + vocab\n",
+      "test": 4,
+      "symptom": "No tanh in the forward pass."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n\n\ndef mlp_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0]\n    return float((lse - Z[np.arange(len(Y)), Y]).sum())\n\n\ndef n_params(block, emb, hidden, vocab):\n    return vocab * emb + block * emb * hidden + hidden + hidden * vocab + vocab\n",
+      "test": 4,
+      "symptom": "Sums the loss instead of averaging."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef mlp_forward(params, X):\n    E = params[\"C\"][X].reshape(X.shape[0], -1)\n    h = np.tanh(E @ params[\"W1\"] + params[\"b1\"])\n    return h @ params[\"W2\"] + params[\"b2\"]\n\n\ndef mlp_loss(params, X, Y):\n    Z = mlp_forward(params, X)\n    m = Z.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0]\n    return float((lse - Z[np.arange(len(Y)), Y]).mean())\n\n\ndef n_params(block, emb, hidden, vocab):\n    return vocab * emb + block * emb * hidden + hidden * vocab\n",
+      "test": 1,
+      "symptom": "Leaves out the biases."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your model passes every hidden test.",
+    "generic": "Not quite. Read the first failing test."
+   },
+   "explain": {
+    "text": "Join the lookups, apply the tanh layer and the output layer; the loss is the mean log-sum-exp minus the true logit. The supplied weights score 2.1609 on dev, under the bigram’s 2.4514."
+   },
+   "title": "Performance task: the MLP",
+   "performance": "code"
+  }
+ ]
+}

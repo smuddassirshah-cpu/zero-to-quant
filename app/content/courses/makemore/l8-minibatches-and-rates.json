@@ -1,0 +1,1867 @@
+{
+ "id": "l8-minibatches-and-rates",
+ "course": "makemore",
+ "title": "Minibatches and a learning-rate sweep",
+ "minutes": 15,
+ "objectives": [
+  "Train on minibatches and pick a learning rate from a sweep."
+ ],
+ "skills": [
+  "mk-train"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One step or thousands?",
+   "prose": "One full-batch step of the MLP runs all 182,531 training rows forward and back. A **minibatch** step runs only 32 rows, drawn at random.",
+   "question": "About how many minibatch steps cost the same arithmetic as one full-batch step?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5704,
+    "tol": {
+     "abs": 1
+    },
+    "placeholder": "Whole number",
+    "label": "Steps",
+    "wrong": [
+     {
+      "id": "times",
+      "value": 5841000,
+      "tol": {
+       "abs": 1000
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The cost grows with the rows used."
+    },
+    {
+     "rung": "step",
+     "text": "$182{,}531 / 32$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 5,704: for the price of one full step, 5,704 small ones.",
+    "generic": "Not quite. Divide the rows of a full step by the rows of a minibatch.",
+    "byKey": {
+     "times": "You multiplied. Each minibatch step costs 32 rows of the 182,531."
+    }
+   },
+   "explain": {
+    "text": "$182{,}531 / 32 = 5{,}704$. Each minibatch gradient is noisy, but thousands of noisy steps go much further than one exact step."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "The recorded run",
+   "prose": "Reveal the course run: 40,000 minibatch steps of 32, step size 0.1, then 0.01 after step 30,000. The dashed line is the bigram’s dev loss.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "train",
+       "label": "train",
+       "values": [
+        2.4876,
+        2.4201,
+        2.3882,
+        2.3593,
+        2.3356,
+        2.3128,
+        2.301,
+        2.3071,
+        2.3023,
+        2.2839,
+        2.2802,
+        2.2714,
+        2.2629,
+        2.2695,
+        2.2669,
+        2.254,
+        2.257,
+        2.2507,
+        2.246,
+        2.2411,
+        2.2299,
+        2.2364,
+        2.2414,
+        2.2347,
+        2.2208,
+        2.2327,
+        2.2305,
+        2.2289,
+        2.2374,
+        2.2359,
+        2.2187,
+        2.221,
+        2.2101,
+        2.208,
+        2.2228,
+        2.2117,
+        2.2177,
+        2.2068,
+        2.2103,
+        2.2117,
+        2.1991,
+        2.1991,
+        2.2068,
+        2.2071,
+        2.2153,
+        2.2185,
+        2.205,
+        2.2018,
+        2.2042,
+        2.1976,
+        2.1893,
+        2.1952,
+        2.1973,
+        2.1806,
+        2.1867,
+        2.198,
+        2.2012,
+        2.1901,
+        2.1811,
+        2.1972,
+        2.1533,
+        2.1479,
+        2.1464,
+        2.1434,
+        2.1425,
+        2.1417,
+        2.1405,
+        2.1394,
+        2.1397,
+        2.1376,
+        2.1377,
+        2.1371,
+        2.1378,
+        2.1365,
+        2.1364,
+        2.137,
+        2.1362,
+        2.1368,
+        2.135,
+        2.1356
+       ]
+      },
+      {
+       "id": "dev",
+       "label": "dev",
+       "values": [
+        2.4962,
+        2.4249,
+        2.3944,
+        2.3673,
+        2.3441,
+        2.3209,
+        2.3059,
+        2.3147,
+        2.3107,
+        2.2944,
+        2.292,
+        2.2824,
+        2.273,
+        2.2775,
+        2.2769,
+        2.2664,
+        2.2639,
+        2.2642,
+        2.2608,
+        2.2488,
+        2.2435,
+        2.2518,
+        2.251,
+        2.2475,
+        2.2387,
+        2.2461,
+        2.2441,
+        2.2453,
+        2.2568,
+        2.2569,
+        2.2364,
+        2.2415,
+        2.2278,
+        2.2301,
+        2.2464,
+        2.2302,
+        2.2407,
+        2.2291,
+        2.2334,
+        2.2353,
+        2.2246,
+        2.2195,
+        2.231,
+        2.2253,
+        2.2331,
+        2.2414,
+        2.223,
+        2.2213,
+        2.2244,
+        2.2208,
+        2.2121,
+        2.2213,
+        2.2239,
+        2.2075,
+        2.2142,
+        2.2272,
+        2.2321,
+        2.2146,
+        2.2041,
+        2.2198,
+        2.18,
+        2.1739,
+        2.1708,
+        2.1687,
+        2.1672,
+        2.167,
+        2.1662,
+        2.1653,
+        2.1656,
+        2.1633,
+        2.1626,
+        2.1634,
+        2.1633,
+        2.1614,
+        2.1613,
+        2.1624,
+        2.1613,
+        2.1645,
+        2.1612,
+        2.1609
+       ],
+       "dashed": true
+      }
+     ],
+     "xValues": [
+      500,
+      1000,
+      1500,
+      2000,
+      2500,
+      3000,
+      3500,
+      4000,
+      4500,
+      5000,
+      5500,
+      6000,
+      6500,
+      7000,
+      7500,
+      8000,
+      8500,
+      9000,
+      9500,
+      10000,
+      10500,
+      11000,
+      11500,
+      12000,
+      12500,
+      13000,
+      13500,
+      14000,
+      14500,
+      15000,
+      15500,
+      16000,
+      16500,
+      17000,
+      17500,
+      18000,
+      18500,
+      19000,
+      19500,
+      20000,
+      20500,
+      21000,
+      21500,
+      22000,
+      22500,
+      23000,
+      23500,
+      24000,
+      24500,
+      25000,
+      25500,
+      26000,
+      26500,
+      27000,
+      27500,
+      28000,
+      28500,
+      29000,
+      29500,
+      30000,
+      30500,
+      31000,
+      31500,
+      32000,
+      32500,
+      33000,
+      33500,
+      34000,
+      34500,
+      35000,
+      35500,
+      36000,
+      36500,
+      37000,
+      37500,
+      38000,
+      38500,
+      39000,
+      39500,
+      40000
+     ],
+     "xStep": 10000,
+     "y": [
+      2.05,
+      2.6
+     ],
+     "xLabel": "Step",
+     "yLabel": "Loss (nats)",
+     "decimals": 2,
+     "hlines": [
+      {
+       "id": "bigram",
+       "y": 2.4514,
+       "label": "bigram dev 2.4514"
+      }
+     ],
+     "vlines": [
+      {
+       "id": "drop",
+       "i": 59,
+       "label": "step 0.01"
+      }
+     ]
+    },
+    "state": {
+     "reveal": 0.1,
+     "caption": "Course run: train and dev loss every 500 steps; the step falls from 0.1 to 0.01 after step 30,000."
+    },
+    "controls": [
+     {
+      "bind": "reveal",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "label": "Show the run",
+      "start": 0.1
+     }
+    ]
+   },
+   "question": "About when does the MLP’s dev loss first beat the bigram’s?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "k1",
+      "text": "After about 1,000 steps",
+      "correct": true
+     },
+     {
+      "id": "k200",
+      "text": "Within the first 200 steps",
+      "why": "At step 200 the dev loss is 2.5876, still above 2.4514."
+     },
+     {
+      "id": "k10",
+      "text": "Only after about 10,000 steps",
+      "why": "It is already 2.4249 at step 1,000."
+     },
+     {
+      "id": "k30",
+      "text": "Only after the step size drops",
+      "why": "It crossed the bigram long before step 30,000."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find where the dev line goes under the dashed line."
+    },
+    {
+     "rung": "step",
+     "text": "At step 1,000 the dev loss is 2.4249."
+    }
+   ],
+   "feedback": {
+    "correct": "After about 1,000 steps: dev 2.4249 against 2.4514.",
+    "generic": "Not quite. Reveal the start of the run and compare with the dashed line."
+   },
+   "explain": {
+    "text": "The dev loss is 2.5876 at step 200 and 2.4249 at step 1,000, already under the bigram’s 2.4514. It ends at 2.1609 after 40,000 steps.",
+    "canvas": {
+     "reveal": 1
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Epochs",
+   "prose": "Name it: **minibatch gradient descent** steps on the gradient of a random batch, a noisy but cheap estimate of the full gradient. One **epoch** is as many rows as the training set, here about 5,704 steps of 32.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "train",
+       "label": "train",
+       "values": [
+        2.4876,
+        2.4201,
+        2.3882,
+        2.3593,
+        2.3356,
+        2.3128,
+        2.301,
+        2.3071,
+        2.3023,
+        2.2839,
+        2.2802,
+        2.2714,
+        2.2629,
+        2.2695,
+        2.2669,
+        2.254,
+        2.257,
+        2.2507,
+        2.246,
+        2.2411,
+        2.2299,
+        2.2364,
+        2.2414,
+        2.2347,
+        2.2208,
+        2.2327,
+        2.2305,
+        2.2289,
+        2.2374,
+        2.2359,
+        2.2187,
+        2.221,
+        2.2101,
+        2.208,
+        2.2228,
+        2.2117,
+        2.2177,
+        2.2068,
+        2.2103,
+        2.2117,
+        2.1991,
+        2.1991,
+        2.2068,
+        2.2071,
+        2.2153,
+        2.2185,
+        2.205,
+        2.2018,
+        2.2042,
+        2.1976,
+        2.1893,
+        2.1952,
+        2.1973,
+        2.1806,
+        2.1867,
+        2.198,
+        2.2012,
+        2.1901,
+        2.1811,
+        2.1972,
+        2.1533,
+        2.1479,
+        2.1464,
+        2.1434,
+        2.1425,
+        2.1417,
+        2.1405,
+        2.1394,
+        2.1397,
+        2.1376,
+        2.1377,
+        2.1371,
+        2.1378,
+        2.1365,
+        2.1364,
+        2.137,
+        2.1362,
+        2.1368,
+        2.135,
+        2.1356
+       ]
+      },
+      {
+       "id": "dev",
+       "label": "dev",
+       "values": [
+        2.4962,
+        2.4249,
+        2.3944,
+        2.3673,
+        2.3441,
+        2.3209,
+        2.3059,
+        2.3147,
+        2.3107,
+        2.2944,
+        2.292,
+        2.2824,
+        2.273,
+        2.2775,
+        2.2769,
+        2.2664,
+        2.2639,
+        2.2642,
+        2.2608,
+        2.2488,
+        2.2435,
+        2.2518,
+        2.251,
+        2.2475,
+        2.2387,
+        2.2461,
+        2.2441,
+        2.2453,
+        2.2568,
+        2.2569,
+        2.2364,
+        2.2415,
+        2.2278,
+        2.2301,
+        2.2464,
+        2.2302,
+        2.2407,
+        2.2291,
+        2.2334,
+        2.2353,
+        2.2246,
+        2.2195,
+        2.231,
+        2.2253,
+        2.2331,
+        2.2414,
+        2.223,
+        2.2213,
+        2.2244,
+        2.2208,
+        2.2121,
+        2.2213,
+        2.2239,
+        2.2075,
+        2.2142,
+        2.2272,
+        2.2321,
+        2.2146,
+        2.2041,
+        2.2198,
+        2.18,
+        2.1739,
+        2.1708,
+        2.1687,
+        2.1672,
+        2.167,
+        2.1662,
+        2.1653,
+        2.1656,
+        2.1633,
+        2.1626,
+        2.1634,
+        2.1633,
+        2.1614,
+        2.1613,
+        2.1624,
+        2.1613,
+        2.1645,
+        2.1612,
+        2.1609
+       ],
+       "dashed": true
+      }
+     ],
+     "xValues": [
+      500,
+      1000,
+      1500,
+      2000,
+      2500,
+      3000,
+      3500,
+      4000,
+      4500,
+      5000,
+      5500,
+      6000,
+      6500,
+      7000,
+      7500,
+      8000,
+      8500,
+      9000,
+      9500,
+      10000,
+      10500,
+      11000,
+      11500,
+      12000,
+      12500,
+      13000,
+      13500,
+      14000,
+      14500,
+      15000,
+      15500,
+      16000,
+      16500,
+      17000,
+      17500,
+      18000,
+      18500,
+      19000,
+      19500,
+      20000,
+      20500,
+      21000,
+      21500,
+      22000,
+      22500,
+      23000,
+      23500,
+      24000,
+      24500,
+      25000,
+      25500,
+      26000,
+      26500,
+      27000,
+      27500,
+      28000,
+      28500,
+      29000,
+      29500,
+      30000,
+      30500,
+      31000,
+      31500,
+      32000,
+      32500,
+      33000,
+      33500,
+      34000,
+      34500,
+      35000,
+      35500,
+      36000,
+      36500,
+      37000,
+      37500,
+      38000,
+      38500,
+      39000,
+      39500,
+      40000
+     ],
+     "xStep": 10000,
+     "y": [
+      2.05,
+      2.6
+     ],
+     "xLabel": "Step",
+     "yLabel": "Loss (nats)",
+     "decimals": 2,
+     "hlines": [
+      {
+       "id": "bigram",
+       "y": 2.4514,
+       "label": "bigram dev 2.4514"
+      }
+     ],
+     "vlines": [
+      {
+       "id": "drop",
+       "i": 59,
+       "label": "step 0.01"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Course run: train and dev loss every 500 steps; the step falls from 0.1 to 0.01 after step 30,000."
+    }
+   },
+   "question": "How many epochs are 40,000 steps of 32? Give a decimal to 2 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7.01,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "label": "Epochs",
+    "wrong": [
+     {
+      "id": "rows",
+      "value": 0.22,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Rows seen: $40{,}000 \\times 32$."
+    },
+    {
+     "rung": "step",
+     "text": "$1{,}280{,}000 / 182{,}531$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1{,}280{,}000 / 182{,}531 = 7.01$ epochs.",
+    "generic": "Not quite. Divide the rows seen by the training rows.",
+    "byKey": {
+     "rows": "You divided 40,000 by 182,531 without the 32 rows a step."
+    }
+   },
+   "explain": {
+    "text": "40,000 steps of 32 see 1,280,000 rows, 7.01 times the training set. With random draws, some rows are seen more often than others."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A learning-rate sweep",
+   "prose": "Five runs of 1,000 steps from the same start and the same batches, differing only in the step size. The bars give each run’s dev loss.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "0.001",
+      "0.01",
+      "0.1",
+      "0.3",
+      "1"
+     ],
+     "xLabel": "Step size",
+     "yLabel": "Dev loss after 1,000 steps",
+     "yMin": 2.3,
+     "yMax": 3.1,
+     "truncate": true,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "0.001": 3.0666,
+      "0.01": 2.6407,
+      "0.1": 2.4249,
+      "0.3": 2.419,
+      "1": 2.4529
+     }
+    }
+   },
+   "question": "Which step sizes would you carry on with?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mid",
+      "text": "0.1 or 0.3: the lowest dev losses",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "0.001: the safest of the five",
+      "why": "Safe but slow: after 1,000 steps it is still at 3.0666."
+     },
+     {
+      "id": "big",
+      "text": "1: it moves the fastest of all",
+      "why": "It overshoots: 2.4529 is worse than 0.1 or 0.3."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the lowest bars."
+    },
+    {
+     "rung": "step",
+     "text": "0.3 gives 2.4190 and 0.1 gives 2.4249."
+    }
+   ],
+   "feedback": {
+    "correct": "0.1 or 0.3: 2.4249 and 2.4190.",
+    "generic": "Not quite. Choose by the dev loss.",
+    "byKey": {
+     "small": "You chose safety. Too small a step wastes the run: 3.0666 after 1,000 steps."
+    }
+   },
+   "explain": {
+    "text": "Too small a step barely moves (3.0666 at 0.001); too large overshoots (2.4529 at 1). The course run uses 0.1: its 0.006 gap to 0.3 is smaller than the spread between seeds.",
+    "canvas": {
+     "highlight": [
+      "x0.1",
+      "x0.3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A step too far",
+   "prose": "The same 1,000 steps with a step size of 5. The first minibatch losses are 3.28, 7.93 and 7.93.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "0.001",
+      "0.01",
+      "0.1",
+      "0.3",
+      "1"
+     ],
+     "xLabel": "Step size",
+     "yLabel": "Dev loss after 1,000 steps",
+     "yMin": 2.3,
+     "yMax": 3.1,
+     "truncate": true,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "0.001": 3.0666,
+      "0.01": 2.6407,
+      "0.1": 2.4249,
+      "0.3": 2.419,
+      "1": 2.4529
+     }
+    }
+   },
+   "question": "What does the dev loss do by step 1,000?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "blow",
+      "text": "It blows up, to about 44 nats",
+      "correct": true
+     },
+     {
+      "id": "best",
+      "text": "It beats 0.3, since bigger steps go further",
+      "why": "Each step overshoots the valley and lands higher up the other side."
+     },
+     {
+      "id": "same",
+      "text": "It ends near 2.45 like step 1",
+      "why": "Step 1 already overshoots a little; step 5 overshoots so far the loss grows."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at how the first losses move."
+    },
+    {
+     "rung": "step",
+     "text": "They rise from 3.28 to 7.93: each step makes things worse."
+    }
+   ],
+   "feedback": {
+    "correct": "It diverges: 44.33 nats after 1,000 steps, far above $\\ln 27$.",
+    "generic": "Not quite. Watch the first minibatch losses.",
+    "byKey": {
+     "best": "You assumed bigger is faster. Past a point every step overshoots and the loss grows."
+    }
+   },
+   "explain": {
+    "text": "With step 5 the first losses jump from 3.28 to 7.93 and the run never recovers: the dev loss after 1,000 steps is 44.33. A sweep across powers of ten finds the useful range before a long run."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Smaller steps at the end",
+   "prose": "At step 30,000 the step size falls from 0.1 to 0.01. The dev loss is 2.2198 just before and 2.1609 at step 40,000.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "train",
+       "label": "train",
+       "values": [
+        2.4876,
+        2.4201,
+        2.3882,
+        2.3593,
+        2.3356,
+        2.3128,
+        2.301,
+        2.3071,
+        2.3023,
+        2.2839,
+        2.2802,
+        2.2714,
+        2.2629,
+        2.2695,
+        2.2669,
+        2.254,
+        2.257,
+        2.2507,
+        2.246,
+        2.2411,
+        2.2299,
+        2.2364,
+        2.2414,
+        2.2347,
+        2.2208,
+        2.2327,
+        2.2305,
+        2.2289,
+        2.2374,
+        2.2359,
+        2.2187,
+        2.221,
+        2.2101,
+        2.208,
+        2.2228,
+        2.2117,
+        2.2177,
+        2.2068,
+        2.2103,
+        2.2117,
+        2.1991,
+        2.1991,
+        2.2068,
+        2.2071,
+        2.2153,
+        2.2185,
+        2.205,
+        2.2018,
+        2.2042,
+        2.1976,
+        2.1893,
+        2.1952,
+        2.1973,
+        2.1806,
+        2.1867,
+        2.198,
+        2.2012,
+        2.1901,
+        2.1811,
+        2.1972,
+        2.1533,
+        2.1479,
+        2.1464,
+        2.1434,
+        2.1425,
+        2.1417,
+        2.1405,
+        2.1394,
+        2.1397,
+        2.1376,
+        2.1377,
+        2.1371,
+        2.1378,
+        2.1365,
+        2.1364,
+        2.137,
+        2.1362,
+        2.1368,
+        2.135,
+        2.1356
+       ]
+      },
+      {
+       "id": "dev",
+       "label": "dev",
+       "values": [
+        2.4962,
+        2.4249,
+        2.3944,
+        2.3673,
+        2.3441,
+        2.3209,
+        2.3059,
+        2.3147,
+        2.3107,
+        2.2944,
+        2.292,
+        2.2824,
+        2.273,
+        2.2775,
+        2.2769,
+        2.2664,
+        2.2639,
+        2.2642,
+        2.2608,
+        2.2488,
+        2.2435,
+        2.2518,
+        2.251,
+        2.2475,
+        2.2387,
+        2.2461,
+        2.2441,
+        2.2453,
+        2.2568,
+        2.2569,
+        2.2364,
+        2.2415,
+        2.2278,
+        2.2301,
+        2.2464,
+        2.2302,
+        2.2407,
+        2.2291,
+        2.2334,
+        2.2353,
+        2.2246,
+        2.2195,
+        2.231,
+        2.2253,
+        2.2331,
+        2.2414,
+        2.223,
+        2.2213,
+        2.2244,
+        2.2208,
+        2.2121,
+        2.2213,
+        2.2239,
+        2.2075,
+        2.2142,
+        2.2272,
+        2.2321,
+        2.2146,
+        2.2041,
+        2.2198,
+        2.18,
+        2.1739,
+        2.1708,
+        2.1687,
+        2.1672,
+        2.167,
+        2.1662,
+        2.1653,
+        2.1656,
+        2.1633,
+        2.1626,
+        2.1634,
+        2.1633,
+        2.1614,
+        2.1613,
+        2.1624,
+        2.1613,
+        2.1645,
+        2.1612,
+        2.1609
+       ],
+       "dashed": true
+      }
+     ],
+     "xValues": [
+      500,
+      1000,
+      1500,
+      2000,
+      2500,
+      3000,
+      3500,
+      4000,
+      4500,
+      5000,
+      5500,
+      6000,
+      6500,
+      7000,
+      7500,
+      8000,
+      8500,
+      9000,
+      9500,
+      10000,
+      10500,
+      11000,
+      11500,
+      12000,
+      12500,
+      13000,
+      13500,
+      14000,
+      14500,
+      15000,
+      15500,
+      16000,
+      16500,
+      17000,
+      17500,
+      18000,
+      18500,
+      19000,
+      19500,
+      20000,
+      20500,
+      21000,
+      21500,
+      22000,
+      22500,
+      23000,
+      23500,
+      24000,
+      24500,
+      25000,
+      25500,
+      26000,
+      26500,
+      27000,
+      27500,
+      28000,
+      28500,
+      29000,
+      29500,
+      30000,
+      30500,
+      31000,
+      31500,
+      32000,
+      32500,
+      33000,
+      33500,
+      34000,
+      34500,
+      35000,
+      35500,
+      36000,
+      36500,
+      37000,
+      37500,
+      38000,
+      38500,
+      39000,
+      39500,
+      40000
+     ],
+     "xStep": 10000,
+     "y": [
+      2.05,
+      2.6
+     ],
+     "xLabel": "Step",
+     "yLabel": "Loss (nats)",
+     "decimals": 2,
+     "hlines": [
+      {
+       "id": "bigram",
+       "y": 2.4514,
+       "label": "bigram dev 2.4514"
+      }
+     ],
+     "vlines": [
+      {
+       "id": "drop",
+       "i": 59,
+       "label": "step 0.01"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Course run: train and dev loss every 500 steps; the step falls from 0.1 to 0.01 after step 30,000."
+    }
+   },
+   "question": "How much does the last stretch lower the dev loss, in nats? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0589,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Nats",
+    "wrong": [
+     {
+      "id": "bits",
+      "value": 0.085,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract."
+    },
+    {
+     "rung": "step",
+     "text": "$2.2198 - 2.1609$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2.2198 - 2.1609 = 0.0589$ nats.",
+    "generic": "Not quite. Take the difference of the two dev losses.",
+    "byKey": {
+     "bits": "That is in bits; the question asks for nats."
+    }
+   },
+   "explain": {
+    "text": "The smaller step lets the noisy steps settle lower in the valley: 0.0589 nats in 10,000 steps, more than the 20,000 steps before gave. The train loss falls to 2.1356."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "One batch is not the loss",
+   "prose": "In the course run, the minibatch losses at steps 196 to 200 are 2.6831, 2.5913, 2.3616, 2.5334, 2.2918. The full training loss at step 200 is 2.5816.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "train",
+       "label": "train",
+       "values": [
+        2.4876,
+        2.4201,
+        2.3882,
+        2.3593,
+        2.3356,
+        2.3128,
+        2.301,
+        2.3071,
+        2.3023,
+        2.2839,
+        2.2802,
+        2.2714,
+        2.2629,
+        2.2695,
+        2.2669,
+        2.254,
+        2.257,
+        2.2507,
+        2.246,
+        2.2411,
+        2.2299,
+        2.2364,
+        2.2414,
+        2.2347,
+        2.2208,
+        2.2327,
+        2.2305,
+        2.2289,
+        2.2374,
+        2.2359,
+        2.2187,
+        2.221,
+        2.2101,
+        2.208,
+        2.2228,
+        2.2117,
+        2.2177,
+        2.2068,
+        2.2103,
+        2.2117,
+        2.1991,
+        2.1991,
+        2.2068,
+        2.2071,
+        2.2153,
+        2.2185,
+        2.205,
+        2.2018,
+        2.2042,
+        2.1976,
+        2.1893,
+        2.1952,
+        2.1973,
+        2.1806,
+        2.1867,
+        2.198,
+        2.2012,
+        2.1901,
+        2.1811,
+        2.1972,
+        2.1533,
+        2.1479,
+        2.1464,
+        2.1434,
+        2.1425,
+        2.1417,
+        2.1405,
+        2.1394,
+        2.1397,
+        2.1376,
+        2.1377,
+        2.1371,
+        2.1378,
+        2.1365,
+        2.1364,
+        2.137,
+        2.1362,
+        2.1368,
+        2.135,
+        2.1356
+       ]
+      },
+      {
+       "id": "dev",
+       "label": "dev",
+       "values": [
+        2.4962,
+        2.4249,
+        2.3944,
+        2.3673,
+        2.3441,
+        2.3209,
+        2.3059,
+        2.3147,
+        2.3107,
+        2.2944,
+        2.292,
+        2.2824,
+        2.273,
+        2.2775,
+        2.2769,
+        2.2664,
+        2.2639,
+        2.2642,
+        2.2608,
+        2.2488,
+        2.2435,
+        2.2518,
+        2.251,
+        2.2475,
+        2.2387,
+        2.2461,
+        2.2441,
+        2.2453,
+        2.2568,
+        2.2569,
+        2.2364,
+        2.2415,
+        2.2278,
+        2.2301,
+        2.2464,
+        2.2302,
+        2.2407,
+        2.2291,
+        2.2334,
+        2.2353,
+        2.2246,
+        2.2195,
+        2.231,
+        2.2253,
+        2.2331,
+        2.2414,
+        2.223,
+        2.2213,
+        2.2244,
+        2.2208,
+        2.2121,
+        2.2213,
+        2.2239,
+        2.2075,
+        2.2142,
+        2.2272,
+        2.2321,
+        2.2146,
+        2.2041,
+        2.2198,
+        2.18,
+        2.1739,
+        2.1708,
+        2.1687,
+        2.1672,
+        2.167,
+        2.1662,
+        2.1653,
+        2.1656,
+        2.1633,
+        2.1626,
+        2.1634,
+        2.1633,
+        2.1614,
+        2.1613,
+        2.1624,
+        2.1613,
+        2.1645,
+        2.1612,
+        2.1609
+       ],
+       "dashed": true
+      }
+     ],
+     "xValues": [
+      500,
+      1000,
+      1500,
+      2000,
+      2500,
+      3000,
+      3500,
+      4000,
+      4500,
+      5000,
+      5500,
+      6000,
+      6500,
+      7000,
+      7500,
+      8000,
+      8500,
+      9000,
+      9500,
+      10000,
+      10500,
+      11000,
+      11500,
+      12000,
+      12500,
+      13000,
+      13500,
+      14000,
+      14500,
+      15000,
+      15500,
+      16000,
+      16500,
+      17000,
+      17500,
+      18000,
+      18500,
+      19000,
+      19500,
+      20000,
+      20500,
+      21000,
+      21500,
+      22000,
+      22500,
+      23000,
+      23500,
+      24000,
+      24500,
+      25000,
+      25500,
+      26000,
+      26500,
+      27000,
+      27500,
+      28000,
+      28500,
+      29000,
+      29500,
+      30000,
+      30500,
+      31000,
+      31500,
+      32000,
+      32500,
+      33000,
+      33500,
+      34000,
+      34500,
+      35000,
+      35500,
+      36000,
+      36500,
+      37000,
+      37500,
+      38000,
+      38500,
+      39000,
+      39500,
+      40000
+     ],
+     "xStep": 10000,
+     "y": [
+      2.05,
+      2.6
+     ],
+     "xLabel": "Step",
+     "yLabel": "Loss (nats)",
+     "decimals": 2,
+     "hlines": [
+      {
+       "id": "bigram",
+       "y": 2.4514,
+       "label": "bigram dev 2.4514"
+      }
+     ],
+     "vlines": [
+      {
+       "id": "drop",
+       "i": 59,
+       "label": "step 0.01"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Course run: train and dev loss every 500 steps; the step falls from 0.1 to 0.01 after step 30,000."
+    }
+   },
+   "question": "A learner compares two step sizes by the last minibatch loss of each run. What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "noise",
+      "text": "One batch of 32 swings by 0.4 nats from step to step; compare dev losses",
+      "correct": true
+     },
+     {
+      "id": "ok",
+      "text": "Nothing: the last batch shows where the run ended",
+      "why": "Five steps in a row range from 2.29 to 2.68; one of them says little about the weights."
+     },
+     {
+      "id": "train",
+      "text": "They should compare the first minibatch loss",
+      "why": "The first batch is just as noisy, and it is before any learning."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How far apart are the five batch losses?"
+    },
+    {
+     "rung": "step",
+     "text": "From 2.29 to 2.68, while the full loss is 2.5816."
+    }
+   ],
+   "feedback": {
+    "correct": "A single batch is noise: compare the loss on the whole dev set.",
+    "generic": "Not quite. Look at how much one batch’s loss varies.",
+    "byKey": {
+     "ok": "You read one noisy batch as the model’s loss. Neighbouring batches differ by 0.4 nats."
+    }
+   },
+   "explain": {
+    "text": "Each minibatch loss is an average over 32 random rows, so it jumps around the true loss: 2.29 to 2.68 near 2.58. Choose settings by the loss on the dev names. Even then, two runs with different seeds differ by a little; `nn-train` level 4 measures how much."
+   }
+  },
+  {
+   "type": "explore",
+   "title": "Watch it learn",
+   "prose": "Run the course loop for 3,000 steps in the page. Each point is 50 steps. Try a step size of 0.01 or 1 instead of 0.1 and run it again.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "loss",
+       "label": "minibatch",
+       "values": []
+      },
+      {
+       "id": "dev",
+       "label": "dev",
+       "values": []
+      }
+     ],
+     "y": [
+      2.0,
+      3.4
+     ],
+     "length": 60,
+     "xLabel": "Report (every 50 steps)",
+     "yLabel": "Loss (nats)"
+    }
+   },
+   "widget": {
+    "kind": "trainer",
+    "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\nP = {k: Tensor(v) for k, v in course_init().items()}\nrng = np.random.default_rng(1)\nrecent = []\nfor step in range(1, 3001):\n    ix = rng.integers(0, len(Xtr), 32)\n    E = P[\"C\"][Xtr[ix]].reshape(32, -1)\n    h = (E @ P[\"W1\"] + P[\"b1\"]).tanh()\n    loss = cross_entropy(h @ P[\"W2\"] + P[\"b2\"], Ytr[ix])\n    for t in P.values():\n        t.zero_grad()\n    loss.backward()\n    sgd_step(list(P.values()), 0.1)\n    recent.append(loss.item())\n    if step % 50 == 0:\n        p = {k: t.data for k, t in P.items()}\n        report(step, np.mean(recent[-50:]), dev=full_loss(p, Xdv, Ydv))\n",
+    "steps": 60,
+    "maxSeconds": 120,
+    "series": [
+     "loss",
+     "dev"
+    ],
+    "prelude": "import numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain = [words[i] for i in perm[:25626]]\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef build_dataset(ws, block=3):\n    X, Y = [], []\n    for w in ws:\n        context = [0] * block\n        for ch in w + \".\":\n            X.append(context)\n            Y.append(INDEX[ch])\n            context = context[1:] + [INDEX[ch]]\n    return np.array(X), np.array(Y)\n\n\ndef course_init():\n    g = np.random.default_rng(0)\n    return {\"C\": g.standard_normal((27, 10)),\n            \"W1\": g.standard_normal((30, 100)) * (5 / 3) / np.sqrt(30),\n            \"b1\": np.zeros(100), \"W2\": g.standard_normal((100, 27)) * 0.01, \"b2\": np.zeros(27)}\n\n\ndef full_loss(p, X, Y):\n    E = p[\"C\"][X].reshape(len(X), -1)\n    Z = np.tanh(E @ p[\"W1\"] + p[\"b1\"]) @ p[\"W2\"] + p[\"b2\"]\n    m = Z.max(axis=1, keepdims=True)\n    return float((np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0] - Z[np.arange(len(Y)), Y]).mean())\n\n\nXtr, Ytr = build_dataset(train)\ndev = [words[i] for i in perm[25626:28829]]\nXdv, Ydv = build_dataset(dev[:600])\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt",
+     "autograd.py": "content/data/ai/autograd.py"
+    },
+    "how": "Never graded. Each point is 50 steps: the mean minibatch loss, and the loss on 600 dev names. Change the step size and run again."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "train_mlp() in code",
+   "prose": "Write `train_mlp(params, X, Y, steps, lr, seed)` with the autograd: wrap each parameter in a `Tensor`, then for each step draw 32 rows with one generator, `np.random.default_rng(seed)`, run the forward pass, take `cross_entropy`, zero the gradients, call `backward` and `sgd_step`. Return the new parameters as arrays and the minibatch losses.",
+   "question": "Write `train_mlp`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_mlp(params, X, Y, steps, lr, seed):\n    # each step: 32 rows drawn by np.random.default_rng(seed).integers(0, len(X), 32),\n    # forward, loss, backward, one sgd_step of size lr\n    # return (new params as NumPy arrays, list of the minibatch losses)\n    losses = []\n    ...\n    return params, losses\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_mlp(params, X, Y, steps, lr, seed):\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    rng = np.random.default_rng(seed)\n    losses = []\n    for _ in range(steps):\n        ix = rng.integers(0, len(X), 32)\n        E = P[\"C\"][X[ix]].reshape(32, -1)\n        h = (E @ P[\"W1\"] + P[\"b1\"]).tanh()\n        loss = cross_entropy(h @ P[\"W2\"] + P[\"b2\"], Y[ix])\n        for t in P.values():\n            t.zero_grad()\n        loss.backward()\n        sgd_step(list(P.values()), lr)\n        losses.append(loss.item())\n    return {k: t.data for k, t in P.items()}, losses\n",
+    "examples": [
+     {
+      "call": "len(train_mlp(course_init(), Xtr, Ytr, 3, 0.1, 1)[1])",
+      "expect": "3",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "tiny()",
+      "expect": "[1.245875, 0.924508, -0.632492, 0.723347]",
+      "compare": "equal"
+     },
+     {
+      "call": "run200()[0] < 2.65",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "np.mean(run200()[1][:20]) - np.mean(run200()[1][-20:]) > 0.3",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "len(run200()[1])",
+      "expect": "200",
+      "compare": "equal"
+     }
+    ],
+    "how": "`autograd.py` is in the working directory; `course_init()`, `Xtr`, `Ytr` (182,531 rows) and `full_loss` are ready. Submit runs 4 hidden tests. The first takes two steps on a planted model of 5 rows, exact to 6 places. The others use the course run, 200 steps of 0.1 with batches from seed 1: its training loss below 2.65, the last 20 batch losses at least 0.3 below the first 20, and 200 losses.",
+    "prelude": "import numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain = [words[i] for i in perm[:25626]]\nINDEX = {c: i for i, c in enumerate(\".abcdefghijklmnopqrstuvwxyz\")}\n\n\ndef build_dataset(ws, block=3):\n    X, Y = [], []\n    for w in ws:\n        context = [0] * block\n        for ch in w + \".\":\n            X.append(context)\n            Y.append(INDEX[ch])\n            context = context[1:] + [INDEX[ch]]\n    return np.array(X), np.array(Y)\n\n\ndef course_init():\n    g = np.random.default_rng(0)\n    return {\"C\": g.standard_normal((27, 10)),\n            \"W1\": g.standard_normal((30, 100)) * (5 / 3) / np.sqrt(30),\n            \"b1\": np.zeros(100), \"W2\": g.standard_normal((100, 27)) * 0.01, \"b2\": np.zeros(27)}\n\n\ndef full_loss(p, X, Y):\n    E = p[\"C\"][X].reshape(len(X), -1)\n    Z = np.tanh(E @ p[\"W1\"] + p[\"b1\"]) @ p[\"W2\"] + p[\"b2\"]\n    m = Z.max(axis=1, keepdims=True)\n    return float((np.log(np.exp(Z - m).sum(axis=1)) + m[:, 0] - Z[np.arange(len(Y)), Y]).mean())\n\n\nXtr, Ytr = build_dataset(train)\n",
+    "postlude": "\n_RUN = {}\n\n\ndef run200():\n    # the course run: 200 steps of 0.1 from course_init(), batches from seed 1\n    if 'r' not in _RUN:\n        p, losses = train_mlp(course_init(), Xtr, Ytr, 200, 0.1, 1)\n        _RUN['r'] = (full_loss(p, Xtr, Ytr), list(losses))\n    return _RUN['r']\n\n\ndef tiny():\n    g = np.random.default_rng(5)\n    p = {\"C\": g.standard_normal((4, 2)), \"W1\": g.standard_normal((4, 3)), \"b1\": np.zeros(3), \"W2\": g.standard_normal((3, 4)), \"b2\": np.zeros(4)}\n    X = np.array([[0, 0], [0, 1], [1, 2], [2, 3], [3, 1]])\n    Y = np.array([1, 2, 3, 0, 0])\n    q, losses = train_mlp(p, X, Y, 2, 0.5, 11)\n    return [round(float(v), 6) for v in losses] + [round(float(q[\"W2\"][0, 0]), 6), round(float(q[\"C\"][1, 1]), 6)]\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt"
+    },
+    "files": {
+     "autograd.py": "\"\"\"backprop level 4 autograd: a small array autograd in NumPy, shared by every later AI course.\n\nA Tensor holds a float64 array `data` and a gradient `grad` of the same shape. Each operation\nrecords its parents (`_prev`), a short name (`_op`) and a `_backward` closure that adds the\noperation's share of the gradient into each parent. `backward()` on a size-1 tensor visits the\ngraph in reverse topological order, built with an explicit stack (no recursion).\nShipped verbatim; a later course that needs another op writes it in a module of its own.\n\"\"\"\n__version__ = \"1.0\"\n\nimport numpy as np\n\n\ndef _noop():\n    pass\n\n\ndef _wrap(x):\n    return x if isinstance(x, Tensor) else Tensor(x)\n\n\ndef unbroadcast(grad, shape):\n    \"\"\"Sum `grad` down to `shape`: over the leading axes broadcasting added, then over every axis where `shape` has 1.\"\"\"\n    shape = tuple(shape)\n    grad = np.asarray(grad)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.sum(axis=tuple(range(extra)))\n    axes = tuple(i for i, s in enumerate(shape) if s == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n\n\nclass Tensor:\n    __array_ufunc__ = None  # ndarray (op) Tensor defers to the Tensor's reflected method\n\n    def __init__(self, data, _prev=(), _op=\"\"):\n        if isinstance(data, Tensor):\n            data = data.data\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = _noop\n\n    def __repr__(self):\n        return f\"Tensor(shape={self.data.shape}, op={self._op!r})\"\n\n    @property\n    def shape(self):\n        return self.data.shape\n\n    def item(self):\n        if self.data.size != 1:\n            raise ValueError(f\"item() needs a tensor of size 1, not shape {self.shape}\")\n        return float(self.data.reshape(()))\n\n    def zero_grad(self):\n        if self.grad.shape == self.data.shape:\n            self.grad.fill(0.0)\n        else:\n            self.grad = np.zeros_like(self.data)\n\n    # ---- elementwise binary operations (NumPy broadcasting; backward sums back with unbroadcast) ----\n    def __add__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad += unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return _wrap(other) + self\n\n    def __sub__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data - other.data, (self, other), \"-\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad -= unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rsub__(self, other):\n        return _wrap(other) - self\n\n    def __neg__(self):\n        out = Tensor(-self.data, (self,), \"neg\")\n\n        def _backward():\n            self.grad -= out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmul__(self, other):\n        return _wrap(other) * self\n\n    def __truediv__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data / other.data, (self, other), \"/\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad / other.data, self.shape)\n            other.grad -= unbroadcast(out.grad * self.data / other.data ** 2, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rtruediv__(self, other):\n        return _wrap(other) / self\n\n    def __pow__(self, k):\n        if isinstance(k, Tensor):\n            raise TypeError(\"the power k in a ** k must be a Python number, not a Tensor\")\n        out = Tensor(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    # ---- matrix product: backward G B^T and A^T G (stacks of matrices broadcast as np.matmul does) ----\n    def __matmul__(self, other):\n        other = _wrap(other)\n        if self.data.ndim < 2 or other.data.ndim < 2:\n            raise ValueError(\"@ needs tensors of at least 2 dimensions: reshape a vector to (n, 1) or (1, n) first\")\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad @ np.swapaxes(other.data, -1, -2), self.shape)\n            other.grad += unbroadcast(np.swapaxes(self.data, -1, -2) @ out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmatmul__(self, other):\n        return _wrap(other) @ self\n\n    # ---- reductions ----\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    def mean(self, axis=None, keepdims=False):\n        out = Tensor(self.data.mean(axis=axis, keepdims=keepdims), (self,), \"mean\")\n        n = self.data.size // max(out.data.size, 1)\n\n        def _backward():\n            g = out.grad / n\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    # ---- elementwise functions ----\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1.0 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0.0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad  # slope 0 at exactly 0\n        out._backward = _backward\n        return out\n\n    def exp(self):\n        e = np.exp(self.data)\n        out = Tensor(e, (self,), \"exp\")\n\n        def _backward():\n            self.grad += e * out.grad\n        out._backward = _backward\n        return out\n\n    def log(self):\n        out = Tensor(np.log(self.data), (self,), \"log\")\n\n        def _backward():\n            self.grad += out.grad / self.data\n        out._backward = _backward\n        return out\n\n    # ---- shape operations ----\n    def reshape(self, *shape):\n        out = Tensor(self.data.reshape(*shape), (self,), \"reshape\")\n\n        def _backward():\n            self.grad += out.grad.reshape(self.shape)\n        out._backward = _backward\n        return out\n\n    @property\n    def T(self):\n        out = Tensor(self.data.T, (self,), \"T\")\n\n        def _backward():\n            self.grad += out.grad.T\n        out._backward = _backward\n        return out\n\n    def __getitem__(self, idx):\n        if isinstance(idx, Tensor):\n            raise TypeError(\"index with an integer array or a tuple of them, not a Tensor\")\n        out = Tensor(self.data[idx], (self,), \"index\")\n\n        def _backward():\n            np.add.at(self.grad, idx, out.grad)  # repeated indices add, as in an embedding lookup\n        out._backward = _backward\n        return out\n\n    # ---- the backward pass ----\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(f\"backward() needs a tensor of size 1 (a loss), not shape {self.shape}\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, parents_done = stack.pop()\n            if parents_done:\n                order.append(node)\n                continue\n            if id(node) in seen:\n                continue\n            seen.add(id(node))\n            stack.append((node, True))\n            for p in node._prev:\n                if id(p) not in seen:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n\ndef softmax(x, axis=-1):\n    \"\"\"Softmax of a plain array along `axis`, largest entry subtracted first; no gradient (for sampling and reporting).\"\"\"\n    x = x.data if isinstance(x, Tensor) else np.asarray(x, dtype=np.float64)\n    z = np.exp(x - x.max(axis=axis, keepdims=True))\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef cross_entropy(logits, targets):\n    \"\"\"Mean over the n rows of -log softmax(z_i)[y_i], in nats, by log-sum-exp; backward (softmax(z) - onehot(y)) / n.\"\"\"\n    logits = _wrap(logits)\n    z = logits.data\n    y = np.asarray(targets)\n    if z.ndim != 2:\n        raise ValueError(f\"logits must be 2-D (n, K), not shape {z.shape}\")\n    if y.ndim != 1 or y.shape[0] != z.shape[0]:\n        raise ValueError(f\"targets must be 1-D of length {z.shape[0]}, not shape {y.shape}\")\n    if not np.issubdtype(y.dtype, np.integer):\n        raise TypeError(\"targets must be integer class indices\")\n    n = z.shape[0]\n    rows = np.arange(n)\n    m = z.max(axis=1, keepdims=True)\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    lse = (m + np.log(s))[:, 0]\n    out = Tensor(np.mean(lse - z[rows, y]), (logits,), \"cross_entropy\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1.0\n        logits.grad += p * (out.grad / n)\n    out._backward = _backward\n    return out\n\n\ndef concat(tensors, axis=0):\n    \"\"\"Join tensors along `axis`; backward hands each its own slice of the gradient.\"\"\"\n    tensors = [_wrap(t) for t in tensors]\n    out = Tensor(np.concatenate([t.data for t in tensors], axis=axis), tuple(tensors), \"concat\")\n\n    def _backward():\n        start = 0\n        for t in tensors:\n            size = t.data.shape[axis]\n            cut = [slice(None)] * out.data.ndim\n            cut[axis] = slice(start, start + size)\n            t.grad += out.grad[tuple(cut)]\n            start += size\n    out._backward = _backward\n    return out\n\n\ndef sgd_step(params, lr):\n    \"\"\"One gradient-descent step in place, outside the graph. It does not zero the gradients.\"\"\"\n    for p in params:\n        p.data -= lr * p.grad\n\n\ndef grad_check(f, params, h=1e-5):\n    \"\"\"Global relative error between backprop and central differences of f() over every entry of every parameter.\"\"\"\n    params = list(params)\n    for p in params:\n        p.zero_grad()\n    f().backward()\n    analytic = [p.grad.copy() for p in params]\n    worst, scale = 0.0, 1e-12\n    for p, g in zip(params, analytic):\n        for i in np.ndindex(p.data.shape):\n            keep = p.data[i]\n            p.data[i] = keep + h\n            up = f().item()\n            p.data[i] = keep - h\n            down = f().item()\n            p.data[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(g[i] - num))\n            scale = max(scale, abs(g[i]), abs(num))\n    return worst / scale\n"
+    },
+    "budget": 10000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_mlp(params, X, Y, steps, lr, seed):\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    rng = np.random.default_rng(seed)\n    losses = []\n    for _ in range(steps):\n        ix = rng.integers(0, len(X), 32)\n        E = P[\"C\"][X[ix]].reshape(32, -1)\n        h = (E @ P[\"W1\"] + P[\"b1\"]).tanh()\n        loss = cross_entropy(h @ P[\"W2\"] + P[\"b2\"], Y[ix])\n        loss.backward()\n        sgd_step(list(P.values()), lr)\n        losses.append(loss.item())\n    return {k: t.data for k, t in P.items()}, losses\n",
+      "test": 1,
+      "symptom": "Never zeroes the gradients, so each step adds every earlier one."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_mlp(params, X, Y, steps, lr, seed):\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    rng = np.random.default_rng(seed)\n    losses = []\n    for _ in range(steps):\n        ix = np.random.default_rng(seed).integers(0, len(X), 32)\n        E = P[\"C\"][X[ix]].reshape(32, -1)\n        h = (E @ P[\"W1\"] + P[\"b1\"]).tanh()\n        loss = cross_entropy(h @ P[\"W2\"] + P[\"b2\"], Y[ix])\n        for t in P.values():\n            t.zero_grad()\n        loss.backward()\n        sgd_step(list(P.values()), lr)\n        losses.append(loss.item())\n    return {k: t.data for k, t in P.items()}, losses\n",
+      "test": 1,
+      "symptom": "Re-seeds every step, so every step uses the same batch."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_mlp(params, X, Y, steps, lr, seed):\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    rng = np.random.default_rng(seed)\n    losses = []\n    for _ in range(steps):\n        ix = rng.integers(0, len(X), 32)\n        E = P[\"C\"][X[ix]].reshape(32, -1)\n        h = E @ P[\"W1\"] + P[\"b1\"]\n        loss = cross_entropy(h @ P[\"W2\"] + P[\"b2\"], Y[ix])\n        for t in P.values():\n            t.zero_grad()\n        loss.backward()\n        sgd_step(list(P.values()), lr)\n        losses.append(loss.item())\n    return {k: t.data for k, t in P.items()}, losses\n",
+      "test": 1,
+      "symptom": "No tanh: a linear model that cannot reach the bar."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_mlp(params, X, Y, steps, lr, seed):\n    P = {k: Tensor(np.array(v, dtype=float)) for k, v in params.items()}\n    rng = np.random.default_rng(seed)\n    losses = []\n    for _ in range(steps):\n        ix = rng.integers(0, len(X), 32)\n        E = P[\"C\"][X[ix]].reshape(32, -1)\n        h = (E @ P[\"W1\"] + P[\"b1\"]).tanh()\n        loss = cross_entropy(h @ P[\"W2\"] + P[\"b2\"], Y[ix])\n        for t in P.values():\n            t.zero_grad()\n        loss.backward()\n        sgd_step(list(P.values()), -lr)\n        losses.append(loss.item())\n    return {k: t.data for k, t in P.items()}, losses\n",
+      "test": 1,
+      "symptom": "Steps uphill."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Make the generator once, before the loop."
+    },
+    {
+     "rung": "step",
+     "text": "Inside: `ix = rng.integers(0, len(X), 32)`, `E = P[\"C\"][X[ix]].reshape(32, -1)`, then the tanh layer and `cross_entropy`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your 200 steps match the course run: training loss below 2.65 (2.5816 recorded).",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "The planted run must match exactly: one generator for the whole run, gradients zeroed every step."
+    }
+   },
+   "explain": {
+    "text": "Every step draws a fresh batch from one generator, runs the forward pass, zeroes the gradients, backpropagates and steps. After 200 steps the training loss is 2.5816, from 3.30 at the start."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A risk model on sampled days",
+   "prose": "A desk refits a risk model every morning. A full fit uses its last 2,500 days; a quick fit uses a random 250 of them, which is noisier but ten times cheaper.",
+   "question": "How many quick fits cost the same as one full fit?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "label": "Fits",
+    "wrong": [
+     {
+      "id": "days",
+      "value": 250,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Cost grows with the days used."
+    },
+    {
+     "rung": "step",
+     "text": "$2{,}500 / 250$."
+    }
+   ],
+   "feedback": {
+    "correct": "10 quick fits for one full one.",
+    "generic": "Not quite. Divide the days of a full fit by the days of a quick one.",
+    "byKey": {
+     "days": "That is the size of a quick fit, not how many fit in one full fit."
+    }
+   },
+   "explain": {
+    "text": "$2{,}500 / 250 = 10$. As with minibatches, the quick fits are noisy one by one; their value comes from many of them, or from averaging, and the honest test is still on days they did not use."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A minibatch of 32 gives a noisy but cheap gradient: 5,704 such steps cost one full step. One epoch is about 5,704 steps.",
+   "Sweep the step size by powers of ten on the dev loss: 0.001 gives 3.0666, 0.1 gives 2.4249, 0.3 gives 2.4190, 1 gives 2.4529, and 5 diverges.",
+   "The course run passes the bigram’s 2.4514 after about 1,000 steps and reaches 2.1609 on dev after 40,000, the last 10,000 at step 0.01."
+  ],
+  "formula": {
+   "name": "Minibatch step",
+   "tex": "\\theta \\leftarrow \\theta - \\eta\\, \\nabla_\\theta \\tfrac{1}{32}\\textstyle\\sum_{i \\in B} L_i",
+   "note": "$B$: 32 rows drawn at random each step; $\\eta$ the step size."
+  },
+  "trap": "Choosing a step size from one minibatch’s loss, which swings by tenths of a nat from step to step."
+ },
+ "quiz": [
+  {
+   "id": "q-seeds",
+   "difficulty": 2,
+   "prose": "Two runs differ only in the seed of their minibatch draws. After 1,000 steps one scores 2.4249 on dev, the other 2.4160.",
+   "question": "What should you conclude?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "noise",
+      "text": "Little: a gap of 0.009 can come from the draws alone",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "The first seed is better and should be kept",
+      "why": "A seed is not a setting of the model; five seeds of this run range from 2.4160 to 2.4321."
+     },
+     {
+      "id": "bug",
+      "text": "One run must have a bug",
+      "why": "Different batches give different paths; small gaps are expected."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A 0.009 gap between seeds says little.",
+    "generic": "Not quite. Ask what changed between the runs."
+   },
+   "explain": {
+    "text": "Only the random batches differ, and five seeds of this run span 2.4160 to 2.4321 after 1,000 steps. So 0.009 nats is noise; `nn-train` level 4 measures such noise before calling a difference real."
+   }
+  },
+  {
+   "id": "q-epoch",
+   "difficulty": 2,
+   "prose": "With batches of 64 on the 182,531 training rows,",
+   "question": "about how many steps make one epoch?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2852,
+    "tol": {
+     "abs": 1
+    },
+    "placeholder": "Whole number",
+    "wrong": [
+     {
+      "id": "thirtytwo",
+      "value": 5704,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$182{,}531 / 64 = 2{,}852$ steps.",
+    "generic": "Not quite. Divide the rows by the batch size.",
+    "byKey": {
+     "thirtytwo": "That is for batches of 32. Batches of 64 halve it."
+    }
+   },
+   "explain": {
+    "text": "An epoch is one training set’s worth of rows: $182{,}531 / 64 = 2{,}852$ steps."
+   }
+  },
+  {
+   "id": "q-pick",
+   "difficulty": 3,
+   "prose": "A sweep of 1,000 steps gives dev losses of 2.61 at 0.03, 2.43 at 0.1, 2.42 at 0.3 and 2.47 at 1.",
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "range",
+      "text": "0.1 to 0.3 is the useful range; past 1 the steps overshoot",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "1 is best because its training loss falls fastest at first",
+      "why": "The sweep is judged on the dev loss after 1,000 steps, where 1 is worse."
+     },
+     {
+      "id": "small",
+      "text": "0.03 is best because it is the most cautious",
+      "why": "It is the slowest: 2.61 after 1,000 steps."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The dev losses point to 0.1 to 0.3.",
+    "generic": "Not quite. Read the dev losses."
+   },
+   "explain": {
+    "text": "The least dev losses are at 0.1 and 0.3; smaller steps are slow and larger ones overshoot. A longer run may then lower the step size near the end."
+   }
+  }
+ ]
+}

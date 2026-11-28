@@ -1,0 +1,2341 @@
+{
+ "id": "l4-bigram-as-network",
+ "course": "makemore",
+ "title": "The same model as a network",
+ "minutes": 15,
+ "objectives": [
+  "Train a one-layer network on one-hot letters with softmax and reach the counting model’s loss."
+ ],
+ "skills": [
+  "mk-bigram",
+  "mk-train"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Can descent find the table?",
+   "prose": "Counting gave the best bigram table in one pass. Now hand the same job to a network: it sees only the current symbol and must output 27 chances for the next, learning by gradient descent from random weights.",
+   "question": "If training goes well, what loss should it approach on its own training names?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "counts",
+      "text": "The count table’s loss on those names, and no lower",
+      "correct": true
+     },
+     {
+      "id": "lower",
+      "text": "Lower than the counts, since a network is more flexible",
+      "why": "With one symbol in, the counts are already the maximum likelihood row for every input (l2)."
+     },
+     {
+      "id": "flat",
+      "text": "$\\ln 27$, the loss of equal chances",
+      "why": "Equal chances is where a network with zero weights would start, not where training ends."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did l2 prove about the counts?"
+    },
+    {
+     "rung": "step",
+     "text": "Normalised counts maximise the likelihood: no table of 27 rows does better on those names."
+    }
+   ],
+   "feedback": {
+    "correct": "The count table’s loss: with one symbol of input, no model can beat it on the names it was counted from.",
+    "generic": "Not quite. Recall what l2 proved about the normalised counts.",
+    "byKey": {
+     "lower": "You expected flexibility to help. With only the current symbol as input, any model is a table of 27 rows, and the counts are the best one."
+    }
+   },
+   "explain": {
+    "text": "With only the current symbol as input, any model is a table of 27 rows of chances. l2 proved the normalised counts are the best such table on the names counted, so training can at best reach their loss."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "One-hot times a matrix",
+   "prose": "Write a symbol as a **one-hot** vector $\\mathbf{x}$: all 0 but a 1 at its index. Here there are three symbols. Step through them and watch $\\mathbf{x}W$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "x",
+       "label": "$\\mathbf{x}$",
+       "rows": [
+        [
+         1,
+         0,
+         0
+        ]
+       ],
+       "colLabels": [
+        ".",
+        "a",
+        "b"
+       ]
+      },
+      {
+       "id": "W",
+       "label": "$W$",
+       "rows": [
+        [
+         0.2,
+         -1.0,
+         0.5
+        ],
+        [
+         1.3,
+         0.1,
+         -0.4
+        ],
+        [
+         -0.6,
+         0.8,
+         0.0
+        ]
+       ],
+       "rowLabels": [
+        ".",
+        "a",
+        "b"
+       ],
+       "colLabels": [
+        ".",
+        "a",
+        "b"
+       ]
+      },
+      {
+       "id": "z",
+       "label": "logits",
+       "rows": [
+        [
+         0.2,
+         -1.0,
+         0.5
+        ]
+       ],
+       "colLabels": [
+        ".",
+        "a",
+        "b"
+       ]
+      }
+     ],
+     "ops": [
+      "×",
+      "="
+     ]
+    },
+    "state": {
+     "highlight": {
+      "W": {
+       "rows": [
+        0
+       ]
+      }
+     },
+     "caption": "One-hot for start picks row 0 of $W$."
+    },
+    "controls": [
+     {
+      "bind": "letter",
+      "min": 0,
+      "max": 2,
+      "step": 1,
+      "label": "Letter",
+      "frames": [
+       {
+        "rows": {
+         "x": [
+          [
+           1,
+           0,
+           0
+          ]
+         ],
+         "z": [
+          [
+           0.2,
+           -1.0,
+           0.5
+          ]
+         ]
+        },
+        "highlight": {
+         "W": {
+          "rows": [
+           0
+          ]
+         }
+        },
+        "caption": "One-hot for start picks row 0 of $W$."
+       },
+       {
+        "rows": {
+         "x": [
+          [
+           0,
+           1,
+           0
+          ]
+         ],
+         "z": [
+          [
+           1.3,
+           0.1,
+           -0.4
+          ]
+         ]
+        },
+        "highlight": {
+         "W": {
+          "rows": [
+           1
+          ]
+         }
+        },
+        "caption": "One-hot for a picks row 1 of $W$."
+       },
+       {
+        "rows": {
+         "x": [
+          [
+           0,
+           0,
+           1
+          ]
+         ],
+         "z": [
+          [
+           -0.6,
+           0.8,
+           0.0
+          ]
+         ]
+        },
+        "highlight": {
+         "W": {
+          "rows": [
+           2
+          ]
+         }
+        },
+        "caption": "One-hot for b picks row 2 of $W$."
+       }
+      ],
+      "frameLabels": [
+       "start",
+       "a",
+       "b"
+      ],
+      "start": 0
+     }
+    ]
+   },
+   "question": "With $\\mathbf{x}$ the one-hot vector for b, what is the logit for a?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "label": "Logit",
+    "wrong": [
+     {
+      "id": "column",
+      "value": -1.0,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set the slider to b."
+    },
+    {
+     "rung": "step",
+     "text": "The logits are row b of $W$; read its column a."
+    }
+   ],
+   "feedback": {
+    "correct": "0.8: the logits are row b of $W$, and its entry under a is 0.8.",
+    "generic": "Not quite. A one-hot vector times $W$ is one row of $W$.",
+    "byKey": {
+     "column": "You read column b down instead of row b across. $\\mathbf{x}W$ picks a row."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{x}W$ with a 1 in place b adds up row b of $W$ once and every other row zero times. So the logits are $(-0.6, 0.8, 0)$, and 0.8 belongs to a.",
+    "canvas": {
+     "letter": 2
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Logits, softmax, loss",
+   "prose": "So the network is $\\mathbf{z} = \\mathbf{x}W$ with $W$ 27 by 27: the **logits** for the next symbol. Softmax turns them into chances, and the loss is `cross_entropy` from your autograd (backprop l15). One input’s logits are $(1, 0, -1)$, giving the chances below.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      ".",
+      "a",
+      "b"
+     ],
+     "yLabel": "Chance",
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      ".": 0.6652,
+      "a": 0.2447,
+      "b": 0.09
+     }
+    }
+   },
+   "question": "The true next symbol is `.`. What is the loss on this pair? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4076,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Loss",
+    "wrong": [
+     {
+      "id": "logit",
+      "value": 1,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "bits",
+      "value": 0.5881,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The loss is $-\\ln$ of the true symbol’s chance."
+    },
+    {
+     "rung": "step",
+     "text": "$-\\ln 0.6652$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-\\ln 0.6652 = 0.4076$ nats.",
+    "generic": "Not quite. Take minus the natural log of the chance of `.`.",
+    "byKey": {
+     "logit": "You used the logit itself. The loss needs the chance after softmax.",
+     "bits": "That is $\\log_2$. The loss is in nats."
+    }
+   },
+   "explain": {
+    "text": "Softmax of $(1, 0, -1)$ gives `.` a chance of $0.6652$, so the pair costs $-\\ln 0.6652 = 0.4076$ nats. `cross_entropy` averages this over all the pairs."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One step by hand",
+   "prose": "Four pairs over three symbols, with $W$ all zeros: every chance is $\\tfrac13$ and the loss is $\\ln 3$. The gradient of the mean loss for the row of input $x$ adds $(\\mathbf{p} - \\mathbf{y})/n$ over the pairs that use it (backprop l15).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Pair",
+      "Input $x$",
+      "Target $y$"
+     ],
+     "rows": [
+      [
+       "start then a",
+       "0",
+       "1"
+      ],
+      [
+       "a then b",
+       "1",
+       "2"
+      ],
+      [
+       "a then end",
+       "1",
+       "0"
+      ],
+      [
+       "b then end",
+       "2",
+       "0"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Three symbols, `.` = 0, a = 1, b = 2; $W$ starts at all zeros."
+    }
+   },
+   "question": "After one step of size 1, what is $W_{0,1}$, the weight from start to a? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1667,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "$W_{0,1}$",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -0.1667,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "no-n",
+      "value": 0.6667,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Only the first pair uses row 0, and its target is a."
+    },
+    {
+     "rung": "step",
+     "text": "Gradient: $(\\tfrac13 - 1)/4 = -\\tfrac16$; the step subtracts it."
+    }
+   ],
+   "feedback": {
+    "correct": "$0 - 1 \\times (-\\tfrac16) = 0.1667$: the weight for the seen pair rises.",
+    "generic": "Not quite. Find the gradient for $W_{0,1}$, then subtract it.",
+    "byKey": {
+     "sign": "You added the gradient. Descent subtracts it, so a weight with a negative gradient rises.",
+     "no-n": "You left out the division by the 4 pairs: the loss is a mean."
+    }
+   },
+   "explain": {
+    "text": "Row 0 is used once, by start then a, so its gradient is $(\\tfrac13, \\tfrac13 - 1, \\tfrac13)/4$. The step subtracts it: $W_{0,1}$ becomes $\\tfrac16 = 0.1667$ and the other two entries $-\\tfrac{1}{12}$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A row used twice",
+   "prose": "Row a is used by two pairs: a then b, and a then end. Their gradients add.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Pair",
+      "Input $x$",
+      "Target $y$"
+     ],
+     "rows": [
+      [
+       "start then a",
+       "0",
+       "1"
+      ],
+      [
+       "a then b",
+       "1",
+       "2"
+      ],
+      [
+       "a then end",
+       "1",
+       "0"
+      ],
+      [
+       "b then end",
+       "2",
+       "0"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Three symbols, `.` = 0, a = 1, b = 2; $W$ starts at all zeros."
+    }
+   },
+   "question": "After the same step, what is $W_{1,1}$, the weight from a to a? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.1667,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "$W_{1,1}$",
+    "wrong": [
+     {
+      "id": "one-pair",
+      "value": -0.0833,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.1667,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "a then a never occurs, so $y_1 = 0$ in both pairs."
+    },
+    {
+     "rung": "step",
+     "text": "Gradient: $(\\tfrac13 + \\tfrac13)/4 = \\tfrac16$; subtract it."
+    }
+   ],
+   "feedback": {
+    "correct": "$-\\tfrac16 = -0.1667$: a pair never seen loses weight from both pairs.",
+    "generic": "Not quite. Add the two pairs’ contributions for entry $(1, 1)$.",
+    "byKey": {
+     "one-pair": "You used one pair. Both pairs from a push $W_{1,1}$ down; their gradients add.",
+     "sign": "You added the gradient. Descent subtracts it."
+    }
+   },
+   "explain": {
+    "text": "Both pairs from a give entry $(1, 1)$ a gradient of $\\tfrac{1}{3}/4$, and they add to $\\tfrac16$. The step makes $W_{1,1} = -0.1667$. The loss falls from $\\ln 3 = 1.0986$ to $0.9805$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The recorded run",
+   "prose": "The real network: 27 by 27 random weights, full-batch steps of size 50 on the first 500 training names. The loss falls from 3.7441 to 2.6236 after 10 steps, 2.4387 after 50 and 2.4122 after 100.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      100
+     ],
+     "y": [
+      2.2,
+      3.9
+     ],
+     "xLabel": "Step",
+     "yLabel": "Loss (nats)",
+     "grid": true,
+     "height": 300,
+     "functions": [
+      {
+       "id": "run",
+       "points": [
+        [
+         0,
+         3.7441
+        ],
+        [
+         1,
+         3.3587
+        ],
+        [
+         2,
+         3.1214
+        ],
+        [
+         3,
+         2.974
+        ],
+        [
+         4,
+         2.8758
+        ],
+        [
+         5,
+         2.8043
+        ],
+        [
+         6,
+         2.7502
+        ],
+        [
+         7,
+         2.708
+        ],
+        [
+         8,
+         2.6742
+        ],
+        [
+         9,
+         2.6466
+        ],
+        [
+         10,
+         2.6236
+        ],
+        [
+         11,
+         2.6043
+        ],
+        [
+         12,
+         2.588
+        ],
+        [
+         13,
+         2.5739
+        ],
+        [
+         14,
+         2.5617
+        ],
+        [
+         15,
+         2.551
+        ],
+        [
+         16,
+         2.5417
+        ],
+        [
+         17,
+         2.5333
+        ],
+        [
+         18,
+         2.5258
+        ],
+        [
+         19,
+         2.5191
+        ],
+        [
+         20,
+         2.513
+        ],
+        [
+         21,
+         2.5074
+        ],
+        [
+         22,
+         2.5023
+        ],
+        [
+         23,
+         2.4976
+        ],
+        [
+         24,
+         2.4933
+        ],
+        [
+         25,
+         2.4893
+        ],
+        [
+         26,
+         2.4856
+        ],
+        [
+         27,
+         2.4821
+        ],
+        [
+         28,
+         2.4789
+        ],
+        [
+         29,
+         2.4758
+        ],
+        [
+         30,
+         2.473
+        ],
+        [
+         31,
+         2.4703
+        ],
+        [
+         32,
+         2.4678
+        ],
+        [
+         33,
+         2.4654
+        ],
+        [
+         34,
+         2.4631
+        ],
+        [
+         35,
+         2.461
+        ],
+        [
+         36,
+         2.4589
+        ],
+        [
+         37,
+         2.457
+        ],
+        [
+         38,
+         2.4552
+        ],
+        [
+         39,
+         2.4534
+        ],
+        [
+         40,
+         2.4518
+        ],
+        [
+         41,
+         2.4502
+        ],
+        [
+         42,
+         2.4487
+        ],
+        [
+         43,
+         2.4472
+        ],
+        [
+         44,
+         2.4459
+        ],
+        [
+         45,
+         2.4445
+        ],
+        [
+         46,
+         2.4433
+        ],
+        [
+         47,
+         2.4421
+        ],
+        [
+         48,
+         2.4409
+        ],
+        [
+         49,
+         2.4398
+        ],
+        [
+         50,
+         2.4387
+        ],
+        [
+         51,
+         2.4377
+        ],
+        [
+         52,
+         2.4367
+        ],
+        [
+         53,
+         2.4357
+        ],
+        [
+         54,
+         2.4348
+        ],
+        [
+         55,
+         2.4339
+        ],
+        [
+         56,
+         2.4331
+        ],
+        [
+         57,
+         2.4322
+        ],
+        [
+         58,
+         2.4314
+        ],
+        [
+         59,
+         2.4307
+        ],
+        [
+         60,
+         2.4299
+        ],
+        [
+         61,
+         2.4292
+        ],
+        [
+         62,
+         2.4285
+        ],
+        [
+         63,
+         2.4278
+        ],
+        [
+         64,
+         2.4272
+        ],
+        [
+         65,
+         2.4266
+        ],
+        [
+         66,
+         2.4259
+        ],
+        [
+         67,
+         2.4253
+        ],
+        [
+         68,
+         2.4248
+        ],
+        [
+         69,
+         2.4242
+        ],
+        [
+         70,
+         2.4237
+        ],
+        [
+         71,
+         2.4231
+        ],
+        [
+         72,
+         2.4226
+        ],
+        [
+         73,
+         2.4221
+        ],
+        [
+         74,
+         2.4216
+        ],
+        [
+         75,
+         2.4211
+        ],
+        [
+         76,
+         2.4207
+        ],
+        [
+         77,
+         2.4202
+        ],
+        [
+         78,
+         2.4198
+        ],
+        [
+         79,
+         2.4193
+        ],
+        [
+         80,
+         2.4189
+        ],
+        [
+         81,
+         2.4185
+        ],
+        [
+         82,
+         2.4181
+        ],
+        [
+         83,
+         2.4177
+        ],
+        [
+         84,
+         2.4173
+        ],
+        [
+         85,
+         2.4169
+        ],
+        [
+         86,
+         2.4166
+        ],
+        [
+         87,
+         2.4162
+        ],
+        [
+         88,
+         2.4159
+        ],
+        [
+         89,
+         2.4155
+        ],
+        [
+         90,
+         2.4152
+        ],
+        [
+         91,
+         2.4149
+        ],
+        [
+         92,
+         2.4145
+        ],
+        [
+         93,
+         2.4142
+        ],
+        [
+         94,
+         2.4139
+        ],
+        [
+         95,
+         2.4136
+        ],
+        [
+         96,
+         2.4133
+        ],
+        [
+         97,
+         2.413
+        ],
+        [
+         98,
+         2.4127
+        ],
+        [
+         99,
+         2.4124
+        ],
+        [
+         100,
+         2.4122
+        ]
+       ],
+       "label": "network"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "counts",
+       "y": 2.382,
+       "label": "counts 2.3820"
+      },
+      {
+       "id": "flat",
+       "y": 3.2958,
+       "label": "equal chances"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Full-batch steps of size 50 on the 3,610 pairs of the first 500 training names."
+    }
+   },
+   "question": "Why does the run start above $\\ln 27 = 3.2958$, the loss of equal chances?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "random",
+      "text": "Random weights make it confidently wrong",
+      "correct": true
+     },
+     {
+      "id": "uphill",
+      "text": "Descent climbs at first before it falls",
+      "why": "The curve falls from the very first step; descent never climbs on this loss with this step."
+     },
+     {
+      "id": "bits",
+      "text": "The first loss is measured in bits",
+      "why": "Every loss on the curve is in nats."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What would all-zero weights give?"
+    },
+    {
+     "rung": "step",
+     "text": "Zero weights give equal chances, $\\ln 27$; random ones give confident, mostly wrong rows."
+    }
+   ],
+   "feedback": {
+    "correct": "Random weights give confident, mostly wrong rows, which cost more than equal chances.",
+    "generic": "Not quite. Compare random weights with zero weights.",
+    "byKey": {
+     "uphill": "The loss drops on every step of this run; the high start comes from the random weights."
+    }
+   },
+   "explain": {
+    "text": "Zero weights would give equal chances and $\\ln 27$. Random normal weights spread the logits, so some wrong symbols get large chances and the first loss is 3.7441. Descent soon removes that."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Rows of W and the counts",
+   "prose": "In the 500 names, n is followed by the end 110 times and by a 51 times. After 3,000 steps the network’s loss is 2.3830, nearly the counts’ 2.3820. Adding one number to a whole row of logits leaves its softmax unchanged.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      100
+     ],
+     "y": [
+      2.2,
+      3.9
+     ],
+     "xLabel": "Step",
+     "yLabel": "Loss (nats)",
+     "grid": true,
+     "height": 300,
+     "functions": [
+      {
+       "id": "run",
+       "points": [
+        [
+         0,
+         3.7441
+        ],
+        [
+         1,
+         3.3587
+        ],
+        [
+         2,
+         3.1214
+        ],
+        [
+         3,
+         2.974
+        ],
+        [
+         4,
+         2.8758
+        ],
+        [
+         5,
+         2.8043
+        ],
+        [
+         6,
+         2.7502
+        ],
+        [
+         7,
+         2.708
+        ],
+        [
+         8,
+         2.6742
+        ],
+        [
+         9,
+         2.6466
+        ],
+        [
+         10,
+         2.6236
+        ],
+        [
+         11,
+         2.6043
+        ],
+        [
+         12,
+         2.588
+        ],
+        [
+         13,
+         2.5739
+        ],
+        [
+         14,
+         2.5617
+        ],
+        [
+         15,
+         2.551
+        ],
+        [
+         16,
+         2.5417
+        ],
+        [
+         17,
+         2.5333
+        ],
+        [
+         18,
+         2.5258
+        ],
+        [
+         19,
+         2.5191
+        ],
+        [
+         20,
+         2.513
+        ],
+        [
+         21,
+         2.5074
+        ],
+        [
+         22,
+         2.5023
+        ],
+        [
+         23,
+         2.4976
+        ],
+        [
+         24,
+         2.4933
+        ],
+        [
+         25,
+         2.4893
+        ],
+        [
+         26,
+         2.4856
+        ],
+        [
+         27,
+         2.4821
+        ],
+        [
+         28,
+         2.4789
+        ],
+        [
+         29,
+         2.4758
+        ],
+        [
+         30,
+         2.473
+        ],
+        [
+         31,
+         2.4703
+        ],
+        [
+         32,
+         2.4678
+        ],
+        [
+         33,
+         2.4654
+        ],
+        [
+         34,
+         2.4631
+        ],
+        [
+         35,
+         2.461
+        ],
+        [
+         36,
+         2.4589
+        ],
+        [
+         37,
+         2.457
+        ],
+        [
+         38,
+         2.4552
+        ],
+        [
+         39,
+         2.4534
+        ],
+        [
+         40,
+         2.4518
+        ],
+        [
+         41,
+         2.4502
+        ],
+        [
+         42,
+         2.4487
+        ],
+        [
+         43,
+         2.4472
+        ],
+        [
+         44,
+         2.4459
+        ],
+        [
+         45,
+         2.4445
+        ],
+        [
+         46,
+         2.4433
+        ],
+        [
+         47,
+         2.4421
+        ],
+        [
+         48,
+         2.4409
+        ],
+        [
+         49,
+         2.4398
+        ],
+        [
+         50,
+         2.4387
+        ],
+        [
+         51,
+         2.4377
+        ],
+        [
+         52,
+         2.4367
+        ],
+        [
+         53,
+         2.4357
+        ],
+        [
+         54,
+         2.4348
+        ],
+        [
+         55,
+         2.4339
+        ],
+        [
+         56,
+         2.4331
+        ],
+        [
+         57,
+         2.4322
+        ],
+        [
+         58,
+         2.4314
+        ],
+        [
+         59,
+         2.4307
+        ],
+        [
+         60,
+         2.4299
+        ],
+        [
+         61,
+         2.4292
+        ],
+        [
+         62,
+         2.4285
+        ],
+        [
+         63,
+         2.4278
+        ],
+        [
+         64,
+         2.4272
+        ],
+        [
+         65,
+         2.4266
+        ],
+        [
+         66,
+         2.4259
+        ],
+        [
+         67,
+         2.4253
+        ],
+        [
+         68,
+         2.4248
+        ],
+        [
+         69,
+         2.4242
+        ],
+        [
+         70,
+         2.4237
+        ],
+        [
+         71,
+         2.4231
+        ],
+        [
+         72,
+         2.4226
+        ],
+        [
+         73,
+         2.4221
+        ],
+        [
+         74,
+         2.4216
+        ],
+        [
+         75,
+         2.4211
+        ],
+        [
+         76,
+         2.4207
+        ],
+        [
+         77,
+         2.4202
+        ],
+        [
+         78,
+         2.4198
+        ],
+        [
+         79,
+         2.4193
+        ],
+        [
+         80,
+         2.4189
+        ],
+        [
+         81,
+         2.4185
+        ],
+        [
+         82,
+         2.4181
+        ],
+        [
+         83,
+         2.4177
+        ],
+        [
+         84,
+         2.4173
+        ],
+        [
+         85,
+         2.4169
+        ],
+        [
+         86,
+         2.4166
+        ],
+        [
+         87,
+         2.4162
+        ],
+        [
+         88,
+         2.4159
+        ],
+        [
+         89,
+         2.4155
+        ],
+        [
+         90,
+         2.4152
+        ],
+        [
+         91,
+         2.4149
+        ],
+        [
+         92,
+         2.4145
+        ],
+        [
+         93,
+         2.4142
+        ],
+        [
+         94,
+         2.4139
+        ],
+        [
+         95,
+         2.4136
+        ],
+        [
+         96,
+         2.4133
+        ],
+        [
+         97,
+         2.413
+        ],
+        [
+         98,
+         2.4127
+        ],
+        [
+         99,
+         2.4124
+        ],
+        [
+         100,
+         2.4122
+        ]
+       ],
+       "label": "network"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "counts",
+       "y": 2.382,
+       "label": "counts 2.3820"
+      },
+      {
+       "id": "flat",
+       "y": 3.2958,
+       "label": "equal chances"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Full-batch steps of size 50 on the 3,610 pairs of the first 500 training names."
+    }
+   },
+   "question": "What should $W_{n,\\text{end}} - W_{n,a}$ approach? Give a decimal to 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7687,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "Decimal",
+    "label": "Difference",
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 2.1569,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "diff",
+      "value": 59,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The chances after n approach the count shares $110/N_n$ and $51/N_n$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln 110 - \\ln 51$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln(110/51) = 0.7687$: the trained run has 0.7687 too.",
+    "generic": "Not quite. Softmax makes the ratio of chances $e$ to the difference of logits.",
+    "byKey": {
+     "ratio": "That is the ratio of chances. The logits differ by its log.",
+     "diff": "You subtracted counts. Logits are logs of chances, up to a constant per row."
+    }
+   },
+   "explain": {
+    "text": "Softmax gives $p_{\\text{end}}/p_a = e^{W_{n,\\text{end}} - W_{n,a}}$, and at the optimum that ratio is $110/51$. So the difference approaches $\\ln(110/51) = 0.7687$. Only differences within a row are pinned down: the rows of $W$ are the log counts up to a constant."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Better than the counts?",
+   "prose": "After 100 steps the network scores 2.4122 on its training names and is still falling. A colleague says that with enough steps it will pass the count model’s 2.3820, because a network can learn patterns a table cannot.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      100
+     ],
+     "y": [
+      2.2,
+      3.9
+     ],
+     "xLabel": "Step",
+     "yLabel": "Loss (nats)",
+     "grid": true,
+     "height": 300,
+     "functions": [
+      {
+       "id": "run",
+       "points": [
+        [
+         0,
+         3.7441
+        ],
+        [
+         1,
+         3.3587
+        ],
+        [
+         2,
+         3.1214
+        ],
+        [
+         3,
+         2.974
+        ],
+        [
+         4,
+         2.8758
+        ],
+        [
+         5,
+         2.8043
+        ],
+        [
+         6,
+         2.7502
+        ],
+        [
+         7,
+         2.708
+        ],
+        [
+         8,
+         2.6742
+        ],
+        [
+         9,
+         2.6466
+        ],
+        [
+         10,
+         2.6236
+        ],
+        [
+         11,
+         2.6043
+        ],
+        [
+         12,
+         2.588
+        ],
+        [
+         13,
+         2.5739
+        ],
+        [
+         14,
+         2.5617
+        ],
+        [
+         15,
+         2.551
+        ],
+        [
+         16,
+         2.5417
+        ],
+        [
+         17,
+         2.5333
+        ],
+        [
+         18,
+         2.5258
+        ],
+        [
+         19,
+         2.5191
+        ],
+        [
+         20,
+         2.513
+        ],
+        [
+         21,
+         2.5074
+        ],
+        [
+         22,
+         2.5023
+        ],
+        [
+         23,
+         2.4976
+        ],
+        [
+         24,
+         2.4933
+        ],
+        [
+         25,
+         2.4893
+        ],
+        [
+         26,
+         2.4856
+        ],
+        [
+         27,
+         2.4821
+        ],
+        [
+         28,
+         2.4789
+        ],
+        [
+         29,
+         2.4758
+        ],
+        [
+         30,
+         2.473
+        ],
+        [
+         31,
+         2.4703
+        ],
+        [
+         32,
+         2.4678
+        ],
+        [
+         33,
+         2.4654
+        ],
+        [
+         34,
+         2.4631
+        ],
+        [
+         35,
+         2.461
+        ],
+        [
+         36,
+         2.4589
+        ],
+        [
+         37,
+         2.457
+        ],
+        [
+         38,
+         2.4552
+        ],
+        [
+         39,
+         2.4534
+        ],
+        [
+         40,
+         2.4518
+        ],
+        [
+         41,
+         2.4502
+        ],
+        [
+         42,
+         2.4487
+        ],
+        [
+         43,
+         2.4472
+        ],
+        [
+         44,
+         2.4459
+        ],
+        [
+         45,
+         2.4445
+        ],
+        [
+         46,
+         2.4433
+        ],
+        [
+         47,
+         2.4421
+        ],
+        [
+         48,
+         2.4409
+        ],
+        [
+         49,
+         2.4398
+        ],
+        [
+         50,
+         2.4387
+        ],
+        [
+         51,
+         2.4377
+        ],
+        [
+         52,
+         2.4367
+        ],
+        [
+         53,
+         2.4357
+        ],
+        [
+         54,
+         2.4348
+        ],
+        [
+         55,
+         2.4339
+        ],
+        [
+         56,
+         2.4331
+        ],
+        [
+         57,
+         2.4322
+        ],
+        [
+         58,
+         2.4314
+        ],
+        [
+         59,
+         2.4307
+        ],
+        [
+         60,
+         2.4299
+        ],
+        [
+         61,
+         2.4292
+        ],
+        [
+         62,
+         2.4285
+        ],
+        [
+         63,
+         2.4278
+        ],
+        [
+         64,
+         2.4272
+        ],
+        [
+         65,
+         2.4266
+        ],
+        [
+         66,
+         2.4259
+        ],
+        [
+         67,
+         2.4253
+        ],
+        [
+         68,
+         2.4248
+        ],
+        [
+         69,
+         2.4242
+        ],
+        [
+         70,
+         2.4237
+        ],
+        [
+         71,
+         2.4231
+        ],
+        [
+         72,
+         2.4226
+        ],
+        [
+         73,
+         2.4221
+        ],
+        [
+         74,
+         2.4216
+        ],
+        [
+         75,
+         2.4211
+        ],
+        [
+         76,
+         2.4207
+        ],
+        [
+         77,
+         2.4202
+        ],
+        [
+         78,
+         2.4198
+        ],
+        [
+         79,
+         2.4193
+        ],
+        [
+         80,
+         2.4189
+        ],
+        [
+         81,
+         2.4185
+        ],
+        [
+         82,
+         2.4181
+        ],
+        [
+         83,
+         2.4177
+        ],
+        [
+         84,
+         2.4173
+        ],
+        [
+         85,
+         2.4169
+        ],
+        [
+         86,
+         2.4166
+        ],
+        [
+         87,
+         2.4162
+        ],
+        [
+         88,
+         2.4159
+        ],
+        [
+         89,
+         2.4155
+        ],
+        [
+         90,
+         2.4152
+        ],
+        [
+         91,
+         2.4149
+        ],
+        [
+         92,
+         2.4145
+        ],
+        [
+         93,
+         2.4142
+        ],
+        [
+         94,
+         2.4139
+        ],
+        [
+         95,
+         2.4136
+        ],
+        [
+         96,
+         2.4133
+        ],
+        [
+         97,
+         2.413
+        ],
+        [
+         98,
+         2.4127
+        ],
+        [
+         99,
+         2.4124
+        ],
+        [
+         100,
+         2.4122
+        ]
+       ],
+       "label": "network"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "counts",
+       "y": 2.382,
+       "label": "counts 2.3820"
+      },
+      {
+       "id": "flat",
+       "y": 3.2958,
+       "label": "equal chances"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Full-batch steps of size 50 on the 3,610 pairs of the first 500 training names."
+    }
+   },
+   "question": "Is the colleague right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: 2.3820 is the floor for one symbol of input",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes, given enough steps it will pass it",
+      "why": "More steps only bring it closer: after 3,000 steps it is 2.3830, still above 2.3820."
+     },
+     {
+      "id": "already",
+      "text": "It already has, since 2.4122 is lower",
+      "why": "You compared the wrong way: 2.4122 is above 2.3820."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the network, written as a table?"
+    },
+    {
+     "rung": "step",
+     "text": "Its input is one symbol, so it is a table of 27 rows; l2 proved the counts are the best table."
+    }
+   ],
+   "feedback": {
+    "correct": "No: the counts are the maximum likelihood table, so 2.3820 is a floor.",
+    "generic": "Not quite. Ask what the network can see.",
+    "byKey": {
+     "yes": "You expected flexibility to win. A model that sees only one symbol is a table of 27 rows, and the counts are the best one on these names."
+    }
+   },
+   "explain": {
+    "text": "The network’s input is one symbol, so whatever $W$ is, it is a table of 27 rows of chances. The counts maximise the likelihood among all such tables, so 2.3820 is a floor it approaches and never crosses."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Indexing is the one-hot product",
+   "prose": "Multiplying 3,610 one-hot rows by $W$ wastes work: each product just picks a row. So the code writes `W[xs]`, which picks row `xs[i]` for each pair. Level 2 calls this an embedding lookup.",
+   "question": "For `xs = [14, 0]` and a 27 by 27 `W`, what is the shape of `W[xs]`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "r",
+      "text": "(2, 27)",
+      "correct": true
+     },
+     {
+      "id": "t",
+      "text": "(27, 2)",
+      "why": "Indexing picks rows: one row of 27 logits per entry of `xs`."
+     },
+     {
+      "id": "v",
+      "text": "(2,)",
+      "why": "That would pick single entries; `W[xs]` picks whole rows."
+     },
+     {
+      "id": "f",
+      "text": "(27, 27)",
+      "why": "The full matrix is `W` itself; `W[xs]` keeps only the rows asked for."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`W[14]` is one row of 27 numbers."
+    },
+    {
+     "rung": "step",
+     "text": "Two indices give two rows."
+    }
+   ],
+   "feedback": {
+    "correct": "(2, 27): row 14 then row 0, the same as the one-hot product.",
+    "generic": "Not quite. `W[xs]` stacks one row per entry of `xs`."
+   },
+   "explain": {
+    "text": "`W[xs]` stacks row 14 and row 0, so it is 2 by 27, exactly `onehot(xs) @ W`. In the backward pass, the autograd adds each row’s gradient back with `np.add.at`, so a row used twice gets both shares."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "train_bigram_net() in code",
+   "prose": "Write `train_bigram_net(xs, ys, steps, lr, seed)`: start $W$ from `np.random.default_rng(seed).standard_normal((27, 27))`, then take `steps` full-batch steps with `cross_entropy(W[xs], ys)`, `backward` and `sgd_step`. Return `steps + 1` losses: before training, then after each step.",
+   "question": "Write `train_bigram_net`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_bigram_net(xs, ys, steps, lr, seed):\n    # W: 27 by 27 from np.random.default_rng(seed).standard_normal\n    # return steps + 1 losses: before training, then after each step\n    losses = []\n    ...\n    return losses\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_bigram_net(xs, ys, steps, lr, seed):\n    W = Tensor(np.random.default_rng(seed).standard_normal((27, 27)))\n    losses = []\n    for k in range(steps + 1):\n        loss = cross_entropy(W[xs], ys)\n        losses.append(loss.item())\n        if k == steps:\n            break\n        W.zero_grad()\n        loss.backward()\n        sgd_step([W], lr)\n    return losses\n",
+    "examples": [
+     {
+      "call": "len(train_bigram_net(np.array([0, 1]), np.array([1, 0]), 3, 1.0, 0))",
+      "expect": "4",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(v, 6) for v in train_bigram_net(np.array([0, 1, 1, 2]), np.array([1, 2, 0, 0]), 2, 1.0, 0)]",
+      "expect": "[4.404148, 4.141296, 3.882716]",
+      "compare": "equal"
+     },
+     {
+      "call": "round(run50()[0], 4)",
+      "expect": "3.7441",
+      "compare": "equal"
+     },
+     {
+      "call": "run50()[50] < 2.45",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "all(a > b for a, b in zip(run50(), run50()[1:]))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "len(run50())",
+      "expect": "51",
+      "compare": "equal"
+     }
+    ],
+    "how": "`autograd.py` from backprop level 4 is in the working directory, and `XS`, `YS` hold the 3,610 pairs of the first 500 training names. Submit runs 5 hidden tests. The first takes two steps on a planted list of four pairs, exact to 6 places. The rest use the course run, 50 steps of size 50 with seed 2147483647: its first loss to 4 places, its last below 2.45, each step lower than the one before, and 51 losses.",
+    "prelude": "import numpy as np\n\nwords = open('names.txt').read().splitlines()\nperm = np.random.default_rng(42).permutation(len(words))\ntrain = [words[i] for i in perm[:25626]]\nindex = {c: i + 1 for i, c in enumerate(\"abcdefghijklmnopqrstuvwxyz\")}\nindex[\".\"] = 0\nxs, ys = [], []\nfor w in train[:500]:\n    cs = \".\" + w + \".\"\n    for a, b in zip(cs, cs[1:]):\n        xs.append(index[a])\n        ys.append(index[b])\nXS, YS = np.array(xs), np.array(ys)\n",
+    "postlude": "\n_RUN = {}\n\n\ndef run50():\n    # the course run: 50 steps of size 50 on the 3,610 pairs, seed 2147483647\n    if 'L' not in _RUN:\n        _RUN['L'] = list(train_bigram_net(XS, YS, 50, 50.0, 2147483647))\n    return _RUN['L']\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt"
+    },
+    "files": {
+     "autograd.py": "\"\"\"backprop level 4 autograd: a small array autograd in NumPy, shared by every later AI course.\n\nA Tensor holds a float64 array `data` and a gradient `grad` of the same shape. Each operation\nrecords its parents (`_prev`), a short name (`_op`) and a `_backward` closure that adds the\noperation's share of the gradient into each parent. `backward()` on a size-1 tensor visits the\ngraph in reverse topological order, built with an explicit stack (no recursion).\nShipped verbatim; a later course that needs another op writes it in a module of its own.\n\"\"\"\n__version__ = \"1.0\"\n\nimport numpy as np\n\n\ndef _noop():\n    pass\n\n\ndef _wrap(x):\n    return x if isinstance(x, Tensor) else Tensor(x)\n\n\ndef unbroadcast(grad, shape):\n    \"\"\"Sum `grad` down to `shape`: over the leading axes broadcasting added, then over every axis where `shape` has 1.\"\"\"\n    shape = tuple(shape)\n    grad = np.asarray(grad)\n    extra = grad.ndim - len(shape)\n    if extra > 0:\n        grad = grad.sum(axis=tuple(range(extra)))\n    axes = tuple(i for i, s in enumerate(shape) if s == 1 and grad.shape[i] != 1)\n    if axes:\n        grad = grad.sum(axis=axes, keepdims=True)\n    return grad\n\n\nclass Tensor:\n    __array_ufunc__ = None  # ndarray (op) Tensor defers to the Tensor's reflected method\n\n    def __init__(self, data, _prev=(), _op=\"\"):\n        if isinstance(data, Tensor):\n            data = data.data\n        self.data = np.asarray(data, dtype=np.float64)\n        self.grad = np.zeros_like(self.data)\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = _noop\n\n    def __repr__(self):\n        return f\"Tensor(shape={self.data.shape}, op={self._op!r})\"\n\n    @property\n    def shape(self):\n        return self.data.shape\n\n    def item(self):\n        if self.data.size != 1:\n            raise ValueError(f\"item() needs a tensor of size 1, not shape {self.shape}\")\n        return float(self.data.reshape(()))\n\n    def zero_grad(self):\n        if self.grad.shape == self.data.shape:\n            self.grad.fill(0.0)\n        else:\n            self.grad = np.zeros_like(self.data)\n\n    # ---- elementwise binary operations (NumPy broadcasting; backward sums back with unbroadcast) ----\n    def __add__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad += unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return _wrap(other) + self\n\n    def __sub__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data - other.data, (self, other), \"-\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad, self.shape)\n            other.grad -= unbroadcast(out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rsub__(self, other):\n        return _wrap(other) - self\n\n    def __neg__(self):\n        out = Tensor(-self.data, (self,), \"neg\")\n\n        def _backward():\n            self.grad -= out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += unbroadcast(other.data * out.grad, self.shape)\n            other.grad += unbroadcast(self.data * out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmul__(self, other):\n        return _wrap(other) * self\n\n    def __truediv__(self, other):\n        other = _wrap(other)\n        out = Tensor(self.data / other.data, (self, other), \"/\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad / other.data, self.shape)\n            other.grad -= unbroadcast(out.grad * self.data / other.data ** 2, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rtruediv__(self, other):\n        return _wrap(other) / self\n\n    def __pow__(self, k):\n        if isinstance(k, Tensor):\n            raise TypeError(\"the power k in a ** k must be a Python number, not a Tensor\")\n        out = Tensor(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    # ---- matrix product: backward G B^T and A^T G (stacks of matrices broadcast as np.matmul does) ----\n    def __matmul__(self, other):\n        other = _wrap(other)\n        if self.data.ndim < 2 or other.data.ndim < 2:\n            raise ValueError(\"@ needs tensors of at least 2 dimensions: reshape a vector to (n, 1) or (1, n) first\")\n        out = Tensor(self.data @ other.data, (self, other), \"@\")\n\n        def _backward():\n            self.grad += unbroadcast(out.grad @ np.swapaxes(other.data, -1, -2), self.shape)\n            other.grad += unbroadcast(np.swapaxes(self.data, -1, -2) @ out.grad, other.shape)\n        out._backward = _backward\n        return out\n\n    def __rmatmul__(self, other):\n        return _wrap(other) @ self\n\n    # ---- reductions ----\n    def sum(self, axis=None, keepdims=False):\n        out = Tensor(self.data.sum(axis=axis, keepdims=keepdims), (self,), \"sum\")\n\n        def _backward():\n            g = out.grad\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    def mean(self, axis=None, keepdims=False):\n        out = Tensor(self.data.mean(axis=axis, keepdims=keepdims), (self,), \"mean\")\n        n = self.data.size // max(out.data.size, 1)\n\n        def _backward():\n            g = out.grad / n\n            if axis is not None and not keepdims:\n                g = np.expand_dims(g, axis)\n            self.grad += np.broadcast_to(g, self.shape)\n        out._backward = _backward\n        return out\n\n    # ---- elementwise functions ----\n    def tanh(self):\n        t = np.tanh(self.data)\n        out = Tensor(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1.0 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n    def relu(self):\n        out = Tensor(np.maximum(self.data, 0.0), (self,), \"relu\")\n\n        def _backward():\n            self.grad += (self.data > 0) * out.grad  # slope 0 at exactly 0\n        out._backward = _backward\n        return out\n\n    def exp(self):\n        e = np.exp(self.data)\n        out = Tensor(e, (self,), \"exp\")\n\n        def _backward():\n            self.grad += e * out.grad\n        out._backward = _backward\n        return out\n\n    def log(self):\n        out = Tensor(np.log(self.data), (self,), \"log\")\n\n        def _backward():\n            self.grad += out.grad / self.data\n        out._backward = _backward\n        return out\n\n    # ---- shape operations ----\n    def reshape(self, *shape):\n        out = Tensor(self.data.reshape(*shape), (self,), \"reshape\")\n\n        def _backward():\n            self.grad += out.grad.reshape(self.shape)\n        out._backward = _backward\n        return out\n\n    @property\n    def T(self):\n        out = Tensor(self.data.T, (self,), \"T\")\n\n        def _backward():\n            self.grad += out.grad.T\n        out._backward = _backward\n        return out\n\n    def __getitem__(self, idx):\n        if isinstance(idx, Tensor):\n            raise TypeError(\"index with an integer array or a tuple of them, not a Tensor\")\n        out = Tensor(self.data[idx], (self,), \"index\")\n\n        def _backward():\n            np.add.at(self.grad, idx, out.grad)  # repeated indices add, as in an embedding lookup\n        out._backward = _backward\n        return out\n\n    # ---- the backward pass ----\n    def backward(self):\n        if self.data.size != 1:\n            raise ValueError(f\"backward() needs a tensor of size 1 (a loss), not shape {self.shape}\")\n        order, seen, stack = [], set(), [(self, False)]\n        while stack:\n            node, parents_done = stack.pop()\n            if parents_done:\n                order.append(node)\n                continue\n            if id(node) in seen:\n                continue\n            seen.add(id(node))\n            stack.append((node, True))\n            for p in node._prev:\n                if id(p) not in seen:\n                    stack.append((p, False))\n        self.grad = np.ones_like(self.data)\n        for node in reversed(order):\n            node._backward()\n\n\ndef softmax(x, axis=-1):\n    \"\"\"Softmax of a plain array along `axis`, largest entry subtracted first; no gradient (for sampling and reporting).\"\"\"\n    x = x.data if isinstance(x, Tensor) else np.asarray(x, dtype=np.float64)\n    z = np.exp(x - x.max(axis=axis, keepdims=True))\n    return z / z.sum(axis=axis, keepdims=True)\n\n\ndef cross_entropy(logits, targets):\n    \"\"\"Mean over the n rows of -log softmax(z_i)[y_i], in nats, by log-sum-exp; backward (softmax(z) - onehot(y)) / n.\"\"\"\n    logits = _wrap(logits)\n    z = logits.data\n    y = np.asarray(targets)\n    if z.ndim != 2:\n        raise ValueError(f\"logits must be 2-D (n, K), not shape {z.shape}\")\n    if y.ndim != 1 or y.shape[0] != z.shape[0]:\n        raise ValueError(f\"targets must be 1-D of length {z.shape[0]}, not shape {y.shape}\")\n    if not np.issubdtype(y.dtype, np.integer):\n        raise TypeError(\"targets must be integer class indices\")\n    n = z.shape[0]\n    rows = np.arange(n)\n    m = z.max(axis=1, keepdims=True)\n    e = np.exp(z - m)\n    s = e.sum(axis=1, keepdims=True)\n    lse = (m + np.log(s))[:, 0]\n    out = Tensor(np.mean(lse - z[rows, y]), (logits,), \"cross_entropy\")\n\n    def _backward():\n        p = e / s\n        p[rows, y] -= 1.0\n        logits.grad += p * (out.grad / n)\n    out._backward = _backward\n    return out\n\n\ndef concat(tensors, axis=0):\n    \"\"\"Join tensors along `axis`; backward hands each its own slice of the gradient.\"\"\"\n    tensors = [_wrap(t) for t in tensors]\n    out = Tensor(np.concatenate([t.data for t in tensors], axis=axis), tuple(tensors), \"concat\")\n\n    def _backward():\n        start = 0\n        for t in tensors:\n            size = t.data.shape[axis]\n            cut = [slice(None)] * out.data.ndim\n            cut[axis] = slice(start, start + size)\n            t.grad += out.grad[tuple(cut)]\n            start += size\n    out._backward = _backward\n    return out\n\n\ndef sgd_step(params, lr):\n    \"\"\"One gradient-descent step in place, outside the graph. It does not zero the gradients.\"\"\"\n    for p in params:\n        p.data -= lr * p.grad\n\n\ndef grad_check(f, params, h=1e-5):\n    \"\"\"Global relative error between backprop and central differences of f() over every entry of every parameter.\"\"\"\n    params = list(params)\n    for p in params:\n        p.zero_grad()\n    f().backward()\n    analytic = [p.grad.copy() for p in params]\n    worst, scale = 0.0, 1e-12\n    for p, g in zip(params, analytic):\n        for i in np.ndindex(p.data.shape):\n            keep = p.data[i]\n            p.data[i] = keep + h\n            up = f().item()\n            p.data[i] = keep - h\n            down = f().item()\n            p.data[i] = keep\n            num = (up - down) / (2 * h)\n            worst = max(worst, abs(g[i] - num))\n            scale = max(scale, abs(g[i]), abs(num))\n    return worst / scale\n"
+    },
+    "budget": 6000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_bigram_net(xs, ys, steps, lr, seed):\n    W = Tensor(np.random.default_rng(seed).standard_normal((27, 27)))\n    losses = []\n    for k in range(steps + 1):\n        loss = cross_entropy(W[xs], ys)\n        losses.append(loss.item())\n        if k == steps:\n            break\n        loss.backward()\n        sgd_step([W], lr)\n    return losses\n",
+      "test": 1,
+      "symptom": "Never zeroes the gradient, so each step adds up every earlier gradient."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_bigram_net(xs, ys, steps, lr, seed):\n    W = Tensor(np.random.default_rng(seed).standard_normal((27, 27)))\n    losses = []\n    for k in range(steps + 1):\n        loss = cross_entropy(W[xs], ys)\n        losses.append(loss.item())\n        if k == steps:\n            break\n        W.zero_grad()\n        loss.backward()\n        sgd_step([W], -lr)\n    return losses\n",
+      "test": 1,
+      "symptom": "Steps uphill: the loss grows."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_bigram_net(xs, ys, steps, lr, seed):\n    W = Tensor(np.random.default_rng(seed).standard_normal((27, 27)))\n    losses = []\n    for k in range(steps + 1):\n        loss = cross_entropy(W[xs], ys)\n        losses.append(loss.item())\n        if k == steps:\n            break\n        W.zero_grad()\n        sgd_step([W], lr)\n    return losses\n",
+      "test": 1,
+      "symptom": "No backward pass, so the gradient stays 0 and nothing learns."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy, sgd_step\n\n\ndef train_bigram_net(xs, ys, steps, lr, seed):\n    W = Tensor(np.random.default_rng(seed).standard_normal((27, 27)))\n    losses = []\n    for k in range(steps + 1):\n        loss = cross_entropy(W[xs], ys)\n        if k == steps:\n            break\n        losses.append(loss.item())\n        W.zero_grad()\n        loss.backward()\n        sgd_step([W], lr)\n    return losses\n",
+      "test": 1,
+      "symptom": "Leaves out the last loss, after the final step."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each step: compute the loss, zero the gradient, backward, step."
+    },
+    {
+     "rung": "step",
+     "text": "Append the loss before stepping, and stop after appending the last one."
+    }
+   ],
+   "feedback": {
+    "correct": "Your run matches: 3.7441 at the start and below 2.45 after 50 steps.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Two steps on four pairs must give exactly the planted losses. Zero the gradient before each backward."
+    }
+   },
+   "explain": {
+    "text": "Each pass computes the loss on all pairs, zeroes the gradient, runs backward and steps by `lr`. Without `zero_grad` the gradients of earlier steps pile up, and the run no longer matches."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "One day of memory",
+   "prose": "A desk feeds a one-layer network yesterday’s move in a share, up or down, as a one-hot vector, and trains it to predict today’s. Its loss on the training days stops at the loss of the 2 by 2 count table of (yesterday, today) pairs.",
+   "question": "What could let a model beat that table?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "context",
+      "text": "More input: several past days",
+      "correct": true
+     },
+     {
+      "id": "steps",
+      "text": "More training steps on the same days",
+      "why": "With one day of input, the count table is already the best possible on those days."
+     },
+     {
+      "id": "rate",
+      "text": "A larger step size for descent",
+      "why": "A step size changes how fast it gets to the table’s loss, not where it ends."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does the network see?"
+    },
+    {
+     "rung": "step",
+     "text": "One day in means a table of 2 rows; only more input changes that."
+    }
+   ],
+   "feedback": {
+    "correct": "More input: a model is only worth more than a table when it sees more context.",
+    "generic": "Not quite. Ask what limits a model that sees one day.",
+    "byKey": {
+     "steps": "You trusted training to find more. With this input, the counts are the floor."
+    }
+   },
+   "explain": {
+    "text": "With one day of input, any model is a 2-row table, and the counts are the best one on the training days. A network pays off when it sees more history than a table can count, which level 2 does with three letters."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A one-hot symbol times a 27 by 27 matrix picks one row: those are the logits; softmax and `cross_entropy` give the loss, `W[xs]` does the product cheaply.",
+   "Full-batch descent at step 50 on 500 names: 3.7441, then 2.4387 after 50 steps and 2.4122 after 100, toward the counts’ 2.3820.",
+   "With one symbol in, the counts are the best table, so the network can only approach them; its rows become the log counts up to a constant."
+  ],
+  "formula": {
+   "name": "One-layer bigram network",
+   "tex": "L(W) = -\\frac{1}{n}\\sum_{i} \\ln \\operatorname{softmax}(W_{x_i})_{y_i}",
+   "note": "Gradient for row $a$: $\\sum_{i: x_i = a} (\\mathbf{p}_i - \\mathbf{y}_i)/n$."
+  },
+  "trap": "Expecting the network to beat the counts with the same input; and forgetting to zero the gradient between steps."
+ },
+ "quiz": [
+  {
+   "id": "q-slow-step",
+   "difficulty": 2,
+   "prose": "With step 0.1 instead of 50, the same run is at 3.7007 after 50 steps, barely below its start of 3.7441.",
+   "question": "What went wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "small",
+      "text": "The step is far too small for this loss",
+      "correct": true
+     },
+     {
+      "id": "stuck",
+      "text": "It is stuck at a minimum",
+      "why": "At a minimum the gradient would be near 0; here the loss is far above 2.3820 and still falling."
+     },
+     {
+      "id": "bug",
+      "text": "The gradient must be wrong",
+      "why": "The same code reaches 2.4387 with step 50; only the step changed."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The step is too small: the run is moving, just slowly.",
+    "generic": "Not quite. Compare with the run at step 50."
+   },
+   "explain": {
+    "text": "With step 50 the loss reaches 2.4387 in 50 steps; with 0.1 it has hardly moved. The mean loss over 3,610 pairs has small gradients, so this problem needs a large step."
+   }
+  },
+  {
+   "id": "q-shift-row",
+   "difficulty": 2,
+   "question": "You add 5 to every entry of row a of $W$. How do the chances after a change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "They do not change",
+      "correct": true
+     },
+     {
+      "id": "up",
+      "text": "Every chance after a rises",
+      "why": "Softmax divides by the row’s sum, which grows by the same factor $e^5$."
+     },
+     {
+      "id": "flat",
+      "text": "They move toward equal chances",
+      "why": "Equal chances need equal logits; adding a constant keeps their differences."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "They do not change: softmax ignores a constant added to a whole row.",
+    "generic": "Not quite. Write softmax with $z_b + 5$ in place of $z_b$."
+   },
+   "explain": {
+    "text": "$e^{z_b + 5} / \\sum_c e^{z_c + 5} = e^{z_b}/\\sum_c e^{z_c}$: the factor $e^5$ cancels. That is why only differences within a row of $W$ are learned."
+   }
+  },
+  {
+   "id": "q-tiny-grad",
+   "difficulty": 3,
+   "prose": "Two pairs share input 0, with targets 1 and 2, over three symbols. $W$ starts at all zeros.",
+   "question": "After one step of size 3, what is $W_{0,0}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Number",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 1,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "no-n",
+      "value": -2,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-1$: symbol 0 never follows, so its weight falls.",
+    "generic": "Not quite. Add the two pairs’ $(p_0 - y_0)$, divide by 2, and step.",
+    "byKey": {
+     "sign": "Descent subtracts the gradient; this one is positive.",
+     "no-n": "The loss is a mean over 2 pairs: divide by 2."
+    }
+   },
+   "explain": {
+    "text": "Each pair gives $p_0 - y_0 = \\tfrac13$, so the gradient is $(\\tfrac13 + \\tfrac13)/2 = \\tfrac13$. A step of 3 makes $W_{0,0} = -1$."
+   }
+  }
+ ]
+}

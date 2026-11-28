@@ -1,0 +1,902 @@
+{
+ "id": "l9-sampling-names",
+ "course": "makemore",
+ "title": "Sampling new names",
+ "minutes": 15,
+ "objectives": [
+  "Write a sampler that draws names letter by letter from a model with a seeded generator."
+ ],
+ "skills": [
+  "mk-eval"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two writers",
+   "prose": "Two models each write six names, both drawn with seed 3. One is the bigram of level 1; the other is the MLP of level 2.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "two samplers, seed 3",
+     "lines": [
+      "List A: acli, ja, n, ilemiyanic, zahonar, na",
+      "List B: aitlane, naleightende, zakynel, naelynn, ordonan, prayel"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Which list is the MLP’s?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "b",
+      "text": "List B",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "List A",
+      "why": "List A has names such as n and ilemiyanic: a model that sees one letter back loses track of length and shape."
+     },
+     {
+      "id": "same",
+      "text": "No way to tell: both are random",
+      "why": "Both are random draws, but from different models; three letters of context write steadier names."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which list reads more like real names?"
+    },
+    {
+     "rung": "step",
+     "text": "naelynn and zakynel against n and ilemiyanic."
+    }
+   ],
+   "feedback": {
+    "correct": "List B: three letters of context give names such as naelynn and zakynel.",
+    "generic": "Not quite. Compare how name-like each list reads.",
+    "byKey": {
+     "a": "You picked the list with n and ilemiyanic. A one-letter memory cannot keep a name’s shape."
+    }
+   },
+   "explain": {
+    "text": "The bigram sees one letter back, so it writes names such as n and ilemiyanic. The MLP sees three and its names read better: naelynn, zakynel. This lesson writes the sampler both use."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Rolling the dice",
+   "prose": "To draw from a row of chances, lay them end to end on the line from 0 to 1 and draw a uniform $u$. Here is the planted start row: a 0.5, b 0.3, c 0.2. Move $u$.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 1,
+     "step": 0.1,
+     "labels": true
+    },
+    "state": {
+     "intervals": [
+      {
+       "id": "ia",
+       "from": 0,
+       "to": 0.5,
+       "label": "a",
+       "colour": 1,
+       "labelPos": "below"
+      },
+      {
+       "id": "ib",
+       "from": 0.5,
+       "to": 0.8,
+       "label": "b",
+       "colour": 2,
+       "labelPos": "below"
+      },
+      {
+       "id": "ic",
+       "from": 0.8,
+       "to": 1.0,
+       "label": "c",
+       "colour": 3,
+       "labelPos": "below"
+      }
+     ],
+     "points": [
+      {
+       "id": "u",
+       "x": 0.3,
+       "label": "u",
+       "labelPos": "above"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "u = {{fixed(u.x, 2)}} picks {{u.x < 0.5 ? \"a\" : (u.x < 0.8 ? \"b\" : \"c\")}}: the first running total above u."
+    },
+    "controls": [
+     {
+      "bind": "u",
+      "min": 0,
+      "max": 0.99,
+      "step": 0.01,
+      "label": "u",
+      "start": 0.3
+     }
+    ]
+   },
+   "question": "Which symbol does $u = 0.62$ pick?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "b",
+      "text": "b",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "a",
+      "why": "a covers 0 up to 0.5; 0.62 is past it."
+     },
+     {
+      "id": "c",
+      "text": "c",
+      "why": "c starts at the running total 0.8; 0.62 is below it."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Running totals: 0.5, then 0.8, then 1."
+    },
+    {
+     "rung": "step",
+     "text": "0.62 is above 0.5 and below 0.8."
+    }
+   ],
+   "feedback": {
+    "correct": "b: 0.62 lies between the running totals 0.5 and 0.8.",
+    "generic": "Not quite. Find the first running total above 0.62."
+   },
+   "explain": {
+    "text": "The running totals are 0.5, 0.8 and 1.0, and the first one above 0.62 is 0.8, which closes b’s stretch. Each symbol is picked with its own chance, the length of its stretch.",
+    "canvas": {
+     "points": {
+      "u": {
+       "x": 0.62
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A name by hand",
+   "prose": "Name the rule: the **sampling rule** takes the first running total strictly above $u$; in NumPy, `np.searchsorted(np.cumsum(p), u, side=\"right\")`. Start from three marks, draw, append, slide the context, and stop at the end mark.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "After",
+      "end",
+      "a",
+      "b",
+      "c"
+     ],
+     "rows": [
+      [
+       "start",
+       "0",
+       "0.5",
+       "0.3",
+       "0.2"
+      ],
+      [
+       "a",
+       "0.4",
+       "0.1",
+       "0.3",
+       "0.2"
+      ],
+      [
+       "b",
+       "0.3",
+       "0.5",
+       "0",
+       "0.2"
+      ],
+      [
+       "c",
+       "0.6",
+       "0.2",
+       "0.2",
+       "0"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "A planted model over ., a, b and c: each row gives the chances of the next symbol."
+    }
+   },
+   "question": "Draw a name from the planted model with $u$ = 0.62, 0.35, 0.40, 0.15 in turn. Fill in the symbol each $u$ picks.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "u",
+     "Symbol"
+    ],
+    "rows": [
+     [
+      "0.62",
+      {
+       "edit": true,
+       "answer": "b",
+       "accept": [
+        "B"
+       ]
+      }
+     ],
+     [
+      "0.35",
+      {
+       "edit": true,
+       "answer": "a",
+       "accept": [
+        "A"
+       ]
+      }
+     ],
+     [
+      "0.40",
+      {
+       "edit": true,
+       "answer": "a",
+       "accept": [
+        "A"
+       ],
+       "wrong": [
+        {
+         "id": "left",
+         "text": "end"
+        }
+       ]
+      }
+     ],
+     [
+      "0.15",
+      {
+       "edit": true,
+       "answer": "end",
+       "accept": [
+        ".",
+        "the end",
+        "end mark"
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use the row of the last symbol drawn."
+    },
+    {
+     "rung": "point",
+     "text": "After a, the running totals are 0.4, 0.5, 0.8, 1.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "b, then a, then a (0.40 equals the total 0.4, so it is past end), then end: baa."
+    }
+   ],
+   "feedback": {
+    "correct": "b, a, a, end: the name baa.",
+    "generic": "Not quite. Each draw uses the row of the symbol just drawn.",
+    "byKey": {
+     "left": "u = 0.40 equals the running total 0.4 exactly. The rule wants a total strictly above u, so it moves on to a."
+    }
+   },
+   "explain": {
+    "text": "Start row: 0.62 picks b; row b: 0.35 picks a (totals 0.3, 0.8). Row a: 0.40 equals the total 0.4, so the first total strictly above it is 0.5 and a comes again. Then 0.15 picks the end, and the name is baa."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Seeds",
+   "prose": "In code, $u$ comes from `rng.random()` with `rng = np.random.default_rng(seed)`. NumPy’s generator gives the same stream of $u$ in the app as on a desktop.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "After",
+      "end",
+      "a",
+      "b",
+      "c"
+     ],
+     "rows": [
+      [
+       "start",
+       "0",
+       "0.5",
+       "0.3",
+       "0.2"
+      ],
+      [
+       "a",
+       "0.4",
+       "0.1",
+       "0.3",
+       "0.2"
+      ],
+      [
+       "b",
+       "0.3",
+       "0.5",
+       "0",
+       "0.2"
+      ],
+      [
+       "c",
+       "0.6",
+       "0.2",
+       "0.2",
+       "0"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "A planted model over ., a, b and c: each row gives the chances of the next symbol."
+    }
+   },
+   "question": "You run the sampler twice with seed 7 and once with seed 8. What do you get?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "Seed 7 repeats; seed 8 differs",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "Three different sets of names",
+      "why": "A seed fixes the whole stream of u, so the same seed repeats exactly."
+     },
+     {
+      "id": "none",
+      "text": "All three agree",
+      "why": "A different seed gives a different stream, so seed 8 writes other names."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a seed fix?"
+    },
+    {
+     "rung": "step",
+     "text": "The stream of u values, and so every draw."
+    }
+   ],
+   "feedback": {
+    "correct": "Same seed, same names: runs can be checked and repeated.",
+    "generic": "Not quite. Ask what the seed controls."
+   },
+   "explain": {
+    "text": "The seed fixes every $u$, and the rule turns each $u$ into one symbol, so seed 7 repeats exactly. That is what lets a test check a sampler’s names letter by letter."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Copies or new names?",
+   "prose": "Of 500 names the MLP draws with seed 11, 19.4% are names in the training set; for the bigram, 9.8%.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "two samplers, seed 3",
+     "lines": [
+      "List A: acli, ja, n, ilemiyanic, zahonar, na",
+      "List B: aitlane, naleightende, zakynel, naelynn, ordonan, prayel"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "What does the MLP’s higher share tell us?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "good",
+      "text": "Most of its names are still new",
+      "correct": true
+     },
+     {
+      "id": "copy",
+      "text": "It mostly copies the training names",
+      "why": "80.6% of its names are not in the training set."
+     },
+     {
+      "id": "bad",
+      "text": "It is overfitting, so it is worse",
+      "why": "Common names are likely under any good model; the dev loss, not this share, judges overfitting."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What share is not in the training set?"
+    },
+    {
+     "rung": "step",
+     "text": "80.6% are new."
+    }
+   ],
+   "feedback": {
+    "correct": "It writes names closer to real ones; most of them are still new.",
+    "generic": "Not quite. Read the share both ways.",
+    "byKey": {
+     "bad": "A good model gives common names high chance, so it redraws some. Overfitting shows on the dev loss."
+    }
+   },
+   "explain": {
+    "text": "A good model gives emma and ava high chances, so some draws are real names: 19.4% for the MLP against 9.8% for the bigram. Most are new, which is the point of a generator."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Always the favourite",
+   "prose": "A learner replaces the draw by the most likely symbol at every step, to get the model’s best name.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "two samplers, seed 3",
+     "lines": [
+      "List A: acli, ja, n, ilemiyanic, zahonar, na",
+      "List B: aitlane, naleightende, zakynel, naelynn, ordonan, prayel"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "What does that sampler write, run after run?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "The same name every time: alee",
+      "correct": true
+     },
+     {
+      "id": "best",
+      "text": "The most likely names, in order",
+      "why": "Argmax at each step gives one path, not a list; and it need not be the most likely name."
+     },
+     {
+      "id": "varied",
+      "text": "Varied names, since the context changes",
+      "why": "The context changes along the way, but each run starts from `...` and repeats the same path."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is there any randomness left?"
+    },
+    {
+     "rung": "step",
+     "text": "No: from `...` it always follows the same path, alee."
+    }
+   ],
+   "feedback": {
+    "correct": "One name for ever: alee.",
+    "generic": "Not quite. Ask where randomness enters.",
+    "byKey": {
+     "best": "Argmax removes every draw: the sampler writes one name, again and again."
+    }
+   },
+   "explain": {
+    "text": "With no $u$, every run follows the top symbol from `...`: alee, every time. Sampling is what lets a model write many names in proportion to their chances."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A cap on the length",
+   "prose": "The sampler stops after 20 letters even without the end mark. Of the MLP’s 500 names, 2 hit that cap.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "two samplers, seed 3",
+     "lines": [
+      "List A: acli, ja, n, ilemiyanic, zahonar, na",
+      "List B: aitlane, naleightende, zakynel, naelynn, ordonan, prayel"
+     ],
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Why cap the length at all?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "loop",
+      "text": "Some runs might never end",
+      "correct": true
+     },
+     {
+      "id": "long",
+      "text": "Long names are wrong",
+      "why": "Real names reach 15 letters; the cap only guards against a run that never ends."
+     },
+     {
+      "id": "speed",
+      "text": "To make the model faster",
+      "why": "It makes a bad run finish; it does not speed up a good one."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What if the end mark’s chance is tiny?"
+    },
+    {
+     "rung": "step",
+     "text": "A run could go on and on; a cap ends it."
+    }
+   ],
+   "feedback": {
+    "correct": "Without a cap, a model that rarely ends could run for ever.",
+    "generic": "Not quite. Think of a model that never picks the end mark."
+   },
+   "explain": {
+    "text": "The longest real name has 15 letters, so 20 never cuts a real-looking name short. A half-trained or planted model may hardly ever pick the end mark, and the cap keeps the sampler finite."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A u on the edge",
+   "prose": "Running totals in floats need not reach exactly 1: ten chances of 0.1 add to `0.9999999999999999`, and `rng.random()` can return that very number.",
+   "question": "For $u$ equal to the last running total, `0.9999999999999999`, what does `searchsorted(..., side=\"right\")` return for 27 symbols?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "27",
+      "text": "27: past the end, so cap it",
+      "correct": true
+     },
+     {
+      "id": "26",
+      "text": "26, the last symbol",
+      "why": "No total is strictly above u, so it returns the length, 27."
+     },
+     {
+      "id": "0",
+      "text": "0, the end mark",
+      "why": "It searches upward; it never wraps to the start."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is any running total strictly above u?"
+    },
+    {
+     "rung": "step",
+     "text": "None is, so the answer is the length of the list."
+    }
+   ],
+   "feedback": {
+    "correct": "27: cap it at 26 so the draw stays a real symbol.",
+    "generic": "Not quite. side=\"right\" returns the first position whose total is above u.",
+    "byKey": {
+     "26": "You expected the last symbol. With no total above u, searchsorted returns the length, 27."
+    }
+   },
+   "explain": {
+    "text": "With no total strictly above $u$, `searchsorted` returns the length, 27, which is no symbol. Capping at 26 gives the last letter, z, the stretch that rounding cut off."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "sample_name() in code",
+   "prose": "Write `sample_name(prob_fn, rng, max_len=20)`: start from `[0, 0, 0]`; each step take `p = prob_fn(context)` and `u = rng.random()`, pick the first running total above $u$ (capped at 26), stop at the end mark, else append the letter and slide the context. Stop after `max_len` letters.",
+   "question": "Write `sample_name`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_name(prob_fn, rng, max_len=20):\n    # start from three marks; each step: p = prob_fn(context), u = rng.random(),\n    # the symbol is the first running total above u (capped at 26);\n    # stop at the end mark or after max_len letters\n    ...\n",
+    "solution": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_name(prob_fn, rng, max_len=20):\n    context = [0, 0, 0]\n    name = \"\"\n    while len(name) < max_len:\n        p = prob_fn(context)\n        u = rng.random()\n        ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n        if ix == 0:\n            break\n        name += SYMBOLS[ix]\n        context = context[1:] + [ix]\n    return name\n",
+    "examples": [
+     {
+      "call": "sample_name(toy, FixedU([0.1, 0.0]))",
+      "expect": "'a'",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "sample_name(toy, FixedU([0.62, 0.35, 0.40, 0.15]))",
+      "expect": "'baa'",
+      "compare": "equal"
+     },
+     {
+      "call": "[sample_name(toy, np.random.default_rng(s)) for s in (1, 2, 3)]",
+      "expect": "['bc', 'a', 'a']",
+      "compare": "equal"
+     },
+     {
+      "call": "sample_name(only_a, np.random.default_rng(0), 5)",
+      "expect": "'aaaaa'",
+      "compare": "equal"
+     },
+     {
+      "call": "sample_name(tenths, FixedU([0.9999999999999999, 0.05, 0.25]), 3)",
+      "expect": "'zqs'",
+      "compare": "equal"
+     },
+     {
+      "call": "[sample_name(mlp, np.random.default_rng(7)) for _ in range(1)]",
+      "expect": "['mora']",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: fixed u values on the planted model (one u equals a running total), and three seeds on it. Then come a model that never ends (the cap), a u equal to the last running total (the cap at 26), and one name from the trained MLP with seed 7. `toy`, `only_a`, `tenths`, `mlp` and `FixedU` are ready.",
+    "prelude": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n_ROWS = {0: [0, 0.5, 0.3, 0.2], 1: [0.4, 0.1, 0.3, 0.2], 2: [0.3, 0.5, 0.0, 0.2], 3: [0.6, 0.2, 0.2, 0.0]}\n\n\ndef toy(context):\n    # a planted model over ., a, b, c that looks only at the last symbol\n    return np.array(_ROWS[context[-1]] + [0.0] * 23)\n\n\ndef only_a(context):\n    # a model that never ends a name\n    p = np.zeros(27)\n    p[1] = 1.0\n    return p\n\n\ndef tenths(context):\n    # ten letters at 0.1 each: the running total ends at 0.9999999999999999\n    p = np.zeros(27)\n    p[17:27] = 0.1\n    return p\n\n\nclass FixedU:\n    # stands in for a generator: hands out the given u values in turn\n    def __init__(self, us):\n        self.us = list(us)\n\n    def random(self):\n        return self.us.pop(0)\n\nimport json\n_W = {k: np.array(v) for k, v in json.load(open('makemore-mlp.json')).items() if k != 'about'}\n\n\ndef mlp_logits(context):\n    e = _W[\"C\"][np.array(context)].reshape(-1)\n    return np.tanh(e @ _W[\"W1\"] + _W[\"b1\"]) @ _W[\"W2\"] + _W[\"b2\"]\n\n\ndef mlp(context):\n    z = mlp_logits(context)\n    p = np.exp(z - z.max())\n    return p / p.sum()\n",
+    "data": {
+     "names.txt": "content/data/ai/names.txt",
+     "makemore-mlp.json": "content/data/ai/makemore-mlp.json"
+    },
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_name(prob_fn, rng, max_len=20):\n    context = [0, 0, 0]\n    name = \"\"\n    while len(name) < max_len:\n        p = prob_fn(context)\n        u = rng.random()\n        ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"left\")), 26)\n        if ix == 0:\n            break\n        name += SYMBOLS[ix]\n        context = context[1:] + [ix]\n    return name\n",
+      "test": 1,
+      "symptom": "Side left: a u equal to a running total picks the symbol before."
+     },
+     {
+      "source": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_name(prob_fn, rng, max_len=20):\n    context = [0, 0, 0]\n    name = \"\"\n    while len(name) < max_len:\n        p = prob_fn(context)\n        u = rng.random()\n        ix = int(np.searchsorted(np.cumsum(p), u, side=\"right\"))\n        if ix == 0:\n            break\n        name += SYMBOLS[ix]\n        context = context[1:] + [ix]\n    return name\n",
+      "test": 4,
+      "symptom": "No cap: u equal to the last total gives index 27."
+     },
+     {
+      "source": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_name(prob_fn, rng, max_len=20):\n    context = [0, 0, 0]\n    name = \"\"\n    while True:\n        p = prob_fn(context)\n        u = rng.random()\n        ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n        if ix == 0:\n            break\n        name += SYMBOLS[ix]\n        context = context[1:] + [ix]\n    return name\n",
+      "test": 3,
+      "symptom": "No length cap: a model that never ends loops for ever.",
+      "timeout": true
+     },
+     {
+      "source": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_name(prob_fn, rng, max_len=20):\n    context = [0, 0, 0]\n    name = \"\"\n    while len(name) < max_len:\n        p = prob_fn(context)\n        u = rng.random()\n        ix = int(np.argmax(p))\n        if ix == 0:\n            break\n        name += SYMBOLS[ix]\n        context = context[1:] + [ix]\n    return name\n",
+      "test": 1,
+      "symptom": "Takes the most likely symbol every step."
+     },
+     {
+      "source": "import numpy as np\n\nSYMBOLS = \".abcdefghijklmnopqrstuvwxyz\"\n\n\ndef sample_name(prob_fn, rng, max_len=20):\n    context = [0, 0, 0]\n    name = \"\"\n    while len(name) < max_len:\n        p = prob_fn(context)\n        u = rng.random()\n        ix = min(int(np.searchsorted(np.cumsum(p), u, side=\"right\")), 26)\n        if ix == 0:\n            break\n        name += SYMBOLS[ix]\n    return name\n",
+      "test": 1,
+      "symptom": "Never slides the context, so every step sees three marks."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.searchsorted(np.cumsum(p), u, side=\"right\")` gives the index."
+    },
+    {
+     "rung": "step",
+     "text": "Loop while the name is shorter than `max_len`; break on index 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Your sampler matches the planted names, the caps and the MLP’s seeded name.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "With u = 0.40 against the total 0.4, side=\"right\" moves on to a: the name is baa.",
+     "test-4": "Cap the index at 26; searchsorted can return 27."
+    }
+   },
+   "explain": {
+    "text": "Three lines do the work: the running totals, `searchsorted` with `side=\"right\"`, and the cap. The rest is the loop: stop at 0, else append and slide."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Synthetic price paths",
+   "prose": "A risk desk fits a model to ten years of daily returns and samples 10,000 synthetic paths for a stress test. A reviewer finds that many sampled paths repeat whole months of real history.",
+   "question": "What should the desk check?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "copy",
+      "text": "How often paths copy history",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "Nothing: copies of real months are realistic",
+      "why": "A stress test needs new paths; a model that replays history says nothing about what has not happened."
+     },
+     {
+      "id": "seed",
+      "text": "Change the seed until the copies go away",
+      "why": "A seed changes which paths are drawn, not what the model learned."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did 19.4% measure for names?"
+    },
+    {
+     "rung": "step",
+     "text": "The share of samples that are training data."
+    }
+   ],
+   "feedback": {
+    "correct": "Measure the share of copies, as with names, and treat a high share as memorising.",
+    "generic": "Not quite. Recall what the 500-name check measured.",
+    "byKey": {
+     "seed": "Re-seeding hides the copies in one run; the model would still be replaying history."
+    }
+   },
+   "explain": {
+    "text": "A generator that mostly replays its training data adds little to a stress test. The names check carries over: sample many, count exact copies, and compare with what a good model should repeat."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Lay the chances end to end and draw $u$: the symbol is the first running total strictly above $u$, `searchsorted(cumsum(p), u, side=\"right\")`, capped at 26.",
+   "Start from `...`, draw, append, slide the context, stop at the end mark or after 20 letters. A seed fixes every draw.",
+   "Taking the top symbol each step writes one name for ever (alee); 19.4% of the MLP’s draws are training names, most are new."
+  ],
+  "formula": {
+   "name": "Sampling rule",
+   "tex": "i = \\min\\big(\\#\\{k : c_k \\le u\\},\\ 26\\big), \\quad c_k = \\textstyle\\sum_{j \\le k} p_j",
+   "note": "$u$ from `rng.random()`; equal to a total, it goes to the next symbol."
+  },
+  "trap": "Taking the most likely symbol every step instead of drawing, which writes one name for ever."
+ },
+ "quiz": [
+  {
+   "id": "q-draw",
+   "difficulty": 2,
+   "prose": "A row of chances is end 0.1, a 0.6, b 0.3.",
+   "question": "Which symbol does $u = 0.45$ pick?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "a",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "b",
+      "why": "b starts at the running total 0.7; 0.45 is below it."
+     },
+     {
+      "id": "end",
+      "text": "end",
+      "why": "end covers only 0 to 0.1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "a: the running totals are 0.1, 0.7, 1.0, and 0.7 is the first above 0.45.",
+    "generic": "Not quite. Find the first running total above 0.45."
+   },
+   "explain": {
+    "text": "The running totals are 0.1, 0.7 and 1.0; the first above 0.45 is 0.7, which closes a’s stretch."
+   }
+  },
+  {
+   "id": "q-tie",
+   "difficulty": 3,
+   "prose": "The same row: end 0.1, a 0.6, b 0.3.",
+   "question": "Which symbol does $u = 0.7$ pick under the sampling rule?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "b",
+      "text": "b",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "a",
+      "why": "u equals the total 0.7; the rule wants a total strictly above u, which is 1.0, closing b."
+     },
+     {
+      "id": "end",
+      "text": "end",
+      "why": "end covers only 0 to 0.1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "b: 0.7 equals a running total, so the first total strictly above it is 1.0.",
+    "generic": "Not quite. The total must be strictly above u."
+   },
+   "explain": {
+    "text": "With `side=\"right\"`, a $u$ equal to a running total goes to the next stretch: 0.7 picks b. Each stretch is closed on the left and open on the right."
+   }
+  },
+  {
+   "id": "q-cap",
+   "difficulty": 3,
+   "question": "Why does the sampler use `min(index, 26)`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "round",
+      "text": "Totals can stop just below 1",
+      "correct": true
+     },
+     {
+      "id": "end",
+      "text": "To stop names at 26 letters",
+      "why": "The cap is on the symbol index, not the length."
+     },
+     {
+      "id": "z",
+      "text": "To give z a higher chance",
+      "why": "It only catches a $u$ above the last total, which happens with chance near 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Totals can end at `0.9999999999999999`, and a $u$ equal to it would give index 27.",
+    "generic": "Not quite. Think of the last running total in floats."
+   },
+   "explain": {
+    "text": "Rounding can leave the last running total at `0.9999999999999999`; a $u$ at or above it makes `searchsorted` return 27. The cap maps it to 26."
+   }
+  }
+ ]
+}
