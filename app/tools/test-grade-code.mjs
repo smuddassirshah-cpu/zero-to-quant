@@ -82,16 +82,22 @@ say(/grade-all: 0 failures/.test(o), 'a fraction expect evaluates without the le
     fs.writeFileSync(path.join(root, 'content', 'courses', id, 'course.json'), JSON.stringify({ id, strand }));
     fs.writeFileSync(path.join(root, 'content', 'courses', id, 'l1-x.json'), JSON.stringify(bad));
   }
+  const go2 = (extra) => { const r = spawnSync('node', [path.join(HERE, 'grade-all.mjs'), '--local-cdn', cdnDir, '--root', root, '--jobs', '1', '--code', ...extra], { encoding: 'utf8', timeout: 170000 }); return (r.stdout || '') + (r.stderr || ''); };
+  fs.mkdirSync(path.join(root, 'content', 'exams'));
+  fs.writeFileSync(path.join(root, 'content', 'curriculum.json'), JSON.stringify({ stages: [{ topics: [{ id: 'T1', courses: ['ca'] }, { id: 'T2', courses: ['ca', 'cb'] }] }] }));
+  for (const t of ['T1', 'T2']) fs.writeFileSync(path.join(root, 'content', 'exams', 'topic-' + t + '.json'), JSON.stringify({ topic: t, ...bad }));
+  o = go2(['--strand', 'ai']);
+  say(/topic-T1\.json#.*solution-fails/.test(o) && !/topic-T2/.test(o) && /2 Python code widgets run/.test(o), '--strand ai includes an exam of an AI topic only', o);
   const vend = path.join(tmp, 'vend'); fs.mkdirSync(path.join(vend, 'compute-engine'), { recursive: true });
   fs.symlinkSync(path.join(cdnDir, 'pyodide-0.27.7', 'package'), path.join(vend, 'pyodide'));
   const ce = path.join(cdnDir, 'cortex-js-compute-engine-0.30.2', 'package', 'dist', 'compute-engine.min.umd.js');
   if (fs.existsSync(ce)) fs.symlinkSync(ce, path.join(vend, 'compute-engine', 'compute-engine.min.umd.js'));
   const go = (cdn, extra) => { const r = spawnSync('node', [path.join(HERE, 'grade-all.mjs'), '--local-cdn', cdn, '--root', root, '--jobs', '1', '--code', ...extra], { encoding: 'utf8', timeout: 170000 }); return (r.stdout || '') + (r.stderr || ''); };
   o = go(cdnDir, ['--strand', 'ai']);
-  say(/ca\/l1-x\.json#.*solution-fails/.test(o) && !/cb\/l1-x/.test(o) && /1 Python code widgets run/.test(o), '--strand ai runs only the ai course', o);
+  say(/ca\/l1-x\.json#.*solution-fails/.test(o) && !/cb\/l1-x/.test(o) && /2 Python code widgets run/.test(o), '--strand ai runs only the ai course', o);
   o = go(cdnDir, []);
-  say(/cb\/l1-x/.test(o) && /2 Python code widgets run/.test(o), 'without --strand both courses run', o);
-  if (fs.existsSync(ce)) { o = go(vend, ['--strand', 'ai']); say(/ca\/l1-x\.json#.*solution-fails/.test(o) && /1 Python code widgets run/.test(o), '--local-cdn takes the fetch-vendor.sh layout', o); }
+  say(/cb\/l1-x/.test(o) && /4 Python code widgets run/.test(o), 'without --strand both courses run', o);
+  if (fs.existsSync(ce)) { o = go(vend, ['--strand', 'ai']); say(/ca\/l1-x\.json#.*solution-fails/.test(o) && /2 Python code widgets run/.test(o), '--local-cdn takes the fetch-vendor.sh layout', o); }
 }
 
 /* ENGINE-BACKLOG 1269: byKey lines no mutant reaches, and tests a mutant fails with no line. Only in a strand-ai course (a temporary content root). */
