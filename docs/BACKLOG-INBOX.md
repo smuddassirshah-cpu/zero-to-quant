@@ -139,3 +139,5 @@ Raised later (ai-use level 1):
 Raised later (ai-use level 2):
 - `console` tap mode selects whole lines only. "Tap the claims in this reply" needs one claim per line, so every transcript is written a sentence to a line (`ai-use/l7-checking-claims` `screens[1]`, `l8` `screens[1]`); a phrase-level tap (spans inside a line) would allow real paragraphs.
 - `pair` with `tap: "sides"` makes each side one target, so a screen cannot compare two worked replies and also ask for the wrong step inside one; `ai-use/l8-asking-for-the-working` splits this over `screens[0]` (tap a side) and `screens[1]` (tap a line).
+Raised later (ai-use level 3):
+- `graph` `rect` nodes in a row of three overlapped at exactly 440 px with labels of 15 to 17 characters ("Stored for a time", "Used in training?"): the width cap of ENGINE-BACKLOG 609 applies only below 440 px. `ai-use/l9-what-not-to-paste` `screens[1]` now uses two-line labels; apply the cap at 440 px too, or whenever two boxes would touch.
