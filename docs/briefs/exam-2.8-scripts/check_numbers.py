@@ -451,7 +451,7 @@ wrong(iid, 'own-n', float(avg) + math.sqrt(2 * math.log(9) / 9))
 say(iid, 'feedback.correct', r4(avg))
 say(iid, 'feedback.correct', r4(bonus))
 say(iid, 'feedback.correct', r4(float(avg) + bonus))
-ex.claim(True, 'e-uct-six-of-nine: "30 / 9" is ln 30 over 9 visits, inputs stated in the prose', covers=[30 / 9])
+ex.literal(30 / 9, why='e-uct-six-of-nine: "30 / 9" names ln 30 over 9 visits; both inputs are stated in the prose')
 for v in (math.log(30), math.log(30) / 9, bonus, avg, float(avg) + bonus):
     say(iid, 'explain.text', r4(v))
 

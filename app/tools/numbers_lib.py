@@ -380,7 +380,13 @@ class Level:
         return self._rec(ok, label, '' if ok else f'not found in: {txt[:120]!r}')
 
     def claim(self, ok, label, note='', covers=()):
-        """Record a claim that is not a single number (an inequality, a coverage statement, what a chart shows). `covers`: the numbers the claim compares (coverage, 1267)."""
+        """Record a claim that is not a single number (an inequality, a coverage statement, what a chart shows). `covers`: the numbers the claim compares (coverage, 1267).
+        A claim whose condition is the literal True cannot cover numbers: that marks them checked without checking (use literal() with a reason)."""
+        if covers and ok is True:
+            import inspect
+            ctx = ''.join((inspect.stack()[1].code_context or []))
+            if re.search(r'claim\(\s*True\b', ctx):
+                return self._rec(False, label, 'claim(True, covers=...) covers numbers by fiat: compare them, or mark each with literal(value, why=...)')
         self._cover(*covers)
         return self._rec(bool(ok), label, '' if ok else (note or 'claim is false'))
 

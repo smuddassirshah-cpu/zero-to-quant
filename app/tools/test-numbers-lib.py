@@ -129,11 +129,11 @@ with contextlib.redirect_stdout(io.StringIO()):
     c.expect('lx', 'screens[0].prose', 12500)
     c.expect('lx', 'screens[0].prose', 0.25)                           # 25% by value x 100 too
     c.expect('lx', 'screens[0].hints', 4)
-    c.claim(True, 'sum', covers=[8, 0, 2 / 3])                         # 2/3 covers "2/3" and "0.67" within the stated precision
+    c.claim(8 + 0 == 8, 'sum', covers=[8, 0, 2 / 3])                         # 2/3 covers "2/3" and "0.67" within the stated precision
 c.literal('365', why='a day count from the lesson context')
 c.literal(0.5, why='a label read off the chart, not computed')
 ok_v = ok_v and {s_ for _, _, s_ in c.uncovered()} == {'11000'}
-c.claim(True, 'round', covers=[11018])                                 # 11,000 reads to the thousand
+c.claim(11018 > 0, 'round', covers=[11018])                                 # 11,000 reads to the thousand
 ok_v = ok_v and c.uncovered() == []
 # the narrowed filter (1267 follow-up): bare small whole numbers, axis labels and table headers are not claims; words for fractions and multiples, money, units, decimals and arithmetic are
 from numbers_lib import _stated
@@ -155,7 +155,7 @@ print(f"{'PASS' if ok_f else 'FAIL'} coverage filter: claims are decimals, fract
 if not ok_f:
     sys.exit(1)
 c2 = cov_level()
-c2.claim(True, 'near', covers=[12480])                                 # 12,500 reads to the hundred: 12480 does not cover it
+c2.claim(12480 > 0, 'near', covers=[12480])                                 # 12,500 reads to the hundred: 12480 does not cover it
 ok_v = ok_v and '12500' in {s_ for _, _, s_ in c2.uncovered()}
 try:
     c2.literal('1', why='')
@@ -210,4 +210,11 @@ try:
 except SystemExit as e:
     ok = ok and e.code == 1
 print(f"{'PASS' if ok else 'FAIL'} report() exits 1 on a failure")
-sys.exit(0 if ok else 1)
+# claim(True, covers=...) covers numbers by fiat: refused (session AK, review-nn-train); a real condition still covers
+with contextlib.redirect_stdout(io.StringIO()):
+    fiat = lv.claim(True, 'by fiat', covers=[3.5])
+    real = lv.claim(3.5 > 3, 'real', covers=[3.5])
+ok_f = (not fiat) and real
+print(f"{'PASS' if ok_f else 'FAIL'} claim(True, covers=...) fails; a computed condition with covers passes")
+
+sys.exit(0 if ok and ok_f else 1)
