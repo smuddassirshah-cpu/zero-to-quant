@@ -29,7 +29,7 @@ if (!isMainThread && workerData && workerData.zqCodeWorker) {
     try {
       const prepare = async () => {
         pk('start');
-        try { await py.loadPackagesFromImports(m.code, { messageCallback: () => {}, errorCallback: () => {} }); } catch (e) { emit('Package load failed: ' + ((e && e.message) || e)); }
+        try { await py.loadPackagesFromImports(((own) => (own.size ? py.pyodide_py.code.find_imports(m.code).toJs().filter(x => !own.has(x)).map(x => 'import ' + x).join('\n') : m.code))(new Set(((m.spec && m.spec.local) || []).map(n => String(n).replace(/^.*\//, '').replace(/\.py$/, '')))), { messageCallback: () => {}, errorCallback: () => {} }); } catch (e) { emit('Package load failed: ' + ((e && e.message) || e)); }
         pk('end');
         py.runPython("import os as _o, shutil as _s, tempfile as _t\n_p = globals().get('_zq_run_dir')\n_o.chdir('/')\nif _p: _s.rmtree(_p, ignore_errors=True)\n_zq_run_dir = _t.mkdtemp(prefix='run-')\n_o.chdir(_zq_run_dir)");
       };
@@ -110,7 +110,7 @@ export const makeRunner = ({ pkgs, root, jobs = 2 }) => {
     };
     w.on('message', onMsg); w.on('error', onErr);
     arm();
-    w.postMessage({ type: 'run', id, code, spec: { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) } });
+    w.postMessage({ type: 'run', id, code, spec: { fn: '__zq_case', compare: 'isclose', prelude: '', local: plan.local, tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) } });
   });
 
   /* grade `src` against the widget's tests (or examples), as the page's grade() does */

@@ -68,5 +68,21 @@ say(r.rows.length === 3 && r.rows[0].loss === 11, 'a prelude and a data file are
 r = train({ steps: 5 }, 'try:\n    report(0, 1.0)\n    for s in range(1, 100):\n        report(s, 1.0)\nexcept Exception:\n    print("caught")\n');
 say(r.stopped && r.stopped.why === 'steps' && r.rows.length === 5, 'the stop is not swallowed by a learner except Exception', JSON.stringify(r.stopped));
 
+/* ENGINE-BACKLOG 1266: a module the widget ships is never passed to package loading (Pyodide has an `autograd` package of its own) */
+{
+  const importsToLoad = new Function('py', /const importsToLoad = [\s\S]*?\n};/.exec(workerSrc)[0] + '\nreturn importsToLoad;')(py);
+  const names = (txt) => py.pyodide_py.code.find_imports(txt).toJs();
+  const own = { local: g.ZQ.widgets.codeImports.shippedNames({ files: { 'autograd.py': 'class Tensor: pass\n' } }) };
+  const code = 'import numpy as np\nfrom autograd import Tensor\nimport pandas\n';
+  say(JSON.stringify(own.local) === '["autograd.py"]', 'shippedNames lists the .py names of files and data', JSON.stringify(own.local));
+  say(JSON.stringify(names(importsToLoad(code, own))) === '["numpy","pandas"]', 'worker: a shipped autograd.py is not loaded, numpy and pandas still are', JSON.stringify(names(importsToLoad(code, own))));
+  say(JSON.stringify(names(importsToLoad(code, {})).sort()) === '["autograd","numpy","pandas"]', 'worker: without a shipped module every import is passed on, as before', JSON.stringify(names(importsToLoad(code, {}))));
+  say(importsToLoad(code, { local: ['data/x.csv'] }) === code, 'worker: a non-Python data file changes nothing');
+  const I = g.ZQ.widgets.codeImports, hint = I.importHintFor({ 'autograd.py': 'x = 1\n' }, code);
+  say(/import numpy/.test(hint) && !/autograd/.test(hint) && /import pandas/.test(hint), 'importHintFor leaves a shipped module out of the hint', hint);
+  r = train({ steps: 3 }, 'from autograd import Tensor\nfor s in range(3):\n    report(s, Tensor().v)\n', { 'autograd.py': 'class Tensor:\n    v = 4.0\n' });
+  say(r.rows.length === 3 && r.rows[0].loss === 4, 'a trainer widget still imports the shipped autograd.py', JSON.stringify(r.rows) + JSON.stringify(r.test));
+}
+
 console.log(`test-trainer: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

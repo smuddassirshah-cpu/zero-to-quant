@@ -189,6 +189,13 @@ self.fetch = async (...a) => {
   return new Response(body, { status: r.status, statusText: r.statusText, headers: r.headers });
 };
 
+/* ENGINE-BACKLOG 1266: a module the widget ships (spec.local, .py names) is never a package, so a shipped autograd.py does not download the
+   Pyodide autograd wheel. Without one the code goes to loadPackagesFromImports unchanged; otherwise only the other imports do. */
+const importsToLoad = (code, spec) => {
+  const own = new Set(((spec && spec.local) || []).filter(n => /\.py$/.test(n)).map(n => String(n).replace(/^.*\//, '').replace(/\.py$/, '')));
+  return own.size ? py.pyodide_py.code.find_imports(code).toJs().filter(x => !own.has(x)).map(x => 'import ' + x).join('\n') : code;
+};
+
 let indexURL = null;
 /* Loads a Pyodide into this worker and defines the grader; used at start and again after a stack overflow kills the one in use */
 const boot = async () => {
@@ -227,7 +234,7 @@ self.onmessage = async (e) => {
       const pk = (phase, text) => self.postMessage({ type: 'pkgs', id: m.id, phase, text });
       const prepare = async () => {
         pk('start');
-        try { await py.loadPackagesFromImports(m.code, { messageCallback: (t) => pk('msg', String(t)), errorCallback: (t) => pk('msg', String(t)) }); }
+        try { await py.loadPackagesFromImports(importsToLoad(m.code, m.spec), { messageCallback: (t) => pk('msg', String(t)), errorCallback: (t) => pk('msg', String(t)) }); }
         catch (e) { pk('end'); self.postMessage({ type: 'pkgfail', id: m.id, message: String((e && e.message) || e) }); return false; } // ENGINE-BACKLOG 1214: a download failure is not an answer: the page says so and no test runs
         pk('end');
         // Item 120: every run starts in a fresh, empty working directory, so files written by one run are gone in the next
