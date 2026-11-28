@@ -1,0 +1,1205 @@
+{
+ "id": "l7-counting-parameters",
+ "course": "cnn",
+ "title": "What a layer costs",
+ "minutes": 15,
+ "objectives": [
+  "Count the parameters and multiply-adds of a convolutional layer, and compare them with a dense one."
+ ],
+ "skills": [
+  "cnn-layers"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two layers, one job",
+   "prose": "Both layers turn an 8 by 8 image into 16 maps of 8 by 8. One is a 3 by 3 convolution with 16 filters and padding 1. The other is a dense layer from the 64 pixels to all $16 \\times 64 = 1{,}024$ outputs, each with its own weights and bias.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "conv",
+      "dense"
+     ],
+     "yLabel": "parameters",
+     "showValues": true,
+     "yScale": "log"
+    },
+    "state": {
+     "values": {
+      "conv": 160,
+      "dense": 66560
+     }
+    }
+   },
+   "question": "Roughly how many times more parameters does the dense layer have?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "About 4 times",
+      "why": "Each dense output has 64 weights of its own; each conv filter has 9 shared by every position."
+     },
+     {
+      "id": "b",
+      "text": "About 40 times",
+      "why": "Count the dense layer: $64 \\times 1{,}024$ weights alone is over 65,000."
+     },
+     {
+      "id": "c",
+      "text": "About 400 times",
+      "correct": true
+     },
+     {
+      "id": "d",
+      "text": "About 4,000 times",
+      "why": "The conv layer has 160 parameters, not 16."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many weights does one conv filter hold?"
+    },
+    {
+     "rung": "point",
+     "text": "$3 \\times 3 = 9$ weights and 1 bias, 16 filters."
+    },
+    {
+     "rung": "step",
+     "text": "The dense layer: $64 \\times 1{,}024$ weights plus 1,024 biases."
+    }
+   ],
+   "feedback": {
+    "correct": "66,560 against 160: 416 times.",
+    "generic": "Not quite. Count both: weights per output, times outputs, plus biases."
+   },
+   "explain": {
+    "text": "The convolution has $16 \\times (9 + 1) = 160$; the dense layer $64 \\times 1{,}024 + 1{,}024 = 66{,}560$. The convolution reuses each 3 by 3 kernel at all 64 positions."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Channels in, channels out",
+   "prose": "Slide the number of input and output channels. The bars show both layers’ parameters, for 3 by 3 kernels on an 8 by 8 image, on a log scale.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "conv",
+      "dense"
+     ],
+     "yLabel": "parameters",
+     "showValues": true,
+     "yScale": "log"
+    },
+    "state": {
+     "values": {
+      "conv": 160,
+      "dense": 66560
+     },
+     "params": {
+      "cin": 1,
+      "cout": 16
+     }
+    },
+    "derive": {
+     "values.conv": "cout * (cin * 9 + 1)",
+     "values.dense": "64 * cin * 64 * cout + 64 * cout",
+     "caption": "{{cin}} in, {{cout}} out: conv {{cout * (cin * 9 + 1)}}, dense {{64 * cin * 64 * cout + 64 * cout}}"
+    },
+    "controls": [
+     {
+      "bind": "cin",
+      "min": 1,
+      "max": 16,
+      "step": 1,
+      "start": 1,
+      "label": "channels in"
+     },
+     {
+      "bind": "cout",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "start": 16,
+      "label": "channels out"
+     }
+    ]
+   },
+   "question": "With 8 channels in and 16 out, how many parameters does the convolution have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1168,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-cin",
+      "value": 160,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "no-bias",
+      "value": 1152,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set 8 in and 16 out."
+    },
+    {
+     "rung": "point",
+     "text": "Read the conv bar or the caption."
+    },
+    {
+     "rung": "step",
+     "text": "$16 \\times 73$."
+    }
+   ],
+   "feedback": {
+    "correct": "$16 \\times (8 \\times 9 + 1) = 1{,}168$.",
+    "generic": "Not quite. Each filter has a 3 by 3 kernel for every input channel, plus one bias.",
+    "byKey": {
+     "no-cin": "That is one input channel. Each filter has a kernel per input channel.",
+     "no-bias": "You left out the 16 biases."
+    }
+   },
+   "explain": {
+    "text": "Each filter holds $8 \\times 9 = 72$ weights and 1 bias; 16 filters make 1,168. The image size never appears."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Counting a layer",
+   "prose": "A convolutional layer with $c_{\\text{in}}$ input channels and $c_{\\text{out}}$ filters of $k \\times k$ has $$c_{\\text{out}}(c_{\\text{in}} k^2 + 1)$$ parameters, whatever the image size: **parameter sharing**. A dense layer from $n_{\\text{in}}$ to $n_{\\text{out}}$ has $n_{\\text{in}} n_{\\text{out}} + n_{\\text{out}}$, as `stat-learning` counted for a 2-2-1 net.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "conv",
+      "dense"
+     ],
+     "yLabel": "parameters",
+     "showValues": true,
+     "yScale": "log"
+    },
+    "state": {
+     "values": {
+      "conv": 160,
+      "dense": 66560
+     }
+    }
+   },
+   "question": "How many parameters does the dense layer from the 64 pixels to 1,024 outputs have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 66560,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 65536,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one-map",
+      "value": 4160,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every one of 64 inputs joins every one of 1,024 outputs."
+    },
+    {
+     "rung": "point",
+     "text": "$64 \\times 1{,}024 = 65{,}536$ weights."
+    },
+    {
+     "rung": "step",
+     "text": "Plus a bias per output."
+    }
+   ],
+   "feedback": {
+    "correct": "$64 \\times 1{,}024 + 1{,}024 = 66{,}560$.",
+    "generic": "Not quite. Weights from every input to every output, then one bias per output.",
+    "byKey": {
+     "no-bias": "You left out the 1,024 biases.",
+     "one-map": "That is 64 outputs, one map. There are 16 maps of 64."
+    }
+   },
+   "explain": {
+    "text": "$65{,}536$ weights and $1{,}024$ biases: 66,560, against 160 for the convolution that does the same shapes."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What a layer costs to run",
+   "prose": "Parameters measure what a layer must learn; **multiply-adds** measure what it costs to run. Each output value of a convolution is a dot product of $k^2 c_{\\text{in}}$ terms, and there is one per position per filter.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "conv 3 × 3, 1 → 16",
+      "dense 64 → 1,024"
+     ],
+     "rows": [
+      [
+       "parameters",
+       "160",
+       "66,560"
+      ],
+      [
+       "multiply-adds",
+       "?",
+       "65,536"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "The 1-to-16 convolution on an 8 by 8 image with padding 1: how many multiply-adds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9216,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "one-filter",
+      "value": 576,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "params",
+      "value": 160,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many positions?"
+    },
+    {
+     "rung": "point",
+     "text": "64, with padding 1."
+    },
+    {
+     "rung": "step",
+     "text": "$64 \\times 9 \\times 16$."
+    }
+   ],
+   "feedback": {
+    "correct": "$64 \\times 9 \\times 16 = 9{,}216$.",
+    "generic": "Not quite. Positions times terms per dot product times filters.",
+    "byKey": {
+     "one-filter": "That is one filter. There are 16.",
+     "params": "That is the parameter count. Each weight is used at all 64 positions."
+    }
+   },
+   "explain": {
+    "text": "64 positions, 9 terms each, 16 filters: 9,216. Each of the 144 weights is used 64 times, which is why a convolution is cheap to store and not to run."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The net of level 3",
+   "prose": "Level 3 trains this net on 8 by 8 digits. A 3 by 3 convolution has 16 filters and padding 1; 2 by 2 max pooling leaves 4 by 4 by 16; a dense layer gives 10 classes.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "conv",
+      "pool",
+      "dense"
+     ],
+     "yLabel": "parameters",
+     "showValues": true
+    },
+    "state": {
+     "values": {
+      "conv": 160,
+      "pool": 0,
+      "dense": 2570
+     }
+    }
+   },
+   "question": "Fill in the parameters of each layer and the total.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "layer",
+     "shape out",
+     "parameters"
+    ],
+    "rows": [
+     [
+      "conv 3 × 3, 1 → 16",
+      "16 × 8 × 8",
+      {
+       "edit": true,
+       "answer": 160,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "no-bias",
+         "value": 144,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "max pool 2 × 2",
+      "16 × 4 × 4",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "dense 256 → 10",
+      "10",
+      {
+       "edit": true,
+       "answer": 2570,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "no-bias",
+         "value": 2560,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "total",
+      "",
+      {
+       "edit": true,
+       "answer": 2730,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "no-pool-shrink",
+         "value": 10410,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Pooling has nothing to learn."
+    },
+    {
+     "rung": "point",
+     "text": "The dense layer gets $16 \\times 4 \\times 4 = 256$ inputs."
+    },
+    {
+     "rung": "step",
+     "text": "$256 \\times 10 + 10$."
+    }
+   ],
+   "feedback": {
+    "correct": "$160 + 0 + 2{,}570 = 2{,}730$.",
+    "generic": "Not quite. Pooling has no parameters; the dense layer sees $4 \\times 4 \\times 16 = 256$ inputs.",
+    "byKey": {
+     "no-bias": "Each filter and each class has a bias.",
+     "no-pool-shrink": "You fed the dense layer the 1,024 values before pooling. Pooling leaves 256."
+    }
+   },
+   "explain": {
+    "text": "Pooling learns nothing. The dense layer has $256 \\times 10 + 10 = 2{,}570$, so the net has 2,730 parameters: 94% of them in the last layer."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "How far a layer sees",
+   "prose": "The **receptive field** of an output is the patch of input it depends on. One 3 by 3 layer sees 3 by 3. A second 3 by 3 layer on top sees 3 by 3 of the first layer’s outputs, which together cover 5 by 5 pixels.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "layers of 3 × 3",
+      "receptive field"
+     ],
+     "rows": [
+      [
+       "1",
+       "3 × 3"
+      ],
+      [
+       "2",
+       "5 × 5"
+      ],
+      [
+       "3",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Three 3 by 3 layers at stride 1: what is the side of the receptive field?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "nine",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each layer at stride 1 adds $k - 1$."
+    },
+    {
+     "rung": "point",
+     "text": "3, then 5."
+    },
+    {
+     "rung": "step",
+     "text": "Then 7."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 + 3 \\times (3 - 1) = 7$.",
+    "generic": "Not quite. Each layer adds $k - 1 = 2$.",
+    "byKey": {
+     "nine": "You multiplied 3 by 3. Each layer widens the view by 2, not by a factor.",
+     "five": "That is two layers."
+    }
+   },
+   "explain": {
+    "text": "Each 3 by 3 layer at stride 1 adds 2 to the side: 3, 5, 7. Three small layers see as far as one 7 by 7 layer with $3 \\times 9 = 27$ weights per channel pair instead of 49."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Biases and channels",
+   "prose": "A 5 by 5 convolution from 3 channels to 8 filters, with padding 2, runs on a 32 by 32 image. One colleague counts 208 parameters; another counts 8,792, with a bias for every output position.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "count"
+     ],
+     "rows": [
+      [
+       "weights per filter",
+       "3 × 5 × 5"
+      ],
+      [
+       "biases per filter",
+       "1"
+      ],
+      [
+       "filters",
+       "8"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many parameters does the layer really have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 608,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-cin",
+      "value": 208,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "bias-per-position",
+      "value": 8792,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many weights in one filter?"
+    },
+    {
+     "rung": "point",
+     "text": "$3 \\times 5 \\times 5 = 75$."
+    },
+    {
+     "rung": "step",
+     "text": "Plus 1 bias, times 8."
+    }
+   ],
+   "feedback": {
+    "correct": "$8 \\times (3 \\times 25 + 1) = 608$.",
+    "generic": "Not quite. Each filter has a 5 by 5 kernel per input channel and one bias.",
+    "byKey": {
+     "no-cin": "You gave each filter one 5 by 5 kernel. It needs one per input channel: $3 \\times 25 = 75$ weights.",
+     "bias-per-position": "You gave each of the $32 \\times 32$ positions its own bias. A filter shares one bias across positions, as it shares its weights."
+    }
+   },
+   "explain": {
+    "text": "Each filter: $3 \\times 25 = 75$ weights and 1 bias. Eight filters: 608. The image size enters only the multiply-adds, never the parameters."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Two counts per layer",
+   "prose": "$$\\text{params} = c_{\\text{out}}(c_{\\text{in}}k^2 + 1), \\qquad \\text{multiply-adds} = (\\text{positions}) \\times k^2 c_{\\text{in}} \\times c_{\\text{out}}.$$ Stacked layers widen the view: at stride 1 the receptive field is $1 + \\sum (k_i - 1)$.",
+   "question": "Doubling the image side from 8 to 16 (padding kept \"same\") does what to a conv layer?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Parameters stay; multiply-adds go up 4 times",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Both go up 4 times",
+      "why": "The kernels do not depend on the image size; only the number of positions does."
+     },
+     {
+      "id": "c",
+      "text": "Both stay the same",
+      "why": "There are 4 times as many positions, each a full dot product."
+     },
+     {
+      "id": "d",
+      "text": "Parameters double; multiply-adds stay",
+      "why": "Parameters never see the image size."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Same weights, four times the positions.",
+    "generic": "Not quite. Which count has the image size in it?"
+   },
+   "explain": {
+    "text": "The positions go from 64 to 256, so the multiply-adds go from 9,216 to 36,864; the 160 parameters do not move."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The counts in code",
+   "prose": "Write `conv_params(c_in, c_out, k)` and `dense_params(n_in, n_out)`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> conv_params(1, 16, 3)",
+      "160",
+      ">>> dense_params(64, 1024)",
+      "66560"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def conv_params(c_in, c_out, k):\n    ...\n\n\ndef dense_params(n_in, n_out):\n    ...\n",
+    "solution": "def conv_params(c_in, c_out, k):\n    return c_out * (c_in * k * k + 1)\n\n\ndef dense_params(n_in, n_out):\n    return n_in * n_out + n_out\n",
+    "examples": [
+     {
+      "call": "conv_params(1, 16, 3)",
+      "expect": "160",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "conv_params(1, 16, 3)",
+      "expect": "160",
+      "compare": "equal"
+     },
+     {
+      "call": "conv_params(8, 16, 3)",
+      "expect": "1168",
+      "compare": "equal"
+     },
+     {
+      "call": "dense_params(64, 1024)",
+      "expect": "66560",
+      "compare": "equal"
+     },
+     {
+      "call": "conv_params(3, 8, 5)",
+      "expect": "608",
+      "compare": "equal"
+     },
+     {
+      "call": "conv_params(64, 32, 1)",
+      "expect": "2080",
+      "compare": "equal"
+     },
+     {
+      "call": "dense_params(2, 2) + dense_params(2, 1)",
+      "expect": "9",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: the layers of this lesson, a 1 by 1 convolution, and the 2-2-1 net of `stat-learning` (9 parameters).",
+    "mutants": [
+     {
+      "source": "def conv_params(c_in, c_out, k):\n    return c_out * (k * k + 1)\n\n\ndef dense_params(n_in, n_out):\n    return n_in * n_out + n_out\n",
+      "test": 2,
+      "symptom": "The input channels are left out of each filter."
+     },
+     {
+      "source": "def conv_params(c_in, c_out, k):\n    return c_out * c_in * k * k\n\n\ndef dense_params(n_in, n_out):\n    return n_in * n_out\n",
+      "test": 1,
+      "symptom": "No biases."
+     },
+     {
+      "source": "def conv_params(c_in, c_out, k):\n    return c_out * (c_in * k * k + 1)\n\n\ndef dense_params(n_in, n_out):\n    return n_in * n_out + n_in\n",
+      "test": 3,
+      "symptom": "One bias per input instead of per output."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One filter: `c_in * k * k` weights and 1 bias."
+    },
+    {
+     "rung": "point",
+     "text": "Times `c_out`."
+    },
+    {
+     "rung": "step",
+     "text": "Dense: `n_in * n_out` weights and `n_out` biases."
+    }
+   ],
+   "feedback": {
+    "correct": "Weights plus one bias per filter or output.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-2": "Each filter has a $k \\times k$ kernel for every input channel.",
+     "test-1": "Each filter has a bias."
+    }
+   },
+   "explain": {
+    "text": "`c_out * (c_in * k * k + 1)` and `n_in * n_out + n_out`. The 2-2-1 net gives $6 + 3 = 9$, as `stat-learning` counted."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Counting a whole net",
+   "prose": "Write `count_net(layers)` for a list of layer specs. The level 3 net is `[(\"conv\", 1, 16, 3), (\"pool\",), (\"dense\", 256, 10)]`; the multilayer perceptron of the same size, 64-40-10, has 3,010.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "CNN",
+      "MLP 64-40-10"
+     ],
+     "yLabel": "parameters",
+     "showValues": true
+    },
+    "state": {
+     "values": {
+      "CNN": 2730,
+      "MLP 64-40-10": 3010
+     }
+    }
+   },
+   "question": "Write `count_net`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def count_net(layers):\n    # layers: tuples ('conv', c_in, c_out, k), ('pool',) or ('dense', n_in, n_out)\n    # return the total number of parameters\n    ...\n",
+    "solution": "def count_net(layers):\n    total = 0\n    for layer in layers:\n        if layer[0] == 'conv':\n            _, c_in, c_out, k = layer\n            total += c_out * (c_in * k * k + 1)\n        elif layer[0] == 'dense':\n            _, n_in, n_out = layer\n            total += n_in * n_out + n_out\n    return total\n",
+    "examples": [
+     {
+      "call": "count_net([('conv', 1, 16, 3), ('pool',), ('dense', 256, 10)])",
+      "expect": "2730",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "count_net([('conv', 1, 16, 3), ('pool',), ('dense', 256, 10)])",
+      "expect": "2730",
+      "compare": "equal"
+     },
+     {
+      "call": "count_net([('dense', 64, 40), ('dense', 40, 10)])",
+      "expect": "3010",
+      "compare": "equal"
+     },
+     {
+      "call": "count_net([('pool',), ('pool',)])",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "count_net([('conv', 3, 8, 5), ('conv', 8, 16, 3), ('pool',), ('dense', 1024, 10)])",
+      "expect": "12026",
+      "compare": "equal"
+     },
+     {
+      "call": "count_net([])",
+      "expect": "0",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: the level 3 net (2,730), a same-size MLP of 64-40-10 (3,010), pooling alone, a deeper net, and an empty list.",
+    "mutants": [
+     {
+      "source": "def count_net(layers):\n    total = 0\n    for layer in layers:\n        if layer[0] == 'conv':\n            _, c_in, c_out, k = layer\n            total += c_out * (c_in * k * k + 1)\n    return total\n",
+      "test": 1,
+      "symptom": "Dense layers are skipped."
+     },
+     {
+      "source": "def count_net(layers):\n    total = 0\n    for layer in layers:\n        if layer[0] == 'conv':\n            _, c_in, c_out, k = layer\n            total += c_out * (c_in * k * k + 1)\n        elif layer[0] == 'pool':\n            total += 1\n        elif layer[0] == 'dense':\n            _, n_in, n_out = layer\n            total += n_in * n_out + n_out\n    return total\n",
+      "test": 1,
+      "symptom": "Pooling is given a parameter."
+     },
+     {
+      "source": "def count_net(layers):\n    total = 0\n    for layer in layers:\n        if layer[0] == 'conv':\n            _, c_in, c_out, k = layer\n            total += c_out * (k * k + 1)\n        elif layer[0] == 'dense':\n            _, n_in, n_out = layer\n            total += n_in * n_out + n_out\n    return total\n",
+      "test": 4,
+      "symptom": "Each filter is given one kernel whatever the input channels."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over the specs."
+    },
+    {
+     "rung": "point",
+     "text": "Check `layer[0]` for \"conv\" and \"dense\"."
+    },
+    {
+     "rung": "step",
+     "text": "Use the two counts from the last screen."
+    }
+   ],
+   "feedback": {
+    "correct": "Add each layer’s count; pooling adds nothing.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "The level 3 net has 2,730: 160 for the conv, 0 for the pool, 2,570 for the dense layer."
+    }
+   },
+   "explain": {
+    "text": "The CNN and the 64-40-10 multilayer perceptron are the same size, 2,730 against 3,010. Level 3 compares them on digits moved one pixel."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The receptive field in code",
+   "prose": "Write `receptive_field(layers)` for a list of `(k, s)` pairs. Each layer adds $(k - 1)$ times the product of the strides before it: a step of one output there is that many pixels of input.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> receptive_field([(3, 1), (3, 1)])",
+      "5",
+      ">>> receptive_field([(3, 1), (2, 2), (3, 1)])",
+      "8"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `receptive_field`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def receptive_field(layers):\n    # layers: (k, s) pairs, first layer first; return the side of the receptive field\n    ...\n",
+    "solution": "def receptive_field(layers):\n    r, jump = 1, 1\n    for k, s in layers:\n        r += (k - 1) * jump\n        jump *= s\n    return r\n",
+    "examples": [
+     {
+      "call": "receptive_field([(3, 1), (3, 1)])",
+      "expect": "5",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "receptive_field([(3, 1), (3, 1)])",
+      "expect": "5",
+      "compare": "equal"
+     },
+     {
+      "call": "receptive_field([(3, 1)] * 3)",
+      "expect": "7",
+      "compare": "equal"
+     },
+     {
+      "call": "receptive_field([(3, 1), (2, 2), (3, 1)])",
+      "expect": "8",
+      "compare": "equal"
+     },
+     {
+      "call": "receptive_field([(3, 2), (3, 2)])",
+      "expect": "7",
+      "compare": "equal"
+     },
+     {
+      "call": "receptive_field([])",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "receptive_field([(5, 1)])",
+      "expect": "5",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. They use two and three 3 by 3 layers, and conv, pool, conv as in level 3. Then two strided layers, no layers, and one 5 by 5 layer.",
+    "mutants": [
+     {
+      "source": "def receptive_field(layers):\n    r = 1\n    for k, s in layers:\n        r *= k\n    return r\n",
+      "test": 1,
+      "symptom": "Multiplies kernel sizes: two 3 by 3 layers would see 9 by 9."
+     },
+     {
+      "source": "def receptive_field(layers):\n    r = 1\n    for k, s in layers:\n        r += k - 1\n    return r\n",
+      "test": 3,
+      "symptom": "Ignores the stride, so a layer after pooling seems to see too little."
+     },
+     {
+      "source": "def receptive_field(layers):\n    r = 0\n    for k, s in layers:\n        r += k\n    return r\n",
+      "test": 1,
+      "symptom": "Adds the kernel sizes, counting the shared centre pixel twice."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with `r = 1`, `jump = 1`."
+    },
+    {
+     "rung": "point",
+     "text": "Each layer: `r += (k - 1) * jump`."
+    },
+    {
+     "rung": "step",
+     "text": "Then `jump *= s`."
+    }
+   ],
+   "feedback": {
+    "correct": "Track the jump between neighbouring outputs, and add $(k - 1)$ jumps per layer.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-1": "Two 3 by 3 layers see 5 by 5: each adds 2.",
+     "test-3": "After a 2 by 2 pool at stride 2, one step on the next layer is 2 pixels, so its 3 by 3 kernel adds $2 \\times 2 = 4$."
+    }
+   },
+   "explain": {
+    "text": "With strides, neighbouring outputs of deeper layers sit `jump` pixels apart, so a kernel of $k$ adds $(k - 1) \\times$ `jump`. Conv, pool, conv: $1 + 2 + 1 + 2 \\times 2 = 8$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A model on every stock every minute",
+   "prose": "A desk runs the 1-to-16 convolution on an 8 by 8 grid of features for each of 500 stocks, every minute. Counts of this kind are the first estimate of what a model costs to run, and of how much data it needs to fit.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "per stock"
+     ],
+     "rows": [
+      [
+       "parameters",
+       "160"
+      ],
+      [
+       "multiply-adds",
+       "9,216"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many multiply-adds does that layer cost per minute?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4608000,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "one-stock",
+      "value": 9216,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "params",
+      "value": 1365000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One stock costs 9,216."
+    },
+    {
+     "rung": "point",
+     "text": "There are 500 stocks."
+    },
+    {
+     "rung": "step",
+     "text": "$500 \\times 9{,}216$."
+    }
+   ],
+   "feedback": {
+    "correct": "$500 \\times 9{,}216 = 4{,}608{,}000$.",
+    "generic": "Not quite. One layer costs 9,216 per stock.",
+    "byKey": {
+     "one-stock": "That is one stock. The desk runs all 500.",
+     "params": "That multiplies the whole net’s parameters by 500. Running costs are multiply-adds."
+    }
+   },
+   "explain": {
+    "text": "$500 \\times 9{,}216 = 4{,}608{,}000$ a minute, trivial for one layer. The 160 parameters say how much the layer must learn; the count of positions says what it costs every minute."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A conv layer has $c_{\\text{out}}(c_{\\text{in}}k^2 + 1)$ parameters whatever the image size; a dense layer $n_{\\text{in}}n_{\\text{out}} + n_{\\text{out}}$. For the same shapes: 160 against 66,560.",
+   "Multiply-adds are positions times $k^2 c_{\\text{in}}$ times $c_{\\text{out}}$: 9,216 for the 1-to-16 layer on 8 by 8. Parameters say what a layer learns, multiply-adds what it costs.",
+   "The level 3 net has $160 + 0 + 2{,}570 = 2{,}730$ parameters; a 64-40-10 MLP has 3,010. At stride 1 each $k \\times k$ layer adds $k - 1$ to the receptive field: 5, then 7."
+  ],
+  "formula": {
+   "name": "Parameters of a conv layer",
+   "tex": "c_{\\text{out}}\\,(c_{\\text{in}}k^2 + 1)",
+   "note": "One bias per filter; no image size."
+  },
+  "trap": "A bias per position, or a kernel without its input channels, gives the wrong count."
+ },
+ "quiz": [
+  {
+   "id": "q-1x1",
+   "difficulty": 2,
+   "question": "A 1 by 1 convolution from 64 channels to 32. How many parameters?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2080,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 2048,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "k-not-one",
+      "value": 18464,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$32 \\times (64 + 1) = 2{,}080$.",
+    "generic": "Not quite. $c_{\\text{out}}(c_{\\text{in}}k^2 + 1)$ with $k = 1$.",
+    "byKey": {
+     "no-bias": "Each of the 32 filters has a bias.",
+     "k-not-one": "That is a 3 by 3 kernel. Here $k^2 = 1$."
+    }
+   },
+   "explain": {
+    "text": "$k^2 = 1$, so each filter has 64 weights and a bias: 2,080."
+   }
+  },
+  {
+   "id": "q-rf",
+   "difficulty": 2,
+   "question": "Four 3 by 3 layers at stride 1. What is the side of the receptive field?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "product",
+      "value": 81,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "three",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 + 4 \\times 2 = 9$.",
+    "generic": "Not quite. Each adds 2.",
+    "byKey": {
+     "product": "You multiplied the kernel sides. Each layer adds $k - 1$.",
+     "three": "That is three layers."
+    }
+   },
+   "explain": {
+    "text": "3, 5, 7, 9: each 3 by 3 layer adds 2."
+   }
+  },
+  {
+   "id": "q-macs",
+   "difficulty": 3,
+   "question": "A 3 by 3 convolution from 8 to 8 channels on a 16 by 16 map with padding 1. How many multiply-adds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 147456,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "params",
+      "value": 584,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one-channel",
+      "value": 18432,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$256 \\times 9 \\times 8 \\times 8 = 147{,}456$.",
+    "generic": "Not quite. Positions times $k^2 c_{\\text{in}}$ times $c_{\\text{out}}$.",
+    "byKey": {
+     "params": "That is the parameter count.",
+     "one-channel": "Each dot product runs over all 8 input channels."
+    }
+   },
+   "explain": {
+    "text": "256 positions, each a dot product of $9 \\times 8 = 72$ terms, for 8 filters: 147,456."
+   }
+  }
+ ]
+}

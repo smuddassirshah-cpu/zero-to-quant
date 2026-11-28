@@ -1,0 +1,409 @@
+{
+ "id": "homework-2",
+ "course": "cnn",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-perf-conv-layer",
+   "difficulty": 5,
+   "skills": [
+    "cnn-layers"
+   ],
+   "title": "A convolutional layer, forward and backward",
+   "performance": "code",
+   "prose": "Write `conv_layer_forward_backward(x, W, b, stride, pad, dout)` by im2col for one image of shape $(C, H, W)$: the output $(F, o_h, o_w)$, then the gradients `dx`, `dW` and `db` of $\\sum \\text{out} \\times \\text{dout}$. No library convolution.",
+   "question": "Write `conv_layer_forward_backward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef conv_layer_forward_backward(x, W, b, stride, pad, dout):\n    # x: (C, H, W); W: (F, C, k, k); b: (F,); dout: (F, oh, ow), the gradient of the loss\n    # by im2col: return (out, dx, dW, db)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef conv_layer_forward_backward(x, W, b, stride, pad, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    c, h, w = x.shape\n    f, _, k, _ = W.shape\n    xp = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))\n    oh = (h + 2 * pad - k) // stride + 1\n    ow = (w + 2 * pad - k) // stride + 1\n    cols = np.array([xp[:, i * stride:i * stride + k, j * stride:j * stride + k].ravel()\n                     for i in range(oh) for j in range(ow)])\n    Wm = W.reshape(f, -1)\n    out = (cols @ Wm.T + b).T.reshape(f, oh, ow)\n    g = dout.reshape(f, -1).T\n    dW = (g.T @ cols).reshape(W.shape)\n    db = g.sum(axis=0)\n    dcols = g @ Wm\n    dxp = np.zeros_like(xp)\n    for i in range(oh):\n        for j in range(ow):\n            r, q = i * stride, j * stride\n            dxp[:, r:r + k, q:q + k] += dcols[i * ow + j].reshape(c, k, k)\n    dx = dxp[:, pad:pad + h, pad:pad + w]\n    return out, dx, dW, db\n",
+    "examples": [
+     {
+      "call": "conv_layer_forward_backward(np.ones((1, 3, 3)), np.ones((1, 1, 3, 3)), [0.0], 1, 0, np.ones((1, 1, 1)))[0].tolist()",
+      "expect": "[[[9.0]]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "r = np.random.default_rng(91); x = r.standard_normal((2, 5, 5)); W = r.standard_normal((3, 2, 3, 3)); b = r.standard_normal(3); s, p = 1, 1; d = r.standard_normal((3, 5, 5)); res = conv_layer_forward_backward(x, W, b, s, p, d)",
+      "call": "bool(np.allclose(res[0], _ref_forward(x, W, b, s, p)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(91); x = r.standard_normal((2, 5, 5)); W = r.standard_normal((3, 2, 3, 3)); b = r.standard_normal(3); s, p = 1, 1; d = r.standard_normal((3, 5, 5)); res = conv_layer_forward_backward(x, W, b, s, p, d)",
+      "call": "bool(np.allclose(res[2], _num_grad(lambda: float(np.sum(_ref_forward(x, W, b, s, p) * d)), W), atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(91); x = r.standard_normal((2, 5, 5)); W = r.standard_normal((3, 2, 3, 3)); b = r.standard_normal(3); s, p = 1, 1; d = r.standard_normal((3, 5, 5)); res = conv_layer_forward_backward(x, W, b, s, p, d)",
+      "call": "bool(np.allclose(res[3], d.sum(axis=(1, 2))))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(91); x = r.standard_normal((2, 5, 5)); W = r.standard_normal((3, 2, 3, 3)); b = r.standard_normal(3); s, p = 1, 1; d = r.standard_normal((3, 5, 5)); res = conv_layer_forward_backward(x, W, b, s, p, d)",
+      "call": "bool(np.allclose(res[1], _num_grad(lambda: float(np.sum(_ref_forward(x, W, b, s, p) * d)), x), atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(92); x = r.standard_normal((2, 7, 7)); W = r.standard_normal((2, 2, 3, 3)); b = r.standard_normal(2); s, p = 2, 1; d = r.standard_normal((2, 4, 4)); res = conv_layer_forward_backward(x, W, b, s, p, d)",
+      "call": "bool(np.allclose(res[1], _num_grad(lambda: float(np.sum(_ref_forward(x, W, b, s, p) * d)), x), atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(92); x = r.standard_normal((2, 7, 7)); W = r.standard_normal((2, 2, 3, 3)); b = r.standard_normal(2); s, p = 2, 1; d = r.standard_normal((2, 4, 4)); res = conv_layer_forward_backward(x, W, b, s, p, d)",
+      "call": "[a.shape for a in res]",
+      "expect": "[(2, 4, 4), (2, 7, 7), (2, 2, 3, 3), (2,)]",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(93); x = r.standard_normal((1, 6, 6)); W = r.standard_normal((2, 1, 2, 2)); b = r.standard_normal(2); s, p = 2, 0; d = r.standard_normal((2, 3, 3)); res = conv_layer_forward_backward(x, W, b, s, p, d)",
+      "call": "bool(np.allclose(res[2], _num_grad(lambda: float(np.sum(_ref_forward(x, W, b, s, p) * d)), W), atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(93); x = r.standard_normal((1, 6, 6)); W = r.standard_normal((2, 1, 2, 2)); b = r.standard_normal(2); s, p = 2, 0; d = r.standard_normal((2, 3, 3)); res = conv_layer_forward_backward(x, W, b, s, p, d)",
+      "call": "bool(np.allclose(res[1], _num_grad(lambda: float(np.sum(_ref_forward(x, W, b, s, p) * d)), x), atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests on seeded inputs. They check the forward pass against loops and the three gradients against central differences, at stride 1 with padding 1 (overlapping patches), stride 2 with padding 1, and stride 2 with no overlap.",
+    "prelude": "import numpy as np\n\ndef _ref_forward(x, W, b, s, p):\n    xp = np.pad(x, ((0, 0), (p, p), (p, p)))\n    f, c, k, _ = W.shape\n    oh, ow = (xp.shape[1] - k) // s + 1, (xp.shape[2] - k) // s + 1\n    return np.array([[[np.sum(xp[:, i * s:i * s + k, j * s:j * s + k] * W[o]) + b[o] for j in range(ow)] for i in range(oh)] for o in range(f)])\n\ndef _num_grad(f, A, h=1e-6):\n    g = np.zeros_like(A)\n    for i in np.ndindex(A.shape):\n        keep = A[i]; A[i] = keep + h; up = f(); A[i] = keep - h; down = f(); A[i] = keep\n        g[i] = (up - down) / (2 * h)\n    return g\n",
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef conv_layer_forward_backward(x, W, b, stride, pad, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    c, h, w = x.shape\n    f, _, k, _ = W.shape\n    xp = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))\n    oh = (h + 2 * pad - k) // stride + 1\n    ow = (w + 2 * pad - k) // stride + 1\n    cols = np.array([xp[:, i * stride:i * stride + k, j * stride:j * stride + k].ravel()\n                     for i in range(oh) for j in range(ow)])\n    Wm = W.reshape(f, -1)\n    out = (cols @ Wm.T + b).T.reshape(f, oh, ow)\n    g = dout.reshape(f, -1).T\n    dW = (g.T @ cols).reshape(W.shape)\n    db = g.sum(axis=0)\n    dcols = g @ Wm\n    dxp = np.zeros_like(xp)\n    for i in range(oh):\n        for j in range(ow):\n            r, q = i * stride, j * stride\n            dxp[:, r:r + k, q:q + k] = dcols[i * ow + j].reshape(c, k, k)\n    dx = dxp[:, pad:pad + h, pad:pad + w]\n    return out, dx, dW, db\n",
+      "test": 4,
+      "symptom": "col2im overwrites where patches overlap instead of adding."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv_layer_forward_backward(x, W, b, stride, pad, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    c, h, w = x.shape\n    f, _, k, _ = W.shape\n    xp = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))\n    oh = (h + 2 * pad - k) // stride + 1\n    ow = (w + 2 * pad - k) // stride + 1\n    cols = np.array([xp[:, i * stride:i * stride + k, j * stride:j * stride + k].ravel()\n                     for i in range(oh) for j in range(ow)])\n    Wm = W.reshape(f, -1)\n    out = (cols @ Wm.T + b).T.reshape(f, oh, ow)\n    g = dout.reshape(f, -1).T\n    dW = (g.T @ cols).reshape(W.shape)\n    db = g.sum(axis=1)\n    dcols = g @ Wm\n    dxp = np.zeros_like(xp)\n    for i in range(oh):\n        for j in range(ow):\n            r, q = i * stride, j * stride\n            dxp[:, r:r + k, q:q + k] += dcols[i * ow + j].reshape(c, k, k)\n    dx = dxp[:, pad:pad + h, pad:pad + w]\n    return out, dx, dW, db\n",
+      "test": 3,
+      "symptom": "The bias gradient sums over filters instead of over positions."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv_layer_forward_backward(x, W, b, stride, pad, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    c, h, w = x.shape\n    f, _, k, _ = W.shape\n    xp = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))\n    oh = (h + 2 * pad - k) // stride + 1\n    ow = (w + 2 * pad - k) // stride + 1\n    cols = np.array([xp[:, i * stride:i * stride + k, j * stride:j * stride + k].ravel()\n                     for i in range(oh) for j in range(ow)])\n    Wm = W.reshape(f, -1)\n    out = (cols @ Wm.T + b).T.reshape(f, oh, ow)\n    g = dout.reshape(f, -1).T\n    dW = (g.T @ cols).reshape(W.shape)\n    db = g.sum(axis=0)\n    dcols = g @ Wm\n    dxp = np.zeros_like(xp)\n    for i in range(oh):\n        for j in range(ow):\n            r, q = i, j\n            dxp[:, r:r + k, q:q + k] += dcols[i * ow + j].reshape(c, k, k)\n    dx = dxp[:, pad:pad + h, pad:pad + w]\n    return out, dx, dW, db\n",
+      "test": 5,
+      "symptom": "The patches go back at stride 1 whatever the forward stride."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef conv_layer_forward_backward(x, W, b, stride, pad, dout):\n    x = np.asarray(x, dtype=float)\n    W = np.asarray(W, dtype=float)\n    dout = np.asarray(dout, dtype=float)\n    c, h, w = x.shape\n    f, _, k, _ = W.shape\n    xp = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))\n    oh = (h + 2 * pad - k) // stride + 1\n    ow = (w + 2 * pad - k) // stride + 1\n    cols = np.array([xp[:, i * stride:i * stride + k, j * stride:j * stride + k].ravel()\n                     for i in range(oh) for j in range(ow)])\n    Wm = W.reshape(f, -1)\n    out = (cols @ Wm.T + b).T.reshape(f, oh, ow)\n    g = dout.reshape(f, -1).T\n    dW = (cols.T @ g).reshape(W.shape)\n    db = g.sum(axis=0)\n    dcols = g @ Wm\n    dxp = np.zeros_like(xp)\n    for i in range(oh):\n        for j in range(ow):\n            r, q = i * stride, j * stride\n            dxp[:, r:r + k, q:q + k] += dcols[i * ow + j].reshape(c, k, k)\n    dx = dxp[:, pad:pad + h, pad:pad + w]\n    return out, dx, dW, db\n",
+      "test": 2,
+      "symptom": "The weight gradient is transposed before the reshape, scrambling the filters."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One product forward; $\\mathbf{G}^T\\mathbf{C}$, a column sum and col2im backward.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-4": "The input gradient differs where patches overlap: col2im must add each patch’s share.",
+     "test-3": "Each filter’s bias collects the gradient of every position of its map."
+    }
+   },
+   "explain": {
+    "text": "Forward: $\\mathbf{Y} = \\mathbf{C}\\mathbf{W}^T + \\mathbf{b}$. Backward: $\\partial \\mathbf{W} = \\mathbf{G}^T\\mathbf{C}$, $\\partial \\mathbf{b} = $ the column sums of $\\mathbf{G}$, and $\\partial \\mathbf{x} = \\operatorname{col2im}(\\mathbf{G}\\mathbf{W})$, adding where patches overlap."
+   }
+  },
+  {
+   "id": "h-overlap-pool",
+   "difficulty": 4,
+   "skills": [
+    "cnn-layers"
+   ],
+   "title": "Pooling windows that overlap",
+   "prose": "Some nets pool with 3 by 3 windows at stride 2, so neighbouring windows share a row or column. Write `maxpool_overlap(x, size, stride)` for a 2-D map, with the output size from the convolution formula and no padding.",
+   "question": "Write `maxpool_overlap`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef maxpool_overlap(x, size, stride):\n    # max pooling of a 2-D map with windows of size by size every `stride` pixels, no padding\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef maxpool_overlap(x, size, stride):\n    x = np.asarray(x, dtype=float)\n    oh = (x.shape[0] - size) // stride + 1\n    ow = (x.shape[1] - size) // stride + 1\n    return np.array([[x[i * stride:i * stride + size, j * stride:j * stride + size].max() for j in range(ow)] for i in range(oh)])\n",
+    "examples": [
+     {
+      "call": "maxpool_overlap(np.arange(16.0).reshape(4, 4), 2, 2).tolist()",
+      "expect": "[[5.0, 7.0], [13.0, 15.0]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "r = np.random.default_rng(94); x = r.standard_normal((9, 9))",
+      "call": "bool(np.allclose(maxpool_overlap(x, 3, 2), np.lib.stride_tricks.sliding_window_view(x, (3, 3))[::2, ::2].max(axis=(2, 3))))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "r = np.random.default_rng(94); x = r.standard_normal((9, 9))",
+      "call": "maxpool_overlap(x, 3, 2).shape",
+      "expect": "(4, 4)",
+      "compare": "equal"
+     },
+     {
+      "call": "maxpool_overlap(np.arange(16.0).reshape(4, 4), 2, 2).tolist()",
+      "expect": "[[5.0, 7.0], [13.0, 15.0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "maxpool_overlap(np.arange(10.0).reshape(2, 5), 2, 2).shape",
+      "expect": "(1, 2)",
+      "compare": "equal"
+     },
+     {
+      "call": "maxpool_overlap([[1, 9], [3, 4]], 2, 1).tolist()",
+      "expect": "[[9.0]]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests: a seeded 9 by 9 map with 3 by 3 windows at stride 2 (values and shape), non-overlapping windows, a width the stride does not divide, and one window.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef maxpool_overlap(x, size, stride):\n    x = np.asarray(x, dtype=float)\n    oh = (x.shape[0] - size) // stride + 1\n    ow = (x.shape[1] - size) // stride + 1\n    return np.array([[x[i:i + size, j:j + size].max() for j in range(ow)] for i in range(oh)])\n",
+      "test": 1,
+      "symptom": "The windows move one pixel at a time."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef maxpool_overlap(x, size, stride):\n    x = np.asarray(x, dtype=float)\n    oh = (x.shape[0] - size) // stride + 1\n    ow = x.shape[1] // stride\n    return np.array([[x[i * stride:i * stride + size, j * stride:j * stride + size].max() for j in range(ow)] for i in range(oh)])\n",
+      "test": 5,
+      "symptom": "The width is taken as w // stride, counting a window that runs off the edge."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Windows every `stride` pixels, as many as fit.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-5": "A window that would run past the edge is not a position: a 2 by 2 map has one 2 by 2 window, whatever the stride."
+    }
+   },
+   "explain": {
+    "text": "The output side is $\\lfloor (n - s_{\\text{win}})/s \\rfloor + 1$, the same formula as a convolution with no padding: a 9 by 9 map gives 4 by 4."
+   }
+  },
+  {
+   "id": "h-order-col2im",
+   "difficulty": 4,
+   "skills": [
+    "cnn-layers"
+   ],
+   "prose": "Derive why the input gradient of an im2col convolution is col2im of $\\mathbf{G}\\mathbf{W}$. $\\mathbf{C}$ is the patch matrix, $\\mathbf{Y} = \\mathbf{C}\\mathbf{W}^T$, and $\\mathbf{G} = \\partial L / \\partial \\mathbf{Y}$.",
+   "question": "Put the steps in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "c1",
+      "text": "$\\partial L/\\partial \\mathbf{C} = \\mathbf{G}\\mathbf{W}$, the matrix product’s backward from `backprop` level 4."
+     },
+     {
+      "id": "c2",
+      "text": "Each entry $C_{r, e}$ is a copy of one pixel $x_p$: patch $r$, position $e$ in the window."
+     },
+     {
+      "id": "c3",
+      "text": "So $\\partial L/\\partial x_p = \\sum_{(r, e)\\, \\text{copying}\\, x_p} (\\mathbf{G}\\mathbf{W})_{r, e}$, since gradients add over every copy."
+     },
+     {
+      "id": "c4",
+      "text": "col2im computes that sum by adding each row of $\\mathbf{G}\\mathbf{W}$ back into its window with `+=`."
+     },
+     {
+      "id": "x1",
+      "text": "Each pixel sits in exactly one patch, so col2im can copy each row back with `=`.",
+      "why": "Patches overlap: with stride 1 an inner pixel sits in $k^2$ of them, and every copy’s gradient counts."
+     }
+    ],
+    "answer": [
+     "c1",
+     "c2",
+     "c3",
+     "c4"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "feedback": {
+    "correct": "Matrix backward, copies, sum over copies, then col2im.",
+    "generic": "Not quite. Start from the product.",
+    "byKey": {
+     "x1": "That forgets the overlaps. An inner pixel sits in 9 patches of a 3 by 3 kernel.",
+     "left-out": "All four steps are needed."
+    }
+   },
+   "explain": {
+    "text": "im2col copies pixels; the copies’ gradients add, exactly as a value used twice collects two gradients. col2im is that addition, written as `+=` into each window."
+   }
+  },
+  {
+   "id": "h-design-10k",
+   "difficulty": 4,
+   "skills": [
+    "cnn-layers"
+   ],
+   "title": "A CNN under 10,000 parameters",
+   "kind": "longform",
+   "prompt": "Design a CNN for 32 by 32 single-channel inputs and 10 classes with at most 10,000 parameters. State every layer with its kernel, padding and stride, the shape after it, and its parameters, and give the total. Then justify two trade-offs you made (for example depth against width, pooling against stride, where the parameters go).",
+   "model": "**A design.**\n\n| layer | out shape | params |\n|---|---|---:|\n| input | 1 × 32 × 32 | 0 |\n| conv 3 × 3, 8 filters, pad 1 | 8 × 32 × 32 | 80 |\n| max pool 2 × 2 | 8 × 16 × 16 | 0 |\n| conv 3 × 3, 16 filters, pad 1 | 16 × 16 × 16 | 1,168 |\n| max pool 2 × 2 | 16 × 8 × 8 | 0 |\n| conv 3 × 3, 16 filters, pad 1 | 16 × 8 × 8 | 2,320 |\n| max pool 2 × 2 | 16 × 4 × 4 | 0 |\n| dense 256 → 10 | 10 | 2,570 |\n| **total** | | **6,138** |\n\nEach conv count is $c_{\\text{out}}(c_{\\text{in}} \\cdot 9 + 1)$ and the dense one $256 \\times 10 + 10$.\n\n**Trade-off 1: pool before the dense layer.** Without the three pools the dense layer would see $16 \\times 32 \\times 32 = 16{,}384$ inputs and need 163,850 parameters, sixteen times the budget. Pooling (or stride 2) shrinks the map so the head stays small; the price is lost position detail.\n\n**Trade-off 2: small kernels stacked.** Three 3 by 3 layers with pools between give a receptive field of $1 + 2 + 1 + 2 \\times 2 + 1 \\times 2 + 2 \\times 4 = 18$ pixels using 9 weights per channel pair each, where one large kernel would cost far more. Depth also adds nonlinearities.\n\n**Where the parameters go.** 42% sit in the dense head; widening the last conv to 32 filters would add 2,320 conv parameters and double the head to 5,130, about 12,500 in all, over budget. Multiply-adds are dominated by the first two layers, which run on the largest maps.",
+   "rubric": [
+    {
+     "points": 3,
+     "text": "Every layer has its kernel, padding, stride and output shape, and the shapes follow the output-size formula.",
+     "required": true
+    },
+    {
+     "points": 3,
+     "text": "Parameters are counted per layer with $c_{\\text{out}}(c_{\\text{in}}k^2 + 1)$ and $n_{\\text{in}}n_{\\text{out}} + n_{\\text{out}}$, and the total is at most 10,000.",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Justifies shrinking the map (pooling or stride) before the dense layer, with the count it saves."
+    },
+    {
+     "points": 2,
+     "text": "Justifies a second trade-off: depth against width, receptive field, or where the parameters sit."
+    }
+   ]
+  },
+  {
+   "id": "h-macs-strided",
+   "difficulty": 3,
+   "skills": [
+    "cnn-layers"
+   ],
+   "prose": "A first layer reads 3-channel 32 by 32 images with 16 filters of 3 by 3, padding 1 and stride 2.",
+   "question": "How many multiply-adds does it take per image?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 110592,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "stride1",
+      "value": 442368,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one-channel",
+      "value": 36864,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$16 \\times 16$ positions, 27 terms, 16 filters: 110,592.",
+    "generic": "Not quite. Output side first, then positions times terms times filters.",
+    "byKey": {
+     "stride1": "That is stride 1. Stride 2 leaves 16 by 16 positions.",
+     "one-channel": "Each dot product runs over all 3 channels: 27 terms."
+    }
+   },
+   "explain": {
+    "text": "$\\lfloor 31/2 \\rfloor + 1 = 16$ a side, 256 positions, $27 \\times 16 = 432$ multiply-adds each: 110,592, a quarter of stride 1."
+   }
+  },
+  {
+   "id": "h-shape-chain",
+   "difficulty": 3,
+   "skills": [
+    "cnn-layers"
+   ],
+   "prose": "A 28 by 28 input goes through a 5 by 5 conv (no padding, stride 1), a 2 by 2 max pool, then a 3 by 3 conv with padding 1 and stride 2.",
+   "question": "What is the side of the final map?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-pad-drop",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "same",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "28 → 24 → 12 → 6.",
+    "generic": "Not quite. Apply the formula layer by layer.",
+    "byKey": {
+     "no-pad-drop": "You left out the padding of the last conv: $\\lfloor (12 + 2 - 3)/2 \\rfloor + 1 = 6$.",
+     "same": "The last conv has stride 2."
+    }
+   },
+   "explain": {
+    "text": "$28 - 5 + 1 = 24$; pooling halves it to 12; $\\lfloor 11/2 \\rfloor + 1 = 6$."
+   }
+  },
+  {
+   "id": "h-pool-choice",
+   "difficulty": 3,
+   "skills": [
+    "cnn-layers"
+   ],
+   "prose": "A map of order-book imbalances shows one sharp spike per window, on a background of small noise.",
+   "question": "Which pooling keeps the spike’s size, and what does it lose?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Max pooling; it loses where in the window the spike was",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Average pooling; it loses nothing",
+      "why": "The mean of a window with one spike and three small values shrinks the spike by about four."
+     },
+     {
+      "id": "c",
+      "text": "Max pooling; it loses nothing",
+      "why": "The position inside the window and the other three values are gone."
+     },
+     {
+      "id": "d",
+      "text": "Average pooling; it loses where the spike was",
+      "why": "It also dilutes the spike’s size by the window’s area."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Max keeps the largest value and forgets its place.",
+    "generic": "Not quite. What does each pooling keep?"
+   },
+   "explain": {
+    "text": "Max pooling passes the spike through at full size, and its gradient goes to that one cell. Average pooling would divide it by 4 and spread the gradient."
+   }
+  }
+ ]
+}

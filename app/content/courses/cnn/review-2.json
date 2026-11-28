@@ -1,0 +1,392 @@
+{
+ "id": "review-2",
+ "course": "cnn",
+ "level": 2,
+ "pass": 0.8,
+ "items": [
+  {
+   "id": "r-stride-size",
+   "difficulty": 2,
+   "skills": [
+    "cnn-layers"
+   ],
+   "question": "A 16 by 16 map, a 3 by 3 kernel, padding 1, stride 2. What is the output side?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-floor",
+      "value": 8.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "same",
+      "value": 16,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\lfloor 15/2 \\rfloor + 1 = 8$.",
+    "generic": "Not quite. Use the output-size formula.",
+    "byKey": {
+     "no-floor": "Round $15/2$ down before adding 1.",
+     "same": "Padding 1 keeps the size only at stride 1."
+    }
+   },
+   "explain": {
+    "text": "$16 + 2 - 3 = 15$; $\\lfloor 15/2 \\rfloor + 1 = 8$."
+   }
+  },
+  {
+   "id": "r-params",
+   "difficulty": 3,
+   "skills": [
+    "cnn-layers"
+   ],
+   "question": "A 5 by 5 convolution from 4 channels to 6 filters. How many parameters?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 606,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-cin",
+      "value": 156,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "no-bias",
+      "value": 600,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$6 \\times (4 \\times 25 + 1) = 606$.",
+    "generic": "Not quite. $c_{\\text{out}}(c_{\\text{in}}k^2 + 1)$.",
+    "byKey": {
+     "no-cin": "Each filter has a 5 by 5 kernel per input channel.",
+     "no-bias": "Each filter has a bias."
+    }
+   },
+   "explain": {
+    "text": "$4 \\times 25 = 100$ weights and 1 bias per filter, 6 filters: 606."
+   }
+  },
+  {
+   "id": "r-rf",
+   "difficulty": 4,
+   "skills": [
+    "cnn-layers"
+   ],
+   "question": "Conv 3 by 3, max pool 2 by 2 (stride 2), conv 3 by 3, max pool 2 by 2, conv 3 by 3; every conv at stride 1. What is the side of the receptive field of the last layer?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 18,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-stride",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "product",
+      "value": 108,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 + 2 + 1 + 2 \\times 2 + 1 \\times 2 + 2 \\times 4 = 18$.",
+    "generic": "Not quite. Each layer adds $(k - 1)$ times the strides before it.",
+    "byKey": {
+     "no-stride": "You added $k - 1$ for each layer but ignored the strides of the pools. After a pool, one step is 2 pixels.",
+     "product": "Receptive fields grow by adding, not multiplying."
+    }
+   },
+   "explain": {
+    "text": "The jump between neighbouring outputs is 1, then 2 after the first pool, then 4. The layers add $2, 1, 4, 2, 8$ to the starting 1: 18."
+   }
+  },
+  {
+   "id": "r-maxgrad",
+   "difficulty": 2,
+   "skills": [
+    "cnn-layers"
+   ],
+   "prose": "A 2 by 2 max-pool window holds $\\begin{pmatrix} 2 & 7 \\\\ 5 & 1 \\end{pmatrix}$ and receives a gradient of 3.",
+   "question": "What gradient does the 5 receive?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "avg",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "all",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0: only the 7 won.",
+    "generic": "Not quite. Which entry set the pooled value?",
+    "byKey": {
+     "avg": "That spreads the gradient as average pooling does.",
+     "all": "Only the winner gets the gradient."
+    }
+   },
+   "explain": {
+    "text": "The pooled value is 7; nudging the 5 changes nothing, so its gradient is 0 and the 7 gets all 3."
+   }
+  },
+  {
+   "id": "r-avggrad",
+   "difficulty": 2,
+   "skills": [
+    "cnn-layers"
+   ],
+   "question": "A 2 by 2 average pool receives a gradient of 0.8 at one output. What gradient reaches each of its four inputs?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.8/4 = 0.2$.",
+    "generic": "Not quite. Each input has weight $\\tfrac14$.",
+    "byKey": {
+     "all": "Each input moved the mean by a quarter.",
+     "half": "Divide by 4 inputs, not 2."
+    }
+   },
+   "explain": {
+    "text": "$0.8 \\times \\tfrac14 = 0.2$ for each of the four."
+   }
+  },
+  {
+   "id": "r-im2col",
+   "difficulty": 3,
+   "skills": [
+    "cnn-layers"
+   ],
+   "question": "im2col of a 2-channel 6 by 6 image, 3 by 3 kernels, no padding, stride 1. What shape is the patch matrix?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$16 \\times 18$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$16 \\times 9$",
+      "why": "Each row holds both channels’ windows: 18 values."
+     },
+     {
+      "id": "c",
+      "text": "$36 \\times 18$",
+      "why": "Without padding there are $4 \\times 4$ positions."
+     },
+     {
+      "id": "d",
+      "text": "$18 \\times 16$",
+      "why": "Rows are positions."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4 \\times 4$ positions, $2 \\times 9$ values each.",
+    "generic": "Not quite. Rows are positions."
+   },
+   "explain": {
+    "text": "16 rows of 18."
+   }
+  },
+  {
+   "id": "r-same",
+   "difficulty": 2,
+   "skills": [
+    "cnn-layers"
+   ],
+   "question": "Which padding keeps the size for a 9 by 9 kernel at stride 1?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "total",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "half",
+      "value": 4.5,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(9 - 1)/2 = 4$.",
+    "generic": "Not quite. $p = (k - 1)/2$.",
+    "byKey": {
+     "total": "That is both sides together.",
+     "half": "Padding is whole: $(k - 1)/2$."
+    }
+   },
+   "explain": {
+    "text": "Padding 4 on each side: $n + 8 - 9 + 1 = n$."
+   }
+  },
+  {
+   "id": "r-macs",
+   "difficulty": 3,
+   "skills": [
+    "cnn-layers"
+   ],
+   "question": "A 3 by 3 convolution from 2 channels to 4 filters on an 8 by 8 map with padding 1. How many multiply-adds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4608,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "one-channel",
+      "value": 2304,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "params",
+      "value": 76,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$64 \\times 18 \\times 4 = 4{,}608$.",
+    "generic": "Not quite. Positions times $k^2 c_{\\text{in}}$ times $c_{\\text{out}}$.",
+    "byKey": {
+     "one-channel": "Each dot product runs over both input channels: 18 terms.",
+     "params": "That is the parameter count."
+    }
+   },
+   "explain": {
+    "text": "64 positions, $9 \\times 2 = 18$ terms each, 4 filters: 4,608."
+   }
+  },
+  {
+   "id": "r-stride-skip",
+   "difficulty": 3,
+   "skills": [
+    "cnn-layers"
+   ],
+   "question": "A 10-wide input, a 3-wide kernel, stride 3, no padding. How many outputs, and how many columns are never read? Choose the pair.",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "3 outputs; 1 column unread",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "3 outputs; no column unread",
+      "why": "The windows cover columns 0 to 8; column 9 is left."
+     },
+     {
+      "id": "c",
+      "text": "4 outputs; no column unread",
+      "why": "A fourth window would start at 9 and need columns 9 to 11."
+     },
+     {
+      "id": "d",
+      "text": "2.67 outputs",
+      "why": "Round $7/3$ down: positions are whole."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\lfloor 7/3 \\rfloor + 1 = 3$; column 9 is never read.",
+    "generic": "Not quite. List the windows."
+   },
+   "explain": {
+    "text": "Windows cover 0 to 2, 3 to 5 and 6 to 8; column 9 is dropped."
+   }
+  }
+ ]
+}
