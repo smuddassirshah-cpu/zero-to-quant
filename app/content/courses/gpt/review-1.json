@@ -1,0 +1,437 @@
+{
+  "id": "review-1",
+  "course": "gpt",
+  "level": 1,
+  "pass": 0.8,
+  "items": [
+    {
+      "id": "r-zurich-bytes",
+      "difficulty": 2,
+      "skills": [
+        "gpt-token"
+      ],
+      "question": "How many bytes is `Zürich €` in UTF-8? (The gap is one space.)",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "chars",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "euro-two",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Bytes"
+      },
+      "feedback": {
+        "correct": "11: five plain letters, `ü` takes 2, the space 1 and `€` 3.",
+        "generic": "Not quite. Give each character its UTF-8 byte count and add them up.",
+        "byKey": {
+          "chars": "That is the number of characters. `ü` and `€` take more than one byte each.",
+          "euro-two": "You gave `€` two bytes. U+20AC is above U+07FF, so it takes 3."
+        }
+      },
+      "explain": {
+        "text": "Z, r, i, c, h and the space are 1 byte each, `ü` (U+00FC) is 2 and `€` (U+20AC) is 3. That makes $6 + 2 + 3 = 11$ bytes."
+      }
+    },
+    {
+      "id": "r-valid-utf8",
+      "difficulty": 3,
+      "skills": [
+        "gpt-token"
+      ],
+      "question": "Which byte sequence decodes as UTF-8 without an error?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "euro",
+            "text": "`e2 82 ac`",
+            "correct": true
+          },
+          {
+            "id": "c328",
+            "text": "`c3 28`",
+            "why": "`c3` promises one continuation byte of the form `10xxxxxx`, but `28` is `00101000`."
+          },
+          {
+            "id": "a963",
+            "text": "`a9 63`",
+            "why": "`a9` is a continuation byte, so it cannot start a character."
+          },
+          {
+            "id": "f09f93",
+            "text": "`f0 9f 93`",
+            "why": "`f0` starts a four-byte character, and only three bytes are here."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`e2 82 ac` is a complete three-byte character, `€`.",
+        "generic": "Not quite. Check each first byte's promise against the bytes that follow."
+      },
+      "explain": {
+        "text": "`e2` is `1110xxxx`, so two continuation bytes must follow; `82` and `ac` both start `10`. The others start with a continuation byte, break a promise or stop short."
+      }
+    },
+    {
+      "id": "r-abab-tokens",
+      "difficulty": 2,
+      "skills": [
+        "gpt-token"
+      ],
+      "question": "Train our BPE on `abab ab` until no pair appears twice. How many tokens is the text then?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "bytes",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "merged-all",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Tokens"
+      },
+      "feedback": {
+        "correct": "4: `ab`, `ab`, space, `ab`.",
+        "generic": "Not quite. Make the first merge, then count pairs again.",
+        "byKey": {
+          "bytes": "That is the byte count, before any merge.",
+          "merged-all": "After `ab` is merged, every pair of the new row appears once, so training stops: no second merge."
+        }
+      },
+      "explain": {
+        "text": "`ab` appears 3 times and becomes id 256, giving `256 256 space 256`. Every pair there appears once, so training stops at 4 tokens."
+      }
+    },
+    {
+      "id": "r-second-merge",
+      "difficulty": 3,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "Train our BPE on `xyxyz xyz`. The first merge is `xy`, which appears 3 times.",
+      "question": "What is the second merge?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "xyz",
+            "text": "`xy` then `z`",
+            "correct": true
+          },
+          {
+            "id": "yz",
+            "text": "`y` then `z`",
+            "why": "You counted on the original bytes, where `yz` appears twice. After the first merge every `y` sits inside `xy`."
+          },
+          {
+            "id": "xyxy",
+            "text": "`xy` then `xy`",
+            "why": "That pair appears once, at the start."
+          },
+          {
+            "id": "zsp",
+            "text": "`z` then a space",
+            "why": "That pair appears once."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`xy` then `z` appears twice in the new row, so it becomes `xyz`.",
+        "generic": "Not quite. Recount the pairs on the row after the first merge."
+      },
+      "explain": {
+        "text": "After merge 1 the row is `xy xy z space xy z`. The pair `xy` then `z` appears twice and every other pair once, so merge 2 makes `xyz`."
+      }
+    },
+    {
+      "id": "r-banana",
+      "difficulty": 3,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "A tokeniser learned three merges, in this order: 256 is `a n`, 257 is `n a`, 258 is 256 followed by `a`.",
+      "question": "How many tokens does it make of `banana`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "na-first",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "bytes",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Tokens"
+      },
+      "feedback": {
+        "correct": "3: `b`, `an`, `ana`.",
+        "generic": "Not quite. Apply the merges in the order learned.",
+        "byKey": {
+          "na-first": "You applied `n a` first. Merge 256 comes first and uses up both `n`s, so 257 never fires.",
+          "bytes": "That is the byte count, before any merge."
+        }
+      },
+      "explain": {
+        "text": "256 turns `banana` into `b an an a`; 257 finds no free `n a`; 258 joins the last `an` and `a`. That leaves `b`, `an`, `ana`: 3 tokens."
+      }
+    },
+    {
+      "id": "r-bpb-filings",
+      "difficulty": 3,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "A model scores 3.6 nats per token on a set of annual reports. On those reports its tokeniser averages 4.1 bytes per token.",
+      "question": "What is the loss in bits per byte? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.2668,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "nats-byte",
+            "value": 0.878,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "bits-token",
+            "value": 5.1937,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Bits per byte"
+      },
+      "feedback": {
+        "correct": "$3.6 / (4.1 \\ln 2) \\approx 1.2668$ bits per byte.",
+        "generic": "Not quite. Divide by the bytes per token, then by $\\ln 2$.",
+        "byKey": {
+          "nats-byte": "That is nats per byte. Divide by $\\ln 2$ to get bits.",
+          "bits-token": "That is bits per token. Spread it over the 4.1 bytes each token covers."
+        }
+      },
+      "explain": {
+        "text": "Per byte the loss is $3.6 / 4.1$ nats; dividing by $\\ln 2$ turns nats into bits. So $3.6 / (4.1 \\ln 2) \\approx 1.2668$."
+      }
+    },
+    {
+      "id": "r-unseen-script",
+      "difficulty": 2,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "A byte-level BPE tokeniser was trained on English text only. It meets `日本`, two characters of 3 bytes each.",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bytes",
+            "text": "6 byte tokens, decoding exactly",
+            "correct": true
+          },
+          {
+            "id": "unk",
+            "text": "One unknown-token marker",
+            "why": "A byte-level tokeniser has no unknown token: every byte is in its vocabulary."
+          },
+          {
+            "id": "two",
+            "text": "2 tokens, one per character",
+            "why": "No merge joins these bytes, since none was learned from English text."
+          },
+          {
+            "id": "error",
+            "text": "An error when it is encoded",
+            "why": "Any string encodes to UTF-8 bytes, and all 256 bytes are tokens."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Six byte tokens, and a perfect round trip.",
+        "generic": "Not quite. What does a byte-level tokeniser fall back on?"
+      },
+      "explain": {
+        "text": "No learned merge touches these bytes, so each of the 6 bytes is its own token. Decoding joins them back into `日本`."
+      }
+    },
+    {
+      "id": "r-scrape-unit",
+      "difficulty": 3,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "A crawl of company websites gives 2 million pages. Every page carries the same cookie notice and menu lines, and some pages were fetched twice.",
+      "question": "Which cleaning step removes the true duplicates and keeps every page's own content?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pages",
+            "text": "Deduplicate pages, and strip shared boilerplate separately",
+            "correct": true
+          },
+          {
+            "id": "lines",
+            "text": "Delete every line that has appeared before",
+            "why": "That deletes the shared lines from every page but the first. It also deletes repeated lines inside pages, such as headings."
+          },
+          {
+            "id": "none",
+            "text": "Keep everything: duplicates do no harm",
+            "why": "Pages fetched twice are trained on twice, and repeated text is memorised."
+          },
+          {
+            "id": "words",
+            "text": "Keep each word only once",
+            "why": "That destroys every sentence."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Duplicates are found at the page level; shared boilerplate is a separate filter.",
+        "generic": "Not quite. Pick the unit at which a repeat means the same content twice."
+      },
+      "explain": {
+        "text": "A page fetched twice is a true duplicate, so compare whole pages. Lines repeated across pages are boilerplate, which a separate step strips."
+      }
+    },
+    {
+      "id": "r-jaccard-sizes",
+      "difficulty": 2,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "Two shingle sets: $A$ has 40 shingles, $B$ has 50, and 30 are in both.",
+      "question": "What is their Jaccard similarity? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "over-a",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "over-sum",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "label": "Jaccard similarity"
+      },
+      "feedback": {
+        "correct": "$30 / (40 + 50 - 30) = 30 / 60 = 0.5$.",
+        "generic": "Not quite. Divide the shared shingles by the union.",
+        "byKey": {
+          "over-a": "You divided by $A$ alone. Jaccard divides by the union.",
+          "over-sum": "You divided by $40 + 50$, which counts the 30 shared shingles twice."
+        }
+      },
+      "explain": {
+        "text": "The union holds $40 + 50 - 30 = 60$ shingles. So $J = 30 / 60 = 0.5$."
+      }
+    },
+    {
+      "id": "r-headline-filter",
+      "difficulty": 4,
+      "skills": [
+        "gpt-token"
+      ],
+      "prose": "A filter flags two texts as near duplicates when their 5-character shingle sets have Jaccard similarity 0.9 or more. Two headlines of 67 characters differ in one digit: `Ashby Copper shares fall 4% after quarterly output misses forecasts`, and the same with 6%. Each has 63 distinct shingles.",
+      "question": "What is their Jaccard similarity? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8529,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "one-broken",
+            "value": 0.9688,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "over-a",
+            "value": 0.9206,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Jaccard similarity"
+      },
+      "feedback": {
+        "correct": "$58 / 68 \\approx 0.8529$, below 0.9, so the filter keeps both.",
+        "generic": "Not quite. Count the shingles that cover the changed digit.",
+        "byKey": {
+          "one-broken": "You let the changed digit break one shingle. Every 5-character shingle that covers it breaks: 5 of them.",
+          "over-a": "You divided by one headline's 63 shingles. Use the union."
+        }
+      },
+      "explain": {
+        "text": "The digit sits inside 5 shingles of each headline, so 58 are shared and 68 are in either. $J = 58 / 68 \\approx 0.8529$, below 0.9: one change costs a short text more of its overlap."
+      }
+    }
+  ]
+}

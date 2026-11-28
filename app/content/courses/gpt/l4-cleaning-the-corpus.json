@@ -1,0 +1,1346 @@
+{
+  "id": "l4-cleaning-the-corpus",
+  "course": "gpt",
+  "title": "Cleaning the corpus",
+  "minutes": 15,
+  "objectives": [
+    "Write exact and near-duplicate filters for a text corpus."
+  ],
+  "skills": [
+    "gpt-token"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A cleaner deletes repeats",
+      "prose": "Here are the first eleven lines of Tiny Shakespeare. A cleaner deletes every non-empty line it has already seen, to remove repetition from the training text.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "tiny-shakespeare.txt",
+          "numbers": true,
+          "lines": [
+            "First Citizen:",
+            "Before we proceed any further, hear me speak.",
+            "",
+            "All:",
+            "Speak, speak.",
+            "",
+            "First Citizen:",
+            "You are all resolved rather to die than to famish?",
+            "",
+            "All:",
+            "Resolved. resolved."
+          ]
+        }
+      },
+      "question": "Tap every line the cleaner deletes.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l7",
+          "l10"
+        ],
+        "wrong": [
+          {
+            "id": "first-too",
+            "set": [
+              "l1",
+              "l4",
+              "l7",
+              "l10"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A line goes only if the same line appeared above it."
+        },
+        {
+          "rung": "point",
+          "text": "Look at the short lines that end in a colon.",
+          "highlight": [
+            "l1",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`First Citizen:` and `All:` each appear twice; the second copy of each goes."
+        }
+      ],
+      "feedback": {
+        "correct": "Lines 7 and 10 go: the second `First Citizen:` and the second `All:`.",
+        "generic": "Not quite. Tap only lines that already appeared earlier.",
+        "byKey": {
+          "first-too": "You tapped the first copies too. The cleaner keeps each line the first time it appears.",
+          "l8": "Line 8 is new speech; it appears nowhere above."
+        }
+      },
+      "explain": {
+        "text": "Only lines 7 and 10 are repeats, and both are speaker names. The cleaner deletes who is speaking, not repeated speech.",
+        "canvas": {
+          "shade": {
+            "gone": [
+              "l7",
+              "l10"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The most repeated lines",
+      "prose": "The bars show the five most frequent lines in the full text, 1,115,394 characters. Slide to see the same for the course's 250,000-character slice.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "GLOUCESTER",
+            "DUKE VINCENTIO",
+            "ROMEO",
+            "MENENIUS",
+            "PETRUCHIO"
+          ],
+          "yLabel": "Times the line appears",
+          "showValues": true,
+          "yMax": 240
+        },
+        "state": {
+          "values": {
+            "GLOUCESTER": 229,
+            "DUKE VINCENTIO": 193,
+            "ROMEO": 163,
+            "MENENIUS": 162,
+            "PETRUCHIO": 158
+          },
+          "caption": "Full text: each bar is a speaker's name followed by a colon."
+        },
+        "controls": [
+          {
+            "frames": [
+              {
+                "categories": [
+                  "GLOUCESTER",
+                  "DUKE VINCENTIO",
+                  "ROMEO",
+                  "MENENIUS",
+                  "PETRUCHIO"
+                ],
+                "values": {
+                  "GLOUCESTER": 229,
+                  "DUKE VINCENTIO": 193,
+                  "ROMEO": 163,
+                  "MENENIUS": 162,
+                  "PETRUCHIO": 158
+                },
+                "caption": "Full text: each bar is a speaker's name followed by a colon."
+              },
+              {
+                "categories": [
+                  "MENENIUS",
+                  "CORIOLANUS",
+                  "GLOUCESTER",
+                  "SICINIUS",
+                  "BRUTUS"
+                ],
+                "values": {
+                  "MENENIUS": 162,
+                  "CORIOLANUS": 149,
+                  "GLOUCESTER": 149,
+                  "SICINIUS": 117,
+                  "BRUTUS": 91
+                },
+                "caption": "The slice: the opening plays, mostly Coriolanus."
+              }
+            ],
+            "frameLabels": [
+              "Full text",
+              "Slice"
+            ],
+            "label": "Text",
+            "start": 0
+          }
+        ]
+      },
+      "question": "What are the most repeated lines?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tags",
+            "text": "Speaker names, the tag before each speech",
+            "correct": true
+          },
+          {
+            "id": "phrases",
+            "text": "Stock phrases such as greetings and farewells",
+            "why": "They repeat too, but far less: none reaches the bars."
+          },
+          {
+            "id": "errors",
+            "text": "Copying errors made when the text was assembled",
+            "why": "These repeats are the play's structure: every speech opens with its speaker."
+          },
+          {
+            "id": "songs",
+            "text": "Refrains of songs",
+            "why": "Look at the labels: they are characters' names."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the labels under the bars."
+        },
+        {
+          "rung": "point",
+          "text": "The tallest bar in the full text is GLOUCESTER.",
+          "highlight": [
+            "xGLOUCESTER"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Speaker tags: GLOUCESTER alone opens 229 speeches.",
+        "generic": "Not quite. Read the bar labels."
+      },
+      "explain": {
+        "text": "Every speech starts with its speaker's name on a line of its own. A character with many speeches has a line repeated hundreds of times."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Exact deduplication",
+      "prose": "**Exact deduplication** keeps a set of the lines (or their hashes) seen so far; a line already in the set is a repeat. Duplicates matter. A model memorises text it sees many times, and a test passage copied into training flatters the test score.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Full text",
+            "Count"
+          ],
+          "rows": [
+            [
+              "Non-empty lines",
+              "32,777"
+            ],
+            [
+              "Distinct lines",
+              "25,721"
+            ],
+            [
+              "Repeats of an earlier line",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many non-empty lines are repeats of an earlier line?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7056,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "distinct",
+            "value": 25721,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Repeated lines"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each distinct line is kept once."
+        },
+        {
+          "rung": "point",
+          "text": "Every other non-empty line is a repeat.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$32777 - 25721 = 7056$."
+        }
+      ],
+      "feedback": {
+        "correct": "$32777 - 25721 = 7056$ lines repeat an earlier line.",
+        "generic": "Not quite. Subtract the distinct lines from all the lines.",
+        "byKey": {
+          "distinct": "That is the number of lines kept. The repeats are the rest."
+        }
+      },
+      "explain": {
+        "text": "Each of the 25,721 distinct lines is kept once, so $32777 - 25721 = 7056$ lines are repeats. A set makes each check fast, whatever the size of the text.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What the repeats are",
+      "prose": "Call a line a speaker tag when it ends in a colon and follows a blank line. In the full text, 6,913 of the 7,056 repeated lines are speaker tags.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Repeated lines",
+            "Count"
+          ],
+          "rows": [
+            [
+              "All repeats",
+              "7,056"
+            ],
+            [
+              "Speaker tags",
+              "6,913"
+            ],
+            [
+              "Other lines",
+              "143"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What percentage of the repeated lines are speaker tags? Give one decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9797,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "of-all",
+            "value": 0.2109,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "others",
+            "value": 0.0203,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ],
+        "unit": "%",
+        "label": "Share in per cent"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the tags by all the repeats."
+        },
+        {
+          "rung": "point",
+          "text": "$6913 / 7056$.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$6913 / 7056 \\approx 0.980$, about 98.0%."
+        }
+      ],
+      "feedback": {
+        "correct": "About 98.0%: nearly every repeated line is a speaker tag.",
+        "generic": "Not quite. Divide 6,913 by 7,056.",
+        "byKey": {
+          "of-all": "You divided by all 32,777 lines. The question asks about the repeated lines only.",
+          "others": "That is the share of repeats that are not tags, 143 of 7,056."
+        }
+      },
+      "explain": {
+        "text": "$6913 / 7056 \\approx 0.980$, so 98.0% of the repeats are tags. Only 143 repeated lines are speech, such as `Farewell.` said twice."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The wrong unit",
+      "prose": "Deleting the 7,056 repeated lines would strip almost every speaker tag after its first use. Most speeches would lose their speaker.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Repeated lines",
+            "Count"
+          ],
+          "rows": [
+            [
+              "All repeats",
+              "7,056"
+            ],
+            [
+              "Speaker tags",
+              "6,913"
+            ],
+            [
+              "Other lines",
+              "143"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "At what unit should a cleaner look for duplicates in a corpus like this?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "docs",
+            "text": "Whole documents, such as a play or a scene",
+            "correct": true
+          },
+          {
+            "id": "lines",
+            "text": "Lines, because that removes the most repetition",
+            "why": "You picked the unit that finds the most repeats. 98% of them are speaker tags, so this deletes structure, not repetition."
+          },
+          {
+            "id": "words",
+            "text": "Words, keeping each word once",
+            "why": "Every common word repeats. Keeping each word once would destroy the text."
+          },
+          {
+            "id": "chars",
+            "text": "Characters",
+            "why": "Only 65 distinct characters appear; deduplicating them leaves 65 characters."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A repeat is a problem when the same content appears twice."
+        },
+        {
+          "rung": "point",
+          "text": "Is a repeated speaker tag repeated content?",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Look for whole documents that appear twice."
+        }
+      ],
+      "feedback": {
+        "correct": "Documents: a play copied twice is a duplicate; a speaker named twice is not.",
+        "generic": "Not quite. Choose the unit at which a repeat means repeated content.",
+        "byKey": {
+          "lines": "Line-level cleaning would delete 6,913 speaker tags. Choose the unit at which a match means the same content was copied."
+        }
+      },
+      "explain": {
+        "text": "Repetition that hurts is a whole document copied, such as a web page scraped twice. Check at the document level, so structure inside a document survives."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Shingles",
+      "prose": "A **shingle** is a run of $n$ characters. Two texts that share most shingles are nearly the same. Take this news story, 92 characters long.\n\n`Shell shares rose 2% to £27.10 on Tuesday after the oil major raised its quarterly dividend.`",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "S",
+            "h",
+            "e",
+            "l",
+            "l",
+            "␣",
+            "s",
+            "h",
+            "a",
+            "r",
+            "e",
+            "s"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "ranges": [
+              {
+                "range": [
+                  0,
+                  4
+                ],
+                "label": "first shingle"
+              },
+              {
+                "range": [
+                  1,
+                  5
+                ],
+                "label": "second"
+              }
+            ]
+          },
+          "caption": "The first 12 characters: each shingle starts one place after the last."
+        }
+      },
+      "question": "How many 5-character shingles does the story have? Every one is different.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 88,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "chars",
+            "value": 92,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "off-by-one",
+            "value": 87,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Shingles"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A shingle can start at any position that leaves 5 characters."
+        },
+        {
+          "rung": "point",
+          "text": "The last shingle starts at position 87, counting from 0.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2",
+            "c3",
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Positions 0 to 87: $92 - 5 + 1 = 88$."
+        }
+      ],
+      "feedback": {
+        "correct": "$92 - 5 + 1 = 88$ shingles.",
+        "generic": "Not quite. Count the starting positions that leave room for 5 characters.",
+        "byKey": {
+          "chars": "That is the number of characters. The last four cannot start a 5-character shingle.",
+          "off-by-one": "Off by one: positions 0 to 87 make 88 starts."
+        }
+      },
+      "explain": {
+        "text": "A text of 92 characters has $92 - 5 + 1 = 88$ starting positions for a 5-character shingle. When all are different, the set has 88 shingles."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Jaccard similarity",
+      "prose": "A second story is the same except that the price reads £27.40. The **Jaccard similarity** of two shingle sets is the shared shingles over all the different shingles.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Set",
+            "Size"
+          ],
+          "rows": [
+            [
+              "Story 1 shingles",
+              "88"
+            ],
+            [
+              "Story 2 shingles",
+              "88"
+            ],
+            [
+              "Shared",
+              "83"
+            ],
+            [
+              "In either",
+              "93"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the Jaccard similarity of the two stories? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8925,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "over-one",
+            "value": 0.9432,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "sum",
+            "value": 0.4716,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Jaccard similarity"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Shared over in either."
+        },
+        {
+          "rung": "point",
+          "text": "$83 / 93$.",
+          "highlight": [
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$83 / 93 \\approx 0.8925$."
+        }
+      ],
+      "feedback": {
+        "correct": "$83 / 93 \\approx 0.8925$.",
+        "generic": "Not quite. Divide the shared shingles by the shingles in either set.",
+        "byKey": {
+          "over-one": "You divided by one story's 88 shingles. Jaccard divides by the union, 93.",
+          "sum": "You divided by the sum of the sizes, which counts the shared shingles twice. Use the union."
+        }
+      },
+      "explain": {
+        "text": "Changing one digit breaks the 5 shingles that cover it, in each story: 88 - 5 = 83 are shared and 83 + 5 + 5 = 93 are in either. So $J = 83 / 93 \\approx 0.8925$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Near duplicates with different facts",
+      "prose": "A near-duplicate filter drops one of any two stories with Jaccard similarity above 0.8. The two Shell stories score 0.8925.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Story",
+            "Price"
+          ],
+          "rows": [
+            [
+              "1",
+              "£27.10"
+            ],
+            [
+              "2",
+              "£27.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What does the filter do to a training set for a model that should report prices?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "loses",
+            "text": "It drops a story whose price differs: a real fact",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing harmful: the stories are near copies",
+            "why": "They are near copies in wording, but they state different prices. One of the two facts is lost."
+          },
+          {
+            "id": "keeps",
+            "text": "It keeps both, because they are not identical",
+            "why": "The filter uses a threshold of 0.8, and 0.8925 is above it."
+          },
+          {
+            "id": "merges",
+            "text": "It merges the two stories into one",
+            "why": "A filter keeps or drops; it never merges texts."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is the Jaccard value above the threshold?"
+        },
+        {
+          "rung": "point",
+          "text": "What differs between the stories?",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The filter drops one, and with it one of the two prices."
+        }
+      ],
+      "feedback": {
+        "correct": "The filter sees near copies and drops one, losing a real fact.",
+        "generic": "Not quite. Compare the score with 0.8, then ask what the stories disagree on."
+      },
+      "explain": {
+        "text": "Shingles measure wording, not meaning. Two reports that differ in one number look like duplicates; a filter for facts must check the numbers too."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Measuring overlap",
+      "prose": "For shingle sets $A$ and $B$:\n$$J(A, B) = \\frac{|A \\cap B|}{|A \\cup B|}$$\nIt is 1 for identical sets and 0 for disjoint ones. Comparing every pair of a billion documents is too slow. Real pipelines use **MinHash**, which estimates $J$ from short signatures; we name it and do not build it.",
+      "question": "Two documents share every shingle, but one also has 10 shingles of its own. What can you say about $J$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "below",
+            "text": "It is below 1, because the union is larger than the shared part",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "It is 1, because every shingle of the smaller one is shared",
+            "why": "Jaccard divides by the union. The 10 extra shingles make the union larger than the shared set."
+          },
+          {
+            "id": "zero",
+            "text": "It is 0, because the documents differ",
+            "why": "Jaccard is 0 only when no shingle is shared."
+          },
+          {
+            "id": "half",
+            "text": "It is 0.5 whatever the sizes",
+            "why": "It depends on how many shingles are shared against how many there are in all."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write $|A \\cap B|$ and $|A \\cup B|$ for the two documents."
+        }
+      ],
+      "feedback": {
+        "correct": "$J = |A| / (|A| + 10) < 1$.",
+        "generic": "Not quite. Compare the shared set with the union."
+      },
+      "explain": {
+        "text": "The smaller set $A$ is inside the larger, so $J = |A| / (|A| + 10)$, below 1. Only identical sets reach 1."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write the exact filter",
+      "prose": "Write `dedup_lines(text)`. Split on `'\\n'`, skip empty lines and keep each line the first time it appears. Return `(kept, removed)`: the kept lines in order, and the count of non-empty lines dropped.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "tiny-shakespeare.txt",
+          "numbers": true,
+          "lines": [
+            "First Citizen:",
+            "Before we proceed any further, hear me speak.",
+            "",
+            "All:",
+            "Speak, speak.",
+            "",
+            "First Citizen:",
+            "You are all resolved rather to die than to famish?",
+            "",
+            "All:",
+            "Resolved. resolved."
+          ]
+        },
+        "state": {
+          "shade": {
+            "gone": [
+              "l7",
+              "l10"
+            ]
+          }
+        }
+      },
+      "question": "Write `dedup_lines(text)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "starter": "def dedup_lines(text):\n    ...\n",
+        "solution": "def dedup_lines(text):\n    seen, kept, removed = set(), [], 0\n    for line in text.split('\\n'):\n        if line == '':\n            continue\n        if line in seen:\n            removed += 1\n        else:\n            seen.add(line)\n            kept.append(line)\n    return kept, removed\n",
+        "examples": [
+          {
+            "call": "dedup_lines('All:\\nSpeak.\\n\\nAll:\\nGo.\\n')",
+            "expect": "(['All:', 'Speak.', 'Go.'], 1)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "list(dedup_lines('All:\\nSpeak.\\n\\nAll:\\nGo.\\n'))",
+            "expect": "[['All:', 'Speak.', 'Go.'], 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(dedup_lines('a\\nb\\na\\nb\\na\\n'))",
+            "expect": "[['a', 'b'], 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(dedup_lines(''))",
+            "expect": "[[], 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(dedup_lines('\\n\\n\\n'))",
+            "expect": "[[], 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(dedup_lines('b\\na\\nb\\nc'))",
+            "expect": "[['b', 'a', 'c'], 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(dedup_lines('Go.\\ngo.\\nGo. \\nGo.'))",
+            "expect": "[['Go.', 'go.', 'Go. '], 1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "k, r = dedup_lines(open('tiny-shakespeare.txt').read())",
+            "call": "[len(k), r, k[:4]]",
+            "expect": "[5920, 1686, ['First Citizen:', 'Before we proceed any further, hear me speak.', 'All:', 'Speak, speak.']]",
+            "compare": "equal",
+            "budget": 2000
+          }
+        ],
+        "how": "Check runs 7 hidden tests: small texts with repeats, blank lines, and near misses that differ in case or a trailing space. The last reads the whole Shakespeare slice and checks the kept count, the removed count and the first four kept lines.",
+        "mutants": [
+          {
+            "source": "def dedup_lines(text):\n    seen, kept, removed = set(), [], 0\n    for line in text.split('\\n'):\n        if line in seen:\n            removed += 1\n        else:\n            seen.add(line)\n            kept.append(line)\n    return kept, removed\n",
+            "test": 1,
+            "symptom": "Treats blank lines as lines, so repeated blanks count as removed."
+          },
+          {
+            "source": "def dedup_lines(text):\n    seen, kept, removed = set(), [], 0\n    for line in text.split('\\n'):\n        if line == '':\n            continue\n        line = line.lower()\n        if line in seen:\n            removed += 1\n        else:\n            seen.add(line)\n            kept.append(line)\n    return kept, removed\n",
+            "test": 1,
+            "symptom": "Ignores case, so lines that differ in case are merged."
+          },
+          {
+            "source": "from collections import Counter\n\n\ndef dedup_lines(text):\n    lines = [l for l in text.split('\\n') if l != '']\n    c = Counter(lines)\n    return list(dict.fromkeys(lines)), sum(1 for v in c.values() if v > 1)\n",
+            "test": 2,
+            "symptom": "Counts each repeated line once, not each repeat."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep a set of lines already seen."
+        },
+        {
+          "rung": "point",
+          "text": "A line already in the set adds 1 to `removed`; a new line goes into the set and onto `kept`.",
+          "highlight": [
+            "l7",
+            "l10"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Loop over `text.split('\\n')`, `continue` on `''`, then check membership in the set."
+        }
+      ],
+      "feedback": {
+        "correct": "On the slice you keep 5,920 lines and remove 1,686.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 is only blank lines. Skip them; they are neither kept nor counted as removed.",
+          "test-6": "Test 6 has lines that differ only in case or a trailing space. Exact deduplication treats them as different."
+        }
+      },
+      "explain": {
+        "text": "A set makes each check cost about the same whatever the text's size. On the slice, 1,686 of 7,606 non-empty lines are repeats, and nearly all are speaker tags."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Shingles and Jaccard in code",
+      "prose": "Write `shingles(text, n)`, the set of every run of `n` characters in `text`, and `jaccard(a, b)` for two sets, not both empty.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Set",
+            "Size"
+          ],
+          "rows": [
+            [
+              "Story 1 shingles",
+              "88"
+            ],
+            [
+              "Story 2 shingles",
+              "88"
+            ],
+            [
+              "Shared",
+              "83"
+            ],
+            [
+              "In either",
+              "93"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "Write `shingles` and `jaccard`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def shingles(text, n):\n    ...\n\n\ndef jaccard(a, b):\n    ...\n",
+        "solution": "def shingles(text, n):\n    return {text[i:i + n] for i in range(len(text) - n + 1)}\n\n\ndef jaccard(a, b):\n    return len(a & b) / len(a | b)\n",
+        "examples": [
+          {
+            "call": "sorted(shingles('abcab', 2))",
+            "expect": "['ab', 'bc', 'ca']",
+            "compare": "equal"
+          },
+          {
+            "call": "jaccard({1, 2, 3}, {2, 3, 4})",
+            "expect": "0.5",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "sorted(shingles('abcab', 2))",
+            "expect": "['ab', 'bc', 'ca']",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(shingles('price', 5))",
+            "expect": "['price']",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(shingles('abc', 5))",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(shingles('aaaaaa', 3))",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "len(shingles('Shell shares rose 2% to £27.10 on Tuesday after the oil major raised its quarterly dividend.', 5))",
+            "expect": "88",
+            "compare": "equal"
+          },
+          {
+            "call": "jaccard({1, 2, 3}, {2, 3, 4})",
+            "expect": "0.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "jaccard({'x'}, {'x'})",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "jaccard({'x'}, {'y'})",
+            "expect": "0.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "jaccard(shingles('Shell shares rose 2% to £27.10 on Tuesday after the oil major raised its quarterly dividend.', 5), shingles('Shell shares rose 2% to £27.40 on Tuesday after the oil major raised its quarterly dividend.', 5))",
+            "expect": "0.89247311828",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "jaccard(shingles('£27.10', 3), shingles('£27.40', 3))",
+            "expect": "0.333333333333",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          }
+        ],
+        "how": "Check runs 10 hidden tests: shingles of short strings, a string shorter than `n`, a run of one letter and the price story. Jaccard values on small sets and on the two stories are accepted within a relative 1e-9. The sets in the tests are never both empty.",
+        "mutants": [
+          {
+            "source": "def shingles(text, n):\n    return {text[i:i + n] for i in range(len(text) - n)}\n\n\ndef jaccard(a, b):\n    return len(a & b) / len(a | b)\n",
+            "test": 2,
+            "symptom": "Misses the last shingle."
+          },
+          {
+            "source": "def shingles(text, n):\n    return {text[i:i + n] for i in range(len(text) - n + 1)}\n\n\ndef jaccard(a, b):\n    return len(a & b) / (len(a) + len(b))\n",
+            "test": 6,
+            "symptom": "Divides by the sum of the sizes, counting shared shingles twice."
+          },
+          {
+            "source": "def shingles(text, n):\n    return [text[i:i + n] for i in range(len(text) - n + 1)]\n\n\ndef jaccard(a, b):\n    return len(a & b) / len(a | b)\n",
+            "test": 1,
+            "symptom": "Returns a list, so repeated shingles are counted again."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A set comprehension over the starting positions builds the shingles."
+        },
+        {
+          "rung": "point",
+          "text": "Start positions run from 0 to `len(text) - n`.",
+          "highlight": [
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`{text[i:i + n] for i in range(len(text) - n + 1)}`, and `len(a & b) / len(a | b)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your sets and scores match: 0.8925 for the two stories.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 has a text shorter than `n`, which has no shingles: return an empty set.",
+          "test-9": "Test 9 is the two stories. Divide by the union `a | b`, not by one set's size."
+        }
+      },
+      "explain": {
+        "text": "`range(len(text) - n + 1)` gives every start, and a set drops repeats. Jaccard is then two set operations and a division."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "One note, three distributors",
+      "prose": "A research team collects broker notes. One note arrives through three distributors, each adding a header or footer. The same broker also sends a second note. The table gives each pair's Jaccard similarity over 5-character shingles.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Pair",
+            "Jaccard"
+          ],
+          "rows": [
+            [
+              "A and B",
+              "0.91"
+            ],
+            [
+              "A and C",
+              "0.83"
+            ],
+            [
+              "B and C",
+              "0.80"
+            ],
+            [
+              "A and D",
+              "0.22"
+            ],
+            [
+              "B and D",
+              "0.19"
+            ],
+            [
+              "C and D",
+              "0.18"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ],
+          "tap": "rows"
+        },
+        "state": {
+          "caption": "A, B and C carry the same note; D is the broker's other note."
+        }
+      },
+      "question": "With a threshold of 0.8, tap every pair the filter flags as near duplicates.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0",
+          "r1",
+          "r2"
+        ],
+        "wrong": [
+          {
+            "id": "with-d",
+            "set": [
+              "r0",
+              "r1",
+              "r2",
+              "r3",
+              "r4",
+              "r5"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Flag a pair when its Jaccard similarity is 0.8 or more."
+        },
+        {
+          "rung": "point",
+          "text": "The three copies of one note score far above the pairs with D.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rows A and B, A and C, and B and C."
+        }
+      ],
+      "feedback": {
+        "correct": "The three copies of the note are flagged; the second note is kept.",
+        "generic": "Not quite. Tap only the rows at 0.8 or above.",
+        "byKey": {
+          "with-d": "You flagged every pair. The pairs with D share only the broker's boilerplate and score well below 0.8."
+        }
+      },
+      "explain": {
+        "text": "The copies differ only in headers and a footer, so they score high; two of the three are dropped. Note D shares the broker's phrasing but not its content, so it stays.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Exact deduplication keeps a set of what it has seen; duplicates make a model memorise and can leak a test set into training.",
+      "Choose the unit with care: 98% of Tiny Shakespeare's repeated lines are speaker tags, so deduplicate documents, not lines.",
+      "Near duplicates share most shingles: Jaccard similarity $|A \\cap B| / |A \\cup B|$, estimated at scale by MinHash; a near copy can still carry a different fact."
+    ],
+    "formula": {
+      "name": "Jaccard similarity",
+      "tex": "J(A, B) = \\frac{|A \\cap B|}{|A \\cup B|}",
+      "note": "$A$ and $B$ are shingle sets, not both empty."
+    },
+    "trap": "Deduplicating at the wrong unit: line-level cleaning of a play deletes its speaker tags, which are structure, not repetition."
+  },
+  "quiz": [
+    {
+      "id": "q-slice-dedup",
+      "difficulty": 2,
+      "prose": "The course's slice of Tiny Shakespeare has 7,606 non-empty lines, of which 5,920 are distinct.",
+      "question": "How many lines does exact line deduplication remove?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1686,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "kept",
+            "value": 5920,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Lines removed"
+      },
+      "feedback": {
+        "correct": "$7606 - 5920 = 1686$ lines.",
+        "generic": "Not quite. Subtract the distinct lines from all the lines.",
+        "byKey": {
+          "kept": "That is the number kept. Removed is the rest."
+        }
+      },
+      "explain": {
+        "text": "Each distinct line is kept once, so $7606 - 5920 = 1686$ are removed, nearly all speaker tags."
+      }
+    },
+    {
+      "id": "q-leak",
+      "difficulty": 3,
+      "prose": "A team scores its model on a test set of news paragraphs. Later it finds that 30% of the test paragraphs also appear, word for word, in the training data.",
+      "question": "What does that do to the reported test score?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "optimistic",
+            "text": "It makes the score look better than the model would do on new text",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "Nothing: a paragraph is scored the same wherever it appears",
+            "why": "A model can memorise text it trained on. Its loss on those paragraphs is lower than on unseen ones."
+          },
+          {
+            "id": "worse",
+            "text": "It makes the score look worse",
+            "why": "Seen text is easier for the model, not harder."
+          },
+          {
+            "id": "only-30",
+            "text": "It changes only the 30% and averages out",
+            "why": "The 30% pull the average down, so the whole test loss is too low."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Leaked test text is partly memorised, so the test loss is too low.",
+        "generic": "Not quite. What can a model do with text it trained on?"
+      },
+      "explain": {
+        "text": "A test set must be unseen. Paragraphs copied into training are partly memorised, so the test score overstates how the model does on new text."
+      }
+    },
+    {
+      "id": "q-shingle-count",
+      "difficulty": 2,
+      "question": "How many distinct 3-character shingles does `aaaa` have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "positions",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "chars",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Distinct shingles"
+      },
+      "feedback": {
+        "correct": "One: both starting positions give `aaa`.",
+        "generic": "Not quite. List the shingles, then remove repeats.",
+        "byKey": {
+          "positions": "There are 2 starting positions, but both give `aaa`; a set keeps it once."
+        }
+      },
+      "explain": {
+        "text": "Positions 0 and 1 both give `aaa`, so the set holds 1 shingle. Shingle sets count distinct runs, not positions."
+      }
+    }
+  ]
+}

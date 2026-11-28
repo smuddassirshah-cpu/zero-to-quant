@@ -1,0 +1,1387 @@
+{
+  "id": "l3-encode-and-decode",
+  "course": "gpt",
+  "title": "Encoding and decoding",
+  "minutes": 15,
+  "objectives": [
+    "Build an encoder and decoder from a list of merges, and measure bytes per token."
+  ],
+  "skills": [
+    "gpt-token"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "New text, old merges",
+      "prose": "The last lesson's toy tokeniser learned four merges from `bid bids bidder bidding`: `bi`, `bid`, ` bid` and ` bidd`. Now it meets new text, `bidding bids`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "b",
+            "i",
+            "d",
+            "d",
+            "i",
+            "n",
+            "g",
+            "␣",
+            "b",
+            "i",
+            "d",
+            "s"
+          ]
+        },
+        "state": {
+          "caption": "bidding bids: 12 bytes; the box is a space."
+        }
+      },
+      "question": "Apply the four merges. How many tokens is `bidding bids`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "bytes",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "bidd",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Tokens"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Apply `bi` first, everywhere, then `bid`, then ` bid`, then ` bidd`."
+        },
+        {
+          "rung": "point",
+          "text": "`bidding` starts the text, so no space comes before it.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`bid`, `d`, `i`, `n`, `g`, ` bid`, `s`: 7 tokens."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven: `bid d i n g` then ` bid s`.",
+        "generic": "Not quite. Apply each merge in turn and count what is left.",
+        "byKey": {
+          "bytes": "That is the byte count, before any merge.",
+          "bidd": "You merged `bidd` at the start, but the learned token is ` bidd`, with a space. `bidding` here has no space before it."
+        }
+      },
+      "explain": {
+        "text": "`bi` and `bid` apply to both words, and ` bid` to the second. ` bidd` needs a space before `bid d`, which the first word lacks, so 7 tokens."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Replaying the merges",
+      "prose": "Encoding replays the merges in the order they were learned, each one everywhere it applies. Step through the four merges on `bidding bids`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "b",
+            "i",
+            "d",
+            "d",
+            "i",
+            "n",
+            "g",
+            "␣",
+            "b",
+            "i",
+            "d",
+            "s"
+          ],
+          "steps": [
+            {
+              "cells": [
+                "b",
+                "i",
+                "d",
+                "d",
+                "i",
+                "n",
+                "g",
+                "␣",
+                "b",
+                "i",
+                "d",
+                "s"
+              ],
+              "caption": "bidding bids: 12 bytes."
+            },
+            {
+              "cells": [
+                "bi",
+                "d",
+                "d",
+                "i",
+                "n",
+                "g",
+                "␣",
+                "bi",
+                "d",
+                "s"
+              ],
+              "caption": "Apply merge 1, `bi`: 10 tokens."
+            },
+            {
+              "cells": [
+                "bid",
+                "d",
+                "i",
+                "n",
+                "g",
+                "␣",
+                "bid",
+                "s"
+              ],
+              "caption": "Apply merge 2, `bid`: 8 tokens."
+            },
+            {
+              "cells": [
+                "bid",
+                "d",
+                "i",
+                "n",
+                "g",
+                "␣bid",
+                "s"
+              ],
+              "caption": "Apply merge 3, `␣bid`: 7 tokens."
+            },
+            {
+              "cells": [
+                "bid",
+                "d",
+                "i",
+                "n",
+                "g",
+                "␣bid",
+                "s"
+              ],
+              "caption": "Apply merge 4, `␣bidd`: 7 tokens."
+            }
+          ]
+        },
+        "state": {
+          "step": 0
+        },
+        "controls": [
+          {
+            "bind": "step",
+            "min": 0,
+            "max": 4,
+            "step": 1,
+            "label": "Merge",
+            "start": 0
+          }
+        ]
+      },
+      "question": "Which merge changes nothing here?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "m1",
+            "text": "`bi`",
+            "why": "Slide to merge 1: the row drops from 12 to 10 cells."
+          },
+          {
+            "id": "m2",
+            "text": "`bid`",
+            "why": "Slide to merge 2: the row drops from 10 to 8."
+          },
+          {
+            "id": "m3",
+            "text": "` bid`",
+            "why": "Slide to merge 3: the space joins `bid` in the second word."
+          },
+          {
+            "id": "m4",
+            "text": "` bidd`",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the cell count at each step."
+        },
+        {
+          "rung": "point",
+          "text": "Compare steps 3 and 4.",
+          "highlight": [
+            "c0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "` bidd` finds no space before `bid d`, so it changes nothing.",
+        "generic": "Not quite. Find the step where the cell count stays the same."
+      },
+      "explain": {
+        "text": "The ` bidd` merge needs ` bid` followed by `d`. Here `bid d` starts the text with no space, so the merge never fires and we end with 7 tokens."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Decoding",
+      "prose": "Each new id stands for the bytes of its two parts. So every token's bytes can be built up in merge order. **Decoding** joins the bytes of the tokens and reads them as UTF-8.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Id",
+            "Merge of",
+            "Bytes"
+          ],
+          "rows": [
+            [
+              "256",
+              "98 + 105",
+              "bi"
+            ],
+            [
+              "257",
+              "256 + 100",
+              "bid"
+            ],
+            [
+              "258",
+              "32 + 257",
+              "␣bid"
+            ],
+            [
+              "259",
+              "258 + 100",
+              "␣bidd"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "The toy tokeniser's merges, in training order; 98 is b, 105 i, 100 d, 32 a space."
+        }
+      },
+      "question": "How many bytes does token 259 stand for?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "pair",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-space",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Bytes in token 259"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "259 is 258 followed by 100."
+        },
+        {
+          "rung": "point",
+          "text": "258 is a space followed by 257, which is `bid`.",
+          "highlight": [
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "` bid` is 4 bytes and `d` is 1: 5 bytes."
+        }
+      ],
+      "feedback": {
+        "correct": "Five bytes: a space, b, i, d, d.",
+        "generic": "Not quite. Expand 259 into its parts, then those into theirs.",
+        "byKey": {
+          "pair": "259 is made of two ids, but 258 itself stands for 4 bytes.",
+          "no-space": "You dropped the space. 258 is space plus `bid`."
+        }
+      },
+      "explain": {
+        "text": "259 is 258 plus `d`, 258 is a space plus 257, and 257 is `bid`. So 259 is ` bidd`, 5 bytes.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Text it never saw",
+      "prose": "The toy tokeniser was trained on four English words. Feed it `€5`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Id",
+            "Merge of",
+            "Bytes"
+          ],
+          "rows": [
+            [
+              "256",
+              "98 + 105",
+              "bi"
+            ],
+            [
+              "257",
+              "256 + 100",
+              "bid"
+            ],
+            [
+              "258",
+              "32 + 257",
+              "␣bid"
+            ],
+            [
+              "259",
+              "258 + 100",
+              "␣bidd"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "The toy tokeniser's merges, in training order; 98 is b, 105 i, 100 d, 32 a space."
+        }
+      },
+      "question": "How many tokens does `€5` become?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "chars",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "unknown",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Tokens"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "No merge involves the bytes of `€`."
+        },
+        {
+          "rung": "point",
+          "text": "So every byte stays a token of its own.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`€` is 3 bytes and `5` is 1: 4 tokens."
+        }
+      ],
+      "feedback": {
+        "correct": "Four tokens: `e2`, `82`, `ac` and `35`, the raw bytes.",
+        "generic": "Not quite. With no merge to apply, how many tokens is each byte?",
+        "byKey": {
+          "chars": "Characters are not tokens here. The euro sign is 3 bytes, and no merge joins them.",
+          "unknown": "There is no unknown token: bytes are the fallback, so `€` is spelt out byte by byte."
+        }
+      },
+      "explain": {
+        "text": "No merge touches these bytes, so each is its own token: 4 tokens, `[226, 130, 172, 53]`. Unseen text still encodes, just less compactly, and decodes back exactly."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Compression on held-out text",
+      "prose": "200 merges were learned on the first 20,000 characters of the Shakespeare slice. Encode the slice's last 25,000 characters, which the tokeniser never saw.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Text",
+            "Bytes",
+            "Tokens",
+            "Bytes per token"
+          ],
+          "rows": [
+            [
+              "Training",
+              "20,000",
+              "9,940",
+              "2.0121"
+            ],
+            [
+              "Held out",
+              "25,000",
+              "13,809",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "What is the bytes per token on the held-out text? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.8104,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 0.5524,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "train",
+            "value": 2.0121,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Bytes per token"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide bytes by tokens."
+        },
+        {
+          "rung": "point",
+          "text": "$25000 / 13809$.",
+          "highlight": [
+            "r1c1",
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$25000 / 13809 \\approx 1.8104$."
+        }
+      ],
+      "feedback": {
+        "correct": "$25000 / 13809 \\approx 1.8104$, below the 2.0121 on the training text.",
+        "generic": "Not quite. Divide the held-out bytes by the held-out tokens.",
+        "byKey": {
+          "inverted": "You divided tokens by bytes. Put bytes on top.",
+          "train": "That is the training text's figure. Work it out for the held-out row."
+        }
+      },
+      "explain": {
+        "text": "Held out, each token covers 1.8104 bytes against 2.0121 on the training text. A tokeniser compresses its own training text best. Measure bytes per token on the text you score.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Which order?",
+      "prose": "A tokeniser learned three merges, in this order: `er` as 256, `th` as 257, then `the` as 258 (257 followed by `e`). Encode `the there`; `th` is the most frequent pair in it.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Order",
+            "Id",
+            "Merge",
+            "Bytes"
+          ],
+          "rows": [
+            [
+              "1",
+              "256",
+              "e + r",
+              "er"
+            ],
+            [
+              "2",
+              "257",
+              "t + h",
+              "th"
+            ],
+            [
+              "3",
+              "258",
+              "257 + e",
+              "the"
+            ]
+          ],
+          "align": [
+            "right",
+            "right",
+            "left",
+            "left"
+          ]
+        }
+      },
+      "question": "How is the word `there` split?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "train",
+            "text": "`th` `er` `e`",
+            "correct": true
+          },
+          {
+            "id": "freq",
+            "text": "`the` `r` `e`",
+            "why": "You merged `th` first because it is the most frequent pair in this text. Encoding replays merges in training order, and `er` was learned first."
+          },
+          {
+            "id": "re",
+            "text": "`the` `re`",
+            "why": "There is no `re` merge. Only learned merges can apply."
+          },
+          {
+            "id": "whole",
+            "text": "`there` as one token",
+            "why": "No merge makes `there`. Tokens come only from the three learned merges."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Apply merge 1 first, everywhere."
+        },
+        {
+          "rung": "point",
+          "text": "After `er` is merged, `there` reads `t h er e`.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then `th` gives `th er e`, and `the` cannot apply: `th` is followed by `er`, not `e`."
+        }
+      ],
+      "feedback": {
+        "correct": "Training order gives `th er e`, while `the` alone becomes one token.",
+        "generic": "Not quite. Apply the merges in the order they were learned.",
+        "byKey": {
+          "freq": "That is the frequency-first mistake: it merges by counts in the new text. The same word would then be split one way here and another way in training."
+        }
+      },
+      "explain": {
+        "text": "Applying `er` first leaves `th er e` for `there`, and `the` merges only in the first word. Replaying in training order makes every text split as the model saw it in training.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Losses per token and per byte",
+      "prose": "Level 2 of `info` measured loss in nats and bits. A loss of $L$ nats per token, with $b$ bytes per token, is $L / b$ nats per byte. Dividing by $\\ln 2$ gives bits per byte.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "Loss (nats per token)",
+            "Bytes per token",
+            "Bits per byte"
+          ],
+          "rows": [
+            [
+              "Character bigram",
+              "2.4554",
+              "1",
+              "3.5424"
+            ],
+            [
+              "Token model",
+              "4.20",
+              "2.0121",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "The token model scores 4.20 nats per token on text where its tokeniser gives 2.0121 bytes per token. What is that in bits per byte? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.0114,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "no-ln2",
+            "value": 2.0874,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "per-token-bits",
+            "value": 6.0593,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "times",
+            "value": 12.192,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Bits per byte"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First turn nats per token into nats per byte."
+        },
+        {
+          "rung": "point",
+          "text": "$4.20 / 2.0121$ nats per byte.",
+          "highlight": [
+            "r1c1",
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$4.20 / (2.0121 \\times \\ln 2) \\approx 3.0114$ bits per byte."
+        }
+      ],
+      "feedback": {
+        "correct": "$4.20 / (2.0121 \\ln 2) \\approx 3.0114$ bits per byte: better than the bigram's 3.5424.",
+        "generic": "Not quite. Divide by the bytes per token, then by $\\ln 2$.",
+        "byKey": {
+          "no-ln2": "That is nats per byte. Divide by $\\ln 2 \\approx 0.6931$ to get bits.",
+          "per-token-bits": "That is bits per token. Spread it over the 2.0121 bytes each token covers.",
+          "times": "You multiplied by the bytes per token. A token covers several bytes, so the loss per byte is smaller: divide."
+        }
+      },
+      "explain": {
+        "text": "Per byte, the token model loses $4.20 / 2.0121$ nats, which is about 3.0114 bits. Its per-token loss looked worse than 2.4554, but per byte it beats the bigram's 3.5424.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "One unit for every tokeniser",
+      "prose": "Bits per byte is a loss that does not depend on the tokeniser:\n$$\\text{bits per byte} = \\frac{L}{b \\ln 2}$$\nwith $L$ the loss in nats per token and $b$ the bytes per token, both on the same text. Bytes per token is the compression ratio.",
+      "question": "Why is the division by $\\ln 2$ there?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "units",
+            "text": "It turns nats into bits",
+            "correct": true
+          },
+          {
+            "id": "bytes",
+            "text": "It turns tokens into bytes",
+            "why": "Dividing by $b$ does that. $\\ln 2$ changes the unit of information."
+          },
+          {
+            "id": "average",
+            "text": "It averages over the two halves of a pair",
+            "why": "Nothing is averaged. One bit is $\\ln 2$ nats, so nats divided by $\\ln 2$ are bits."
+          },
+          {
+            "id": "bigram",
+            "text": "It corrects for the bigram baseline",
+            "why": "No baseline enters the formula; it is a change of units."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many nats is one bit?"
+        }
+      ],
+      "feedback": {
+        "correct": "One bit is $\\ln 2 \\approx 0.6931$ nats, so dividing by $\\ln 2$ converts nats to bits.",
+        "generic": "Not quite. Think about the units of $L$."
+      },
+      "explain": {
+        "text": "$L / b$ is nats per byte, and one bit is $\\ln 2$ nats. Two models scored on the same text can then be compared, whatever their tokenisers."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the encoder and decoder",
+      "prose": "Write `encode(text, merges)`, returning the list of ids, and `decode(ids, merges)`, returning the string. `merges` is the list from `train_bpe`. Decode with `errors='replace'` so a cut-off character shows as U+FFFD.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Id",
+            "Merge of",
+            "Bytes"
+          ],
+          "rows": [
+            [
+              "256",
+              "98 + 105",
+              "bi"
+            ],
+            [
+              "257",
+              "256 + 100",
+              "bid"
+            ],
+            [
+              "258",
+              "32 + 257",
+              "␣bid"
+            ],
+            [
+              "259",
+              "258 + 100",
+              "␣bidd"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "The toy tokeniser's merges, in training order; 98 is b, 105 i, 100 d, 32 a space."
+        }
+      },
+      "question": "Write `encode` and `decode`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "def merge(ids, pair, new_id):\n    out, i = [], 0\n    while i < len(ids):\n        if i + 1 < len(ids) and ids[i] == pair[0] and ids[i + 1] == pair[1]:\n            out.append(new_id)\n            i += 2\n        else:\n            out.append(ids[i])\n            i += 1\n    return out\n\ndef train_bpe(text, n_merges):\n    ids, merges = list(text.encode('utf-8')), []\n    for k in range(n_merges):\n        counts = {}\n        for p in zip(ids, ids[1:]):\n            counts[p] = counts.get(p, 0) + 1\n        if not counts:\n            break\n        pair = max(counts, key=counts.get)\n        if counts[pair] < 2:\n            break\n        ids = merge(ids, pair, 256 + k)\n        merges.append(pair)\n    return merges\n\nTOY = [(98, 105), (256, 100), (32, 257), (258, 100)]\n",
+        "data": {
+          "tiny-shakespeare.txt": "content/data/ai/tiny-shakespeare.txt"
+        },
+        "starter": "def encode(text, merges):\n    ...\n\n\ndef decode(ids, merges):\n    ...\n",
+        "solution": "def encode(text, merges):\n    ids = list(text.encode('utf-8'))\n    for k, pair in enumerate(merges):\n        ids = merge(ids, pair, 256 + k)\n    return ids\n\n\ndef decode(ids, merges):\n    vocab = {i: bytes([i]) for i in range(256)}\n    for k, (a, b) in enumerate(merges):\n        vocab[256 + k] = vocab[a] + vocab[b]\n    return b''.join(vocab[i] for i in ids).decode('utf-8', errors='replace')\n",
+        "examples": [
+          {
+            "call": "encode('bidding bids', TOY)",
+            "expect": "[257, 100, 105, 110, 103, 258, 115]",
+            "compare": "equal"
+          },
+          {
+            "call": "decode([257, 115], TOY)",
+            "expect": "'bids'",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "encode('bidding bids', TOY)",
+            "expect": "[257, 100, 105, 110, 103, 258, 115]",
+            "compare": "equal"
+          },
+          {
+            "call": "decode([257, 100, 105, 110, 103, 258, 115], TOY)",
+            "expect": "'bidding bids'",
+            "compare": "equal"
+          },
+          {
+            "call": "decode([259], TOY)",
+            "expect": "' bidd'",
+            "compare": "equal"
+          },
+          {
+            "call": "encode('€5', TOY)",
+            "expect": "[226, 130, 172, 53]",
+            "compare": "equal"
+          },
+          {
+            "call": "[encode('', TOY), decode([], TOY)]",
+            "expect": "[[], '']",
+            "compare": "equal"
+          },
+          {
+            "call": "encode('the there', [(101, 114), (116, 104), (257, 101)])",
+            "expect": "[258, 32, 257, 256, 101]",
+            "compare": "equal"
+          },
+          {
+            "setup": "s = 'Price £5, up 3% \\U0001F4C8'",
+            "call": "decode(encode(s, TOY), TOY) == s",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "decode([226, 130], TOY)",
+            "expect": "'�'",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = open('tiny-shakespeare.txt').read(); m = train_bpe(text[:5000], 30); s = text[-3000:]",
+            "call": "[decode(encode(s, m), m) == s, len(encode(s, m))]",
+            "expect": "[True, 2309]",
+            "compare": "equal",
+            "budget": 3000
+          }
+        ],
+        "how": "Check runs 9 hidden tests: the toy merges (`TOY` is defined for you), an unseen euro sign, empty input and merges that must replay in training order. Others try round trips with £ and an emoji, a cut-off character, and 3,000 Shakespeare characters through 30 merges learned from the first 5,000. `merge` and `train_bpe` are defined for you.",
+        "mutants": [
+          {
+            "source": "def encode(text, merges):\n    ids = list(text.encode('utf-8'))\n    rank = {p: 256 + k for k, p in enumerate(merges)}\n    while True:\n        counts = {}\n        for p in zip(ids, ids[1:]):\n            if p in rank:\n                counts[p] = counts.get(p, 0) + 1\n        if not counts:\n            return ids\n        p = max(counts, key=counts.get)\n        ids = merge(ids, p, rank[p])\n\n\ndef decode(ids, merges):\n    vocab = {i: bytes([i]) for i in range(256)}\n    for k, (a, b) in enumerate(merges):\n        vocab[256 + k] = vocab[a] + vocab[b]\n    return b''.join(vocab[i] for i in ids).decode('utf-8', errors='replace')\n",
+            "test": 6,
+            "symptom": "Applies merges by their frequency in the new text, not in training order."
+          },
+          {
+            "source": "def encode(text, merges):\n    ids = list(text.encode('utf-8'))\n    for k, pair in enumerate(merges):\n        ids = merge(ids, pair, 256 + k)\n    return ids\n\n\ndef decode(ids, merges):\n    vocab = {i: bytes([i]) for i in range(256)}\n    for k, (a, b) in enumerate(merges):\n        vocab[256 + k] = vocab[a] + vocab[b]\n    return b''.join(vocab[i] for i in ids).decode('utf-8')\n",
+            "test": 8,
+            "symptom": "Decodes without errors='replace', so a cut-off character raises."
+          },
+          {
+            "source": "def encode(text, merges):\n    ids = list(text.encode('utf-8'))\n    for k, pair in enumerate(merges[:-1]):\n        ids = merge(ids, pair, 256 + k)\n    return ids\n\n\ndef decode(ids, merges):\n    vocab = {i: bytes([i]) for i in range(256)}\n    for k, (a, b) in enumerate(merges):\n        vocab[256 + k] = vocab[a] + vocab[b]\n    return b''.join(vocab[i] for i in ids).decode('utf-8', errors='replace')\n",
+            "test": 6,
+            "symptom": "Forgets the last merge."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`encode`: start from the UTF-8 bytes and apply each merge in order with `merge(ids, pair, 256 + k)`."
+        },
+        {
+          "rung": "point",
+          "text": "`decode`: build a dict from id to bytes, starting with `bytes([i])` for the 256 bytes.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Id `256 + k` maps to the bytes of its two parts joined; join the tokens' bytes and call `.decode('utf-8', errors='replace')`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every planted string survives the round trip, and the merges replay in training order.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-6": "Test 6 needs training order: apply merge 0 first, then 1, then 2, whatever the counts in the new text.",
+          "test-8": "Test 8 decodes a cut-off euro sign. Use `errors='replace'`, so it becomes U+FFFD instead of raising."
+        }
+      },
+      "explain": {
+        "text": "Encoding replays the merge list in order; decoding expands each id to its bytes. Because bytes are the fallback, `decode(encode(s)) == s` for every string."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Convert a loss",
+      "prose": "Write `bits_per_byte(loss_nats_per_token, bytes_per_token)`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "Loss (nats per token)",
+            "Bytes per token",
+            "Bits per byte"
+          ],
+          "rows": [
+            [
+              "Character bigram",
+              "2.4554",
+              "1",
+              "3.5424"
+            ],
+            [
+              "Token model",
+              "4.20",
+              "2.0121",
+              "3.0114"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "Write `bits_per_byte`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\ndef bits_per_byte(loss_nats_per_token, bytes_per_token):\n    ...\n",
+        "solution": "import math\n\n\ndef bits_per_byte(loss_nats_per_token, bytes_per_token):\n    return loss_nats_per_token / (bytes_per_token * math.log(2))\n",
+        "examples": [
+          {
+            "call": "bits_per_byte(2.4554, 1)",
+            "expect": "3.542393",
+            "compare": "isclose",
+            "tol": {
+              "abs": 5e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "bits_per_byte(2.4554, 1)",
+            "expect": "3.542393403",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-08
+            }
+          },
+          {
+            "call": "bits_per_byte(4.2, 2.0121)",
+            "expect": "3.011440372",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-08
+            }
+          },
+          {
+            "call": "bits_per_byte(math.log(65), 1)",
+            "expect": "6.022367813",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-08
+            }
+          },
+          {
+            "call": "bits_per_byte(math.log(2), 1)",
+            "expect": "1.0",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-08
+            }
+          },
+          {
+            "call": "bits_per_byte(0.0, 3.0)",
+            "expect": "0.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "bits_per_byte(3.1, 3.8)",
+            "expect": "1.176935428",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-08
+            }
+          },
+          {
+            "call": "bits_per_byte(2.6, 3.0)",
+            "expect": "1.250335702",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-08
+            }
+          }
+        ],
+        "how": "Check runs 7 hidden tests, each accepted within a relative 1e-8. They are the bigram's 2.4554 nats per character, the worked example, the uniform loss $\\ln 65$, one nat on a byte, a loss of 0 and two vendors' figures.",
+        "mutants": [
+          {
+            "source": "import math\n\n\ndef bits_per_byte(loss_nats_per_token, bytes_per_token):\n    return loss_nats_per_token / bytes_per_token\n",
+            "test": 1,
+            "symptom": "Leaves the loss in nats."
+          },
+          {
+            "source": "import math\n\n\ndef bits_per_byte(loss_nats_per_token, bytes_per_token):\n    return loss_nats_per_token * bytes_per_token / math.log(2)\n",
+            "test": 2,
+            "symptom": "Multiplies by the bytes per token instead of dividing."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the loss by the bytes per token."
+        },
+        {
+          "rung": "point",
+          "text": "Then divide by `math.log(2)`.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return loss_nats_per_token / (bytes_per_token * math.log(2))`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your conversion matches on every test.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 is the uniform loss $\\ln 65$ on one byte per character, which is $\\log_2 65 \\approx 6.0224$ bits. Check the $\\ln 2$."
+        }
+      },
+      "explain": {
+        "text": "One line: nats per token over bytes per token is nats per byte, and over $\\ln 2$ it is bits per byte. The uniform model over 65 characters gives $\\log_2 65 \\approx 6.0224$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Two vendors, two tokenisers",
+      "prose": "Two vendors score their models on the same set of research notes. A reports 3.10 nats per token with 3.8 bytes per token. B reports 2.60 nats per token with 3.0 bytes per token.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Vendor",
+            "Nats per token",
+            "Bytes per token"
+          ],
+          "rows": [
+            [
+              "A",
+              "3.10",
+              "3.8"
+            ],
+            [
+              "B",
+              "2.60",
+              "3.0"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "Which model predicts the notes better?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A: 1.18 bits per byte against B's 1.25",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "B: 2.60 nats per token is lower than 3.10",
+            "why": "You compared per-token losses across two tokenisers. A's tokens are longer, so each carries more text; convert to bits per byte first."
+          },
+          {
+            "id": "none",
+            "text": "Neither: different tokenisers cannot be compared",
+            "why": "They can, once both are put in bits per byte on the same text."
+          },
+          {
+            "id": "b2",
+            "text": "B: 1.25 bits per byte against A's 1.18",
+            "why": "You read the comparison the wrong way round. Lower loss is better."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Convert each to bits per byte."
+        },
+        {
+          "rung": "point",
+          "text": "A: $3.10 / (3.8 \\ln 2)$. B: $2.60 / (3.0 \\ln 2)$.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A is about 1.18 and B about 1.25 bits per byte."
+        }
+      ],
+      "feedback": {
+        "correct": "A wins at about 1.18 bits per byte, though its per-token loss is higher.",
+        "generic": "Not quite. Put both losses in bits per byte before comparing.",
+        "byKey": {
+          "b": "Per-token losses depend on token length. A's tokens cover 3.8 bytes, B's 3.0, so compare per byte."
+        }
+      },
+      "explain": {
+        "text": "A: $3.10 / (3.8 \\ln 2) \\approx 1.18$; B: $2.60 / (3.0 \\ln 2) \\approx 1.25$ bits per byte. A predicts the notes better: the lower per-token loss came from shorter tokens."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Encoding replays the merges in training order, each everywhere it applies; decoding joins each token's bytes and reads UTF-8.",
+      "Bytes are the fallback, so any string encodes and `decode(encode(s)) == s`; unseen text just compresses less.",
+      "Bytes per token is the compression ratio; compare models across tokenisers in bits per byte, $L / (b \\ln 2)$, on the same text."
+    ],
+    "formula": {
+      "name": "Bits per byte",
+      "tex": "\\text{bits per byte} = \\frac{L}{b \\ln 2}",
+      "note": "$L$ nats per token, $b$ bytes per token, on one text."
+    },
+    "trap": "Applying merges by their frequency in the new text instead of training order, or comparing per-token losses across tokenisers."
+  },
+  "quiz": [
+    {
+      "id": "q-decode-ids",
+      "difficulty": 2,
+      "prose": "With the toy merges (256 `bi`, 257 `bid`, 258 ` bid`, 259 ` bidd`), a model outputs the ids `[257, 115, 259, 101, 114]`.",
+      "question": "What text do they decode to?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`bids bidder`",
+            "correct": true
+          },
+          {
+            "id": "nospace",
+            "text": "`bidsbidder`",
+            "why": "Token 259 starts with a space, so a space separates the words."
+          },
+          {
+            "id": "d",
+            "text": "`bids bider`",
+            "why": "259 is ` bidd`, with two d's."
+          },
+          {
+            "id": "bid",
+            "text": "`bid s bidd e r`",
+            "why": "Decoding joins the bytes; the token boundaries leave no spaces."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`bid` + `s` + ` bidd` + `e` + `r` is `bids bidder`.",
+        "generic": "Not quite. Expand each id into its bytes and join them."
+      },
+      "explain": {
+        "text": "257 is `bid`, 115 is `s`, 259 is ` bidd`, then `e` and `r`. Joined, that is `bids bidder`."
+      }
+    },
+    {
+      "id": "q-char-bits",
+      "difficulty": 2,
+      "prose": "A character-level model reads plain English text, one byte per character. Its validation loss is 1.30 nats per character.",
+      "question": "What is that in bits per byte? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.8755,
+        "tol": {
+          "abs": 0.0001
+        },
+        "wrong": [
+          {
+            "id": "times",
+            "value": 0.9011,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ],
+        "label": "Bits per byte"
+      },
+      "feedback": {
+        "correct": "$1.30 / \\ln 2 \\approx 1.8755$ bits per byte.",
+        "generic": "Not quite. With one byte per token, only the unit changes.",
+        "byKey": {
+          "times": "You multiplied by $\\ln 2$. Bits are smaller units than nats, so the number grows: divide."
+        }
+      },
+      "explain": {
+        "text": "With $b = 1$, bits per byte is $L / \\ln 2$, and $1.30 / \\ln 2 \\approx 1.8755$."
+      }
+    },
+    {
+      "id": "q-round-trip",
+      "difficulty": 3,
+      "question": "Why does `decode(encode(s)) == s` hold for every string `s` with a byte-level BPE tokeniser?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bytes",
+            "text": "Merges only group bytes; decoding ungroups them",
+            "correct": true
+          },
+          {
+            "id": "train",
+            "text": "Every string was seen in training",
+            "why": "Most strings were not. Unseen text falls back to bytes, which still decode exactly."
+          },
+          {
+            "id": "unique",
+            "text": "Each string has one most frequent pair",
+            "why": "Frequency is not used at encoding time; the merge list is replayed as learned."
+          },
+          {
+            "id": "replace",
+            "text": "`errors='replace'` repairs any damage",
+            "why": "A full encoding never cuts a character, so nothing needs repairing."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Grouping and expanding are inverse, so the bytes, and the text, come back unchanged.",
+        "generic": "Not quite. What does a merge do to the bytes themselves?"
+      },
+      "explain": {
+        "text": "A merge never changes or drops a byte; it only groups two ids. Decoding undoes every grouping, so the original UTF-8 bytes return."
+      }
+    },
+    {
+      "id": "q-swap-tokeniser",
+      "difficulty": 3,
+      "prose": "A team retrains its tokeniser with more merges. The validation loss rises from 2.9 to 3.4 nats per token. Bytes per token rises from 3.1 to 3.9.",
+      "question": "Did the model get worse at predicting the text?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: bits per byte fell from about 1.35 to about 1.26",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: the loss rose from 2.9 to 3.4",
+            "why": "You compared per-token losses across two tokenisers. Longer tokens carry more text each."
+          },
+          {
+            "id": "same",
+            "text": "It cannot be told without the old model",
+            "why": "Both figures are on the same text, so bits per byte answers it."
+          },
+          {
+            "id": "yes2",
+            "text": "Yes: bits per byte rose from about 1.26 to about 1.35",
+            "why": "You swapped the two models' figures. Recompute each with its own bytes per token."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Per byte the loss fell, so the model predicts the text better.",
+        "generic": "Not quite. Convert both losses to bits per byte."
+      },
+      "explain": {
+        "text": "Before: $2.9 / (3.1 \\ln 2) \\approx 1.35$. After: $3.4 / (3.9 \\ln 2) \\approx 1.26$ bits per byte, lower, so better."
+      }
+    }
+  ]
+}
