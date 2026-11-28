@@ -7,7 +7,7 @@ the split is rebuilt from scikit-learn's load_digits and train_test_split and co
 forward pass on the shipped weights is recomputed with plain NumPy sliding windows and loops (no autograd, no im2col) and
 compared with the module; counts and parameter totals are built from arrays; the training runs are repeated here with the
 module's fit on three seeds, and only thresholds (or values recorded once, checked within a stated tolerance) are stated from
-them. Every code widget is run: the model solution passes, the starter fails, each mutant first fails the test it names, and
+them. The rate and the margin rule are set on validation digits only: no test score is computed for a candidate. Every code widget is run: the model solution passes, the starter fails, each mutant first fails the test it names, and
 the exact values in the tests are recomputed by route B.
 """
 import hashlib
@@ -190,6 +190,8 @@ cm = np.zeros((10, 10), int); np.add.at(cm, (yh, pred), 1)
 accx = float((pred == yh).mean()); pc = np.diag(cm) / cm.sum(1)
 accm, accs, accr, acca = (accB(FB[k], WTS[k], Xh, yh) for k in ('mlp', 'small', 'res', 'mlp-aug'))
 accv = accB(cnnB, WTS['exit'], Xv, yv)
+yf = yh.copy(); okk = np.flatnonzero(pred == yh)[:6]; yf[okk] = (yf[okk] + 1) % 10        # six right test labels changed: the l10 and homework plants
+acc_yf = accB(cnnB, WTS['exit'], Xh, yf)
 blank = softB(cnnB(WTS['exit'], np.zeros((1, 1, 8, 8))))[0]
 shx = {k: [accB(FB[k], WTS[k], shiftB(Xh, dx, dy), yh) for dx, dy in SH] for k in ('exit', 'mlp', 'mlp-aug', 'small')}
 c1, m1, a1 = (float(np.mean(shx[k])) for k in ('exit', 'mlp', 'mlp-aug'))
@@ -228,7 +230,7 @@ for lr in (0.001, 0.1):
     RUN[('smalllr', lr)] = run(o.cnn_logits, o.init_cnn(8, 0), Xt, yt, 10, lr, 0, val=True)
 RUN[('res', 0)] = run(o.res_logits, o.init_res(0, True), Xt, yt, 6, 0.01, 0, cosine=True)
 print(f'training runs done at {time.time() - T0:.0f} s')
-KIND = {'exit': cnnB, 'small': cnnB, 'cnnaug': cnnB, 'exitlr': cnnB, 'mlp': mlpB, 'mlpaug': mlpB, 'res': resB}
+KIND = {'exit': cnnB, 'small': cnnB, 'cnnaug': cnnB, 'mlp': mlpB, 'mlpaug': mlpB, 'res': resB}
 TE = {k: accB(KIND[k[0]], r_['P'], Xh, yh) for k, r_ in RUN.items() if k[0] in KIND}
 SHM = {}
 for k in [k for k in RUN if k[0] in ('exit', 'mlp', 'mlpaug', 'cnnaug')]:
@@ -239,6 +241,16 @@ for s in range(3):
           f'gap {SHM[("exit", s)][0] - SHM[("mlp", s)][0]:.4f}; aug cnn {SHM[("cnnaug", s)][0]:.4f} mlp {SHM[("mlpaug", s)][0]:.4f}; small val {RUN[("small", s)]["val"][-1]:.4f}')
 lv.claim(all(TE[('exit', s)] >= 0.98 for s in range(3)), 'the exit recipe scores at least 0.98 held out on all three seeds', covers=[0.98, 30, 0.02])
 lv.claim(abs(TE[('exit', 0)] - accx) <= 0.005 and abs(TE[('res', 0)] - accr) <= 0.005, 'the retrained seed-0 exit and residual nets score within 0.005 of the shipped weights')
+_tmp = tempfile.mkdtemp()
+exact = {}
+for k_, P_ in (('exit', RUN[('exit', 0)]['P']), ('small', RUN[('small', 0)]['P']), ('mlp', RUN[('mlp', 0)]['P']), ('res', RUN[('res', 0)]['P'])):
+    pth = os.path.join(_tmp, f'{k_}.json'); o.save_weights(P_, pth, digits=6)
+    exact[k_] = open(pth, 'rb').read() == open(os.path.join(AI, f'cnn-w-{k_}.json'), 'rb').read()
+shutil.rmtree(_tmp)
+lv.claim(all(exact.values()), f'the shipped exit, small, mlp and residual weight files are byte for byte what the seed-0 recipes write with save_weights(digits=6) {exact}')
+lv.claim(all(np.array_equal(np.round(a, 6), b) for a, b in zip(RUN[('exit', 0)]['P'], WTS['exit'])) and all(np.array_equal(np.round(a, 6), b) for a, b in zip(RUN[('res', 0)]['P'], WTS['res'])),
+         'round(retrained, 6) equals the shipped exit and residual arrays entry by entry')
+lv.claim(max(float(np.abs(a - b).max()) for a, b in zip(RUN[('mlpaug', 0)]['P'], WTS['mlp-aug'])) <= 1e-6, 'the shipped augmented MLP is the seed-0 recipe within 1e-6 (the one file whose last digit can move with summation order)')
 vlr = {lr: RUN[('exitlr', lr)]['val'][-1] for lr in (0.005, 0.01)}
 vlr[0.02] = RUN[('exit', 0)]['val'][-1]
 lv.claim(vlr[0.02] >= max(vlr[0.005], vlr[0.01]), f'rate 0.02 does best on validation of 0.005, 0.01, 0.02 (seed 0): {vlr}', covers=[0.005, 0.01, 0.02])
@@ -251,7 +263,22 @@ for s in range(3):
 gaps = [SHM[('exit', s)][0] - SHM[('mlp', s)][0] for s in range(3)]
 cross = [SHM[('exit', s)][0] - SHM[('mlp', q)][0] for s in range(3) for q in range(3)]
 auggaps = [SHM[('cnnaug', s)][0] - SHM[('mlpaug', s)][0] for s in range(3)]
-lv.claim(min(cross) >= 0.15 > 0.10, f'every CNN beats every MLP by at least 0.15 on one-pixel shifts (smallest {min(cross):.4f}); the rule of 0.10 sits below', covers=[0.15, 0.10])
+
+
+def shv(k, X, y, shifts):
+    return float(np.mean([accB(KIND[k[0]], RUN[k]['P'], shiftB(X, dx, dy), y) for dx, dy in shifts]))
+
+
+vcross = [shv(('exit', s), Xv, yv, SH) - shv(('mlp', q), Xv, yv, SH) for s in range(3) for q in range(3)]
+vaug = [shv(('cnnaug', s), Xv, yv, SH) - shv(('mlpaug', s), Xv, yv, SH) for s in range(3)]
+lv.claim(min(vcross) >= 0.17 and max(vaug) < 0.03 and 0.03 < 0.10 < 0.17,
+         f'the margin rule of 0.10 is set on shifted VALIDATION digits: every CNN beats every MLP by at least 0.17 (smallest {min(vcross):.4f}) and an augmented MLP is within 0.03 ({[round(g, 4) for g in vaug]}); 0.10 sits between',
+         covers=[0.17, 0.03, 0.10])
+lv.claim(all(shv(('mlpaug', s), Xv, yv, SH) > 0.93 and shv(('cnnaug', s), Xv, yv, SH) > 0.96 for s in range(3)) and max(vaug) < 0.05,
+         'the augmentation statements (MLP above 0.93, CNN above 0.96, gap under 0.05) hold on validation as well as on test')
+vg2 = [shv(('cnnaug', s), Xv, yv, SH2) - shv(('mlpaug', s), Xv, yv, SH2) for s in range(3)]
+lv.claim(all(0.06 <= round(g, 2) <= 0.10 for g in vg2) and max(vg2) > max(vaug),
+         f'at two pixels, which the augmented nets never saw, the gap returns to between 0.06 and 0.10 on validation ({[round(g, 4) for g in vg2]})', covers=[0.06, 0.10])
 lv.claim(all(SHM[('mlpaug', s)][0] > 0.93 for s in range(3)) and all(SHM[('cnnaug', s)][0] > 0.96 for s in range(3)) and max(auggaps) < 0.05,
          f'augmented: MLP above 0.93, CNN above 0.96, gap under 0.05 on three seeds ({[round(g, 4) for g in auggaps]})', covers=[0.93, 0.96, 0.05, 5025, 10])
 lv.claim(all(SHM[('exit', s)][1] < 0.2 and SHM[('mlp', s)][1] < 0.2 for s in range(3)), 'at two pixels both nets fall below 0.2 on three seeds', covers=[0.2])
@@ -318,7 +345,7 @@ nerr = int((pred != yh).sum()); trace = int(np.trace(cm))
 E(L9, 'screens[4].widget.answer', r4(accx)); E(L9, 'screens[4].widget.wrong[0].value', r4(1 - accx)); EA(L9, 'screens[4]', trace, len(yh), r4(accx), nerr)
 EA(L9, 'screens[5].widget.how', 10, len(yh))
 E(L9, 'screens[6].widget.answer', r4(pc[8])); E(L9, 'screens[6].widget.wrong[0].value', r4(accx)); E(L9, 'screens[6].widget.wrong[1].value', r4(1 - pc[8]))
-EA(L9, 'screens[6]', int(cm[8].sum()), int(cm[8, 8]), nerr, round(100 * accx)); E(L9, 'screens[6].title', round(100 * 0.98))
+EA(L9, 'screens[6]', int(cm[8].sum()), int(cm[8, 8]), nerr, round(100 * 0.98)); E(L9, 'screens[6].title', round(100 * 0.98))
 lv.claim(int(np.argmin(pc)) == 8 and cm[8, 1] == 2 and all(pc[k] == 1 for k in (0, 1, 4, 6, 7)), 'digit 8 is worst; two 8s read as 1; every 0, 1, 4, 6, 7 right')
 F13 = np.round(WTS['exit'][0][13, 0], 2)
 for v in list(F13[0]) + list(F13[2]):
@@ -348,7 +375,7 @@ gV = (8 * 4 * 4) * 10
 E(L10, 'screens[4].widget.answer', gV); E(L10, 'screens[4].widget.wrong[0].value', 32 * 10); E(L10, 'screens[4].widget.wrong[1].value', gV + 10); EA(L10, 'screens[4]', 8 * 4 * 4)
 budget5 = lv.files[L10]['screens'][5]['widget']['tests'][4]['budget'] / 1000
 lv.claim(3 * 32 == 96 and len(Xt[:96]) == 96, '96 digits are 3 batches of 32', covers=[96])
-EA(L10, 'screens[5].widget.how', 1005, 0.90, budget5)
+EA(L10, 'screens[5].widget.how', 1005, 0.90, budget5, 0.01, 0.02)
 vs = series(L10, 6, 'val'); ls = series(L10, 6, 'loss')
 best = int(np.argmax(vs)) + 1
 E(L10, 'screens[6].widget.answer', best); E(L10, 'screens[6].widget.wrong[0].value', int(np.argmin(ls)) + 1); EA(L10, 'screens[6]', max(vs), vs[-1])
@@ -359,7 +386,8 @@ EA(L10, 'screens[7]', tt[int(np.argmax(tv))], max(tt), r4(np.mean(tt)), max(tv),
 lv.claim(tt[int(np.argmax(tv))] == accx.__round__(4), 'the trap’s chosen net scores the shipped exit figure, a made-up table built around it')
 EA(L10, 'screens[8]', round(math.log(10), 2), 0.10, len(yv))
 lv.claim(abs(np.bincount(yv).max() / len(yv) - 0.1) < 0.005, 'one fixed class is right about a tenth of the time on validation', covers=['a tenth', 'A tenth', 0.1])
-EA(L10, 'screens[9]', 16, 0.02, 30, 32, 0.005, 0.01, 0.98, r4(accx), r4(accs), round(accx * len(yh)), len(yh))
+EA(L10, 'screens[9]', 16, 0.02, 30, 32, 0.005, 0.01, 0.98, r4(accx), r4(accs), round(accx * len(yh)), len(yh), r4(acc_yf), 0.97)
+lv.claim(0.97 < acc_yf < 0.98 and acc_yf == 526 / 540, 'six changed test labels leave the exit net at 526 of 540: below 0.98 and above 0.97')
 lv.claim(len(np.flatnonzero(pred == yh)[:50]) == 50, 'the planted set has 50 digits the exit net reads right, one relabelled', covers=[50])
 E(L10, 'screens[10].widget.answer', 1); E(L10, 'screens[10].widget.wrong[0].value', 30); E(L10, 'screens[10].widget.wrong[1].value', 0)
 EA(L10, 'summary', 1005, steps, 16, 0.02, 30, 0.98, r4(accx), best)
@@ -406,7 +434,8 @@ for v in shx['exit']:
 EA(L12, 'screens[3]', len(yh), r2(accx), r2(accm), 0.2)
 lv.claim((accx - c1) / accx > 1 / 3 and (accm - m1) / accm > 1 / 2 and c2 < 0.2 and m2 < 0.2, 'one pixel costs the CNN over a third and the MLP over half; at two pixels both are below 0.2', covers=['a third', 0.2])
 EA(L12, 'screens[4]', pool_n)
-EA(L12, 'screens[5]', len(yt), 5 * len(yt), r3(a1), r2(a1), r2(m1), 0.17, 0.10)
+EA(L12, 'screens[5]', len(yt), 5 * len(yt), r3(a1), r2(a1), r2(m1), 0.17, 0.10, 0.06)
+EA(L12, 'screens[10]', 0.17, 0.03, 0.10)
 tab = lv.files[L12]['screens'][5]['canvas']['params']['rows']
 lv.claim([float(r_[1]) for r_ in tab] == [r3(c1), r3(m1), r3(a1)], 'the augmentation table holds the shipped nets’ mean shifted accuracies')
 for g in auggaps:
@@ -415,7 +444,8 @@ lv.claim(abs(r2(c1) - r2(m1) - 0.17) < 0.006, 'the gap before augmenting is abou
 EA(L12, 'screens[6]', r2(accx), r2(c1), r2(m1))
 ink = Xh[117, 0, :, 7]
 E(L12, 'screens[7].widget.answer', int((ink > 0).sum())); E(L12, 'screens[7].widget.wrong[0].value', 8); E(L12, 'screens[7].feedback.correct', int(round(ink.sum() * 16)))
-EA(L12, 'screens[9]', r3(c1), r3(m1), r3(c1 - m1), 0.15, 0.10, len(yh))
+EA(L12, 'screens[9]', r3(c1), r3(m1), r3(c1 - m1), 0.17, 0.10, len(yh))
+lv.claim(0.57 - 0.47 < 0.10 and (0.57 - 0.47) >= 0.10 - 1e-9 and 0.10 - (0.57 - 0.47) < 1e-9, 'floating point: 0.57 - 0.47 is a hair below 0.10, so the margin test allows 1e-9')
 lv.claim(round(0.71 - 0.63, 2) == 0.08 and round(100 * (0.71 / 0.63 - 1)) == 13, 'the generalise check: a gap of 0.08, a ratio 13% up', covers=[0.08, 13, 0.71, 0.63])
 E(L12, 'screens[10].prose', 0.25)
 EA(L12, 'summary', r2(c1), r2(m1), 0.10, 0.2, 0.93, 0.05)
@@ -436,10 +466,12 @@ E('review', 'items[6].widget.answer', 1 + 0.7 * 2 * (2 * -1 > 0)); E('review', '
 rowp = [3, 0, 0, 5]; sp = [0, 3, 0, 0]
 E('review', 'items[7].widget.answer', sum(max(rowp[2 * i:2 * i + 2]) != max(sp[2 * i:2 * i + 2]) for i in range(2)))
 E('review', 'items[8].widget.answer', round(0.47 + 0.10, 2)); E('review', 'items[8].widget.wrong[0].value', round(0.47 * 1.10, 2)); EA('review', 'items[8]', 0.47, 0.10)
+proj8 = 16 * (8 + 1)
+E('review', 'items[9].widget.answer', proj8); E('review', 'items[9].widget.wrong[0].value', 16 * 8); E('review', 'items[9].widget.wrong[1].value', 16 * (8 * 9 + 1))
 
 # =================== 6f. homework ===================
-EA('homework', 'items[0]', 0.98, 0.10, r4(accx), r3(c1), r3(m1), r3(a1))
-EA('homework', 'items[1].widget.how', 50, len(Xa[::50]), 5025, 158, 4, 0.85)
+EA('homework', 'items[0]', 0.98, 0.10, r4(accx), r3(c1), r3(m1), r3(a1), 0.05, 0.08)
+EA('homework', 'items[1].widget.how', 50, len(Xa[::50]), 5025, 158, 4, 0.85, 0.01, 0.02)
 lv.claim(ceil_div(101, 32) == 4 and len(Xa[::50]) == 101, 'every 50th augmented image: 101 images, 4 steps an epoch', covers=[101])
 EA('homework', 'items[1].explain.text', 0.65, 0.90)
 lv.claim(abs((0.985 - 0.62) / 0.985 - 0.37) < 0.01, 'the memo’s digits example: 0.99 to 0.62', covers=[0.99, 0.62, 0.05, 50, 20, 60])
@@ -558,25 +590,30 @@ lv.claim(tex(L9, 'screens', 3, 2) == pred[five].tolist() and close(tex(L9, 'scre
 lv.claim(tex(L9, 'screens', 5, 3) == cm.tolist() and close(tex(L9, 'screens', 7, 2), pc, None) and tex(L9, 'screens', 7, 3) == 8, 'l9 confusion and per-class tests')
 lv.claim(close(tex(L10, 'screens', 9, 0), accx, None) and close(tex(L10, 'screens', 9, 1), accs, None) and close(tex(L10, 'screens', 9, 2), accv, None), 'l10 evaluate tests')
 Pa, _ = o.fit(o.cnn_logits, o.init_cnn(8, 3), Xt[:96], yt[:96], 1, 0.01, 3)
-Pb, _ = o.fit(o.cnn_logits, o.init_cnn(8, 4), Xt[:96], yt[:96], 2, 0.01, 4)
+Pb, _ = o.fit(o.cnn_logits, o.init_cnn(8, 4), Xt[:96], yt[:96], 2, 0.02, 4)
 la = float(np.mean(-np.log(softB(cnnB(Pa, Xt[:96]))[np.arange(96), yt[:96]])))
 lb = float(np.mean(-np.log(softB(cnnB(Pb, Xt[:96]))[np.arange(96), yt[:96]])))
-lv.claim(close(tex(L10, 'screens', 5, 1), la, {'rel': 1e-7}) and close(tex(L10, 'screens', 5, 2), lb, {'rel': 1e-7}), f'l10 exact short runs: losses {la:.6f} (3 steps) and {lb:.6f} (6 steps) by fit and a plain NumPy loss')
+lv.claim(close(tex(L10, 'screens', 5, 1), la, {'rel': 1e-7}) and close(tex(L10, 'screens', 5, 2), lb, {'rel': 1e-7}), f'l10 exact short runs: losses {la:.6f} (3 steps at 0.01) and {lb:.6f} (6 steps at 0.02) by fit and a plain NumPy loss')
 lv.claim(close(tex(L11, 'screens', 8, 2), accr, None), 'l11 block test: the residual net’s held-out accuracy')
 hh = np.maximum(convB(Xh[:2], WTS['res'][0], WTS['res'][1]), 0)
 lv.claim(close(tex(L11, 'screens', 8, 1), blockB(hh, *WTS['res'][2:6])[0, :, 3, 3], {'abs': 1e-9}), 'l11 block test: one output pixel by plain NumPy')
+lv.claim(close(tex(L11, 'screens', 8, 6), blockB(hh - 0.5, *WTS['res'][2:6])[0, :, 3, 3], {'abs': 1e-9}) and not close(tex(L11, 'screens', 8, 6), (np.maximum(hh - 0.5, 0) + blockB(hh - 0.5, *WTS['res'][2:6]) - (hh - 0.5))[0, :, 3, 3], {'abs': 1e-9}),
+         'l11 signed-input block test: one output pixel on h - 0.5 by plain NumPy, and it differs from a block that clips the identity path')
 pl_rec = eval(lv.files[L11]['screens'][10]['widget']['tests'][0]['setup'].split('; _rs = ')[0].split('_pl = ')[1])
 lv.claim(pl_rec == [series(L11, 0, 'pl')] + pl_rec[1:] and tex(L11, 'screens', 10, 1) == [next(i for i, v in enumerate(p_ + [0]) if v <= 2.2) for p_ in pl_rec], 'l11 curve tests: the recorded plain curves and their stuck epochs')
 lv.claim(close(tex(L12, 'screens', 9, 0), shx['exit'], None) and close(tex(L12, 'screens', 9, 1), shx['mlp'], None), 'l12 shifted-accuracy tests')
 lv.claim(close(tex('homework', 'items', 0, 1), [accx, accm], None) and close(tex('homework', 'items', 0, 2), shx['exit'], None) and close(tex('homework', 'items', 0, 3), shx['mlp'], None), 'homework report tests')
-yf = yh.copy(); okk = np.flatnonzero(pred == yh)[:6]; yf[okk] = (yf[okk] + 1) % 10
 gapf = np.mean([accB(cnnB, WTS['exit'], shiftB(Xh, dx, dy), yf) for dx, dy in SH]) - np.mean([accB(mlpB, WTS['mlp'], shiftB(Xh, dx, dy), yf) for dx, dy in SH])
 lv.claim(accB(cnnB, WTS['exit'], Xh, yf) < 0.98 and gapf >= 0.10 and c1 - a1 < 0.10 and accs < 0.98, 'homework plants: relabelled set fails only the 0.98 bar; the augmented MLP breaks the margin; the 8-filter net fails the bar')
 Pf1, _ = o.fit(o.cnn_logits, WTS['exit'], Xa[::50], ya[::50], 1, 0.01, 5)
-Pf2, _ = o.fit(o.cnn_logits, WTS['exit'], Xa[::50], ya[::50], 2, 0.01, 6)
+Pf2, _ = o.fit(o.cnn_logits, WTS['exit'], Xa[::50], ya[::50], 2, 0.02, 6)
 lf1 = float(np.mean(-np.log(softB(cnnB(Pf1, Xa[::50]))[np.arange(101), ya[::50]])))
 lf2 = float(np.mean(-np.log(softB(cnnB(Pf2, Xa[::50]))[np.arange(101), ya[::50]])))
 lv.claim(close(tex('homework', 'items', 1, 2), lf1, {'rel': 1e-7}) and close(tex('homework', 'items', 1, 3), lf2, {'rel': 1e-7}), f'homework fine-tune exact runs: {lf1:.6f} and {lf2:.6f}')
+_mb = [0.7 * p + 0.3 * q for p, q in zip(WTS['mlp'], WTS['mlp-aug'])]
+mix = float(np.mean([accB(mlpB, _mb, shiftB(Xh, dx, dy), yh) for dx, dy in SH]))
+lv.claim(accx >= 0.98 and 0.05 < c1 - mix < 0.10 and round(c1 - mix, 2) == 0.08,
+         f'homework plant 9: an MLP part way to the augmented one (0.7 of the plain weights, 0.3 of the augmented) trails the CNN by {c1 - mix:.4f}, above 0.05 and below 0.10; the CNN meets the bar')
 print(f'done at {time.time() - T0:.0f} s')
 lv.check_wrongs()
 lv.report()

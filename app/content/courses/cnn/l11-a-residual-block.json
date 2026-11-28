@@ -129,7 +129,7 @@
         "generic": "Not quite. Compare each curve with the guessing line."
       },
       "explain": {
-        "text": "Its loss stays at the guessing level $\\ln 10 = 2.30$ for 2 epochs and is above the shallow net’s at every epoch. The signal through two small extra layers is too weak to learn from at first."
+        "text": "Its loss stays at the guessing level $\\ln 10 = 2.30$ for 2 epochs and is above the shallow net’s at every epoch. The signal through two small extra layers is too weak at first, but this is the small start and plain descent at work. With He starts and Adam these layers train well; the skip matters most in nets tens of layers deep, as in He et al. 2016."
       }
     },
     {
@@ -790,11 +790,11 @@
         }
       ],
       "feedback": {
-        "correct": "Inside $F$, after each convolution: the identity path stays clean.",
+        "correct": "Inside $F$, after each convolution, never on the identity path.",
         "generic": "Not quite. Keep the identity path an identity."
       },
       "explain": {
-        "text": "The original ResNet puts batch norm after each convolution inside $F$; transformers put layer norm at the start of each block’s $F$. Either way the identity path carries $x$ unchanged."
+        "text": "The original ResNet puts batch norm after each convolution inside $F$, with a ReLU after the sum; later ResNets dropped that ReLU. Most transformers now put layer norm at the start of each $F$, which leaves the identity path clean."
       }
     },
     {
@@ -900,9 +900,17 @@
             "call": "zq_no('block', 'res_logits')",
             "expect": "True",
             "compare": "equal"
+          },
+          {
+            "call": "residual_block_forward(h - 0.5, [A1, a1, A2, a2])[0, :, 3, 3].tolist()",
+            "expect": "[-5.729789386209337, 1.6297016226026138, -1.1241922677833085, -5.237490477573227, -7.211659758687077, -3.2076387130208137, -1.6829859576113946, -5.379360237964842, -5.9006051366880135, -6.2556054037267375, -2.0507924510775504, -5.812857909267147, -6.427414413007835, -4.863947151059313, -3.9650889469537107, -3.2740807302179507]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
           }
         ],
-        "how": "Submit runs 6 hidden tests on the supplied residual net `cnn-w-res.json`. They check the shape, the 16 channels of one output pixel (to $10^{-9}$), and the whole net’s held-out accuracy with your block inside (0.9815). Then a zero second convolution (return $x$ unchanged), one with a single filter (raise `ValueError`), and no call to the module’s `block` or `res_logits`.",
+        "how": "Submit runs 7 hidden tests on the supplied residual net `cnn-w-res.json`. They check the shape, the 16 channels of one output pixel (to $10^{-9}$), and the whole net’s held-out accuracy with your block inside (0.9815). Then a zero second convolution (return $x$ unchanged), one with a single filter (raise `ValueError`), and no call to the module’s `block` or `res_logits`. The last test feeds the block signed inputs, so an input that is clipped before the sum is caught.",
         "budget": 2000,
         "data": {
           "autograd.py": "content/data/ai/autograd.py",
@@ -932,6 +940,11 @@
             "source": "import numpy as np\nfrom cnn_ops_l3 import conv2d, load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nW, b, A1, a1, A2, a2, V, c = load_weights('cnn-w-res.json')\nh = conv2d(X_te[:2], W, b, 1, 1).relu().data   # (2, 16, 8, 8): the block's input\n\n\ndef residual_block_forward(x, params):\n    A1, a1, A2, a2 = params\n    F = conv2d(conv2d(x, A1, a1, 1, 0).relu(), A2, a2, 1, 1).data\n    if F.shape != np.shape(x):\n        raise ValueError('x and F(x) have different shapes')\n    return x + F\n",
             "test": 1,
             "symptom": "Padding 0 shrinks F(x) to 4 by 4 after two convolutions, so it no longer matches x."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import conv2d, load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nW, b, A1, a1, A2, a2, V, c = load_weights('cnn-w-res.json')\nh = conv2d(X_te[:2], W, b, 1, 1).relu().data   # (2, 16, 8, 8): the block's input\n\n\ndef residual_block_forward(x, params):\n    A1, a1, A2, a2 = params\n    F = conv2d(conv2d(x, A1, a1, 1, 1).relu(), A2, a2, 1, 1).data\n    if F.shape != np.shape(x):\n        raise ValueError('x and F(x) have different shapes')\n    return np.maximum(x, 0) + F\n",
+            "test": 7,
+            "symptom": "The identity path is clipped by a ReLU, which changes nothing on the net’s non-negative inputs but breaks the block on signed ones."
           }
         ]
       },
@@ -956,7 +969,8 @@
           "test-2": "Return $x + F(x)$, with no ReLU after the sum.",
           "test-4": "With a zero second convolution the block must return $x$ itself.",
           "test-5": "A one-channel $F(x)$ broadcasts over 16 channels. Compare the shapes and raise `ValueError`.",
-          "test-6": "Build the block from `conv2d`; do not call the module’s `block` or `res_logits`."
+          "test-6": "Build the block from `conv2d`; do not call the module’s `block` or `res_logits`.",
+          "test-7": "Add $x$ itself, negative values included: there is no ReLU on the identity path."
         }
       },
       "explain": {
@@ -988,7 +1002,7 @@
             "compare": "equal"
           },
           {
-            "call": "bool(block_grad_check(x, params, M)[1] < 1e-6)",
+            "call": "bool(1e-13 < block_grad_check(x, params, M)[1] < 1e-6)",
             "expect": "True",
             "compare": "equal"
           },
@@ -1008,7 +1022,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Submit runs 4 hidden tests: the shape of the gradient of $x$, and a relative error below $10^{-6}$ from `grad_check` (float64, central differences). Then the gradient itself against the model run (to $10^{-9}$), and a block whose second convolution is zero, where the gradient of $x$ must equal $M$.",
+        "how": "Submit runs 4 hidden tests: the shape of the gradient of $x$, and the relative error from `grad_check` (float64, central differences), which must be below $10^{-6}$ and not zero. Then the gradient itself against the model run (to $10^{-9}$), and a block whose second convolution is zero, where the gradient of $x$ must equal $M$.",
         "budget": 2000,
         "data": {
           "autograd.py": "content/data/ai/autograd.py",
@@ -1032,6 +1046,11 @@
             "source": "import numpy as np\nfrom autograd import Tensor, grad_check\nfrom cnn_ops_l3 import block\n\nrng = np.random.default_rng(31)\nx = rng.standard_normal((1, 2, 4, 4))            # small: grad_check loops over every entry\nparams = [rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2), rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2)]\nM = rng.standard_normal((1, 2, 4, 4))            # the loss is sum(block(x) * M)\n\n\ndef block_grad_check(x, params, M):\n    xt = Tensor(x)\n    ts = [Tensor(p) for p in params]\n    f = lambda: (block(xt, *ts) * M).sum()\n    err = grad_check(f, [xt] + ts)\n    return ts[0].grad.copy(), err\n",
             "test": 1,
             "symptom": "It returns the gradient of the first filter bank, not of x."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, grad_check\nfrom cnn_ops_l3 import block\n\nrng = np.random.default_rng(31)\nx = rng.standard_normal((1, 2, 4, 4))            # small: grad_check loops over every entry\nparams = [rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2), rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2)]\nM = rng.standard_normal((1, 2, 4, 4))            # the loss is sum(block(x) * M)\n\n\ndef block_grad_check(x, params, M):\n    xt = Tensor(x)\n    ts = [Tensor(p) for p in params]\n    f = lambda: (block(xt, *ts) * M).sum()\n    f().backward()\n    err = 0.0\n    return xt.grad.copy(), err\n",
+            "test": 2,
+            "symptom": "It never calls `grad_check`: it runs `backward()` and reports an error of 0.0."
           }
         ]
       },
@@ -1055,7 +1074,8 @@
         "byKey": {
           "test-1": "Return the gradient of `x`, `xt.grad`, not that of a parameter.",
           "test-3": "The gradient differs. Keep the skip, and weight the sum by `M`.",
-          "test-4": "With $F(x) = 0$ the gradient of $x$ is $M$: the identity path passes it on."
+          "test-4": "With $F(x) = 0$ the gradient of $x$ is $M$: the identity path passes it on.",
+          "test-2": "Return the relative error `grad_check` reports: a real check is small but never exactly zero."
         }
       },
       "explain": {
@@ -1124,9 +1144,14 @@
             "call": "stuck_epochs([2.2, 1.0])",
             "expect": "0",
             "compare": "equal"
+          },
+          {
+            "call": "deep_vs_residual({'plain': [2.3, 0.2, 0.5], 'residual': [1.9, 0.3, 0.4]})",
+            "expect": "'residual'",
+            "compare": "equal"
           }
         ],
-        "how": "Submit runs 6 hidden tests. Three use the recorded curves of three seeds: which net ends lower, and how long each plain and residual curve stays above 2.2. Three use planted curves, one where the plain net ends lower and one that rises above the level again later.",
+        "how": "Submit runs 7 hidden tests. Three use the recorded curves of three seeds: which net ends lower, and how long each plain and residual curve stays above 2.2. Four use planted curves: one where the plain net ends lower, one that rises above the level again later, one at exactly the level, and one where the plain net touches its lowest loss early and ends higher.",
         "mutants": [
           {
             "source": "def stuck_epochs(losses, level=2.2):\n    n = 0\n    for v in losses:\n        if v > level:\n            n += 1\n        else:\n            break\n    return n\n\n\ndef deep_vs_residual(curves):\n    if curves['residual'][0] < curves['plain'][0]:\n        return 'residual'\n    return 'plain'\n",
@@ -1142,6 +1167,11 @@
             "source": "def stuck_epochs(losses, level=2.2):\n    n = 0\n    for v in losses:\n        if v >= level:\n            n += 1\n        else:\n            break\n    return n\n\n\ndef deep_vs_residual(curves):\n    if curves['residual'][-1] < curves['plain'][-1]:\n        return 'residual'\n    return 'plain'\n",
             "test": 6,
             "symptom": "A loss exactly at the level counts as stuck."
+          },
+          {
+            "source": "def stuck_epochs(losses, level=2.2):\n    n = 0\n    for v in losses:\n        if v > level:\n            n += 1\n        else:\n            break\n    return n\n\n\ndef deep_vs_residual(curves):\n    if min(curves['residual']) < min(curves['plain']):\n        return 'residual'\n    return 'plain'\n",
+            "test": 7,
+            "symptom": "It compares the lowest loss of each curve, not the final one, so a net that dipped early and ended higher wins."
           }
         ]
       },
@@ -1165,7 +1195,8 @@
         "byKey": {
           "test-4": "Compare the final losses, the last entries.",
           "test-5": "Count only the run at the start; stop at the first loss at or below the level.",
-          "test-6": "A loss exactly at the level is not above it."
+          "test-6": "A loss exactly at the level is not above it.",
+          "test-7": "Compare the final losses, the last entries, not each curve’s lowest."
         }
       },
       "explain": {

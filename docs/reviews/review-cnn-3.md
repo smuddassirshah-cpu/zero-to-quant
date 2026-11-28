@@ -1486,3 +1486,37 @@ def fine_tune(params, X, y, epochs, lr, seed):
             params = [p - lr * q.grad for p, q in zip(params, ts)]
     return params
 ```
+
+## Fix pass
+
+I recomputed every changed figure before writing it (the lr 0.02 losses by the module's `fit` and by the script's plain NumPy loss; the signed-input block pixel by `blockB`; the 0.9741 plant as 526/540; the mixture gap 0.0755; the validation gaps). After the edits `docs/reports/cnn-L3-numbers.py` exits 0 through `run-number-scripts.mjs --only cnn-L3` (1 thread, 68 s) and directly with `ZQ_NUMBERS_STRICT=1` (633 of 633 checks, 0 uncovered, 6 literals, no `claim(True, covers=...)`). The 12 surviving wrong solutions are now `mutants` (13 added in all, 51 in the level), each first failing the test it names. Validator 0 errors, no `[ai-mutants]` or `[source-ban]` warning on cnn files; voice scan 0 over 35 words and 0 long explanations; `same-course-reuse.mjs --all` no error for cnn; `grade-all.mjs --file <f> --code --local-cdn <pkgs>` 0 failures on each of the 7 files alone; playthrough green with and without `--mobile` for the four lessons, `review-3`, `homework-3` and `problems-3`.
+
+Status: fixed 21, disputed 0, deferred 0. One part of one fix differs from the proposal, and its line says why.
+
+### Errors
+- l10 screens[0] options[2].why, explain | fixed: "It ends lowest, at 0.889, and has not risen since epoch 7: too slow for 10 epochs." Explain: "Too small a rate ends lowest (0.889); too large a rate wobbles (0.917)." Recomputed from the chart: 0.893, 0.889, 0.889, 0.889.
+- l11 screens[6] explain, feedback.correct | fixed: the original ResNet has batch norm inside $F$ and a ReLU after the sum (later ResNets dropped it); most transformers now put layer norm at the start of $F$, which leaves the identity path clean. The keyed answer is unchanged.
+
+### Warnings
+- l10 screens[9] exit_check | fixed: test 6 plants the exit net on the test digits with six labels changed (526 of 540 = 0.9741) and expects False, with a `test-6` line. Mutants: validation split, bar 0.95, bar 0.97 (all first fail test 6). Graded answer added.
+- l10 screens[5] early stopping on test | fixed: `load_split()` assigns `_, _` for the test split in starter and solution, test 6 is `zq_no('fit', 'X_te', 'y_te')`, with its line and `how` updated. Mutant: best-test-epoch keeper (first fails test 6).
+- l10 screens[5] and homework items[1] ignored `lr` | fixed: l10 test 3 now runs at lr 0.02 (loss 1.309602203294493, was 1.7500431545973398 at 0.01); homework test 4 runs at 0.02 (0.4566970672338245, was 0.6314950223715697). The `lr` sentence moved from l10 `test-5` to `test-3`, and homework `test-4` names it. Mutants: lr fixed at 0.01 (l10 test 3, homework test 4). Graded answers changed (two expected losses).
+- homework items[0] margin never tested | fixed: test 9 (an MLP 0.7 plain plus 0.3 augmented: mean shifted 0.5426, gap 0.0755, claimed in the script) expects False; `how` now says the 8-filter net fails both parts and describes the new plant; `test-9` line added. Mutants: any lead, 0.05 (both first fail test 9). Graded answer added.
+- l11 screens[9] block_grad_check never calls `grad_check` | fixed: test 2 is `1e-13 < err < 1e-6` (the model returns about 3e-11), with a `test-2` line and `how` updated. Mutant: backward only, error 0.0 (first fails test 2). Graded answer tightened.
+- l11 screens[0] hook | fixed: explain now says the stall comes from the small start and plain descent, that He starts with Adam train these layers well, and that the skip matters most in nets tens of layers deep (He et al. 2016). Three sentences.
+- l12 screens[5], homework items[6], problems-3 items[2] parts[3] overclaim | fixed: l12 says the copies teach the MLP these four shifts and that at two pixels the gap returns to between 0.06 and 0.10 on the validation digits (script claim: 0.0585, 0.0764, 0.098 against under 0.03 at one pixel). The reviewer's test-split figures were 0.065 to 0.10 for the same recipe; I used validation so the claim is not made on the data that judges the exit. Homework option c now points to the two-pixel result; problems says "the shifts they show".
+- l9 screens[6] explain | fixed: "Accuracy averages over all 540 digits, so one weak class barely moves it".
+
+### Notes
+- l9 screens[6] prose 99% | fixed to "about 98%"; script expectation changed to 98.
+- l9 quiz[1] byKey.col | fixed: id renamed `all-right`, line "Not every 3 is read right: 2 of the 50 are misread."
+- l9 screens[5] and screens[7] test-2 lines | fixed: screens[5] now teaches `+=` counting; the screens[7] line is dropped.
+- l9 screens[8] options[2].why | fixed: "F7's middle row is its positive row".
+- l11 screens[8] ReLU on the identity path | fixed, decided by the stated contract (y = x + F(x)): a block that adds ReLU(x) is not that block even though it agrees on non-negative inputs. Test 7 runs the block on `h - 0.5` (signed) against the plain NumPy block (pixel checked in the script and checked to differ from the clipped version); `test-7` line; mutant `np.maximum(x, 0) + F` first fails test 7. The `test-4` line stays for code that changes `x` when F is zero.
+- l11 screens[10] min loss for final | fixed, decided by the stated contract ("the name of the lower final loss"): test 7 is the reviewer's planted pair expecting 'residual'; `test-7` line; mutant `min(...)` first fails test 7. `how` now says four planted curves.
+- l12 screens[2] explain, screens[4] prose | fixed: "The CNN's filters learned strokes wherever they sit" and "its own 10 weights for each of the 256 pooled values, just as the MLP has its own 40 for each pixel".
+- l12 screens[9] margin, review-3 r-margin | fixed: solution and hint use `>= 0.10 - 1e-9`, the prose says why (0.57 - 0.47 is a hair under 0.10 in floating point; claimed in the script), test 7 is `margin(0.57, 0.47)` expecting True. Mutants: strict `>` and `>= 0.10` (both first fail test 7). r-margin keys 0.57 and now agrees with the widget.
+- review-3 nine items | fixed: tenth item `r-projection` (1 by 1, stride 2 projection from 8 to 16 channels, $16 \times 9 = 144$). I used 8 to 16 rather than 16 to 32 because l11 screens[5] already states $32 \times 17 = 544$ and a repeat would be a same-course reuse.
+- problems-3 items[3] parts[3] 'high-last' (24) | fixed: the wrong value and its line are dropped; 'last' (25) stays.
+- docs/reports/cnn-L3-numbers.py four gaps | fixed, one part declined. (1) Claims that the exit, small, mlp and residual files are byte for byte what the seed-0 recipes write with `save_weights(..., digits=6)`, and `round(retrained, 6)` equals the arrays; the augmented MLP is claimed within 1e-6 (it is the one file that is not exact). (2) `exitlr` is out of `KIND`: no test score is computed for a rate candidate. (3) The margin rule is now set on shifted validation digits (smallest CNN-minus-MLP gap over nine seed pairs 0.1776, largest augmented gap 0.0278, so 0.10 sits between), l12 screens[10] and screens[9] say so, and the augmentation statements are rechecked on validation. (4) The two-pixel augmented gap is computed and claimed. Declined: changing the default of `save_weights` in `cnn_ops_l3.py` from 7 to 6 digits, because it would change the shipped module's bytes and hash for no lesson; the script passes `digits=6` and proves the files by bytes instead.
+- Leakage notes (margin set from test, scores of rate candidates on test) | fixed as above. Exit accuracy is still read once per seed on test, and the exit nets, MLP and augmented sets are unchanged.
