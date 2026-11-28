@@ -2998,7 +2998,7 @@ Status block (engine pass AK follow-up):
 - 1264: done. `grade-all.mjs` (`byStrand`, `ceSource`), `code-runner.mjs` (`makeRunner` layout); `test-grade-code.mjs` (strand filter, vendor layout). `--code --strand ai` on current content: 78 widgets, about 8 s with `--jobs 4`.
 - 1265: done. `acceptance.yml` tests-browser python leg; `ci-coverage.mjs` 0 problems.
 - 1266: done. `drill-worker.js` (`importsToLoad`, from `spec.local`), `code.js` (`shippedNames`, `importHintFor`), `drill.js`, `code-runner.mjs`; `test-trainer.mjs` (six checks).
-- 1267: done. `numbers_lib.py` (`_stated`, `Level.uncovered`, `literal`, `claim(..., covers=)`, `coverage` argument, `ZQ_NUMBERS_STRICT`; `expect`, `check_wrongs` and `slip` record what they compared), `tools/test-numbers-lib.py` (two new cases), LEVEL-BRIEF number scripts, AUTHORING section 9. Existing AI scripts all still exit 0; uncovered counts in `docs/reports/engine-pass-ak-prose-numbers.md`.
+- 1267: done (claim filter narrowed in a follow-up; see the report). `numbers_lib.py` (`_stated`, `Level.uncovered`, `literal`, `claim(..., covers=)`, `coverage` argument, `ZQ_NUMBERS_STRICT`; `expect`, `check_wrongs` and `slip` record what they compared), `tools/test-numbers-lib.py` (two new cases), LEVEL-BRIEF number scripts, AUTHORING section 9. Existing AI scripts all still exit 0; uncovered counts in `docs/reports/engine-pass-ak-prose-numbers.md`.
 
 
 ### Engine pass AK (trainer and data): `docs/reports/engine-pass-ak-trainer.md`

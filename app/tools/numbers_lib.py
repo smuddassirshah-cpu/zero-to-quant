@@ -163,32 +163,54 @@ _POW10 = re.compile(r'(?<![\w.])10\^(-?\d+)')
 _SLASH = re.compile(r'(?<![\w./])(\d+)\s*/\s*(\d+)(?![\w./])')
 _EXPSUB = re.compile(r'(?<![\w.])\d+(?:\.\d+)?\^\s*-?[\d.]+|\^\s*-?[\d.]+|_\d+')
 _TEXT_KEYS = {'prose', 'question', 'text', 'hint', 'hints', 'explain', 'how', 'why', 'label', 'caption', 'title', 'generic', 'correct', 'byKey', 'summary',
-              'ideas', 'trap', 'note', 'objectives', 'rows', 'columns', 'colHeads', 'rowHeads', 'xLabel', 'yLabel', 'rootLabel', 'frameLabels', 'prompt',
+              'ideas', 'trap', 'note', 'objectives', 'rows', 'prompt', 'model',
               'postlude', 'symptom', 'placeholder', 'unit', 'description'}
 _TEXT_SKIP = {'id', 'kind', 'type', 'highlight', 'rung', 'values', 'ids', 'accept', 'tol', 'answer', 'wrong', 'starter', 'solution', 'tests', 'examples',
               'mutants', 'setup', 'call', 'expect', 'compare', 'source', 'code'}
-_CANVAS_TEXT = {'label', 'caption', 'xLabel', 'yLabel', 'rootLabel', 'frameLabels', 'title', 'text'}
+_CANVAS_TEXT = {'caption', 'title', 'text'}      # axis, tick, node and frame labels are not claims
+_ANSWER_PATHS = ('explain', 'hints', 'how', 'why', 'byKey', 'feedback', 'options', 'lines')
+
+
+_WORDN = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'twelve': 12}
+_DEN = {'half': 2, 'halves': 2, 'third': 3, 'thirds': 3, 'quarter': 4, 'quarters': 4, 'fifth': 5, 'fifths': 5, 'tenth': 10, 'tenths': 10}
+_WORDFRAC = re.compile(r'\b(a|one|two|three|four|five|three)\s+(half|halves|third|thirds|quarter|quarters|fifth|fifths|tenth|tenths)\b', re.I)
+_WORDMULT = re.compile(r'\b(twice|thrice|double|doubles|doubled|triple|tripled|halved|(one|two|three|four|five|six|seven|eight|nine|ten|twelve)\s+times)\b', re.I)
+_UNIT = re.compile(r'\s*(?:bits?|nats?|bytes?|ms|s\b|seconds?|secs?|minutes?|hours?|days?|hz|kb|mb|gb|kg|km|cm|pence|pounds?|percent|per\s+cent|x\b)', re.I)
+_ARITH_BEFORE = re.compile(r'(?:[+*/=×÷]|\\times|\\cdot|\\div|\btimes|\bby|\bplus|\bminus|\bequals|\bis|\bgives?|\bmakes?|\btotal)\s*$|\s-\s*$', re.I)
+_ARITH_AFTER = re.compile(r'\s*(?:[+*/=×÷]|\\times|\\cdot|\\div|\btimes\b|\s-\s)', re.I)
 
 
 def _stated(s):
-    """Numbers a learner reads in a string: a list of (value, tolerance, percent, shown). Code, years, list numbers, "lesson 3" ids, exponents and subscripts are
-    left out; a fraction (LaTeX or a/b) and a sci-notation number are each one value."""
+    """Numbers a learner reads in a string, as (value, tolerance, percent, shown, strong). `strong` marks the claims a reader checks: decimals, fractions, percentages,
+    money, a number with a unit, a whole number in arithmetic, a whole number over 100, and words for fractions and multiples ("a third", "twice") converted to values.
+    Other whole numbers are weak (by size, see Level.uncovered). Code, years, list numbers, "lesson 3" ids, exponents and subscripts are left out."""
     out = []
     s = _LISTNUM.sub(' ', _IDISH.sub(' ', _CODE.sub(' ', s)))
+    s = re.sub(r'(?:£|\\pounds\s*)\s*(?=[\d.])', '\x01', s)
 
     def frac(m):
         a, b = (m.group(1), m.group(2)) if m.group(1) is not None else (m.group(3), m.group(4))
         try:
             x, y = float(normalise(a)), float(normalise(b))
             if y != 0:
-                out.append((x / y, max(5e-4, 1e-3 * abs(x / y)), False, f'{a}/{b}'))
+                out.append((x / y, max(5e-4, 1e-3 * abs(x / y)), False, f'{a}/{b}', True))
         except ValueError:
             pass
         return ' '
 
-    def val(m, v, tol):
-        out.append((v, tol, False, m.group(0)))
+    def val(m, v, tol, shown=None):
+        out.append((v, tol, False, shown or m.group(0), True))
         return ' '
+
+    def words(m):
+        w = m.group(0).lower()
+        if m.re is _WORDFRAC:
+            n = 1 if m.group(1).lower() in ('a', 'one') else _WORDN.get(m.group(1).lower(), 3 if m.group(1).lower() == 'three' else 2)
+            return val(m, n / _DEN[m.group(2).lower()], 5e-4)
+        k = {'twice': 2, 'double': 2, 'doubles': 2, 'doubled': 2, 'thrice': 3, 'triple': 3, 'tripled': 3, 'halved': 0.5}.get(w)
+        return val(m, k if k else _WORDN[m.group(2).lower()], 1e-9)
+    s = _WORDFRAC.sub(words, s)
+    s = _WORDMULT.sub(words, s)
     s = normalise(_FRAC.sub(frac, s))
     s = _SCI.sub(lambda m: val(m, float(m.group(1)) * 10 ** int(m.group(2)), 1e-3 * float(m.group(1)) * 10 ** int(m.group(2))), s)
     s = _POW10.sub(lambda m: val(m, 10.0 ** int(m.group(1)), 1e-9), s)
@@ -203,14 +225,18 @@ def _stated(s):
         except ValueError:
             continue
         d = raw.lstrip('-')
+        whole = re.fullmatch(r'\d+', d) is not None
         if re.fullmatch(r'\d+\.\d+', d):
             tol = 0.5 * 10 ** -len(d.split('.')[1])
-        elif re.fullmatch(r'\d+', d):
+        elif whole:
             tol = 0.5 * 10 ** max(len(d) - len(d.rstrip('0')) - 1, 0)   # 12,500 reads to the hundred, 11,000 to the thousand
         else:
             tol = 1e-9 * max(1.0, abs(v))
-        pct = s[m.end():m.end() + 3].lstrip().startswith(('%', '\\%'))
-        out.append((v, tol + 1e-9, pct, raw))
+        after, before = s[m.end():m.end() + 14], s[max(0, m.start() - 14):m.start() + (1 if raw.startswith('-') else 0)]
+        pct = after.lstrip().startswith(('%', '\\%'))
+        strong = (not whole) or pct or abs(v) > 100 or before.endswith('\x01') or bool(_UNIT.match(after)) \
+            or bool(_ARITH_BEFORE.search(before)) or bool(_ARITH_AFTER.match(after))
+        out.append((v, tol + 1e-9, pct, raw, strong))
     return out
 
 
@@ -252,13 +278,19 @@ class Level:
     def _cv(self):
         return self.__dict__.setdefault('_cvals', [])
 
-    def _cover(self, *vals):
-        """Record values some check compared against (numbers, or strings whose numbers count)."""
+    def _cover(self, *vals, at=None):
+        """Record values some check compared against (numbers, or strings whose numbers count). `at` is (file id, path): the value then covers that screen or item
+        only (a path that does not name one, such as "screens" or "screens[*]", covers the file); without it the value covers the whole level."""
+        fid = unit = None
+        if at:
+            fid = at[0]
+            m = re.match(r'(?:screens|items|quiz)\[(\d+)\]', at[1] or '')
+            unit = None                    # file level: a screen-level match was measured and tripled the uncovered counts
         for v in vals:
             if isinstance(v, str):
-                self._cv().extend(x[0] for x in _stated(v))
+                self._cv().extend((x[0], fid, unit) for x in _stated(v))
             elif isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v):
-                self._cv().append(float(v))
+                self._cv().append((float(v), fid, unit))
 
     def literal(self, value, why):
         """ENGINE-BACKLOG 1267: mark a number (or the numbers of a string) as deliberately unchecked; `why` is required and listed by report()."""
@@ -272,19 +304,31 @@ class Level:
         strs = []
         for fid, doc in self.files.items():
             _text_strings(doc, '', fid, strs)
-        cv, seen, out = sorted(abs(v) for v in self._cv()), set(), []
         import bisect
+        cv, seen, out = {}, set(), []
+        for v, f, u in self._cv():
+            cv.setdefault((f, u), []).append(abs(v))
+            cv.setdefault('all', []).append(abs(v))
+        for lst in cv.values():
+            lst.sort()
         for fid, path, text in strs:
-            for v, tol, pct, shown in _stated(text):
+            reading = any(k in path for k in _ANSWER_PATHS)
+            um = re.match(r'(?:screens|items|quiz)\[\d+\]', path)
+            local = [cv[k] for k in ((fid, None), (None, None)) if k in cv]          # a fraction or a word ("a third") must be covered in its own file
+            for v, tol, pct, shown, strong in _stated(text):
+                if not strong and not (reading and abs(v) > 12):    # a bare whole number: prose skips up to 100, explain-class text up to 12
+                    continue
                 a = abs(v)
                 hit = False
+                lists = local if re.search(r'[/a-z]', shown) else [cv.get('all', [])]       # a plain number may be covered anywhere in the level
                 for t in ((a, a / 100) if pct else (a,)):
-                    i = bisect.bisect_left(cv, t - tol)
-                    if i < len(cv) and cv[i] <= t + tol:
-                        hit = True
-                        break
-                if not hit and (fid, path, shown) not in seen:
-                    seen.add((fid, path, shown))
+                    for lst in lists:
+                        i = bisect.bisect_left(lst, t - tol)
+                        if i < len(lst) and lst[i] <= t + tol:
+                            hit = True
+                key = (fid, um.group(0) if um else path, round(a, 9))        # one number per screen or item: the same figure in a hint, explain and byKey is read once
+                if not hit and key not in seen:
+                    seen.add(key)
                     out.append((fid, path, shown))
         return out
 
@@ -302,7 +346,10 @@ class Level:
 
     def expect(self, ref, path, value, fmt=None):
         label = f'{ref} {path} = {value!r}'
-        self._cover(value)
+        try:
+            self._cover(value, at=(self._file(ref)[0], path))
+        except KeyError:
+            self._cover(value)
         try:
             txt = self.text(ref, path)
         except KeyError as e:
@@ -358,7 +405,7 @@ class Level:
                 fb = node['feedback']['byKey']
             ans, wr = node.get('answer'), node.get('wrong')
             if isinstance(ans, (int, float)) and not isinstance(ans, bool) and isinstance(wr, list):
-                self._cover(ans, *[w.get('value') for w in wr if isinstance(w, dict)])
+                self._cover(ans, *[w.get('value') for w in wr if isinstance(w, dict)], at=(fid, path))
                 ha = half(ans, node.get('tol'))
                 for i, w in enumerate(wr):
                     v = w.get('value') if isinstance(w, dict) else None
@@ -407,7 +454,7 @@ class Level:
         if not isinstance(ans, (int, float)) or isinstance(ans, bool) or len(ent) != 1 or not isinstance(ent[0].get('value'), (int, float)):
             return self._rec(False, label, 'no numeric answer, or no single numeric wrong entry with this id')
         e, ha = ent[0], _half(ans, w.get('tol'))
-        self._cover(ans, e['value'], *[r[1] if isinstance(r, tuple) else r for r in routes])
+        self._cover(ans, e['value'], *[r[1] if isinstance(r, tuple) else r for r in routes], at=(self._file(ref)[0], path))
         hs, ok = _half(e['value'], e.get('tol') or {'abs': 1e-9}), True
         ok &= self._rec(abs(e['value'] - ans) > ha + hs, f'{label}: band apart from the key band', f'the slip band {e["value"]!r} +-{hs:.6g} meets the key band {ans!r} +-{ha:.6g}')
         fb = part.get('feedback') if isinstance(part, dict) else None
