@@ -1,0 +1,1354 @@
+{
+ "id": "l3-exploding-and-vanishing",
+ "course": "sequence",
+ "title": "Gradients that explode or vanish",
+ "minutes": 15,
+ "objectives": [
+  "Explain from the eigenvalues of the recurrent weight why gradients through time explode or vanish."
+ ],
+ "skills": [
+  "sqn-rnn"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Fifty steps back",
+   "prose": "Lesson 2 found $\\partial h_T/\\partial h_0 = w^T$ for a linear net. That factor scales every gradient arriving from $T$ steps back. The curve is $|w|^T$ on a log scale; slide $w$ either side of 1.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      50
+     ],
+     "y": [
+      0.001,
+      1000
+     ],
+     "yScale": "log",
+     "xLabel": "steps back $T$",
+     "yLabel": "$|w|^T$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "abs(w)^x",
+       "label": "$|w|^T$",
+       "labelAt": 40
+      }
+     ],
+     "params": {
+      "w": 0.9
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 50,
+       "y": 0.005154,
+       "label": ""
+      }
+     ],
+     "hlines": [
+      {
+       "id": "one",
+       "y": 1,
+       "label": "1"
+      }
+     ]
+    },
+    "derive": {
+     "P.y": "pow(abs(w), 50)",
+     "caption": "$w$ = {{fixed(w, 2)}}: after 50 steps the factor is {{fixed(pow(abs(w), 50), 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "w",
+      "min": 0.5,
+      "max": 1.2,
+      "step": 0.01,
+      "start": 0.9,
+      "label": "$w$",
+      "decimals": 2
+     }
+    ],
+    "maxHeight": 280
+   },
+   "question": "At $w = 0.9$, what share of its size does a gradient keep after 50 steps? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0052,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 45,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the point at $T = 50$."
+    },
+    {
+     "rung": "point",
+     "text": "The caption gives $0.9^{50}$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.9^{50} = e^{50 \\ln 0.9}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.9^{50} = 0.0052$: about half a per cent survives.",
+    "generic": "Not quite. Raise 0.9 to the power 50.",
+    "byKey": {
+     "linear": "You multiplied $0.9 \\times 50$. One factor of 0.9 is applied per step, so they multiply.",
+     "one": "That is one step. There are 50."
+    }
+   },
+   "explain": {
+    "text": "$0.9^{50} = 0.0052$, so a lesson from 50 days back arrives at about 0.5% of its size. Slide to 1.1 and the same 50 steps multiply it by 117. Neither extreme can be learned from.",
+    "canvas": {
+     "params": {
+      "w": 0.9
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Just above 1",
+   "prose": "Now take $w = 1.1$: each step back multiplies the gradient by 1.1. A weight a tenth above 1 looks harmless.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      50
+     ],
+     "y": [
+      0.001,
+      1000
+     ],
+     "yScale": "log",
+     "xLabel": "steps back $T$",
+     "yLabel": "$|w|^T$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "abs(w)^x",
+       "label": "$|w|^T$",
+       "labelAt": 40
+      }
+     ],
+     "params": {
+      "w": 0.9
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 50,
+       "y": 117.3909,
+       "label": ""
+      }
+     ],
+     "hlines": [
+      {
+       "id": "one",
+       "y": 1,
+       "label": "1"
+      }
+     ]
+    },
+    "derive": {
+     "P.y": "pow(abs(w), 50)",
+     "caption": "$w$ = {{fixed(w, 2)}}: after 50 steps the factor is {{fixed(pow(abs(w), 50), 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "w",
+      "min": 0.5,
+      "max": 1.2,
+      "step": 0.01,
+      "start": 1.1,
+      "label": "$w$",
+      "decimals": 2
+     }
+    ],
+    "maxHeight": 280
+   },
+   "question": "By what factor does a gradient grow over 50 steps? Give the nearest whole number.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 117,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 55,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "add",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Raise 1.1 to the power 50."
+    },
+    {
+     "rung": "point",
+     "text": "Read the point at $T = 50$ with $w = 1.1$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1.1^{50} = e^{50 \\ln 1.1} = e^{4.7655}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1.1^{50} = 117.39$, about 117 times.",
+    "generic": "Not quite. The factors multiply.",
+    "byKey": {
+     "linear": "You multiplied $1.1 \\times 50$. The factor compounds, like interest.",
+     "add": "You added 0.1 a step, $1 + 50 \\times 0.1$. It compounds."
+    }
+   },
+   "explain": {
+    "text": "$1.1^{50} = 117.39$: compounding at 10% a step for 50 steps. A gradient that large throws the weights far in one update. This is the **exploding gradient**; the 0.0052 of the hook is the **vanishing gradient**."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A matrix of weights",
+   "prose": "With many units, $\\mathbf h_t = \\mathbf W\\mathbf h_{t-1} + \\dots$, and each step back multiplies the gradient by $\\mathbf W^\\top$. Take eigen l4's broker matrix $\\mathbf W = \\begin{pmatrix} 0.9 & 0.2 \\\\ 0.1 & 0.8 \\end{pmatrix}$, eigenvalues 1 and 0.7, and $\\mathbf g = (1, 0)$. The line is $\\lVert(\\mathbf W^\\top)^k\\mathbf g\\rVert$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "n",
+       "label": "gradient size",
+       "values": [
+        1.0,
+        0.922,
+        0.8969,
+        0.8954,
+        0.9023,
+        0.911,
+        0.9189,
+        0.9252,
+        0.9301,
+        0.9337,
+        0.9364,
+        0.9383,
+        0.9396,
+        0.9406,
+        0.9412,
+        0.9417,
+        0.942,
+        0.9423,
+        0.9424,
+        0.9425,
+        0.9426
+       ]
+      }
+     ],
+     "y": [
+      0.85,
+      1.02
+     ],
+     "xLabel": "steps back $k$",
+     "yLabel": "$\\lVert(\\mathbf W^\\top)^k\\mathbf g\\rVert$",
+     "decimals": 4,
+     "height": 220
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "m20",
+       "i": 20,
+       "label": "{value}"
+      }
+     ]
+    }
+   },
+   "question": "What size does the gradient settle at? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9428,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "third",
+      "value": 0.7454,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Split $\\mathbf g$ along the eigenvectors of $\\mathbf W^\\top$: $(1, 1)$ for 1 and $(1, -2)$ for 0.7."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathbf g = \\tfrac23(1, 1) + \\tfrac13(1, -2)$.",
+     "highlight": [
+      "n"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The 0.7 part dies away; the $\\tfrac23(1, 1)$ part stays, with length $\\tfrac23\\sqrt2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac23\\sqrt2 = 0.9428$: the part along the eigenvalue-1 direction stays, the rest shrinks like $0.7^k$.",
+    "generic": "Not quite. Which part of $\\mathbf g$ survives repeated multiplication?",
+    "byKey": {
+     "one": "The start had size 1, but the part along eigenvalue 0.7 dies away.",
+     "third": "That is the length of the part that dies, $\\tfrac13\\lVert(1, -2)\\rVert$."
+    }
+   },
+   "explain": {
+    "text": "Repeated multiplication keeps the part along the eigenvector of the largest eigenvalue, as in eigen l4. Here that eigenvalue is 1, so the gradient neither explodes nor vanishes: it settles at 0.9428. For a diagonalisable $\\mathbf W$ the size behaves like $|\\lambda_{\\max}|^k$ in the long run."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Inside or outside the circle",
+   "prose": "Three recurrent matrices, $\\mathbf A = \\begin{pmatrix} 0.5 & 0.4 \\\\ 0.4 & 0.5 \\end{pmatrix}$, $\\mathbf B = \\begin{pmatrix} 1 & 0.3 \\\\ 0.3 & 0.8 \\end{pmatrix}$ and $\\mathbf C = \\begin{pmatrix} 0.866 & -0.5 \\\\ 0.5 & 0.866 \\end{pmatrix}$. The points are their eigenvalues; $\\mathbf C$ turns by 30 degrees, so its pair is complex.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.6,
+      1.6
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "equal": true,
+     "xLabel": "real part",
+     "yLabel": "imaginary part",
+     "functions": [
+      {
+       "id": "u",
+       "x": "cos(t)",
+       "y": "sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "label": "unit circle"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a1",
+       "x": 0.9,
+       "y": 0,
+       "label": "A"
+      },
+      {
+       "id": "a2",
+       "x": 0.1,
+       "y": 0,
+       "label": "A"
+      },
+      {
+       "id": "b1",
+       "x": 1.2162,
+       "y": 0,
+       "label": "B"
+      },
+      {
+       "id": "b2",
+       "x": 0.5838,
+       "y": 0,
+       "label": "B"
+      },
+      {
+       "id": "c1",
+       "x": 0.866,
+       "y": 0.5,
+       "label": "C"
+      },
+      {
+       "id": "c2",
+       "x": 0.866,
+       "y": -0.5,
+       "label": "C"
+      }
+     ]
+    }
+   },
+   "question": "Whose gradient explodes over many steps?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "B",
+      "text": "$\\mathbf B$: one eigenvalue lies outside the circle",
+      "correct": true
+     },
+     {
+      "id": "A",
+      "text": "$\\mathbf A$: its entries are the largest off the diagonal",
+      "why": "Both of $\\mathbf A$'s eigenvalues, 0.9 and 0.1, lie inside the circle, so its gradient vanishes."
+     },
+     {
+      "id": "C",
+      "text": "$\\mathbf C$: it turns the gradient at every step",
+      "why": "A turn keeps length: $\\mathbf C$'s eigenvalues have size exactly 1, so the gradient neither grows nor shrinks."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each eigenvalue's size with 1."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathbf B$'s larger eigenvalue is $0.9 + \\sqrt{0.1} = 1.2162$.",
+     "highlight": [
+      "b1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Outside the circle grows, inside shrinks, on it stays."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf B$ has $|\\lambda| = 1.2162 > 1$, so it explodes; $\\mathbf A$ vanishes and $\\mathbf C$ holds.",
+    "generic": "Not quite. Read the sizes of the eigenvalues."
+   },
+   "explain": {
+    "text": "$\\mathbf B$'s eigenvalues are 1.2162 and 0.5838: the first grows like $1.2162^k$. $\\mathbf A$'s are 0.9 and 0.1, inside the circle, so it vanishes. $\\mathbf C$'s have size 1: it turns the gradient and keeps its length."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The tanh takes its share",
+   "prose": "With a tanh, each step back multiplies by $w\\,(1 - h_t^2)$, and the slope $1 - h_t^2$ is at most 1 (nn-train l5). Suppose $w = 1.2$, so the weight alone would explode, and the states sit where the slope averages 0.6.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      50
+     ],
+     "y": [
+      0.001,
+      1000
+     ],
+     "yScale": "log",
+     "xLabel": "steps back $T$",
+     "yLabel": "$|w|^T$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "abs(w)^x",
+       "label": "$|w|^T$",
+       "labelAt": 40
+      }
+     ],
+     "params": {
+      "w": 0.9
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 20,
+       "y": 0.001402,
+       "label": ""
+      }
+     ],
+     "hlines": [
+      {
+       "id": "one",
+       "y": 1,
+       "label": "1"
+      }
+     ]
+    },
+    "derive": {
+     "P.y": "pow(abs(w), 20)",
+     "caption": "factor per step {{fixed(w, 2)}}: after 20 steps {{fixed(pow(abs(w), 20), 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "w",
+      "min": 0.5,
+      "max": 1.2,
+      "step": 0.01,
+      "start": 0.72,
+      "label": "$w$",
+      "decimals": 2
+     }
+    ],
+    "maxHeight": 280
+   },
+   "question": "What factor survives 20 steps? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0014,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "noslope",
+      "value": 38.34,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "add",
+      "value": 3.7e-05,
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply the weight by the slope for one step."
+    },
+    {
+     "rung": "point",
+     "text": "$1.2 \\times 0.6 = 0.72$ a step.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.72^{20}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.72^{20} = 0.0014$: the slopes turn an exploding weight into a vanishing gradient.",
+    "generic": "Not quite. One step multiplies by $1.2 \\times 0.6$.",
+    "byKey": {
+     "noslope": "You left out the slopes: $1.2^{20}$. Each step also multiplies by the tanh's slope.",
+     "add": "You used the slope alone, $0.6^{20}$. The weight multiplies in too."
+    }
+   },
+   "explain": {
+    "text": "Each step contributes $1.2 \\times 0.6 = 0.72$, and $0.72^{20} = 0.0014$. The slopes can only shrink the factor, so with a tanh vanishing is the commoner failure. It is nn-train's vanishing gradient through depth, met here through time."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Start near the circle",
+   "prose": "A common start is to draw $\\mathbf W$ at random and rescale it so its largest eigenvalue size, the **spectral radius** $\\rho$, sits just below 1. A 16 by 16 matrix of standard normals from `default_rng(2)` has $\\rho = 4.0766$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.6,
+      1.6
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "equal": true,
+     "xLabel": "real part",
+     "yLabel": "imaginary part",
+     "functions": [
+      {
+       "id": "u",
+       "x": "cos(t)",
+       "y": "sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "label": "unit circle"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a1",
+       "x": 0.9,
+       "y": 0,
+       "label": "A"
+      },
+      {
+       "id": "a2",
+       "x": 0.1,
+       "y": 0,
+       "label": "A"
+      },
+      {
+       "id": "b1",
+       "x": 1.2162,
+       "y": 0,
+       "label": "B"
+      },
+      {
+       "id": "b2",
+       "x": 0.5838,
+       "y": 0,
+       "label": "B"
+      },
+      {
+       "id": "c1",
+       "x": 0.866,
+       "y": 0.5,
+       "label": "C"
+      },
+      {
+       "id": "c2",
+       "x": 0.866,
+       "y": -0.5,
+       "label": "C"
+      }
+     ]
+    }
+   },
+   "question": "By what number should it be multiplied to make $\\rho = 0.95$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.233,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 4.291,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sqrt",
+      "value": 0.471,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Scaling a matrix by $c$ scales every eigenvalue by $c$."
+    },
+    {
+     "rung": "point",
+     "text": "So $c\\rho = 0.95$.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$c = 0.95/4.0766$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.95/4.0766 = 0.233$.",
+    "generic": "Not quite. Every eigenvalue scales by the same factor.",
+    "byKey": {
+     "inv": "You divided the other way, $4.0766/0.95$, which pushes $\\rho$ further out.",
+     "sqrt": "You divided by $\\sqrt\\rho$. Eigenvalues scale by $c$, not $c^2$."
+    }
+   },
+   "explain": {
+    "text": "$c = 0.95/4.0766 = 0.233$ puts every eigenvalue inside the circle, the largest at 0.95. Gradients then fade slowly instead of exploding at the first step. It helps at the start; training can still move $\\rho$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Big entries, small eigenvalues",
+   "prose": "A colleague scans the weights for large entries to spot explosions. Compare $\\mathbf N = \\begin{pmatrix} 0.9 & -0.9 \\\\ 0.9 & -0.9 \\end{pmatrix}$, $\\mathbf D = \\begin{pmatrix} 0.3 & 0 \\\\ 0 & 1.05 \\end{pmatrix}$ and the turn $\\mathbf C$ by 30 degrees.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "N",
+       "rows": [
+        [
+         0.9,
+         -0.9
+        ],
+        [
+         0.9,
+         -0.9
+        ]
+       ],
+       "label": "$\\mathbf N$"
+      },
+      {
+       "id": "N2",
+       "rows": [
+        [
+         0,
+         0
+        ],
+        [
+         0,
+         0
+        ]
+       ],
+       "label": "$\\mathbf N^2$"
+      },
+      {
+       "id": "D",
+       "rows": [
+        [
+         0.3,
+         0.0
+        ],
+        [
+         0.0,
+         1.05
+        ]
+       ],
+       "label": "$\\mathbf D$"
+      }
+     ],
+     "ops": [
+      "",
+      "",
+      ""
+     ]
+    },
+    "state": {
+     "hidden": [
+      "N2"
+     ]
+    }
+   },
+   "question": "Whose gradient explodes over 50 steps?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "D",
+      "text": "$\\mathbf D$, though its entries are smaller",
+      "correct": true
+     },
+     {
+      "id": "N",
+      "text": "$\\mathbf N$, whose entries are all near 1 in size",
+      "why": "You judged by the entries. $\\mathbf N^2 = \\mathbf 0$: both eigenvalues are 0, and the gradient is gone after two steps."
+     },
+     {
+      "id": "C",
+      "text": "$\\mathbf C$, since it never shrinks the gradient",
+      "why": "A turn keeps the size at 1 without growing it: no explosion."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the eigenvalues, not the largest entry."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply $\\mathbf N$ by itself.",
+     "highlight": [
+      "N"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\mathbf D$ is diagonal: its eigenvalues are 0.3 and 1.05."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf D$ has eigenvalue 1.05, so $1.05^{50} = 11.47$; $\\mathbf N$'s are both 0.",
+    "generic": "Not quite. Compare eigenvalues with 1.",
+    "byKey": {
+     "N": "Large entries are not large eigenvalues. $\\mathbf N^2 = \\mathbf 0$, so its gradient vanishes after two steps."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf N$ has entries of size 0.9 yet $\\mathbf N^2 = \\mathbf 0$: both eigenvalues are 0. $\\mathbf D$'s 1.05 compounds to 11.47 over 50 steps. Explosion is a property of the eigenvalues, and a turn like $\\mathbf C$ keeps size 1 with entries under 1.",
+    "canvas": {
+     "hidden": []
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Up before down",
+   "prose": "Edge case: $\\mathbf W = \\begin{pmatrix} 0.85 & 4 \\\\ 0 & 0.85 \\end{pmatrix}$ has both eigenvalues 0.85, inside the circle, so the long run vanishes. Its eigenvectors do not span the plane, and the line shows $\\lVert(\\mathbf W^\\top)^k\\mathbf g\\rVert$ from $\\mathbf g = (1, 0)$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "n",
+       "label": "gradient size",
+       "values": [
+        1.0,
+        4.089,
+        6.838,
+        8.692,
+        9.84,
+        10.45,
+        10.656,
+        10.565,
+        10.262,
+        9.812,
+        9.267,
+        8.664,
+        8.034,
+        7.398,
+        6.771,
+        6.167,
+        5.591,
+        5.049,
+        4.544,
+        4.077,
+        3.648,
+        3.256,
+        2.899,
+        2.576,
+        2.285,
+        2.023,
+        1.789,
+        1.579,
+        1.392,
+        1.225,
+        1.077,
+        0.946,
+        0.83,
+        0.728,
+        0.637,
+        0.558,
+        0.488,
+        0.426,
+        0.372,
+        0.324,
+        0.283
+       ]
+      }
+     ],
+     "y": [
+      0,
+      12
+     ],
+     "xLabel": "steps back $k$",
+     "yLabel": "size",
+     "decimals": 2,
+     "height": 220
+    },
+    "state": {}
+   },
+   "question": "At which step $k$ is the gradient largest?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "start",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "never",
+      "value": 40,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the top of the curve."
+    },
+    {
+     "rung": "point",
+     "text": "$(\\mathbf W^\\top)^k\\mathbf g = (0.85^k,\\; 4k\\,0.85^{k-1})$.",
+     "highlight": [
+      "n"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$k\\,0.85^{k-1}$ is largest where $(k + 1)\\,0.85 < k$ first holds."
+    }
+   ],
+   "feedback": {
+    "correct": "It peaks at $k = 6$, about 10.66 times its start, before the 0.85s win.",
+    "generic": "Not quite. Read the top of the curve.",
+    "byKey": {
+     "start": "At $k = 0$ the size is 1; it then grows tenfold before it falls.",
+     "never": "By step 40 it is falling; eigenvalues inside the circle win in the end."
+    }
+   },
+   "explain": {
+    "text": "The off-diagonal 4 adds a term $4k\\,0.85^{k-1}$ that grows before the powers of 0.85 take over, peaking near 10.66 at $k = 6$. The eigenvalue rule describes the long run only. A non-normal $\\mathbf W$ can amplify a gradient for a while first.",
+    "canvas": {
+     "markers": [
+      {
+       "id": "pk",
+       "i": 6,
+       "label": "peak"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The diagnosis in code",
+   "prose": "Write `grad_norm_through_time(W, g, T)`, the sizes $\\lVert(\\mathbf W^\\top)^k\\mathbf g\\rVert$ for $k = 0, \\dots, T$; `spectral_radius(W)`, the largest $|\\lambda|$ (use `np.linalg.eigvals`); and `explodes(W, T, factor)`, true when $\\rho^T$ exceeds `factor`.",
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    # [||g||, ||W^T g||, ||(W^T)^2 g||, ..., ||(W^T)^T g||]: T + 1 sizes\n    ...\n\n\ndef spectral_radius(W):\n    # the largest |eigenvalue| of W\n    ...\n\n\ndef explodes(W, T, factor):\n    # True when the long-run growth rho^T exceeds factor\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    W, v = np.asarray(W, dtype=float), np.asarray(g, dtype=float)\n    out = []\n    for _ in range(T + 1):\n        out.append(float(np.linalg.norm(v)))\n        v = W.T @ v\n    return out\n\n\ndef spectral_radius(W):\n    return float(np.max(np.abs(np.linalg.eigvals(np.asarray(W, dtype=float)))))\n\n\ndef explodes(W, T, factor):\n    return bool(spectral_radius(W) ** T > factor)\n",
+    "examples": [
+     {
+      "call": "grad_norm_through_time([[0.9, 0.2], [0.1, 0.8]], [1.0, 0.0], 3)",
+      "compare": "isclose",
+      "expect": "[1.0, 0.9219544457292888, 0.8969392398596463, 0.8954356481623904]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "grad_norm_through_time([[0.9, 0.2], [0.1, 0.8]], [1.0, 0.0], 3)",
+      "compare": "isclose",
+      "expect": "[1.0, 0.9219544457292888, 0.8969392398596463, 0.8954356481623904]"
+     },
+     {
+      "call": "grad_norm_through_time([[0.85, 4.0], [0.0, 0.85]], [1.0, 0.0], 8)",
+      "compare": "isclose",
+      "expect": "[1.0, 4.089315346118467, 6.838275093179566, 8.691723046417493, 9.83985602156043, 10.449549484067038, 10.655604096314407, 10.565051219198597, 10.262085201646963]"
+     },
+     {
+      "call": "len(grad_norm_through_time(np.eye(3), np.ones(3), 0))",
+      "compare": "equal",
+      "expect": "1"
+     },
+     {
+      "call": "spectral_radius([[0.866, -0.5], [0.5, 0.866]])",
+      "compare": "isclose",
+      "expect": "0.9999779997579947"
+     },
+     {
+      "call": "spectral_radius([[0.0, -1.2], [1.0, 0.0]])",
+      "compare": "isclose",
+      "expect": "1.0954451150103321"
+     },
+     {
+      "call": "spectral_radius([[-1.3, 0.0], [0.0, 0.2]])",
+      "compare": "isclose",
+      "expect": "1.3"
+     },
+     {
+      "call": "[explodes([[1.0, 0.3], [0.3, 0.8]], 50, 100.0), explodes([[0.5, 0.4], [0.4, 0.5]], 50, 100.0), explodes([[0.9, -0.9], [0.9, -0.9]], 50, 1.0)]",
+      "compare": "equal",
+      "expect": "[True, False, False]"
+     },
+     {
+      "call": "explodes([[1.05, 0.0], [0.0, 0.3]], 50, 11.0)",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests, compared to $10^{-9}$. Tests 1 to 3 check the sizes (the second matrix is not symmetric), tests 4 to 6 the spectral radius (complex and negative eigenvalues), tests 7 and 8 `explodes`.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    W, v = np.asarray(W, dtype=float), np.asarray(g, dtype=float)\n    out = []\n    for _ in range(T + 1):\n        out.append(float(np.linalg.norm(v)))\n        v = W @ v\n    return out\n\n\ndef spectral_radius(W):\n    return float(np.max(np.abs(np.linalg.eigvals(np.asarray(W, dtype=float)))))\n\n\ndef explodes(W, T, factor):\n    return bool(spectral_radius(W) ** T > factor)\n",
+      "test": 1,
+      "symptom": "Multiplies by W, not its transpose: the backward pass runs the wrong way."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    W, v = np.asarray(W, dtype=float), np.asarray(g, dtype=float)\n    out = []\n    for _ in range(T + 1):\n        out.append(float(np.linalg.norm(v)))\n        v = W.T @ v\n    return out\n\n\ndef spectral_radius(W):\n    return float(np.max(np.linalg.eigvals(np.asarray(W, dtype=float)).real))\n\n\ndef explodes(W, T, factor):\n    return bool(spectral_radius(W) ** T > factor)\n",
+      "test": 4,
+      "symptom": "Takes the largest real part instead of the largest size."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    W, v = np.asarray(W, dtype=float), np.asarray(g, dtype=float)\n    out = []\n    for _ in range(T + 1):\n        out.append(float(np.linalg.norm(v)))\n        v = W.T @ v\n    return out\n\n\ndef spectral_radius(W):\n    return float(np.max(np.abs(np.asarray(W, dtype=float))))\n\n\ndef explodes(W, T, factor):\n    return bool(spectral_radius(W) ** T > factor)\n",
+      "test": 4,
+      "symptom": "Uses the largest entry, not the largest eigenvalue."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef grad_norm_through_time(W, g, T):\n    W, v = np.asarray(W, dtype=float), np.asarray(g, dtype=float)\n    out = []\n    for _ in range(T):\n        v = W.T @ v\n        out.append(float(np.linalg.norm(v)))\n    return out\n\n\ndef spectral_radius(W):\n    return float(np.max(np.abs(np.linalg.eigvals(np.asarray(W, dtype=float)))))\n\n\ndef explodes(W, T, factor):\n    return bool(spectral_radius(W) ** T > factor)\n",
+      "test": 1,
+      "symptom": "Leaves out the starting size, so the list is one short."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Keep a vector `v`, record its norm, then multiply by `W.T`."
+    },
+    {
+     "rung": "point",
+     "text": "Eigenvalues may be complex: take `np.abs` before the maximum."
+    },
+    {
+     "rung": "step",
+     "text": "`explodes` is `spectral_radius(W) ** T > factor`."
+    }
+   ],
+   "feedback": {
+    "correct": "The sizes, the radius and the verdict agree: the eigenvalues set the long run.",
+    "generic": "Not yet. Check the transpose and the size of complex eigenvalues.",
+    "byKey": {
+     "test-1": "The backward pass multiplies by $\\mathbf W^\\top$, and the list starts with $\\lVert\\mathbf g\\rVert$ at $k = 0$.",
+     "test-4": "The radius is the largest size of an eigenvalue. This turn has entries and real parts under 1, yet radius 1: take `np.abs` of `np.linalg.eigvals`."
+    }
+   },
+   "explain": {
+    "text": "`W.T @ v` is one step of the backward pass, and `np.abs` turns a complex eigenvalue into its size. The radius gives the long-run rate, but test 2's non-normal matrix shows the sizes can climb first."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Why gradients explode or vanish",
+   "prose": "Every step back multiplies the gradient by the step's Jacobian:\n$$\\frac{\\partial \\mathbf h_T}{\\partial \\mathbf h_0} = \\prod_{t=T}^{1} \\operatorname{diag}(1 - \\mathbf h_t^2)\\,\\mathbf W.$$\nFor a diagonalisable $\\mathbf W$ and slopes near 1, its size goes like $\\rho^T$, with $\\rho$ the spectral radius.",
+   "question": "Which statement holds for a diagonalisable $\\mathbf W$ with slopes at most 1?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "vanish",
+      "text": "If $\\rho < 1$ the gradient from far back vanishes",
+      "correct": true
+     },
+     {
+      "id": "explode",
+      "text": "If any entry of $\\mathbf W$ exceeds 1 the gradient explodes",
+      "why": "Entries do not decide it: $\\mathbf N$ had entries 0.9 and radius 0, and $\\mathbf D$ entries under 1.06 and radius 1.05."
+     },
+     {
+      "id": "safe",
+      "text": "If $\\rho > 1$ the tanh always keeps the gradient finite and useful",
+      "why": "The slopes only shrink the factor; they can turn growth into vanishing, never into a well-sized gradient for sure."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With $\\rho < 1$ and slopes at most 1, the product shrinks like $\\rho^T$ or faster.",
+    "generic": "Not quite. What decides the long run?"
+   },
+   "explain": {
+    "text": "Slopes at most 1 can only shrink the product, so $\\rho < 1$ means vanishing in the long run. $\\rho > 1$ can explode, unless the slopes pull it back under 1. A non-normal $\\mathbf W$ may grow for a while first."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A signal from 60 days back",
+   "prose": "A researcher wants a recurrent net to learn that a slow-moving signal predicts returns 60 trading days later, about three months. Even with the recurrent weights tuned so that each step back keeps 0.95 of the gradient, the lesson from day 1 must travel 60 steps.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      50
+     ],
+     "y": [
+      0.001,
+      1000
+     ],
+     "yScale": "log",
+     "xLabel": "steps back $T$",
+     "yLabel": "$|w|^T$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "abs(w)^x",
+       "label": "$|w|^T$",
+       "labelAt": 40
+      }
+     ],
+     "params": {
+      "w": 0.9
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 50,
+       "y": 0.076945,
+       "label": ""
+      }
+     ],
+     "hlines": [
+      {
+       "id": "one",
+       "y": 1,
+       "label": "1"
+      }
+     ]
+    },
+    "derive": {
+     "P.y": "pow(abs(w), 50)",
+     "caption": "$w$ = {{fixed(w, 2)}}: after 50 steps the factor is {{fixed(pow(abs(w), 50), 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "w",
+      "min": 0.5,
+      "max": 1.2,
+      "step": 0.01,
+      "start": 0.95,
+      "label": "$w$",
+      "decimals": 2
+     }
+    ],
+    "maxHeight": 280
+   },
+   "question": "What share of the gradient reaches it? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0461,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": -2.0,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.95,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ],
+    "placeholder": "a number"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One factor of 0.95 per day."
+    },
+    {
+     "rung": "point",
+     "text": "$0.95^{60} = e^{60 \\ln 0.95}$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$60 \\ln 0.95 = -3.0776$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.95^{60} = 0.0461$, under 5%, and noisier gradients from recent days drown it.",
+    "generic": "Not quite. Raise 0.95 to the power 60.",
+    "byKey": {
+     "linear": "You took off 5% of the start each day, $1 - 60 \\times 0.05$. Each day keeps 95% of what is left.",
+     "one": "That is one day."
+    }
+   },
+   "explain": {
+    "text": "$0.95^{60} = 0.0461$: the 60-day lesson arrives at under a twentieth of the strength of yesterday's. With tanh slopes below 1 it is smaller still. Lesson 4's gates, and level 2's attention, are the two fixes."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Each step back multiplies the gradient by $w$, so 50 steps give $0.9^{50} = 0.0052$ or $1.1^{50} = 117$: it vanishes or explodes.",
+   "With a matrix, the backward pass multiplies by $\\mathbf W^\\top$ and keeps the part along the largest eigenvalue: for a diagonalisable $\\mathbf W$ the size goes like $\\rho^k$. Large entries do not mean a large $\\rho$.",
+   "tanh slopes are at most 1, so they make vanishing likelier. Starting with $\\rho$ near 1 helps; a non-normal $\\mathbf W$ can grow before it shrinks."
+  ],
+  "formula": {
+   "name": "The gradient through time",
+   "tex": "\\frac{\\partial \\mathbf h_T}{\\partial \\mathbf h_0} = \\prod_{t=T}^{1} \\operatorname{diag}(1 - \\mathbf h_t^2)\\,\\mathbf W",
+   "note": "Long run like $\\rho^T$ for a diagonalisable $\\mathbf W$."
+  },
+  "trap": "A big weight entry is not an explosion: judge by the eigenvalues."
+ },
+ "quiz": [
+  {
+   "id": "q-pow",
+   "difficulty": 2,
+   "prose": "A linear recurrent net has $w = 0.8$.",
+   "question": "What is $\\partial h_{10}/\\partial h_0$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1074,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 8,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.8^{10} = 0.1074$.",
+    "generic": "Not quite. One factor of $w$ per step.",
+    "byKey": {
+     "linear": "You multiplied $0.8 \\times 10$. The factors multiply."
+    }
+   },
+   "explain": {
+    "text": "Ten steps, ten factors of 0.8: $0.8^{10} = 0.1074$."
+   }
+  },
+  {
+   "id": "q-rho",
+   "difficulty": 3,
+   "prose": "A diagonal recurrent matrix has entries 0.6 and $-1.1$ on its diagonal, slopes taken as 1.",
+   "question": "Over many steps, its gradient:",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "explode",
+      "text": "explodes, since $|-1.1| > 1$",
+      "correct": true
+     },
+     {
+      "id": "vanish",
+      "text": "vanishes, since $-1.1 < 1$",
+      "why": "Size is what counts: $|-1.1| = 1.1$, outside the circle."
+     },
+     {
+      "id": "hold",
+      "text": "holds steady, since $0.6 - 1.1$ is near $-0.5$",
+      "why": "The eigenvalues act separately; they do not add."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The radius is $|-1.1| = 1.1 > 1$, so the gradient grows, flipping sign each step.",
+    "generic": "Not quite. Compare the sizes of the eigenvalues with 1."
+   },
+   "explain": {
+    "text": "A diagonal matrix's eigenvalues are its diagonal entries. $|-1.1| = 1.1$ is outside the circle, so one part grows like $1.1^k$ with alternating sign."
+   }
+  },
+  {
+   "id": "q-nonnormal",
+   "difficulty": 3,
+   "prose": "Both eigenvalues of a 2 by 2 recurrent matrix are 0.5, but its gradient grows for the first few steps back.",
+   "question": "Is that a contradiction?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: the eigenvalue rule describes the long run only",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: eigenvalues inside the circle mean it shrinks from the first step",
+      "why": "That holds for a symmetric matrix, not a non-normal one, whose off-diagonal term can grow first."
+     },
+     {
+      "id": "bug",
+      "text": "Yes, so the gradient code has a bug",
+      "why": "A matrix like $\\begin{pmatrix} 0.5 & 5 \\\\ 0 & 0.5 \\end{pmatrix}$ does exactly this."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No. A non-normal matrix can amplify before the eigenvalues take over.",
+    "generic": "Not quite. What does the eigenvalue rule describe?"
+   },
+   "explain": {
+    "text": "With eigenvectors that do not span the plane, a term like $k\\,\\lambda^{k-1}$ can grow before $\\lambda^k$ wins. The radius sets where it ends, not every step."
+   }
+  }
+ ]
+}

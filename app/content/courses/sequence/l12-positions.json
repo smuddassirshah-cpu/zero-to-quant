@@ -1,0 +1,970 @@
+{
+ "id": "l12-positions",
+ "course": "sequence",
+ "title": "Where each token sits",
+ "minutes": 14,
+ "objectives": [
+  "Explain why attention needs positions, and add learned or sinusoidal position vectors."
+ ],
+ "skills": [
+  "sqn-self"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two orders, one answer",
+   "prose": "Take lesson 2's trained model and leave out its position table. Feed it \".mar\" and \".amr\": the last symbol is r in both, and the earlier symbols are the same set in a different order. The bars are the chance it gives to i as the next letter.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "mar",
+       "label": ".mar"
+      },
+      {
+       "id": "amr",
+       "label": ".amr"
+      }
+     ],
+     "yMin": 0,
+     "yMax": 0.5,
+     "showValues": true,
+     "decimals": 4,
+     "yLabel": "chance of i next"
+    },
+    "state": {
+     "values": {
+      "mar": 0.2377,
+      "amr": 0.2377
+     },
+     "caption": "Positions left out: the two chances are equal."
+    },
+    "controls": [
+     {
+      "bind": "pos",
+      "label": "positions",
+      "frames": [
+       {
+        "values": {
+         "mar": 0.2377,
+         "amr": 0.2377
+        },
+        "caption": "Positions left out: the two chances are equal."
+       },
+       {
+        "values": {
+         "mar": 0.291,
+         "amr": 0.4306
+        },
+        "caption": "Positions added: they differ."
+       }
+      ],
+      "frameLabels": [
+       "out",
+       "in"
+      ],
+      "start": 0
+     }
+    ]
+   },
+   "question": "With positions left out, by how much do the two chances of i differ?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "withpos",
+      "value": 0.1396,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the two bars with positions out."
+    },
+    {
+     "rung": "point",
+     "text": "The last position attends to the same set of tokens in both."
+    },
+    {
+     "rung": "step",
+     "text": "A weighted average over a set does not depend on its order."
+    }
+   ],
+   "feedback": {
+    "correct": "They are equal, 0.2377 each: without positions the model cannot tell the orders apart.",
+    "generic": "Not quite. Compare the two bars with positions out.",
+    "byKey": {
+     "withpos": "That is the gap with positions in. Switch them out."
+    }
+   },
+   "explain": {
+    "text": "Without positions the last query is r in both and it averages over the same set $\\{., m, a, r\\}$, so the chances match: 0.2377. With positions they become 0.2910 and 0.4306. (The mask itself carries some order: earlier positions see fewer tokens.)"
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Adding a position vector",
+   "prose": "Attention is blind to order, so add a **position vector** to each token's embedding before the first layer. It is either **learned**, a table with one row per position as in the supplied model, or **sinusoidal**: $PE_{t, 2i} = \\sin(t/10000^{2i/d})$ and $PE_{t, 2i+1} = \\cos(t/10000^{2i/d})$, from $t = 0$. Take $d = 32$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      16
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "xLabel": "position $t$",
+     "yLabel": "value",
+     "functions": [
+      {
+       "id": "f0",
+       "expr": "sin(x)",
+       "label": "$i = 0$, sin",
+       "labelAt": 13
+      },
+      {
+       "id": "f2",
+       "expr": "sin(x / 10000^(4/32))",
+       "label": "$i = 2$, sin",
+       "labelAt": 5
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 3,
+       "y": 0.1411,
+       "on": "f0",
+       "label": ""
+      }
+     ]
+    },
+    "maxHeight": 260
+   },
+   "question": "What is $PE_{3, 0}$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1411,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "cos",
+      "value": -0.99,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "deg",
+      "value": 0.0523,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With $i = 0$ the divisor is $10000^0 = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "So $PE_{3,0} = \\sin 3$, in radians.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sin 3 = 0.1411$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sin 3 = 0.1411$.",
+    "generic": "Not quite. $\\sin(3/1)$ in radians.",
+    "byKey": {
+     "cos": "That is $PE_{3,1}$, the cosine.",
+     "deg": "You took 3 degrees. The angle is 3 radians."
+    }
+   },
+   "explain": {
+    "text": "$PE_{3,0} = \\sin(3) = 0.1411$ and $PE_{3,1} = \\cos 3 = -0.9900$. Low dimensions swing fast with $t$, higher ones slowly, like the hands of a clock."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A slower dimension",
+   "prose": "Now $PE_{5, 2}$: here $i = 1$, so the angle is $5/10000^{2/32}$, and $10000^{2/32} = 1.7783$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "entry",
+      "angle",
+      "value"
+     ],
+     "rows": [
+      [
+       "$PE_{3,0}$",
+       "3",
+       "0.1411"
+      ],
+      [
+       "$PE_{5,2}$",
+       "?",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "What is $PE_{5, 2}$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3239,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "cos",
+      "value": -0.9461,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "i2",
+      "value": 0.9999,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the angle first."
+    },
+    {
+     "rung": "point",
+     "text": "$5/1.7783 = 2.8117$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sin(2.8117)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sin(2.8117) = 0.3239$.",
+    "generic": "Not quite. Divide 5 by 1.7783, then take the sine.",
+    "byKey": {
+     "cos": "That is the cosine, $PE_{5,3}$.",
+     "i2": "You used $i = 2$. Entry 2 is the sine with $i = 1$."
+    }
+   },
+   "explain": {
+    "text": "The angle is $5/1.7783 = 2.8117$, so $PE_{5,2} = 0.3239$ and $PE_{5,3} = -0.9461$. Every position gets a unique pattern, computed, not learned."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Offsets, not places",
+   "prose": "Take the dot product of two sinusoidal position vectors $t$ and $t + k$. Each sine and cosine pair gives $\\cos(k\\,\\omega_i)$, so the sum depends on the offset $k$ alone, not on $t$. The curve is that sum for $d = 32$ against $k$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      40
+     ],
+     "y": [
+      -4,
+      17
+     ],
+     "xLabel": "offset $k$",
+     "yLabel": "$PE_t \\cdot PE_{t+k}$",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "sum(i, 0, 15, cos(x / 10000^(2*i/32)))",
+       "label": "sum of cosines",
+       "labelAt": 30
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0,
+       "y": 16,
+       "on": "g",
+       "label": ""
+      }
+     ]
+    },
+    "maxHeight": 260
+   },
+   "question": "What is the dot product of a position vector with itself ($k = 0$)?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "d",
+      "value": 32,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With $k = 0$ each $\\cos 0 = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "There are $d/2 = 16$ pairs.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$16 \\times 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$d/2 = 16$; at $k = 1$ it is 15.31, and it falls away as $k$ grows.",
+    "generic": "Not quite. Count the sine and cosine pairs.",
+    "byKey": {
+     "d": "Each pair contributes $\\sin^2 + \\cos^2 = 1$: 16 pairs, not 32.",
+     "one": "Each of the 16 pairs gives 1."
+    }
+   },
+   "explain": {
+    "text": "$\\sin^2 + \\cos^2 = 1$ for each of the 16 pairs, so the self dot product is 16 at every $t$; at offset 1 it is 15.31. Because the dot product depends on the offset only, attention can learn \"look 3 back\" once for all positions."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Beyond the trained context",
+   "prose": "The supplied model has a learned table of 8 rows, one per position. A sinusoidal table can be computed for any $t$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "positions",
+      "learned table",
+      "sinusoidal"
+     ],
+     "rows": [
+      [
+       "0 to 7",
+       "rows exist",
+       "computed"
+      ],
+      [
+       "8 to 11",
+       "missing",
+       "computed"
+      ]
+     ]
+    }
+   },
+   "question": "A sequence of 12 tokens arrives. What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "learned",
+      "text": "The learned table has no rows 8 to 11; the sinusoidal one has them, though whether the model uses them well is untested",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "Both work equally well, since positions are just numbers",
+      "why": "A learned table simply has no row for position 9: the lookup fails."
+     },
+     {
+      "id": "neither",
+      "text": "Neither can be used past 8",
+      "why": "Sinusoidal vectors exist for every $t$; the question is only how well a model trained to 8 uses them."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How is each table made?"
+    },
+    {
+     "rung": "point",
+     "text": "A learned table has one trained row per position seen.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A formula has a value at every $t$."
+    }
+   ],
+   "feedback": {
+    "correct": "Learned rows end at the trained context; the formula never ends, but the model never practised there.",
+    "generic": "Not quite. Compare a table with a formula."
+   },
+   "explain": {
+    "text": "Learned positions cannot reach past the trained context: there is no row to look up. Sinusoidal ones can be computed for any $t$, which is part of why Vaswani et al. chose them; extrapolating well is a separate question."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Concatenating instead of adding",
+   "prose": "A colleague joins the position vectors to the embeddings side by side, `np.concatenate([E, P], axis=1)`, for embeddings of width 32 feeding a layer whose $\\mathbf W_Q$ is 32 by 32.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "operation",
+      "shape"
+     ],
+     "rows": [
+      [
+       "$\\mathbf E + \\mathbf P$",
+       "$T$ by 32"
+      ],
+      [
+       "concatenate",
+       "$T$ by 64"
+      ],
+      [
+       "$\\mathbf W_Q$",
+       "32 by 32"
+      ]
+     ]
+    }
+   },
+   "question": "What happens at the first layer?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "shape",
+      "text": "The input is now 64 wide, so the product with the 32 by 32 matrices fails",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "It works the same as adding",
+      "why": "Concatenating doubles the width; the weights expect 32."
+     },
+     {
+      "id": "after",
+      "text": "It works if the positions are added after attention instead",
+      "why": "Adding after attention is too late: the scores, where order matters, were already computed without them."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check the shapes."
+    },
+    {
+     "rung": "point",
+     "text": "Concatenating two $T \\times 32$ arrays gives $T \\times 64$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A $T \\times 64$ times $32 \\times 32$ product does not exist."
+    }
+   ],
+   "feedback": {
+    "correct": "Shapes break: the model expects positions added.",
+    "generic": "Not quite. What width comes out of the concatenation?",
+    "byKey": {
+     "after": "Positions added after attention arrive once the scores are fixed, so attention stays blind to order."
+    }
+   },
+   "explain": {
+    "text": "The standard transformer adds position vectors to the embeddings, keeping the width. Concatenating needs wider weights; adding positions after attention leaves the scores blind to order."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "An index past the table",
+   "prose": "Edge case: `add_positions(E, P)` adds `P[:T]` to embeddings `E` of $T$ rows. With the learned table of 8 rows and $T = 10$, a careful version raises an error instead of silently adding a shorter table.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8?",
+      "9?"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         8,
+         9
+        ],
+        "label": "no row",
+        "colour": 3
+       }
+      ]
+     }
+    }
+   },
+   "question": "Which error should it raise?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "index",
+      "text": "`IndexError`: there is no row for positions 8 and 9",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "None: NumPy broadcasts the 8 rows",
+      "why": "Shapes $(10, 32)$ and $(8, 32)$ do not broadcast; and silently padding would hide the bug."
+     },
+     {
+      "id": "value",
+      "text": "`ZeroDivisionError`",
+      "why": "Nothing is divided. The fault is a missing row."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which rows exist?"
+    },
+    {
+     "rung": "point",
+     "text": "Rows 0 to 7.",
+     "highlight": [
+      "c8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Asking for row 8 is an index out of range."
+    }
+   ],
+   "feedback": {
+    "correct": "An `IndexError`, so the caller learns the context is too long.",
+    "generic": "Not quite. What is missing?"
+   },
+   "explain": {
+    "text": "A learned table indexed past its end must fail loudly: an `IndexError` naming the context length. The code screen tests for exactly that."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Positions in code",
+   "prose": "Write `sinusoidal_positions(T, d)`, `add_positions(E, P)` (raise `IndexError` past the table), and `order_matters(model, a, b)`, the largest gap between the last-position logits of two token lists, without and with the model's positions. `last_logits(model, tokens, P)` is supplied.",
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef sinusoidal_positions(T, d):\n    # P[t, 2i] = sin(t / 10000^(2i/d)), P[t, 2i+1] = cos(t / 10000^(2i/d)), t from 0\n    ...\n\n\ndef add_positions(E, P):\n    # E (T, d) plus the first T rows of P; raise IndexError if T is longer than P\n    ...\n\n\ndef order_matters(model, a, b):\n    # [largest |difference| of last_logits(model, a) and (model, b) without positions,\n    #  the same with positions model['P']]\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef sinusoidal_positions(T, d):\n    P = np.zeros((T, d))\n    t = np.arange(T)[:, None]\n    w = 1.0 / 10000 ** (np.arange(0, d, 2) / d)\n    P[:, 0::2] = np.sin(t * w)\n    P[:, 1::2] = np.cos(t * w)\n    return P\n\n\ndef add_positions(E, P):\n    E, P = np.asarray(E, dtype=float), np.asarray(P, dtype=float)\n    if len(E) > len(P):\n        raise IndexError(f'context {len(E)} is longer than the position table ({len(P)})')\n    return E + P[:len(E)]\n\n\ndef order_matters(model, a, b):\n    no = float(np.abs(last_logits(model, a) - last_logits(model, b)).max())\n    yes = float(np.abs(last_logits(model, a, model['P']) - last_logits(model, b, model['P'])).max())\n    return [no, yes]\n",
+    "prelude": "import json\nimport numpy as np\n\nwith open('sequence-attn-names.json') as f:\n    _W = json.load(f)\nMODEL = {k: np.array(v) for k, v in _W['h1'].items()}\nIX = {ch: i for i, ch in enumerate(_W['vocab'])}\n\n\ndef last_logits(model, tokens, P=None):\n    X = np.asarray(tokens)\n    T = len(X)\n    x = model['E'][X] + (P[:T] if P is not None else 0.0)\n    q, k, v = x @ model['Wq'], x @ model['Wk'], x @ model['Wv']\n    S = q @ k.T / np.sqrt(q.shape[-1]) + np.triu(np.full((T, T), -np.inf), 1)\n    S = S - S.max(-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(-1, keepdims=True)\n    return ((A @ v) @ model['Wo'] @ model['U'] + model['c'])[-1]\n",
+    "data": {
+     "sequence-attn-names.json": "content/data/ai/sequence-attn-names.json"
+    },
+    "examples": [
+     {
+      "call": "sinusoidal_positions(4, 4).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.0, 1.0, 0.0, 1.0], [0.8414709848078965, 0.5403023058681398, 0.009999833334166664, 0.9999500004166653], [0.9092974268256817, -0.4161468365471424, 0.01999866669333308, 0.9998000066665778], [0.1411200080598672, -0.9899924966004454, 0.02999550020249566, 0.9995500337489875]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "sinusoidal_positions(4, 4).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.0, 1.0, 0.0, 1.0], [0.8414709848078965, 0.5403023058681398, 0.009999833334166664, 0.9999500004166653], [0.9092974268256817, -0.4161468365471424, 0.01999866669333308, 0.9998000066665778], [0.1411200080598672, -0.9899924966004454, 0.02999550020249566, 0.9995500337489875]]"
+     },
+     {
+      "call": "sinusoidal_positions(8, 32)[5, :4].tolist()",
+      "compare": "isclose",
+      "expect": "[-0.9589242746631385, 0.28366218546322625, 0.32393520361009215, -0.9460792693332246]"
+     },
+     {
+      "call": "float(sinusoidal_positions(20, 32)[3] @ sinusoidal_positions(20, 32)[3])",
+      "compare": "isclose",
+      "expect": "16.0"
+     },
+     {
+      "call": "add_positions(np.ones((3, 2)), np.arange(8.0).reshape(4, 2)).tolist()",
+      "compare": "isclose",
+      "expect": "[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]"
+     },
+     {
+      "call": "add_positions(np.zeros((10, 32)), MODEL[\"P\"])",
+      "compare": "raises",
+      "expect": "IndexError"
+     },
+     {
+      "call": "order_matters(MODEL, [0, 13, 1, 18], [0, 1, 13, 18])[0] < 1e-9",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "order_matters(MODEL, [0, 13, 1, 18], [0, 1, 13, 18])[1]",
+      "compare": "isclose",
+      "expect": "2.2996970818517672"
+     },
+     {
+      "call": "order_matters(MODEL, [0, 1, 14, 1], [0, 14, 1, 1])[1]",
+      "compare": "isclose",
+      "expect": "1.0647127943614527"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests, compared to $10^{-9}$. Test 5 checks the `IndexError` for a context of 10 against the 8-row table; tests 6 to 8 use the supplied model on \".mar\" and \".amr\", then \".ana\" and \".naa\".",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef sinusoidal_positions(T, d):\n    P = np.zeros((T, d))\n    t = np.arange(T)[:, None]\n    w = 1.0 / 10000 ** (np.arange(0, d, 2) / d)\n    P[:, 0::2] = np.cos(t * w)\n    P[:, 1::2] = np.sin(t * w)\n    return P\n\n\ndef add_positions(E, P):\n    E, P = np.asarray(E, dtype=float), np.asarray(P, dtype=float)\n    if len(E) > len(P):\n        raise IndexError(f'context {len(E)} is longer than the position table ({len(P)})')\n    return E + P[:len(E)]\n\n\ndef order_matters(model, a, b):\n    no = float(np.abs(last_logits(model, a) - last_logits(model, b)).max())\n    yes = float(np.abs(last_logits(model, a, model['P']) - last_logits(model, b, model['P'])).max())\n    return [no, yes]\n",
+      "test": 1,
+      "symptom": "Puts the cosines in the even entries."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef sinusoidal_positions(T, d):\n    P = np.zeros((T, d))\n    t = np.arange(T)[:, None]\n    w = 1.0 / 10000 ** (np.arange(d // 2) / d)\n    P[:, 0::2] = np.sin(t * w)\n    P[:, 1::2] = np.cos(t * w)\n    return P\n\n\ndef add_positions(E, P):\n    E, P = np.asarray(E, dtype=float), np.asarray(P, dtype=float)\n    if len(E) > len(P):\n        raise IndexError(f'context {len(E)} is longer than the position table ({len(P)})')\n    return E + P[:len(E)]\n\n\ndef order_matters(model, a, b):\n    no = float(np.abs(last_logits(model, a) - last_logits(model, b)).max())\n    yes = float(np.abs(last_logits(model, a, model['P']) - last_logits(model, b, model['P'])).max())\n    return [no, yes]\n",
+      "test": 1,
+      "symptom": "Uses i where the formula has 2i in the exponent."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef sinusoidal_positions(T, d):\n    P = np.zeros((T, d))\n    t = np.arange(T)[:, None]\n    w = 1.0 / 10000 ** (np.arange(0, d, 2) / d)\n    P[:, 0::2] = np.sin(t * w)\n    P[:, 1::2] = np.cos(t * w)\n    return P\n\n\ndef add_positions(E, P):\n    E, P = np.asarray(E, dtype=float), np.asarray(P, dtype=float)\n    return E + np.resize(P, E.shape)\n\n\ndef order_matters(model, a, b):\n    no = float(np.abs(last_logits(model, a) - last_logits(model, b)).max())\n    yes = float(np.abs(last_logits(model, a, model['P']) - last_logits(model, b, model['P'])).max())\n    return [no, yes]\n",
+      "test": 5,
+      "symptom": "Wraps the table round instead of failing past its end."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef sinusoidal_positions(T, d):\n    P = np.zeros((T, d))\n    t = np.arange(T)[:, None]\n    w = 1.0 / 10000 ** (np.arange(0, d, 2) / d)\n    P[:, 0::2] = np.sin(t * w)\n    P[:, 1::2] = np.cos(t * w)\n    return P\n\n\ndef add_positions(E, P):\n    E, P = np.asarray(E, dtype=float), np.asarray(P, dtype=float)\n    if len(E) > len(P):\n        raise IndexError(f'context {len(E)} is longer than the position table ({len(P)})')\n    return E + P[:len(E)]\n\n\ndef order_matters(model, a, b):\n    no = float(np.abs(last_logits(model, a) - last_logits(model, b)).max())\n    yes = float(np.abs(last_logits(model, a) - last_logits(model, b, model['P'])).max())\n    return [no, yes]\n",
+      "test": 7,
+      "symptom": "Adds positions to one sequence only."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`w = 1 / 10000 ** (np.arange(0, d, 2) / d)`; sines in the even columns, cosines in the odd."
+    },
+    {
+     "rung": "point",
+     "text": "Check the length before adding, and raise `IndexError`."
+    },
+    {
+     "rung": "step",
+     "text": "`last_logits(model, a)` without positions, `last_logits(model, a, model[\"P\"])` with them."
+    }
+   ],
+   "feedback": {
+    "correct": "Without positions the two orders give the same logits; with them they differ.",
+    "generic": "Not yet. Check the exponent, the order of sines and cosines, and the length check.",
+    "byKey": {
+     "test-1": "Even entries are sines, odd entries cosines, with exponent $2i/d$.",
+     "test-5": "Raise `IndexError` when the context is longer than the table, instead of wrapping or padding.",
+     "test-7": "Add the positions to both sequences."
+    }
+   },
+   "explain": {
+    "text": "The table is a fixed function of $t$, so any length can be computed. The order test shows exactly what the positions add: without them the last logits of \".mar\" and \".amr\" agree to rounding."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Where each token sits",
+   "prose": "Attention needs order supplied from outside:\n$$\\mathbf x_t = \\mathbf e_{\\text{token}_t} + \\mathbf p_t, \\qquad p_{t,2i} = \\sin\\!\\big(t/10000^{2i/d}\\big),\\; p_{t,2i+1} = \\cos\\!\\big(t/10000^{2i/d}\\big),$$\nor $\\mathbf p_t$ a learned row of a table. Sinusoidal dot products depend on the offset only.",
+   "question": "Why add rather than concatenate?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "width",
+      "text": "Adding keeps the width, so every later weight keeps its shape",
+      "correct": true
+     },
+     {
+      "id": "info",
+      "text": "Adding keeps more information than concatenating",
+      "why": "Concatenating keeps both intact; adding mixes them. The reason is the width."
+     },
+     {
+      "id": "speed",
+      "text": "Adding makes attention faster",
+      "why": "Both cost about the same; the point is the shape."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Same width, so the model is unchanged; it learns to read both from one vector.",
+    "generic": "Not quite. Compare the shapes."
+   },
+   "explain": {
+    "text": "Adding keeps $\\mathbf x_t$ at width $d$, and in high dimensions the model can still separate the token and position parts. Concatenating would need every weight matrix widened."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Day of the week, days to earnings",
+   "prose": "A transformer reads 60 days of a stock's returns. Mondays behave differently, and returns are wilder in the days before an earnings date. Each day's return is embedded as a vector.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "day",
+      "return",
+      "weekday",
+      "days to earnings"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.4%",
+       "Mon",
+       "12"
+      ],
+      [
+       "2",
+       "−0.2%",
+       "Tue",
+       "11"
+      ],
+      [
+       "…",
+       "…",
+       "…",
+       "…"
+      ]
+     ]
+    }
+   },
+   "question": "How does the model learn about weekdays and earnings?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "pos",
+      "text": "Add vectors for the weekday and the days to earnings, as position vectors are added",
+      "correct": true
+     },
+     {
+      "id": "order",
+      "text": "It reads them from the order of the days automatically",
+      "why": "Attention without positions cannot see order at all, let alone weekdays."
+     },
+     {
+      "id": "mask",
+      "text": "Through the causal mask",
+      "why": "The mask hides the future; it says nothing about which day is a Monday."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Attention sees only the vectors."
+    },
+    {
+     "rung": "point",
+     "text": "Order and calendar facts must be written into them.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Add learned vectors for each weekday and each distance."
+    }
+   ],
+   "feedback": {
+    "correct": "Positions generalise to any fact about where a token sits.",
+    "generic": "Not quite. What can attention see?"
+   },
+   "explain": {
+    "text": "Attention mixes vectors and sees nothing else. Position, weekday and distance to earnings are all \"where this token sits\", and each is written in by adding a vector before the first layer."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Without positions, attention averages over a set: \".mar\" and \".amr\" get the same chance of i next, 0.2377, until positions are added.",
+   "Add a position vector to each embedding: learned rows, or sinusoids $\\sin(t/10000^{2i/d})$ and $\\cos(\\cdot)$; $PE_{3,0} = 0.1411$. Their dot products depend on the offset only.",
+   "Learned tables stop at the trained context (index past it and fail); sinusoids extend to any $t$. Add positions to the embeddings, before attention, never concatenated or after."
+  ],
+  "formula": {
+   "name": "Sinusoidal positions",
+   "tex": "PE_{t,2i} = \\sin\\!\\big(t/10000^{2i/d}\\big), \\quad PE_{t,2i+1} = \\cos\\!\\big(t/10000^{2i/d}\\big)",
+   "note": "Added to the token embedding."
+  },
+  "trap": "Concatenating positions breaks the shapes; adding them after attention leaves the scores blind to order."
+ },
+ "quiz": [
+  {
+   "id": "q-pe",
+   "difficulty": 2,
+   "prose": "Sinusoidal positions with $d = 16$.",
+   "question": "What is $PE_{0, 1}$, the cosine entry at position 0?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "sin",
+      "value": 0,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\cos 0 = 1$.",
+    "generic": "Not quite. Entry 1 is a cosine.",
+    "byKey": {
+     "sin": "That is the sine entry, $\\sin 0 = 0$."
+    }
+   },
+   "explain": {
+    "text": "At $t = 0$ every angle is 0, so sines are 0 and cosines 1."
+   }
+  },
+  {
+   "id": "q-blind",
+   "difficulty": 2,
+   "prose": "Self-attention without positions reads \"abc\" and \"bac\".",
+   "question": "What is the same in both?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "c",
+      "text": "The output for c, the last token",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "Every output, position by position",
+      "why": "With a mask, a and b see different earlier tokens in the two orders."
+     },
+     {
+      "id": "none",
+      "text": "Nothing",
+      "why": "The last token c sees the same set in both."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "c attends to the same set $\\{a, b, c\\}$ in both, so its output is the same.",
+    "generic": "Not quite. Which token sees the same set?"
+   },
+   "explain": {
+    "text": "Without positions, c's output is an average over the same tokens either way. With a causal mask, a and b see different prefixes."
+   }
+  },
+  {
+   "id": "q-table",
+   "difficulty": 3,
+   "prose": "A model with a learned table of 32 positions is given 40 tokens.",
+   "question": "What should happen?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "error",
+      "text": "An error: there are no rows for positions 32 to 39",
+      "correct": true
+     },
+     {
+      "id": "wrap",
+      "text": "It reuses rows 0 to 7 for the extra tokens",
+      "why": "Wrapping gives tokens 32 and 0 the same position: a silent bug."
+     },
+     {
+      "id": "zero",
+      "text": "The extra positions get zero vectors",
+      "why": "Silently adding nothing hides that the model never saw those positions."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Fail loudly: the context is longer than anything learned.",
+    "generic": "Not quite. What does the table hold?"
+   },
+   "explain": {
+    "text": "A learned table has rows only for the trained context, so position 32 has nothing to look up. A sinusoidal table could compute it."
+   }
+  }
+ ]
+}

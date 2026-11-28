@@ -1,0 +1,558 @@
+{
+ "id": "problems-1",
+ "course": "sequence",
+ "level": 1,
+ "title": "Recurrent nets: chained problems",
+ "minutes": 40,
+ "items": [
+  {
+   "id": "p-radius",
+   "difficulty": 4,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "prose": "A recurrent net's weight matrix is $\\mathbf W = \\begin{pmatrix} 0.6 & 0.5 \\\\ 0.2 & 0.9 \\end{pmatrix}$, and its tanh units sit near 0, so the slopes are about 1.",
+   "parts": [
+    {
+     "question": "What is its larger eigenvalue? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.1,
+      "tol": {
+       "abs": 0.05
+      },
+      "wrong": [
+       {
+        "id": "trace",
+        "value": 1.5,
+        "tol": {
+         "abs": 0.05
+        }
+       },
+       {
+        "id": "det",
+        "value": 0.44,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Trace 1.5, determinant 0.44: $\\lambda = 0.75 \\pm 0.35$, so 1.1 and 0.4.",
+      "generic": "Not quite. Solve $\\lambda^2 - 1.5\\lambda + 0.44 = 0$.",
+      "byKey": {
+       "trace": "That is the trace, the sum of the two eigenvalues.",
+       "det": "That is the determinant, their product."
+      }
+     },
+     "explain": {
+      "text": "The characteristic equation is $\\lambda^2 - 1.5\\lambda + 0.44 = 0$, with roots $0.75 \\pm \\sqrt{0.1225} = 0.75 \\pm 0.35$: 1.1 and 0.4."
+     }
+    },
+    {
+     "question": "Using the radius 1.1 from part 1, by what factor does a gradient grow over 20 steps back in the long run? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 6.73,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "linear",
+        "value": 22.0,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "add",
+        "value": 3.0,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1.1^{20} = 6.73$.",
+      "generic": "Not quite. Compound 1.1 twenty times.",
+      "byKey": {
+       "linear": "You multiplied $1.1 \\times 20$. The factors compound.",
+       "add": "You added 0.1 a step. It compounds."
+      }
+     },
+     "explain": {
+      "text": "The part along the eigenvalue-1.1 direction grows like $1.1^k$: $1.1^{20} = 6.73$."
+     }
+    },
+    {
+     "question": "A gradient of norm 0.5 is carried back those 20 steps, then clipped by norm at $c = 1$. By what factor does the clip scale it? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.2973,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "noh",
+        "value": 0.1486,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "inv",
+        "value": 3.3637,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "It arrives with norm $0.5 \\times 6.7275 = 3.3637$, so the factor is $1/3.3637 = 0.2973$.",
+      "generic": "Not quite. Find the arriving norm first.",
+      "byKey": {
+       "noh": "You left out the starting norm 0.5. The arriving norm is $0.5 \\times 6.7275$.",
+       "inv": "You gave the arriving norm. The clip scales by $c$ over it."
+      }
+     },
+     "explain": {
+      "text": "Arriving norm $0.5 \\times 6.7275 = 3.3637 > 1$, so the clip scales by $1/3.3637 = 0.2973$."
+     }
+    },
+    {
+     "question": "Instead of clipping, $\\mathbf W$ is rescaled so its radius is 0.9. By what number is $\\mathbf W$ multiplied? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8182,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "inv",
+        "value": 1.2222,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.9/1.1 = 0.8182$.",
+      "generic": "Not quite. Every eigenvalue scales by the same factor.",
+      "byKey": {
+       "inv": "You divided the other way. The radius must shrink from 1.1 to 0.9."
+      }
+     },
+     "explain": {
+      "text": "Scaling $\\mathbf W$ by $c$ scales both eigenvalues, so $1.1c = 0.9$ and $c = 0.8182$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-twostep",
+   "difficulty": 3,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "prose": "A one-unit linear net $h_t = w\\,h_{t-1} + u\\,x_t$ has $w = 0.6$, $u = 2$, $h_0 = 0$ and reads the inputs $x_1 = 1$, $x_2 = 0.5$.",
+   "parts": [
+    {
+     "question": "What is $h_2$? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.2,
+      "tol": {
+       "abs": 0.05
+      },
+      "wrong": [
+       {
+        "id": "nowt",
+        "value": 3.0,
+        "tol": {
+         "abs": 0.05
+        }
+       },
+       {
+        "id": "nou",
+        "value": 1.1,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$h_1 = 2$ and $h_2 = 0.6 \\times 2 + 2 \\times 0.5 = 2.2$.",
+      "generic": "Not quite. Two steps of the update.",
+      "byKey": {
+       "nowt": "You added $h_1$ in full; it is multiplied by 0.6.",
+       "nou": "You left out $u = 2$ on the inputs."
+      }
+     },
+     "explain": {
+      "text": "$h_1 = 0 + 2 \\times 1 = 2$, then $h_2 = 1.2 + 1 = 2.2$."
+     }
+    },
+    {
+     "question": "With $h_1 = 2$ from part 1, what is $\\partial h_2/\\partial w$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "w",
+        "value": 0.6,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "both",
+        "value": 2.6,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\partial h_2/\\partial w = h_1 + w\\,\\partial h_1/\\partial w = 2 + 0.6 \\times 0 = 2$.",
+      "generic": "Not quite. One term per use of $w$.",
+      "byKey": {
+       "w": "You gave $w$. The derivative of $w\\,h_1$ in $w$ is $h_1$.",
+       "both": "You added $w$ to $h_1$. The first step's term is $w$ times $h_0 = 0$."
+      }
+     },
+     "explain": {
+      "text": "The first use of $w$ multiplies $h_0 = 0$ and adds nothing; the second adds $h_1 = 2$."
+     }
+    },
+    {
+     "question": "What is $\\partial h_2/\\partial u$? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.1,
+      "tol": {
+       "abs": 0.05
+      },
+      "wrong": [
+       {
+        "id": "last",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.05
+        }
+       },
+       {
+        "id": "nopow",
+        "value": 1.5,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\partial h_2/\\partial u = w\\,x_1 + x_2 = 0.6 + 0.5 = 1.1$.",
+      "generic": "Not quite. $u$ is shared too.",
+      "byKey": {
+       "last": "You kept only the second step's term, $x_2$.",
+       "nopow": "You added $x_1 + x_2$ without carrying $x_1$'s term through $w$."
+      }
+     },
+     "explain": {
+      "text": "$u$ acts at both steps: its first use is carried to $h_2$ by $w = 0.6$, giving $0.6 \\times 1 + 0.5 = 1.1$."
+     }
+    },
+    {
+     "question": "The loss is $(h_2 - 2)^2$. Using $h_2 = 2.2$ and $\\partial h_2/\\partial w = 2$, what is $\\partial L/\\partial w$? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8,
+      "tol": {
+       "abs": 0.05
+      },
+      "wrong": [
+       {
+        "id": "nochain",
+        "value": 0.4,
+        "tol": {
+         "abs": 0.05
+        }
+       },
+       {
+        "id": "sign",
+        "value": -0.8,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2(h_2 - 2)\\,\\partial h_2/\\partial w = 2 \\times 0.2 \\times 2 = 0.8$.",
+      "generic": "Not quite. Chain the loss's slope onto $\\partial h_2/\\partial w$.",
+      "byKey": {
+       "nochain": "You stopped at $2(h_2 - 2) = 0.4$. Multiply by $\\partial h_2/\\partial w = 2$.",
+       "sign": "The forecast is too high, so the gradient is positive."
+      }
+     },
+     "explain": {
+      "text": "The chain rule: $2 \\times 0.2 \\times 2 = 0.8$. A step against it lowers $w$, pulling $h_2$ back towards 2."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-gate",
+   "difficulty": 5,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "prose": "A gated unit keeps its gate nearly shut on quiet days, so along its direct path each step back multiplies the gradient by $1 - z = 0.95$. A plain tanh net beside it multiplies by $w\\,(1 - h^2) = 0.9 \\times 0.7$ a step.",
+   "parts": [
+    {
+     "question": "What share of the gradient does the gated path keep over 30 steps? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.2146,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "linear",
+        "value": -0.5,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.95^{30} = 0.2146$.",
+      "generic": "Not quite. Raise 0.95 to the power 30.",
+      "byKey": {
+       "linear": "You took 5% off the start each step. Each step keeps 95% of what is left."
+      }
+     },
+     "explain": {
+      "text": "$0.95^{30} = 0.2146$: about a fifth survives a month and a half of trading days."
+     }
+    },
+    {
+     "question": "And the plain net? Give the answer in units of $10^{-6}$, to 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.96,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "w",
+        "value": 42391.16,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ],
+      "scale": 1e-06
+     },
+     "feedback": {
+      "correct": "$0.63^{30} \\approx 0.96 \\times 10^{-6}$.",
+      "generic": "Not quite. One step multiplies by $0.9 \\times 0.7 = 0.63$.",
+      "byKey": {
+       "w": "You used $w$ alone, $0.9^{30}$. The slope 0.7 multiplies in too."
+      }
+     },
+     "explain": {
+      "text": "Each step multiplies by $0.63$, and $0.63^{30} \\approx 0.96 \\times 10^{-6}$: gone."
+     }
+    },
+    {
+     "question": "After how many whole steps back does the gated path first keep less than 1%?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 90,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "floor",
+        "value": 89,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "half",
+        "value": 14,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\ln 0.01/\\ln 0.95 = 89.78$, so the 90th step is the first below 1%.",
+      "generic": "Not quite. Solve $0.95^k < 0.01$.",
+      "byKey": {
+       "floor": "At 89 steps $0.95^{89} = 0.0104$, still above 1%. Round up.",
+       "half": "That is when it halves. One per cent is much further."
+      }
+     },
+     "explain": {
+      "text": "$k > \\ln 0.01/\\ln 0.95 = 89.78$, so 90 steps."
+     }
+    },
+    {
+     "question": "The gate is trained to shut further, to $z = 0.01$. Using 90 steps from part 3, what share is kept now? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.4047,
+      "tol": {
+       "abs": 0.0001
+      },
+      "wrong": [
+       {
+        "id": "old",
+        "value": 0.0099,
+        "tol": {
+         "abs": 0.0001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.99^{90} = 0.4047$: forty times more.",
+      "generic": "Not quite. Raise $1 - z = 0.99$ to the power 90.",
+      "byKey": {
+       "old": "That is the old gate. With $z = 0.01$ the factor is 0.99."
+      }
+     },
+     "explain": {
+      "text": "$0.99^{90} = 0.4047$. Shutting the gate a little more keeps the gradient above 1% about five times as far back: the gate sets the memory."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-ewma",
+   "difficulty": 3,
+   "skills": [
+    "sqn-rnn"
+   ],
+   "prose": "A risk model updates a variance each day, $\\sigma_t^2 = 0.97\\,\\sigma_{t-1}^2 + 0.03\\,r_t^2$: a linear recurrent net with state $\\sigma_t^2$ and input $r_t^2$.",
+   "parts": [
+    {
+     "question": "What is its recurrent weight $w$? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.97,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "u",
+        "value": 0.03,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$w = 0.97$, the weight on yesterday's state.",
+      "generic": "Not quite. Which weight multiplies the state?",
+      "byKey": {
+       "u": "That is $u$, the weight on the input."
+      }
+     },
+     "explain": {
+      "text": "The state is multiplied by 0.97 each day, so $w = 0.97$, and $u = 0.03$."
+     }
+    },
+    {
+     "question": "With $w = 0.97$ from part 1, after how many days has a shock's weight in the state halved? Give 1 decimal place.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 22.8,
+      "tol": {
+       "abs": 0.05
+      },
+      "wrong": [
+       {
+        "id": "linear",
+        "value": 16.7,
+        "tol": {
+         "abs": 0.05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\ln 0.5/\\ln 0.97 = 22.8$ days.",
+      "generic": "Not quite. Solve $0.97^h = 0.5$.",
+      "byKey": {
+       "linear": "You took 3% off linearly. The memory decays geometrically."
+      }
+     },
+     "explain": {
+      "text": "A shock's weight after $h$ days is $0.03 \\times 0.97^h$, which halves when $0.97^h = 0.5$: $h = 22.8$."
+     }
+    },
+    {
+     "question": "Using the weights 0.97 and 0.03 of part 1: yesterday the variance was $0.0004$ (2% a day) and today's return is 1%. What is today's volatility, as a percentage to 2 decimal places?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.019774,
+      "tol": {
+       "abs": 5e-05
+      },
+      "wrong": [
+       {
+        "id": "var",
+        "value": 0.000391,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "swap",
+        "value": 0.01044,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ],
+      "unit": "%"
+     },
+     "feedback": {
+      "correct": "$\\sqrt{0.97 \\times 0.0004 + 0.03 \\times 0.0001} = \\sqrt{0.000391} = 0.0198$, about 1.98%.",
+      "generic": "Not quite. Update the variance, then take the root.",
+      "byKey": {
+       "var": "That is the variance. The volatility is its square root.",
+       "swap": "You swapped the weights: yesterday keeps 0.97."
+      }
+     },
+     "explain": {
+      "text": "$0.000388 + 0.000003 = 0.000391$, whose root is 0.0198: the quiet day lowers the estimate only a little."
+     }
+    }
+   ]
+  }
+ ]
+}

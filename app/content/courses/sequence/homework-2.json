@@ -1,0 +1,484 @@
+{
+ "id": "homework-2",
+ "course": "sequence",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-scale",
+   "difficulty": 3,
+   "skills": [
+    "sqn-attend"
+   ],
+   "prose": "A model uses attention with queries and keys of width 128 whose entries are independent with mean 0 and variance 1.",
+   "question": "What is the standard deviation of a raw score? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11.31,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "var",
+      "value": 128,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "half",
+      "value": 64,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{128} = 11.31$.",
+    "generic": "Not quite. Root of the variance $d$.",
+    "byKey": {
+     "var": "That is the variance.",
+     "half": "You halved $d$; take its square root."
+    }
+   },
+   "explain": {
+    "text": "The variance is 128 and the spread 11.31: unscaled, the softmax would saturate."
+   }
+  },
+  {
+   "id": "h-temp",
+   "difficulty": 4,
+   "skills": [
+    "sqn-attend"
+   ],
+   "prose": "Two past days lie at squared distances 0.5 and 1.5 from today. A soft lookup uses $\\tau = 0.25$.",
+   "question": "What weight does the nearer day get? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.982,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "t1",
+      "value": 0.7311,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "mult",
+      "value": 0.5622,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Scores $-2$ and $-6$: $1/(1 + e^{-4}) = 0.9820$.",
+    "generic": "Not quite. Divide the scores by 0.25.",
+    "byKey": {
+     "t1": "That is $\\tau = 1$. Divide by 0.25.",
+     "mult": "You multiplied by 0.25. Divide."
+    }
+   },
+   "explain": {
+    "text": "Dividing by 0.25 makes the gap 4, so the nearer day takes 0.9820: close to the hard lookup."
+   }
+  },
+  {
+   "id": "h-axis",
+   "difficulty": 3,
+   "skills": [
+    "sqn-attend"
+   ],
+   "prose": "Attention weights come out with every column summing to 1 and the rows summing to anything.",
+   "question": "What went wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "axis",
+      "text": "The softmax was taken over the queries (down the columns), not over the keys",
+      "correct": true
+     },
+     {
+      "id": "scale",
+      "text": "The scores were not divided by $\\sqrt d$",
+      "why": "Scaling changes how sharp the weights are, not which axis sums to 1."
+     },
+     {
+      "id": "transpose",
+      "text": "The values were transposed",
+      "why": "The weights are formed before the values come in."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each query's weights must sum to 1 over the keys: softmax along the row.",
+    "generic": "Not quite. Which axis sums to 1?"
+   },
+   "explain": {
+    "text": "Columns summing to 1 means the softmax ran down axis 0. With queries in rows it must run along axis $-1$."
+   }
+  },
+  {
+   "id": "h-shapes",
+   "difficulty": 3,
+   "skills": [
+    "sqn-attend"
+   ],
+   "prose": "A layer attends from 12 queries over 30 keys, with $\\mathbf W_V$ mapping width 16 to width 8.",
+   "question": "How many numbers are in its output?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 96,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "scores",
+      "value": 360,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "vals",
+      "value": 240,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "12 queries by width 8: 96.",
+    "generic": "Not quite. One value-sized row per query.",
+    "byKey": {
+     "scores": "That is the score matrix, 12 by 30.",
+     "vals": "That is $\\mathbf V$, 30 by 8."
+    }
+   },
+   "explain": {
+    "text": "Weights (12 by 30) times values (30 by 8) give 12 by 8: 96 numbers."
+   }
+  },
+  {
+   "id": "h-kgrad",
+   "difficulty": 4,
+   "skills": [
+    "sqn-attend"
+   ],
+   "title": "The slope of a soft lookup",
+   "prose": "Lesson 6 gave the slope of the soft lookup in the query: $\\partial\\hat y/\\partial q = \\tfrac{2}{\\tau}\\sum_i \\alpha_i (v_i - \\hat y)(k_i - q)$. Write `kernel_grad(q, K, V, tau)` returning it as an array.",
+   "question": "Complete `kernel_grad`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef kernel_grad(q, K, V, tau):\n    # the gradient of the soft lookup yhat = sum_i a_i v_i, a = softmax(-||q - k_i||^2 / tau), with respect to q:\n    # (2 / tau) * sum_i a_i (v_i - yhat) (k_i - q), as an array the size of q\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef kernel_grad(q, K, V, tau):\n    q, K, V = np.asarray(q, dtype=float), np.asarray(K, dtype=float), np.asarray(V, dtype=float)\n    s = -((K - q) ** 2).sum(axis=1) / tau\n    a = np.exp(s - s.max())\n    a = a / a.sum()\n    yhat = a @ V\n    return (2 / tau) * ((a * (V - yhat)) @ (K - q))\n",
+    "prelude": "import numpy as np\n\nK10 = np.array([[-1, 1.5], [1, 1], [-0.5, 0.5], [1.5, 0.5], [-1.5, 0], [0.5, 0], [-1, -0.5], [0, -1], [1.5, -1], [0.5, -1.5]], dtype=float)\nV10 = np.array([-0.8, -0.5, 0.2, 0.6, 0.1, 0.4, 0.9, -0.3, -1.1, 1.2])\n\n\ndef soft(q, K, V, tau):\n    s = -((K - np.asarray(q, dtype=float)) ** 2).sum(axis=1) / tau\n    a = np.exp(s - s.max())\n    return float(a @ V / a.sum())\n\n\ndef fd(q, K, V, tau, eps=1e-6):\n    q = np.asarray(q, dtype=float)\n    out = []\n    for j in range(len(q)):\n        u, d = q.copy(), q.copy()\n        u[j] += eps\n        d[j] -= eps\n        out.append((soft(u, K, V, tau) - soft(d, K, V, tau)) / (2 * eps))\n    return np.array(out)\n",
+    "examples": [
+     {
+      "call": "kernel_grad([0.0, 0.0], K10, V10, 1.0).tolist()",
+      "compare": "isclose",
+      "expect": "[-0.11631526053680089, -0.09559979595526498]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "kernel_grad([0.0, 0.0], K10, V10, 1.0).tolist()",
+      "compare": "isclose",
+      "expect": "[-0.11631526053680089, -0.09559979595526498]"
+     },
+     {
+      "call": "kernel_grad([0.3, -0.4], K10, V10, 0.5).tolist()",
+      "compare": "isclose",
+      "expect": "[0.10239715520405336, 0.3117661575174059]"
+     },
+     {
+      "call": "float(np.abs(kernel_grad([0.3, -0.4], K10, V10, 0.5) - fd([0.3, -0.4], K10, V10, 0.5)).max()) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "kernel_grad([1.0, 1.0], K10, V10, 100.0).tolist()",
+      "compare": "isclose",
+      "expect": "[-0.0016946557116795538, -0.004151978757181517]"
+     },
+     {
+      "call": "kernel_grad([0.0], [[1.0], [-1.0]], [3.0, 3.0], 1.0).tolist()",
+      "compare": "isclose",
+      "expect": "[0.0]"
+     },
+     {
+      "call": "kernel_grad([0.2, 0.1], K10[:1], V10[:1], 1.0).tolist()",
+      "compare": "isclose",
+      "expect": "[0.0, 0.0]"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, compared to $10^{-9}$. Test 3 checks against central differences of the soft lookup; tests 5 and 6 have equal values and a single key, where the slope is 0.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef kernel_grad(q, K, V, tau):\n    q, K, V = np.asarray(q, dtype=float), np.asarray(K, dtype=float), np.asarray(V, dtype=float)\n    s = -((K - q) ** 2).sum(axis=1) / tau\n    a = np.exp(s - s.max())\n    a = a / a.sum()\n    yhat = a @ V\n    return (2 / tau) * ((a * V) @ (K - q))\n",
+      "test": 1,
+      "symptom": "Weights each pull by the value, not by its gap from the forecast."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef kernel_grad(q, K, V, tau):\n    q, K, V = np.asarray(q, dtype=float), np.asarray(K, dtype=float), np.asarray(V, dtype=float)\n    s = -((K - q) ** 2).sum(axis=1) / tau\n    a = np.exp(s - s.max())\n    a = a / a.sum()\n    yhat = a @ V\n    return (2 / tau) * ((a * (V - yhat)) @ (q - K))\n",
+      "test": 1,
+      "symptom": "Points each pull away from its key: the sign is flipped."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef kernel_grad(q, K, V, tau):\n    q, K, V = np.asarray(q, dtype=float), np.asarray(K, dtype=float), np.asarray(V, dtype=float)\n    s = -((K - q) ** 2).sum(axis=1) / tau\n    a = np.exp(s - s.max())\n    a = a / a.sum()\n    yhat = a @ V\n    return 2 * ((a * (V - yhat)) @ (K - q))\n",
+      "test": 2,
+      "symptom": "Forgets to divide by the temperature."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your slope matches central differences: the soft lookup can be trained.",
+    "generic": "Not yet. Weight each key's pull by $\\alpha_i(v_i - \\hat y)$.",
+    "byKey": {
+     "test-1": "Each key pulls along $k_i - q$, weighted by $\\alpha_i(v_i - \\hat y)$, all times $2/\\tau$.",
+     "test-2": "Divide by $\\tau$: the scores were."
+    }
+   },
+   "explain": {
+    "text": "Differentiating $\\alpha_i$ in $q$ gives $\\alpha_i(\\partial s_i - \\sum_j \\alpha_j\\partial s_j)$, and $\\partial s_i/\\partial q = 2(k_i - q)/\\tau$. Summed against $v_i$, the common term becomes $\\hat y$, giving the formula."
+   }
+  },
+  {
+   "id": "h-order",
+   "difficulty": 4,
+   "skills": [
+    "sqn-attend"
+   ],
+   "title": "The softmax Jacobian",
+   "prose": "Derive the Jacobian of the softmax and the backward rule it gives. Put the steps in order and leave out the two that do not belong.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "$s_i = e^{z_i}/S$ with $S = \\sum_k e^{z_k}$ (the definition)."
+     },
+     {
+      "id": "s2",
+      "text": "$\\partial S/\\partial z_j = e^{z_j}$, since only one term of the sum holds $z_j$."
+     },
+     {
+      "id": "s3",
+      "text": "By the quotient rule, $\\partial s_i/\\partial z_j = (\\delta_{ij} e^{z_i} S - e^{z_i} e^{z_j})/S^2$."
+     },
+     {
+      "id": "s4",
+      "text": "Split the fraction: $\\partial s_i/\\partial z_j = s_i\\delta_{ij} - s_i s_j = s_i(\\delta_{ij} - s_j)$."
+     },
+     {
+      "id": "s5",
+      "text": "So for an upstream gradient $\\mathbf g$, $\\partial L/\\partial z_j = \\sum_i g_i s_i(\\delta_{ij} - s_j) = s_j(g_j - \\mathbf g \\cdot \\mathbf s)$, by the chain rule."
+     },
+     {
+      "id": "d1",
+      "text": "$\\partial s_i/\\partial z_j = \\delta_{ij} s_i$, since $z_j$ appears only in $s_j$.",
+      "why": "$z_j$ also appears in the denominator $S$ of every $s_i$, which gives the $-s_i s_j$ term."
+     },
+     {
+      "id": "d2",
+      "text": "$\\partial L/\\partial z_j = s_j g_j(1 - s_j)$, keeping only the diagonal of the Jacobian.",
+      "why": "The off-diagonal terms $-s_i s_j$ do not vanish: every weight moves when one score does."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Definition, the denominator's derivative, the quotient rule, tidy, then chain.",
+    "generic": "Not quite. Differentiate the denominator before the quotient rule.",
+    "byKey": {
+     "d1": "$z_j$ sits in every denominator, so every weight depends on it.",
+     "d2": "Dropping the off-diagonal terms is the bug the homework's first mutant makes.",
+     "left-out": "Every line but the two distractors belongs."
+    }
+   },
+   "explain": {
+    "text": "Because $z_j$ is in every denominator, the Jacobian is $s_i(\\delta_{ij} - s_j)$, not diagonal. Applied to $\\mathbf g$ it gives $\\mathbf s \\odot (\\mathbf g - \\mathbf g \\cdot \\mathbf s)$, the rule in `seq_ops_l2.softmax`."
+   }
+  },
+  {
+   "id": "h-long",
+   "difficulty": 4,
+   "skills": [
+    "sqn-attend"
+   ],
+   "kind": "longform",
+   "title": "Attention for a k-NN user",
+   "prompt": "A quant who knows $k$-nearest neighbours well asks you whether attention is \"just $k$-NN with learned features and soft weights\". Explain where the analogy holds and where it fails, in about 250 words.",
+   "model": "**The analogy.** $k$-NN forecasts with the mean value of the $k$ stored days nearest the query. Attention forecasts with a weighted mean of every stored value, weights $\\operatorname{softmax}(\\mathbf q \\cdot \\mathbf k_i/\\sqrt d)$. Make the weights hard (keep the top $k$, equal weights) and use raw features with a distance, and you are back at $k$-NN. So attention is $k$-NN with learned features and soft weights.\n\n**Where it holds.** Both answer a query from stored pairs, both weight near keys most, and both have a setting for how local the forecast is: $k$ for $k$-NN, $\\tau$ (or the scale of the scores) for attention. At small $\\tau$ attention tends to 1-NN; at large $\\tau$ to the mean.\n\n**Where it fails.** (1) The similarity is learned: $\\mathbf W_Q$ and $\\mathbf W_K$ make it any bilinear form, trained by gradient descent, which a hard $k$-NN cannot do because its error has no slope in the features. (2) A dot product is not a distance: it favours long keys, since only the query's norm cancels in the softmax. (3) The values are learned too ($\\mathbf V = \\mathbf X\\mathbf W_V$), not the stored outcomes. (4) Without the $\\sqrt d$ scaling, wide scores saturate the softmax and it behaves like a hard 1-NN that cannot learn. (5) In a transformer the keys are the sequence itself, not a fixed table of the past.\n\n**For a quant.** Read attention as an analogue model whose notion of a similar day is fitted end to end, and whose weights stay readable.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States $k$-NN as the mean of the $k$ nearest and attention as a softmax-weighted mean of all values",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Shows the limit: hard top-$k$ weights on raw features recover $k$-NN, and small $\\tau$ tends to 1-NN"
+    },
+    {
+     "points": 2,
+     "text": "Explains that the similarity is learned through $\\mathbf W_Q$, $\\mathbf W_K$ by gradient descent, which a hard lookup cannot do"
+    },
+    {
+     "points": 1,
+     "text": "Notes that a dot product is not a distance (long keys are favoured; only the query norm cancels)"
+    },
+    {
+     "points": 1,
+     "text": "Notes that the values are learned, not the stored outcomes"
+    },
+    {
+     "points": 1,
+     "text": "Mentions saturation without the $\\sqrt d$ scaling"
+    },
+    {
+     "points": 1,
+     "text": "Written for the reader: plain language, no unexplained symbols"
+    }
+   ]
+  },
+  {
+   "id": "h-perf",
+   "difficulty": 5,
+   "skills": [
+    "sqn-attend"
+   ],
+   "performance": "code",
+   "title": "The backward pass of attention",
+   "prose": "Write `attention_backward(Q, K, V, dout)` for scaled dot-product attention, $\\mathbf O = \\operatorname{softmax}(\\mathbf Q\\mathbf K^\\top/\\sqrt d)\\,\\mathbf V$ with the softmax along each row. Given $\\mathbf G = \\partial L/\\partial\\mathbf O$, return $\\partial L/\\partial\\mathbf Q$, $\\partial L/\\partial\\mathbf K$ and $\\partial L/\\partial\\mathbf V$ by hand: no autograd. `planted(nq, nk, d, dv, seed)` makes test data.",
+   "question": "Complete `attention_backward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef attention_backward(Q, K, V, dout):\n    # out = softmax(Q K^T / sqrt(d)) V, softmax along each row; dout is the gradient of a loss with respect to out\n    # return (dQ, dK, dV) by hand: no autograd\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef attention_backward(Q, K, V, dout):\n    Q, K, V, dout = (np.asarray(a, dtype=float) for a in (Q, K, V, dout))\n    c = 1 / np.sqrt(Q.shape[-1])\n    S = Q @ K.T * c\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    dV = A.T @ dout\n    dA = dout @ V.T\n    dS = A * (dA - (dA * A).sum(axis=-1, keepdims=True))\n    dQ = dS @ K * c\n    dK = dS.T @ Q * c\n    return dQ, dK, dV\n",
+    "prelude": "import numpy as np\n\n\ndef _fwd(Q, K, V):\n    S = Q @ K.T / np.sqrt(Q.shape[-1])\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return A @ V\n\n\ndef planted(nq, nk, d, dv, seed, scale=1.0):\n    g = np.random.default_rng(seed)\n    return (scale * g.standard_normal((nq, d)), scale * g.standard_normal((nk, d)),\n            g.standard_normal((nk, dv)), g.standard_normal((nq, dv)))\n\n\ndef fd_err(Q, K, V, dout, eps=1e-6):\n    dQ, dK, dV = attention_backward(Q, K, V, dout)\n    worst, scale = 0.0, 1e-12\n    for X, G in ((Q, dQ), (K, dK), (V, dV)):\n        for i in np.ndindex(X.shape):\n            keep = X[i]\n            X[i] = keep + eps\n            up = float((_fwd(Q, K, V) * dout).sum())\n            X[i] = keep - eps\n            dn = float((_fwd(Q, K, V) * dout).sum())\n            X[i] = keep\n            num = (up - dn) / (2 * eps)\n            worst = max(worst, abs(num - G[i]))\n            scale = max(scale, abs(num), abs(G[i]))\n    return worst / scale\n\n\nsmall = planted(2, 3, 2, 1, 0)\nmid = planted(3, 5, 4, 2, 1)\n",
+    "examples": [
+     {
+      "call": "[g.tolist() for g in attention_backward(*small)]",
+      "compare": "isclose",
+      "expect": "[[[-0.11293249722211121, -0.14983149881372335], [-0.6196018835628944, -0.668629349199512]], [[0.004078576825230305, 0.0033561281444995975], [-0.20505271874074082, -0.02522316020438582], [0.2009741419155105, 0.021867032059886226]], [[-0.3620435665785142], [-0.7834567381047771], [-0.3192023065023197]]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[g.tolist() for g in attention_backward(*small)]",
+      "compare": "isclose",
+      "expect": "[[[-0.11293249722211121, -0.14983149881372335], [-0.6196018835628944, -0.668629349199512]], [[0.004078576825230305, 0.0033561281444995975], [-0.20505271874074082, -0.02522316020438582], [0.2009741419155105, 0.021867032059886226]], [[-0.3620435665785142], [-0.7834567381047771], [-0.3192023065023197]]]"
+     },
+     {
+      "call": "attention_backward(*mid)[0].tolist()",
+      "compare": "isclose",
+      "expect": "[[0.13379406839914781, 0.07407350695945579, 0.4642424230098195, -0.10854348392456253], [-0.015442279272377011, 0.005289899656748306, -0.02884110550832797, -0.0025655578851838195], [0.09748876498588319, 0.004466219333225017, 0.29877927261686255, 0.02780348377152224]]"
+     },
+     {
+      "call": "attention_backward(*mid)[1].tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.054529102273508746, -0.10499536464429408, -0.049587360708895294, 0.07963740082764124], [-0.044151073910367954, -0.07671980953761771, -0.02359047747544365, 0.08261412359940402], [0.04989508795672683, 0.0808858640200516, 0.0349041253272108, -0.02953465589412564], [-0.006347367671620456, -0.012046049268810154, -0.0038396722374171165, 0.01575076838683299], [0.05513245589877033, 0.11287535943067036, 0.04211338509454525, -0.1484676369197526]]"
+     },
+     {
+      "call": "attention_backward(*mid)[2].tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.024165671286076863, -0.17497534010213958], [-0.0345525260249383, -0.22662021734941562], [-0.0214009891458248, -0.21949479929014068], [-0.006234842866290361, -0.10343410246738821], [-0.04837338120082866, -0.6310357946965538]]"
+     },
+     {
+      "call": "fd_err(*[a.copy() for a in mid]) < 1e-6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "one = planted(2, 1, 3, 2, 2)",
+      "call": "[g.tolist() for g in attention_backward(*one)]",
+      "compare": "isclose",
+      "expect": "[[[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0]], [[-1.1027033020180508, 0.12613416718289278]]]"
+     },
+     {
+      "setup": "big = planted(2, 4, 4, 1, 3, scale=30.0)",
+      "call": "[g.tolist() for g in attention_backward(*big)]",
+      "compare": "isclose",
+      "expect": "[[[-9.215801874917864e-234, -2.1887160149090853e-233, -3.456983071629822e-233, -1.2803787678768506e-233], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0, 0.0], [6.686650398027051e-233, -8.373109164297752e-233, 1.3698146048904363e-233, -1.8601799664781889e-233], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0], [1.0023136012756912], [-0.24355867907910456], [0.0]]]"
+     },
+     {
+      "setup": "big = planted(2, 4, 4, 1, 3, scale=30.0)",
+      "call": "bool(np.isfinite(attention_backward(*big)[0]).all())",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "zq_no('autograd', 'Tensor', 'grad_check')",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests, compared to $10^{-9}$ against the array autograd's values. Test 5 checks your gradients against central differences (relative error under $10^{-6}$); test 6 has one key; tests 7 and 8 have scores in the hundreds; test 9 checks that no autograd is used.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef attention_backward(Q, K, V, dout):\n    Q, K, V, dout = (np.asarray(a, dtype=float) for a in (Q, K, V, dout))\n    c = 1 / np.sqrt(Q.shape[-1])\n    S = Q @ K.T * c\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    dV = A.T @ dout\n    dA = dout @ V.T\n    dS = A * dA\n    dQ = dS @ K * c\n    dK = dS.T @ Q * c\n    return dQ, dK, dV\n",
+      "test": 1,
+      "symptom": "Leaves out the softmax Jacobian's second term, as if each weight moved alone."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef attention_backward(Q, K, V, dout):\n    Q, K, V, dout = (np.asarray(a, dtype=float) for a in (Q, K, V, dout))\n    c = 1 / np.sqrt(Q.shape[-1])\n    S = Q @ K.T * c\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    dV = A.T @ dout\n    dA = dout @ V.T\n    dS = A * (dA - (dA * A).sum(axis=-1, keepdims=True))\n    dQ = dS @ K\n    dK = dS.T @ Q\n    return dQ, dK, dV\n",
+      "test": 1,
+      "symptom": "Forgets the 1/sqrt(d) on the way back."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef attention_backward(Q, K, V, dout):\n    Q, K, V, dout = (np.asarray(a, dtype=float) for a in (Q, K, V, dout))\n    c = 1 / np.sqrt(Q.shape[-1])\n    S = Q @ K.T * c\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    dV = A @ dout\n    dA = dout @ V.T\n    dS = A * (dA - (dA * A).sum(axis=-1, keepdims=True))\n    dQ = dS @ K * c\n    dK = dS.T @ Q * c\n    return dQ, dK, dV\n",
+      "test": 1,
+      "symptom": "Multiplies by the weights, not their transpose, for dV."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef attention_backward(Q, K, V, dout):\n    Q, K, V, dout = (np.asarray(a, dtype=float) for a in (Q, K, V, dout))\n    c = 1 / np.sqrt(Q.shape[-1])\n    S = Q @ K.T * c\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    dV = A.T @ dout\n    dA = dout @ V.T\n    dS = A * (dA - (dA * A).sum(axis=-1, keepdims=True))\n    dQ = dS @ K * c\n    dK = dS.T @ Q * c\n    return dQ, dK, dV\n",
+      "test": 7,
+      "symptom": "Leaves out the maximum, so scores in the hundreds overflow."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef attention_backward(Q, K, V, dout):\n    Q, K, V, dout = (np.asarray(a, dtype=float) for a in (Q, K, V, dout))\n    c = 1 / np.sqrt(Q.shape[-1])\n    S = Q @ K.T * c\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    dV = A.T @ dout\n    dA = dout @ V.T\n    dS = A * (dA - (dA * A).sum(axis=0, keepdims=True))\n    dQ = dS @ K * c\n    dK = dS.T @ Q * c\n    return dQ, dK, dV\n",
+      "test": 1,
+      "symptom": "Sums the Jacobian term down the columns."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your backward pass matches the autograd and central differences, with one key and with large scores.",
+    "generic": "Not yet. Recompute the weights, then go back through $\\mathbf V$, the softmax and the scaled product.",
+    "byKey": {
+     "test-1": "Through the softmax, $\\mathbf dS = \\mathbf A \\odot (\\mathbf dA - \\operatorname{rowsum}(\\mathbf dA \\odot \\mathbf A))$; $\\mathbf dV = \\mathbf A^\\top\\mathbf G$; and both $\\mathbf dQ$ and $\\mathbf dK$ carry the $1/\\sqrt d$.",
+     "test-7": "Subtract each row's maximum before exponentiating.",
+     "test-9": "Write the backward pass yourself, without the autograd."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf dV = \\mathbf A^\\top\\mathbf G$ and $\\mathbf dA = \\mathbf G\\mathbf V^\\top$; the softmax gives $\\mathbf dS = \\mathbf A \\odot (\\mathbf dA - \\operatorname{rowsum}(\\mathbf dA \\odot \\mathbf A))$. Then $\\mathbf dQ = \\mathbf dS\\,\\mathbf K/\\sqrt d$ and $\\mathbf dK = \\mathbf dS^\\top\\mathbf Q/\\sqrt d$."
+   }
+  }
+ ]
+}

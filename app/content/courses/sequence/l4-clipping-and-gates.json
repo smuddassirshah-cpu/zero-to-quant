@@ -1,0 +1,1244 @@
+{
+ "id": "l4-clipping-and-gates",
+ "course": "sequence",
+ "title": "Clipping and gates",
+ "minutes": 15,
+ "objectives": [
+  "Write gradient clipping by norm, and explain how a gate lets a gradient survive many steps."
+ ],
+ "skills": [
+  "sqn-rnn"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A run that blew up",
+   "prose": "A linear recurrent net learns to keep a running total over 30 steps: the right weight is $w = 1$. Training from $w = 0.5$ with step size 0.003, the loss bounces, then leaves the chart and becomes NaN. Switch on the cap, which limits the size of each gradient, and rerun.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "loss",
+       "label": "training loss",
+       "values": [
+        27.6334,
+        38.9867,
+        14.0927,
+        28.7892,
+        24.0759,
+        22.26,
+        44.1704,
+        34.8564,
+        0.0935,
+        21.3536,
+        10.5248,
+        39337.1245,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+       ]
+      }
+     ],
+     "y": [
+      0.01,
+      1000000
+     ],
+     "yScale": "log",
+     "xLabel": "step",
+     "yLabel": "loss",
+     "height": 240
+    },
+    "state": {
+     "caption": "No clipping: the loss leaves the chart and turns into NaN."
+    },
+    "controls": [
+     {
+      "bind": "run",
+      "label": "cap",
+      "frames": [
+       {
+        "series": {
+         "loss": {
+          "values": [
+           27.6334,
+           38.9867,
+           14.0927,
+           28.7892,
+           24.0759,
+           22.26,
+           44.1704,
+           34.8564,
+           0.0935,
+           21.3536,
+           10.5248,
+           39337.1245,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null,
+           null
+          ]
+         }
+        },
+        "caption": "No clipping: the loss leaves the chart and turns into NaN."
+       },
+       {
+        "series": {
+         "loss": {
+          "values": [
+           27.6334,
+           39.1437,
+           14.2825,
+           29.2027,
+           24.8085,
+           23.0498,
+           46.6078,
+           42.1676,
+           38.7477,
+           25.2653,
+           17.8395,
+           29.8945,
+           17.3226,
+           28.3372,
+           27.2482,
+           20.1685,
+           17.6648,
+           28.2437,
+           25.0353,
+           30.53,
+           21.4494,
+           17.9075,
+           12.5619,
+           11.4518,
+           22.436,
+           20.1132,
+           18.0931,
+           14.3072,
+           14.7389,
+           8.8577,
+           8.6468,
+           5.9257,
+           1.6623,
+           0.1854,
+           1.2754,
+           0.3534,
+           1.004,
+           0.2431,
+           1.0965,
+           0.1406
+          ]
+         }
+        },
+        "caption": "Gradient norm capped at 5: the same run settles."
+       }
+      ],
+      "frameLabels": [
+       "off",
+       "at 5"
+      ],
+      "start": 0
+     }
+    ]
+   },
+   "question": "What sent the first run to NaN?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "spike",
+      "text": "One huge gradient threw $w$ past 1, where gradients are larger still",
+      "correct": true
+     },
+     {
+      "id": "lr",
+      "text": "The step size was too small to make progress",
+      "why": "A small step would crawl, not overflow. The run moved too far, not too little."
+     },
+     {
+      "id": "data",
+      "text": "A bad batch of data with a NaN in it",
+      "why": "Every batch is standard normal and the capped run on the same batches is fine."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at the step where the loss jumps."
+    },
+    {
+     "rung": "point",
+     "text": "Lesson 3: with $w > 1$ the gradient grows like $w^{30}$."
+    },
+    {
+     "rung": "step",
+     "text": "One step too far makes the next gradient enormous, and so on."
+    }
+   ],
+   "feedback": {
+    "correct": "A gradient spike moved $w$ past 1, the next gradient was larger, and the run overflowed.",
+    "generic": "Not quite. Compare the two runs at the jump."
+   },
+   "explain": {
+    "text": "Past $w = 1$ the gradient through 30 steps is huge, so one update throws $w$ further out and the next is larger still. Within 12 steps the loss passes 10,000, then it overflows. Capping the gradient's size keeps every step short and the run settles."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Clipping by norm",
+   "prose": "The cap is **clipping by norm**: if the gradient $\\mathbf g$ has norm above $c$, rescale it to norm $c$, $\\mathbf g \\leftarrow c\\,\\mathbf g/\\lVert\\mathbf g\\rVert$; otherwise leave it. A gradient $\\mathbf g = (3, 4)$ arrives and $c = 1$.",
+   "canvas": {
+    "kind": "vectors",
+    "params": {
+     "x": [
+      -1,
+      5
+     ],
+     "y": [
+      -1,
+      5
+     ],
+     "vectors": [
+      {
+       "id": "g",
+       "v": [
+        3,
+        4
+       ],
+       "label": "$\\mathbf g$"
+      },
+      {
+       "id": "c",
+       "v": [
+        0.6,
+        0.8
+       ],
+       "label": "clipped"
+      }
+     ]
+    }
+   },
+   "question": "By what factor is it scaled?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sum",
+      "value": 0.1429,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the norm first."
+    },
+    {
+     "rung": "point",
+     "text": "$\\lVert(3, 4)\\rVert = 5$.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Scale by $c/\\lVert\\mathbf g\\rVert$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1/5 = 0.2$, giving $(0.6, 0.8)$: the same direction, length 1.",
+    "generic": "Not quite. Divide $c$ by the norm.",
+    "byKey": {
+     "inv": "You divided the norm by $c$. The factor is $c/\\lVert\\mathbf g\\rVert$, below 1.",
+     "sum": "You used $3 + 4 = 7$. The norm is $\\sqrt{3^2 + 4^2} = 5$."
+    }
+   },
+   "explain": {
+    "text": "$\\lVert\\mathbf g\\rVert = 5 > 1$, so it is scaled by $1/5 = 0.2$ to $(0.6, 0.8)$. The step points the same way and is never longer than $c$. It cures explosion; it cannot make a vanished gradient larger."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One norm over every array",
+   "prose": "A net has many weight arrays. The norm is taken over all of them together, as if laid end to end, and every array is scaled by the same factor. The gradients are $(3, 0)$ for $\\mathbf W$ and $(4)$ for $b$, and $c = 2.5$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "array",
+      "gradient"
+     ],
+     "rows": [
+      [
+       "$\\mathbf W$",
+       "(3, 0)"
+      ],
+      [
+       "$b$",
+       "(4)"
+      ]
+     ]
+    }
+   },
+   "question": "What does the 3 in $\\mathbf W$'s gradient become?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "each",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "none",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One norm for both arrays."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sqrt{3^2 + 0^2 + 4^2} = 5$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Scale by $2.5/5$."
+    }
+   ],
+   "feedback": {
+    "correct": "The global norm is 5, the factor 0.5, so 3 becomes 1.5 and 4 becomes 2.",
+    "generic": "Not quite. Take one norm over both arrays.",
+    "byKey": {
+     "each": "You clipped each array (or each entry) on its own, giving 2.5. One norm over all of them keeps their proportions.",
+     "none": "$\\mathbf W$'s own norm is 3, but the norm over both arrays is 5, above 2.5."
+    }
+   },
+   "explain": {
+    "text": "Laid end to end the gradient is $(3, 0, 4)$, of norm 5, so every entry is halved: $(1.5, 0)$ and $(2)$. The update keeps its direction in the space of all the weights."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Clipping each coordinate",
+   "prose": "A shortcut caps each entry at $\\pm 1$ instead of the norm, `np.clip(g, -1, 1)`. On $\\mathbf g = (3, 0.5)$ it gives $(1, 0.5)$; clipping by norm with $c = 1$ gives about $(0.986, 0.164)$.",
+   "canvas": {
+    "kind": "vectors",
+    "params": {
+     "x": [
+      -0.5,
+      3.5
+     ],
+     "y": [
+      -0.5,
+      1.5
+     ],
+     "vectors": [
+      {
+       "id": "g",
+       "v": [
+        3,
+        0.5
+       ],
+       "label": "$\\mathbf g$"
+      },
+      {
+       "id": "e",
+       "v": [
+        1,
+        0.5
+       ],
+       "label": "entry-wise"
+      },
+      {
+       "id": "n",
+       "v": [
+        0.986,
+        0.164
+       ],
+       "label": "by norm"
+      }
+     ]
+    }
+   },
+   "question": "By how many degrees does the entry-wise cap turn the step? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 17.1,
+    "tol": {
+     "abs": 0.05
+    },
+    "wrong": [
+     {
+      "id": "none",
+      "value": 0,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "new",
+      "value": 26.6,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the angles of $(3, 0.5)$ and $(1, 0.5)$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\arctan(0.5/3) = 9.46$ degrees.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\arctan(0.5/1) = 26.57$ degrees."
+    }
+   ],
+   "feedback": {
+    "correct": "$26.57 - 9.46 = 17.1$ degrees: the step no longer points down the gradient.",
+    "generic": "Not quite. Find each angle with the arctangent.",
+    "byKey": {
+     "none": "The entry-wise cap does change the direction: it shrinks the large entry and leaves the small one.",
+     "new": "That is the new angle. The turn is the difference from the old one, 9.46 degrees."
+    }
+   },
+   "explain": {
+    "text": "$\\arctan(0.5/3) = 9.46$ degrees and $\\arctan(0.5) = 26.57$, a turn of 17.1. The entry-wise cap favours the small coordinates. Clipping by norm scales the whole vector, so the direction stays the gradient's."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Clipping and a gate in code",
+   "prose": "Write `clip_by_norm(grads, c)` for a list of arrays, and `gated_step(h, x, f, p)`, one step of a **gated unit**: $z = \\sigma(a_x x + a_f f + a_h h + c)$, a candidate $\\tilde h = \\tanh(w h + u_x x + u_f f + b)$, and $h_{\\text{new}} = (1 - z)\\,h + z\\,\\tilde h$. Here $f$ marks the first step of a sequence.",
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\n\n\ndef clip_by_norm(grads, c):\n    # one norm over every array in the list; rescale all of them only when it exceeds c\n    ...\n\n\ndef sig(t):\n    return 1.0 / (1.0 + (-t).exp())\n\n\ndef gated_step(h, x, f, p):\n    # z = sig(ax x + af f + ah h + c); candidate = tanh(w h + ux x + uf f + b)\n    # return (1 - z) h + z candidate (h, the p values and the result are Tensors)\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\n\n\ndef clip_by_norm(grads, c):\n    total = np.sqrt(sum(float(np.sum(np.asarray(g, dtype=float) ** 2)) for g in grads))\n    scale = c / total if total > c else 1.0\n    return [np.asarray(g, dtype=float) * scale for g in grads]\n\n\ndef sig(t):\n    return 1.0 / (1.0 + (-t).exp())\n\n\ndef gated_step(h, x, f, p):\n    z = sig(p['ax'] * x + p['af'] * f + p['ah'] * h + p['c'])\n    cand = (p['w'] * h + p['ux'] * x + p['uf'] * f + p['b']).tanh()\n    return (1.0 - z) * h + z * cand\n",
+    "prelude": "import numpy as np\nfrom autograd import Tensor\n\nP0 = {k: Tensor(v) for k, v in dict(w=0.9, ux=1.0, uf=0.5, b=0.0, ax=0.3, af=2.0, ah=0.1, c=-3.0).items()}\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py"
+    },
+    "examples": [
+     {
+      "call": "[g.tolist() for g in clip_by_norm([np.array([3.0, 4.0])], 1.0)]",
+      "compare": "isclose",
+      "expect": "[[0.6000000000000001, 0.8]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[g.tolist() for g in clip_by_norm([np.array([3.0, 4.0])], 1.0)]",
+      "compare": "isclose",
+      "expect": "[[0.6000000000000001, 0.8]]"
+     },
+     {
+      "call": "[g.tolist() for g in clip_by_norm([np.array([3.0, 0.0]), np.array([4.0])], 2.5)]",
+      "compare": "isclose",
+      "expect": "[[1.5, 0.0], [2.0]]"
+     },
+     {
+      "call": "[g.tolist() for g in clip_by_norm([np.array([0.3, -0.4]), np.array([[0.1]])], 1.0)]",
+      "compare": "isclose",
+      "expect": "[[0.3, -0.4], [[0.1]]]"
+     },
+     {
+      "call": "[g.tolist() for g in clip_by_norm([np.array([3.0, 0.5])], 1.0)]",
+      "compare": "isclose",
+      "expect": "[[0.9863939238321437, 0.1643989873053573]]"
+     },
+     {
+      "call": "gated_step(Tensor(0.8), 0.5, 0.0, P0).item()",
+      "compare": "isclose",
+      "expect": "0.8023382883097468"
+     },
+     {
+      "call": "gated_step(Tensor(0.0), -1.0, 1.0, P0).item()",
+      "compare": "isclose",
+      "expect": "-0.0989693288209146"
+     },
+     {
+      "call": "gated_step(Tensor(0.8), 0.5, 0.0, dict(P0, c=Tensor(-50.0))).item()",
+      "compare": "isclose",
+      "expect": "0.8"
+     },
+     {
+      "setup": "hh = Tensor(0.3); out = gated_step(hh, 0.2, 0.0, P0); out.backward()",
+      "call": "hh.grad.item()",
+      "compare": "isclose",
+      "expect": "0.986582967184169"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests, compared to $10^{-9}$. Tests 1 to 4 check `clip_by_norm` (test 3 is below the cap, test 4 the trap's vector), tests 5 to 7 `gated_step` (test 7 shuts the gate), test 8 the gradient through the step.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef clip_by_norm(grads, c):\n    return [np.clip(np.asarray(g, dtype=float), -c, c) for g in grads]\n\n\ndef sig(t):\n    return 1.0 / (1.0 + (-t).exp())\n\n\ndef gated_step(h, x, f, p):\n    z = sig(p['ax'] * x + p['af'] * f + p['ah'] * h + p['c'])\n    cand = (p['w'] * h + p['ux'] * x + p['uf'] * f + p['b']).tanh()\n    return (1.0 - z) * h + z * cand\n",
+      "test": 1,
+      "symptom": "Clips each entry to [-c, c], which turns the step."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef clip_by_norm(grads, c):\n    total = np.sqrt(sum(float(np.sum(np.asarray(g, dtype=float) ** 2)) for g in grads))\n    scale = c / total\n    return [np.asarray(g, dtype=float) * scale for g in grads]\n\n\ndef sig(t):\n    return 1.0 / (1.0 + (-t).exp())\n\n\ndef gated_step(h, x, f, p):\n    z = sig(p['ax'] * x + p['af'] * f + p['ah'] * h + p['c'])\n    cand = (p['w'] * h + p['ux'] * x + p['uf'] * f + p['b']).tanh()\n    return (1.0 - z) * h + z * cand\n",
+      "test": 3,
+      "symptom": "Rescales every gradient to norm c, also the small ones."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef clip_by_norm(grads, c):\n    out = []\n    for g in grads:\n        g = np.asarray(g, dtype=float)\n        n = np.sqrt(np.sum(g ** 2))\n        out.append(g * (c / n if n > c else 1.0))\n    return out\n\n\ndef sig(t):\n    return 1.0 / (1.0 + (-t).exp())\n\n\ndef gated_step(h, x, f, p):\n    z = sig(p['ax'] * x + p['af'] * f + p['ah'] * h + p['c'])\n    cand = (p['w'] * h + p['ux'] * x + p['uf'] * f + p['b']).tanh()\n    return (1.0 - z) * h + z * cand\n",
+      "test": 2,
+      "symptom": "Clips each array by its own norm."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef clip_by_norm(grads, c):\n    total = np.sqrt(sum(float(np.sum(np.asarray(g, dtype=float) ** 2)) for g in grads))\n    scale = c / total if total > c else 1.0\n    return [np.asarray(g, dtype=float) * scale for g in grads]\n\n\ndef sig(t):\n    return 1.0 / (1.0 + (-t).exp())\n\n\ndef gated_step(h, x, f, p):\n    z = sig(p['ax'] * x + p['af'] * f + p['ah'] * h + p['c'])\n    cand = (p['w'] * h + p['ux'] * x + p['uf'] * f + p['b']).tanh()\n    return z * h + (1.0 - z) * cand\n",
+      "test": 5,
+      "symptom": "Swaps the roles of z and 1 - z."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`clip_by_norm`: one total over every array, then one scale."
+    },
+    {
+     "rung": "point",
+     "text": "Scale only when the total exceeds `c`."
+    },
+    {
+     "rung": "step",
+     "text": "The gate mixes: `(1.0 - z) * h + z * cand`, all Tensors, so `backward()` reaches `h`."
+    }
+   ],
+   "feedback": {
+    "correct": "One norm, one scale; and a step that keeps $1 - z$ of the old state.",
+    "generic": "Not yet. Check the scale and the mix.",
+    "byKey": {
+     "test-1": "Clipping by norm keeps the direction: scale the whole list by $c/\\lVert\\mathbf g\\rVert$.",
+     "test-2": "Take one norm over all the arrays together, not one per array.",
+     "test-3": "This gradient has norm 0.51, under the cap: leave it alone.",
+     "test-5": "The old state keeps the share $1 - z$; the candidate gets $z$."
+    }
+   },
+   "explain": {
+    "text": "The clip scales every array by one factor, so the update keeps its direction. In the gate, $z$ near 0 copies the old state forward almost unchanged, which is what lets memory, and its gradient, last."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A gate by hand",
+   "prose": "The gated update blends yesterday's state with a fresh candidate: $h_t = (1 - z_t)\\,h_{t-1} + z_t\\,\\tilde h_t$, with $z_t$ between 0 and 1. Take $h_{t-1} = 0.8$, the candidate $\\tilde h_t = -0.5$ and the gate $z_t = 0.1$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "old",
+       "label": "kept from $h_{t-1}$"
+      },
+      {
+       "id": "new",
+       "label": "from $\\tilde h_t$"
+      }
+     ],
+     "showValues": true,
+     "decimals": 2,
+     "yMin": -0.2,
+     "yMax": 0.8
+    },
+    "state": {
+     "values": {
+      "old": 0.72,
+      "new": -0.05
+     }
+    }
+   },
+   "question": "What is $h_t$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.67,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "swap",
+      "value": -0.37,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "cand",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Weight the old state by $1 - z$."
+    },
+    {
+     "rung": "point",
+     "text": "$0.9 \\times 0.8 = 0.72$.",
+     "highlight": [
+      "old"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Add $0.1 \\times (-0.5) = -0.05$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.72 - 0.05 = 0.67$: mostly the old state.",
+    "generic": "Not quite. Weight the old state by $1 - z$ and the candidate by $z$.",
+    "byKey": {
+     "swap": "You gave the old state the weight $z$. With $z = 0.1$ the old state keeps 0.9.",
+     "cand": "That is the candidate. A shut gate keeps most of the old state."
+    }
+   },
+   "explain": {
+    "text": "$0.9 \\times 0.8 + 0.1 \\times (-0.5) = 0.67$. With the gate nearly shut, the state barely moves. The LSTM (Hochreiter and Schmidhuber, 1997) and the GRU are built on this blend."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A path the gradient can travel",
+   "prose": "Through the blend, a change in $h_{t-1}$ reaches $h_t$ with factor $1 - z_t$ along the direct path. A shut gate, $z_t = 0.02$, keeps 0.98 a step. A plain tanh net whose steps multiply by 0.5 is the comparison.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      50
+     ],
+     "y": [
+      1e-16,
+      2
+     ],
+     "yScale": "log",
+     "xLabel": "steps back",
+     "yLabel": "share of gradient",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "0.98^x",
+       "label": "gate, $1 - z = 0.98$",
+       "labelAt": 30
+      },
+      {
+       "id": "p",
+       "expr": "0.5^x",
+       "label": "plain, 0.5",
+       "labelAt": 30
+      }
+     ]
+    }
+   },
+   "question": "What share of the gradient does the gated path keep over 50 steps? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3642,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "plain",
+      "value": 0.0,
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.98,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One factor of 0.98 per step."
+    },
+    {
+     "rung": "point",
+     "text": "Read the gate line at 50.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.98^{50} = e^{50 \\ln 0.98}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.98^{50} = 0.3642$; the plain net keeps $0.5^{50} \\approx 8.9 \\times 10^{-16}$.",
+    "generic": "Not quite. Raise 0.98 to the power 50.",
+    "byKey": {
+     "plain": "That is the plain net, $0.5^{50}$, about $10^{-15}$. The gated path keeps 0.98 a step.",
+     "one": "That is one step."
+    }
+   },
+   "explain": {
+    "text": "$0.98^{50} = 0.3642$: over a third of the gradient survives, against $8.9 \\times 10^{-16}$ for the plain net. The gate opens a path whose factor stays near 1 when $z$ is small. That is how a gate cures vanishing, which clipping cannot."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The copy task",
+   "prose": "A test of memory: the first input is $+1$ or $-1$, then $T - 1$ steps of noise (sd 0.2), and the net must say the first sign at the end. A plain tanh unit and a gated unit, each one number of state, were trained for 300 steps on three seeds. The bars are their accuracies on 1,000 fresh sequences.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "t5",
+       "label": "T = 5"
+      },
+      {
+       "id": "t10",
+       "label": "T = 10"
+      },
+      {
+       "id": "t20",
+       "label": "T = 20"
+      },
+      {
+       "id": "t40",
+       "label": "T = 40"
+      }
+     ],
+     "groups": [
+      {
+       "id": "plain",
+       "label": "plain tanh"
+      },
+      {
+       "id": "gated",
+       "label": "gated"
+      }
+     ],
+     "yLabel": "accuracy (mean of 3 seeds)",
+     "yMin": 0,
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "plain": {
+       "t5": 0.84,
+       "t10": 0.506,
+       "t20": 0.519,
+       "t40": 0.506
+      },
+      "gated": {
+       "t5": 1.0,
+       "t10": 1.0,
+       "t20": 1.0,
+       "t40": 0.945
+      }
+     }
+    }
+   },
+   "question": "From which $T$ on does the plain unit fail on all three seeds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "gated",
+      "value": 40,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "never",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A coin scores 0.5."
+    },
+    {
+     "rung": "point",
+     "text": "Look for the first plain bar near 0.5.",
+     "highlight": [
+      "t10-plain"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At $T = 5$ two seeds of three succeed."
+    }
+   ],
+   "feedback": {
+    "correct": "From $T = 10$: the plain unit scores near a coin's 0.5, while the gated unit holds.",
+    "generic": "Not quite. Find the first plain bar at chance.",
+    "byKey": {
+     "gated": "That is where the gated unit first misses on one seed. The plain unit failed long before.",
+     "never": "The plain bars fall to 0.5: it does fail."
+    }
+   },
+   "explain": {
+    "text": "Plain: 0.84, 0.51, 0.52, 0.51 at $T$ = 5, 10, 20, 40. Gated: 1.00, 1.00, 1.00, 0.94. The plain unit's gradient from the first step vanishes; the gate keeps a path open, though at $T = 40$ one seed in three still falls short."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Training the gated unit",
+   "prose": "Write the training loop of the copy task for the gated unit. Zero the gradients and run `gated_step` over the $T$ steps. Take the cross-entropy of the readout $v\\,h_T + d$, call `backward()`, clip the global norm at `c` (default 1) and step. At $T = 10$, 150 steps reach full accuracy.",
+   "question": "Complete `train_gated_copy`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor\n\n\ndef train_gated_copy(T, steps, seed, lr=0.5, n=64, c=1.0):\n    p = init_gated(seed)\n    rng = np.random.default_rng(1000 + seed)\n    for step in range(steps):\n        X, F, y = copy_batch(T, n, rng)\n        # zero every gradient, run gated_step over the T steps from h = 0,\n        # loss = bce(v h + d, y), backward, clip the global norm at c, step\n        ...\n    return accuracy(p, T), loss.item()\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor\n\n\ndef train_gated_copy(T, steps, seed, lr=0.5, n=64, c=1.0):\n    p = init_gated(seed)\n    rng = np.random.default_rng(1000 + seed)\n    for step in range(steps):\n        X, F, y = copy_batch(T, n, rng)\n        for q in p.values():\n            q.zero_grad()\n        h = Tensor(np.zeros(n))\n        for t in range(T):\n            h = gated_step(h, X[t], F[t], p)\n        loss = bce(p['v'] * h + p['d'], y)\n        loss.backward()\n        norm = np.sqrt(sum(float((q.grad ** 2).sum()) for q in p.values()))\n        scale = min(1.0, c / max(norm, 1e-12))\n        for q in p.values():\n            q.data -= lr * scale * q.grad\n    return accuracy(p, T), loss.item()\n",
+    "prelude": "import numpy as np\nfrom autograd import Tensor\n\n\ndef sig(t):\n    return 1.0 / (1.0 + (-t).exp())\n\n\ndef copy_batch(T, n, rng, noise=0.2):\n    s = rng.choice([-1.0, 1.0], size=n)\n    X = noise * rng.standard_normal((T, n))\n    X[0] = s\n    F = np.zeros((T, n))\n    F[0] = 1.0\n    return X, F, (s > 0).astype(float)\n\n\ndef init_gated(seed):\n    g = np.random.default_rng(seed)\n    p = {k: Tensor(0.5 * g.standard_normal()) for k in ['w', 'ux', 'uf', 'b', 'ax', 'af', 'ah', 'c', 'v', 'd']}\n    p['w'] = Tensor(0.9)\n    p['c'] = Tensor(-3.0)\n    return p\n\n\ndef gated_step(h, x, f, p):\n    z = sig(p['ax'] * x + p['af'] * f + p['ah'] * h + p['c'])\n    cand = (p['w'] * h + p['ux'] * x + p['uf'] * f + p['b']).tanh()\n    return (1.0 - z) * h + z * cand\n\n\ndef bce(logit, y):\n    m = logit * (2 * y - 1)\n    return ((-m).exp() + 1.0).log().mean()\n\n\ndef accuracy(p, T):\n    X, F, y = copy_batch(T, 1000, np.random.default_rng(99))\n    h = Tensor(np.zeros(1000))\n    for t in range(T):\n        h = gated_step(h, X[t], F[t], p)\n    return float((((p['v'] * h + p['d']).data > 0) == (y > 0.5)).mean())\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py"
+    },
+    "examples": [
+     {
+      "call": "train_gated_copy(5, 3, 0)[1]",
+      "compare": "isclose",
+      "expect": "0.7542785017335719"
+     }
+    ],
+    "tests": [
+     {
+      "call": "train_gated_copy(5, 3, 0)[1]",
+      "compare": "isclose",
+      "expect": "0.7542785017335719"
+     },
+     {
+      "call": "train_gated_copy(5, 1, 1)[1]",
+      "compare": "isclose",
+      "expect": "0.7078709496546716"
+     },
+     {
+      "call": "train_gated_copy(8, 6, 2)[1]",
+      "compare": "isclose",
+      "expect": "0.6901412252786494"
+     },
+     {
+      "call": "train_gated_copy(5, 4, 3, c=0.05)[1]",
+      "compare": "isclose",
+      "expect": "0.7773960259096577"
+     },
+     {
+      "call": "train_gated_copy(10, 150, 0)[0] >= 0.95",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "train_gated_copy(10, 150, 1)[0] >= 0.95",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Tests 1 to 4 compare the last training loss of a short seeded run to $10^{-9}$; in test 4 a cap of $c = 0.05$ binds. Tests 5 and 6 train for 150 steps at $T = 10$ and need an accuracy of at least 0.95 (the reference reaches 1.0). `copy_batch`, `init_gated`, `gated_step`, `bce` and `accuracy` are defined for you.",
+    "budget": 6000,
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef train_gated_copy(T, steps, seed, lr=0.5, n=64, c=1.0):\n    p = init_gated(seed)\n    rng = np.random.default_rng(1000 + seed)\n    for step in range(steps):\n        X, F, y = copy_batch(T, n, rng)\n        h = Tensor(np.zeros(n))\n        for t in range(T):\n            h = gated_step(h, X[t], F[t], p)\n        loss = bce(p['v'] * h + p['d'], y)\n        loss.backward()\n        norm = np.sqrt(sum(float((q.grad ** 2).sum()) for q in p.values()))\n        scale = min(1.0, c / max(norm, 1e-12))\n        for q in p.values():\n            q.data -= lr * scale * q.grad\n    return accuracy(p, T), loss.item()\n",
+      "test": 1,
+      "symptom": "Never zeroes the gradients, so they pile up across steps."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef train_gated_copy(T, steps, seed, lr=0.5, n=64, c=1.0):\n    p = init_gated(seed)\n    rng = np.random.default_rng(1000 + seed)\n    for step in range(steps):\n        X, F, y = copy_batch(T, n, rng)\n        for q in p.values():\n            q.zero_grad()\n        h = Tensor(np.zeros(n))\n        for t in range(T):\n            h = gated_step(h, X[t], F[t], p)\n        loss = bce(p['v'] * h + p['d'], y)\n        loss.backward()\n        norm = np.sqrt(sum(float((q.grad ** 2).sum()) for q in p.values()))\n        scale = 1.0\n        for q in p.values():\n            q.data -= lr * scale * q.grad\n    return accuracy(p, T), loss.item()\n",
+      "test": 4,
+      "symptom": "Leaves out the clip."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\n\n\ndef train_gated_copy(T, steps, seed, lr=0.5, n=64, c=1.0):\n    p = init_gated(seed)\n    rng = np.random.default_rng(1000 + seed)\n    for step in range(steps):\n        X, F, y = copy_batch(T, n, rng)\n        for q in p.values():\n            q.zero_grad()\n        h = Tensor(np.zeros(n))\n        for t in range(T):\n            h = gated_step(h, X[t], F[t], p)\n        loss = bce(p['v'] * h + p['d'], y)\n        loss.backward()\n        norm = np.sqrt(sum(float((q.grad ** 2).sum()) for q in p.values()))\n        scale = min(1.0, c / max(norm, 1e-12))\n        for q in p.values():\n            q.data += lr * scale * q.grad\n    return accuracy(p, T), loss.item()\n",
+      "test": 1,
+      "symptom": "Steps up the loss: the sign of the step is flipped."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`for q in p.values(): q.zero_grad()` first."
+    },
+    {
+     "rung": "point",
+     "text": "Start `h = Tensor(np.zeros(n))` and loop `h = gated_step(h, X[t], F[t], p)`."
+    },
+    {
+     "rung": "step",
+     "text": "Norm over every `q.grad`, `scale = min(1, c/norm)`, then `q.data -= lr * scale * q.grad`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your loop trains the gated unit to remember the first sign.",
+    "generic": "Not yet. Check the zeroing, the clip and the sign of the step.",
+    "byKey": {
+     "test-1": "The loss after 3 steps differs. Zero every gradient at the start of each step and step against the gradient.",
+     "test-4": "With $c = 0.05$ the cap binds: scale every gradient by $\\min(1, c/\\lVert\\mathbf g\\rVert)$ before the step."
+    }
+   },
+   "explain": {
+    "text": "The loop is lesson 2's backprop through time with a gate in each step and a clip before each update. Tests 1 to 3 pin the exact losses of short runs, so a loop that skips the zeroing or the clip is caught even when it would still learn."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Two cures for two failures",
+   "prose": "Clipping caps the size of the update: $\\mathbf g \\leftarrow \\min\\!\\big(1, c/\\lVert\\mathbf g\\rVert\\big)\\,\\mathbf g$. It cures explosion. A gate opens a path along which the gradient is multiplied by $1 - z_t$:\n$$h_t = (1 - z_t)\\,h_{t-1} + z_t\\,\\tilde h_t.$$\nIt cures vanishing. The LSTM and the GRU are refinements of this gate (read only here).",
+   "question": "Edge case: what does the unit do if $z_t = 0$ at every step?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "frozen",
+      "text": "Its state never changes from $h_0$",
+      "correct": true
+     },
+     {
+      "id": "plain",
+      "text": "It becomes a plain tanh net",
+      "why": "That is $z_t = 1$: the state is the candidate, with no direct path."
+     },
+     {
+      "id": "reset",
+      "text": "Its state is reset to 0 each step",
+      "why": "Nothing resets it: with $z_t = 0$ the old state is kept whole."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With $z_t = 0$, $h_t = h_{t-1}$: perfect memory, and nothing new gets in.",
+    "generic": "Not quite. Put $z_t = 0$ in the update."
+   },
+   "explain": {
+    "text": "$z_t = 0$ keeps the state frozen, so it can learn nothing new; $z_t = 1$ throws the old state away and is a plain net. A trained gate sits between, opening for the input that matters and shutting for the rest."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Remembering an earnings date",
+   "prose": "A model reads a stock's daily data and must remember, for the next 30 trading days, that an earnings surprise happened. Its plain recurrent net forgets it within a week, and the desk suggests clipping the gradients harder.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      30
+     ],
+     "y": [
+      1e-10,
+      2
+     ],
+     "yScale": "log",
+     "xLabel": "days back",
+     "yLabel": "share of gradient",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "0.98^x",
+       "label": "gated path",
+       "labelAt": 20
+      },
+      {
+       "id": "p",
+       "expr": "0.5^x",
+       "label": "plain",
+       "labelAt": 20
+      }
+     ]
+    }
+   },
+   "question": "What is the better fix, and why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "gate",
+      "text": "Add gates, so the surprise is kept along a path the gradient can travel",
+      "correct": true
+     },
+     {
+      "id": "clip",
+      "text": "Clip harder, so the gradient from 30 days back is not lost",
+      "why": "Clipping only shrinks large gradients. It cannot enlarge one that has vanished."
+     },
+     {
+      "id": "lr",
+      "text": "Raise the learning rate, so small gradients count more",
+      "why": "A larger rate scales every gradient alike, so the recent days still swamp the vanished one, and the big ones explode."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which failure is this: exploding or vanishing?"
+    },
+    {
+     "rung": "point",
+     "text": "Forgetting is a vanished gradient.",
+     "highlight": [
+      "p"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Clipping cures only the other one."
+    }
+   ],
+   "feedback": {
+    "correct": "Forgetting is vanishing, and a gate is the cure; attention, in level 2, is the other.",
+    "generic": "Not quite. Which failure does each fix cure?",
+    "byKey": {
+     "clip": "Clipping cures explosion. A forgotten date is a vanished gradient, which clipping leaves as it is."
+    }
+   },
+   "explain": {
+    "text": "A week of forgetting means the gradient from the surprise has vanished. Clipping cannot enlarge it; a gate keeps a path with factor near 1. Attention, in level 2, lets the model look back at day 1 directly."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Clipping by norm rescales a gradient of norm above $c$ to norm $c$, one factor for every array: $(3, 4)$ with $c = 1$ is scaled by 0.2. It cures explosion, not vanishing.",
+   "A gate blends, $h_t = (1 - z_t)\\,h_{t-1} + z_t\\,\\tilde h_t$, so the direct path keeps $1 - z_t$ a step: $0.98^{50} = 0.3642$ against $0.5^{50}$ for a plain net.",
+   "On the copy task the plain unit fails from $T = 10$, while the gated unit holds to $T = 40$ on two seeds of three. LSTMs and GRUs refine the gate; attention is the other cure."
+  ],
+  "formula": {
+   "name": "Clip and gate",
+   "tex": "\\mathbf g \\leftarrow \\min\\!\\Big(1, \\frac{c}{\\lVert\\mathbf g\\rVert}\\Big)\\mathbf g, \\qquad h_t = (1 - z_t)\\,h_{t-1} + z_t\\,\\tilde h_t",
+   "note": "Clipping keeps direction; the gate keeps memory."
+  },
+  "trap": "Clipping each coordinate separately turns the step away from the gradient."
+ },
+ "quiz": [
+  {
+   "id": "q-clip",
+   "difficulty": 2,
+   "prose": "A gradient $\\mathbf g = (6, 8)$ is clipped by norm with $c = 5$.",
+   "question": "What is the clipped first entry?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "coord",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "none",
+      "value": 6,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The norm is 10, the factor 0.5, so $(3, 4)$.",
+    "generic": "Not quite. Scale by $c/\\lVert\\mathbf g\\rVert$.",
+    "byKey": {
+     "coord": "You capped the entry at 5. Clipping by norm scales the whole vector.",
+     "none": "The norm is 10, above 5, so it is scaled."
+    }
+   },
+   "explain": {
+    "text": "$\\lVert(6, 8)\\rVert = 10 > 5$, so both entries are halved: $(3, 4)$."
+   }
+  },
+  {
+   "id": "q-z1",
+   "difficulty": 2,
+   "prose": "A gated unit has $z_t = 1$ at every step.",
+   "question": "What is it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "plain",
+      "text": "A plain recurrent net: the state is the candidate",
+      "correct": true
+     },
+     {
+      "id": "frozen",
+      "text": "A unit whose state never changes from $h_0$",
+      "why": "That is $z_t = 0$. With $z_t = 1$ the old state is thrown away."
+     },
+     {
+      "id": "none",
+      "text": "A unit with no state carried at all",
+      "why": "The candidate still reads $h_{t-1}$ through $w$, so a state remains."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With $z_t = 1$, $h_t = \\tilde h_t = \\tanh(w\\,h_{t-1} + \\dots)$: a plain net.",
+    "generic": "Not quite. Put $z_t = 1$ in the blend."
+   },
+   "explain": {
+    "text": "The blend keeps $1 - z_t = 0$ of the old state, so the update is the plain tanh step, and the gated path is gone."
+   }
+  },
+  {
+   "id": "q-cure",
+   "difficulty": 3,
+   "prose": "A net's loss suddenly jumps to NaN after a few hundred steps.",
+   "question": "Which fix targets the cause?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "clip",
+      "text": "Clip the gradient by norm",
+      "correct": true
+     },
+     {
+      "id": "gate",
+      "text": "Replace the units by gated units",
+      "why": "Gates cure vanishing gradients. A jump to NaN is an exploding one."
+     },
+     {
+      "id": "short",
+      "text": "Train on shorter windows only",
+      "why": "Shorter windows can help, but they also cut what the net can learn; clipping caps the spike directly."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A jump to NaN is an exploding gradient, and clipping caps it.",
+    "generic": "Not quite. Is this explosion or vanishing?"
+   },
+   "explain": {
+    "text": "One oversized update throws the weights into a region of larger gradients. Clipping by norm caps every update and leaves its direction alone."
+   }
+  }
+ ]
+}

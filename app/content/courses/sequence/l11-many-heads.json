@@ -1,0 +1,1217 @@
+{
+ "id": "l11-many-heads",
+ "course": "sequence",
+ "title": "Several heads",
+ "minutes": 14,
+ "objectives": [
+  "Write multi-head attention by splitting and joining the model width."
+ ],
+ "skills": [
+  "sqn-self"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two things to look for",
+   "prose": "Two hand-built heads read the name \"marlen\" after its start mark. Head A puts all its weight on the previous symbol; head B on the most recent vowel (the start mark before any vowel). To guess the next letter after \"n\", a model wants both: the letter just before, and the vowel sound it follows.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0
+        ]
+       ],
+       "label": "head A",
+       "rowLabels": [
+        ".0",
+        "m1",
+        "a2",
+        "r3",
+        "l4",
+        "e5",
+        "n6"
+       ],
+       "colLabels": [
+        ".0",
+        "m1",
+        "a2",
+        "r3",
+        "l4",
+        "e5",
+        "n6"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 0,
+        "legend": false
+       }
+      },
+      {
+       "id": "B",
+       "rows": [
+        [
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0
+        ]
+       ],
+       "label": "head B",
+       "rowLabels": [
+        ".0",
+        "m1",
+        "a2",
+        "r3",
+        "l4",
+        "e5",
+        "n6"
+       ],
+       "colLabels": [
+        ".0",
+        "m1",
+        "a2",
+        "r3",
+        "l4",
+        "e5",
+        "n6"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 0,
+        "legend": false
+       }
+      }
+     ]
+    }
+   },
+   "question": "At which position, counted from 0, does head B's row for n6 put its weight?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "prev",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "first",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read row n6 of head B."
+    },
+    {
+     "rung": "point",
+     "text": "The most recent vowel before n is e.",
+     "highlight": [
+      "B-r6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "e sits at position 5."
+    }
+   ],
+   "feedback": {
+    "correct": "On e5, the most recent vowel; head A's row for n6 also points at e5, the previous symbol.",
+    "generic": "Not quite. Find the most recent vowel at or before n.",
+    "byKey": {
+     "prev": "Position 4 is l, the symbol before e. Head B looks for vowels.",
+     "first": "a2 is a vowel, but e5 is more recent."
+    }
+   },
+   "explain": {
+    "text": "Head B's row n6 is 1 at e5. One head gives one weighted average per position, so it cannot put full weight on both the previous symbol and the last vowel when they differ. For l4 they are r3 and a2: two heads can do both."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Splitting the width",
+   "prose": "**Multi-head attention** cuts the model width $d$ into $h$ heads of $d/h$ features each and runs scaled attention in every head separately. It joins the heads' outputs side by side and mixes them with an output matrix $\\mathbf W_O$. A model has $d = 64$ and 4 heads.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "step",
+      "shape"
+     ],
+     "rows": [
+      [
+       "$\\mathbf X\\mathbf W_Q$",
+       "$T$ by 64"
+      ],
+      [
+       "split",
+       "4 by $T$ by ?"
+      ],
+      [
+       "attention per head",
+       "4 by $T$ by ?"
+      ],
+      [
+       "join, then $\\mathbf W_O$",
+       "$T$ by 64"
+      ]
+     ]
+    }
+   },
+   "question": "How many features does each head get?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "times",
+      "value": 256,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "d",
+      "value": 64,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the width by the number of heads."
+    },
+    {
+     "rung": "point",
+     "text": "$64/4$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "16."
+    }
+   ],
+   "feedback": {
+    "correct": "$64/4 = 16$ features a head.",
+    "generic": "Not quite. Divide $d$ by $h$.",
+    "byKey": {
+     "times": "You multiplied. The heads share the width.",
+     "d": "Each head gets a slice of the width, not all of it."
+    }
+   },
+   "explain": {
+    "text": "Four heads of 16 features each fill the width of 64. Each head scores with its own 16-wide queries and keys, so each can learn a different pattern."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Where a feature goes",
+   "prose": "Splitting reshapes $(T, d)$ to $(T, h, d/h)$ and swaps the first two axes to $(h, T, d/h)$: head $k$ holds features $16k$ to $16k + 15$. Joining undoes it. Take $d = 64$, 4 heads and feature 37 of position 2.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "head",
+      "features"
+     ],
+     "rows": [
+      [
+       "0",
+       "0 to 15"
+      ],
+      [
+       "1",
+       "16 to 31"
+      ],
+      [
+       "2",
+       "32 to 47"
+      ],
+      [
+       "3",
+       "48 to 63"
+      ]
+     ]
+    }
+   },
+   "question": "Which head holds it (heads counted from 0)?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "mod",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the feature index by 16."
+    },
+    {
+     "rung": "point",
+     "text": "$37 = 2 \\times 16 + 5$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Head 2, its feature 5."
+    }
+   ],
+   "feedback": {
+    "correct": "Head 2, as its feature 5: $37 = 2 \\times 16 + 5$.",
+    "generic": "Not quite. Integer-divide 37 by 16.",
+    "byKey": {
+     "one": "You counted heads from 1. From 0, features 32 to 47 are head 2.",
+     "mod": "You took the remainder of $37/4$; the head is $\\lfloor 37/16 \\rfloor$."
+    }
+   },
+   "explain": {
+    "text": "The reshape keeps the features of each head together: head 2 holds 32 to 47. The position stays the same, so each head sees the whole sequence through its own slice of features."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What the heads cost",
+   "prose": "Count the weights of the attention layer at $d = 64$ without biases. $\\mathbf W_Q$, $\\mathbf W_K$ and $\\mathbf W_V$ are each 64 by 64 whatever $h$ is, since the heads are slices of them, and $\\mathbf W_O$ is 64 by 64.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "matrix",
+      "shape"
+     ],
+     "rows": [
+      [
+       "$\\mathbf W_Q$",
+       "64 by 64"
+      ],
+      [
+       "$\\mathbf W_K$",
+       "64 by 64"
+      ],
+      [
+       "$\\mathbf W_V$",
+       "64 by 64"
+      ],
+      [
+       "$\\mathbf W_O$",
+       "64 by 64"
+      ]
+     ]
+    }
+   },
+   "question": "How many weights does 4-head attention hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16384,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "perhead",
+      "value": 65536,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nowo",
+      "value": 12288,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Four matrices of 64 by 64."
+    },
+    {
+     "rung": "point",
+     "text": "$64 \\times 64 = 4{,}096$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$4 \\times 4{,}096$."
+    }
+   ],
+   "feedback": {
+    "correct": "$4 \\times 4{{,}}096 = 16{,}384$, the same for 1 head or 4.",
+    "generic": "Not quite. The heads slice the matrices; they do not copy them.",
+    "byKey": {
+     "perhead": "You multiplied by the number of heads. The heads share the three matrices.",
+     "nowo": "You left out $\\mathbf W_O$, the matrix that mixes the heads."
+    }
+   },
+   "explain": {
+    "text": "$3 \\times 4{,}096$ for queries, keys and values plus 4,096 for $\\mathbf W_O$: 16,384 weights. Splitting into heads changes what the layer can compute, not its size."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Splitting the wrong axis",
+   "prose": "A colleague splits $\\mathbf X$, of shape $(T, d) = (8, 64)$, into 4 heads by cutting the rows: head 0 gets positions 0 and 1, head 1 positions 2 and 3, and so on.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "p0",
+      "p1",
+      "p2",
+      "p3",
+      "p4",
+      "p5",
+      "p6",
+      "p7"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         1
+        ],
+        "label": "head 0",
+        "colour": 2
+       },
+       {
+        "range": [
+         2,
+         3
+        ],
+        "label": "head 1",
+        "colour": 3
+       }
+      ]
+     }
+    }
+   },
+   "question": "What does each head then compute?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "blind",
+      "text": "Attention over 2 positions only, blind to the rest of the sequence",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "The same as splitting the features",
+      "why": "Splitting the features keeps all 8 positions in every head; cutting the rows does not."
+     },
+     {
+      "id": "fine",
+      "text": "A cheaper version of full attention with the same result",
+      "why": "Each head now sees a quarter of the sequence, so the result differs."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does each head see?"
+    },
+    {
+     "rung": "point",
+     "text": "Head 0 sees only positions 0 and 1.",
+     "highlight": [
+      "c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Heads must split the features and keep every position."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the sequence axis must stay whole in every head.",
+    "generic": "Not quite. Which positions does head 0 see?",
+    "byKey": {
+     "same": "Cutting rows hands each head a block of the sequence; cutting columns hands each head a slice of every position."
+    }
+   },
+   "explain": {
+    "text": "The reshape must cut the feature axis: $(T, d) \\to (T, h, d/h) \\to (h, T, d/h)$. Cut the sequence axis and each head attends inside its own block, never across it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Heads of width one",
+   "prose": "Edge case: $h = d$, so every head has one feature, and its query, key and score are plain numbers. In one such head a query is 2 and a key is $-1.5$; the scale is $\\sqrt 1 = 1$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "value"
+     ],
+     "rows": [
+      [
+       "query",
+       "2"
+      ],
+      [
+       "key",
+       "−1.5"
+      ],
+      [
+       "scale",
+       "1"
+      ]
+     ]
+    }
+   },
+   "question": "What is the score?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 3,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sum",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A dot product of one number is a product."
+    },
+    {
+     "rung": "point",
+     "text": "$2 \\times (-1.5)$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-3$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2 \\times (-1.5) = -3$.",
+    "generic": "Not quite. Multiply query by key.",
+    "byKey": {
+     "sign": "Check the sign: the key is negative.",
+     "sum": "You added them; a score multiplies."
+    }
+   },
+   "explain": {
+    "text": "$2 \\times (-1.5) = -3$. With width 1 the score is a product of two numbers, so a head can only say \"same sign, attend\" or \"opposite sign, avoid\", scaled by size. Very narrow heads lose the rich matching of wider ones."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Heads in code",
+   "prose": "Write `split_heads(X, h)` and `merge_heads(Xh)` with a reshape and a transpose, `head_params(d, h)`, and `multi_head_attention(X, params, h, mask)`, all heads at once. It must match a loop over heads.",
+   "question": "Complete the four functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef split_heads(X, h):\n    # (T, d) -> (h, T, d // h): head k holds features k*d/h to (k+1)*d/h - 1\n    ...\n\n\ndef merge_heads(Xh):\n    # (h, T, w) -> (T, h*w), undoing split_heads\n    ...\n\n\ndef head_params(d, h):\n    # {'per_head_width': ..., 'weights': ...}: the weights of W_Q, W_K, W_V and W_O, no biases\n    ...\n\n\ndef multi_head_attention(X, params, h, mask=None):\n    # project with params['Wq'], ['Wk'], ['Wv']; split; scaled attention in every head (mask added if given);\n    # merge; multiply by params['Wo']\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef split_heads(X, h):\n    T, d = X.shape\n    return np.asarray(X).reshape(T, h, d // h).transpose(1, 0, 2)\n\n\ndef merge_heads(Xh):\n    h, T, w = Xh.shape\n    return np.asarray(Xh).transpose(1, 0, 2).reshape(T, h * w)\n\n\ndef head_params(d, h):\n    return {'per_head_width': d // h, 'weights': 4 * d * d}\n\n\ndef multi_head_attention(X, params, h, mask=None):\n    X = np.asarray(X, dtype=float)\n    Q, K, V = (split_heads(X @ params[k], h) for k in ('Wq', 'Wk', 'Wv'))\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(Q.shape[-1])\n    if mask is not None:\n        S = S + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return merge_heads(A @ V) @ params['Wo']\n",
+    "prelude": "import numpy as np\n\ng = np.random.default_rng(11)\nX8 = g.standard_normal((5, 8))\nP8 = {k: g.standard_normal((8, 8)) / np.sqrt(8) for k in ('Wq', 'Wk', 'Wv', 'Wo')}\nM5 = np.triu(np.full((5, 5), -np.inf), 1)\n\n\ndef one_head(Q, K, V, mask):\n    S = Q @ K.T / np.sqrt(Q.shape[-1])\n    if mask is not None:\n        S = S + mask\n    S = S - S.max(-1, keepdims=True)\n    A = np.exp(S)\n    return (A / A.sum(-1, keepdims=True)) @ V\n\n\ndef loop_heads(X, params, h, mask):\n    d = X.shape[1]\n    w = d // h\n    Q, K, V = X @ params['Wq'], X @ params['Wk'], X @ params['Wv']\n    outs = [one_head(Q[:, i * w:(i + 1) * w], K[:, i * w:(i + 1) * w], V[:, i * w:(i + 1) * w], mask) for i in range(h)]\n    return np.concatenate(outs, axis=1) @ params['Wo']\n",
+    "examples": [
+     {
+      "call": "split_heads(np.arange(16.0).reshape(2, 8), 4).tolist()",
+      "compare": "isclose",
+      "expect": "[[[0.0, 1.0], [8.0, 9.0]], [[2.0, 3.0], [10.0, 11.0]], [[4.0, 5.0], [12.0, 13.0]], [[6.0, 7.0], [14.0, 15.0]]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "split_heads(np.arange(16.0).reshape(2, 8), 4).tolist()",
+      "compare": "isclose",
+      "expect": "[[[0.0, 1.0], [8.0, 9.0]], [[2.0, 3.0], [10.0, 11.0]], [[4.0, 5.0], [12.0, 13.0]], [[6.0, 7.0], [14.0, 15.0]]]"
+     },
+     {
+      "call": "merge_heads(split_heads(X8, 2)).tolist() == X8.tolist()",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "head_params(64, 4)",
+      "compare": "equal",
+      "expect": "{'per_head_width': 16, 'weights': 16384}"
+     },
+     {
+      "call": "head_params(96, 6)",
+      "compare": "equal",
+      "expect": "{'per_head_width': 16, 'weights': 36864}"
+     },
+     {
+      "call": "multi_head_attention(X8, P8, 2, M5).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.053781603381287325, -0.40430105959017276, -0.07998845695311166, 0.2057214069393743, 0.2813018106064578, -0.028378309860269988, 0.04106437836691631, -0.7892672459355244], [0.6330086174875338, -0.017620320888443754, 0.11771681581653262, 0.3360973356321801, -0.12827776976879526, -0.28502021519124343, 0.3465016940804039, -0.5413157509231383], [0.3574731047093564, -0.29923861815787367, 0.06201770292570668, 0.29324007557376114, -0.047161584910942585, -0.1977834195959625, 0.4639856195343013, -0.6294669039020234], [0.22691290260885746, -0.4284307008444189, -0.10985178718696517, -0.06810756018383454, 0.09661480839207774, -0.1024553287944097, 0.6551099817277308, -0.3626994550517285], [0.21477775015126752, -0.25972157672705454, -0.1210443922149858, -0.08004484543394186, 0.17900343459951867, -0.12302981700813173, 0.5225104931077507, -0.19581493119462778]]"
+     },
+     {
+      "call": "np.allclose(multi_head_attention(X8, P8, 4, M5), loop_heads(X8, P8, 4, M5))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "np.allclose(multi_head_attention(X8, P8, 8, None), loop_heads(X8, P8, 8, None))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "multi_head_attention(X8, P8, 1, M5).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.053781603381287325, -0.40430105959017276, -0.07998845695311166, 0.2057214069393743, 0.2813018106064578, -0.028378309860269988, 0.04106437836691631, -0.7892672459355244], [0.3867855009681989, 0.08486340689014983, 0.2261759454192115, 0.25700402166829517, 0.003323431720023275, -0.17643453091264885, 0.11759762307699695, -0.5595833744375317], [0.19724397382887124, -0.24713993805674528, 0.055004609956401156, 0.2071374297158554, 0.10517535963716002, -0.10626258710128977, 0.2280935471862262, -0.6617318638464486], [0.1721322138761644, -0.5337823907600904, -0.11941345414082855, -0.03233277872497525, 0.07195991110767377, -0.10131874061695198, 0.7398771244136905, -0.4180220593431262], [0.25956177933663455, -0.34210408754187027, -0.09699572342848527, -0.07025125088270189, 0.11067477037089592, -0.13718801478740714, 0.6770476142400144, -0.23072375311679164]]"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests, compared to $10^{-9}$. Test 2 checks the round trip; tests 6 and 7 compare with a loop over heads (`loop_heads`, defined for you), test 7 with heads of width 1; test 8 is one head.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef split_heads(X, h):\n    T, d = X.shape\n    return np.asarray(X).reshape(h, d // h, T).transpose(0, 2, 1)\n\n\ndef merge_heads(Xh):\n    h, T, w = Xh.shape\n    return np.asarray(Xh).transpose(1, 0, 2).reshape(T, h * w)\n\n\ndef head_params(d, h):\n    return {'per_head_width': d // h, 'weights': 4 * d * d}\n\n\ndef multi_head_attention(X, params, h, mask=None):\n    X = np.asarray(X, dtype=float)\n    Q, K, V = (split_heads(X @ params[k], h) for k in ('Wq', 'Wk', 'Wv'))\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(Q.shape[-1])\n    if mask is not None:\n        S = S + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return merge_heads(A @ V) @ params['Wo']\n",
+      "test": 1,
+      "symptom": "Reshapes without the transpose, so heads mix positions and features."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef split_heads(X, h):\n    T, d = X.shape\n    return np.asarray(X).reshape(T, h, d // h).transpose(1, 0, 2)\n\n\ndef merge_heads(Xh):\n    h, T, w = Xh.shape\n    return np.asarray(Xh).transpose(1, 0, 2).reshape(T, h * w)\n\n\ndef head_params(d, h):\n    return {'per_head_width': d // h, 'weights': 4 * d * d}\n\n\ndef multi_head_attention(X, params, h, mask=None):\n    X = np.asarray(X, dtype=float)\n    Q, K, V = (split_heads(X @ params[k], h) for k in ('Wq', 'Wk', 'Wv'))\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(X.shape[-1])\n    if mask is not None:\n        S = S + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return merge_heads(A @ V) @ params['Wo']\n",
+      "test": 5,
+      "symptom": "Scales by the square root of the full width, not the head width."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef split_heads(X, h):\n    T, d = X.shape\n    return np.asarray(X).reshape(T, h, d // h).transpose(1, 0, 2)\n\n\ndef merge_heads(Xh):\n    h, T, w = Xh.shape\n    return np.asarray(Xh).transpose(1, 0, 2).reshape(T, h * w)\n\n\ndef head_params(d, h):\n    return {'per_head_width': d // h, 'weights': 4 * d * d * h}\n\n\ndef multi_head_attention(X, params, h, mask=None):\n    X = np.asarray(X, dtype=float)\n    Q, K, V = (split_heads(X @ params[k], h) for k in ('Wq', 'Wk', 'Wv'))\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(Q.shape[-1])\n    if mask is not None:\n        S = S + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return merge_heads(A @ V) @ params['Wo']\n",
+      "test": 3,
+      "symptom": "Counts the weights once per head."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef split_heads(X, h):\n    T, d = X.shape\n    return np.asarray(X).reshape(T, h, d // h).transpose(1, 0, 2)\n\n\ndef merge_heads(Xh):\n    h, T, w = Xh.shape\n    return np.asarray(Xh).transpose(1, 0, 2).reshape(T, h * w)\n\n\ndef head_params(d, h):\n    return {'per_head_width': d // h, 'weights': 4 * d * d}\n\n\ndef multi_head_attention(X, params, h, mask=None):\n    X = np.asarray(X, dtype=float)\n    Q, K, V = (split_heads(X @ params[k], h) for k in ('Wq', 'Wk', 'Wv'))\n    S = Q @ K.transpose(0, 2, 1) / np.sqrt(Q.shape[-1])\n    if mask is not None:\n        S = S + mask\n    S = S - S.max(axis=-1, keepdims=True)\n    A = np.exp(S)\n    A = A / A.sum(axis=-1, keepdims=True)\n    return merge_heads(A @ V)\n",
+      "test": 5,
+      "symptom": "Forgets W_O after joining the heads."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`X.reshape(T, h, d // h).transpose(1, 0, 2)` splits; reverse both steps to merge."
+    },
+    {
+     "rung": "point",
+     "text": "Score every head at once: `Q @ K.transpose(0, 2, 1)` on arrays of shape $(h, T, w)$, divided by $\\sqrt w$."
+    },
+    {
+     "rung": "step",
+     "text": "Merge, then multiply by `Wo`."
+    }
+   ],
+   "feedback": {
+    "correct": "All heads at once match the loop, for 1, 2, 4 and 8 heads.",
+    "generic": "Not yet. Check the axis you split and the scale.",
+    "byKey": {
+     "test-1": "Split the features: reshape to $(T, h, d/h)$, then move the head axis first.",
+     "test-5": "Scale by the square root of the head width, $\\sqrt{d/h}$, not of $d$."
+    }
+   },
+   "explain": {
+    "text": "The reshape and transpose put the heads on a leading axis, so one batched product scores every head. Matching the loop for $h = 1$ to $h = d$ is the check that the axes are right."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Several heads",
+   "prose": "Multi-head attention runs $h$ attentions side by side on slices of the width:\n$$\\operatorname{MHA}(\\mathbf X) = [\\,\\mathbf H_1 \\;\\cdots\\; \\mathbf H_h\\,]\\,\\mathbf W_O, \\qquad \\mathbf H_k = \\operatorname{softmax}\\!\\Big(\\frac{\\mathbf Q_k\\mathbf K_k^\\top}{\\sqrt{d/h}} + \\mathbf M\\Big)\\mathbf V_k.$$\nThe weight count is $4d^2$ without biases, for any $h$ that divides $d$.",
+   "question": "What do several heads buy that one wide head does not?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "patterns",
+      "text": "Several attention patterns at each position, one per head",
+      "correct": true
+     },
+     {
+      "id": "params",
+      "text": "More weights to learn",
+      "why": "The count is $4d^2$ for any $h$."
+     },
+     {
+      "id": "length",
+      "text": "A longer context",
+      "why": "The context length is set elsewhere; heads split the width."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each head has its own weights over the positions, so the layer can look for several things at once.",
+    "generic": "Not quite. What does each head have of its own?"
+   },
+   "explain": {
+    "text": "One head gives one weighted average per position. $h$ heads give $h$ averages, each from its own queries and keys, and $\\mathbf W_O$ mixes them. The price is narrower matching in each head."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Several analysts on one tape",
+   "prose": "A desk's model reads a day's tape of 500 trades with 8 heads. After training, one head attends from each trade to the previous trade in the same stock, and another to the last large block trade.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0
+        ]
+       ],
+       "label": "head A",
+       "rowLabels": [
+        ".0",
+        "m1",
+        "a2",
+        "r3",
+        "l4",
+        "e5",
+        "n6"
+       ],
+       "colLabels": [
+        ".0",
+        "m1",
+        "a2",
+        "r3",
+        "l4",
+        "e5",
+        "n6"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 0,
+        "legend": false
+       }
+      },
+      {
+       "id": "B",
+       "rows": [
+        [
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         0.0
+        ]
+       ],
+       "label": "head B",
+       "rowLabels": [
+        ".0",
+        "m1",
+        "a2",
+        "r3",
+        "l4",
+        "e5",
+        "n6"
+       ],
+       "colLabels": [
+        ".0",
+        "m1",
+        "a2",
+        "r3",
+        "l4",
+        "e5",
+        "n6"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 0,
+        "legend": false
+       }
+      }
+     ]
+    }
+   },
+   "question": "Why can one head not do both jobs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "One head gives one set of weights per trade, so it cannot point at two different places at full weight",
+      "correct": true
+     },
+     {
+      "id": "size",
+      "text": "One head has too few weights",
+      "why": "Splitting into heads does not change the weight count; the limit is one pattern per head."
+     },
+     {
+      "id": "order",
+      "text": "One head cannot see the order of trades",
+      "why": "Order comes from positions, which every head shares."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many weight rows does a head have per trade?"
+    },
+    {
+     "rung": "point",
+     "text": "One row of weights, summing to 1.",
+     "highlight": [
+      "A-r6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Two targets at full weight need two rows."
+    }
+   ],
+   "feedback": {
+    "correct": "Like two analysts reading the same tape for different things.",
+    "generic": "Not quite. What does one head produce per position?"
+   },
+   "explain": {
+    "text": "Each head produces one weighted average per trade. When the previous trade and the last block are different trades, one head must split its weight and blur both. Two heads keep both sharp, and $\\mathbf W_O$ combines what they found."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Multi-head attention splits the width $d$ into $h$ heads of $d/h$ ($d = 64$, 4 heads: 16 each), attends in each, joins them and mixes with $\\mathbf W_O$.",
+   "Split with a reshape and a transpose, $(T, d) \\to (h, T, d/h)$; join by the reverse. Cut the feature axis, never the sequence axis.",
+   "The weights are $4d^2$ without biases for any $h$: 16,384 at $d = 64$. Heads buy several patterns per position, not more weights."
+  ],
+  "formula": {
+   "name": "Multi-head attention",
+   "tex": "[\\,\\mathbf H_1 \\;\\cdots\\; \\mathbf H_h\\,]\\,\\mathbf W_O, \\quad \\mathbf H_k = \\operatorname{softmax}\\!\\Big(\\frac{\\mathbf Q_k\\mathbf K_k^\\top}{\\sqrt{d/h}}\\Big)\\mathbf V_k",
+   "note": "Each head scales by its own width."
+  },
+  "trap": "Splitting along the sequence axis gives each head a block of positions instead of a slice of features."
+ },
+ "quiz": [
+  {
+   "id": "q-width",
+   "difficulty": 2,
+   "prose": "A model has width $d = 96$ and 6 heads.",
+   "question": "How wide is each head?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "times",
+      "value": 576,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$96/6 = 16$.",
+    "generic": "Not quite. $d/h$.",
+    "byKey": {
+     "times": "You multiplied."
+    }
+   },
+   "explain": {
+    "text": "$96/6 = 16$ features a head."
+   }
+  },
+  {
+   "id": "q-count",
+   "difficulty": 2,
+   "prose": "An attention layer of width 32 with 8 heads has no biases.",
+   "question": "How many weights does it hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4096,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "perhead",
+      "value": 32768,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nowo",
+      "value": 3072,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4 \\times 32^2 = 4{,}096$.",
+    "generic": "Not quite. Four $d$ by $d$ matrices.",
+    "byKey": {
+     "perhead": "The heads share the matrices.",
+     "nowo": "Add $\\mathbf W_O$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf W_Q$, $\\mathbf W_K$, $\\mathbf W_V$, $\\mathbf W_O$: $4 \\times 1{,}024 = 4{,}096$."
+   }
+  },
+  {
+   "id": "q-axis",
+   "difficulty": 3,
+   "prose": "An array of shape $(T, d) = (10, 64)$ is split into 4 heads.",
+   "question": "What shape comes out of the split?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$(4, 10, 16)$",
+      "correct": true
+     },
+     {
+      "id": "rows",
+      "text": "$(4, 2.5, 64)$",
+      "why": "That cuts the sequence axis, which must stay whole."
+     },
+     {
+      "id": "flat",
+      "text": "$(10, 4, 16)$",
+      "why": "That is the reshape before the transpose; the heads go first."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Heads first, every position kept, 16 features each.",
+    "generic": "Not quite. Which axis is cut?"
+   },
+   "explain": {
+    "text": "Reshape to $(10, 4, 16)$, then swap the first two axes: $(4, 10, 16)$."
+   }
+  }
+ ]
+}
