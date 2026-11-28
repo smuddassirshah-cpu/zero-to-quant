@@ -463,7 +463,7 @@
      },
      {
       "id": "above-chance",
-      "value": 0.2,
+      "value": 0.1,
       "tol": {
        "abs": 0.001
       }
@@ -499,7 +499,7 @@
     "generic": "Not quite. Add the two entropies and take away the joint one.",
     "byKey": {
      "agreement": "The hit rate is not the information. Work out $1 + 1 - 1.971$.",
-     "above-chance": "Ten points above chance is not 0.2 bits. Use the entropies.",
+     "above-chance": "Ten points above chance is not 0.1 bits. Use the entropies.",
      "joint": "That is $H(X, Y)$. Subtract it from $H(X) + H(Y)$."
     }
    },
@@ -763,7 +763,7 @@
   {
    "type": "trap",
    "difficulty": 2,
-   "prose": "A colleague reads the 60% signal two ways. One says it is worth 0.6 bits a day. The other says 0.2 bits, its edge above a coin.",
+   "prose": "A colleague reads the 60% signal two ways. One says it is worth 0.6 bits a day. The other says 0.1 bits, its edge above a coin.",
    "canvas": {
     "kind": "bars",
     "params": {
@@ -824,7 +824,7 @@
      },
      {
       "id": "point-two",
-      "text": "0.2 bits a day",
+      "text": "0.1 bits a day",
       "why": "An edge in chance is not an edge in bits. The entropies give 0.029."
      },
      {
@@ -1041,7 +1041,24 @@
       }
      }
     ],
-    "how": "Check runs 7 hidden tests, including a 3 by 2 table and tables of counts. Each value is accepted within 1e-9."
+    "how": "Check runs 7 hidden tests, including a 3 by 2 table and tables of counts. Each value is accepted within 1e-9.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef entropy(ps):\n    return -sum(p * math.log2(p) for p in ps if p > 0)\n\ndef mutual_information(joint):\n    \"\"\"I(X; Y) in bits from a table of chances or counts (a list of rows).\"\"\"\n    total = sum(sum(row) for row in joint)\n    cells = [c / total for row in joint for c in row]\n    rows = [sum(row) / total for row in joint]\n    cols = [sum(col) / total for col in zip(*joint)]\n    return entropy(cells) - entropy(rows) - entropy(cols)\n",
+      "test": 1,
+      "symptom": "The sign is reversed, so the information comes out negative."
+     },
+     {
+      "source": "import math\n\ndef entropy(ps):\n    return -sum(p * math.log2(p) for p in ps if p > 0)\n\ndef mutual_information(joint):\n    \"\"\"I(X; Y) in bits from a table of chances or counts (a list of rows).\"\"\"\n    total = sum(sum(row) for row in joint)\n    cells = [c for row in joint for c in row]\n    rows = [sum(row) / total for row in joint]\n    cols = [sum(col) / total for col in zip(*joint)]\n    return entropy(rows) + entropy(cols) - entropy(cells)\n",
+      "test": 6,
+      "symptom": "Counts are not turned into chances."
+     },
+     {
+      "source": "import math\n\ndef entropy(ps):\n    return -sum(p * math.log(p) for p in ps if p > 0)\n\ndef mutual_information(joint):\n    \"\"\"I(X; Y) in bits from a table of chances or counts (a list of rows).\"\"\"\n    total = sum(sum(row) for row in joint)\n    cells = [c / total for row in joint for c in row]\n    rows = [sum(row) / total for row in joint]\n    cols = [sum(col) / total for col in zip(*joint)]\n    return entropy(rows) + entropy(cols) - entropy(cells)\n",
+      "test": 1,
+      "symptom": "Uses the natural log, so it gives nats."
+     }
+    ]
    },
    "hints": [
     {

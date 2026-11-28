@@ -121,10 +121,30 @@
       "call": "null_mi_quantile(250, 3, 2, 50, 0.9, 7) == null_mi_quantile(250, 3, 2, 50, 0.9, 7)",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "call": "null_mi_quantile(2, 2, 2, 200, 0.999, 1)",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
      }
     ],
-    "how": "Submit runs 6 hidden tests with thresholds, since draws may be made in any order. They check the median and 95th percentile on 250 days, the median on 1,000 days and a four-state signal. The last checks that one seed gives one answer.",
-    "budget": 3000
+    "how": "Submit runs 7 hidden tests. Six use thresholds, since draws may be made in any order: the median and 95th percentile on 250 days, the median on 1,000 days, a four-state signal and one seed giving one answer. The last has an exact answer, whatever the draws.",
+    "budget": 3000,
+    "mutants": [
+     {
+      "source": "import random\nimport math\nfrom collections import Counter\n\ndef plug_in(xs, ys):\n    n = len(xs)\n    cx, cy, cxy = Counter(xs), Counter(ys), Counter(zip(xs, ys))\n    return sum(c / n * math.log(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n\ndef null_mi_quantile(n, k_x, k_y, runs, q, seed):\n    \"\"\"The q-quantile of plug-in MI (bits) over runs samples of n days from\n    independent uniform states; use random.Random(seed).\"\"\"\n    r = random.Random(seed)\n    values = []\n    for _ in range(runs):\n        xs = [r.randrange(k_x) for _ in range(n)]\n        ys = [r.randrange(k_y) for _ in range(n)]\n        values.append(plug_in(xs, ys))\n    values.sort()\n    return values[min(int(q * runs), runs - 1)]\n",
+      "test": 7,
+      "symptom": "Computes the information in nats, so the null quantile is 0.69 of its size."
+     },
+     {
+      "source": "import random\nimport math\nfrom collections import Counter\n\ndef plug_in(xs, ys):\n    n = len(xs)\n    cx, cy, cxy = Counter(xs), Counter(ys), Counter(zip(xs, ys))\n    return sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n\ndef null_mi_quantile(n, k_x, k_y, runs, q, seed):\n    \"\"\"The q-quantile of plug-in MI (bits) over runs samples of n days from\n    independent uniform states; use random.Random(seed).\"\"\"\n    r = random.Random(seed)\n    values = []\n    for _ in range(runs):\n        xs = [r.randrange(k_x) for _ in range(n)]\n        ys = [r.randrange(k_x) for _ in range(n)]\n        values.append(plug_in(xs, ys))\n    values.sort()\n    return values[min(int(q * runs), runs - 1)]\n",
+      "test": 1,
+      "symptom": "Draws the outcomes from the wrong number of states."
+     }
+    ]
    },
    "feedback": {
     "correct": "Your simulation shows how much information noise invents.",
@@ -132,7 +152,8 @@
     "byKey": {
      "error": "Your code stopped with an error. Check that the sorted list is indexed inside its length.",
      "test-4": "Test 4 uses 1,000 days. The median should be about a quarter of the 250-day one.",
-     "test-6": "Test 6 runs the same seed twice. Make every draw from `random.Random(seed)`."
+     "test-6": "Test 6 runs the same seed twice. Make every draw from `random.Random(seed)`.",
+     "test-7": "Test 7 uses two days and two states: a sample's information is 0 or exactly 1 bit, and the top of 200 runs is 1. Use `math.log2`, not `math.log`."
     }
    },
    "explain": {
@@ -265,7 +286,24 @@
       }
      }
     ],
-    "how": "Submit runs 7 hidden tests. Planted samples are exact to 1e-9, and in one a zero return must count as down. Others check the correction's size, a constant signal and the default corrected=True. The last is a seeded useless sample of 500 days: its corrected estimate must lie within 0.008 bits of 0."
+    "how": "Submit runs 7 hidden tests. Planted samples are exact to 1e-9, and in one a zero return must count as down. Others check the correction's size, a constant signal and the default corrected=True. The last is a seeded useless sample of 500 days: its corrected estimate must lie within 0.008 bits of 0.",
+    "mutants": [
+     {
+      "source": "import math\nfrom collections import Counter\n\ndef signal_information(signal, returns, corrected=True):\n    \"\"\"Bits the signal carries about each return's sign.\"\"\"\n    signs = [1 if r >= 0 else 0 for r in returns]          # a return of exactly 0 counts as down\n    n = len(signal)\n    cx, cy, cxy = Counter(signal), Counter(signs), Counter(zip(signal, signs))\n    info = sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n    if corrected:\n        info -= (len(cx) - 1) * (len(cy) - 1) / (2 * n * math.log(2))\n    return info\n",
+      "test": 2,
+      "symptom": "A return of exactly 0 counts as up, not down."
+     },
+     {
+      "source": "import math\nfrom collections import Counter\n\ndef signal_information(signal, returns, corrected=False):\n    \"\"\"Bits the signal carries about each return's sign.\"\"\"\n    signs = [1 if r > 0 else 0 for r in returns]          # a return of exactly 0 counts as down\n    n = len(signal)\n    cx, cy, cxy = Counter(signal), Counter(signs), Counter(zip(signal, signs))\n    info = sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n    if corrected:\n        info -= (len(cx) - 1) * (len(cy) - 1) / (2 * n * math.log(2))\n    return info\n",
+      "test": 4,
+      "symptom": "The correction is off by default."
+     },
+     {
+      "source": "import math\nfrom collections import Counter\n\ndef signal_information(signal, returns, corrected=True):\n    \"\"\"Bits the signal carries about each return's sign.\"\"\"\n    signs = [1 if r > 0 else 0 for r in returns]          # a return of exactly 0 counts as down\n    n = len(signal)\n    cx, cy, cxy = Counter(signal), Counter(signs), Counter(zip(signal, signs))\n    info = sum(c / n * math.log2(c * n / (cx[x] * cy[y])) for (x, y), c in cxy.items())\n    if corrected:\n        info -= (len(cx) - 1) * (len(cy) - 1) / (2 * n)\n    return info\n",
+      "test": 4,
+      "symptom": "The bias is left in nats while the estimate is in bits."
+     }
+    ]
    },
    "feedback": {
     "correct": "Your estimator turns returns into signs and corrects the bias.",

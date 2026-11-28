@@ -268,7 +268,7 @@
      {
       "id": "d2",
       "text": "So $I \\ge 0$ because every term $p \\log_2 \\tfrac{p}{p_X p_Y}$ is at least 0.",
-      "why": "Single terms can be negative, as the 0.2 cells of the 60% table are. Only the sum is."
+      "why": "Single terms can be negative, as the 0.2 cells of the 60% table are. Only the sum is at least 0."
      }
     ],
     "answer": [
@@ -903,7 +903,24 @@
       }
      }
     ],
-    "how": "Check runs 6 hidden tests on four tables of chances, a table of counts and a 2 by 3 table. Each value is accepted within 1e-9."
+    "how": "Check runs 6 hidden tests on four tables of chances, a table of counts and a 2 by 3 table. Each value is accepted within 1e-9.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef mi_as_kl(joint):\n    \"\"\"I(X; Y) in bits as D(joint || product of margins), from chances or counts.\"\"\"\n    total = sum(sum(row) for row in joint)\n    p = [[c / total for c in row] for row in joint]\n    px = [sum(row) for row in p]\n    py = [sum(col) for col in zip(*p)]\n    out = 0.0\n    for i, row in enumerate(p):\n        for j, c in enumerate(row):\n            if c > 0:\n                out += c * math.log2(c / px[i])\n    return out\n",
+      "test": 1,
+      "symptom": "Divides by the row chance only, which is not the product of the margins."
+     },
+     {
+      "source": "import math\n\ndef mi_as_kl(joint):\n    \"\"\"I(X; Y) in bits as D(joint || product of margins), from chances or counts.\"\"\"\n    total = sum(sum(row) for row in joint)\n    p = [[c / total for c in row] for row in joint]\n    px = [sum(row) for row in p]\n    py = [sum(col) for col in zip(*p)]\n    out = 0.0\n    for i, row in enumerate(p):\n        for j, c in enumerate(row):\n            if c > 0:\n                out += c * math.log(c / (px[i] * py[j]))\n    return out\n",
+      "test": 1,
+      "symptom": "Uses the natural log, so it gives nats."
+     },
+     {
+      "source": "import math\n\ndef mi_as_kl(joint):\n    \"\"\"I(X; Y) in bits as D(joint || product of margins), from chances or counts.\"\"\"\n    total = sum(sum(row) for row in joint)\n    p = [[c for c in row] for row in joint]\n    px = [sum(row) for row in p]\n    py = [sum(col) for col in zip(*p)]\n    out = 0.0\n    for i, row in enumerate(p):\n        for j, c in enumerate(row):\n            if c > 0:\n                out += c * math.log2(c / (px[i] * py[j]))\n    return out\n",
+      "test": 5,
+      "symptom": "Counts are not turned into chances."
+     }
+    ]
    },
    "hints": [
     {

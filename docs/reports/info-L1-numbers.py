@@ -386,5 +386,52 @@ finally:
     os.chdir(cwd)
     shutil.rmtree(tmp)
 
+# Table totals: every canvas table whose last row is "Total" must add up (rows, columns and the grand total).
+import glob as _glob
+
+
+def _num(s):
+    try:
+        return float(str(s).replace(',', '').strip())
+    except ValueError:
+        return None
+
+
+def _tables(o, path):
+    if isinstance(o, dict):
+        p = o.get('params')
+        if o.get('kind') == 'table' and isinstance(p, dict) and isinstance(p.get('rows'), list):
+            yield path, p
+        for k, v in o.items():
+            yield from _tables(v, path + [k])
+    elif isinstance(o, list):
+        for i, v in enumerate(o):
+            yield from _tables(v, path + [i])
+
+
+def check_table_totals(names):
+    for name in names:
+        for fn in sorted(_glob.glob(os.path.join(APP, 'content', 'courses', 'info', name + '.json'))):
+            d = json.load(open(fn))
+            for path, p in _tables(d, []):
+                rows = p['rows']
+                if not rows or str(rows[-1][0]).strip().lower() != 'total':
+                    continue
+                grid = [[_num(c) for c in r[1:]] for r in rows]
+                if any(v is None for r in grid for v in r):
+                    continue
+                where = f'{os.path.basename(fn)}{path}'
+                body, tot = grid[:-1], grid[-1]
+                for i, r in enumerate(body):
+                    lv.claim(abs(sum(r[:-1]) - r[-1]) < 1e-9, f'{where}: row {i} total {r[-1]} is the sum of its cells {sum(r[:-1])}')
+                for j in range(len(tot) - 1):
+                    s = sum(r[j] for r in body)
+                    lv.claim(abs(s - tot[j]) < 1e-9, f'{where}: column {j} total {tot[j]} is the sum of its cells {s}')
+                s = sum(r[-1] for r in body)
+                lv.claim(abs(s - tot[-1]) < 1e-9, f'{where}: grand total {tot[-1]} is the sum of the row totals {s}')
+
+
+check_table_totals(['l1-*', 'l2-*', 'l3-*', 'l4-*', 'review-1', 'homework-1', 'problems-1'])
+
 lv.check_wrongs()
 lv.report()

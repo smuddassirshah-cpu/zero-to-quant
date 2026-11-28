@@ -242,7 +242,7 @@
     "generic": "Not quite. Follow the plan for face 4, then for face 6."
    },
    "explain": {
-    "text": "Faces 1 and 4 come out after two questions; the other four faces need three. So a die costs between 2 and 3 questions, never a whole number on average."
+    "text": "Faces 1 and 4 come out after two questions; the other four faces need three. So with this plan a die costs 2 or 3 questions, $16/6 \\approx 2.67$ on average."
    }
   },
   {
@@ -877,8 +877,8 @@
      },
      {
       "id": "skip",
-      "text": "A code may leave out an outcome its model calls impossible, even if it can happen.",
-      "why": "If that outcome happens, the code has no word for it. The cost of a chance of 0 is unbounded."
+      "text": "A model may call an outcome impossible at no cost, even if it can happen.",
+      "why": "If that outcome happens, the model gave it no chance at all. The cost of a chance of 0 is unbounded."
      }
     ]
    },
@@ -904,7 +904,7 @@
     "generic": "Not quite. Read the curve at both ends.",
     "byKey": {
      "zero": "You ticked chance 0 as 0 bits. The curve climbs without limit as $p$ falls to 0.",
-     "skip": "You let the code skip an outcome that can happen. Then it cannot send that outcome at all."
+     "skip": "You let the model call an outcome impossible although it can happen. Then it cannot price that outcome at all."
     }
    },
    "explain": {
@@ -1025,7 +1025,24 @@
       "compare": "raises"
      }
     ],
-    "how": "Check runs 8 hidden tests. A value is accepted within a relative error of 1e-9; two tests expect a ValueError."
+    "how": "Check runs 8 hidden tests. A value is accepted within a relative error of 1e-9; two tests expect a ValueError.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef surprise_bits(p):\n    \"\"\"The surprise of an outcome of chance p, in bits.\"\"\"\n    if not 0 < p <= 1:\n        raise ValueError(\"p must be in (0, 1]\")\n    return math.log2(p)\n",
+      "test": 1,
+      "symptom": "Returns a negative surprise: the sign is missing."
+     },
+     {
+      "source": "import math\n\ndef surprise_bits(p):\n    \"\"\"The surprise of an outcome of chance p, in bits.\"\"\"\n    if not 0 < p <= 1:\n        raise ValueError(\"p must be in (0, 1]\")\n    return -math.log(p)\n",
+      "test": 1,
+      "symptom": "Uses the natural log, so it gives nats, not bits."
+     },
+     {
+      "source": "import math\n\ndef surprise_bits(p):\n    \"\"\"The surprise of an outcome of chance p, in bits.\"\"\"\n    if not 0 < p:\n        raise ValueError(\"p must be in (0, 1]\")\n    return -math.log2(p)\n",
+      "test": 8,
+      "symptom": "A chance above 1 is accepted instead of raising ValueError."
+     }
+    ]
    },
    "hints": [
     {

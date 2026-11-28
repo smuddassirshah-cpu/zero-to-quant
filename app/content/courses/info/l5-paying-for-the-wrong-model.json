@@ -885,7 +885,7 @@
      },
      {
       "id": "small",
-      "text": "About 0.9 bits, since the other two terms are small",
+      "text": "About 0.69 bits, since the other two terms are small",
       "why": "Two terms are small, but the snow term is $-0.1 \\log_2 0$."
      }
     ]
@@ -921,7 +921,7 @@
   {
    "type": "generalise",
    "difficulty": 2,
-   "prose": "Every time, you weighed the model's word lengths by the true chances. $$H(p, q) = -\\sum_i p_i \\log_2 q_i,$$ summed over outcomes with $p_i > 0$. It equals $H(p)$ when $q = p$, is infinite when some $q_i = 0 < p_i$, and was above $H(p)$ in every example. Level 2 proves it never falls below.",
+   "prose": "Every time, you weighed the model's word lengths by the true chances. $$H(p, q) = -\\sum_i p_i \\log_2 q_i,$$ summed over outcomes with $p_i > 0$. It equals $H(p)$ when $q = p$, is infinite when some $q_i = 0 < p_i$, and was above $H(p)$ in every example. The next lesson proves it never falls below.",
    "question": "For which model is $H(p, q)$ smallest?",
    "widget": {
     "kind": "choice",
@@ -1035,7 +1035,29 @@
       "compare": "raises"
      }
     ],
-    "how": "Check runs 7 hidden tests. Values are accepted within 1e-9; one test expects a ValueError."
+    "how": "Check runs 7 hidden tests. Values are accepted within 1e-9; one test expects a ValueError.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef cross_entropy_bits(p, q):\n    \"\"\"H(p, q) in bits. Raise ValueError if some q_i = 0 < p_i.\"\"\"\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if qi == 0:\n            raise ValueError(\"q rules out an outcome p allows\")\n        if pi == 0:\n            continue\n        total -= pi * math.log2(qi)\n    return total\n",
+      "test": 6,
+      "symptom": "Tests q before p, so a term with p = q = 0 raises instead of being skipped."
+     },
+     {
+      "source": "import math\n\ndef cross_entropy_bits(p, q):\n    \"\"\"H(p, q) in bits. Raise ValueError if some q_i = 0 < p_i.\"\"\"\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if pi == 0:\n            continue\n        if qi == 0:\n            raise ValueError(\"q rules out an outcome p allows\")\n        total -= qi * math.log2(pi)\n    return total\n",
+      "test": 1,
+      "symptom": "Weights by q and takes the log of p, the arguments swapped."
+     },
+     {
+      "source": "import math\n\ndef cross_entropy_bits(p, q):\n    \"\"\"H(p, q) in bits. Raise ValueError if some q_i = 0 < p_i.\"\"\"\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if pi == 0:\n            continue\n        if qi == 0:\n            raise ValueError(\"q rules out an outcome p allows\")\n        total -= pi * math.log(qi)\n    return total\n",
+      "test": 1,
+      "symptom": "Uses the natural log, so it gives nats."
+     },
+     {
+      "source": "import math\n\ndef cross_entropy_bits(p, q):\n    \"\"\"H(p, q) in bits. Raise ValueError if some q_i = 0 < p_i.\"\"\"\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if pi == 0:\n            continue\n        if qi == 0:\n            return math.inf\n        total -= pi * math.log2(qi)\n    return total\n",
+      "test": 7,
+      "symptom": "Returns infinity where the task asks for a ValueError."
+     }
+    ]
    },
    "hints": [
     {
@@ -1185,7 +1207,7 @@
  "summary": {
   "ideas": [
    "A code built for a model $q$ spends $-\\log_2 q_i$ bits on outcome $i$; if outcomes come from $p$, the average is the cross-entropy $H(p, q)$.",
-   "$H(p, p) = H(p)$, and in every example a wrong model cost more than the entropy; level 2 proves it.",
+   "$H(p, p) = H(p)$, and in every example a wrong model cost more than the entropy; the next lesson proves it.",
    "The order matters: $H(p, q)$ and $H(q, p)$ differ. A model that gives a real outcome chance 0 has infinite cross-entropy."
   ],
   "formula": {

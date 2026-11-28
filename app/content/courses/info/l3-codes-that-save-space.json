@@ -335,7 +335,7 @@
   {
    "type": "ladder",
    "difficulty": 2,
-   "prose": "A code's **average length** is $\\sum_i p_i \\ell_i$: each word's length $\\ell_i$ weighed by its chance. Level 1 found the weather's entropy was 1.75 bits.",
+   "prose": "A code's **average length** is $\\sum_i p_i \\ell_i$: each word's length $\\ell_i$ weighed by its chance. Lesson 2 found the weather's entropy was 1.75 bits.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -553,7 +553,7 @@
   {
    "type": "ladder",
    "difficulty": 2,
-   "prose": "Huffman's code for chances 0.4, 0.3, 0.2 and 0.1 has word lengths 1, 2, 3 and 3. Level 1 gave this source an entropy of 1.846 bits.",
+   "prose": "Huffman's code for chances 0.4, 0.3, 0.2 and 0.1 has word lengths 1, 2, 3 and 3. The last lesson gave this source an entropy of 1.846 bits.",
    "canvas": {
     "kind": "tree",
     "params": {
@@ -1054,7 +1054,19 @@
       "compare": "equal"
      }
     ],
-    "how": "Check runs 8 hidden tests. Each result must equal True or False exactly."
+    "how": "Check runs 8 hidden tests. Each result must equal True or False exactly.",
+    "mutants": [
+     {
+      "source": "def is_prefix_free(codes):\n    \"\"\"True when no word in codes is the start of another word.\"\"\"\n    for i, a in enumerate(codes):\n        for j, b in enumerate(codes):\n            if b.startswith(a):\n                return False\n    return True\n",
+      "test": 1,
+      "symptom": "Every word counts as a prefix of itself, so nothing is prefix-free."
+     },
+     {
+      "source": "def is_prefix_free(codes):\n    \"\"\"True when no word in codes is the start of another word.\"\"\"\n    for i, a in enumerate(codes):\n        for j, b in enumerate(codes):\n            if a != b and b.startswith(a):\n                return False\n    return True\n",
+      "test": 7,
+      "symptom": "A repeated word is not noticed as a prefix of its twin."
+     }
+    ]
    },
    "hints": [
     {
@@ -1151,7 +1163,19 @@
       "setup": "P = [0.2, 0.2, 0.2, 0.2, 0.2]"
      }
     ],
-    "how": "Check runs 7 hidden tests on the average length and the Kraft sum, never on the lengths alone, because ties may be broken either way. Averages are accepted within a relative error of 1e-9."
+    "how": "Check runs 7 hidden tests on the average length and the Kraft sum, never on the lengths alone, because ties may be broken either way. Averages are accepted within a relative error of 1e-9.",
+    "mutants": [
+     {
+      "source": "import heapq\n\ndef huffman_lengths(probs):\n    \"\"\"Word lengths of a Huffman code, in the order of probs.\"\"\"\n    heap = [(p, i, [i]) for i, p in enumerate(probs)]\n    heapq.heapify(heap)\n    lengths = [0] * len(probs)\n    count = len(probs)\n    while len(heap) > 1:\n        p1, _, s1 = heapq.heappop(heap)\n        p2, _, s2 = heapq.heappop(heap)\n        for i in s1 + s2:\n            lengths[i] = 1\n        heapq.heappush(heap, (p1 + p2, count, s1 + s2))\n        count += 1\n    return lengths\n",
+      "test": 1,
+      "symptom": "Every word gets length 1 instead of one level deeper per merge."
+     },
+     {
+      "source": "import heapq\n\ndef huffman_lengths(probs):\n    \"\"\"Word lengths of a Huffman code, in the order of probs.\"\"\"\n    heap = [(p, i, [i]) for i, p in enumerate(probs)]\n    heapq.heapify(heap)\n    lengths = [0] * len(probs)\n    count = len(probs)\n    while len(heap) > 1:\n        p1, _, s1 = heapq.heappop(heap)\n        p2, _, s2 = heapq.heappop(heap)\n        for i in s1:\n            lengths[i] += 1    # one level deeper\n        heapq.heappush(heap, (p1 + p2, count, s1 + s2))\n        count += 1\n    return lengths\n",
+      "test": 1,
+      "symptom": "Only the first merged group gets one level deeper, so the other words come out too short."
+     }
+    ]
    },
    "hints": [
     {

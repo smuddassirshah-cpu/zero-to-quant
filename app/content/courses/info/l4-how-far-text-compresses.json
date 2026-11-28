@@ -741,7 +741,19 @@
     "how": "Check runs 4 hidden tests: the names file and three small files written first. Each value is accepted within a relative error of 1e-9. Names list from Andrej Karpathy's makemore (MIT licence), drawn from US Social Security Administration baby-name data.",
     "data": {
      "names.txt": "content/data/ai/names.txt"
-    }
+    },
+    "mutants": [
+     {
+      "source": "import math\nfrom collections import Counter\n\ndef letter_entropy(path):\n    \"\"\"Bits per symbol of the names in path, one stream with an end mark per name.\"\"\"\n    names = open(path).read().splitlines()\n    stream = \"\".join(name for name in names)\n    counts = Counter(stream)\n    n = len(stream)\n    h = -sum(c / n * math.log2(c / n) for c in counts.values())\n    return round(h, 4)\n",
+      "test": 1,
+      "symptom": "No end mark after each name, so the stream is shorter and the entropy differs."
+     },
+     {
+      "source": "import math\nfrom collections import Counter\n\ndef letter_entropy(path):\n    \"\"\"Bits per symbol of the names in path, one stream with an end mark per name.\"\"\"\n    names = open(path).read().splitlines()\n    stream = \"\".join(name + \".\" for name in names)\n    counts = Counter(stream)\n    n = len(stream)\n    h = -sum(c / n * math.log(c / n) for c in counts.values())\n    return round(h, 4)\n",
+      "test": 1,
+      "symptom": "Uses the natural log, so it gives nats per symbol."
+     }
+    ]
    },
    "hints": [
     {
@@ -869,7 +881,7 @@
     }
    },
    "explain": {
-    "text": "$228{,}146 \\times 3.5412 = 807{,}911$ bits, and $\\div 8$ gives 100,989 bytes, about 101 thousand. A better model of the text gives a shorter code.",
+    "text": "$228{,}146 \\times 3.5412 = 807{,}911$ bits, and $\\div 8$ gives 100,989 bytes, about 101 thousand. A better model of the text gives a shorter code. The 4.0723 of the letter counts is the floor only for codes that treat each symbol on its own; a model that uses the previous letter has a lower floor.",
     "canvas": {
      "highlight": [
       "m2"
@@ -959,7 +971,19 @@
     "how": "Check runs 3 hidden tests: the names file and a file of one repeated letter. Values are accepted within 0.01 bits, and the byte count within 300. Names list from Andrej Karpathy's makemore (MIT licence), drawn from US Social Security Administration baby-name data.",
     "data": {
      "names.txt": "content/data/ai/names.txt"
-    }
+    },
+    "mutants": [
+     {
+      "source": "import zlib\n\ndef compressed_bits_per_char(path):\n    \"\"\"Bits per byte after zlib at level 9.\"\"\"\n    data = open(path, \"rb\").read()\n    return len(zlib.compress(data, 9)) / len(data)\n",
+      "test": 1,
+      "symptom": "Bytes per byte, not bits per byte: the factor of 8 is missing."
+     },
+     {
+      "source": "import zlib\n\ndef compressed_bits_per_char(path):\n    \"\"\"Bits per byte after zlib at level 9.\"\"\"\n    data = open(path, \"rb\").read()\n    return len(zlib.compress(data, 0)) * 8 / len(data)\n",
+      "test": 1,
+      "symptom": "Level 0 stores the data without compressing it."
+     }
+    ]
    },
    "hints": [
     {
@@ -1175,13 +1199,13 @@
     }
    },
    "explain": {
-    "text": "Entropy is a rate per symbol. It does not count the one-off cost of saying how many symbols there are, about 14 bits here. zlib packs 1,000 a's into 17 bytes for the same reason."
+    "text": "Entropy is a rate per symbol. It does not count the one-off cost of saying how many symbols there are, about 14 bits here. zlib still needs 17 bytes for 1,000 a's: a header, a checksum and a note of the run."
    }
   },
   {
    "type": "generalise",
    "difficulty": 2,
-   "prose": "Every time, a model gave each symbol a chance $q$, and a code built on it spent $-\\log_2 q$ bits on it. The entropy of the model's chances is the least any such code averages. A model that predicts the text better gives a shorter code.",
+   "prose": "Every time, a model gave each symbol a chance $q$, and a code built on it spent $-\\log_2 q$ bits on it. Averaged over the text, that cost is least when $q$ matches the text's own shares, and then it equals their entropy. A model that predicts the text better gives a shorter code.",
    "question": "A model gives the next symbol chance 0.25, and that symbol comes. How many bits does a code built on the model spend on it?",
    "widget": {
     "kind": "choice",

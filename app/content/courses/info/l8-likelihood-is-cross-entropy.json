@@ -546,7 +546,7 @@
   {
    "type": "generalise",
    "difficulty": 2,
-   "prose": "Every time, the average loss was a cross-entropy to the data: $$-\\tfrac1n \\sum_i \\log q_\\theta(x_i) = H(\\hat p, q_\\theta) = H(\\hat p) + D(\\hat p \\| q_\\theta).$$ $H(\\hat p)$ does not move with $\\theta$. So maximising the likelihood minimises the cross-entropy, and the KL divergence to the data.",
+   "prose": "Every time, the average loss was a cross-entropy to the data: $$-\\tfrac1n \\sum_i \\log q_\\theta(x_i) = H(\\hat p, q_\\theta) = H(\\hat p) + D(\\hat p \\| q_\\theta).$$ $H(\\hat p)$ does not move with $\\theta$. So maximising the likelihood minimises the cross-entropy, and the KL divergence to the data. One observation $y$ is the case where $\\hat p$ is one-hot at $y$: its loss is $-\\ln q_\\theta(y)$ nats.",
    "question": "If some $\\theta$ makes $q_\\theta = \\hat p$, what is the least average loss?",
    "widget": {
     "kind": "choice",
@@ -843,7 +843,29 @@
       }
      }
     ],
-    "how": "Check runs 7 hidden tests. Values are accepted within 1e-9."
+    "how": "Check runs 7 hidden tests. Values are accepted within 1e-9.",
+    "mutants": [
+     {
+      "source": "import math\n\ndef avg_nll(theta, heads, n, unit):\n    \"\"\"Average negative log-likelihood of heads in n tosses, in \"bits\" or \"nats\".\"\"\"\n    nats = -(heads * math.log(1 - theta) + (n - heads) * math.log(theta)) / n\n    return nats / math.log(2) if unit == \"bits\" else nats\n\ndef best_theta(heads, n):\n    \"\"\"The theta in 0.01, 0.02, ..., 0.99 with the least average loss.\"\"\"\n    grid = [k / 100 for k in range(1, 100)]\n    return min(grid, key=lambda th: avg_nll(th, heads, n, \"nats\"))\n",
+      "test": 2,
+      "symptom": "Heads are charged at the chance of tails."
+     },
+     {
+      "source": "import math\n\ndef avg_nll(theta, heads, n, unit):\n    \"\"\"Average negative log-likelihood of heads in n tosses, in \"bits\" or \"nats\".\"\"\"\n    nats = -(heads * math.log(theta) + (n - heads) * math.log(1 - theta))\n    return nats / math.log(2) if unit == \"bits\" else nats\n\ndef best_theta(heads, n):\n    \"\"\"The theta in 0.01, 0.02, ..., 0.99 with the least average loss.\"\"\"\n    grid = [k / 100 for k in range(1, 100)]\n    return min(grid, key=lambda th: avg_nll(th, heads, n, \"nats\"))\n",
+      "test": 1,
+      "symptom": "The loss is a total, not an average per toss."
+     },
+     {
+      "source": "import math\n\ndef avg_nll(theta, heads, n, unit):\n    \"\"\"Average negative log-likelihood of heads in n tosses, in \"bits\" or \"nats\".\"\"\"\n    nats = -(heads * math.log(theta) + (n - heads) * math.log(1 - theta)) / n\n    return nats * math.log(2) if unit == \"bits\" else nats\n\ndef best_theta(heads, n):\n    \"\"\"The theta in 0.01, 0.02, ..., 0.99 with the least average loss.\"\"\"\n    grid = [k / 100 for k in range(1, 100)]\n    return min(grid, key=lambda th: avg_nll(th, heads, n, \"nats\"))\n",
+      "test": 1,
+      "symptom": "Converts nats to bits the wrong way round."
+     },
+     {
+      "source": "import math\n\ndef avg_nll(theta, heads, n, unit):\n    \"\"\"Average negative log-likelihood of heads in n tosses, in \"bits\" or \"nats\".\"\"\"\n    nats = -(heads * math.log(theta) + (n - heads) * math.log(1 - theta)) / n\n    return nats / math.log(2) if unit == \"bits\" else nats\n\ndef best_theta(heads, n):\n    \"\"\"The theta in 0.01, 0.02, ..., 0.99 with the least average loss.\"\"\"\n    grid = [k / 100 for k in range(1, 100)]\n    return max(grid, key=lambda th: avg_nll(th, heads, n, \"nats\"))\n",
+      "test": 4,
+      "symptom": "Picks the theta with the greatest loss."
+     }
+    ]
    },
    "hints": [
     {
