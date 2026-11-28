@@ -1,0 +1,941 @@
+{
+ "id": "l15-baselines",
+ "course": "rl",
+ "title": "A baseline is a control variate",
+ "minutes": 15,
+ "objectives": [
+  "Derive why a baseline leaves the gradient unbiased, and measure the variance it removes."
+ ],
+ "skills": [
+  "rl-pg"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Pay less attention to the £10",
+   "prose": "Back to the two venues paying £10 and £11, with $\\pi = (0.5, 0.5)$. The one-pull estimates for A's dial were 5 and $-5.5$. Now subtract $b = 10$ from each reward before multiplying by the score: the estimates become 0 and $-0.5$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B"
+     ],
+     "yLabel": "one-pull estimate",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 0,
+      "B": -0.5
+     }
+    }
+   },
+   "question": "What is the mean of the new estimate?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.25,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each happens with chance 0.5."
+    },
+    {
+     "rung": "point",
+     "text": "$0.5 \\times 0 + 0.5 \\times (-0.5)$.",
+     "highlight": [
+      "xA",
+      "xB"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compare with the true gradient."
+    }
+   ],
+   "feedback": {
+    "correct": "$-0.25$: the same mean as before.",
+    "generic": "Not quite. Weight the two estimates by their chances.",
+    "byKey": {
+     "zero": "You looked only at the pull of A. Weight both.",
+     "half": "That is the pull of B alone; it happens half the time."
+    }
+   },
+   "explain": {
+    "text": "The mean is still the true $-0.25$, but the two values are now 0.5 apart instead of 10.5. Subtracting $b$ kept the signal and cut the noise."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Slide the baseline",
+   "prose": "Slide $b$, the number taken off each reward. The bars are the two one-pull estimates for A's dial; the caption gives their variance.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B"
+     ],
+     "yLabel": "one-pull estimate",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 0,
+      "B": -0.5
+     }
+    },
+    "controls": [
+     {
+      "bind": "b",
+      "min": 0,
+      "max": 12,
+      "step": 0.5,
+      "start": 10,
+      "label": "$b$"
+     }
+    ],
+    "derive": {
+     "values.A": "(10 - b) * 0.5",
+     "values.B": "(11 - b) * (-0.5)",
+     "caption": "Variance {{fixed((10.5 - b) * (10.5 - b) / 4, 4)}}"
+    }
+   },
+   "question": "Which $b$ makes the two estimates equal, so the variance is 0?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "105",
+      "text": "$b = 10.5$, the mean reward",
+      "correct": true
+     },
+     {
+      "id": "10",
+      "text": "$b = 10$, the smaller reward",
+      "why": "At 10 the estimates are 0 and $-0.5$: close, not equal."
+     },
+     {
+      "id": "0",
+      "text": "$b = 0$, no baseline",
+      "why": "That is plain REINFORCE, variance 27.5625."
+     },
+     {
+      "id": "11",
+      "text": "$b = 11$, the larger reward",
+      "why": "At 11 they are $-0.5$ and 0, as far apart as at 10."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "At $b = 10.5$ both estimates are $-0.25$: no noise at all.",
+    "generic": "Slide until the bars are level."
+   },
+   "explain": {
+    "text": "The variance is $(10.5 - b)^2/4$, smallest at $b = 10.5$, where every pull gives exactly $-0.25$. The mean never moved.",
+    "canvas": {
+     "params": {
+      "b": 10.5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Why the mean does not move",
+   "prose": "The baseline adds $-b \\nabla \\log \\pi(a)$ to each estimate, so its mean shifts by $-b\\, E[\\nabla \\log \\pi(a)]$. For a softmax the score's entry for dial 1 is $[a = 1] - \\pi_1$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "2",
+      "3"
+     ],
+     "yLabel": "chance",
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "1": 0.2,
+      "2": 0.5,
+      "3": 0.3
+     }
+    }
+   },
+   "question": "With $\\boldsymbol\\pi = (0.2, 0.5, 0.3)$, what is $E[\\nabla_{\\theta_1} \\log \\pi(a)]$, averaged over the arm pulled?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "own",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "pi",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The entry is $0.8$ if arm 1 is pulled and $-0.2$ otherwise."
+    },
+    {
+     "rung": "point",
+     "text": "Weight: $0.2 \\times 0.8 + 0.8 \\times (-0.2)$.",
+     "highlight": [
+      "x1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is $0.16 - 0.16$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.2 \\times 0.8 + 0.8 \\times (-0.2) = 0$.",
+    "generic": "Not quite. Weight each entry by the chance of pulling that arm.",
+    "byKey": {
+     "own": "That is the entry when arm 1 is pulled. Average over all three arms.",
+     "pi": "That is $\\pi_1$. Average the score entries."
+    }
+   },
+   "explain": {
+    "text": "The score has mean 0, because $\\sum_a \\pi(a) \\nabla \\log \\pi(a) = \\nabla \\sum_a \\pi(a) = \\nabla 1 = 0$. So any $b$ that does not depend on the action leaves the mean alone."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The variance that is left",
+   "prose": "With $b = 10$ the estimate is 0 or $-0.5$, each with chance 0.5.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B"
+     ],
+     "yLabel": "one-pull estimate",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 0,
+      "B": -0.5
+     }
+    }
+   },
+   "question": "What is its variance? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0625,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "nomean",
+      "value": 0.125,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sd",
+      "value": 0.25,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$E[X^2] - (E[X])^2$."
+    },
+    {
+     "rung": "point",
+     "text": "$E[X^2] = 0.25/2 = 0.125$.",
+     "highlight": [
+      "xA",
+      "xB"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.125 - 0.0625$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.125 - 0.0625 = 0.0625$, against 27.5625 with no baseline.",
+    "generic": "Not quite. Subtract the squared mean.",
+    "byKey": {
+     "nomean": "That is $E[X^2]$. Subtract $(-0.25)^2 = 0.0625$.",
+     "sd": "That is the standard deviation. Square it."
+    }
+   },
+   "explain": {
+    "text": "The variance fell from 27.5625 to 0.0625, a factor of 441, with the same mean. This is `numerics` l16's control variate: $Y - b(X - \\mu_X)$ with $X$ the score and $\\mu_X = 0$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The best baseline",
+   "prose": "Write $s$ for the score entry and $G$ for the reward. The variance of $(G - b)s$ is smallest at $b^* = E[s^2 G]/E[s^2]$. Take $\\pi = (0.2, 0.8)$ with rewards £10 and £11: $s = 0.8$ after A, $-0.2$ after B.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Arm",
+      "Chance",
+      "$s$",
+      "$s^2$",
+      "Reward"
+     ],
+     "rows": [
+      [
+       "A",
+       "0.2",
+       "0.8",
+       "0.64",
+       "10"
+      ],
+      [
+       "B",
+       "0.8",
+       "−0.2",
+       "0.04",
+       "11"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $b^*$? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.2,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 10.8,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "unw",
+      "value": 10.5,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$E[s^2] = 0.2 \\times 0.64 + 0.8 \\times 0.04$."
+    },
+    {
+     "rung": "point",
+     "text": "$E[s^2 G] = 0.2 \\times 0.64 \\times 10 + 0.8 \\times 0.04 \\times 11$."
+    },
+    {
+     "rung": "step",
+     "text": "$1.632 / 0.16$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1.632/0.16 = 10.2$, not the mean reward 10.8.",
+    "generic": "Not quite. Weight each reward by its chance times $s^2$.",
+    "byKey": {
+     "mean": "That is $E[G]$. The best baseline weights each reward by $s^2$ as well.",
+     "unw": "You averaged the two rewards without their chances."
+    }
+   },
+   "explain": {
+    "text": "Here $b^* = 10.2$: rare moves have large scores, so their rewards count more. The mean reward is a good, simple baseline; $b^*$ is the best constant one."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A baseline that learns",
+   "prose": "A baseline may depend on the state: $V(s)$, learned alongside the policy. The **advantage** $G_t - V(s_t)$ says how much better this episode went than usual. At the corridor's best policy, $V(S) = -11.657$. One episode from S took 9 steps.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Value"
+     ],
+     "rows": [
+      [
+       "$G_0$",
+       "−9"
+      ],
+      [
+       "$V(S)$",
+       "−11.657"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the advantage at its first step? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.66,
+    "tol": {
+     "abs": 0.006
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -2.66,
+      "tol": {
+       "abs": 0.006
+      }
+     },
+     {
+      "id": "raw",
+      "value": -9,
+      "tol": {
+       "abs": 0.006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Advantage is return minus baseline."
+    },
+    {
+     "rung": "point",
+     "text": "$-9 - (-11.657)$."
+    },
+    {
+     "rung": "step",
+     "text": "Two minuses make a plus."
+    }
+   ],
+   "feedback": {
+    "correct": "$-9 + 11.657 = 2.66$: better than usual, so its moves are reinforced.",
+    "generic": "Not quite. Subtract $V(S)$ from $G_0$.",
+    "byKey": {
+     "sign": "You took $V(S) - G_0$. The advantage is $G_0 - V(S)$.",
+     "raw": "That is the return alone, which is negative even for a good episode."
+    }
+   },
+   "explain": {
+    "text": "The advantage is 2.66. Without the baseline every return here is negative, so every move would be pushed down. Learning $V$ by TD, as in level 3, while the policy learns is **actor-critic**: the critic is the TD learner."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code the baseline",
+   "prose": "Write `score_estimates` and `variance_of_estimate` exactly, then `reinforce_with_baseline`: a running-mean baseline $b \\leftarrow b + 0.1(r - b)$, updated after each step. Return the final chances and the variance of the baselined estimates for dial 0 over that of the plain ones, on the same pulls.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B"
+     ],
+     "yLabel": "one-pull estimate",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 0,
+      "B": -0.5
+     }
+    }
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport random\nimport statistics\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef score_estimates(pi, rewards, b, k=0):\n    \"\"\"Estimate for dial k after pulling each arm: (r_a - b) * score.\"\"\"\n    ...\n\ndef variance_of_estimate(pi, rewards, b, k=0):\n    \"\"\"Exact variance when arm a is pulled with chance pi[a].\"\"\"\n    ...\n\ndef reinforce_with_baseline(rewards, steps, lr, seed, beta=0.1):\n    \"\"\"Return (final chances, variance ratio for dial 0).\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    b = 0.0\n    plain, based = [], []\n    ...\n",
+    "solution": "import math\nimport random\nimport statistics\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef score_estimates(pi, rewards, b, k=0):\n    \"\"\"Estimate for dial k after pulling each arm: (r_a - b) * score.\"\"\"\n    return [(r - b) * ((1.0 if a == k else 0.0) - pi[k]) for a, r in enumerate(rewards)]\n\ndef variance_of_estimate(pi, rewards, b, k=0):\n    \"\"\"Exact variance when arm a is pulled with chance pi[a].\"\"\"\n    est = score_estimates(pi, rewards, b, k)\n    mean = sum(p * x for p, x in zip(pi, est))\n    return sum(p * x * x for p, x in zip(pi, est)) - mean * mean\n\ndef reinforce_with_baseline(rewards, steps, lr, seed, beta=0.1):\n    \"\"\"Return (final chances, variance ratio for dial 0).\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    b = 0.0\n    plain, based = [], []\n    for _ in range(steps):\n        pi = softmax(theta)\n        a = pull(pi, rng)\n        r = rewards[a]\n        g = [(1.0 if j == a else 0.0) - pi[j] for j in range(len(theta))]\n        plain.append(r * g[0])\n        based.append((r - b) * g[0])\n        theta = [t + lr * (r - b) * x for t, x in zip(theta, g)]\n        b += beta * (r - b)   # after the step: b never sees this r first\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return softmax(theta), ratio\n",
+    "examples": [
+     {
+      "call": "score_estimates([0.5, 0.5], [10, 11], 0)",
+      "expect": "[5.0, -5.5]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "score_estimates([0.5, 0.5], [10, 11], 0)",
+      "expect": "[5.0, -5.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "score_estimates([0.5, 0.5], [10, 11], 10)",
+      "expect": "[0.0, -0.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "variance_of_estimate([0.5, 0.5], [10, 11], 0)",
+      "expect": "27.5625",
+      "compare": "isclose"
+     },
+     {
+      "call": "variance_of_estimate([0.5, 0.5], [10, 11], 10)",
+      "expect": "0.0625",
+      "compare": "isclose"
+     },
+     {
+      "call": "variance_of_estimate([0.5, 0.5], [10, 11], 10.5)",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "score_estimates([0.2, 0.5, 0.3], [1, 2, 4], 0, k=1)",
+      "expect": "[-0.5, 1.0, -2.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "variance_of_estimate([0.2, 0.5, 0.3], [1, 2, 4], 0, k=1)",
+      "expect": "1.71",
+      "compare": "isclose"
+     },
+     {
+      "call": "all(reinforce_with_baseline([10, 11], 1000, 0.1, s)[0][1] > 0.95 for s in range(5))",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 3000
+     },
+     {
+      "call": "all(reinforce_with_baseline([10, 11], 1000, 0.1, s)[1] < 0.25 for s in range(5))",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 3000
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. Estimates and variances are compared with `math.isclose`. Over seeds 0 to 4, the better venue must end above 0.95 and the variance ratio below 0.25.",
+    "mutants": [
+     {
+      "source": "import math\nimport random\nimport statistics\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef score_estimates(pi, rewards, b, k=0):\n    \"\"\"Estimate for dial k after pulling each arm: (r_a - b) * score.\"\"\"\n    return [(r - r) * ((1.0 if a == k else 0.0) - pi[k]) for a, r in enumerate(rewards)]\n\ndef variance_of_estimate(pi, rewards, b, k=0):\n    \"\"\"Exact variance when arm a is pulled with chance pi[a].\"\"\"\n    est = score_estimates(pi, rewards, b, k)\n    mean = sum(p * x for p, x in zip(pi, est))\n    return sum(p * x * x for p, x in zip(pi, est)) - mean * mean\n\ndef reinforce_with_baseline(rewards, steps, lr, seed, beta=0.1):\n    \"\"\"Return (final chances, variance ratio for dial 0).\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    b = 0.0\n    plain, based = [], []\n    for _ in range(steps):\n        pi = softmax(theta)\n        a = pull(pi, rng)\n        r = rewards[a]\n        g = [(1.0 if j == a else 0.0) - pi[j] for j in range(len(theta))]\n        plain.append(r * g[0])\n        based.append((r - b) * g[0])\n        theta = [t + lr * (r - b) * x for t, x in zip(theta, g)]\n        b += beta * (r - b)   # after the step: b never sees this r first\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return softmax(theta), ratio\n",
+      "test": 1,
+      "symptom": "The baseline depends on the arm pulled: b is replaced by that arm's reward."
+     },
+     {
+      "source": "import math\nimport random\nimport statistics\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef score_estimates(pi, rewards, b, k=0):\n    \"\"\"Estimate for dial k after pulling each arm: (r_a - b) * score.\"\"\"\n    return [(r - b) * ((1.0 if a == k else 0.0) - pi[k]) for a, r in enumerate(rewards)]\n\ndef variance_of_estimate(pi, rewards, b, k=0):\n    \"\"\"Exact variance when arm a is pulled with chance pi[a].\"\"\"\n    est = score_estimates(pi, rewards, b, k)\n    mean = sum(p * x for p, x in zip(pi, est))\n    return sum(p * x * x for p, x in zip(pi, est))\n\ndef reinforce_with_baseline(rewards, steps, lr, seed, beta=0.1):\n    \"\"\"Return (final chances, variance ratio for dial 0).\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    b = 0.0\n    plain, based = [], []\n    for _ in range(steps):\n        pi = softmax(theta)\n        a = pull(pi, rng)\n        r = rewards[a]\n        g = [(1.0 if j == a else 0.0) - pi[j] for j in range(len(theta))]\n        plain.append(r * g[0])\n        based.append((r - b) * g[0])\n        theta = [t + lr * (r - b) * x for t, x in zip(theta, g)]\n        b += beta * (r - b)   # after the step: b never sees this r first\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return softmax(theta), ratio\n",
+      "test": 3,
+      "symptom": "The variance forgets to subtract the squared mean."
+     },
+     {
+      "source": "import math\nimport random\nimport statistics\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef score_estimates(pi, rewards, b, k=0):\n    \"\"\"Estimate for dial k after pulling each arm: (r_a - b) * score.\"\"\"\n    return [(r - b) * (1.0 if a == k else 0.0) for a, r in enumerate(rewards)]\n\ndef variance_of_estimate(pi, rewards, b, k=0):\n    \"\"\"Exact variance when arm a is pulled with chance pi[a].\"\"\"\n    est = score_estimates(pi, rewards, b, k)\n    mean = sum(p * x for p, x in zip(pi, est))\n    return sum(p * x * x for p, x in zip(pi, est)) - mean * mean\n\ndef reinforce_with_baseline(rewards, steps, lr, seed, beta=0.1):\n    \"\"\"Return (final chances, variance ratio for dial 0).\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    b = 0.0\n    plain, based = [], []\n    for _ in range(steps):\n        pi = softmax(theta)\n        a = pull(pi, rng)\n        r = rewards[a]\n        g = [(1.0 if j == a else 0.0) - pi[j] for j in range(len(theta))]\n        plain.append(r * g[0])\n        based.append((r - b) * g[0])\n        theta = [t + lr * (r - b) * x for t, x in zip(theta, g)]\n        b += beta * (r - b)   # after the step: b never sees this r first\n    ratio = statistics.pvariance(based) / statistics.pvariance(plain)\n    return softmax(theta), ratio\n",
+      "test": 1,
+      "symptom": "The score forgets to subtract pi."
+     }
+    ],
+    "budget": 3000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Entry $k$ of the score is $[a = k] - \\pi_k$."
+    },
+    {
+     "rung": "point",
+     "text": "Variance: $\\sum_a \\pi_a x_a^2 - (\\sum_a \\pi_a x_a)^2$."
+    },
+    {
+     "rung": "step",
+     "text": "Record both estimates before you update $b$."
+    }
+   ],
+   "feedback": {
+    "correct": "All hidden tests pass.",
+    "generic": "Some tests fail. Read the first failing row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A baseline that peeks",
+   "prose": "A colleague uses the reward of the arm just pulled as its baseline: $b(a) = r(a)$. Every estimate is then $(r(a) - r(a))s = 0$, so the variance is 0.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B"
+     ],
+     "yLabel": "one-pull estimate",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 0,
+      "B": -0.5
+     }
+    }
+   },
+   "question": "What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bias",
+      "text": "The mean is now 0, not $-0.25$: the estimate is biased",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: zero variance is exactly the goal",
+      "why": "Zero variance around the wrong value is useless. The true gradient is $-0.25$."
+     },
+     {
+      "id": "slow",
+      "text": "It only learns more slowly than before",
+      "why": "It never learns: every step is exactly 0."
+     },
+     {
+      "id": "neg",
+      "text": "Baselines must be negative numbers here",
+      "why": "The sign of $b$ does not matter; whether it depends on the action does."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What made the mean safe before?"
+    },
+    {
+     "rung": "point",
+     "text": "$E[b\\, s] = b\\, E[s] = 0$ needs $b$ fixed before the action.",
+     "highlight": [
+      "xA",
+      "xB"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Here $b$ moves with the action."
+    }
+   ],
+   "feedback": {
+    "correct": "A baseline that depends on the action taken biases the estimate.",
+    "generic": "Not quite. Check the mean, not only the variance.",
+    "byKey": {
+     "fine": "You judged by variance alone. The estimate must still average to the true gradient, and this one averages 0."
+    }
+   },
+   "explain": {
+    "text": "$E[b\\,s] = 0$ only when $b$ is fixed before the action is drawn, as a constant or $V(s)$ is. With $b = r(a)$ the estimate is 0 every time, a perfectly steady wrong answer."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Baselines as control variates",
+   "prose": "For any $b(s)$ that ignores the action, $$E[(G - b(s))\\,\\nabla \\log \\pi(a \\mid s)] = E[G\\, \\nabla \\log \\pi(a \\mid s)],$$ because the score has mean 0. A good baseline tracks $G$, so the difference is small and the estimate is steady.",
+   "question": "Every episode returns exactly £7 whatever the agent does. Which baseline removes all the variance?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "7",
+      "text": "$b = 7$",
+      "correct": true
+     },
+     {
+      "id": "0",
+      "text": "$b = 0$",
+      "why": "Then each estimate is $7s$, which varies with the action."
+     },
+     {
+      "id": "none",
+      "text": "None: some noise always remains",
+      "why": "With $b = 7$ every estimate is $0 \\times s = 0$, which is also the true gradient."
+     },
+     {
+      "id": "half",
+      "text": "$b = 3.5$",
+      "why": "Half the return leaves $3.5s$, which still varies."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$b = 7$ gives 0 every time, and 0 is the true gradient: no move changes the return.",
+    "generic": "Make $G - b$ zero."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Hedging a noisy estimate",
+   "prose": "A strategy's daily P&L estimate has variance 400 (£²). A hedge instrument's P&L has known mean and correlation 0.9 with it. Subtracting the best multiple of the hedge's surprise is the control variate of `numerics` l16.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Variance of the estimate",
+       "400"
+      ],
+      [
+       "Correlation with the hedge",
+       "0.9"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What variance is left, in £²?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 76,
+    "tol": {
+     "abs": 0.5
+    },
+    "wrong": [
+     {
+      "id": "rho",
+      "value": 40,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "r2",
+      "value": 324,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The variance factor is $1 - \\rho^2$."
+    },
+    {
+     "rung": "point",
+     "text": "$1 - 0.81 = 0.19$."
+    },
+    {
+     "rung": "step",
+     "text": "$400 \\times 0.19$."
+    }
+   ],
+   "feedback": {
+    "correct": "$400 \\times (1 - 0.81) = 76$.",
+    "generic": "Not quite. Multiply by $1 - \\rho^2$.",
+    "byKey": {
+     "rho": "You used $1 - \\rho$. The factor is $1 - \\rho^2$.",
+     "r2": "That is the part removed, $\\rho^2 \\times 400$."
+    }
+   },
+   "explain": {
+    "text": "The best control removes $\\rho^2$ of the variance and leaves $400 \\times 0.19 = 76$. A baseline does the same for a policy gradient, with the score as the control and 0 as its known mean."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The score has mean 0, so subtracting $b \\nabla \\log \\pi$ for any $b$ fixed before the action leaves the gradient unbiased: a control variate with known mean 0.",
+   "On the venues paying £10 and £11 at $\\pi = (0.5, 0.5)$, the variance is 27.5625 with no baseline, 0.0625 with $b = 10$ and 0 with $b = 10.5$.",
+   "The best constant is $b^* = E[s^2 G]/E[s^2]$; a learned $V(s)$ gives the advantage $G - V(s)$, and learning $V$ by TD is actor-critic."
+  ],
+  "formula": {
+   "name": "Gradient with a baseline",
+   "tex": "\\nabla J = E\\big[(G - b(s))\\, \\nabla_\\theta \\log \\pi_\\theta(a \\mid s)\\big]",
+   "note": "True for any $b(s)$ that does not depend on the action."
+  },
+  "trap": "A baseline that depends on the action taken: its variance may be tiny, but the estimate is biased."
+ },
+ "quiz": [
+  {
+   "id": "q-var-b11",
+   "difficulty": 2,
+   "prose": "Venues paying £10 and £11, $\\pi = (0.5, 0.5)$, baseline $b = 11$.",
+   "question": "What is the variance of the estimate for A's dial? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0625,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "none",
+      "value": 27.5625,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "nomean",
+      "value": 0.125,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Estimates $-0.5$ and 0: variance 0.0625.",
+    "generic": "Not quite. Work out the two estimates first.",
+    "byKey": {
+     "none": "That is the variance with no baseline.",
+     "nomean": "That is $E[X^2]$; subtract the squared mean."
+    }
+   },
+   "explain": {
+    "text": "With $b = 11$ the estimates are $(10 - 11)(0.5) = -0.5$ and $(11 - 11)(-0.5) = 0$, so the variance is $0.125 - 0.0625 = 0.0625$, the same as at $b = 10$."
+   }
+  },
+  {
+   "id": "q-why-unbiased",
+   "difficulty": 3,
+   "question": "Why does a constant baseline leave the policy gradient unbiased?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mean0",
+      "text": "The score has mean 0, so $b$ times the score has mean 0",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "Because $b$ is small next to the returns",
+      "why": "$b = 10.5$ is not small, and it is still unbiased."
+     },
+     {
+      "id": "cancel",
+      "text": "Because the baseline cancels over one episode",
+      "why": "It cancels in expectation, not within an episode."
+     },
+     {
+      "id": "var",
+      "text": "Because it lowers the variance",
+      "why": "Lower variance does not make an estimate unbiased; the peeking baseline shows that."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The score has mean 0, so $E[b\\,s] = b \\times 0$.",
+    "generic": "Not quite. Look at the mean of the extra term."
+   },
+   "explain": {
+    "text": "The extra term is $-b\\,\\nabla \\log \\pi(a)$, and $E[\\nabla \\log \\pi(a)] = \\nabla \\sum_a \\pi(a) = 0$."
+   }
+  },
+  {
+   "id": "q-bstar",
+   "difficulty": 3,
+   "prose": "Two arms with chances $(0.5, 0.5)$, rewards 4 and 8.",
+   "question": "What is the variance-minimising constant baseline $b^*$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "low",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sum",
+      "value": 12,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Both scores have $s^2 = 0.25$, so $b^*$ is the mean reward, 6.",
+    "generic": "Not quite. Use $E[s^2 G]/E[s^2]$.",
+    "byKey": {
+     "low": "That is the smaller reward.",
+     "sum": "That is the sum; take the weighted mean."
+    }
+   },
+   "explain": {
+    "text": "With equal chances $s = \\pm 0.5$ and $s^2 = 0.25$ for both, so $b^* = E[G] = (4 + 8)/2 = 6$."
+   }
+  }
+ ]
+}

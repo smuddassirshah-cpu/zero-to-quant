@@ -1,0 +1,985 @@
+{
+ "id": "l14-reinforce",
+ "course": "rl",
+ "title": "REINFORCE",
+ "minutes": 15,
+ "objectives": [
+  "Derive the score-function gradient and code REINFORCE."
+ ],
+ "skills": [
+  "rl-pg"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which way to turn the dial",
+   "prose": "Two venues pay a fixed £10 (A) and £11 (B) an order. A softmax policy with dials $(0, 0)$ sends half to each, so $J = 10\\pi_A + 11\\pi_B = 10.5$. Turning A's dial changes the chances at rates $\\partial \\pi_A/\\partial \\theta_A = \\pi_A \\pi_B$ and $\\partial \\pi_B/\\partial \\theta_A = -\\pi_A \\pi_B$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B"
+     ],
+     "yLabel": "pays (£)",
+     "showValues": true,
+     "money": "£"
+    },
+    "state": {
+     "values": {
+      "A": 10,
+      "B": 11
+     }
+    }
+   },
+   "question": "What is $\\partial J/\\partial \\theta_A$ at these dials?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.25,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nochain",
+      "value": -1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$J$ changes through both chances."
+    },
+    {
+     "rung": "point",
+     "text": "$10 \\times 0.25 + 11 \\times (-0.25)$.",
+     "highlight": [
+      "xA",
+      "xB"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is $0.25 \\times (10 - 11)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.25 \\times 10 - 0.25 \\times 11 = -0.25$: turn A's dial down.",
+    "generic": "Not quite. Multiply each payment by the rate its chance moves.",
+    "byKey": {
+     "sign": "Raising A's dial moves orders to the cheaper venue, so $J$ falls.",
+     "nochain": "You took $10 - 11$ but left out the rate $0.25$ at which the chances move."
+    }
+   },
+   "explain": {
+    "text": "Raising $\\theta_A$ moves chance from B to A at rate $0.25$, and each unit moved loses £1. So $\\partial J/\\partial \\theta_A = 0.25 \\times (10 - 11) = -0.25$."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "An estimate from one pull",
+   "prose": "An agent that does not know the payments can still estimate that gradient from one pull: multiply the reward by $\\partial \\log \\pi(a)/\\partial \\theta_A$, which is $1 - \\pi_A$ if it pulled A and $-\\pi_A$ if it pulled B. Slide $\\pi_A$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B",
+      "Mean"
+     ],
+     "yLabel": "one-pull estimate",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 5,
+      "B": -5.5,
+      "Mean": -0.25
+     }
+    },
+    "controls": [
+     {
+      "bind": "pa",
+      "min": 0.1,
+      "max": 0.9,
+      "step": 0.05,
+      "start": 0.5,
+      "label": "$\\pi_A$"
+     }
+    ],
+    "derive": {
+     "values.A": "10 * (1 - pa)",
+     "values.B": "-11 * pa",
+     "values.Mean": "pa * 10 * (1 - pa) - (1 - pa) * 11 * pa",
+     "caption": "True gradient {{fixed(pa * (1 - pa) * (10 - 11), 4)}}"
+    }
+   },
+   "question": "At $\\pi_A = 0.5$ the two estimates are 5 and $-5.5$. What is their average, weighted by how often each happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "m",
+      "text": "$-0.25$, the true gradient",
+      "correct": true
+     },
+     {
+      "id": "5",
+      "text": "5, the estimate after pulling A",
+      "why": "One pull is one sample. Weight both by their chances, 0.5 each."
+     },
+     {
+      "id": "0",
+      "text": "0, since the two cancel",
+      "why": "5 and $-5.5$ do not cancel: their mean is $-0.25$."
+     },
+     {
+      "id": "105",
+      "text": "10.5, the mean payment",
+      "why": "That is $J$, not its gradient."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.5 \\times 5 + 0.5 \\times (-5.5) = -0.25$, the gradient you found.",
+    "generic": "Weight each estimate by its chance."
+   },
+   "explain": {
+    "text": "At every $\\pi_A$ the weighted mean of the two estimates equals the true gradient $\\pi_A(1 - \\pi_A)(10 - 11)$. Each single estimate is far from it."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The score",
+   "prose": "The factor $\\nabla_\\theta \\log \\pi(a)$ is the **score**. For a softmax, its entry for dial $b$ is $[b = a] - \\pi_b$: one minus the chance for the move taken, minus the chance for every other dial.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "2",
+      "3"
+     ],
+     "yLabel": "chance",
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "1": 0.2,
+      "2": 0.5,
+      "3": 0.3
+     }
+    }
+   },
+   "question": "Chances $\\boldsymbol\\pi = (0.2, 0.5, 0.3)$ and the agent pulled arm 2 (chance 0.5). What is the score's entry for arm 1's dial?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "own",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "pulled",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Arm 1 is not the arm pulled."
+    },
+    {
+     "rung": "point",
+     "text": "So its entry is $0 - \\pi_1$.",
+     "highlight": [
+      "x1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.2$."
+    }
+   ],
+   "feedback": {
+    "correct": "Arm 1 was not pulled: $0 - 0.2 = -0.2$.",
+    "generic": "Not quite. Use $[b = a] - \\pi_b$ with $b$ = arm 1.",
+    "byKey": {
+     "own": "That is $1 - \\pi_1$, the entry if arm 1 had been pulled.",
+     "pulled": "You used the pulled arm's chance. Each entry uses its own dial's chance."
+    }
+   },
+   "explain": {
+    "text": "The score is $(-0.2, 0.5, -0.3)$: the pulled arm's dial goes up and every other goes down by its chance. Its entries always sum to 0."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The log-derivative trick",
+   "prose": "Put the steps in order. Each line carries its reason.",
+   "question": "Order the derivation of $\\nabla J$.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$J(\\theta) = \\sum_a \\pi_\\theta(a)\\, r(a)$ (the expected reward)"
+     },
+     {
+      "id": "d2",
+      "text": "$\\nabla J = \\sum_a \\nabla \\pi_\\theta(a)\\, r(a)$ (the world's rewards do not depend on $\\theta$)"
+     },
+     {
+      "id": "d3",
+      "text": "$\\nabla \\pi = \\pi\\, \\nabla \\log \\pi$ (the chain rule: $\\nabla \\log \\pi = \\nabla \\pi / \\pi$)"
+     },
+     {
+      "id": "d4",
+      "text": "$\\nabla J = \\sum_a \\pi_\\theta(a)\\, r(a)\\, \\nabla \\log \\pi_\\theta(a)$ (substitute)"
+     },
+     {
+      "id": "d5",
+      "text": "$\\nabla J = E_{a \\sim \\pi}[\\,r(a)\\, \\nabla \\log \\pi_\\theta(a)\\,]$ (a sum weighted by $\\pi$ is an expectation we can sample)"
+     },
+     {
+      "id": "x1",
+      "text": "$\\nabla J = \\sum_a \\pi_\\theta(a)\\, \\nabla r(a)$ (differentiate the reward)",
+      "why": "The rewards come from the world and have no gradient in $\\theta$; this line is 0."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4",
+     "d5"
+    ],
+    "after": {
+     "d2": [
+      "d1"
+     ],
+     "d4": [
+      "d2",
+      "d3"
+     ],
+     "d5": [
+      "d4"
+     ]
+    },
+    "distractors": [
+     "x1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the definition of $J$."
+    },
+    {
+     "rung": "point",
+     "text": "The gradient falls on $\\pi$, not on $r$."
+    },
+    {
+     "rung": "step",
+     "text": "Rewrite $\\nabla \\pi$ so a $\\pi$ appears as a weight."
+    }
+   ],
+   "feedback": {
+    "correct": "The gradient is an expectation of reward times score, so one sampled episode estimates it.",
+    "generic": "Not quite. The gradient acts on the chances only.",
+    "byKey": {
+     "x1": "You differentiated the reward. It comes from the world, so its gradient in $\\theta$ is 0."
+    }
+   },
+   "explain": {
+    "text": "Moving the gradient onto $\\pi$ and writing $\\nabla \\pi = \\pi \\nabla \\log \\pi$ turns the sum into an expectation. That is REINFORCE's gradient, sampled one action at a time."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The price of one sample",
+   "prose": "In the two-venue problem the estimate is 5 with chance 0.5 and $-5.5$ with chance 0.5. Its mean is the true $-0.25$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B",
+      "Mean"
+     ],
+     "yLabel": "one-pull estimate",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 5,
+      "B": -5.5,
+      "Mean": -0.25
+     }
+    }
+   },
+   "question": "What is its variance? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 27.5625,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "nomean",
+      "value": 27.625,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sd",
+      "value": 5.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Variance is $E[X^2] - (E[X])^2$."
+    },
+    {
+     "rung": "point",
+     "text": "$E[X^2] = (25 + 30.25)/2$.",
+     "highlight": [
+      "xA",
+      "xB"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$27.625 - 0.0625$."
+    }
+   ],
+   "feedback": {
+    "correct": "$27.625 - 0.0625 = 27.5625$: a standard deviation of 5.25 around $-0.25$.",
+    "generic": "Not quite. Subtract the squared mean.",
+    "byKey": {
+     "nomean": "That is $E[X^2]$. Subtract $(-0.25)^2$.",
+     "sd": "That is the standard deviation. Square it."
+    }
+   },
+   "explain": {
+    "text": "The variance is 27.5625. Its spread, 5.25, is 21 times the signal, 0.25. Level 4's next lesson removes most of it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Reward-to-go",
+   "prose": "In the corridor a move cannot change rewards already paid, so each move's score is multiplied by the **reward-to-go** $G_t$: the rewards from step $t$ on. One episode took five moves.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Step t",
+      "State",
+      "Move",
+      "Reward",
+      "Reward-to-go $G_t$"
+     ],
+     "rows": [
+      [
+       "0",
+       "S",
+       "R",
+       "−1",
+       "?"
+      ],
+      [
+       "1",
+       "B",
+       "L",
+       "−1",
+       "?"
+      ],
+      [
+       "2",
+       "C",
+       "L",
+       "−1",
+       "?"
+      ],
+      [
+       "3",
+       "B",
+       "L",
+       "−1",
+       "?"
+      ],
+      [
+       "4",
+       "C",
+       "R",
+       "−1",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What reward-to-go multiplies the score of the move at $t = 2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "whole",
+      "value": -5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "after",
+      "value": -2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the rewards from step 2 to the end."
+    },
+    {
+     "rung": "point",
+     "text": "Steps 2, 3 and 4 each pay $-1$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-1 - 1 - 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "Three steps remain, its own included: $G_2 = -3$.",
+    "generic": "Not quite. Add the rewards from step 2 to the end.",
+    "byKey": {
+     "whole": "That is the whole return. The two earlier rewards cannot depend on this move.",
+     "after": "Include the reward of step 2 itself."
+    }
+   },
+   "explain": {
+    "text": "Rewards before $t$ have mean 0 against the score at $t$, so dropping them keeps the estimate unbiased and lowers its noise. The column reads $-5, -4, -3, -2, -1$.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code REINFORCE",
+   "prose": "Write `grad_log_softmax`, then REINFORCE on the venues (after each pull add `lr * r * score`) and on the corridor (after each episode add `lr` times the sum of $G_t \\times$ score$_t$, with the dials held fixed during the episode).",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B",
+      "Mean"
+     ],
+     "yLabel": "one-pull estimate",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 5,
+      "B": -5.5,
+      "Mean": -0.25
+     }
+    }
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport random\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef corridor_move(s, right):\n    \"\"\"S = 0, B = 1 (moves swapped), C = 2, G = 3.\"\"\"\n    if s == 0:\n        return 1 if right else 0\n    if s == 1:\n        return 0 if right else 2\n    return 3 if right else 1\n\ndef grad_log_softmax(theta, a):\n    \"\"\"d log pi(a) / d theta: one entry per dial.\"\"\"\n    ...\n\ndef reinforce_bandit(rewards, steps, lr, seed):\n    \"\"\"Dials from 0; each step pull a, then theta += lr * r * score.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    ...\n    return softmax(theta)\n\ndef reinforce_corridor(episodes, lr, seed):\n    \"\"\"Dials [left, right] from 0; after each episode add\n    lr * sum over steps of G_t * score_t. Return the final p.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]\n    ...\n    return softmax(theta)[1]\n",
+    "solution": "import math\nimport random\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef corridor_move(s, right):\n    \"\"\"S = 0, B = 1 (moves swapped), C = 2, G = 3.\"\"\"\n    if s == 0:\n        return 1 if right else 0\n    if s == 1:\n        return 0 if right else 2\n    return 3 if right else 1\n\ndef grad_log_softmax(theta, a):\n    \"\"\"d log pi(a) / d theta: one entry per dial.\"\"\"\n    pi = softmax(theta)\n    return [(1.0 if b == a else 0.0) - pi[b] for b in range(len(theta))]\n\ndef reinforce_bandit(rewards, steps, lr, seed):\n    \"\"\"Dials from 0; each step pull a, then theta += lr * r * score.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    for _ in range(steps):\n        a = pull(softmax(theta), rng)\n        g = grad_log_softmax(theta, a)\n        theta = [t + lr * rewards[a] * x for t, x in zip(theta, g)]\n    return softmax(theta)\n\ndef reinforce_corridor(episodes, lr, seed):\n    \"\"\"Dials [left, right] from 0; after each episode add\n    lr * sum over steps of G_t * score_t. Return the final p.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]\n    for _ in range(episodes):\n        p = softmax(theta)[1]\n        s, acts = 0, []\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            s = corridor_move(s, a == 1)\n        step = [0.0, 0.0]\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)   # reward-to-go: -1 a step left\n            g = grad_log_softmax(theta, a)\n            step = [x + G * y for x, y in zip(step, g)]\n        theta = [x + lr * y for x, y in zip(theta, step)]\n    return softmax(theta)[1]\n",
+    "examples": [
+     {
+      "call": "grad_log_softmax([0.0, 0.0], 0)",
+      "expect": "[0.5, -0.5]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "grad_log_softmax([0.0, 0.0], 0)",
+      "expect": "[0.5, -0.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "grad_log_softmax([1.0, 2.0, 3.0], 2)",
+      "expect": "[-0.09003057317038046, -0.24472847105479764, 0.33475904422517810]",
+      "compare": "isclose"
+     },
+     {
+      "call": "all(abs(g - (math.log(softmax([t + (h if j == b else 0) for j, t in enumerate(th)])[1]) - math.log(softmax([t - (h if j == b else 0) for j, t in enumerate(th)])[1])) / (2 * h)) < 1e-6 for b, g in enumerate(grad_log_softmax(th, 1)))",
+      "expect": "True",
+      "compare": "equal",
+      "setup": "th, h = [0.3, -1.2, 0.8], 1e-5"
+     },
+     {
+      "call": "sum(reinforce_bandit([10, 11], 2000, 0.01, s)[1] for s in range(10)) / 10 > 0.8",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 4000
+     },
+     {
+      "call": "sum(reinforce_bandit([11, 10], 2000, 0.01, s)[0] for s in range(10)) / 10 > 0.8",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 4000
+     },
+     {
+      "call": "0.53 < sum(reinforce_corridor(1000, 0.001, s) for s in range(10)) / 10 < 0.64",
+      "expect": "True",
+      "compare": "equal",
+      "budget": 4000
+     },
+     {
+      "call": "reinforce_corridor(50, 0.0, 3)",
+      "expect": "0.5",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. The score is checked exactly and against central differences below $10^{-6}$. Over seeds 0 to 9 the better arm must end above 0.8 on average, and the corridor's mean final $p$ must lie between 0.53 and 0.64.",
+    "mutants": [
+     {
+      "source": "import math\nimport random\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef corridor_move(s, right):\n    \"\"\"S = 0, B = 1 (moves swapped), C = 2, G = 3.\"\"\"\n    if s == 0:\n        return 1 if right else 0\n    if s == 1:\n        return 0 if right else 2\n    return 3 if right else 1\n\ndef grad_log_softmax(theta, a):\n    \"\"\"d log pi(a) / d theta: one entry per dial.\"\"\"\n    pi = softmax(theta)\n    return [(1.0 if b == a else 0.0) for b in range(len(theta))]\n\ndef reinforce_bandit(rewards, steps, lr, seed):\n    \"\"\"Dials from 0; each step pull a, then theta += lr * r * score.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    for _ in range(steps):\n        a = pull(softmax(theta), rng)\n        g = grad_log_softmax(theta, a)\n        theta = [t + lr * rewards[a] * x for t, x in zip(theta, g)]\n    return softmax(theta)\n\ndef reinforce_corridor(episodes, lr, seed):\n    \"\"\"Dials [left, right] from 0; after each episode add\n    lr * sum over steps of G_t * score_t. Return the final p.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]\n    for _ in range(episodes):\n        p = softmax(theta)[1]\n        s, acts = 0, []\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            s = corridor_move(s, a == 1)\n        step = [0.0, 0.0]\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)   # reward-to-go: -1 a step left\n            g = grad_log_softmax(theta, a)\n            step = [x + G * y for x, y in zip(step, g)]\n        theta = [x + lr * y for x, y in zip(theta, step)]\n    return softmax(theta)[1]\n",
+      "test": 1,
+      "symptom": "The score forgets to subtract pi."
+     },
+     {
+      "source": "import math\nimport random\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef corridor_move(s, right):\n    \"\"\"S = 0, B = 1 (moves swapped), C = 2, G = 3.\"\"\"\n    if s == 0:\n        return 1 if right else 0\n    if s == 1:\n        return 0 if right else 2\n    return 3 if right else 1\n\ndef grad_log_softmax(theta, a):\n    \"\"\"d log pi(a) / d theta: one entry per dial.\"\"\"\n    pi = softmax(theta)\n    return [(1.0 if b == a else 0.0) - pi[b] for b in range(len(theta))]\n\ndef reinforce_bandit(rewards, steps, lr, seed):\n    \"\"\"Dials from 0; each step pull a, then theta += lr * r * score.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    for _ in range(steps):\n        a = pull(softmax(theta), rng)\n        g = grad_log_softmax(theta, a)\n        theta = [t + (lr * rewards[a] if i == a else 0.0) for i, t in enumerate(theta)]\n    return softmax(theta)\n\ndef reinforce_corridor(episodes, lr, seed):\n    \"\"\"Dials [left, right] from 0; after each episode add\n    lr * sum over steps of G_t * score_t. Return the final p.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]\n    for _ in range(episodes):\n        p = softmax(theta)[1]\n        s, acts = 0, []\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            s = corridor_move(s, a == 1)\n        step = [0.0, 0.0]\n        for t, a in enumerate(acts):\n            G = -(len(acts) - t)   # reward-to-go: -1 a step left\n            g = grad_log_softmax(theta, a)\n            step = [x + G * y for x, y in zip(step, g)]\n        theta = [x + lr * y for x, y in zip(theta, step)]\n    return softmax(theta)[1]\n",
+      "test": 4,
+      "symptom": "Differentiates the reward: the pulled dial just rises by lr * r."
+     },
+     {
+      "source": "import math\nimport random\n\ndef softmax(theta):\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef pull(pi, rng):\n    \"\"\"An index drawn with chances pi, from one rng.random().\"\"\"\n    u, c = rng.random(), 0.0\n    for i, p in enumerate(pi):\n        c += p\n        if u < c:\n            return i\n    return len(pi) - 1\n\ndef corridor_move(s, right):\n    \"\"\"S = 0, B = 1 (moves swapped), C = 2, G = 3.\"\"\"\n    if s == 0:\n        return 1 if right else 0\n    if s == 1:\n        return 0 if right else 2\n    return 3 if right else 1\n\ndef grad_log_softmax(theta, a):\n    \"\"\"d log pi(a) / d theta: one entry per dial.\"\"\"\n    pi = softmax(theta)\n    return [(1.0 if b == a else 0.0) - pi[b] for b in range(len(theta))]\n\ndef reinforce_bandit(rewards, steps, lr, seed):\n    \"\"\"Dials from 0; each step pull a, then theta += lr * r * score.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0] * len(rewards)\n    for _ in range(steps):\n        a = pull(softmax(theta), rng)\n        g = grad_log_softmax(theta, a)\n        theta = [t + lr * rewards[a] * x for t, x in zip(theta, g)]\n    return softmax(theta)\n\ndef reinforce_corridor(episodes, lr, seed):\n    \"\"\"Dials [left, right] from 0; after each episode add\n    lr * sum over steps of G_t * score_t. Return the final p.\"\"\"\n    rng = random.Random(seed)\n    theta = [0.0, 0.0]\n    for _ in range(episodes):\n        p = softmax(theta)[1]\n        s, acts = 0, []\n        while s != 3:\n            a = 1 if rng.random() < p else 0\n            acts.append(a)\n            s = corridor_move(s, a == 1)\n        step = [0.0, 0.0]\n        for t, a in enumerate(acts):\n            G = len(acts) - t   # reward-to-go: -1 a step left\n            g = grad_log_softmax(theta, a)\n            step = [x + G * y for x, y in zip(step, g)]\n        theta = [x + lr * y for x, y in zip(theta, step)]\n    return softmax(theta)[1]\n",
+      "test": 6,
+      "symptom": "Reward-to-go with the wrong sign: steps count as gains, and the walks grow very long.",
+      "timeout": true
+     }
+    ],
+    "budget": 4000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Entry $b$ of the score is $[b = a] - \\pi_b$."
+    },
+    {
+     "rung": "point",
+     "text": "In the corridor, $G_t = -(T - t)$ for an episode of $T$ moves."
+    },
+    {
+     "rung": "step",
+     "text": "Collect the episode first, then update once."
+    }
+   ],
+   "feedback": {
+    "correct": "All hidden tests pass.",
+    "generic": "Some tests fail. Read the first failing row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Differentiating the reward",
+   "prose": "A colleague writes $\\nabla J = \\sum_a \\pi(a) \\nabla r(a)$ for the venue problem, gets 0, and concludes the dials cannot be improved.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B",
+      "Mean"
+     ],
+     "yLabel": "one-pull estimate",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "A": 5,
+      "B": -5.5,
+      "Mean": -0.25
+     }
+    }
+   },
+   "question": "What went wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "world",
+      "text": "Rewards come from the world; the gradient acts on the chances",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "Nothing: the policy is already optimal here",
+      "why": "At $\\pi = (0.5, 0.5)$ the true gradient is $-0.25$, not 0. B pays more."
+     },
+     {
+      "id": "sample",
+      "text": "They needed many more samples to see it",
+      "why": "Their formula is 0 for any number of samples."
+     },
+     {
+      "id": "lr",
+      "text": "The learning rate is far too small",
+      "why": "Any rate times 0 is 0."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does $\\theta$ actually change?"
+    },
+    {
+     "rung": "point",
+     "text": "It changes which venue is chosen, not what a venue pays.",
+     "highlight": [
+      "xA",
+      "xB"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So the gradient must act on $\\pi$."
+    }
+   ],
+   "feedback": {
+    "correct": "The payments do not depend on $\\theta$; the chances do.",
+    "generic": "Not quite. Ask what the dials control.",
+    "byKey": {
+     "right": "You trusted a zero that came from differentiating the reward. The true gradient is $-0.25$: move orders to B."
+    }
+   },
+   "explain": {
+    "text": "Differentiating the reward gives 0 because the world, not $\\theta$, sets the payment. The log-derivative trick moves the gradient onto $\\pi$, where it belongs."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "REINFORCE",
+   "prose": "Sample an episode with $\\pi_\\theta$, then step up the sampled gradient: $$\\theta \\leftarrow \\theta + \\alpha \\sum_t G_t\\, \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t).$$ Its mean is the true gradient, so on average each step climbs $J$.",
+   "question": "Every reward in an episode is 0. What does the REINFORCE step do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "Nothing: every $G_t$ is 0",
+      "correct": true
+     },
+     {
+      "id": "down",
+      "text": "It lowers the dials of the moves taken",
+      "why": "Each term is $G_t$ times a score, and every $G_t$ is 0."
+     },
+     {
+      "id": "up",
+      "text": "It raises the dials of the moves taken",
+      "why": "Only a positive $G_t$ raises them."
+     },
+     {
+      "id": "rand",
+      "text": "It moves the dials at random",
+      "why": "The step is exactly 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A return of zero gives no learning signal, whatever happened.",
+    "generic": "Look at what multiplies each score."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Tuning a rule by its P&L",
+   "prose": "An execution rule picks a limit order with chance 0.7 and a market order with 0.3 (a softmax over two dials). Its P&L has no formula, only realised days. One day it sent a market order and made £120.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "Limit",
+      "Market"
+     ],
+     "yLabel": "chance",
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "Limit": 0.7,
+      "Market": 0.3
+     }
+    }
+   },
+   "question": "What is that day's estimate for the market-order dial, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 84,
+    "tol": {
+     "abs": 0.5
+    },
+    "wrong": [
+     {
+      "id": "chance",
+      "value": 36,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "sign",
+      "value": -84,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ],
+    "unit": "£"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The market order was the move taken."
+    },
+    {
+     "rung": "point",
+     "text": "Its score entry is $1 - 0.3$.",
+     "highlight": [
+      "xMarket"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$120 \\times 0.7$."
+    }
+   ],
+   "feedback": {
+    "correct": "$120 \\times (1 - 0.3) = 84$: raise the market dial a little.",
+    "generic": "Not quite. Multiply the P&L by the score entry for the move taken.",
+    "byKey": {
+     "chance": "You multiplied by the chance 0.3. The score entry is $1 - 0.3$.",
+     "sign": "The move taken has a positive score entry."
+    }
+   },
+   "explain": {
+    "text": "The estimate is £84. REINFORCE needs only the realised P&L and the chance of what was done. Averaged over many days, these estimates point up the P&L's gradient."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The log-derivative trick: $\\nabla J = E[G\\, \\nabla \\log \\pi(a)]$, so a sampled episode estimates the gradient with no model of the rewards.",
+   "For a softmax the score is $\\mathbf e_a - \\boldsymbol\\pi$; with venues paying £10 and £11 at $\\pi = (0.5, 0.5)$ the one-pull estimates are 5 and $-5.5$, mean $-0.25$, variance 27.5625.",
+   "Reward-to-go keeps only the rewards after each move: unbiased, and less noisy than the whole return."
+  ],
+  "formula": {
+   "name": "REINFORCE",
+   "tex": "\\theta \\leftarrow \\theta + \\alpha \\sum_t G_t\\, \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t)",
+   "note": "$G_t$ is the reward-to-go from step $t$."
+  },
+  "trap": "Differentiating the reward: it comes from the world, so the gradient must act on the log-probability."
+ },
+ "quiz": [
+  {
+   "id": "q-score-own",
+   "difficulty": 2,
+   "prose": "Three moves with equal dials. The agent took the third.",
+   "question": "What is the score's entry for the third dial? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6667,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "other",
+      "value": -0.3333,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - 1/3 = 0.6667$.",
+    "generic": "Not quite. Use $1 - \\pi$ for the move taken.",
+    "byKey": {
+     "other": "That is the entry for a dial not taken.",
+     "one": "Subtract the move's own chance, $1/3$."
+    }
+   },
+   "explain": {
+    "text": "The move taken gets $1 - \\pi = 1 - 1/3 = 0.6667$."
+   }
+  },
+  {
+   "id": "q-estimate",
+   "difficulty": 3,
+   "prose": "Chances $(0.25, 0.75)$ for arms A and B. The agent pulled A and received 8.",
+   "question": "What is the estimate for A's dial?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "chance",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "raw",
+      "value": 8,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$8 \\times (1 - 0.25) = 6$.",
+    "generic": "Not quite. Reward times the score entry for A.",
+    "byKey": {
+     "chance": "You multiplied by $\\pi_A$. The score entry is $1 - \\pi_A$.",
+     "raw": "Multiply the reward by the score entry."
+    }
+   },
+   "explain": {
+    "text": "The score entry for the pulled arm is $1 - 0.25 = 0.75$, so the estimate is $8 \\times 0.75 = 6$."
+   }
+  },
+  {
+   "id": "q-rtg",
+   "difficulty": 3,
+   "prose": "An episode pays rewards $2, 0, 5$ at steps 0, 1, 2, with no discount.",
+   "question": "What reward-to-go multiplies the score at step 1?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "whole",
+      "value": 7,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "own",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "From step 1 on: $0 + 5 = 5$.",
+    "generic": "Not quite. Add the rewards from step 1 to the end.",
+    "byKey": {
+     "whole": "That is the whole return, which counts the reward paid before step 1.",
+     "own": "Include the later reward, 5."
+    }
+   },
+   "explain": {
+    "text": "Reward-to-go from step 1 is $0 + 5 = 5$; the 2 at step 0 was paid before the move."
+   }
+  }
+ ]
+}

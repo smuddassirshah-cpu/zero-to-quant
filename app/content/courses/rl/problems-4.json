@@ -1,0 +1,485 @@
+{
+ "id": "problems-4",
+ "course": "rl",
+ "level": 4,
+ "title": "Scores, estimates and baselines",
+ "minutes": 35,
+ "items": [
+  {
+   "id": "p4-router",
+   "difficulty": 3,
+   "skills": [
+    "rl-pg"
+   ],
+   "prose": "An order router sends each order to venue X or venue Y with softmax chances $\\boldsymbol\\pi = (0.6, 0.4)$. Venue X pays a fixed £5 an order and venue Y a fixed £15.",
+   "parts": [
+    {
+     "question": "One order went to Y. What is the score's entry for X's dial? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.6,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "own",
+        "value": 0.4,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.6,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "X was not chosen: $0 - 0.6 = -0.6$.",
+      "generic": "Not quite. Use $[b = a] - \\pi_b$ for X's dial.",
+      "byKey": {
+       "own": "That is $1 - \\pi_X$, the entry if X had been chosen.",
+       "sign": "X was not chosen, so its entry is negative."
+      }
+     },
+     "explain": {
+      "text": "The entry for a dial not chosen is minus its chance: $-0.6$."
+     }
+    },
+    {
+     "question": "Using the entry $-0.6$ from part 1, what is that order's estimate for X's dial with no baseline, in pounds?",
+     "widget": {
+      "kind": "numeric",
+      "answer": -9,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "rx",
+        "value": -3,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "sign",
+        "value": 9,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ],
+      "unit": "£"
+     },
+     "feedback": {
+      "correct": "$15 \\times (-0.6) = -9$.",
+      "generic": "Not quite. Multiply Y's payment by the entry.",
+      "byKey": {
+       "rx": "You used X's £5. The order went to Y and earned £15.",
+       "sign": "The entry is negative."
+      }
+     },
+     "explain": {
+      "text": "Reward times score: $15 \\times (-0.6) = -9$."
+     }
+    },
+    {
+     "question": "What is the exact gradient $\\partial J/\\partial \\theta_X = \\pi_X(r_X - J)$, where $J$ is the expected payment? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -2.4,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "nopi",
+        "value": -4,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "sign",
+        "value": 2.4,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$J = 9$, so $0.6 \\times (5 - 9) = -2.4$.",
+      "generic": "Not quite. Find $J = 0.6 \\times 5 + 0.4 \\times 15$ first.",
+      "byKey": {
+       "nopi": "That is $r_X - J$; multiply by $\\pi_X = 0.6$.",
+       "sign": "X pays less than average, so raising its dial lowers $J$."
+      }
+     },
+     "explain": {
+      "text": "$J = 3 + 6 = 9$ and $\\pi_X(r_X - J) = 0.6 \\times (-4) = -2.4$. The one-order estimates, 2 after X and $-9$ after Y, average to it."
+     }
+    },
+    {
+     "question": "The estimate is 2 with chance 0.6 and $-9$ with chance 0.4, mean $-2.4$ from part 3. What is its variance? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 29.04,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "nomean",
+        "value": 34.8,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "sd",
+        "value": 5.39,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$34.8 - 5.76 = 29.04$.",
+      "generic": "Not quite. Use $E[X^2] - (E[X])^2$ with the chances.",
+      "byKey": {
+       "nomean": "That is $E[X^2]$. Subtract $2.4^2 = 5.76$.",
+       "sd": "That is the standard deviation."
+      }
+     },
+     "explain": {
+      "text": "$E[X^2] = 0.6 \\times 4 + 0.4 \\times 81 = 34.8$, so the variance is $34.8 - 5.76 = 29.04$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p4-router-baseline",
+   "difficulty": 4,
+   "skills": [
+    "rl-pg"
+   ],
+   "prose": "The same router: $\\boldsymbol\\pi = (0.6, 0.4)$, X pays £5 and Y £15. For X's dial the score is $s = 0.4$ after X and $s = -0.6$ after Y. With no baseline the estimate's variance was 29.04.",
+   "parts": [
+    {
+     "question": "What is $E[s^2]$? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.24,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "nochance",
+        "value": 0.52,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "mean0",
+        "value": 0,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.6 \\times 0.16 + 0.4 \\times 0.36 = 0.24$.",
+      "generic": "Not quite. Square each score and weight by its chance.",
+      "byKey": {
+       "nochance": "You added the two squares without their chances.",
+       "mean0": "That is $E[s]$, which is 0. Square first."
+      }
+     },
+     "explain": {
+      "text": "$E[s^2] = 0.096 + 0.144 = 0.24$."
+     }
+    },
+    {
+     "question": "Using $E[s^2] = 0.24$ from part 1, what is $b^* = E[s^2 G]/E[s^2]$, in pounds?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 11,
+      "tol": {
+       "abs": 0.001
+      },
+      "wrong": [
+       {
+        "id": "mean",
+        "value": 9,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "unw",
+        "value": 10,
+        "tol": {
+         "abs": 0.001
+        }
+       }
+      ],
+      "unit": "£"
+     },
+     "feedback": {
+      "correct": "$2.64/0.24 = 11$.",
+      "generic": "Not quite. $E[s^2 G] = 0.096 \\times 5 + 0.144 \\times 15$.",
+      "byKey": {
+       "mean": "That is $J = E[G]$. Weight by $s^2$ as well.",
+       "unw": "You averaged the payments without the weights."
+      }
+     },
+     "explain": {
+      "text": "$E[s^2 G] = 0.48 + 2.16 = 2.64$, so $b^* = 2.64/0.24 = 11$, above the mean payment 9."
+     }
+    },
+    {
+     "question": "With $b = 9$ instead, the mean payment, what is the estimate's variance? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.96,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "nomean",
+        "value": 6.72,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "none",
+        "value": 29.04,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Estimates $-1.6$ and $-3.6$: variance 0.96.",
+      "generic": "Not quite. Find the two estimates with $b = 9$ first.",
+      "byKey": {
+       "nomean": "That is $E[X^2]$; subtract $2.4^2$.",
+       "none": "That is the variance with no baseline."
+      }
+     },
+     "explain": {
+      "text": "With $b = 9$: $(5 - 9)(0.4) = -1.6$ and $(15 - 9)(-0.6) = -3.6$; $E[X^2] = 0.6 \\times 2.56 + 0.4 \\times 12.96 = 6.72$, minus $5.76$, is 0.96."
+     }
+    },
+    {
+     "question": "What share of the no-baseline variance, 29.04, is left with $b = 9$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0331,
+      "tol": {
+       "abs": 5e-05
+      },
+      "wrong": [
+       {
+        "id": "inv",
+        "value": 30.25,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "removed",
+        "value": 0.9669,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.96/29.04 = 0.0331$.",
+      "generic": "Not quite. Divide the new variance by the old.",
+      "byKey": {
+       "inv": "You divided the old by the new.",
+       "removed": "That is the share removed."
+      }
+     },
+     "explain": {
+      "text": "$0.96/29.04 = 0.0331$: the mean payment removes about 97% of the variance, and $b^* = 11$ removes all of it."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p4-corridor-step",
+   "difficulty": 5,
+   "skills": [
+    "rl-pg"
+   ],
+   "prose": "In the short corridor every move costs 1 and the policy moves right with chance $p = 0.6$ in every state, so $J(p) = (2p - 4)/(p(1 - p))$.",
+   "parts": [
+    {
+     "question": "What is $J(0.6)$? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -11.67,
+      "tol": {
+       "abs": 0.006
+      },
+      "wrong": [
+       {
+        "id": "sign",
+        "value": 11.67,
+        "tol": {
+         "abs": 0.006
+        }
+       },
+       {
+        "id": "coin",
+        "value": -12,
+        "tol": {
+         "abs": 0.006
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-2.8/0.24 = -11.67$.",
+      "generic": "Not quite. Work out the top and the bottom.",
+      "byKey": {
+       "sign": "Every move costs 1, so the return is negative.",
+       "coin": "That is $J(0.5)$."
+      }
+     },
+     "explain": {
+      "text": "Top $1.2 - 4 = -2.8$; bottom $0.6 \\times 0.4 = 0.24$; $J(0.6) = -11.67$."
+     }
+    },
+    {
+     "question": "One episode took 8 moves. Using $-11.67$ from part 1 as the baseline at S, what is the advantage of its first move? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3.67,
+      "tol": {
+       "abs": 0.006
+      },
+      "wrong": [
+       {
+        "id": "sign",
+        "value": -3.67,
+        "tol": {
+         "abs": 0.006
+        }
+       },
+       {
+        "id": "raw",
+        "value": -8,
+        "tol": {
+         "abs": 0.006
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-8 - (-11.67) = 3.67$.",
+      "generic": "Not quite. Subtract the baseline from the return.",
+      "byKey": {
+       "sign": "You took baseline minus return.",
+       "raw": "That is the return alone."
+      }
+     },
+     "explain": {
+      "text": "Reward-to-go at the first move is $-8$, so the advantage is $-8 + 11.67 = 3.67$: a better walk than usual."
+     }
+    },
+    {
+     "question": "The first move was right. Its score entry for the right dial is $1 - 0.6$. Using the advantage 3.67 from part 2, what is that move's term in the gradient estimate? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.47,
+      "tol": {
+       "abs": 0.006
+      },
+      "wrong": [
+       {
+        "id": "chance",
+        "value": 2.2,
+        "tol": {
+         "abs": 0.006
+        }
+       },
+       {
+        "id": "sign",
+        "value": -1.47,
+        "tol": {
+         "abs": 0.006
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$3.67 \\times 0.4 = 1.47$.",
+      "generic": "Not quite. Multiply the advantage by the score entry 0.4.",
+      "byKey": {
+       "chance": "You multiplied by $p = 0.6$. The entry is $1 - p$.",
+       "sign": "A right move has a positive entry for the right dial."
+      }
+     },
+     "explain": {
+      "text": "Advantage times score: $3.67 \\times 0.4 = 1.47$."
+     }
+    },
+    {
+     "question": "Apply only that term with learning rate 0.01: $\\theta_R$ rises by $0.01 \\times 1.47$ and $\\theta_L$ falls by the same, from a gap $\\theta_R - \\theta_L = \\ln 1.5$. What is the new $p$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.607,
+      "tol": {
+       "abs": 6e-05
+      },
+      "wrong": [
+       {
+        "id": "one",
+        "value": 0.6035,
+        "tol": {
+         "abs": 6e-05
+        }
+       },
+       {
+        "id": "same",
+        "value": 0.6,
+        "tol": {
+         "abs": 6e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The gap becomes $0.4055 + 0.0294 = 0.4349$, so $p = 0.6070$.",
+      "generic": "Not quite. Change the gap by twice the step, then take the logistic.",
+      "byKey": {
+       "one": "You moved only $\\theta_R$. $\\theta_L$ falls too, so the gap grows by twice the step.",
+       "same": "The step is small but not zero."
+      }
+     },
+     "explain": {
+      "text": "The gap grows by $2 \\times 0.0147 = 0.0294$ to $0.4349$, and $1/(1 + e^{-0.4349}) = 0.6070$. That moves away from the best $p = 0.5858$: one sampled term is noisy, and only the average points uphill."
+     }
+    }
+   ]
+  }
+ ]
+}

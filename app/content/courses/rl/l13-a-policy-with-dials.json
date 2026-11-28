@@ -1,0 +1,1149 @@
+{
+ "id": "l13-a-policy-with-dials",
+ "course": "rl",
+ "title": "A policy with dials",
+ "minutes": 14,
+ "objectives": [
+  "Write a softmax policy and find where a stochastic policy beats every deterministic one."
+ ],
+ "skills": [
+  "rl-pg"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A corridor that lies",
+   "prose": "A robot starts at S and pays £1 a step until it reaches G. Right from S goes to B, but in B the two moves swap. Its camera cannot tell S, B and C apart, so it must use one rule in all three.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "S",
+       "label": "S",
+       "x": 0.1,
+       "y": 0.55
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.37,
+       "y": 0.55
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.63,
+       "y": 0.55
+      },
+      {
+       "id": "G",
+       "label": "G",
+       "x": 0.9,
+       "y": 0.55
+      }
+     ],
+     "edges": [
+      {
+       "from": "S",
+       "to": "S",
+       "label": "L",
+       "directed": true,
+       "loopAngle": 90
+      },
+      {
+       "from": "S",
+       "to": "B",
+       "label": "R",
+       "directed": true
+      },
+      {
+       "from": "B",
+       "to": "S",
+       "label": "R",
+       "directed": true
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "label": "L",
+       "directed": true
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "label": "L",
+       "directed": true
+      },
+      {
+       "from": "C",
+       "to": "G",
+       "label": "R",
+       "directed": true
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "With the rule \"always move right\", where does the robot go?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "loop",
+      "text": "Back and forth between S and B for ever",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "Straight to G in 3 steps, one per state",
+      "why": "You read R as right in every state. In B the moves swap, so right goes back to S."
+     },
+     {
+      "id": "stuck",
+      "text": "It stays at S for ever",
+      "why": "That is \"always move left\": the wall holds it at S."
+     },
+     {
+      "id": "five",
+      "text": "To G after 5 steps, via S twice",
+      "why": "Trace it: S, B, S, B, and so on. It never passes B."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Follow the arrows labelled R."
+    },
+    {
+     "rung": "point",
+     "text": "From B the arrow labelled R points back to S.",
+     "highlight": [
+      "e-S-B",
+      "e-B-S"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "S to B, then B back to S, and again."
+    }
+   ],
+   "feedback": {
+    "correct": "Right takes it to B, and in B right means back to S.",
+    "generic": "Not quite. Follow the R arrows from S.",
+    "byKey": {
+     "three": "You followed \"right\" as on a plain corridor. B reverses it, so the robot bounces between S and B."
+    }
+   },
+   "explain": {
+    "text": "Always right loops S, B, S, B for ever; always left sits at S for ever. Neither fixed rule ever reaches G.",
+    "canvas": {
+     "highlight": [
+      "e-S-B",
+      "e-B-S"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Flip a weighted coin",
+   "prose": "Now let the robot move right with chance $p$ in every state. The curve is its expected return $J(p)$, minus the expected number of steps. Drag the point along it.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      -100,
+      0
+     ],
+     "xAxis": "bottom",
+     "xLabel": "p, the chance of moving right",
+     "yLabel": "J(p)",
+     "functions": [
+      {
+       "id": "J",
+       "expr": "(2*x-4)/(x*(1-x))",
+       "domain": [
+        0.045,
+        0.955
+       ],
+       "label": "J(p)",
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 0.5,
+       "y": -12,
+       "on": "J",
+       "drag": true
+      }
+     ]
+    },
+    "derive": {
+     "caption": "p = {{fixed(p1.x, 3)}}, J = {{fixed((2*p1.x-4)/(p1.x*(1-p1.x)), 2)}}"
+    }
+   },
+   "question": "Roughly which chance of right gives the shortest walk on average?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "059",
+      "text": "About 0.59",
+      "correct": true
+     },
+     {
+      "id": "05",
+      "text": "Exactly 0.5",
+      "why": "The curve is not symmetric: drag past 0.5 and it still rises a little."
+     },
+     {
+      "id": "1",
+      "text": "As close to 1 as possible",
+      "why": "Near 1 the robot almost always bounces at B; the curve falls to minus infinity."
+     },
+     {
+      "id": "025",
+      "text": "About 0.25",
+      "why": "At 0.25 the walk takes about 19 steps; the curve is higher to the right."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The top of the curve is near $p = 0.59$, about 11.66 steps.",
+    "generic": "Drag the point until the curve is highest."
+   },
+   "explain": {
+    "text": "The highest point is at $p = 2 - \\sqrt 2 = 0.5858$, where $J = -(6 + 4\\sqrt 2) = -11.657$. A rule that only ever moves one way never arrives.",
+    "canvas": {
+     "points": {
+      "p1": {
+       "x": 0.5858
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A stochastic policy",
+   "prose": "A rule that picks a move by chance is a **stochastic policy**. Solving the three Bellman equations for S, B and C gives $J(p) = \\dfrac{2p - 4}{p(1 - p)}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      -100,
+      0
+     ],
+     "xAxis": "bottom",
+     "xLabel": "p, the chance of moving right",
+     "yLabel": "J(p)",
+     "functions": [
+      {
+       "id": "J",
+       "expr": "(2*x-4)/(x*(1-x))",
+       "domain": [
+        0.045,
+        0.955
+       ],
+       "label": "J(p)",
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 0.5,
+       "y": -12,
+       "on": "J"
+      }
+     ]
+    }
+   },
+   "question": "What is $J(0.5)$, the expected return when the robot tosses a fair coin?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -12,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 12,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "three",
+      "value": -3,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $p = 0.5$ into the formula."
+    },
+    {
+     "rung": "point",
+     "text": "The top is $2(0.5) - 4$; the bottom is $0.5 \\times 0.5$.",
+     "highlight": [
+      "p1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-3 / 0.25$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(1 - 4)/0.25 = -12$: twelve steps on average.",
+    "generic": "Not quite. Work out the top and the bottom separately.",
+    "byKey": {
+     "sign": "Every step costs £1, so the return is negative.",
+     "three": "That is the top alone, $2(0.5) - 4$. Divide by $0.5 \\times 0.5$."
+    }
+   },
+   "explain": {
+    "text": "The top is $1 - 4 = -3$ and the bottom $0.25$, so $J(0.5) = -12$. A fair coin pays for twelve steps on average."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Dials instead of a chance",
+   "prose": "A **softmax policy** keeps a dial $\\theta_a$ for each move: $\\pi(a) = e^{\\theta_a} / \\sum_b e^{\\theta_b}$. With two moves, $p = \\pi(R) = 1/(1 + e^{-(\\theta_R - \\theta_L)})$, so only the gap matters.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      -100,
+      0
+     ],
+     "xAxis": "bottom",
+     "xLabel": "p, the chance of moving right",
+     "yLabel": "J(p)",
+     "functions": [
+      {
+       "id": "J",
+       "expr": "(2*x-4)/(x*(1-x))",
+       "domain": [
+        0.045,
+        0.955
+       ],
+       "label": "J(p)",
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 0.5858,
+       "y": -11.657,
+       "on": "J"
+      }
+     ]
+    }
+   },
+   "question": "The best chance is $p = 2 - \\sqrt 2 = 0.5858$. What gap $\\theta_R - \\theta_L$ gives it? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3466,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "nolog",
+      "value": 1.4142,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "logp",
+      "value": -0.5348,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $p/(1 - p) = e^{\\text{gap}}$."
+    },
+    {
+     "rung": "point",
+     "text": "$(2 - \\sqrt 2)/(\\sqrt 2 - 1)$ simplifies to $\\sqrt 2$.",
+     "highlight": [
+      "p1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Take the natural log of $\\sqrt 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "The gap is $\\ln \\sqrt 2 = 0.3466$.",
+    "generic": "Not quite. The odds $p/(1 - p)$ equal $e$ to the gap.",
+    "byKey": {
+     "nolog": "That is the odds, $\\sqrt 2$. The gap is its log.",
+     "logp": "You took $\\ln p$. The gap is the log of the odds $p/(1 - p)$."
+    }
+   },
+   "explain": {
+    "text": "The odds are $p/(1 - p) = (2 - \\sqrt 2)/(\\sqrt 2 - 1) = \\sqrt 2$, and the gap is their log, $\\ln \\sqrt 2 = 0.3466$. Dials that differ by that much give the best corridor policy."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Epsilon-greedy is stuck",
+   "prose": "An epsilon-greedy agent with $\\varepsilon = 0.1$ moves at random a tenth of the time. Its greedy move is right or left, so its chance of right is $0.9 + 0.05 = 0.95$ or $0.05$, nothing between.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      -100,
+      0
+     ],
+     "xAxis": "bottom",
+     "xLabel": "p, the chance of moving right",
+     "yLabel": "J(p)",
+     "functions": [
+      {
+       "id": "J",
+       "expr": "(2*x-4)/(x*(1-x))",
+       "domain": [
+        0.045,
+        0.955
+       ],
+       "label": "J(p)",
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a",
+       "x": 0.05,
+       "y": -82.105,
+       "label": "0.05"
+      },
+      {
+       "id": "b",
+       "x": 0.95,
+       "y": -44.21,
+       "label": "0.95"
+      }
+     ]
+    }
+   },
+   "question": "What is $J(0.95)$? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -44.21,
+    "tol": {
+     "abs": 0.006
+    },
+    "wrong": [
+     {
+      "id": "low",
+      "value": -82.11,
+      "tol": {
+       "abs": 0.006
+      }
+     },
+     {
+      "id": "sign",
+      "value": 44.21,
+      "tol": {
+       "abs": 0.006
+      }
+     },
+     {
+      "id": "best",
+      "value": -11.66,
+      "tol": {
+       "abs": 0.006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $p = 0.95$ into $J(p)$."
+    },
+    {
+     "rung": "point",
+     "text": "Top $1.9 - 4 = -2.1$; bottom $0.95 \\times 0.05 = 0.0475$.",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-2.1 / 0.0475$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-2.1/0.0475 = -44.21$: worse than a fair coin.",
+    "generic": "Not quite. Use $p = 0.95$, not 0.9.",
+    "byKey": {
+     "low": "That is $J(0.05)$, greedy-left. Greedy-right is $p = 0.95$.",
+     "best": "That is the best stochastic policy. Epsilon-greedy cannot reach it."
+    }
+   },
+   "explain": {
+    "text": "$J(0.95) = -44.21$ and $J(0.05) = -82.11$, both far below the coin's $-12$ and the best $-11.66$. Value methods choose an arg-max move, so with one rule for three alike states they can only reach these two chances."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Code the softmax and the corridor",
+   "prose": "Write `softmax(theta)` safely: subtract the largest dial first, so a dial of 1000 does not overflow. Then `corridor_value(p)` by solving the Bellman equations, and `best_p(grid)`.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      -100,
+      0
+     ],
+     "xAxis": "bottom",
+     "xLabel": "p, the chance of moving right",
+     "yLabel": "J(p)",
+     "functions": [
+      {
+       "id": "J",
+       "expr": "(2*x-4)/(x*(1-x))",
+       "domain": [
+        0.045,
+        0.955
+       ],
+       "label": "J(p)",
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\ndef softmax(theta):\n    \"\"\"Chances from a list of dials; safe for large dials.\"\"\"\n    ...\n\ndef corridor_value(p):\n    \"\"\"J(p): solve the Bellman equations of S, B and C.\"\"\"\n    ...\n\ndef best_p(grid):\n    \"\"\"The p in grid with the largest corridor_value.\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef softmax(theta):\n    \"\"\"Chances from a list of dials; safe for large dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef corridor_value(p):\n    \"\"\"J(p): solve the Bellman equations of S, B and C.\"\"\"\n    # V = -1 + P V; rows S, B, C; reaching G ends the walk\n    P = np.array([[1 - p, p, 0.0],\n                  [p, 0.0, 1 - p],\n                  [0.0, 1 - p, 0.0]])\n    V = np.linalg.solve(np.eye(3) - P, -np.ones(3))\n    return float(V[0])\n\ndef best_p(grid):\n    \"\"\"The p in grid with the largest corridor_value.\"\"\"\n    return max(grid, key=corridor_value)\n",
+    "examples": [
+     {
+      "call": "softmax([0.0, 0.0])",
+      "expect": "[0.5, 0.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "corridor_value(0.5)",
+      "expect": "-12.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "softmax([1000.0, 1001.0])",
+      "expect": "[0.2689414213699951, 0.7310585786300049]",
+      "compare": "isclose"
+     },
+     {
+      "call": "softmax([1.0, 2.0, 3.0])",
+      "expect": "[0.09003057317038046, 0.24472847105479764, 0.6652409557748219]",
+      "compare": "isclose"
+     },
+     {
+      "call": "softmax([2.5, 2.5, 2.5])",
+      "expect": "[1/3, 1/3, 1/3]",
+      "compare": "isclose"
+     },
+     {
+      "call": "corridor_value(0.5)",
+      "expect": "-12.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "corridor_value(2 - 2 ** 0.5)",
+      "expect": "-(6 + 4 * 2 ** 0.5)",
+      "compare": "isclose"
+     },
+     {
+      "call": "corridor_value(0.05)",
+      "expect": "-3.9 / 0.0475",
+      "compare": "isclose"
+     },
+     {
+      "call": "corridor_value(0.95)",
+      "expect": "-2.1 / 0.0475",
+      "compare": "isclose"
+     },
+     {
+      "call": "best_p([i / 100 for i in range(1, 100)])",
+      "expect": "0.5858",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "best_p([0.1, 0.3, 0.9])",
+      "expect": "0.3",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. Chances and values are compared with `math.isclose`; `best_p` on a grid of hundredths must land within 0.01 of 0.5858.",
+    "mutants": [
+     {
+      "source": "import math\nimport numpy as np\n\ndef softmax(theta):\n    \"\"\"Chances from a list of dials; safe for large dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef corridor_value(p):\n    \"\"\"J(p): solve the Bellman equations of S, B and C.\"\"\"\n    # V = -1 + P V; rows S, B, C; reaching G ends the walk\n    P = np.array([[1 - p, p, 0.0],\n                  [p, 0.0, 1 - p],\n                  [0.0, 1 - p, 0.0]])\n    V = np.linalg.solve(np.eye(3) - P, -np.ones(3))\n    return float(V[0])\n\ndef best_p(grid):\n    \"\"\"The p in grid with the largest corridor_value.\"\"\"\n    return max(grid, key=corridor_value)\n",
+      "test": 1,
+      "symptom": "No maximum subtracted: exp(1000) overflows."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\ndef softmax(theta):\n    \"\"\"Chances from a list of dials; safe for large dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef corridor_value(p):\n    \"\"\"J(p): solve the Bellman equations of S, B and C.\"\"\"\n    # V = -1 + P V; rows S, B, C; reaching G ends the walk\n    P = np.array([[1 - p, p, 0.0],\n                  [1 - p, 0.0, p],\n                  [0.0, 1 - p, 0.0]])\n    V = np.linalg.solve(np.eye(3) - P, -np.ones(3))\n    return float(V[0])\n\ndef best_p(grid):\n    \"\"\"The p in grid with the largest corridor_value.\"\"\"\n    return max(grid, key=corridor_value)\n",
+      "test": 5,
+      "symptom": "B does not reverse the moves: right goes on to C."
+     },
+     {
+      "source": "import math\nimport numpy as np\n\ndef softmax(theta):\n    \"\"\"Chances from a list of dials; safe for large dials.\"\"\"\n    m = max(theta)\n    e = [math.exp(t - m) for t in theta]\n    total = sum(e)\n    return [x / total for x in e]\n\ndef corridor_value(p):\n    \"\"\"J(p): solve the Bellman equations of S, B and C.\"\"\"\n    # V = -1 + P V; rows S, B, C; reaching G ends the walk\n    P = np.array([[1 - p, p, 0.0],\n                  [p, 0.0, 1 - p],\n                  [0.0, 1 - p, 0.0]])\n    V = np.linalg.solve(np.eye(3) - P, -np.ones(3))\n    return float(V[0])\n\ndef best_p(grid):\n    \"\"\"The p in grid with the largest corridor_value.\"\"\"\n    return min(grid, key=corridor_value)\n",
+      "test": 8,
+      "symptom": "best_p picks the lowest value."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`math.exp(1000)` overflows; `math.exp(0)` does not."
+    },
+    {
+     "rung": "point",
+     "text": "Each state: $V = -1 + \\sum$ chance $\\times$ next $V$, with G worth 0."
+    },
+    {
+     "rung": "step",
+     "text": "Rows S, B, C of $(I - P)V = -\\mathbf 1$; in B, right goes to S."
+    }
+   ],
+   "feedback": {
+    "correct": "All hidden tests pass.",
+    "generic": "Some tests fail. Read the first failing row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Deterministic is not always best",
+   "prose": "A colleague says: \"The best policy is always deterministic, so push one dial to the limit.\" In level 2, value iteration found a deterministic optimal policy on the gridworld.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "S",
+       "label": "S",
+       "x": 0.1,
+       "y": 0.55
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.37,
+       "y": 0.55
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.63,
+       "y": 0.55
+      },
+      {
+       "id": "G",
+       "label": "G",
+       "x": 0.9,
+       "y": 0.55
+      }
+     ],
+     "edges": [
+      {
+       "from": "S",
+       "to": "S",
+       "label": "L",
+       "directed": true,
+       "loopAngle": 90
+      },
+      {
+       "from": "S",
+       "to": "B",
+       "label": "R",
+       "directed": true
+      },
+      {
+       "from": "B",
+       "to": "S",
+       "label": "R",
+       "directed": true
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "label": "L",
+       "directed": true
+      },
+      {
+       "from": "C",
+       "to": "B",
+       "label": "L",
+       "directed": true
+      },
+      {
+       "from": "C",
+       "to": "G",
+       "label": "R",
+       "directed": true
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "S",
+      "B",
+      "C"
+     ]
+    }
+   },
+   "question": "When does the colleague's rule hold?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "full",
+      "text": "When the agent can tell every state apart",
+      "correct": true
+     },
+     {
+      "id": "always",
+      "text": "Always",
+      "why": "Here every deterministic rule never reaches G, while $p = 0.5858$ takes 11.66 steps."
+     },
+     {
+      "id": "never",
+      "text": "Never",
+      "why": "On the gridworld, where each cell is seen, a greedy deterministic policy was optimal."
+     },
+     {
+      "id": "disc",
+      "text": "Only when the discount is below 1",
+      "why": "The corridor has no discount, and the gridworld result holds at 0.9 too. What matters is what the agent can see."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did the gridworld agent know that this robot does not?"
+    },
+    {
+     "rung": "point",
+     "text": "This robot sees S, B and C as the same state.",
+     "highlight": [
+      "S",
+      "B",
+      "C"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "With every state seen, a best move exists in each."
+    }
+   ],
+   "feedback": {
+    "correct": "With full state information some deterministic policy is optimal. When states look alike, a coin can win.",
+    "generic": "Not quite. Ask what the agent can see.",
+    "byKey": {
+     "always": "You took the gridworld result as a rule for every problem. It needs states the agent can tell apart; here a coin beats every fixed rule."
+    }
+   },
+   "explain": {
+    "text": "With every state visible, the best move in each state gives a deterministic optimal policy. Here three states share one rule, and a stochastic rule escapes the loop."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "All dials equal",
+   "prose": "Three moves, dials $\\boldsymbol\\theta = (2.5, 2.5, 2.5)$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "L",
+      "U",
+      "R"
+     ],
+     "yLabel": "dial",
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "L": 2.5,
+      "U": 2.5,
+      "R": 2.5
+     }
+    }
+   },
+   "question": "What is $\\pi$ of the first move? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3333,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 0.8333,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "all",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each term is $e^{2.5}$."
+    },
+    {
+     "rung": "point",
+     "text": "The sum is $3e^{2.5}$."
+    },
+    {
+     "rung": "step",
+     "text": "$e^{2.5}/(3e^{2.5})$."
+    }
+   ],
+   "feedback": {
+    "correct": "Equal dials give the uniform policy: $1/3$ each.",
+    "generic": "Not quite. Divide one exponential by the sum of three equal ones.",
+    "byKey": {
+     "ratio": "You divided the dial by 3. Divide $e^{2.5}$ by the sum of the exponentials.",
+     "all": "No dial is larger, so no move takes everything."
+    }
+   },
+   "explain": {
+    "text": "$e^{2.5}/(3e^{2.5}) = 1/3$. Adding the same number to every dial changes nothing, so all equal is uniform whatever the value."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The softmax policy",
+   "prose": "A softmax policy turns dials into chances: $$\\pi_\\theta(a) = \\frac{e^{\\theta_a}}{\\sum_b e^{\\theta_b}}.$$ Gaps between dials set the odds. Unlike an arg-max, it can sit anywhere between 0 and 1, which the corridor needs.",
+   "question": "Which change leaves a softmax policy's chances unchanged?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "shift",
+      "text": "Adding the same number to every dial",
+      "correct": true
+     },
+     {
+      "id": "double",
+      "text": "Doubling every dial",
+      "why": "Doubling widens every gap, so the odds change (unless all dials are equal)."
+     },
+     {
+      "id": "one",
+      "text": "Adding 1 to just one of the dials",
+      "why": "That raises one move's odds by a factor of $e$."
+     },
+     {
+      "id": "zero",
+      "text": "Setting every dial back to 0",
+      "why": "That makes the policy uniform, which changes it unless it already was."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A common shift cancels top and bottom; that is why subtracting the maximum is safe.",
+    "generic": "Think about which changes keep every gap the same."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A rule others cannot read",
+   "prose": "A desk sells a block either at the open or at the close. A rival who knows the time trades ahead and costs the desk £600; a wrong guess costs nothing. The rival guesses the more likely time, so with chance $p$ of the open the expected cost is $\\pounds 600 \\times \\max(p, 1 - p)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      700
+     ],
+     "xLabel": "p, chance of the open",
+     "yLabel": "expected cost (£)",
+     "functions": [
+      {
+       "id": "c",
+       "expr": "600*max(x, 1-x)",
+       "label": "cost"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the lowest expected cost, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 300,
+    "tol": {
+     "abs": 0.5
+    },
+    "wrong": [
+     {
+      "id": "fixed",
+      "value": 600,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ],
+    "unit": "£"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where is $\\max(p, 1 - p)$ smallest?"
+    },
+    {
+     "rung": "point",
+     "text": "At $p = 0.5$ the two are equal.",
+     "highlight": [
+      "c"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$600 \\times 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "At $p = 0.5$ the rival is right half the time: £300.",
+    "generic": "Not quite. Find the $p$ that makes the larger of $p$ and $1 - p$ as small as it can be.",
+    "byKey": {
+     "fixed": "That is a fixed time, which the rival reads every day.",
+     "zero": "The rival still guesses right half the time at best."
+    }
+   },
+   "explain": {
+    "text": "Any fixed rule costs £600, because the rival reads it. A fair coin halves that to £300. As in the corridor, a stochastic policy wins when a fixed one can be exploited."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A softmax policy turns dials into chances; only the gaps between dials matter, so subtracting the largest dial is safe.",
+   "In the short corridor the agent cannot tell S, B and C apart: every fixed rule loops for ever, and $p = 2 - \\sqrt 2 = 0.5858$ is best, at $J = -11.657$.",
+   "Epsilon-greedy with $\\varepsilon = 0.1$ can reach only $p = 0.05$ or $0.95$ (returns $-82.11$ and $-44.21$); policy methods can reach any chance."
+  ],
+  "formula": {
+   "name": "Softmax policy",
+   "tex": "\\pi_\\theta(a) = \\dfrac{e^{\\theta_a}}{\\sum_b e^{\\theta_b}}",
+   "note": "With two moves, the chance of one is the logistic function of the gap."
+  },
+  "trap": "Assuming the best policy is deterministic: true when every state can be told apart, false when states look alike."
+ },
+ "quiz": [
+  {
+   "id": "q-softmax-odds",
+   "difficulty": 2,
+   "prose": "Two moves with dials $\\theta = (0, \\ln 3)$.",
+   "question": "What is the chance of the second move? Give a decimal.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.75,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "swap",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "odds",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^{\\ln 3}/(1 + e^{\\ln 3}) = 3/4$.",
+    "generic": "Not quite. Turn each dial into $e^{\\theta}$ first.",
+    "byKey": {
+     "swap": "That is the first move's chance.",
+     "odds": "That is the odds, 3 to 1. Turn it into a chance."
+    }
+   },
+   "explain": {
+    "text": "The exponentials are 1 and 3, so the second move has chance $3/4 = 0.75$."
+   }
+  },
+  {
+   "id": "q-corridor-quarter",
+   "difficulty": 3,
+   "prose": "In the short corridor, $J(p) = (2p - 4)/(p(1 - p))$.",
+   "question": "What is $J(0.25)$? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -18.67,
+    "tol": {
+     "abs": 0.006
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 18.67,
+      "tol": {
+       "abs": 0.006
+      }
+     },
+     {
+      "id": "coin",
+      "value": -12,
+      "tol": {
+       "abs": 0.006
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-3.5/0.1875 = -18.67$.",
+    "generic": "Not quite. Work out the top and the bottom.",
+    "byKey": {
+     "sign": "Every step costs £1, so the return is negative.",
+     "coin": "That is $J(0.5)$."
+    }
+   },
+   "explain": {
+    "text": "Top $0.5 - 4 = -3.5$; bottom $0.25 \\times 0.75 = 0.1875$; so $J(0.25) = -18.67$."
+   }
+  },
+  {
+   "id": "q-why-not-greedy",
+   "difficulty": 3,
+   "prose": "An agent learns values and acts epsilon-greedily with $\\varepsilon = 0.1$ on the corridor.",
+   "question": "Why can it not reach $p = 0.5858$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "argmax",
+      "text": "Its greedy move is one move, so its chance of right is 0.95 or 0.05",
+      "correct": true
+     },
+     {
+      "id": "slow",
+      "text": "It learns its values far too slowly",
+      "why": "Speed is not the issue: even perfect values give an arg-max move."
+     },
+     {
+      "id": "eps",
+      "text": "Its $\\varepsilon$ is too small to explore enough",
+      "why": "A larger $\\varepsilon$ only moves the two reachable chances towards 0.5 together."
+     },
+     {
+      "id": "disc",
+      "text": "It needs a discount below 1 to settle",
+      "why": "The discount does not change that it picks one move."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Value methods choose an arg-max; with one rule for three states it cannot choose 0.5858.",
+    "generic": "Not quite. What chances can an arg-max rule produce?"
+   },
+   "explain": {
+    "text": "An arg-max picks right or left, and $\\varepsilon$ adds a fixed share of random moves, so only 0.95 and 0.05 are reachable."
+   }
+  }
+ ]
+}
