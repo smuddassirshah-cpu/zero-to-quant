@@ -1,0 +1,500 @@
+{
+ "id": "problems-3",
+ "course": "backprop",
+ "level": 3,
+ "title": "One neuron, step by step",
+ "minutes": 45,
+ "items": [
+  {
+   "id": "p-neuron-two-points",
+   "difficulty": 3,
+   "skills": [
+    "bp-networks"
+   ],
+   "prose": "A one-neuron model $o = \\tanh(wx)$ with $w = 0.5$ is fitted to two points: $x = 1$ with target 1, and $x = -1$ with target $-1$. The loss is $L = \\sum (o - y)^2$.",
+   "parts": [
+    {
+     "question": "What is the output at $x = 1$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.4621,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "no-tanh",
+        "value": 0.5,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tanh 0.5 = 0.4621$.",
+      "generic": "Not quite. Apply tanh to $wx$.",
+      "byKey": {
+       "no-tanh": "You gave $wx$. The output is its tanh."
+      }
+     },
+     "explain": {
+      "text": "$o = \\tanh(0.5 \\times 1) = 0.4621$."
+     }
+    },
+    {
+     "question": "Using $o = 0.4621$ at $x = 1$ and $-0.4621$ at $x = -1$, what is $L$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5786,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "one-point",
+        "value": 0.2893,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2 \\times (0.462117 - 1)^2 = 0.578636$, which is 0.5786.",
+      "generic": "Not quite. Add both points.",
+      "byKey": {
+       "one-point": "You used one point. The second misses by the same 0.5379."
+      }
+     },
+     "explain": {
+      "text": "Each point misses by 0.537883, so $L = 2 \\times 0.537883^2 = 0.578636$, which is 0.5786."
+     }
+    },
+    {
+     "question": "What is $\\partial L/\\partial w$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -1.6921,
+      "tol": {
+       "abs": 0.0002
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "one-point",
+        "value": -0.846,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "sign",
+        "value": 1.6921,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Each point gives $2(o - y)(1 - o^2)x = -0.8460$; together $-1.6921$.",
+      "generic": "Not quite. Back through the square, the tanh and the product, for each point.",
+      "byKey": {
+       "one-point": "You used one point. Both add the same $-0.8460$.",
+       "sign": "At $x = 1$ the output is too low, so raising $w$ lowers $L$: the gradient is negative."
+      }
+     },
+     "explain": {
+      "text": "At $x = 1$: $2(-0.5379)(0.7864)(1) = -0.8460$; at $x = -1$ the signs of $(o - y)$ and $x$ both flip, giving the same. Total $-1.6921$."
+     }
+    },
+    {
+     "question": "Using $\\partial L/\\partial w = -1.6921$ and step size 0.1, what is $w$ after one step? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6692,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "with",
+        "value": 0.3308,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.5 - 0.1 \\times (-1.6921) = 0.6692$.",
+      "generic": "Not quite. Step against the gradient.",
+      "byKey": {
+       "with": "You stepped with the gradient. Subtract it."
+      }
+     },
+     "explain": {
+      "text": "Against a negative gradient $w$ rises: $0.5 + 0.1692 = 0.6692$."
+     }
+    },
+    {
+     "question": "Using $w = 0.6692$, what is the new loss? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.3454,
+      "tol": {
+       "abs": 0.0002
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "old",
+        "value": 0.5786,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2(\\tanh 0.6692 - 1)^2 = 0.3454$, down from 0.5786.",
+      "generic": "Not quite. Recompute the output at the new $w$.",
+      "byKey": {
+       "old": "That is the loss before the step."
+      }
+     },
+     "explain": {
+      "text": "$\\tanh(0.6692) = 0.5845$, so each point misses by $0.4155$ and $L = 0.3454$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-neuron-bias-step",
+   "difficulty": 4,
+   "skills": [
+    "bp-networks"
+   ],
+   "prose": "A model $o = \\tanh(wx + b)$ with $w = 1$, $b = -0.5$ sees two points: $x = 2$ with target 1, and $x = 0$ with target $-1$. The loss is $L = \\sum (o - y)^2$.",
+   "parts": [
+    {
+     "question": "What is $L$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.2983,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "first-only",
+        "value": 0.009,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Outputs 0.9051 and $-0.4621$; $L = 0.2983$.",
+      "generic": "Not quite. Compute both outputs first.",
+      "byKey": {
+       "first-only": "You used the first point. The second misses by 0.5379."
+      }
+     },
+     "explain": {
+      "text": "$\\tanh 1.5 = 0.9051$ misses by 0.0949; $\\tanh(-0.5) = -0.4621$ misses by 0.5379. Squared and added, $L = 0.2983$."
+     }
+    },
+    {
+     "question": "What is $\\partial L/\\partial b$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8118,
+      "tol": {
+       "abs": 0.0002
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "first-only",
+        "value": -0.0343,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "no-slope",
+        "value": 0.8861,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2(o - y)(1 - o^2)$ summed: $-0.034281 + 0.846033 = 0.811752$, which is 0.8118.",
+      "generic": "Not quite. Each point gives $2(o - y)(1 - o^2)$, and the bias collects both.",
+      "byKey": {
+       "first-only": "You used the first point only. The bias feeds both.",
+       "no-slope": "You left out the tanh's slope $1 - o^2$."
+      }
+     },
+     "explain": {
+      "text": "The bias gets $2(o - y)(1 - o^2)$ from each point: $-0.0343$ from $x = 2$ and $0.8460$ from $x = 0$. Total $0.8118$."
+     }
+    },
+    {
+     "question": "Using $\\partial L/\\partial b = 0.8118$ and step size 0.2, what is $b$ after one step? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.6624,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "with",
+        "value": -0.3376,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.6624,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-0.5 - 0.2 \\times 0.8118 = -0.6624$.",
+      "generic": "Not quite. Step against the gradient.",
+      "byKey": {
+       "with": "You stepped with the gradient. Subtract it.",
+       "sign": "The bias stays negative; it moves further below 0."
+      }
+     },
+     "explain": {
+      "text": "$b$ moves against its gradient: $-0.5 - 0.1624 = -0.6624$."
+     }
+    },
+    {
+     "question": "With $w = 1$ and $b = -0.6624$, what is the new loss? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.1931,
+      "tol": {
+       "abs": 0.0002
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "old",
+        "value": 0.2983,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$L = 0.1931$, down from 0.2983.",
+      "generic": "Not quite. Recompute both outputs.",
+      "byKey": {
+       "old": "That is the loss before the step."
+      }
+     },
+     "explain": {
+      "text": "The outputs become 0.8711 and $-0.5799$, so $L = 0.1931$: the second point gained more than the first lost."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-check-one-neuron",
+   "difficulty": 5,
+   "skills": [
+    "bp-networks",
+    "bp-check"
+   ],
+   "prose": "Check a gradient by hand. A model $o = \\tanh(2w)$ has target 0.5 and loss $L = (o - 0.5)^2$, at $w = 0.3$.",
+   "parts": [
+    {
+     "question": "What is $o$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.537,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "no-two",
+        "value": 0.2913,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tanh 0.6 = 0.5370$.",
+      "generic": "Not quite. The input to tanh is $2w$.",
+      "byKey": {
+       "no-two": "You took $\\tanh 0.3$. The input is $2w = 0.6$."
+      }
+     },
+     "explain": {
+      "text": "$o = \\tanh(0.6) = 0.5370$."
+     }
+    },
+    {
+     "question": "What does backpropagation give for $\\partial L/\\partial w$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.1055,
+      "tol": {
+       "abs": 0.0002
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "no-two",
+        "value": 0.0527,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "used-n",
+        "value": 0.0948,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2(o - 0.5)(1 - o^2) \\times 2 = 0.1055$.",
+      "generic": "Not quite. Three local derivatives: the square, the tanh, the doubling.",
+      "byKey": {
+       "no-two": "You left out the doubling box: $\\partial(2w)/\\partial w = 2$.",
+       "used-n": "You used $1 - n^2$ with $n = 0.6$. The tanh slope is $1 - o^2$."
+      }
+     },
+     "explain": {
+      "text": "The square gives $2(o - 0.5) = 0.0741$, the tanh $1 - o^2 = 0.7116$, the doubling 2. Their product is $0.1055$."
+     }
+    },
+    {
+     "question": "Estimate the slope from the forward pass alone: compute $\\tfrac{L(0.31) - L(0.29)}{0.02}$. Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.105,
+      "tol": {
+       "abs": 0.0001
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "backprop",
+        "value": 0.1055,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "forward",
+        "value": 0.1241,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$L(0.31) = 0.002614$ and $L(0.29) = 0.000514$, so the difference is 0.1050.",
+      "generic": "Not quite. Recompute $L$ at 0.31 and 0.29.",
+      "byKey": {
+       "backprop": "That is the backpropagated value. Recompute $L$ at the two points.",
+       "forward": "That is the forward difference from 0.3 to 0.31."
+      }
+     },
+     "explain": {
+      "text": "$L(0.31) - L(0.29) = 0.002100$, divided by 0.02 gives 0.1050."
+     }
+    },
+    {
+     "question": "Using 0.1055 from backpropagation and 0.1050 from the difference, what is the relative error? Give 2 significant figures.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0041,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "absolute",
+        "value": 0.0004,
+        "tol": {
+         "abs": 3e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.000437 / 0.105455 = 0.0041$.",
+      "generic": "Not quite. Divide the gap by the larger value.",
+      "byKey": {
+       "absolute": "That is the gap. Divide it by the larger value."
+      }
+     },
+     "explain": {
+      "text": "The gap is 0.000437 and the larger value 0.105455, so the relative error is 0.0041. At $h = 0.01$ that is the difference's own $h^2$ error, not a bug."
+     }
+    },
+    {
+     "question": "The forward difference $\\tfrac{L(0.31) - L(0.3)}{0.01}$ is 0.1241. What is its relative error against 0.1055? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.15,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "a decimal",
+      "wrong": [
+       {
+        "id": "central",
+        "value": 0.0041,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.0187 / 0.1241 = 0.15$: about 40 times the central error.",
+      "generic": "Not quite. Divide the gap by the larger value.",
+      "byKey": {
+       "central": "That is the central difference's error."
+      }
+     },
+     "explain": {
+      "text": "$|0.1241 - 0.1055| / 0.1241 = 0.15$. The forward difference keeps an error of order $h$; the central one an error of order $h^2$."
+     }
+    }
+   ]
+  }
+ ]
+}

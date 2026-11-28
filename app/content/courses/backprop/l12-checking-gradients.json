@@ -1,0 +1,1309 @@
+{
+ "id": "l12-checking-gradients",
+ "course": "backprop",
+ "title": "Checking gradients",
+ "minutes": 15,
+ "objectives": [
+  "Check backpropagated gradients against central differences, and choose the step that makes the check trustworthy."
+ ],
+ "skills": [
+  "bp-check"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A bug with plausible numbers",
+   "prose": "Priya's `tanh()` closure used $1 - n^2$. Her network still trained, a little slower, and every gradient looked sensible. Such a bug survives until something independent checks it.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> loss.backward()",
+      ">>> [round(p.grad, 3) for p in model.parameters()][:5]",
+      "[0.056, -0.012, 1.383, 0.896, 0.791]",
+      "# plausible numbers: right or wrong?"
+     ],
+     "title": "Priya's gradients"
+    },
+    "state": {}
+   },
+   "question": "Which check would catch her bug?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "numeric",
+      "text": "Nudge each parameter, recompute the loss, and compare the change with its gradient",
+      "correct": true
+     },
+     {
+      "id": "falls",
+      "text": "Check that the loss falls steadily during training",
+      "why": "Her loss fell too. A wrong gradient often still points roughly downhill."
+     },
+     {
+      "id": "sign",
+      "text": "Check that every gradient has the sign you expect it to have",
+      "why": "Her signs were right; the sizes were slightly off."
+     },
+     {
+      "id": "twice",
+      "text": "Run `backward()` twice and compare the two sets of gradients",
+      "why": "Both runs would repeat the same mistake."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The check must not use her `backward()`."
+    },
+    {
+     "rung": "point",
+     "text": "Recomputing the loss uses only the forward pass.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compare a nudge's effect with each gradient."
+    }
+   ],
+   "feedback": {
+    "correct": "A numerical estimate from the forward pass alone is independent of `backward()`.",
+    "generic": "Not quite. The check must not trust her backward pass."
+   },
+   "explain": {
+    "text": "Nudging a parameter and recomputing the loss uses only the forward pass, which her bug does not touch. If the change disagrees with the gradient, `backward()` is wrong."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "The central difference",
+   "prose": "The **central difference** $\\dfrac{f(x + h) - f(x - h)}{2h}$ is the slope of the dashed chord from $x - h$ to $x + h$. Here $f = \\tanh$ at $x = 0.5$, where the true slope is $1 - \\tanh^2 0.5 = 0.7864$. Move $h$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      1.6
+     ],
+     "y": [
+      -0.5,
+      1.1
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "(exp(2*x) - 1)/(exp(2*x) + 1)",
+       "label": "tanh x"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "A",
+       "x": 0,
+       "y": 0,
+       "on": "f",
+       "label": "x − h"
+      },
+      {
+       "id": "B",
+       "x": 1,
+       "y": 0.7615941559557649,
+       "on": "f",
+       "label": "x + h"
+      }
+     ],
+     "segments": [
+      {
+       "id": "sec",
+       "from": "A",
+       "to": "B",
+       "dashed": true
+      }
+     ],
+     "tangent": {
+      "f": "f",
+      "x": 0.5,
+      "lengthPx": 120
+     }
+    },
+    "controls": [
+     {
+      "bind": "hh",
+      "min": 0.05,
+      "max": 0.5,
+      "step": 0.05,
+      "label": "h",
+      "start": 0.5
+     }
+    ],
+    "derive": {
+     "A.x": "0.5 - hh",
+     "B.x": "0.5 + hh",
+     "caption": "h = {{fixed(hh, 2)}}: central difference = {{fixed(((exp(2*(0.5 + hh)) - 1)/(exp(2*(0.5 + hh)) + 1) - (exp(2*(0.5 - hh)) - 1)/(exp(2*(0.5 - hh)) + 1)) / (2 * hh), 4)}}; slope 0.7864"
+    }
+   },
+   "question": "What is the central difference at $h = 0.1$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7855,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "forward",
+      "value": 0.7493,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "true",
+      "value": 0.7864,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set $h$ to 0.1 and read the caption."
+    },
+    {
+     "rung": "point",
+     "text": "$(\\tanh 0.6 - \\tanh 0.4)/0.2$.",
+     "highlight": [
+      "sec"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.7855."
+    }
+   ],
+   "feedback": {
+    "correct": "0.7855, within 0.001 of the true 0.7864; at $h = 0.5$ it is far off.",
+    "generic": "Not quite. Read the caption at $h = 0.1$.",
+    "byKey": {
+     "forward": "That is the forward difference $(\\tanh 0.6 - \\tanh 0.5)/0.1$. The central one straddles $x$.",
+     "true": "That is the true slope. The chord at $h = 0.1$ is slightly below it."
+    }
+   },
+   "explain": {
+    "text": "$(\\tanh 0.6 - \\tanh 0.4)/0.2 = 0.7855$, against the true 0.7864. As $h$ shrinks the chord turns into the tangent.",
+    "canvas": {
+     "params": {
+      "hh": 0.1
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "Why the error shrinks like h squared",
+   "prose": "The taylor course added a curvature term $\\tfrac{h^2}{2}f''$ to the tangent line. Write $f(x + h)$ and $f(x - h)$ with one more term, $\\tfrac{h^3}{6}f'''$, and subtract.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      1.6
+     ],
+     "y": [
+      -0.5,
+      1.1
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "(exp(2*x) - 1)/(exp(2*x) + 1)",
+       "label": "tanh x"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "A",
+       "x": 0.4,
+       "y": 0.3799489622552249
+      },
+      {
+       "id": "B",
+       "x": 0.6,
+       "y": 0.5370495669980353
+      }
+     ],
+     "segments": [
+      {
+       "id": "sec",
+       "from": "A",
+       "to": "B",
+       "dashed": true
+      }
+     ],
+     "tangent": {
+      "f": "f",
+      "x": 0.5,
+      "lengthPx": 120
+     }
+    }
+   },
+   "question": "Put the lines in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "e1",
+      "text": "$f(x + h) = f + hf' + \\tfrac{h^2}{2}f'' + \\tfrac{h^3}{6}f''' + \\cdots$: Taylor, the curvature term and one more"
+     },
+     {
+      "id": "e2",
+      "text": "$f(x - h) = f - hf' + \\tfrac{h^2}{2}f'' - \\tfrac{h^3}{6}f''' + \\cdots$: replace $h$ by $-h$"
+     },
+     {
+      "id": "e3",
+      "text": "$f(x + h) - f(x - h) = 2hf' + \\tfrac{h^3}{3}f''' + \\cdots$: subtract; $f$ and the curvature terms cancel"
+     },
+     {
+      "id": "e4",
+      "text": "$\\dfrac{f(x + h) - f(x - h)}{2h} = f' + \\tfrac{h^2}{6}f''' + \\cdots$: divide by $2h$, so the error is about $\\tfrac{|f'''|}{6}h^2$"
+     },
+     {
+      "id": "ex",
+      "text": "The error is about $\\tfrac{|f''|}{2}h$, like any difference",
+      "why": "That is the forward difference's error. In the central one the curvature terms cancel."
+     }
+    ],
+    "answer": [
+     "e1",
+     "e2",
+     "e3",
+     "e4"
+    ],
+    "distractors": [
+     "ex"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Expand both sides first."
+    },
+    {
+     "rung": "point",
+     "text": "Subtracting cancels the even powers of $h$.",
+     "highlight": [
+      "sec"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then divide by $2h$."
+    }
+   ],
+   "feedback": {
+    "correct": "The $f''$ terms cancel, leaving an error of $\\tfrac{f'''}{6}h^2$.",
+    "generic": "Not quite. Expand, subtract, divide.",
+    "byKey": {
+     "ex": "That is the forward difference. Subtracting the two expansions removes the $h$-sized term."
+    }
+   },
+   "explain": {
+    "text": "Subtracting the two expansions cancels $f$ and the $\\tfrac{h^2}{2}f''$ terms. Dividing by $2h$ leaves $f' + \\tfrac{h^2}{6}f'''$, so halving $h$ quarters the error until rounding takes over."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Too small is also wrong",
+   "prose": "The errors of both differences for $\\tanh'(0.5)$, as powers of ten: $-5$ on an axis means $10^{-5}$. Solid is forward, dashed is central. The central error is $9.42 \\times 10^{-6}$ at $h = 0.01$ and $9.42 \\times 10^{-8}$ at 0.001: it falls like $h^2$. Below about $10^{-5}$, rounding in $f(x + h) - f(x - h)$ takes over and it rises again.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -10.5,
+      -0.5
+     ],
+     "y": [
+      -12,
+      0
+     ],
+     "xLabel": "log₁₀ h",
+     "yLabel": "log₁₀ error",
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "xAxis": "bottom",
+     "functions": [
+      {
+       "id": "fw",
+       "points": [
+        [
+         -1.0,
+         -1.4303
+        ],
+        [
+         -2.0,
+         -2.4385
+        ],
+        [
+         -3.0,
+         -3.4395
+        ],
+        [
+         -4.0,
+         -4.4396
+        ],
+        [
+         -5.0,
+         -5.4396
+        ],
+        [
+         -6.0,
+         -6.4397
+        ],
+        [
+         -8.0,
+         -8.4198
+        ],
+        [
+         -10.0,
+         -6.798
+        ]
+       ],
+       "label": "forward"
+      },
+      {
+       "id": "ce",
+       "points": [
+        [
+         -1.0,
+         -3.0247
+        ],
+        [
+         -2.0,
+         -5.0259
+        ],
+        [
+         -3.0,
+         -7.0259
+        ],
+        [
+         -4.0,
+         -9.026
+        ],
+        [
+         -5.0,
+         -10.8133
+        ],
+        [
+         -6.0,
+         -10.2675
+        ],
+        [
+         -8.0,
+         -8.4198
+        ],
+        [
+         -10.0,
+         -6.3597
+        ]
+       ],
+       "label": "central",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "c0",
+       "x": -1.0,
+       "y": -3.0247
+      },
+      {
+       "id": "c1",
+       "x": -2.0,
+       "y": -5.0259
+      },
+      {
+       "id": "c2",
+       "x": -3.0,
+       "y": -7.0259
+      },
+      {
+       "id": "c3",
+       "x": -4.0,
+       "y": -9.026
+      },
+      {
+       "id": "c4",
+       "x": -5.0,
+       "y": -10.8133
+      },
+      {
+       "id": "c5",
+       "x": -6.0,
+       "y": -10.2675
+      },
+      {
+       "id": "c6",
+       "x": -8.0,
+       "y": -8.4198
+      },
+      {
+       "id": "c7",
+       "x": -10.0,
+       "y": -6.3597
+      }
+     ]
+    }
+   },
+   "question": "Near which $h$ is the central error smallest?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "m5",
+      "text": "$h = 10^{-5}$",
+      "correct": true
+     },
+     {
+      "id": "m10",
+      "text": "$h = 10^{-10}$",
+      "why": "At $10^{-10}$ rounding dominates: the error is $4.4 \\times 10^{-7}$."
+     },
+     {
+      "id": "m2",
+      "text": "$h = 10^{-2}$",
+      "why": "The $h^2$ term is still large there: $9.4 \\times 10^{-6}$."
+     },
+     {
+      "id": "m8",
+      "text": "$h = 10^{-8}$",
+      "why": "At $10^{-8}$ rounding already gives $3.8 \\times 10^{-9}$, worse than at $10^{-5}$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the lowest point of the dashed curve."
+    },
+    {
+     "rung": "point",
+     "text": "It falls steeply, then turns up.",
+     "highlight": [
+      "ce"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The bottom is near $10^{-5}$, at $1.5 \\times 10^{-11}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Near $10^{-5}$: $1.54 \\times 10^{-11}$. Smaller $h$ loses digits to rounding.",
+    "generic": "Not quite. Find the lowest point of the central curve."
+   },
+   "explain": {
+    "text": "The $h^2$ error and the rounding error trade off. For this $f$ the best $h$ is near $10^{-5}$, where the central difference is good to about $10^{-11}$; the forward one is never better than about $10^{-9}$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Relative error",
+   "prose": "A check compares two numbers with the **relative error** $\\dfrac{|a - b|}{\\max(|a|, |b|)}$, so a tolerance means the same for large and small gradients. Backpropagation gives $a = 2.0$ for one parameter; the central difference gives $b = 2.002$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Gradient"
+     ],
+     "rows": [
+      [
+       "backward()",
+       "2.0"
+      ],
+      [
+       "central difference",
+       "2.002"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the relative error? Give 2 significant figures.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.001,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "absolute",
+      "value": 0.002,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "percent",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the gap by the larger size."
+    },
+    {
+     "rung": "point",
+     "text": "$|2.0 - 2.002| = 0.002$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.002 / 2.002 = 0.000999$, which is 0.0010."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.002 / 2.002 = 0.0010$: agreement to about one part in a thousand.",
+    "generic": "Not quite. Divide the gap by the larger of the two sizes.",
+    "byKey": {
+     "absolute": "That is the absolute gap. Divide it by 2.002.",
+     "percent": "You gave a percentage. As a fraction it is 0.0010."
+    }
+   },
+   "explain": {
+    "text": "$|a - b| = 0.002$ and $\\max(|a|, |b|) = 2.002$, so the relative error is 0.000999, about 0.0010. An absolute gap of 0.002 would mean something very different for a gradient of $10^{-5}$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Checking the course network",
+   "prose": "The check on the course network at its starting parameters: for each of the 13 parameters, compare `p.grad` with the central difference of the loss, and keep the largest relative error.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$h$",
+      "Largest relative error"
+     ],
+     "rows": [
+      [
+       "$10^{-2}$",
+       "$1.6 \\times 10^{-3}$"
+      ],
+      [
+       "$10^{-4}$",
+       "$1.6 \\times 10^{-7}$"
+      ],
+      [
+       "$10^{-6}$",
+       "$2.8 \\times 10^{-8}$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "A check passes below $10^{-6}$. At which steps does it pass? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "h4",
+      "text": "$h = 10^{-4}$",
+      "correct": true
+     },
+     {
+      "id": "h6",
+      "text": "$h = 10^{-6}$",
+      "correct": true
+     },
+     {
+      "id": "h2",
+      "text": "$h = 10^{-2}$",
+      "why": "At $10^{-2}$ the $h^2$ error alone is about $10^{-3}$, far above $10^{-6}$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each row with $10^{-6}$."
+    },
+    {
+     "rung": "point",
+     "text": "$1.6 \\times 10^{-7}$ and $2.8 \\times 10^{-8}$ are below it.",
+     "highlight": [
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$10^{-4}$ and $10^{-6}$ pass."
+    }
+   ],
+   "feedback": {
+    "correct": "$10^{-4}$ and $10^{-6}$ pass; $10^{-2}$ fails on the difference's own error.",
+    "generic": "Not quite. Compare each row with $10^{-6}$."
+   },
+   "explain": {
+    "text": "At $h = 10^{-2}$ the error is the central difference's own $h^2$ term, about $10^{-3}$. At $10^{-4}$ and $10^{-6}$ the two methods agree to better than $10^{-6}$, so `backward()` is right."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A forward difference reads as a bug",
+   "prose": "Ali checks a tanh gradient with the forward difference $\\dfrac{f(x + h) - f(x)}{h}$ at $h = 0.01$. At $x = 0.5$ it gives 0.7828 against `backward()`'s 0.7864, a relative error of $4.6 \\times 10^{-3}$. He files a bug against `backward()`.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -10.5,
+      -0.5
+     ],
+     "y": [
+      -12,
+      0
+     ],
+     "xLabel": "log₁₀ h",
+     "yLabel": "log₁₀ error",
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "xAxis": "bottom",
+     "functions": [
+      {
+       "id": "fw",
+       "points": [
+        [
+         -1.0,
+         -1.4303
+        ],
+        [
+         -2.0,
+         -2.4385
+        ],
+        [
+         -3.0,
+         -3.4395
+        ],
+        [
+         -4.0,
+         -4.4396
+        ],
+        [
+         -5.0,
+         -5.4396
+        ],
+        [
+         -6.0,
+         -6.4397
+        ],
+        [
+         -8.0,
+         -8.4198
+        ],
+        [
+         -10.0,
+         -6.798
+        ]
+       ],
+       "label": "forward"
+      },
+      {
+       "id": "ce",
+       "points": [
+        [
+         -1.0,
+         -3.0247
+        ],
+        [
+         -2.0,
+         -5.0259
+        ],
+        [
+         -3.0,
+         -7.0259
+        ],
+        [
+         -4.0,
+         -9.026
+        ],
+        [
+         -5.0,
+         -10.8133
+        ],
+        [
+         -6.0,
+         -10.2675
+        ],
+        [
+         -8.0,
+         -8.4198
+        ],
+        [
+         -10.0,
+         -6.3597
+        ]
+       ],
+       "label": "central",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "c0",
+       "x": -1.0,
+       "y": -3.0247
+      },
+      {
+       "id": "c1",
+       "x": -2.0,
+       "y": -5.0259
+      },
+      {
+       "id": "c2",
+       "x": -3.0,
+       "y": -7.0259
+      },
+      {
+       "id": "c3",
+       "x": -4.0,
+       "y": -9.026
+      },
+      {
+       "id": "c4",
+       "x": -5.0,
+       "y": -10.8133
+      },
+      {
+       "id": "c5",
+       "x": -6.0,
+       "y": -10.2675
+      },
+      {
+       "id": "c6",
+       "x": -8.0,
+       "y": -8.4198
+      },
+      {
+       "id": "c7",
+       "x": -10.0,
+       "y": -6.3597
+      }
+     ]
+    }
+   },
+   "question": "What explains the gap?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fwd",
+      "text": "The forward difference's own error, about $\\tfrac{|f''|}{2}h = 0.0036$: `backward()` is fine",
+      "correct": true
+     },
+     {
+      "id": "bug",
+      "text": "A real bug in the tanh closure of `backward()`, worth filing",
+      "why": "A central difference at the same $h$ agrees to $10^{-5}$. The gap comes from the check, not the code."
+     },
+     {
+      "id": "round",
+      "text": "Rounding error in the subtraction $f(x + h) - f(x)$",
+      "why": "At $h = 0.01$ rounding is about $10^{-14}$. The gap is the $h$-sized term."
+     },
+     {
+      "id": "tol",
+      "text": "A tolerance too tight for any gradient check to pass",
+      "why": "A central check passes at $10^{-6}$ easily."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which difference did he use?"
+    },
+    {
+     "rung": "point",
+     "text": "A forward difference has an error of order $h$.",
+     "highlight": [
+      "fw"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{|f''(0.5)|}{2} \\times 0.01 \\approx 0.0036$, the whole gap."
+    }
+   ],
+   "feedback": {
+    "correct": "A forward difference is off by about 0.0036 at $h = 0.01$; the central one by $9.4 \\times 10^{-6}$.",
+    "generic": "Not quite. Look at the forward curve at $h = 0.01$.",
+    "byKey": {
+     "bug": "You trusted the check over the code. A forward difference at $h = 0.01$ is off by 0.0036 on its own."
+    }
+   },
+   "explain": {
+    "text": "A forward difference keeps the curvature term, so its error is about $\\tfrac{|f''|}{2}h = 0.0036$ here, the whole gap. Use the central difference and a relative tolerance before blaming `backward()`."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A kink",
+   "prose": "An edge case: $r = \\max(0, x)$ at $x = 0$. It has a corner there, so it has no derivative; level 1 passed back 0 or 1 by convention. Take $h = 0.001$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1,
+      1
+     ],
+     "y": [
+      -0.3,
+      1
+     ],
+     "functions": [
+      {
+       "id": "r",
+       "expr": "max(0, x)",
+       "label": "max(0, x)"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "A",
+       "x": -0.4,
+       "y": 0,
+       "label": "−h"
+      },
+      {
+       "id": "B",
+       "x": 0.4,
+       "y": 0.4,
+       "label": "+h"
+      }
+     ],
+     "segments": [
+      {
+       "id": "sec",
+       "from": "A",
+       "to": "B",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "What does the central difference give at $x = 0$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "right",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "left",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute $r(0.001)$ and $r(-0.001)$."
+    },
+    {
+     "rung": "point",
+     "text": "They are 0.001 and 0.",
+     "highlight": [
+      "sec"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.001 / 0.002 = 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.5, which matches neither side: at a kink no difference agrees with backpropagation.",
+    "generic": "Not quite. Use both sides of the kink.",
+    "byKey": {
+     "right": "That is the slope on the right only.",
+     "left": "That is the slope on the left only."
+    }
+   },
+   "explain": {
+    "text": "$(0.001 - 0)/0.002 = 0.5$, the average of the two one-sided slopes 0 and 1. A check that lands exactly on a kink fails whatever `backward()` passes back; nudge the point away from it."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "check_gradients() in code",
+   "prose": "Your classes, the course data and `total_loss(model, X, Y)` are loaded. Write `check_gradients(model, X, Y, h)`: zero every `p.grad`, backpropagate the loss, then for each parameter take the central difference of `total_loss` (restoring `p.data` after) and return the largest relative error, $\\tfrac{|a - b|}{\\max(|a|, |b|, 10^{-12})}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$h$",
+      "Course network",
+      "Priya's $1 - n^2$ bug"
+     ],
+     "rows": [
+      [
+       "$10^{-6}$",
+       "$2.8 \\times 10^{-8}$",
+       "$1.65$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `check_gradients`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def check_gradients(model, X, Y, h):\n    # largest relative error between p.grad and the central difference\n    ...\n",
+    "solution": "def check_gradients(model, X, Y, h):\n    params = model.parameters()\n    for p in params:\n        p.grad = 0.0\n    total_loss(model, X, Y).backward()\n    worst = 0.0\n    for p in params:\n        keep = p.data\n        p.data = keep + h\n        up = total_loss(model, X, Y).data\n        p.data = keep - h\n        down = total_loss(model, X, Y).data\n        p.data = keep\n        num = (up - down) / (2 * h)\n        rel = abs(p.grad - num) / max(abs(p.grad), abs(num), 1e-12)\n        worst = max(worst, rel)\n    return worst\n",
+    "examples": [
+     {
+      "setup": "",
+      "call": "check_gradients(MLP(2, [3, 1], seed=42), X4, Y4, 1e-6) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "",
+      "call": "check_gradients(MLP(2, [3, 1], seed=42), X4, Y4, 1e-6) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "planted() > 1e-2",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "unchanged()",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "check_gradients(MLP(2, [4, 1], seed=3), X4, Y4, 1e-6) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "1e-3 < check_gradients(MLP(2, [3, 1], seed=42), X4, Y4, 1e-2) < 2e-3",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "type(check_gradients(MLP(2, [3, 1], seed=42), X4, Y4, 1e-4)).__name__",
+      "expect": "'float'",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: the course network below $10^{-6}$ at $h = 10^{-6}$, Priya's planted bug above $10^{-2}$, the parameters restored afterwards, a 2-4-1 network, the $h = 10^{-2}$ figure and the type of the result. Tests are thresholds.",
+    "prelude": "import random\nimport math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n\nclass Neuron:\n    def __init__(self, nin, rng):\n        self.w = [Value(rng.uniform(-1, 1)) for _ in range(nin)]\n        self.b = Value(rng.uniform(-1, 1))\n\n    def __call__(self, x):\n        act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)\n        return act.tanh()\n\n    def parameters(self):\n        return self.w + [self.b]\n\n\nclass Layer:\n    def __init__(self, nin, nout, rng):\n        self.neurons = [Neuron(nin, rng) for _ in range(nout)]\n\n    def __call__(self, x):\n        return [n(x) for n in self.neurons]\n\n    def parameters(self):\n        return [p for n in self.neurons for p in n.parameters()]\n\n\nclass MLP:\n    def __init__(self, nin, nouts, seed=42):\n        rng = random.Random(seed)\n        sizes = [nin] + list(nouts)\n        self.layers = [Layer(sizes[i], sizes[i + 1], rng) for i in range(len(nouts))]\n\n    def __call__(self, x):\n        for layer in self.layers:\n            x = layer(x)\n        return x[0] if len(x) == 1 else x\n\n    def parameters(self):\n        return [p for layer in self.layers for p in layer.parameters()]\n\nX4 = [[1.0, 1.0], [-1.0, -1.0], [1.0, -1.0], [-1.0, 1.0]]\nY4 = [1.0, 1.0, -1.0, -1.0]\n\n\ndef total_loss(model, X, Y):\n    return sum(((model(x) - y) ** 2 for x, y in zip(X, Y)), Value(0.0))\n\n\n",
+    "postlude": "def planted():\n    good = Value.tanh\n\n    def bad(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - self.data ** 2) * out.grad\n        out._backward = _backward\n        return out\n    Value.tanh = bad\n    try:\n        return check_gradients(MLP(2, [3, 1], seed=42), X4, Y4, 1e-6)\n    finally:\n        Value.tanh = good\n\n\ndef unchanged():\n    m = MLP(2, [3, 1], seed=42)\n    before = [p.data for p in m.parameters()]\n    check_gradients(m, X4, Y4, 1e-6)\n    return [p.data for p in m.parameters()] == before\n",
+    "budget": 4000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Zero the gradients, then `total_loss(model, X, Y).backward()`."
+    },
+    {
+     "rung": "point",
+     "text": "For each `p`: keep `p.data`, set it to `keep + h`, then `keep - h`, recompute the loss each time, and put `keep` back.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Track `max(worst, abs(p.grad - num) / max(abs(p.grad), abs(num), 1e-12))`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your check passes the course network at $2.8 \\times 10^{-8}$ and catches Priya's bug at 1.65.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-2": "Test 2 plants Priya's $1 - n^2$ bug in `tanh`. Your check must report above $10^{-2}$: compare `p.grad` with the difference, not the difference with itself.",
+     "test-3": "Test 3 checks every `p.data` is put back after its two nudges."
+    }
+   },
+   "explain": {
+    "text": "Two forward passes per parameter give an estimate that never touches `backward()`. The largest relative error over all 13 parameters is $2.8 \\times 10^{-8}$ for the right code and far above $10^{-2}$ for the planted bug."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Greeks against bumped prices",
+   "prose": "A quant library's unit tests compare each analytic Greek with a bumped price, as the options course bumped a price. For a call with $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$, a bump of £0.01 each way gives delta 0.6368. A new build's analytic delta reports 0.5596.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Delta"
+     ],
+     "rows": [
+      [
+       "bumped price, central",
+       "0.6368"
+      ],
+      [
+       "analytic, new build",
+       "0.5596"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the relative error between them? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.12,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "absolute",
+      "value": 0.08,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "other-base",
+      "value": 0.14,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the gap by the larger delta."
+    },
+    {
+     "rung": "point",
+     "text": "$0.6368 - 0.5596 = 0.0772$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.0772 / 0.6368 = 0.12$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.0772 / 0.6368 = 0.12$: a failed test. The new build returns $N(d_2)$ where delta is $N(d_1)$.",
+    "generic": "Not quite. Divide the gap by the larger delta.",
+    "byKey": {
+     "absolute": "That is the gap itself. Divide by 0.6368.",
+     "other-base": "You divided by the smaller delta. Use the larger, as the rule says."
+    }
+   },
+   "explain": {
+    "text": "$|0.6368 - 0.5596| / 0.6368 = 0.12$, far above any test tolerance. The bumped price is independent of the analytic formula, as the central difference is of `backward()`, so it catches the swapped $d_1$ and $d_2$."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The central difference $\\tfrac{f(x + h) - f(x - h)}{2h}$ uses only the forward pass, so it checks `backward()` independently.",
+   "Its error is about $\\tfrac{|f'''|}{6}h^2$ until rounding takes over; for $\\tanh'(0.5)$ the best $h$ is near $10^{-5}$.",
+   "Compare by relative error; the course network checks to $2.8 \\times 10^{-8}$ at $h = 10^{-6}$, and a planted bug fails above $10^{-2}$."
+  ],
+  "formula": {
+   "name": "Central difference",
+   "tex": "\\frac{f(x + h) - f(x - h)}{2h} = f'(x) + \\frac{h^2}{6}f'''(x) + \\cdots",
+   "note": "Relative error $\\tfrac{|a - b|}{\\max(|a|, |b|)}$; pass below $10^{-6}$ in float64."
+  },
+  "trap": "A forward difference at $h = 0.01$ is off by about 0.0036 on its own; that is not a bug in `backward()`."
+ },
+ "quiz": [
+  {
+   "id": "q-cd-value",
+   "difficulty": 2,
+   "prose": "Take $f(x) = x^3$ at $x = 1$ and $h = 0.1$.",
+   "question": "What is the central difference $\\tfrac{f(1.1) - f(0.9)}{0.2}$? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.01,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "true",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "forward",
+      "value": 3.31,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(1.331 - 0.729)/0.2 = 3.01$, against the true 3.",
+    "generic": "Not quite. Use both $f(1.1)$ and $f(0.9)$.",
+    "byKey": {
+     "true": "That is $f'(1)$. The difference is off by $\\tfrac{f'''}{6}h^2 = 0.01$.",
+     "forward": "That is the forward difference $(1.331 - 1)/0.1$."
+    }
+   },
+   "explain": {
+    "text": "$f(1.1) = 1.331$ and $f(0.9) = 0.729$, so the central difference is $0.602/0.2 = 3.01$. The error, 0.01, is exactly $\\tfrac{f'''}{6}h^2 = \\tfrac{6}{6} \\times 0.01$."
+   }
+  },
+  {
+   "id": "q-abs-tol",
+   "difficulty": 3,
+   "prose": "A tiny gradient is $1 \\times 10^{-8}$ by backpropagation and $3 \\times 10^{-8}$ by central differences. A check uses an absolute tolerance of $10^{-6}$.",
+   "question": "What does the check report, and is that right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "missed",
+      "text": "It passes, but the relative error is about 0.67: the gradients disagree",
+      "correct": true
+     },
+     {
+      "id": "ok",
+      "text": "It passes, and the two gradients agree closely enough",
+      "why": "The gap is twice the smaller value. Only a relative error shows that."
+     },
+     {
+      "id": "fails",
+      "text": "It fails, since the gap is large compared with the values",
+      "why": "The gap, $2 \\times 10^{-8}$, is below the absolute tolerance, so it passes."
+     },
+     {
+      "id": "undef",
+      "text": "It cannot be computed for gradients this small",
+      "why": "Both numbers are fine; the tolerance is the problem."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "An absolute tolerance hides disagreement in small gradients.",
+    "generic": "Not quite. Compare the gap with the gradients' size."
+   },
+   "explain": {
+    "text": "The gap $2 \\times 10^{-8}$ passes an absolute tolerance of $10^{-6}$, yet it is two thirds of the larger value. A relative error of 0.67 says the gradient is wrong."
+   }
+  },
+  {
+   "id": "q-h-choice",
+   "difficulty": 2,
+   "prose": "Checking a float64 network with central differences.",
+   "question": "Which step $h$ is a sensible choice?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "m6",
+      "text": "$h = 10^{-6}$",
+      "correct": true
+     },
+     {
+      "id": "m1",
+      "text": "$h = 10^{-1}$",
+      "why": "Too large: the $h^2$ error is about $10^{-3}$."
+     },
+     {
+      "id": "m12",
+      "text": "$h = 10^{-12}$",
+      "why": "Too small: rounding swamps the difference."
+     },
+     {
+      "id": "one",
+      "text": "$h = 1$",
+      "why": "Far too large: the difference measures a chord, not a slope."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Between about $10^{-4}$ and $10^{-6}$ both errors are small.",
+    "generic": "Not quite. Too large keeps the $h^2$ term; too small loses digits."
+   },
+   "explain": {
+    "text": "In float64 a step near $10^{-5}$ or $10^{-6}$ keeps both the $h^2$ term and rounding small. The course network checks to $2.8 \\times 10^{-8}$ at $h = 10^{-6}$."
+   }
+  }
+ ]
+}

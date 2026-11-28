@@ -1,0 +1,1462 @@
+{
+ "id": "l9-neuron-of-values",
+ "course": "backprop",
+ "title": "A neuron made of Values",
+ "minutes": 15,
+ "objectives": [
+  "Build a tanh neuron from `Value` operations and backpropagate through it."
+ ],
+ "skills": [
+  "bp-networks"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A neuron with no slope",
+   "prose": "A threshold neuron computes $n = w_1x_1 + w_2x_2 + b$ and outputs 1 if $n > 0$, else $-1$. Take $x = (1, -2)$, $w = (0.5, 0.25)$, $b = 0.3$, so $n = 0.3$. Nudge $w_1$ from 0.5 to 0.51.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      -1.5,
+      1.5
+     ],
+     "functions": [
+      {
+       "id": "s",
+       "steps": {
+        "at": [
+         0
+        ],
+        "levels": [
+         -1,
+         1
+        ],
+        "from": -3,
+        "to": 3
+       },
+       "label": "threshold"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0.3,
+       "y": 1,
+       "label": "n = 0.3"
+      }
+     ]
+    }
+   },
+   "question": "By how much does the output move?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the new $n$, then the new output."
+    },
+    {
+     "rung": "point",
+     "text": "$n = 0.51 - 0.5 + 0.3 = 0.31$, still above 0.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The output stays at 1: it moves by 0."
+    }
+   ],
+   "feedback": {
+    "correct": "The output stays at 1. Its slope is 0 almost everywhere, so backpropagation would pass back 0 and nothing would learn.",
+    "generic": "Not quite. Is $n$ still above 0?",
+    "byKey": {
+     "linear": "You moved the output with $n$. A threshold stays flat until $n$ crosses 0."
+    }
+   },
+   "explain": {
+    "text": "$n$ moves from 0.3 to 0.31 and the output stays at 1, so the move is 0. A step has slope 0 except at the jump, so no gradient reaches the weights. We swap the step for a smooth curve."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "tanh has a slope",
+   "prose": "Replace the step by $\\tanh n = \\dfrac{e^{2n} - 1}{e^{2n} + 1}$. It runs smoothly from $-1$ to 1. The dashed curve is its slope. Drag P along the curve.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "(exp(2*x) - 1)/(exp(2*x) + 1)",
+       "label": "tanh n"
+      },
+      {
+       "id": "g",
+       "expr": "1 - ((exp(2*x) - 1)/(exp(2*x) + 1))^2",
+       "label": "slope",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0.3,
+       "y": 0.2913126124515909,
+       "drag": true,
+       "on": "f",
+       "label": "P"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "n = {{fixed(P.x, 2)}}: tanh n = {{fixed((exp(2*P.x) - 1)/(exp(2*P.x) + 1), 4)}}, slope = {{fixed(1 - pow((exp(2*P.x) - 1)/(exp(2*P.x) + 1), 2), 4)}}"
+    }
+   },
+   "question": "What is the slope at $n = 0.3$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9151,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "value",
+      "value": 0.2913,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Drag P to $n = 0.3$ and read the caption."
+    },
+    {
+     "rung": "point",
+     "text": "The slope is the dashed curve's height there.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.9151."
+    }
+   ],
+   "feedback": {
+    "correct": "0.9151: near 0 the curve is steep, so a weight change moves the output.",
+    "generic": "Not quite. Read the slope, not the value.",
+    "byKey": {
+     "value": "That is $\\tanh 0.3$, the value. The slope is the dashed curve.",
+     "one": "The slope is 1 only at $n = 0$."
+    }
+   },
+   "explain": {
+    "text": "At $n = 0.3$ the slope is 0.9151, close to the maximum of 1 at $n = 0$. Far from 0 the curve flattens and the slope falls towards 0.",
+    "canvas": {
+     "points": {
+      "P": {
+       "x": 0.3,
+       "y": 0.2913126124515909
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The slope of tanh",
+   "prose": "Derive the slope with the quotient rule and $(e^{u})' = e^{u}$ from the limits course. The result is written in terms of the output itself.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "(exp(2*x) - 1)/(exp(2*x) + 1)",
+       "label": "tanh x"
+      },
+      {
+       "id": "g",
+       "expr": "1 - ((exp(2*x) - 1)/(exp(2*x) + 1))^2",
+       "label": "1 − tanh² x",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put the lines in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "t1",
+      "text": "$\\tanh x = \\dfrac{e^{2x} - 1}{e^{2x} + 1}$: the definition"
+     },
+     {
+      "id": "t2",
+      "text": "$\\dfrac{d}{dx}\\tanh x = \\dfrac{2e^{2x}(e^{2x} + 1) - (e^{2x} - 1)\\,2e^{2x}}{(e^{2x} + 1)^2}$: the quotient rule and $(e^{2x})' = 2e^{2x}$"
+     },
+     {
+      "id": "t3",
+      "text": "$= \\dfrac{4e^{2x}}{(e^{2x} + 1)^2}$: expand the top; the $e^{4x}$ terms cancel"
+     },
+     {
+      "id": "t4",
+      "text": "$1 - \\tanh^2 x = \\dfrac{(e^{2x} + 1)^2 - (e^{2x} - 1)^2}{(e^{2x} + 1)^2} = \\dfrac{4e^{2x}}{(e^{2x} + 1)^2}$: a difference of squares"
+     },
+     {
+      "id": "t5",
+      "text": "So $\\dfrac{d}{dx}\\tanh x = 1 - \\tanh^2 x$: the two right sides agree"
+     },
+     {
+      "id": "tx",
+      "text": "So $\\dfrac{d}{dx}\\tanh x = 1 - x^2$",
+      "why": "That squares the input. The slope is $1 - \\tanh^2 x$, the square of the output."
+     }
+    ],
+    "answer": [
+     "t1",
+     "t2",
+     "t3",
+     "t4",
+     "t5"
+    ],
+    "distractors": [
+     "tx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the definition."
+    },
+    {
+     "rung": "point",
+     "text": "Differentiate the quotient, then simplify.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then show $1 - \\tanh^2 x$ simplifies to the same fraction."
+    }
+   ],
+   "feedback": {
+    "correct": "Both sides equal $\\tfrac{4e^{2x}}{(e^{2x} + 1)^2}$, so $(\\tanh x)' = 1 - \\tanh^2 x$.",
+    "generic": "Not quite. Each line needs the one before it.",
+    "byKey": {
+     "tx": "That line squares the input. The slope is one minus the output squared."
+    }
+   },
+   "explain": {
+    "text": "The quotient rule gives $\\tfrac{4e^{2x}}{(e^{2x} + 1)^2}$, and a difference of squares turns $1 - \\tanh^2 x$ into the same fraction. So a tanh box's local derivative is $1 - o^2$, where $o$ is its own output."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The course neuron by hand",
+   "prose": "A **neuron** computes $n = w_1x_1 + w_2x_2 + b$, then $o = \\tanh n$. The course neuron has $x = (1, -2)$, $w = (0.5, 0.25)$, $b = 0.3$. Edge widths show the weights.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.5
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.05,
+       "y": 0.9,
+       "shape": "pill"
+      },
+      {
+       "id": "n",
+       "label": "n = w·x + b",
+       "x": 0.62,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "o",
+       "label": "o = tanh n",
+       "x": 0.93,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "n",
+       "w": 0.5,
+       "label": "w₁ = 0.5"
+      },
+      {
+       "from": "x2",
+       "to": "n",
+       "w": 0.25,
+       "label": "w₂ = 0.25"
+      },
+      {
+       "from": "b",
+       "to": "n",
+       "w": 1,
+       "label": ""
+      },
+      {
+       "from": "n",
+       "to": "o",
+       "w": 1,
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 5,
+      "norm": 1
+     }
+    },
+    "state": {
+     "valueSide": {
+      "x1": "left",
+      "x2": "left",
+      "b": "left"
+     },
+     "values": {
+      "x1": "1",
+      "x2": "−2",
+      "b": "0.3"
+     }
+    }
+   },
+   "question": "Fill in the forward values and the first gradient, to 4 decimal places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$n$",
+      {
+       "edit": true,
+       "answer": 0.3,
+       "tol": {
+        "abs": 5e-05
+       }
+      }
+     ],
+     [
+      "$o = \\tanh n$",
+      {
+       "edit": true,
+       "answer": 0.2913,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "no-tanh",
+         "value": 0.3,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$1 - o^2$",
+      {
+       "edit": true,
+       "answer": 0.9151,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "used-n",
+         "value": 0.91,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$\\partial o/\\partial w_2$",
+      {
+       "edit": true,
+       "answer": -1.8303,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "own-w",
+         "value": 0.2288,
+         "tol": {
+          "abs": 5e-05
+         }
+        },
+        {
+         "id": "no-x",
+         "value": 0.9151,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Forward first: $n = 0.5 - 0.5 + 0.3$."
+    },
+    {
+     "rung": "point",
+     "text": "$o = \\tanh 0.3 = 0.2913$, so $1 - o^2 = 0.9151$.",
+     "highlight": [
+      "n",
+      "o"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Into $w_2$ the product passes $x_2 = -2$: $0.915137 \\times (-2) = -1.830274$, so $-1.8303$."
+    }
+   ],
+   "feedback": {
+    "correct": "$n = 0.3$, $o = 0.2913$, $1 - o^2 = 0.9151$, $\\partial o/\\partial w_2 = -1.8303$.",
+    "generic": "Not quite. Forward first, then back through tanh and the product.",
+    "byKey": {
+     "used-n": "You squared $n$. The slope of tanh uses its output: $1 - o^2$.",
+     "own-w": "You multiplied by $w_2$. Into $w_2$, the product passes $x_2 = -2$.",
+     "no-x": "You stopped at the tanh box. Multiply by $x_2 = -2$ too."
+    }
+   },
+   "explain": {
+    "text": "$n = 0.3$ and $o = \\tanh 0.3 = 0.291313$. Back through tanh: $1 - o^2 = 0.915137$; the product $w_2x_2$ passes $x_2 = -2$, so $\\partial o/\\partial w_2 = -1.830274$.",
+    "canvas": {
+     "values": {
+      "x1": "1",
+      "x2": "−2",
+      "b": "0.3",
+      "n": "0.3",
+      "o": "0.2913"
+     },
+     "values2": {
+      "o": "1",
+      "n": "0.9151",
+      "x2": "0.2288"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The other four gradients",
+   "prose": "Every gradient of the neuron starts from $\\partial o/\\partial n = 1 - o^2 = 0.9151$. The sum passes it on, and each product passes the other input.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.5
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.05,
+       "y": 0.9,
+       "shape": "pill"
+      },
+      {
+       "id": "n",
+       "label": "n = w·x + b",
+       "x": 0.62,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "o",
+       "label": "o = tanh n",
+       "x": 0.93,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "n",
+       "w": 0.5,
+       "label": "w₁ = 0.5"
+      },
+      {
+       "from": "x2",
+       "to": "n",
+       "w": 0.25,
+       "label": "w₂ = 0.25"
+      },
+      {
+       "from": "b",
+       "to": "n",
+       "w": 1,
+       "label": ""
+      },
+      {
+       "from": "n",
+       "to": "o",
+       "w": 1,
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 5,
+      "norm": 1
+     }
+    },
+    "state": {
+     "valueSide": {
+      "x1": "left",
+      "x2": "left",
+      "b": "left"
+     },
+     "values": {
+      "x1": "1",
+      "x2": "−2",
+      "b": "0.3",
+      "n": "0.3",
+      "o": "0.2913"
+     },
+     "values2": {
+      "o": "1",
+      "n": "0.9151"
+     }
+    }
+   },
+   "question": "Fill in the four gradients, to 4 decimal places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Gradient",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$\\partial o/\\partial w_1$",
+      {
+       "edit": true,
+       "answer": 0.9151,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "own-w1",
+         "value": 0.4576,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$\\partial o/\\partial b$",
+      {
+       "edit": true,
+       "answer": 0.9151,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "one",
+         "value": 1,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$\\partial o/\\partial x_1$",
+      {
+       "edit": true,
+       "answer": 0.4576,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "own-x1",
+         "value": 0.9151,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$\\partial o/\\partial x_2$",
+      {
+       "edit": true,
+       "answer": 0.2288,
+       "tol": {
+        "abs": 5e-05
+       },
+       "wrong": [
+        {
+         "id": "own-x2",
+         "value": -1.8303,
+         "tol": {
+          "abs": 5e-05
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each starts from 0.9151."
+    },
+    {
+     "rung": "point",
+     "text": "Into $w_1$ the product passes $x_1 = 1$; into $x_1$ it passes $w_1 = 0.5$.",
+     "highlight": [
+      "n"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.9151, 0.9151, 0.4576, 0.2288."
+    }
+   ],
+   "feedback": {
+    "correct": "0.9151, 0.9151, 0.4576 and 0.2288.",
+    "generic": "Not quite. Multiply 0.9151 by the other input of each product.",
+    "byKey": {
+     "own-w1": "You multiplied by $w_1$. Into $w_1$, the product passes $x_1 = 1$.",
+     "one": "The bias gets 1 from the sum, times the 0.9151 that reaches the sum.",
+     "own-x2": "You multiplied by $x_2$. Into $x_2$, the product passes $w_2 = 0.25$."
+    }
+   },
+   "explain": {
+    "text": "$0.915137 \\times x_1 = 0.915137$, the bias gets $0.915137$, $0.915137 \\times w_1 = 0.457568$ and $0.915137 \\times w_2 = 0.228784$. Training uses the weight and bias gradients; the input gradients matter when a neuron feeds another.",
+    "canvas": {
+     "values2": {
+      "o": "1",
+      "n": "0.9151",
+      "x1": "0.4576",
+      "x2": "0.2288",
+      "b": "0.9151"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Which square?",
+   "prose": "Priya writes the tanh closure as `self.grad += (1 - self.data ** 2) * out.grad`. For the course neuron, `self` is $n = 0.3$ and `out` is $o = 0.2913$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.5
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.05,
+       "y": 0.9,
+       "shape": "pill"
+      },
+      {
+       "id": "n",
+       "label": "n = w·x + b",
+       "x": 0.62,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "o",
+       "label": "o = tanh n",
+       "x": 0.93,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "n",
+       "w": 0.5,
+       "label": "w₁ = 0.5"
+      },
+      {
+       "from": "x2",
+       "to": "n",
+       "w": 0.25,
+       "label": "w₂ = 0.25"
+      },
+      {
+       "from": "b",
+       "to": "n",
+       "w": 1,
+       "label": ""
+      },
+      {
+       "from": "n",
+       "to": "o",
+       "w": 1,
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 5,
+      "norm": 1
+     }
+    },
+    "state": {
+     "valueSide": {
+      "x1": "left",
+      "x2": "left",
+      "b": "left"
+     },
+     "values": {
+      "x1": "1",
+      "x2": "−2",
+      "b": "0.3",
+      "n": "0.3",
+      "o": "0.2913"
+     },
+     "values2": {
+      "o": "1"
+     }
+    }
+   },
+   "question": "What is the right local derivative $\\partial o/\\partial n$, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9151,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "used-n",
+      "value": 0.91,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "value",
+      "value": 0.2913,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The slope of tanh is written with its output."
+    },
+    {
+     "rung": "point",
+     "text": "$1 - o^2$ with $o = 0.2913$.",
+     "highlight": [
+      "o"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 0.0849 = 0.9151$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - o^2 = 0.9151$; Priya's $1 - n^2$ gives 0.91.",
+    "generic": "Not quite. Square the output, not the input.",
+    "byKey": {
+     "used-n": "You squared $n$, as Priya's code does. The derivative is $1 - \\tanh^2 n = 1 - o^2$.",
+     "value": "That is $o$ itself. The slope is $1 - o^2$."
+    }
+   },
+   "explain": {
+    "text": "$(\\tanh n)' = 1 - \\tanh^2 n = 1 - o^2 = 0.9151$. Priya's line gives $1 - 0.09 = 0.91$: close enough to look right, wrong enough to fail a gradient check."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A saturated neuron",
+   "prose": "An edge case: the same neuron with a large input, so $n = 5$. Then $o = \\tanh 5 = 0.99991$, very close to 1.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1,
+      6
+     ],
+     "y": [
+      -0.2,
+      1.2
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "(exp(2*x) - 1)/(exp(2*x) + 1)",
+       "label": "tanh n"
+      },
+      {
+       "id": "g",
+       "expr": "1 - ((exp(2*x) - 1)/(exp(2*x) + 1))^2",
+       "label": "slope",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 5,
+       "y": 0.9999092042625951,
+       "label": "n = 5"
+      }
+     ]
+    }
+   },
+   "question": "What is $\\partial o/\\partial n$ at $n = 5$? Give 6 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.000182,
+    "tol": {
+     "abs": 5e-07
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "used-n",
+      "value": -24,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "value",
+      "value": 0.999909,
+      "tol": {
+       "abs": 5e-07
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$1 - o^2$ with $o = 0.9999092$."
+    },
+    {
+     "rung": "point",
+     "text": "$o^2 = 0.9998184$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 0.9998184 = 0.000182$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - \\tanh^2 5 = 0.000182$: a weight change of 1 moves the output by under 0.0002.",
+    "generic": "Not quite. Use $1 - o^2$ with $o$ very close to 1.",
+    "byKey": {
+     "used-n": "You used $1 - n^2$. The slope is $1 - o^2$, tiny here.",
+     "value": "That is $o$. Its slope is $1 - o^2$."
+    }
+   },
+   "explain": {
+    "text": "$1 - \\tanh^2 5 = 0.000182$, so every gradient through this neuron is multiplied by 0.000182. A saturated neuron passes almost nothing back and learns very slowly."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "tanh in the Value class",
+   "prose": "Your class from level 2 is in the editor, with the powers, negation, subtraction and `exp()` from homework 2. Add `tanh()`: the output is `math.tanh(self.data)`, and its closure adds $(1 - t^2)$ times `out.grad` to `self.grad`, where $t$ is the output.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.05,
+       "y": 0.1
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.05,
+       "y": 0.5
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.05,
+       "y": 0.9,
+       "shape": "pill"
+      },
+      {
+       "id": "n",
+       "label": "n = w·x + b",
+       "x": 0.62,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "o",
+       "label": "o = tanh n",
+       "x": 0.93,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "n",
+       "w": 0.5,
+       "label": "w₁ = 0.5"
+      },
+      {
+       "from": "x2",
+       "to": "n",
+       "w": 0.25,
+       "label": "w₂ = 0.25"
+      },
+      {
+       "from": "b",
+       "to": "n",
+       "w": 1,
+       "label": ""
+      },
+      {
+       "from": "n",
+       "to": "o",
+       "w": 1,
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "g",
+       "colour": 2
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 5,
+      "norm": 1
+     }
+    },
+    "state": {
+     "valueSide": {
+      "x1": "left",
+      "x2": "left",
+      "b": "left"
+     },
+     "values": {
+      "x1": "1",
+      "x2": "−2",
+      "b": "0.3",
+      "n": "0.3",
+      "o": "0.2913"
+     },
+     "values2": {
+      "o": "1",
+      "n": "0.9151",
+      "x1": "0.4576",
+      "x2": "0.2288",
+      "b": "0.9151"
+     }
+    }
+   },
+   "question": "Write `tanh()`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        ...\n",
+    "solution": "import math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n",
+    "examples": [
+     {
+      "setup": "x1 = Value(1.0); x2 = Value(-2.0); w1 = Value(0.5); w2 = Value(0.25); b = Value(0.3); o = (x1 * w1 + x2 * w2 + b).tanh(); o.backward()",
+      "call": "o.data",
+      "expect": "0.2913126124515909",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x1 = Value(1.0); x2 = Value(-2.0); w1 = Value(0.5); w2 = Value(0.25); b = Value(0.3); o = (x1 * w1 + x2 * w2 + b).tanh(); o.backward()",
+      "call": "o.data",
+      "expect": "0.2913126124515909",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x1 = Value(1.0); x2 = Value(-2.0); w1 = Value(0.5); w2 = Value(0.25); b = Value(0.3); o = (x1 * w1 + x2 * w2 + b).tanh(); o.backward()",
+      "call": "(w1.grad, w2.grad, b.grad)",
+      "expect": "(0.9151369618266292, -1.8302739236532584, 0.9151369618266292)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x1 = Value(1.0); x2 = Value(-2.0); w1 = Value(0.5); w2 = Value(0.25); b = Value(0.3); o = (x1 * w1 + x2 * w2 + b).tanh(); o.backward()",
+      "call": "(x1.grad, x2.grad)",
+      "expect": "(0.4575684809133146, 0.2287842404566573)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "n = Value(5.0); o = n.tanh(); o.backward()",
+      "call": "n.grad",
+      "expect": "0.0001815832309438603",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "setup": "n = Value(-0.8); o = n.tanh(); o.backward()",
+      "call": "(o.data, n.grad)",
+      "expect": "(-0.6640367702678491, 0.5590551677322437)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "n = Value(0.5); y = n.tanh() * n.tanh(); y.backward()",
+      "call": "n.grad",
+      "expect": "0.7268619813835873",
+      "compare": "isclose"
+     },
+     {
+      "setup": "n = Value(0.3)",
+      "call": "n.tanh()._op",
+      "expect": "'tanh'",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: the course neuron's output and five gradients, a saturated input, a negative input, a reused tanh and the op label. Values are accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Follow the shape of `exp()`: compute the output, build `out` with one parent, attach a closure."
+    },
+    {
+     "rung": "point",
+     "text": "Keep `t = math.tanh(self.data)` for the closure.",
+     "highlight": [
+      "o"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`self.grad += (1 - t * t) * out.grad`."
+    }
+   ],
+   "feedback": {
+    "correct": "The class now backpropagates through a neuron: 0.9151, $-1.8303$, 0.9151 for $w_1$, $w_2$ and $b$.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-2": "Test 2 reads the weight and bias gradients: $(0.9151, -1.8303, 0.9151)$ to many places. Use $1 - t^2$ with $t$ the output.",
+     "test-7": "Test 7 reads the op label: `\"tanh\"`."
+    }
+   },
+   "explain": {
+    "text": "`tanh()` is one more unary box: the output $t$, one parent, and a closure that multiplies by $1 - t^2$. With it, the class runs a whole neuron forwards and backwards."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A squashed credit score",
+   "prose": "A lender squashes a raw credit score $z$ into $s = \\tanh z$, between $-1$ and 1. A typical borrower has $z = 0.3$; a very strong one has $z = 3$. The model learns by the slope of $s$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1,
+      4
+     ],
+     "y": [
+      -0.2,
+      1.2
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "(exp(2*x) - 1)/(exp(2*x) + 1)",
+       "label": "s = tanh z"
+      },
+      {
+       "id": "g",
+       "expr": "1 - ((exp(2*x) - 1)/(exp(2*x) + 1))^2",
+       "label": "slope",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "A",
+       "x": 0.3,
+       "y": 0.2913126124515909,
+       "label": "z = 0.3"
+      },
+      {
+       "id": "B",
+       "x": 3,
+       "y": 0.9950547536867305,
+       "label": "z = 3"
+      }
+     ]
+    }
+   },
+   "question": "What is the slope of $s$ at $z = 3$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0099,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "value",
+      "value": 0.9951,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "typical",
+      "value": 0.9151,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$1 - \\tanh^2 3$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tanh 3 = 0.99505$.",
+     "highlight": [
+      "B"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 0.99013 = 0.0099$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.0099, about 90 times smaller than at $z = 0.3$.",
+    "generic": "Not quite. Use $1 - \\tanh^2 z$ at $z = 3$.",
+    "byKey": {
+     "value": "That is $\\tanh 3$, the score. Its slope is $1 - \\tanh^2 3$.",
+     "typical": "That is the slope at $z = 0.3$."
+    }
+   },
+   "explain": {
+    "text": "At $z = 3$ the slope is $1 - \\tanh^2 3 = 0.0099$, against 0.9151 at $z = 0.3$. The squashed score barely responds to extreme borrowers, so their data moves the model very little."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A threshold has slope 0 almost everywhere, so no gradient reaches its weights; tanh is smooth.",
+   "A neuron computes $n = \\mathbf{w} \\cdot \\mathbf{x} + b$ and $o = \\tanh n$; its local derivative is $1 - o^2$.",
+   "Far from 0, tanh saturates: at $n = 5$ the slope is 0.000182 and the neuron barely learns."
+  ],
+  "formula": {
+   "name": "Slope of tanh",
+   "tex": "\\frac{d}{dx}\\tanh x = 1 - \\tanh^2 x",
+   "note": "In the closure: `self.grad += (1 - t * t) * out.grad`, with `t` the output."
+  },
+  "trap": "Squaring the input, $1 - n^2$, gives 0.91 for the course neuron instead of 0.9151."
+ },
+ "quiz": [
+  {
+   "id": "q-tanh-slope-o",
+   "difficulty": 2,
+   "prose": "A tanh box outputs $o = 0.6$.",
+   "question": "What is its local derivative?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.64,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "value",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - 0.36 = 0.64$.",
+    "generic": "Not quite. Use $1 - o^2$.",
+    "byKey": {
+     "linear": "You took $1 - o$. Square the output first.",
+     "value": "That is the output. The slope is $1 - o^2$."
+    }
+   },
+   "explain": {
+    "text": "The slope of tanh is $1 - o^2$, here $1 - 0.36 = 0.64$. It needs only the output, which the closure keeps."
+   }
+  },
+  {
+   "id": "q-neuron-bias",
+   "difficulty": 3,
+   "prose": "A neuron has $n = wx + b$ and $o = \\tanh n$, with $w = -1$, $x = 0.5$, $b = 0.5$.",
+   "question": "What is $\\partial o/\\partial b$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "used-x",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$n = 0$, so $1 - \\tanh^2 0 = 1$, and the sum passes it to $b$.",
+    "generic": "Not quite. Find $n$ first.",
+    "byKey": {
+     "used-x": "You multiplied by $x$. The bias gets the sum's 1, not a product."
+    }
+   },
+   "explain": {
+    "text": "$n = -0.5 + 0.5 = 0$ and $o = 0$, so the slope is $1 - 0 = 1$. The sum passes it to the bias unchanged: $\\partial o/\\partial b = 1$."
+   }
+  },
+  {
+   "id": "q-saturated",
+   "difficulty": 3,
+   "prose": "Two neurons see the same small change in a weight. One has $n = 0.1$, the other $n = 4$.",
+   "question": "Which one's output moves more?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "small",
+      "text": "The one with $n = 0.1$, where tanh is steep",
+      "correct": true
+     },
+     {
+      "id": "large",
+      "text": "The one with $n = 4$, because its input is bigger",
+      "why": "At $n = 4$ tanh is flat: its slope is about 0.0013."
+     },
+     {
+      "id": "same",
+      "text": "Both the same, since the change is the same",
+      "why": "The change is scaled by the slope, which differs."
+     },
+     {
+      "id": "neither",
+      "text": "Neither: tanh outputs are fixed",
+      "why": "tanh is smooth, so small changes do move it."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Near 0 the slope is about 0.99; at $n = 4$ it is about 0.0013.",
+    "generic": "Not quite. Compare the slopes $1 - \\tanh^2 n$."
+   },
+   "explain": {
+    "text": "The output moves by about the slope times the change. $1 - \\tanh^2 0.1 = 0.990$ against $1 - \\tanh^2 4 = 0.0013$, so the neuron near 0 moves far more."
+   }
+  }
+ ]
+}

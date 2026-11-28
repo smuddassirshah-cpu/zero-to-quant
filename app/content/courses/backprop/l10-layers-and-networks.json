@@ -1,0 +1,1859 @@
+{
+ "id": "l10-layers-and-networks",
+ "course": "backprop",
+ "title": "Layers and a small network",
+ "minutes": 15,
+ "objectives": [
+  "Build a layer and a multilayer perceptron from neurons, and count its parameters."
+ ],
+ "skills": [
+  "bp-networks"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One neuron draws one line",
+   "prose": "The course data has four points: $(1, 1)$ and $(-1, -1)$ with target 1, $(1, -1)$ and $(-1, 1)$ with target $-1$. The target is the sign of $x_1x_2$, an XOR. One tanh neuron changes sign along one straight line, $w_1x_1 + w_2x_2 + b = 0$.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       1,
+       1,
+       "target +1"
+      ],
+      [
+       -1,
+       -1,
+       "target +1"
+      ],
+      [
+       1,
+       -1,
+       "target −1"
+      ],
+      [
+       -1,
+       1,
+       "target −1"
+      ]
+     ],
+     "x": [
+      -1.6,
+      1.6
+     ],
+     "y": [
+      -1.6,
+      1.6
+     ],
+     "xLabel": "x₁",
+     "yLabel": "x₂",
+     "height": 260
+    },
+    "state": {}
+   },
+   "question": "Can one neuron put both +1 points on one side of its line and both $-1$ points on the other?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: the +1 points sit on one diagonal and the $-1$ points on the other, and no line splits them",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: the vertical line $x_1 = 0$ splits the four points into two pairs",
+      "why": "That line puts $(1, 1)$ with $(1, -1)$, which have opposite targets."
+     },
+     {
+      "id": "weights",
+      "text": "Yes, as long as the weights are made large enough",
+      "why": "Large weights make the line sharper, not bent. It is still one line."
+     },
+     {
+      "id": "bias",
+      "text": "Yes, by moving the bias far enough to one side",
+      "why": "Moving the bias shifts the line until all four points are on one side."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Try a few lines on the picture."
+    },
+    {
+     "rung": "point",
+     "text": "Any line that separates $(1, 1)$ from $(1, -1)$ also leaves $(-1, -1)$ or $(-1, 1)$ on the wrong side.",
+     "highlight": [
+      "p0",
+      "p1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "No single line works, so the network needs a hidden layer."
+    }
+   ],
+   "feedback": {
+    "correct": "No line works. A hidden layer of neurons gives several lines, which the output neuron combines.",
+    "generic": "Not quite. Try to draw the line."
+   },
+   "explain": {
+    "text": "The +1 points lie on one diagonal and the $-1$ points on the other, so every line leaves a wrong point on some side. A hidden layer lets the network combine several lines."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A 2-3-1 network",
+   "prose": "The course network has 2 inputs, a hidden **layer** of 3 tanh neurons and 1 output neuron: a 2-3-1 **multilayer perceptron**. Each edge is a weight (width by size, blue positive, red negative); each neuron's bias is under it. Step the forward pass for the point $(1, 1)$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.06,
+       "y": 0.25
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.06,
+       "y": 0.75
+      },
+      {
+       "id": "h1",
+       "label": "h₁",
+       "x": 0.5,
+       "y": 0.1
+      },
+      {
+       "id": "h2",
+       "label": "h₂",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "h3",
+       "label": "h₃",
+       "x": 0.5,
+       "y": 0.9
+      },
+      {
+       "id": "o",
+       "label": "o",
+       "x": 0.92,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "h1",
+       "w": 0.2788535969157675,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h1",
+       "w": -0.9499784895546661,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h2",
+       "w": -0.5535785237023545,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h2",
+       "w": 0.4729424283280248,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h3",
+       "w": 0.7843591354096908,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h3",
+       "w": -0.8261223347411677,
+       "label": ""
+      },
+      {
+       "from": "h1",
+       "to": "o",
+       "w": -0.9404055611238593,
+       "label": ""
+      },
+      {
+       "from": "h2",
+       "to": "o",
+       "w": -0.5627240503927933,
+       "label": ""
+      },
+      {
+       "from": "h3",
+       "to": "o",
+       "w": 0.010710576206724776,
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "b",
+       "colour": "muted"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 6,
+      "norm": 1
+     }
+    },
+    "state": {
+     "values": {
+      "x1": "1",
+      "x2": "1"
+     },
+     "values2": {
+      "h1": "−0.4499",
+      "h2": "0.3534",
+      "h3": "−0.1562",
+      "o": "−0.9469"
+     }
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "frames": [
+       {
+        "values": {
+         "x1": "1",
+         "x2": "1"
+        }
+       },
+       {
+        "values": {
+         "x1": "1",
+         "x2": "1",
+         "h1": "−0.8079",
+         "h2": "0.2662",
+         "h3": "−0.1954"
+        }
+       },
+       {
+        "values": {
+         "x1": "1",
+         "x2": "1",
+         "h1": "−0.8079",
+         "h2": "0.2662",
+         "h3": "−0.1954",
+         "o": "−0.3266"
+        }
+       }
+      ],
+      "frameLabels": [
+       "inputs",
+       "hidden",
+       "output"
+      ],
+      "label": "Forward",
+      "start": 0
+     }
+    ]
+   },
+   "question": "What does the network output at $(1, 1)$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.3266,
+    "tol": {
+     "abs": 5e-05
+    },
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "hidden",
+      "value": -0.8079,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.3266,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to the last frame."
+    },
+    {
+     "rung": "point",
+     "text": "The output neuron takes the three hidden values.",
+     "highlight": [
+      "o"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.3266$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-0.3266$, far from the target 1: the untrained network is wrong here.",
+    "generic": "Not quite. Read the output neuron in the last frame.",
+    "byKey": {
+     "hidden": "That is $h_1$. The output is the last neuron.",
+     "sign": "The output is negative here, on the wrong side of the target 1."
+    }
+   },
+   "explain": {
+    "text": "Each hidden neuron squashes its own weighted sum: $h = (−0.8079, 0.2662, −0.1954)$. The output neuron does the same with $h$ and gives $-0.3266$; the target at $(1, 1)$ is 1.",
+    "canvas": {
+     "values": {
+      "x1": "1",
+      "x2": "1",
+      "h1": "−0.8079",
+      "h2": "0.2662",
+      "h3": "−0.1954",
+      "o": "−0.3266"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Counting parameters",
+   "prose": "In code a `Neuron(nin)` holds `nin` weights and one bias; a `Layer(nin, nout)` holds `nout` neurons; an `MLP(nin, [3, 1])` chains layers of sizes 3 and 1. Every weight and bias is a **parameter** that training will move.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.06,
+       "y": 0.25
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.06,
+       "y": 0.75
+      },
+      {
+       "id": "h1",
+       "label": "h₁",
+       "x": 0.5,
+       "y": 0.1
+      },
+      {
+       "id": "h2",
+       "label": "h₂",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "h3",
+       "label": "h₃",
+       "x": 0.5,
+       "y": 0.9
+      },
+      {
+       "id": "o",
+       "label": "o",
+       "x": 0.92,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "h1",
+       "w": 0.2788535969157675,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h1",
+       "w": -0.9499784895546661,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h2",
+       "w": -0.5535785237023545,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h2",
+       "w": 0.4729424283280248,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h3",
+       "w": 0.7843591354096908,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h3",
+       "w": -0.8261223347411677,
+       "label": ""
+      },
+      {
+       "from": "h1",
+       "to": "o",
+       "w": -0.9404055611238593,
+       "label": ""
+      },
+      {
+       "from": "h2",
+       "to": "o",
+       "w": -0.5627240503927933,
+       "label": ""
+      },
+      {
+       "from": "h3",
+       "to": "o",
+       "w": 0.010710576206724776,
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "b",
+       "colour": "muted"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 6,
+      "norm": 1
+     }
+    },
+    "state": {
+     "values2": {
+      "h1": "−0.4499",
+      "h2": "0.3534",
+      "h3": "−0.1562",
+      "o": "−0.9469"
+     }
+    }
+   },
+   "question": "How many parameters does the 2-3-1 network have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 13,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "neurons",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count weights, then biases."
+    },
+    {
+     "rung": "point",
+     "text": "$2 \\times 3 + 3 \\times 1 = 9$ weights.",
+     "highlight": [
+      "h1",
+      "o"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "9 weights and 4 biases: 13."
+    }
+   ],
+   "feedback": {
+    "correct": "$2 \\times 3 + 3 + 3 \\times 1 + 1 = 13$.",
+    "generic": "Not quite. Count every weight and every bias.",
+    "byKey": {
+     "no-bias": "You counted the 9 weights. Each of the 4 neurons also has a bias.",
+     "neurons": "That counts the neurons. Each has several parameters."
+    }
+   },
+   "explain": {
+    "text": "Each hidden neuron has 2 weights and a bias (9 in all), and the output neuron has 3 weights and a bias (4). That makes 13 parameters."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Bigger networks",
+   "prose": "A layer from $m$ inputs to $k$ neurons has $mk$ weights and $k$ biases, $(m + 1)k$ parameters. A network adds its layers.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.06,
+       "y": 0.25
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.06,
+       "y": 0.75
+      },
+      {
+       "id": "h1",
+       "label": "h₁",
+       "x": 0.5,
+       "y": 0.1
+      },
+      {
+       "id": "h2",
+       "label": "h₂",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "h3",
+       "label": "h₃",
+       "x": 0.5,
+       "y": 0.9
+      },
+      {
+       "id": "o",
+       "label": "o",
+       "x": 0.92,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "h1",
+       "w": 0.2788535969157675,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h1",
+       "w": -0.9499784895546661,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h2",
+       "w": -0.5535785237023545,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h2",
+       "w": 0.4729424283280248,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h3",
+       "w": 0.7843591354096908,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h3",
+       "w": -0.8261223347411677,
+       "label": ""
+      },
+      {
+       "from": "h1",
+       "to": "o",
+       "w": -0.9404055611238593,
+       "label": ""
+      },
+      {
+       "from": "h2",
+       "to": "o",
+       "w": -0.5627240503927933,
+       "label": ""
+      },
+      {
+       "from": "h3",
+       "to": "o",
+       "w": 0.010710576206724776,
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "b",
+       "colour": "muted"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 6,
+      "norm": 1
+     }
+    },
+    "state": {
+     "values2": {
+      "h1": "−0.4499",
+      "h2": "0.3534",
+      "h3": "−0.1562",
+      "o": "−0.9469"
+     }
+    }
+   },
+   "question": "Count the parameters of each network.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Network",
+     "Parameters"
+    ],
+    "rows": [
+     [
+      "3-4-4-1",
+      {
+       "edit": true,
+       "answer": 41,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "no-bias-341",
+         "value": 32,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "2-16-16-1",
+      {
+       "edit": true,
+       "answer": 337,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "no-bias-2",
+         "value": 304,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $(m + 1)k$ per layer."
+    },
+    {
+     "rung": "point",
+     "text": "3-4-4-1: $4 \\times 4 + 5 \\times 4 + 5 \\times 1$.",
+     "highlight": [
+      "o"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$16 + 20 + 5 = 41$; and $48 + 272 + 17 = 337$."
+    }
+   ],
+   "feedback": {
+    "correct": "41 and 337.",
+    "generic": "Not quite. Add $(m + 1)k$ over the layers.",
+    "byKey": {
+     "no-bias-341": "You left out the 9 biases.",
+     "no-bias-2": "You left out the 33 biases."
+    }
+   },
+   "explain": {
+    "text": "3-4-4-1: $4 \\times 4 + 5 \\times 4 + 5 \\times 1 = 41$. 2-16-16-1: $3 \\times 16 + 17 \\times 16 + 17 \\times 1 = 337$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Where the numbers come from",
+   "prose": "The parameters come from `random.Random(42).uniform(-1, 1)`, drawn in a fixed order: layer by layer, neuron by neuron, each neuron's weights then its bias. So the first three draws are $h_1$'s two weights and bias.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.06,
+       "y": 0.25
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.06,
+       "y": 0.75
+      },
+      {
+       "id": "h1",
+       "label": "h₁",
+       "x": 0.5,
+       "y": 0.1
+      },
+      {
+       "id": "h2",
+       "label": "h₂",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "h3",
+       "label": "h₃",
+       "x": 0.5,
+       "y": 0.9
+      },
+      {
+       "id": "o",
+       "label": "o",
+       "x": 0.92,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "h1",
+       "w": 0.2788535969157675,
+       "label": "0.279"
+      },
+      {
+       "from": "x2",
+       "to": "h1",
+       "w": -0.9499784895546661,
+       "label": "−0.95"
+      },
+      {
+       "from": "x1",
+       "to": "h2",
+       "w": -0.5535785237023545,
+       "label": "−0.554"
+      },
+      {
+       "from": "x2",
+       "to": "h2",
+       "w": 0.4729424283280248,
+       "label": "0.473"
+      },
+      {
+       "from": "x1",
+       "to": "h3",
+       "w": 0.7843591354096908,
+       "label": "0.784"
+      },
+      {
+       "from": "x2",
+       "to": "h3",
+       "w": -0.8261223347411677,
+       "label": "−0.826"
+      },
+      {
+       "from": "h1",
+       "to": "o",
+       "w": -0.9404055611238593,
+       "label": "−0.94"
+      },
+      {
+       "from": "h2",
+       "to": "o",
+       "w": -0.5627240503927933,
+       "label": "−0.563"
+      },
+      {
+       "from": "h3",
+       "to": "o",
+       "w": 0.010710576206724776,
+       "label": "0.011"
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "b",
+       "colour": "muted"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 6,
+      "norm": 1
+     }
+    },
+    "state": {
+     "values2": {
+      "h1": "−0.4499",
+      "h2": "0.3534",
+      "h3": "−0.1562",
+      "o": "−0.9469"
+     }
+    }
+   },
+   "question": "Give the first three parameters, to 3 decimal places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Draw",
+     "Parameter",
+     "Value"
+    ],
+    "rows": [
+     [
+      "1",
+      "$h_1$, weight on $x_1$",
+      {
+       "edit": true,
+       "answer": 0.279,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "2",
+      "$h_1$, weight on $x_2$",
+      {
+       "edit": true,
+       "answer": -0.95,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "order",
+         "value": 0.279,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "3",
+      "$h_1$, bias",
+      {
+       "edit": true,
+       "answer": -0.45,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "next-weight",
+         "value": -0.554,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read $h_1$'s two edges and the bias under it."
+    },
+    {
+     "rung": "point",
+     "text": "Weights first, then the bias.",
+     "highlight": [
+      "h1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.279, $-0.950$, $-0.450$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.279, $-0.950$ and $-0.450$: $h_1$ is filled before $h_2$.",
+    "generic": "Not quite. Weights, then bias, one neuron at a time.",
+    "byKey": {
+     "next-weight": "You moved to $h_2$ too early. Each neuron takes its bias before the next neuron starts."
+    }
+   },
+   "explain": {
+    "text": "Draws 1 to 3 fill $h_1$: weights 0.279 and $-0.950$, bias $-0.450$. Draws 4 to 6 fill $h_2$, and so on to the output's bias, draw 13. The same seed and order give the same network every time."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Weights are not all",
+   "prose": "Sam sizes a 3-4-4-1 network by counting the edges in its drawing: $3 \\times 4 + 4 \\times 4 + 4 \\times 1 = 32$. He writes 32 in his report.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.06,
+       "y": 0.25
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.06,
+       "y": 0.75
+      },
+      {
+       "id": "h1",
+       "label": "h₁",
+       "x": 0.5,
+       "y": 0.1
+      },
+      {
+       "id": "h2",
+       "label": "h₂",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "h3",
+       "label": "h₃",
+       "x": 0.5,
+       "y": 0.9
+      },
+      {
+       "id": "o",
+       "label": "o",
+       "x": 0.92,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "h1",
+       "w": 0.2788535969157675,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h1",
+       "w": -0.9499784895546661,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h2",
+       "w": -0.5535785237023545,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h2",
+       "w": 0.4729424283280248,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h3",
+       "w": 0.7843591354096908,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h3",
+       "w": -0.8261223347411677,
+       "label": ""
+      },
+      {
+       "from": "h1",
+       "to": "o",
+       "w": -0.9404055611238593,
+       "label": ""
+      },
+      {
+       "from": "h2",
+       "to": "o",
+       "w": -0.5627240503927933,
+       "label": ""
+      },
+      {
+       "from": "h3",
+       "to": "o",
+       "w": 0.010710576206724776,
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "b",
+       "colour": "muted"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 6,
+      "norm": 1
+     }
+    },
+    "state": {
+     "values2": {
+      "h1": "−0.4499",
+      "h2": "0.3534",
+      "h3": "−0.1562",
+      "o": "−0.9469"
+     }
+    }
+   },
+   "question": "How many parameters does it really have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 41,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 32,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a drawing of edges leave out?"
+    },
+    {
+     "rung": "point",
+     "text": "Every neuron also has a bias.",
+     "highlight": [
+      "h1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$32 + 4 + 4 + 1 = 41$."
+    }
+   ],
+   "feedback": {
+    "correct": "$32 + 9 = 41$: the drawing shows weights, not biases.",
+    "generic": "Not quite. Add a bias for every neuron.",
+    "byKey": {
+     "no-bias": "That is Sam's count: edges only. Each of the 9 neurons adds a bias."
+    }
+   },
+   "explain": {
+    "text": "The edges are the 32 weights. The 4, 4 and 1 neurons add 9 biases, so the network has 41 parameters."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "No hidden layer",
+   "prose": "An edge case: drop the hidden layer and train one neuron, `MLP(2, [1])`, on the course data. Its loss, the sum of squared errors, starts at 6.6146 and stops falling.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "one",
+       "label": "one neuron",
+       "values": [
+        6.61459,
+        6.20936,
+        5.74296,
+        5.24526,
+        4.8425,
+        4.62006,
+        4.52752,
+        4.48996,
+        4.46845,
+        4.44803,
+        4.42278,
+        4.38947,
+        4.34577,
+        4.29065,
+        4.22592,
+        4.15802,
+        4.09712,
+        4.052,
+        4.02456,
+        4.01053,
+        4.00422,
+        4.00162,
+        4.00061,
+        4.00022,
+        4.00008,
+        4.00003,
+        4.00001,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0
+       ]
+      }
+     ],
+     "y": [
+      0,
+      7
+     ],
+     "xLabel": "Step",
+     "yLabel": "Loss",
+     "height": 220,
+     "hlines": [
+      {
+       "id": "four",
+       "y": 4,
+       "label": "loss 4"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What loss does it settle at?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "start",
+      "value": 6.6146,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read where the curve flattens."
+    },
+    {
+     "rung": "point",
+     "text": "With no line that fits, the best it can do is output 0 everywhere.",
+     "highlight": [
+      "four"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each point then misses by 1: $4 \\times 1^2 = 4$."
+    }
+   ],
+   "feedback": {
+    "correct": "It settles at 4: it outputs about 0 everywhere, missing every target by 1.",
+    "generic": "Not quite. Read where the curve flattens.",
+    "byKey": {
+     "zero": "One neuron cannot fit an XOR; only the hidden layer lets the loss fall towards 0.",
+     "start": "That is where it starts."
+    }
+   },
+   "explain": {
+    "text": "No line splits the XOR, so the neuron's best move is to output 0 at all four points. Each misses by 1, so the loss settles at 4."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Neuron, Layer and MLP",
+   "prose": "Write the three classes; the `Value` class with `tanh()` is loaded. `Neuron(nin, rng)` draws its weights then its bias from `rng.uniform(-1, 1)`. `Layer(nin, nout, rng)` makes `nout` neurons. `MLP(nin, nouts, seed=42)` makes one `random.Random(seed)` and builds the layers in order. Calling a neuron returns `tanh` of $\\mathbf{w} \\cdot \\mathbf{x} + b$; a layer returns a list; an MLP returns the last layer's list, or its one Value.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 300,
+     "nodeRadius": 18,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.06,
+       "y": 0.25
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.06,
+       "y": 0.75
+      },
+      {
+       "id": "h1",
+       "label": "h₁",
+       "x": 0.5,
+       "y": 0.1
+      },
+      {
+       "id": "h2",
+       "label": "h₂",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "h3",
+       "label": "h₃",
+       "x": 0.5,
+       "y": 0.9
+      },
+      {
+       "id": "o",
+       "label": "o",
+       "x": 0.92,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "h1",
+       "w": 0.2788535969157675,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h1",
+       "w": -0.9499784895546661,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h2",
+       "w": -0.5535785237023545,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h2",
+       "w": 0.4729424283280248,
+       "label": ""
+      },
+      {
+       "from": "x1",
+       "to": "h3",
+       "w": 0.7843591354096908,
+       "label": ""
+      },
+      {
+       "from": "x2",
+       "to": "h3",
+       "w": -0.8261223347411677,
+       "label": ""
+      },
+      {
+       "from": "h1",
+       "to": "o",
+       "w": -0.9404055611238593,
+       "label": ""
+      },
+      {
+       "from": "h2",
+       "to": "o",
+       "w": -0.5627240503927933,
+       "label": ""
+      },
+      {
+       "from": "h3",
+       "to": "o",
+       "w": 0.010710576206724776,
+       "label": ""
+      }
+     ],
+     "valueLines": [
+      {
+       "label": "",
+       "colour": "ink"
+      },
+      {
+       "label": "b",
+       "colour": "muted"
+      }
+     ],
+     "edgeWidth": {
+      "min": 1,
+      "max": 6,
+      "norm": 1
+     }
+    },
+    "state": {
+     "values2": {
+      "h1": "−0.4499",
+      "h2": "0.3534",
+      "h3": "−0.1562",
+      "o": "−0.9469"
+     }
+    }
+   },
+   "question": "Write `Neuron`, `Layer` and `MLP`, each with `parameters()`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\n\nclass Neuron:\n    def __init__(self, nin, rng):\n        ...\n\n    def __call__(self, x):\n        ...\n\n    def parameters(self):\n        ...\n\n\nclass Layer:\n    def __init__(self, nin, nout, rng):\n        ...\n\n    def __call__(self, x):\n        ...\n\n    def parameters(self):\n        ...\n\n\nclass MLP:\n    def __init__(self, nin, nouts, seed=42):\n        ...\n\n    def __call__(self, x):\n        ...\n\n    def parameters(self):\n        ...\n",
+    "solution": "import random\n\n\nclass Neuron:\n    def __init__(self, nin, rng):\n        self.w = [Value(rng.uniform(-1, 1)) for _ in range(nin)]\n        self.b = Value(rng.uniform(-1, 1))\n\n    def __call__(self, x):\n        act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)\n        return act.tanh()\n\n    def parameters(self):\n        return self.w + [self.b]\n\n\nclass Layer:\n    def __init__(self, nin, nout, rng):\n        self.neurons = [Neuron(nin, rng) for _ in range(nout)]\n\n    def __call__(self, x):\n        return [n(x) for n in self.neurons]\n\n    def parameters(self):\n        return [p for n in self.neurons for p in n.parameters()]\n\n\nclass MLP:\n    def __init__(self, nin, nouts, seed=42):\n        rng = random.Random(seed)\n        sizes = [nin] + list(nouts)\n        self.layers = [Layer(sizes[i], sizes[i + 1], rng) for i in range(len(nouts))]\n\n    def __call__(self, x):\n        for layer in self.layers:\n            x = layer(x)\n        return x[0] if len(x) == 1 else x\n\n    def parameters(self):\n        return [p for layer in self.layers for p in layer.parameters()]\n",
+    "examples": [
+     {
+      "setup": "",
+      "call": "len(MLP(2, [3, 1]).parameters())",
+      "expect": "13",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "",
+      "call": "len(MLP(2, [3, 1]).parameters())",
+      "expect": "13",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "len(MLP(3, [4, 4, 1]).parameters())",
+      "expect": "41",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "len(MLP(2, [16, 16, 1]).parameters())",
+      "expect": "337",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "[round(p.data, 6) for p in MLP(2, [3, 1], seed=42).parameters()[:5]]",
+      "expect": "[0.278854, -0.949978, -0.449941, -0.553579, 0.472942]",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "MLP(2, [3, 1], seed=42)([1.0, 1.0]).data",
+      "expect": "-0.32660536479517055",
+      "compare": "isclose"
+     },
+     {
+      "setup": "",
+      "call": "MLP(2, [3, 1], seed=7)([0.5, -1.0]).data",
+      "expect": "0.7763631417475776",
+      "compare": "isclose"
+     },
+     {
+      "setup": "out = MLP(2, [3, 2], seed=1)([1.0, -1.0])",
+      "call": "(type(out).__name__, len(out))",
+      "expect": "('list', 2)",
+      "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "all(type(p).__name__ == \"Value\" for p in MLP(2, [3, 1]).parameters())",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests: three parameter counts, the first five parameters for seed 42, two outputs at the initial parameters, a two-output network and the parameter types. Values are accepted when math.isclose(actual, expected, rel_tol=1e-9).",
+    "prelude": "import math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`Neuron.__init__`: `self.w = [Value(rng.uniform(-1, 1)) for _ in range(nin)]`, then `self.b`."
+    },
+    {
+     "rung": "point",
+     "text": "A neuron's call: `sum((wi * xi for wi, xi in zip(self.w, x)), self.b).tanh()`.",
+     "highlight": [
+      "h1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`MLP` builds `Layer(sizes[i], sizes[i + 1], rng)` for each consecutive pair of `[nin] + nouts`, all sharing one `rng`."
+    }
+   ],
+   "feedback": {
+    "correct": "The classes build the course network: 13 parameters starting 0.278854, $-0.949978$, $-0.449941$, and an output of $-0.3266$ at $(1, 1)$.",
+    "generic": "Not quite. Check the first failing test.",
+    "byKey": {
+     "test-4": "Test 4 reads the first five parameters for seed 42: $h_1$'s weights and bias, then $h_2$'s two weights. Draw weights before the bias, and share one `rng`.",
+     "test-5": "Test 5 is the output at $(1, 1)$: $-0.3266$. Apply `tanh` in every neuron, the output neuron included."
+    }
+   },
+   "explain": {
+    "text": "One `rng` passed down the layers keeps the draws in the stated order, so seed 42 gives the same 13 numbers every time. Each class only lists its parts' parameters, and the MLP chains the layers' calls."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A fund's small network",
+   "prose": "A fund fits a 5-8-8-1 network to five daily features to predict a nonlinear signal. It has one year of data: 250 trading days.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Layer",
+      "Inputs",
+      "Neurons",
+      "Parameters"
+     ],
+     "rows": [
+      [
+       "1",
+       "5",
+       "8",
+       "?"
+      ],
+      [
+       "2",
+       "8",
+       "8",
+       "?"
+      ],
+      [
+       "3",
+       "8",
+       "1",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many parameters does the network have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 129,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 112,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $(m + 1)k$ per layer."
+    },
+    {
+     "rung": "point",
+     "text": "$6 \\times 8 = 48$, $9 \\times 8 = 72$, $9 \\times 1 = 9$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$48 + 72 + 9 = 129$."
+    }
+   ],
+   "feedback": {
+    "correct": "129 parameters from 250 days: about one parameter for every two observations, which is easy to overfit.",
+    "generic": "Not quite. Count weights and biases per layer.",
+    "byKey": {
+     "no-bias": "You left out the 17 biases."
+    }
+   },
+   "explain": {
+    "text": "$48 + 72 + 9 = 129$ parameters against 250 data points. With that ratio the network can fit noise; later courses (makemore level 3, nn-train) measure it on held-out data."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "One neuron splits the plane with one line, so it cannot fit an XOR; a hidden layer can.",
+   "A layer from $m$ inputs to $k$ neurons has $(m + 1)k$ parameters: 13 for 2-3-1, 41 for 3-4-4-1, 337 for 2-16-16-1.",
+   "Seeded draws in a fixed order (layer, neuron, weights then bias) give the same network every time."
+  ],
+  "formula": {
+   "name": "Parameters of a layer",
+   "tex": "(m + 1)\\,k \\quad\\text{for } m \\text{ inputs and } k \\text{ neurons}",
+   "note": "$mk$ weights plus $k$ biases."
+  },
+  "trap": "Counting the edges of a drawing gives the weights only: 32 for 3-4-4-1, which has 41 parameters."
+ },
+ "quiz": [
+  {
+   "id": "q-count-421",
+   "difficulty": 2,
+   "prose": "A network is 4-2-1: four inputs, two hidden tanh neurons, one output.",
+   "question": "How many parameters does it have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 13,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$5 \\times 2 + 3 \\times 1 = 13$.",
+    "generic": "Not quite. Each layer has $(m + 1)k$.",
+    "byKey": {
+     "no-bias": "You left out the 3 biases."
+    }
+   },
+   "explain": {
+    "text": "The hidden layer has $4 \\times 2$ weights and 2 biases (10), the output 2 weights and a bias (3): 13 in all."
+   }
+  },
+  {
+   "id": "q-init-order",
+   "difficulty": 2,
+   "prose": "An `MLP(2, [3, 1], seed=42)` draws its 13 parameters in the course order.",
+   "question": "Which parameter is the 4th draw?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "h2w1",
+      "text": "$h_2$'s weight on $x_1$",
+      "correct": true
+     },
+     {
+      "id": "h1b",
+      "text": "$h_1$'s bias",
+      "why": "That is the 3rd draw."
+     },
+     {
+      "id": "h3w1",
+      "text": "$h_3$'s weight on $x_1$",
+      "why": "That is the 7th draw."
+     },
+     {
+      "id": "ob",
+      "text": "The output's bias",
+      "why": "That is the last, the 13th."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Draws 1 to 3 fill $h_1$; the 4th starts $h_2$.",
+    "generic": "Not quite. Weights then bias, one neuron at a time."
+   },
+   "explain": {
+    "text": "$h_1$ takes draws 1 to 3 (two weights, then its bias). The 4th draw is $h_2$'s first weight."
+   }
+  },
+  {
+   "id": "q-layer-output",
+   "difficulty": 3,
+   "prose": "A layer is `Layer(5, 3, rng)`.",
+   "question": "What does calling it on a list of 5 inputs return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "three",
+      "text": "A list of 3 Values, one per neuron",
+      "correct": true
+     },
+     {
+      "id": "five",
+      "text": "A list of 5 Values",
+      "why": "You used the input size. The layer has 3 neurons, one output each."
+     },
+     {
+      "id": "one",
+      "text": "One Value, the sum of the neurons",
+      "why": "A layer returns each neuron's output separately."
+     },
+     {
+      "id": "fifteen",
+      "text": "A list of 15 weights",
+      "why": "That is part of its parameters, not its output."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One output per neuron: 3 Values.",
+    "generic": "Not quite. How many neurons does it have?"
+   },
+   "explain": {
+    "text": "`Layer(5, 3)` has 3 neurons, each reading all 5 inputs. Called, it returns their 3 outputs as a list."
+   }
+  }
+ ]
+}
