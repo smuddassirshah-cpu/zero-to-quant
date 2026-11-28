@@ -1,0 +1,13 @@
+# representations level 4: performance task
+
+- `homework-4.json`, item `h-sampler`, index 0. Kind `code` (Python, difficulty 5).
+- Matched objective: l15 "Write the reverse sampling loop, and check its samples against the data." (also l13 "Derive the closed form for a point after many noising steps, and compute it for a schedule." and l16 "Explain how the noise schedule and the number of steps change the samples.").
+- Task: from a one-line stub, `ddpm_sampler(eps_model, betas, n, seed)` runs the full reverse loop for any supplied noise predictor `eps_model(x, t)` and schedule: a standard normal start from `default_rng(seed)`, steps from $t = T$ down to 1 with $\sigma_t^2 = \beta_t$, fresh noise drawn only for $t > 1$, and returns the samples.
+- 9 hidden tests, 2 examples: an exact three-step run with a simple linear predictor (6 places); the shape; $T = 1$ (one jump, no noise) to 9 places; a two-step run with a zero predictor that checks the no-noise last step exactly; the planted exact predictor for normal data, $\mathbb E[\epsilon \mid x_t] = \sqrt{1 - \bar\alpha_t}(x_t - \sqrt{\bar\alpha_t}\mu)/(\bar\alpha_t s^2 + 1 - \bar\alpha_t)$, with 20,000 samples whose mean and sd must match the data's within 0.05 for $\mathcal N((1, -1), 0.5^2\mathbf I)$ and within 0.08 for $\mathcal N((0, 2), 0.8^2\mathbf I)$ on a second schedule; a recording predictor that must be called at $t = 4, 3, 2, 1$; and seeded reproducibility. Four mutants: noise at the last step, steps run forwards, no fresh noise, a jump to an estimate of $\mathbf x_0$ at every step. The number script reruns every test with the solution and a twin, and checks the planted cases on three more seeds with margin (within 0.03 and 0.05).
+- Overlapping screens: l15 screens 8 and 9 code `reverse_step` and `sample` for the level's own trained network with a scaffold (screens counted from 0). The task takes any predictor as a function, adds the $T = 1$ and call-order checks, and is graded against an exact predictor on normal data that no screen uses.
+
+Gates:
+1. `node tools/validate.mjs`: 0 errors.
+2. `VOICE_BASE=app/content/courses/representations python3 docs/reviews/voice-scan.py 35`: 0 over 35 words and 0 lesson ids in code spans.
+3. Numbers script `docs/reports/representations-L4-numbers.py` through `node tools/run-number-scripts.mjs --only representations-L4` (strict): 248 of 248 checks, exit 0; it reruns the solution and a twin against every test.
+4. Playthrough `--set representations/homework-4 --local-cdn <pkgs>`, with and without `--mobile`: all passed, the starter fails. Desktop time per hidden test in Pyodide: at most 247 ms (budget 3,000 ms a case).
