@@ -1,0 +1,1279 @@
+{
+  "id": "l19-what-fits",
+  "course": "gpt",
+  "title": "What fits in memory",
+  "minutes": 14,
+  "objectives": [
+    "Build a memory budget for training and for inference."
+  ],
+  "skills": [
+    "gpt-hardware"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A model's weights",
+      "prose": "A model with 7 billion parameters is stored in bf16, 2 bytes per parameter. A GB here is $10^9$ bytes.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "parameters",
+              "$7 \\times 10^9$"
+            ],
+            [
+              "bytes per parameter",
+              "2"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many GB do the weights take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 14,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "one",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "fp32",
+            "value": 28,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "GB"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Parameters times bytes."
+        },
+        {
+          "rung": "point",
+          "text": "$7 \\times 10^9 \\times 2$."
+        },
+        {
+          "rung": "step",
+          "text": "$1.4 \\times 10^{10}$ bytes."
+        }
+      ],
+      "feedback": {
+        "correct": "$7 \\times 10^9 \\times 2 = 14$ GB.",
+        "generic": "Not quite. Multiply the parameters by 2 bytes.",
+        "byKey": {
+          "one": "That is 1 byte per parameter, as in 8-bit. bf16 is 2.",
+          "fp32": "That is float32, 4 bytes a parameter."
+        }
+      },
+      "explain": {
+        "text": "14 GB of weights: what inference must hold, before the KV cache.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "What training holds",
+      "prose": "Training holds more than the weights. Step through three settings and read the bytes each parameter needs.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "weights",
+            "gradients",
+            "Adam m",
+            "Adam v",
+            "master copy"
+          ],
+          "yLabel": "bytes per parameter",
+          "showValues": true,
+          "yMax": 5
+        },
+        "state": {
+          "values": {
+            "weights": 2,
+            "gradients": 0,
+            "Adam m": 0,
+            "Adam v": 0,
+            "master copy": 0
+          },
+          "caption": "Inference in bf16: 2 bytes per parameter."
+        },
+        "controls": [
+          {
+            "bind": "mode",
+            "label": "Setting",
+            "frames": [
+              {
+                "values": {
+                  "weights": 2,
+                  "gradients": 0,
+                  "Adam m": 0,
+                  "Adam v": 0,
+                  "master copy": 0
+                },
+                "caption": "Inference in bf16: 2 bytes per parameter."
+              },
+              {
+                "values": {
+                  "weights": 4,
+                  "gradients": 4,
+                  "Adam m": 4,
+                  "Adam v": 4,
+                  "master copy": 0
+                },
+                "caption": "Training in float32 with Adam: 4 + 4 + 4 + 4 bytes."
+              },
+              {
+                "values": {
+                  "weights": 2,
+                  "gradients": 2,
+                  "Adam m": 4,
+                  "Adam v": 4,
+                  "master copy": 4
+                },
+                "caption": "Mixed precision with Adam: 2 + 2 + 4 + 4 + 4 bytes."
+              }
+            ],
+            "frameLabels": [
+              "inference",
+              "float32",
+              "mixed"
+            ]
+          }
+        ]
+      },
+      "question": "How many bytes per parameter does training with Adam in mixed precision need?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "sixteen",
+            "text": "16",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "6",
+            "why": "That counts the bf16 weights, gradients and one float32 copy. Adam keeps two moments as well."
+          },
+          {
+            "id": "eight",
+            "text": "8",
+            "why": "Each of Adam's two moments is 4 bytes; with the rest that is 16."
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "why": "That is inference: the weights alone."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the five bars of the mixed setting."
+        }
+      ],
+      "feedback": {
+        "correct": "$2 + 2 + 4 + 4 + 4 = 16$ bytes per parameter.",
+        "generic": "Not quite. Add up every bar of the mixed setting."
+      },
+      "explain": {
+        "text": "Mixed precision does not shrink the training state: 16 bytes, the same as float32 with Adam. It saves time and activation memory, not optimiser memory.",
+        "canvas": {
+          "values": {
+            "weights": 2,
+            "gradients": 2,
+            "Adam m": 4,
+            "Adam v": 4,
+            "master copy": 4
+          },
+          "caption": "Mixed precision with Adam: 16 bytes per parameter."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Training a 7B model",
+      "prose": "Train the 7-billion-parameter model with Adam in mixed precision: bf16 weights and gradients (2 + 2 bytes), Adam's two moments in float32 (4 + 4) and a float32 master copy (4).",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "Bytes per parameter"
+          ],
+          "rows": [
+            [
+              "bf16 weights",
+              "2"
+            ],
+            [
+              "bf16 gradients",
+              "2"
+            ],
+            [
+              "Adam's moments",
+              "8"
+            ],
+            [
+              "float32 master copy",
+              "4"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many GB does the training state take, before activations?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 112,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "weights",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-master",
+            "value": 98,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "GB"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the bytes per parameter."
+        },
+        {
+          "rung": "point",
+          "text": "16 bytes."
+        },
+        {
+          "rung": "step",
+          "text": "$7 \\times 10^9 \\times 16$."
+        }
+      ],
+      "feedback": {
+        "correct": "$7 \\times 10^9 \\times 16 = 112$ GB.",
+        "generic": "Not quite. Multiply by all 16 bytes.",
+        "byKey": {
+          "weights": "That is the weights only, 2 bytes.",
+          "no-master": "That leaves out the 4-byte master copy."
+        }
+      },
+      "explain": {
+        "text": "112 GB, eight times the weights, before a single activation is stored.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A 70B model",
+      "prose": "Now 70 billion parameters, the same recipe.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Use",
+            "Bytes per parameter",
+            "GB"
+          ],
+          "rows": [
+            [
+              "inference, bf16",
+              "2",
+              "140"
+            ],
+            [
+              "training, mixed",
+              "16",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "How many GB does training it take, before activations?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1120,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "inf",
+            "value": 140,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "seven",
+            "value": 112,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "GB"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$70 \\times 10^9 \\times 16$."
+        },
+        {
+          "rung": "point",
+          "text": "$1.12 \\times 10^{12}$ bytes.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In GB, divide by $10^9$."
+        }
+      ],
+      "feedback": {
+        "correct": "$70 \\times 10^9 \\times 16 = 1{,}120$ GB.",
+        "generic": "Not quite. 16 bytes per parameter.",
+        "byKey": {
+          "inf": "That is inference in bf16.",
+          "seven": "That is the 7B model."
+        }
+      },
+      "explain": {
+        "text": "1,120 GB: no single chip holds it, so training a 70B model splits the state across many. Inference needs 140 GB.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The tiny GPT",
+      "prose": "The tiny GPT has 18,017 parameters and trains in float64 with Adam: 8 bytes for each weight, gradient and moment, and no master copy.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "Bytes per parameter"
+          ],
+          "rows": [
+            [
+              "weights",
+              "8"
+            ],
+            [
+              "gradients",
+              "8"
+            ],
+            [
+              "Adam's moments",
+              "16"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many bytes is its training state?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 576544,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "weights",
+            "value": 144136,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-moment",
+            "value": 432408,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Bytes"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Bytes per parameter: $8 + 8 + 16$."
+        },
+        {
+          "rung": "point",
+          "text": "32 bytes."
+        },
+        {
+          "rung": "step",
+          "text": "$18{,}017 \\times 32$."
+        }
+      ],
+      "feedback": {
+        "correct": "$18{,}017 \\times 32 = 576{,}544$ bytes, about 577 KB.",
+        "generic": "Not quite. 32 bytes per parameter.",
+        "byKey": {
+          "weights": "That is the weights alone.",
+          "one-moment": "Adam keeps two moments, 16 bytes in float64."
+        }
+      },
+      "explain": {
+        "text": "576,544 bytes: a few hundred kilobytes. At this size the activations are the larger part, as the next screen shows.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Activations for a batch",
+      "prose": "The tiny GPT's forward pass keeps every intermediate array for the backward pass: 705 float64 numbers per token. A batch is 16 windows of 32 tokens.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Kept per token",
+            "Floats"
+          ],
+          "rows": [
+            [
+              "`x0`, `ln1`, `z`, `attn_out`, `mid`, `ln2`, `lnf`",
+              "$7 \\times 32 = 224$"
+            ],
+            [
+              "`q`, `k`, `v`",
+              "96"
+            ],
+            [
+              "`att`, the attention weights",
+              "$4 \\times 32 = 128$"
+            ],
+            [
+              "`hidden`, the MLP layer",
+              "128"
+            ],
+            [
+              "`mlp_out`, `post`",
+              "64"
+            ],
+            [
+              "`logits`",
+              "65"
+            ],
+            [
+              "total",
+              "705"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many bytes of activations does one batch keep?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2887680,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "floats",
+            "value": 360960,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "window",
+            "value": 180480,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Bytes"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Tokens in the batch: $16 \\times 32$."
+        },
+        {
+          "rung": "point",
+          "text": "512 tokens, 705 floats each, 8 bytes a float.",
+          "highlight": [
+            "r6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$512 \\times 705 \\times 8$."
+        }
+      ],
+      "feedback": {
+        "correct": "$512 \\times 705 \\times 8 = 2{,}887{,}680$ bytes, five times the training state.",
+        "generic": "Not quite. Tokens times floats per token times 8 bytes.",
+        "byKey": {
+          "floats": "That counts floats. Each float64 is 8 bytes.",
+          "window": "That is one window of 32 tokens. The batch has 16."
+        }
+      },
+      "explain": {
+        "text": "2,887,680 bytes, 2.9 MB, of activations against 0.58 MB of weights and Adam state. Activations grow with batch and context, so they come on top of the 16-bytes rule and often dominate.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the budget",
+      "prose": "Write `training_bytes(N, bytes_weights, bytes_grads, bytes_optimizer, master)` and `inference_bytes(N, bytes_per, kv_bytes)`. `bytes_optimizer` is all of the optimiser's state per parameter, so 8 for Adam's two float32 moments.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Call",
+            "Bytes"
+          ],
+          "rows": [
+            [
+              "`training_bytes(7e9, 2, 2, 8, 4)`",
+              "$1.12 \\times 10^{11}$"
+            ],
+            [
+              "`inference_bytes(7e9, 2, 0)`",
+              "$1.4 \\times 10^{10}$"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "Write both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def training_bytes(N, bytes_weights, bytes_grads, bytes_optimizer, master):\n    # Each of N parameters holds a weight, a gradient, the optimiser's\n    # state (all of it, in bytes) and a master copy (master bytes; 0 for none).\n    ...\n\n\ndef inference_bytes(N, bytes_per, kv_bytes):\n    # The weights at bytes_per bytes each (0.5 for 4 bits), plus the KV cache.\n    ...\n",
+        "solution": "def training_bytes(N, bytes_weights, bytes_grads, bytes_optimizer, master):\n    return N * (bytes_weights + bytes_grads + bytes_optimizer + master)\n\n\ndef inference_bytes(N, bytes_per, kv_bytes):\n    return N * bytes_per + kv_bytes\n",
+        "examples": [
+          {
+            "call": "training_bytes(1, 2, 2, 8, 4)",
+            "expect": "16",
+            "compare": "isclose"
+          },
+          {
+            "call": "inference_bytes(1, 2, 0)",
+            "expect": "2",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "training_bytes(18017, 8, 8, 16, 0)",
+            "expect": "576544",
+            "compare": "isclose"
+          },
+          {
+            "call": "training_bytes(7e9, 2, 2, 8, 4)",
+            "expect": "1.12e11",
+            "compare": "isclose"
+          },
+          {
+            "call": "training_bytes(70e9, 2, 2, 8, 4)",
+            "expect": "1.12e12",
+            "compare": "isclose"
+          },
+          {
+            "call": "inference_bytes(7e9, 2, 0)",
+            "expect": "1.4e10",
+            "compare": "isclose"
+          },
+          {
+            "call": "inference_bytes(7e9, 2, 2**31)",
+            "expect": "1.4e10 + 2**31",
+            "compare": "isclose"
+          },
+          {
+            "call": "inference_bytes(70e9, 0.5, 0)",
+            "expect": "3.5e10",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Submit runs 6 hidden tests: the tiny GPT in float64 with Adam, 7B and 70B models in mixed precision, then inference at 2 bytes, with a 2 GiB cache and at 4 bits.",
+        "mutants": [
+          {
+            "source": "def training_bytes(N, bytes_weights, bytes_grads, bytes_optimizer, master):\n    return N * (bytes_weights + bytes_grads + 2 * bytes_optimizer + master)\n\n\ndef inference_bytes(N, bytes_per, kv_bytes):\n    return N * bytes_per + kv_bytes\n",
+            "test": 1,
+            "symptom": "Doubles the optimiser bytes, counting Adam's two moments twice."
+          },
+          {
+            "source": "def training_bytes(N, bytes_weights, bytes_grads, bytes_optimizer, master):\n    return N * (bytes_weights + bytes_grads + bytes_optimizer)\n\n\ndef inference_bytes(N, bytes_per, kv_bytes):\n    return N * bytes_per + kv_bytes\n",
+            "test": 2,
+            "symptom": "Leaves out the float32 master copy."
+          },
+          {
+            "source": "def training_bytes(N, bytes_weights, bytes_grads, bytes_optimizer, master):\n    return N * (bytes_weights + bytes_grads + bytes_optimizer + master)\n\n\ndef inference_bytes(N, bytes_per, kv_bytes):\n    return N * bytes_per\n",
+            "test": 5,
+            "symptom": "Leaves the KV cache out of inference."
+          },
+          {
+            "source": "def training_bytes(N, bytes_weights, bytes_grads, bytes_optimizer, master):\n    return N * (bytes_weights + bytes_grads + bytes_optimizer + master)\n\n\ndef inference_bytes(N, bytes_per, kv_bytes):\n    return N * int(bytes_per) + kv_bytes\n",
+            "test": 6,
+            "symptom": "Rounds 0.5 bytes down to 0, so a 4-bit model weighs nothing."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Training: add the four sizes, times $N$."
+        },
+        {
+          "rung": "point",
+          "text": "Inference: weights times bytes, plus the cache."
+        },
+        {
+          "rung": "step",
+          "text": "A 4-bit weight is 0.5 bytes."
+        }
+      ],
+      "feedback": {
+        "correct": "Your budgets match the six tests.",
+        "generic": "Not quite. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 passes 16 as Adam's whole state in float64. Add it once.",
+          "test-2": "Test 2 has a 4-byte master copy: add `master` too.",
+          "test-5": "Test 5 adds a 2 GiB KV cache: inference holds it as well as the weights.",
+          "test-6": "Test 6 stores 4-bit weights, half a byte each. Keep `bytes_per` as given."
+        }
+      },
+      "explain": {
+        "text": "The budget is a sum of per-parameter sizes; the hard part is knowing every term."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Two bytes a parameter",
+      "prose": "A colleague plans to fine-tune the 7B model with Adam on one chip with 80 GB of memory: \"it is 14 GB in bf16, so it fits five times over.\"",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Estimate",
+            "GB"
+          ],
+          "rows": [
+            [
+              "weights in bf16",
+              "14"
+            ],
+            [
+              "training state, mixed precision",
+              "112"
+            ],
+            [
+              "chip memory",
+              "80"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "What is wrong with the plan?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "state",
+            "text": "Training holds 16 bytes per parameter, 112 GB, which does not fit",
+            "correct": true
+          },
+          {
+            "id": "ok",
+            "text": "Nothing: 14 GB fits in 80 GB",
+            "why": "That is the trap: 14 GB is the weights alone. Gradients, Adam's moments and the master copy make 112 GB."
+          },
+          {
+            "id": "act",
+            "text": "Only the activations are missing; the rest fits",
+            "why": "The state alone is 112 GB, above 80 before any activation."
+          },
+          {
+            "id": "fp32",
+            "text": "It should be 28 GB, in float32",
+            "why": "Even all in float32 the weights are 28 GB, and training needs 16 bytes each."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does training hold per parameter?"
+        },
+        {
+          "rung": "point",
+          "text": "16 bytes with Adam in mixed precision."
+        },
+        {
+          "rung": "step",
+          "text": "$7 \\times 10^9 \\times 16$."
+        }
+      ],
+      "feedback": {
+        "correct": "112 GB of state before activations: the plan needs two chips or a lighter optimiser.",
+        "generic": "Not quite. Count what training holds.",
+        "byKey": {
+          "ok": "14 GB is inference. Training needs eight times as much, 112 GB."
+        }
+      },
+      "explain": {
+        "text": "Budgeting training at 2 bytes per parameter misses seven eighths of it. The state is 112 GB; activations come on top.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Fits to serve, not to train",
+      "prose": "A 34-billion-parameter model and chips with 80 GB each. In bf16 it serves from one chip; training it with Adam in mixed precision does not fit there.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Use",
+            "GB",
+            "One 80 GB chip?"
+          ],
+          "rows": [
+            [
+              "inference, bf16",
+              "68",
+              "yes"
+            ],
+            [
+              "training, mixed",
+              "544",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        }
+      },
+      "question": "At least how many 80 GB chips does the training state need, before activations?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "down",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "inf",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Chips"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$34 \\times 10^9 \\times 16 = 544$ GB."
+        },
+        {
+          "rung": "point",
+          "text": "$544 / 80 = 6.8$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A chip cannot be split: round up."
+        }
+      ],
+      "feedback": {
+        "correct": "$544 / 80 = 6.8$, so 7 chips.",
+        "generic": "Not quite. Divide 544 by 80 and round up.",
+        "byKey": {
+          "down": "6 chips hold 480 GB, short of 544.",
+          "inf": "One chip serves the model; training needs 544 GB."
+        }
+      },
+      "explain": {
+        "text": "The same model fits one chip for inference and needs 7 to train, before activations. That is why many teams fine-tune with lighter optimisers or train only small added weights.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Fewer bits for serving",
+      "prose": "**Quantisation** stores the weights in 8 or 4 bits for inference: memory halves or quarters against bf16. What it costs in accuracy must be measured on the task, not assumed.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Format",
+            "Bytes per weight",
+            "70B model (GB)"
+          ],
+          "rows": [
+            [
+              "bf16",
+              "2",
+              "140"
+            ],
+            [
+              "8-bit",
+              "1",
+              "70"
+            ],
+            [
+              "4-bit",
+              "0.5",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "How many GB does the 70B model take at 4 bits?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 35,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "eight",
+            "value": 70,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "bits",
+            "value": 280,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "GB"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "4 bits is half a byte."
+        },
+        {
+          "rung": "point",
+          "text": "$70 \\times 10^9 \\times 0.5$.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3.5 \\times 10^{10}$ bytes."
+        }
+      ],
+      "feedback": {
+        "correct": "$70 \\times 10^9 \\times 0.5 = 35$ GB, a quarter of bf16.",
+        "generic": "Not quite. 4 bits is 0.5 bytes.",
+        "byKey": {
+          "eight": "That is 8-bit.",
+          "bits": "That counts 4 bytes, not 4 bits."
+        }
+      },
+      "explain": {
+        "text": "35 GB at 4 bits. Real schemes also store a scale per small group of weights, a few per cent more, and the loss of accuracy differs by model and task: measure it.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The memory budget",
+      "prose": "For $N$ parameters:\n$$\\text{training} = N(b_w + b_g + b_{\\text{opt}} + b_{\\text{master}}) + \\text{activations}$$\n$$\\text{inference} = N b + \\text{KV cache}$$\nWith Adam in mixed precision the first bracket is 16 bytes.",
+      "question": "Which part of the training memory grows with the batch size?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "act",
+            "text": "The activations",
+            "correct": true
+          },
+          {
+            "id": "opt",
+            "text": "Adam's moments",
+            "why": "They are per parameter, whatever the batch."
+          },
+          {
+            "id": "grads",
+            "text": "The gradients",
+            "why": "One gradient per parameter, summed over the batch."
+          },
+          {
+            "id": "none",
+            "text": "None of it",
+            "why": "The activations are kept per token, so they grow with the batch."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which terms are per parameter, and which per token?"
+        }
+      ],
+      "feedback": {
+        "correct": "Activations are kept per token, so they scale with batch and context.",
+        "generic": "Not quite. Which term is counted per token?"
+      },
+      "explain": {
+        "text": "Every term but the activations is per parameter. A batch too large for memory is split into smaller micro-batches whose gradients are added."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Sizing a research machine",
+      "prose": "A team will fine-tune a 7B model with Adam in mixed precision. At their batch and context the activations take 40 GB. The machines they can rent hold chips of 80 GB each.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Part",
+            "GB"
+          ],
+          "rows": [
+            [
+              "training state",
+              "112"
+            ],
+            [
+              "activations",
+              "40"
+            ],
+            [
+              "total",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "question": "How many GB does the run need in all?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 152,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "state",
+            "value": 112,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "weights",
+            "value": 54,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "GB"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the state and the activations."
+        },
+        {
+          "rung": "point",
+          "text": "$112 + 40$."
+        },
+        {
+          "rung": "step",
+          "text": "Then compare with chips of 80 GB."
+        }
+      ],
+      "feedback": {
+        "correct": "$112 + 40 = 152$ GB: two 80 GB chips, with 8 GB to spare.",
+        "generic": "Not quite. Add the two parts.",
+        "byKey": {
+          "state": "That leaves out the activations.",
+          "weights": "That uses the 14 GB of weights instead of the 112 GB state."
+        }
+      },
+      "explain": {
+        "text": "152 GB fits on two 80 GB chips with little room; halving the batch frees activation memory if it does not fit. Budget memory before renting the machine.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Inference holds the weights (2 bytes each in bf16) and the KV cache: a 7B model is 14 GB, a 70B model 140 GB.",
+      "Training with Adam in mixed precision holds 16 bytes per parameter (weights 2, gradients 2, moments 8, master 4): 112 GB for 7B, 1,120 GB for 70B, before activations.",
+      "Activations grow with batch and context and can dominate; 8-bit and 4-bit weights halve and quarter inference memory, at an accuracy cost to be measured."
+    ],
+    "formula": {
+      "name": "Training memory",
+      "tex": "N(b_w + b_g + b_{\\text{opt}} + b_{\\text{master}}) + \\text{activations}",
+      "note": "Adam, mixed precision: $2 + 2 + 8 + 4 = 16$ bytes."
+    },
+    "trap": "Budgeting training at the 2 bytes per parameter of inference: it is 16."
+  },
+  "quiz": [
+    {
+      "id": "q-1p5b",
+      "difficulty": 2,
+      "question": "How many GB does training a 1.5-billion-parameter model with Adam in mixed precision take, before activations?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "weights",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "GB"
+      },
+      "feedback": {
+        "correct": "$1.5 \\times 10^9 \\times 16 = 24$ GB.",
+        "generic": "Not quite. 16 bytes per parameter.",
+        "byKey": {
+          "weights": "That is the bf16 weights alone."
+        }
+      },
+      "explain": {
+        "text": "$1.5 \\times 10^9 \\times 16 = 24$ GB."
+      }
+    },
+    {
+      "id": "q-int8",
+      "difficulty": 3,
+      "question": "A 13B model is served in 8 bits with a 3 GB KV cache. How many GB does inference hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "bf16",
+            "value": 29,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nokv",
+            "value": 13,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "GB"
+      },
+      "feedback": {
+        "correct": "$13 + 3 = 16$ GB.",
+        "generic": "Not quite. Weights at 1 byte, plus the cache.",
+        "byKey": {
+          "bf16": "That is bf16 weights, 2 bytes each.",
+          "nokv": "That leaves out the KV cache."
+        }
+      },
+      "explain": {
+        "text": "13 GB of 8-bit weights plus a 3 GB cache: 16 GB."
+      }
+    },
+    {
+      "id": "q-tiny-inf",
+      "difficulty": 2,
+      "question": "The tiny GPT's 18,017 weights are float64. How many bytes do they take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 144136,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "train",
+            "value": 576544,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ],
+        "label": "Bytes"
+      },
+      "feedback": {
+        "correct": "$18{,}017 \\times 8 = 144{,}136$ bytes.",
+        "generic": "Not quite. 8 bytes per float64.",
+        "byKey": {
+          "train": "That is the training state, with gradients and Adam."
+        }
+      },
+      "explain": {
+        "text": "$18{,}017 \\times 8 = 144{,}136$ bytes, about 144 KB."
+      }
+    }
+  ]
+}
