@@ -1,0 +1,1497 @@
+{
+ "id": "l16-a-tiny-transformer",
+ "course": "sequence",
+ "title": "A tiny transformer at work",
+ "minutes": 15,
+ "objectives": [
+  "Run a one-block transformer from supplied weights, and train it for a few steps on a toy task."
+ ],
+ "skills": [
+  "sqn-block"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A model that reverses",
+   "prose": "A supplied 2-block transformer was trained to write six digits backwards after a separator (shown as →). It writes one digit at a time, each fed back in. Slide through five inputs.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "3",
+      "1",
+      "4",
+      "1",
+      "5",
+      "9",
+      "→",
+      "9",
+      "5",
+      "1",
+      "4",
+      "1",
+      "3"
+     ],
+     "showIndex": false
+    },
+    "state": {
+     "caption": "Input 3 1 4 1 5 9, model writes 9 5 1 4 1 3",
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         5
+        ],
+        "label": "input"
+       },
+       {
+        "range": [
+         7,
+         12
+        ],
+        "label": "written"
+       }
+      ]
+     }
+    },
+    "controls": [
+     {
+      "bind": "frame",
+      "label": "input",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "frames": [
+       {
+        "cells": [
+         "3",
+         "1",
+         "4",
+         "1",
+         "5",
+         "9",
+         "→",
+         "9",
+         "5",
+         "1",
+         "4",
+         "1",
+         "3"
+        ],
+        "caption": "Input 3 1 4 1 5 9, model writes 9 5 1 4 1 3"
+       },
+       {
+        "cells": [
+         "2",
+         "7",
+         "1",
+         "8",
+         "2",
+         "8",
+         "→",
+         "8",
+         "2",
+         "8",
+         "1",
+         "7",
+         "2"
+        ],
+        "caption": "Input 2 7 1 8 2 8, model writes 8 2 8 1 7 2"
+       },
+       {
+        "cells": [
+         "0",
+         "0",
+         "7",
+         "4",
+         "2",
+         "1",
+         "→",
+         "1",
+         "2",
+         "4",
+         "7",
+         "0",
+         "0"
+        ],
+        "caption": "Input 0 0 7 4 2 1, model writes 1 2 4 7 0 0"
+       },
+       {
+        "cells": [
+         "9",
+         "0",
+         "2",
+         "1",
+         "0",
+         "6",
+         "→",
+         "6",
+         "0",
+         "1",
+         "2",
+         "0",
+         "9"
+        ],
+        "caption": "Input 9 0 2 1 0 6, model writes 6 0 1 2 0 9"
+       },
+       {
+        "cells": [
+         "8",
+         "8",
+         "8",
+         "8",
+         "8",
+         "8",
+         "→",
+         "8",
+         "8",
+         "8",
+         "8",
+         "8",
+         "8"
+        ],
+        "caption": "Input 8 8 8 8 8 8, model writes 8 8 8 8 8 8"
+       }
+      ],
+      "frameLabels": [
+       "1",
+       "2",
+       "3",
+       "4",
+       "5"
+      ]
+     }
+    ]
+   },
+   "question": "For how many of the five inputs does it write the exact reverse?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "All five come out reversed, the repeated 8s included.",
+    "generic": "Not quite. Check each input against what is written after the arrow.",
+    "byKey": {
+     "four": "Look again at the last frame: six 8s reversed are six 8s."
+    }
+   },
+   "explain": {
+    "text": "All 5 of the 5. Five checks prove little on their own; later screens score the model on 1,000 inputs it never trained on."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Where it looks",
+   "prose": "One attention head of block 2, reading 3 1 4 1 5 9. Row \"out $t$\" is the query that writes output digit $t$; the columns are the six inputs and the separator. Each row sums to 1 over every earlier position; the table shows the first seven.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "label": "block 2, head 1",
+       "rows": [
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.98,
+         0.01
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.97,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         0.0,
+         0.99,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ],
+        [
+         0.01,
+         0.71,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.26
+        ],
+        [
+         0.7,
+         0.27,
+         0.0,
+         0.01,
+         0.0,
+         0.0,
+         0.01
+        ]
+       ],
+       "rowLabels": [
+        "out 1",
+        "out 2",
+        "out 3",
+        "out 4",
+        "out 5",
+        "out 6"
+       ],
+       "colLabels": [
+        "in 1",
+        "in 2",
+        "in 3",
+        "in 4",
+        "in 5",
+        "in 6",
+        "→"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 2,
+        "legend": false
+       }
+      }
+     ]
+    }
+   },
+   "question": "Output digit 2 puts most of its weight on which input position (1 to 6)?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "same",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read row \"out 2\" and find its largest entry."
+    },
+    {
+     "rung": "point",
+     "text": "The heavy cells run along the anti-diagonal.",
+     "highlight": [
+      "A-r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Row \"out 2\" puts 0.97 on input 5."
+    }
+   ],
+   "feedback": {
+    "correct": "Input 5, with weight 0.97: output digit 2 copies the fifth input.",
+    "generic": "Not quite. Find the largest entry in row \"out 2\".",
+    "byKey": {
+     "same": "Position 2 holds the digit that output 5 needs. Reversal pairs $t$ with $7 - t$.",
+     "six": "Input 6 is what output 1 copies."
+    }
+   },
+   "explain": {
+    "text": "Output $t$ looks at input $7 - t$, so the head copies the mirrored digit. Rows 5 and 6 are less clean: they put 0.71 and 0.70 on the right input and the rest nearby, yet the model still writes the right digit."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "How it was trained",
+   "prose": "Training a transformer is the loop of `nn-train` L1 with this block inside. The loss is cross-entropy on each next token; here only the six written digits are scored. Adam runs with a warm-up then a decay of the rate (`nn-train` l4). Layer norms and residuals keep it trainable. The curve is the shipped model's 400 steps.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "loss",
+       "label": "training loss",
+       "values": [
+        2.636,
+        2.212,
+        1.619,
+        0.371,
+        0.036,
+        0.014,
+        0.01,
+        0.008,
+        0.007,
+        0.006,
+        0.005,
+        0.005,
+        0.004,
+        0.004,
+        0.004,
+        0.004,
+        0.004,
+        0.004,
+        0.004,
+        0.004
+       ]
+      }
+     ],
+     "xValues": [
+      20,
+      40,
+      60,
+      80,
+      100,
+      120,
+      140,
+      160,
+      180,
+      200,
+      220,
+      240,
+      260,
+      280,
+      300,
+      320,
+      340,
+      360,
+      380,
+      400
+     ],
+     "xStep": 100,
+     "xLabel": "step (mean of the 20 before)",
+     "yLabel": "nats",
+     "y": [
+      0,
+      3
+     ]
+    }
+   },
+   "question": "What loss does a model score if it spreads its chance evenly over all 11 tokens? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.398,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "bits",
+      "value": 3.459,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ten",
+      "value": 2.303,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each of 11 tokens gets chance $1/11$."
+    },
+    {
+     "rung": "point",
+     "text": "The loss is $-\\ln(1/11)$.",
+     "highlight": [
+      "loss"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln 11$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln 11 = 2.398$ nats, close to where the curve starts.",
+    "generic": "Not quite. Take minus the log of $1/11$.",
+    "byKey": {
+     "bits": "That is $\\log_2 11$, in bits. Cross-entropy here is in nats.",
+     "ten": "That is $\\ln 10$: there are 11 tokens, the separator too."
+    }
+   },
+   "explain": {
+    "text": "Uniform guessing scores $\\ln 11 = 2.398$. The curve starts near 2.64 and ends near 0.004: the model is almost sure of every digit."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The forward pass",
+   "prose": "Write `tiny_forward(model, seq)`: embeddings plus positions, the two blocks (`block` from `seq_ops_l4`, the reference version of your l13 block), the final layer norm and the unembedding. `TOK` is 3 1 4 1 5 9, the separator (10) and the first five reversed digits.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "3",
+      "1",
+      "4",
+      "1",
+      "5",
+      "9",
+      "10",
+      "9",
+      "5",
+      "1",
+      "4",
+      "1"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         5
+        ],
+        "label": "digits"
+       },
+       {
+        "range": [
+         6,
+         11
+        ],
+        "label": "predicts the next digit"
+       }
+      ]
+     }
+    }
+   },
+   "question": "Complete `tiny_forward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import block\n\n\ndef tiny_forward(model, seq, h=4):\n    # token embeddings E[seq] plus positions P[:T]; each block (seq_ops_l4.block, h heads);\n    # the final layer norm (lnf_g, lnf_b); then @ U + c. Return the logits, (T, 11).\n    ...\n",
+    "solution": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import block\n\n\ndef tiny_forward(model, seq, h=4):\n    seq = np.asarray(seq)\n    x = model['E'][seq] + model['P'][:seq.shape[-1]]\n    for p in model['blocks']:\n        x = block(x, p, h).data\n    return layernorm(x, model['lnf_g'], model['lnf_b']).data @ model['U'] + model['c']\n",
+    "prelude": "import numpy as np\nfrom seq_ops_l4 import read_model\n\nMODEL = read_model('sequence-reverse.json')\nTOK = np.array([3, 1, 4, 1, 5, 9, 10, 9, 5, 1, 4, 1])\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+     "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+     "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+     "sequence-reverse.json": "content/data/ai/sequence-reverse.json"
+    },
+    "examples": [
+     {
+      "call": "tiny_forward(MODEL, TOK).shape",
+      "compare": "equal",
+      "expect": "(12, 11)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "tiny_forward(MODEL, TOK)[6].tolist()",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[-0.6532291777129768, -1.1751480699219852, -0.046645764539631186, 0.5976320249769539, -4.126175735692076, -0.6669950394091351, -0.8723100610741287, -1.189189707469268, -2.2999874388842416, 7.729039173630717, -0.5125856001056639]"
+     },
+     {
+      "call": "tiny_forward(MODEL, TOK)[6:].argmax(-1).tolist()",
+      "compare": "equal",
+      "expect": "[9, 5, 1, 4, 1, 3]"
+     },
+     {
+      "call": "tiny_forward(MODEL, TOK[:1]).tolist()",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[[1.1945581228801065, -0.5180763485231257, -1.210799646026996, 6.0946048807491415, -2.2111639446672267, -1.9651045141352146, -1.6941631561430202, -0.49385936457018675, -1.0932575303262722, -1.002412653322772, -1.7001247151549983]]"
+     },
+     {
+      "call": "tiny_forward(MODEL, np.stack([TOK, TOK[::-1]]))[1, 3].tolist()",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[-3.3009333817334054, 4.721737930634147, -2.0495976116587973, 1.4361547577876979, 0.4355303906520265, 4.2271174071799775, -1.2660405855320256, 2.7094881458525233, 1.1281392975883726, -0.6403223169391954, -1.059101852562757]"
+     },
+     {
+      "call": "zq_no('lm_logits', 'stream')",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on the supplied weights, compared to $10^{-6}$ (relative). Test 3 is one token; test 4 a batch of two; test 5 checks you assemble the model rather than calling `seq_ops_l4.lm_logits`.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import block\n\n\ndef tiny_forward(model, seq, h=4):\n    seq = np.asarray(seq)\n    x = model['E'][seq]\n    for p in model['blocks']:\n        x = block(x, p, h).data\n    return layernorm(x, model['lnf_g'], model['lnf_b']).data @ model['U'] + model['c']\n",
+      "test": 1,
+      "symptom": "Leaves out the positions, so the model cannot tell where a digit sits."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import block\n\n\ndef tiny_forward(model, seq, h=4):\n    seq = np.asarray(seq)\n    x = model['E'][seq] + model['P'][:seq.shape[-1]]\n    for p in model['blocks']:\n        x = block(x, p, h).data\n    return x @ model['U'] + model['c']\n",
+      "test": 1,
+      "symptom": "Leaves out the final layer norm."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import block\n\n\ndef tiny_forward(model, seq, h=4):\n    seq = np.asarray(seq)\n    x = model['E'][seq] + model['P'][:seq.shape[-1]]\n    from seq_ops_l4 import lm_logits\n    return lm_logits(seq, model, h).data\n",
+      "test": 5,
+      "symptom": "Calls the shipped model function instead of assembling it."
+     },
+     {
+      "source": "import numpy as np\nfrom nt_ops_l2 import layernorm\nfrom seq_ops_l4 import block\n\n\ndef tiny_forward(model, seq, h=4):\n    seq = np.asarray(seq)\n    x = model['E'][seq] + model['P'][:12]\n    for p in model['blocks']:\n        x = block(x, p, h).data\n    return layernorm(x, model['lnf_g'], model['lnf_b']).data @ model['U'] + model['c']\n",
+      "test": 3,
+      "symptom": "Adds all 12 position vectors whatever the length."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with `model[\"E\"][seq] + model[\"P\"][:T]`."
+    },
+    {
+     "rung": "point",
+     "text": "Loop over `model[\"blocks\"]` with `block(x, p, h).data`.",
+     "highlight": [
+      "c6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Finish with `layernorm(x, lnf_g, lnf_b).data @ U + c`."
+    }
+   ],
+   "feedback": {
+    "correct": "Rows 6 to 11 predict 9 5 1 4 1 3: the reversed digits.",
+    "generic": "Not quite. Check each stage against the comment in the starter."
+   },
+   "explain": {
+    "text": "Row $t$ of the logits predicts token $t + 1$, so rows 6 to 11 carry the answer. The causal mask makes row 6 depend on the digits and the separator only."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Scoring it on inputs it never saw",
+   "prose": "There are $10^6$ six-digit inputs. Training drew fresh ones but never any of 1,000 held out by `default_rng(1)` (`HELD`). Write `reverse_with(model, digits)`, which decodes greedily, feeding each written digit back in, and `heldout_accuracy(model, digits)`.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "d1",
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "→",
+      "w1",
+      "w2",
+      "…"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "ranges": [
+       {
+        "range": [
+         0,
+         6
+        ],
+        "label": "given"
+       },
+       {
+        "range": [
+         7,
+         9
+        ],
+        "label": "written, fed back"
+       }
+      ]
+     }
+    }
+   },
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom seq_ops_l4 import lm_logits\n\n\ndef reverse_with(model, digits, h=4):\n    # digits: (N, 6). Append the separator 10, then six times: run lm_logits, take the argmax of the\n    # last position, append it. Return the six written digits, (N, 6).\n    ...\n\n\ndef heldout_accuracy(model, digits):\n    # the share of rows of digits that the model writes exactly reversed\n    ...\n",
+    "solution": "import numpy as np\nfrom seq_ops_l4 import lm_logits\n\n\ndef reverse_with(model, digits, h=4):\n    digits = np.asarray(digits)\n    x = np.concatenate([digits, np.full((len(digits), 1), 10)], axis=1)\n    for _ in range(6):\n        nxt = lm_logits(x, model, h).data[:, -1].argmax(-1)\n        x = np.concatenate([x, nxt[:, None]], axis=1)\n    return x[:, 7:]\n\n\ndef heldout_accuracy(model, digits):\n    digits = np.asarray(digits)\n    return float(np.mean((reverse_with(model, digits) == digits[:, ::-1]).all(axis=1)))\n",
+    "prelude": "import numpy as np\nfrom seq_ops_l4 import read_model\n\nMODEL = read_model('sequence-reverse.json')\nTOK = np.array([3, 1, 4, 1, 5, 9, 10, 9, 5, 1, 4, 1])\n\nWEAK = {k: v for k, v in MODEL.items()}\nWEAK['blocks'] = [MODEL['blocks'][0], dict(MODEL['blocks'][1], Wo=0.2 * MODEL['blocks'][1]['Wo'])]\nHELD = np.random.default_rng(1).integers(0, 10, (1000, 6))\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+     "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+     "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+     "sequence-reverse.json": "content/data/ai/sequence-reverse.json"
+    },
+    "examples": [
+     {
+      "call": "reverse_with(MODEL, [[3, 1, 4, 1, 5, 9]]).tolist()",
+      "compare": "equal",
+      "expect": "[[9, 5, 1, 4, 1, 3]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "heldout_accuracy(MODEL, HELD) >= 0.99",
+      "compare": "equal",
+      "expect": "True",
+      "budget": 5000
+     },
+     {
+      "call": "heldout_accuracy(WEAK, HELD[:200])",
+      "compare": "isclose",
+      "expect": "0.45"
+     },
+     {
+      "call": "reverse_with(WEAK, HELD[:20]).tolist()",
+      "compare": "equal",
+      "expect": "[[1, 0, 9, 1, 5, 4], [4, 8, 3, 2, 9, 8], [5, 6, 4, 2, 8, 2], [5, 8, 7, 8, 0, 8], [3, 1, 7, 4, 3, 8], [4, 3, 1, 9, 4, 1], [7, 0, 2, 5, 2, 5], [9, 1, 4, 4, 2, 0], [5, 2, 7, 0, 9, 7], [9, 3, 1, 7, 2, 9], [6, 4, 1, 2, 5, 4], [9, 7, 6, 3, 7, 4], [4, 8, 5, 7, 0, 4], [7, 7, 6, 4, 0, 3], [7, 3, 2, 1, 5, 2], [7, 9, 5, 6, 5, 5], [6, 0, 0, 5, 1, 0], [7, 5, 9, 8, 7, 7], [7, 2, 0, 4, 1, 3], [4, 3, 8, 8, 8, 6]]"
+     },
+     {
+      "call": "heldout_accuracy(MODEL, [[8, 8, 8, 8, 8, 8]])",
+      "compare": "isclose",
+      "expect": "1.0"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. Test 1 needs at least 0.99 on the 1,000 held-out inputs; tests 2 and 3 use `WEAK`, the model with block 2's attention output scaled by 0.2, compared exactly.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom seq_ops_l4 import lm_logits\n\n\ndef reverse_with(model, digits, h=4):\n    digits = np.asarray(digits)\n    x = np.concatenate([digits, np.full((len(digits), 1), 10)], axis=1)\n    for _ in range(6):\n        nxt = lm_logits(x, model, h).data[:, -1].argmax(-1)\n        x = np.concatenate([x, nxt[:, None]], axis=1)\n    return x[:, 7:]\n\n\ndef heldout_accuracy(model, digits):\n    digits = np.asarray(digits)\n    return float(np.mean(reverse_with(model, digits) == digits[:, ::-1]))\n",
+      "test": 2,
+      "symptom": "Scores digits, not whole sequences."
+     },
+     {
+      "source": "import numpy as np\nfrom seq_ops_l4 import lm_logits\n\n\ndef reverse_with(model, digits, h=4):\n    digits = np.asarray(digits)\n    x = np.concatenate([digits, np.full((len(digits), 1), 10)], axis=1)\n    x = np.concatenate([x, digits[:, ::-1][:, :5]], axis=1)\n    return lm_logits(x, model, h).data[:, 6:].argmax(-1)\n\n\ndef heldout_accuracy(model, digits):\n    digits = np.asarray(digits)\n    return float(np.mean((reverse_with(model, digits) == digits[:, ::-1]).all(axis=1)))\n",
+      "test": 3,
+      "symptom": "Feeds in the true digits (teacher forcing) instead of its own."
+     },
+     {
+      "source": "import numpy as np\nfrom seq_ops_l4 import lm_logits\n\n\ndef reverse_with(model, digits, h=4):\n    digits = np.asarray(digits)\n    x = np.concatenate([digits, np.full((len(digits), 1), 10)], axis=1)\n    for _ in range(6):\n        nxt = lm_logits(x, model, h).data[:, 0].argmax(-1)\n        x = np.concatenate([x, nxt[:, None]], axis=1)\n    return x[:, 7:]\n\n\ndef heldout_accuracy(model, digits):\n    digits = np.asarray(digits)\n    return float(np.mean((reverse_with(model, digits) == digits[:, ::-1]).all(axis=1)))\n",
+      "test": 1,
+      "symptom": "Reads the first position's logits instead of the last."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the digits and the separator."
+    },
+    {
+     "rung": "point",
+     "text": "Each round: the argmax of the last row of `lm_logits`, appended.",
+     "highlight": [
+      "c7"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Score a row only when all six written digits match."
+    }
+   ],
+   "feedback": {
+    "correct": "The shipped model reverses every one of the 1,000 held-out inputs.",
+    "generic": "Not quite. Decode with the model's own digits, and score whole sequences."
+   },
+   "explain": {
+    "text": "The model scores 100% on inputs it never trained on, so it has learned reversal, not a list. Greedy decoding feeds back its own digits, so one slip can spoil the rest of a row."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Scored on what it saw",
+   "prose": "A colleague trains the same model for 100 steps on one batch of 32 inputs. Its training loss ends at 0.0043 and it reverses all 32 of them. \"Done,\" they say.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "scored on",
+      "reversed exactly"
+     ],
+     "rows": [
+      [
+       "the 32 training inputs",
+       "100%"
+      ],
+      [
+       "1,000 held-out inputs",
+       "0.5%"
+      ],
+      [
+       "held-out digits, one at a time",
+       "46.0%"
+      ]
+     ]
+    }
+   },
+   "question": "What does the held-out set say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mem",
+      "text": "It reverses 0.5% of held-out inputs: it learned the 32, not reversal",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "About 100% of them, as on its training batch",
+      "why": "You took training accuracy as the answer. The held-out score shows it learned the 32 inputs only."
+     },
+     {
+      "id": "half",
+      "text": "About half of them, since its training was short",
+      "why": "Whole sequences come out right far less often than half the time; it gets single digits right by luck and copying."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two rows of the table."
+    },
+    {
+     "rung": "point",
+     "text": "Held out, it gets whole sequences right almost never.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The model memorised its batch."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: a perfect training score here says nothing about reversal.",
+    "generic": "Not quite. Read the held-out row.",
+    "byKey": {
+     "same": "You judged it by its training accuracy. On inputs it never saw it almost always fails."
+    }
+   },
+   "explain": {
+    "text": "Seen inputs: 100%. Unseen: 0.5% of sequences, 46.0% of digits. With $10^6$ possible inputs, only a held-out score tells memory from skill."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Training it for a few steps",
+   "prose": "Write `train_reverser(model, X, Y, steps, lr)` with the autograd and `adam_step` from `nt_ops_l1`, at a fixed rate. `start_model(7)` is an untrained model; `XB`, `YB` are 32 inputs and their targets ($-1$ marks the six positions that are not scored).",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "run",
+       "label": "reference",
+       "values": [
+        2.716,
+        2.354,
+        2.174,
+        2.051,
+        1.959,
+        1.866,
+        1.764,
+        1.658,
+        1.556,
+        1.454
+       ]
+      }
+     ],
+     "xValues": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "xLabel": "step",
+     "yLabel": "loss",
+     "y": [
+      0,
+      3
+     ]
+    }
+   },
+   "question": "Complete `train_reverser`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import flat_params, lm_logits\n\n\ndef train_reverser(model, X, Y, steps, lr):\n    # Copy every array of model into a Tensor (model['blocks'] is a list of dicts); flat_params lists them.\n    # Each step: zero the gradients; loss = cross-entropy of lm_logits(X, P, 4) over the rows where Y >= 0;\n    # record loss.item(); backward; one adam_step (t from 1) at rate lr. Return the recorded losses.\n    ...\n",
+    "solution": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import flat_params, lm_logits\n\n\ndef train_reverser(model, X, Y, steps, lr):\n    P = {k: Tensor(v) for k, v in model.items() if k != 'blocks'}\n    P['blocks'] = [{k: Tensor(v) for k, v in p.items()} for p in model['blocks']]\n    params = [a for _, a in flat_params(P)]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    keep = np.nonzero(Y.reshape(-1) >= 0)[0]\n    losses = []\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        loss = cross_entropy(lm_logits(X, P, 4).reshape(-1, 11)[keep], Y.reshape(-1)[keep])\n        losses.append(loss.item())\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, t, lr)\n        for p, a in zip(params, new):\n            p.data = a\n    return losses\n",
+    "prelude": "import numpy as np\nfrom seq_ops_l4 import read_model\n\nMODEL = read_model('sequence-reverse.json')\nTOK = np.array([3, 1, 4, 1, 5, 9, 10, 9, 5, 1, 4, 1])\nfrom nt_ops_l1 import adam_step\n\n\ndef start_model(seed):\n    from seq_ops_l4 import init_block\n    g = np.random.default_rng(seed)\n    return {'E': g.standard_normal((11, 32)) * 0.5, 'P': g.standard_normal((12, 32)) * 0.5,\n            'blocks': [init_block(32, 128, seed=seed * 10 + i + 1) for i in range(2)],\n            'lnf_g': np.ones(32), 'lnf_b': np.zeros(32), 'U': g.standard_normal((32, 11)) / np.sqrt(32), 'c': np.zeros(11)}\n\n\n_d = np.random.default_rng(5).integers(0, 10, (32, 6))\nXB = np.concatenate([_d, np.full((32, 1), 10), _d[:, ::-1][:, :5]], axis=1)\nYB = np.concatenate([np.full((32, 6), -1), _d[:, ::-1]], axis=1)\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+     "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+     "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+     "sequence-reverse.json": "content/data/ai/sequence-reverse.json",
+     "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py"
+    },
+    "examples": [
+     {
+      "call": "len(train_reverser(start_model(7), XB, YB, 2, 0.003))",
+      "compare": "equal",
+      "expect": "2"
+     }
+    ],
+    "tests": [
+     {
+      "call": "train_reverser(start_model(7), XB, YB, 3, 0.003)",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[2.7161534544154087, 2.3536746089870952, 2.173997176345817]"
+     },
+     {
+      "call": "train_reverser(start_model(7), XB, YB, 1, 0.0)",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[2.7161534544154087]"
+     },
+     {
+      "call": "train_reverser(start_model(7), XB, YB, 10, 0.003)[-1] < 1.6",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "train_reverser(start_model(7), XB, YB, 100, 0.003)[-1] < 0.05",
+      "compare": "equal",
+      "expect": "True",
+      "budget": 15000
+     }
+    ],
+    "how": "Submit runs 4 hidden tests. Tests 1 and 2 compare the losses of short runs from the supplied start to $10^{-6}$ (relative). Test 3 needs the tenth loss below 1.6. Test 4 runs 100 steps and needs the last loss below 0.05.",
+    "mutants": [
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import flat_params, lm_logits\n\n\ndef train_reverser(model, X, Y, steps, lr):\n    P = {k: Tensor(v) for k, v in model.items() if k != 'blocks'}\n    P['blocks'] = [{k: Tensor(v) for k, v in p.items()} for p in model['blocks']]\n    params = [a for _, a in flat_params(P)]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    keep = np.nonzero(Y.reshape(-1) >= 0)[0]\n    losses = []\n    for t in range(1, steps + 1):\n        loss = cross_entropy(lm_logits(X, P, 4).reshape(-1, 11)[keep], Y.reshape(-1)[keep])\n        losses.append(loss.item())\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, t, lr)\n        for p, a in zip(params, new):\n            p.data = a\n    return losses\n",
+      "test": 1,
+      "symptom": "Never zeroes the gradients, so they pile up across steps."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import flat_params, lm_logits\n\n\ndef train_reverser(model, X, Y, steps, lr):\n    P = {k: Tensor(v) for k, v in model.items() if k != 'blocks'}\n    P['blocks'] = [{k: Tensor(v) for k, v in p.items()} for p in model['blocks']]\n    params = [a for _, a in flat_params(P)]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    keep = np.nonzero(Y.reshape(-1) >= 0)[0]\n    losses = []\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        loss = cross_entropy(lm_logits(X, P, 4).reshape(-1, 11)[keep], Y.reshape(-1)[keep])\n        losses.append(loss.item())\n        loss.backward()\n        for p in params:\n            p.data = p.data - lr * p.grad\n    return losses\n",
+      "test": 1,
+      "symptom": "Plain gradient descent instead of Adam."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import flat_params, lm_logits\n\n\ndef train_reverser(model, X, Y, steps, lr):\n    P = {k: Tensor(v) for k, v in model.items() if k != 'blocks'}\n    P['blocks'] = [{k: Tensor(v) for k, v in p.items()} for p in model['blocks']]\n    params = [a for _, a in flat_params(P)]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    keep = np.nonzero(Y.reshape(-1) >= 0)[0]\n    losses = []\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        loss = cross_entropy(lm_logits(X, P, 4).reshape(-1, 11)[keep], Y.reshape(-1)[keep])\n        losses.append(loss.item())\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, 1, lr)\n        for p, a in zip(params, new):\n            p.data = a\n    return losses\n",
+      "test": 1,
+      "symptom": "Keeps t at 1, so the bias correction never fades."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\nfrom seq_ops_l4 import flat_params, lm_logits\n\n\ndef train_reverser(model, X, Y, steps, lr):\n    P = {k: Tensor(v) for k, v in model.items() if k != 'blocks'}\n    P['blocks'] = [{k: Tensor(v) for k, v in p.items()} for p in model['blocks']]\n    params = [a for _, a in flat_params(P)]\n    m = [np.zeros_like(p.data) for p in params]\n    v = [np.zeros_like(p.data) for p in params]\n    keep = np.nonzero(Y.reshape(-1) >= 0)[0]\n    losses = []\n    for t in range(1, steps + 1):\n        for p in params:\n            p.zero_grad()\n        loss = cross_entropy(lm_logits(X, P, 4).reshape(-1, 11), np.maximum(Y.reshape(-1), 0))\n        losses.append(loss.item())\n        loss.backward()\n        new, m, v = adam_step([p.data for p in params], [p.grad for p in params], m, v, t, lr)\n        for p, a in zip(params, new):\n            p.data = a\n    return losses\n",
+      "test": 1,
+      "symptom": "Scores the six unscored positions too."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`flat_params(P)` gives every Tensor of the model in a fixed order."
+    },
+    {
+     "rung": "point",
+     "text": "The loss uses only rows where `Y >= 0`: index the logits with those rows.",
+     "highlight": [
+      "run"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`new, m, v = adam_step(datas, grads, m, v, t, lr)`, then copy `new` into each `.data`."
+    }
+   ],
+   "feedback": {
+    "correct": "The loss falls from 2.716 to 1.454 in 10 steps, as the reference does.",
+    "generic": "Not quite. Check the zeroing, the scored rows and the Adam step."
+   },
+   "explain": {
+    "text": "The loop is the one from `nn-train` L1; only the model changed. Test 4 trains on the same 32 inputs for 100 steps, which is how the colleague on the last screen got a perfect, useless score."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Without residuals or layer norms",
+   "prose": "The number script trained a deeper version, 6 blocks, for 300 steps of 32 inputs, three ways: as built, without the residual additions, and without the layer norms. The curves are means over 25 steps; a stalled run varies a little from machine to machine.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "full",
+       "label": "as built",
+       "values": [
+        2.404,
+        2.071,
+        0.843,
+        0.054,
+        0.014,
+        0.01,
+        0.008,
+        0.007,
+        0.006,
+        0.006,
+        0.006,
+        0.006
+       ]
+      },
+      {
+       "id": "nores",
+       "label": "no residuals",
+       "values": [
+        2.484,
+        2.291,
+        2.274,
+        2.249,
+        2.209,
+        2.192,
+        2.134,
+        2.119,
+        2.086,
+        2.055,
+        2.037,
+        2.034
+       ]
+      },
+      {
+       "id": "noln",
+       "label": "no layer norms",
+       "values": [
+        4.0,
+        3.242,
+        2.194,
+        2.025,
+        1.93,
+        1.827,
+        1.741,
+        1.641,
+        1.555,
+        1.523,
+        1.501,
+        1.471
+       ]
+      }
+     ],
+     "xValues": [
+      25,
+      50,
+      75,
+      100,
+      125,
+      150,
+      175,
+      200,
+      225,
+      250,
+      275,
+      300
+     ],
+     "xStep": 50,
+     "xLabel": "step (mean of the 25 before)",
+     "yLabel": "loss (capped at 4)",
+     "y": [
+      0,
+      4
+     ]
+    }
+   },
+   "question": "Which run is still above 1.8 nats at the end?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nores",
+      "text": "The run without residuals",
+      "correct": true
+     },
+     {
+      "id": "noln",
+      "text": "The run without layer norms",
+      "why": "Without layer norms the loss starts far above the rest but ends below 1.8: slow, not stuck."
+     },
+     {
+      "id": "full",
+      "text": "The model as it was built",
+      "why": "As built, it ends below 0.01."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read where each curve ends."
+    },
+    {
+     "rung": "point",
+     "text": "One curve ends above 2.",
+     "highlight": [
+      "nores"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The run without residuals stalls."
+    }
+   ],
+   "feedback": {
+    "correct": "Without residuals the loss stays above 1.8; with them it falls below 0.01.",
+    "generic": "Not quite. Compare the end of each curve."
+   },
+   "explain": {
+    "text": "With no identity path, the gradient must pass through all 12 parts and the deep model stalls above 1.8. Without layer norms it starts far higher and recovers slowly. At 2 blocks such runs end close together: depth exposes the difference."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Repeated digits",
+   "prose": "Edge case: the input 8 8 8 8 8 8. The same head of block 2, reading it, still follows the anti-diagonal: position decides where it looks, not the digit.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "label": "block 2, head 1: 8 8 8 8 8 8",
+       "rows": [
+        [
+         0.01,
+         0.03,
+         0.04,
+         0.0,
+         0.01,
+         0.89,
+         0.02
+        ],
+        [
+         0.04,
+         0.0,
+         0.0,
+         0.02,
+         0.93,
+         0.0,
+         0.0
+        ],
+        [
+         0.02,
+         0.0,
+         0.0,
+         0.96,
+         0.01,
+         0.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.01,
+         0.92,
+         0.01,
+         0.01,
+         0.01,
+         0.01
+        ],
+        [
+         0.01,
+         0.98,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.01
+        ],
+        [
+         1.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0,
+         0.0
+        ]
+       ],
+       "rowLabels": [
+        "out 1",
+        "out 2",
+        "out 3",
+        "out 4",
+        "out 5",
+        "out 6"
+       ],
+       "colLabels": [
+        "in 1",
+        "in 2",
+        "in 3",
+        "in 4",
+        "in 5",
+        "in 6",
+        "→"
+       ],
+       "heat": {
+        "mode": "seq",
+        "range": [
+         0,
+         1
+        ],
+        "decimals": 2,
+        "legend": false
+       }
+      }
+     ]
+    }
+   },
+   "question": "Suppose a row spread its weight over several inputs instead. Would the output still be right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "yes",
+      "text": "Yes: every input it could copy holds an 8",
+      "correct": true
+     },
+     {
+      "id": "no",
+      "text": "No: attention must pick one input exactly",
+      "why": "A weighted average of identical values is that value; the pattern can blur without harm here."
+     },
+     {
+      "id": "sep",
+      "text": "Only if it ignored the separator",
+      "why": "Its weight on the separator is small in every row here; the inputs carry the 8s."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a weighted average of six 8s give?"
+    },
+    {
+     "rung": "point",
+     "text": "Each value vector here encodes the same digit.",
+     "highlight": [
+      "A-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "8, whatever the weights."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: with repeated digits the pattern is ambiguous but the copy is right.",
+    "generic": "Not quite. What is copied when every input is the same?"
+   },
+   "explain": {
+    "text": "With every input equal, any spread of attention copies an 8, so the output cannot show which input was read. Repeats hide the pattern; they do not break the reversal."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Training a transformer",
+   "prose": "A trained transformer is the block of l13, stacked, with $$\\text{loss} = -\\frac{1}{n}\\sum_{t \\text{ scored}} \\ln p_\\theta(x_{t+1} \\mid x_{\\le t}),$$ minimised by Adam with a warm-up and a decay, and judged on held-out inputs.",
+   "question": "Which pair of design choices let the 6-block model train at all?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rl",
+      "text": "Residual additions and layer norms",
+      "correct": true
+     },
+     {
+      "id": "heads",
+      "text": "More heads and a wider MLP",
+      "why": "The 6-block runs had the same heads and width; they differed only in residuals and norms."
+     },
+     {
+      "id": "mask",
+      "text": "The causal mask and positions",
+      "why": "Every run had both. What changed was residuals and norms."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: without residuals the deep model stalled; without norms it limped.",
+    "generic": "Not quite. Recall what differed between the four curves."
+   },
+   "explain": {
+    "text": "The identity path carries the gradient through depth, and the norms keep each part's input in range. Both are why the same loop trains a deep stack."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A small model first",
+   "prose": "A research desk wants to know whether a transformer can learn to sort a day's order sizes before paying for a large run on real order books.",
+   "question": "What is the sensible first step?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tiny",
+      "text": "A tiny model on a synthetic sorting task, scored on held-out inputs, in minutes",
+      "correct": true
+     },
+     {
+      "id": "big",
+      "text": "Go straight to the large model on real order books",
+      "why": "A large run costs days; a bug found there costs the run. A tiny model finds it in minutes."
+     },
+     {
+      "id": "train",
+      "text": "A tiny model, judged by its accuracy on the training set",
+      "why": "As the trap showed, training accuracy can be perfect while the model learns nothing general."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is cheap to run and honest to score?"
+    },
+    {
+     "rung": "point",
+     "text": "A small synthetic task, scored on inputs held out."
+    },
+    {
+     "rung": "step",
+     "text": "Then scale up."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the same discipline as `nn-train` L4, at a cost of minutes.",
+    "generic": "Not quite. Think about cost and about honest scoring."
+   },
+   "explain": {
+    "text": "A tiny model on a synthetic task tests the idea and the code quickly. Held-out scoring and seeds keep the result honest before any money is spent."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A 2-block model of width 32 reverses six digits: a head of block 2 sends output $t$ to input $7 - t$, mostly cleanly.",
+   "Training is the `nn-train` loop with the block inside: cross-entropy on the scored tokens, Adam, warm-up and decay; residuals and norms keep a deep stack trainable.",
+   "Judge it on held-out inputs: on one batch of 32 it reached 100% training accuracy and almost no held-out sequences."
+  ],
+  "formula": {
+   "name": "Next-token loss",
+   "tex": "-\\frac{1}{n}\\sum_{t\\ \\text{scored}} \\ln p_\\theta(x_{t+1} \\mid x_{\\le t})",
+   "note": "Only the written digits are scored."
+  },
+  "trap": "Training accuracy on inputs the model saw says nothing when the task has $10^6$ inputs: hold some out."
+ },
+ "quiz": [
+  {
+   "id": "q-mirror",
+   "difficulty": 2,
+   "prose": "A model reverses 8 digits written after a separator. Count input and output positions from 1.",
+   "question": "Which input position does output digit 3 copy?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "same",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "seven",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$9 - 3 = 6$.",
+    "generic": "Not quite. Output $t$ copies input $n + 1 - t$.",
+    "byKey": {
+     "same": "Reversal pairs output 3 with the third input from the end.",
+     "seven": "You used $7 - t$, which is for six digits."
+    }
+   },
+   "explain": {
+    "text": "With 8 digits, output $t$ copies input $9 - t$: input 6."
+   }
+  },
+  {
+   "id": "q-share",
+   "difficulty": 2,
+   "prose": "A model reverses 993 of 1,000 held-out inputs exactly.",
+   "question": "What is its held-out accuracy, as a percentage?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.993,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "miss",
+      "value": 0.007,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ],
+    "unit": "%"
+   },
+   "feedback": {
+    "correct": "$993/1{,}000 = 99.3\\%$.",
+    "generic": "Not quite. Divide the right ones by 1,000.",
+    "byKey": {
+     "miss": "That is the error rate."
+    }
+   },
+   "explain": {
+    "text": "$993/1{,}000 = 99.3\\%$."
+   }
+  },
+  {
+   "id": "q-why",
+   "difficulty": 3,
+   "prose": "A model reverses all of its training inputs.",
+   "question": "Why still hold some inputs out?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mem",
+      "text": "It may have memorised them; only unseen inputs show whether it learned to reverse",
+      "correct": true
+     },
+     {
+      "id": "noise",
+      "text": "Training data is usually noisier than held-out data",
+      "why": "Both sets come from the same generator here; the issue is that the model saw one of them."
+     },
+     {
+      "id": "speed",
+      "text": "Held-out scoring is faster to run than training scoring",
+      "why": "It costs the same per input. It is the honest score, not a faster one."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right.",
+    "generic": "Not quite. What can a model do with inputs it has seen?"
+   },
+   "explain": {
+    "text": "A model can memorise the inputs it saw. Unseen inputs are the test of the skill."
+   }
+  },
+  {
+   "id": "q-unif",
+   "difficulty": 2,
+   "prose": "A model over 5 tokens gives each the same chance.",
+   "question": "What is its loss in nats? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.609,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "bits",
+      "value": 2.322,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln 5 = 1.609$.",
+    "generic": "Not quite. $-\\ln(1/5)$.",
+    "byKey": {
+     "bits": "That is $\\log_2 5$, in bits."
+    }
+   },
+   "explain": {
+    "text": "Each token has chance $1/5$, so the loss is $\\ln 5 = 1.609$ nats."
+   }
+  }
+ ]
+}

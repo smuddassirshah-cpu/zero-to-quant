@@ -1,0 +1,494 @@
+{
+ "id": "homework-4",
+ "course": "sequence",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-count",
+   "difficulty": 3,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A character model: vocabulary 65, context 64, two pre-norm blocks of width 128 with MLP width 512, biases everywhere, a final layer norm and an untied unembedding with bias.",
+   "question": "How many parameters does it hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 421697,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 223425,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "tied",
+      "value": 413377,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nob",
+      "value": 418688,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$8{,}320 + 8{,}192 + 2 \\times 198{,}272 + 256 + 8{,}385 = 421{,}697$.",
+    "generic": "Not quite. Count a block first, then add the tables.",
+    "byKey": {
+     "one": "There are two blocks.",
+     "tied": "The unembedding is untied here: add its $128 \\times 65$ matrix.",
+     "nob": "You dropped the biases; this model has them."
+    }
+   },
+   "explain": {
+    "text": "A block: $4(128^2 + 128) = 66{,}048$, MLP $131{,}072 + 640 = 131{,}712$, norms 512, so 198,272. With the tables, 421{,}697."
+   }
+  },
+  {
+   "id": "h-prepost",
+   "difficulty": 4,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A team trains a 48-block post-norm transformer. Without a long warm-up its early blocks barely move and the loss stalls.",
+   "question": "Which change most directly gives the early blocks a plain path to the loss?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "pre",
+      "text": "Move each layer norm inside its branch (pre-norm)",
+      "correct": true
+     },
+     {
+      "id": "heads",
+      "text": "Use more attention heads in every block",
+      "why": "More heads change what attention can compute, not the path the gradient takes through depth."
+     },
+     {
+      "id": "nores",
+      "text": "Remove the residual additions to simplify the stack",
+      "why": "Without the additions there is no identity path at all; the 6-block run without them stalled."
+     },
+     {
+      "id": "extra",
+      "text": "Add a further layer norm after each MLP",
+      "why": "Post-norm already normalises after each addition; more norms on the main path make it worse, not better."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: pre-norm keeps an identity path from the loss to every block.",
+    "generic": "Not quite. Which change leaves the stream with additions only?"
+   },
+   "explain": {
+    "text": "In post-norm every addition is followed by a norm on the main path. Pre-norm moves it into the branch, so the gradient reaches block 1 through additions alone; that usually eases the warm-up (Xiong et al., 2020)."
+   }
+  },
+  {
+   "id": "h-perpos",
+   "difficulty": 4,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "In l13 a colleague's MLP mixed positions and leaked the future. A quick test catches that: perturb one row of the input and see which output rows move. Write `is_per_position(f, x)`.",
+   "question": "Complete `is_per_position`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef is_per_position(f, x):\n    # x: (T, d). For each row j, add 1 to row j only and run f again.\n    # Return False if any output row other than j moves; True if no change ever spreads.\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef is_per_position(f, x):\n    x = np.asarray(x, dtype=float)\n    base = np.asarray(f(x))\n    for j in range(len(x)):\n        y = x.copy()\n        y[j] = y[j] + 1.0\n        moved = np.abs(np.asarray(f(y)) - base).max(axis=-1) > 1e-9\n        moved[j] = False\n        if moved.any():\n            return False\n    return True\n",
+    "prelude": "import numpy as np\n\n_g = np.random.default_rng(6)\n_W1, _W2 = _g.standard_normal((4, 16)), _g.standard_normal((16, 4))\nX = _g.standard_normal((5, 4))\n\n\ndef ffn(x):\n    return np.maximum(0, x @ _W1) @ _W2\n\n\ndef causal_avg(x):\n    return np.cumsum(x, axis=0) / np.arange(1, len(x) + 1)[:, None]\n\n\ndef anti_causal(x):\n    return np.cumsum(x[::-1], axis=0)[::-1] / np.arange(len(x), 0, -1)[:, None]\n\n\ndef row_norm(x):\n    mu = x.mean(-1, keepdims=True)\n    return (x - mu) / np.sqrt(((x - mu) ** 2).mean(-1, keepdims=True) + 1e-5)\n\n\ndef zero_out(x):\n    return np.zeros_like(x)\n",
+    "examples": [
+     {
+      "call": "is_per_position(ffn, X)",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "tests": [
+     {
+      "call": "is_per_position(ffn, X)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "is_per_position(causal_avg, X)",
+      "compare": "equal",
+      "expect": "False"
+     },
+     {
+      "call": "is_per_position(anti_causal, X)",
+      "compare": "equal",
+      "expect": "False"
+     },
+     {
+      "call": "is_per_position(row_norm, X)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "is_per_position(zero_out, X)",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on planted functions: a per-position MLP, a running mean over earlier rows, a mean over later rows, a row-wise layer norm, and a function that outputs zeros.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef is_per_position(f, x):\n    x = np.asarray(x, dtype=float)\n    base = np.asarray(f(x))\n    for j in range(1):\n        y = x.copy()\n        y[j] = y[j] + 1.0\n        moved = np.abs(np.asarray(f(y)) - base).max(axis=-1) > 1e-9\n        moved[j] = False\n        if moved.any():\n            return False\n    return True\n",
+      "test": 3,
+      "symptom": "Perturbs row 0 only, so mixing from later rows is missed."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef is_per_position(f, x):\n    x = np.asarray(x, dtype=float)\n    base = np.asarray(f(x))\n    for j in range(len(x)):\n        y = x.copy()\n        y[j] = y[j] + 1.0\n        moved = np.abs(np.asarray(f(y)) - base).max(axis=-1) > 1e-9\n        if moved[j + 1:].any():\n            return False\n    return True\n",
+      "test": 3,
+      "symptom": "Looks only at later rows."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef is_per_position(f, x):\n    x = np.asarray(x, dtype=float)\n    base = np.asarray(f(x))\n    for j in range(len(x)):\n        y = x.copy()\n        y[j] = y[j] + 1.0\n        moved = np.abs(np.asarray(f(y)) - base).max(axis=-1) > 1e-9\n        if moved[:j].any():\n            return False\n    return True\n",
+      "test": 2,
+      "symptom": "Looks only at earlier rows."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef is_per_position(f, x):\n    x = np.asarray(x, dtype=float)\n    base = np.asarray(f(x))\n    for j in range(len(x)):\n        y = x.copy()\n        y[j] = y[j] + 1.0\n        moved = np.abs(np.asarray(f(y)) - base).max(axis=-1) > 1e-9\n        if not moved[j] or moved.sum() > 1:\n            return False\n    return True\n",
+      "test": 4,
+      "symptom": "Demands that row j itself moves (layer norm ignores a shift of the whole row)."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The test separates row-wise layers from mixing ones in both directions.",
+    "generic": "Not quite. Perturb every row, and ignore the perturbed row itself."
+   },
+   "explain": {
+    "text": "A layer is per-position when a change to row $j$ moves no other row. Checking every row catches mixing forward and backward; a layer that ignores its input passes, since nothing spreads."
+   }
+  },
+  {
+   "id": "h-order",
+   "difficulty": 4,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A forward pass through one pre-norm block. One step does not belong in it.",
+   "question": "Put the steps in order and leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Layer-normalise the stream into a copy"
+     },
+     {
+      "id": "b",
+      "text": "Causal multi-head attention on the copy"
+     },
+     {
+      "id": "c",
+      "text": "Add the attention output to the stream"
+     },
+     {
+      "id": "d",
+      "text": "Layer-normalise the stream into a second copy"
+     },
+     {
+      "id": "e",
+      "text": "The MLP on the second copy, each position alone"
+     },
+     {
+      "id": "f",
+      "text": "Add the MLP output to the stream"
+     },
+     {
+      "id": "x",
+      "text": "Mix the positions of the MLP's hidden layer with a learned $T \\times T$ matrix",
+      "why": "That lets each position read later ones and fixes the length. Only masked attention may mix positions."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e",
+     "f"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "feedback": {
+    "correct": "Right: normalise, attend, add; normalise, MLP, add.",
+    "generic": "Not quite. Each part follows its own norm and is added back before the next reads.",
+    "byKey": {
+     "x": "That step mixes positions inside the MLP: it leaks later tokens and ties the model to one length.",
+     "left-out": "Every step but one belongs."
+    }
+   },
+   "explain": {
+    "text": "The block has six steps. Mixing positions belongs to attention alone, under its mask."
+   }
+  },
+  {
+   "id": "h-vocab",
+   "difficulty": 4,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A model has a vocabulary of 32,000, context 512, four blocks of width 512 with MLP width 2,048, a final layer norm, and tied embeddings whose unembedding keeps a bias.",
+   "question": "What share of its parameters is the embedding matrix? Give a percentage to 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.559,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "untied",
+      "value": 0.359,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "blocks",
+      "value": 0.431,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ],
+    "unit": "%"
+   },
+   "feedback": {
+    "correct": "$16{,}384{,}000 / 29{,}288{,}704$ is 55.9%.",
+    "generic": "Not quite. Count the whole model, then divide the $V \\times d$ matrix by it.",
+    "byKey": {
+     "untied": "You counted the unembedding matrix too; it is tied here.",
+     "blocks": "That is the blocks' share."
+    }
+   },
+   "explain": {
+    "text": "Blocks: $4 \\times 3{,}152{,}384$; embeddings 16,384,000; positions 262,144; norm 1,024; bias 32,000; total 29{,}288{,}704. The one table is 55.9% of the model."
+   }
+  },
+  {
+   "id": "h-ablate",
+   "difficulty": 3,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "A colleague takes a trained model's final stream, subtracts attention 2's write, and finds the prediction unchanged. \"Attention 2 does nothing,\" they say.",
+   "question": "What has the method missed?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "later",
+      "text": "MLP 2 read attention 2's write; with it removed, MLP 2 would write something else too",
+      "correct": true
+     },
+     {
+      "id": "norm",
+      "text": "The final layer norm undoes any subtraction",
+      "why": "The final norm rescales, but a removed write still changes the direction of the stream."
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the stream is a sum, so subtracting a write removes it",
+      "why": "The sum holds only if later writes stay fixed, and they were computed from the full stream."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: rerun the model without the write to see its whole effect.",
+    "generic": "Not quite. Which later part read that write?"
+   },
+   "explain": {
+    "text": "Subtracting at the end measures only the direct path. Ablation reruns the model, so every later part reacts; in l14, removing attention 2 dropped the score to almost nothing."
+   }
+  },
+  {
+   "id": "h-explain",
+   "difficulty": 4,
+   "skills": [
+    "sqn-block"
+   ],
+   "question": "Write your answer.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "The desk is buying a language model to read filings. Explain to a portfolio manager, in under 300 words: what one transformer block computes, why residual connections let blocks be stacked, and what the model's parameter count says and does not say about its cost.",
+    "model": "**What a block computes.** Text arrives as one vector per token. A block does two things to those vectors. First, attention lets each token gather information from earlier tokens, weighting each by how relevant it looks; a mask stops it reading ahead. Second, a small feed-forward net (the MLP) transforms each token's vector on its own. Before each step the vector is normalised, so both parts see inputs on a steady scale.\n\n**Why blocks stack.** Neither part replaces the token's vector: each adds its output to it. The vector is a running sum, the residual stream, that every later block reads and adds to. Because of these additions, the training signal reaches every block directly, and a block that has nothing useful to add can learn to add almost nothing. That is why 12, 48 or more identical blocks can be trained together; without the additions, a deep stack stalls.\n\n**What the parameter count says.** It is the number of weights stored: memory to hold the model, and roughly how much it can fit. For one block of width $d$ it is about $12d^2$; heads do not change it, and with a large vocabulary the word tables can be most of the count.\n\n**What it does not say.** It does not give the cost of running the model, which also grows with how much text it reads at once, nor its quality, which depends on data and training. Two models of the same size can differ widely on our filings, so we should test the vendor's model on held-out documents of our own.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Says attention mixes information across earlier tokens, with a mask against reading ahead",
+      "required": true
+     },
+     {
+      "points": 1,
+      "text": "Says the MLP acts on each token's vector on its own"
+     },
+     {
+      "points": 1,
+      "text": "Mentions the layer norm before each part"
+     },
+     {
+      "points": 2,
+      "text": "Explains that each part adds to the vector rather than replacing it (the residual stream)",
+      "required": true
+     },
+     {
+      "points": 1,
+      "text": "Links the additions to training signal reaching every block, so deep stacks train"
+     },
+     {
+      "points": 2,
+      "text": "States what the count measures (weights, memory, capacity) and that heads do not change it or that embeddings can dominate"
+     },
+     {
+      "points": 1,
+      "text": "States a limit: it does not give running cost or quality, so test on held-out data"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your answer with the model answer and tick each rubric line you met.",
+    "generic": "Compare with the model answer."
+   },
+   "explain": {
+    "text": "A strong answer covers both parts of the block, the residual stream and the limits of a parameter count."
+   }
+  },
+  {
+   "id": "h-perf",
+   "difficulty": 5,
+   "skills": [
+    "sqn-block"
+   ],
+   "prose": "Write `transformer_lm_forward(tokens, params, n_blocks, h)`: the next-token logits $(T, V)$ of a causal language model. Add token embeddings `params[\"E\"]` and learned positions `params[\"P\"][:T]`; run the first `n_blocks` pre-norm blocks of `params[\"blocks\"]`. Each block has layer norms with $\\epsilon = 10^{-5}$, $h$-head causal attention with biases and a ReLU MLP. Then apply the final layer norm (`lnf_g`, `lnf_b`) and the unembedding `U`, `c`. Block arrays are named as in `seq_ops_l4.BLOCK_KEYS`. Use NumPy only.",
+   "question": "Complete `transformer_lm_forward`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef transformer_lm_forward(tokens, params, n_blocks, h):\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef _ln(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef transformer_lm_forward(tokens, params, n_blocks, h):\n    tokens = np.asarray(tokens)\n    T = len(tokens)\n    x = params['E'][tokens] + params['P'][:T]\n    d = x.shape[-1]\n    w = d // h\n    mask = np.triu(np.full((T, T), -np.inf), 1)\n    for p in params['blocks'][:n_blocks]:\n        a = _ln(x, p['ln1_g'], p['ln1_b'])\n        q, k, v = ((a @ p[W] + p[b]).reshape(T, h, w).transpose(1, 0, 2) for W, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n        S = q @ k.transpose(0, 2, 1) / np.sqrt(w) + mask\n        A = np.exp(S - S.max(-1, keepdims=True))\n        A = A / A.sum(-1, keepdims=True)\n        x = x + (A @ v).transpose(1, 0, 2).reshape(T, d) @ p['Wo'] + p['bo']\n        m = _ln(x, p['ln2_g'], p['ln2_b'])\n        x = x + np.maximum(0, m @ p['W1'] + p['b1']) @ p['W2'] + p['b2']\n    return _ln(x, params['lnf_g'], params['lnf_b']) @ params['U'] + params['c']\n",
+    "prelude": "import base64\nimport json\nimport numpy as np\n\n\ndef _load(path):\n    raw = json.load(open(path))\n    arr = {k: np.frombuffer(base64.b64decode(v['b64']), dtype='<f4').reshape(v['shape']).astype(float) for k, v in raw.items() if isinstance(v, dict) and 'b64' in v}\n    keys = ('ln1_g', 'ln1_b', 'Wq', 'bq', 'Wk', 'bk', 'Wv', 'bv', 'Wo', 'bo', 'ln2_g', 'ln2_b', 'W1', 'b1', 'W2', 'b2')\n    m = {k: v for k, v in arr.items() if not k.startswith('blocks.')}\n    m['blocks'] = [{k: arr[f'blocks.{i}.{k}'] for k in keys} for i in range(2)]\n    return m\n\n\nREV = _load('sequence-reverse.json')\nTOKR = [3, 1, 4, 1, 5, 9, 10, 9, 5, 1, 4, 1]\n\n\ndef planted(V, T, d, dm, nb, seed):\n    g = np.random.default_rng(seed)\n    blocks = []\n    for _ in range(nb):\n        p = {k: g.standard_normal((d, d)) / np.sqrt(d) for k in ('Wq', 'Wk', 'Wv', 'Wo')}\n        p['W1'] = g.standard_normal((d, dm)) / np.sqrt(d)\n        p['W2'] = g.standard_normal((dm, d)) / np.sqrt(dm)\n        for k, n in (('bq', d), ('bk', d), ('bv', d), ('bo', d), ('b1', dm), ('b2', d), ('ln1_b', d), ('ln2_b', d)):\n            p[k] = 0.1 * g.standard_normal(n)\n        p['ln1_g'] = 1 + 0.2 * g.standard_normal(d)\n        p['ln2_g'] = 1 + 0.2 * g.standard_normal(d)\n        blocks.append(p)\n    return {'E': g.standard_normal((V, d)), 'P': 0.5 * g.standard_normal((T, d)), 'blocks': blocks,\n            'lnf_g': 1 + 0.2 * g.standard_normal(d), 'lnf_b': 0.1 * g.standard_normal(d),\n            'U': g.standard_normal((d, V)) / np.sqrt(d), 'c': 0.1 * g.standard_normal(V)}\n\n\nPL = planted(7, 6, 8, 32, 3, 9)\nTK = [3, 1, 4, 1, 5, 2]\n",
+    "data": {
+     "sequence-reverse.json": "content/data/ai/sequence-reverse.json"
+    },
+    "examples": [
+     {
+      "call": "transformer_lm_forward(TK, PL, 3, 2).shape",
+      "compare": "equal",
+      "expect": "(6, 7)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "transformer_lm_forward(TK, PL, 3, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.0017467555439831112, -0.9381133659587225, 0.21199843066497187, -0.8634355067551198, -0.5999352794606457, -0.24562962633944307, 0.4416401616779594], [-0.18076862894025375, -0.6311150767163263, -0.35585582901349416, 0.15737782368666883, 2.743207150668596, 0.07301007853682262, 1.3863762108946023], [0.3288412739638977, 1.519850859515813, -0.5932823549138533, -0.32378061086093696, 1.5344395730858431, -0.3470500234615346, -1.0833057954609924], [0.5314504172108436, 0.5591900626446376, -0.7249981390226201, 0.15622902919272372, 2.1616541738503074, 0.06324469930592097, 0.2956519136147802], [0.42117789438028425, 1.8299331863068662, -0.8646832185918076, -0.6782380707245197, 0.1285425488491168, -0.10138195155066465, -2.8600022724241843], [0.444888562648872, -0.15057224703365124, 0.44135846126818595, 0.3142259030584201, -1.5030360701304197, -0.6316877908357006, 1.2992741106796644]]"
+     },
+     {
+      "call": "transformer_lm_forward(TK, PL, 2, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.2248530735094033, -0.8577626043406579, 0.2114254343028939, 0.35225961220994034, -0.4091961785778716, 0.961392763418965, 0.6678180590692085], [-0.4017106129205812, -0.9760084389986761, -0.10777541964610732, 0.49663399609964726, 2.662239596113135, 0.26710948702657006, 1.9145937839649612], [0.39694616962086365, 0.9113589893082775, -0.6588562731248591, -0.7273607416085862, 2.1191528613332484, -0.349130776929123, -0.5589968961032203], [0.5568596676802439, -0.36392383136285655, -0.7987382059413655, -0.5641210030831935, 2.5314354907665595, -0.20853168789646387, 0.8402690955198251], [0.7158938074891146, 0.9661020823498977, -1.403762324031178, -2.035349129407799, 0.4828052685229358, -0.3190630894359018, -3.0422233954272553], [0.30045282977663706, -0.495516251839479, 0.3460387292147751, 0.16099072174127038, -2.117063192393145, -0.19749000979426728, 0.7608842135327177]]"
+     },
+     {
+      "call": "transformer_lm_forward(TK, PL, 3, 4).tolist()",
+      "compare": "isclose",
+      "expect": "[[-0.0017467555439831112, -0.9381133659587225, 0.21199843066497187, -0.8634355067551198, -0.5999352794606457, -0.24562962633944307, 0.4416401616779594], [-0.31308885433410316, -0.9217387033756729, -0.3496432490986603, -0.1337318861762703, 2.6083536855740124, 0.09223921090436396, 1.271315922782223], [0.5501332727173698, 1.5398584002954152, -0.6287936550909494, -0.4314277765686335, 1.6917757380734488, -0.39102711393954837, -0.832093389884365], [0.966384277009693, 0.9150204329120011, -1.0928181704378293, -0.5261667367687535, 2.0571630270039147, 0.09983335472569652, -0.6495771276667373], [0.5989751378019166, 1.8570988596684768, -0.8733522498707076, -0.621970220760409, 0.28466218371842056, -0.1204937363684834, -2.658913196758196], [0.07575083981267766, -0.8439454535964784, 0.5745819747272234, 0.884732080741771, -1.062646486301496, -0.2921698241715205, 2.3071963421897252]]"
+     },
+     {
+      "call": "transformer_lm_forward([5], PL, 3, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.655326864561631, 2.1189816877539203, -0.002079229439774788, -0.14519124942920433, -0.5942132854121576, -0.43002221086433257, -1.9223480347174922]]"
+     },
+     {
+      "setup": "TK2 = TK[:5] + [0]",
+      "call": "np.allclose(transformer_lm_forward(TK, PL, 3, 2)[:5], transformer_lm_forward(TK2, PL, 3, 2)[:5])",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "transformer_lm_forward(TOKR, REV, 2, 4)[6:].argmax(-1).tolist()",
+      "compare": "equal",
+      "expect": "[9, 5, 1, 4, 1, 3]"
+     },
+     {
+      "call": "transformer_lm_forward(TOKR, REV, 2, 4)[6].tolist()",
+      "tol": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      },
+      "compare": "isclose",
+      "expect": "[-0.6532291777129756, -1.1751480699219874, -0.046645764539630534, 0.5976320249769523, -4.126175735692076, -0.6669950394091341, -0.872310061074129, -1.189189707469268, -2.2999874388842434, 7.729039173630717, -0.512585600105663]"
+     },
+     {
+      "call": "transformer_lm_forward(TK, PL, 0, 2).tolist()",
+      "compare": "isclose",
+      "expect": "[[0.7165828329501265, 0.5815978718401553, -1.3565589434111205, -1.6874884957248495, -0.8169749795435073, 0.7388114994826462, -3.3148344014792714], [-0.022068327943441796, -0.29971815246264194, 0.08909157953041383, 0.6548094340141504, 2.6672854016285528, -0.07755373310150061, 2.229719000028283], [0.7320556447533312, 2.4513125880870756, 0.02468027378706064, 0.12703756954122694, 0.05889942198470473, -0.7771340160879036, -0.8878150901665997], [0.7918781601860365, 0.20270441370481457, 0.07240381214594072, 0.06778286593855701, 1.8960334475092464, -0.7344055729202105, 2.127548221964348], [1.0943140749991855, 1.7443505909029784, -1.0500940487064565, -1.5043073857280764, 0.16092150823121032, -0.6389312019784219, -2.645846111035954], [0.8189290685205333, -0.511922515915292, -0.5576024758238783, 0.1224594827432908, -0.7193932751284745, 0.4204082794668892, 0.4329516722343386]]"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests, compared to $10^{-9}$ against the reference (test 7 to $10^{-6}$ relative). Planted weights `PL` (vocabulary 7, context 6, width 8, three blocks, MLP 32); test 4 is one token, test 5 a leak test, tests 6 and 7 the reversal model `REV`, test 8 no blocks.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef _ln(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef transformer_lm_forward(tokens, params, n_blocks, h):\n    tokens = np.asarray(tokens)\n    T = len(tokens)\n    x = params['E'][tokens] + params['P'][:T]\n    d = x.shape[-1]\n    w = d // h\n    mask = np.triu(np.full((T, T), -np.inf), 1)\n    for p in params['blocks'][:n_blocks]:\n        a = _ln(x, p['ln1_g'], p['ln1_b'])\n        q, k, v = ((a @ p[W] + p[b]).reshape(T, h, w).transpose(1, 0, 2) for W, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n        S = q @ k.transpose(0, 2, 1) / np.sqrt(w) + mask\n        A = np.exp(S - S.max(-1, keepdims=True))\n        A = A / A.sum(-1, keepdims=True)\n        x = x + (A @ v).transpose(1, 0, 2).reshape(T, d) @ p['Wo'] + p['bo']\n        m = x\n        x = _ln(x + np.maximum(0, m @ p['W1'] + p['b1']) @ p['W2'] + p['b2'], p['ln2_g'], p['ln2_b'])\n    return _ln(x, params['lnf_g'], params['lnf_b']) @ params['U'] + params['c']\n",
+      "test": 1,
+      "symptom": "Post-norm MLP: normalises the sum instead of the branch."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _ln(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef transformer_lm_forward(tokens, params, n_blocks, h):\n    tokens = np.asarray(tokens)\n    T = len(tokens)\n    x = params['E'][tokens]\n    d = x.shape[-1]\n    w = d // h\n    mask = np.triu(np.full((T, T), -np.inf), 1)\n    for p in params['blocks'][:n_blocks]:\n        a = _ln(x, p['ln1_g'], p['ln1_b'])\n        q, k, v = ((a @ p[W] + p[b]).reshape(T, h, w).transpose(1, 0, 2) for W, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n        S = q @ k.transpose(0, 2, 1) / np.sqrt(w) + mask\n        A = np.exp(S - S.max(-1, keepdims=True))\n        A = A / A.sum(-1, keepdims=True)\n        x = x + (A @ v).transpose(1, 0, 2).reshape(T, d) @ p['Wo'] + p['bo']\n        m = _ln(x, p['ln2_g'], p['ln2_b'])\n        x = x + np.maximum(0, m @ p['W1'] + p['b1']) @ p['W2'] + p['b2']\n    return _ln(x, params['lnf_g'], params['lnf_b']) @ params['U'] + params['c']\n",
+      "test": 1,
+      "symptom": "No position vectors."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _ln(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef transformer_lm_forward(tokens, params, n_blocks, h):\n    tokens = np.asarray(tokens)\n    T = len(tokens)\n    x = params['E'][tokens] + params['P'][:T]\n    d = x.shape[-1]\n    w = d // h\n    mask = np.triu(np.full((T, T), -np.inf), 1)\n    for p in params['blocks']:\n        a = _ln(x, p['ln1_g'], p['ln1_b'])\n        q, k, v = ((a @ p[W] + p[b]).reshape(T, h, w).transpose(1, 0, 2) for W, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n        S = q @ k.transpose(0, 2, 1) / np.sqrt(w) + mask\n        A = np.exp(S - S.max(-1, keepdims=True))\n        A = A / A.sum(-1, keepdims=True)\n        x = x + (A @ v).transpose(1, 0, 2).reshape(T, d) @ p['Wo'] + p['bo']\n        m = _ln(x, p['ln2_g'], p['ln2_b'])\n        x = x + np.maximum(0, m @ p['W1'] + p['b1']) @ p['W2'] + p['b2']\n    return _ln(x, params['lnf_g'], params['lnf_b']) @ params['U'] + params['c']\n",
+      "test": 2,
+      "symptom": "Runs every block whatever n_blocks says."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _ln(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef transformer_lm_forward(tokens, params, n_blocks, h):\n    tokens = np.asarray(tokens)\n    T = len(tokens)\n    x = params['E'][tokens] + params['P'][:T]\n    d = x.shape[-1]\n    w = d // h\n    mask = np.triu(np.full((T, T), -np.inf), 1)\n    for p in params['blocks'][:n_blocks]:\n        a = _ln(x, p['ln1_g'], p['ln1_b'])\n        q, k, v = ((a @ p[W] + p[b]).reshape(T, h, w).transpose(1, 0, 2) for W, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n        S = q @ k.transpose(0, 2, 1) / np.sqrt(w) + mask\n        A = np.exp(S - S.max(-1, keepdims=True))\n        A = A / A.sum(-1, keepdims=True)\n        x = x + (A @ v).transpose(1, 0, 2).reshape(T, d) @ p['Wo'] + p['bo']\n        m = _ln(x, p['ln2_g'], p['ln2_b'])\n        x = x + np.maximum(0, m @ p['W1'] + p['b1']) @ p['W2'] + p['b2']\n    return x @ params['U'] + params['c']\n",
+      "test": 1,
+      "symptom": "No final layer norm."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _ln(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef transformer_lm_forward(tokens, params, n_blocks, h):\n    tokens = np.asarray(tokens)\n    T = len(tokens)\n    x = params['E'][tokens] + params['P'][:T]\n    d = x.shape[-1]\n    w = d // h\n    mask = np.triu(np.full((T, T), -np.inf), 1)\n    for p in params['blocks'][:n_blocks]:\n        a = _ln(x, p['ln1_g'], p['ln1_b'])\n        q, k, v = ((a @ p[W] + p[b]).reshape(T, h, w).transpose(1, 0, 2) for W, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n        S = q @ k.transpose(0, 2, 1) / np.sqrt(w)\n        A = np.exp(S - S.max(-1, keepdims=True))\n        A = A / A.sum(-1, keepdims=True)\n        x = x + (A @ v).transpose(1, 0, 2).reshape(T, d) @ p['Wo'] + p['bo']\n        m = _ln(x, p['ln2_g'], p['ln2_b'])\n        x = x + np.maximum(0, m @ p['W1'] + p['b1']) @ p['W2'] + p['b2']\n    return _ln(x, params['lnf_g'], params['lnf_b']) @ params['U'] + params['c']\n",
+      "test": 1,
+      "symptom": "No causal mask: later tokens leak in."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _ln(x, g, b, eps=1e-5):\n    mu = x.mean(-1, keepdims=True)\n    var = ((x - mu) ** 2).mean(-1, keepdims=True)\n    return g * (x - mu) / np.sqrt(var + eps) + b\n\n\ndef transformer_lm_forward(tokens, params, n_blocks, h):\n    tokens = np.asarray(tokens)\n    T = len(tokens)\n    x = params['E'][tokens] + params['P'][:T]\n    d = x.shape[-1]\n    w = d // h\n    mask = np.triu(np.full((T, T), -np.inf), 1)\n    for p in params['blocks'][:n_blocks]:\n        a = _ln(x, p['ln1_g'], p['ln1_b'])\n        q, k, v = ((a @ p[W] + p[b]).reshape(T, h, w).transpose(1, 0, 2) for W, b in (('Wq', 'bq'), ('Wk', 'bk'), ('Wv', 'bv')))\n        S = q @ k.transpose(0, 2, 1) / np.sqrt(d) + mask\n        A = np.exp(S - S.max(-1, keepdims=True))\n        A = A / A.sum(-1, keepdims=True)\n        x = x + (A @ v).transpose(1, 0, 2).reshape(T, d) @ p['Wo'] + p['bo']\n        m = _ln(x, p['ln2_g'], p['ln2_b'])\n        x = x + np.maximum(0, m @ p['W1'] + p['b1']) @ p['W2'] + p['b2']\n    return _ln(x, params['lnf_g'], params['lnf_b']) @ params['U'] + params['c']\n",
+      "test": 1,
+      "symptom": "Scales by the model width instead of the head width."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Your model matches the reference on planted weights and reverses 3 1 4 1 5 9.",
+    "generic": "Not quite. Check the order inside each block, the mask, and the final layer norm."
+   },
+   "explain": {
+    "text": "The whole model is the embedding plus positions, the blocks as additions to one stream, a final norm and the unembedding. The leak test and the one-token case pass only with the mask and $\\mathbf P[{:}T]$."
+   },
+   "performance": "code",
+   "title": "A whole transformer, forward"
+  }
+ ]
+}

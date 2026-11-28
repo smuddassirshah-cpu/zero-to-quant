@@ -1,0 +1,1214 @@
+{
+ "id": "l15-counting-a-block",
+ "course": "sequence",
+ "title": "What a block costs",
+ "minutes": 13,
+ "objectives": [
+  "Count the parameters of a transformer block and of a one-block model, and check the count in code."
+ ],
+ "skills": [
+  "sqn-block"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Where the parameters sit",
+   "prose": "A block of width $d = 64$ has 4 attention heads and an MLP of width 256. Attention holds four matrices ($\\mathbf W_Q$, $\\mathbf W_K$, $\\mathbf W_V$, $\\mathbf W_O$); the MLP holds two. Guess before you count.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "attention",
+      "MLP",
+      "layer norms"
+     ],
+     "showValues": true,
+     "decimals": 0,
+     "yLabel": "parameters",
+     "yMax": 36000
+    },
+    "state": {
+     "values": {
+      "attention": 0,
+      "MLP": 0,
+      "layer norms": 0
+     },
+     "caption": "One block, $d = 64$, MLP width 256: counts hidden until you answer."
+    }
+   },
+   "question": "Which part holds more parameters?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mlp",
+      "text": "The MLP, about twice as many",
+      "correct": true
+     },
+     {
+      "id": "attn",
+      "text": "Attention, with four matrices to two",
+      "why": "You counted matrices. Each MLP matrix is 64 by 256, four times an attention matrix."
+     },
+     {
+      "id": "same",
+      "text": "They hold about the same",
+      "why": "Two matrices of 64 by 256 hold twice what four of 64 by 64 hold."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the sizes of the matrices, not how many there are."
+    },
+    {
+     "rung": "point",
+     "text": "Attention's are 64 by 64; the MLP's are 64 by 256 and 256 by 64.",
+     "highlight": [
+      "xattention",
+      "xMLP"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each MLP matrix is four times an attention matrix."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the MLP holds about twice as many.",
+    "generic": "Not quite. Size each matrix before you compare.",
+    "byKey": {
+     "attn": "You counted matrices. Each MLP matrix is 64 by 256, four times the size of an attention matrix.",
+     "same": "Two matrices of $64 \\times 256$ hold twice what four of $64 \\times 64$ hold."
+    }
+   },
+   "explain": {
+    "text": "Attention: four matrices of $64^2 = 4{,}096$. MLP: two of $64 \\times 256 = 16{,}384$, so twice as many. With biases, 16,640 against 33,088.",
+    "canvas": {
+     "values": {
+      "attention": 16640,
+      "MLP": 33088,
+      "layer norms": 256
+     },
+     "caption": "Attention 16,640; MLP 33,088; layer norms 256."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Counting attention",
+   "prose": "Count every number in the attention part of the block, biases included. $\\mathbf W_Q$, $\\mathbf W_K$, $\\mathbf W_V$ and $\\mathbf W_O$ are each $d$ by $d$ with a bias of length $d$, whatever the number of heads, since the heads are slices of them.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "array",
+      "shape",
+      "count"
+     ],
+     "rows": [
+      [
+       "$\\mathbf W_Q$, $\\mathbf W_K$, $\\mathbf W_V$, $\\mathbf W_O$",
+       "64 by 64 each",
+       "?"
+      ],
+      [
+       "$\\mathbf b_Q$, $\\mathbf b_K$, $\\mathbf b_V$, $\\mathbf b_O$",
+       "64 each",
+       "?"
+      ],
+      [
+       "total",
+       "",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "How many parameters does attention hold at $d = 64$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16640,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "heads",
+      "value": 66560,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nobias",
+      "value": 16384,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nowo",
+      "value": 12480,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each matrix holds $64^2$ numbers and each bias 64."
+    },
+    {
+     "rung": "point",
+     "text": "$4 \\times 4{,}096$ in the matrices, $4 \\times 64$ in the biases.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$4(d^2 + d)$ at $d = 64$."
+    }
+   ],
+   "feedback": {
+    "correct": "$4(64^2 + 64) = 4 \\times 4{,}160 = 16{,}640$.",
+    "generic": "Not quite. Four matrices of $d^2$ and four biases of $d$.",
+    "byKey": {
+     "heads": "You multiplied by the 4 heads. The heads share the matrices.",
+     "nobias": "That leaves out the four biases of 64.",
+     "nowo": "You left out $\\mathbf W_O$ and its bias."
+    }
+   },
+   "explain": {
+    "text": "Attention holds $4(d^2 + d)$: 16,640 at $d = 64$. The heads cut these matrices into slices, so their number does not appear."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Counting the MLP",
+   "prose": "The MLP has $\\mathbf W_1$ ($d$ by $4d$), $\\mathbf b_1$ ($4d$), $\\mathbf W_2$ ($4d$ by $d$) and $\\mathbf b_2$ ($d$). Here $d = 64$ and its width is 256.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "array",
+      "shape",
+      "count"
+     ],
+     "rows": [
+      [
+       "$\\mathbf W_1$",
+       "64 by 256",
+       "?"
+      ],
+      [
+       "$\\mathbf b_1$",
+       "256",
+       "?"
+      ],
+      [
+       "$\\mathbf W_2$",
+       "256 by 64",
+       "?"
+      ],
+      [
+       "$\\mathbf b_2$",
+       "64",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "How many parameters does the MLP hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 33088,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "nobias",
+      "value": 32768,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nob2",
+      "value": 33024,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "d",
+      "value": 8320,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count each array, then add."
+    },
+    {
+     "rung": "point",
+     "text": "$64 \\times 256 = 16{,}384$ for each matrix.",
+     "highlight": [
+      "r0",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$16{,}384 + 256 + 16{,}384 + 64$."
+    }
+   ],
+   "feedback": {
+    "correct": "$16{,}384 + 256 + 16{,}384 + 64 = 33{,}088$.",
+    "generic": "Not quite. Two matrices of $64 \\times 256$ and two biases.",
+    "byKey": {
+     "nobias": "You left out both biases.",
+     "nob2": "You left out $\\mathbf b_2$, the 64 biases of the output layer.",
+     "d": "You used a hidden width of 64. It is 256."
+    }
+   },
+   "explain": {
+    "text": "$d \\cdot 4d + 4d + 4d \\cdot d + d = 33{,}088$ at $d = 64$: twice attention's matrices, since $8d^2$ against $4d^2$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The whole block",
+   "prose": "Each of the two layer norms has a gain and a shift of length $d$. Add attention (16,640), the MLP (33,088) and the layer norms.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "attention",
+      "MLP",
+      "layer norms"
+     ],
+     "showValues": true,
+     "decimals": 0,
+     "yLabel": "parameters"
+    },
+    "state": {
+     "values": {
+      "attention": 16640,
+      "MLP": 33088,
+      "layer norms": 256
+     }
+    }
+   },
+   "question": "How many parameters does the block hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 49984,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "noln",
+      "value": 49728,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "oneln",
+      "value": 49856,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two layer norms, each $2d$."
+    },
+    {
+     "rung": "point",
+     "text": "$4 \\times 64 = 256$ for the norms.",
+     "highlight": [
+      "xlayer norms"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$16{,}640 + 33{,}088 + 256$."
+    }
+   ],
+   "feedback": {
+    "correct": "$16{,}640 + 33{,}088 + 256 = 49{,}984$.",
+    "generic": "Not quite. Add the three bars.",
+    "byKey": {
+     "noln": "You left out the layer norms' 256.",
+     "oneln": "There are two layer norms, 128 each."
+    }
+   },
+   "explain": {
+    "text": "A block of width 64 holds 49,984 numbers: two thirds in the MLP, a third in attention, half a per cent in the norms."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "More heads, more weights?",
+   "prose": "A colleague moves the same block from 4 heads to 8 and says the attention part now holds 8 times 16,640 parameters.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "heads",
+      "width of each head",
+      "attention parameters"
+     ],
+     "rows": [
+      [
+       "4",
+       "16",
+       "16,640"
+      ],
+      [
+       "8",
+       "8",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "How many parameters does attention hold with 8 heads?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16640,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "times",
+      "value": 133120,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "double",
+      "value": 33280,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Do the matrices change size when the heads change?"
+    },
+    {
+     "rung": "point",
+     "text": "Each head gets $64/8 = 8$ features: a thinner slice.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Still four 64 by 64 matrices with biases."
+    }
+   ],
+   "feedback": {
+    "correct": "Still 16,640: eight heads cut the same matrices into thinner slices.",
+    "generic": "Not quite. Count the matrices, not the heads.",
+    "byKey": {
+     "times": "You multiplied by the number of heads. Heads share $\\mathbf W_Q$, $\\mathbf W_K$, $\\mathbf W_V$ and $\\mathbf W_O$.",
+     "double": "Doubling the heads halves each head's width; the matrices stay 64 by 64."
+    }
+   },
+   "explain": {
+    "text": "With $h$ heads each has width $d/h$; together they fill the same $d$ by $d$ matrices. The count is $4(d^2 + d) = 16{,}640$ for any $h$ that divides $d$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A one-block model",
+   "prose": "The timing spike's model: vocabulary 65, context 32, $d = 64$, one block of 49,984. Add token embeddings ($65 \\times 64$), learned positions ($32 \\times 64$), a final layer norm ($2d$) and an unembedding with bias ($64 \\times 65 + 65$).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "part",
+      "count"
+     ],
+     "rows": [
+      [
+       "token embeddings",
+       "4,160"
+      ],
+      [
+       "positions",
+       "2,048"
+      ],
+      [
+       "block",
+       "49,984"
+      ],
+      [
+       "final layer norm",
+       "128"
+      ],
+      [
+       "unembedding",
+       "4,225"
+      ],
+      [
+       "total",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "How many parameters does the model hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 60545,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "tied",
+      "value": 56385,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nopos",
+      "value": 58497,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nobias",
+      "value": 60480,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the five rows."
+    },
+    {
+     "rung": "point",
+     "text": "$64 \\times 65 + 65 = 4{,}225$ for the unembedding.",
+     "highlight": [
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$4{,}160 + 2{,}048 + 49{,}984 + 128 + 4{,}225$."
+    }
+   ],
+   "feedback": {
+    "correct": "$4{,}160 + 2{,}048 + 49{,}984 + 128 + 4{,}225 = 60{,}545$.",
+    "generic": "Not quite. Add every row of the table.",
+    "byKey": {
+     "tied": "You left out the unembedding matrix. Here it is separate from the embeddings.",
+     "nopos": "You left out the 2,048 position vectors.",
+     "nobias": "You left out the unembedding's 65 biases."
+    }
+   },
+   "explain": {
+    "text": "60,545 in all: the block is 83% of it, and embeddings, positions and unembedding most of the rest."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Counting in code",
+   "prose": "Write `block_params(d, d_mlp, bias)`, `model_params(vocab, ctx, d, d_mlp, n_blocks, tied)` and `count_arrays(params)`, which adds up the sizes of a model dict like `MODEL` (the reversal model of l14: vocabulary 11, context 12, $d = 32$, MLP 128, two blocks).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "part",
+      "formula"
+     ],
+     "rows": [
+      [
+       "attention",
+       "$4(d^2 + d)$"
+      ],
+      [
+       "MLP",
+       "$2 d\\,d_{\\text{mlp}} + d_{\\text{mlp}} + d$"
+      ],
+      [
+       "two layer norms",
+       "$4d$"
+      ],
+      [
+       "embeddings, positions",
+       "$V d + T d$"
+      ],
+      [
+       "final norm, unembedding",
+       "$2d + dV + V$"
+      ]
+     ]
+    }
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    # attention (4 matrices d by d, 4 biases), MLP (d by d_mlp, d_mlp by d, 2 biases), 2 layer norms (gain, shift).\n    # bias=False drops every bias vector, the layer-norm shifts too; the gains stay.\n    ...\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    # embeddings, positions, the blocks (with biases), a final layer norm, an unembedding with a bias of length vocab.\n    # tied=True: the unembedding reuses the embedding matrix (its bias stays).\n    ...\n\n\ndef count_arrays(params):\n    # the number of numbers in a dict of arrays, where a value may also be a list of such dicts (model['blocks'])\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    attn = 4 * d * d + (4 * d if bias else 0)\n    mlp = 2 * d * d_mlp + (d_mlp + d if bias else 0)\n    norms = 4 * d if bias else 2 * d\n    return attn + mlp + norms\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    unembed = (0 if tied else d * vocab) + vocab\n    return vocab * d + ctx * d + n_blocks * block_params(d, d_mlp) + 2 * d + unembed\n\n\ndef count_arrays(params):\n    if isinstance(params, dict):\n        return sum(count_arrays(v) for v in params.values())\n    if isinstance(params, (list, tuple)):\n        return sum(count_arrays(v) for v in params)\n    return int(np.size(params))\n",
+    "prelude": "import numpy as np\nfrom seq_ops_l4 import read_model\n\nMODEL = read_model('sequence-reverse.json')\n",
+    "data": {
+     "autograd.py": "content/data/ai/autograd.py",
+     "nt_ops_l2.py": "content/data/ai/nt_ops_l2.py",
+     "seq_ops_l2.py": "content/data/ai/seq_ops_l2.py",
+     "seq_ops_l3.py": "content/data/ai/seq_ops_l3.py",
+     "seq_ops_l4.py": "content/data/ai/seq_ops_l4.py",
+     "sequence-reverse.json": "content/data/ai/sequence-reverse.json"
+    },
+    "examples": [
+     {
+      "call": "block_params(32, 128)",
+      "compare": "equal",
+      "expect": "12704"
+     }
+    ],
+    "tests": [
+     {
+      "call": "block_params(64, 256)",
+      "compare": "equal",
+      "expect": "49984"
+     },
+     {
+      "call": "block_params(64, 256, bias=False)",
+      "compare": "equal",
+      "expect": "49280"
+     },
+     {
+      "call": "model_params(65, 32, 64, 256, 1)",
+      "compare": "equal",
+      "expect": "60545"
+     },
+     {
+      "call": "model_params(65, 32, 64, 256, 1, tied=True)",
+      "compare": "equal",
+      "expect": "56385"
+     },
+     {
+      "call": "count_arrays(MODEL)",
+      "compare": "equal",
+      "expect": "26571"
+     },
+     {
+      "call": "count_arrays(MODEL) == model_params(11, 12, 32, 128, 2)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "count_arrays({'a': np.zeros((3, 4)), 'b': [{'c': np.zeros(5)}, {'c': np.zeros((2, 2))}]})",
+      "compare": "equal",
+      "expect": "21"
+     },
+     {
+      "call": "model_params(50257, 1024, 768, 3072, 12, tied=True)",
+      "compare": "equal",
+      "expect": "124490065"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests; each result must equal the expected whole number. Tests 5 and 6 count the supplied reversal model, `MODEL`, and check it against the formula.",
+    "mutants": [
+     {
+      "source": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    attn = 4 * d * d + (4 * d if bias else 0)\n    mlp = 2 * d * d_mlp + (d_mlp + d if bias else 0)\n    norms = 0\n    return attn + mlp + norms\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    unembed = (0 if tied else d * vocab) + vocab\n    return vocab * d + ctx * d + n_blocks * block_params(d, d_mlp) + 2 * d + unembed\n\n\ndef count_arrays(params):\n    if isinstance(params, dict):\n        return sum(count_arrays(v) for v in params.values())\n    if isinstance(params, (list, tuple)):\n        return sum(count_arrays(v) for v in params)\n    return int(np.size(params))\n",
+      "test": 1,
+      "symptom": "Leaves out the layer norms."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    attn = 4 * d * d + (4 * d if bias else 0)\n    mlp = 2 * d * d_mlp + (d_mlp + d if bias else 0)\n    norms = 4 * d\n    return attn + mlp + norms\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    unembed = (0 if tied else d * vocab) + vocab\n    return vocab * d + ctx * d + n_blocks * block_params(d, d_mlp) + 2 * d + unembed\n\n\ndef count_arrays(params):\n    if isinstance(params, dict):\n        return sum(count_arrays(v) for v in params.values())\n    if isinstance(params, (list, tuple)):\n        return sum(count_arrays(v) for v in params)\n    return int(np.size(params))\n",
+      "test": 2,
+      "symptom": "Keeps the layer-norm shifts with bias=False."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    attn = 4 * d * d + (4 * d if bias else 0)\n    mlp = 2 * d * d_mlp + (d_mlp + d if bias else 0)\n    norms = 4 * d if bias else 2 * d\n    return attn + mlp + norms\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    unembed = 0 if tied else d * vocab + vocab\n    return vocab * d + ctx * d + n_blocks * block_params(d, d_mlp) + 2 * d + unembed\n\n\ndef count_arrays(params):\n    if isinstance(params, dict):\n        return sum(count_arrays(v) for v in params.values())\n    if isinstance(params, (list, tuple)):\n        return sum(count_arrays(v) for v in params)\n    return int(np.size(params))\n",
+      "test": 4,
+      "symptom": "Drops the unembedding bias when the matrix is tied."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    attn = 4 * d * d + (4 * d if bias else 0)\n    mlp = 2 * d * d_mlp + (d_mlp + d if bias else 0)\n    norms = 4 * d if bias else 2 * d\n    return attn + mlp + norms\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    unembed = (0 if tied else d * vocab) + vocab\n    return vocab * d + ctx * d + n_blocks * block_params(d, d_mlp) + 2 * d + unembed\n\n\ndef count_arrays(params):\n    if isinstance(params, dict):\n        return sum(count_arrays(v) for v in params.values())\n    if isinstance(params, (list, tuple)):\n        return 0\n    return int(np.size(params))\n",
+      "test": 5,
+      "symptom": "Skips the list of blocks."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef block_params(d, d_mlp, bias=True):\n    attn = 4 * d * d + (4 * d if bias else 0)\n    mlp = 2 * d * d_mlp + (d_mlp + d if bias else 0)\n    norms = 4 * d if bias else 2 * d\n    return attn + mlp + norms\n\n\ndef model_params(vocab, ctx, d, d_mlp, n_blocks, tied=False):\n    unembed = (0 if tied else d * vocab) + vocab\n    return vocab * d + ctx * d + n_blocks * block_params(d, d_mlp) * 4 + 2 * d + unembed\n\n\ndef count_arrays(params):\n    if isinstance(params, dict):\n        return sum(count_arrays(v) for v in params.values())\n    if isinstance(params, (list, tuple)):\n        return sum(count_arrays(v) for v in params)\n    return int(np.size(params))\n",
+      "test": 3,
+      "symptom": "Multiplies by the number of heads."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the block first and reuse it."
+    },
+    {
+     "rung": "point",
+     "text": "Without biases, attention is $4d^2$, the MLP $2 d\\,d_{\\text{mlp}}$, the norms $2d$.",
+     "highlight": [
+      "r0",
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For `count_arrays`, recurse into dicts and lists and use `np.size` on arrays."
+    }
+   ],
+   "feedback": {
+    "correct": "The formula and the arrays agree: the reversal model holds 26,571 numbers.",
+    "generic": "Not quite. Check each part against the table."
+   },
+   "explain": {
+    "text": "Counting the arrays checks the formula, and the formula checks the arrays: a mismatch means a missing bias or a stray matrix. For the reversal model both give 26,571."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Without biases",
+   "prose": "Many recent models drop every bias vector, the layer-norm shifts included, and keep only the gains. Count the block again at $d = 64$, MLP width 256.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "part",
+      "with biases",
+      "without"
+     ],
+     "rows": [
+      [
+       "attention",
+       "16,640",
+       "?"
+      ],
+      [
+       "MLP",
+       "33,088",
+       "?"
+      ],
+      [
+       "layer norms",
+       "256",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "How many parameters does the block hold without biases?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 49280,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "keepln",
+      "value": 49408,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "noln",
+      "value": 49152,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Keep the matrices and the gains."
+    },
+    {
+     "rung": "point",
+     "text": "Attention $4d^2 = 16{,}384$; MLP $2 \\times 64 \\times 256 = 32{,}768$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The two gains add $2d = 128$."
+    }
+   ],
+   "feedback": {
+    "correct": "$16{,}384 + 32{,}768 + 128 = 49{,}280$.",
+    "generic": "Not quite. Remove each bias vector and keep the rest.",
+    "byKey": {
+     "keepln": "You kept the layer-norm shifts; they are biases too.",
+     "noln": "You dropped the gains as well. They are weights, not biases."
+    }
+   },
+   "explain": {
+    "text": "Without biases the block holds 49,280. Dropping them saves 704 numbers, under 1.5%: the matrices hold almost everything."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Tied embeddings",
+   "prose": "GPT-2 **ties** its embeddings: the unembedding reuses the token-embedding matrix (transposed), so it costs nothing new. Keep the unembedding's bias of 65. Start from the spike model's 60,545.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "part",
+      "untied",
+      "tied"
+     ],
+     "rows": [
+      [
+       "token embeddings",
+       "4,160",
+       "4,160"
+      ],
+      [
+       "unembedding matrix",
+       "4,160",
+       "shared"
+      ],
+      [
+       "unembedding bias",
+       "65",
+       "65"
+      ],
+      [
+       "the rest",
+       "52,160",
+       "52,160"
+      ]
+     ]
+    }
+   },
+   "question": "How many parameters does the tied model hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 56385,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "nobias",
+      "value": 56320,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "both",
+      "value": 52225,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which array disappears?"
+    },
+    {
+     "rung": "point",
+     "text": "The 64 by 65 unembedding matrix is the embedding matrix again.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$60{,}545 - 4{,}160$."
+    }
+   ],
+   "feedback": {
+    "correct": "$60{,}545 - 4{,}160 = 56{,}385$.",
+    "generic": "Not quite. Remove one copy of the 65 by 64 matrix.",
+    "byKey": {
+     "nobias": "You removed the bias too. Only the matrix is shared.",
+     "both": "You removed both copies. The embedding matrix is still there, used twice."
+    }
+   },
+   "explain": {
+    "text": "Tied, the model holds 56,385. Tying saves one $V \\times d$ matrix: 4,160 here, under 7% of the model."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A large vocabulary",
+   "prose": "Edge case: keep one block of width 64 and context 32, but use a tokeniser with 50,257 tokens, untied. The table gives the parts.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "part",
+      "count"
+     ],
+     "rows": [
+      [
+       "token embeddings",
+       "3,216,448"
+      ],
+      [
+       "positions",
+       "2,048"
+      ],
+      [
+       "block",
+       "49,984"
+      ],
+      [
+       "final layer norm",
+       "128"
+      ],
+      [
+       "unembedding",
+       "3,266,705"
+      ],
+      [
+       "total",
+       "6,535,313"
+      ]
+     ]
+    }
+   },
+   "question": "What share of the model is the embedding and the unembedding (with its bias)? Give a percentage to 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.992,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "block",
+      "value": 0.008,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "emb",
+      "value": 0.492,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ],
+    "unit": "%"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the embedding and unembedding rows, then divide by the total."
+    },
+    {
+     "rung": "point",
+     "text": "3,216,448 + 3,266,705 = 6,483,153.",
+     "highlight": [
+      "r0",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "6,483,153 / 6,535,313."
+    }
+   ],
+   "feedback": {
+    "correct": "6,483,153 of 6,535,313: 99.2%.",
+    "generic": "Not quite. Add the two vocabulary-sized rows and divide by the total.",
+    "byKey": {
+     "block": "That is the block's share, the small part here.",
+     "emb": "That is the token embeddings alone; the unembedding is as large again."
+    }
+   },
+   "explain": {
+    "text": "When the vocabulary is much larger than the width, the two $V \\times d$ matrices dominate: 99.2% of this model. A parameter count then says little about the block's capacity."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Checking a model card",
+   "prose": "A vendor sells a news-sentiment model built on GPT-2 small: 12 blocks, $d = 768$, MLP 3,072, vocabulary 50,257, context 1,024, tied embeddings. Its card says 124,439,808 parameters. Your `model_params` gives 124,490,065.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "source",
+      "parameters"
+     ],
+     "rows": [
+      [
+       "card",
+       "124,439,808"
+      ],
+      [
+       "`model_params`",
+       "124,490,065"
+      ],
+      [
+       "difference",
+       "?"
+      ]
+     ]
+    }
+   },
+   "question": "By how many parameters does your count exceed the card?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 50257,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "tie",
+      "value": 38597376,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the card from your count."
+    },
+    {
+     "rung": "point",
+     "text": "124,490,065 − 124,439,808.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then ask which array has exactly that many numbers."
+    }
+   ],
+   "feedback": {
+    "correct": "50,257: one number per token, which is the unembedding bias. GPT-2's output layer has none.",
+    "generic": "Not quite. Take the difference of the two counts.",
+    "byKey": {
+     "tie": "That is a whole $V \\times d$ matrix. The gap is much smaller."
+    }
+   },
+   "explain": {
+    "text": "The gap is 50,257 $= V$, so the card's model has no unembedding bias. A parameter count is the first number on a card; checking it tells you the conventions."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "With biases, attention holds $4(d^2 + d)$ for any number of heads, the MLP $8d^2 + 5d$ at width $4d$, two layer norms $4d$: 49,984 at $d = 64$.",
+   "A model adds embeddings $Vd$, positions $Td$, a final norm $2d$ and an unembedding $dV + V$: 60,545 for the spike's one-block model.",
+   "Tying shares the $V \\times d$ matrix; when $V$ is far above $d$ the embeddings dominate the count."
+  ],
+  "formula": {
+   "name": "One block",
+   "tex": "4(d^2 + d) + (2 d\\,d_{\\text{mlp}} + d_{\\text{mlp}} + d) + 4d",
+   "note": "Attention, MLP, two layer norms; heads do not appear."
+  },
+  "trap": "Multiplying the attention count by the number of heads: the heads are slices of the same four matrices."
+ },
+ "quiz": [
+  {
+   "id": "q-attn32",
+   "difficulty": 2,
+   "prose": "A block has width $d = 32$ and 4 heads, with biases.",
+   "question": "How many parameters does attention hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4224,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "nob",
+      "value": 4096,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "heads",
+      "value": 16896,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4(32^2 + 32) = 4{,}224$.",
+    "generic": "Not quite. $4(d^2 + d)$.",
+    "byKey": {
+     "nob": "You left out the biases.",
+     "heads": "You multiplied by the heads."
+    }
+   },
+   "explain": {
+    "text": "Four $32 \\times 32$ matrices and four biases of 32: $4 \\times 1{,}056 = 4{,}224$."
+   }
+  },
+  {
+   "id": "q-mlp16",
+   "difficulty": 2,
+   "prose": "An MLP has $d = 16$ and width 64.",
+   "question": "How many parameters does it hold, with biases?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2128,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "nob",
+      "value": 2048,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1{,}024 + 64 + 1{,}024 + 16 = 2{,}128$.",
+    "generic": "Not quite. Two matrices and two biases.",
+    "byKey": {
+     "nob": "You left out the biases."
+    }
+   },
+   "explain": {
+    "text": "$16 \\times 64 + 64 + 64 \\times 16 + 16 = 2{,}128$."
+   }
+  },
+  {
+   "id": "q-heads",
+   "difficulty": 3,
+   "prose": "A block of width 96 has its heads changed from 6 to 12.",
+   "question": "What happens to the attention parameter count?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "Nothing changes",
+      "correct": true
+     },
+     {
+      "id": "double",
+      "text": "It doubles",
+      "why": "More heads means thinner heads; the matrices stay $96 \\times 96$."
+     },
+     {
+      "id": "half",
+      "text": "It halves",
+      "why": "Each head is half as wide, but there are twice as many: the total is unchanged."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: the heads slice the same matrices.",
+    "generic": "Not quite. Do the matrices change size?"
+   },
+   "explain": {
+    "text": "Attention holds $4(d^2 + d)$ for any number of heads that divides $d$."
+   }
+  },
+  {
+   "id": "q-tie",
+   "difficulty": 3,
+   "prose": "A model has a vocabulary of 2,000 and width 128.",
+   "question": "How many parameters does tying the embeddings save?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 256000,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "bias",
+      "value": 258000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "double",
+      "value": 512000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One $2{,}000 \\times 128$ matrix: 256,000.",
+    "generic": "Not quite. One matrix is shared.",
+    "byKey": {
+     "bias": "The bias stays; only the matrix is shared.",
+     "double": "One copy remains, used twice."
+    }
+   },
+   "explain": {
+    "text": "Tying removes the unembedding matrix, $V d = 256{,}000$; the bias stays."
+   }
+  }
+ ]
+}
