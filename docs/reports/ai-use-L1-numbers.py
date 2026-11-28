@@ -85,7 +85,18 @@ lv.expect('l4', 'screens[7].prose', '\\tfrac{1}{36}')
 lv.expect('l4', 'summary.formula.tex', '\\tfrac{1}{36}')
 lv.claim(F(1, 2) * F(1, 3) * F(1, 6) == F(1, 36) and chance_b(AB, 'cat', 'sat') == F(1, 3), 'quiz: cat sentence 1/2 x 1/3 x 1/6 = 1/36')
 lv.expect('l4', 'quiz[0].explain.text', '\\tfrac12 \\times \\tfrac13 \\times 1 \\times 1 \\times \\tfrac16 \\times 1 = \\tfrac{1}{36}')
-lv.claim(round(36 * float(dog)) == 1, 'about 1 run in 36')
+lv.claim(round(36 * float(dog)) == 1, 'about 1 run in 36 writes this one sentence')
+# The three sentences the text does say each have chance 1/36 from "the", so the chance of writing SOME sentence the
+# text never says is 1 - 3/36 = 11/12 (the chance of this one sentence, 1/36, is not that chance).
+said = [two('l4 said sentence ' + s, s.split(), AB) for s in ('the cat sat on the mat .', 'the cat ate the jam .', 'the dog sat on the cat .')]
+lv.claim(said == [F(1, 36)] * 3 and all(s in AB for s in ('the cat sat on the mat .', 'the cat ate the jam .', 'the dog sat on the cat .')),
+         'the three sentences in the text each have chance 1/36 from "the"')
+some_unsupported = 1 - sum(said)
+lv.claim(some_unsupported == F(11, 12) and round(float(some_unsupported), 3) == 0.917, 'some unsupported sentence: 1 - 3/36 = 11/12')
+lv.expect('l4', 'screens[1].explain.text', 'about 1 run in 36 writes this sentence, which the text never says')
+lv.expect('l4', 'screens[1].explain.text', '11 runs in 12 write some sentence the text never says')
+lv.claim_text('l4', 'screens[1].explain.text', '1 run in 36 writes a sentence the text never says', some_unsupported == F(1, 36),
+                'l4: "1 run in 36 writes a sentence the text never says" is false (it is 11 in 12)')
 
 # review-1 r8: a longer sentence the text never says
 long_s = 'the dog sat on the cat sat on the mat .'.split()

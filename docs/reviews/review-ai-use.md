@@ -48,3 +48,44 @@ Findings: 2 errors, 15 warnings, 17 notes.
 - app/content/courses/ai-use/l9-what-not-to-paste.json | quiz[2] explain.text | note | "A full postcode covers a handful of homes" understates: UK postcodes average about 15 addresses. | "A full postcode covers one street or part of one."
 - app/content/courses/ai-use/l11-misuse-and-fakes.json | screens[3] hints[1] | note | "A faked boss's voice is aimed at staff" highlights l1 of the scam email, which has nothing to do with the voice. | Drop the highlight, or use a canvas that lists the four misuses.
 - app/content/courses/ai-use/homework-3.json | items[2] widget.model | note | The prompt asks for five rules. The model answer gives five numbered rules plus a sixth "Measured against meant" rule. | Merge rules 1 and 2 ("Paste nothing confidential, and remove identifiers from the rest"), then number the measured-against-meant rule 5 and the call-back rule 4 (or drop one).
+
+## Fix pass
+
+Status per finding, in the order above. All edits are targeted; every changed number was recomputed (11/12 = 1 - 3/36; 1,200 + 1,000 + 1,400 + 800 + 1,100 = 5,500 and 5,500 - 4,770 = 730; 40% of 160 = 64 and of 40 = 16; 2000 x 0.1956 = 391.20). Number scripts L1 87/87, L2 204/204, L3 107/107 (exit 0); validator 0 errors; voice scan 0 and 0; the 12 lessons plus homework-1, homework-3 and review-2 replayed green with and without `--mobile`; problems-1 to -3 and homework-3 pass `grade-all.mjs --file` (0 failures).
+
+- l4 screens[1] explain (error): fixed. Now "1 run in 36 writes this sentence, which the text never says; 11 runs in 12 write some sentence the text never says". `ai-use-L1-numbers.py` now builds the three sentences the text does say (1/36 each), asserts 1 - 3/36 = 11/12 and uses `claim_text` so the old wording would fail.
+- l4 screens[3] 'unaware' and summary.ideas[1] (warning): fixed. Option, explain, feedback.correct and the summary now say it often does not say when it does not know, and rarely says where its knowledge stops unless its examples taught it. Hint step "nothing tells it where its knowledge stops" also reworded.
+- l1 screens[6] 'same' why (warning): fixed as suggested.
+- l1 quiz[3] q-number (warning): fixed ("with no search tool").
+- l2 screens[8] explain (warning): fixed, kept to three sentences (a repeated fact like a fee can be copied, so out-of-date examples are dangerous).
+- problems-1 items[0].parts[1] 'distinct' why (warning): fixed (equal shares; fund is 2 of the 3).
+- homework-1 items[3] 'two-thirds' why (note): fixed (bank's chance and the dropped 1/2).
+- l2 screens[1] 'users' why (note): fixed.
+- l3 screens[7] prose (note): fixed; the summary is left unchanged because the sentence belongs to the screen.
+- problems-2 items[2].parts[2] (error): fixed by rewording the stem ("Using the unrounded rate, $1.015^{12} - 1$"), and the 391.20 slip also gets wrong id `rounded` (391.2, tol 0.005) with a targeted why; script checks the value, stem and why.
+- l6 screens[5] prose, hint, explain (warning): fixed (round to nearest £100, £5,500, about £700 short); script checks the sum and that £4,770 is more than 5% below it.
+- l7 screens[2] slot and table row (warning): fixed ("The body that publishes it"; prose matched).
+- l8 screens[3] hints[1] (warning): fixed (highlight c1).
+- l8 screens[4] canvas (note): fixed ("asked again").
+- review-2 items[0] (note): fixed (keyed option now "no figures or report to write from").
+- l6 screens[8] widget.how (note): fixed (code span).
+- l5 screens[5] canvas (note): fixed (console line of the long request; hint highlight removed).
+- problems-2 items[1].parts[3] explain (note): fixed.
+- homework-3 items[0] (warning): fixed (hire CVs pasted as examples; 'none' why and explain say the pasted hires).
+- problems-3 items[0] canvas and items[1] (warning): fixed (both 25% cells now 40%; counts, rates and gaps unchanged; L3 script asserts 64 and 16 and that every shortlist sits inside the qualified pool).
+- l12 screens[8] (warning): fixed (rewarded for each day that ends in profit; "profitable days" in the explain).
+- homework-3 items[1] (warning): fixed (`after` rules added, `byKey.need` dropped; `answer` unchanged).
+- problems-3 items[2].parts[1] 'everyone' (warning): fixed (prose says the share of its 10 shortlisted candidates; why "The shortlist holds 10.").
+- l9 screens[3] and screens[4] (warning): fixed (bin and slot "Remove details first (if policy allows)"; screens[4] states the bank's policy allows the tool).
+- l11 screens[5] prose (warning): fixed ("this email").
+- l12 screens[0] hints[1] (note): fixed (highlight r0).
+- l12 screens[1] prose (note): fixed.
+- l10 screens[0] hints[1] (note): fixed (text now "Find the one row marked B: the other nine are A.", keeping highlight r3, which is that row).
+- l10 screens[4] 'true-typical' why (note): fixed.
+- l10 screens[5] (note): fixed. Question is now what the firm should do before relying on it (option ids test, one, same, larger); the explain keeps who gets worse answers. This changes the keyed answer of that screen.
+- l10 screens[6] explain (note): fixed ("one reason").
+- l9 quiz[2] explain (note): fixed ("one street or part of one").
+- l11 screens[3] hints[1] (note): fixed by dropping the highlight.
+- homework-3 items[2] model (note): fixed (rules 1 and 2 merged, five numbered rules including measured against meant; rubric points unchanged).
+
+Declined: none. Needs for `course.json` or lesson ids: none.

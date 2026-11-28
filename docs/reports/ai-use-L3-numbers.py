@@ -101,6 +101,13 @@ lv.expect('problems', 'items[1].parts[1].widget.answer', g2)
 lv.expect('problems', 'items[1].parts[1].widget.wrong[0].value', g1)
 lv.expect('problems', 'items[1].parts[1].widget.wrong[1].value', 56 - 13)
 lv.expect('problems', 'items[1].prose', 35)
+# the qualified pool: 40% of each group meet the requirements, and every shortlist sits inside it
+qc, qd = F(40, 100) * 160, F(40, 100) * 40
+lv.claim(qc == 64 == 0.4 * 160 and qd == 16 == 0.4 * 40, 'p1/p2: 40% of 160 is 64 and 40% of 40 is 16 meet the requirements')
+lv.claim(56 <= qc and 6 <= qd and 13 <= qd, 'p1/p2: 56 of 64 (C), 6 and 13 of 16 (D): no shortlist exceeds those who meet the requirements')
+lv.claim(F(13, 40) < F(40, 100) and F(56, 160) < F(40, 100) and F(6, 40) < F(40, 100), 'p2: every shortlist rate (35%, 32.5%, 15%) is below the 40% who meet the requirements')
+lv.expect('problems', 'items[0].canvas.params.rows[1]', '40%')
+lv.claim_text('problems', 'items[0].canvas.params.rows[1]', '25%', False, 'p1: the old 25% cell (below the shortlist counts) is gone')
 
 lv.check_wrongs()
 lv.report()

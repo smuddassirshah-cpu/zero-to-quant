@@ -79,6 +79,11 @@ for k in costs:
     tot_b += costs[k]
 lv.claim(tot == tot_b == 5530, 'costs total 5530')
 lv.claim(tot - costs['July'] == 4770, 'dropping July gives 4770')
+# estimate to the nearest 100: 1200 + 1000 + 1400 + 800 + 1100 = 5500, so 4770 is about 700 short (it is not within 5% of the estimate)
+est = [int(round(v / 100.0)) * 100 for v in costs.values()]; est_b = [(v + 50) // 100 * 100 for v in costs.values()]
+lv.claim(est == est_b == [1200, 1000, 1400, 800, 1100] and sum(est) == 5500, 'l6 estimate to nearest 100 totals 5500')
+lv.claim(sum(est) - 4770 == 730 and (sum(est) - 4770) / sum(est) > 0.05, 'l6 4770 is about 700 short of 5500, more than 5% below')
+lv.expect('l6', 'screens[5].explain.text', '1,200 + 1,000 + 1,400 + 800 + 1,100 = £5,500')
 for k, path in (('April', 'r0'), ('May', 'r1'), ('June', 'r2'), ('August', 'r4')):
     lv.expect('l6', f'screens[5].feedback.byKey.{path}', tot - costs[k])
 lv.expect('l6', 'screens[5].feedback.correct', tot)
@@ -187,6 +192,9 @@ cost = two('p3 cost on £2,000', 2000 * (comp_a(1, 0.015, 12) - 1), 2000 * (comp
 lv.claim(cost == 391.24 and round(2000 * 0.1956, 2) == 391.2, 'p3 cost 391.24 (391.20 from the rounded rate)')
 lv.expect('problems', 'items[2].parts[2].widget.answer', cost)
 lv.expect('problems', 'items[2].parts[2].widget.wrong[1].value', round(2000 + cost, 2))
+lv.expect('problems', 'items[2].parts[2].widget.wrong[2].value', round(2000 * 0.1956, 2))   # the rounded 19.56% path the old stem invited
+lv.expect('problems', 'items[2].parts[2].question', 'unrounded rate')
+lv.expect('problems', 'items[2].parts[2].feedback.byKey.rounded', 391.24)
 lv.expect('problems', 'items[2].parts[2].explain.text', 391.20)
 lv.claim(F(12 * 15, 1000) * 2000 == 360, 'p3 the chatbot\'s 18% of 2000 = 360')
 lv.expect('problems', 'items[2].parts[3].widget.answer', round(cost - 360, 2))
