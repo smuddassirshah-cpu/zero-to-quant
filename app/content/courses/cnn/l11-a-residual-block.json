@@ -1,0 +1,1363 @@
+{
+  "id": "l11-a-residual-block",
+  "course": "cnn",
+  "title": "A residual block",
+  "minutes": 16,
+  "objectives": [
+    "Build a residual block and explain why the identity path helps a deeper net train."
+  ],
+  "skills": [
+    "cnn-train"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two more layers",
+      "prose": "Take the digits net and add two 16-to-16 convolutions after the first one. The deeper net has more to learn with. Here are both training losses over six epochs.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "sh",
+              "label": "shallow",
+              "values": [
+                1.891,
+                1.114,
+                0.763,
+                0.56,
+                0.441,
+                0.38
+              ]
+            },
+            {
+              "id": "pl",
+              "label": "plain, 2 more layers",
+              "values": [
+                2.301,
+                2.283,
+                2.124,
+                1.337,
+                0.574,
+                0.389
+              ]
+            },
+            {
+              "id": "rs",
+              "label": "residual",
+              "values": [
+                1.888,
+                1.084,
+                0.662,
+                0.422,
+                0.282,
+                0.253
+              ]
+            }
+          ],
+          "y": [
+            0,
+            2.5
+          ],
+          "indexFrom": 1,
+          "xLabel": "epoch",
+          "yLabel": "training loss",
+          "decimals": 2,
+          "hlines": [
+            {
+              "id": "g",
+              "y": 2.3,
+              "label": "guessing"
+            }
+          ]
+        },
+        "state": {
+          "hide": [
+            "rs"
+          ],
+          "caption": "Gradient descent at rate 0.05, the extra 16-to-16 filters started small (sd 0.01), seed 0 (recorded)."
+        }
+      },
+      "question": "What do the curves show about the deeper, plain net?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "It is stuck near 2.30 at first: it is guessing",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "It overfits the training digits",
+            "why": "These are training losses; overfitting shows as a gap to validation, not a high training loss."
+          },
+          {
+            "id": "c",
+            "text": "It trains faster from the first epoch",
+            "why": "Its first-epoch loss is 2.30, against 1.89 for the shallow net."
+          },
+          {
+            "id": "d",
+            "text": "More layers always train faster",
+            "why": "Here the deeper net starts slower; depth can make a net harder to train."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does each curve start?"
+        },
+        {
+          "rung": "point",
+          "text": "2.30 is the guessing line.",
+          "highlight": [
+            "pl",
+            "g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The plain net stays above 2.2 for 2 epochs."
+        }
+      ],
+      "feedback": {
+        "correct": "The plain net sits at 2.30 and 2.28: guessing, while the shallow net learns at once.",
+        "generic": "Not quite. Compare each curve with the guessing line."
+      },
+      "explain": {
+        "text": "Its loss stays at the guessing level $\\ln 10 = 2.30$ for 2 epochs and is above the shallow net’s at every epoch. The signal through two small extra layers is too weak to learn from at first."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Add the input back",
+      "prose": "Now keep the same two layers $F$, but add their input back to their output: $y = x + F(x)$. Switch between the nets.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "sh",
+              "label": "shallow",
+              "values": [
+                1.891,
+                1.114,
+                0.763,
+                0.56,
+                0.441,
+                0.38
+              ]
+            },
+            {
+              "id": "pl",
+              "label": "plain, 2 more layers",
+              "values": [
+                2.301,
+                2.283,
+                2.124,
+                1.337,
+                0.574,
+                0.389
+              ]
+            },
+            {
+              "id": "rs",
+              "label": "residual",
+              "values": [
+                1.888,
+                1.084,
+                0.662,
+                0.422,
+                0.282,
+                0.253
+              ]
+            }
+          ],
+          "y": [
+            0,
+            2.5
+          ],
+          "indexFrom": 1,
+          "xLabel": "epoch",
+          "yLabel": "training loss",
+          "decimals": 2,
+          "hlines": [
+            {
+              "id": "g",
+              "y": 2.3,
+              "label": "guessing"
+            }
+          ]
+        },
+        "state": {
+          "hide": [
+            "rs"
+          ],
+          "caption": "Gradient descent at rate 0.05, the extra 16-to-16 filters started small (sd 0.01), seed 0 (recorded)."
+        },
+        "controls": [
+          {
+            "bind": "view",
+            "label": "net",
+            "frames": [
+              {
+                "hide": [
+                  "rs"
+                ]
+              },
+              {
+                "hide": []
+              }
+            ],
+            "frameLabels": [
+              "without the skip",
+              "with the skip"
+            ]
+          }
+        ]
+      },
+      "question": "What is the residual net’s training loss after epoch 3? Give a decimal to 2 places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.66,
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "plain",
+            "value": 2.12,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "shallow",
+            "value": 0.76,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Switch the skip on."
+        },
+        {
+          "rung": "point",
+          "text": "Read the residual line at epoch 3.",
+          "highlight": [
+            "rs"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It reads 0.662."
+        }
+      ],
+      "feedback": {
+        "correct": "0.66, against 2.12 for the plain net.",
+        "generic": "Not quite. Read the residual line at epoch 3.",
+        "byKey": {
+          "plain": "That is the plain net, without the skip.",
+          "shallow": "That is the shallow net. The residual line is lower still."
+        }
+      },
+      "explain": {
+        "text": "With the skip the deep net learns from the first epoch and stays below the shallow net: 0.66 against 0.76 at epoch 3.",
+        "canvas": {
+          "hide": []
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A residual block",
+      "prose": "A **residual block** computes $y = x + F(x)$: the **identity path** carries $x$ past $F$ unchanged, and $F$ learns a correction. Here $F$ is conv, ReLU, conv, each 3 by 3 with padding 1, and $x$ is 16 × 8 × 8.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "shape"
+          ],
+          "rows": [
+            [
+              "x",
+              "16 × 8 × 8"
+            ],
+            [
+              "F(x)",
+              "16 × 8 × 8"
+            ],
+            [
+              "y = x + F(x)",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Why must $F(x)$ have exactly the shape of $x$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The sum adds them entry by entry",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The dense layer needs 256 inputs",
+            "why": "That is about the pooled maps; the block’s rule is about its own sum."
+          },
+          {
+            "id": "c",
+            "text": "Padding must always be 1",
+            "why": "Padding 1 is how this $F$ keeps 8 by 8; the rule itself is that the shapes match."
+          },
+          {
+            "id": "d",
+            "text": "It need not: NumPy broadcasts",
+            "why": "Broadcasting a single channel over 16 would add the wrong numbers without an error."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does $x + F(x)$ do with each entry?"
+        },
+        {
+          "rung": "point",
+          "text": "Entry $(c, i, j)$ of $x$ meets entry $(c, i, j)$ of $F(x)$.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So every axis must match."
+        }
+      ],
+      "feedback": {
+        "correct": "Entry by entry, so the shapes must match.",
+        "generic": "Not quite. Think about what the sum pairs up."
+      },
+      "explain": {
+        "text": "The sum pairs each of the 1,024 entries of $x$ with the same entry of $F(x)$. Padding 1 and 16 filters keep $F(x)$ at 16 × 8 × 8."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What the block costs",
+      "prose": "Each convolution in $F$ maps 16 channels to 16 with 3 by 3 kernels. Count with l7’s rule $c_{\\text{out}}(c_{\\text{in}}k^2 + 1)$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "formula"
+          ],
+          "rows": [
+            [
+              "conv in F",
+              "16 × (16 × 9 + 1)"
+            ],
+            [
+              "the net of l7",
+              "2,730"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in the parameters.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "layer",
+          "parameters"
+        ],
+        "rows": [
+          [
+            "first conv of F",
+            {
+              "edit": true,
+              "answer": 2320,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "no-cin",
+                  "value": 160,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "second conv of F",
+            {
+              "edit": true,
+              "answer": 2320,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "no-bias",
+                  "value": 2304,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "the block",
+            {
+              "edit": true,
+              "answer": 4640,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "the residual net",
+            {
+              "edit": true,
+              "answer": 7370,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "block-only",
+                  "value": 4640,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each filter has a 3 by 3 kernel for all 16 input channels."
+        },
+        {
+          "rung": "point",
+          "text": "$16 \\times 9 = 144$ weights and 1 bias per filter."
+        },
+        {
+          "rung": "step",
+          "text": "$16 \\times 145 = 2{,}320$ per convolution."
+        }
+      ],
+      "feedback": {
+        "correct": "$2 \\times 2{,}320 = 4{,}640$, and $2{,}730 + 4{,}640 = 7{,}370$.",
+        "generic": "Not quite. Every filter reads all 16 input channels.",
+        "byKey": {
+          "no-cin": "That is a 1-channel input. These filters read 16 channels.",
+          "no-bias": "Each of the 16 filters has a bias.",
+          "block-only": "Add the 2,730 of the shallow net."
+        }
+      },
+      "explain": {
+        "text": "The block nearly triples the parameters, from 2,730 to 7,370. The identity path costs nothing."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The gradient through the block",
+      "prose": "A one-number block: $F(x) = w_2\\,\\mathrm{ReLU}(w_1 x)$ and $y = x + F(x)$, with $w_1 = 0.5$, $w_2 = -0.4$, $x = 2$. The graph shows each value and its gradient.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "valueLines": [
+            {
+              "label": "v",
+              "colour": 3
+            },
+            {
+              "label": "g",
+              "colour": 2
+            }
+          ],
+          "nodes": [
+            {
+              "id": "x",
+              "label": "x",
+              "x": 0.06,
+              "y": 0.6,
+              "shape": "pill"
+            },
+            {
+              "id": "u",
+              "label": "w₁x",
+              "x": 0.28,
+              "y": 0.25,
+              "shape": "pill"
+            },
+            {
+              "id": "r",
+              "label": "ReLU",
+              "x": 0.5,
+              "y": 0.25,
+              "shape": "pill"
+            },
+            {
+              "id": "F",
+              "label": "w₂·",
+              "x": 0.72,
+              "y": 0.25,
+              "shape": "pill"
+            },
+            {
+              "id": "y",
+              "label": "+",
+              "x": 0.94,
+              "y": 0.6,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "x",
+              "to": "u"
+            },
+            {
+              "from": "u",
+              "to": "r"
+            },
+            {
+              "from": "r",
+              "to": "F"
+            },
+            {
+              "from": "F",
+              "to": "y"
+            },
+            {
+              "from": "x",
+              "to": "y",
+              "label": "identity"
+            }
+          ]
+        },
+        "state": {
+          "values": {
+            "x": "2",
+            "u": "1",
+            "r": "1",
+            "F": "−0.4",
+            "y": "1.6"
+          },
+          "values2": {
+            "y": "1",
+            "F": "1",
+            "r": "−0.4",
+            "u": "−0.4",
+            "x": "?"
+          },
+          "caption": "$w_1 = 0.5$, $w_2 = -0.4$, $x = 2$: v is each value, g its gradient $\\partial y / \\partial(\\cdot)$."
+        }
+      },
+      "question": "What is $\\partial y / \\partial x$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "no-skip",
+            "value": -0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "no-F",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two paths reach $x$: the identity and $F$."
+        },
+        {
+          "rung": "point",
+          "text": "The identity path gives 1. Through $F$: $w_2 \\cdot w_1$, since $w_1 x > 0$.",
+          "highlight": [
+            "x",
+            "u"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 + (-0.4)(0.5)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 + w_2 w_1 = 1 - 0.2 = 0.8$.",
+        "generic": "Not quite. Add the gradient of both paths.",
+        "byKey": {
+          "no-skip": "That is $\\partial F / \\partial x$ alone. The identity path adds 1.",
+          "no-F": "That is the identity path alone. $F$ adds $w_2 w_1 = -0.2$."
+        }
+      },
+      "explain": {
+        "text": "Gradients of paths that meet add: $\\partial y/\\partial x = 1 + \\partial F/\\partial x = 0.8$. However small $\\partial F/\\partial x$ is, the identity path passes the gradient on.",
+        "canvas": {
+          "values2": {
+            "x": "0.8"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Shapes that do not match",
+      "prose": "A block that halves the map and doubles the channels uses stride 2 and 32 filters in $F$, so $F(x)$ is 32 × 4 × 4 while $x$ is 16 × 8 × 8. A colleague adds them anyway.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "shape"
+          ],
+          "rows": [
+            [
+              "x",
+              "16 × 8 × 8"
+            ],
+            [
+              "F(x)",
+              "32 × 4 × 4"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "How should the identity path change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A 1 by 1 conv, stride 2, 32 filters, on the identity path",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Add x to F(x) as they are and let NumPy cope",
+            "why": "The shapes differ, so the sum is either an error or a broadcast of the wrong entries."
+          },
+          {
+            "id": "c",
+            "text": "Copy each channel of x twice and keep it 8 by 8",
+            "why": "That gives 32 × 8 × 8, still not 32 × 4 × 4."
+          },
+          {
+            "id": "d",
+            "text": "Drop the identity path for this one block",
+            "why": "It works, but this block then loses the gradient path the identity gives."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The two shapes must be made equal."
+        },
+        {
+          "rung": "point",
+          "text": "Stride 2 halves 8 to 4; 32 filters give 32 channels."
+        },
+        {
+          "rung": "step",
+          "text": "A 1 by 1 kernel changes channels without mixing neighbours."
+        }
+      ],
+      "feedback": {
+        "correct": "A 1 by 1 projection with stride 2 and 32 filters on the identity path.",
+        "generic": "Not quite. The identity path must deliver 32 × 4 × 4.",
+        "byKey": {
+          "b": "You added two different shapes. The sum needs the identity path to produce 32 × 4 × 4 first."
+        }
+      },
+      "explain": {
+        "text": "The projection costs $32 \\times (16 + 1) = 544$ parameters and makes both terms 32 × 4 × 4. ResNets use it only where the shape changes."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Where normalisation sits",
+      "prose": "`nn-train` L2 built batch norm and layer norm. Deep residual nets use them inside the blocks.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "net",
+            "normalisation"
+          ],
+          "rows": [
+            [
+              "ResNet (He et al. 2016)",
+              "batch norm"
+            ],
+            [
+              "transformer",
+              "layer norm"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "In the original ResNet block, where does batch norm sit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Inside F, after each convolution",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "On the identity path",
+            "why": "Normalising $x$ on the identity path would stop it carrying $x$ unchanged."
+          },
+          {
+            "id": "c",
+            "text": "Only after the last block",
+            "why": "It sits in every block, after each convolution."
+          },
+          {
+            "id": "d",
+            "text": "Nowhere: the skip replaces it",
+            "why": "The skip and the normalisation solve different problems; ResNets use both."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which path must stay untouched?"
+        },
+        {
+          "rung": "point",
+          "text": "The identity path carries $x$ as it is."
+        },
+        {
+          "rung": "step",
+          "text": "So the normalisation goes in $F$."
+        }
+      ],
+      "feedback": {
+        "correct": "Inside $F$, after each convolution: the identity path stays clean.",
+        "generic": "Not quite. Keep the identity path an identity."
+      },
+      "explain": {
+        "text": "The original ResNet puts batch norm after each convolution inside $F$; transformers put layer norm at the start of each block’s $F$. Either way the identity path carries $x$ unchanged."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Why the identity helps",
+      "prose": "For a residual block $$\\frac{\\partial \\mathbf{y}}{\\partial \\mathbf{x}} = \\mathbf{I} + \\frac{\\partial F}{\\partial \\mathbf{x}}.$$ Set the second convolution of $F$ to zero at the start and $F(x) = 0$. The block is then the identity: the deep net starts as the shallow one and learns a correction.",
+      "question": "With the second convolution of every block started at zero, what does the residual net compute before training?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Exactly what the shallow net computes",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Nothing: the output is zero",
+            "why": "Only $F(x)$ is zero; $y = x$ still flows to the pool and dense layer."
+          },
+          {
+            "id": "c",
+            "text": "Random noise from the first convolution of F",
+            "why": "The second convolution multiplies it by zero."
+          },
+          {
+            "id": "d",
+            "text": "The plain deep net",
+            "why": "The plain net would output $F(x) = 0$; the residual net outputs $x$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$y = x + 0 = x$: the blocks vanish and the shallow net remains.",
+        "generic": "Not quite. Put $F(x) = 0$ into $y = x + F(x)$."
+      },
+      "explain": {
+        "text": "With $F(x) = 0$ every block passes $x$ through, so training starts from the shallow net and $\\partial y/\\partial x = \\mathbf{I}$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The block in code",
+      "prose": "Write `residual_block_forward(x, params)` with `conv2d` from `cnn_ops_l3`, which checks the bias shape. Raise `ValueError` when $F(x)$ and $x$ differ in shape.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> residual_block_forward(h, [A1, a1, A2, a2]).shape",
+            "(2, 16, 8, 8)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `residual_block_forward`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom cnn_ops_l3 import conv2d, load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nW, b, A1, a1, A2, a2, V, c = load_weights('cnn-w-res.json')\nh = conv2d(X_te[:2], W, b, 1, 1).relu().data   # (2, 16, 8, 8): the block's input\n\n\ndef residual_block_forward(x, params):\n    # y = x + F(x), F = conv(ReLU(conv(x))), both 3 by 3 with padding 1\n    A1, a1, A2, a2 = params\n    ...\n",
+        "solution": "import numpy as np\nfrom cnn_ops_l3 import conv2d, load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nW, b, A1, a1, A2, a2, V, c = load_weights('cnn-w-res.json')\nh = conv2d(X_te[:2], W, b, 1, 1).relu().data   # (2, 16, 8, 8): the block's input\n\n\ndef residual_block_forward(x, params):\n    A1, a1, A2, a2 = params\n    F = conv2d(conv2d(x, A1, a1, 1, 1).relu(), A2, a2, 1, 1).data\n    if F.shape != np.shape(x):\n        raise ValueError('x and F(x) have different shapes')\n    return x + F\n",
+        "examples": [
+          {
+            "call": "residual_block_forward(h, [A1, a1, A2, a2]).shape",
+            "expect": "(2, 16, 8, 8)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "residual_block_forward(h, [A1, a1, A2, a2]).shape",
+            "expect": "(2, 16, 8, 8)",
+            "compare": "equal"
+          },
+          {
+            "call": "residual_block_forward(h, [A1, a1, A2, a2])[0, :, 3, 3].tolist()",
+            "expect": "[-1.0252244732213347, 2.095219753465327, 0.06807839094628276, -3.8057949958076245, -2.2800054543228514, -3.126408822585219, -1.4434374499023899, -3.809700387412374, -2.230717587352726, -5.381670630758136, 0.6331427704944204, -3.5864873827605623, -3.0025114622174036, -2.8540048443629678, -2.092997939239284, -3.7515844638408344]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "from autograd import Tensor as _T; from cnn_ops_l2 import maxpool2d as _mp; _lg = lambda X: _mp(_T(residual_block_forward(conv2d(X, W, b, 1, 1).relu().data, [A1, a1, A2, a2])), 2).data.reshape(len(X), -1) @ V + c",
+            "call": "float((_lg(X_te).argmax(axis=1) == y_te).mean())",
+            "expect": "0.9814814814814815",
+            "compare": "isclose"
+          },
+          {
+            "call": "bool(np.array_equal(residual_block_forward(h, [A1, a1, 0 * A2, 0 * a2]), h))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "residual_block_forward(h, [A1, a1, A2[:1], a2[:1]])",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "zq_no('block', 'res_logits')",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 6 hidden tests on the supplied residual net `cnn-w-res.json`. They check the shape, the 16 channels of one output pixel (to $10^{-9}$), and the whole net’s held-out accuracy with your block inside (0.9815). Then a zero second convolution (return $x$ unchanged), one with a single filter (raise `ValueError`), and no call to the module’s `block` or `res_logits`.",
+        "budget": 2000,
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "cnn_ops_l2.py": "content/data/ai/cnn_ops_l2.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "cnn_ops_l3.py": "content/data/ai/cnn_ops_l3.py",
+          "cnn-digits.txt": "content/data/ai/cnn-digits.txt",
+          "cnn-w-res.json": "content/data/ai/cnn-w-res.json"
+        },
+        "mutants": [
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import conv2d, load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nW, b, A1, a1, A2, a2, V, c = load_weights('cnn-w-res.json')\nh = conv2d(X_te[:2], W, b, 1, 1).relu().data   # (2, 16, 8, 8): the block's input\n\n\ndef residual_block_forward(x, params):\n    A1, a1, A2, a2 = params\n    F = conv2d(conv2d(x, A1, a1, 1, 1).relu(), A2, a2, 1, 1).data\n    if F.shape != np.shape(x):\n        raise ValueError('x and F(x) have different shapes')\n    return F\n",
+            "test": 2,
+            "symptom": "The skip is missing: the block returns F(x) alone."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import conv2d, load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nW, b, A1, a1, A2, a2, V, c = load_weights('cnn-w-res.json')\nh = conv2d(X_te[:2], W, b, 1, 1).relu().data   # (2, 16, 8, 8): the block's input\n\n\ndef residual_block_forward(x, params):\n    A1, a1, A2, a2 = params\n    F = conv2d(conv2d(x, A1, a1, 1, 1).relu(), A2, a2, 1, 1).data\n    if F.shape != np.shape(x):\n        raise ValueError('x and F(x) have different shapes')\n    return np.maximum(x + F, 0)\n",
+            "test": 2,
+            "symptom": "A ReLU after the sum clips the negative corrections F(x) adds."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import conv2d, load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nW, b, A1, a1, A2, a2, V, c = load_weights('cnn-w-res.json')\nh = conv2d(X_te[:2], W, b, 1, 1).relu().data   # (2, 16, 8, 8): the block's input\n\n\ndef residual_block_forward(x, params):\n    A1, a1, A2, a2 = params\n    F = conv2d(conv2d(x, A1, a1, 1, 1).relu(), A2, a2, 1, 1).data\n    return x + F\n",
+            "test": 5,
+            "symptom": "Without the check, one channel of F(x) is broadcast over all 16 channels of x and the sum runs silently."
+          },
+          {
+            "source": "import numpy as np\nfrom cnn_ops_l3 import conv2d, load_split, load_weights\n\nX_tr, y_tr, X_va, y_va, X_te, y_te = load_split()\nW, b, A1, a1, A2, a2, V, c = load_weights('cnn-w-res.json')\nh = conv2d(X_te[:2], W, b, 1, 1).relu().data   # (2, 16, 8, 8): the block's input\n\n\ndef residual_block_forward(x, params):\n    A1, a1, A2, a2 = params\n    F = conv2d(conv2d(x, A1, a1, 1, 0).relu(), A2, a2, 1, 1).data\n    if F.shape != np.shape(x):\n        raise ValueError('x and F(x) have different shapes')\n    return x + F\n",
+            "test": 1,
+            "symptom": "Padding 0 shrinks F(x) to 4 by 4 after two convolutions, so it no longer matches x."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`conv2d(x, A1, a1, 1, 1).relu()` then the second `conv2d`; take `.data`."
+        },
+        {
+          "rung": "point",
+          "text": "Compare `F.shape` with `x.shape` before adding."
+        },
+        {
+          "rung": "step",
+          "text": "Return `x + F`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your block reproduces the supplied net: 0.9815 held out.",
+        "generic": "Not quite. Check the skip and the shapes.",
+        "byKey": {
+          "test-2": "Return $x + F(x)$, with no ReLU after the sum.",
+          "test-4": "With a zero second convolution the block must return $x$ itself.",
+          "test-5": "A one-channel $F(x)$ broadcasts over 16 channels. Compare the shapes and raise `ValueError`.",
+          "test-6": "Build the block from `conv2d`; do not call the module’s `block` or `res_logits`."
+        }
+      },
+      "explain": {
+        "text": "Two convolutions, a ReLU between them, and the input added back. The shape check turns a silent broadcast into an error."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Checking its gradient",
+      "prose": "Check the block’s backward pass with the autograd’s `grad_check`, on a small block of 2 channels on 4 by 4 maps. Use `block` from `cnn_ops_l3` and the loss $\\sum \\mathrm{block}(x) \\odot M$.",
+      "question": "Write `block_grad_check(x, params, M)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom autograd import Tensor, grad_check\nfrom cnn_ops_l3 import block\n\nrng = np.random.default_rng(31)\nx = rng.standard_normal((1, 2, 4, 4))            # small: grad_check loops over every entry\nparams = [rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2), rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2)]\nM = rng.standard_normal((1, 2, 4, 4))            # the loss is sum(block(x) * M)\n\n\ndef block_grad_check(x, params, M):\n    # return (the gradient of sum(block(x) * M) with respect to x, grad_check's relative error)\n    ...\n",
+        "solution": "import numpy as np\nfrom autograd import Tensor, grad_check\nfrom cnn_ops_l3 import block\n\nrng = np.random.default_rng(31)\nx = rng.standard_normal((1, 2, 4, 4))            # small: grad_check loops over every entry\nparams = [rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2), rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2)]\nM = rng.standard_normal((1, 2, 4, 4))            # the loss is sum(block(x) * M)\n\n\ndef block_grad_check(x, params, M):\n    xt = Tensor(x)\n    ts = [Tensor(p) for p in params]\n    f = lambda: (block(xt, *ts) * M).sum()\n    err = grad_check(f, [xt] + ts)\n    return xt.grad.copy(), err\n",
+        "examples": [
+          {
+            "call": "block_grad_check(x, params, M)[0].shape",
+            "expect": "(1, 2, 4, 4)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "block_grad_check(x, params, M)[0].shape",
+            "expect": "(1, 2, 4, 4)",
+            "compare": "equal"
+          },
+          {
+            "call": "bool(block_grad_check(x, params, M)[1] < 1e-6)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "block_grad_check(x, params, M)[0].ravel().tolist()",
+            "expect": "[2.2815249254365044, -2.059956896798254, 3.4525129889027393, -1.4347210905825256, -5.881996158562707, 17.688422441512298, 3.303431123278775, 2.496709360289754, 10.63981298305867, -5.078489696464676, -3.4749653979082953, 2.6814784040104573, -10.586170042061633, -20.24422965585174, 11.463239902973617, 8.307007206735875, -1.2562955364360748, 1.233466895490831, 10.829971580355318, 1.644786506661188, 4.124967309057446, -5.975535405954155, -6.827370029110977, 5.683120883661103, -4.561889438370428, -13.355894141570305, 17.69750064021327, 0.259445772074718, -2.424960719531265, 11.803253704435791, 3.421256878221056, -6.25723905730485]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-12
+            }
+          },
+          {
+            "setup": "_r = np.random.default_rng(47); _x = _r.standard_normal((2, 3, 4, 4)); _p = [_r.standard_normal((3, 3, 3, 3)), _r.standard_normal(3), 0.0 * _r.standard_normal((3, 3, 3, 3)), np.zeros(3)]; _M = _r.standard_normal((2, 3, 4, 4))",
+            "call": "bool(np.allclose(block_grad_check(_x, _p, _M)[0], _M))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 4 hidden tests: the shape of the gradient of $x$, and a relative error below $10^{-6}$ from `grad_check` (float64, central differences). Then the gradient itself against the model run (to $10^{-9}$), and a block whose second convolution is zero, where the gradient of $x$ must equal $M$.",
+        "budget": 2000,
+        "data": {
+          "autograd.py": "content/data/ai/autograd.py",
+          "cnn_ops_l2.py": "content/data/ai/cnn_ops_l2.py",
+          "nt_ops_l1.py": "content/data/ai/nt_ops_l1.py",
+          "cnn_ops_l3.py": "content/data/ai/cnn_ops_l3.py",
+          "cnn-digits.txt": "content/data/ai/cnn-digits.txt"
+        },
+        "mutants": [
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, grad_check\nfrom cnn_ops_l3 import block\n\nrng = np.random.default_rng(31)\nx = rng.standard_normal((1, 2, 4, 4))            # small: grad_check loops over every entry\nparams = [rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2), rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2)]\nM = rng.standard_normal((1, 2, 4, 4))            # the loss is sum(block(x) * M)\n\n\ndef block_grad_check(x, params, M):\n    xt = Tensor(x)\n    ts = [Tensor(p) for p in params]\n    f = lambda: (block(xt, *ts, skip=False) * M).sum()\n    err = grad_check(f, [xt] + ts)\n    return xt.grad.copy(), err\n",
+            "test": 3,
+            "symptom": "With skip=False the identity path is gone and the gradient of x loses its M term."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, grad_check\nfrom cnn_ops_l3 import block\n\nrng = np.random.default_rng(31)\nx = rng.standard_normal((1, 2, 4, 4))            # small: grad_check loops over every entry\nparams = [rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2), rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2)]\nM = rng.standard_normal((1, 2, 4, 4))            # the loss is sum(block(x) * M)\n\n\ndef block_grad_check(x, params, M):\n    xt = Tensor(x)\n    ts = [Tensor(p) for p in params]\n    f = lambda: block(xt, *ts).sum()\n    err = grad_check(f, [xt] + ts)\n    return xt.grad.copy(), err\n",
+            "test": 3,
+            "symptom": "The loss drops the weights M, so the gradient is that of a plain sum."
+          },
+          {
+            "source": "import numpy as np\nfrom autograd import Tensor, grad_check\nfrom cnn_ops_l3 import block\n\nrng = np.random.default_rng(31)\nx = rng.standard_normal((1, 2, 4, 4))            # small: grad_check loops over every entry\nparams = [rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2), rng.standard_normal((2, 2, 3, 3)), rng.standard_normal(2)]\nM = rng.standard_normal((1, 2, 4, 4))            # the loss is sum(block(x) * M)\n\n\ndef block_grad_check(x, params, M):\n    xt = Tensor(x)\n    ts = [Tensor(p) for p in params]\n    f = lambda: (block(xt, *ts) * M).sum()\n    err = grad_check(f, [xt] + ts)\n    return ts[0].grad.copy(), err\n",
+            "test": 1,
+            "symptom": "It returns the gradient of the first filter bank, not of x."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Wrap `x` and every parameter in a Tensor."
+        },
+        {
+          "rung": "point",
+          "text": "`f = lambda: (block(xt, *ts) * M).sum()`."
+        },
+        {
+          "rung": "step",
+          "text": "`grad_check(f, [xt] + ts)` leaves the backprop gradient in `xt.grad`."
+        }
+      ],
+      "feedback": {
+        "correct": "Relative error below $10^{-6}$, and the gradient of $x$ matches.",
+        "generic": "Not quite. Check the loss and which gradient you return.",
+        "byKey": {
+          "test-1": "Return the gradient of `x`, `xt.grad`, not that of a parameter.",
+          "test-3": "The gradient differs. Keep the skip, and weight the sum by `M`.",
+          "test-4": "With $F(x) = 0$ the gradient of $x$ is $M$: the identity path passes it on."
+        }
+      },
+      "explain": {
+        "text": "grad_check compares backprop with central differences over every entry. With $F$ switched off the gradient of $x$ is exactly $M$, the identity term of $\\mathbf{I} + \\partial F/\\partial \\mathbf{x}$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Reading the curves",
+      "prose": "The recorded losses of the plain and residual nets, three seeds each, are in the hidden tests. Write `stuck_epochs(losses, level=2.2)`, the epochs from the start spent above `level`, and `deep_vs_residual(curves)`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "seed 0 (recorded)",
+          "lines": [
+            "plain    [2.301, 2.283, 2.124, 1.337, 0.574, 0.389]",
+            "residual [1.888, 1.084, 0.662, 0.422, 0.282, 0.253]"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def stuck_epochs(losses, level=2.2):\n    # how many epochs, from the first, the loss stays above level\n    ...\n\n\ndef deep_vs_residual(curves):\n    # curves = {'plain': [...], 'residual': [...]}: the name of the lower final loss\n    ...\n",
+        "solution": "def stuck_epochs(losses, level=2.2):\n    n = 0\n    for v in losses:\n        if v > level:\n            n += 1\n        else:\n            break\n    return n\n\n\ndef deep_vs_residual(curves):\n    if curves['residual'][-1] < curves['plain'][-1]:\n        return 'residual'\n    return 'plain'\n",
+        "examples": [
+          {
+            "call": "stuck_epochs([2.30, 2.28, 2.12, 1.34])",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "_pl = [[2.301, 2.283, 2.124, 1.337, 0.574, 0.389], [2.303, 2.298, 2.28, 2.167, 1.395, 0.755], [2.303, 2.3, 2.291, 2.256, 1.939, 0.727]]; _rs = [[1.888, 1.084, 0.662, 0.422, 0.282, 0.253], [1.986, 1.35, 0.777, 0.433, 0.345, 0.265], [1.931, 1.223, 0.721, 0.457, 0.326, 0.236]]",
+            "call": "[deep_vs_residual({'plain': p, 'residual': q}) for p, q in zip(_pl, _rs)]",
+            "expect": "['residual', 'residual', 'residual']",
+            "compare": "equal"
+          },
+          {
+            "setup": "_pl = [[2.301, 2.283, 2.124, 1.337, 0.574, 0.389], [2.303, 2.298, 2.28, 2.167, 1.395, 0.755], [2.303, 2.3, 2.291, 2.256, 1.939, 0.727]]; _rs = [[1.888, 1.084, 0.662, 0.422, 0.282, 0.253], [1.986, 1.35, 0.777, 0.433, 0.345, 0.265], [1.931, 1.223, 0.721, 0.457, 0.326, 0.236]]",
+            "call": "[stuck_epochs(p) for p in _pl]",
+            "expect": "[2, 3, 4]",
+            "compare": "equal"
+          },
+          {
+            "setup": "_pl = [[2.301, 2.283, 2.124, 1.337, 0.574, 0.389], [2.303, 2.298, 2.28, 2.167, 1.395, 0.755], [2.303, 2.3, 2.291, 2.256, 1.939, 0.727]]; _rs = [[1.888, 1.084, 0.662, 0.422, 0.282, 0.253], [1.986, 1.35, 0.777, 0.433, 0.345, 0.265], [1.931, 1.223, 0.721, 0.457, 0.326, 0.236]]",
+            "call": "[stuck_epochs(q) for q in _rs]",
+            "expect": "[0, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "deep_vs_residual({'plain': [2.3, 1.2, 0.30], 'residual': [1.9, 0.9, 0.35]})",
+            "expect": "'plain'",
+            "compare": "equal"
+          },
+          {
+            "call": "stuck_epochs([2.4, 1.0, 2.5])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "stuck_epochs([2.2, 1.0])",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 6 hidden tests. Three use the recorded curves of three seeds: which net ends lower, and how long each plain and residual curve stays above 2.2. Three use planted curves, one where the plain net ends lower and one that rises above the level again later.",
+        "mutants": [
+          {
+            "source": "def stuck_epochs(losses, level=2.2):\n    n = 0\n    for v in losses:\n        if v > level:\n            n += 1\n        else:\n            break\n    return n\n\n\ndef deep_vs_residual(curves):\n    if curves['residual'][0] < curves['plain'][0]:\n        return 'residual'\n    return 'plain'\n",
+            "test": 4,
+            "symptom": "It compares the first epoch, where the residual net is always ahead, not the last."
+          },
+          {
+            "source": "def stuck_epochs(losses, level=2.2):\n    n = 0\n    for v in losses:\n        if v > level:\n            n += 1\n    return n\n\n\ndef deep_vs_residual(curves):\n    if curves['residual'][-1] < curves['plain'][-1]:\n        return 'residual'\n    return 'plain'\n",
+            "test": 5,
+            "symptom": "It counts every epoch above the level, not only the run at the start."
+          },
+          {
+            "source": "def stuck_epochs(losses, level=2.2):\n    n = 0\n    for v in losses:\n        if v >= level:\n            n += 1\n        else:\n            break\n    return n\n\n\ndef deep_vs_residual(curves):\n    if curves['residual'][-1] < curves['plain'][-1]:\n        return 'residual'\n    return 'plain'\n",
+            "test": 6,
+            "symptom": "A loss exactly at the level counts as stuck."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count from the first epoch and stop at the first loss at or below the level."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the last entries of the two lists."
+        },
+        {
+          "rung": "step",
+          "text": "Return the name of the lower one."
+        }
+      ],
+      "feedback": {
+        "correct": "Plain nets stay stuck for [2, 3, 4] epochs; residual nets for none, and they end lower.",
+        "generic": "Not quite. Check where you start and stop counting.",
+        "byKey": {
+          "test-4": "Compare the final losses, the last entries.",
+          "test-5": "Count only the run at the start; stop at the first loss at or below the level.",
+          "test-6": "A loss exactly at the level is not above it."
+        }
+      },
+      "explain": {
+        "text": "On all three seeds the plain net spends 2, 3, 4 epochs near guessing and the residual net none; the residual net ends lower each time."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The residual stream",
+      "prose": "A transformer (`sequence` L4) applies this idea at every layer: $x_{l+1} = x_l + F_l(x_l)$, so after 12 layers $x_{12} = x_0 + \\sum_l F_l(x_l)$. Language models that price news or read filings stack dozens of such layers.",
+      "question": "Which path lets the gradient reach $x_0$ from the top of a deep stack?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The sum of identities, which adds $\\mathbf{I}$ at every layer",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The product of the Jacobians of the $F_l$ alone",
+            "why": "A product of many small Jacobians shrinks towards zero; the identities avoid it."
+          },
+          {
+            "id": "c",
+            "text": "Only the last layer, through its own identity",
+            "why": "Every layer’s identity carries the gradient down."
+          },
+          {
+            "id": "d",
+            "text": "None: such deep stacks cannot be trained",
+            "why": "The identity paths are exactly what lets them train."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write $\\partial x_{12}/\\partial x_0$ for one layer first."
+        },
+        {
+          "rung": "point",
+          "text": "One layer gives $\\mathbf{I} + \\partial F/\\partial x$."
+        },
+        {
+          "rung": "step",
+          "text": "Multiplying such terms keeps an $\\mathbf{I}$ in the product."
+        }
+      ],
+      "feedback": {
+        "correct": "The identities: each layer adds $\\mathbf{I}$ to its Jacobian.",
+        "generic": "Not quite. Expand the product of $\\mathbf{I} + \\partial F_l/\\partial x$."
+      },
+      "explain": {
+        "text": "Multiplying 12 factors of $\\mathbf{I} + \\partial F_l / \\partial x$ always leaves the term $\\mathbf{I}$, a direct route to $x_0$. The running sum is called the residual stream."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A residual block computes $y = x + F(x)$; $F(x)$ must have the shape of $x$, or the identity path needs a 1 by 1 projection.",
+      "Its gradient is $\\mathbf{I} + \\partial F/\\partial \\mathbf{x}$, so the identity path passes the gradient on even when $F$’s is small.",
+      "Two 16-to-16 3 by 3 convolutions cost 4,640 parameters; started with $F = 0$, the deep net begins as the shallow one."
+    ],
+    "formula": {
+      "name": "Residual block",
+      "tex": "\\mathbf{y} = \\mathbf{x} + F(\\mathbf{x}),\\quad \\dfrac{\\partial \\mathbf{y}}{\\partial \\mathbf{x}} = \\mathbf{I} + \\dfrac{\\partial F}{\\partial \\mathbf{x}}",
+      "note": "Shapes of $\\mathbf{x}$ and $F(\\mathbf{x})$ must match."
+    },
+    "trap": "Adding $x$ and $F(x)$ of different shapes: a stride or channel change needs a projection on the identity path."
+  },
+  "quiz": [
+    {
+      "id": "q-count8",
+      "difficulty": 2,
+      "question": "A residual block on 8-channel maps has two 3 by 3 convolutions, 8 channels to 8. How many parameters?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1168,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 584,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-bias",
+            "value": 1152,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2 \\times 8 \\times (8 \\times 9 + 1) = 1{,}168$.",
+        "generic": "Not quite. Two convolutions, each $8(8 \\times 9 + 1)$.",
+        "byKey": {
+          "one": "That is one convolution. The block has two.",
+          "no-bias": "Each filter has a bias."
+        }
+      },
+      "explain": {
+        "text": "Each convolution has $8 \\times 73 = 584$; two make 1,168."
+      }
+    },
+    {
+      "id": "q-scalar",
+      "difficulty": 3,
+      "question": "In $y = x + F(x)$ the slope of $F$ at $x$ is $-0.95$. What is $\\partial y/\\partial x$? Give a decimal to 2 places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.05,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "no-skip",
+            "value": -0.95,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sign",
+            "value": 1.95,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - 0.95 = 0.05$.",
+        "generic": "Not quite. Add the identity to the slope of $F$.",
+        "byKey": {
+          "no-skip": "Add 1 for the identity path.",
+          "sign": "The slope is negative: subtract."
+        }
+      },
+      "explain": {
+        "text": "The identity gives 1 and $F$ gives $-0.95$: 0.05."
+      }
+    },
+    {
+      "id": "q-zero",
+      "difficulty": 2,
+      "question": "At the start of training, a block’s $F$ outputs exactly 0. What does the block output?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$x$, unchanged",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "0",
+            "why": "Only $F(x)$ is 0; the identity adds $x$."
+          },
+          {
+            "id": "c",
+            "text": "$2x$",
+            "why": "That would need $F(x) = x$."
+          },
+          {
+            "id": "d",
+            "text": "$\\mathrm{ReLU}(x)$",
+            "why": "There is no ReLU after the sum in this block."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$y = x + 0$.",
+        "generic": "Not quite. Put $F(x) = 0$ into $y = x + F(x)$."
+      },
+      "explain": {
+        "text": "The block is the identity, so the net starts as if the block were not there."
+      }
+    }
+  ]
+}
