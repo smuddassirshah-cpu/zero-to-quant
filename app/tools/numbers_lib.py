@@ -506,7 +506,7 @@ class Level:
         return ok
 
     def _coverage(self):
-        mode = self.coverage or ('strict' if os.environ.get('ZQ_NUMBERS_STRICT') == '1' else 'warn')
+        mode = getattr(self, 'coverage', None) or ('strict' if os.environ.get('ZQ_NUMBERS_STRICT') == '1' else 'warn')
         if mode == 'off':
             return
         miss = self.uncovered()
