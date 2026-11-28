@@ -121,6 +121,11 @@
       "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    n = len(X)\n    A = np.zeros((n, n))\n    for i, j in edges:\n        A[i, j] = A[j, i] = 1.0\n    At = A + np.eye(n)\n    s = 1.0 / np.sqrt(At.sum(axis=1))\n    Ah = s[:, None] * At * s[None, :]\n    sizes = [X.shape[1]] + [16] * (layers - 1) + [2]\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((a, b)) / np.sqrt(a) for a, b in zip(sizes[:-1], sizes[1:])]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    for t in range(1, steps + 1):\n        P = [Tensor(w) for w in W]\n        h = Tensor(X)\n        for k, p in enumerate(P):\n            h = Ah @ h @ p\n            if k < len(P) - 1:\n                h = h.relu()\n        loss = cross_entropy(h[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [p.grad for p in P], m, v, t, lr)\n    h = X\n    for k, w in enumerate(W):\n        h = Ah @ h @ w\n        if k < len(W) - 1:\n            h = np.maximum(h, 0.0)\n    return h.argmax(axis=1), losses\n",
       "test": 4,
       "symptom": "Assumes two classes."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef gcn_node_classifier(edges, X, y, train_idx, layers, steps, lr, seed):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    n = len(X)\n    A = np.zeros((n, n))\n    for i, j in edges:\n        A[i, j] = A[j, i] = 1.0\n    At = A + np.eye(n)\n    s = 1.0 / np.sqrt(At.sum(axis=1))\n    Ah = s[:, None] * At * s[None, :]\n    sizes = [X.shape[1]] + [16] * (layers - 1) + [int(y.max()) + 1]\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((a, b)) / np.sqrt(a) for a, b in zip(sizes[:-1], sizes[1:])]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    best, bestW = -1, W\n    for t in range(1, steps + 1):\n        P = [Tensor(w) for w in W]\n        h = Tensor(X)\n        for k, p in enumerate(P):\n            h = Ah @ h @ p\n            if k < len(P) - 1:\n                h = h.relu()\n        loss = cross_entropy(h[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        acc = float(np.mean(h.data.argmax(axis=1) == y))\n        if acc > best:\n            best, bestW = acc, W\n        W, m, v = adam_step(W, [p.grad for p in P], m, v, t, lr)\n    W = bestW\n    h = X\n    for k, w in enumerate(W):\n        h = Ah @ h @ w\n        if k < len(W) - 1:\n            h = np.maximum(h, 0.0)\n    return h.argmax(axis=1), losses\n",
+      "test": 8,
+      "symptom": "Keeps the weights of the step with the best accuracy over every node, which uses labels the task does not have."
      }
     ],
     "data": {
@@ -206,9 +211,15 @@
       "call": "len(nodes_within(Lp, 150, 40))",
       "compare": "equal",
       "expect": "81"
+     },
+     {
+      "setup": "B = np.zeros((6, 6)); B[0, 1] = B[1, 0] = 1; B[3, 4] = B[4, 3] = B[4, 5] = B[5, 4] = 1",
+      "call": "nodes_within(B, 2, 2)",
+      "compare": "equal",
+      "expect": "[2]"
      }
     ],
-    "how": "Submit runs 7 hidden tests, each compared exactly: the venues from D at 1 and 2 links, and a path of 6 at 0, 1 and 2 links. Then a graph in two pieces, and a path of 300 at 40 links.",
+    "how": "Submit runs 8 hidden tests, each compared exactly: the venues from D at 1 and 2 links, and a path of 6 at 0, 1 and 2 links. Then a graph in two pieces, a path of 300 at 40 links, and a node with no links at 2.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef nodes_within(A, i, k):\n    M = np.linalg.matrix_power(np.asarray(A, dtype=float), k)\n    return sorted(int(j) for j in np.nonzero(M[i])[0])\n",
@@ -224,6 +235,11 @@
       "source": "import numpy as np\n\n\ndef nodes_within(A, i, k):\n    A = np.asarray(A)\n    seen = {i}\n    frontier = {i}\n    for _ in range(k - 1):\n        frontier = {int(j) for u in frontier for j in np.nonzero(A[u])[0] if int(j) not in seen and A[u, j]}\n        seen.update(frontier)\n    return sorted(seen)\n",
       "test": 1,
       "symptom": "Stops one link short."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef nodes_within(A, i, k):\n    A = np.asarray(A, dtype=float)\n    if k == 0:\n        return [i]\n    M = np.linalg.matrix_power(A, k) + np.linalg.matrix_power(A, k - 1)\n    return sorted(int(j) for j in np.nonzero(M[i])[0])\n",
+      "test": 8,
+      "symptom": "Takes the non-zero pattern of $\\mathbf A^k + \\mathbf A^{k-1}$, which drops node $i$ when it has no links."
      }
     ]
    },
@@ -232,8 +248,7 @@
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-1": "Keep node $i$, which enters through its self-loop, and collect every node reached in up to $k$ rounds, not only walks of exactly $k$ steps.",
-     "test-2": "Collect every node reached so far, not only those at exactly $k$ steps.",
-     "test-3": "Run all $k$ rounds: from node 0 of the path, 2 links reach nodes 1 and 2."
+     "test-8": "A node with no links still reaches itself, through its self-loop, however many layers you stack."
     }
    },
    "explain": {
@@ -298,7 +313,20 @@
     "distractors": [
      "x1",
      "x2"
-    ]
+    ],
+    "after": {
+     "b": [
+      "a"
+     ],
+     "d": [
+      "b",
+      "c"
+     ],
+     "f": [
+      "d",
+      "e"
+     ]
+    }
    },
    "feedback": {
     "correct": "$\\mathbf u = \\tilde{\\mathbf D}^{1/2}\\mathbf 1$ is fixed by $\\hat{\\mathbf A}$, and no eigenvalue is larger.",

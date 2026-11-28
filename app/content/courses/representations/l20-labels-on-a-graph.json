@@ -758,7 +758,7 @@
     "options": [
      {
       "id": "blue",
-      "text": "Blue, because almost all of its links go to the left-hand cluster",
+      "text": "Blue, because all 5 of its links go to the left-hand cluster",
       "correct": true
      },
      {
@@ -2863,7 +2863,7 @@
     }
    },
    "explain": {
-    "text": "Only 4 labels entered the loss, yet the network labels 35 of the other 36 firms correctly, 0.972. The links carried the labels' information to the rest."
+    "text": "Only 4 labels entered the loss, yet the network labels 35 of the other 36 firms correctly, 0.972. The links carried the labels' information to the rest. The unlabelled firms' numbers and links were used in training, but not their labels, so the score is for this graph: a new graph needs its own check."
    }
   },
   {
@@ -3127,7 +3127,7 @@
     }
    },
    "explain": {
-    "text": "Accuracy rises to 0.97 at 8 steps, then falls to 0.50: **over-smoothing**. A 16-layer ReLU network scores a mean of 0.55, and in 14 of its 20 runs the training loss stays above 0.6: deep stacks are also hard to train.",
+    "text": "Accuracy rises to 0.97 at 8 steps, then falls to 0.50: **over-smoothing**, with no ReLU involved. A 16-layer ReLU network scores a mean of 0.55: 17 of its 20 runs predict one class, and in 11 every last-layer unit is dead, so the output is 0. Dead units and over-smoothing both collapse a deep stack, and the training loss stays above 0.6 in 14 runs.",
     "canvas": {
      "highlight": [
       "x8",
@@ -4189,9 +4189,15 @@
       "call": "len(train_gcn(Ah, X, y, [0, 1, 20, 21], 7, 0.05, 0)[1])",
       "compare": "equal",
       "expect": "7"
+     },
+     {
+      "setup": "import representations_ops_l5 as ops\nA, y = ops.planted_partition(40, 0.3, 0.03, 13)\nX = ops.node_features(y, 0.6, 113)\nAh = ops.normalised_adjacency(A)",
+      "call": "round(train_gcn(Ah, X, y, [0, 1, 20, 21], 40, 0.05, 0)[0], 6)",
+      "compare": "equal",
+      "expect": "0.972222"
      }
     ],
-    "how": "Submit runs 6 hidden tests. The first 5 losses and the accuracy after 5 steps on the lesson's graph are compared to 6 places. After 200 steps the accuracy on the unlabelled nodes of two graphs must be at least 0.85. Then 4 losses from another start, and one loss a step.",
+    "how": "Submit runs 7 hidden tests. The first 5 losses and the accuracy after 5 steps on the lesson's graph are compared to 6 places. After 200 steps the accuracy on the unlabelled nodes of two graphs must be at least 0.85. Then 4 losses from another start, one loss a step, and the accuracy after 40 steps, which is lower than the best one on the way.",
     "mutants": [
      {
       "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef train_gcn(A_hat, X, y, train_idx, steps, lr, seed):\n    A_hat = np.asarray(A_hat, dtype=float)\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    K = int(y.max()) + 1\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((X.shape[1], 16)) / np.sqrt(X.shape[1]),\n         rng.standard_normal((16, K)) / np.sqrt(16)]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    for t in range(1, steps + 1):\n        W1, W2 = Tensor(W[0]), Tensor(W[1])\n        logits = A_hat @ (A_hat @ X @ W1).relu() @ W2\n        loss = cross_entropy(logits[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [W1.grad, W2.grad], m, v, t, lr)\n    pred = (A_hat @ np.maximum(A_hat @ X @ W[0], 0) @ W[1]).argmax(axis=1)\n    return float(np.mean(pred[tr] == y[tr])), losses\n",
@@ -4217,6 +4223,16 @@
       "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef train_gcn(A_hat, X, y, train_idx, steps, lr, seed):\n    A_hat = np.asarray(A_hat, dtype=float)\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    K = int(y.max()) + 1\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((X.shape[1], 16)) / np.sqrt(X.shape[1]),\n         rng.standard_normal((16, K)) / np.sqrt(16)]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    W1, W2 = Tensor(W[0]), Tensor(W[1])\n    for t in range(1, steps + 1):\n        W1.data, W2.data = W[0], W[1]\n        logits = A_hat @ (A_hat @ X @ W1).relu() @ W2\n        loss = cross_entropy(logits[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [W1.grad, W2.grad], m, v, t, lr)\n    pred = (A_hat @ np.maximum(A_hat @ X @ W[0], 0) @ W[1]).argmax(axis=1)\n    other = np.setdiff1d(np.arange(len(y)), tr)\n    return float(np.mean(pred[other] == y[other])), losses\n",
       "test": 1,
       "symptom": "Reuses the same tensors without zeroing their gradients, so each step adds the last one in."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef train_gcn(A_hat, X, y, train_idx, steps, lr, seed):\n    A_hat = np.asarray(A_hat, dtype=float)\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray(train_idx)\n    K = int(y.max()) + 1\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((X.shape[1], 16)) / np.sqrt(X.shape[1]),\n         rng.standard_normal((16, K)) / np.sqrt(16)]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    other = np.setdiff1d(np.arange(len(y)), tr)\n    best, bestW = -1, W\n    for t in range(1, steps + 1):\n        W1, W2 = Tensor(W[0]), Tensor(W[1])\n        logits = A_hat @ (A_hat @ X @ W1).relu() @ W2\n        loss = cross_entropy(logits[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        acc = float(np.mean(logits.data.argmax(axis=1)[other] == y[other]))\n        if acc > best:\n            best, bestW = acc, W\n        W, m, v = adam_step(W, [W1.grad, W2.grad], m, v, t, lr)\n    W = bestW\n    pred = (A_hat @ np.maximum(A_hat @ X @ W[0], 0) @ W[1]).argmax(axis=1)\n    other = np.setdiff1d(np.arange(len(y)), tr)\n    return float(np.mean(pred[other] == y[other])), losses\n",
+      "test": 7,
+      "symptom": "Keeps the weights of the step with the best accuracy on the unlabelled nodes, which uses labels the task does not have."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor, cross_entropy\nfrom nt_ops_l1 import adam_step\n\n\ndef train_gcn(A_hat, X, y, train_idx, steps, lr, seed):\n    A_hat = np.asarray(A_hat, dtype=float)\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y)\n    tr = np.asarray([0, 1, 20, 21])\n    K = int(y.max()) + 1\n    rng = np.random.default_rng(seed)\n    W = [rng.standard_normal((X.shape[1], 16)) / np.sqrt(X.shape[1]),\n         rng.standard_normal((16, K)) / np.sqrt(16)]\n    m = [np.zeros_like(w) for w in W]\n    v = [np.zeros_like(w) for w in W]\n    losses = []\n    for t in range(1, steps + 1):\n        W1, W2 = Tensor(W[0]), Tensor(W[1])\n        logits = A_hat @ (A_hat @ X @ W1).relu() @ W2\n        loss = cross_entropy(logits[tr], y[tr])\n        loss.backward()\n        losses.append(loss.item())\n        W, m, v = adam_step(W, [W1.grad, W2.grad], m, v, t, lr)\n    pred = (A_hat @ np.maximum(A_hat @ X @ W[0], 0) @ W[1]).argmax(axis=1)\n    other = np.setdiff1d(np.arange(len(y)), tr)\n    return float(np.mean(pred[other] == y[other])), losses\n",
+      "test": 5,
+      "symptom": "Ignores `train_idx` and always trains on firms 0, 1, 20 and 21."
      }
     ],
     "data": {
@@ -4241,7 +4257,8 @@
     "byKey": {
      "test-1": "The loss uses the four training nodes only, after ReLU between the layers, with gradients that start at 0 each step.",
      "test-2": "Measure accuracy on the 36 nodes outside `train_idx`.",
-     "test-5": "The loss is the cross-entropy of the training rows only; each step's gradient must start from 0."
+     "test-5": "Use the `train_idx` you are given: the loss is the cross-entropy of those rows only.",
+     "test-7": "Report the accuracy of the final weights: choosing the step by the unlabelled nodes' labels uses labels the task does not have."
     }
    },
    "explain": {
@@ -4322,10 +4339,10 @@
       "expect": "[0.992892, 0.034949, 0.000435, 5e-06, 0.0]"
      },
      {
-      "setup": "Va = np.array([[0.25, 0.288675, 0.288675, 0.353553], [0.288675, 0.333333, 0.333333, 0], [0.288675, 0.333333, 0.333333, 0], [0.353553, 0, 0, 0.5]])\nXv = np.array([[2.0, 10.0], [0.0, 4.0], [4.0, 6.0], [6.0, 8.0]])",
+      "setup": "Va0 = np.array([[0, 1, 1, 1], [1, 0, 1, 0], [1, 1, 0, 0], [1, 0, 0, 0]]) + np.eye(4)\nsv = 1 / np.sqrt(Va0.sum(axis=1))\nVa = sv[:, None] * Va0 * sv[None, :]\nXv = np.array([[2.0, 10.0], [0.0, 4.0], [4.0, 6.0], [6.0, 8.0]])",
       "call": "np.round(feature_spread(Va, Xv, 4), 6).tolist()",
       "compare": "equal",
-      "expect": "[0.399843, 0.188735, 0.10686, 0.060503, 0.034185]"
+      "expect": "[0.399843, 0.188735, 0.106861, 0.060503, 0.034185]"
      },
      {
       "setup": "import representations_ops_l5 as ops\nA, y = ops.planted_partition(40, 0.3, 0.03, 13)\nX = ops.node_features(y, 0.6, 113)\nAh = ops.normalised_adjacency(A)\nv0 = np.sqrt(A.sum(axis=1) + 1)",
@@ -4383,9 +4400,7 @@
     "correct": "Your spreads match: near 1 at first, about 0.69 at 8 steps, and 0 by 128.",
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
-     "test-1": "Use the eigenvector of the largest eigenvalue (the last column from `eigh`), multiply by $\\hat{\\mathbf A}$ once a step rather than raising its entries to a power, measure the part outside $\\mathbf v$, and divide by $\\lVert\\mathbf Z\\rVert$.",
-     "test-2": "Repeat the matrix product: `A_hat ** k` raises each entry to a power, which is a different matrix.",
-     "test-4": "Measure the part outside $\\mathbf v$, not the spread around the mean row: rows that line up along $\\mathbf v$ still differ by $\\sqrt{\\tilde d_i}$."
+     "test-1": "Use the eigenvector of the largest eigenvalue (the last column from `eigh`), multiply by $\\hat{\\mathbf A}$ once a step rather than raising its entries to a power, measure the part outside $\\mathbf v$, and divide by $\\lVert\\mathbf Z\\rVert$, and not the spread around the mean row: rows that line up along $\\mathbf v$ still differ by $\\sqrt{\\tilde d_i}$."
     }
    },
    "explain": {
@@ -4461,7 +4476,7 @@
     },
     {
      "rung": "step",
-     "text": "Shuffled links keep the degrees but drop any link between similar firms."
+     "text": "Shuffled links keep every firm's degree but link firms at random, whatever their sector."
     }
    ],
    "feedback": {
@@ -4531,7 +4546,7 @@
   {
    "id": "q-smooth",
    "difficulty": 3,
-   "prose": "A team stacks 40 graph convolution layers on a connected graph and finds every node predicted in the same class.",
+   "prose": "A team applies $\\hat{\\mathbf A}$ 40 times to a connected graph's features, then fits one weight matrix, and finds every node predicted in the same class.",
    "question": "What is the most likely cause?",
    "widget": {
     "kind": "choice",
@@ -4555,16 +4570,16 @@
      {
       "id": "relu",
       "text": "ReLU removes every negative feature, so the classes look alike",
-      "why": "ReLU alone does not make all nodes alike; the repeated averaging does."
+      "why": "This stack has no ReLU, and 40 multiplications by $\\hat{\\mathbf A}$ still leave only the top eigenvector."
      }
     ]
    },
    "feedback": {
     "correct": "Over-smoothing: $\\hat{\\mathbf A}^{40}$ keeps little more than the top eigenvector.",
-    "generic": "Not quite. Think about what 40 multiplications by $\\hat{\\mathbf A}$ do."
+    "generic": "Not quite. Think about what 40 multiplications by $\\hat{\\mathbf A}$ do, with no ReLU in sight."
    },
    "explain": {
-    "text": "Each layer multiplies by $\\hat{\\mathbf A}$; after many, the features lie along the top eigenvector, which carries only $\\sqrt{\\tilde d_i}$."
+    "text": "Each multiplication by $\\hat{\\mathbf A}$ blurs the features; after many, they lie along the top eigenvector, which carries only $\\sqrt{\\tilde d_i}$. A deep ReLU stack can also collapse by dead units: in this level's 16-layer runs, 11 of 20 ended with every last-layer unit dead."
    }
   },
   {

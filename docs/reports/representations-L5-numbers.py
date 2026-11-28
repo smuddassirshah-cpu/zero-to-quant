@@ -133,6 +133,23 @@ def pred_b(Ah, X, W):
     return H.argmax(1)
 
 
+def within_b(adj, i, k):
+    """Nodes within k links of i by breadth-first search over a neighbour list (node i included)."""
+    seen, frontier = {i}, [i]
+    for _ in range(k):
+        frontier = [v for u in frontier for v in adj[u] if v not in seen]
+        seen.update(frontier)
+    return sorted(seen)
+
+
+def last_hidden_b(Ah, X, W):
+    """Output of the last hidden ReLU layer of a trained stack."""
+    H = np.asarray(X, float)
+    for w in W[:-1]:
+        H = np.maximum(np.asarray(Ah) @ H @ w, 0)
+    return H
+
+
 def acc_b(pred, y, tr):
     o = [i for i in range(len(y)) if i not in set(tr)]
     return sum(int(pred[i] == y[i]) for i in o) / len(o)
@@ -167,7 +184,7 @@ lv.expect('l17', 'screens[3].widget.answer', Ax[0])
 lv.expect('l17', 'screens[3].widget.wrong[0].value', Ax[0] + x3[0])
 Px = step_fr(VA, x3)
 lv.expect('l17', 'screens[4].widget.answer', round(float(Px[0]), 2))
-lv.claim(Px[0] == Fr(10, 3) and Fr(14, 4) == Fr(7, 2), 'l17 average at A 10/3 = 3.33; with A itself 14/4 = 3.5', covers=[3.33, 3.5, 10, 14, 4])
+lv.claim(Px[0] == Fr(10, 3) and step_fr(VA, x3, loops=True)[0] == Fr(7, 2), 'l17 average at A 10/3 = 3.33; with A itself (4 + 1 + 2 + 7) / 4 = 3.5', covers=[3.33, 3.5, 10, 14, 4])
 Pp = [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
 Hp = hat_b(Pp)
 lv.claim(close(Hp[0][0], 0.5) and close(Hp[0][1], 1 / math.sqrt(6)) and close(Hp[1][1], 1 / 3), 'path with loops: degrees 2, 3, 2; 1/2, 1/sqrt 6, 1/3',
@@ -198,8 +215,6 @@ xs = [eD]
 for _ in range(40):
     xs.append(step_fr(VA, xs[-1]))
 lv.claim(xs[1] == [Fr(1, 3), 0, 0, 0] and xs[2] == [0, Fr(1, 6), Fr(1, 6), Fr(1, 3)] and xs[3] == [Fr(2, 9), Fr(1, 12), Fr(1, 12), 0], 'hook: 1/3 at A, then 1/6, 1/6, 1/3, then 2/9, 1/12, 1/12, 0')
-for f_, k in (('screens[0].canvas.controls[0].frames', None),):
-    pass
 fr0 = F['l18-passing-messages']['screens'][0]['canvas']['controls'][0]['frames']
 lv.claim(all(abs(fr0[k]['distribution'][v] - float(xs[k][i])) < 6e-4 for k in range(4) for i, v in enumerate('ABCD')), 'hook frames show the exact steps to 3 places',
          covers=[round(float(xs[k][i]), 3) for k in range(4) for i in range(4)])
@@ -212,6 +227,9 @@ lv.expect('l18', 'screens[1].widget.answer', float(pi[3]))
 x2 = [2, 0, 4, 6]
 lv.expect('l18', 'screens[2].widget.answer', float(step_fr(VA, x2)[1]))
 lv.claim(step_fr(VA, x2, loops=True)[1] == 2, 'B with its loop: 2', covers=[2])
+chg = [max(abs(a - b) for a, b in zip(xs[k], xs[k - 1])) for k in range(1, 41)]
+first_small = next(k for k in range(1, 41) if chg[k - 1] < Fr(1, 1000))
+lv.claim(first_small == 22 and chg[20] >= Fr(1, 1000) and float(chg[21]) < 0.00077, 'settles on the venues from 1 at D: the 21st step still moves a value by 0.00105, the 22nd first by less than 0.001 (0.00076)', covers=[22, 21, 0.001, 0.00076])
 # reach in two looped steps
 g7 = {'S': ['a', 'f'], 'a': ['S', 'b', 'd'], 'f': ['S'], 'b': ['a', 'c'], 'd': ['a', 'e'], 'c': ['b'], 'e': ['d']}
 names = list(g7)
@@ -225,9 +243,16 @@ X5 = [[2, 10], [0, 4], [4, 6], [6, 8]]
 c2 = step_fr(VA, [r[1] for r in X5])
 lv.expect('l18', 'screens[5].widget.answer', float(c2[0]))
 lv.expect('l18', 'screens[5].widget.wrong[1].value', round(float(step_fr(VA, [r[0] for r in X5])[0]), 2))
-lv.claim(Fr(28, 4) == 7 and step_fr(VA, [r[0] for r in X5])[0] == Fr(10, 3), 'two features: own-included slip 7; first coordinate 10/3', covers=[7, 28, 3.33])
+lv.claim(step_fr(VA, [r[1] for r in X5], loops=True)[0] == 7 and step_fr(VA, [r[0] for r in X5])[0] == Fr(10, 3), 'two features: own-included slip (10 + 4 + 6 + 8) / 4 = 7; first coordinate 10/3', covers=[7, 28, 3.33])
 # directed
-lv.claim(9 == 9 and 1 + 3 == 4 and 1 + 3 + 9 == 13, 'directed: A collects D 9; incoming 4; both 13', covers=[9, 4, 13])
+Ad = np.zeros((4, 4))
+Ad[1, 0] = Ad[2, 0] = Ad[0, 3] = 1.0   # B to A, C to A, A to D: A_ij = 1 when i has lent to j
+xd = np.array([5.0, 1.0, 3.0, 9.0])
+out_d, in_d, both_d = (Ad @ xd)[0], (Ad.T @ xd)[0], (np.maximum(Ad, Ad.T) @ xd)[0]
+lv.expect('l18', 'screens[6].widget.answer', float(out_d))
+lv.expect('l18', 'screens[6].widget.wrong[0].value', float(in_d))
+lv.expect('l18', 'screens[6].widget.wrong[1].value', float(both_d))
+lv.claim(out_d == 9 and in_d == 4 and both_d == 13 and (Ad.T @ xd)[0] != (Ad @ xd)[0], 'directed: (A x)_A collects D 9; (A^T x)_A the arrows into A, 1 + 3 = 4; symmetrised 1 + 3 + 9 = 13', covers=[9, 4, 13])
 SQ = [[0, 1, 0, 1], [1, 0, 1, 0], [0, 1, 0, 1], [1, 0, 1, 0]]
 sq = [[1, 0, 0, 0]]
 for _ in range(100):
@@ -275,6 +300,9 @@ lv.claim(close(round(float(X19[[1, 0, 9], 0].mean()), 2), -0.53) and close(float
 z1 = mix1 @ W1
 lv.claim(close(round(float(z1[0]), 2), -3.27) and close(round(float(z1[1]), 2), 1.84) and abs(np.array([-0.51, 0.32]) @ W1[:, 1] - z1[1]) < 0.02, 'node 1: pre-activation (-3.27, 1.84); from the rounded row within 0.02',
          covers=[3.27, 1.84, 0.51, 0.32, 0.333, 0.289, 0.6, 0.4, 0.1, 1.1, 4.2, 3.6, 2.5, 1.8])
+zr = np.array([-0.51, 0.32]) @ W1
+lv.claim(close(round(float(zr[0]), 2), -3.29) and close(round(float(zr[1]), 2), 1.85) and close(round(float(z1[0]), 2), -3.27) and close(round(float(z1[1]), 2), 1.84),
+         'node 1: the rounded row gives (-3.29, 1.85); the unrounded row (-3.27, 1.84)', covers=[3.29, 1.85, 3.27, 1.84])
 lv.expect('l19', 'screens[1].widget.rows[1][1].answer', round(float(max(z1[1], 0)), 2))
 lv.expect('l19', 'screens[1].widget.rows[0][1].wrong[0].value', round(float(z1[0]), 2))
 mix4 = H19[4][4] * X19[4] + H19[4][8] * X19[8]
@@ -342,6 +370,7 @@ for s in range(20):
             sgc[k].append(acc_b(pred_b(np.eye(40), Z, W), y, TR))
         Ak = Ah @ Ak
     W, Ld = train_b(Ah, X, y, TR, layers=16); means['deep'].append(acc_b(pred_b(Ah, X, W), y, TR)); means.setdefault('stuck', []).append(Ld[-1] > 0.6)
+    means.setdefault('one', []).append(len(set(pred_b(Ah, X, W).tolist())) == 1); means.setdefault('dead', []).append(bool(np.all(last_hidden_b(Ah, X, W) == 0)))
 mg, mm, mn, md = (float(np.mean(means[k])) for k in ('gcn', 'mlp', 'ns', 'deep'))
 bars3 = F['l20-labels-on-a-graph']['screens'][3]['canvas']['state']['values']
 lv.claim(close(bars3['gcn']['mean'], round(mg, 2)) and close(bars3['mlp']['mean'], round(mm, 2)) and close(bars3['gcn']['this'], 0.97) and close(bars3['mlp']['this'], 0.58),
@@ -355,7 +384,24 @@ lv.claim(all(close(bars5[str(k)], sgm[k]) for k in KS), f'linear k-step accuraci
 best = max(KS, key=lambda k: np.mean(sgc[k]))
 lv.expect('l20', 'screens[5].widget.answer', best)
 lv.claim(close(round(md, 2), 0.55), f'16 ReLU layers: mean accuracy {md:.3f}', covers=[round(md, 2), 128])
+lv.claim(sum(means['dead']) >= 11 and sum(means['one']) == 17, f"16 ReLU layers, hand backprop: {sum(means['one'])} of 20 runs predict one class, {sum(means['dead'])} have every unit of the last hidden layer dead", covers=[17, 20])
+ones_a = dead_a = zero_a = 0
+for s_ in range(20):
+    Aa, ya = ops.planted_partition(40, 0.3, 0.03, s_)
+    Xa = ops.node_features(ya, 0.6, 100 + s_)
+    Aha = ops.normalised_adjacency(Aa)
+    Wa_, _ = ops.train_gcn_params(Aha, Xa, ya, TR, layers=16)
+    Ha = last_hidden_b(Aha, Xa, Wa_)
+    out_a = Aha @ Ha @ Wa_[-1]
+    ones_a += len(set(out_a.argmax(1).tolist())) == 1
+    dead_a += bool(np.all(Ha == 0))
+    zero_a += bool(np.all(out_a == 0))
+lv.claim(ones_a == 17 and dead_a == 11 and zero_a == 11, f'16 ReLU layers, the generator route (autograd): {ones_a} of 20 runs predict one class; in {dead_a} every unit of the last hidden layer is dead, so the output is 0 at every node ({zero_a})',
+         covers=[11, 16, 20])
 lv.claim(sum(means['stuck']) == 14, f"16 ReLU layers: {sum(means['stuck'])} of 20 runs end with training loss above 0.6", covers=[14, 0.6])
+accs40 = [acc_b(pred_b(H20, X20, train_b(H20, X20, y20, TR, steps=n)[0]), y20, TR) for n in range(1, 41)]
+lv.claim(accs40[39] == 35 / 36 and max(accs40) == 1.0 and [n + 1 for n, a_ in enumerate(accs40) if a_ == 1.0] == [36, 37] and round(accs40[39], 6) == 0.972222,
+         'train_gcn hidden test 7: accuracy 0.972222 after 40 steps; steps 36 and 37 reach 1.0, so a solution that keeps the best step on the unlabelled nodes reports 1.0', covers=[40, 36, 37])
 dt = A20.sum(1) + 1
 ratio = math.sqrt(dt[2] / dt[17])
 vv = top_vec_b(H20)
@@ -567,7 +613,10 @@ lv.literal('0.85, 0.8, 0.75, 0.002, 0.001, 300, 30, 1e-9, 1e-3', why='thresholds
 lv.expect('review', 'items[0].widget.answer', round(1 / math.sqrt(5 * 3), 3))
 lv.claim(close(round(1 / math.sqrt(8), 3), 0.354) and close(round(1 / 15, 3), 0.067) and 1 / 5 == 0.2, 'review slips', covers=[0.354, 0.067, 0.2, 15])
 lv.expect('review', 'items[1].widget.answer', float(Fr(6 + 2 + 4, 3)))
-lv.expect('review', 'items[2].widget.answer', 3)
+path6 = [[v for v in (u - 1, u + 1) if 0 <= v < 6] for u in range(6)]
+lv.expect('review', 'items[2].widget.answer', len(within_b(path6, 0, 2)))
+lv.expect('review', 'items[2].widget.wrong[0].value', len(within_b(path6, 0, 1)))
+lv.expect('review', 'items[2].widget.wrong[1].value', 1 + 2 * 2)
 lv.expect('review', 'items[4].widget.answer', 4 * 8 + 8 * 8 + 8 * 2)
 lv.claim(4 * 8 == 32 and 8 * 8 == 64 and 8 * 2 == 16 and 4 * 8 + 8 * 2 == 48 and 4 * 8 + 8 + 64 + 8 + 16 + 2 == 130, 'review weights 32 + 64 + 16; slips 48 and 130', covers=[32, 64, 16, 112, 48, 130])
 tri = adj_b(4, [(0, 1), (1, 2), (2, 0), (2, 3)])
@@ -576,7 +625,11 @@ xx = [x_]
 for _ in range(200):
     xx.append(step_fr(tri, xx[-1]))
 lv.expect('review', 'items[6].widget.answer', round(float(xx[200][0]), 6))
-lv.claim(abs(float(xx[200][0]) - 3) < 1e-9 and Fr(3, 8) * 8 == 3 and Fr(8, 4) == 2 and close(8 * 4 / 12, 2.667, 1e-3), 'review limit 3 = 3/8 of 8 (iterated 200 steps); slips 2 and 2.667', covers=[3, 2, 2.667, 8, 0.375])
+xl = [Fr(v) for v in x_]
+for _ in range(300):
+    xl = step_fr(tri, xl, loops=True)
+lv.claim(abs(float(xx[200][0]) - 3) < 1e-9 and Fr(sum(x_), 4) == 2 and abs(float(xl[0]) - 8 / 3) < 1e-9 and close(round(float(xl[0]), 3), 2.667, 1e-9),
+         'review limit 3 (iterated 200 steps, 3/8 of 8); slips: plain mean 2, and 2.667 = 8/3 with self-loops (iterated 300 steps)', covers=[3, 2, 2.667, 8, 0.375])
 lv.literal('30', why='the 30 layers in the review prompt are a given setting')
 lv.claim(close(1 / 3, 0.3333, 1e-3), 'walk 1/3', covers=[1 / 3])
 lv.claim(50 - 6 == 44, 'review: 44 of 50 unlabelled', covers=[44, 6, 50])
@@ -588,10 +641,19 @@ for _ in range(300):
     rr.append([float(v) for v in step_fr(rg, rr[-1])])
 lv.expect('homework', 'items[4].widget.answer', round(rr[-1][0], 6))
 lv.claim(abs(rr[-1][0] - 2.8) < 1e-9 and Fr(14, 5) == Fr(28, 10), 'ring of 5 settles at 14/5 = 2.8 (iterated)', covers=[2.8, 14, 5, 3])
-lv.expect('homework', 'items[5].widget.answer', 1 + 3 + 3 * 2)
-lv.claim(1 + 3 + 6 == 10 and 1 + 3 == 4 and 3 + 6 == 9 and 1 + 3 + 6 + 3 == 13, 'two links out: 10; slips 4, 9, 13', covers=[10, 6, 4, 9, 13])
+tree = {0: [1, 2, 3], 1: [0, 4, 5], 2: [0, 6, 7], 3: [0, 8, 9], 4: [1], 5: [1], 6: [2], 7: [2], 8: [3], 9: [3]}
+w2, w1 = within_b(tree, 0, 2), within_b(tree, 0, 1)
+lv.expect('homework', 'items[5].widget.answer', len(w2))
+lv.expect('homework', 'items[5].widget.wrong[0].value', len(w2) - 1)
+lv.expect('homework', 'items[5].widget.wrong[1].value', len(w1))
+lv.expect('homework', 'items[5].widget.wrong[2].value', len(w2) + len(w1) - 1)
+lv.claim(len(w2) == 10 and len(w2) - len(w1) == 6 and len(w1) == 4, 'two links out of F (breadth-first search): 10 firms, 6 of them two links away, 4 within one', covers=[10, 6, 4, 9, 13])
 lv.claim(close(sum(HV[0]), 1.18, 3e-3), 'homework order distractor: row A sums to about 1.18', covers=[1.18])
 lv.literal('16', why='the hidden width 16 in the classifier prompt is a given setting')
+Bn = np.zeros((6, 6)); Bn[0, 1] = Bn[1, 0] = Bn[3, 4] = Bn[4, 3] = Bn[4, 5] = Bn[5, 4] = 1
+nbB = [[j for j in range(6) if Bn[u, j]] for u in range(6)]
+pat = np.nonzero(np.linalg.matrix_power(Bn, 2)[2] + np.linalg.matrix_power(Bn, 1)[2])[0].tolist()
+lv.claim(within_b(nbB, 2, 2) == [2] and pat == [], 'nodes_within on an isolated node: the node itself, though A^2 + A has an empty row there', covers=[2])
 rub = F['homework-5']['items'][3]['rubric']
 lv.claim(sum(r['points'] for r in rub) == 10, 'longform rubric totals 10', covers=[10])
 # problems

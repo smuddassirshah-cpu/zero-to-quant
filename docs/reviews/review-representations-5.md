@@ -1273,3 +1273,30 @@ def nodes_within(A, i, k):
     return sorted(seen - {i}) if k else [i]
 ```
 
+
+## Fix pass
+
+I recomputed every corrected number before writing it: Fractions for the settling run (the 21st step moves a value by 0.00105, the 22nd by 0.00076), breadth-first search for the reach counts, a built directed matrix for l18 screen 6, the rounded-row product for l19 screen 1, and both trainers (hand backprop and the autograd generator) for the deep runs and the 40-step accuracies. After the edits: validator 0 errors with no `[ai-mutants]` or `[source-ban]` line for representations; `voice-scan.py 35` 0 and 0; no reuse error line for representations; `grade-all.mjs --file <path> --code --strict-feedback` 0 failures on each of the 7 files alone; the number script passes through the CI runner and directly with `ZQ_NUMBERS_STRICT=1` (326 of 326 checks, 0 uncovered, 5 literals); playthrough of l17 to l20, review-5, homework-5 and problems-5 green with and without `--mobile`.
+
+Status: fixed 20, disputed 0 (one number differs from the report, see item 2), deferred 0. Graded answers changed: none. Hidden tests added: l18 `settles` test 9, l20 `train_gcn` test 7, homework `nodes_within` test 8; l20 `feature_spread` test 3 now builds its matrix from the formula and its third expected value is 0.106861 (the hand-rounded matrix gave 0.10686).
+
+1. representations_ops_l5.py (note, all public names): no action, the module was correct.
+2. l20 quiz[1] and screens[5] (error): fixed. The quiz now asks about the linear stack ($\hat{\mathbf A}$ applied 40 times, then one weight matrix), the ReLU option's why says this stack has no ReLU, and the explain names the other cause: dead units. Screen 5's explain says the bars show over-smoothing with no ReLU, and that of the 20 runs of the 16-layer ReLU stack 17 predict one class and in 11 every last-layer unit is dead, so the output is 0. The script computes this on the generator route (autograd: 17, 11 and 11 with an all-zero output). The hand-backprop route counts 13 dead of the same 17 (deep stacks amplify float differences once a layer is at 0), so its claim is `>= 11` and 17 exactly; the stated 11 is the generator's figure and agrees with the report.
+3. Number script fiat, dead loop and literal slips (warning): fixed. The directed banks are built (B to A, C to A, A to D) and give 9, 4 and 13 for $\mathbf A\mathbf x$, $\mathbf A^\top\mathbf x$ and the symmetrised sum; the dead loop is deleted; l17's 3.5, l18's 7, the review's 2 and 2.667 and l19's rounded-row figures come from `step_fr` (looped steps iterated 300 times where a limit is stated) or the product; the review's reach counts and homework item 5's 10, 4, 9 and 13 come from breadth-first search on the path and on F's tree. New claims cover the dead-unit counts, the 40-step accuracies and the isolated-node reach.
+4. l19 screens[1] (warning): fixed. Feedback, byKey `no-relu` and explain give $(-3.29, 1.85)$ from the rounded row and $(-3.27, 1.84)$ from the unrounded one; the bands are unchanged.
+5. l18 screens[6] (warning): fixed. The explain and summary trap now say which way messages flow is a choice: $\mathbf A\mathbf x$ reads the arrows out of a node, $\mathbf A^\top\mathbf x$ the arrows into it.
+6. l20 screens[11] hints[1] (warning): fixed with the proposed wording.
+7. review-5 items[3] (warning): fixed. The prompt now asks about $\hat{\mathbf A}$ applied 30 times before one weight matrix; the options are unchanged.
+8. l18 screens[9] test 6 (warning): fixed. byKey `test-6` names the direction mistake, and a mutant that symmetrises with `np.maximum(A, A.T)` is declared on test 6 (a transposing solution fails the same test).
+9. l20 screens[9] (warning): fixed. Hidden test 7 (`round(train_gcn(..., 40, 0.05, 0)[0], 6)` expects 0.972222; the best step on the way reaches 1.0 at steps 36 and 37, computed in the script), byKey `test-7` and a model-selection mutant on test 7.
+10. homework-5 items[2] (warning): fixed with `"after": {"b": ["a"], "d": ["b", "c"], "f": ["d", "e"]}`.
+11. l17 quiz[1] (note): fixed with the proposed wording.
+12. l20 screens[0] option `blue` (note): fixed, "all 5 of its links".
+13. l19 screens[3] (note): fixed, the `cnn` clause now reads "if you have met one in `cnn`".
+14. l20 screens[2] explain (note): fixed with a transductive sentence (the unlabelled firms' numbers and links are used in training, so the score is for this graph).
+15. l18 screens[10] (note): fixed. Hidden test 9 `settles(V, [0, 0, 0, 1], 22, 1e-3)` expects True, byKey `test-9`, and a `k - 1` mutant on test 9.
+16. homework-5 items[1] (note): fixed. Hidden test 8 `nodes_within(B, 2, 2)` expects `[2]`, byKey `test-8`, and an $\mathbf A^k + \mathbf A^{k-1}$ mutant on test 8 (it returns `[]` there).
+17. l20 screens[10] test 3 (note): fixed. The setup builds the matrix from the exact formula and the expected list is recomputed (0.399843, 0.188735, 0.106861, 0.060503, 0.034185).
+18. Unreachable byKey lines (note): fixed. The strict check flags a line that no recorded mutant reaches, so each line either gained a mutant or went. Kept with a mutant: l18 screens[10] `test-4` (loop that ignores $k$) and l20 screens[9] `test-5` (hard-codes the four training firms; line reworded to say use `train_idx`). Deleted: l20 screens[10] `test-2` and `test-4` (test 1's line now also names the mean-row slip) and homework items[1] `test-2` and `test-3` (the report named `test-3`; the checker also flags `test-2`). The check also needed mutants for two lines the report called reachable: l17 screens[10] `test-6` (in-place `fill_diagonal`) and homework items[0] `test-8` (model selection on every label).
+19. ENGINE-BACKLOG proposal (note): no action here; `grade-all --code` already warns on both cases (`feedback-unreachable`, `feedback-missing`) and `--strict-feedback` fails on them (AUTHORING section 9), and every level 5 file passes it. Engine files are not mine to edit.
+20. Harmless survivors (note): no action, as the report says.

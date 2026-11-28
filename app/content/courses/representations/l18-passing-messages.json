@@ -986,7 +986,7 @@
     }
    },
    "explain": {
-    "text": "$(\\mathbf A\\mathbf x)_i$ sums over the $j$ with $A_{ij} = 1$, so A collects D's 9. Messages follow $\\mathbf A$, not $\\mathbf A^\\top$, unless we symmetrise it first.",
+    "text": "$(\\mathbf A\\mathbf x)_i$ sums over the $j$ with $A_{ij} = 1$, so A collects D's 9: a lender reads the banks it is exposed to. Collecting along arrows into a node is $\\mathbf A^\\top\\mathbf x$; choose the direction on purpose.",
     "canvas": {
      "highlight": [
       "A",
@@ -1379,6 +1379,11 @@
       "source": "import numpy as np\n\n\ndef message_step(A, X, self_loops):\n    A = np.asarray(A, dtype=float)\n    if self_loops:\n        A = A + np.eye(len(A))\n    P = A / A.sum(axis=1, keepdims=True)\n    return P @ np.asarray(X, dtype=float)\n\n\ndef k_steps(A, X, k):\n    for _ in range(k - 1):\n        X = message_step(A, X, False)\n    return np.asarray(X, dtype=float)\n",
       "test": 4,
       "symptom": "Runs one step too few."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef message_step(A, X, self_loops):\n    A = np.asarray(A, dtype=float)\n    A = np.maximum(A, A.T)\n    if self_loops:\n        A = A + np.eye(len(A))\n    P = A / A.sum(axis=1, keepdims=True)\n    return P @ np.asarray(X, dtype=float)\n\n\ndef k_steps(A, X, k):\n    for _ in range(k):\n        X = message_step(A, X, False)\n    return np.asarray(X, dtype=float)\n",
+      "test": 6,
+      "symptom": "Symmetrises the directed graph, so a bank also reads the banks that lent to it."
      }
     ]
    },
@@ -1398,7 +1403,8 @@
     "byKey": {
      "test-1": "Divide each row by its own sum and multiply $\\mathbf P\\mathbf x$: B should get 3.",
      "test-2": "With self-loops add $\\mathbf I$ before dividing: B should get $(2 + 0 + 4)/3 = 2$.",
-     "test-4": "Three plain steps from 1 at D give $(\\tfrac29, \\tfrac1{12}, \\tfrac1{12}, 0)$."
+     "test-4": "Three plain steps from 1 at D give $(\\tfrac29, \\tfrac1{12}, \\tfrac1{12}, 0)$.",
+     "test-6": "On a directed graph row $i$ of $\\mathbf A$ lists the arrows out of $i$: average along them, without transposing or symmetrising."
     }
    },
    "explain": {
@@ -1470,9 +1476,15 @@
       "call": "settles(B, xb, 50, 1e-3)",
       "compare": "equal",
       "expect": "False"
+     },
+     {
+      "setup": "V = np.array([[0, 1, 1, 1], [1, 0, 1, 0], [1, 1, 0, 0], [1, 0, 0, 0]])",
+      "call": "settles(V, [0, 0, 0, 1], 22, 1e-3)",
+      "compare": "equal",
+      "expect": "True"
      }
     ],
-    "how": "Submit runs 8 hidden tests: the venues, the square without and with self-loops, a run too short to settle, and two nodes that swap. Then two more runs on the venues, and a pair that swaps by 0.002 beside 20 settled nodes. Each must return True or False exactly.",
+    "how": "Submit runs 9 hidden tests: the venues, the square without and with self-loops, a run too short to settle, and two nodes that swap. Then two more runs on the venues, and a pair that swaps by 0.002 beside 20 settled nodes. Last, the venues at 22 steps, the first step that moves every value by less than 0.001. Each must return True or False exactly.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef settles(A, x, k, tol):\n    A = np.asarray(A, dtype=float)\n    P = A / A.sum(axis=1, keepdims=True)\n    x = np.asarray(x, dtype=float)\n    x0 = x\n    for _ in range(k):\n        x = P @ x\n    return bool(np.max(np.abs(x - x0)) < tol)\n",
@@ -1493,6 +1505,16 @@
       "source": "import numpy as np\n\n\ndef settles(A, x, k, tol):\n    A = np.asarray(A, dtype=float)\n    P = A / A.sum(axis=1, keepdims=True)\n    x = np.asarray(x, dtype=float)\n    prev = x\n    for _ in range(k):\n        prev, x = x, P @ x\n    return bool(np.mean(np.abs(x - prev)) < tol)\n",
       "test": 8,
       "symptom": "Uses the mean change, which can be small while one node still moves."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef settles(A, x, k, tol):\n    A = np.asarray(A, dtype=float)\n    P = A / A.sum(axis=1, keepdims=True)\n    x = np.asarray(x, dtype=float)\n    prev = x\n    for _ in range(k - 1):\n        prev, x = x, P @ x\n    return bool(np.max(np.abs(x - prev)) < tol)\n",
+      "test": 9,
+      "symptom": "Runs one step too few, so the check looks at the 21st step, which still moves a value by more than 0.001."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef settles(A, x, k, tol):\n    A = np.asarray(A, dtype=float)\n    P = A / A.sum(axis=1, keepdims=True)\n    x = np.asarray(x, dtype=float)\n    for _ in range(10000):\n        new = P @ x\n        if np.max(np.abs(new - x)) < tol:\n            return True\n        x = new\n    return False\n",
+      "test": 4,
+      "symptom": "Ignores $k$ and runs until the change is small, so a run too short to settle looks settled."
      }
     ]
    },
@@ -1513,7 +1535,8 @@
      "test-1": "Compare the last step with the one before it, not with the start: the venues end far from 1 at D but stop changing.",
      "test-2": "The plain square must not settle: take one step at a time, and add no self-loops of your own. It swaps sides every step.",
      "test-8": "Check the largest change, not the average: two nodes still swap by 0.002 while 20 others sit still.",
-     "test-4": "Three steps from 1 at D still move values by more than 0.001."
+     "test-4": "Three steps from 1 at D still move values by more than 0.001.",
+     "test-9": "Run exactly $k$ steps: the 22nd is the first to move every value by less than 0.001."
     }
    },
    "explain": {
@@ -1658,7 +1681,7 @@
    "tex": "\\mathbf x \\to \\mathbf D^{-1}\\mathbf A\\,\\mathbf x, \\qquad \\mathbf P^k\\mathbf x \\to (\\boldsymbol\\pi^\\top\\mathbf x)\\,\\mathbf 1",
    "note": "The walk moves probability by $\\mathbf P^\\top$; averaging uses $\\mathbf P$."
   },
-  "trap": "On a directed graph, collecting along the arrows into a node: $\\mathbf A\\mathbf x$ follows row $i$ of $\\mathbf A$, not of $\\mathbf A^\\top$."
+  "trap": "On a directed graph, mixing up $\\mathbf A\\mathbf x$ (row $i$: the arrows out of $i$) with $\\mathbf A^\\top\\mathbf x$ (the arrows into $i$)."
  },
  "quiz": [
   {
