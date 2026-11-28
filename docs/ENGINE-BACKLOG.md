@@ -2988,6 +2988,7 @@ Status block (engine pass AK canvas):
 1264. [Should] `grade-all.mjs`: `--strand ai` filter; `--local-cdn` also takes the `fetch-vendor.sh` layout (`<dir>/pyodide`, `<dir>/compute-engine`); time the strand run.
 1265. [Should] CI: the `tests-browser` python leg runs `grade-all.mjs --code --strand ai --local-cdn vendor` after `fetch-vendor.sh`.
 1266. [Must] A module a widget ships itself (any `.py` name in `files` or `data`, by basename) is never passed to package loading: a shipped `autograd.py` no longer downloads the Pyodide `autograd` wheel. Code widgets, drills and the `trainer` widget alike.
+1267. [Must] Coverage of on-screen numbers in `numbers_lib.Level` (SESSION PROTOCOL 6; the class seen in `review-ai-basics.md`, `review-info.md`, `review-cnn.md`: a number in prose, a hint, an `explain`, a `how`, a model answer or a `byKey` line is wrong and no script looked at it). `report()` lists every number in the level's on-screen text that no check compared against (match by value to the stated precision; years, list numbers, ids, exponents and code ignored); `lv.literal(value, why=...)` marks one as deliberately unchecked; default prints the count and the first five and never fails; `coverage="strict"` or `ZQ_NUMBERS_STRICT=1` fails the run; AI-strand scripts run strict from the next wave.
 
 Status block (engine pass AK follow-up):
 - 1260: done. `validate.mjs`, `readiness-sums.mjs`, AUTHORING section 9; `test-strand-ai.mjs` (no row, optional, required rejected).
@@ -2997,6 +2998,7 @@ Status block (engine pass AK follow-up):
 - 1264: done. `grade-all.mjs` (`byStrand`, `ceSource`), `code-runner.mjs` (`makeRunner` layout); `test-grade-code.mjs` (strand filter, vendor layout). `--code --strand ai` on current content: 78 widgets, about 8 s with `--jobs 4`.
 - 1265: done. `acceptance.yml` tests-browser python leg; `ci-coverage.mjs` 0 problems.
 - 1266: done. `drill-worker.js` (`importsToLoad`, from `spec.local`), `code.js` (`shippedNames`, `importHintFor`), `drill.js`, `code-runner.mjs`; `test-trainer.mjs` (six checks).
+- 1267: done. `numbers_lib.py` (`_stated`, `Level.uncovered`, `literal`, `claim(..., covers=)`, `coverage` argument, `ZQ_NUMBERS_STRICT`; `expect`, `check_wrongs` and `slip` record what they compared), `tools/test-numbers-lib.py` (two new cases), LEVEL-BRIEF number scripts, AUTHORING section 9. Existing AI scripts all still exit 0; uncovered counts in `docs/reports/engine-pass-ak-prose-numbers.md`.
 
 
 ### Engine pass AK (trainer and data): `docs/reports/engine-pass-ak-trainer.md`
