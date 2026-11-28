@@ -23,11 +23,12 @@ EXIT = [np.array(a, dtype=float) for a in json.load(open("cnn-w-exit.json"))]
 
 
 def planted(seed, filters=1, symmetric=False, shift=0.0):
-    """A random net of the exit net's layout with `filters` filters; a symmetric kernel reads the same flipped."""
+    """A random net of the exit net's layout with `filters` filters; a symmetric kernel reads the same flipped or transposed."""
     g = np.random.default_rng(seed)
     W = g.standard_normal((filters, 1, 3, 3))
     if symmetric:
         W = (W + W[:, :, ::-1, ::-1]) / 2
+        W = (W + W.transpose(0, 1, 3, 2)) / 2
     return [W, g.standard_normal(filters) + shift, g.standard_normal((16 * filters, 10)), g.standard_normal(10)]
 '''
 
@@ -86,6 +87,16 @@ CNN_MUTANTS = [
      "Flattens position first, so the rows of V meet the wrong numbers."),
     (mutate(CNN_SOLUTION, "pred == np.asarray(y)", "pred != np.asarray(y)"), "Returns the error rate, not the accuracy."),
     (mutate(CNN_SOLUTION, ".argmax(axis=1)", ".argmax(axis=0)"), "Takes the largest logit down each column, over the images."),
+    (mutate(CNN_SOLUTION, "W.reshape(F, 9)", "W.transpose(0, 1, 3, 2).reshape(F, 9)"),
+     "The kernel transposed: rows and columns swapped."),
+    (mutate(CNN_SOLUTION, "return float(np.mean(pred == np.asarray(y)))", "return round(float(np.mean(pred == np.asarray(y))), 2)"),
+     "Accuracy rounded to 2 places."),
+    (mutate(mutate(CNN_SOLUTION, "pred = cnn_logits_np(params, X).argmax(axis=1)", "pred = cnn_logits_np(params, X_test).argmax(axis=1)"),
+            "pred == np.asarray(y)", "pred == y_test"),
+     "Scores the global held-out split, whatever X and y it is given."),
+    (mutate(CNN_SOLUTION, "    pred = cnn_logits_np(params, X).argmax(axis=1)\n    return float(np.mean(pred == np.asarray(y)))",
+            "    return 532 / 540"),
+     "Returns the exit net's score as a fixed number."),
 ]
 
 ATT_PRELUDE = '''import numpy as np
@@ -240,8 +251,9 @@ cnn_tests = [
     {"call": "cnn_logits_np(planted(3), X_test[:4])", "compare": "isclose", "tol": TOL9},
     {"call": "cnn_logits_np(planted(4, 3), X_test[:4])", "compare": "isclose", "tol": TOL9},
     {"call": "cnn_logits_np(EXIT, X_test[:3])", "compare": "isclose", "tol": TOL9},
+    {"call": "held_out_accuracy(EXIT, X_test, y_test) >= 0.98", "compare": "equal"},
     {"call": "held_out_accuracy(EXIT, X_test, y_test)", "compare": "isclose", "tol": TOL9},
-    {"call": "held_out_accuracy(EXIT, X_test, y_test) >= 0.95", "compare": "equal"},
+    {"call": "held_out_accuracy(planted(3), X_test[:60], y_test[:60])", "compare": "isclose", "tol": TOL9},
 ]
 cnn_examples = [
     {"call": "list(cnn_logits_np(EXIT, X_test[:2]).shape)", "compare": "equal"},
@@ -249,7 +261,7 @@ cnn_examples = [
 ]
 with_expects(CNN_PRELUDE, CNN_SOLUTION, cnn_tests, DATA)
 with_expects(CNN_PRELUDE, CNN_SOLUTION, cnn_examples, DATA)
-acc31 = eval(cnn_tests[6]['expect'])
+acc31 = eval(cnn_tests[7]['expect'])
 right31 = round(acc31 * 540)
 
 att_tests = [
@@ -277,9 +289,9 @@ cnn_widget = {
     "kind": "code", "language": "python", "starter": CNN_STARTER, "solution": CNN_SOLUTION, "prelude": CNN_PRELUDE,
     "data": {"cnn-digits.txt": "content/data/ai/cnn-digits.txt", "cnn-w-exit.json": "content/data/ai/cnn-w-exit.json"},
     "examples": cnn_examples, "tests": cnn_tests, "budget": 3000,
-    "how": "Submit runs 8 hidden tests, each within $10^{-9}$ of ours. Four planted nets isolate the pooling, the ReLU, "
-           "the kernel's orientation and the flatten order. The rest check the exit net's shape, logits and held-out "
-           "accuracy, exactly and against 0.95. Digits: Alpaydin and Kaynak, UCI Machine Learning Repository, CC BY 4.0, "
+    "how": "Submit runs 9 hidden tests, each within $10^{-9}$ of ours. Four planted nets check the pooling, the ReLU, "
+           "the kernel's orientation and the flatten order. The rest check the exit net's shape and logits, and its held-out "
+           "accuracy against 0.98 and exactly. The last runs the accuracy function on another net and a smaller split. Digits: Alpaydin and Kaynak, UCI Machine Learning Repository, CC BY 4.0, "
            "via scikit-learn; the weights were trained on them for this course.",
     "mutants": mutants_of(CNN_PRELUDE, CNN_MUTANTS, cnn_tests),
 }
@@ -294,20 +306,23 @@ items.append({
                 "and padding 1, applies ReLU and 2 by 2 max pooling, flattens channel first, then returns "
                 "$\\mathbf h\\mathbf V + \\mathbf c$. Then "
                 "write `held_out_accuracy(params, X, y)`, the share of images whose largest logit is at the label. This "
-                "exam's check asks for at least 0.95 held out.",
+                "exam's check asks for at least 0.98 held out.",
     "widget": cnn_widget,
-    "feedback": fb(f"The exit net reads {right31} of the 540 held-out digits, {r(acc31, 4)}, above the 0.95 the check asks for.",
+    "feedback": fb(f"The exit net reads {right31} of the 540 held-out digits, {r(acc31, 4)}, above the 0.98 the check asks for.",
                    "Read the first failing test.",
                    {"test-1": "The output is one row of 10 logits per image. Pad each side by 1 so the 8 by 8 map stays "
                               "8 by 8. Pooling then leaves 16 maps of 4 by 4, the 256 numbers `V` expects.",
-                    "test-2": "Keep the largest value of each 2 by 2 window, not the mean.",
+                    "test-2": "Check each stage against the prose: zero padding of 1, `b` added before the ReLU, the largest value of "
+                              "each 2 by 2 window, then `h V + c`.",
                     "test-3": "Apply ReLU to the convolution plus its bias, before the pool.",
                     "test-4": "Slide the kernel unflipped: output $(i, j)$ is $\\sum_{a,b} W_{ab}\\,x_{i+a,\\,j+b}$ over the "
                               "padded image, not the textbook flipped convolution.",
                     "test-5": "Flatten each image's pooled maps channel first, as `h.reshape(N, -1)` does on an "
                               "$(N, F, 4, 4)$ array, so the rows of `V` meet the right numbers.",
                     "test-7": "Take the largest logit along each row, `argmax(axis=1)`, compare it with the label, and "
-                              "return the share that match."}),
+                              "return the share that match.",
+                    "test-8": "Return the share itself, $532/540$ for the exit net, not a rounded figure.",
+                    "test-9": "Score the `params`, `X` and `y` you are given, not `EXIT`, `X_test` or a fixed number."}),
     "explain": {"text": f"Convolution, ReLU, pooling and one dense layer read {right31} of 540 held-out digits right. "
                         "Each planted test fixes one convention the weights were trained with: unflipped kernels, ReLU "
                         "before the pool, the maximum of each window and channel-first flattening."}})
@@ -337,11 +352,13 @@ items.append({
                    "Read the first failing test.",
                    {"test-1": "Each query averages only the keys at or before it. Add the mask to the scores, then take "
                               "the softmax across each row, over the keys.",
-                    "test-2": "Divide the scores by $\\sqrt{d/h}$ before the softmax.",
+                    "test-2": "Scores are $\\mathbf Q\\mathbf K^T$, queries from `Wq` and keys from `Wk`, divided by $\\sqrt{d/h}$ "
+                              "before the softmax.",
                     "test-3": "Cut the features into heads, `X @ W` reshaped to $(T, h, d/h)$ then transposed to "
-                              "$(h, T, d/h)$, and scale by the head's width $d/h$, not by $d$.",
+                              "$(h, T, d/h)$, and divide by $\\sqrt{d/h}$, the head's width, not $\\sqrt d$.",
                     "test-4": "Multiply the joined heads by `Wo`.",
-                    "test-5": "Mask the keys at padded positions, the columns of the scores, for every query.",
+                    "test-5": "Mask the keys at padded positions, the columns of the scores, for every query. A padded query still "
+                              "reads its allowed keys.",
                     "test-6": "A query whose keys are all masked must output zeros. A row of $-\\infty$ gives NaN, and a "
                               "large negative number spreads the weight over every key: handle that row on its own."}),
     "explain": {"text": "A padding mask is one more set of keys a query may not see, added to the scores like the causal "
