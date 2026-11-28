@@ -97,11 +97,13 @@ function runOne(script) {
     const t0 = Date.now();
     const p = spawn(PY, [path.join(ROOT, script)], { cwd: path.join(ROOT, path.dirname(script)), detached: true, stdio: ['ignore', 'pipe', 'pipe'], env: { OPENBLAS_CORETYPE: 'Haswell', OMP_NUM_THREADS: '1', OPENBLAS_NUM_THREADS: '1', MKL_NUM_THREADS: '1', ...process.env, PYTHONIOENCODING: 'utf-8' } });
     let buf = '';
-    const keep = (d) => { buf += d.toString(); if (buf.length > 20000) buf = buf.slice(-10000); };
+    const badLines = [];   // failure lines are kept as they stream: the 10 KB tail alone dropped an early BAD in a long script (CI run 54)
+    let part = '';
+    const keep = (d) => { const s = d.toString(); buf += s; part += s; const ls = part.split('\n'); part = ls.pop(); for (const l of ls) if (/\bFAIL|\bBAD\b|\bFINDING|Error/.test(l) && badLines.length < 40) badLines.push(l); if (buf.length > 20000) buf = buf.slice(-10000); };
     p.stdout.on('data', keep); p.stderr.on('data', keep);
     let timedOut = false, done = false;
     const timer = setTimeout(() => { timedOut = true; try { process.kill(-p.pid, 'SIGKILL'); } catch { /* gone */ } }, TIMEOUT);
-    const fin = (code, err) => { if (done) return; done = true; clearTimeout(timer); resolve({ script, ok: !timedOut && code === 0, timedOut, code, secs: (Date.now() - t0) / 1000, out: err ? String(err) : buf }); };
+    const fin = (code, err) => { if (done) return; done = true; clearTimeout(timer); resolve({ script, ok: !timedOut && code === 0, timedOut, code, secs: (Date.now() - t0) / 1000, out: err ? String(err) : (badLines.length ? badLines.join('\n') + '\n' : '') + buf }); };
     p.on('error', (e) => fin(-1, e.message));
     p.on('close', (code) => fin(code));
   });
