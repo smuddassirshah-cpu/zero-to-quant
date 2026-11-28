@@ -111,6 +111,11 @@
       "source": "import numpy as np\nfrom autograd import Tensor\nimport representations_ops_l3 as ops\n\n\ndef vae_step(x_batch, params, eps, lr):\n    X = np.asarray(x_batch, dtype=float)\n    eps = np.asarray(eps, dtype=float)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    n, d, s = X.shape[0], X.shape[1], ops.S_DEC\n    mu, logvar = ops.vae_encode(P, X)\n    z = mu + (logvar * 0.5).exp() * eps\n    x_hat = ops.vae_decode(P, z)\n    log_px = -((x_hat - X) ** 2).sum() / (2 * s * s) / n - 0.5 * d * np.log(2 * np.pi * s * s)\n    kl = (mu * mu + logvar.exp() - 1 - logvar).sum() * 0.5 / n\n    loss = kl - log_px\n    loss.backward()\n    return loss.item(), [p.data + lr * p.grad for p in P]\n",
       "test": 2,
       "symptom": "Steps up the gradient, raising the loss."
+     },
+     {
+      "source": "import numpy as np\nfrom autograd import Tensor\nimport representations_ops_l3 as ops\n\n\ndef vae_step(x_batch, params, eps, lr):\n    X = np.asarray(x_batch, dtype=float)\n    eps = np.asarray(eps, dtype=float)\n    P = [Tensor(np.array(p, dtype=float)) for p in params]\n    n, d, s = X.shape[0], X.shape[1], ops.S_DEC\n    mu, logvar = ops.vae_encode(P, X)\n    z = Tensor(mu.data + np.exp(0.5 * logvar.data) * eps)\n    x_hat = ops.vae_decode(P, z)\n    log_px = -((x_hat - X) ** 2).sum() / (2 * s * s) / n - 0.5 * d * np.log(2 * np.pi * s * s)\n    kl = (mu * mu + logvar.exp() - 1 - logvar).sum() * 0.5 / n\n    loss = kl - log_px\n    loss.backward()\n    return loss.item(), [p.data - lr * p.grad for p in P]\n",
+      "test": 4,
+      "symptom": "Builds z outside the graph, so the encoder's heads get no gradient through the sample."
      }
     ],
     "data": {
@@ -125,7 +130,8 @@
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
      "test-1": "The loss averages KL minus $\\ln p(\\mathbf{x} \\mid z)$ over the batch, with $z = \\mu + e^{\\ell/2}\\epsilon$ and the constant $-\\tfrac{d}{2}\\ln(2\\pi s^2)$.",
-     "test-7": "With $\\ell = -800$ the variance is 0: write the KL with $-\\ell$, never $\\ln$ of the variance."
+     "test-7": "With $\\ell = -800$ the variance is 0: write the KL with $-\\ell$, never $\\ln$ of the variance.",
+     "test-4": "The encoder's heads must get a gradient through $z$: build $z$ from `Tensor` operations, not from `.data`."
     }
    },
    "explain": {

@@ -4211,7 +4211,7 @@
      {
       "id": "better",
       "text": "The VAE has removed the noise from the data, so it knows the circle better than the data do",
-      "why": "The samples omit noise because we plotted decoder means. Adding $s\\epsilon$ would spread them as widely."
+      "why": "The samples omit noise because we plotted decoder means. Adding the decoder's noise, sd 0.1, would put them about 0.08 from the circle, twice as far as the data."
      },
      {
       "id": "prior",
@@ -4243,7 +4243,7 @@
     }
    },
    "explain": {
-    "text": "Plotting $g(z)$ shows the curve the decoder learned, distance 0.011. A full sample adds noise of sd 0.1, which a fair comparison with the data would include."
+    "text": "Plotting $g(z)$ shows the curve the decoder learned, distance 0.011. A full sample adds noise of sd 0.1, which a fair comparison with the data would include. The decoder noise is fixed at 0.1, twice the data's 0.05, so full samples would be noisier than the data."
    }
   },
   {
@@ -4344,7 +4344,7 @@
      {
       "id": "bug",
       "text": "Training failed for those coordinates and must be restarted",
-      "why": "This can be the model's choice: a curve needs few numbers, and unused coordinates cost KL. It is often called posterior collapse."
+      "why": "This can be the model's choice: a curve needs few numbers, and unused coordinates cost KL."
      },
      {
       "id": "noise",
@@ -4371,7 +4371,7 @@
     }
    },
    "explain": {
-    "text": "A coordinate whose $q$ always equals the prior costs no KL and tells the decoder nothing. Here that is harmless, since the data need only about two; when it hides structure it is called posterior collapse, and it is hard to diagnose in general."
+    "text": "A coordinate whose $q$ always equals the prior costs no KL and tells the decoder nothing. Here that is harmless, since two coordinates carry the circle; when unused coordinates hide structure the data need, this is called posterior collapse, and it is hard to diagnose in general."
    }
   },
   {
@@ -4614,8 +4614,7 @@
     "correct": "Your loop matches the seeded runs and lowers the loss below 0.8 in 200 steps.",
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
-     "test-1": "Three steps must match to 6 places: zero the gradients, use fresh noise each step, and include both terms.",
-     "test-3": "After 200 steps the loss should be near 0.42. Use fresh noise every step and the standard deviation $e^{\\ell/2}$."
+     "test-1": "Three steps must match to 6 places: zero the gradients, use fresh noise each step, and include both terms."
     }
    },
    "explain": {
@@ -4672,9 +4671,15 @@
       "call": "float(np.round(sample_vae(PT, 2000, 5)[:, 1].mean(), 3)) > 0.3",
       "compare": "equal",
       "expect": "True"
+     },
+     {
+      "setup": "import json, representations_ops_l3 as ops\nVF = json.load(open('representations-l12-vae.json'))\nPT = [np.array(a) for a in VF['trained']]\nPS = [np.array(a) for a in VF['start']]\nX, _ = ops.circle_model(50, 0.05, 1)\nE = np.random.default_rng(5).standard_normal((50, 1))\nPP = list(PT)\nPP[2] = np.hstack([PT[2], np.zeros((32, 1))])\nPP[3] = np.append(PT[3], 0.0)\nPP[4] = np.hstack([PT[4], np.zeros((32, 1))])\nPP[5] = np.append(PT[5], 0.0)\nPP[6] = np.vstack([PT[6], np.zeros((1, 32))])\n",
+      "call": "np.round(sample_vae(PP, 3, 0), 6).tolist()",
+      "compare": "equal",
+      "expect": "[[-0.16459, 0.965625], [-0.717272, 0.687992], [0.646315, 0.752035]]"
      }
     ],
-    "how": "Submit runs 5 hidden tests. Three samples are compared to 6 places, and two runs of 500 samples must lie within 0.025 of the circle on average. The last two check the shape and a mean height above 0.3, like the data's.",
+    "how": "Submit runs 5 hidden tests. Three samples are compared to 6 places, and two runs of 500 samples must lie within 0.025 of the circle on average. The last two check the shape and a mean height above 0.3, like the data's. A sixth test pads the weights to two codes and expects the sampler to draw two.",
     "mutants": [
      {
       "source": "import numpy as np\nimport representations_ops_l3 as ops\n\n\ndef sample_vae(params, n, seed):\n    k = np.shape(params[2])[1]\n    Z = np.random.default_rng(seed).uniform(-1, 1, (n, k))\n    return ops.vae_decode(params, Z)\n",
@@ -4690,6 +4695,11 @@
       "source": "import numpy as np\nimport representations_ops_l3 as ops\n\n\ndef sample_vae(params, n, seed):\n    k = np.shape(params[2])[1]\n    Z = np.random.default_rng(seed).standard_normal((n, k))\n    return ops.vae_decode(params, Z) + ops.S_DEC * np.random.default_rng(seed + 1).standard_normal((n, 2))\n",
       "test": 1,
       "symptom": "Adds the decoder noise, which the task asks you to leave out."
+     },
+     {
+      "source": "import numpy as np\nimport representations_ops_l3 as ops\n\n\ndef sample_vae(params, n, seed):\n    k = 1\n    Z = np.random.default_rng(seed).standard_normal((n, k))\n    return ops.vae_decode(params, Z)\n",
+      "test": 6,
+      "symptom": "Hard-codes one code, so a model with more codes breaks."
      }
     ],
     "data": {
@@ -4713,7 +4723,8 @@
     "correct": "Your samples sit about 0.011 from the circle on average.",
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
-     "test-1": "Draw codes with `standard_normal((n, k))` from `default_rng(seed)` and return the decoder means, without extra noise."
+     "test-1": "Draw codes with `standard_normal((n, k))` from `default_rng(seed)` and return the decoder means, without extra noise.",
+     "test-6": "Read the number of codes from the weights, not from a fixed 1: draw `standard_normal((n, k))`."
     }
    },
    "explain": {

@@ -664,9 +664,15 @@
       "call": "abs(elbo_mc([1.0, 0.8], enc, dec, 0.5, 100000, 5) - (-2.014129)) < 0.01",
       "compare": "equal",
       "expect": "True"
+     },
+     {
+      "setup": "enc = lambda x: (0.9333, np.log(1 / 6))\nenc0 = lambda x: (0.0, 0.0)\ndec = lambda z: np.stack([z, 0.5 * z], axis=-1)\nimport representations_ops_l3 as ops\ndecc = ops.g_circle\nencc = lambda x: (float(np.arctan2(x[0], x[1])), np.log(0.05 ** 2))\n",
+      "call": "[round(t, 9) for t in two_terms([1.0, 0.8], enc, dec, 0.5, 4, 0)]",
+      "compare": "equal",
+      "expect": "[-0.659655541, 1.354458485]"
      }
     ],
-    "how": "Submit runs 6 hidden tests: three short seeded runs to 9 places, then 100,000-draw averages against the closed forms of this lesson (within 0.03, 0.01 and 0.01 nats).",
+    "how": "Submit runs 7 hidden tests: three short seeded runs to 9 places, then 100,000-draw averages against the closed forms of this lesson (within 0.03, 0.01 and 0.01 nats), and a last short run of the two terms at the posterior guess.",
     "mutants": [
      {
       "source": "import numpy as np\n\n\ndef _parts(x, enc, dec, s, n, seed):\n    m, logvar = enc(x)\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = m + np.exp(0.5 * logvar) * eps\n    d2 = ((np.asarray(x, dtype=float) - dec(z)) ** 2).sum(axis=1)\n    log_px_z = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s)\n    log_pz = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    log_q = -0.5 * np.log(2 * np.pi) - eps ** 2 / 2\n    return log_px_z, log_pz, log_q\n\n\ndef elbo_mc(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a + b - c))\n\n\ndef two_terms(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a)), float(np.mean(c - b))\n",
@@ -687,6 +693,11 @@
       "source": "import numpy as np\n\n\ndef _parts(x, enc, dec, s, n, seed):\n    m, logvar = enc(x)\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = m + np.exp(0.5 * logvar) * eps\n    d2 = ((np.asarray(x, dtype=float) - dec(z)) ** 2).sum(axis=1)\n    log_px_z = -np.log(2 * np.pi * s * s) - d2 / (2 * s)\n    log_pz = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    log_q = -0.5 * np.log(2 * np.pi) - logvar / 2 - eps ** 2 / 2\n    return log_px_z, log_pz, log_q\n\n\ndef elbo_mc(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a + b - c))\n\n\ndef two_terms(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a)), float(np.mean(c - b))\n",
       "test": 1,
       "symptom": "Divides the squared distance by 2s instead of 2s squared."
+     },
+     {
+      "source": "import numpy as np\n\n\ndef _parts(x, enc, dec, s, n, seed):\n    m, logvar = enc(x)\n    eps = np.random.default_rng(seed).standard_normal(n)\n    z = m + np.exp(0.5 * logvar) * eps\n    d2 = ((np.asarray(x, dtype=float) - dec(z)) ** 2).sum(axis=1)\n    log_px_z = -np.log(2 * np.pi * s * s) - d2 / (2 * s * s)\n    log_pz = -0.5 * np.log(2 * np.pi) - z ** 2 / 2\n    log_q = -0.5 * np.log(2 * np.pi) - logvar / 2 - eps ** 2 / 2\n    return log_px_z, log_pz, log_q\n\n\ndef elbo_mc(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a + b - c))\n\n\ndef two_terms(x, enc, dec, s, n, seed):\n    a, b, c = _parts(x, enc, dec, s, n, seed)\n    return float(np.mean(a)), float(np.mean(b - c))\n",
+      "test": 7,
+      "symptom": "Returns the KL term with the wrong sign, which is 0 whenever q equals the prior."
      }
     ],
     "data": {
@@ -707,8 +718,8 @@
     "correct": "Your sampler reproduces the closed forms: about -2.014 at the posterior guess.",
     "generic": "Not quite. Read the first failing test.",
     "byKey": {
-     "test-1": "Use the standard deviation $e^{\\ln v/2}$ for the noise, and include $-\\tfrac12\\ln v$ in $\\ln q$.",
-     "test-6": "At the posterior guess the ELBO should be $\\ln p(\\mathbf{x}) \\approx -2.014$: subtract $\\ln q$ as well as adding $\\ln p(z)$."
+     "test-1": "Use the standard deviation $e^{\\ln v/2}$ for the noise, and include $-\\tfrac12\\ln v$ in $\\ln q$. Return the full ELBO: $\\ln p(\\mathbf{x} \\mid z) + \\ln p(z) - \\ln q$.",
+     "test-7": "The KL term is the mean of $\\ln q - \\ln p(z)$, at least 0 on average."
     }
    },
    "explain": {

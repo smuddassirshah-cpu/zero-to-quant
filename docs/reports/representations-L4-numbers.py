@@ -8,6 +8,9 @@ widget's hidden tests are rerun in CPython with the model solution and with an i
 `node tools/run-number-scripts.mjs --only representations-L4` (one BLAS thread); strict coverage.
 """
 import json, math, os, sys, hashlib
+
+for _v in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS'):
+    os.environ.setdefault(_v, '1')
 from fractions import Fraction as Fr
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -118,10 +121,10 @@ FD = json.load(open(os.path.join(DATA, 'representations-l15-denoiser.json')))
 Pst_f = [np.array(a) for a in FD['start']]; Ptr_f = [np.array(a) for a in FD['trained']]
 Pb1, tr1 = train_b(X0, ops.init_denoiser(64, 0), b50, 300, 2e-3, 1, trace=True)
 d1 = max(float(np.abs(a - b).max()) for a, b in zip(Pb1, Pst_f))
-lv.claim(d1 < 1e-5, f'starting weights: 300 hand-backprop steps reproduce the file to {d1:.1e}', covers=[300, 0.002, 256])
+lv.claim(d1 < 1e-6, f'starting weights: 300 hand-backprop steps reproduce the file to {d1:.1e}', covers=[300, 0.002, 256])
 Pb2, tr2 = train_b(X0, Pst_f, b50, 11700, 2e-3, 2, trace=True)
 d2 = max(float(np.abs(a - b).max()) for a, b in zip(Pb2, Ptr_f))
-lv.claim(d2 < 1e-2, f'trained weights: 11,700 more hand-backprop steps stay within {d2:.1e} of the file (a long run: compared loosely)', covers=[12000, 11700, 64])
+lv.claim(d2 < 1e-6, f'trained weights: 11,700 more hand-backprop steps reproduce the file to {d2:.1e}', covers=[12000, 11700, 64])
 crv = tr1 + tr2
 sm = [float(np.mean(crv[i:i + 100])) for i in range(0, len(crv), 100)]
 lv.claim(max(abs(a - b) for a, b in zip(sm, FD['loss_per_100'])) < 0.02, 'recorded loss curve reproduced within 0.02')
@@ -205,7 +208,8 @@ lno = float(np.mean(trno[-1000:]))
 stated_no = float(F['l14-predict-the-noise']['screens'][5]['prose'].split('is ')[1].split(',')[0])
 lv.claim(abs(lno - stated_no) < 0.02 and lno - lend > 0.1, f'no-time loss {lno:.3f} by hand backprop against the stated {stated_no}; the gap holds', covers=[stated_no, round(lend, 2), round(stated_no - round(lend, 2), 2)])
 lv.claim(np.std(trno[-1000:]) / math.sqrt(1000) < 0.01, 'batch-to-batch wobble of the average about 0.01 or less', covers=[0.01])
-given([0.02, 0.6, 0.0, 1.0, 0.25, 0.7, 0.125], 'l14 quiz values and the plain-number slips are given in the prompts')
+given([0.02, 0.6, 0.0, 1.0, 0.25, 0.7], 'l14 quiz values and the plain-number slips are given in the prompts')
+lv.claim(close(0.25 / 2, 0.125, 1e-12), 'l14 quiz slip: 0.25 / 2', covers=[0.125])
 
 # ------------------------------------------------------------------ l15
 Sb, frb = sample_b(Ptr_f, b50, 1000, 5)
@@ -226,7 +230,7 @@ lv.expect('l15', 'screens[1].hints[1].text', round(math.sqrt(b10), 4), fmt='{:.4
 lv.expect('l15', 'screens[1].explain.text', round(mean1[1], 3), fmt='{:.3f}')
 lv.expect('l15', 'screens[1].explain.text', round(mean1[0], 3), fmt='{:.3f}')
 base = sum(math.exp(-lo * lo / 1.6) - math.exp(-hi * hi / 1.6) for lo, hi in ((0.7, 0.9), (1.5, 1.7)))
-lv.expect('l15', 'screens[2].widget.answer', round(base, 2) if False else round(shares[0], 2))
+lv.expect('l15', 'screens[2].widget.answer', round(shares[0], 2))
 lv.expect('l15', 'screens[2].widget.wrong[0].value', round(base, 2))
 lv.claim(abs(base - 0.214) < 0.001, 'round normal baseline 0.21 (Rayleigh)', covers=[0.21, 0.214, 0.1])
 Snn = sample_b(Ptr_f, b50, 1000, 5, noise=False)[0]
@@ -472,9 +476,15 @@ lv.expect('problems', 'items[2].parts[2]', round(math.log(0.01) / math.log(0.95)
 lv.expect('problems', 'items[2].parts[3].widget.answer', 1000 * nn)
 lv.claim(0.95 ** (nn - 1) > 0.01 > 0.95 ** nn, f'{nn - 1} steps are not enough, {nn} are', covers=[nn - 1, 100, 0.95, 0.01, 20000, 4.5, round(1 - a20p, 3), round((1 - round(a20p, 3)) / round(a20p, 3), 3)])
 lv.claim(close(0.1 / 0.9, 0.1111, 1e-3), 'homework SNR 0.1111; slips 9 and 0.1', covers=[0.1111, 9.0, 0.1, 0.9])
-mh = (1.2 - 0.36 / 0.6 * 0.5) / 0.8
+bh, ah = 0.19, 0.64
+sq_a, sq_ab, sq_1ab = math.sqrt(1 - bh), math.sqrt(ah), math.sqrt(1 - ah)
+mh = (1.2 - bh / sq_1ab * 0.5) / sq_a
+slips = {'noscale': 1.2 - bh / sq_1ab * 0.5, 'abar': (1.2 - bh / sq_ab * 0.5) / sq_a, 'abardiv': (1.2 - bh / sq_1ab * 0.5) / sq_ab}
 lv.expect('homework', 'items[5].widget.answer', round(mh, 3))
-lv.claim(close(0.36 / 0.6 * 0.5, 0.3, 1e-12), 'homework pieces 0.3', covers=[0.3, round(1.2 - 0.36 / 0.6 * 0.5, 3), round((1.2 - 0.36 / 0.8 * 0.5) / 0.8, 3), 1.2, 0.36, 0.64, 0.6, 0.8, 0.5])
+for i_, key_ in enumerate(('noscale', 'abar', 'abardiv')):
+    lv.expect('homework', f'items[5].widget.wrong[{i_}].value', round(slips[key_], 3))
+lv.claim(close(sq_a, 0.9, 1e-12) and close(sq_ab, 0.8, 1e-12) and close(sq_1ab, 0.6, 1e-12) and close(1 - bh, 0.81, 1e-12), 'homework: alpha_t = 0.81, sqrt(alpha_t) = 0.9, sqrt(abar) = 0.8, sqrt(1 - abar) = 0.6, so alpha_t differs from abar_t', covers=[0.9, 0.8, 0.6, 0.81, 0.64, 0.19])
+lv.claim(close(bh / sq_1ab * 0.5, 0.1583, 1e-4) and all(abs(v - mh) > 0.01 for v in slips.values()), 'homework pieces 0.1583; every slip lands away from the key', covers=[0.1583, 1.2, 0.5])
 lv.claim(5000 * 200 - 5000 * 50 == 750000, 'homework cost: 1,000,000 and 250,000, saving 750,000', covers=[750000, 250000, 1000000, 5000, 200, 50, 150])
 given([15, 100, 50000], 'scenarios: years, stocks and synthetic days are given')
 lv.expect('l16', 'screens[1].hints[1].text', round(1 - end, 4), fmt='{:.4f}')

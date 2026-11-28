@@ -2008,3 +2008,56 @@ def steps_to_noise(betas, thresh):
     return int(below[0]) if len(below) else None
 ```
 
+
+## Fix pass
+
+I recomputed every corrected number before writing it (Python with the shipped weights and the lessons' own seeded draws). After the edits: `node tools/validate.mjs` 0 errors and no `[ai-mutants]` or `[source-ban]` warning on representations files; `voice-scan.py 35 --summary` 0 over 35 words and 0 explanations over three sentences; `same-course-reuse.mjs --all` no representations error; the three number scripts exit 0 under `ZQ_NUMBERS_STRICT=1` (299, 255 and 254 checks, 0 uncovered) and through the CI runner; `grade-all.mjs --file <path> --code` 0 failures on every edited file, alone; the playthrough of every edited lesson, set and problem set is green on desktop and mobile. Test numbers: new hidden tests are appended at the end, so no existing `test-N` or mutant number moved.
+
+Status: fixed 31, disputed 1 (13, fixed with a corrected figure), declined 3 (2, 32, 37), deferred 1 (36), no action 1 (1). Graded answers changed: l11 screens[4] (0.0001 to 0.0002 with `tol` 0.0001) and homework-4 items[5] (1.125 to 1.157, with its wrong values); homework-2 `choose_k` test 3 now expects 1 for target 1e-9; the l8 hook slider now accepts 2.4 to 5.4.
+
+### Modules, weight files and number scripts
+1. Modules and weight files, correctness: no finding.
+2. Weight-file `note` fields: declined for the files (the brief allows weight-file changes only for errors); the loose claims are fixed in the scripts: L3 `dw < 1e-6` (measured 5.0e-7) and L4 `d1`, `d2 < 1e-6` (5.0e-7), with the "compared loosely" wording removed.
+3. L4 script threads: fixed, `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `MKL_NUM_THREADS` default to 1 before `import numpy`.
+4. Fiat and dead code: fixed. L3 530 is now `kh1` computed from the closed form, checked against `klg` quadrature; 0.818 and 0.125 are covered by computed claims and left the `given` lists; the `if False` branches in L2 654, L3 322 and L4 229 are deleted. No `claim(True, covers=...)` remains.
+
+### Level 2
+5. l8 slider: fixed. `tol` 1.5, `wrong` low 0 to 2.3 (high 5.5 to 8 unchanged); L2 script now checks every step-0.1 position: accepted exactly when inside the gap 2.373 to 5.459.
+6. homework-2 `choose_k` test 3: fixed as proposed, target 1e-9, expect 1; the reference passes and a `<= max_err + 1e-12` variant passes all 5 tests; the byKey line says "near-zero error".
+7. l5 screens[0] "steep": fixed with the proposed line.
+8. review-2 items[9] `same`: fixed with the proposed line (250 against 40, ratio 2.5).
+9. l8 screens[3] explain: fixed.
+10. l8 screens[8] prose: fixed.
+11. problems-2 items[1]: fixed, "(software)" deleted.
+
+### Level 3
+12. l11 screens[1] explain: fixed (0.5 and 0.318).
+13. l12 screens[4]: fixed, but disputed in part: 0.075 is one seed. Over 20 seeds the full samples sit 0.080 from the circle (theory 0.1 sqrt(2/pi) = 0.0798), so the text says 0.08; the script computes it over 40 seeds and compares with the theory and with 2 times the data's 0.039.
+14. l12 screens[6]: fixed as proposed; "posterior collapse" now only in the explain.
+15. l11 screens[4]: fixed by the second option: key 0.0002 with `tol` 0.0001 (the displayed figures give 0.0002; the unrounded gap is 0.00012, inside the tolerance; 0 and 0.0003 are rejected); feedback states both; the script checks the gap.
+16. l11 screens[8]: fixed.
+17. review-3 items[8]: fixed (weights p(z)/q(z)).
+
+### Level 4
+18. l16 screens[11]: fixed, `trees` l9 (checked in `trees/course.json`: "l9-tiny-steps").
+19. l14 screens[6]: fixed with the proposed sentence.
+20. homework-4 items[5]: fixed. beta 0.19, key 1.157; slips 1.042, 1.201 and a new `abardiv` 1.302, each with its line; the script recomputes all four and asserts they sit more than 0.01 from the key.
+21. l14 screens[9] test 3: fixed, bar 1.2 (reference 0.742, untrained 2.3).
+22. l16 screens[4]: fixed.
+23. l15 screens[3]: fixed.
+
+### Code widgets
+24. homework-2 `anomaly_detector`, threshold on training errors: fixed. Test 10 (validation noise 0.05, training 0.01, five test rows at offsets 0, 0, 0.03, 0.06, 0.2 from the line; reference [4], the mutant [2, 3, 4]); mutant at test 10; byKey line.
+25. l10 `two_terms` sign: fixed. Test 7 (`two_terms([1.0, 0.8], enc, dec, 0.5, 4, 0)`, KL 1.354458485 with 4 draws), mutant at test 7, byKey line, `how` updated. Appended rather than inserted before test 4 so no number moved.
+26. l13 byKey test-1 and test-3: fixed as proposed.
+27. l5 screens[9] byKey: fixed as proposed.
+28. l6 screens[9] byKey: fixed as proposed.
+29. l10 byKey test-1 and test-6: fixed as proposed.
+30. homework-2 `>=`: fixed. Test 11 (`anomaly_detector(Rtr, Rva, Rva, 1, 1.0)` expects [], the same array on both sides so equality is exact); mutant at test 11.
+31. l12 `sample_vae` width: fixed. Test 6 pads the trained weights to two codes (reference output differs from test 1 because `standard_normal((3, 2))` is drawn); the hard-coded-1 mutant raises at test 6.
+32. Mean over entries in l7 and l14: declined. Both lessons state the loss as a sum over each row's coordinates divided by the number of rows (l7 "mean over rows of the squared distance", l14 "sum of squared errors / 256"), but the function returns only weights and Adam divides a constant loss scale away, so no exact test on the returned weights can tell the two apart without contrived inputs near Adam's epsilon. Left as the reviewer recorded it.
+33. homework-3 byKey test-4: fixed, plus a mutant (z built from `.data`, fails test 4 first).
+34. l15 screens[9]: fixed, the line moved to test-1 and also covers the squared-distance mutant that fails there.
+35. Unreachable byKey lines: fixed, deleted in l5 screens[8] (test-4), l7 (test-3, sentence folded into test-1), l9 (test-3), l12 screens[9] (test-3), l14 screens[7] (test-3), l15 screens[8] (test-5), homework-4 (test-6).
+36. Engine item for `grade-all --code`: deferred; one bullet added to `docs/BACKLOG-INBOX.md`.
+37. Margins under 3 times: declined, no change needed while the draws stay seeded (the finding says so).
