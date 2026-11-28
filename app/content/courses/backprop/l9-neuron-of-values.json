@@ -536,7 +536,8 @@
       "o": "1",
       "n": "0.9151",
       "x2": "0.2288"
-     }
+     },
+     "caption": "The gradient line shows the nodes' gradients. The weights are on the edges, so $\\partial o/\\partial w_2$ is not on a node."
     }
    }
   },
@@ -1016,7 +1017,7 @@
     }
    ],
    "feedback": {
-    "correct": "$1 - \\tanh^2 5 = 0.000182$: a weight change of 1 moves the output by under 0.0002.",
+    "correct": "$1 - \\tanh^2 5 = 0.000182$: at $n = 5$ the output moves about 0.0002 per unit of $n$, against 0.92 at $n = 0.3$.",
     "generic": "Not quite. Use $1 - o^2$ with $o$ very close to 1.",
     "byKey": {
      "used-n": "You used $1 - n^2$. The slope is $1 - o^2$, tiny here.",
@@ -1198,7 +1199,24 @@
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 7 hidden tests: the course neuron's output and five gradients, a saturated input, a negative input, a reused tanh and the op label. Values are accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+    "how": "Submit runs 7 hidden tests: the course neuron's output and five gradients, a saturated input, a negative input, a reused tanh and the op label. Values are accepted when `math.isclose(actual, expected, rel_tol=1e-9)`.",
+    "mutants": [
+     {
+      "source": "import math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t) * out.grad\n        out._backward = _backward\n        return out\n",
+      "test": 2,
+      "symptom": "the tanh closure uses $1 - t$ instead of $1 - t^2$"
+     },
+     {
+      "source": "import math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 + t * t) * out.grad\n        out._backward = _backward\n        return out\n",
+      "test": 2,
+      "symptom": "the tanh closure uses $1 + t^2$, so its sign is wrong"
+     },
+     {
+      "source": "import math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad = (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n",
+      "test": 6,
+      "symptom": "the tanh closure uses `=`, so a reused tanh keeps one share"
+     }
+    ]
    },
    "hints": [
     {

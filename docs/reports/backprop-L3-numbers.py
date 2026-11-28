@@ -221,6 +221,7 @@ for h, want in ((1e-2, 1.6e-3), (1e-4, 1.6e-7), (1e-6, 2.8e-8)):
 w12 = D('l12')['screens'][8]['widget']; n12 = {}; exec(w12['prelude'] + '\n' + w12['solution'] + '\n' + w12['postlude'], n12)
 planted = n12['planted'](); lv.claim(planted > 1e-2, f'l12 planted bug fails at {planted:.2f}'); E('l12', 'screens[8].canvas', round(planted, 2))
 for t in w12['tests']:
+    exec(t.get('setup', ''), n12)
     lv.claim(repr(eval(t['call'], n12)) == t['expect'], f'l12 check test {t["call"][:40]}')
 two('l12 kink', (max(0, 0.001) - max(0, -0.001)) / 0.002, 0.5, 1e-12)
 Ncdf = lambda z: 0.5 * (1 + math.erf(z / math.sqrt(2)))
@@ -270,6 +271,95 @@ c3 = (f3_(0.31) - f3_(0.29)) / 0.02; E('problems', 'items[2].parts[2].widget.ans
 E('problems', 'items[2].parts[3].widget.answer', round(abs(g3 - c3) / g3, 4))
 fw3 = (f3_(0.31) - f3_(0.3)) / 0.01; E('problems', 'items[2].parts[4].widget.answer', round(abs(fw3 - g3) / max(fw3, g3), 2))
 lv.claim(30 < (abs(fw3 - g3) / max(fw3, g3)) / (abs(g3 - c3) / g3) < 45, 'problems 3: forward error "about 40 times" the central one')
+
+
+# ---------- fix pass ----------
+# l11 and homework-3: the step-10 loss pins the zeroing of the gradients
+NOZ = ("        for p in model.parameters():\n            p.grad = 0.0\n        loss.backward()", "        loss.backward()")
+w11 = D('l11')['screens'][7]['widget']
+lv.claim(w11['tests'][7]['call'] == 'abs(losses_200()[10] - 1.588956) < 1e-5' and w11['mutants'][0]['test'] == 8, 'l11 test 8 pins the step-10 loss at 1.588956')
+two('l11 step-10 loss, Value class vs NumPy', Lv[10], np_run([2, 3, 1], 42, X4, Y4, 200, 0.05)[0][10], 1e-9)
+lv.claim(round(Lv[10], 6) == 1.588956 and round(nz[10], 6) == 0.358497, 'l11 step-10 loss is 1.588956 with the reset and 0.358497 without')
+two('l11 no-reset step-10 loss, Value class vs NumPy', nz[10], nzn[10], 1e-9)
+n11 = {}; exec(w11['prelude'] + '\n' + w11['mutants'][0]['source'] + '\n' + w11['postlude'], n11)
+res = [repr(eval(t['call'], n11)) == t['expect'] for t in w11['tests']]
+lv.claim(res[:7] == [True] * 7 and res[7] is False, f'l11 train() without the reset passes tests 1 to 7 and fails test 8 ({res})')
+n11 = {}; exec(w11['prelude'] + '\n' + w11['starter'] + '\n' + w11['postlude'], n11)
+try:
+    ok11 = repr(eval(w11['tests'][7]['call'], n11)) == 'True'
+except Exception:
+    ok11 = False
+lv.claim(not ok11, 'l11 starter fails the step-10 test')
+w3h = D('homework')['items'][5]['widget']
+lv.claim(w3h['tests'][6]['call'].endswith('[10] - 1.693188) < 1e-5') and w3h['mutants'][0]['test'] == 7, 'homework-3 test 7 pins the step-10 loss at 1.693188')
+a3, _ = np_run([2, 4, 1], 42, X6, Y6, 10, 0.05); b3, _ = np_run([2, 4, 1], 42, X6, Y6, 10, 0.05, zero=False)
+lv.claim(round(a3[10], 6) == 1.693188 and round(b3[10], 4) == 0.0786, f'homework-3 step-10 loss is {a3[10]:.6f} with the reset, {b3[10]:.4f} without (NumPy)')
+n3h = {}; exec(w3h['prelude'] + '\n' + w3h['mutants'][0]['source'] + '\n' + w3h['postlude'], n3h)
+res = [repr(eval(t['call'], n3h)) == t['expect'] if t['compare'] == 'equal' else None for t in w3h['tests']]
+lv.claim(all(r is True for r in res[:6] if r is not None) and res[6] is False, f'homework-3 train() without the reset passes tests 1 to 6 and fails test 7 ({res})')
+# l11 s6: seeds 1 to 7 without the reset, five reach zero and two stick near 2
+reach = []
+for seed in range(1, 8):
+    msd = MLP(2, [3, 1], seed=seed)
+    for k in range(201):
+        loss = sum(((msd(x) - y) ** 2 for x, y in zip(X4, Y4)), V(0.0))
+        if k == 200:
+            break
+        loss.backward()
+        for p in msd.parameters():
+            p.data -= 0.05 * p.grad
+    reach.append(loss.data)
+lv.claim(sorted(i + 1 for i, v in enumerate(reach) if v > 1.9) == [3, 6] and sum(v < 0.03 for v in reach) == 5, f'l11 seeds 1 to 7 without the reset: two stick near 2 (3 and 6), five reach 0 ({[round(v, 3) for v in reach]})')
+# l12 screen 0: the 1 - n^2 closure on the course network (real gradients and real training at 0.05)
+w12b = D('l12')['screens'][8]['widget']
+bug_src = (w12b['prelude'] + '\n' + w12b['solution']).replace('self.grad += (1 - t * t) * out.grad', 'self.grad += (1 - self.data ** 2) * out.grad')
+lv.claim(bug_src != (w12b['prelude'] + '\n' + w12b['solution']), 'l12 s0: the bug source differs from the correct one')
+nb = {}; exec(bug_src, nb); exec(D('l11')['screens'][7]['widget']['solution'], nb)
+mb = nb['MLP'](2, [3, 1], seed=42); lb = nb['total_loss'](mb, nb['X4'], nb['Y4']); lb.backward()
+gb5 = [round(p.grad, 3) for p in mb.parameters()][:5]
+cons = D('l12')['screens'][0]['canvas']['params']['lines']
+lv.claim(cons[2] == str(gb5), f'l12 s0 console gradients are the real 1 - n^2 gradients {gb5}')
+# route 2: NumPy with the wrong derivative 1 - n^2 (n is the pre-activation)
+def np_bug(sizes, seed, X, Y, steps, lr):
+    P = [(W.copy(), b.copy()) for W, b in raw(sizes, seed)]
+    Xa, Ya = np.array(X), np.array(Y); losses = []; g0 = None
+    for k in range(steps + 1):
+        acts = [Xa]; pre = []
+        for W, b in P:
+            z = acts[-1] @ W.T + b; pre.append(z); acts.append(np.tanh(z))
+        out = acts[-1][:, 0]; losses.append(float(((out - Ya) ** 2).sum()))
+        if k == steps:
+            break
+        d = (2 * (out - Ya))[:, None]; grads = [None] * len(P)
+        for l in range(len(P) - 1, -1, -1):
+            dz = d * (1 - pre[l] ** 2); grads[l] = (dz.T @ acts[l], dz.sum(0)); d = dz @ P[l][0]
+        if g0 is None:
+            g0 = [float(v) for v in np.concatenate([np.concatenate([grads[0][0][j], [grads[0][1][j]]]) for j in range(3)] + [np.concatenate([grads[1][0][0], [grads[1][1][0]]])])]
+        P = [(W - lr * gw, b - lr * gb) for (W, b), (gw, gb) in zip(P, grads)]
+    return losses, g0
+lnp, g0 = np_bug([2, 3, 1], 42, X4, Y4, 3, 0.05)
+two('l12 s0 buggy gradients, Value class vs NumPy', [p.grad for p in mb.parameters()][0], g0[0], 1e-9)
+lv.claim([round(v, 3) for v in g0[:5]] == gb5, f'l12 s0 NumPy buggy gradients agree {gb5}')
+lbug = nb['train'](nb['MLP'](2, [3, 1], seed=42), nb['X4'], nb['Y4'], 3, 0.05)
+lv.claim(cons[4] == str([round(v, 3) for v in lbug]) and [round(v, 3) for v in lnp] == [round(v, 3) for v in lbug], f'l12 s0 console losses {[round(v, 3) for v in lbug]} (Value class and NumPy agree)')
+lv.claim(lbug[1] < lbug[0] and lbug[2] < lbug[1] and lbug[3] > lbug[2] and round(lbug[3], 3) == 9.954, 'l12 s0: the loss falls for two steps then jumps to 9.954')
+mg = MLP(2, [3, 1], seed=42); lg = sum(((mg(x) - y) ** 2 for x, y in zip(X4, Y4)), V(0.0)); lg.backward()
+lv.claim(sum((a_ > 0) != (b_ > 0) for a_, b_ in zip(gb5, [p.grad for p in mg.parameters()][:5])) == 2, 'l12 s0 sign option: two of the first five buggy signs are wrong')
+# l12 screen 9 (check_gradients): a second call on a used model; the no-zeroing version gives 0.5
+w12c = D('l12')['screens'][8]['widget']
+lv.claim(w12c['tests'][6]['setup'].startswith('m = MLP(2, [3, 1], seed=42)') and w12c['mutants'][0]['test'] == 7, 'l12 check_gradients test 7 reuses a model')
+n12m = {}; exec(w12c['prelude'] + '\n' + w12c['mutants'][0]['source'] + '\n' + w12c['postlude'], n12m)
+res = []
+for t in w12c['tests']:
+    exec(t.get('setup', ''), n12m); res.append(repr(eval(t['call'], n12m)) == t['expect'])
+lv.claim(res[:6] == [True] * 6 and res[6] is False, f'l12 check_gradients without zeroing passes tests 1 to 6, fails test 7 ({res})')
+mm = n12m['MLP'](2, [3, 1], seed=42); n12m['check_gradients'](mm, n12m['X4'], n12m['Y4'], 1e-6)
+two('l12 no-zeroing check on a used model reports 0.5', n12m['check_gradients'](mm, n12m['X4'], n12m['Y4'], 1e-6), 0.5, 1e-6)
+# l12 option whys
+two('l12 course network check at h = 0.1 is 0.14', n12['check_gradients'](n12['MLP'](2, [3, 1], seed=42), n12['X4'], n12['Y4'], 0.1), 0.14, 5e-3)
+lv.claim(n12['check_gradients'](n12['MLP'](2, [3, 1], seed=42), n12['X4'], n12['Y4'], 1e-5) < 1e-6, 'l12 central check on the course network at h = 1e-5 passes 1e-6')
+E('l9', 'screens[6].feedback.correct', round(1 - math.tanh(5) ** 2, 6)); E('l9', 'screens[6].feedback.correct', 0.92)
+two('l9 s7: 1 - tanh^2 0.3 is about 0.92', 1 - math.tanh(0.3) ** 2, 0.915137, 1e-6)
 
 lv.check_wrongs()
 lv.report()

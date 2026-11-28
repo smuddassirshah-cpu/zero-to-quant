@@ -52,3 +52,34 @@ Counts: 5 errors, 10 warnings, 11 notes.
 - Stated numbers recomputed and correct throughout, including: the course expression and its slider steps; $M = 4.968282$; the $(e^{wx+b})^2$ chain; the bond (95.6705, −420.98, −0.42098); both P&L books; the homework bond (−409.37) and performance task (1.173946, 0.733716, 0.011930); every L2 graph and slip value (2, 1, 4, 1, 8, 12, 24, −10.5); the 13 seeded draws; the 2-3-1 forward pass ($-0.3266$); the step-0 bias step (−0.8263); losses 5.556800, 4.955816, 1.588956, 0.153664, 0.025020, first below 0.1 at step 68; 0.1756 and 0.0241, 3.3716 and 4.0001, 8.0; the one-neuron run (6.6146 to 4.0); the no-reset run (0.0000 by step 50, largest parameter 73.9, against 2.22); the tanh difference table ($9.42 \times 10^{-6}$, $9.42 \times 10^{-8}$, $1.54 \times 10^{-11}$, $3.8 \times 10^{-9}$, $4.4 \times 10^{-7}$); the network check (1.6e-3, 1.6e-7, 2.8e-8, planted 1.65); BS delta 0.6368 against 0.5596 (0.12, 0.14); the homework-3 six-point runs (4.009 and 0.017 at seed 42, 4.009 and 0.011 at seed 7).
 - Tolerances: no wrong value falls inside its key's band; rounding instructions match the bands.
 - All three longform rubrics sum to 10. No "!", no em-dash, no American spelling, no "$" currency, no orphan `byKey` key.
+
+## Fix pass
+
+Recomputed before writing: l11 step-10 loss 1.588956 with the reset, 0.358497 without (NumPy and Value class agree); homework-3 step-10 loss 1.693188 with, 0.0786 without; `y = e * e`, `e = 3x` at 2 gives 36 (72 without `seen`); the l12 1 - n^2 closure on the course network gives step-0 gradients (1.462, 3.544, -2.48, 2.512, 3.07) and losses 5.557, 5.36, 4.739, 9.954 at 0.05. All checked in the three numbers scripts. Fixed 26, declined 0, deferred 0. Extra: every Python code widget in L1 to L3 now has at least two `mutants` (56 in 18 widgets, each checked by `grade-all.mjs --code`); homework-1 item 3 gained a sixth test (`x * x + x`) because no test used a leaf twice, so the `=` mutant passed.
+
+- l3 quiz[0] 'added': fixed (value 6.5, why "$5 + 1 + 0.5$").
+- l2 screens[8] limits back-reference: fixed (no back-reference, present tense).
+- l1 screens[4] 'hides': fixed (option and explain say two rules at once).
+- l4 screens[5] explain: fixed.
+- review-1 items[6] explain: fixed (added "is").
+- l8 screens[3] tests (error): fixed (test 8, `e * e` with `e = 3x`, expect 36.0; mutant without `seen` gives 72 and fails test 8 only).
+- homework-2 items[5] tests (error): fixed (test 9, `(e + 1) * e` with `e = 3x`, expect (42.0, 39.0); the no-`seen` version gives 60, which I recomputed, not the reviewer's 72 for a different graph).
+- l7 screens[5] question: fixed.
+- review-2 items[9] explain and why: fixed (recomputed: outer product sends 2x = -2, `2 * x` receives -1 and passes -2, plus 1 gives -3).
+- l5 screens[5] explain: fixed.
+- l7 screens[8] explain: fixed ("difference box").
+- homework-2 items[1] feedback: fixed ("Five short methods").
+- l11 screens[7] tests (error): fixed (test 8, step-10 loss 1.588956 within 1e-5; no-reset loop gives 0.358497 and fails test 8 only).
+- homework-3 items[5] tests (error): fixed with an exact value rather than `> 1.0` (test 7, step-10 loss 1.693188 within 1e-5; no reset gives 0.0786).
+- l12 screens[0] (error): fixed by keeping 1 - n^2 and telling the truth: prose, console (real step-0 gradients and the first four losses), 'falls' why and 'sign' why rewritten (two of the first five signs are wrong); the console is now checked in `backprop-L3-numbers.py`.
+- l12 screens[8] tests: fixed (test 7 calls the check twice on one model; the no-zeroing version reports 0.5).
+- l9 screens[6] feedback: fixed (a rate per unit of n, 0.92 at n = 0.3).
+- l11 screens[5] explain: fixed ("some other seeds"; seeds 1 to 7 checked in the script: 3 and 6 stick, five reach 0).
+- l12 screens[6] option 4 why: fixed ($h = 10^{-5}$; the course check there is 3.6e-9).
+- l12 quiz[2] $h = 10^{-1}$ why: fixed (0.14, recomputed).
+- l12 screens[7] prose and feedback: fixed.
+- l12 screens[9] prose and feedback: fixed (also the explain, which repeated the swapped-d1-d2 claim).
+- l9 screens[3] canvas caption: fixed (caption in `explain.canvas`: nodes' gradients, weights on edges).
+- Across levels, course names in learner text: fixed (Series and Approximation, Python Foundations, First language models and Training Networks, Multivariable Calculus in l5 and l11).
+- Across levels, minus signs in l10 screens[1] and l11 screens[6]: fixed (TeX with `-`; only the negative numbers wrapped in l11).
+- Across levels, `math.isclose` in code spans: fixed in l9, l10, homework-1 (two), homework-2, homework-3.

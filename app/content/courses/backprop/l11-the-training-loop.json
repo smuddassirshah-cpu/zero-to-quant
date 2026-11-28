@@ -14,7 +14,7 @@
    "type": "problem",
    "difficulty": 1,
    "title": "One step for one parameter",
-   "prose": "The course network starts with loss 5.5568 on the four points. The backward pass gives every parameter a gradient. The output neuron's bias is $b = -0.946928$ with gradient $-2.412490$. To lower the loss, step against the gradient, as in the multivar course: $b \\leftarrow b - \\eta \\times \\text{grad}$, with step size $\\eta = 0.05$.",
+   "prose": "The course network starts with loss 5.5568 on the four points. The backward pass gives every parameter a gradient. The output neuron's bias is $b = -0.946928$ with gradient $-2.412490$. To lower the loss, step against the gradient, as in the Multivariable Calculus course: $b \\leftarrow b - \\eta \\times \\text{grad}$, with step size $\\eta = 0.05$.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -1198,14 +1198,14 @@
     }
    },
    "explain": {
-    "text": "With no reset `p.grad` holds the sum of every gradient so far, so each step overshoots. The weights grow to 74 and every tanh saturates, which happens to fit these four points. From other starts the same loop sticks at a loss of 2."
+    "text": "With no reset `p.grad` holds the sum of every gradient so far, so each step overshoots. The weights grow to 74 and every tanh saturates, which happens to fit these four points. From some other seeds the same loop sticks near a loss of 2; a zero here is luck, not learning."
    }
   },
   {
    "type": "problem",
    "difficulty": 3,
    "title": "Fitting four points",
-   "prose": "After 200 correct steps the network outputs 0.9346, 0.9352, −0.9079 and −0.9102 on the four points: right in sign at every one. The loss is 0.0250.",
+   "prose": "After 200 correct steps the network outputs 0.9346, 0.9352, $-0.9079$ and $-0.9102$ on the four points: right in sign at every one. The loss is 0.0250.",
    "canvas": {
     "kind": "scatter",
     "params": {
@@ -1580,12 +1580,35 @@
       "call": "train(MLP(2, [3, 1], seed=42), X4, Y4, 1, 0.05)[1] < 4.96",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "setup": "",
+      "call": "abs(losses_200()[10] - 1.588956) < 1e-5",
+      "expect": "True",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 7 hidden tests on the course network. They want 201 losses for 200 steps, a first loss of 5.5568, a last loss below 0.03 and a falling loss at steps 0, 10 and 50. They also check that every parameter moved, one loss for 0 steps, and the first step. These are thresholds, not exact losses; training takes under a second.",
+    "how": "Submit runs 8 hidden tests on the course network. They want 201 losses for 200 steps, a first loss of 5.5568, a last loss below 0.03 and a falling loss at steps 0, 10 and 50. They also check that every parameter moved, one loss for 0 steps, and the first step. The eighth test checks the loss at step 10 to five decimal places, which a loop that never zeroes the gradients misses. The others are thresholds; training takes under a second.",
     "prelude": "import random\nimport math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n\nclass Neuron:\n    def __init__(self, nin, rng):\n        self.w = [Value(rng.uniform(-1, 1)) for _ in range(nin)]\n        self.b = Value(rng.uniform(-1, 1))\n\n    def __call__(self, x):\n        act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)\n        return act.tanh()\n\n    def parameters(self):\n        return self.w + [self.b]\n\n\nclass Layer:\n    def __init__(self, nin, nout, rng):\n        self.neurons = [Neuron(nin, rng) for _ in range(nout)]\n\n    def __call__(self, x):\n        return [n(x) for n in self.neurons]\n\n    def parameters(self):\n        return [p for n in self.neurons for p in n.parameters()]\n\n\nclass MLP:\n    def __init__(self, nin, nouts, seed=42):\n        rng = random.Random(seed)\n        sizes = [nin] + list(nouts)\n        self.layers = [Layer(sizes[i], sizes[i + 1], rng) for i in range(len(nouts))]\n\n    def __call__(self, x):\n        for layer in self.layers:\n            x = layer(x)\n        return x[0] if len(x) == 1 else x\n\n    def parameters(self):\n        return [p for layer in self.layers for p in layer.parameters()]\n\nX4 = [[1.0, 1.0], [-1.0, -1.0], [1.0, -1.0], [-1.0, 1.0]]\nY4 = [1.0, 1.0, -1.0, -1.0]\n",
     "postlude": "_RUN = {}\n\n\ndef losses_200():\n    if \"L\" not in _RUN:\n        _RUN[\"L\"] = train(MLP(2, [3, 1], seed=42), X4, Y4, 200, 0.05)\n    return _RUN[\"L\"]\n\n\ndef moved():\n    m = MLP(2, [3, 1], seed=42)\n    before = [p.data for p in m.parameters()]\n    train(m, X4, Y4, 3, 0.05)\n    return sum(1 for p, b in zip(m.parameters(), before) if p.data != b)\n",
-    "budget": 4000
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "def train(model, X, Y, steps, lr):\n    losses = []\n    for k in range(steps + 1):\n        loss = sum(((model(x) - y) ** 2 for x, y in zip(X, Y)), Value(0.0))\n        losses.append(loss.data)\n        if k == steps:\n            break\n        loss.backward()\n        for p in model.parameters():\n            p.data -= lr * p.grad\n    return losses\n",
+      "test": 8,
+      "symptom": "no reset: the gradients pile up and the loss at step 10 is 0.3585, not 1.5890"
+     },
+     {
+      "source": "def train(model, X, Y, steps, lr):\n    losses = []\n    for k in range(steps + 1):\n        loss = sum(((model(x) - y) ** 2 for x, y in zip(X, Y)), Value(0.0))\n        losses.append(loss.data)\n        if k == steps:\n            break\n        for p in model.parameters():\n            p.grad = 0.0\n        loss.backward()\n        for p in model.parameters():\n            p.data += lr * p.grad\n    return losses\n",
+      "test": 3,
+      "symptom": "steps with the gradient instead of against it, so the loss rises"
+     },
+     {
+      "source": "def train(model, X, Y, steps, lr):\n    losses = []\n    for k in range(steps):\n        loss = sum(((model(x) - y) ** 2 for x, y in zip(X, Y)), Value(0.0))\n        losses.append(loss.data)\n        if k == steps:\n            break\n        for p in model.parameters():\n            p.grad = 0.0\n        loss.backward()\n        for p in model.parameters():\n            p.data -= lr * p.grad\n    return losses\n",
+      "test": 1,
+      "symptom": "loops `range(steps)`, so the list is one loss short"
+     }
+    ]
    },
    "hints": [
     {

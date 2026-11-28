@@ -14,15 +14,17 @@
    "type": "problem",
    "difficulty": 1,
    "title": "A bug with plausible numbers",
-   "prose": "Priya's `tanh()` closure used $1 - n^2$. Her network still trained, a little slower, and every gradient looked sensible. Such a bug survives until something independent checks it.",
+   "prose": "Priya's `tanh()` closure used $1 - n^2$. Her gradients looked like ordinary numbers, and her loss fell twice before it jumped. Such a bug survives until something independent checks it.",
    "canvas": {
     "kind": "console",
     "params": {
      "lines": [
       ">>> loss.backward()",
       ">>> [round(p.grad, 3) for p in model.parameters()][:5]",
-      "[0.056, -0.012, 1.383, 0.896, 0.791]",
-      "# plausible numbers: right or wrong?"
+      "[1.462, 3.544, -2.48, 2.512, 3.07]",
+      ">>> [round(l, 3) for l in train(MLP(2, [3, 1]), X4, Y4, 3, 0.05)]",
+      "[5.557, 5.36, 4.739, 9.954]",
+      "# ordinary-looking numbers: right or wrong?"
      ],
      "title": "Priya's gradients"
     },
@@ -41,12 +43,12 @@
      {
       "id": "falls",
       "text": "Check that the loss falls steadily during training",
-      "why": "Her loss fell too. A wrong gradient often still points roughly downhill."
+      "why": "Her loss fell for two steps, then jumped to 9.954. A wrong gradient can still point roughly downhill, so a falling loss proves little."
      },
      {
       "id": "sign",
       "text": "Check that every gradient has the sign you expect it to have",
-      "why": "Her signs were right; the sizes were slightly off."
+      "why": "Two of her first five signs were wrong, but nothing tells you which sign each gradient should have."
      },
      {
       "id": "twice",
@@ -214,7 +216,7 @@
    "type": "derive",
    "difficulty": 2,
    "title": "Why the error shrinks like h squared",
-   "prose": "The taylor course added a curvature term $\\tfrac{h^2}{2}f''$ to the tangent line. Write $f(x + h)$ and $f(x - h)$ with one more term, $\\tfrac{h^3}{6}f'''$, and subtract.",
+   "prose": "The Series and Approximation course added a curvature term $\\tfrac{h^2}{2}f''$ to the tangent line. Write $f(x + h)$ and $f(x - h)$ with one more term, $\\tfrac{h^3}{6}f'''$, and subtract.",
    "canvas": {
     "kind": "plane",
     "params": {
@@ -848,7 +850,7 @@
      {
       "id": "tol",
       "text": "A tolerance too tight for any gradient check to pass",
-      "why": "A central check passes at $10^{-6}$ easily."
+      "why": "A central check at $h = 10^{-5}$ passes $10^{-6}$ easily."
      }
     ]
    },
@@ -884,7 +886,7 @@
    "type": "ladder",
    "difficulty": 3,
    "title": "A kink",
-   "prose": "An edge case: $r = \\max(0, x)$ at $x = 0$. It has a corner there, so it has no derivative; level 1 passed back 0 or 1 by convention. Take $h = 0.001$.",
+   "prose": "An edge case: $r = \\max(0, x)$ at $x = 0$. It has a corner there, so it has no derivative. Level 1 never said what ReLU passes back at 0; autograds pass 0 or 1 by convention. Take $h = 0.001$.",
    "canvas": {
     "kind": "plane",
     "params": {
@@ -972,7 +974,7 @@
     }
    ],
    "feedback": {
-    "correct": "0.5, which matches neither side: at a kink no difference agrees with backpropagation.",
+    "correct": "0.5, which matches neither one-sided slope: a central check on a kink fails whatever `backward()` passes back.",
     "generic": "Not quite. Use both sides of the kink.",
     "byKey": {
      "right": "That is the slope on the right only.",
@@ -1056,12 +1058,40 @@
       "call": "type(check_gradients(MLP(2, [3, 1], seed=42), X4, Y4, 1e-4)).__name__",
       "expect": "'float'",
       "compare": "equal"
+     },
+     {
+      "setup": "m = MLP(2, [3, 1], seed=42); check_gradients(m, X4, Y4, 1e-6)",
+      "call": "check_gradients(m, X4, Y4, 1e-6) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
      }
     ],
-    "how": "Submit runs 6 hidden tests: the course network below $10^{-6}$ at $h = 10^{-6}$, Priya's planted bug above $10^{-2}$, the parameters restored afterwards, a 2-4-1 network, the $h = 10^{-2}$ figure and the type of the result. Tests are thresholds.",
+    "how": "Submit runs 7 hidden tests: the course network below $10^{-6}$ at $h = 10^{-6}$, Priya's planted bug above $10^{-2}$, the parameters restored afterwards, a 2-4-1 network, the $h = 10^{-2}$ figure and the type of the result. The last test calls it twice on one model, so a check that skips the zeroing fails. Tests are thresholds.",
     "prelude": "import random\nimport math\n\n\nclass Value:\n    def __init__(self, data, _prev=(), _op=\"\"):\n        self.data = data\n        self.grad = 0.0\n        self._prev = tuple(_prev)\n        self._op = _op\n        self._backward = lambda: None\n\n    def __repr__(self):\n        return f\"Value(data={self.data}, grad={self.grad})\"\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other), \"+\")\n\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        return out\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other), \"*\")\n\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward\n        return out\n\n    def __radd__(self, other):\n        return self + other\n\n    def __rmul__(self, other):\n        return self * other\n\n    def backward(self):\n        topo, seen = [], set()\n\n        def build(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._prev:\n                    build(p)\n                topo.append(v)\n        build(self)\n        self.grad = 1.0\n        for v in reversed(topo):\n            v._backward()\n\n    def __pow__(self, k):\n        out = Value(self.data ** k, (self,), f\"**{k}\")\n\n        def _backward():\n            self.grad += k * self.data ** (k - 1) * out.grad\n        out._backward = _backward\n        return out\n\n    def __neg__(self):\n        return self * -1\n\n    def __sub__(self, other):\n        return self + (-other)\n\n    def __rsub__(self, other):\n        return other + (-self)\n\n    def exp(self):\n        out = Value(math.exp(self.data), (self,), \"exp\")\n\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n\n    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - t * t) * out.grad\n        out._backward = _backward\n        return out\n\n\nclass Neuron:\n    def __init__(self, nin, rng):\n        self.w = [Value(rng.uniform(-1, 1)) for _ in range(nin)]\n        self.b = Value(rng.uniform(-1, 1))\n\n    def __call__(self, x):\n        act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)\n        return act.tanh()\n\n    def parameters(self):\n        return self.w + [self.b]\n\n\nclass Layer:\n    def __init__(self, nin, nout, rng):\n        self.neurons = [Neuron(nin, rng) for _ in range(nout)]\n\n    def __call__(self, x):\n        return [n(x) for n in self.neurons]\n\n    def parameters(self):\n        return [p for n in self.neurons for p in n.parameters()]\n\n\nclass MLP:\n    def __init__(self, nin, nouts, seed=42):\n        rng = random.Random(seed)\n        sizes = [nin] + list(nouts)\n        self.layers = [Layer(sizes[i], sizes[i + 1], rng) for i in range(len(nouts))]\n\n    def __call__(self, x):\n        for layer in self.layers:\n            x = layer(x)\n        return x[0] if len(x) == 1 else x\n\n    def parameters(self):\n        return [p for layer in self.layers for p in layer.parameters()]\n\nX4 = [[1.0, 1.0], [-1.0, -1.0], [1.0, -1.0], [-1.0, 1.0]]\nY4 = [1.0, 1.0, -1.0, -1.0]\n\n\ndef total_loss(model, X, Y):\n    return sum(((model(x) - y) ** 2 for x, y in zip(X, Y)), Value(0.0))\n\n\n",
     "postlude": "def planted():\n    good = Value.tanh\n\n    def bad(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), \"tanh\")\n\n        def _backward():\n            self.grad += (1 - self.data ** 2) * out.grad\n        out._backward = _backward\n        return out\n    Value.tanh = bad\n    try:\n        return check_gradients(MLP(2, [3, 1], seed=42), X4, Y4, 1e-6)\n    finally:\n        Value.tanh = good\n\n\ndef unchanged():\n    m = MLP(2, [3, 1], seed=42)\n    before = [p.data for p in m.parameters()]\n    check_gradients(m, X4, Y4, 1e-6)\n    return [p.data for p in m.parameters()] == before\n",
-    "budget": 4000
+    "budget": 4000,
+    "mutants": [
+     {
+      "source": "def check_gradients(model, X, Y, h):\n    params = model.parameters()\n    total_loss(model, X, Y).backward()\n    worst = 0.0\n    for p in params:\n        keep = p.data\n        p.data = keep + h\n        up = total_loss(model, X, Y).data\n        p.data = keep - h\n        down = total_loss(model, X, Y).data\n        p.data = keep\n        num = (up - down) / (2 * h)\n        rel = abs(p.grad - num) / max(abs(p.grad), abs(num), 1e-12)\n        worst = max(worst, rel)\n    return worst\n",
+      "test": 7,
+      "symptom": "no zeroing at the start: the second call adds to the first call's gradients and reports 0.5"
+     },
+     {
+      "source": "def check_gradients(model, X, Y, h):\n    params = model.parameters()\n    for p in params:\n        p.grad = 0.0\n    total_loss(model, X, Y).backward()\n    worst = 0.0\n    for p in params:\n        keep = p.data\n        p.data = keep + h\n        up = total_loss(model, X, Y).data\n        down = total_loss(model, X, Y).data\n        p.data = keep\n        num = (up - down) / h\n        rel = abs(p.grad - num) / max(abs(p.grad), abs(num), 1e-12)\n        worst = max(worst, rel)\n    return worst\n",
+      "test": 1,
+      "symptom": "uses a forward difference, so the check on correct code reports an error above $10^{-6}$"
+     },
+     {
+      "source": "def check_gradients(model, X, Y, h):\n    params = model.parameters()\n    for p in params:\n        p.grad = 0.0\n    total_loss(model, X, Y).backward()\n    worst = 0.0\n    for p in params:\n        keep = p.data\n        p.data = keep + h\n        up = total_loss(model, X, Y).data\n        p.data = keep - h\n        down = total_loss(model, X, Y).data\n        num = (up - down) / (2 * h)\n        rel = abs(p.grad - num) / max(abs(p.grad), abs(num), 1e-12)\n        worst = max(worst, rel)\n    return worst\n",
+      "test": 1,
+      "symptom": "never restores `p.data` after the nudges"
+     },
+     {
+      "source": "def check_gradients(model, X, Y, h):\n    params = model.parameters()\n    for p in params:\n        p.grad = 0.0\n    total_loss(model, X, Y).backward()\n    worst = 0.0\n    for p in params:\n        keep = p.data\n        p.data = keep + h\n        up = total_loss(model, X, Y).data\n        p.data = keep - h\n        down = total_loss(model, X, Y).data\n        p.data = keep\n        num = (up - down) / (2 * h)\n        rel = abs(p.grad - num)\n        worst = max(worst, rel)\n    return worst\n",
+      "test": 5,
+      "symptom": "reports the absolute error, not the relative one"
+     }
+    ]
    },
    "hints": [
     {
@@ -1096,7 +1126,7 @@
    "type": "transfer",
    "difficulty": 3,
    "title": "Greeks against bumped prices",
-   "prose": "A quant library's unit tests compare each analytic Greek with a bumped price, as the options course bumped a price. For a call with $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$, a bump of £0.01 each way gives delta 0.6368. A new build's analytic delta reports 0.5596.",
+   "prose": "A quant library's unit tests compare each analytic Greek with a bumped price. For a call with $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$, a bump of £0.01 each way gives delta 0.6368. A new build's analytic delta reports 0.5596.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -1160,7 +1190,7 @@
     }
    ],
    "feedback": {
-    "correct": "$0.0772 / 0.6368 = 0.12$: a failed test. The new build returns $N(d_2)$ where delta is $N(d_1)$.",
+    "correct": "$0.0772 / 0.6368 = 0.12$: a failed test. The build used the wrong one of two normal probabilities in the formula.",
     "generic": "Not quite. Divide the gap by the larger delta.",
     "byKey": {
      "absolute": "That is the gap itself. Divide by 0.6368.",
@@ -1168,7 +1198,7 @@
     }
    },
    "explain": {
-    "text": "$|0.6368 - 0.5596| / 0.6368 = 0.12$, far above any test tolerance. The bumped price is independent of the analytic formula, as the central difference is of `backward()`, so it catches the swapped $d_1$ and $d_2$."
+    "text": "$|0.6368 - 0.5596| / 0.6368 = 0.12$, far above any test tolerance. The bumped price is independent of the analytic formula, as the central difference is of `backward()`, so it catches the wrong probability."
    }
   }
  ],
@@ -1283,7 +1313,7 @@
      {
       "id": "m1",
       "text": "$h = 10^{-1}$",
-      "why": "Too large: the $h^2$ error is about $10^{-3}$."
+      "why": "Too large: the course network's check gives 0.14 at $h = 10^{-1}$."
      },
      {
       "id": "m12",
