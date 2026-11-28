@@ -1,0 +1,1274 @@
+{
+ "id": "l7-leaks-in-text",
+ "course": "llm-apps",
+ "title": "Leaks hiding in text",
+ "minutes": 15,
+ "objectives": [
+  "Find leaks in a text pipeline: full-sample vocabularies, memorised names and late timestamps."
+ ],
+ "skills": [
+  "llm-lookahead"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A word from the future",
+   "prose": "A text model is fitted on 2018 to 2020 and tested on 2021 and 2022. In 2021 Corran launches a product called zenvia, a word no earlier note contains.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Year",
+      "Note",
+      "Fold"
+     ],
+     "rows": [
+      [
+       "2018",
+       "corran margins steady as costs ease",
+       "train"
+      ],
+      [
+       "2019",
+       "corran guidance raised on strong sales",
+       "train"
+      ],
+      [
+       "2020",
+       "corran sales slip as demand cools",
+       "train"
+      ],
+      [
+       "2021",
+       "corran launches zenvia and sales jump",
+       "test"
+      ],
+      [
+       "2022",
+       "zenvia orders lift corran guidance",
+       "test"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many words of the 2022 note are missing from a vocabulary built on the 2018 to 2020 notes?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "none",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "List the words of the training notes."
+    },
+    {
+     "rung": "point",
+     "text": "Check each word of 'zenvia orders lift corran guidance'.",
+     "highlight": [
+      "r4"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Three: 'zenvia', 'orders' and 'lift'. A vocabulary fitted on all five notes would contain them, telling a 2020 model about 2021.",
+    "generic": "Not quite. Check each word against the three training notes.",
+    "byKey": {
+     "none": "You used a vocabulary fitted on all five notes. Fitted on 2018 to 2020, it lacks 'zenvia', 'orders' and 'lift'.",
+     "one": "'zenvia' is missing, but so are 'orders' and 'lift'."
+    }
+   },
+   "explain": {
+    "text": "'corran' and 'guidance' are in the training notes; 'zenvia', 'orders' and 'lift', 3 words, are not. A vocabulary or IDF fitted on all years carries such words, and their rarity, back in time.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       4
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "title": "Find the leaks",
+   "prose": "A colleague's text-signal pipeline runs left to right, then along the bottom. Three steps let information from after a date reach the score for that date; the as-of join and the walk-forward test are sound.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "nodes": [
+      {
+       "id": "docs",
+       "label": "Notes\n2016 to 2023",
+       "x": 0.12,
+       "y": 0.2,
+       "shape": "rect"
+      },
+      {
+       "id": "vocab",
+       "label": "Vocabulary\nall years",
+       "x": 0.42,
+       "y": 0.2,
+       "shape": "rect"
+      },
+      {
+       "id": "names",
+       "label": "Scores with\nnames",
+       "x": 0.72,
+       "y": 0.2,
+       "shape": "rect"
+      },
+      {
+       "id": "stamp",
+       "label": "Revised\nstamps",
+       "x": 0.12,
+       "y": 0.75,
+       "shape": "rect"
+      },
+      {
+       "id": "join",
+       "label": "As-of join\nbackward",
+       "x": 0.42,
+       "y": 0.75,
+       "shape": "rect"
+      },
+      {
+       "id": "wf",
+       "label": "Walk-\nforward",
+       "x": 0.72,
+       "y": 0.75,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "docs",
+       "to": "vocab"
+      },
+      {
+       "from": "vocab",
+       "to": "names"
+      },
+      {
+       "from": "names",
+       "to": "stamp"
+      },
+      {
+       "from": "stamp",
+       "to": "join"
+      },
+      {
+       "from": "join",
+       "to": "wf"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Tap the three steps that leak.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "vocab",
+     "names",
+     "stamp"
+    ],
+    "countWord": "steps"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which steps were fitted or stamped using later data?"
+    },
+    {
+     "rung": "point",
+     "text": "The vocabulary saw every year; the scores saw company names; the stamps come from revisions.",
+     "highlight": [
+      "vocab"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The all-years vocabulary, scores that can recognise names, and revised timestamps all carry later information.",
+    "generic": "Not quite. Look for steps that use data from after each date.",
+    "byKey": {
+     "join": "A backward as-of join takes only past documents: sound.",
+     "wf": "Walk-forward testing trains on the past only: sound.",
+     "docs": "The notes themselves are fine; the question is how they are fitted, scored and stamped."
+    }
+   },
+   "explain": {
+    "text": "Each leak is `validation` level 3 in text form: fit vocabularies inside each fold, test whether names drive the scores, and stamp each document with its first version's time.",
+    "canvas": {
+     "highlight": [
+      "vocab",
+      "names",
+      "stamp"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "IDF inside the fold",
+   "prose": "Fitting inside the fold changes the weights of words that are kept too. 'sales' is in 2 of the 3 training notes, and in 3 of all 5.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Year",
+      "Note",
+      "Fold"
+     ],
+     "rows": [
+      [
+       "2018",
+       "corran margins steady as costs ease",
+       "train"
+      ],
+      [
+       "2019",
+       "corran guidance raised on strong sales",
+       "train"
+      ],
+      [
+       "2020",
+       "corran sales slip as demand cools",
+       "train"
+      ],
+      [
+       "2021",
+       "corran launches zenvia and sales jump",
+       "test"
+      ],
+      [
+       "2022",
+       "zenvia orders lift corran guidance",
+       "test"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What IDF does 'sales' get when fitted on the training fold only? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.2877,
+    "tol": {
+     "abs": 6e-05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 1.4055,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $n = 3$ and $\\text{df} = 2$ in the smooth IDF."
+    },
+    {
+     "rung": "point",
+     "text": "$\\ln(4/3) + 1$.",
+     "highlight": [
+      "r1",
+      "r2"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln(4/3) + 1 = 1.2877$, against 1.4055 when fitted on all five notes.",
+    "generic": "Not quite. Count only the three training notes.",
+    "byKey": {
+     "all": "1.4055 is the IDF fitted on all five notes, test years included."
+    }
+   },
+   "explain": {
+    "text": "In the fold 'sales' gets 1.2877; fitted on all years, 1.4055. Every weight learned from the test years is information the 2020 model could not have had."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Measuring a leak",
+   "prose": "On the seeded market, trade the sign of the latest score known at each close, after the cut-off: the hit rate (share of winning days) is 52.8%. Join documents by calendar date instead, so that after-close documents feed the same day, and it becomes 65.6%.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "asof",
+       "label": "As-of join"
+      },
+      {
+       "id": "date",
+       "label": "Date join"
+      },
+      {
+       "id": "before",
+       "label": "Before cut-off"
+      }
+     ],
+     "yLabel": "Hit rate",
+     "yMax": 0.8,
+     "showValues": true,
+     "decimals": 3
+    },
+    "state": {
+     "values": {
+      "asof": 0.528,
+      "date": 0.656,
+      "before": 0.746
+     }
+    }
+   },
+   "question": "By how many percentage points does the timestamp leak raise the hit rate? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12.8,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 1.24,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the two hit rates."
+    },
+    {
+     "rung": "point",
+     "text": "$65.6 - 52.8$."
+    }
+   ],
+   "feedback": {
+    "correct": "12.8 points: a leak of hours, not days, already looks like a strong signal.",
+    "generic": "Not quite. Take the difference of the two percentages.",
+    "byKey": {
+     "ratio": "That is the ratio of the two rates. The question asks for the difference in points."
+    }
+   },
+   "explain": {
+    "text": "65.6% against 52.8%: 12.8 points. Before the cut-off, with memory, the as-of hit rate is 74.6%."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The masking test",
+   "prose": "Does the model read the text, or recognise the company? Replace every company name with a placeholder and score again. Eight headlines give the scores below.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Headline",
+      "Raw",
+      "Masked",
+      "Change"
+     ],
+     "rows": [
+      [
+       "h1",
+       "0.62",
+       "0.30",
+       "0.32"
+      ],
+      [
+       "h2",
+       "0.35",
+       "0.31",
+       "0.04"
+      ],
+      [
+       "h3",
+       "-0.41",
+       "-0.45",
+       "0.04"
+      ],
+      [
+       "h4",
+       "0.80",
+       "0.42",
+       "0.38"
+      ],
+      [
+       "h5",
+       "0.15",
+       "0.12",
+       "0.03"
+      ],
+      [
+       "h6",
+       "-0.22",
+       "-0.20",
+       "-0.02"
+      ],
+      [
+       "h7",
+       "0.55",
+       "0.18",
+       "0.37"
+      ],
+      [
+       "h8",
+       "0.40",
+       "0.36",
+       "0.04"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the mean change, raw minus masked? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.15,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 1.2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "masked-raw",
+      "value": -0.15,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Average the Change column."
+    },
+    {
+     "rung": "point",
+     "text": "The changes add up to 1.20."
+    }
+   ],
+   "feedback": {
+    "correct": "$1.20/8 = 0.1500$: the scores fall when the names are hidden.",
+    "generic": "Not quite. Average the eight changes.",
+    "byKey": {
+     "sum": "That is the sum of the changes; divide by 8.",
+     "masked-raw": "You took masked minus raw. The change is raw minus masked."
+    }
+   },
+   "explain": {
+    "text": "Mean change 0.1500, driven by h1, h4 and h7, whose scores drop by more than 0.3. A model that scores a company higher just for its name has memorised something about it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Is the change real?",
+   "prose": "The eight changes have standard deviation 0.1731. As for any paired test, the standard error of their mean is the standard deviation over $\\sqrt n$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Headline",
+      "Raw",
+      "Masked",
+      "Change"
+     ],
+     "rows": [
+      [
+       "h1",
+       "0.62",
+       "0.30",
+       "0.32"
+      ],
+      [
+       "h2",
+       "0.35",
+       "0.31",
+       "0.04"
+      ],
+      [
+       "h3",
+       "-0.41",
+       "-0.45",
+       "0.04"
+      ],
+      [
+       "h4",
+       "0.80",
+       "0.42",
+       "0.38"
+      ],
+      [
+       "h5",
+       "0.15",
+       "0.12",
+       "0.03"
+      ],
+      [
+       "h6",
+       "-0.22",
+       "-0.20",
+       "-0.02"
+      ],
+      [
+       "h7",
+       "0.55",
+       "0.18",
+       "0.37"
+      ],
+      [
+       "h8",
+       "0.40",
+       "0.36",
+       "0.04"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the standard error of the mean change? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0612,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.1731,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "over-n",
+      "value": 0.0216,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$n = 8$."
+    },
+    {
+     "rung": "point",
+     "text": "$0.1731/\\sqrt 8$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.1731/\\sqrt 8 = 0.0612$, so the mean change of 0.1500 is 2.5 standard errors from 0.",
+    "generic": "Not quite. Divide by $\\sqrt 8$.",
+    "byKey": {
+     "sd": "That is the spread of single changes.",
+     "over-n": "You divided by 8. Divide by $\\sqrt 8$."
+    }
+   },
+   "explain": {
+    "text": "$0.1731/2.8284 = 0.0612$. A mean change 2.5 standard errors above 0 is evidence that names, not words, move these scores."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "It barely moved",
+   "prose": "Another vendor's scores are masked on four headlines. The mean change is -0.0050, with standard error 0.0520. The vendor says: 'masking changes nothing, so our model reads, it does not remember.'",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Headline",
+      "Raw",
+      "Masked",
+      "Change"
+     ],
+     "rows": [
+      [
+       "g1",
+       "0.50",
+       "0.42",
+       "0.08"
+      ],
+      [
+       "g2",
+       "-0.10",
+       "0.05",
+       "-0.15"
+      ],
+      [
+       "g3",
+       "0.30",
+       "0.31",
+       "-0.01"
+      ],
+      [
+       "g4",
+       "0.20",
+       "0.14",
+       "0.06"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does this test show?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nothing",
+      "text": "Little: changes as large as 0.1 cannot be ruled out",
+      "correct": true
+     },
+     {
+      "id": "clean",
+      "text": "The model does not use names",
+      "why": "A mean near 0 on four headlines is weak evidence: its standard error is about 0.05."
+     },
+     {
+      "id": "leak",
+      "text": "The model leaks, since some changes are negative",
+      "why": "Changes of both signs are what noise looks like; they do not show a leak."
+     },
+     {
+      "id": "size",
+      "text": "Masking always changes the score, so this is a bug",
+      "why": "Masking leaves scores unchanged when names carry nothing; the problem is the tiny sample."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the mean change with its standard error."
+    },
+    {
+     "rung": "point",
+     "text": "Which changes are still plausible within two standard errors?"
+    }
+   ],
+   "feedback": {
+    "correct": "The test cannot tell: the mean -0.0050 sits inside a band of about $\\pm 0.10$.",
+    "generic": "Not quite. How precise is a mean of four changes?",
+    "byKey": {
+     "clean": "You read 'barely moved' as 'no leak'. With a standard error of 0.0520, a real change of 0.1 could easily look like this."
+    }
+   },
+   "explain": {
+    "text": "Two standard errors either side of -0.0050 span about ±0.10, so a name effect of 0.1 is still plausible. Mask hundreds of headlines before concluding anything."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A word that really predicts",
+   "prose": "From 2021, notes that mention zenvia are followed by rises in Corran's shares more often than not. The word is genuinely predictive.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Year",
+      "Note",
+      "Fold"
+     ],
+     "rows": [
+      [
+       "2018",
+       "corran margins steady as costs ease",
+       "train"
+      ],
+      [
+       "2019",
+       "corran guidance raised on strong sales",
+       "train"
+      ],
+      [
+       "2020",
+       "corran sales slip as demand cools",
+       "train"
+      ],
+      [
+       "2021",
+       "corran launches zenvia and sales jump",
+       "test"
+      ],
+      [
+       "2022",
+       "zenvia orders lift corran guidance",
+       "test"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Can a backtest of 2018 to 2020 use the word?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: before 2021 the word did not exist",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes, because the effect is real",
+      "why": "Real or not, nobody in 2019 could have searched for a product announced in 2021."
+     },
+     {
+      "id": "weight",
+      "text": "Yes, if its weight is small",
+      "why": "Any weight on a word from the future is look-ahead."
+     },
+     {
+      "id": "test",
+      "text": "Only in the test years of the backtest",
+      "why": "From 2021 on it can be used, yes; the question was about 2018 to 2020."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Could anyone have used the word in 2019?"
+    }
+   ],
+   "feedback": {
+    "correct": "No: a feature can only use what existed at the time.",
+    "generic": "Not quite. When did the word first appear?"
+   },
+   "explain": {
+    "text": "A real effect does not license look-ahead. From 2021 the word can enter the vocabulary of folds trained on 2021 data, and earn its place honestly."
+   }
+  },
+  {
+   "type": "generalise",
+   "title": "Text leaks are ordinary leaks",
+   "prose": "What you checked, as `validation` level 3's rules applied to text. Fit the vocabulary and IDF on each training fold only. Stamp each document with its first version's time. Test for memorised names by masking, and judge the change with its standard error,\n\n$$\\bar d = \\frac{1}{n}\\sum_i (s_i - s_i^{\\text{masked}}), \\qquad \\text{SE} = \\frac{s_d}{\\sqrt n}.$$",
+   "question": "A vendor revises a note on Thursday but keeps Monday's publication time on the new text. What is the leak?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rev",
+      "text": "Monday's decision gets Thursday's revised text",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "None: the note was first published on Monday",
+      "why": "The first version was; the revised text was not."
+     },
+     {
+      "id": "late",
+      "text": "Thursday's decision gets Monday's text",
+      "why": "Using older text later is safe; the problem runs the other way."
+     },
+     {
+      "id": "names",
+      "text": "The names in the note",
+      "why": "Names are a separate leak; this one is the timestamp."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which version existed on Monday?"
+    }
+   ],
+   "feedback": {
+    "correct": "The revised words are back-dated to Monday.",
+    "generic": "Not quite. What did Monday's reader actually see?"
+   },
+   "explain": {
+    "text": "Keep every version with its own timestamp, and let each decision see only the versions out before it."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A vocabulary fitted in the fold",
+   "prose": "Write `fit_vocab_in_fold(train_docs)`, returning the training vocabulary and its smooth IDF, and `transform(test_docs, model)`, which weights test notes with that IDF and drops words the fold never saw.",
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport re\n\n\ndef fit_vocab_in_fold(train_docs):\n    # {'vocab': sorted words of the training docs,\n    #  'idf': {word: ln((1 + n) / (1 + df)) + 1}} from the training docs only\n    ...\n\n\ndef transform(test_docs, model):\n    # one TF-IDF row per test doc over model['vocab'], length 1;\n    # words outside the vocabulary are dropped\n    ...\n",
+    "solution": "import math\nimport re\n\n\ndef fit_vocab_in_fold(train_docs):\n    n = len(train_docs)\n    df = {}\n    for d in train_docs:\n        for w in set(re.findall(r'[a-z]+', d.lower())):\n            df[w] = df.get(w, 0) + 1\n    vocab = sorted(df)\n    return {'vocab': vocab, 'idf': {w: math.log((1 + n) / (1 + df[w])) + 1 for w in vocab}}\n\n\ndef transform(test_docs, model):\n    col = {w: j for j, w in enumerate(model['vocab'])}\n    rows = []\n    for d in test_docs:\n        r = [0.0] * len(col)\n        for w in re.findall(r'[a-z]+', d.lower()):\n            if w in col:\n                r[col[w]] += model['idf'][w]\n        n = math.sqrt(sum(x * x for x in r))\n        rows.append([x / n for x in r] if n > 0 else r)\n    return rows\n",
+    "examples": [
+     {
+      "setup": "TR = ['corran margins steady as costs ease', 'corran guidance raised on strong sales', 'corran sales slip as demand cools']\nTE = ['corran launches zenvia and sales jump', 'zenvia orders lift corran guidance']",
+      "call": "len(fit_vocab_in_fold(TR)['vocab'])",
+      "expect": "14"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "TR = ['corran margins steady as costs ease', 'corran guidance raised on strong sales', 'corran sales slip as demand cools']\nTE = ['corran launches zenvia and sales jump', 'zenvia orders lift corran guidance']",
+      "call": "fit_vocab_in_fold(TR)['vocab']",
+      "expect": "['as', 'cools', 'corran', 'costs', 'demand', 'ease', 'guidance', 'margins', 'on', 'raised', 'sales', 'slip', 'steady', 'strong']"
+     },
+     {
+      "call": "fit_vocab_in_fold(TR)['idf']['sales']",
+      "expect": "1.2876820724517808",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "fit_vocab_in_fold(['Oil rises.', 'oil falls'])['vocab']",
+      "expect": "['falls', 'oil', 'rises']"
+     },
+     {
+      "call": "transform(TE, fit_vocab_in_fold(TR))",
+      "expect": "[[0.0, 0.0, 0.6133555370249717, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.7898069290660905, 0.0, 0.0, 0.0], [0.0, 0.0, 0.5085423203783267, 0.0, 0.0, 0.0, 0.8610369959439764, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "transform(['zenvia launches'], fit_vocab_in_fold(TR))[0]",
+      "expect": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "transform(['Sales SALES margins'], fit_vocab_in_fold(TR))[0]",
+      "expect": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5493512310263033, 0.0, 0.0, 0.8355915419449176, 0.0, 0.0, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "len(transform(TE + TR, fit_vocab_in_fold(TR))[0])",
+      "expect": "14"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Three check the fit: the training vocabulary, the IDF of 'sales' (relative $10^{-9}$) and a vocabulary from notes with capitals and full stops. Four check rows within absolute $10^{-9}$: the two test notes, unknown words only, a word repeated in capitals, and the row width.",
+    "mutants": [
+     {
+      "source": "import math\nimport re\n\n\ndef fit_vocab_in_fold(train_docs):\n    n = len(train_docs) + 2\n    df = {}\n    for d in train_docs:\n        for w in set(re.findall(r'[a-z]+', d.lower())):\n            df[w] = df.get(w, 0) + 1\n    vocab = sorted(df)\n    return {'vocab': vocab, 'idf': {w: math.log((1 + n) / (1 + df[w])) + 1 for w in vocab}, 'n': n}\n\n\ndef transform(test_docs, model):\n    col = {w: j for j, w in enumerate(model['vocab'])}\n    rows = []\n    for d in test_docs:\n        r = [0.0] * len(col)\n        for w in re.findall(r'[a-z]+', d.lower()):\n            if w in col:\n                r[col[w]] += model['idf'][w]\n        n = math.sqrt(sum(x * x for x in r))\n        rows.append([x / n for x in r] if n > 0 else r)\n    return rows\n",
+      "test": 2,
+      "symptom": "Counts the test notes in n, as if fitted on all years."
+     },
+     {
+      "source": "import math\nimport re\n\n\ndef fit_vocab_in_fold(train_docs):\n    n = len(train_docs)\n    df = {}\n    for d in train_docs:\n        for w in set(d.split()):\n            df[w] = df.get(w, 0) + 1\n    vocab = sorted(df)\n    return {'vocab': vocab, 'idf': {w: math.log((1 + n) / (1 + df[w])) + 1 for w in vocab}}\n\n\ndef transform(test_docs, model):\n    col = {w: j for j, w in enumerate(model['vocab'])}\n    rows = []\n    for d in test_docs:\n        r = [0.0] * len(col)\n        for w in re.findall(r'[a-z]+', d.lower()):\n            if w in col:\n                r[col[w]] += model['idf'][w]\n        n = math.sqrt(sum(x * x for x in r))\n        rows.append([x / n for x in r] if n > 0 else r)\n    return rows\n",
+      "test": 3,
+      "symptom": "Splits on spaces without lowering the case."
+     },
+     {
+      "source": "import math\nimport re\n\n\ndef fit_vocab_in_fold(train_docs):\n    n = len(train_docs)\n    df = {}\n    for d in train_docs:\n        for w in set(re.findall(r'[a-z]+', d.lower())):\n            df[w] = df.get(w, 0) + 1\n    vocab = sorted(df)\n    return {'vocab': vocab, 'idf': {w: math.log((1 + n) / (1 + df[w])) + 1 for w in vocab}}\n\n\ndef transform(test_docs, model):\n    col = {w: j for j, w in enumerate(model['vocab'])}\n    rows = []\n    for d in test_docs:\n        r = [0.0] * len(col)\n        for w in re.findall(r'[a-z]+', d.lower()):\n            if w in col:\n                r[col[w]] = model['idf'][w]\n        n = math.sqrt(sum(x * x for x in r))\n        rows.append([x / n for x in r] if n > 0 else r)\n    return rows\n",
+      "test": 6,
+      "symptom": "Counts a repeated word once."
+     },
+     {
+      "source": "import math\nimport re\n\n\ndef fit_vocab_in_fold(train_docs):\n    n = len(train_docs)\n    df = {}\n    for d in train_docs:\n        for w in set(re.findall(r'[a-z]+', d.lower())):\n            df[w] = df.get(w, 0) + 1\n    vocab = sorted(df)\n    return {'vocab': vocab, 'idf': {w: math.log((1 + n) / (1 + df[w])) + 1 for w in vocab}}\n\n\ndef transform(test_docs, model):\n    col = {w: j for j, w in enumerate(model['vocab'])}\n    rows = []\n    for d in test_docs:\n        r = [0.0] * len(col)\n        for w in re.findall(r'[a-z]+', d.lower()):\n            if w in col:\n                r[col[w]] += model['idf'][w]\n        n = math.sqrt(sum(x * x for x in r))\n        rows.append([x / n for x in r])\n    return rows\n",
+      "test": 5,
+      "symptom": "Divides a note of unknown words by its zero length."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Fit uses only `train_docs`: `n` is their number."
+    },
+    {
+     "rung": "point",
+     "text": "In `transform`, skip any word not in the vocabulary, then scale each row to length 1."
+    }
+   ],
+   "feedback": {
+    "correct": "Both match: zenvia never enters the 2018 to 2020 model.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-2": "IDF here uses $n = 3$ training notes: 'sales' gets $\\ln(4/3) + 1$, not a figure from all five.",
+     "test-3": "Read words as lower-case runs of letters, so the vocabulary is the one the transform uses.",
+     "test-6": "'sales' appears twice beside 'margins', so add its IDF twice before scaling.",
+     "test-5": "A note whose words are all outside the vocabulary has a zero row: leave it as zeros."
+    }
+   },
+   "explain": {
+    "text": "The fold's vocabulary and IDF are fixed before any test note is seen, so a word or a frequency from the test years cannot reach the model."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The masking test in code",
+   "prose": "Write `mask_entities(text, names)`, replacing every name with 'NAME', and `masking_effect(scores_raw, scores_masked)`, returning the mean change and its standard error. Names are matched as whole words in any case, longest first.",
+   "question": "Write both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport re\nimport statistics\n\n\ndef mask_entities(text, names):\n    # replace each name (whole words, any case) with 'NAME',\n    # longer names first\n    ...\n\n\ndef masking_effect(scores_raw, scores_masked):\n    # (mean of raw - masked, its standard error with the n - 1 sd)\n    ...\n",
+    "solution": "import math\nimport re\nimport statistics\n\n\ndef mask_entities(text, names):\n    for name in sorted(names, key=len, reverse=True):\n        text = re.sub(r'\\b' + re.escape(name) + r'\\b', 'NAME', text, flags=re.IGNORECASE)\n    return text\n\n\ndef masking_effect(scores_raw, scores_masked):\n    d = [a - b for a, b in zip(scores_raw, scores_masked)]\n    return statistics.fmean(d), statistics.stdev(d) / math.sqrt(len(d))\n",
+    "examples": [
+     {
+      "call": "mask_entities('Dunmore cuts guidance', ['Dunmore'])",
+      "expect": "'NAME cuts guidance'"
+     }
+    ],
+    "tests": [
+     {
+      "call": "mask_entities('Corran shares rose as corran beat forecasts', ['Corran'])",
+      "expect": "'NAME shares rose as NAME beat forecasts'"
+     },
+     {
+      "call": "mask_entities('Corran Group and Corran Bank both rose', ['Corran', 'Corran Group'])",
+      "expect": "'NAME and NAME Bank both rose'"
+     },
+     {
+      "call": "mask_entities('Corranby Mills is not Corran', ['Corran'])",
+      "expect": "'Corranby Mills is not NAME'"
+     },
+     {
+      "call": "masking_effect([0.62, 0.35, -0.41, 0.8, 0.15, -0.22, 0.55, 0.4], [0.3, 0.31, -0.45, 0.42, 0.12, -0.2, 0.18, 0.36])",
+      "expect": "[0.15000000000000002, 0.06120807603109716]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "masking_effect([0.5, 0.2], [0.1, 0.3])",
+      "expect": "[0.15000000000000002, 0.25]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. Three masks must match exactly: a name in two cases, a longer name that contains a shorter one, and a name inside a longer word. Two masking effects must be within relative $10^{-9}$: the eight headlines, and two headlines that move in opposite directions.",
+    "mutants": [
+     {
+      "source": "import math\nimport re\nimport statistics\n\n\ndef mask_entities(text, names):\n    for name in sorted(names, key=len, reverse=True):\n        text = re.sub(r'\\b' + re.escape(name) + r'\\b', 'NAME', text)\n    return text\n\n\ndef masking_effect(scores_raw, scores_masked):\n    d = [a - b for a, b in zip(scores_raw, scores_masked)]\n    return statistics.fmean(d), statistics.stdev(d) / math.sqrt(len(d))\n",
+      "test": 1,
+      "symptom": "Matches only the exact case."
+     },
+     {
+      "source": "import math\nimport re\nimport statistics\n\n\ndef mask_entities(text, names):\n    for name in names:\n        text = re.sub(r'\\b' + re.escape(name) + r'\\b', 'NAME', text, flags=re.IGNORECASE)\n    return text\n\n\ndef masking_effect(scores_raw, scores_masked):\n    d = [a - b for a, b in zip(scores_raw, scores_masked)]\n    return statistics.fmean(d), statistics.stdev(d) / math.sqrt(len(d))\n",
+      "test": 2,
+      "symptom": "Masks a short name before a longer one that contains it."
+     },
+     {
+      "source": "import math\nimport re\nimport statistics\n\n\ndef mask_entities(text, names):\n    for name in sorted(names, key=len, reverse=True):\n        text = re.sub(re.escape(name), 'NAME', text, flags=re.IGNORECASE)\n    return text\n\n\ndef masking_effect(scores_raw, scores_masked):\n    d = [a - b for a, b in zip(scores_raw, scores_masked)]\n    return statistics.fmean(d), statistics.stdev(d) / math.sqrt(len(d))\n",
+      "test": 3,
+      "symptom": "Masks a name inside a longer word."
+     },
+     {
+      "source": "import math\nimport re\nimport statistics\n\n\ndef mask_entities(text, names):\n    for name in sorted(names, key=len, reverse=True):\n        text = re.sub(r'\\b' + re.escape(name) + r'\\b', 'NAME', text, flags=re.IGNORECASE)\n    return text\n\n\ndef masking_effect(scores_raw, scores_masked):\n    d = [a - b for a, b in zip(scores_raw, scores_masked)]\n    return statistics.fmean(d), statistics.stdev(d)\n",
+      "test": 4,
+      "symptom": "Returns the standard deviation, not the standard error."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`re.sub(r'\\b' + re.escape(name) + r'\\b', 'NAME', text, flags=re.IGNORECASE)` masks one name."
+    },
+    {
+     "rung": "point",
+     "text": "Sort names by length, longest first."
+    }
+   ],
+   "feedback": {
+    "correct": "Both match: the eight headlines give 0.1500 with standard error 0.0612.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "'corran' in lower case is the same company: match any case.",
+     "test-2": "Mask 'Corran Group' before 'Corran', or it becomes 'NAME Group'.",
+     "test-3": "'Corranby' is another company: match whole words only, with `\\b`.",
+     "test-4": "Divide the standard deviation by $\\sqrt n$ for the standard error of the mean."
+    }
+   },
+   "explain": {
+    "text": "Longest-first stops 'Corran Group' turning into 'NAME Group'; word boundaries stop 'Corranby' being masked. The standard error is what turns a change into evidence."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A vendor's news embedding",
+   "prose": "A vendor offers news embeddings for a factor model, produced by a model trained in 2024. Your backtest covers 2015 to 2023.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 2015,
+     "max": 2025,
+     "step": 1
+    },
+    "state": {
+     "intervals": [
+      {
+       "id": "bt",
+       "from": 2015,
+       "to": 2023.99,
+       "label": "backtest"
+      }
+     ],
+     "points": [
+      {
+       "id": "tr",
+       "x": 2024.5,
+       "label": "trained"
+      }
+     ]
+    }
+   },
+   "question": "What is the main risk?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "future",
+      "text": "They were learned from text about the backtest years",
+      "correct": true
+     },
+     {
+      "id": "dim",
+      "text": "The embeddings have too many dimensions",
+      "why": "Size is a modelling question; the leak is when they were learned."
+     },
+     {
+      "id": "speed",
+      "text": "They may arrive late each morning",
+      "why": "Delivery speed matters live, not for whether the backtest is honest."
+     },
+     {
+      "id": "none",
+      "text": "None: embeddings are only numbers, not text",
+      "why": "Numbers learned from later text carry what that text knew."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When was the embedding model trained, relative to the backtest?"
+    }
+   ],
+   "feedback": {
+    "correct": "The whole backtest predates the model's training: every embedding may encode hindsight.",
+    "generic": "Not quite. Compare the training date with the backtest."
+   },
+   "explain": {
+    "text": "An embedding is a fitted transform, like a vocabulary. Fitted in 2024, it can encode which words preceded which outcomes in 2015 to 2023, so the backtest has no clean window."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Text leaks are ordinary leaks: a vocabulary or IDF fitted on all years carries later words and frequencies back in time; fit them inside each fold.",
+   "A model may recognise company names rather than read; mask the names, score again and judge the mean change with its standard error.",
+   "Stamp each document version with its own time: a revision kept under the first version's timestamp back-dates later text."
+  ],
+  "formula": {
+   "name": "Masking effect",
+   "tex": "\\bar d = \\frac{1}{n}\\sum_i (s_i - s_i^{\\text{masked}}), \\quad \\text{SE} = \\frac{s_d}{\\sqrt n}",
+   "note": "A small change on few headlines proves nothing."
+  },
+  "trap": "Masking a handful of headlines, seeing little change, and calling the model clean."
+ },
+ "quiz": [
+  {
+   "id": "q7-vocab",
+   "difficulty": 2,
+   "prose": "A fold trains on 2019 notes and tests on 2020. A word first appears in March 2020.",
+   "question": "Should it be in the fold's vocabulary?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: it is fitted on the training notes only",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes, if it helps predict returns in 2020",
+      "why": "Helping in the test period is exactly the leak."
+     },
+     {
+      "id": "half",
+      "text": "Only with half its usual weight",
+      "why": "Any weight on it is look-ahead in this fold."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No: the fold's vocabulary comes from 2019 alone.",
+    "generic": "Not quite. Which notes is the vocabulary fitted on?"
+   },
+   "explain": {
+    "text": "Fitted on 2019, the vocabulary cannot contain a word born in 2020; the next fold, trained on 2020, can."
+   }
+  },
+  {
+   "id": "q7-mask",
+   "difficulty": 2,
+   "prose": "Masking changes five headlines' scores by 0.2, 0.1, 0.3, 0.0 and 0.4, raw minus masked.",
+   "question": "What is the mean change? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1.0/5 = 0.20$.",
+    "generic": "Not quite. Average the five changes.",
+    "byKey": {
+     "sum": "1.0 is the sum."
+    }
+   },
+   "explain": {
+    "text": "The changes sum to 1.0, so the mean is 0.20."
+   }
+  },
+  {
+   "id": "q7-se",
+   "difficulty": 3,
+   "prose": "A masking test on 100 headlines gives a mean change of 0.03 with standard deviation 0.10.",
+   "question": "What is the standard error of the mean change? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.01,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "Decimal",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.10/\\sqrt{100} = 0.01$, so the change is 3 standard errors from 0.",
+    "generic": "Not quite. Divide by $\\sqrt{100}$.",
+    "byKey": {
+     "sd": "0.10 is the spread of single changes."
+    }
+   },
+   "explain": {
+    "text": "$0.10/10 = 0.01$. A mean change three standard errors above 0 is evidence that names move the scores."
+   }
+  },
+  {
+   "id": "q7-stamp",
+   "difficulty": 3,
+   "prose": "A vendor's archive keeps only each note's latest revision, stamped with its first publication time.",
+   "question": "Why is that a leak?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "back",
+      "text": "Revised text is back-dated to when the first version appeared",
+      "correct": true
+     },
+     {
+      "id": "late",
+      "text": "The stamps are too late",
+      "why": "They are too early for the revised text."
+     },
+     {
+      "id": "none",
+      "text": "It is not: the first time is the right one",
+      "why": "Right for the first version, wrong for the revised words."
+     },
+     {
+      "id": "names",
+      "text": "Revisions add company names",
+      "why": "The leak is the timing, not the names."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Later words carry an earlier timestamp.",
+    "generic": "Not quite. Which version existed at the first time?"
+   },
+   "explain": {
+    "text": "The archive hands early decisions text that was only written later. Keep every version with its own timestamp."
+   }
+  }
+ ]
+}
