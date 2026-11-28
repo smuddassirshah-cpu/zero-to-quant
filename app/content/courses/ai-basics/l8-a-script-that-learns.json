@@ -1,0 +1,709 @@
+{
+ "id": "l8-a-script-that-learns",
+ "course": "ai-basics",
+ "title": "A script that learns",
+ "minutes": 15,
+ "objectives": [
+  "Write a script that fits a line by nudging two weights until the error stops falling."
+ ],
+ "skills": [
+  "ab-nudge"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Write what you did",
+   "prose": "You fitted the line by hand: start at (0, 0), do rounds, stop when a round changes nothing. A script can do the same.",
+   "question": "Put the script's steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "start",
+      "text": "Set $w = 0$, $b = 0$ and the round count to 0"
+     },
+     {
+      "id": "round",
+      "text": "Do one round of nudging and add 1 to the count"
+     },
+     {
+      "id": "test",
+      "text": "If the round changed nothing, stop"
+     },
+     {
+      "id": "again",
+      "text": "Otherwise go back and do another round"
+     },
+     {
+      "id": "ret",
+      "text": "Return $w$, $b$, the error and the count"
+     }
+    ],
+    "answer": [
+     "start",
+     "round",
+     "test",
+     "again",
+     "ret"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What has to happen before the first round?"
+    },
+    {
+     "rung": "step",
+     "text": "Start, round, test, repeat, return."
+    }
+   ],
+   "feedback": {
+    "correct": "Start, round, test, repeat, return.",
+    "generic": "Not quite. The stopping test comes right after each round.",
+    "byKey": {
+     "test": "The test needs a round to have happened first.",
+     "ret": "Returning comes only after the loop stops."
+    }
+   },
+   "explain": {
+    "text": "The loop body is one round and a test. The test after each round is what stops the loop, as in first-python l6."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The fitting script",
+   "prose": "Use `nudge_once` and `mse` (already written). Count every round, including the last one that changes nothing. Round $w$ and $b$ to 6 places at the end: 0.1 added fifteen times is `1.5000000000000002` in a computer, not exactly 1.5.",
+   "question": "Write `fit_by_nudging(xs, ys, step)` returning `(w, b, error, rounds)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    # run rounds until one changes nothing; count every round\n    return (w, b, mse(w, b, xs, ys), rounds)\n",
+    "solution": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n",
+    "examples": [
+     {
+      "call": "list(fit_by_nudging([1, 2, 3, 4, 5], [3, 4, 6, 7, 9], 0.1))",
+      "expect": "[1.5, 1.3, 0.06, 16]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(fit_by_nudging([1, 2, 3, 4, 5], [3, 4, 6, 7, 9], 0.1))",
+      "expect": "[1.5, 1.3, 0.06, 16]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([1, 2, 3, 4, 5], [3, 4, 6, 7, 9], 0.5))",
+      "expect": "[1.5, 1.5, 0.1, 4]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([-1, 0, 1, 2], [-5, -2, 1, 4], 1))",
+      "expect": "[3.0, -2.0, 0.0, 4]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([1, 2, 3], [0, 0, 0], 0.1))",
+      "expect": "[0.0, 0.0, 0.0, 1]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([2], [5], 1))",
+      "expect": "[2.0, 1.0, 0.0, 3]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_by_nudging([0, 1, 2, 3], [2, 1, 0, -1], 1))",
+      "expect": "[0.0, 0.0, 1.5, 1]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 6 hidden tests. Each list is accepted when every number is math.isclose to the expected one."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use `while True:` and `break` when nothing changed."
+    },
+    {
+     "rung": "point",
+     "text": "Inside: `new_w, new_b = nudge_once(w, b, xs, ys, step)`, then add 1 to `rounds`."
+    },
+    {
+     "rung": "step",
+     "text": "If `new_w == w and new_b == b`, break; otherwise set `w, b = new_w, new_b`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your script fits the line and counts 16 rounds on the course data.",
+    "generic": "Not quite. Read the first failing test.",
+    "byKey": {
+     "test-1": "Expected 16 rounds. If you got 15, count the last round, the one that changed nothing.",
+     "test-4": "These points lie on $y = 0$, so the first round changes nothing: 1 round, $w = b = 0$."
+    }
+   },
+   "explain": {
+    "text": "The loop runs rounds and breaks on the first round that changes nothing.\n\n```python\nwhile True:\n    new_w, new_b = nudge_once(w, b, xs, ys, step)\n    rounds = rounds + 1\n    if new_w == w and new_b == b:\n        break\n    w, b = new_w, new_b\n```"
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A coarser step",
+   "prose": "The script prints a line each round. Here is the start and the end of the run with step 0.1.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Printed by the loop, step 0.1",
+     "compact": true,
+     "lines": [
+      "round 1: w = 0.1, b = 0.1",
+      "round 2: w = 0.2, b = 0.2",
+      "round 3: w = 0.30000000000000004, b = 0.30000000000000004",
+      "...",
+      "round 14: w = 1.4000000000000001, b = 1.4000000000000001",
+      "round 15: w = 1.5000000000000002, b = 1.3",
+      "round 16: w = 1.5000000000000002, b = 1.3"
+     ]
+    },
+    "state": {}
+   },
+   "question": "With step 0.5 instead, how many rounds does `fit_by_nudging` count?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "label": "Rounds",
+    "accept": "4",
+    "wrong": [
+     {
+      "id": "moving",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "fine",
+      "value": 16,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each round with step 0.5 can move $w$ and $b$ by 0.5."
+    },
+    {
+     "rung": "point",
+     "text": "Three rounds reach (1.5, 1.5)."
+    },
+    {
+     "rung": "step",
+     "text": "The fourth round changes nothing: 4 rounds."
+    }
+   ],
+   "feedback": {
+    "correct": "Three moving rounds and one that changes nothing: 4.",
+    "generic": "Not quite. Count the last round too.",
+    "byKey": {
+     "moving": "3 rounds move the line. The fourth, which changes nothing, is counted too.",
+     "fine": "16 is the count for step 0.1."
+    }
+   },
+   "explain": {
+    "text": "With step 0.5 the line goes (0.5, 0.5), (1, 1), (1.5, 1.5), and a fourth round changes nothing: 4 rounds. It stops at MSE 0.1, coarser than step 0.1's 0.06."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A loop that never ends",
+   "prose": "A colleague's script hangs forever.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Their loop",
+     "lines": [
+      "while True:",
+      "    new_w, new_b = nudge_once(w, b, xs, ys, step)",
+      "    w, b = new_w, new_b"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is missing?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "test",
+      "text": "A test that stops the loop when a round changes nothing",
+      "correct": true
+     },
+     {
+      "id": "step",
+      "text": "A smaller step, so it reaches the end",
+      "why": "Any step ends in a round that changes nothing. Without a test, the loop keeps going after that."
+     },
+     {
+      "id": "count",
+      "text": "A counter of the rounds it has run",
+      "why": "Counting is useful, but a counter alone does not stop anything."
+     },
+     {
+      "id": "return",
+      "text": "A `return` line placed inside the loop",
+      "why": "A `return` with no test would stop after one round."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`while True` repeats until something breaks out."
+    },
+    {
+     "rung": "step",
+     "text": "Nothing here ever breaks out."
+    }
+   ],
+   "feedback": {
+    "correct": "Without a stopping test, `while True` never ends.",
+    "generic": "Not quite. What would end a `while True` loop?",
+    "byKey": {
+     "step": "You changed the step. The loop still has no way to stop."
+    }
+   },
+   "explain": {
+    "text": "`while True` runs until a `break`. The fix is the test you wrote: if the round changed nothing, break. Every loop needs a test that will become true (first-python l6)."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Ties that move",
+   "prose": "Another colleague keeps a nudge when it gives an **equal or lower** error, writing `<=` where we wrote `<`. Their points are (0, 1) and (0, 3): both have $x = 0$, so changing $w$ never changes the error.",
+   "question": "What happens when their script runs on these points?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "forever",
+      "text": "A nudge keeps being accepted, so rounds can go on forever",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "Nothing changes: equal is as good as lower",
+      "why": "With `<=` an equal error is accepted, so the line moves, and the round changed something."
+     },
+     {
+      "id": "faster",
+      "text": "The script finishes faster",
+      "why": "Accepting ties can stop the rounds ever ending."
+     },
+     {
+      "id": "crash",
+      "text": "Python raises an error",
+      "why": "Nothing illegal happens; it just never stops."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When does our script stop?"
+    },
+    {
+     "rung": "step",
+     "text": "Only when a round changes nothing. With `<=`, a tie still changes something."
+    }
+   ],
+   "feedback": {
+    "correct": "Accepting ties lets the line wander forever without improving.",
+    "generic": "Not quite. Think about when the stopping test can be true."
+   },
+   "explain": {
+    "text": "Our loop stops when a round changes nothing. With `<=`, a nudge that only ties is accepted, so every round changes the line and the loop never ends. Strict `<` keeps a nudge only when the error really falls."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Already perfect",
+   "prose": "Three points lie on $y = 0x + 0$: (1, 0), (2, 0) and (3, 0).",
+   "question": "What does `fit_by_nudging(xs, ys, 0.1)` return as the round count?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "label": "Rounds",
+    "accept": "1",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "From (0, 0) the MSE is already 0."
+    },
+    {
+     "rung": "step",
+     "text": "The first round changes nothing, and it is counted."
+    }
+   ],
+   "feedback": {
+    "correct": "One round, which changes nothing.",
+    "generic": "Not quite. The first round runs before the test.",
+    "byKey": {
+     "zero": "The test runs after a round, so at least one round is always counted."
+    }
+   },
+   "explain": {
+    "text": "The MSE at (0, 0) is already 0, so no nudge can lower it. The first round changes nothing and the script stops, having counted 1 round."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A script that reads its data",
+   "prose": "Make it a whole program: read five lines from the keyboard, each `x y`, fit with step 0.1 and print one line. For the course points it prints `w = 1.5, b = 1.3, error = 0.06`.",
+   "question": "Complete the script so it prints `w = ..., b = ..., error = ...` for any five points.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n\n# read five lines of \"x y\", fit with step 0.1, print the result\n",
+    "solution": "def mse(w, b, xs, ys):\n    total = 0\n    for i in range(len(xs)):\n        e = w * xs[i] + b - ys[i]\n        total = total + e * e\n    return total / len(xs)\n\ndef nudge_once(w, b, xs, ys, step):\n    best = mse(w, b, xs, ys)\n    up = mse(w + step, b, xs, ys)\n    down = mse(w - step, b, xs, ys)\n    if up < best and up <= down:\n        w, best = w + step, up\n    elif down < best:\n        w, best = w - step, down\n    up = mse(w, b + step, xs, ys)\n    down = mse(w, b - step, xs, ys)\n    if up < best and up <= down:\n        b, best = b + step, up\n    elif down < best:\n        b, best = b - step, down\n    return (w, b)\n\ndef fit_by_nudging(xs, ys, step):\n    w, b, rounds = 0.0, 0.0, 0\n    while True:\n        new_w, new_b = nudge_once(w, b, xs, ys, step)\n        rounds = rounds + 1\n        if new_w == w and new_b == b:\n            break\n        w, b = new_w, new_b\n    w, b = round(w, 6), round(b, 6)\n    return (w, b, round(mse(w, b, xs, ys), 6), rounds)\n\nxs = []\nys = []\nfor i in range(5):\n    x, y = input().split()\n    xs.append(float(x))\n    ys.append(float(y))\nw, b, error, rounds = fit_by_nudging(xs, ys, 0.1)\nprint(f\"w = {w}, b = {b}, error = {error}\")\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "1 3\n2 4\n3 6\n4 7\n5 9\n",
+      "expect": "w = 1.5, b = 1.3, error = 0.06\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "1 3\n2 4\n3 6\n4 7\n5 9\n",
+      "expect": "w = 1.5, b = 1.3, error = 0.06\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "-1 -5\n0 -2\n1 1\n2 4\n3 7\n",
+      "expect": "w = 3.0, b = -2.0, error = 0.0\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1 10\n2 8\n3 6\n4 4\n5 2\n",
+      "expect": "w = -1.8, b = 11.4, error = 0.08\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "0 2\n1 2.5\n2 3\n3 3.5\n4 4\n",
+      "expect": "w = 0.6, b = 1.8, error = 0.02\n"
+     }
+    ],
+    "how": "Check runs your program 4 times, each with five input lines, and compares what it prints."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`x, y = input().split()` reads one line into two pieces of text."
+    },
+    {
+     "rung": "point",
+     "text": "Turn each into a number with `float(...)` and append it to a list."
+    },
+    {
+     "rung": "step",
+     "text": "Then `w, b, error, rounds = fit_by_nudging(xs, ys, 0.1)` and print with an f-string."
+    }
+   ],
+   "feedback": {
+    "correct": "Your program reads, fits and prints.",
+    "generic": "Not quite. Compare your printed line with the expected one."
+   },
+   "explain": {
+    "text": "Read five lines into two lists, fit, and print.\n\n```python\nfor i in range(5):\n    x, y = input().split()\n    xs.append(float(x))\n    ys.append(float(y))\n```"
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "How every network learns",
+   "prose": "Your script did this: $$\\text{change the numbers} \\;\\to\\; \\text{lower the error} \\;\\to\\; \\text{repeat until it cannot}$$ Every network in this strand learns that way, with millions of numbers instead of two. Later courses (`multivar` l8) find the downhill direction without trying both ways.",
+   "question": "What do a two-number line and a large network have in common?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "lower",
+      "text": "Both change their numbers to lower an error on examples",
+      "correct": true
+     },
+     {
+      "id": "rules",
+      "text": "Both follow rules a person wrote",
+      "why": "The numbers are not written by a person; they are learned."
+     },
+     {
+      "id": "best",
+      "text": "Both always reach the best possible numbers",
+      "why": "Our rule stopped at 0.0608 with step 0.01, not the best. Stopping is not proof."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did your script do with $w$ and $b$?"
+    },
+    {
+     "rung": "step",
+     "text": "It changed them to lower the MSE."
+    }
+   ],
+   "feedback": {
+    "correct": "Both lower an error by changing their numbers.",
+    "generic": "Not quite. Think about what the loop did."
+   },
+   "explain": {
+    "text": "A model is a rule with numbers, and learning changes the numbers to lower an error on examples. Your nudging script is the smallest case."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A line through prices",
+   "prose": "The same script fits a line to five days of a share's closing price against the day number. It prints `w = 0.22, b = 19.84`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Day",
+      "Closing price"
+     ],
+     "rows": [
+      [
+       "1",
+       "£20.10"
+      ],
+      [
+       "2",
+       "£20.40"
+      ],
+      [
+       "3",
+       "£20.20"
+      ],
+      [
+       "4",
+       "£20.80"
+      ],
+      [
+       "5",
+       "£21.00"
+      ]
+     ],
+     "align": "center"
+    },
+    "state": {}
+   },
+   "question": "What price does the line give for day 35, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 27.54,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "Price",
+    "label": "Line at day 35",
+    "accept": "£27.54",
+    "wrong": [
+     {
+      "id": "slope-only",
+      "value": 7.7,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "day5",
+      "value": 20.94,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $x = 35$ into $y = 0.22x + 19.84$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.22 \\times 35 + 19.84 = 27.54$."
+    }
+   ],
+   "feedback": {
+    "correct": "£27.54: the line climbs £0.22 a day.",
+    "generic": "Not quite. Use $y = 0.22x + 19.84$ at $x = 35$.",
+    "byKey": {
+     "slope-only": "£7.70 is $0.22 \\times 35$ alone. Add the bias, 19.84.",
+     "day5": "£20.94 is the line at day 5."
+    }
+   },
+   "explain": {
+    "text": "The weight 0.22 means the line rises £0.22 a day, so day 35 gives $0.22 \\times 35 + 19.84 = 27.54$. Trusting it is the l4 mistake: five days chose the line, and none of day 6 to day 35 tested it."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`fit_by_nudging` repeats rounds of nudging and stops on the first round that changes nothing; on our points it returns (1.5, 1.3, 0.06, 16).",
+   "A `while True` loop needs a test that breaks out; strict `<` makes every kept nudge lower the error.",
+   "Every network learns this way, by changing its numbers to lower an error on examples."
+  ],
+  "formula": {
+   "name": "The fitting loop",
+   "tex": "\\text{repeat: round} \\;\\to\\; \\text{changed? if not, stop}",
+   "note": "Count every round, including the last."
+  },
+  "trap": "A loop with no stopping test, or one that accepts ties, can run for ever."
+ },
+ "quiz": [
+  {
+   "id": "q-rounds",
+   "difficulty": 2,
+   "prose": "A nudging script moves the line in 7 rounds, then runs one round that changes nothing.",
+   "question": "What round count does `fit_by_nudging` return?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "Whole number",
+    "label": "Rounds",
+    "accept": "8",
+    "wrong": [
+     {
+      "id": "moving",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "7 moving rounds plus the round that changed nothing: 8.",
+    "generic": "Not quite. Count every round run.",
+    "byKey": {
+     "moving": "The final round, which changes nothing, is counted too."
+    }
+   },
+   "explain": {
+    "text": "The script counts each round it runs, including the last. That is $7 + 1 = 8$."
+   }
+  },
+  {
+   "id": "q-why-round",
+   "difficulty": 2,
+   "prose": "After nudging, `w` prints as `1.5000000000000002`.",
+   "question": "Why does the script round `w` to 6 places?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "float",
+      "text": "Adding 0.1 many times leaves a tiny computer rounding error",
+      "correct": true
+     },
+     {
+      "id": "wrong",
+      "text": "The nudging rule made a mistake in a round",
+      "why": "The rule landed on 1.5; the computer cannot store 0.1 exactly."
+     },
+     {
+      "id": "style",
+      "text": "Six places is just tidier to print",
+      "why": "It is tidier, but the reason is that 0.1 is not stored exactly."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.1 is not stored exactly, so sums drift slightly.",
+    "generic": "Not quite. Think about how a computer stores 0.1."
+   },
+   "explain": {
+    "text": "A computer stores 0.1 as a binary fraction that is very slightly off. Fifteen additions give `1.5000000000000002`. Rounding to 6 places removes the drift."
+   }
+  },
+  {
+   "id": "q-no-stop",
+   "difficulty": 3,
+   "prose": "A loop is written `while True:` with one round of nudging inside and no `break`.",
+   "question": "What happens when it runs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "forever",
+      "text": "It never stops",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "It does one round and stops",
+      "why": "Nothing tells it to stop after one round."
+     },
+     {
+      "id": "error",
+      "text": "Python refuses to run it",
+      "why": "Python runs it happily; it just never ends."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Without a `break`, `while True` runs for ever.",
+    "generic": "Not quite. What would make `while True` stop?"
+   },
+   "explain": {
+    "text": "`while True` is always true, so only a `break` or `return` inside can end it. With neither, the loop never stops."
+   }
+  }
+ ]
+}
